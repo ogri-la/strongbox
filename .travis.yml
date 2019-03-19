@@ -3,4 +3,3 @@ language: clojure
 jdk:
     - openjdk8
     - openjdk10
-    - oraclejdk10
