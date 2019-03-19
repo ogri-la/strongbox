@@ -33,8 +33,8 @@ Changes are recorded in the [CHANGELOG.md](CHANGELOG.md) file.
 
 All bugs/questions/feedback should go in [Issues](https://github.com/ogri-la/wowman/issues).
 
-All contributions should take the form of a pull request with unit tests. [The licence](LICENCE.txt) is quite strict and 
-all contributions will be subject to it.
+All contributions should take the form of a pull request with unit tests.  
+[The licence](LICENCE.txt) is quite strict and all contributions will be subject to it.
 
 ## Notes
 
@@ -50,7 +50,7 @@ This software interacts with the following remote hosts:
 * [https://www.curseforge.com](https://www.curseforge.com), to download detailed addon data
 * [https://github.com/ogri-la](https://github.com/ogri-la), to download a list of summary addon information
 
-These interactions use a HTTP user agent header unique to `wowman` so it may be identified easily by www.curseforge.com
+These interactions use a HTTP user agent header unique to `wowman` so it may be identified easily
 
 ## Recognition
 
