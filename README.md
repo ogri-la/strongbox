@@ -42,7 +42,7 @@ A sub-directory called `state` will be created in the current directory. All con
 
 Addon zip files are downloaded to your WoW `Addons` directory.
 
-A file called `.wowman.json` is created within newly installed addons. This map specific attributes between 
+A file called `.wowman.json` is created within newly installed addons. This maps specific attributes between 
 www.curseforge.com and the unpacked addon, as well as across addons that unpack to multiple directories.
 
 This software interacts with the following remote hosts:
