@@ -1,0 +1,13 @@
+*~
+*.swp
+/target
+/classes
+/checkouts
+/state
+pom.xml
+pom.xml.asc
+*.jar
+*.class
+/.lein-*
+/.nrepl-port
+.eastwood
