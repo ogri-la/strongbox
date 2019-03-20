@@ -1,5 +1,7 @@
 # wowman, a World of Warcraft Addon Manager
 
+[![Build Status](https://travis-ci.org/ogri-la/wowman.svg?branch=master)](https://travis-ci.org/ogri-la/wowman)
+
 `wowman` is *open source*, *advertisement free* and *privacy respecting* software that interfaces with 
 [www.curseforge.com](https://www.curseforge.com/wow/addons) and the addon files in your World of Warcraft `Addons` 
 directory.
