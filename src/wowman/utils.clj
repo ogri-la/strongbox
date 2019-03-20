@@ -235,7 +235,7 @@
 (defn-spec list-files ::sp/list-of-files
   "returns a simple list of files and files in sub-directories rooted at `path`"
   [path ::sp/extant-dir]
-  (mapv str (remove fs/directory? (file-seq (java.io.File. path)))))
+  (mapv str (sort (remove fs/directory? (file-seq (java.io.File. path))))))
 
 (defn-spec zip-directory (s/or :ok ::sp/extant-archive-file :error nil?)
   "zips a directory of files. contents of zip will always live in a single top level directory"

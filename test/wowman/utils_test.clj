@@ -20,11 +20,11 @@
 ;;
 
 (deftest list-files
-  (testing "listing a directory returns a list of pairs: [[path, filename], ...]"
+  (testing "listing a directory returns a list of pairs [[path, filename], ...] sorted alphabetically"
     (let [target "test-dir"
-          expected [(join target "f1")
-                    (join target "f2")
-                    (join target "d1" "d2" "f3")]]
+          expected [(join target "d1" "d2" "f3")
+                    (join target "f1")
+                    (join target "f2")]]
       (is (= (utils/list-files target) expected)))))
 
 (deftest zip-directory
