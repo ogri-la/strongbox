@@ -15,7 +15,8 @@ jobs:
             script: ...
             deploy:
                 provider: releases
-                api_key: $GITHUB_OAUTH_TOKEN
+                api_key: 
+                    secure: "Rz1EtlWYDNNa8SVOTMS4VlZU+t4RfiOtGF0cswiZBSpJeotWoGANuET7WVw1iRChWM3ZzmCMsTwHcVM9moVhqhyIYz6Z6rmdbrO+Q+RhtifQ7dOy6OAAwXoXTRi4CbENcUTfYgPsp6omCUp6R6hPSEztZbwSp98rk8IY1QWdkOLfUSOYXYYqUswoSq0qgFRjI88fEckGjG7q/ruASpp7VkpzGJyNrMPfbSmCRgvSM0v0+9wlW5oli70MxDsc7X0rAfchjhItfOROQLqJsLYDbOpEk7U3NqlDJNXEaIZLJMSgFLrTG2CINoJZeqsx2E/a/eL1kAQPuZvF0YOYQUIoZjshWhg8a9KGUToUHkSwTGnXvQwH6LE5DPdcS/EYqxIAruTrHa78p1J9lYfNDpw13tkfBaxakbu8wqduu+aPBHsWp7ry0RRZr4Fn66wQs3MdIZSGRPsxCn89vVqbWDjMLqv4/XtpGZ4NnSGEkBAFtR0CZB+bzXnDCOf+dqA0It0BhRoLHfyBgUYx4euWjxdDW9Zn4VUGnjwvtbFDlMTK0sABuz7FPuslBsYUK2/1c3U0+4ujk+DLitT7t5wkl/HjDKCSLnkiYYaJrxDyOakalYglBmQU5op+Ug7mxsxtvjyVIFem0TH/aVXDJew4oYZ6ZkMV/IOVta67pqTx6x61Y9o="
                 file: concat("target/wowman-", env(TRAVIS_TAG) "-standalone.jar") # target/wowman-1.1.1-standalone.jar
                 skip_cleanup: true
                 on:
