@@ -1,5 +1,22 @@
-dist: xenial
+dist: xenial # Ubuntu 16.04
 language: clojure
 jdk:
     - openjdk8
     - openjdk10
+jobs:
+    include:
+        # run the release stage 
+        # when the branch being tested is 'master'
+        # and the revision has been tagged
+        -   
+            stage: release
+            jdk: openjdk8
+            if: branch = master
+            script: ...
+            deploy:
+                provider: releases
+                api_key: $GITHUB_OAUTH_TOKEN
+                file: concat("target/wowman-", env(TRAVIS_TAG) "-standalone.jar") # target/wowman-1.1.1-standalone.jar
+                skip_cleanup: true
+                on:
+                    tags: true
