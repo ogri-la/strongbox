@@ -12,7 +12,7 @@ jobs:
             stage: release
             jdk: openjdk8
             if: branch = master
-            script: ...
+            script: lein uberjar
             deploy:
                 provider: releases
                 api_key: 
