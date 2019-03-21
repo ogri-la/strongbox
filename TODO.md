@@ -120,6 +120,18 @@ see CHANGELOG.md for a more formal list of changes by release
     - suspect race condition somewhere
         - was an event dispatch thread issue with selection of rows happening outside of edt
     - done
+* scrutinise all files
+    - done
+* travis-ci integration
+    - done
+* squash history
+    - done
+* updates are merged into curseforge.json
+    - done
+* datestamp in file should be updated
+    - done
+* order should be preserved for easy diffing
+    - done
 
 ## todo, 0.1.0 release
 
@@ -133,23 +145,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ---
 
-* list of available addons are regenerated weekly and updated daily
-    - updates are merged into curseforge.json
-        - done
-    - datestamp in file should be updated
-        - done
-    - order should be preserved for easy diffing
-        - done
-
-* travis-ci integration
-
-* upload .jar artifacts
-
-* add curseforge scraping to CI
-
-* upload generated/updated curseforge.json to github
-
-* scrutinise all files
+* travis to generate and upload .jar artifacts
+    - only on tagged (x.y.z) releases on the master branch
 
 * 0.1.0 release
 
