@@ -22,7 +22,7 @@ jobs:
             deploy:
                 provider: releases
                 api_key: 
-                    secure: "fWgPeTUUnQY85WeD33ogvj9hZU23k/aqQa6oai2Bdf1wR7rQXw8bwHqEbZrV8kQyp3CUV70Ewjsj2t/cXdOeBGJrionaC95uRYEuAZ8wxjEztyu0Bo19SURi2E9g+shfKqPjxrOJH5UV76FamFRad6IHPpvffFslWb/N7EBhJEHQ9BYcBzfY8Q2PYaaiJSwthkPe/MrdcQOqQdAKtlVevCsAD/JgSN4SWeJaEjOsAZDSxK8uMUmaIzkrV1TSf0k2jGfVarbACxysu4hH+sbpsoSHiKXBjrgdiIxTDbAbfdOI+TzY7dVw/miYcHGExdDZt6Fi+AT1fo8cdQMoKUxIzYMYRHjPXoY0x3doB9DxLUa/XjuyBc+4pMh4At4SRJ8U445rchPd6Vv6wSZbBMnz7GneokVp3BD41/13eUuZtn1arCWdrq3zYmHwjmiiv+nKci72QXyDLz2J37TeiCq9fTLWqQvyIITiLT+gtKdQbPofkvnhOY6zOb1S+r5ArxwNKy65T4giwjX6yEEUDo0lz3hQsCsPinEKGAN2o1FNOxMzCQPEpvwx1m8xTgvcCifW9NcHds084eiCLinQWdNTp92xpNodP2gk7qn1P6eFVVVoBK6jfx4p8W1EQltwfHt8Zq+sdpVMAQMIx+pB30uO+em3ffIPZgDMmttfn8xIjjg="
+                    secure: "QbCPY1EjlbvENXbXYs5VSa0opKh0cLbi95CBjW2rJeapcSiFpwEK8z5COCBMaZbtbYHwot9PEhf4dM+CrJrevFG6fbHWOOw7Yh+eHzw3g2VgMz/fu23meZBckMQwcMzhQnD8nW1mLD7c8saLUgfOwUljaOlcshXtxdVk+Vh/dGdk/miPNyTIYtpXhAsMP0R9jjnArbS84wNkyDSYEFLfpC1fRS24kEWy7oLupZUzNaGaI75phF7T0MxAQ45H47DJGGldUIbu3TMe0hK0Vi/W6A5E0Q9VZ+btPYnt0Fv2QgGDkNaRyaxlbpJ1LnXn53/R6OnKmnWRmKJMBK1E1R2/BnA5y1j5eG3bm/pDrxO2x6pTL0YiBw4LDQcpNmAKU/VT7YObF6hj0pHFBUym+NgAx695FEwCneBxpptfTubdfKe0wj9ZVsJ9raY4bcceqxBLxS15rayWoUfSKF5svYHKnykeZzquaIvTHw63YBDqLT4SdiknaIcnjakTXJtBqrVQZW/2R3geL6cze2x1kPenJJIv+QS4QXytqqesgl7diGI1vNxINW+BFl8ykkzMl4FWI9OcT6pBup0OGQ5sQkd49okdo1Bz7xHC9N3P6lbhc8cw18mKJcwj1MttLdsATXKXjMkfG/mSjdNm0HEz/aadYSMT16XVsS/4hJyZe+oeI7k="
                 file_glob: true
                 file: "target/wowman-*-standalone.jar" # target/wowman-1.1.1-standalone.jar
                 skip_cleanup: true
