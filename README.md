@@ -38,6 +38,8 @@ All bugs/questions/feedback should go in [Issues](https://github.com/ogri-la/wow
 All contributions should take the form of a pull request with unit tests.  
 [The licence](LICENCE.txt) is quite strict and all contributions will be subject to it.
 
+See [CONTRIBUTING](CONTRIBUTING.md) for more detail.
+
 ## Notes
 
 A sub-directory called `state` will be created in the current directory. All configuration and cached data lives there.
