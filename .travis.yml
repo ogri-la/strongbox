@@ -21,8 +21,7 @@ jobs:
             script: lein uberjar
             deploy:
                 provider: releases
-                api_key: 
-                    secure: "QbCPY1EjlbvENXbXYs5VSa0opKh0cLbi95CBjW2rJeapcSiFpwEK8z5COCBMaZbtbYHwot9PEhf4dM+CrJrevFG6fbHWOOw7Yh+eHzw3g2VgMz/fu23meZBckMQwcMzhQnD8nW1mLD7c8saLUgfOwUljaOlcshXtxdVk+Vh/dGdk/miPNyTIYtpXhAsMP0R9jjnArbS84wNkyDSYEFLfpC1fRS24kEWy7oLupZUzNaGaI75phF7T0MxAQ45H47DJGGldUIbu3TMe0hK0Vi/W6A5E0Q9VZ+btPYnt0Fv2QgGDkNaRyaxlbpJ1LnXn53/R6OnKmnWRmKJMBK1E1R2/BnA5y1j5eG3bm/pDrxO2x6pTL0YiBw4LDQcpNmAKU/VT7YObF6hj0pHFBUym+NgAx695FEwCneBxpptfTubdfKe0wj9ZVsJ9raY4bcceqxBLxS15rayWoUfSKF5svYHKnykeZzquaIvTHw63YBDqLT4SdiknaIcnjakTXJtBqrVQZW/2R3geL6cze2x1kPenJJIv+QS4QXytqqesgl7diGI1vNxINW+BFl8ykkzMl4FWI9OcT6pBup0OGQ5sQkd49okdo1Bz7xHC9N3P6lbhc8cw18mKJcwj1MttLdsATXKXjMkfG/mSjdNm0HEz/aadYSMT16XVsS/4hJyZe+oeI7k="
+                api_key: $GITHUB_TOKEN
                 file_glob: true
                 file: "target/wowman-*-standalone.jar" # target/wowman-1.1.1-standalone.jar
                 skip_cleanup: true
