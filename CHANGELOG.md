@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## 0.1.0 - 2019-03-19
+## 0.1.0 - 2019-03-23
 ### Added
 - initial release! squashed history
 - a GUI and a very rough 'headless' mode
@@ -16,3 +16,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - searching and installing from a complete list of curseforge addons
 - a notice logger for operations that are happening
 - logic to do the occasional large curseforge.com update and smaller incremental updates more regularly
+- CI and releases with Travis-CI

@@ -24,8 +24,8 @@ It may work on other platforms but it is only tested and supported on Linux.
 
 ## Usage
 
-1. download the [jar](#todo) file
-2. run with `java -jar wowman-x.x.x.jar`
+1. download the [jar](https://github.com/ogri-la/wowman/releases/download/0.1.0/wowman-0.1.0-standalone.jar) file
+2. run with `java -jar wowman-x.x.x-standalone.jar`
 3. select your `Addons` directory (`/path/to/WoW/_retail_/Interface/Addons`)
 4. select the addons you wish to update and click the `update` button
 
