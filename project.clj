@@ -24,6 +24,7 @@
                  [clj-time "0.15.0"]
 
                  ;; remember to update the LICENCE.txt
+                 ;; remember to update pom file (`lein pom`)
 
                  ]
 

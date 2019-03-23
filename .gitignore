@@ -4,8 +4,6 @@
 /classes
 /checkouts
 /state
-pom.xml
-pom.xml.asc
 *.jar
 *.class
 /.lein-*
