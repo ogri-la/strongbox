@@ -26,5 +26,5 @@ jobs:
                 file: "target/wowman-*-standalone.jar" # target/wowman-1.1.1-standalone.jar
                 skip_cleanup: true
                 # disabled until I get this working
-                #on:
-                #    tags: true
+                on:
+                    tags: true
