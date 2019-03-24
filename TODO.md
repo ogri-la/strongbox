@@ -11,6 +11,9 @@ see CHANGELOG.md for a more formal list of changes by release
         - turns out tags have no branch
     - done
 
+* bug, regression, gui, installed addons not refreshing after update
+    - fixed
+
 * 0.1.0 release
     - done!
 
