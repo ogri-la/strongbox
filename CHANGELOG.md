@@ -6,8 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## 0.1.1 - 2019-03-24
+
 ### Fixed
 - CLI "update-addon-list" action now actually updates the addon list instead of writing a useless separate file
+- GUI regression in post-install/update/delete behaviour when listing addons.
 
 ### Added
 - detailed contributor guidelines
