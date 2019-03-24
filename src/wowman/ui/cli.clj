@@ -24,7 +24,11 @@
   [opts]
   (binding [utils/cache-dir (paths :cache-dir)]
     (let [{since :datestamp} (utils/load-json-file-with-decoding (paths :addon-summary-file))]
-      (curseforge/download-all-addon-summary-updates since (paths :addon-summary-updates-file)))))
+      ;; download any updates to a file
+      (curseforge/download-all-addon-summary-updates since (paths :addon-summary-updates-file))
+      ;; merge those updates with the main summary file
+      (curseforge/update-addon-summary-file (paths :addon-summary-file)
+                                            (paths :addon-summary-updates-file)))))
 
 (defmethod action :list
   [opts]
