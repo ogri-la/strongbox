@@ -27,5 +27,5 @@ jobs:
                 file: "target/wowman-*-standalone.jar" # target/wowman-1.1.1-standalone.jar
                 skip_cleanup: true
                 # redundant if "if: tag is present" ?
-                #on:
-                #    tags: true
+                on:
+                    tags: true
