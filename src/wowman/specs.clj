@@ -1,6 +1,5 @@
 (ns wowman.specs
   (:require
-   [clojure.string :refer [trim lower-case]]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
    [me.raynes.fs :as fs]))

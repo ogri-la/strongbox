@@ -15,7 +15,7 @@
     [invoke :as ssi]
     [chooser :as chooser]
     [mig :as mig]
-    [dev :as debug]
+    ;;[dev :as ssdebug]
     [swingx :as x]
     [core :as ss]
     [table :as sstbl]]
@@ -252,8 +252,10 @@
                          ;; don't use core/get-state inside listeners!
                          (insert-all grid (:installed-addon-list state)))
 
-        watch-for-unsteady-addons (fn [state]
-                                    (let [unsteady (get-state :unsteady-addons)]
+        watch-for-unsteady-addons (fn [_] ;;state]
+                                    (let [unsteady (get-state :unsteady-addons)
+                                          ;;unsteady (:unstead-addons state) ;; doesn't work for some reason. should it?
+                                          ]
                                       (when-not (empty? unsteady)
                                         (debug "unsteady addons:" unsteady)
                                         (ss/invoke-now
@@ -297,7 +299,7 @@
   [rows uinput]
   (let [uinput (-> uinput (or "") trim lower-case)
         search-fn (fn [row]
-                    (when-let [lbl (:label row)]
+                    (when (:label row)
                       (starts-with? (-> row :label lower-case) uinput)))]
     (if (empty? uinput)
       rows
@@ -323,8 +325,7 @@
         watch-these [[:addon-summary-list]
                      [:search-field-input]]
 
-        cap 500 ;; regular jtable default
-        cap 250 ;; jxtable + autopack. 500 results makes searching noticibly laggy
+        cap 250 ;; jxtable + autopack. more rows and searching becomes noticibly laggy
         update-rows-fn (fn [state]
                          (let [known-addons (search-rows (:addon-summary-list state) (:search-field-input state))]
                            (insert-all grid (take cap known-addons))))]

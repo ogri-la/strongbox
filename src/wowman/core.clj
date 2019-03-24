@@ -2,7 +2,6 @@
   (:require
    [clojure.set]
    [clojure.string]
-   [clojure.instant]
    [taoensso.timbre :as timbre :refer [debug info warn error spy]]
    [clojure.spec.alpha :as s]
    [orchestra.spec.test :as st]
@@ -125,7 +124,7 @@
         rmwatch #(remove-watch state wid)]
 
     (add-watch state wid
-               (fn [key atom old-state new-state]
+               (fn [_ _ old-state new-state] ;; key, atom, old-state, new-state
                  (when (has-changed old-state new-state)
                    (debug (format "path %s triggered %s" path wid))
                    (callback new-state))))
@@ -246,7 +245,7 @@
       (do
         (error "refusing to unzip addon, it contains top-level *files*:" toplevel-files)
         [])
-      (let [unzip-to-addons (utils/unzip-file downloaded-file install-dir)
+      (let [_ (utils/unzip-file downloaded-file install-dir)
 
             ;; if multiple directories, which is the 'main' addon?
             ;; a common convention looks like "Addon[seperator]Subname"
@@ -359,7 +358,7 @@
   (when-not (fs/exists? (paths :addon-summary-file)) ;; temporary check until header caching in
     (download-addon-summary-file))
   (info "loading addon summary list from:" (paths :addon-summary-file))
-  (let [{:keys [addon-summary-list datestamp]} (utils/load-json-file-with-decoding (paths :addon-summary-file))]
+  (let [{:keys [addon-summary-list]} (utils/load-json-file-with-decoding (paths :addon-summary-file))]
     (swap! state assoc :addon-summary-list addon-summary-list)
     nil))
 
@@ -404,36 +403,31 @@
    any installed addon not found in :addon-idx has a mapping problem"
   []
   (info "matching installed addons to online addons")
-  ;; TODO: revisit this when-let*
-  (when-let* [;; when we have both a list of installed addons and the addon summary list...
-              inst-addons (get-state :installed-addon-list)
-              addons (get-state :addon-summary-list)]
-
-             (let [ia-idx (get-state :installed-addon-idx)
-                   matcher (fn [available-addon]
-                             (let [{:keys [name alt-name]} available-addon
-                                   ia-by-name (get ia-idx name)
-                                   ia-by-alt-name (get ia-idx alt-name)
-
-                                   installed-addon (or ia-by-name ia-by-alt-name)]
-                               (when installed-addon
-                                 (when-not ia-by-name
+  (let [inst-addons (get-state :installed-addon-list)
+        ia-idx (get-state :installed-addon-idx)
+        matcher (fn [available-addon]
+                  (let [{:keys [name alt-name]} available-addon
+                        ia-by-name (get ia-idx name)
+                        ia-by-alt-name (get ia-idx alt-name)
+                        installed-addon (or ia-by-name ia-by-alt-name)]
+                    (when installed-addon
+                      (when-not ia-by-name
                           ;; we matched, but under less than ideal circumstances
-                                   (warn (format "matched installed addon '%s' by the :alt-name '%s'" (:name installed-addon) (:alt-name available-addon))))
+                        (warn (format "matched installed addon '%s' by the :alt-name '%s'" (:name installed-addon) (:alt-name available-addon))))
                         ;;(merge-addons installed-addon available-addon))))
-                                 (merge {:matched? true} available-addon installed-addon))))
+                      (merge {:matched? true} available-addon installed-addon))))
 
-                   matched (vec (remove nil? (map matcher (get-state :addon-summary-list))))
-                   unmatched (clojure.set/difference (set (keys ia-idx)) (mapv :name matched))
+        matched (vec (remove nil? (map matcher (get-state :addon-summary-list))))
+        unmatched (clojure.set/difference (set (keys ia-idx)) (mapv :name matched))
 
-                   upgraded-installed-addon-list (utils/merge-lists :name (get-state :installed-addon-list) matched)]
+        expanded-installed-addon-list (utils/merge-lists :name (get-state :installed-addon-list) matched)]
 
-               (info "num installed" (count inst-addons) ", num matched" (count matched))
+    (info "num installed" (count inst-addons) ", num matched" (count matched))
 
-               (when-not (empty? unmatched)
-                 (warn "failed to match the following addons to an addon online:" (clojure.string/join ", " unmatched)))
+    (when-not (empty? unmatched)
+      (warn "failed to match the following addons to an addon online:" (clojure.string/join ", " unmatched)))
 
-               (update-installed-addon-list! upgraded-installed-addon-list))))
+    (update-installed-addon-list! expanded-installed-addon-list)))
 
 (defn-spec refresh nil?
   []
