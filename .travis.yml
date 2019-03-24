@@ -5,10 +5,11 @@ jdk:
     - openjdk10
 
 # https://github.com/travis-ci/travis-ci/issues/3897
-branches:
-    only:
-        - master
-        - /\d+\.\d+\.\d+/
+#branches:
+#    only:
+#        - master
+#        - /\d+\.\d+\.\d+/
+
 jobs:
     include:
         # run the release stage 
@@ -17,7 +18,7 @@ jobs:
         -   
             stage: release
             jdk: openjdk8
-            #if: branch = master
+            if: tag IS present
             script: lein uberjar
             deploy:
                 provider: releases
@@ -25,6 +26,6 @@ jobs:
                 file_glob: true
                 file: "target/wowman-*-standalone.jar" # target/wowman-1.1.1-standalone.jar
                 skip_cleanup: true
-                # disabled until I get this working
-                on:
-                    tags: true
+                # redundant if "if: tag is present" ?
+                #on:
+                #    tags: true

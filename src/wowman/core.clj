@@ -2,7 +2,6 @@
   (:require
    [clojure.set]
    [clojure.string]
-   [clojure.instant]
    [taoensso.timbre :as timbre :refer [debug info warn error spy]]
    [clojure.spec.alpha :as s]
    [orchestra.spec.test :as st]
@@ -51,6 +50,11 @@
         (get-in state path)
         state))))
 
+(defn-spec debugging? boolean?
+  "'debug mode'"
+  []
+  (get-state :cfg :debug?))
+
 (def -state-template
   {:cleanup []
 
@@ -89,6 +93,31 @@
    :search-field-input nil
    :selected-search []})
 
+(defn-spec state-bind nil?
+  [path ::sp/list-of-keywords, callback fn?]
+  (let [prefn identity
+        has-changed (fn [old-state new-state]
+                      (not= (prefn (get-in old-state path))
+                            (prefn (get-in new-state path))))
+        wid (keyword (gensym callback)) ;; :foo.bar$baz@123456789
+        rmwatch #(remove-watch state wid)]
+
+    (add-watch state wid
+               (fn [_ _ old-state new-state] ;; key, atom, old-state, new-state
+                 (when (has-changed old-state new-state)
+                   (debug (format "path %s triggered %s" path wid))
+                   (callback new-state))))
+
+    (swap! state update-in [:cleanup] conj rmwatch)
+    nil))
+
+(defn-spec state-binds nil?
+  [path-list ::sp/list-of-list-of-keywords, callback fn?]
+  (doseq [path path-list]
+    (state-bind path callback)))
+
+;; settings
+
 (defn-spec configure ::sp/user-config
   "handles the user configurable bit of the app. command line args override args from from the config file."
   [file-opts map?, cli-opts map?]
@@ -110,47 +139,12 @@
 
       (if valid? final-cfg cfg))))
 
-;; debug mode
-(defn-spec debugging? boolean?
-  []
-  (get-state :cfg :debug?))
-
-(defn-spec state-bind nil?
-  [path ::sp/list-of-keywords, callback fn?]
-  (let [prefn identity
-        has-changed (fn [old-state new-state]
-                      (not= (prefn (get-in old-state path))
-                            (prefn (get-in new-state path))))
-        wid (keyword (gensym callback)) ;; :foo.bar$baz@123456789
-        rmwatch #(remove-watch state wid)]
-
-    (add-watch state wid
-               (fn [key atom old-state new-state]
-                 (when (has-changed old-state new-state)
-                   (debug (format "path %s triggered %s" path wid))
-                   (callback new-state))))
-
-    (swap! state update-in [:cleanup] conj rmwatch)
-    nil))
-
-(defn-spec state-binds nil?
-  [path-list ::sp/list-of-list-of-keywords, callback fn?]
-  (doseq [path path-list]
-    (state-bind path callback)))
-
-;; settings
-
 (defn save-settings
   []
   ;; warning: this will preserve any once-off command line parameters as well
   ;; this might make sense within the gui but be careful about auto-saving elsewhere
   (info "saving settings to " (paths :cfg-file))
   (utils/dump-json-file (paths :cfg-file) (get-state :cfg)))
-
-(defn-spec set-install-dir! nil?
-  [install-dir ::sp/install-dir]
-  (swap! state assoc-in [:cfg :install-dir] (-> install-dir fs/absolute fs/normalized str))
-  nil)
 
 (defn load-settings
   ([]
@@ -170,6 +164,11 @@
       (swap! state assoc :file-opts file-opts)
 
       (when (:verbosity cli-opts) (logging/change-log-level (:verbosity cli-opts)))))))
+
+(defn-spec set-install-dir! nil?
+  [install-dir ::sp/install-dir]
+  (swap! state assoc-in [:cfg :install-dir] (-> install-dir fs/absolute fs/normalized str))
+  nil)
 
 ;; utils
 
@@ -246,7 +245,7 @@
       (do
         (error "refusing to unzip addon, it contains top-level *files*:" toplevel-files)
         [])
-      (let [unzip-to-addons (utils/unzip-file downloaded-file install-dir)
+      (let [_ (utils/unzip-file downloaded-file install-dir)
 
             ;; if multiple directories, which is the 'main' addon?
             ;; a common convention looks like "Addon[seperator]Subname"
@@ -291,40 +290,51 @@
     (info "(re)loading installed addons:" install-dir)
     (update-installed-addon-list! (wowman.fs/installed-addons install-dir))))
 
-(defn-spec -install-update-these nil?
-  [updateable-toc-addons (s/coll-of ::sp/addon-or-toc-addon)]
-  (doseq [toc-addon updateable-toc-addons]
-    (install-addon toc-addon (get-state :cfg :install-dir))))
-
-(defn updateable?
-  [rows]
-  (filterv :update? rows))
-
-(defn re-install-selected
+(defn-spec download-addon-summary-file ::sp/extant-file
+  "downloads addon summary file to expected location, nothing more"
   []
-  (-> (get-state) :selected-installed -install-update-these)
-  (load-installed-addons))
+  (utils/download-file remote-addon-summary-file (paths :addon-summary-file)))
 
-(defn re-install-all
+(defn-spec load-addon-summaries nil?
   []
-  (-> (get-state) :installed-addon-list -install-update-these)
-  (load-installed-addons))
+  (when-not (fs/exists? (paths :addon-summary-file)) ;; temporary check until header caching in
+    (download-addon-summary-file))
+  (info "loading addon summary list from:" (paths :addon-summary-file))
+  (let [{:keys [addon-summary-list]} (utils/load-json-file-with-decoding (paths :addon-summary-file))]
+    (swap! state assoc :addon-summary-list addon-summary-list)
+    nil))
 
-(defn install-update-selected
+(defn-spec match-installed-addons-with-online-addons nil?
+  "when we have a list of installed addons as well as the addon list,
+   merge what we can into ::specs/addon-toc records and update state.
+   any installed addon not found in :addon-idx has a mapping problem"
   []
-  (-> (get-state) :selected-installed updateable? -install-update-these)
-  (load-installed-addons))
+  (info "matching installed addons to online addons")
+  (let [inst-addons (get-state :installed-addon-list)
+        ia-idx (get-state :installed-addon-idx)
+        matcher (fn [available-addon]
+                  (let [{:keys [name alt-name]} available-addon
+                        ia-by-name (get ia-idx name)
+                        ia-by-alt-name (get ia-idx alt-name)
+                        installed-addon (or ia-by-name ia-by-alt-name)]
+                    (when installed-addon
+                      (when-not ia-by-name
+                          ;; we matched, but under less than ideal circumstances
+                        (warn (format "matched installed addon '%s' by the :alt-name '%s'" (:name installed-addon) (:alt-name available-addon))))
+                        ;;(merge-addons installed-addon available-addon))))
+                      (merge {:matched? true} available-addon installed-addon))))
 
-(defn-spec install-update-all nil?
-  []
-  (-> (get-state) :installed-addon-list updateable? -install-update-these)
-  (load-installed-addons))
+        matched (vec (remove nil? (map matcher (get-state :addon-summary-list))))
+        unmatched (clojure.set/difference (set (keys ia-idx)) (mapv :name matched))
 
-(defn expand-summary-wrapper
-  [addon-summary]
-  (binding [utils/cache-dir (paths :cache-dir)]
-    (let [wrapper (affects-addon-wrapper curseforge/expand-summary)]
-      (wrapper addon-summary))))
+        expanded-installed-addon-list (utils/merge-lists :name (get-state :installed-addon-list) matched)]
+
+    (info "num installed" (count inst-addons) ", num matched" (count matched))
+
+    (when-not (empty? unmatched)
+      (warn "failed to match the following addons to an addon online:" (clojure.string/join ", " unmatched)))
+
+    (update-installed-addon-list! expanded-installed-addon-list)))
 
 (defn-spec merge-addons ::sp/toc-addon
   [toc ::sp/toc, addon ::sp/addon]
@@ -333,6 +343,12 @@
     (if update?
       (assoc toc-addon :update? update?)
       toc-addon)))
+
+(defn expand-summary-wrapper
+  [addon-summary]
+  (binding [utils/cache-dir (paths :cache-dir)]
+    (let [wrapper (affects-addon-wrapper curseforge/expand-summary)]
+      (wrapper addon-summary))))
 
 (defn-spec check-for-updates nil?
   "downloads full details for all installed addons that can be found in summary list"
@@ -349,19 +365,43 @@
                                       (get-state :installed-addon-list)))
   (info "done checking for updates"))
 
-(defn-spec download-addon-summary-file ::sp/extant-file
-  "downloads addon summary file to expected location, nothing more"
+(defn-spec refresh nil?
   []
-  (utils/download-file remote-addon-summary-file (paths :addon-summary-file)))
+  (load-addon-summaries)  ;; load the contents of the curseforge.json file
+  (load-installed-addons) ;; parse toc files in install-dir
+  (match-installed-addons-with-online-addons) ;; match installed addons to those in curseforge.json
+  (check-for-updates)     ;; for those addons that have matches, download their full details from curseforge
 
-(defn-spec load-addon-summaries nil?
+  nil)
+
+(defn-spec -install-update-these nil?
+  [updateable-toc-addons (s/coll-of ::sp/addon-or-toc-addon)]
+  (doseq [toc-addon updateable-toc-addons]
+    (install-addon toc-addon (get-state :cfg :install-dir))))
+
+(defn updateable?
+  [rows]
+  (filterv :update? rows))
+
+(defn re-install-selected
   []
-  (when-not (fs/exists? (paths :addon-summary-file)) ;; temporary check until header caching in
-    (download-addon-summary-file))
-  (info "loading addon summary list from:" (paths :addon-summary-file))
-  (let [{:keys [addon-summary-list datestamp]} (utils/load-json-file-with-decoding (paths :addon-summary-file))]
-    (swap! state assoc :addon-summary-list addon-summary-list)
-    nil))
+  (-> (get-state) :selected-installed -install-update-these)
+  (refresh))
+
+(defn re-install-all
+  []
+  (-> (get-state) :installed-addon-list -install-update-these)
+  (refresh))
+
+(defn install-update-selected
+  []
+  (-> (get-state) :selected-installed updateable? -install-update-these)
+  (refresh))
+
+(defn-spec install-update-all nil?
+  []
+  (-> (get-state) :installed-addon-list updateable? -install-update-these)
+  (refresh))
 
 (defn -remove-addon
   [addon-dir]
@@ -397,52 +437,6 @@
 (defn remove-selected
   []
   (-> (get-state) :selected-installed vec remove-many-addons))
-
-(defn-spec match-installed-addons-with-online-addons nil?
-  "when we have a list of installed addons as well as the addon list,
-   merge what we can into ::specs/addon-toc records and update state.
-   any installed addon not found in :addon-idx has a mapping problem"
-  []
-  (info "matching installed addons to online addons")
-  ;; TODO: revisit this when-let*
-  (when-let* [;; when we have both a list of installed addons and the addon summary list...
-              inst-addons (get-state :installed-addon-list)
-              addons (get-state :addon-summary-list)]
-
-             (let [ia-idx (get-state :installed-addon-idx)
-                   matcher (fn [available-addon]
-                             (let [{:keys [name alt-name]} available-addon
-                                   ia-by-name (get ia-idx name)
-                                   ia-by-alt-name (get ia-idx alt-name)
-
-                                   installed-addon (or ia-by-name ia-by-alt-name)]
-                               (when installed-addon
-                                 (when-not ia-by-name
-                          ;; we matched, but under less than ideal circumstances
-                                   (warn (format "matched installed addon '%s' by the :alt-name '%s'" (:name installed-addon) (:alt-name available-addon))))
-                        ;;(merge-addons installed-addon available-addon))))
-                                 (merge {:matched? true} available-addon installed-addon))))
-
-                   matched (vec (remove nil? (map matcher (get-state :addon-summary-list))))
-                   unmatched (clojure.set/difference (set (keys ia-idx)) (mapv :name matched))
-
-                   upgraded-installed-addon-list (utils/merge-lists :name (get-state :installed-addon-list) matched)]
-
-               (info "num installed" (count inst-addons) ", num matched" (count matched))
-
-               (when-not (empty? unmatched)
-                 (warn "failed to match the following addons to an addon online:" (clojure.string/join ", " unmatched)))
-
-               (update-installed-addon-list! upgraded-installed-addon-list))))
-
-(defn-spec refresh nil?
-  []
-  (load-addon-summaries)  ;; load the contents of the curseforge.json file
-  (load-installed-addons) ;; parse toc files in install-dir
-  (match-installed-addons-with-online-addons) ;; match installed addons to those in curseforge.json
-  (check-for-updates)     ;; for those addons that have matches, download their full details from curseforge
-
-  nil)
 
 (defn watch-for-install-dir-change
   "when the install directory changes, the list of installed addons should be re-read"

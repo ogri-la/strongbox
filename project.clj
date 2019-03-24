@@ -1,4 +1,4 @@
-(defproject wowman "0.1.0"
+(defproject wowman "0.1.1"
   :description "World Of Warcraft Addon Manager"
   :url "http://github.com/ogri-la/wowman"
   :license {:name "GNU Affero General Public License (AGPL)"
@@ -24,6 +24,7 @@
                  [clj-time "0.15.0"]
 
                  ;; remember to update the LICENCE.txt
+                 ;; remember to update pom file (`lein pom`)
 
                  ]
 
@@ -33,6 +34,10 @@
 
   :plugins [[lein-cljfmt "0.6.4"]
             [jonase/eastwood "0.3.5"]]
-  :eastwood {:exclude-linters [:constant-test]}
-
+  :eastwood {:exclude-linters [:constant-test]
+             :add-linters [:unused-namespaces
+                           ;;:unused-locals :unused-fn-args ;; too may false positives to be always-enabled
+                           ;; :non-clojure-file  ;; just noise
+                           ;; :keyword-typos ;; bugged with spec?
+                           ]}
   )

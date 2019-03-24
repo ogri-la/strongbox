@@ -2,8 +2,7 @@
   (:require
    [clojure.test :refer [deftest testing is use-fixtures]]
    [wowman
-    [core :as core]]
-   [taoensso.timbre :as log :refer [debug info warn error spy]]))
+    [core :as core]]))
 
 (deftest determine-primary-subdir
   (testing "basic failure cases"

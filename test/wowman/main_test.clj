@@ -2,8 +2,7 @@
   (:require
    [clojure.test :refer [deftest testing is]]
    [wowman
-    [main :as main]]
-   [taoensso.timbre :as log :refer [debug info warn error spy]]))
+    [main :as main]]))
 
 (deftest parse-args
   (testing "default ui is 'gui'"

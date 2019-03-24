@@ -6,7 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## 0.1.0 - 2019-03-19
+## 0.1.1 - 2019-03-24
+
+### Fixed
+- CLI "update-addon-list" action now actually updates the addon list instead of writing a useless separate file
+- GUI regression in post-install/update/delete behaviour when listing addons.
+
+### Added
+- detailed contributor guidelines
+- `pom.xml` generated file
+
+## 0.1.0 - 2019-03-23
+
 ### Added
 - initial release! squashed history
 - a GUI and a very rough 'headless' mode
@@ -16,3 +27,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - searching and installing from a complete list of curseforge addons
 - a notice logger for operations that are happening
 - logic to do the occasional large curseforge.com update and smaller incremental updates more regularly
+- CI and releases with Travis-CI

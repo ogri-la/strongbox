@@ -2,7 +2,6 @@
   (:require
    [wowman
     [specs :as sp]
-    [nfo :as nfo]
     [utils :as utils :refer [to-int to-json fmap join from-epoch]]]
    [clj-time
     [core :as ct]
@@ -12,12 +11,7 @@
    [orchestra.spec.test :as st]
    [orchestra.core :refer [defn-spec]]
    [net.cgrand.enlive-html :as html]
-   [clojure.data.codec.base64 :as b64]
-   [taoensso.timbre :as log :refer [debug info warn error spy]]
-   [clj-http.client :as client]
-   [me.raynes.fs :as fs])
-  (:import
-   org.apache.http.impl.conn.PoolingHttpClientConnectionManager))
+   [taoensso.timbre :as log :refer [debug info warn error spy]]))
 
 (def curseforge-host "https://www.curseforge.com")
 
@@ -130,10 +124,24 @@
         (recur (inc page-n) (into accumulator results))
         (into accumulator results)))))
 
+(defn-spec update-addon-summary-file ::sp/extant-file
+  [addon-summary-file ::sp/extant-file, addon-summary-updates-file ::sp/extant-file]
+  (let [{created-date :datestamp, addons-list :addon-summary-list} (utils/load-json-file-with-decoding addon-summary-file)
+        updated-addons-list (utils/load-json-file-with-decoding addon-summary-updates-file)
+        updated-date (utils/datestamp-now-ymd)
+        merged-addons-list (utils/merge-lists :name addons-list updated-addons-list :prepend? true)]
+    (info "updating addon summary file:" addon-summary-file)
+    (spit addon-summary-file (utils/to-json {:datestamp created-date
+                                             :updated-datestamp updated-date
+                                             :total (count merged-addons-list)
+                                             :addon-summary-list merged-addons-list}))
+    addon-summary-file))
+
 (defn-spec download-all-addon-summaries ::sp/extant-file
   "downloads all addon summaries from curseforge. path to data file is returned"
   [output-path ::sp/file]
   (let [all-summaries (sort-by :name (download-all-summaries-alphabetically))]
+    (info "writing addon updates:" output-path)
     (spit output-path (utils/to-json {:datestamp (utils/datestamp-now-ymd)
                                       :total (count all-summaries)
                                       :addon-summary-list all-summaries}))

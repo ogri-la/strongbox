@@ -24,19 +24,10 @@ It may work on other platforms but it is only tested and supported on Linux.
 
 ## Usage
 
-1. download the [jar](#todo) file
-2. run with `java -jar wowman-x.x.x.jar`
+1. download the [jar](https://github.com/ogri-la/wowman/releases/download/0.1.1/wowman-0.1.1-standalone.jar) file
+2. run with `java -jar wowman-x.x.x-standalone.jar`
 3. select your `Addons` directory (`/path/to/WoW/_retail_/Interface/Addons`)
 4. select the addons you wish to update and click the `update` button
-
-## Releases, bugs, questions, feedback, contributing
-
-Changes are recorded in the [CHANGELOG.md](CHANGELOG.md) file.
-
-All bugs/questions/feedback should go in [Issues](https://github.com/ogri-la/wowman/issues).
-
-All contributions should take the form of a pull request with unit tests.  
-[The licence](LICENCE.txt) is quite strict and all contributions will be subject to it.
 
 ## Notes
 
@@ -53,6 +44,17 @@ This software interacts with the following remote hosts:
 * [https://github.com/ogri-la](https://github.com/ogri-la), to download a list of summary addon information
 
 These interactions use a HTTP user agent header unique to `wowman` so it may be identified easily
+
+## Releases, bugs, questions, feedback, contributing
+
+Changes are recorded in the [CHANGELOG.md](CHANGELOG.md) file.
+
+All bugs/questions/feedback should go in [Issues](https://github.com/ogri-la/wowman/issues).
+
+All contributions should take the form of a pull request with unit tests.  
+[The licence](LICENCE.txt) is quite strict and all contributions will be subject to it.
+
+See [CONTRIBUTING](CONTRIBUTING.md) for more detail.
 
 ## Recognition
 
