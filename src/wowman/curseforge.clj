@@ -2,7 +2,6 @@
   (:require
    [wowman
     [specs :as sp]
-    [nfo :as nfo]
     [utils :as utils :refer [to-int to-json fmap join from-epoch]]]
    [clj-time
     [core :as ct]
@@ -12,12 +11,7 @@
    [orchestra.spec.test :as st]
    [orchestra.core :refer [defn-spec]]
    [net.cgrand.enlive-html :as html]
-   [clojure.data.codec.base64 :as b64]
-   [taoensso.timbre :as log :refer [debug info warn error spy]]
-   [clj-http.client :as client]
-   [me.raynes.fs :as fs])
-  (:import
-   org.apache.http.impl.conn.PoolingHttpClientConnectionManager))
+   [taoensso.timbre :as log :refer [debug info warn error spy]]))
 
 (def curseforge-host "https://www.curseforge.com")
 

@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `pom.xml` generated file
 
 ## 0.1.0 - 2019-03-23
+
 ### Added
 - initial release! squashed history
 - a GUI and a very rough 'headless' mode

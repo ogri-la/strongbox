@@ -16,12 +16,12 @@
   :action)
 
 (defmethod action :scrape-addon-list
-  [opts]
+  [_]
   (binding [utils/cache-dir (paths :cache-dir)]
     (curseforge/download-all-addon-summaries (paths :addon-summary-file))))
 
 (defmethod action :update-addon-list
-  [opts]
+  [_]
   (binding [utils/cache-dir (paths :cache-dir)]
     (let [{since :datestamp} (utils/load-json-file-with-decoding (paths :addon-summary-file))]
       ;; download any updates to a file
@@ -31,14 +31,14 @@
                                             (paths :addon-summary-updates-file)))))
 
 (defmethod action :list
-  [opts]
+  [_]
   (let [installed-addons (get-state :installed-addon-list)]
     (println (count installed-addons) "installed addons")
     (doseq [{:keys [dirname installed-version]} installed-addons]
       (println (format "%s (%s)" dirname, installed-version)))))
 
 (defmethod action :list-updates
-  [opts]
+  [_]
   (let [installed-addons (get-state :installed-addon-list)
         updates (filter :update? installed-addons)]
     (println (count installed-addons) "installed addons, " (count updates) " updates")
@@ -46,7 +46,7 @@
       (println (format "%s (%s => %s)" dirname, installed-version version)))))
 
 (defmethod action :update-all
-  [opts]
+  [_]
   (core/install-update-all)
   (action {:action :list-updates}))
 

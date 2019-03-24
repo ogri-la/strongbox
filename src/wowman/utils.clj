@@ -18,9 +18,7 @@
    [clj-http.client :as client]
    [clj-time
     [coerce :as coerce-time]
-    [format :as format-time]])
-  (:import
-   org.apache.http.impl.conn.PoolingHttpClientConnectionManager))
+    [format :as format-time]]))
 
 (def ^:dynamic cache-dir nil)
 
@@ -182,7 +180,7 @@
 (defn-spec game-version-to-interface-version (s/or :ok ::sp/interface-version :error nil?)
   [game-version string?]
   (let [;; patch-version isn't considered apparently: http://wowwiki.wikia.com/wiki/Getting_the_current_interface_number
-        [major minor & rest] (clojure.string/split game-version #"\.")
+        [major minor & _] (clojure.string/split game-version #"\.")
         major (to-int major)
         minor (to-int minor)]
     (when (and major minor)
@@ -245,8 +243,8 @@
       (zip/zip out-path (mapv #(file-to-lazy-byte-array % in-path) files-to-be-zipped))
       out-path)))
 
-(defn-spec unzip-file string?
-  [zipfile-path ::sp/extant-archive-file output-dir-path ::sp/extant-dir]
+(defn-spec unzip-file ::sp/extant-dir
+  [zipfile-path ::sp/extant-archive-file, output-dir-path ::sp/extant-dir]
   (debug (format "unzipping %s to %s" zipfile-path output-dir-path))
   (zip/unzip zipfile-path output-dir-path)
   output-dir-path)

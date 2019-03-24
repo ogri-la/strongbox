@@ -34,6 +34,10 @@
 
   :plugins [[lein-cljfmt "0.6.4"]
             [jonase/eastwood "0.3.5"]]
-  :eastwood {:exclude-linters [:constant-test]}
-
+  :eastwood {:exclude-linters [:constant-test]
+             :add-linters [:unused-namespaces
+                           ;;:unused-locals :unused-fn-args ;; too may false positives to be always-enabled
+                           ;; :non-clojure-file  ;; just noise
+                           ;; :keyword-typos ;; bugged with spec?
+                           ]}
   )

@@ -10,7 +10,6 @@
    [wowman
     [logging :as logging]
     [core :as core :refer [paths]]
-    [curseforge :as curseforge]
     [utils :as utils :refer [in?]]]
    [wowman.ui
     [cli :as cli]
@@ -109,7 +108,7 @@
       :else
 
       ;; post-processing
-      (let [{:keys [options errors]} args
+      (let [{:keys [options]} args
 
             ;; switch default ui to :cli if --headless given without explicit --ui
             args (if (not (contains? options :ui))

@@ -124,7 +124,8 @@
                    (first addons)
 
                    ;; multiple addons in group
-                   (let [primary (first (filter :primary? addons))
+                   (let [_ (debug (format "grouping '%s', %s addons in group" group-id (count addons)))
+                         primary (first (filter :primary? addons))
                          next-best (first addons)
                          new-data {:group-addons addons
                                    :group-addon-count (count addons)}]
