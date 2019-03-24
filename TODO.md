@@ -17,14 +17,24 @@ see CHANGELOG.md for a more formal list of changes by release
 * 0.1.0 release
     - done!
 
-## todo
+## 0.2.0 release
 
+* gui, prompt when attempting to install or delete many addons at once
+* more graceful handling of github errors when downloading curseforge.json
+    - see recent 503 varnish error "bad backend"
 * send etag header to github to prevent downloading unmodified curseforge.json file
     - need to capture the etag sent to us when we first request the file
     - etag should be stored and sent on subsequent requests for file
     - where to store? curseforge.etag ?
 * bug, FileNotFoundException (PermissionDenied) attempting to unzip addon belonging to root
 	- nothing reporting in log, just stacktrace in terminal
+* gui, error after installing addon
+    - failed to find value <something> in column '-addon-id'
+        - 19-02-28 00:51:20 WARN [wowman.ui.gui:267] - failed to find value tidy-plates in column 'addon-id'
+        - 19-02-28 00:51:24 WARN [wowman.ui.gui:267] - failed to find value omni-cc in column 'addon-id'
+
+## todo
+
 * gui, min-widths for updated, installed, available, update? and version fields
     - rest can be elastic
 * gui, search box gets focused immediately
@@ -35,21 +45,14 @@ see CHANGELOG.md for a more formal list of changes by release
 * cached files policy
     - nothing older than a week?
 * gui, search pane, indicate results are paginated
-* gui, error after installing addon
-    - failed to find value <something> in column '-addon-id'
-        - 19-02-28 00:51:20 rama WARN [wowman.ui.gui:267] - failed to find value tidy-plates in column 'addon-id'
-        - 19-02-28 00:51:24 rama WARN [wowman.ui.gui:267] - failed to find value omni-cc in column 'addon-id'
 * cache downloaded file based on addon AND addon version
     - is this still a thing?
 * cli, update specific addon
 * cli, install specific addon
-* cli, colours! 
+* cli, colours!
 * cli, interactive interface when no specific action specified
     - you have N addons installed. what do you want to do? (list, update, update-all, delete) etc
-
 * gui, both panes, filter by categories
-* gui, prompt when attempting to install many addons at once
-    - skip prompt on re-installation
 * gui, pagination controls in search pane
 * gui, feature, install addon from local zipfile
     - *not* the 'reinstallation' feature, but literally selecting a zipfile from somewhere and installing it
