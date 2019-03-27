@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- confirmation dialog when deleting addons
+
+### Changed
+- quietened some log noise causing install/update/delete results to be pushed off screen
+
 ## 0.1.1 - 2019-03-24
 
 ### Fixed
