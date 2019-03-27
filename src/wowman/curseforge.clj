@@ -79,10 +79,10 @@
 (defn-spec expand-summary (s/or :ok ::sp/addon, :error nil?)
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
   [addon-summary ::sp/addon-summary]
-  (info "downloading summary data for" (:name addon-summary))
-  (let [detail-uri (str curseforge-host "/wow/addons/" (:name addon-summary))
+  (let [message (str "downloading summary data for" (:name addon-summary))
+        detail-uri (str curseforge-host "/wow/addons/" (:name addon-summary))
         versions-uri (str detail-uri "/files")
-        versions-html (html/html-snippet (utils/download versions-uri))
+        versions-html (html/html-snippet (utils/download versions-uri :message message))
         latest-release (-> (html/select versions-html [:table.project-file-listing :tbody :tr]) first)
         info-box (-> (html/select versions-html [:aside.project-details__sidebar]) first)
         prefix #(str curseforge-host %)]
