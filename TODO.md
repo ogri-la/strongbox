@@ -20,6 +20,8 @@ see CHANGELOG.md for a more formal list of changes by release
 ## 0.2.0 release
 
 * gui, prompt when attempting to install or delete many addons at once
+    - done
+
 * more graceful handling of github errors when downloading curseforge.json
     - see recent 503 varnish error "bad backend"
 * send etag header to github to prevent downloading unmodified curseforge.json file
@@ -35,6 +37,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+* gui, shift 'update selected' and 'delete selected' and 're-install selected' into a context menu
 * on cache hit, don't display "downloading summary data for ..."
     - it's just noise at this point
 * arch linux AUR package
