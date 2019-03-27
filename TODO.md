@@ -21,6 +21,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * gui, prompt when attempting to install or delete many addons at once
     - done
+* on cache hit, don't display "downloading summary data for ..."
+    - it's just noise at this point
+    - done
 
 * more graceful handling of github errors when downloading curseforge.json
     - see recent 503 varnish error "bad backend"
@@ -38,8 +41,6 @@ see CHANGELOG.md for a more formal list of changes by release
 ## todo
 
 * gui, shift 'update selected' and 'delete selected' and 're-install selected' into a context menu
-* on cache hit, don't display "downloading summary data for ..."
-    - it's just noise at this point
 * arch linux AUR package
 * download addon details in parallel
     - speed benefits, mostly
