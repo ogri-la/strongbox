@@ -325,9 +325,14 @@
 ;;
 ;;
 
-(defn-spec download (s/or :ok ::sp/html :error nil?)
-  "downloads content at given path if contents of uri not on fs already."
-  [uri ::sp/uri]
+;; disabled until I figure out how to spec the parameters:
+;; https://github.com/jeaye/orchestra/issues/43
+;;(defn-spec download (s/or :ok ::sp/html :error nil?)
+;;  "downloads content at given path if contents of uri not on fs already."
+;;  [uri ::sp/uri, & {:keys [message]} (s/map-of keyword? string?)]
+
+(defn download
+  [uri & {:keys [message]}]
   (let [cache? (not (nil? cache-dir)) ;; only cache when we have somewhere to cache.
         ;; only the filename is being encoded, not the contents of the download. it's ugly, but safe and reversible.
         cache-key (-> uri .getBytes b64/encode String. (str ".html"))
@@ -342,8 +347,9 @@
         (slurp cache-path))
 
       ;; not caching or cache miss
-      (let [_ (when cache?
-                (debug "cache miss: " uri))
+      (let [_ (when message (info message))
+            _ (when cache? (debug "cache miss: " uri))
+
             anon-useragent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36"
             wow-useragent "Wowman/0.1 (https://github.com/ogri-la/wowman)"
             use-anon-useragent? false
