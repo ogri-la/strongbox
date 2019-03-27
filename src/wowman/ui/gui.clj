@@ -53,6 +53,12 @@
              :text label
              :listen [:action onclick]))
 
+(comment "unused"
+(defn-spec click-button nil?
+  [btn-id keyword?]
+  (ss/invoke-later
+   (.doClick (select-ui btn-id)))))
+
 (defn handler [& fl]
   (fn [_]
     (doseq [f fl] (f))))
@@ -167,6 +173,24 @@
   (switch-tab INSTALLED-TAB)
   (refresh))
 
+(defn-spec remove-selected-handler nil?
+  []
+  (when-let [selected (get-state :selected-installed)]
+    (let [header [[(format "Deleting %s:" (count selected)) ""]]
+          labels (mapv (fn [row] [(str " - " (-> row :name)) ""]) selected)
+
+          content (into header labels)
+          content (interleave content (repeat [:separator "growx, wrap"]))
+        
+          dialog (ss/dialog :content (mig/mig-panel :items content)
+                            :resizable? false
+                          :type :warning
+                          :option-type :ok-cancel
+                          :default-option :no
+                          :success-fn (handler core/remove-selected))]
+      (-> dialog ss/pack! ss/show!)
+      nil)))
+
 (defn configure-app-panel
   []
   (let [picker (fn []
@@ -180,7 +204,7 @@
         reinstall-button (button "Re-install selected" (async-handler core/re-install-selected))
         reinstall-all-button (button "Re-install all" (async-handler core/re-install-all))
 
-        delete-button (button "Delete selected" (async-handler core/remove-selected))
+        delete-button (button "Delete selected" (async-handler remove-selected-handler))
 
         wow-dir-button (button "WoW directory" (async-handler picker))
 
