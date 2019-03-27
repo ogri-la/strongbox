@@ -35,6 +35,11 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+* arch linux AUR package
+* download addon details in parallel
+    - speed benefits, mostly
+    - share a pool of connections between threads
+        - N connections serving M threads
 * gui, min-widths for updated, installed, available, update? and version fields
     - rest can be elastic
 * gui, search box gets focused immediately
