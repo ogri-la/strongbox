@@ -38,23 +38,6 @@
       (get-in path-map path)
       path-map)))
 
-(def state (atom nil))
-
-(defn get-state
-  "state accessor, really should be using this"
-  [& path]
-  (let [state @state]
-    (if (nil? state)
-      (throw (RuntimeException. "application must be `start`ed before state may be accessed."))
-      (if-not (empty? path)
-        (get-in state path)
-        state))))
-
-(defn-spec debugging? boolean?
-  "'debug mode'"
-  []
-  (get-state :cfg :debug?))
-
 (def -state-template
   {:cleanup []
 
@@ -93,6 +76,18 @@
    :search-field-input nil
    :selected-search []})
 
+(def state (atom nil))
+
+(defn get-state
+  "state accessor, really should be using this"
+  [& path]
+  (let [state @state]
+    (if (nil? state)
+      (throw (RuntimeException. "application must be `start`ed before state may be accessed."))
+      (if-not (empty? path)
+        (get-in state path)
+        state))))
+
 (defn-spec state-bind nil?
   [path ::sp/list-of-keywords, callback fn?]
   (let [prefn identity
@@ -115,6 +110,11 @@
   [path-list ::sp/list-of-list-of-keywords, callback fn?]
   (doseq [path path-list]
     (state-bind path callback)))
+
+(defn-spec debugging? boolean?
+  "'debug mode'"
+  []
+  (get-state :cfg :debug?))
 
 ;; settings
 
@@ -432,7 +432,7 @@
   [toc-list ::sp/toc-list]
   (doseq [toc toc-list]
     (remove-addon toc))
-  (load-installed-addons))
+  (refresh))
 
 (defn remove-selected
   []
