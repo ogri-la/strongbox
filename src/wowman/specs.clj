@@ -94,3 +94,7 @@
 (s/def ::install-dir (s/nilable ::extant-dir))
 (s/def ::debug? boolean?)
 (s/def ::user-config (s/keys :req-un [::install-dir ::debug?]))
+
+(s/def ::reason-phrase (s/and string? #(<= (count %) 50)))
+(s/def ::status int?) ;; a little too general but ok for now
+(s/def ::http-error (s/keys :req-un [::reason-phrase ::status]))
