@@ -298,6 +298,11 @@
 (defn-spec load-addon-summaries nil?
   []
   (when-not (fs/exists? (paths :addon-summary-file)) ;; temporary check until header caching in
+    ;; what happens if we have no addon-summary-file?
+    ;; we can't make a mapping from local to remote to download updates.
+    ;; we have nothing to search, which is ok if temporary
+    ;; if we stored the uri in the .wowman.json file we could avoid this point of failure
+    ;; ... :uri is actually a better id than :name come to think of it :P
     (download-addon-summary-file))
   (info "loading addon summary list from:" (paths :addon-summary-file))
   (let [{:keys [addon-summary-list]} (utils/load-json-file-with-decoding (paths :addon-summary-file))]

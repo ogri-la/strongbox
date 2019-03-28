@@ -30,11 +30,12 @@ see CHANGELOG.md for a more formal list of changes by release
 * on cache hit, don't display "downloading summary data for ..."
     - it's just noise at this point
     - done
+* more graceful handling of github errors when downloading curseforge.json
+    - see recent 503 varnish error "bad backend"
+    - done
 
 ### todo
 
-* more graceful handling of github errors when downloading curseforge.json
-    - see recent 503 varnish error "bad backend"
 * send etag header to github to prevent downloading unmodified curseforge.json file
     - need to capture the etag sent to us when we first request the file
     - etag should be stored and sent on subsequent requests for file
@@ -44,6 +45,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
+* store download-uri in .wowman.json file
+    - we'll prefer the uri in the curseforge file but if that is unavailable we have a fallback
 * gui, shift 'update selected' and 'delete selected' and 're-install selected' into a context menu
 * arch linux AUR package
 * download addon details in parallel
