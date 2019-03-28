@@ -199,12 +199,8 @@
   (when-let [download-uri (:download-uri addon)]
     (let [output-fname (downloaded-addon-fname (:name addon) (:version addon)) ;; addonname--1-2-3.zip
           output-path (join (fs/absolute download-dir) output-fname)] ;; /path/to/installed/addons/addonname--1.2.3.zip
-      (if-not (fs/exists? output-path)
-        (binding [utils/cache-dir (paths :cache-dir)]
-          (utils/download-file download-uri output-path))
-        (do
-          (info "cache hit for" output-path)
-          output-path)))))
+      (binding [utils/cache-dir (paths :cache-dir)]
+        (utils/download-file download-uri output-path)))))
 
 ;; don't do this. `download-addon` is wrapped by `install-addon` that is already affecting the addon
 ;;(def download-addon

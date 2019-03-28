@@ -310,21 +310,32 @@
 ;; https://stackoverflow.com/questions/11321264
 (defn-spec download-file (s/or :ok ::sp/extant-file, :http-error ::sp/http-error)
   [uri ::sp/uri, output-file ::sp/file]
-  (info (format "downloading %s to %s" uri output-file))
-  (try
-    (clojure.java.io/copy
-     (:body (client/get uri {:as :stream, :redirect-strategy curse-crap-redirect-strategy}))
-     (java.io.File. output-file))
-    output-file
-    (catch Exception e
-      ;; "Note that the connection to the server will NOT be closed until the stream has been read"
-      ;;  - https://github.com/dakrone/clj-http
-      ;; not sure if necessary, but can't hurt: https://github.com/dakrone/clj-http/issues/461
-      (some-> e ex-data :body .close)
-      (let [http-error (select-keys (ex-data e) [:reason-phrase :status])]
-        (error (format "failed to download file '%s': %s (HTTP %s)"
-                       uri (:reason-phrase http-error) (:status http-error)))
-        http-error))))
+  (let [cache? (not (nil? cache-dir))
+        ;; not *really* a cache. this is more of a "if exists, don't overwrite" feature.
+        ;; we don't even use the bound cache-dir value. it will do for now though
+        cache-key output-file]
+    (if (and cache? (fs/exists? cache-key))
+      (do
+        (debug "cache hit for" cache-key)
+        cache-key)
+
+      (try
+        (debug "cache miss for" cache-key)
+        (info (format "downloading %s to %s" uri output-file))
+        (clojure.java.io/copy
+         (:body (client/get uri {:as :stream, :redirect-strategy curse-crap-redirect-strategy}))
+         (java.io.File. output-file))
+        output-file
+
+        (catch Exception e
+          ;; "Note that the connection to the server will NOT be closed until the stream has been read"
+          ;;  - https://github.com/dakrone/clj-http
+          ;; not sure if necessary, but can't hurt: https://github.com/dakrone/clj-http/issues/461
+          (some-> e ex-data :body .close)
+          (let [http-error (select-keys (ex-data e) [:reason-phrase :status])]
+            (error (format "failed to download file '%s': %s (HTTP %s)"
+                           uri (:reason-phrase http-error) (:status http-error)))
+            http-error))))))
 
 ;; todo: revisit this
 ;; https://github.com/dakrone/clj-http/blob/master/src/clj_http/conn_mgr.clj#L251
