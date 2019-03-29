@@ -200,7 +200,7 @@
     (let [output-fname (downloaded-addon-fname (:name addon) (:version addon)) ;; addonname--1-2-3.zip
           output-path (join (fs/absolute download-dir) output-fname)] ;; /path/to/installed/addons/addonname--1.2.3.zip
       (binding [utils/cache-dir (paths :cache-dir)]
-        (utils/download-file download-uri output-path)))))
+        (utils/download-file download-uri output-path :overwrite? false)))))
 
 ;; don't do this. `download-addon` is wrapped by `install-addon` that is already affecting the addon
 ;;(def download-addon
@@ -289,7 +289,8 @@
 (defn-spec download-addon-summary-file ::sp/extant-file
   "downloads addon summary file to expected location, nothing more"
   []
-  (utils/download-file remote-addon-summary-file (paths :addon-summary-file)))
+  (binding [utils/cache-dir (paths :cache-dir)]
+    (utils/download-file remote-addon-summary-file (paths :addon-summary-file))))
 
 (defn-spec load-addon-summaries nil?
   []
