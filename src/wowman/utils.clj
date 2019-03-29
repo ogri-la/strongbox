@@ -40,7 +40,7 @@
 (defn-spec merge-lists1 ::sp/list-of-maps
   "given two lists and a key, returns list1 with matching entries from list2 when keys match"
   [key keyword?, list1 ::sp/list-of-maps, list2 ::sp/list-of-maps]
-  (let [index (spy (idx list2 key))]
+  (let [index (idx list2 key)]
     (mapv (fn [row] (or (get index (get row key)) row)) list1)))
 
 (defn merge-lists2
@@ -307,14 +307,79 @@
           (warn "redirected to bad URI! encoding path:" loc)
           (encode-url-path loc))))))
 
-;; https://stackoverflow.com/questions/11321264
-(defn-spec download-file ::sp/extant-file
-  [uri ::sp/uri, output-file ::sp/file]
-  (info (format "downloading %s to %s" uri output-file))
-  (clojure.java.io/copy
-   (:body (client/get uri {:as :stream, :redirect-strategy curse-crap-redirect-strategy}))
-   (java.io.File. output-file))
-  output-file)
+(defn- add-etag-or-not
+  [etag-path req]
+  (if (and etag-path (fs/file? etag-path))
+    (assoc-in req [:headers :if-none-match] (slurp etag-path))
+    req))
+
+(defn- write-etag
+  [etag-path resp]
+  (when etag-path
+    (spit etag-path (-> resp :headers (get "etag"))))
+  resp)
+
+(defn etag-middleware
+  [etag-path]
+  (fn [client]
+    (fn
+      ([req]
+       (write-etag etag-path (client (add-etag-or-not etag-path req))))
+      ([req resp raise]
+       (write-etag etag-path (client (add-etag-or-not etag-path req) resp raise))))))
+
+;;(defn-spec download-file (s/or :ok ::sp/extant-file, :http-error ::sp/http-error)
+;;  [uri ::sp/uri, output-file ::sp/file, & {:keys [overwrite?]} (s/map-of keyword? any?)]
+(defn download-file
+  [uri output-file & {:keys [overwrite?]}]
+  (let [;; we can have local file based caching or we can rely on etags for fresh data
+        ;; erring on the side of etags for now as a dumb cache is a little too-dumb for me
+        cache? (not (nil? cache-dir))
+        etag-path (when cache?
+                    (join cache-dir (-> output-file fs/base-name (str ".etag"))))]
+    
+    ;; when etag path exists but output file doesn't, delete etag file
+    ;; ensures orphaned .etag files don't prevent download
+    (when (and (fs/exists? etag-path)
+               (not (fs/exists? output-file)))
+      (warn "orphaned .etag found:" etag-path)
+      (fs/delete etag-path))
+    
+    ;; file exists and we're not overwriting existing file, return path to what we have
+    (if (and
+         (fs/exists? output-file)
+         (not overwrite?))
+      (do
+        (debug "cache hit for" output-file)
+        output-file)
+
+      ;; we're overwriting files. still a chance nothing is downloaded or overwritten
+      (try
+        (debug "cache miss for" output-file)
+        (info (format "downloading %s to %s" uri output-file))
+        (client/with-additional-middleware [client/wrap-lower-case-headers (etag-middleware etag-path)]
+          (let [resp (client/get uri {:as :stream
+                                      :redirect-strategy curse-crap-redirect-strategy})]
+            (when-not (= 304 (:status resp)) ;; 'when-not not-modified' or just 'when modified'
+              (clojure.java.io/copy
+               (:body resp)
+               (java.io.File. output-file)))
+
+            output-file))
+
+        (catch Exception e
+          (if (-> e ex-data :status)
+            ;; "Note that the connection to the server will NOT be closed until the stream has been read"
+            ;;  - https://github.com/dakrone/clj-http
+            ;; not sure if necessary, but can't hurt: https://github.com/dakrone/clj-http/issues/461
+            (let [_ (some-> e ex-data :body .close)
+                  http-error (select-keys (ex-data e) [:reason-phrase :status])]
+              (error (format "failed to download file '%s': %s (HTTP %s)"
+                             uri (:reason-phrase http-error) (:status http-error)))
+              http-error)
+
+            ;; unhandled non-http exception
+            (throw e)))))))
 
 ;; todo: revisit this
 ;; https://github.com/dakrone/clj-http/blob/master/src/clj_http/conn_mgr.clj#L251

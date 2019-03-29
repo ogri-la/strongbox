@@ -199,12 +199,8 @@
   (when-let [download-uri (:download-uri addon)]
     (let [output-fname (downloaded-addon-fname (:name addon) (:version addon)) ;; addonname--1-2-3.zip
           output-path (join (fs/absolute download-dir) output-fname)] ;; /path/to/installed/addons/addonname--1.2.3.zip
-      (if-not (fs/exists? output-path)
-        (binding [utils/cache-dir (paths :cache-dir)]
-          (utils/download-file download-uri output-path))
-        (do
-          (info "cache hit for" output-path)
-          output-path)))))
+      (binding [utils/cache-dir (paths :cache-dir)]
+        (utils/download-file download-uri output-path :overwrite? false)))))
 
 ;; don't do this. `download-addon` is wrapped by `install-addon` that is already affecting the addon
 ;;(def download-addon
@@ -293,11 +289,17 @@
 (defn-spec download-addon-summary-file ::sp/extant-file
   "downloads addon summary file to expected location, nothing more"
   []
-  (utils/download-file remote-addon-summary-file (paths :addon-summary-file)))
+  (binding [utils/cache-dir (paths :cache-dir)]
+    (utils/download-file remote-addon-summary-file (paths :addon-summary-file))))
 
 (defn-spec load-addon-summaries nil?
   []
   (when-not (fs/exists? (paths :addon-summary-file)) ;; temporary check until header caching in
+    ;; what happens if we have no addon-summary-file?
+    ;; we can't make a mapping from local to remote to download updates.
+    ;; we have nothing to search, which is ok if temporary
+    ;; if we stored the uri in the .wowman.json file we could avoid this point of failure
+    ;; ... :uri is actually a better id than :name come to think of it :P
     (download-addon-summary-file))
   (info "loading addon summary list from:" (paths :addon-summary-file))
   (let [{:keys [addon-summary-list]} (utils/load-json-file-with-decoding (paths :addon-summary-file))]

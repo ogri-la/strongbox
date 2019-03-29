@@ -4,42 +4,49 @@ this is my own scratchpad for keeping track of things. it gets truncated frequen
 
 see CHANGELOG.md for a more formal list of changes by release
 
-## done
+## done bucket
 
 * travis to generate and upload .jar artifacts
     - only on tagged (x.y.z) releases on the master branch
         - turns out tags have no branch
     - done
-
 * bug, regression, gui, installed addons not refreshing after update
     - fixed
-
 * 0.1.0 release
     - done!
+* gui, error after installing addon
+    - failed to find value <something> in column '-addon-id'
+        - 19-02-28 00:51:20 WARN [wowman.ui.gui:267] - failed to find value tidy-plates in column 'addon-id'
+        - 19-02-28 00:51:24 WARN [wowman.ui.gui:267] - failed to find value omni-cc in column 'addon-id'
+    - can't replicate any more
+        - possibly related to the problems with event threading earlier
 
 ## 0.2.0 release
+
+### done
 
 * gui, prompt when attempting to install or delete many addons at once
     - done
 * on cache hit, don't display "downloading summary data for ..."
     - it's just noise at this point
     - done
-
 * more graceful handling of github errors when downloading curseforge.json
     - see recent 503 varnish error "bad backend"
+    - done
+
+### todo
+
 * send etag header to github to prevent downloading unmodified curseforge.json file
     - need to capture the etag sent to us when we first request the file
     - etag should be stored and sent on subsequent requests for file
     - where to store? curseforge.etag ?
 * bug, FileNotFoundException (PermissionDenied) attempting to unzip addon belonging to root
 	- nothing reporting in log, just stacktrace in terminal
-* gui, error after installing addon
-    - failed to find value <something> in column '-addon-id'
-        - 19-02-28 00:51:20 WARN [wowman.ui.gui:267] - failed to find value tidy-plates in column 'addon-id'
-        - 19-02-28 00:51:24 WARN [wowman.ui.gui:267] - failed to find value omni-cc in column 'addon-id'
 
-## todo
+## todo bucket
 
+* store download-uri in .wowman.json file
+    - we'll prefer the uri in the curseforge file but if that is unavailable we have a fallback
 * gui, shift 'update selected' and 'delete selected' and 're-install selected' into a context menu
 * arch linux AUR package
 * download addon details in parallel

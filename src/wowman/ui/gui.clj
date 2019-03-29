@@ -54,10 +54,10 @@
              :listen [:action onclick]))
 
 (comment "unused"
-(defn-spec click-button nil?
-  [btn-id keyword?]
-  (ss/invoke-later
-   (.doClick (select-ui btn-id)))))
+         (defn-spec click-button nil?
+           [btn-id keyword?]
+           (ss/invoke-later
+            (.doClick (select-ui btn-id)))))
 
 (defn handler [& fl]
   (fn [_]
@@ -181,13 +181,13 @@
 
           content (into header labels)
           content (interleave content (repeat [:separator "growx, wrap"]))
-        
+
           dialog (ss/dialog :content (mig/mig-panel :items content)
                             :resizable? false
-                          :type :warning
-                          :option-type :ok-cancel
-                          :default-option :no
-                          :success-fn (handler core/remove-selected))]
+                            :type :warning
+                            :option-type :ok-cancel
+                            :default-option :no
+                            :success-fn (handler core/remove-selected))]
       (-> dialog ss/pack! ss/show!)
       nil)))
 
