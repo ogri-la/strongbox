@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - confirmation dialog when deleting addons
+- http error handling for unsuccessful requests
+- http etag support when downloading files
 
 ### Changed
 - quietened some log noise causing install/update/delete results to be pushed off screen

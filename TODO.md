@@ -20,6 +20,9 @@ see CHANGELOG.md for a more formal list of changes by release
         - 19-02-28 00:51:24 WARN [wowman.ui.gui:267] - failed to find value omni-cc in column 'addon-id'
     - can't replicate any more
         - possibly related to the problems with event threading earlier
+* cache downloaded file based on addon AND addon version
+    - is this still a thing?
+    - no, it's not
 
 ## 0.2.0 release
 
@@ -33,20 +36,33 @@ see CHANGELOG.md for a more formal list of changes by release
 * more graceful handling of github errors when downloading curseforge.json
     - see recent 503 varnish error "bad backend"
     - done
-
-### todo
-
 * send etag header to github to prevent downloading unmodified curseforge.json file
     - need to capture the etag sent to us when we first request the file
     - etag should be stored and sent on subsequent requests for file
     - where to store? curseforge.etag ?
+    - done
+        - .etag files are stored in ./state/cache/filename.ext.etag
+        - feels less than ideal but works nicely with github
+        - untested with curseforge and addon downloads
+
+### todo
+
+* bug, install-addon when download fails
 * bug, FileNotFoundException (PermissionDenied) attempting to unzip addon belonging to root
 	- nothing reporting in log, just stacktrace in terminal
+* store download-uri in .wowman.json file
+    - we'll prefer the uri in the curseforge file but if that is unavailable we have a fallback
 
 ## todo bucket
 
-* store download-uri in .wowman.json file
-    - we'll prefer the uri in the curseforge file but if that is unavailable we have a fallback
+* gui, installed pane, highlight rows that need updating
+* gui, search, highlight rows that are installed
+* clear cached files option
+    - clears all cache files
+* clear zip files options
+    - clears all downloaded zip files
+* cached files policy
+    - nothing older than a week?
 * gui, shift 'update selected' and 'delete selected' and 're-install selected' into a context menu
 * arch linux AUR package
 * download addon details in parallel
@@ -58,15 +74,7 @@ see CHANGELOG.md for a more formal list of changes by release
 * gui, min-widths for updated, installed, available, update? and version fields
     - rest can be elastic
 * gui, search box gets focused immediately
-* clear cached files option
-    - clears all cache files
-* clear zip files options
-    - clears all downloaded zip files
-* cached files policy
-    - nothing older than a week?
 * gui, search pane, indicate results are paginated
-* cache downloaded file based on addon AND addon version
-    - is this still a thing?
 * cli, update specific addon
 * cli, install specific addon
 * cli, colours!
@@ -77,8 +85,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * gui, feature, install addon from local zipfile
     - *not* the 'reinstallation' feature, but literally selecting a zipfile from somewhere and installing it
 * gui, search pane, clear search button
-* gui, installed pane, highlight rows that need updating
-* gui, search, highlight rows that are installed
 * gui, scroll tabs with mouse
 * gui, search, order by date only orders the *current page* of results
 * capture 'total downloads' from curseforge
@@ -88,12 +94,5 @@ see CHANGELOG.md for a more formal list of changes by release
     - other addons by author ?
     - list the hidden/sub dependencies
 * gui, optional fields in the search and installed panes
-
-## elaboration required
-
 * testing, capture metrics with an eye to improving performance and speed
-* mount, reconsider the use of this library
-    - might make gui wrangling easier
-* headless gui mode?
-    - ./wowman -a update-all # should: load the gui, call update-all, exit
 
