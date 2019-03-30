@@ -55,6 +55,7 @@
 (s/def ::list-of-files (s/coll-of ::file))
 (s/def ::anything (complement nil?)) ;; like `any?` but nil is considered false
 (s/def ::extant-dir (s/and string? fs/directory?))
+(s/def ::writeable-dir (s/and ::extant-dir fs/writeable?))
 (s/def ::download-uri ::uri)
 (s/def ::name string?) ;; normalised name of the addon, shared between toc file and curseforge
 (s/def ::label string?) ;; name of the addon without normalisation

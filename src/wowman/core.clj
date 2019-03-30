@@ -194,7 +194,7 @@
   (format "%s--%s.zip" name (utils/slugify version))) ;; addonname--1-2-3.zip
 
 (defn-spec download-addon (s/or :ok ::sp/archive-file, :http-error ::sp/http-error, :error nil?)
-  [addon ::sp/addon-or-toc-addon download-dir ::sp/extant-dir]
+  [addon ::sp/addon-or-toc-addon download-dir ::sp/writeable-dir]
   (info "downloading" (:label addon) "...")
   (when-let [download-uri (:download-uri addon)]
     (let [output-fname (downloaded-addon-fname (:name addon) (:version addon)) ;; addonname--1-2-3.zip
@@ -248,7 +248,7 @@
 
 (defn-spec -install-addon (s/or :ok (s/coll-of ::sp/extant-file), :error ::sp/empty-coll)
   "installs an addon given an addon description, a place to install the addon and the addon zip file itself"
-  [addon ::sp/addon-or-toc-addon, install-dir ::sp/extant-dir, downloaded-file ::sp/archive-file]
+  [addon ::sp/addon-or-toc-addon, install-dir ::sp/writeable-dir, downloaded-file ::sp/archive-file]
   (let [toplevel-entries (utils/zipfile-toplevel-entries downloaded-file)
         [toplevel-dirs, toplevel-files] (utils/split-filter :dir? toplevel-entries)]
     (if (> (count toplevel-files) 0)
@@ -272,12 +272,14 @@
 (defn-spec install-addon (s/or :ok (s/coll-of ::sp/extant-file), :error nil?)
   "downloads an addon and installs it. handles http and non-http errors"
   [addon ::sp/addon-or-toc-addon, install-dir ::sp/extant-dir]
-  (info "installing" (:label addon) "...")
-  (let [downloaded-file (download-addon addon install-dir)]
-    (cond
-      (nil? downloaded-file) (error "non-http error downloading addon, could not install" (:name addon))
-      (map? downloaded-file) (error "failed to download addon, could not install" (:name addon))
-      :else (-install-addon addon install-dir downloaded-file))))
+  (if (not (fs/writeable? install-dir))
+    (error "failed to install addon, directory not writeable" install-dir)
+    (let [downloaded-file (download-addon addon install-dir)]
+      (info "installing" (:label addon) "...")
+      (cond
+        (nil? downloaded-file) (error "non-http error downloading addon, could not install" (:name addon))
+        (map? downloaded-file) (error "failed to download addon, could not install" (:name addon))
+        :else (-install-addon addon install-dir downloaded-file)))))
 
 (defn update-installed-addon-list!
   [installed-addon-list]
