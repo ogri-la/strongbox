@@ -128,14 +128,15 @@
                          primary (first (filter :primary? addons))
                          next-best (first addons)
                          new-data {:group-addons addons
-                                   :group-addon-count (count addons)}]
+                                   :group-addon-count (count addons)}
+                         next-best-label (-> next-best :group-id fs/base-name)]
                      (if primary
                        ;; best, easiest case
                        (merge primary new-data)
                        ;; when we can't determine the primary addon, add a shitty synthetic one
                        ;; TODO: should I dissoc :dirname? it could be misleading..
-                       (merge next-best new-data {:label (format "%s (group)" (:group-id next-best))
-                                                  :description (format "group record for the %s addon" (:group-id next-best))})))))
+                       (merge next-best new-data {:label (format "%s (group)" next-best-label)
+                                                  :description (format "group record for the %s addon" next-best-label)})))))
 
         ;; expand the grouped addons and join with the unknowns
         addon-groups (apply conj (mapv expand addon-groups) unknown-grouping)]

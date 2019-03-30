@@ -19,7 +19,7 @@
   [addon ::sp/addon-or-toc-addon, primary? boolean?]
   {:installed-version (:version addon)
    :name (:name addon) ;; normalised name, used to match to online addon
-   :group-id (:name addon) ;; groups all of an addon's directories together
+   :group-id (:uri addon) ;; groups all of an addon's directories together
    :primary? primary? ;; if addon is one of multiple addons, is this addon considered the primary one?
    })
 
