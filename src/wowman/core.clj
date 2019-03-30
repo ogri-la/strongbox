@@ -276,7 +276,7 @@
   (let [downloaded-file (download-addon addon install-dir)]
     (cond
       (nil? downloaded-file) (error "non-http error downloading addon, could not install" (:name addon))
-      (contains? downloaded-file :status) (error "failed to download addon, could not install" (:name addon))
+      (map? downloaded-file) (error "failed to download addon, could not install" (:name addon))
       :else (-install-addon addon install-dir downloaded-file))))
 
 (defn update-installed-addon-list!
