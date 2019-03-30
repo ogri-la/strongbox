@@ -193,7 +193,7 @@
   [name string? version string?]
   (format "%s--%s.zip" name (utils/slugify version))) ;; addonname--1-2-3.zip
 
-(defn-spec download-addon (s/or :ok ::sp/archive-file :error nil?)
+(defn-spec download-addon (s/or :ok ::sp/archive-file, :http-error ::sp/http-error, :error nil?)
   [addon ::sp/addon-or-toc-addon download-dir ::sp/extant-dir]
   (info "downloading" (:label addon) "...")
   (when-let [download-uri (:download-uri addon)]
@@ -207,6 +207,17 @@
 ;;  (affects-addon-wrapper download-addon))
 
 (defn-spec determine-primary-subdir (s/or :found map?, :not-found nil?)
+  "if an addon unpacks to multiple directories, which is the 'main' addon?
+   a common convention looks like 'Addon[seperator]Subname', for example:
+       'Healbot' and 'Healbot_de' or 
+       'MogIt' and 'MogIt_Artifact'
+   DBM is one exception to this as the 'main' addon is 'DBM-Core' (I think, it's definitely the largest)
+   'MasterPlan' and 'MasterPlanA' is another exception
+   these exceptions to the rule are easily handled. the rule is:
+       1. if multiple directories,
+       2. assume dir with shortest name is the main addon
+       3. but only if it's a prefix of all other directories
+       4. if case doesn't hold, do nothing and accept we have no 'main' addon"
   [toplevel-dirs ::sp/list-of-maps]
   (let [path-val #(-> % :path (utils/rtrim "\\/")) ;; strips trailing line endings, they mess with comparison
         path-len (comp count :path)
@@ -215,6 +226,10 @@
         toplevel-dirs (sort-by path-len toplevel-dirs)
         dirname-lengths (mapv path-len toplevel-dirs)
         first-toplevel-dir (first toplevel-dirs)]
+
+    ;; todo: issue a warning if all subfolders don't share a common prefix?
+    ;; do people care if SlideBar and Stubby are being installed when they install things like Auctioneer?
+
     (cond
       (= 1 (count toplevel-dirs)) ;; single dir, perfect case
       first-toplevel-dir
@@ -226,38 +241,21 @@
        (every? #(clojure.string/starts-with? (path-val %) (path-val first-toplevel-dir)) toplevel-dirs))
       first-toplevel-dir
 
-      ;; todo: static lookup here
+      ;; todo: option to do a lookup in a static map here
 
       ;; couldn't reasonably determine the primary directory
       :else nil)))
 
-(defn-spec install-addon (s/coll-of ::sp/extant-file)
-  [addon ::sp/addon-or-toc-addon install-dir ::sp/extant-dir]
-  (info "installing" (:label addon) "...")
-  (let [downloaded-file (download-addon addon install-dir)
-        toplevel-entries (utils/zipfile-toplevel-entries downloaded-file)
+(defn-spec -install-addon (s/or :ok (s/coll-of ::sp/extant-file), :error ::sp/empty-coll)
+  "installs an addon given an addon description, a place to install the addon and the addon zip file itself"
+  [addon ::sp/addon-or-toc-addon, install-dir ::sp/extant-dir, downloaded-file ::sp/archive-file]
+  (let [toplevel-entries (utils/zipfile-toplevel-entries downloaded-file)
         [toplevel-dirs, toplevel-files] (utils/split-filter :dir? toplevel-entries)]
     (if (> (count toplevel-files) 0)
       (do
         (error "refusing to unzip addon, it contains top-level *files*:" toplevel-files)
         [])
       (let [_ (utils/unzip-file downloaded-file install-dir)
-
-            ;; if multiple directories, which is the 'main' addon?
-            ;; a common convention looks like "Addon[seperator]Subname"
-            ;;   so: Healbot and Healbot_de
-            ;;   or: MogIt and MogIt_Artifact
-            ;; DBM is an exception to this as the 'main' addon is 'DBM-Core' (I think, it's definitely the largest)
-            ;; MasterPlan and MasterPlanA is another exception
-            ;; these exceptions to the rule are easily handled
-            ;; the rule is:
-            ;; 1. if multiple directories,
-            ;; 2. assume dir with shortest name is the main addon
-            ;; 3. but only if it's a prefix of all other directories
-            ;; 4. if case doesn't hold, do nothing and accept we have no 'main' addon
-
-            ;; todo: issue a warning if all subfolders don't share a common prefix.
-
             primary-dirname (determine-primary-subdir toplevel-dirs)
 
             ;; an addon may unzip to many directories, each directory needs the nfo file
@@ -270,6 +268,16 @@
             retval (mapv update-nfo-fn toplevel-dirs)]
         (info (:label addon) "installed.")
         retval))))
+
+(defn-spec install-addon (s/or :ok (s/coll-of ::sp/extant-file), :error nil?)
+  "downloads an addon and installs it. handles http and non-http errors"
+  [addon ::sp/addon-or-toc-addon, install-dir ::sp/extant-dir]
+  (info "installing" (:label addon) "...")
+  (let [downloaded-file (download-addon addon install-dir)]
+    (cond
+      (nil? downloaded-file) (error "non-http error downloading addon, could not install" (:name addon))
+      (contains? downloaded-file :status) (error "failed to download addon, could not install" (:name addon))
+      :else (-install-addon addon install-dir downloaded-file))))
 
 (defn update-installed-addon-list!
   [installed-addon-list]
