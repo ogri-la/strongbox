@@ -46,16 +46,19 @@ see CHANGELOG.md for a more formal list of changes by release
         - .etag files are stored in ./state/cache/filename.ext.etag
         - feels less than ideal but works nicely with github
         - untested with curseforge and addon downloads
+* store download-uri in .wowman.json file
+    - we'll prefer the uri in the curseforge file but if that is unavailable we have a fallback
+    - done
 
 ### todo
 
 * bug, FileNotFoundException (PermissionDenied) attempting to unzip addon belonging to root
 	- nothing reporting in log, just stacktrace in terminal
-* store download-uri in .wowman.json file
-    - we'll prefer the uri in the curseforge file but if that is unavailable we have a fallback
 
 ## todo bucket
 
+* regression, "re-install all" not selecting addons as it re-installs them
+* fallback to using :group-id (a uri) if curseforge.json is not available
 * gui, installed pane, highlight rows that need updating
 * gui, search, highlight rows that are installed
 * clear cached files option
