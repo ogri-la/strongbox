@@ -23,6 +23,8 @@ see CHANGELOG.md for a more formal list of changes by release
 * cache downloaded file based on addon AND addon version
     - is this still a thing?
     - no, it's not
+* bug, install-addon when addon download fails
+    - done
 
 ## 0.2.0 release
 
@@ -47,7 +49,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### todo
 
-* bug, install-addon when download fails
 * bug, FileNotFoundException (PermissionDenied) attempting to unzip addon belonging to root
 	- nothing reporting in log, just stacktrace in terminal
 * store download-uri in .wowman.json file
@@ -95,4 +96,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - list the hidden/sub dependencies
 * gui, optional fields in the search and installed panes
 * testing, capture metrics with an eye to improving performance and speed
-
+* issue a warning when addons unpack directories that don't share a common prefix
+    - this would hopefully alert users that some shitty addons are being sneakily installed, like SlideBar or Stubby
+        - we could go one further and filter/prompt the user if they actually want to unpack these directories
