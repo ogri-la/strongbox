@@ -25,11 +25,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - no, it's not
 * bug, install-addon when addon download fails
     - done
-
-## 0.2.0 release
-
-### done
-
 * gui, prompt when attempting to install or delete many addons at once
     - done
 * on cache hit, don't display "downloading summary data for ..."
@@ -52,40 +47,47 @@ see CHANGELOG.md for a more formal list of changes by release
 * bug, FileNotFoundException (PermissionDenied) attempting to unzip addon belonging to root
 	- nothing reporting in log, just stacktrace in terminal
 	- done
+* 0.2.0 release
+    - merge to master, tag, update readme with new downloadable
+    - done
+
+## 0.3.0/unreleased
+
+### done
+
+* fixes the typo in 'downloading addon summary data foraddon'
 
 ### todo
 
-* merge to master, tag, update readme with new downloadable
+* gui, shift 'update selected' and 'delete selected' and 're-install selected' into a context menu
+* gui, stateful buttons
+    - don't allow enabled 'delete selected' buttons if nothing is selected
+* gui, installed pane, highlight rows that need updating
+    - remove/hide the 'update?' column
+* gui, search, highlight rows that are installed
+* regression, "re-install all" not selecting addons as it re-installs them
+* fallback to using :group-id (a uri) if curseforge.json is not available
+* gui, search box gets focused immediately
 
 ## todo bucket
 
-* regression, "re-install all" not selecting addons as it re-installs them
-* fallback to using :group-id (a uri) if curseforge.json is not available
-* gui, installed pane, highlight rows that need updating
-* gui, search, highlight rows that are installed
+* arch linux AUR package
 * clear cached files option
     - clears all cache files
 * clear zip files options
     - clears all downloaded zip files
 * cached files policy
     - nothing older than a week?
-* gui, shift 'update selected' and 'delete selected' and 're-install selected' into a context menu
-* arch linux AUR package
 * download addon details in parallel
     - speed benefits, mostly
     - share a pool of connections between threads
         - N connections serving M threads
-* gui, stateful buttons
-    - don't allow enabled 'delete selected' buttons if nothing is selected
 * gui, min-widths for updated, installed, available, update? and version fields
     - rest can be elastic
-* gui, search box gets focused immediately
 * gui, search pane, indicate results are paginated
 * cli, update specific addon
 * cli, install specific addon
 * cli, colours!
-* cli, interactive interface when no specific action specified
-    - you have N addons installed. what do you want to do? (list, update, update-all, delete) etc
 * gui, both panes, filter by categories
 * gui, pagination controls in search pane
 * gui, feature, install addon from local zipfile
@@ -100,7 +102,14 @@ see CHANGELOG.md for a more formal list of changes by release
     - other addons by author ?
     - list the hidden/sub dependencies
 * gui, optional fields in the search and installed panes
+    - prune back the columns if we can
 * testing, capture metrics with an eye to improving performance and speed
 * issue a warning when addons unpack directories that don't share a common prefix
     - this would hopefully alert users that some shitty addons are being sneakily installed, like SlideBar or Stubby
         - we could go one further and filter/prompt the user if they actually want to unpack these directories
+        
+## wontfix
+
+* cli, interactive interface when no specific action specified
+    - you have N addons installed. what do you want to do? (list, update, update-all, delete) etc
+    - this is a huge amount of hassle
