@@ -49,11 +49,13 @@ see CHANGELOG.md for a more formal list of changes by release
 * store download-uri in .wowman.json file
     - we'll prefer the uri in the curseforge file but if that is unavailable we have a fallback
     - done
+* bug, FileNotFoundException (PermissionDenied) attempting to unzip addon belonging to root
+	- nothing reporting in log, just stacktrace in terminal
+	- done
 
 ### todo
 
-* bug, FileNotFoundException (PermissionDenied) attempting to unzip addon belonging to root
-	- nothing reporting in log, just stacktrace in terminal
+* merge to master, tag, update readme with new downloadable
 
 ## todo bucket
 
