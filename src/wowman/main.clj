@@ -105,6 +105,11 @@
        (not (fs/exists? (paths :state-dir)))
        (not (fs/writeable? (fs/parent (paths :state-dir))))) {:ok? false, :exit-message (str "State directory doesn't exist and it cannot be created: " (paths :state-dir))}
 
+      ;; state directory *does* exist but isn't writeable
+      ;; another non-starter
+      (and (fs/exists? (paths :state-dir))
+           (not (fs/writeable? (paths :state-dir)))) {:ok? false, :exit-message (str "State directory isn't writeable:" (paths :state-dir))}
+
       :else
 
       ;; post-processing
