@@ -337,14 +337,14 @@
         cache? (not (nil? cache-dir))
         etag-path (when cache?
                     (join cache-dir (-> output-file fs/base-name (str ".etag"))))]
-    
+
     ;; when etag path exists but output file doesn't, delete etag file
     ;; ensures orphaned .etag files don't prevent download
     (when (and (fs/exists? etag-path)
                (not (fs/exists? output-file)))
       (warn "orphaned .etag found:" etag-path)
       (fs/delete etag-path))
-    
+
     ;; file exists and we're not overwriting existing file, return path to what we have
     (if (and
          (fs/exists? output-file)
