@@ -60,6 +60,7 @@ see CHANGELOG.md for a more formal list of changes by release
     - done
 * gui, installed pane, highlight rows that need updating
     - remove/hide the 'update?' column
+    - done
 
 ### todo
 
@@ -72,6 +73,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
+* gui, hide columns using jxtable preferred method
 * move to XDG preferred data/config directories
     - https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
     - perhaps ignore data directory for now and just use config (~/.config/wowman/)
