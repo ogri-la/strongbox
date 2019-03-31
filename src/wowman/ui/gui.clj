@@ -16,6 +16,7 @@
     [chooser :as chooser]
     [mig :as mig]
     ;;[dev :as ssdebug]
+    [color]
     [swingx :as x]
     [core :as ss]
     [table :as sstbl]]
@@ -219,7 +220,6 @@
         ;; important! release the event thread using async-handler else updates during process won't be shown until complete
         refresh-button (button "Refresh" (async-handler core/refresh))
         update-all-button (button "Update all" (async-handler core/install-update-all))
-        reinstall-all-button (button "Re-install all" (async-handler core/re-install-all))
 
         wow-dir-button (button "WoW directory" (async-handler picker))
 
@@ -228,8 +228,7 @@
                            (ss/value! wow-dir-label (get-in state [:cfg :install-dir])))]
     (state-bind [:cfg :install-dir] wow-dir-label-fn)
     (ss/vertical-panel
-     :items [(ss/flow-panel :align :left :items [refresh-button wow-dir-button wow-dir-label])
-             (ss/flow-panel :align :left :items [update-all-button reinstall-all-button])])))
+     :items [(ss/flow-panel :align :left :items [refresh-button update-all-button wow-dir-button wow-dir-label])])))
 
 (defn entry-to-map
   "converts a RowFilter.Entry object to a simple map"
