@@ -239,17 +239,17 @@
 
 (defn installed-addons-panel
   []
-  (let [debug-cols [:group-id :primary? :addon-id] ;; only visible when debugging
+  (let [debug-cols [:group-id :primary? :addon-id :update?] ;; only visible when debugging
         tblmdl (sstbl/table-model :columns [{:key :name :text "addon-id"}
                                             :group-id
                                             :primary?
                                             {:key :label :text "name"}
                                             :description
-                                            {:key :updated-date :text "updated"}
                                             {:key :installed-version :text "installed"}
                                             {:key :version :text "available"}
+                                            {:key :updated-date :text "updated"}
                                             :update?
-                                            {:key :interface-version :text "version"}
+                                            {:key :interface-version :text "WoW"}
                                             {:key :category-list :text "categories"}]
                                   :rows [])
 
@@ -272,6 +272,19 @@
                         :model tblmdl
                         :popup popup-menu)
 
+        predicate (proxy [org.jdesktop.swingx.decorator.HighlightPredicate] []
+                    (isHighlighted [renderer adapter]
+                      (let [update-column 8
+                            ;;update-column (.viewToModel adapter update-column) ;; not working?
+                            value (.getValue adapter update-column)]
+                        (not (nil? value)))))
+
+        highlighter (org.jdesktop.swingx.decorator.ColorHighlighter.
+                     predicate
+                     (seesaw.color/color :lightsteelblue 140)
+                     nil) ;; no change in foreground colours
+        _ (.addHighlighter grid highlighter)
+
         ;; filter known non-primary addons from the results
         table-sorter (.getRowSorter grid)
         row-filter (proxy [javax.swing.RowFilter] []
@@ -292,7 +305,7 @@
                         (setValue [datestr]
                           (when datestr
                             (proxy-super setValue (-> datestr clojure.instant/read-instant-date (utils/fmt-date "yyyy-MM-dd"))))))
-        _ (.setCellRenderer (.getColumn (.getColumnModel grid) 5) date-renderer)
+        _ (.setCellRenderer (.getColumn (.getColumnModel grid) 7) date-renderer)
 
         interface-version-renderer (proxy [javax.swing.table.DefaultTableCellRenderer] []
                                      (setValue [iface-version]
@@ -318,6 +331,8 @@
                                            (warn "failed to find value" (first unsteady) "in column 'addon-id'"))))))]
 
     ;; 'hide' debug columns. affects table only, data/table model is unaffected
+    ;; todo: switch to setVisible:
+    ;; https://pirlwww.lpl.arizona.edu/resources/guide/software/SwingX/org/jdesktop/swingx/table/TableColumnExt.html#setVisible(boolean)
     (when-not (core/debugging?)
       (doseq [col debug-cols]
         (.removeColumn grid (.getColumn grid (-> col name str)))))
