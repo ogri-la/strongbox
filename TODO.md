@@ -70,11 +70,18 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
+* move to XDG preferred data/config directories
+    - https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+    - perhaps ignore data directory for now and just use config (~/.config/wowman/)
+    - make this customisable?
 * arch linux AUR package
 * clear cached files option
     - clears all cache files
 * clear zip files options
     - clears all downloaded zip files
+* clear hidden files
+    - .wowman.json
+    - wowmatrix .dat files?
 * cached files policy
     - nothing older than a week?
 * download addon details in parallel
