@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file. This change
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- added highlighted rows when an addon needs updating
+- added a context menu to installed addons pane and moved actions that target selections to it
+
+### Changed
+- collapsed main button bar back into single row of buttons
+
+### Removed
+- removed 'update?' column in favour of highlighted rows
+- removed 're-install all' button from main button bar. It can still be found under 'Addons' menu
+
 ## 0.2.0 - 2019-03-30
 
 ### Added

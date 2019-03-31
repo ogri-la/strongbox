@@ -64,15 +64,15 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### todo
 
-* bug, 'whoa thick frames' is reporting a version number of '0.9.zip'
-    - toc file just says '0.9'
+* bug, no toc displayed after installing many into fresh dir
+    - it's downloading summary stuff but it needs to be async
 * gui, search, highlight rows that are installed
 * regression, "re-install all" not selecting addons as it re-installs them
-* fallback to using :group-id (a uri) if curseforge.json is not available
 * gui, search box gets focused immediately
 
 ## todo bucket
 
+* bug, changing sort order during refresh doesn't accurate reflect what is being updated
 * gui, hide columns using jxtable preferred method
 * move to XDG preferred data/config directories
     - https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
@@ -117,9 +117,26 @@ see CHANGELOG.md for a more formal list of changes by release
 * issue a warning when addons unpack directories that don't share a common prefix
     - this would hopefully alert users that some shitty addons are being sneakily installed, like SlideBar or Stubby
         - we could go one further and filter/prompt the user if they actually want to unpack these directories
-        
+* fallback to using :group-id (a uri) if curseforge.json is not available
+    - low priority
+    - curseforge.json will only ever be missing:
+        - fresh install and
+        - your network connection goes down, or
+        - you're a victim of github's 99.999 uptime rating
+
 ## wontfix
 
+* bug, 'whoa thick frames' is reporting a version number of '0.9.zip'
+    - toc file just says '0.9'
+    - update: it's using the version value from curseforge which *is* '0.9.zip'
+        - addon problem, wontfix
+    - update2: this seems to happen a lot actually
+        - I can also see
+            - zep-mix-damage-taken
+            - training grounds
+            - pvp-mate addon
+            - mekka robo helper
+            - jcs media sounds
 * gui, stateful buttons
     - don't allow enabled 'delete selected' buttons if nothing is selected
     - not going to coddle the user. deleting nothing will see nothing deleted.
