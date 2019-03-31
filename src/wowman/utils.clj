@@ -416,7 +416,7 @@
             _ (when cache? (debug "cache miss: " uri))
 
             anon-useragent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36"
-            wow-useragent "Wowman/0.1 (https://github.com/ogri-la/wowman)"
+            wow-useragent "Wowman/0.2 (https://github.com/ogri-la/wowman)"
             use-anon-useragent? false
             remote-content (client/get uri {:connection-manager conn-manager
                                             :cookie-policy :none ;; Completely ignore cookies
