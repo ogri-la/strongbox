@@ -53,6 +53,25 @@
              :text label
              :listen [:action onclick]))
 
+(defn menu-item
+  [label onclick]
+  (ss/menu-item :text label
+                :listen [:action onclick]))
+
+(defn dynamic-menu-item
+  "like a regular menu-item, but it's label changes"
+  [initial-label & {:keys [watch callback onclick]}]
+  (let [mi (menu-item initial-label onclick)
+        actual-callback (fn [state]
+                          (ss/text! mi (callback state)))]
+    (state-bind watch actual-callback)
+    mi))
+
+(defn donothing
+  "the does-nothing event handler"
+  [_]
+  nil)
+
 (comment "unused"
          (defn-spec click-button nil?
            [btn-id keyword?]
@@ -200,11 +219,7 @@
         ;; important! release the event thread using async-handler else updates during process won't be shown until complete
         refresh-button (button "Refresh" (async-handler core/refresh))
         update-all-button (button "Update all" (async-handler core/install-update-all))
-        update-selected-button (button "Update selected" (handler core/install-update-selected))
-        reinstall-button (button "Re-install selected" (async-handler core/re-install-selected))
         reinstall-all-button (button "Re-install all" (async-handler core/re-install-all))
-
-        delete-button (button "Delete selected" (async-handler remove-selected-handler))
 
         wow-dir-button (button "WoW directory" (async-handler picker))
 
@@ -214,7 +229,7 @@
     (state-bind [:cfg :install-dir] wow-dir-label-fn)
     (ss/vertical-panel
      :items [(ss/flow-panel :align :left :items [refresh-button wow-dir-button wow-dir-label])
-             (ss/flow-panel :align :left :items [update-all-button update-selected-button reinstall-all-button reinstall-button delete-button])])))
+             (ss/flow-panel :align :left :items [update-all-button reinstall-all-button])])))
 
 (defn entry-to-map
   "converts a RowFilter.Entry object to a simple map"
@@ -224,10 +239,7 @@
 
 (defn installed-addons-panel
   []
-  (let [debug-mode (get-state :cfg :debug?)
-
-        debug-cols [:group-id :primary? :addon-id]
-
+  (let [debug-cols [:group-id :primary? :addon-id] ;; only visible when debugging
         tblmdl (sstbl/table-model :columns [{:key :name :text "addon-id"}
                                             :group-id
                                             :primary?
@@ -240,7 +252,25 @@
                                             {:key :interface-version :text "version"}
                                             {:key :category-list :text "categories"}]
                                   :rows [])
-        grid (x/table-x :id :tbl-installed-addons :model tblmdl)
+
+        popup-menu-items [(dynamic-menu-item ""
+                                             :watch [:selected-installed]
+                                             :callback (fn [state]
+                                                         (let [selected-rows (tbl-selected-rows :#tbl-installed-addons)]
+                                                           (format "%s selected, %s updateable"
+                                                                   (count selected-rows)
+                                                                   (count (filter :update? selected-rows)))))
+                                             :onclick donothing)
+                          (ss/separator)
+                          (menu-item "Update" (async-handler core/install-update-selected))
+                          (menu-item "Re-install" (async-handler core/re-install-selected))
+                          (ss/separator)
+                          (menu-item "Delete" (async-handler remove-selected-handler))]
+        popup-menu (ss/popup :items popup-menu-items)
+
+        grid (x/table-x :id :tbl-installed-addons
+                        :model tblmdl
+                        :popup popup-menu)
 
         ;; filter known non-primary addons from the results
         table-sorter (.getRowSorter grid)
@@ -288,7 +318,7 @@
                                            (warn "failed to find value" (first unsteady) "in column 'addon-id'"))))))]
 
     ;; 'hide' debug columns. affects table only, data/table model is unaffected
-    (when-not debug-mode
+    (when-not (core/debugging?)
       (doseq [col debug-cols]
         (.removeColumn grid (.getColumn grid (-> col name str)))))
 
@@ -425,7 +455,7 @@
         ;;
 
         newui (ss/frame
-               :title "WoW addon updater"
+               :title "wowman"
                :size [640 :by 480]
                :content (mig/mig-panel
                          :constraints (if (core/debugging?)
