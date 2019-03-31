@@ -58,11 +58,13 @@ see CHANGELOG.md for a more formal list of changes by release
 * fixes the typo in 'downloading addon summary data foraddon'
 * gui, shift 'update selected' and 'delete selected' and 're-install selected' into a context menu
     - done
+* gui, installed pane, highlight rows that need updating
+    - remove/hide the 'update?' column
 
 ### todo
 
-* gui, installed pane, highlight rows that need updating
-    - remove/hide the 'update?' column
+* bug, 'whoa thick frames' is reporting a version number of '0.9.zip'
+    - toc file just says '0.9'
 * gui, search, highlight rows that are installed
 * regression, "re-install all" not selecting addons as it re-installs them
 * fallback to using :group-id (a uri) if curseforge.json is not available
@@ -70,11 +72,18 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
+* move to XDG preferred data/config directories
+    - https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+    - perhaps ignore data directory for now and just use config (~/.config/wowman/)
+    - make this customisable?
 * arch linux AUR package
 * clear cached files option
     - clears all cache files
 * clear zip files options
     - clears all downloaded zip files
+* clear hidden files
+    - .wowman.json
+    - wowmatrix .dat files?
 * cached files policy
     - nothing older than a week?
 * download addon details in parallel
