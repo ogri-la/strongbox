@@ -56,12 +56,11 @@ see CHANGELOG.md for a more formal list of changes by release
 ### done
 
 * fixes the typo in 'downloading addon summary data foraddon'
+* gui, shift 'update selected' and 'delete selected' and 're-install selected' into a context menu
+    - done
 
 ### todo
 
-* gui, shift 'update selected' and 'delete selected' and 're-install selected' into a context menu
-* gui, stateful buttons
-    - don't allow enabled 'delete selected' buttons if nothing is selected
 * gui, installed pane, highlight rows that need updating
     - remove/hide the 'update?' column
 * gui, search, highlight rows that are installed
@@ -110,6 +109,9 @@ see CHANGELOG.md for a more formal list of changes by release
         
 ## wontfix
 
+* gui, stateful buttons
+    - don't allow enabled 'delete selected' buttons if nothing is selected
+    - not going to coddle the user. deleting nothing will see nothing deleted.
 * cli, interactive interface when no specific action specified
     - you have N addons installed. what do you want to do? (list, update, update-all, delete) etc
     - this is a huge amount of hassle
