@@ -1,4 +1,4 @@
-(defproject wowman "0.2.0"
+(defproject wowman "0.2.0" ;; remember to update user-agent
   :description "World Of Warcraft Addon Manager"
   :url "http://github.com/ogri-la/wowman"
   :license {:name "GNU Affero General Public License (AGPL)"

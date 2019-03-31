@@ -64,6 +64,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### todo
 
+* bug, utils/download-file and utils/download are using two separate user agents
+    - unify these
+    - figure out a way to keep the version in the user agent up-to-date
 * bug, no toc displayed after installing many into fresh dir
     - it's downloading summary stuff but it needs to be async
 * gui, search, highlight rows that are installed
