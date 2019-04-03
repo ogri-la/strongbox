@@ -37,13 +37,7 @@
   [list-of-maps ::sp/list-of-maps, key keyword?]
   (into {} (map (fn [row] {(get row key) row}) list-of-maps)))
 
-(defn-spec merge-lists1 ::sp/list-of-maps
-  "given two lists and a key, returns list1 with matching entries from list2 when keys match"
-  [key keyword?, list1 ::sp/list-of-maps, list2 ::sp/list-of-maps]
-  (let [index (idx list2 key)]
-    (mapv (fn [row] (or (get index (get row key)) row)) list1)))
-
-(defn merge-lists2
+(defn merge-lists
   "given two lists and a key, returns list1 with matching entries from list2 when keys match. unmatched entries in list2 are prepended to list1"
   [key list1 list2 & {:keys [prepend?]}]
   (loop [index (idx list2 key)
@@ -67,8 +61,6 @@
           (recur index
                  (next ilist)
                  (conj list3 row)))))))
-
-(def merge-lists merge-lists2)
 
 ;; TODO: replace with clj-time equivalent
 (defn fmt-date
@@ -102,14 +94,6 @@
   (when s
     (if (empty? (clojure.string/trim s)) nil s)))
 
-;; https://clojuredocs.org/clojure.core/when-let
-(defmacro when-let*
-  ([bindings & body]
-   (if (seq bindings)
-     `(when-let [~(first bindings) ~(second bindings)]
-        (when-let* ~(drop 2 bindings) ~@body))
-     `(do ~@body))))
-
 (defn-spec to-json ::sp/json
   [x ::sp/anything]
   (json/generate-string x {:pretty true}))
@@ -123,34 +107,6 @@
 (defn-spec load-json-file ::sp/anything
   [path ::sp/extant-file]
   (clojure.data.json/read (clojure.java.io/reader path), :key-fn keyword))
-
-;; todo: deprecated, remove once we no longer have java.net.URI:: prefixed strings around
-(defn-spec decode-java-net-uri (s/or :ok ::sp/uri :error nil?)
-  [string (s/or :ok string?, :nil nil?)]
-  (if string
-    (if ;; old serialised data
-     (and string (clojure.string/starts-with? string "java.net.URI::"))
-      (-> string (subs 14) java.net.URI. str)
-
-      ;; new serialised data
-      (-> string java.net.URI. str))
-
-    string))
-
-;; todo: possibly redundant once uri decoding is removed. 
-(defn-spec load-json-file-with-decoding ::sp/anything
-  "like `load-json-file`, however specific fields are handled specially (see `decode-map`). 
-  this is because encoding values to strings is easy, decoding strings to values is expensive"
-  [path ::sp/extant-file]
-  (let [value-fn (fn [k v]
-                   (if-let [f (case k
-                                :uri decode-java-net-uri
-                                :download-uri decode-java-net-uri
-                                :donation-uri decode-java-net-uri
-                                nil)]
-                     (f v)
-                     v))]
-    (clojure.data.json/read (clojure.java.io/reader path), :key-fn keyword, :value-fn value-fn)))
 
 (defn-spec to-int (s/or :ok int? :error nil?)
   [x any?]
@@ -328,6 +284,7 @@
       ([req resp raise]
        (write-etag etag-path (client (add-etag-or-not etag-path req) resp raise))))))
 
+;; disabled until I figure out how to spec the parameters:
 ;;(defn-spec download-file (s/or :ok ::sp/extant-file, :http-error ::sp/http-error)
 ;;  [uri ::sp/uri, output-file ::sp/file, & {:keys [overwrite?]} (s/map-of keyword? any?)]
 (defn download-file

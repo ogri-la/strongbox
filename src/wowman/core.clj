@@ -11,7 +11,7 @@
    [wowman
     [logging :as logging]
     [nfo :as nfo]
-    [utils :as utils :refer [when-let* join not-empty?]]
+    [utils :as utils :refer [join not-empty?]]
     [curseforge :as curseforge]
     [fs]
     [specs :as sp]]))
@@ -310,7 +310,7 @@
     ;; if we installed the addon via wowman then the :group-id in nfo file can be used as a fall back
     (download-addon-summary-file))
   (info "loading addon summary list from:" (paths :addon-summary-file))
-  (let [{:keys [addon-summary-list]} (utils/load-json-file-with-decoding (paths :addon-summary-file))]
+  (let [{:keys [addon-summary-list]} (utils/load-json-file (paths :addon-summary-file))]
     (swap! state assoc :addon-summary-list addon-summary-list)
     nil))
 

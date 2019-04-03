@@ -61,6 +61,8 @@ see CHANGELOG.md for a more formal list of changes by release
 * gui, installed pane, highlight rows that need updating
     - remove/hide the 'update?' column
     - done
+* remove uri decoding in utils json handling
+    - done, also did a general cleanup of utils
 
 ### todo
 
@@ -69,8 +71,9 @@ see CHANGELOG.md for a more formal list of changes by release
     - figure out a way to keep the version in the user agent up-to-date
 * bug, no toc displayed after installing many into fresh dir
     - it's downloading summary stuff but it needs to be async
-* gui, search, highlight rows that are installed
 * regression, "re-install all" not selecting addons as it re-installs them
+    - possibly duplicate of above
+* gui, search, highlight rows that are installed
 * gui, search box gets focused immediately
 
 ## todo bucket

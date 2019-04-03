@@ -126,8 +126,8 @@
 
 (defn-spec update-addon-summary-file ::sp/extant-file
   [addon-summary-file ::sp/extant-file, addon-summary-updates-file ::sp/extant-file]
-  (let [{created-date :datestamp, addons-list :addon-summary-list} (utils/load-json-file-with-decoding addon-summary-file)
-        updated-addons-list (utils/load-json-file-with-decoding addon-summary-updates-file)
+  (let [{created-date :datestamp, addons-list :addon-summary-list} (utils/load-json-file addon-summary-file)
+        updated-addons-list (utils/load-json-file addon-summary-updates-file)
         updated-date (utils/datestamp-now-ymd)
         merged-addons-list (utils/merge-lists :name addons-list updated-addons-list :prepend? true)]
     (info "updating addon summary file:" addon-summary-file)
