@@ -308,6 +308,7 @@
          (not overwrite?))
       (do
         (debug "cache hit for" output-file)
+        ;;(Thread/sleep 50) ;; simulates a slow download
         output-file)
 
       ;; we're overwriting files. still a chance nothing is downloaded or overwritten

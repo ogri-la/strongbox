@@ -189,8 +189,15 @@
 
 (defn-spec search-results-install-handler nil?
   []
-  (core/-install-update-these (map curseforge/expand-summary (get-state :selected-search)))
+  ;; this works ~ok~ for one or two files, but many at once and we get what looks like a freeze as the summary is expanded
+  ;; what might be better is: switch tab; for each selected, expand summary, install addon, load-installed-addons; refresh;
+  ;; there will be a plodding step-wise update which is better than a blank screen and apparent hang
+  ;; `load-installed-addons` will simply re-visit the list of installed addons and update the state with the bare toc contents.
+  ;;(core/-install-update-these (map curseforge/expand-summary (get-state :selected-search)))
   (switch-tab INSTALLED-TAB)
+  (doseq [selected (get-state :selected-search)]
+    (-> selected curseforge/expand-summary vector core/-install-update-these)
+    (core/load-installed-addons))
   (refresh))
 
 (defn-spec remove-selected-handler nil?
@@ -207,7 +214,7 @@
                             :type :warning
                             :option-type :ok-cancel
                             :default-option :no
-                            :success-fn (handler core/remove-selected))]
+                            :success-fn (async-handler core/remove-selected))]
       (-> dialog ss/pack! ss/show!)
       nil)))
 
@@ -478,14 +485,16 @@
                          :items [[root "height 100%, width 100%:100%:100%"]])
                :on-close :dispose)
 
-        file-menu [(ss/action :name "Installed" :key "menu I" :mnemonic "i" :handler (switch-tab-handler INSTALLED-TAB))
+        file-menu (items
+                   (ss/action :name "Installed" :key "menu I" :mnemonic "i" :handler (switch-tab-handler INSTALLED-TAB))
                    (ss/action :name "Search" :key "menu H" :mnemonic "h" :handler (switch-tab-handler SEARCH-TAB))
-                   (ss/action :name "Load settings" :handler (handler core/load-settings))
-                   (ss/action :name "Save settings" :key "menu S" :mnemonic "s" :handler (handler core/save-settings))
-                   (ss/action :name "Exit" :key "menu Q" :mnemonic "x" :handler (handler #(ss/dispose! newui)))]
+                   (when (core/debugging?) ;; these have never been useful outside of dev
+                     (ss/action :name "Load settings" :handler (handler core/load-settings))
+                     (ss/action :name "Save settings" :key "menu S" :mnemonic "s" :handler (handler core/save-settings)))
+                   (ss/action :name "Exit" :key "menu Q" :mnemonic "x" :handler (handler #(ss/dispose! newui))))
 
-        addon-menu [(ss/action :name "Update all" :key "menu U" :mnemonic "u" :handler (handler core/install-update-all))
-                    (ss/action :name "Re-install all" :handler (handler core/re-install-all))]
+        addon-menu [(ss/action :name "Update all" :key "menu U" :mnemonic "u" :handler (async-handler core/install-update-all))
+                    (ss/action :name "Re-install all" :handler (async-handler core/re-install-all))]
 
         menu (ss/menubar :items [(ss/menu :text "File" :mnemonic "F" :items file-menu)
                                  (ss/menu :text "Addons" :mnemonic "A" :items addon-menu)])

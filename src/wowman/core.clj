@@ -281,6 +281,9 @@
         (map? downloaded-file) (error "failed to download addon, could not install" (:name addon))
         :else (-install-addon addon install-dir downloaded-file)))))
 
+(def install-addon
+  (affects-addon-wrapper install-addon))
+
 (defn update-installed-addon-list!
   [installed-addon-list]
   (let [installed-addon-idx (utils/idx installed-addon-list :name)
@@ -402,6 +405,7 @@
   []
   (-> (get-state) :installed-addon-list -install-update-these)
   (refresh))
+  )
 
 (defn install-update-selected
   []
