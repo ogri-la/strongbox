@@ -74,7 +74,7 @@ This software also tries very hard to:
 I benefit so much from the hard work of those who write free and open source software, including addon developers, 
 that it's my privilege to offer this small piece back.
 
-[![wowman version 0.1.0](screenshot-0.1.0-thumbnail.jpg)](screenshot-0.1.0.png?raw=true)
+[![wowman version 0.3.0](screenshot-0.3.0-thumbnail.jpg)](screenshot-0.3.0.png?raw=true)
 
 ## License
 
