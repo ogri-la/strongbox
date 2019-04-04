@@ -325,10 +325,8 @@
                          ;; don't use core/get-state inside listeners!
                          (insert-all grid (:installed-addon-list state)))
 
-        watch-for-unsteady-addons (fn [_] ;;state]
-                                    (let [unsteady (get-state :unsteady-addons)
-                                          ;;unsteady (:unstead-addons state) ;; doesn't work for some reason. should it?
-                                          ]
+        watch-for-unsteady-addons (fn [state]
+                                    (let [unsteady (:unsteady-addons state)]
                                       (when-not (empty? unsteady)
                                         (debug "unsteady addons:" unsteady)
                                         (ss/invoke-now
