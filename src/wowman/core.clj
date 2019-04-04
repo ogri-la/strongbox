@@ -269,7 +269,7 @@
         (info (:label addon) "installed.")
         retval))))
 
-(defn-spec install-addon (s/or :ok (s/coll-of ::sp/extant-file), :error nil?)
+(defn-spec install-addon-guard (s/or :ok (s/coll-of ::sp/extant-file), :error nil?)
   "downloads an addon and installs it. handles http and non-http errors"
   [addon ::sp/addon-or-toc-addon, install-dir ::sp/extant-dir]
   (if (not (fs/writeable? install-dir))
@@ -282,7 +282,7 @@
         :else (-install-addon addon install-dir downloaded-file)))))
 
 (def install-addon
-  (affects-addon-wrapper install-addon))
+  (affects-addon-wrapper install-addon-guard))
 
 (defn update-installed-addon-list!
   [installed-addon-list]
@@ -405,7 +405,6 @@
   []
   (-> (get-state) :installed-addon-list -install-update-these)
   (refresh))
-  )
 
 (defn install-update-selected
   []
