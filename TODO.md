@@ -63,21 +63,41 @@ see CHANGELOG.md for a more formal list of changes by release
     - done
 * remove uri decoding in utils json handling
     - done, also did a general cleanup of utils
+* regression, "re-install all" not selecting addons as it re-installs them
+    - done, it now selects as it's installing and selects again as it refreshes.
+        - when everything is cached this looks a bit silly
+* bug, no toc displayed after installing many into fresh dir
+    - it's downloading summary stuff but it needs to be async
+    - done, the installation process is now slightly different from the search panel
+        - it switches to the installed pane, expands the summary, downloads the addon, re-loads the installed addon list
+        - this gives us many small partial updates instead of a freeze and a single massive update
+* hid load/save settings from File menu unless in debug mode
+    - these were only used in the beginning to kick start development
 
 ### todo
 
 * bug, utils/download-file and utils/download are using two separate user agents
     - unify these
     - figure out a way to keep the version in the user agent up-to-date
-* bug, no toc displayed after installing many into fresh dir
-    - it's downloading summary stuff but it needs to be async
-* regression, "re-install all" not selecting addons as it re-installs them
-    - possibly duplicate of above
 * gui, search, highlight rows that are installed
 * gui, search box gets focused immediately
 
 ## todo bucket
 
+* do not cache bad downloads
+    - do not keep the zip file
+    - do not keep an etag, although orphaned etags *are* handled
+* handle installing bad zip files
+    - I just attempted to install an addon called Narcissus and the download failed/timed out
+        - unzipping it caused a java.lang.IllegalArgumentException: MALFORMED
+        - the bad zip file was preserved in cache
+* internationalisation? 
+    - Akitools has no english description but it does have a "Notes-zhCN" in the toc file that could be used
+* add an 'about' top level menu
+    - it checks if a new version of wowman available
+    - link where to find it
+    - licence
+* a 'stop' button to stop updates would be nice ...
 * bug, changing sort order during refresh doesn't accurate reflect what is being updated
 * gui, hide columns using jxtable preferred method
 * move to XDG preferred data/config directories
