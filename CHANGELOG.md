@@ -6,16 +6,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## 0.3.0 - 2019-04-05
+
 ### Added
 - added highlighted rows when an addon needs updating
+- added highlighted rows to search pane to indicate installed addons
 - added a context menu to installed addons pane and moved actions that target selections to it
+- added special handling when installing multiple addons. It now updates gui as it works through each addon.
+- both `utils/download` and `utils/download-file` now share the same user-agent when making remote calls
+- user-agent now uses the wowman version stored in the project file if running from the repl, or the pom if uberjar'ed
+- input text field on 'search' pane now focused immediately
 
 ### Changed
 - collapsed main button bar back into single row of buttons
+- 're-install all' now visible works it's way through the addons instead of just pausing indefinitely
 
 ### Removed
 - removed 'update?' column in favour of highlighted rows
 - removed 're-install all' button from main button bar. It can still be found under 'Addons' menu
+- 'save' and 'load' settings are now only available if running debug mode
 
 ## 0.2.0 - 2019-03-30
 
