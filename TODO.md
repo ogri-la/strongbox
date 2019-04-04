@@ -79,10 +79,13 @@ see CHANGELOG.md for a more formal list of changes by release
     - done, introduced new dependency 'versioneer'
 * gui, search, highlight rows that are installed
     - done
+* gui, search box gets focused immediately
+    - done
 
 ### todo
 
-* gui, search box gets focused immediately
+* 0.3.0 release
+    - merge to master, tag, update readme with new downloadable
 
 ## todo bucket
 

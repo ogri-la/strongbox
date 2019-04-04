@@ -365,7 +365,7 @@
 (defn search-input-panel
   []
   (let [install-button (button "install selected" (async-handler search-results-install-handler))
-        search-input (ss/text :columns 40 :listen [:key-released search-input-handler])]
+        search-input (ss/text :id :search-input-txt :columns 40 :listen [:key-released search-input-handler])]
     (ss/flow-panel :align :left :items ["search" search-input install-button])))
 
 (defn search-rows
@@ -475,14 +475,22 @@
     (.setSelectedIndex tabber-component 1)
     nil))
 
+(defn mk-tabber
+  []
+  (let [tabber (ss/tabbed-panel
+                :id :tabber
+                :tabs [(tab "installed" (installed-panel))
+                       (tab "search" (search-panel))])]
+
+    (ss/listen tabber :selection (fn [e]
+                                   (let [tab-label (-> (ss/selection tabber) :title)]
+                                     (when (= tab-label "search")
+                                       (ss/request-focus! (select-ui :#search-input-txt))))))
+    tabber))
+
 (defn start-ui
   []
-  (let [root->splitter->tabber (ss/tabbed-panel
-                                :id :tabber
-                                :tabs [(tab "installed" (installed-panel))
-                                       (tab "search" (search-panel))])
-
-        root->splitter (ss/top-bottom-split root->splitter->tabber (notice-logger))
+  (let [root->splitter (ss/top-bottom-split (mk-tabber) (notice-logger))
         _ (.setResizeWeight root->splitter 0.8)
 
         root (ss/vertical-panel :id :root
