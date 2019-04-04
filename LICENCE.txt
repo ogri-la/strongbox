@@ -683,3 +683,4 @@ If you modify this Program, or any covered work, by linking or combining it with
 * me.raynes/fs
 * slugify
 * clj-time
+* trptcolin/versioneer

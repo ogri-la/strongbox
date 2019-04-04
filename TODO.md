@@ -73,12 +73,13 @@ see CHANGELOG.md for a more formal list of changes by release
         - this gives us many small partial updates instead of a freeze and a single massive update
 * hid load/save settings from File menu unless in debug mode
     - these were only used in the beginning to kick start development
-
-### todo
-
 * bug, utils/download-file and utils/download are using two separate user agents
     - unify these
     - figure out a way to keep the version in the user agent up-to-date
+    - done, introduced new dependency 'versioneer'
+
+### todo
+
 * gui, search, highlight rows that are installed
 * gui, search box gets focused immediately
 

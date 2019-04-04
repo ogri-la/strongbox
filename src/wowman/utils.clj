@@ -14,6 +14,7 @@
    [orchestra.core :refer [defn-spec]]
    [clojure.data.codec.base64 :as b64]
    [taoensso.timbre :refer [debug info warn error spy]]
+   [trptcolin.versioneer.core :as versioneer]
    [clj-http.conn-mgr]
    [clj-http.client :as client]
    [clj-time
@@ -284,6 +285,13 @@
       ([req resp raise]
        (write-etag etag-path (client (add-etag-or-not etag-path req) resp raise))))))
 
+(defn-spec user-agent map?
+  [use-anon-useragent? boolean?]
+  (let [anon-useragent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36"
+        wowman-version (-> (versioneer/get-version "ogri-la" "wowman") (subs 0 3)) ;; `subs` here is fine until major or minor exceeds double digits
+        wowman-useragent (format "Wowman/%s (https://github.com/ogri-la/wowman)" wowman-version)]
+    {"http.useragent" (if use-anon-useragent? anon-useragent wowman-useragent)}))
+
 ;; disabled until I figure out how to spec the parameters:
 ;;(defn-spec download-file (s/or :ok ::sp/extant-file, :http-error ::sp/http-error)
 ;;  [uri ::sp/uri, output-file ::sp/file, & {:keys [overwrite?]} (s/map-of keyword? any?)]
@@ -316,13 +324,14 @@
         (debug "cache miss for" output-file)
         (info (format "downloading %s to %s" uri output-file))
         (client/with-additional-middleware [client/wrap-lower-case-headers (etag-middleware etag-path)]
-          (let [resp (client/get uri {:as :stream
-                                      :redirect-strategy curse-crap-redirect-strategy})]
-            (when-not (= 304 (:status resp)) ;; 'when-not not-modified' or just 'when modified'
-              (clojure.java.io/copy
-               (:body resp)
-               (java.io.File. output-file)))
+          (let [params {:as :stream
+                        :redirect-strategy curse-crap-redirect-strategy}
+                use-anon-useragent? false
+                params (merge params (user-agent use-anon-useragent?))
+                resp (client/get uri params)]
 
+            (when-not (= 304 (:status resp)) ;; 'when-not not-modified' or just 'when modified'
+              (clojure.java.io/copy (:body resp) (java.io.File. output-file)))
             output-file))
 
         (catch Exception e
@@ -372,14 +381,12 @@
       ;; not caching or cache miss
       (let [_ (when message (info message))
             _ (when cache? (debug "cache miss: " uri))
-
-            anon-useragent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36"
-            wow-useragent "Wowman/0.2 (https://github.com/ogri-la/wowman)"
+            params {:connection-manager conn-manager
+                    :cookie-policy :none ;; Completely ignore cookies
+                    :redirect-strategy :none} ;; do not follow redirects
             use-anon-useragent? false
-            remote-content (client/get uri {:connection-manager conn-manager
-                                            :cookie-policy :none ;; Completely ignore cookies
-                                            :redirect-strategy :none ;; do not follow redirects
-                                            :client-params {"http.useragent" (if use-anon-useragent? anon-useragent wow-useragent)}})
+            params (merge params (user-agent use-anon-useragent?))
+            remote-content (client/get uri params)
             remote-content (:body remote-content)]
 
         (when cache?

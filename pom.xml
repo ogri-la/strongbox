@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>wowman</groupId>
+  <groupId>ogri-la</groupId>
   <artifactId>wowman</artifactId>
   <packaging>jar</packaging>
-  <version>0.1.1</version>
+  <version>0.2.0</version>
   <name>wowman</name>
   <description>World Of Warcraft Addon Manager</description>
   <url>http://github.com/ogri-la/wowman</url>
@@ -17,7 +17,7 @@
     <url>https://github.com/ogri-la/wowman</url>
     <connection>scm:git:git://github.com/ogri-la/wowman.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/ogri-la/wowman.git</developerConnection>
-    <tag>0cc05bd84afcce54db0f3b1ddaba67aaee7b7ed2</tag>
+    <tag>4bba3f39870e6efc4bc3626782559dfdde20fe8c</tag>
   </scm>
   <build>
     <sourceDirectory>src</sourceDirectory>
@@ -152,6 +152,11 @@
       <groupId>clj-time</groupId>
       <artifactId>clj-time</artifactId>
       <version>0.15.0</version>
+    </dependency>
+    <dependency>
+      <groupId>trptcolin</groupId>
+      <artifactId>versioneer</artifactId>
+      <version>0.2.0</version>
     </dependency>
   </dependencies>
 </project>

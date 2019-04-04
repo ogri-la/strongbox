@@ -1,4 +1,4 @@
-(defproject wowman "0.2.0" ;; remember to update user-agent
+(defproject ogri-la/wowman "0.2.0"
   :description "World Of Warcraft Addon Manager"
   :url "http://github.com/ogri-la/wowman"
   :license {:name "GNU Affero General Public License (AGPL)"
@@ -22,6 +22,7 @@
                  [me.raynes/fs "1.4.6"] ;; file system wrangling
                  [slugify "0.0.1"]
                  [clj-time "0.15.0"]
+                 [trptcolin/versioneer "0.2.0"] ;; version number wrangling. it's more involved than you might suspect
 
                  ;; remember to update the LICENCE.txt
                  ;; remember to update pom file (`lein pom`)
