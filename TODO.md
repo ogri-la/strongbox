@@ -79,6 +79,11 @@ see CHANGELOG.md for a more formal list of changes by release
 * 0.3.0 release
     - merge to master, tag, update readme with new downloadable
 
+## 0.3.1 release
+
+* fixed bug where etag was being written before cache directory existed
+    - this wouldn't have affected existing installations
+
 ## 0.4.0 release
 
 ### done
@@ -109,6 +114,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
+* highlight errors and warnings in notice logger
 * internationalisation? 
     - Akitools has no english description but it does have a "Notes-zhCN" in the toc file that could be used
 * add an 'about' top level menu

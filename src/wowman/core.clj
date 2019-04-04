@@ -464,11 +464,11 @@
                            (refresh)))]
     (state-bind [:cfg :install-dir] reset-state-fn)))
 
-(defn-spec init-state-dir nil?
+(defn-spec init-dirs nil?
   []
-  (when-not (fs/exists? (paths :state-dir))
-    (info "creating state directory:" (paths :state-dir))
-    (fs/mkdirs (paths :state-dir)))
+  (info (format "creating directories %s and %s" (paths :state-dir) (paths :cache-dir)))
+  (fs/mkdirs (paths :state-dir))
+  (fs/mkdirs (paths :cache-dir))
   nil)
 
 ;;
@@ -483,7 +483,7 @@
   [& [cli-opts]]
   (-start)
   (info "starting app")
-  (init-state-dir)
+  (init-dirs)
   (load-settings cli-opts)
   ;;(load-addon-summaries)  ;; load the contents of the curseforge.json file. defer to ui
   (watch-for-install-dir-change)

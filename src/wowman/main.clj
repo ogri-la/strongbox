@@ -100,7 +100,7 @@
       (:errors args) args
 
       ;; state directory doesn't exist and parent directory isn't writable
-      ;; no where to create state dir, nowhere to download addon list. non-starter
+      ;; nowhere to create state dir, nowhere to download addon list. non-starter
       (and
        (not (fs/exists? (paths :state-dir)))
        (not (fs/writeable? (fs/parent (paths :state-dir))))) {:ok? false, :exit-message (str "State directory doesn't exist and it cannot be created: " (paths :state-dir))}
