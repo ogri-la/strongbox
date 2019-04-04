@@ -50,11 +50,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * 0.2.0 release
     - merge to master, tag, update readme with new downloadable
     - done
-
-## 0.3.0/unreleased
-
-### done
-
 * fixes the typo in 'downloading addon summary data foraddon'
 * gui, shift 'update selected' and 'delete selected' and 're-install selected' into a context menu
     - done
@@ -81,13 +76,14 @@ see CHANGELOG.md for a more formal list of changes by release
     - done
 * gui, search box gets focused immediately
     - done
-
-### todo
-
 * 0.3.0 release
     - merge to master, tag, update readme with new downloadable
 
-## todo bucket
+## 0.4.0 release
+
+### done
+
+### todo
 
 * do not cache bad downloads
     - do not keep the zip file
@@ -96,20 +92,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - I just attempted to install an addon called Narcissus and the download failed/timed out
         - unzipping it caused a java.lang.IllegalArgumentException: MALFORMED
         - the bad zip file was preserved in cache
-* internationalisation? 
-    - Akitools has no english description but it does have a "Notes-zhCN" in the toc file that could be used
-* add an 'about' top level menu
-    - it checks if a new version of wowman available
-    - link where to find it
-    - licence
-* a 'stop' button to stop updates would be nice ...
-* bug, changing sort order during refresh doesn't accurate reflect what is being updated
-* gui, hide columns using jxtable preferred method
-* move to XDG preferred data/config directories
-    - https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
-    - perhaps ignore data directory for now and just use config (~/.config/wowman/)
-    - make this customisable?
-* arch linux AUR package
 * clear cached files option
     - clears all cache files
 * clear zip files options
@@ -119,12 +101,31 @@ see CHANGELOG.md for a more formal list of changes by release
     - wowmatrix .dat files?
 * cached files policy
     - nothing older than a week?
+* gui, min-widths for updated, installed, available, update? and version fields
+    - rest can be elastic
+* gui, optional fields in the search and installed panes
+    - prune back the columns if we can
+    - columns can be hidden using jxtable preferred method
+
+## todo bucket
+
+* internationalisation? 
+    - Akitools has no english description but it does have a "Notes-zhCN" in the toc file that could be used
+* add an 'about' top level menu
+    - it checks if a new version of wowman available
+    - link where to find it
+    - licence
+* a 'stop' button to stop updates would be nice ...
+* bug, changing sort order during refresh doesn't accurate reflect what is being updated
+* move to XDG preferred data/config directories
+    - https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+    - perhaps ignore data directory for now and just use config (~/.config/wowman/)
+    - make this customisable?
+* arch linux AUR package
 * download addon details in parallel
     - speed benefits, mostly
     - share a pool of connections between threads
         - N connections serving M threads
-* gui, min-widths for updated, installed, available, update? and version fields
-    - rest can be elastic
 * gui, search pane, indicate results are paginated
 * cli, update specific addon
 * cli, install specific addon
@@ -133,7 +134,7 @@ see CHANGELOG.md for a more formal list of changes by release
 * gui, pagination controls in search pane
 * gui, feature, install addon from local zipfile
     - *not* the 'reinstallation' feature, but literally selecting a zipfile from somewhere and installing it
-* gui, search pane, clear search button
+    - would be good for installing older versions of an addon?
 * gui, scroll tabs with mouse
 * gui, search, order by date only orders the *current page* of results
 * capture 'total downloads' from curseforge
@@ -142,8 +143,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - donation url
     - other addons by author ?
     - list the hidden/sub dependencies
-* gui, optional fields in the search and installed panes
-    - prune back the columns if we can
 * testing, capture metrics with an eye to improving performance and speed
 * issue a warning when addons unpack directories that don't share a common prefix
     - this would hopefully alert users that some shitty addons are being sneakily installed, like SlideBar or Stubby
@@ -156,7 +155,8 @@ see CHANGELOG.md for a more formal list of changes by release
         - you're a victim of github's 99.999 uptime rating
 
 ## wontfix
-
+* gui, search pane, clear search button
+    - I don't think this is necessary anymore
 * bug, 'whoa thick frames' is reporting a version number of '0.9.zip'
     - toc file just says '0.9'
     - update: it's using the version value from curseforge which *is* '0.9.zip'
