@@ -388,6 +388,23 @@
 
         grid (x/table-x :id :tbl-search-addons :model tblmdl)
 
+        label-idx (atom (set []))
+        update-label-idx (fn [_]
+                           (reset! label-idx (set (remove nil? (map :label (get-state :installed-addon-list))))))
+        _ (state-bind [:installed-addon-list] update-label-idx)
+
+        predicate (proxy [org.jdesktop.swingx.decorator.HighlightPredicate] []
+                    (isHighlighted [renderer adapter]
+                      (let [label-column 0
+                            value (.getValue adapter label-column)]
+                        (contains? @label-idx value))))
+
+        highlighter (org.jdesktop.swingx.decorator.ColorHighlighter.
+                     predicate
+                     (seesaw.color/color :lightsteelblue 140)
+                     nil) ;; no change in foreground colours
+        _ (.addHighlighter grid highlighter)
+
         date-renderer (proxy [javax.swing.table.DefaultTableCellRenderer] []
                         (setValue [datestr]
                           (when datestr

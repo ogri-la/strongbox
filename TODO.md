@@ -77,10 +77,11 @@ see CHANGELOG.md for a more formal list of changes by release
     - unify these
     - figure out a way to keep the version in the user agent up-to-date
     - done, introduced new dependency 'versioneer'
+* gui, search, highlight rows that are installed
+    - done
 
 ### todo
 
-* gui, search, highlight rows that are installed
 * gui, search box gets focused immediately
 
 ## todo bucket
