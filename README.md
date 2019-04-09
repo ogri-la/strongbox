@@ -85,7 +85,12 @@ Minion         https://minion.mmoui.com/                       yes*    yes   yes
 WorldOfAddons  https://github.com/WorldofAddons/worldofaddons  yes*    yes*  yes       yes     yes
 wowam          https://github.com/sysworx/wowam                no      yes   yes       no      yes
 wowmatrix      https://www.wowmatrix.com/                      yes     yes   yes       no      no
+
+* with caveats
+  may require compilation, partial functionality or not work at all, or be officially unsupported, or ...
 </pre>
+
+
 
 ## License
 
