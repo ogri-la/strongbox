@@ -76,6 +76,17 @@ that it's my privilege to offer this small piece back.
 
 [![wowman version 0.3.0](screenshot-0.3.0-thumbnail.jpg)](screenshot-0.3.0.png?raw=true)
 
+## Other unofficial addon managers
+
+<pre>
+               url                                             Linux   Mac   Windows   f/oss?  source available?
+
+Minion         https://minion.mmoui.com/                       yes*    yes   yes       no      no
+WorldOfAddons  https://github.com/WorldofAddons/worldofaddons  yes*    yes*  yes       yes     yes
+wowam          https://github.com/sysworx/wowam                no      yes   yes       no      yes
+wowmatrix      https://www.wowmatrix.com/                      yes     yes   yes       no      no
+</pre>
+
 ## License
 
 Copyright © 2018-2019 Torkus
