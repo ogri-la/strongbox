@@ -85,7 +85,7 @@ that it's my privilege to offer this small piece back.
 | wowmatrix     | https://www.wowmatrix.com/                     | yes    | yes  | yes      | no     | no                | 
 | WorldOfAddons | https://github.com/WorldofAddons/worldofaddons | yes*   | yes* | yes      | yes    | yes               | 
 
-* with caveats. may require compilation, partial functionality or not work at all, or be officially unsupported, or ...
+\* with caveats. may require compilation, partial functionality or not work at all, or be officially unsupported, or ...
 
 ## License
 
