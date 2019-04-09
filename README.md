@@ -78,19 +78,14 @@ that it's my privilege to offer this small piece back.
 
 ## Other unofficial addon managers
 
-<pre>
-               url                                             Linux   Mac   Windows   f/oss?  source available?
+| name          | url                                            | Linux  | Mac  | Windows  | f/oss? | source available? | 
+|---------------|------------------------------------------------|--------|------|----------|--------|-------------------| 
+| Minion        | https://minion.mmoui.com/                      | yes*   | yes  | yes      | no     | no                | 
+| wowam         | https://github.com/sysworx/wowam               | no     | yes  | yes      | no     | yes               | 
+| wowmatrix     | https://www.wowmatrix.com/                     | yes    | yes  | yes      | no     | no                | 
+| WorldOfAddons | https://github.com/WorldofAddons/worldofaddons | yes*   | yes* | yes      | yes    | yes               | 
 
-Minion         https://minion.mmoui.com/                       yes*    yes   yes       no      no
-WorldOfAddons  https://github.com/WorldofAddons/worldofaddons  yes*    yes*  yes       yes     yes
-wowam          https://github.com/sysworx/wowam                no      yes   yes       no      yes
-wowmatrix      https://www.wowmatrix.com/                      yes     yes   yes       no      no
-
-* with caveats
-  may require compilation, partial functionality or not work at all, or be officially unsupported, or ...
-</pre>
-
-
+* with caveats. may require compilation, partial functionality or not work at all, or be officially unsupported, or ...
 
 ## License
 
