@@ -21,7 +21,7 @@
     [coerce :as coerce-time]
     [format :as format-time]]))
 
-(def ^:dynamic cache-dir nil)
+(def ^:dynamic *cache-dir* nil)
 
 (def not-empty? (comp not empty?))
 
@@ -298,10 +298,9 @@
 (defn download-file
   [uri output-file & {:keys [overwrite?]}]
   (let [;; we can have local file based caching or we can rely on etags for fresh data
-        ;; erring on the side of etags for now as a dumb cache is a little too-dumb for me
-        cache? (not (nil? cache-dir))
+        cache? (not (nil? *cache-dir*))
         etag-path (when cache?
-                    (join cache-dir (-> output-file fs/base-name (str ".etag"))))]
+                    (join *cache-dir* (-> output-file fs/base-name (str ".etag"))))]
 
     ;; when etag path exists but output file doesn't, delete etag file
     ;; ensures orphaned .etag files don't prevent download
@@ -365,10 +364,10 @@
 
 (defn download
   [uri & {:keys [message]}]
-  (let [cache? (not (nil? cache-dir)) ;; only cache when we have somewhere to cache.
+  (let [cache? (not (nil? *cache-dir*)) ;; only cache when we have somewhere to cache.
         ;; only the filename is being encoded, not the contents of the download. it's ugly, but safe and reversible.
         cache-key (-> uri .getBytes b64/encode String. (str ".html"))
-        cache-dir (fs/file cache-dir (datestamp-now-ymd))
+        cache-dir (fs/file *cache-dir* (datestamp-now-ymd))
         cache-path (fs/file cache-dir cache-key)] ;; "/path/to/cache/2001-01-01/aHR0[...]cHM6=.html
     (when cache?
       (fs/mkdirs cache-dir))

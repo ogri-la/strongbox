@@ -17,12 +17,12 @@
 
 (defmethod action :scrape-addon-list
   [_]
-  (binding [utils/cache-dir (paths :cache-dir)]
+  (binding [utils/*cache-dir* (paths :cache-dir)]
     (curseforge/download-all-addon-summaries (paths :addon-summary-file))))
 
 (defmethod action :update-addon-list
   [_]
-  (binding [utils/cache-dir (paths :cache-dir)]
+  (binding [utils/*cache-dir* (paths :cache-dir)]
     (let [{since :datestamp} (utils/load-json-file (paths :addon-summary-file))]
       ;; download any updates to a file
       (curseforge/download-all-addon-summary-updates since (paths :addon-summary-updates-file))
