@@ -253,6 +253,7 @@
         [toplevel-dirs, toplevel-files] (utils/split-filter :dir? toplevel-entries)]
     (if (> (count toplevel-files) 0)
       (do
+        ;; todo: shift this (somehow) into `install-addon-guard`
         (error "refusing to unzip addon, it contains top-level *files*:" toplevel-files)
         [])
       (let [_ (utils/unzip-file downloaded-file install-dir)
@@ -277,9 +278,12 @@
     (let [downloaded-file (download-addon addon install-dir)]
       (info "installing" (:label addon) "...")
       (cond
-        (nil? downloaded-file) (error "non-http error downloading addon, could not install" (:name addon))
         (map? downloaded-file) (error "failed to download addon, could not install" (:name addon))
-        (not (utils/valid-zip-file? downloaded-file)) (error (format "failed to read zip file '%s', could not install %s" downloaded-file (:name addon)))
+        (not (utils/valid-zip-file? downloaded-file)) (do
+                                                        (error (format "failed to read zip file '%s', could not install %s" downloaded-file (:name addon)))
+                                                        (fs/delete downloaded-file)
+                                                        (warn "removed bad zipfile" downloaded-file))
+        (nil? downloaded-file) (error "non-http error downloading addon, could not install" (:name addon)) ;; I dunno. /shrug
         :else (-install-addon addon install-dir downloaded-file)))))
 
 (def install-addon

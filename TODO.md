@@ -12,8 +12,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### done
 
-### todo
-
 * do not cache bad downloads
     - do not keep the zip file
     - do not keep an etag, although orphaned etags *are* handled
@@ -21,6 +19,10 @@ see CHANGELOG.md for a more formal list of changes by release
     - I just attempted to install an addon called Narcissus and the download failed/timed out
         - unzipping it caused a java.lang.IllegalArgumentException: MALFORMED
         - the bad zip file was preserved in cache
+    - done, although etag left for orphan checker
+
+### todo
+
 * clear cached files option
     - clears all cache files
 * clear zip files options
@@ -38,6 +40,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
+* gui, a 'go' link
+    - takes you to the curseforge site
 * highlight errors and warnings in notice logger
 * internationalisation? 
     - Akitools has no english description but it does have a "Notes-zhCN" in the toc file that could be used

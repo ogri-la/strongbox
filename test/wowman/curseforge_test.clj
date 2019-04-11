@@ -46,19 +46,28 @@
 
 (def toc-addon (core/merge-addons toc addon))
 
+;; TODO: move to core_test.clj
 (deftest install-addon
-  (let [install-dir temp-dir-path
-        ;; move dummy addon file into place so there is no cache miss
-        fname (core/downloaded-addon-fname (:name addon) (:version addon))
-        _ (utils/cp (join "test" "fixtures" fname) temp-dir-path)]
+  (testing "installing an addon"
+    (let [install-dir temp-dir-path
+          ;; move dummy addon file into place so there is no cache miss
+          fname (core/downloaded-addon-fname (:name addon) (:version addon))
+          _ (utils/cp (join "test" "fixtures" fname) install-dir)
+          file-list (core/install-addon addon install-dir)]
 
-    (testing "installing an addon"
-      (let [nfo-file-list (core/install-addon addon install-dir)]
-        (testing "addon directory created, single nfo file written"
-          (is (= (count nfo-file-list) 1))
-          (is (fs/exists? (first nfo-file-list))))))))
+      (testing "addon directory created, single file written (.wowman.json nfo file)"
+        (is (= (count file-list) 1))
+        (is (fs/exists? (first file-list)))))))
 
-(comment
+(deftest install-bad-addon
+  (testing "installing a bad addon"
+    (let [install-dir temp-dir-path
+          fname (core/downloaded-addon-fname (:name addon) (:version addon))
+          _ (fs/copy "test/fixtures/bad-truncated.zip" (join install-dir fname))] ;; hoho, so evil
+      (is (= (core/install-addon addon install-dir) nil))
+      (is (= (count (fs/list-dir install-dir)) 0))))) ;; bad zip file deleted
+
+(comment "why disabled?"
   (deftest install-addon-from-toc-addon
     (let [install-dir temp-dir-path
         ;; move dummy addon file into place so there is no cache miss

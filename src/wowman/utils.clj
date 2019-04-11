@@ -204,7 +204,7 @@
   "returns true if there are no apparent problems reading the given zip file."
   [zipfile-path ::sp/extant-archive-file]
   (try
-    (java.util.zip.ZipFile. zipfile-path)
+    (-> zipfile-path java.util.zip.ZipFile. .close)
     true
     (catch java.util.zip.ZipException _ 
       false)))
