@@ -143,6 +143,7 @@
   (let [all-summaries (sort-by :name (download-all-summaries-alphabetically))]
     (info "writing addon updates:" output-path)
     (spit output-path (utils/to-json {:datestamp (utils/datestamp-now-ymd)
+                                      :updated-datestamp (utils/datestamp-now-ymd)
                                       :total (count all-summaries)
                                       :addon-summary-list all-summaries}))
     output-path))
