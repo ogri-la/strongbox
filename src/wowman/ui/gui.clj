@@ -514,6 +514,7 @@
                    (when (core/debugging?) ;; these have never been useful outside of dev
                      (ss/action :name "Load settings" :handler (handler core/load-settings))
                      (ss/action :name "Save settings" :key "menu S" :mnemonic "s" :handler (handler core/save-settings)))
+                   :separator
                    (ss/action :name "Exit" :key "menu Q" :mnemonic "x" :handler (handler #(ss/dispose! newui))))
 
         addon-menu [(ss/action :name "Update all" :key "menu U" :mnemonic "u" :handler (async-handler core/install-update-all))
