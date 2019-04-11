@@ -308,7 +308,7 @@
   "downloads addon summary file to expected location, nothing more"
   []
   (binding [utils/*cache-dir* (paths :cache-dir)]
-    (utils/download-file remote-addon-summary-file (paths :addon-summary-file))))
+    (utils/download-file remote-addon-summary-file (paths :addon-summary-file) :overwrite? true)))
 
 (defn-spec load-addon-summaries nil?
   []

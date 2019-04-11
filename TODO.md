@@ -20,6 +20,7 @@ see CHANGELOG.md for a more formal list of changes by release
         - unzipping it caused a java.lang.IllegalArgumentException: MALFORMED
         - the bad zip file was preserved in cache
     - done, although etag left for orphan checker
+* fixed bug where curseforge.json wasn't updated when etag changed
 
 ### todo
 
@@ -40,6 +41,11 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
+* support for wowinterface.com
+    - turns out curseforge isn't the sole addon host around (good!)
+    - see AbyssUI
+        - it disappeared from curseforge but showed up on wowinterface
+    - I suspect Tukui is similar as well, a self-host for addons 
 * gui, a 'go' link
     - takes you to the curseforge site
 * highlight errors and warnings in notice logger
