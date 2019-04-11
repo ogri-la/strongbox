@@ -13,7 +13,7 @@
 (defn tempdir-fixture
   "each test has a temporary dir available to it"
   [f]
-  (binding [temp-dir-path (str (fs/temp-dir "cljtest-"))]
+  (binding [temp-dir-path (str (fs/temp-dir "wowman.curseforge-test."))]
     (debug "created temp dir" temp-dir-path)
     (f)
     (debug "destroying temp dir" temp-dir-path)
@@ -52,7 +52,7 @@
         fname (core/downloaded-addon-fname (:name addon) (:version addon))
         _ (utils/cp (join "test" "fixtures" fname) temp-dir-path)]
 
-    (testing "installing from an addon type"
+    (testing "installing an addon"
       (let [nfo-file-list (core/install-addon addon install-dir)]
         (testing "addon directory created, single nfo file written"
           (is (= (count nfo-file-list) 1))

@@ -200,11 +200,24 @@
       (zip/zip out-path (mapv #(file-to-lazy-byte-array % in-path) files-to-be-zipped))
       out-path)))
 
-(defn-spec unzip-file ::sp/extant-dir
+(defn-spec valid-zip-file? boolean?
+  "returns true if there are no apparent problems reading the given zip file."
+  [zipfile-path ::sp/extant-archive-file]
+  (try
+    (java.util.zip.ZipFile. zipfile-path)
+    true
+    (catch java.util.zip.ZipException _ 
+      false)))
+
+(defn-spec unzip-file (s/or :ok ::sp/extant-dir, :failed nil?)
   [zipfile-path ::sp/extant-archive-file, output-dir-path ::sp/extant-dir]
   (debug (format "unzipping %s to %s" zipfile-path output-dir-path))
-  (zip/unzip zipfile-path output-dir-path)
-  output-dir-path)
+  (try
+    (zip/unzip zipfile-path output-dir-path)
+    output-dir-path
+    (catch java.util.zip.ZipException e
+      (error (format "failed to unzip '%s': %s" zipfile-path (.getMessage e)))
+      nil)))
 
 (defn zipfile-entries
   [zipfile-path]

@@ -279,6 +279,7 @@
       (cond
         (nil? downloaded-file) (error "non-http error downloading addon, could not install" (:name addon))
         (map? downloaded-file) (error "failed to download addon, could not install" (:name addon))
+        (not (utils/valid-zip-file? downloaded-file)) (error (format "failed to read zip file '%s', could not install %s" downloaded-file (:name addon)))
         :else (-install-addon addon install-dir downloaded-file)))))
 
 (def install-addon
