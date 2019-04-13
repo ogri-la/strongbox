@@ -80,7 +80,8 @@
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
   [addon-summary ::sp/addon-summary]
   (let [message (str "downloading summary data: " (:name addon-summary))
-        detail-uri (str curseforge-host "/wow/addons/" (:name addon-summary))
+        ;;detail-uri (str curseforge-host "/wow/addons/" (:name addon-summary)) ;; :name here is unreliable. it may be the 'altname' used to match.
+        detail-uri (:uri addon-summary)
         versions-uri (str detail-uri "/files")
         versions-html (html/html-snippet (utils/download versions-uri :message message))
         latest-release (-> (html/select versions-html [:table.project-file-listing :tbody :tr]) first)

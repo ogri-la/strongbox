@@ -350,9 +350,11 @@
                     (when installed-addon
                       (when-not ia-by-name
                           ;; we matched, but under less than ideal circumstances
-                        (warn (format "matched installed addon '%s' by the :alt-name '%s'" (:name installed-addon) (:alt-name available-addon))))
-                        ;;(merge-addons installed-addon available-addon))))
-                      (merge {:matched? true} available-addon installed-addon))))
+                        (warn (format "matched installed addon '%s' by the :alt-name '%s'" name (:alt-name available-addon))))
+                      (merge {:matched? true} available-addon installed-addon)
+                      ;; this is probably what should be happening, but the conflict on :name means the catalog name gets overwritten
+                      ;;(merge installed-addon available-addon {:matched? true}))))
+                      )))
 
         matched (vec (remove nil? (map matcher (get-state :addon-summary-list))))
         unmatched (clojure.set/difference (set (keys ia-idx)) (mapv :name matched))
@@ -373,7 +375,9 @@
 (defn-spec merge-addons ::sp/toc-addon
   [toc ::sp/toc, addon ::sp/addon]
   (let [toc-addon (merge toc addon)
-        update? (not= (:installed-version toc-addon) (:version toc-addon))]
+        {:keys [installed-version version]} toc-addon
+        ;; update only if we have a new version and it's different from the installed version
+        update? (and version (not= installed-version version))]
     (if update?
       (assoc toc-addon :update? update?)
       toc-addon)))
@@ -432,8 +436,10 @@
                                              ;; don't expand if we have a dummy uri.
                                              ;; this isn't the right place for test code, but eh
                                              (nil? (clojure.string/index-of (:uri ia) "example.org")))
+                                          ;; we have a match!
                                           (merge-addons ia (expand-summary-wrapper ia))
-                                          (assoc ia :update? false))) ;;hack
+                                          ;; no match, can't update
+                                          (assoc ia :update? false))) ;; hack. this whole bit needs looking at
                                       (get-state :installed-addon-list)))
   (info "done checking for updates"))
 
