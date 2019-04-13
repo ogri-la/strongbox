@@ -522,6 +522,7 @@
 
         cache-menu [(ss/action :name "Delete cache" :handler (async-handler core/delete-cache))
                     (ss/action :name "Delete addon zips" :handler (async-handler core/delete-downloaded-addon-zips))
+                    (ss/action :name "Delete .wowman.json files" :handler (async-handler core/delete-wowman-json-files))
                     :separator
                     (ss/action :name "Clear all" :handler (async-handler core/clear-all-temp-files))]
 
