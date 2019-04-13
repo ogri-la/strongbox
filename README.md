@@ -78,15 +78,15 @@ that it's my privilege to offer this small piece back.
 
 ## Other unofficial addon managers
 
-| name          | url                                             | Linux  | Mac  | Windows  | maintained? | f/oss? | source available? | 
-|---------------|-------------------------------------------------|--------|------|----------|-------------|--------|-------------------| 
-| Minion        | https://minion.mmoui.com/                       | yes*   | yes  | yes      | yes         | no     | no                | 
-| Tukui Client  | https://www.tukui.org/download.php?client=win   | no     | no   | yes      | yes         | no     | no                | 
-| WorldOfAddons | https://github.com/WorldofAddons/worldofaddons  | yes*   | yes* | yes      | yes         | yes    | yes               | 
-| WoWAceUpdater | https://sourceforge.net/projects/wowaceupdater/ | no     | no   | yes      | no          | yes    | yes               | 
-| wowam         | https://github.com/sysworx/wowam                | no     | yes  | yes      | no          | no     | yes               | 
-| wowmatrix     | https://www.wowmatrix.com/                      | yes    | yes  | yes      | yes         | no     | no                | 
-
+| name          | url                                             | Linux | Mac  | Windows | maintained? | f/oss? | source available? | 
+|---------------|-------------------------------------------------|-------|------|---------|-------------|--------|-------------------| 
+| Minion        | https://minion.mmoui.com/                       | yes*  | yes  | yes     | yes         | no     | no                | 
+| Tukui Client  | https://www.tukui.org/download.php?client=win   | no    | no   | yes     | yes         | no     | no                | 
+| WorldOfAddons | https://github.com/WorldofAddons/worldofaddons  | yes*  | yes* | yes     | yes         | yes    | yes               | 
+| WoWAceUpdater | https://sourceforge.net/projects/wowaceupdater/ | no    | no   | yes     | no          | yes    | yes               | 
+| wowaddon      | https://github.com/wttw/wowaddon                | yes   | yes  | yes     | no          | yes    | yes               | 
+| wowam         | https://github.com/sysworx/wowam                | no    | yes  | yes     | no          | no     | yes               | 
+| wowmatrix     | https://www.wowmatrix.com/                      | yes   | yes  | yes     | yes         | no     | no                | 
 
 \* with caveats. may require compilation, partial functionality or not work at all, or be officially unsupported, or ...
 
