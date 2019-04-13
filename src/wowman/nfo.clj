@@ -17,7 +17,8 @@
 
 (defn-spec derive ::sp/nfo
   [addon ::sp/addon-or-toc-addon, primary? boolean?]
-  {:installed-version (:version addon)
+  {;; important! as an addon is (re)installed the addon :installed-version scraped from the toc file is replaced with the more-consistent :version from the catalog
+   :installed-version (:version addon)
    :name (:name addon) ;; normalised name, used to match to online addon
    :group-id (:uri addon) ;; groups all of an addon's directories together
    :primary? primary? ;; if addon is one of multiple addons, is this addon considered the primary one?
