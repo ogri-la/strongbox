@@ -116,7 +116,9 @@
   []
   (get-state :cfg :debug?))
 
+;;
 ;; settings
+;;
 
 (defn-spec configure ::sp/user-config
   "handles the user configurable bit of the app. command line args override args from from the config file."
@@ -170,7 +172,9 @@
   (swap! state assoc-in [:cfg :install-dir] (-> install-dir fs/absolute fs/normalized str))
   nil)
 
+;;
 ;; utils
+;;
 
 (defn start-affecting-addon
   [addon]
@@ -188,6 +192,10 @@
       (apply wrapped-fn addon args)
       (finally
         (stop-affecting-addon addon)))))
+
+;;
+;; downloading and installing and updating
+;;
 
 (defn-spec downloaded-addon-fname string?
   [name string? version string?]
@@ -304,6 +312,10 @@
     (info "(re)loading installed addons:" install-dir)
     (update-installed-addon-list! (wowman.fs/installed-addons install-dir))))
 
+;;
+;; addon summaries
+;;
+
 (defn-spec download-addon-summary-file ::sp/extant-file
   "downloads addon summary file to expected location, nothing more"
   []
@@ -354,6 +366,10 @@
 
     (update-installed-addon-list! expanded-installed-addon-list)))
 
+;;
+;; addon summary and toc merging
+;;
+
 (defn-spec merge-addons ::sp/toc-addon
   [toc ::sp/toc, addon ::sp/addon]
   (let [toc-addon (merge toc addon)
@@ -367,6 +383,35 @@
   (binding [utils/*cache-dir* (paths :cache-dir)]
     (let [wrapper (affects-addon-wrapper curseforge/expand-summary)]
       (wrapper addon-summary))))
+
+;;
+;; ui interface
+;; 
+
+(defn-spec delete-cache nil?
+  "deletes the './state/cache' directory that contains etag files and "
+  []
+  (warn "deleting cache")
+  (fs/delete-dir (paths :cache-dir))
+  nil)
+
+(defn-spec list-downloaded-addon-zips (s/coll-of ::sp/extant-file)
+  [dir ::sp/extant-dir]
+  (mapv str (fs/find-files dir #".+\-\-.+\.zip")))
+
+(defn-spec delete-downloaded-addon-zips nil?
+  "deletes all of the addon zip files downloaded to '/path/to/Addons/'"
+  []
+  (let [install-dir (get-state :cfg :install-dir)
+        zip-files (list-downloaded-addon-zips install-dir)
+        alert #(warn "deleting file " %)]
+    (warn (format "deleting %s downloaded addon zip files" (count zip-files)))
+    (dorun (map (juxt alert fs/delete) zip-files))))
+
+(defn-spec clear-all-temp-files nil?
+  []
+  (delete-downloaded-addon-zips)
+  (delete-cache))
 
 (defn-spec check-for-updates nil?
   "downloads full details for all installed addons that can be found in summary list"
@@ -456,6 +501,10 @@
   []
   (-> (get-state) :selected-installed vec remove-many-addons))
 
+;;
+;; init
+;;
+
 (defn watch-for-install-dir-change
   "when the install directory changes, the list of installed addons should be re-read"
   []
@@ -475,10 +524,6 @@
   (fs/mkdirs (paths :state-dir))
   (fs/mkdirs (paths :cache-dir))
   nil)
-
-;;
-;;
-;;
 
 (defn -start
   []

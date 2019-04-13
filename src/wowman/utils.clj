@@ -206,7 +206,7 @@
   (try
     (-> zipfile-path java.util.zip.ZipFile. .close)
     true
-    (catch java.util.zip.ZipException _ 
+    (catch java.util.zip.ZipException _
       false)))
 
 (defn-spec unzip-file (s/or :ok ::sp/extant-dir, :failed nil?)

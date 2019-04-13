@@ -21,13 +21,18 @@ see CHANGELOG.md for a more formal list of changes by release
         - the bad zip file was preserved in cache
     - done, although etag left for orphan checker
 * fixed bug where curseforge.json wasn't updated when etag changed
+* clear cached files option
+    - clears all cache files
+    - done
+* clear zip files options
+    - clears all downloaded zip files
+    - done
+* 'clear all' option
+    - general housecleaning option
+    - done
 
 ### todo
 
-* clear cached files option
-    - clears all cache files
-* clear zip files options
-    - clears all downloaded zip files
 * clear hidden files
     - .wowman.json
     - wowmatrix .dat files?

@@ -68,16 +68,16 @@
       (is (= (count (fs/list-dir install-dir)) 0))))) ;; bad zip file deleted
 
 (comment "why disabled?"
-  (deftest install-addon-from-toc-addon
-    (let [install-dir temp-dir-path
+         (deftest install-addon-from-toc-addon
+           (let [install-dir temp-dir-path
         ;; move dummy addon file into place so there is no cache miss
-          fname (core/downloaded-addon-fname (:name addon) (:version addon))
-          _ (utils/cp (join "./resources" fname) temp-dir-path)]
-      (testing "installing from a toc-addon (merged toc-file + addon) type"
-        (let [nfo-file-list (core/install-addon install-dir toc-addon)]
-          (testing "addon directory created, single nfo file written"
-            (is (= (count nfo-file-list) 1))
-            (is (fs/exists? (first nfo-file-list)))))))))
+                 fname (core/downloaded-addon-fname (:name addon) (:version addon))
+                 _ (utils/cp (join "./resources" fname) temp-dir-path)]
+             (testing "installing from a toc-addon (merged toc-file + addon) type"
+               (let [nfo-file-list (core/install-addon install-dir toc-addon)]
+                 (testing "addon directory created, single nfo file written"
+                   (is (= (count nfo-file-list) 1))
+                   (is (fs/exists? (first nfo-file-list)))))))))
 
 (deftest scrape-addon-summary
   (let [fixture (slurp "test/fixtures/addon-summary-listing.html")
