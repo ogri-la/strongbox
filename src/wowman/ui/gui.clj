@@ -283,7 +283,7 @@
                       (let [update-column 8
                             ;;update-column (.viewToModel adapter update-column) ;; not working?
                             value (.getValue adapter update-column)]
-                        (not (nil? value)))))
+                        (true? value))))
 
         highlighter (org.jdesktop.swingx.decorator.ColorHighlighter.
                      predicate
@@ -309,8 +309,8 @@
 
         date-renderer (proxy [javax.swing.table.DefaultTableCellRenderer] []
                         (setValue [datestr]
-                          (when datestr
-                            (proxy-super setValue (-> datestr clojure.instant/read-instant-date (utils/fmt-date "yyyy-MM-dd"))))))
+                          (proxy-super setValue (if-not datestr ""
+                                                  (-> datestr clojure.instant/read-instant-date (utils/fmt-date "yyyy-MM-dd"))))))
         _ (.setCellRenderer (.getColumn (.getColumnModel grid) 7) date-renderer)
 
         interface-version-renderer (proxy [javax.swing.table.DefaultTableCellRenderer] []
