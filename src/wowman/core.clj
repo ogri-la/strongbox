@@ -421,6 +421,15 @@
     (warn (format "deleting %s .wowman.json files" (count wowman-files)))
     (dorun (vec (map (juxt alert fs/delete) wowman-files)))))
 
+(defn delete-wowmatrix-dat-files
+  []
+  (let [wowman-json #(fs/find-files % #"WowMatrix.dat$")
+        subdirs (filter fs/directory? (fs/list-dir (get-state :cfg :install-dir)))
+        wowman-files (flatten (map wowman-json subdirs))
+        alert #(warn "deleting file " %)]
+    (warn (format "deleting %s WowMatrix.dat files" (count wowman-files)))
+    (dorun (vec (map (juxt alert fs/delete) wowman-files)))))
+
 (defn-spec clear-all-temp-files nil?
   []
   (delete-downloaded-addon-zips)

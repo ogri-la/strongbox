@@ -520,11 +520,12 @@
         addon-menu [(ss/action :name "Update all" :key "menu U" :mnemonic "u" :handler (async-handler core/install-update-all))
                     (ss/action :name "Re-install all" :handler (async-handler core/re-install-all))]
 
-        cache-menu [(ss/action :name "Delete cache" :handler (async-handler core/delete-cache))
-                    (ss/action :name "Delete addon zips" :handler (async-handler core/delete-downloaded-addon-zips))
-                    (ss/action :name "Delete .wowman.json files" :handler (async-handler core/delete-wowman-json-files))
+        cache-menu [(ss/action :name "Clear cache" :handler (async-handler core/delete-cache))
+                    (ss/action :name "Clear addon zips" :handler (async-handler core/delete-downloaded-addon-zips))
+                    (ss/action :name "Clear all" :handler (async-handler core/clear-all-temp-files))
                     :separator
-                    (ss/action :name "Clear all" :handler (async-handler core/clear-all-temp-files))]
+                    (ss/action :name "Delete WowMatrix.dat files" :handler (async-handler core/delete-wowmatrix-dat-files))
+                    (ss/action :name "Delete .wowman.json files" :handler (async-handler core/delete-wowman-json-files))]
 
         menu (ss/menubar :items [(ss/menu :text "File" :mnemonic "F" :items file-menu)
                                  (ss/menu :text "Addons" :mnemonic "A" :items addon-menu)
