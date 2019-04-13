@@ -30,14 +30,26 @@ see CHANGELOG.md for a more formal list of changes by release
 * 'clear all' option
     - general housecleaning option
     - done
+* clear hidden files
+    - .wowman.json
+        - done
+    - wowmatrix .dat files?
+        - done
+* fixed bug in gui where empty date field caused peculiar rendering artifacts
+    - empty date fields not present when all addons are managed!
+    - I need to test against unmanaged installations more often
+* fixed bug where slugified 'altname' from catalog (used for matching against installed addons) caused a 404 when uri reconstructed
+    - no need to reconstruct uri
+    - points to a larger problem where catalog :name is otherwise lost when merged with toc contents
 
 ### todo
 
-* clear hidden files
-    - .wowman.json
-    - wowmatrix .dat files?
+* bug, on unmanaged addons dir, installing MogIt doesn't add nfo files to sub-addons
+    - try deleting the zip files ...
 * cached files policy
     - nothing older than a week?
+        - why? it's not like we want to go back and scrutinize it
+    - nothing older than today?
 * gui, min-widths for updated, installed, available, update? and version fields
     - rest can be elastic
 * gui, optional fields in the search and installed panes
