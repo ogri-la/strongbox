@@ -2,15 +2,9 @@
 
 [![Build Status](https://travis-ci.org/ogri-la/wowman.svg?branch=master)](https://travis-ci.org/ogri-la/wowman)
 
-`wowman` is *open source*, *advertisement free* and *privacy respecting* software that interfaces with 
-[www.curseforge.com](https://www.curseforge.com/wow/addons) and the addon files in your World of Warcraft `Addons` 
+`wowman` is **open source**, **advertisement free** and **privacy respecting** software that interfaces with 
+[www.curseforge.com](https://www.curseforge.com/wow/addons) and World of Warcraft addon files in your `Addons` 
 directory.
-
-It works like this:
-
-1. downloads a list of publicly available addons
-2. matches your installed addons to those in this list
-3. updates out of date addons
 
 ## Audience
 
