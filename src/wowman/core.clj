@@ -24,13 +24,15 @@
   [& path]
   (let [state-dir (join fs/*cwd* "state") ;; /path/to/current-dir/state
         cache-dir (join state-dir "cache")
+        daily-cache-dir (join cache-dir (utils/datestamp-now-ymd))
         cfg-file (join state-dir "config.json")
 
-        addon-summary-file (join state-dir "curseforge.json")
-        addon-summary-updates-file (join state-dir "curseforge-updates.json")
+        addon-summary-file (join daily-cache-dir "curseforge.json")
+        addon-summary-updates-file (join daily-cache-dir "curseforge-updates.json")
 
         path-map {:state-dir state-dir
                   :cache-dir cache-dir
+                  :daily-cache-dir daily-cache-dir
                   :cfg-file cfg-file
                   :addon-summary-file addon-summary-file
                   :addon-summary-updates-file addon-summary-updates-file}]
@@ -319,8 +321,8 @@
 (defn-spec download-addon-summary-file ::sp/extant-file
   "downloads addon summary file to expected location, nothing more"
   []
-  (binding [utils/*cache-dir* (paths :cache-dir)]
-    (utils/download-file remote-addon-summary-file (paths :addon-summary-file) :overwrite? true)))
+  (binding [utils/*cache-dir* (paths :daily-cache-dir)]
+    (utils/download-file remote-addon-summary-file (paths :addon-summary-file))))
 
 (defn-spec load-addon-summaries nil?
   []
@@ -380,7 +382,7 @@
 
 (defn expand-summary-wrapper
   [addon-summary]
-  (binding [utils/*cache-dir* (paths :cache-dir)]
+  (binding [utils/*cache-dir* (paths :daily-cache-dir)]
     (let [wrapper (affects-addon-wrapper curseforge/expand-summary)]
       (wrapper addon-summary))))
 
@@ -399,32 +401,36 @@
   [dir ::sp/extant-dir]
   (mapv str (fs/find-files dir #".+\-\-.+\.zip")))
 
+;; todo: these are all variations on a theme. consider something generic
+
 (defn-spec delete-downloaded-addon-zips nil?
   "deletes all of the addon zip files downloaded to '/path/to/Addons/'"
   []
-  (let [install-dir (get-state :cfg :install-dir)
-        zip-files (list-downloaded-addon-zips install-dir)
-        alert #(warn "deleting file " %)]
-    (warn (format "deleting %s downloaded addon zip files" (count zip-files)))
-    (dorun (map (juxt alert fs/delete) zip-files))))
+  (when-let [install-dir (get-state :cfg :install-dir)]
+    (let [zip-files (list-downloaded-addon-zips install-dir)
+          alert #(warn "deleting file " %)]
+      (warn (format "deleting %s downloaded addon zip files" (count zip-files)))
+      (dorun (map (juxt alert fs/delete) zip-files)))))
 
 (defn delete-wowman-json-files
   []
-  (let [wowman-json #(fs/find-files % #"\.wowman\.json$")
-        subdirs (filter fs/directory? (fs/list-dir (get-state :cfg :install-dir)))
-        wowman-files (flatten (map wowman-json subdirs))
-        alert #(warn "deleting file " %)]
-    (warn (format "deleting %s .wowman.json files" (count wowman-files)))
-    (dorun (vec (map (juxt alert fs/delete) wowman-files)))))
+  (when-let [install-dir (get-state :cfg :install-dir)]
+    (let [wowman-json #(fs/find-files % #"\.wowman\.json$")
+          subdirs (filter fs/directory? (fs/list-dir install-dir))
+          wowman-files (flatten (map wowman-json subdirs))
+          alert #(warn "deleting file " %)]
+      (warn (format "deleting %s .wowman.json files" (count wowman-files)))
+      (dorun (vec (map (juxt alert fs/delete) wowman-files))))))
 
 (defn delete-wowmatrix-dat-files
   []
-  (let [wowman-json #(fs/find-files % #"WowMatrix.dat$")
-        subdirs (filter fs/directory? (fs/list-dir (get-state :cfg :install-dir)))
-        wowman-files (flatten (map wowman-json subdirs))
-        alert #(warn "deleting file " %)]
-    (warn (format "deleting %s WowMatrix.dat files" (count wowman-files)))
-    (dorun (vec (map (juxt alert fs/delete) wowman-files)))))
+  (when-let [install-dir (get-state :cfg :install-dir)]
+    (let [wowman-json #(fs/find-files % #"WowMatrix.dat$")
+          subdirs (filter fs/directory? (fs/list-dir install-dir))
+          wowman-files (flatten (map wowman-json subdirs))
+          alert #(warn "deleting file " %)]
+      (warn (format "deleting %s WowMatrix.dat files" (count wowman-files)))
+      (dorun (vec (map (juxt alert fs/delete) wowman-files))))))
 
 (defn-spec clear-all-temp-files nil?
   []
@@ -548,6 +554,7 @@
   (info (format "creating directories %s and %s" (paths :state-dir) (paths :cache-dir)))
   (fs/mkdirs (paths :state-dir))
   (fs/mkdirs (paths :cache-dir))
+  (fs/mkdirs (paths :daily-cache-dir))
   (utils/prune-html-download-cache (paths :cache-dir))
   nil)
 

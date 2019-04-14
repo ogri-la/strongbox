@@ -380,10 +380,12 @@
   (let [cache? (not (nil? *cache-dir*)) ;; only cache when we have somewhere to cache.
         ;; only the filename is being encoded, not the contents of the download. it's ugly, but safe and reversible.
         cache-key (-> uri .getBytes b64/encode String. (str ".html"))
-        cache-dir (fs/file *cache-dir* (datestamp-now-ymd))
-        cache-path (fs/file cache-dir cache-key)] ;; "/path/to/cache/2001-01-01/aHR0[...]cHM6=.html
+        cache-path (fs/file *cache-dir* cache-key)] ;; "/path/to/cache/aHR0[...]cHM6=.html"
+
+    ;; it's part of `core/init-dirs`, but I like `download` available regardless of whether app has started
     (when cache?
-      (fs/mkdirs cache-dir))
+      (fs/mkdirs *cache-dir*))
+
     (if (and cache? (fs/exists? cache-path))
       (do
         (debug "cache hit: " uri)
