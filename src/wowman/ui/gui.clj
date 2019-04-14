@@ -271,6 +271,11 @@
       (when-let [pre-width (get pre-width-map (.getTitle column))]
         (.setPreferredWidth column pre-width)))))
 
+(defn hide-columns
+  [grid hidden-column-list]
+  (doseq [column hidden-column-list]
+    (.setVisible (.getColumnExt grid (-> column name str)) false)))
+
 (defn installed-addons-panel
   []
   (let [debug-cols [:group-id :primary? :addon-id :update?] ;; only visible when debugging
@@ -367,12 +372,7 @@
                                            (select-one grid idx) ;; if the rows are hidden you won't be able to see it
                                            (warn "failed to find value" (first unsteady) "in column 'addon-id'"))))))]
 
-    ;; 'hide' debug columns. affects table only, data/table model is unaffected
-    ;; todo: switch to setVisible:
-    ;; https://pirlwww.lpl.arizona.edu/resources/guide/software/SwingX/org/jdesktop/swingx/table/TableColumnExt.html#setVisible(boolean)
-    (when-not (core/debugging?)
-      (doseq [col debug-cols]
-        (.removeColumn grid (.getColumn grid (-> col name str)))))
+    (hide-columns grid debug-cols)
 
     (ss/listen grid :selection (selected-rows-handler installed-addons-selection-handler))
 
