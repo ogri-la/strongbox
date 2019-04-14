@@ -404,3 +404,12 @@
         (when cache?
           (spit cache-path remote-content))
         remote-content))))
+
+(defn-spec prune-html-download-cache nil?
+  [cache-dir ::sp/extant-dir]
+  (let [todays-cache-dir (datestamp-now-ymd)
+        all-cache-dirs (fs/find-files cache-dir #"\d{4}\-\d{2}\-\d{2}")
+        all-except-today (remove #(clojure.string/ends-with? (fs/base-name %) todays-cache-dir) all-cache-dirs)]
+    (doseq [cache-dir all-except-today]
+      (warn "deleting cache dir " cache-dir)
+      (fs/delete-dir cache-dir))))

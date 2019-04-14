@@ -55,13 +55,14 @@ see CHANGELOG.md for a more formal list of changes by release
                 - done
 * bug, curseforge.json doesn't appear to get re-downloaded
     - done
-
-### todo
-
 * cached files policy
     - nothing older than a week?
         - why? it's not like we want to go back and scrutinize it
     - nothing older than today?
+    - done
+
+### todo
+
 * gui, min-widths for updated, installed, available, update? and version fields
     - rest can be elastic
 * gui, optional fields in the search and installed panes

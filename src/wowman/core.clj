@@ -548,6 +548,7 @@
   (info (format "creating directories %s and %s" (paths :state-dir) (paths :cache-dir)))
   (fs/mkdirs (paths :state-dir))
   (fs/mkdirs (paths :cache-dir))
+  (utils/prune-html-download-cache (paths :cache-dir))
   nil)
 
 (defn -start
