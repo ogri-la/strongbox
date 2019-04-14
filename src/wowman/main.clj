@@ -136,4 +136,4 @@
   (let [{:keys [options exit-message ok?]} (-> args parse validate)]
     (if exit-message
       (exit (if ok? 0 1) exit-message)
-      (restart options))))
+      (start options))))
