@@ -66,17 +66,18 @@ see CHANGELOG.md for a more formal list of changes by release
         - a min-width has been set with a few exceptions
         - a max-width and preferred width have been set for some columns
         - preferred width doesn't seem to have much effect
-
-### todo
-
 * gui, optional fields in the search and installed panes
     - prune back the columns if we can
     - columns can be hidden using jxtable preferred method
+    - done
 
-## todo bucket
+### todo
 
 * only download curseforge.json once a day
     - download it to the cache dir so it gets auto-pruned
+
+## todo bucket
+
 * toggleable highlighers as a menuitem
     - highlight unmatched
     - highlight updates
