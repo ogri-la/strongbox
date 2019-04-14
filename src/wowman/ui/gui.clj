@@ -3,7 +3,6 @@
    [wowman
     [core :as core :refer [get-state state-bind state-binds]]
     [logging :as logging]
-    [curseforge :as curseforge]
     [specs :as sp]
     [utils :as utils]]
    [clojure.instant]
@@ -321,7 +320,7 @@
         date-renderer (proxy [javax.swing.table.DefaultTableCellRenderer] []
                         (setValue [datestr]
                           (proxy-super setValue (if-not datestr ""
-                                                  (-> datestr clojure.instant/read-instant-date (utils/fmt-date "yyyy-MM-dd"))))))
+                                                        (-> datestr clojure.instant/read-instant-date (utils/fmt-date "yyyy-MM-dd"))))))
         _ (.setCellRenderer (.getColumn (.getColumnModel grid) 7) date-renderer)
 
         interface-version-renderer (proxy [javax.swing.table.DefaultTableCellRenderer] []
