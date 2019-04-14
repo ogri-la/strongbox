@@ -1,8 +1,22 @@
 (ns wowman.main-test
   (:require
-   [clojure.test :refer [deftest testing is]]
+   [clojure.test :refer [deftest testing is use-fixtures]]
+   [taoensso.timbre :as timbre :refer [debug info warn error spy]]
+   [me.raynes.fs :as fs]
    [wowman
     [main :as main]]))
+
+(defn tempcwd-fixture
+  "each test is executed in a new location (accessible as fs/*cwd*)"
+  [f]
+  (let [temp-dir-path (fs/temp-dir "wowman.main-test.")]
+    (fs/with-cwd temp-dir-path
+      (debug "created temp working directory" fs/*cwd*)
+      (f)
+      (debug "destroying temp working directory" fs/*cwd*) ;; "with contents" (vec (file-seq fs/*cwd*)))
+      (fs/delete-dir temp-dir-path))))
+
+(use-fixtures :each tempcwd-fixture)
 
 (deftest parse-args
   (testing "default ui is 'gui'"
@@ -26,3 +40,10 @@
 
   (testing "certain actions force the 'cli' ui, even when 'gui' is explicitly passed"
     (is (= :cli (-> (main/parse ["--action" "scrape-addon-list" "--ui" "gui"]) :options :ui)))))
+
+(deftest start-app
+  (testing "starting app from a clean state, no dirs, no summary file, nothing"
+    (try
+      (main/start {})
+      (finally
+        (main/stop)))))
