@@ -264,7 +264,6 @@
         pre-width-map {"WoW" 50
                        "updated" 100}] ;; we would like these a little larger, if possible
     (doseq [column (.getColumns grid)]
-      (info "got column" (.getTitle column))
       (.setMinWidth column (get min-width-map (.getTitle column) default-min-width))
       (when-let [max-width (get max-width-map (.getTitle column))]
         (.setMaxWidth column max-width))
