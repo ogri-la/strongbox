@@ -68,6 +68,17 @@
     (state-bind watch actual-callback)
     mi))
 
+(defn disabled-button
+  [initial-label & {:keys [watch callback onclick]}]
+  (let [button (ss/button :id (-> initial-label slugify (str "-btn") keyword) ;; ":refresh-btn", ":update-all-btn"
+                          :text initial-label
+                          :listen [:action onclick]
+                          :enabled? false)
+        actual-callback (fn [state]
+                          (ss/config! button :enabled? (callback (get-in state watch))))]
+    (state-bind watch actual-callback)
+    button))
+
 (defn donothing
   "the does-nothing event handler"
   [_]
@@ -364,7 +375,10 @@
 
 (defn search-input-panel
   []
-  (let [install-button (button "install selected" (async-handler search-results-install-handler))
+  (let [install-button (disabled-button "install selected"
+                                        :watch [:selected-search]
+                                        :callback (comp not empty?)
+                                        :onclick (async-handler search-results-install-handler))
         search-input (ss/text :id :search-input-txt :columns 40 :listen [:key-released search-input-handler])]
     (ss/flow-panel :align :left :items ["search" search-input install-button])))
 
