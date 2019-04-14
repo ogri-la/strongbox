@@ -41,11 +41,22 @@ see CHANGELOG.md for a more formal list of changes by release
 * fixed bug where slugified 'altname' from catalog (used for matching against installed addons) caused a 404 when uri reconstructed
     - no need to reconstruct uri
     - points to a larger problem where catalog :name is otherwise lost when merged with toc contents
+* bug on unmanaged addons dir, re-installing unmanaged addon fails with stacktrace
+    - done
+* bug, on unmanaged addons dir, installing MogIt doesn't add nfo files to sub-addons
+    - try deleting the zip files ...
+        - nope, in fact, no downloaded zip file present at all...
+    - the addon is showing up as 'matched' in the search panel, possibly an old state hanging around
+        - I mistook the highlighted row for being 'selected' and was clicking 'install selected'
+        - 'install selected' would merrily install nothing (nothing selected), switch back to installed pane and refresh things with no obvious difference
+            - todo: change highlighted colour to not-blue
+                - changed to khaki
+            - todo: disable 'install selected' until there is something selected
+                - done
 
 ### todo
 
-* bug, on unmanaged addons dir, installing MogIt doesn't add nfo files to sub-addons
-    - try deleting the zip files ...
+* bug, curseforge.json doesn't appear to get re-downloaded
 * cached files policy
     - nothing older than a week?
         - why? it's not like we want to go back and scrutinize it
@@ -58,6 +69,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
+* highlight unmatched addons
+* nightly unstable builds
 * support for wowinterface.com
     - turns out curseforge isn't the sole addon host around (good!)
     - see AbyssUI
