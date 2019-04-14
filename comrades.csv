@@ -1,6 +1,6 @@
 name,url,Linux,Mac,Windows,maintained?,f/oss?,source available?
 vargen2/addon-manager,https://github.com/vargen2/addonmanager,no,no,yes,no,no,yes
-GWAM,https://github.com/JonasKnarbakk/GWAM,yes*,yes*,yes*,yes,yes
+GWAM,https://github.com/JonasKnarbakk/GWAM,yes*,yes*,yes*,yes,yes,yes
 Minion,https://minion.mmoui.com/,yes*,yes,yes,yes,no,no
 Tukui Client,https://www.tukui.org/download.php?client=win,no,no,yes,yes,no,no
 WorldOfAddons,https://github.com/WorldofAddons/worldofaddons,yes*,yes*,yes,yes,yes,yes
