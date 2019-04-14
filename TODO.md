@@ -53,10 +53,11 @@ see CHANGELOG.md for a more formal list of changes by release
                 - changed to khaki
             - todo: disable 'install selected' until there is something selected
                 - done
+* bug, curseforge.json doesn't appear to get re-downloaded
+    - done
 
 ### todo
 
-* bug, curseforge.json doesn't appear to get re-downloaded
 * cached files policy
     - nothing older than a week?
         - why? it's not like we want to go back and scrutinize it
@@ -70,6 +71,19 @@ see CHANGELOG.md for a more formal list of changes by release
 ## todo bucket
 
 * highlight unmatched addons
+* 're-install all' should handle cases where .wowman.json is missing
+    - it *is*, but some addons are not being handled (no match, presumably)
+        - the undermine journal (match)
+        - bartender4 (match)
+        - Healbot (no match)
+        - DBM (no match)
+        - champion commander (no match)
+    - some of these are common cases and we should have a static lookup for them
+        - healbot = healbot-continued
+        - dbm = deadly-boss-mods
+    - bartender and undermine journal not matching smell like bugs
+* download progress bar *inside* the grid ...?
+    - pure fantasy?
 * nightly unstable builds
 * support for wowinterface.com
     - turns out curseforge isn't the sole addon host around (good!)
