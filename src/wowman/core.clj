@@ -556,7 +556,7 @@
   []
   (doseq [dir [:state-dir :cache-dir :daily-cache-dir]]
     (info "creating dir:" dir)
-    (fs/mkdirs dir))
+    (fs/mkdirs (paths dir)))
   (utils/prune-html-download-cache (paths :cache-dir))
   nil)
 
