@@ -552,9 +552,7 @@
 (defn-spec init-dirs nil?
   []
   (info (format "creating directories %s and %s" (paths :state-dir) (paths :cache-dir)))
-  (fs/mkdirs (paths :state-dir))
-  (fs/mkdirs (paths :cache-dir))
-  (fs/mkdirs (paths :daily-cache-dir))
+  (mapv fs/mkdirs (map (paths) [:state-dir :cache-dir :daily-cache-dir])) ;; voodoo. you can map a map to a list of keys to get their values
   (utils/prune-html-download-cache (paths :cache-dir))
   nil)
 
