@@ -324,11 +324,7 @@
 
 (defn-spec load-addon-summaries nil?
   []
-  (when-not (fs/exists? (paths :addon-summary-file)) ;; temporary check until header caching in
-    ;; what happens if we have no addon-summary-file?
-    ;; we have nothing to search, which is ok if temporary
-    ;; if we installed the addon via wowman then the :group-id in nfo file can be used as a fall back
-    (download-addon-summary-file))
+  (download-addon-summary-file)
   (info "loading addon summary list from:" (paths :addon-summary-file))
   (let [{:keys [addon-summary-list]} (utils/load-json-file (paths :addon-summary-file))]
     (swap! state assoc :addon-summary-list addon-summary-list)
