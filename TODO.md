@@ -10,13 +10,14 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### todo
 
-
-## todo bucket
-
-* toggleable highlighers as a menuitem
-    - highlight unmatched
-    - highlight updates
-    - touch of colour against each menuitem would serve as a legend
+* move to XDG preferred data/config directories
+    - https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+    - perhaps ignore data directory for now and just use config (~/.config/wowman/)
+    - make this customisable?
+* arch linux AUR package
+* gui, a 'go' link
+    - takes you to the curseforge site
+* highlight errors and warnings in notice logger
 * highlight unmatched addons
 * 're-install all' should handle cases where .wowman.json is missing
     - it *is*, but some addons are not being handled (no match, presumably)
@@ -29,6 +30,19 @@ see CHANGELOG.md for a more formal list of changes by release
         - healbot = healbot-continued
         - dbm = deadly-boss-mods
     - bartender and undermine journal not matching smell like bugs
+* status bar indicating number matched
+* add an 'about' top level menu
+    - it checks if a new version of wowman available
+    - link where to find it
+    - licence
+* hide categories from installed panel until we can do something with them
+
+## todo bucket
+
+* toggleable highlighers as a menuitem
+    - highlight unmatched
+    - highlight updates
+    - touch of colour against each menuitem would serve as a legend
 * download progress bar *inside* the grid ...?
     - pure fantasy?
 * nightly unstable builds
@@ -37,22 +51,10 @@ see CHANGELOG.md for a more formal list of changes by release
     - see AbyssUI
         - it disappeared from curseforge but showed up on wowinterface
     - I suspect Tukui is similar as well, a self-host for addons 
-* gui, a 'go' link
-    - takes you to the curseforge site
-* highlight errors and warnings in notice logger
 * internationalisation? 
     - Akitools has no english description but it does have a "Notes-zhCN" in the toc file that could be used
-* add an 'about' top level menu
-    - it checks if a new version of wowman available
-    - link where to find it
-    - licence
 * a 'stop' button to stop updates would be nice ...
 * bug, changing sort order during refresh doesn't accurate reflect what is being updated
-* move to XDG preferred data/config directories
-    - https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
-    - perhaps ignore data directory for now and just use config (~/.config/wowman/)
-    - make this customisable?
-* arch linux AUR package
 * download addon details in parallel
     - speed benefits, mostly
     - share a pool of connections between threads
