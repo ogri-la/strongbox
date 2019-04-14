@@ -466,28 +466,33 @@
   (doseq [toc-addon updateable-toc-addons]
     (install-addon toc-addon (get-state :cfg :install-dir))))
 
-(defn updateable?
+(defn -updateable?
   [rows]
   (filterv :update? rows))
 
+(defn -re-installable?
+  "an addon can only be re-installed if it's been matched to an addon in the catalog"
+  [rows]
+  (filterv :uri rows)) ;; :uri is only present in addons that have a match
+
 (defn re-install-selected
   []
-  (-> (get-state) :selected-installed -install-update-these)
+  (-> (get-state) :selected-installed -re-installable? -install-update-these)
   (refresh))
 
 (defn re-install-all
   []
-  (-> (get-state) :installed-addon-list -install-update-these)
+  (-> (get-state) :installed-addon-list -re-installable? -install-update-these)
   (refresh))
 
 (defn install-update-selected
   []
-  (-> (get-state) :selected-installed updateable? -install-update-these)
+  (-> (get-state) :selected-installed -updateable? -install-update-these)
   (refresh))
 
 (defn-spec install-update-all nil?
   []
-  (-> (get-state) :installed-addon-list updateable? -install-update-these)
+  (-> (get-state) :installed-addon-list -updateable? -install-update-these)
   (refresh))
 
 (defn -remove-addon
