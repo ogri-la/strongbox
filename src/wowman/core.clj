@@ -395,6 +395,9 @@
   []
   (warn "deleting cache")
   (fs/delete-dir (paths :cache-dir))
+  ;; todo: this and `init-dirs` needs revisiting
+  (fs/mkdirs (paths :cache-dir))
+  (fs/mkdirs (paths :daily-cache-dir))
   nil)
 
 (defn-spec list-downloaded-addon-zips (s/coll-of ::sp/extant-file)
@@ -551,8 +554,9 @@
 
 (defn-spec init-dirs nil?
   []
-  (info (format "creating directories %s and %s" (paths :state-dir) (paths :cache-dir)))
-  (mapv fs/mkdirs (map (paths) [:state-dir :cache-dir :daily-cache-dir])) ;; voodoo. you can map a map to a list of keys to get their values
+  (doseq [dir [:state-dir :cache-dir :daily-cache-dir]]
+    (info "creating dir:" dir)
+    (fs/mkdirs dir))
   (utils/prune-html-download-cache (paths :cache-dir))
   nil)
 
