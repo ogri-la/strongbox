@@ -6,6 +6,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## 0.4.0 - 2019-04-15
+
+### Added
+
+- bad addon zip files (empty or malformed) are now removed to prevent a later cache hit
+- clear cache menu option to manually clear out accumulating cache and downloaded addon zip data
+- delete .wowman.json and wowmatrix.dat files actions added to clear cache menu
+- columns that were being removed outside of debug mode are now simply hidden and can be toggled on/off
+
+### Changed
+- curseforge.json file is now downloaded once a day, if necessary according to etag
+- previous daily cache dirs are now pruned back on app start
+- highlighted row colour is no longer so close to the 'selected' row colour
+- 'install selected' on search screen is now disabled until addons are selected
+
+### Fixed
+- null dates in gui were causing a strange rendering effect
+- the :alt-name attribute on a sub-par match was being used to build a url that would result in a 404
+- re-installing an addon with no match in catalog caused a stacktrace
+- column widths on the installed addon screen no longer truncate title are reasonably sized values
+
 ## 0.3.1 - 2019-04-05
 
 ### Fixed
