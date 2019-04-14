@@ -70,11 +70,14 @@ see CHANGELOG.md for a more formal list of changes by release
     - prune back the columns if we can
     - columns can be hidden using jxtable preferred method
     - done
+* only download curseforge.json once a day
+    - download it to the cache dir so it gets auto-pruned
+    - done
+        - new path available :daily-cache-dir
 
 ### todo
 
-* only download curseforge.json once a day
-    - download it to the cache dir so it gets auto-pruned
+* release 0.4.0
 
 ## todo bucket
 
