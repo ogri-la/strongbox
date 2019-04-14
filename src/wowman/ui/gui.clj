@@ -196,7 +196,7 @@
   ;;(core/-install-update-these (map curseforge/expand-summary (get-state :selected-search)))
   (switch-tab INSTALLED-TAB)
   (doseq [selected (get-state :selected-search)]
-    (-> selected curseforge/expand-summary vector core/-install-update-these)
+    (-> selected core/expand-summary-wrapper vector core/-install-update-these)
     (core/load-installed-addons))
   (refresh))
 
@@ -287,7 +287,7 @@
 
         highlighter (org.jdesktop.swingx.decorator.ColorHighlighter.
                      predicate
-                     (seesaw.color/color :lightsteelblue 140)
+                     (seesaw.color/color :darkkhaki)
                      nil) ;; no change in foreground colours
         _ (.addHighlighter grid highlighter)
 
@@ -401,7 +401,7 @@
 
         highlighter (org.jdesktop.swingx.decorator.ColorHighlighter.
                      predicate
-                     (seesaw.color/color :lightsteelblue 140)
+                     (seesaw.color/color :darkkhaki)
                      nil) ;; no change in foreground colours
         _ (.addHighlighter grid highlighter)
 
