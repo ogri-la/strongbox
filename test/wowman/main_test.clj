@@ -44,6 +44,6 @@
 (deftest start-app
   (testing "starting app from a clean state, no dirs, no summary file, nothing"
     (try
-      (main/start {})
+      (main/-main "--ui" "cli")
       (finally
         (main/stop)))))

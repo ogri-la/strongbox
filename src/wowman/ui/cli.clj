@@ -57,6 +57,7 @@
 (defn start
   [opts]
   (info "starting cli")
+  (core/refresh)
   (action opts))
 
 (defn stop
