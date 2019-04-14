@@ -14,7 +14,7 @@
     [invoke :as ssi]
     [chooser :as chooser]
     [mig :as mig]
-    ;;[dev :as ssdebug]
+    ;;[dev :refer [show-options show-events]]
     [color]
     [swingx :as x]
     [core :as ss]
@@ -253,6 +253,24 @@
   (let [mdl (.getModel entry-obj)] ;; TableModel
     (into {} (mapv (fn [idx] [(.getColumnName mdl idx) (.getValue entry-obj idx)]) (range 0 (.getColumnCount mdl))))))
 
+(defn installed-addons-panel-column-widths
+  "this sucks"
+  [grid]
+  (let [default-min-width 80 ;; solid default for all columns
+        min-width-map {"WoW" 45} ;; these can be a little smaller
+        max-width-map {"installed" 200
+                       "available" 200
+                       "updated" 100}
+        pre-width-map {"WoW" 50
+                       "updated" 100}] ;; we would like these a little larger, if possible
+    (doseq [column (.getColumns grid)]
+      (info "got column" (.getTitle column))
+      (.setMinWidth column (get min-width-map (.getTitle column) default-min-width))
+      (when-let [max-width (get max-width-map (.getTitle column))]
+        (.setMaxWidth column max-width))
+      (when-let [pre-width (get pre-width-map (.getTitle column))]
+        (.setPreferredWidth column pre-width)))))
+
 (defn installed-addons-panel
   []
   (let [debug-cols [:group-id :primary? :addon-id :update?] ;; only visible when debugging
@@ -286,7 +304,12 @@
 
         grid (x/table-x :id :tbl-installed-addons
                         :model tblmdl
+                        ;;:auto-resize :all-columns ;; crazy, don't use this
+                        ;;:column-margin 10 ;; messes with selected line
                         :popup popup-menu)
+
+        ;; this is before render and before hiding and before user has had a chance to move or resize columns
+        _ (installed-addons-panel-column-widths grid)
 
         predicate (proxy [org.jdesktop.swingx.decorator.HighlightPredicate] []
                     (isHighlighted [renderer adapter]

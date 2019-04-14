@@ -60,17 +60,27 @@ see CHANGELOG.md for a more formal list of changes by release
         - why? it's not like we want to go back and scrutinize it
     - nothing older than today?
     - done
+* gui, min-widths for updated, installed, available, update? and version fields
+    - rest can be elastic
+    - done
+        - a min-width has been set with a few exceptions
+        - a max-width and preferred width have been set for some columns
+        - preferred width doesn't seem to have much effect
 
 ### todo
 
-* gui, min-widths for updated, installed, available, update? and version fields
-    - rest can be elastic
 * gui, optional fields in the search and installed panes
     - prune back the columns if we can
     - columns can be hidden using jxtable preferred method
 
 ## todo bucket
 
+* only download curseforge.json once a day
+    - download it to the cache dir so it gets auto-pruned
+* toggleable highlighers as a menuitem
+    - highlight unmatched
+    - highlight updates
+    - touch of colour against each menuitem would serve as a legend
 * highlight unmatched addons
 * 're-install all' should handle cases where .wowman.json is missing
     - it *is*, but some addons are not being handled (no match, presumably)
