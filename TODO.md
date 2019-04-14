@@ -4,80 +4,12 @@ this is my own scratchpad for keeping track of things. it gets truncated frequen
 
 see CHANGELOG.md for a more formal list of changes by release
 
-## done bucket
-
-
-
-## 0.4.0 release
+## 0.5.0 release
 
 ### done
 
-* do not cache bad downloads
-    - do not keep the zip file
-    - do not keep an etag, although orphaned etags *are* handled
-* handle installing bad zip files
-    - I just attempted to install an addon called Narcissus and the download failed/timed out
-        - unzipping it caused a java.lang.IllegalArgumentException: MALFORMED
-        - the bad zip file was preserved in cache
-    - done, although etag left for orphan checker
-* fixed bug where curseforge.json wasn't updated when etag changed
-* clear cached files option
-    - clears all cache files
-    - done
-* clear zip files options
-    - clears all downloaded zip files
-    - done
-* 'clear all' option
-    - general housecleaning option
-    - done
-* clear hidden files
-    - .wowman.json
-        - done
-    - wowmatrix .dat files?
-        - done
-* fixed bug in gui where empty date field caused peculiar rendering artifacts
-    - empty date fields not present when all addons are managed!
-    - I need to test against unmanaged installations more often
-* fixed bug where slugified 'altname' from catalog (used for matching against installed addons) caused a 404 when uri reconstructed
-    - no need to reconstruct uri
-    - points to a larger problem where catalog :name is otherwise lost when merged with toc contents
-* bug on unmanaged addons dir, re-installing unmanaged addon fails with stacktrace
-    - done
-* bug, on unmanaged addons dir, installing MogIt doesn't add nfo files to sub-addons
-    - try deleting the zip files ...
-        - nope, in fact, no downloaded zip file present at all...
-    - the addon is showing up as 'matched' in the search panel, possibly an old state hanging around
-        - I mistook the highlighted row for being 'selected' and was clicking 'install selected'
-        - 'install selected' would merrily install nothing (nothing selected), switch back to installed pane and refresh things with no obvious difference
-            - todo: change highlighted colour to not-blue
-                - changed to khaki
-            - todo: disable 'install selected' until there is something selected
-                - done
-* bug, curseforge.json doesn't appear to get re-downloaded
-    - done
-* cached files policy
-    - nothing older than a week?
-        - why? it's not like we want to go back and scrutinize it
-    - nothing older than today?
-    - done
-* gui, min-widths for updated, installed, available, update? and version fields
-    - rest can be elastic
-    - done
-        - a min-width has been set with a few exceptions
-        - a max-width and preferred width have been set for some columns
-        - preferred width doesn't seem to have much effect
-* gui, optional fields in the search and installed panes
-    - prune back the columns if we can
-    - columns can be hidden using jxtable preferred method
-    - done
-* only download curseforge.json once a day
-    - download it to the cache dir so it gets auto-pruned
-    - done
-        - new path available :daily-cache-dir
-
 ### todo
 
-* release 0.4.0
 
 ## todo bucket
 
