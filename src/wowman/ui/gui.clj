@@ -275,6 +275,69 @@
   (doseq [column hidden-column-list]
     (.setVisible (.getColumnExt grid (-> column name str)) false)))
 
+;; disabled, addon grouping now happens in fs/installed-addons
+(defn- add-sort-filter
+  [grid]
+  (let [;; filter known non-primary addons from the results
+        table-sorter (.getRowSorter grid)
+        row-filter (proxy [javax.swing.RowFilter] []
+                     (include [entry]
+                       (let [entry-map (entry-to-map entry)
+                             primary? (get entry-map "primary?")
+                             ;; true if primary? key not-nil and primary? is true, otherwise true
+                             ;; BUG: this will cause all addons in a group to be hidden when the primary isn't known, like dbm
+                             include? (or (and
+                                           (not (nil? primary?))
+                                           (Boolean. primary?))
+                                          true)]
+                         include?)))]
+
+    (.setRowFilter table-sorter row-filter)))
+
+(defn add-highlighter
+  "target a selection of rows and colour their backgrounds differently"
+  [grid pred-fn colour]
+  (let [predicate (proxy [org.jdesktop.swingx.decorator.HighlightPredicate] []
+                    (isHighlighted [renderer adapter]
+                      (pred-fn adapter)))
+
+        highlighter (org.jdesktop.swingx.decorator.ColorHighlighter.
+                     predicate
+                     (seesaw.color/color colour)
+                     nil)] ;; no change in foreground colours
+    (.addHighlighter grid highlighter)
+    nil))
+
+(defn add-cell-renderer
+  "target a cell and render it's contents differently"
+  [grid column-idx render-fn]
+  ;; todo: change column-idx to column title. idx is too brittle
+  (let [date-renderer (proxy [javax.swing.table.DefaultTableCellRenderer] []
+                        (setValue [colval]
+                          ;; nil values can make cells render strangely, so ensure an empty string if nil returned
+                          (proxy-super setValue (or (render-fn colval) ""))))]
+    (.setCellRenderer (.getColumn (.getColumnModel grid) column-idx) date-renderer)
+    nil))
+
+(defn installed-addons-popup-menu
+  []
+  (let [no-label ""
+        popup-menu-items [(dynamic-menu-item
+                           no-label
+                           :watch [:selected-installed]
+                           :callback (fn [state]
+                                       (let [selected-rows (tbl-selected-rows :#tbl-installed-addons)]
+                                         (format "%s selected, %s updateable"
+                                                 (count selected-rows)
+                                                 (count (filter :update? selected-rows)))))
+                           :onclick donothing)
+                          (ss/separator)
+                          (menu-item "Update" (async-handler core/install-update-selected))
+                          (menu-item "Re-install" (async-handler core/re-install-selected))
+                          (ss/separator)
+                          (menu-item "Delete" (async-handler remove-selected-handler))]]
+    (ss/popup :items popup-menu-items)))
+
 (defn installed-addons-panel
   []
   (let [debug-cols [:group-id :primary? :addon-id :update?] ;; only visible when debugging
@@ -291,70 +354,13 @@
                                             {:key :category-list :text "categories"}]
                                   :rows [])
 
-        popup-menu-items [(dynamic-menu-item ""
-                                             :watch [:selected-installed]
-                                             :callback (fn [state]
-                                                         (let [selected-rows (tbl-selected-rows :#tbl-installed-addons)]
-                                                           (format "%s selected, %s updateable"
-                                                                   (count selected-rows)
-                                                                   (count (filter :update? selected-rows)))))
-                                             :onclick donothing)
-                          (ss/separator)
-                          (menu-item "Update" (async-handler core/install-update-selected))
-                          (menu-item "Re-install" (async-handler core/re-install-selected))
-                          (ss/separator)
-                          (menu-item "Delete" (async-handler remove-selected-handler))]
-        popup-menu (ss/popup :items popup-menu-items)
-
         grid (x/table-x :id :tbl-installed-addons
                         :model tblmdl
-                        ;;:auto-resize :all-columns ;; crazy, don't use this
-                        ;;:column-margin 10 ;; messes with selected line
-                        :popup popup-menu)
+                        :popup (installed-addons-popup-menu))
 
-        ;; this is before render and before hiding and before user has had a chance to move or resize columns
-        _ (installed-addons-panel-column-widths grid)
-
-        predicate (proxy [org.jdesktop.swingx.decorator.HighlightPredicate] []
-                    (isHighlighted [renderer adapter]
-                      (let [update-column 8
-                            ;;update-column (.viewToModel adapter update-column) ;; not working?
-                            value (.getValue adapter update-column)]
-                        (true? value))))
-
-        highlighter (org.jdesktop.swingx.decorator.ColorHighlighter.
-                     predicate
-                     (seesaw.color/color :darkkhaki)
-                     nil) ;; no change in foreground colours
-        _ (.addHighlighter grid highlighter)
-
-        ;; filter known non-primary addons from the results
-        table-sorter (.getRowSorter grid)
-        row-filter (proxy [javax.swing.RowFilter] []
-                     (include [entry]
-                       (let [entry-map (entry-to-map entry)
-                             primary? (get entry-map "primary?")
-                             ;; true if primary? key not-nil and primary? is true, otherwise true
-                             ;; BUG: this will cause all addons in a group to be hidden when the primary isn't known, like dbm
-                             include? (or (and
-                                           (not (nil? primary?))
-                                           (Boolean. primary?))
-                                          true)]
-                         include?)))
-        ;; disabled, addon grouping now happens in fs/installed-addons
-        ;;_ (.setRowFilter table-sorter row-filter)
-
-        date-renderer (proxy [javax.swing.table.DefaultTableCellRenderer] []
-                        (setValue [datestr]
-                          (proxy-super setValue (if-not datestr ""
-                                                        (-> datestr clojure.instant/read-instant-date (utils/fmt-date "yyyy-MM-dd"))))))
-        _ (.setCellRenderer (.getColumn (.getColumnModel grid) 7) date-renderer)
-
-        interface-version-renderer (proxy [javax.swing.table.DefaultTableCellRenderer] []
-                                     (setValue [iface-version]
-                                       (when iface-version
-                                         (proxy-super setValue (-> iface-version str utils/interface-version-to-game-version)))))
-        _ (.setCellRenderer (.getColumn (.getColumnModel grid) 9) interface-version-renderer)
+        addon-needs-update? #(true? (.getValue % 8)) ;; 8 update-column
+        date-renderer #(when % (-> % clojure.instant/read-instant-date (utils/fmt-date "yyyy-MM-dd")))
+        iface-version-renderer #(when % (-> % str utils/interface-version-to-game-version))
 
         ;; refreshes installed addons table
         update-rows-fn (fn [state]
@@ -370,6 +376,13 @@
                                          (if-let [idx (first (find-row-by-value grid "addon-id" (first unsteady)))]
                                            (select-one grid idx) ;; if the rows are hidden you won't be able to see it
                                            (warn "failed to find value" (first unsteady) "in column 'addon-id'"))))))]
+
+    ;; this is before render and before hiding and before user has had a chance to move or resize columns
+    (installed-addons-panel-column-widths grid)
+
+    (add-highlighter grid addon-needs-update? :darkkhaki)
+    (add-cell-renderer grid 7 date-renderer)
+    (add-cell-renderer grid 9 iface-version-renderer)
 
     (hide-columns grid debug-cols)
 
@@ -426,37 +439,25 @@
         label-idx (atom (set []))
         update-label-idx (fn [_]
                            (reset! label-idx (set (remove nil? (map :label (get-state :installed-addon-list))))))
-        _ (state-bind [:installed-addon-list] update-label-idx)
+        _ (state-bind [:installed-addon-list] update-label-idx) ;; update internal idx of labels whenever installed addons change
 
-        predicate (proxy [org.jdesktop.swingx.decorator.HighlightPredicate] []
-                    (isHighlighted [renderer adapter]
-                      (let [label-column 0
-                            value (.getValue adapter label-column)]
-                        (contains? @label-idx value))))
+        addon-installed? (fn [adapter]
+                           (let [label-column 0
+                                 value (.getValue adapter label-column)]
+                             (contains? @label-idx value)))
 
-        highlighter (org.jdesktop.swingx.decorator.ColorHighlighter.
-                     predicate
-                     (seesaw.color/color :darkkhaki)
-                     nil) ;; no change in foreground colours
-        _ (.addHighlighter grid highlighter)
-
-        date-renderer (proxy [javax.swing.table.DefaultTableCellRenderer] []
-                        (setValue [datestr]
-                          (when datestr
-                            (proxy-super setValue (-> datestr clojure.instant/read-instant-date (utils/fmt-date "yyyy-MM-dd"))))))
-
-        _ (.setCellRenderer (.getColumn (.getColumnModel grid) 3) date-renderer)
-
-        watch-these [[:addon-summary-list]
-                     [:search-field-input]]
+        date-renderer #(when % (-> % clojure.instant/read-instant-date (utils/fmt-date "yyyy-MM-dd")))
 
         cap 250 ;; jxtable + autopack. more rows and searching becomes noticibly laggy
         update-rows-fn (fn [state]
                          (let [known-addons (search-rows (:addon-summary-list state) (:search-field-input state))]
                            (insert-all grid (take cap known-addons))))]
 
+    (add-cell-renderer grid 3 date-renderer)
+    (add-highlighter grid addon-installed? :darkkhaki) ;; highlight installed addons
+
     (ss/listen grid :selection (selected-rows-handler search-results-selection-handler))
-    (state-binds watch-these update-rows-fn)
+    (state-binds [[:addon-summary-list] [:search-field-input]] update-rows-fn)
     (ss/scrollable grid)))
 
 (defn search-panel
