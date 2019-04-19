@@ -20,7 +20,6 @@
     [swingx :as x]
     [core :as ss]
     [table :as sstbl]]
-   [me.raynes.fs :as fs]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
    [orchestra.spec.test :as st]))
@@ -383,7 +382,7 @@
 (defn installed-addons-panel
   []
   (let [;; always visible when debugging and always available from the column menu
-        hidden-by-default-cols [:group-id :primary? :addon-id :update? :categories :updated :WoW] 
+        hidden-by-default-cols [:group-id :primary? :addon-id :update? :categories :updated :WoW]
         tblmdl (sstbl/table-model :columns [{:key :name :text "addon-id"}
                                             :group-id
                                             :primary?

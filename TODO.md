@@ -11,6 +11,13 @@ see CHANGELOG.md for a more formal list of changes by release
 * gui, a 'go' link
     - takes you to the curseforge site
         - this was *fucking agonising* and it's still a compromise. I really *hate* java/swing sometimes
+* re-order position of columns
+    - 'go' link should be closer name and description
+        - done
+    - 'categories' should be hidden until we're doing something with it
+        - done
+    - shouldn't be specifying column indicies when adding highlighters
+        - done
 
 ### todo
 
@@ -40,21 +47,18 @@ see CHANGELOG.md for a more formal list of changes by release
     - it checks if a new version of wowman available
     - link where to find it
     - licence
-* hide categories from installed panel until we can do something with them
 
 ## todo bucket
 
 * gui, search, add 'go' link and row highlighting
     - feels weird to go from having it (installed) to not (search)
-* re-order position of columns
-    - 'go' link should be closer name and description
-    - 'categories' should be hidden until we're doing something with it
-    - shouldn't be specifying column indicies when adding highlighters
 * revisit group records, I can't believe we can't pull a good name or description from *somewhere*
 * toggleable highlighers as a menuitem
     - highlight unmatched
     - highlight updates
     - touch of colour against each menuitem would serve as a legend
+* toggleable columns as a menuitem
+    - they're available from the column menu, but it's a little hidden and contains other fairly useless options like 'horizontal scroll'
 * download progress bar *inside* the grid ...?
     - pure fantasy?
 * nightly unstable builds
