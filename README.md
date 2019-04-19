@@ -8,7 +8,7 @@ directory.
 
 ## Audience
 
-This software targets World of Warcraft users using Linux.
+This software targets World of Warcraft players using Linux.
 
 It may work on other platforms but it is only tested and supported on Linux.
 
