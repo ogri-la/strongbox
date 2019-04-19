@@ -44,6 +44,12 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
+* gui, search, add 'go' link and row highlighting
+    - feels weird to go from having it (installed) to not (search)
+* re-order position of columns
+    - 'go' link should be closer name and description
+    - 'categories' should be hidden until we're doing something with it
+    - shouldn't be specifying column indicies when adding highlighters
 * revisit group records, I can't believe we can't pull a good name or description from *somewhere*
 * toggleable highlighers as a menuitem
     - highlight unmatched
