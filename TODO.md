@@ -8,15 +8,20 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### done
 
+* gui, a 'go' link
+    - takes you to the curseforge site
+        - this was *fucking agonising* and it's still a compromise. I really *hate* java/swing sometimes
+
 ### todo
 
 * move to XDG preferred data/config directories
     - https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
     - perhaps ignore data directory for now and just use config (~/.config/wowman/)
     - make this customisable?
+    - I think this would be a breaking change requiring a major version bump to 1.0 ... ?
+        - https://semver.org/, point 4: "Major version zero (0.y.z) is for initial development. Anything may change at any time. "
+        - so I'm all good :)
 * arch linux AUR package
-* gui, a 'go' link
-    - takes you to the curseforge site
 * highlight errors and warnings in notice logger
 * highlight unmatched addons
 * 're-install all' should handle cases where .wowman.json is missing
@@ -39,6 +44,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
+* revisit group records, I can't believe we can't pull a good name or description from *somewhere*
 * toggleable highlighers as a menuitem
     - highlight unmatched
     - highlight updates

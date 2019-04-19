@@ -16,9 +16,11 @@
     [mig :as mig]
     ;;[dev :refer [show-options show-events]]
     [color]
+    [cursor :refer [cursor]]
     [swingx :as x]
     [core :as ss]
     [table :as sstbl]]
+   [me.raynes.fs :as fs]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
    [orchestra.spec.test :as st]))
@@ -338,6 +340,37 @@
                           (menu-item "Delete" (async-handler remove-selected-handler))]]
     (ss/popup :items popup-menu-items)))
 
+(defn installed-addons-go-links
+  [grid]
+  (let [gocol? #(= (.getColumnName grid %) "go")
+
+        cell-val-for-event (fn [e]
+                             (let [row (.rowAtPoint grid (.getPoint e))
+                                   col (.columnAtPoint grid (.getPoint e))]
+                               (when (and (> col -1) (> row -1))
+                                 [row col (.getValueAt grid row col)])))
+
+        go-link-clicked (fn [e]
+                          (when-let [triple (cell-val-for-event e)]
+                            (let [[row col val] triple]
+                              (if (and (gocol? col) val)
+                                (.browse (java.awt.Desktop/getDesktop) (java.net.URI. val))))))
+
+        hand-cursor-on-hover (fn [e]
+                               (when-let [triple (cell-val-for-event e)]
+                                 (let [[row col val] triple]
+                                   (if (and (gocol? col) val)
+                                     (.setCursor grid (cursor :hand))
+                                     (.setCursor grid (cursor :default))))))
+
+        uri-renderer #(when % (format "<html><font color='blue'>%s@curseforge</font></html>" (fs/base-name %)))]
+
+    (ss/listen grid :mouse-motion hand-cursor-on-hover)
+    (ss/listen grid :mouse-clicked go-link-clicked)
+    (add-cell-renderer grid 11 uri-renderer)
+
+    nil))
+
 (defn installed-addons-panel
   []
   (let [debug-cols [:group-id :primary? :addon-id :update?] ;; only visible when debugging
@@ -351,11 +384,13 @@
                                             {:key :updated-date :text "updated"}
                                             :update?
                                             {:key :interface-version :text "WoW"}
-                                            {:key :category-list :text "categories"}]
+                                            {:key :category-list :text "categories"}
+                                            {:key :uri :text "go"}]
                                   :rows [])
 
         grid (x/table-x :id :tbl-installed-addons
                         :model tblmdl
+                        :highlighters [((x/hl-color :background "#e6e6e6") :rollover-row)]
                         :popup (installed-addons-popup-menu))
 
         addon-needs-update? #(true? (.getValue % 8)) ;; 8 update-column
@@ -379,6 +414,8 @@
 
     ;; this is before render and before hiding and before user has had a chance to move or resize columns
     (installed-addons-panel-column-widths grid)
+
+    (installed-addons-go-links grid)
 
     (add-highlighter grid addon-needs-update? :darkkhaki)
     (add-cell-renderer grid 7 date-renderer)
