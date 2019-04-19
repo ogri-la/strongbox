@@ -363,7 +363,7 @@
                                      (.setCursor grid (cursor :hand))
                                      (.setCursor grid (cursor :default))))))
 
-        uri-renderer #(when % (format "<html><font color='blue'>%s@curseforge</font></html>" (fs/base-name %)))]
+        uri-renderer #(when % "<html><font color='blue'>↪ curseforge</font></html>")]
 
     (ss/listen grid :mouse-motion hand-cursor-on-hover)
     (ss/listen grid :mouse-clicked go-link-clicked)
