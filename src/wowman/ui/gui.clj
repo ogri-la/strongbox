@@ -143,10 +143,11 @@
               (doseq [idx (rest indicies)]
                 (.addSelectionInterval s-model idx idx))))))
 
-(defn -find-column-by-label
+(defn find-column-by-label
   "returns the index of the column for the given label. remember, column positions can change!"
-  [mdl label]
-  (let [matches? (fn [idx]
+  [grid label]
+  (let [mdl (.getModel grid)
+        matches? (fn [idx]
                    (when (= (.getColumnName mdl idx) label)
                      idx))
         columns (range 0 (.getColumnCount mdl))]
@@ -155,7 +156,7 @@
 (defn find-row-by-value
   "returns the first set of coordinates [row col] for a match of `row-value` in column with given `column-label` or `nil` if not found."
   [grid column-label row-value]
-  (let [col-idx (-find-column-by-label (.getModel grid) column-label)
+  (let [col-idx (find-column-by-label grid column-label)
         matches? (fn [row-idx]
                    (when (= (.getValueAt (.getModel grid) row-idx col-idx) row-value)
                      [row-idx col-idx]))
@@ -259,7 +260,8 @@
   "this sucks"
   [grid]
   (let [default-min-width 80 ;; solid default for all columns
-        min-width-map {"WoW" 45} ;; these can be a little smaller
+        min-width-map {"WoW" 45
+                       "go" 100} ;; these can be a little smaller
         max-width-map {"installed" 200
                        "available" 200
                        "updated" 100}
@@ -274,8 +276,9 @@
 
 (defn hide-columns
   [grid hidden-column-list]
-  (doseq [column hidden-column-list]
-    (.setVisible (.getColumnExt grid (-> column name str)) false)))
+  (when-not (core/debugging?)
+    (doseq [column hidden-column-list]
+      (.setVisible (.getColumnExt grid (-> column name str)) false))))
 
 ;; disabled, addon grouping now happens in fs/installed-addons
 (defn- add-sort-filter
@@ -312,13 +315,19 @@
 
 (defn add-cell-renderer
   "target a cell and render it's contents differently"
-  [grid column-idx render-fn]
+  [grid column-name render-fn]
   ;; todo: change column-idx to column title. idx is too brittle
-  (let [date-renderer (proxy [javax.swing.table.DefaultTableCellRenderer] []
+  (let [column-idx (find-column-by-label grid column-name)
+        cell-renderer (proxy [javax.swing.table.DefaultTableCellRenderer] []
                         (setValue [colval]
                           ;; nil values can make cells render strangely, so ensure an empty string if nil returned
                           (proxy-super setValue (or (render-fn colval) ""))))]
-    (.setCellRenderer (.getColumn (.getColumnModel grid) column-idx) date-renderer)
+    (.setCellRenderer (.getColumn (.getColumnModel grid) column-idx) cell-renderer)
+
+    ;; lawdy dawdy this is awful. 
+    (when (= column-name "go")
+      (.setHorizontalAlignment cell-renderer javax.swing.SwingConstants/CENTER))
+
     nil))
 
 (defn installed-addons-popup-menu
@@ -367,16 +376,18 @@
 
     (ss/listen grid :mouse-motion hand-cursor-on-hover)
     (ss/listen grid :mouse-clicked go-link-clicked)
-    (add-cell-renderer grid 11 uri-renderer)
+    (add-cell-renderer grid "go" uri-renderer)
 
     nil))
 
 (defn installed-addons-panel
   []
-  (let [debug-cols [:group-id :primary? :addon-id :update?] ;; only visible when debugging
+  (let [;; always visible when debugging and always available from the column menu
+        hidden-by-default-cols [:group-id :primary? :addon-id :update? :categories :updated :WoW] 
         tblmdl (sstbl/table-model :columns [{:key :name :text "addon-id"}
                                             :group-id
                                             :primary?
+                                            {:key :uri :text "go"}
                                             {:key :label :text "name"}
                                             :description
                                             {:key :installed-version :text "installed"}
@@ -384,8 +395,7 @@
                                             {:key :updated-date :text "updated"}
                                             :update?
                                             {:key :interface-version :text "WoW"}
-                                            {:key :category-list :text "categories"}
-                                            {:key :uri :text "go"}]
+                                            {:key :category-list :text "categories"}]
                                   :rows [])
 
         grid (x/table-x :id :tbl-installed-addons
@@ -418,10 +428,10 @@
     (installed-addons-go-links grid)
 
     (add-highlighter grid addon-needs-update? :darkkhaki)
-    (add-cell-renderer grid 7 date-renderer)
-    (add-cell-renderer grid 9 iface-version-renderer)
+    (add-cell-renderer grid "updated" date-renderer)
+    (add-cell-renderer grid "WoW" iface-version-renderer)
 
-    (hide-columns grid debug-cols)
+    (hide-columns grid hidden-by-default-cols)
 
     (ss/listen grid :selection (selected-rows-handler installed-addons-selection-handler))
 
@@ -490,7 +500,7 @@
                          (let [known-addons (search-rows (:addon-summary-list state) (:search-field-input state))]
                            (insert-all grid (take cap known-addons))))]
 
-    (add-cell-renderer grid 3 date-renderer)
+    (add-cell-renderer grid "updated" date-renderer)
     (add-highlighter grid addon-installed? :darkkhaki) ;; highlight installed addons
 
     (ss/listen grid :selection (selected-rows-handler search-results-selection-handler))
