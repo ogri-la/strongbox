@@ -24,11 +24,11 @@
   [& path]
   (let [;; https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
         ;; ignoring XDG_CONFIG_DIRS and XDG_DATA_DIRS for now
-        config-dir (or (System/getenv "XDG_CONFIG_HOME") "~/.config")
-        config-dir (-> config-dir (join "wowman") fs/expand-home fs/normalized fs/absolute str)
+        config-dir (or (System/getenv "XDG_CONFIG_HOME") "~/.config/wowman")
+        config-dir (-> config-dir fs/expand-home fs/normalized fs/absolute str)
 
-        data-dir (or (System/getenv "XDG_DATA_HOME") "~/.local/share")
-        data-dir (-> data-dir (join "wowman") fs/expand-home fs/normalized fs/absolute str)
+        data-dir (or (System/getenv "XDG_DATA_HOME") "~/.local/share/wowman")
+        data-dir (-> data-dir fs/expand-home fs/normalized fs/absolute str)
 
         cache-dir (join data-dir "cache") ;; /home/you/.local/share/wowman/cache
         daily-cache-dir (join cache-dir (utils/datestamp-now-ymd)) ;; /home/$you/.local/share/wowman/cache/$today
