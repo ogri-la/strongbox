@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+* a 'go' link that will open a link to the addon's catalog page
+* a simple row highlighting on the installed addons screen when moving your cursor over an addon
+
+### Changed
+
+* the 'categories', 'updated' and 'WoW' columns on the installed addons screen are now hidden by default
+* the 'state' directory has been split into 'data' and 'config' directories and now follow XDG recommended paths
+
+### Fixed
+
+### Removed
+
 ## 0.4.0 - 2019-04-15
 
 ### Added

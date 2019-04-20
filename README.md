@@ -25,19 +25,25 @@ It may work on other platforms but it is only tested and supported on Linux.
 
 ## Notes
 
-A sub-directory called `state` will be created in the current directory. All configuration and cached data lives there.
+User configuration is stored in `~/.config/wowman` unless run with the envvar `$XDG_CONFIG_HOME` set.
+
+Temporary data is stored in `~/.local/share/wowman` unless run with the envvar `$XDG_DATA_HOME` set.
+
+Previously a sub-directory called `state` created in the current working directory was used for both data and config.  
+This local `state` directory can be safely deleted now.
 
 Addon zip files are downloaded to your WoW `Addons` directory.
 
-A file called `.wowman.json` is created within newly installed addons. This maps specific attributes between 
-www.curseforge.com and the unpacked addon, as well as across addons that unpack to multiple directories.
+A file called `.wowman.json` is created within newly installed or re-installed addons. This file maps specific 
+attributes between www.curseforge.com and the addon as well as *across* addons, as some addons unzip to multiple 
+directories. It's a simple `txt` file in a structured format called `json`.
 
 This software interacts with the following remote hosts:
 
 * [https://www.curseforge.com](https://www.curseforge.com), to download detailed addon data
 * [https://github.com/ogri-la](https://github.com/ogri-la), to download a list of summary addon information
 
-These interactions use a HTTP user agent header unique to `wowman` so it may be identified easily
+These interactions use a HTTP user agent header unique to `wowman` so that it may be identified easily
 
 ## Releases, bugs, questions, feedback, contributing
 
