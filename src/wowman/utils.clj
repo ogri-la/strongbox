@@ -23,6 +23,10 @@
 
 (def ^:dynamic *cache-dir* nil)
 
+(defn items
+  [& lst]
+  (vec (remove nil? (flatten lst))))
+
 (def not-empty? (comp not empty?))
 
 (defn-spec safe-subs string?

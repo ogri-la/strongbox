@@ -4,7 +4,7 @@
     [core :as core :refer [get-state state-bind state-binds]]
     [logging :as logging]
     [specs :as sp]
-    [utils :as utils]]
+    [utils :as utils :refer [items]]]
    [clojure.instant]
    [clojure.core.async :as async]
    [clojure.string :refer [lower-case starts-with? trim]]
@@ -25,14 +25,6 @@
    [orchestra.spec.test :as st]))
 
 (s/def ::content-pane #(instance? java.awt.Component %))
-
-(defn items
-  [& lst]
-  (vec (remove nil? (flatten lst))))
-
-;;
-;;
-;;
 
 (defn select-ui
   [& path]
@@ -84,12 +76,6 @@
   [_]
   nil)
 
-(comment "unused"
-         (defn-spec click-button nil?
-           [btn-id keyword?]
-           (ss/invoke-later
-            (.doClick (select-ui btn-id)))))
-
 (defn handler [& fl]
   (fn [_]
     (doseq [f fl] (f))))
@@ -117,7 +103,6 @@
    (dorun (map-indexed (fn [idx row]
                          (debug "inserting row" (:name row) "at idx" idx)
                          (sstbl/insert-at! grid idx row)) rows))
-   ;; packs the columns to something less-default
    (.packAll grid)))
 
 (defn insert-one
@@ -169,16 +154,6 @@
 
 ;;
 
-;; TODO: remove
-(defn-spec refresh nil?
-  []
-  ;; here be dragons.
-  ;; this queues the function and discards further calls to function if function call is still pending
-  ;; this is close to atomicity of an operation without rollback
-  (let [signal (ssi/signaller* core/refresh)]
-    (signal))
-  nil)
-
 (defn-spec tbl-selected-rows (s/or :ok ::sp/list-of-maps, :nothing-selected nil?)
   "returns a list of rows that are currently selected for given table"
   [tbl keyword?]
@@ -201,16 +176,14 @@
 
 (defn-spec search-results-install-handler nil?
   []
-  ;; this works ~ok~ for one or two files, but many at once and we get what looks like a freeze as the summary is expanded
-  ;; what might be better is: switch tab; for each selected, expand summary, install addon, load-installed-addons; refresh;
+  ;; this: switches tab, then, for each addon selected, expands summary, installs addon, calls load-installed-addons and finally refreshes;
   ;; there will be a plodding step-wise update which is better than a blank screen and apparent hang
-  ;; `load-installed-addons` will simply re-visit the list of installed addons and update the state with the bare toc contents.
-  ;;(core/-install-update-these (map curseforge/expand-summary (get-state :selected-search)))
+  ;;(core/-install-update-these (map curseforge/expand-summary (get-state :selected-search))) ;; original approach. efficient but no feedback for user
   (switch-tab INSTALLED-TAB)
   (doseq [selected (get-state :selected-search)]
     (-> selected core/expand-summary-wrapper vector core/-install-update-these)
     (core/load-installed-addons))
-  (refresh))
+  (core/refresh))
 
 (defn-spec remove-selected-handler nil?
   []
@@ -249,12 +222,6 @@
     (ss/vertical-panel
      :items [(ss/flow-panel :align :left :items [refresh-button update-all-button wow-dir-button wow-dir-label])])))
 
-(defn entry-to-map
-  "converts a RowFilter.Entry object to a simple map"
-  [entry-obj]
-  (let [mdl (.getModel entry-obj)] ;; TableModel
-    (into {} (mapv (fn [idx] [(.getColumnName mdl idx) (.getValue entry-obj idx)]) (range 0 (.getColumnCount mdl))))))
-
 (defn installed-addons-panel-column-widths
   "this sucks"
   [grid]
@@ -278,25 +245,6 @@
   (when-not (core/debugging?)
     (doseq [column hidden-column-list]
       (.setVisible (.getColumnExt grid (-> column name str)) false))))
-
-;; disabled, addon grouping now happens in fs/installed-addons
-(defn- add-sort-filter
-  [grid]
-  (let [;; filter known non-primary addons from the results
-        table-sorter (.getRowSorter grid)
-        row-filter (proxy [javax.swing.RowFilter] []
-                     (include [entry]
-                       (let [entry-map (entry-to-map entry)
-                             primary? (get entry-map "primary?")
-                             ;; true if primary? key not-nil and primary? is true, otherwise true
-                             ;; BUG: this will cause all addons in a group to be hidden when the primary isn't known, like dbm
-                             include? (or (and
-                                           (not (nil? primary?))
-                                           (Boolean. primary?))
-                                          true)]
-                         include?)))]
-
-    (.setRowFilter table-sorter row-filter)))
 
 (defn add-highlighter
   "target a selection of rows and colour their backgrounds differently"
