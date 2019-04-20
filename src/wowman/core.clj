@@ -19,6 +19,19 @@
 ;; TODO: allow user to specify their own catalog
 (def remote-addon-summary-file "https://raw.githubusercontent.com/ogri-la/wowman-data/master/curseforge.json")
 
+(defn colours
+  [& path]
+  (prn "looking for path" path)
+  (let [colour-map {:notice/error :tomato
+                    :notice/warning :lemonchiffon
+                    :installed/needs-updating :darkkhaki
+                    :installed/unmatched :green
+                    :installed/hovering "#e6e6e6"
+                    :search/already-installed :darkkhaki}]
+    (if-not (empty? path)
+      (get-in colour-map path)
+      colour-map)))
+
 (defn paths
   "returns a map of paths whose location may vary depending on the location of the current working directory"
   [& path]

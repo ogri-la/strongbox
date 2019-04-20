@@ -1,7 +1,7 @@
 (ns wowman.ui.gui
   (:require
    [wowman
-    [core :as core :refer [get-state state-bind state-binds]]
+    [core :as core :refer [get-state state-bind state-binds colours]]
     [logging :as logging]
     [specs :as sp]
     [utils :as utils :refer [items]]]
@@ -347,7 +347,7 @@
 
         grid (x/table-x :id :tbl-installed-addons
                         :model tblmdl
-                        :highlighters [((x/hl-color :background "#e6e6e6") :rollover-row)]
+                        :highlighters [((x/hl-color :background (colours :installed/hovering)) :rollover-row)]
                         :popup (installed-addons-popup-menu))
 
         addon-needs-update? #(true? (.getValue % 8)) ;; 8 update-column
@@ -374,7 +374,7 @@
 
     (installed-addons-go-links grid)
 
-    (add-highlighter grid addon-needs-update? :darkkhaki)
+    (add-highlighter grid addon-needs-update? (colours :installed/needs-updating))
     (add-cell-renderer grid "updated" date-renderer)
     (add-cell-renderer grid "WoW" iface-version-renderer)
 
@@ -448,7 +448,7 @@
                            (insert-all grid (take cap known-addons))))]
 
     (add-cell-renderer grid "updated" date-renderer)
-    (add-highlighter grid addon-installed? :darkkhaki) ;; highlight installed addons
+    (add-highlighter grid addon-installed? (colours :search/already-installed))
 
     (ss/listen grid :selection (selected-rows-handler search-results-selection-handler))
     (state-binds [[:addon-summary-list] [:search-field-input]] update-rows-fn)
@@ -485,8 +485,8 @@
 
     (logging/add-appender :gui gui-logger {:timestamp-opts {:pattern "HH:mm:ss"}})
 
-    (add-highlighter grid #(= (.getValue % 0) :warn) :lemonchiffon)
-    (add-highlighter grid #(= (.getValue % 0) :error) :tomato)
+    (add-highlighter grid #(= (.getValue % 0) :warn) (colours :notice/warning))
+    (add-highlighter grid #(= (.getValue % 0) :error) (colours :notice/error))
 
     ;; hide header when not debugging
     (when-not (core/debugging?)
