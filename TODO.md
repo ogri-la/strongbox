@@ -31,8 +31,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### todo
 
-* bug, curseforge.etag file is inside the daily cache dir
-    - it should be in the regular cache dir, the parent.
 * arch linux AUR package
 * highlight errors and warnings in notice logger
 * highlight unmatched addons
@@ -54,6 +52,27 @@ see CHANGELOG.md for a more formal list of changes by release
     - licence
 
 ## todo bucket
+
+* bug, curseforge.etag file is inside the daily cache dir
+    - it should be in the regular cache dir, the parent.
+        - this is awkard
+            - we have two caching regimes
+        - while developing we don't want requests for curseforge.json going out into the world
+            - so we use file based cache
+        - however, this prevents a fresh curseforge.json from being downloaded, ever
+        - so curseforge.json was stuck in the daily cache to ensure it got downloaded at least daily
+        - the etag file is written to the same directory the file is downloaded
+    - etag files should always be written to the cache directory
+        - regardless of where the file is actually downloaded to
+        - but only if cache dir is set, obviously
+    - we need the two systems to work more harmoniously
+        - for example, every cached request gets an etag, but file cache is used for a period before sending another request
+            - if we do 100 requests/minute for the same file how many of those should go out into the world?
+                - we have a local cached copy *and* an etag
+            - perhaps send request with etag once an hour? rely on file based cache on the interim
+                - do other types of file have different age requirements? 
+                - once a day seems appropriate for addon pages
+                - once a day seems appropriate for curseforge.json ...
 
 * gui, search, add 'go' link and row highlighting
     - feels weird to go from having it (installed) to not (search)
