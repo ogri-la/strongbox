@@ -230,7 +230,8 @@
                        "go" 100} ;; these can be a little smaller
         max-width-map {"installed" 200
                        "available" 200
-                       "updated" 100}
+                       "updated" 100
+                       "go" 120}
         pre-width-map {"WoW" 50
                        "updated" 100}] ;; we would like these a little larger, if possible
     (doseq [column (.getColumns grid)]
