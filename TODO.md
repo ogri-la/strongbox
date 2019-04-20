@@ -28,11 +28,13 @@ see CHANGELOG.md for a more formal list of changes by release
     - done
         - you will need to re-select your addons dir
         - local state directory can be safely deleted
+* notice logger now appears to be roughly the same width as the panes above it
+    - at extreme widths you can see its still a bit off
+* highlight errors and warnings in notice logger
+    - done
 
 ### todo
 
-* arch linux AUR package
-* highlight errors and warnings in notice logger
 * highlight unmatched addons
 * 're-install all' should handle cases where .wowman.json is missing
     - it *is*, but some addons are not being handled (no match, presumably)
@@ -50,6 +52,8 @@ see CHANGELOG.md for a more formal list of changes by release
     - it checks if a new version of wowman available
     - link where to find it
     - licence
+* arch linux AUR package
+    - investigate if any further code changes required, then release, then make a package
 
 ## todo bucket
 

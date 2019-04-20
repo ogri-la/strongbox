@@ -488,7 +488,7 @@
         _ (state-bind [:installed-addon-list] update-label-idx) ;; update internal idx of labels whenever installed addons change
 
         addon-installed? (fn [adapter]
-                           (let [label-column 0
+                           (let [label-column 0 ;; (find-column-by-label grid "Name")
                                  value (.getValue adapter label-column)]
                              (contains? @label-idx value)))
 
@@ -537,6 +537,9 @@
         level-width 50]
 
     (logging/add-appender :gui gui-logger {:timestamp-opts {:pattern "HH:mm:ss"}})
+
+    (add-highlighter grid #(= (.getValue % 0) :warn) :lemonchiffon)
+    (add-highlighter grid #(= (.getValue % 0) :error) :tomato)
 
     ;; more suckage
 
