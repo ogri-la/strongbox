@@ -351,7 +351,7 @@
                         :highlighters [((x/hl-color :background (colours :installed/hovering)) :rollover-row)]
                         :popup (installed-addons-popup-menu))
 
-        addon-needs-update? #(true? (.getValue % 8)) ;; 8 update-column
+        addon-needs-update? #(true? (.getValue % (find-column-by-label grid "update?")))
         date-renderer #(when % (-> % clojure.instant/read-instant-date (utils/fmt-date "yyyy-MM-dd")))
         iface-version-renderer #(when % (-> % str utils/interface-version-to-game-version))
 
