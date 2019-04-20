@@ -3,7 +3,6 @@
 /target
 /classes
 /checkouts
-/state
 *.jar
 *.class
 /.lein-*

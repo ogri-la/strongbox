@@ -16,21 +16,30 @@
     [fs]
     [specs :as sp]]))
 
-;; TODO: allow override in user config
+;; TODO: allow user to specify their own catalog
 (def remote-addon-summary-file "https://raw.githubusercontent.com/ogri-la/wowman-data/master/curseforge.json")
 
 (defn paths
   "returns a map of paths whose location may vary depending on the location of the current working directory"
   [& path]
-  (let [state-dir (join fs/*cwd* "state") ;; /path/to/current-dir/state
-        cache-dir (join state-dir "cache")
-        daily-cache-dir (join cache-dir (utils/datestamp-now-ymd))
-        cfg-file (join state-dir "config.json")
+  (let [;; https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+        ;; ignoring XDG_CONFIG_DIRS and XDG_DATA_DIRS for now
+        config-dir (or (System/getenv "XDG_CONFIG_HOME") "~/.config")
+        config-dir (-> config-dir (join "wowman") fs/expand-home fs/normalized fs/absolute str)
 
-        addon-summary-file (join daily-cache-dir "curseforge.json")
+        data-dir (or (System/getenv "XDG_DATA_HOME") "~/.local/share")
+        data-dir (-> data-dir (join "wowman") fs/expand-home fs/normalized fs/absolute str)
+
+        cache-dir (join data-dir "cache") ;; /home/you/.local/share/wowman/cache
+        daily-cache-dir (join cache-dir (utils/datestamp-now-ymd)) ;; /home/$you/.local/share/wowman/cache/$today
+
+        cfg-file (join config-dir "config.json") ;; /home/$you/.config/wowman/config.json
+
+        addon-summary-file (join daily-cache-dir "curseforge.json") ;; /home/$you/.local/share/wowman/cache/$today/curseforge.json
         addon-summary-updates-file (join daily-cache-dir "curseforge-updates.json")
 
-        path-map {:state-dir state-dir
+        path-map {:config-dir config-dir
+                  :data-dir data-dir
                   :cache-dir cache-dir
                   :daily-cache-dir daily-cache-dir
                   :cfg-file cfg-file
@@ -391,7 +400,8 @@
 ;; 
 
 (defn-spec delete-cache nil?
-  "deletes the './state/cache' directory that contains etag files and "
+  "deletes the 'cache' directory that contains scraped html files, etag files, the catalog, etc. 
+  nothing that isn't regenerated when missing."
   []
   (warn "deleting cache")
   (fs/delete-dir (paths :cache-dir))
@@ -554,9 +564,10 @@
 
 (defn-spec init-dirs nil?
   []
-  (doseq [dir [:state-dir :cache-dir :daily-cache-dir]]
-    (info "creating dir:" dir)
-    (fs/mkdirs (paths dir)))
+  (doseq [[path val] (paths)]
+    (when (-> path name (clojure.string/ends-with? "-dir"))
+      (debug (format "creating '%s' directory: %s" path val))
+      (fs/mkdirs val)))
   (utils/prune-html-download-cache (paths :cache-dir))
   nil)
 

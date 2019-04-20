@@ -18,9 +18,6 @@ see CHANGELOG.md for a more formal list of changes by release
         - done
     - shouldn't be specifying column indicies when adding highlighters
         - done
-
-### todo
-
 * move to XDG preferred data/config directories
     - https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
     - perhaps ignore data directory for now and just use config (~/.config/wowman/)
@@ -28,6 +25,14 @@ see CHANGELOG.md for a more formal list of changes by release
     - I think this would be a breaking change requiring a major version bump to 1.0 ... ?
         - https://semver.org/, point 4: "Major version zero (0.y.z) is for initial development. Anything may change at any time. "
         - so I'm all good :)
+    - done
+        - you will need to re-select your addons dir
+        - local state directory can be safely deleted
+
+### todo
+
+* bug, curseforge.etag file is inside the daily cache dir
+    - it should be in the regular cache dir, the parent.
 * arch linux AUR package
 * highlight errors and warnings in notice logger
 * highlight unmatched addons
