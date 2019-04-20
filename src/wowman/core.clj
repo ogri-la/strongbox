@@ -24,10 +24,10 @@
   (prn "looking for path" path)
   (let [colour-map {:notice/error :tomato
                     :notice/warning :lemonchiffon
-                    :installed/needs-updating :darkkhaki
-                    :installed/unmatched :green
+                    ;;:installed/unmatched :tomato
+                    :installed/needs-updating :lemonchiffon
                     :installed/hovering "#e6e6e6"
-                    :search/already-installed :darkkhaki}]
+                    :search/already-installed "#99bc6b"}] ;; greenish
     (if-not (empty? path)
       (get-in colour-map path)
       colour-map)))
@@ -370,7 +370,7 @@
                     (when installed-addon
                       (when-not ia-by-name
                           ;; we matched, but under less than ideal circumstances
-                        (warn (format "matched installed addon '%s' by the :alt-name '%s'" name (:alt-name available-addon))))
+                        (debug (format "matched installed addon '%s' by the :alt-name '%s'" name (:alt-name available-addon))))
                       (merge {:matched? true} available-addon installed-addon)
                       ;; this is probably what should be happening, but the conflict on :name means the catalog name gets overwritten
                       ;;(merge installed-addon available-addon {:matched? true}))))
@@ -384,7 +384,8 @@
     (info "num installed" (count inst-addons) ", num matched" (count matched))
 
     (when-not (empty? unmatched)
-      (warn "failed to match the following addons to an addon online:" (clojure.string/join ", " unmatched)))
+      (warn "you need to manually search for them and then re-install them")
+      (warn (format "failed to match %s installed addons to online addons: %s" (count unmatched) (clojure.string/join ", " unmatched))))
 
     (update-installed-addon-list! expanded-installed-addon-list)))
 

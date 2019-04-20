@@ -331,17 +331,18 @@
 (defn installed-addons-panel
   []
   (let [;; always visible when debugging and always available from the column menu
-        hidden-by-default-cols [:group-id :primary? :addon-id :update? :categories :updated :WoW]
+        hidden-by-default-cols [:addon-id :group-id :primary? :update? :matched? :categories :updated :WoW]
         tblmdl (sstbl/table-model :columns [{:key :name :text "addon-id"}
                                             :group-id
                                             :primary?
+                                            :update?
+                                            :matched?
                                             {:key :uri :text "go"}
                                             {:key :label :text "name"}
                                             :description
                                             {:key :installed-version :text "installed"}
                                             {:key :version :text "available"}
                                             {:key :updated-date :text "updated"}
-                                            :update?
                                             {:key :interface-version :text "WoW"}
                                             {:key :category-list :text "categories"}]
                                   :rows [])
@@ -350,6 +351,9 @@
                         :model tblmdl
                         :highlighters [((x/hl-color :background (colours :installed/hovering)) :rollover-row)]
                         :popup (installed-addons-popup-menu))
+
+        addon-unmatched? (fn [adapter]
+                           (nil? (.getValue adapter (find-column-by-label grid "matched?"))))
 
         addon-needs-update? #(true? (.getValue % (find-column-by-label grid "update?")))
         date-renderer #(when % (-> % clojure.instant/read-instant-date (utils/fmt-date "yyyy-MM-dd")))
@@ -375,6 +379,8 @@
 
     (installed-addons-go-links grid)
 
+    (when (colours :installed/unmatched)
+      (add-highlighter grid addon-unmatched? (colours :installed/unmatched)))
     (add-highlighter grid addon-needs-update? (colours :installed/needs-updating))
     (add-cell-renderer grid "updated" date-renderer)
     (add-cell-renderer grid "WoW" iface-version-renderer)
