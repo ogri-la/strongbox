@@ -44,7 +44,7 @@
 
         do-toc-file (fn [toc-file & [warning]]
                       (when warning
-                        (warn warning))
+                        (debug warning))
                       (-> toc-file utils/de-bom-slurp -read-toc-file))]
     (cond
       (.exists toc-file) (do-toc-file toc-file)
