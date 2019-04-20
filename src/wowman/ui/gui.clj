@@ -525,28 +525,20 @@
                            formatted-output-str (force (format "%s - %s" (force timestamp_) (force msg_)))]
                        (insert-one grid {:level level :message formatted-output-str})))
 
-        ;; this all sucks. mig for tables would be super nice
-
-        column-mdl (.getColumnModel grid)
-        level-col (.getColumn column-mdl 0)
-
         cell-renderer (javax.swing.table.DefaultTableCellRenderer.)
         _ (.setHorizontalAlignment cell-renderer javax.swing.SwingConstants/CENTER)
-        _ (.setCellRenderer level-col cell-renderer)
 
-        level-width 50]
+        level-width 50
+        level-col (doto (.getColumn (.getColumnModel grid) 0)
+                    (.setMinWidth level-width)
+                    (.setMaxWidth (* level-width 2))
+                    (.setPreferredWidth (* level-width 1.5))
+                    (.setCellRenderer cell-renderer))]
 
     (logging/add-appender :gui gui-logger {:timestamp-opts {:pattern "HH:mm:ss"}})
 
     (add-highlighter grid #(= (.getValue % 0) :warn) :lemonchiffon)
     (add-highlighter grid #(= (.getValue % 0) :error) :tomato)
-
-    ;; more suckage
-
-    ;; level
-    (.setMinWidth level-col level-width)
-    (.setMaxWidth level-col (* level-width 2))
-    (.setPreferredWidth level-col (* level-width 1.5))
 
     ;; hide header when not debugging
     (when-not (core/debugging?)
