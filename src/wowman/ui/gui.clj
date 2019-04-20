@@ -549,7 +549,10 @@
     (when-not (core/debugging?)
       (.setTableHeader grid nil))
 
-    (ss/scrollable grid)))
+    ;; would love to know how to make these layouts and widths more consistent and deterministic
+    (mig/mig-panel
+     :constraints ["wrap 1"]
+     :items [[(ss/scrollable grid) "height 100%, width 98.75%::"]])))
 
 (defn-spec switch-search-tab-handler nil?
   [_ ::sp/gui-event]
@@ -577,8 +580,6 @@
 
         root (ss/vertical-panel :id :root
                                 :items [root->splitter])
-
-        ;;
 
         newui (ss/frame
                :title "wowman"
