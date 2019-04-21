@@ -443,7 +443,7 @@
         _ (state-bind [:installed-addon-list] update-label-idx) ;; update internal idx of labels whenever installed addons change
 
         addon-installed? (fn [adapter]
-                           (let [label-column 0 ;; (find-column-by-label grid "Name")
+                           (let [label-column (find-column-by-label grid "Name")
                                  value (.getValue adapter label-column)]
                              (contains? @label-idx value)))
 
