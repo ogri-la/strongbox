@@ -290,6 +290,7 @@
 (defn- write-etag
   [etag-path resp]
   (when etag-path
+    (fs/mkdirs (fs/parent etag-path)) ;; when the clock ticks over and the app hasn't been restarted ...
     (spit etag-path (-> resp :headers (get "etag"))))
   resp)
 
