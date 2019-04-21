@@ -21,7 +21,6 @@
 
 (defn colours
   [& path]
-  (prn "looking for path" path)
   (let [colour-map {:notice/error :tomato
                     :notice/warning :lemonchiffon
                     ;;:installed/unmatched :tomato
@@ -81,9 +80,6 @@
    ;; ... then updated again with live data from curseforge
    ;; see specs/toc-addon
    :installed-addon-list nil
-
-   ;; same as above but a map indexed by :name. purely for convenience
-   :installed-addon-idx nil
 
    ;; ui
 
@@ -323,11 +319,9 @@
 
 (defn update-installed-addon-list!
   [installed-addon-list]
-  (let [installed-addon-idx (utils/idx installed-addon-list :name)
-        asc compare
+  (let [asc compare
         installed-addon-list (sort-by :name asc installed-addon-list)]
-    (swap! state merge {:installed-addon-list installed-addon-list
-                        :installed-addon-idx installed-addon-idx})
+    (swap! state assoc :installed-addon-list installed-addon-list)
     nil))
 
 (defn-spec load-installed-addons nil?
@@ -354,6 +348,52 @@
     (swap! state assoc :addon-summary-list addon-summary-list)
     nil))
 
+(defn moosh-addons
+  [installed-addon catalog-addon]
+  ;; this is probably what should be happening, but the conflict on :name means the catalog name gets overwritten
+  ;;(merge installed-addon catalog-addon {:matched? true}))))
+  (merge {:matched? true} catalog-addon installed-addon))
+
+(defn -match-installed-addons-with-catalog
+  "for each installed addon, search the catalog across multiple joins until a match is found."
+  [installed-addon-list catalog]
+  (let [;; [{toc-key catalog-key}, ...]
+        ;; most -> least desirable match
+        match-on [[:name :name] [:name :alt-name] [:label :label] [:dirname :label]]
+        ;;[:description :description]] ;; matching on description actually works :P
+        ;; I don't think it's a good-enough unique identifier though
+
+        idx-idx (into {} (mapv (fn [[toc-key catalog-key]]
+                                 {catalog-key (utils/idx catalog catalog-key)}) match-on))
+
+        finder (fn [installed-addon]
+                 (let [-finder (fn [[toc-key catalog-key]]
+                                 (let [idx (get idx-idx catalog-key)
+                                       key (get installed-addon toc-key)
+                                       match (get idx key)]
+                                   (debug (format "checking %s=>%s for %s" toc-key catalog-key (:name installed-addon)))
+
+                                   (when match
+                                     ;; {:idx [:name :alt-name], :key "deadly-boss-mods", :match {...}, ...}
+                                     {:idx [toc-key catalog-key]
+                                      :key key
+                                      :installed-addon installed-addon
+                                      :match match
+                                      :final (moosh-addons installed-addon match)})))
+
+                       ;; clojure has peculiar laziness rules and this will actually visit *all* of the `match-on` pairs
+                       ;; see chunking: http://clojure-doc.org/articles/language/laziness.html
+                       match (first (remove nil? (map -finder match-on)))]
+
+                   (if match match {:installed-addon installed-addon})))]
+
+    (mapv finder installed-addon-list)))
+
+(defn -match-installed-addons-with-catalog-debug
+  "good for when you have addons that don't have a match"
+  []
+  (-match-installed-addons-with-catalog (get-state :installed-addon-list) (get-state :addon-summary-list)))
+
 (defn-spec match-installed-addons-with-online-addons nil?
   "when we have a list of installed addons as well as the addon list,
    merge what we can into ::specs/addon-toc records and update state.
@@ -361,23 +401,16 @@
   []
   (info "matching installed addons to online addons")
   (let [inst-addons (get-state :installed-addon-list)
-        ia-idx (get-state :installed-addon-idx)
-        matcher (fn [available-addon]
-                  (let [{:keys [name alt-name]} available-addon
-                        ia-by-name (get ia-idx name)
-                        ia-by-alt-name (get ia-idx alt-name)
-                        installed-addon (or ia-by-name ia-by-alt-name)]
-                    (when installed-addon
-                      (when-not ia-by-name
-                          ;; we matched, but under less than ideal circumstances
-                        (debug (format "matched installed addon '%s' by the :alt-name '%s'" name (:alt-name available-addon))))
-                      (merge {:matched? true} available-addon installed-addon)
-                      ;; this is probably what should be happening, but the conflict on :name means the catalog name gets overwritten
-                      ;;(merge installed-addon available-addon {:matched? true}))))
-                      )))
+        catalog (get-state :addon-summary-list)
 
-        matched (vec (remove nil? (map matcher (get-state :addon-summary-list))))
-        unmatched (clojure.set/difference (set (keys ia-idx)) (mapv :name matched))
+        match-results (-match-installed-addons-with-catalog inst-addons catalog)
+
+        [matched unmatched] (utils/split-filter #(contains? % :final) match-results)
+
+        matched (mapv :final matched)
+        unmatched (mapv :installed-addon unmatched)
+
+        unmatched (set (map :name unmatched))
 
         expanded-installed-addon-list (utils/merge-lists :name (get-state :installed-addon-list) matched)]
 

@@ -32,10 +32,14 @@ see CHANGELOG.md for a more formal list of changes by release
     - at extreme widths you can see its still a bit off
 * highlight errors and warnings in notice logger
     - done
+* highlight unmatched addons
+    - done, partially
+        - support has been added, but ...
+            - on first start the number of unmatched addons will be quite large and a solid block of this warning-colour was a bit overwhelming
+            - I plan to re-introduce it under selectable highlighters
 
 ### todo
 
-* highlight unmatched addons
 * 're-install all' should handle cases where .wowman.json is missing
     - it *is*, but some addons are not being handled (no match, presumably)
         - the undermine journal (match)
