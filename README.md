@@ -27,7 +27,7 @@ It may work on other platforms but it is only tested and supported on Linux.
 
 Some addons match cleanly to those online but others require you to manually search and re-install them before that match can be made.
 
-Some addons come bundled with other addons and **do not appear** in the online list. You will need to re-install the 'parent' addon that bundles those addons.
+Some addons come bundled with other addons that *do not appear* in the online list. You will need to re-install the 'parent' addon that bundles those addons.
 
 First time usage:
 
