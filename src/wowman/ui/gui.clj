@@ -21,6 +21,7 @@
     [core :as ss]
     [font :refer [font]]
     [table :as sstbl]]
+   [trptcolin.versioneer.core :as versioneer]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
    [orchestra.spec.test :as st]))
@@ -203,6 +204,21 @@
                             :success-fn (async-handler core/remove-selected))]
       (-> dialog ss/pack! ss/show!)
       nil)))
+
+(defn about-wowman-dialog
+  []
+  (let [content [[(ss/label :text "wowman" :font (font :size 18 :style #{:bold})) ""]
+                 ["an open source, advertisement free and privacy respecting addon manager for World of Warcraft" ""]
+                 [(format "version %s" (versioneer/get-version "ogri-la" "wowman")) ""]
+                 ["" ""]
+                 [(x/hyperlink :text "github" :uri "https://github.com/ogri-la/wowman") ""]]
+        content (interleave content (repeat [:separator "growx, wrap"]))
+
+        dialog (ss/dialog :content (mig/mig-panel :items content)
+                          :type :info
+                          :resizable? false)]
+    (-> dialog ss/pack! ss/show!)
+    nil))
 
 (defn configure-app-panel
   []
@@ -574,9 +590,12 @@
                     (ss/action :name "Delete WowMatrix.dat files" :handler (async-handler core/delete-wowmatrix-dat-files))
                     (ss/action :name "Delete .wowman.json files" :handler (async-handler core/delete-wowman-json-files))]
 
+        help-menu [(ss/action :name "About wowman" :handler (handler about-wowman-dialog))]
+
         menu (ss/menubar :items [(ss/menu :text "File" :mnemonic "F" :items file-menu)
                                  (ss/menu :text "Addons" :mnemonic "A" :items addon-menu)
-                                 (ss/menu :text "Cache" :items cache-menu)])
+                                 (ss/menu :text "Cache" :items cache-menu)
+                                 (ss/menu :text "Help" :items help-menu)])
         _ (.setJMenuBar newui menu)
 
         init (fn [_]

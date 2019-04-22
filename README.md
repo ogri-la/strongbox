@@ -2,9 +2,8 @@
 
 [![Build Status](https://travis-ci.org/ogri-la/wowman.svg?branch=master)](https://travis-ci.org/ogri-la/wowman)
 
-`wowman` is **open source**, **advertisement free** and **privacy respecting** software that interfaces with 
-[www.curseforge.com](https://www.curseforge.com/wow/addons) and World of Warcraft addon files in your `Addons` 
-directory.
+`wowman` is **open source**, **advertisement free** and **privacy respecting** addon manager for World of Warcraft that 
+interfaces with [www.curseforge.com](https://www.curseforge.com/wow/addons) and the addons in your `Addons` directory.
 
 ## Audience
 
