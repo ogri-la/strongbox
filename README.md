@@ -25,18 +25,22 @@ It may work on other platforms but it is only tested and supported on Linux.
 
 `wowman` works by matching your installed addons to a list of addons available online.
 
-Some addons match cleanly to those online but others require you to manually search and re-install them before that match can be made.
+Some addons match cleanly to those online but others require you to manually search and re-install them before that 
+match can be made.
 
-Some addons come bundled with other addons that *do not appear* in the online list. You will need to re-install the 'parent' addon that bundles those addons.
+Some addons come bundled with other addons that *do not appear* in the online list. You will need to re-install the 
+'parent' addon that bundles those addons.
 
 First time usage:
 
 1. select your "Addons" directory (`/path/to/WoW/_retail_/Interface/Addons`)
 2. from the `Addons` menu select `Re-install all` to automatically re-install all *matching* addons
 3. unmatched addons can be searched for and installed from the `search` tab
-4. finally, addons can be deleted by selecting them, right-clicking, and selecting `delete`. Multiple addons can be selected and removed at once.
+4. finally, addons can be deleted by selecting them, right-clicking, and selecting `delete`. Multiple addons can be 
+selected and removed at once.
 
-Daily usage is simply using the `Update all` button to update any addons with newer versions. Addons with newer versions will be highlighted.
+Afterwards, daily usage is simply using the `Update all` button to update any addons with newer versions. 
+Addons with new versions available will be highlighted.
 
 ## Notes
 
