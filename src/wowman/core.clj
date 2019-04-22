@@ -256,7 +256,7 @@
         first-toplevel-dir (first toplevel-dirs)]
 
     ;; todo: issue a warning if all subfolders don't share a common prefix?
-    ;; do people care if SlideBar and Stubby are being installed when they install things like Auctioneer?
+    ;; do people care if SlideBar and Stubby are being installed when they install things like Auctioneer/Healbot?
 
     (cond
       (= 1 (count toplevel-dirs)) ;; single dir, perfect case
@@ -350,18 +350,17 @@
 
 (defn moosh-addons
   [installed-addon catalog-addon]
-  ;; this is probably what should be happening, but the conflict on :name means the catalog name gets overwritten
-  ;;(merge installed-addon catalog-addon {:matched? true}))))
-  (merge {:matched? true} catalog-addon installed-addon))
+  ;; merges left->right. catalog-addon overwrites installed-addon, ':matched' overwrites catalog-addon, etc
+  (merge installed-addon catalog-addon {:matched? true}))
 
 (defn -match-installed-addons-with-catalog
   "for each installed addon, search the catalog across multiple joins until a match is found."
   [installed-addon-list catalog]
   (let [;; [{toc-key catalog-key}, ...]
         ;; most -> least desirable match
-        match-on [[:name :name] [:name :alt-name] [:label :label] [:dirname :label]]
+        match-on [[:alias :name] [:name :name] [:name :alt-name] [:label :label] [:dirname :label]]
         ;;[:description :description]] ;; matching on description actually works :P
-        ;; I don't think it's a good-enough unique identifier though
+        ;; it's not a good enough unique identifier though
 
         idx-idx (into {} (mapv (fn [[toc-key catalog-key]]
                                  {catalog-key (utils/idx catalog catalog-key)}) match-on))
@@ -404,21 +403,21 @@
         catalog (get-state :addon-summary-list)
 
         match-results (-match-installed-addons-with-catalog inst-addons catalog)
-
         [matched unmatched] (utils/split-filter #(contains? % :final) match-results)
 
         matched (mapv :final matched)
         unmatched (mapv :installed-addon unmatched)
+        unmatched-names (set (map :name unmatched))
 
-        unmatched (set (map :name unmatched))
-
-        expanded-installed-addon-list (utils/merge-lists :name (get-state :installed-addon-list) matched)]
+        expanded-installed-addon-list (into matched unmatched)
+        ;;expanded-installed-addon-list (utils/merge-lists :name (get-state :installed-addon-list) matched)
+        ]
 
     (info "num installed" (count inst-addons) ", num matched" (count matched))
 
     (when-not (empty? unmatched)
       (warn "you need to manually search for them and then re-install them")
-      (warn (format "failed to match %s installed addons to online addons: %s" (count unmatched) (clojure.string/join ", " unmatched))))
+      (warn (format "failed to match %s installed addons to online addons: %s" (count unmatched) (clojure.string/join ", " unmatched-names))))
 
     (update-installed-addon-list! expanded-installed-addon-list)))
 
