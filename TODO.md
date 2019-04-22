@@ -51,10 +51,11 @@ see CHANGELOG.md for a more formal list of changes by release
     - done
         - matching has been improved across multiple joins
         - parsed toc files now have a static 'alias' key for the catalog name
+* status bar indicating number matched
+    - done
 
 ### todo
 
-* status bar indicating number matched
 * add an 'about' top level menu
     - it checks if a new version of wowman available
     - link where to find it

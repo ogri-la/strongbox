@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * errors and warnings in the notice logger are now highlighted yellow and red
 * static matching of installed -> catalog addons via a simple mapping has been added for popular addons
 * minor: support for highlighting unmatched addons, disabled by default, possibly not helpful at all
+* a handy dandy status bar at the bottom of the screen with number of unmatched addons and total addons in catalog
 
 ### Changed
 

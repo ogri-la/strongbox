@@ -19,6 +19,7 @@
     [cursor :refer [cursor]]
     [swingx :as x]
     [core :as ss]
+    [font :refer [font]]
     [table :as sstbl]]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
@@ -523,13 +524,26 @@
                                        (ss/request-focus! (select-ui :#search-input-txt))))))
     tabber))
 
+(defn status-bar
+  "this is the litle strip of text at the bottom of the application."
+  []
+  (let [template " %s of %s installed addons matched. %s addons in catalog."
+        status (ss/label :text (format template 0 0 0)
+                         :font (font :size 11))
+        update-label (fn [state]
+                       (let [ia (:installed-addon-list state)
+                             uia (filter :matched? ia)]
+                         (ss/text! status (format template (count uia) (count ia) (count (:addon-summary-list state))))))]
+    (state-bind [:installed-addon-list] update-label)
+    status))
+
 (defn start-ui
   []
   (let [root->splitter (ss/top-bottom-split (mk-tabber) (notice-logger))
         _ (.setResizeWeight root->splitter 0.8)
 
         root (ss/vertical-panel :id :root
-                                :items [root->splitter])
+                                :items [root->splitter (status-bar)])
 
         newui (ss/frame
                :title "wowman"
