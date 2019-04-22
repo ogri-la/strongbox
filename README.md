@@ -31,7 +31,7 @@ Some addons come bundled with other addons that *do not appear* in the online li
 
 First time usage:
 
-1. select your `Addons` directory (`/path/to/WoW/_retail_/Interface/Addons`)
+1. select your "Addons" directory (`/path/to/WoW/_retail_/Interface/Addons`)
 2. from the `Addons` menu select `Re-install all` to automatically re-install all *matching* addons
 3. unmatched addons can be searched for and installed from the `search` tab
 4. finally, addons can be deleted by selecting them, right-clicking, and selecting `delete`. Multiple addons can be selected and removed at once.
