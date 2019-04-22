@@ -10,13 +10,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * a 'go' link that will open a link to the addon's catalog page
 * a simple row highlighting on the installed addons screen when moving your cursor over an addon
+* errors and warnings in the notice logger are now highlighted yellow and red
+* static matching of installed -> catalog addons via a simple mapping has been added for popular addons
+* minor: support for highlighting unmatched addons, disabled by default, possibly not helpful at all
 
 ### Changed
 
 * the 'categories', 'updated' and 'WoW' columns on the installed addons screen are now hidden by default
 * the 'state' directory has been split into 'data' and 'config' directories and now follow XDG recommended paths
+* matching between installed addons and catalog addons has been improved, now searching across multiple joins
 
 ### Fixed
+
+* minor: inconsistent widths between notice logger and the tables above them causing scrollbars to be misaligned
 
 ### Removed
 
