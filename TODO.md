@@ -37,9 +37,6 @@ see CHANGELOG.md for a more formal list of changes by release
         - support has been added, but ...
             - on first start the number of unmatched addons will be quite large and a solid block of this warning-colour was a bit overwhelming
             - I plan to re-introduce it under selectable highlighters
-
-### todo
-
 * 're-install all' should handle cases where .wowman.json is missing
     - it *is*, but some addons are not being handled (no match, presumably)
         - the undermine journal (match)
@@ -51,6 +48,12 @@ see CHANGELOG.md for a more formal list of changes by release
         - healbot = healbot-continued
         - dbm = deadly-boss-mods
     - bartender and undermine journal not matching smell like bugs
+    - done
+        - matching has been improved across multiple joins
+        - parsed toc files now have a static 'alias' key for the catalog name
+
+### todo
+
 * status bar indicating number matched
 * add an 'about' top level menu
     - it checks if a new version of wowman available
@@ -61,6 +64,16 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
+* move away from this merging toc/addon/expanded addon data strategy
+    - it's confusing to debug!
+    - namespaced keys might be a good alternative:
+        - :toc/label and :catalog/label
+        - :toc/version and :catalog/version
+        - with derived/synthetic attributes having no ns
+            - :group-id, :group-count
+        - how to pick preferred attributes without continuous (or key else other-key) ?
+            - (getattr addon :label) ;; does multiple lookups ...? seems kinda meh
+* gui, refresh addons after deleting .wowman.json files
 * bug, curseforge.etag file is inside the daily cache dir
     - it should be in the regular cache dir, the parent.
         - this is awkard
@@ -81,7 +94,11 @@ see CHANGELOG.md for a more formal list of changes by release
                 - do other types of file have different age requirements? 
                 - once a day seems appropriate for addon pages
                 - once a day seems appropriate for curseforge.json ...
-
+* capture 'total downloads' from curseforge
+    - more than anything this will help distinguish main addons from the noise of supplementary addons
+        - see 'Titan Panel' or 'BigWigs' or 'DBM'
+* generate aliases for the top 10/20 installed addons that need them
+    - depends on capturing total downloads
 * gui, search, add 'go' link and row highlighting
     - feels weird to go from having it (installed) to not (search)
 * revisit group records, I can't believe we can't pull a good name or description from *somewhere*
@@ -118,7 +135,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - would be good for installing older versions of an addon?
 * gui, scroll tabs with mouse
 * gui, search, order by date only orders the *current page* of results
-* capture 'total downloads' from curseforge
 * addon 'detail' tab
     - link to curseforge
     - donation url
