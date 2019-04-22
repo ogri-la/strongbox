@@ -16,12 +16,27 @@ It may work on other platforms but it is only tested and supported on Linux.
 
 * Java 8+
 
-## Usage
+## Installation
 
 1. [download the jar](https://github.com/ogri-la/wowman/releases/download/0.4.0/wowman-0.4.0-standalone.jar) file
 2. run with `java -jar wowman-x.x.x-standalone.jar`
-3. select your `Addons` directory (`/path/to/WoW/_retail_/Interface/Addons`)
-4. select the addons you wish to update and click the `update` button
+
+## Usage
+
+`wowman` works by matching your installed addons to a list of addons available online.
+
+Some addons match cleanly to those online but others require you to manually search and re-install them before that match can be made.
+
+Some addons come bundled with other addons and **do not appear** in the online list. You will need to re-install the 'parent' addon that bundles those addons.
+
+First time usage:
+
+1. select your `Addons` directory (`/path/to/WoW/_retail_/Interface/Addons`)
+2. from the `Addons` menu select `Re-install all` to automatically re-install all *matching* addons
+3. unmatched addons can be searched for and installed from the `search` tab
+4. finally, addons can be deleted by selecting them, right-clicking, and selecting `delete`. Multiple addons can be selected and removed at once.
+
+Daily usage is simply using the `Update all` button to update any addons with newer versions. Addons with newer versions will be highlighted.
 
 ## Notes
 
