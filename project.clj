@@ -1,4 +1,4 @@
-(defproject ogri-la/wowman "0.4.0"
+(defproject ogri-la/wowman "0.5.0-unreleased"
   :description "World Of Warcraft Addon Manager"
   :url "http://github.com/ogri-la/wowman"
   :license {:name "GNU Affero General Public License (AGPL)"
@@ -37,7 +37,7 @@
             [jonase/eastwood "0.3.5"]]
   :eastwood {:exclude-linters [:constant-test]
              :add-linters [:unused-namespaces
-                           ;;:unused-locals :unused-fn-args ;; too may false positives to be always-enabled
+                           ;;:unused-locals :unused-fn-args ;; too many false positives to always be enabled
                            ;; :non-clojure-file  ;; just noise
                            ;; :keyword-typos ;; bugged with spec?
                            ]}
