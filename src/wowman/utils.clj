@@ -5,6 +5,7 @@
    [clojure.java.io]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
+   [orchestra.spec.test :as st]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
    [cheshire.core :as json]
    [clojure.data.json]
@@ -102,6 +103,10 @@
 (defn-spec to-json ::sp/json
   [x ::sp/anything]
   (json/generate-string x {:pretty true}))
+
+(defn from-json
+  [x]
+  (clojure.data.json/read-str x :key-fn keyword))
 
 (defn-spec dump-json-file nil?
   [path ::sp/file data ::sp/anything]
@@ -420,3 +425,33 @@
     (doseq [cache-dir all-except-today]
       (warn "deleting cache dir " cache-dir)
       (fs/delete-dir cache-dir))))
+
+(defn -semver-comp
+  [a-bits b-bits]
+  (let [to-int (fn [x]
+                 (try
+                   (some-> x first Integer.)
+                   (catch NumberFormatException nfe
+                     ;; try again, this time ignore everything after any hyphen.
+                     ;; if it's genuine bollocks we'll raise another exception
+                     (some-> x first (clojure.string/split #"-") first Integer.))))
+        result (compare (to-int a-bits) (to-int b-bits))
+        more? (not (empty? (rest b-bits)))]
+    (if (= result 0)
+      (if more?
+        (-semver-comp (rest a-bits) (rest b-bits))
+        result)
+      result)))
+
+(defn semver-comp
+  [a-string b-string]
+  (let [a-bits (clojure.string/split a-string #"\.")
+        b-bits (clojure.string/split b-string #"\.")]
+    (-semver-comp a-bits b-bits)))
+
+(defn-spec sort-semver-strings (s/or :ok (s/coll-of string?) :empty empty?)
+  "sort a list of semver strings with support for '1.2.3-something' suffixes."
+  [semver-list (s/coll-of string?)]
+  (sort semver-comp semver-list))
+
+(st/instrument)

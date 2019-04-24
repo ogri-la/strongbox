@@ -53,13 +53,17 @@ see CHANGELOG.md for a more formal list of changes by release
         - parsed toc files now have a static 'alias' key for the catalog name
 * status bar indicating number matched
     - done
+* add an 'about' top level menu
+    - it checks if a new version of wowman available
+        - done
+    - link where to find it
+        - done
+    - licence
+        - done
+    - done
 
 ### todo
 
-* add an 'about' top level menu
-    - it checks if a new version of wowman available
-    - link where to find it
-    - licence
 * arch linux AUR package
     - investigate if any further code changes required, then release, then make a package
 

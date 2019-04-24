@@ -8,6 +8,7 @@
    [orchestra.core :refer [defn-spec]]
    [spec-tools.core :as spec-tools]
    [me.raynes.fs :as fs]
+   [trptcolin.versioneer.core :as versioneer]
    [wowman
     [logging :as logging]
     [nfo :as nfo]
@@ -590,6 +591,28 @@
 (defn remove-selected
   []
   (-> (get-state) :selected-installed vec remove-many-addons))
+
+;; version checking
+
+(defn-spec wowman-version string?
+  "returns this version of wowman"
+  []
+  (versioneer/get-version "ogri-la" "wowman"))
+
+(defn-spec latest-wowman-release string?
+  "returns the most recently released version of wowman it can find"
+  []
+  (binding [utils/*cache-dir* (paths :cache-dir)]
+    (let [resp (utils/from-json (utils/download "https://api.github.com/repos/ogri-la/wowman/releases/latest"))]
+      (-> resp :tag_name))))
+
+(defn-spec latest-wowman-version? boolean?
+  "returns true if the *running instance* of wowman is the *most recent known* version of wowman."
+  []
+  (let [latest-release (latest-wowman-release)
+        version-running (wowman-version)
+        sorted-asc (utils/sort-semver-strings [latest-release version-running])]
+    (= version-running (last sorted-asc))))
 
 ;;
 ;; init

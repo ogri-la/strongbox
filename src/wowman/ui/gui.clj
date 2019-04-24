@@ -21,7 +21,6 @@
     [core :as ss]
     [font :refer [font]]
     [table :as sstbl]]
-   [trptcolin.versioneer.core :as versioneer]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
    [orchestra.spec.test :as st]))
@@ -207,11 +206,14 @@
 
 (defn about-wowman-dialog
   []
-  (let [content [[(ss/label :text "wowman" :font (font :size 18 :style #{:bold})) ""]
-                 ["an open source, advertisement free and privacy respecting addon manager for World of Warcraft" ""]
-                 [(format "version %s" (versioneer/get-version "ogri-la" "wowman")) ""]
+  (let [content [[(ss/label :text "wowman" :font (font :size 18 :style #{:bold})) "center"]
+                 [(format "version %s" (core/wowman-version)) "center"]
                  ["" ""]
-                 [(x/hyperlink :text "github" :uri "https://github.com/ogri-la/wowman") ""]]
+                 (when-not (core/latest-wowman-version?)
+                   [(format "version %s is now available to download!" (core/latest-wowman-release)) "center"])
+                 [(x/hyperlink :text "github" :uri "https://github.com/ogri-la/wowman") "center"]
+                 ["AGPL v3", "center"]]
+        content (remove nil? content)
         content (interleave content (repeat [:separator "growx, wrap"]))
 
         dialog (ss/dialog :content (mig/mig-panel :items content)
