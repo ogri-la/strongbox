@@ -114,6 +114,8 @@ that it's my privilege to offer this small piece back.
 
 \* with caveats. may require compilation, partial functionality or not work at all, or be officially unsupported, or ...
 
+(see [comrades.csv](comrades.csv))
+
 ## License
 
 Copyright © 2018-2019 Torkus
