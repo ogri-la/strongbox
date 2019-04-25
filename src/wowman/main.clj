@@ -99,16 +99,16 @@
       ;; problems with user args, no further processing
       (:errors args) args
 
-      ;; state directory doesn't exist and parent directory isn't writable
-      ;; nowhere to create state dir, nowhere to download addon list. non-starter
+      ;; data directory doesn't exist and parent directory isn't writable
+      ;; nowhere to create data dir, nowhere to store download catalog. non-starter
       (and
-       (not (fs/exists? (paths :state-dir)))
-       (not (fs/writeable? (fs/parent (paths :state-dir))))) {:ok? false, :exit-message (str "State directory doesn't exist and it cannot be created: " (paths :state-dir))}
+       (not (fs/exists? (paths :data-dir)))
+       (not (fs/writeable? (fs/parent (paths :data-dir))))) {:ok? false, :exit-message (str "Data directory doesn't exist and it cannot be created: " (paths :data-dir))}
 
       ;; state directory *does* exist but isn't writeable
       ;; another non-starter
-      (and (fs/exists? (paths :state-dir))
-           (not (fs/writeable? (paths :state-dir)))) {:ok? false, :exit-message (str "State directory isn't writeable:" (paths :state-dir))}
+      (and (fs/exists? (paths :data-dir))
+           (not (fs/writeable? (paths :data-dir)))) {:ok? false, :exit-message (str "Data directory isn't writeable:" (paths :data-dir))}
 
       :else
 

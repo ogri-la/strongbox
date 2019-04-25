@@ -1,10 +1,10 @@
 (ns wowman.ui.gui
   (:require
    [wowman
-    [core :as core :refer [get-state state-bind state-binds]]
+    [core :as core :refer [get-state state-bind state-binds colours]]
     [logging :as logging]
     [specs :as sp]
-    [utils :as utils]]
+    [utils :as utils :refer [items]]]
    [clojure.instant]
    [clojure.core.async :as async]
    [clojure.string :refer [lower-case starts-with? trim]]
@@ -16,22 +16,16 @@
     [mig :as mig]
     ;;[dev :refer [show-options show-events]]
     [color]
+    [cursor :refer [cursor]]
     [swingx :as x]
     [core :as ss]
+    [font :refer [font]]
     [table :as sstbl]]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
    [orchestra.spec.test :as st]))
 
 (s/def ::content-pane #(instance? java.awt.Component %))
-
-(defn items
-  [& lst]
-  (vec (remove nil? (flatten lst))))
-
-;;
-;;
-;;
 
 (defn select-ui
   [& path]
@@ -83,12 +77,6 @@
   [_]
   nil)
 
-(comment "unused"
-         (defn-spec click-button nil?
-           [btn-id keyword?]
-           (ss/invoke-later
-            (.doClick (select-ui btn-id)))))
-
 (defn handler [& fl]
   (fn [_]
     (doseq [f fl] (f))))
@@ -116,7 +104,6 @@
    (dorun (map-indexed (fn [idx row]
                          (debug "inserting row" (:name row) "at idx" idx)
                          (sstbl/insert-at! grid idx row)) rows))
-   ;; packs the columns to something less-default
    (.packAll grid)))
 
 (defn insert-one
@@ -141,10 +128,11 @@
               (doseq [idx (rest indicies)]
                 (.addSelectionInterval s-model idx idx))))))
 
-(defn -find-column-by-label
+(defn find-column-by-label
   "returns the index of the column for the given label. remember, column positions can change!"
-  [mdl label]
-  (let [matches? (fn [idx]
+  [grid label]
+  (let [mdl (.getModel grid)
+        matches? (fn [idx]
                    (when (= (.getColumnName mdl idx) label)
                      idx))
         columns (range 0 (.getColumnCount mdl))]
@@ -153,7 +141,7 @@
 (defn find-row-by-value
   "returns the first set of coordinates [row col] for a match of `row-value` in column with given `column-label` or `nil` if not found."
   [grid column-label row-value]
-  (let [col-idx (-find-column-by-label (.getModel grid) column-label)
+  (let [col-idx (find-column-by-label grid column-label)
         matches? (fn [row-idx]
                    (when (= (.getValueAt (.getModel grid) row-idx col-idx) row-value)
                      [row-idx col-idx]))
@@ -166,16 +154,6 @@
 (defn switch-tab-handler [idx] (fn [_] (switch-tab idx)))
 
 ;;
-
-;; TODO: remove
-(defn-spec refresh nil?
-  []
-  ;; here be dragons.
-  ;; this queues the function and discards further calls to function if function call is still pending
-  ;; this is close to atomicity of an operation without rollback
-  (let [signal (ssi/signaller* core/refresh)]
-    (signal))
-  nil)
 
 (defn-spec tbl-selected-rows (s/or :ok ::sp/list-of-maps, :nothing-selected nil?)
   "returns a list of rows that are currently selected for given table"
@@ -199,16 +177,14 @@
 
 (defn-spec search-results-install-handler nil?
   []
-  ;; this works ~ok~ for one or two files, but many at once and we get what looks like a freeze as the summary is expanded
-  ;; what might be better is: switch tab; for each selected, expand summary, install addon, load-installed-addons; refresh;
+  ;; this: switches tab, then, for each addon selected, expands summary, installs addon, calls load-installed-addons and finally refreshes;
   ;; there will be a plodding step-wise update which is better than a blank screen and apparent hang
-  ;; `load-installed-addons` will simply re-visit the list of installed addons and update the state with the bare toc contents.
-  ;;(core/-install-update-these (map curseforge/expand-summary (get-state :selected-search)))
+  ;;(core/-install-update-these (map curseforge/expand-summary (get-state :selected-search))) ;; original approach. efficient but no feedback for user
   (switch-tab INSTALLED-TAB)
   (doseq [selected (get-state :selected-search)]
     (-> selected core/expand-summary-wrapper vector core/-install-update-these)
     (core/load-installed-addons))
-  (refresh))
+  (core/refresh))
 
 (defn-spec remove-selected-handler nil?
   []
@@ -227,6 +203,24 @@
                             :success-fn (async-handler core/remove-selected))]
       (-> dialog ss/pack! ss/show!)
       nil)))
+
+(defn about-wowman-dialog
+  []
+  (let [content [[(ss/label :text "wowman" :font (font :size 18 :style #{:bold})) "center"]
+                 [(format "version %s" (core/wowman-version)) "center"]
+                 ["" ""]
+                 (when-not (core/latest-wowman-version?)
+                   [(format "version %s is now available to download!" (core/latest-wowman-release)) "center"])
+                 [(x/hyperlink :text "github" :uri "https://github.com/ogri-la/wowman") "center"]
+                 ["AGPL v3", "center"]]
+        content (remove nil? content)
+        content (interleave content (repeat [:separator "growx, wrap"]))
+
+        dialog (ss/dialog :content (mig/mig-panel :items content)
+                          :type :info
+                          :resizable? false)]
+    (-> dialog ss/pack! ss/show!)
+    nil))
 
 (defn configure-app-panel
   []
@@ -247,20 +241,16 @@
     (ss/vertical-panel
      :items [(ss/flow-panel :align :left :items [refresh-button update-all-button wow-dir-button wow-dir-label])])))
 
-(defn entry-to-map
-  "converts a RowFilter.Entry object to a simple map"
-  [entry-obj]
-  (let [mdl (.getModel entry-obj)] ;; TableModel
-    (into {} (mapv (fn [idx] [(.getColumnName mdl idx) (.getValue entry-obj idx)]) (range 0 (.getColumnCount mdl))))))
-
 (defn installed-addons-panel-column-widths
   "this sucks"
   [grid]
   (let [default-min-width 80 ;; solid default for all columns
-        min-width-map {"WoW" 45} ;; these can be a little smaller
+        min-width-map {"WoW" 45
+                       "go" 100} ;; these can be a little smaller
         max-width-map {"installed" 200
                        "available" 200
-                       "updated" 100}
+                       "updated" 100
+                       "go" 120}
         pre-width-map {"WoW" 50
                        "updated" 100}] ;; we would like these a little larger, if possible
     (doseq [column (.getColumns grid)]
@@ -272,89 +262,121 @@
 
 (defn hide-columns
   [grid hidden-column-list]
-  (doseq [column hidden-column-list]
-    (.setVisible (.getColumnExt grid (-> column name str)) false)))
+  (when-not (core/debugging?)
+    (doseq [column hidden-column-list]
+      (.setVisible (.getColumnExt grid (-> column name str)) false))))
+
+(defn add-highlighter
+  "target a selection of rows and colour their backgrounds differently"
+  [grid pred-fn colour]
+  (let [predicate (proxy [org.jdesktop.swingx.decorator.HighlightPredicate] []
+                    (isHighlighted [renderer adapter]
+                      (pred-fn adapter)))
+
+        highlighter (org.jdesktop.swingx.decorator.ColorHighlighter.
+                     predicate
+                     (seesaw.color/color colour)
+                     nil)] ;; no change in foreground colours
+    (.addHighlighter grid highlighter)
+    nil))
+
+(defn add-cell-renderer
+  "target a cell and render it's contents differently"
+  [grid column-name render-fn]
+  ;; todo: change column-idx to column title. idx is too brittle
+  (let [column-idx (find-column-by-label grid column-name)
+        cell-renderer (proxy [javax.swing.table.DefaultTableCellRenderer] []
+                        (setValue [colval]
+                          ;; nil values can make cells render strangely, so ensure an empty string if nil returned
+                          (proxy-super setValue (or (render-fn colval) ""))))]
+    (.setCellRenderer (.getColumn (.getColumnModel grid) column-idx) cell-renderer)
+
+    ;; lawdy dawdy this is awful. 
+    (when (= column-name "go")
+      (.setHorizontalAlignment cell-renderer javax.swing.SwingConstants/CENTER))
+
+    nil))
+
+(defn installed-addons-popup-menu
+  []
+  (let [no-label ""
+        popup-menu-items [(dynamic-menu-item
+                           no-label
+                           :watch [:selected-installed]
+                           :callback (fn [state]
+                                       (let [selected-rows (tbl-selected-rows :#tbl-installed-addons)]
+                                         (format "%s selected, %s updateable"
+                                                 (count selected-rows)
+                                                 (count (filter :update? selected-rows)))))
+                           :onclick donothing)
+                          (ss/separator)
+                          (menu-item "Update" (async-handler core/install-update-selected))
+                          (menu-item "Re-install" (async-handler core/re-install-selected))
+                          (ss/separator)
+                          (menu-item "Delete" (async-handler remove-selected-handler))]]
+    (ss/popup :items popup-menu-items)))
+
+(defn installed-addons-go-links
+  [grid]
+  (let [gocol? #(= (.getColumnName grid %) "go")
+
+        cell-val-for-event (fn [e]
+                             (let [row (.rowAtPoint grid (.getPoint e))
+                                   col (.columnAtPoint grid (.getPoint e))]
+                               (when (and (> col -1) (> row -1))
+                                 [row col (.getValueAt grid row col)])))
+
+        go-link-clicked (fn [e]
+                          (when-let [triple (cell-val-for-event e)]
+                            (let [[row col val] triple]
+                              (if (and (gocol? col) val)
+                                (.browse (java.awt.Desktop/getDesktop) (java.net.URI. val))))))
+
+        hand-cursor-on-hover (fn [e]
+                               (when-let [triple (cell-val-for-event e)]
+                                 (let [[row col val] triple]
+                                   (if (and (gocol? col) val)
+                                     (.setCursor grid (cursor :hand))
+                                     (.setCursor grid (cursor :default))))))
+
+        uri-renderer #(when % "<html><font color='blue'>↪ curseforge</font></html>")]
+
+    (ss/listen grid :mouse-motion hand-cursor-on-hover)
+    (ss/listen grid :mouse-clicked go-link-clicked)
+    (add-cell-renderer grid "go" uri-renderer)
+
+    nil))
 
 (defn installed-addons-panel
   []
-  (let [debug-cols [:group-id :primary? :addon-id :update?] ;; only visible when debugging
+  (let [;; always visible when debugging and always available from the column menu
+        hidden-by-default-cols [:addon-id :group-id :primary? :update? :matched? :categories :updated :WoW]
         tblmdl (sstbl/table-model :columns [{:key :name :text "addon-id"}
                                             :group-id
                                             :primary?
+                                            :update?
+                                            :matched?
+                                            {:key :uri :text "go"}
                                             {:key :label :text "name"}
                                             :description
                                             {:key :installed-version :text "installed"}
                                             {:key :version :text "available"}
                                             {:key :updated-date :text "updated"}
-                                            :update?
                                             {:key :interface-version :text "WoW"}
                                             {:key :category-list :text "categories"}]
                                   :rows [])
 
-        popup-menu-items [(dynamic-menu-item ""
-                                             :watch [:selected-installed]
-                                             :callback (fn [state]
-                                                         (let [selected-rows (tbl-selected-rows :#tbl-installed-addons)]
-                                                           (format "%s selected, %s updateable"
-                                                                   (count selected-rows)
-                                                                   (count (filter :update? selected-rows)))))
-                                             :onclick donothing)
-                          (ss/separator)
-                          (menu-item "Update" (async-handler core/install-update-selected))
-                          (menu-item "Re-install" (async-handler core/re-install-selected))
-                          (ss/separator)
-                          (menu-item "Delete" (async-handler remove-selected-handler))]
-        popup-menu (ss/popup :items popup-menu-items)
-
         grid (x/table-x :id :tbl-installed-addons
                         :model tblmdl
-                        ;;:auto-resize :all-columns ;; crazy, don't use this
-                        ;;:column-margin 10 ;; messes with selected line
-                        :popup popup-menu)
+                        :highlighters [((x/hl-color :background (colours :installed/hovering)) :rollover-row)]
+                        :popup (installed-addons-popup-menu))
 
-        ;; this is before render and before hiding and before user has had a chance to move or resize columns
-        _ (installed-addons-panel-column-widths grid)
+        addon-unmatched? (fn [adapter]
+                           (nil? (.getValue adapter (find-column-by-label grid "matched?"))))
 
-        predicate (proxy [org.jdesktop.swingx.decorator.HighlightPredicate] []
-                    (isHighlighted [renderer adapter]
-                      (let [update-column 8
-                            ;;update-column (.viewToModel adapter update-column) ;; not working?
-                            value (.getValue adapter update-column)]
-                        (true? value))))
-
-        highlighter (org.jdesktop.swingx.decorator.ColorHighlighter.
-                     predicate
-                     (seesaw.color/color :darkkhaki)
-                     nil) ;; no change in foreground colours
-        _ (.addHighlighter grid highlighter)
-
-        ;; filter known non-primary addons from the results
-        table-sorter (.getRowSorter grid)
-        row-filter (proxy [javax.swing.RowFilter] []
-                     (include [entry]
-                       (let [entry-map (entry-to-map entry)
-                             primary? (get entry-map "primary?")
-                             ;; true if primary? key not-nil and primary? is true, otherwise true
-                             ;; BUG: this will cause all addons in a group to be hidden when the primary isn't known, like dbm
-                             include? (or (and
-                                           (not (nil? primary?))
-                                           (Boolean. primary?))
-                                          true)]
-                         include?)))
-        ;; disabled, addon grouping now happens in fs/installed-addons
-        ;;_ (.setRowFilter table-sorter row-filter)
-
-        date-renderer (proxy [javax.swing.table.DefaultTableCellRenderer] []
-                        (setValue [datestr]
-                          (proxy-super setValue (if-not datestr ""
-                                                        (-> datestr clojure.instant/read-instant-date (utils/fmt-date "yyyy-MM-dd"))))))
-        _ (.setCellRenderer (.getColumn (.getColumnModel grid) 7) date-renderer)
-
-        interface-version-renderer (proxy [javax.swing.table.DefaultTableCellRenderer] []
-                                     (setValue [iface-version]
-                                       (when iface-version
-                                         (proxy-super setValue (-> iface-version str utils/interface-version-to-game-version)))))
-        _ (.setCellRenderer (.getColumn (.getColumnModel grid) 9) interface-version-renderer)
+        addon-needs-update? #(true? (.getValue % (find-column-by-label grid "update?")))
+        date-renderer #(when % (-> % clojure.instant/read-instant-date (utils/fmt-date "yyyy-MM-dd")))
+        iface-version-renderer #(when % (-> % str utils/interface-version-to-game-version))
 
         ;; refreshes installed addons table
         update-rows-fn (fn [state]
@@ -371,7 +393,18 @@
                                            (select-one grid idx) ;; if the rows are hidden you won't be able to see it
                                            (warn "failed to find value" (first unsteady) "in column 'addon-id'"))))))]
 
-    (hide-columns grid debug-cols)
+    ;; this is before render and before hiding and before user has had a chance to move or resize columns
+    (installed-addons-panel-column-widths grid)
+
+    (installed-addons-go-links grid)
+
+    (when (colours :installed/unmatched)
+      (add-highlighter grid addon-unmatched? (colours :installed/unmatched)))
+    (add-highlighter grid addon-needs-update? (colours :installed/needs-updating))
+    (add-cell-renderer grid "updated" date-renderer)
+    (add-cell-renderer grid "WoW" iface-version-renderer)
+
+    (hide-columns grid hidden-by-default-cols)
 
     (ss/listen grid :selection (selected-rows-handler installed-addons-selection-handler))
 
@@ -426,37 +459,25 @@
         label-idx (atom (set []))
         update-label-idx (fn [_]
                            (reset! label-idx (set (remove nil? (map :label (get-state :installed-addon-list))))))
-        _ (state-bind [:installed-addon-list] update-label-idx)
+        _ (state-bind [:installed-addon-list] update-label-idx) ;; update internal idx of labels whenever installed addons change
 
-        predicate (proxy [org.jdesktop.swingx.decorator.HighlightPredicate] []
-                    (isHighlighted [renderer adapter]
-                      (let [label-column 0
-                            value (.getValue adapter label-column)]
-                        (contains? @label-idx value))))
+        addon-installed? (fn [adapter]
+                           (let [label-column (find-column-by-label grid "Name")
+                                 value (.getValue adapter label-column)]
+                             (contains? @label-idx value)))
 
-        highlighter (org.jdesktop.swingx.decorator.ColorHighlighter.
-                     predicate
-                     (seesaw.color/color :darkkhaki)
-                     nil) ;; no change in foreground colours
-        _ (.addHighlighter grid highlighter)
-
-        date-renderer (proxy [javax.swing.table.DefaultTableCellRenderer] []
-                        (setValue [datestr]
-                          (when datestr
-                            (proxy-super setValue (-> datestr clojure.instant/read-instant-date (utils/fmt-date "yyyy-MM-dd"))))))
-
-        _ (.setCellRenderer (.getColumn (.getColumnModel grid) 3) date-renderer)
-
-        watch-these [[:addon-summary-list]
-                     [:search-field-input]]
+        date-renderer #(when % (-> % clojure.instant/read-instant-date (utils/fmt-date "yyyy-MM-dd")))
 
         cap 250 ;; jxtable + autopack. more rows and searching becomes noticibly laggy
         update-rows-fn (fn [state]
                          (let [known-addons (search-rows (:addon-summary-list state) (:search-field-input state))]
                            (insert-all grid (take cap known-addons))))]
 
+    (add-cell-renderer grid "updated" date-renderer)
+    (add-highlighter grid addon-installed? (colours :search/already-installed))
+
     (ss/listen grid :selection (selected-rows-handler search-results-selection-handler))
-    (state-binds watch-these update-rows-fn)
+    (state-binds [[:addon-summary-list] [:search-field-input]] update-rows-fn)
     (ss/scrollable grid)))
 
 (defn search-panel
@@ -478,31 +499,29 @@
                            formatted-output-str (force (format "%s - %s" (force timestamp_) (force msg_)))]
                        (insert-one grid {:level level :message formatted-output-str})))
 
-        ;; this all sucks. mig for tables would be super nice
-
-        column-mdl (.getColumnModel grid)
-        level-col (.getColumn column-mdl 0)
-
         cell-renderer (javax.swing.table.DefaultTableCellRenderer.)
         _ (.setHorizontalAlignment cell-renderer javax.swing.SwingConstants/CENTER)
-        _ (.setCellRenderer level-col cell-renderer)
 
-        level-width 50]
+        level-width 50
+        level-col (doto (.getColumn (.getColumnModel grid) 0)
+                    (.setMinWidth level-width)
+                    (.setMaxWidth (* level-width 2))
+                    (.setPreferredWidth (* level-width 1.5))
+                    (.setCellRenderer cell-renderer))]
 
     (logging/add-appender :gui gui-logger {:timestamp-opts {:pattern "HH:mm:ss"}})
 
-    ;; more suckage
-
-    ;; level
-    (.setMinWidth level-col level-width)
-    (.setMaxWidth level-col (* level-width 2))
-    (.setPreferredWidth level-col (* level-width 1.5))
+    (add-highlighter grid #(= (.getValue % 0) :warn) (colours :notice/warning))
+    (add-highlighter grid #(= (.getValue % 0) :error) (colours :notice/error))
 
     ;; hide header when not debugging
     (when-not (core/debugging?)
       (.setTableHeader grid nil))
 
-    (ss/scrollable grid)))
+    ;; would love to know how to make these layouts and widths more consistent and deterministic
+    (mig/mig-panel
+     :constraints ["wrap 1"]
+     :items [[(ss/scrollable grid) "height 100%, width 98.75%::"]])))
 
 (defn-spec switch-search-tab-handler nil?
   [_ ::sp/gui-event]
@@ -523,15 +542,26 @@
                                        (ss/request-focus! (select-ui :#search-input-txt))))))
     tabber))
 
+(defn status-bar
+  "this is the litle strip of text at the bottom of the application."
+  []
+  (let [template " %s of %s installed addons matched. %s addons in catalog."
+        status (ss/label :text (format template 0 0 0)
+                         :font (font :size 11))
+        update-label (fn [state]
+                       (let [ia (:installed-addon-list state)
+                             uia (filter :matched? ia)]
+                         (ss/text! status (format template (count uia) (count ia) (count (:addon-summary-list state))))))]
+    (state-bind [:installed-addon-list] update-label)
+    status))
+
 (defn start-ui
   []
   (let [root->splitter (ss/top-bottom-split (mk-tabber) (notice-logger))
         _ (.setResizeWeight root->splitter 0.8)
 
         root (ss/vertical-panel :id :root
-                                :items [root->splitter])
-
-        ;;
+                                :items [root->splitter (status-bar)])
 
         newui (ss/frame
                :title "wowman"
@@ -562,9 +592,12 @@
                     (ss/action :name "Delete WowMatrix.dat files" :handler (async-handler core/delete-wowmatrix-dat-files))
                     (ss/action :name "Delete .wowman.json files" :handler (async-handler core/delete-wowman-json-files))]
 
+        help-menu [(ss/action :name "About wowman" :handler (handler about-wowman-dialog))]
+
         menu (ss/menubar :items [(ss/menu :text "File" :mnemonic "F" :items file-menu)
                                  (ss/menu :text "Addons" :mnemonic "A" :items addon-menu)
-                                 (ss/menu :text "Cache" :items cache-menu)])
+                                 (ss/menu :text "Cache" :items cache-menu)
+                                 (ss/menu :text "Help" :items help-menu)])
         _ (.setJMenuBar newui menu)
 
         init (fn [_]

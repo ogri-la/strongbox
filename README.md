@@ -2,13 +2,12 @@
 
 [![Build Status](https://travis-ci.org/ogri-la/wowman.svg?branch=master)](https://travis-ci.org/ogri-la/wowman)
 
-`wowman` is **open source**, **advertisement free** and **privacy respecting** software that interfaces with 
-[www.curseforge.com](https://www.curseforge.com/wow/addons) and World of Warcraft addon files in your `Addons` 
-directory.
+`wowman` is **open source**, **advertisement free** and **privacy respecting** addon manager for World of Warcraft that 
+interfaces with [www.curseforge.com](https://www.curseforge.com/wow/addons) and the addons in your `Addons` directory.
 
 ## Audience
 
-This software targets World of Warcraft users using Linux.
+This software targets World of Warcraft players using Linux.
 
 It may work on other platforms but it is only tested and supported on Linux.
 
@@ -16,37 +15,63 @@ It may work on other platforms but it is only tested and supported on Linux.
 
 * Java 8+
 
+## Installation
+
+1. [download the jar](https://github.com/ogri-la/wowman/releases/download/0.4.0/wowman-0.4.0-standalone.jar) file
+2. run with `java -jar wowman-x.x.x-standalone.jar`
+
 ## Usage
 
-1. download the [jar](https://github.com/ogri-la/wowman/releases/download/0.4.0/wowman-0.4.0-standalone.jar) file
-2. run with `java -jar wowman-x.x.x-standalone.jar`
-3. select your `Addons` directory (`/path/to/WoW/_retail_/Interface/Addons`)
-4. select the addons you wish to update and click the `update` button
+`wowman` works by matching your installed addons to a list of addons available online.
+
+Some addons match cleanly to those online but others require you to manually search and re-install them before that 
+match can be made.
+
+Some addons come bundled with other addons that *do not appear* in the online list. You will need to re-install the 
+'parent' addon that bundles those addons.
+
+First time usage:
+
+1. select your "Addons" directory (`/path/to/WoW/_retail_/Interface/Addons`)
+2. from the `Addons` menu select `Re-install all` to automatically re-install all *matching* addons
+3. unmatched addons can be searched for and installed from the `search` tab
+4. finally, addons can be deleted by selecting them, right-clicking, and selecting `delete`. Multiple addons can be 
+selected and removed at once.
+
+Afterwards, daily usage is simply using the `Update all` button to update any addons with newer versions. 
+Addons with new versions available will be highlighted.
 
 ## Notes
 
-A sub-directory called `state` will be created in the current directory. All configuration and cached data lives there.
+User configuration is stored in `~/.config/wowman` unless run with the envvar `$XDG_CONFIG_HOME` set.
+
+Temporary data is stored in `~/.local/share/wowman` unless run with the envvar `$XDG_DATA_HOME` set.
+
+Previously a sub-directory called `state` created in the current working directory was used for both data and config.  
+This local `state` directory can be safely deleted now.
 
 Addon zip files are downloaded to your WoW `Addons` directory.
 
-A file called `.wowman.json` is created within newly installed addons. This maps specific attributes between 
-www.curseforge.com and the unpacked addon, as well as across addons that unpack to multiple directories.
+A file called `.wowman.json` is created within newly installed or re-installed addons. This file maps specific 
+attributes between www.curseforge.com and the addon as well as *across* addons, as some addons unzip to multiple 
+directories. It's a simple `txt` file in a structured format called `json`.
 
 This software interacts with the following remote hosts:
 
 * [https://www.curseforge.com](https://www.curseforge.com), to download detailed addon data
 * [https://github.com/ogri-la](https://github.com/ogri-la), to download a list of summary addon information
+* [https://api.github.com](https://developer.github.com/v3/repos/releases), to download the latest `wowman` release data
 
-These interactions use a HTTP user agent header unique to `wowman` so it may be identified easily
+These interactions use a HTTP user agent header unique to `wowman` so that it may be identified easily
 
 ## Releases, bugs, questions, feedback, contributing
 
 Changes are recorded in the [CHANGELOG.md](CHANGELOG.md) file.
 
-All bugs/questions/feedback should go in [Issues](https://github.com/ogri-la/wowman/issues).
+All bugs/questions/feedback should go in [Github Issues](https://github.com/ogri-la/wowman/issues).
 
-All contributions should take the form of a pull request with unit tests.  
-[The licence](LICENCE.txt) is quite strict and all contributions will be subject to it.
+All code contributions should take the form of a pull request with unit tests.  
+[The licence](LICENCE.txt) is quite strict and all code contributions are subject to it.
 
 See [CONTRIBUTING](CONTRIBUTING.md) for more detail.
 

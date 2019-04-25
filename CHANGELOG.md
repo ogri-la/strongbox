@@ -6,6 +6,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+* a 'go' link that will open a link to the addon's catalog page
+* a simple row highlighting on the installed addons screen when moving your cursor over an addon
+* errors and warnings in the notice logger are now highlighted yellow and red
+* static matching of installed -> catalog addons via a simple mapping has been added for popular addons
+* minor: support for highlighting unmatched addons, disabled by default, possibly not helpful at all
+* a handy dandy status bar at the bottom of the screen with number of unmatched addons and total addons in catalog
+* a 'help' menu with an 'about' menuitem that displays the current version, the current release, the licence and a url
+
+### Changed
+
+* the 'categories', 'updated' and 'WoW' columns on the installed addons screen are now hidden by default
+* the 'state' directory has been split into 'data' and 'config' directories and now follow XDG recommended paths
+* matching between installed addons and catalog addons has been improved, now searching across multiple joins
+
+### Fixed
+
+* minor: inconsistent widths between notice logger and the tables above them causing scrollbars to be misaligned
+
+## 0.4.0 - 2019-04-15
+
+### Added
+
+- bad addon zip files (empty or malformed) are now removed to prevent a later cache hit
+- clear cache menu option to manually clear out accumulating cache and downloaded addon zip data
+- delete .wowman.json and wowmatrix.dat files actions added to clear cache menu
+- columns that were being removed outside of debug mode are now simply hidden and can be toggled on/off
+
+### Changed
+- curseforge.json file is now downloaded once a day, if necessary according to etag
+- previous daily cache dirs are now pruned back on app start
+- highlighted row colour is no longer so close to the 'selected' row colour
+- 'install selected' on search screen is now disabled until addons are selected
+
+### Fixed
+- null dates in gui were causing a strange rendering effect
+- the :alt-name attribute on a sub-par match was being used to build a url that would result in a 404
+- re-installing an addon with no match in catalog caused a stacktrace
+- column widths on the installed addon screen no longer truncate title are reasonably sized values
+
 ## 0.3.1 - 2019-04-05
 
 ### Fixed

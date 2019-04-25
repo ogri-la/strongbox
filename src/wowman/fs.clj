@@ -12,6 +12,16 @@
    [me.raynes.fs :as fs]
    [clojure.string :refer [lower-case ends-with?]]))
 
+;; matches a tocfile's 'Title' (label) to a catalog's name
+;; aliases are maintained for the top-N downloaded addons only
+;; best way to avoid needing an alias is to have your .toc 'Title' attribute match your curseforge addon name
+(def aliases
+  {"|cffffd200Deadly Boss Mods|r |cff69ccf0Core|r" "deadly-boss-mods"
+   "|cffffe00a<|r|cffff7d0aDBM|r|cffffe00a>|r |cff69ccf0Azeroth (Classic)|r" "dbm-bc"
+   "AtlasLoot |cFF22B14C[Core]|r" "atlasloot-enhanced"
+   "Auc-Auctioneer |cff774422(core)" "auctioneer"
+   "HealBot" "heal-bot-continued"})
+
 (defn-spec -read-toc-file map?
   [toc-contents string?]
   (let [comment? #(clojure.string/starts-with? % "##")
@@ -44,7 +54,7 @@
 
         do-toc-file (fn [toc-file & [warning]]
                       (when warning
-                        (warn warning))
+                        (debug warning))
                       (-> toc-file utils/de-bom-slurp -read-toc-file))]
     (cond
       (.exists toc-file) (do-toc-file toc-file)
@@ -86,9 +96,12 @@
           dirname (fs/base-name addon-dir) ;; /foo/bar/baz => baz
           install-dir (str (fs/parent addon-dir)) ;; /foo/bar/baz => /foo/bar
           nfo-contents (nfo/read-nfo install-dir dirname)
+          label (:title keyvals)
+          alias (when (contains? aliases label) ;; ensure :alias is absent if not present
+                  {:alias (get aliases label)})
           addon {:name (normalise-name (:title keyvals))
                  :dirname dirname
-                 :label (:title keyvals)
+                 :label label
                  :description (or (:notes keyvals) (:description keyvals)) ;; :notes is preferred but we'll fall back to :description
                  :interface-version (-> keyvals :interface utils/to-int)
                  :installed-version (:version keyvals)
@@ -98,7 +111,7 @@
                  ;;:optional-dependencies (:optionaldependencies keyvals)
                  ;;:required-dependencies (:requireddeps keyvals)
                  }]
-      (merge addon nfo-contents))
+      (merge alias addon nfo-contents))
 
     ;; ignore failures to parse Blizzard addons
     (when-not (.startsWith (fs/base-name addon-dir) "Blizzard_")

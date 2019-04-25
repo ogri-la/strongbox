@@ -4,88 +4,39 @@ this is my own scratchpad for keeping track of things. it gets truncated frequen
 
 see CHANGELOG.md for a more formal list of changes by release
 
-## done bucket
-
-
-
-## 0.4.0 release
+## 0.5.0 release
 
 ### done
 
-* do not cache bad downloads
-    - do not keep the zip file
-    - do not keep an etag, although orphaned etags *are* handled
-* handle installing bad zip files
-    - I just attempted to install an addon called Narcissus and the download failed/timed out
-        - unzipping it caused a java.lang.IllegalArgumentException: MALFORMED
-        - the bad zip file was preserved in cache
-    - done, although etag left for orphan checker
-* fixed bug where curseforge.json wasn't updated when etag changed
-* clear cached files option
-    - clears all cache files
-    - done
-* clear zip files options
-    - clears all downloaded zip files
-    - done
-* 'clear all' option
-    - general housecleaning option
-    - done
-* clear hidden files
-    - .wowman.json
+* gui, a 'go' link
+    - takes you to the curseforge site
+        - this was *fucking agonising* and it's still a compromise. I really *hate* java/swing sometimes
+* re-order position of columns
+    - 'go' link should be closer name and description
         - done
-    - wowmatrix .dat files?
+    - 'categories' should be hidden until we're doing something with it
         - done
-* fixed bug in gui where empty date field caused peculiar rendering artifacts
-    - empty date fields not present when all addons are managed!
-    - I need to test against unmanaged installations more often
-* fixed bug where slugified 'altname' from catalog (used for matching against installed addons) caused a 404 when uri reconstructed
-    - no need to reconstruct uri
-    - points to a larger problem where catalog :name is otherwise lost when merged with toc contents
-* bug on unmanaged addons dir, re-installing unmanaged addon fails with stacktrace
+    - shouldn't be specifying column indicies when adding highlighters
+        - done
+* move to XDG preferred data/config directories
+    - https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+    - perhaps ignore data directory for now and just use config (~/.config/wowman/)
+    - make this customisable?
+    - I think this would be a breaking change requiring a major version bump to 1.0 ... ?
+        - https://semver.org/, point 4: "Major version zero (0.y.z) is for initial development. Anything may change at any time. "
+        - so I'm all good :)
     - done
-* bug, on unmanaged addons dir, installing MogIt doesn't add nfo files to sub-addons
-    - try deleting the zip files ...
-        - nope, in fact, no downloaded zip file present at all...
-    - the addon is showing up as 'matched' in the search panel, possibly an old state hanging around
-        - I mistook the highlighted row for being 'selected' and was clicking 'install selected'
-        - 'install selected' would merrily install nothing (nothing selected), switch back to installed pane and refresh things with no obvious difference
-            - todo: change highlighted colour to not-blue
-                - changed to khaki
-            - todo: disable 'install selected' until there is something selected
-                - done
-* bug, curseforge.json doesn't appear to get re-downloaded
+        - you will need to re-select your addons dir
+        - local state directory can be safely deleted
+* notice logger now appears to be roughly the same width as the panes above it
+    - at extreme widths you can see its still a bit off
+* highlight errors and warnings in notice logger
     - done
-* cached files policy
-    - nothing older than a week?
-        - why? it's not like we want to go back and scrutinize it
-    - nothing older than today?
-    - done
-* gui, min-widths for updated, installed, available, update? and version fields
-    - rest can be elastic
-    - done
-        - a min-width has been set with a few exceptions
-        - a max-width and preferred width have been set for some columns
-        - preferred width doesn't seem to have much effect
-* gui, optional fields in the search and installed panes
-    - prune back the columns if we can
-    - columns can be hidden using jxtable preferred method
-    - done
-* only download curseforge.json once a day
-    - download it to the cache dir so it gets auto-pruned
-    - done
-        - new path available :daily-cache-dir
-
-### todo
-
-* release 0.4.0
-
-## todo bucket
-
-* toggleable highlighers as a menuitem
-    - highlight unmatched
-    - highlight updates
-    - touch of colour against each menuitem would serve as a legend
 * highlight unmatched addons
+    - done, partially
+        - support has been added, but ...
+            - on first start the number of unmatched addons will be quite large and a solid block of this warning-colour was a bit overwhelming
+            - I plan to re-introduce it under selectable highlighters
 * 're-install all' should handle cases where .wowman.json is missing
     - it *is*, but some addons are not being handled (no match, presumably)
         - the undermine journal (match)
@@ -97,6 +48,72 @@ see CHANGELOG.md for a more formal list of changes by release
         - healbot = healbot-continued
         - dbm = deadly-boss-mods
     - bartender and undermine journal not matching smell like bugs
+    - done
+        - matching has been improved across multiple joins
+        - parsed toc files now have a static 'alias' key for the catalog name
+* status bar indicating number matched
+    - done
+* add an 'about' top level menu
+    - it checks if a new version of wowman available
+        - done
+    - link where to find it
+        - done
+    - licence
+        - done
+    - done
+
+### todo
+
+## todo bucket
+
+* arch linux AUR package
+    - investigate if any further code changes required, then release, then make a package
+        - done investigation. no further code changes needed. 
+        - will release, then try my hand at building a package
+* move away from this merging toc/addon/expanded addon data strategy
+    - it's confusing to debug!
+    - namespaced keys might be a good alternative:
+        - :toc/label and :catalog/label
+        - :toc/version and :catalog/version
+        - with derived/synthetic attributes having no ns
+            - :group-id, :group-count
+        - how to pick preferred attributes without continuous (or key else other-key) ?
+            - (getattr addon :label) ;; does multiple lookups ...? seems kinda meh
+* gui, refresh addons after deleting .wowman.json files
+* bug, curseforge.etag file is inside the daily cache dir
+    - it should be in the regular cache dir, the parent.
+        - this is awkard
+            - we have two caching regimes
+        - while developing we don't want requests for curseforge.json going out into the world
+            - so we use file based cache
+        - however, this prevents a fresh curseforge.json from being downloaded, ever
+        - so curseforge.json was stuck in the daily cache to ensure it got downloaded at least daily
+        - the etag file is written to the same directory the file is downloaded
+    - etag files should always be written to the cache directory
+        - regardless of where the file is actually downloaded to
+        - but only if cache dir is set, obviously
+    - we need the two systems to work more harmoniously
+        - for example, every cached request gets an etag, but file cache is used for a period before sending another request
+            - if we do 100 requests/minute for the same file how many of those should go out into the world?
+                - we have a local cached copy *and* an etag
+            - perhaps send request with etag once an hour? rely on file based cache on the interim
+                - do other types of file have different age requirements? 
+                - once a day seems appropriate for addon pages
+                - once a day seems appropriate for curseforge.json ...
+* capture 'total downloads' from curseforge
+    - more than anything this will help distinguish main addons from the noise of supplementary addons
+        - see 'Titan Panel' or 'BigWigs' or 'DBM'
+* generate aliases for the top 10/20 installed addons that need them
+    - depends on capturing total downloads
+* gui, search, add 'go' link and row highlighting
+    - feels weird to go from having it (installed) to not (search)
+* revisit group records, I can't believe we can't pull a good name or description from *somewhere*
+* toggleable highlighers as a menuitem
+    - highlight unmatched
+    - highlight updates
+    - touch of colour against each menuitem would serve as a legend
+* toggleable columns as a menuitem
+    - they're available from the column menu, but it's a little hidden and contains other fairly useless options like 'horizontal scroll'
 * download progress bar *inside* the grid ...?
     - pure fantasy?
 * nightly unstable builds
@@ -105,22 +122,10 @@ see CHANGELOG.md for a more formal list of changes by release
     - see AbyssUI
         - it disappeared from curseforge but showed up on wowinterface
     - I suspect Tukui is similar as well, a self-host for addons 
-* gui, a 'go' link
-    - takes you to the curseforge site
-* highlight errors and warnings in notice logger
 * internationalisation? 
     - Akitools has no english description but it does have a "Notes-zhCN" in the toc file that could be used
-* add an 'about' top level menu
-    - it checks if a new version of wowman available
-    - link where to find it
-    - licence
 * a 'stop' button to stop updates would be nice ...
 * bug, changing sort order during refresh doesn't accurate reflect what is being updated
-* move to XDG preferred data/config directories
-    - https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
-    - perhaps ignore data directory for now and just use config (~/.config/wowman/)
-    - make this customisable?
-* arch linux AUR package
 * download addon details in parallel
     - speed benefits, mostly
     - share a pool of connections between threads
@@ -136,7 +141,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - would be good for installing older versions of an addon?
 * gui, scroll tabs with mouse
 * gui, search, order by date only orders the *current page* of results
-* capture 'total downloads' from curseforge
 * addon 'detail' tab
     - link to curseforge
     - donation url

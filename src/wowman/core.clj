@@ -8,6 +8,7 @@
    [orchestra.core :refer [defn-spec]]
    [spec-tools.core :as spec-tools]
    [me.raynes.fs :as fs]
+   [trptcolin.versioneer.core :as versioneer]
    [wowman
     [logging :as logging]
     [nfo :as nfo]
@@ -16,21 +17,42 @@
     [fs]
     [specs :as sp]]))
 
-;; TODO: allow override in user config
+;; TODO: allow user to specify their own catalog
 (def remote-addon-summary-file "https://raw.githubusercontent.com/ogri-la/wowman-data/master/curseforge.json")
+
+(defn colours
+  [& path]
+  (let [colour-map {:notice/error :tomato
+                    :notice/warning :lemonchiffon
+                    ;;:installed/unmatched :tomato
+                    :installed/needs-updating :lemonchiffon
+                    :installed/hovering "#e6e6e6"
+                    :search/already-installed "#99bc6b"}] ;; greenish
+    (if-not (empty? path)
+      (get-in colour-map path)
+      colour-map)))
 
 (defn paths
   "returns a map of paths whose location may vary depending on the location of the current working directory"
   [& path]
-  (let [state-dir (join fs/*cwd* "state") ;; /path/to/current-dir/state
-        cache-dir (join state-dir "cache")
-        daily-cache-dir (join cache-dir (utils/datestamp-now-ymd))
-        cfg-file (join state-dir "config.json")
+  (let [;; https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+        ;; ignoring XDG_CONFIG_DIRS and XDG_DATA_DIRS for now
+        config-dir (or (System/getenv "XDG_CONFIG_HOME") "~/.config/wowman")
+        config-dir (-> config-dir fs/expand-home fs/normalized fs/absolute str)
 
-        addon-summary-file (join daily-cache-dir "curseforge.json")
+        data-dir (or (System/getenv "XDG_DATA_HOME") "~/.local/share/wowman")
+        data-dir (-> data-dir fs/expand-home fs/normalized fs/absolute str)
+
+        cache-dir (join data-dir "cache") ;; /home/you/.local/share/wowman/cache
+        daily-cache-dir (join cache-dir (utils/datestamp-now-ymd)) ;; /home/$you/.local/share/wowman/cache/$today
+
+        cfg-file (join config-dir "config.json") ;; /home/$you/.config/wowman/config.json
+
+        addon-summary-file (join daily-cache-dir "curseforge.json") ;; /home/$you/.local/share/wowman/cache/$today/curseforge.json
         addon-summary-updates-file (join daily-cache-dir "curseforge-updates.json")
 
-        path-map {:state-dir state-dir
+        path-map {:config-dir config-dir
+                  :data-dir data-dir
                   :cache-dir cache-dir
                   :daily-cache-dir daily-cache-dir
                   :cfg-file cfg-file
@@ -59,9 +81,6 @@
    ;; ... then updated again with live data from curseforge
    ;; see specs/toc-addon
    :installed-addon-list nil
-
-   ;; same as above but a map indexed by :name. purely for convenience
-   :installed-addon-idx nil
 
    ;; ui
 
@@ -238,7 +257,7 @@
         first-toplevel-dir (first toplevel-dirs)]
 
     ;; todo: issue a warning if all subfolders don't share a common prefix?
-    ;; do people care if SlideBar and Stubby are being installed when they install things like Auctioneer?
+    ;; do people care if SlideBar and Stubby are being installed when they install things like Auctioneer/Healbot?
 
     (cond
       (= 1 (count toplevel-dirs)) ;; single dir, perfect case
@@ -301,11 +320,9 @@
 
 (defn update-installed-addon-list!
   [installed-addon-list]
-  (let [installed-addon-idx (utils/idx installed-addon-list :name)
-        asc compare
+  (let [asc compare
         installed-addon-list (sort-by :name asc installed-addon-list)]
-    (swap! state merge {:installed-addon-list installed-addon-list
-                        :installed-addon-idx installed-addon-idx})
+    (swap! state assoc :installed-addon-list installed-addon-list)
     nil))
 
 (defn-spec load-installed-addons nil?
@@ -332,6 +349,51 @@
     (swap! state assoc :addon-summary-list addon-summary-list)
     nil))
 
+(defn moosh-addons
+  [installed-addon catalog-addon]
+  ;; merges left->right. catalog-addon overwrites installed-addon, ':matched' overwrites catalog-addon, etc
+  (merge installed-addon catalog-addon {:matched? true}))
+
+(defn -match-installed-addons-with-catalog
+  "for each installed addon, search the catalog across multiple joins until a match is found."
+  [installed-addon-list catalog]
+  (let [;; [{toc-key catalog-key}, ...]
+        ;; most -> least desirable match
+        match-on [[:alias :name] [:name :name] [:name :alt-name] [:label :label] [:dirname :label]]
+        ;;[:description :description]] ;; matching on description actually works :P
+        ;; it's not a good enough unique identifier though
+
+        idx-idx (into {} (mapv (fn [[toc-key catalog-key]]
+                                 {catalog-key (utils/idx catalog catalog-key)}) match-on))
+
+        finder (fn [installed-addon]
+                 (let [-finder (fn [[toc-key catalog-key]]
+                                 (let [idx (get idx-idx catalog-key)
+                                       key (get installed-addon toc-key)
+                                       match (get idx key)]
+                                   (debug (format "checking %s=>%s for %s" toc-key catalog-key (:name installed-addon)))
+
+                                   (when match
+                                     ;; {:idx [:name :alt-name], :key "deadly-boss-mods", :match {...}, ...}
+                                     {:idx [toc-key catalog-key]
+                                      :key key
+                                      :installed-addon installed-addon
+                                      :match match
+                                      :final (moosh-addons installed-addon match)})))
+
+                       ;; clojure has peculiar laziness rules and this will actually visit *all* of the `match-on` pairs
+                       ;; see chunking: http://clojure-doc.org/articles/language/laziness.html
+                       match (first (remove nil? (map -finder match-on)))]
+
+                   (if match match {:installed-addon installed-addon})))]
+
+    (mapv finder installed-addon-list)))
+
+(defn -match-installed-addons-with-catalog-debug
+  "good for when you have addons that don't have a match"
+  []
+  (-match-installed-addons-with-catalog (get-state :installed-addon-list) (get-state :addon-summary-list)))
+
 (defn-spec match-installed-addons-with-online-addons nil?
   "when we have a list of installed addons as well as the addon list,
    merge what we can into ::specs/addon-toc records and update state.
@@ -339,30 +401,24 @@
   []
   (info "matching installed addons to online addons")
   (let [inst-addons (get-state :installed-addon-list)
-        ia-idx (get-state :installed-addon-idx)
-        matcher (fn [available-addon]
-                  (let [{:keys [name alt-name]} available-addon
-                        ia-by-name (get ia-idx name)
-                        ia-by-alt-name (get ia-idx alt-name)
-                        installed-addon (or ia-by-name ia-by-alt-name)]
-                    (when installed-addon
-                      (when-not ia-by-name
-                          ;; we matched, but under less than ideal circumstances
-                        (warn (format "matched installed addon '%s' by the :alt-name '%s'" name (:alt-name available-addon))))
-                      (merge {:matched? true} available-addon installed-addon)
-                      ;; this is probably what should be happening, but the conflict on :name means the catalog name gets overwritten
-                      ;;(merge installed-addon available-addon {:matched? true}))))
-                      )))
+        catalog (get-state :addon-summary-list)
 
-        matched (vec (remove nil? (map matcher (get-state :addon-summary-list))))
-        unmatched (clojure.set/difference (set (keys ia-idx)) (mapv :name matched))
+        match-results (-match-installed-addons-with-catalog inst-addons catalog)
+        [matched unmatched] (utils/split-filter #(contains? % :final) match-results)
 
-        expanded-installed-addon-list (utils/merge-lists :name (get-state :installed-addon-list) matched)]
+        matched (mapv :final matched)
+        unmatched (mapv :installed-addon unmatched)
+        unmatched-names (set (map :name unmatched))
+
+        expanded-installed-addon-list (into matched unmatched)
+        ;;expanded-installed-addon-list (utils/merge-lists :name (get-state :installed-addon-list) matched)
+        ]
 
     (info "num installed" (count inst-addons) ", num matched" (count matched))
 
     (when-not (empty? unmatched)
-      (warn "failed to match the following addons to an addon online:" (clojure.string/join ", " unmatched)))
+      (warn "you need to manually search for them and then re-install them")
+      (warn (format "failed to match %s installed addons to online addons: %s" (count unmatched) (clojure.string/join ", " unmatched-names))))
 
     (update-installed-addon-list! expanded-installed-addon-list)))
 
@@ -391,7 +447,8 @@
 ;; 
 
 (defn-spec delete-cache nil?
-  "deletes the './state/cache' directory that contains etag files and "
+  "deletes the 'cache' directory that contains scraped html files, etag files, the catalog, etc. 
+  nothing that isn't regenerated when missing."
   []
   (warn "deleting cache")
   (fs/delete-dir (paths :cache-dir))
@@ -535,6 +592,28 @@
   []
   (-> (get-state) :selected-installed vec remove-many-addons))
 
+;; version checking
+
+(defn-spec wowman-version string?
+  "returns this version of wowman"
+  []
+  (versioneer/get-version "ogri-la" "wowman"))
+
+(defn-spec latest-wowman-release string?
+  "returns the most recently released version of wowman it can find"
+  []
+  (binding [utils/*cache-dir* (paths :cache-dir)]
+    (let [resp (utils/from-json (utils/download "https://api.github.com/repos/ogri-la/wowman/releases/latest"))]
+      (-> resp :tag_name))))
+
+(defn-spec latest-wowman-version? boolean?
+  "returns true if the *running instance* of wowman is the *most recent known* version of wowman."
+  []
+  (let [latest-release (latest-wowman-release)
+        version-running (wowman-version)
+        sorted-asc (utils/sort-semver-strings [latest-release version-running])]
+    (= version-running (last sorted-asc))))
+
 ;;
 ;; init
 ;;
@@ -554,9 +633,10 @@
 
 (defn-spec init-dirs nil?
   []
-  (doseq [dir [:state-dir :cache-dir :daily-cache-dir]]
-    (info "creating dir:" dir)
-    (fs/mkdirs (paths dir)))
+  (doseq [[path val] (paths)]
+    (when (-> path name (clojure.string/ends-with? "-dir"))
+      (debug (format "creating '%s' directory: %s" path val))
+      (fs/mkdirs val)))
   (utils/prune-html-download-cache (paths :cache-dir))
   nil)
 
