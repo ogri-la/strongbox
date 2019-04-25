@@ -60,6 +60,7 @@ This software interacts with the following remote hosts:
 
 * [https://www.curseforge.com](https://www.curseforge.com), to download detailed addon data
 * [https://github.com/ogri-la](https://github.com/ogri-la), to download a list of summary addon information
+* [https://api.github.com](https://developer.github.com/v3/repos/releases), to download the latest `wowman` release data
 
 These interactions use a HTTP user agent header unique to `wowman` so that it may be identified easily
 
