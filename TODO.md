@@ -10,22 +10,11 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### todo
 
-## todo bucket
-
 * arch linux AUR package
+    - before any 0.6.0 changes
     - investigate if any further code changes required, then release, then make a package
         - done investigation. no further code changes needed. 
         - will release, then try my hand at building a package
-* move away from this merging toc/addon/expanded addon data strategy
-    - it's confusing to debug!
-    - namespaced keys might be a good alternative:
-        - :toc/label and :catalog/label
-        - :toc/version and :catalog/version
-        - with derived/synthetic attributes having no ns
-            - :group-id, :group-count
-        - how to pick preferred attributes without continuous (or key else other-key) ?
-            - (getattr addon :label) ;; does multiple lookups ...? seems kinda meh
-* gui, refresh addons after deleting .wowman.json files
 * bug, curseforge.etag file is inside the daily cache dir
     - it should be in the regular cache dir, the parent.
         - this is awkard
@@ -46,13 +35,28 @@ see CHANGELOG.md for a more formal list of changes by release
                 - do other types of file have different age requirements? 
                 - once a day seems appropriate for addon pages
                 - once a day seems appropriate for curseforge.json ...
+* add a version to the curseforge.json file
+    - wowman-data may be changing to accept addons from different sources
 * capture 'total downloads' from curseforge
     - more than anything this will help distinguish main addons from the noise of supplementary addons
         - see 'Titan Panel' or 'BigWigs' or 'DBM'
+* gui, refresh addons after deleting .wowman.json files
 * generate aliases for the top 10/20 installed addons that need them
     - depends on capturing total downloads
 * gui, search, add 'go' link and row highlighting
     - feels weird to go from having it (installed) to not (search)
+
+## todo bucket
+
+* move away from this merging toc/addon/expanded addon data strategy
+    - it's confusing to debug!
+    - namespaced keys might be a good alternative:
+        - :toc/label and :catalog/label
+        - :toc/version and :catalog/version
+        - with derived/synthetic attributes having no ns
+            - :group-id, :group-count
+        - how to pick preferred attributes without continuous (or key else other-key) ?
+            - (getattr addon :label) ;; does multiple lookups ...? seems kinda meh
 * revisit group records, I can't believe we can't pull a good name or description from *somewhere*
 * toggleable highlighers as a menuitem
     - highlight unmatched
