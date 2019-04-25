@@ -4,63 +4,9 @@ this is my own scratchpad for keeping track of things. it gets truncated frequen
 
 see CHANGELOG.md for a more formal list of changes by release
 
-## 0.5.0 release
+## 0.6.0 release
 
 ### done
-
-* gui, a 'go' link
-    - takes you to the curseforge site
-        - this was *fucking agonising* and it's still a compromise. I really *hate* java/swing sometimes
-* re-order position of columns
-    - 'go' link should be closer name and description
-        - done
-    - 'categories' should be hidden until we're doing something with it
-        - done
-    - shouldn't be specifying column indicies when adding highlighters
-        - done
-* move to XDG preferred data/config directories
-    - https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
-    - perhaps ignore data directory for now and just use config (~/.config/wowman/)
-    - make this customisable?
-    - I think this would be a breaking change requiring a major version bump to 1.0 ... ?
-        - https://semver.org/, point 4: "Major version zero (0.y.z) is for initial development. Anything may change at any time. "
-        - so I'm all good :)
-    - done
-        - you will need to re-select your addons dir
-        - local state directory can be safely deleted
-* notice logger now appears to be roughly the same width as the panes above it
-    - at extreme widths you can see its still a bit off
-* highlight errors and warnings in notice logger
-    - done
-* highlight unmatched addons
-    - done, partially
-        - support has been added, but ...
-            - on first start the number of unmatched addons will be quite large and a solid block of this warning-colour was a bit overwhelming
-            - I plan to re-introduce it under selectable highlighters
-* 're-install all' should handle cases where .wowman.json is missing
-    - it *is*, but some addons are not being handled (no match, presumably)
-        - the undermine journal (match)
-        - bartender4 (match)
-        - Healbot (no match)
-        - DBM (no match)
-        - champion commander (no match)
-    - some of these are common cases and we should have a static lookup for them
-        - healbot = healbot-continued
-        - dbm = deadly-boss-mods
-    - bartender and undermine journal not matching smell like bugs
-    - done
-        - matching has been improved across multiple joins
-        - parsed toc files now have a static 'alias' key for the catalog name
-* status bar indicating number matched
-    - done
-* add an 'about' top level menu
-    - it checks if a new version of wowman available
-        - done
-    - link where to find it
-        - done
-    - licence
-        - done
-    - done
 
 ### todo
 

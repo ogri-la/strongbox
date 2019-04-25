@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Removed
+
+## 0.5.0 - 2019-04-25
+
+### Added
+
 * a 'go' link that will open a link to the addon's catalog page
 * a simple row highlighting on the installed addons screen when moving your cursor over an addon
 * errors and warnings in the notice logger are now highlighted yellow and red
