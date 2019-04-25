@@ -17,7 +17,7 @@ It may work on other platforms but it is only tested and supported on Linux.
 
 ## Installation
 
-1. [download the jar](https://github.com/ogri-la/wowman/releases/download/0.4.0/wowman-0.4.0-standalone.jar) file
+1. [download the jar](https://github.com/ogri-la/wowman/releases/download/0.5.0/wowman-0.5.0-standalone.jar) file
 2. run with `java -jar wowman-x.x.x-standalone.jar`
 
 ## Usage
@@ -93,7 +93,7 @@ This software also tries very hard to:
 I benefit so much from the hard work of those who write free and open source software, including addon developers, 
 that it's my privilege to offer this small piece back.
 
-[![wowman version 0.3.0](screenshot-0.3.0-thumbnail.jpg)](screenshot-0.3.0.png?raw=true)
+[![wowman version 0.5.0](screenshot-0.5.0-thumbnail.jpg)](screenshot-0.5.0.png?raw=true)
 
 ## Other unofficial addon managers
 
