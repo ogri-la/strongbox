@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * static matching of installed -> catalog addons via a simple mapping has been added for popular addons
 * minor: support for highlighting unmatched addons, disabled by default, possibly not helpful at all
 * a handy dandy status bar at the bottom of the screen with number of unmatched addons and total addons in catalog
+* a 'help' menu with an 'about' menuitem that displays the current version, the current release, the licence and a url
 
 ### Changed
 
@@ -24,8 +25,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 * minor: inconsistent widths between notice logger and the tables above them causing scrollbars to be misaligned
-
-### Removed
 
 ## 0.4.0 - 2019-04-15
 

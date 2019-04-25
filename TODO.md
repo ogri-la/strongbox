@@ -64,11 +64,12 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### todo
 
-* arch linux AUR package
-    - investigate if any further code changes required, then release, then make a package
-
 ## todo bucket
 
+* arch linux AUR package
+    - investigate if any further code changes required, then release, then make a package
+        - done investigation. no further code changes needed. 
+        - will release, then try my hand at building a package
 * move away from this merging toc/addon/expanded addon data strategy
     - it's confusing to debug!
     - namespaced keys might be a good alternative:
