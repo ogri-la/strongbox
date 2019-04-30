@@ -8,13 +8,17 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### done
 
-### todo
-
 * arch linux AUR package
     - before any 0.6.0 changes
     - investigate if any further code changes required, then release, then make a package
         - done investigation. no further code changes needed. 
         - will release, then try my hand at building a package
+    - done
+        - you can find it here: https://raw.githubusercontent.com/ogri-la/wowman-pkgbuild/master/PKGBUILD
+
+### todo
+
+* submit pkgbuild to aur
 * bug, curseforge.etag file is inside the daily cache dir
     - it should be in the regular cache dir, the parent.
         - this is awkard
@@ -40,14 +44,26 @@ see CHANGELOG.md for a more formal list of changes by release
 * capture 'total downloads' from curseforge
     - more than anything this will help distinguish main addons from the noise of supplementary addons
         - see 'Titan Panel' or 'BigWigs' or 'DBM'
-* gui, refresh addons after deleting .wowman.json files
 * generate aliases for the top 10/20 installed addons that need them
     - depends on capturing total downloads
+* gui, refresh addons after deleting .wowman.json files
 * gui, search, add 'go' link and row highlighting
     - feels weird to go from having it (installed) to not (search)
 
 ## todo bucket
 
+* 'export' addons
+    - an idle thought until I saw wowmatrix has it
+        - they have a wordpress plugin and a simple text file
+    - json, yaml and xml serialisations as a minimum
+        - these are the most common and versatile
+    - friendly text and html formats
+        - who on earth would use such a thing? and is it worth the added complexity?
+* cli, data path is now broken after moving to XDG paths
+    - I just realised. 
+    - this is affecting tests as well, as they're picking up on config outside of temp dirs
+* code quality, we're sorely lacking in tests and test coverage metrics
+* refactor, rename fs.clj to toc.clj
 * move away from this merging toc/addon/expanded addon data strategy
     - it's confusing to debug!
     - namespaced keys might be a good alternative:

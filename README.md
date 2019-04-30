@@ -20,6 +20,12 @@ It may work on other platforms but it is only tested and supported on Linux.
 1. [download the jar](https://github.com/ogri-la/wowman/releases/download/0.5.0/wowman-0.5.0-standalone.jar) file
 2. run with `java -jar wowman-x.x.x-standalone.jar`
 
+### Arch Linux users
+
+A PKGBUILD exists (my first, ever) but hasn't been submitted to the AUR at time of writing.
+
+If you're feeling brave, you can find it here: https://github.com/ogri-la/wowman-pkgbuild/
+
 ## Usage
 
 `wowman` works by matching your installed addons to a list of addons available online.
