@@ -15,6 +15,7 @@ see CHANGELOG.md for a more formal list of changes by release
         - will release, then try my hand at building a package
     - done
         - you can find it here: https://raw.githubusercontent.com/ogri-la/wowman-pkgbuild/master/PKGBUILD
+* gui, refresh addons after deleting .wowman.json files
 
 ### todo
 
@@ -46,12 +47,14 @@ see CHANGELOG.md for a more formal list of changes by release
         - see 'Titan Panel' or 'BigWigs' or 'DBM'
 * generate aliases for the top 10/20 installed addons that need them
     - depends on capturing total downloads
-* gui, refresh addons after deleting .wowman.json files
 * gui, search, add 'go' link and row highlighting
     - feels weird to go from having it (installed) to not (search)
 
 ## todo bucket
 
+* memory usage
+    - we're big and fat :(
+    - lets explore some ways to measure and then reduce memory usage
 * 'export' addons
     - an idle thought until I saw wowmatrix has it
         - they have a wordpress plugin and a simple text file
