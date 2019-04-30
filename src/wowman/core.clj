@@ -514,8 +514,8 @@
                                       (get-state :installed-addon-list)))
   (info "done checking for updates"))
 
-(defn-spec refresh nil?
-  []
+(defn refresh
+  [& _]
   (load-addon-summaries)  ;; load the contents of the curseforge.json file
   (load-installed-addons) ;; parse toc files in install-dir
   (match-installed-addons-with-online-addons) ;; match installed addons to those in curseforge.json
