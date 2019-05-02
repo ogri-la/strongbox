@@ -16,10 +16,12 @@ see CHANGELOG.md for a more formal list of changes by release
     - done
         - you can find it here: https://raw.githubusercontent.com/ogri-la/wowman-pkgbuild/master/PKGBUILD
 * gui, refresh addons after deleting .wowman.json files
+* submit pkgbuild to aur
+    - done!
+    - it's really very cool to see my baby appear in the aur
 
 ### todo
 
-* submit pkgbuild to aur
 * bug, curseforge.etag file is inside the daily cache dir
     - it should be in the regular cache dir, the parent.
         - this is awkard
@@ -55,6 +57,8 @@ see CHANGELOG.md for a more formal list of changes by release
 * memory usage
     - we're big and fat :(
     - lets explore some ways to measure and then reduce memory usage
+    - measuring:
+        - https://github.com/clojure-goes-fast/clj-memory-meter
 * 'export' addons
     - an idle thought until I saw wowmatrix has it
         - they have a wordpress plugin and a simple text file
