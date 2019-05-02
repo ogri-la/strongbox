@@ -1,6 +1,7 @@
 name,url,Linux,Mac,Windows,maintained?,f/oss?,source available?,ads?,EULA?,language
-addon-manager,https://github.com/vargen2/addonmanager,no,no,yes*,no,yes,yes,no,no,java
+addon-manager,https://github.com/vargen2/addonmanager,no,no,yes*,no,yes,yes,no,no,"java, javafx"
 GWAM,https://github.com/JonasKnarbakk/GWAM,yes*,yes*,yes*,no^,yes,yes,no,no,c++
+lcurse,https://github.com/ephraim/lcurse,yes,no,no,yes,no,yes,no,no,"python, qt"
 Minion,https://minion.mmoui.com/,yes*,yes,yes,yes,no,no,yes,yes,java
 Tukui Client,https://www.tukui.org/download.php?client=win,no,no,yes,yes,no,no,?,?,?
 WorldOfAddons,https://github.com/WorldofAddons/worldofaddons,yes*,yes*,yes,yes,yes,yes,no,no,javascript
