@@ -22,9 +22,10 @@ It may work on other platforms but it is only tested and supported on Linux.
 
 ### Arch Linux users
 
-A PKGBUILD exists (my first, ever) but hasn't been submitted to the AUR at time of writing.
+A PKGBUILD exists in the AUR [here](https://aur.archlinux.org/packages/wowman/) 
+with a mirror [here](https://github.com/ogri-la/wowman-pkgbuild/). 
 
-If you're feeling brave, you can find it here: https://github.com/ogri-la/wowman-pkgbuild/
+Once installed it's available from the command line as `wowman`.
 
 ## Usage
 
