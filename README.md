@@ -74,7 +74,8 @@ These interactions use a HTTP user agent header unique to `wowman` so that it ma
 
 Changes are recorded in the [CHANGELOG.md](CHANGELOG.md) file.
 
-All bugs/questions/feedback should go in [Github Issues](https://github.com/ogri-la/wowman/issues).
+All bugs/questions/feedback should go in [Github Issues](https://github.com/ogri-la/wowman/issues) or 
+via a Reddit [private message](https://www.reddit.com/message/compose/?to=torkus-jr&subject=wowman).
 
 All code contributions should take the form of a pull request with unit tests.  
 [The licence](LICENCE.txt) is quite strict and all code contributions are subject to it.
