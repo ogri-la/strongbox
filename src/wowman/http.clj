@@ -9,20 +9,13 @@
    [orchestra.core :refer [defn-spec]]
    [orchestra.spec.test :as st]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
-   [cheshire.core :as json]
-   [clojure.data.json]
    [me.raynes.fs :as fs]
-   [me.raynes.fs.compression :as zip]
-   [slugify.core :as sluglib]
    [orchestra.core :refer [defn-spec]]
    [clojure.data.codec.base64 :as b64]
    [taoensso.timbre :refer [debug info warn error spy]]
    [trptcolin.versioneer.core :as versioneer]
    [clj-http.conn-mgr]
-   [clj-http.client :as client]
-   [clj-time
-    [coerce :as coerce-time]
-    [format :as format-time]]))
+   [clj-http.client :as client]))
 
 (def ^:dynamic *cache-dir* nil)
 
@@ -185,3 +178,5 @@
     (doseq [cache-dir all-except-today]
       (warn "deleting cache dir " cache-dir)
       (fs/delete-dir cache-dir))))
+
+(st/instrument)

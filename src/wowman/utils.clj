@@ -13,11 +13,7 @@
    [me.raynes.fs.compression :as zip]
    [slugify.core :as sluglib]
    [orchestra.core :refer [defn-spec]]
-   [clojure.data.codec.base64 :as b64]
    [taoensso.timbre :refer [debug info warn error spy]]
-   [trptcolin.versioneer.core :as versioneer]
-   [clj-http.conn-mgr]
-   [clj-http.client :as client]
    [clj-time
     [coerce :as coerce-time]
     [format :as format-time]]))
