@@ -10,6 +10,7 @@
    [me.raynes.fs :as fs]
    [trptcolin.versioneer.core :as versioneer]
    [wowman
+    [http :as http]
     [logging :as logging]
     [nfo :as nfo]
     [utils :as utils :refer [join not-empty?]]
@@ -228,8 +229,8 @@
   (when-let [download-uri (:download-uri addon)]
     (let [output-fname (downloaded-addon-fname (:name addon) (:version addon)) ;; addonname--1-2-3.zip
           output-path (join (fs/absolute download-dir) output-fname)] ;; /path/to/installed/addons/addonname--1.2.3.zip
-      (binding [utils/*cache-dir* (paths :cache-dir)]
-        (utils/download-file download-uri output-path :overwrite? false)))))
+      (binding [http/*cache-dir* (paths :cache-dir)]
+        (http/download-file download-uri output-path :overwrite? false)))))
 
 ;; don't do this. `download-addon` is wrapped by `install-addon` that is already affecting the addon
 ;;(def download-addon
@@ -338,8 +339,8 @@
 (defn-spec download-addon-summary-file ::sp/extant-file
   "downloads addon summary file to expected location, nothing more"
   []
-  (binding [utils/*cache-dir* (paths :daily-cache-dir)]
-    (utils/download-file remote-addon-summary-file (paths :addon-summary-file))))
+  (binding [http/*cache-dir* (paths :daily-cache-dir)]
+    (http/download-file remote-addon-summary-file (paths :addon-summary-file))))
 
 (defn-spec load-addon-summaries nil?
   []
@@ -438,7 +439,7 @@
 
 (defn expand-summary-wrapper
   [addon-summary]
-  (binding [utils/*cache-dir* (paths :daily-cache-dir)]
+  (binding [http/*cache-dir* (paths :daily-cache-dir)]
     (let [wrapper (affects-addon-wrapper curseforge/expand-summary)]
       (wrapper addon-summary))))
 
@@ -602,8 +603,8 @@
 (defn-spec latest-wowman-release string?
   "returns the most recently released version of wowman it can find"
   []
-  (binding [utils/*cache-dir* (paths :cache-dir)]
-    (let [resp (utils/from-json (utils/download "https://api.github.com/repos/ogri-la/wowman/releases/latest"))]
+  (binding [http/*cache-dir* (paths :cache-dir)]
+    (let [resp (utils/from-json (http/download "https://api.github.com/repos/ogri-la/wowman/releases/latest"))]
       (-> resp :tag_name))))
 
 (defn-spec latest-wowman-version? boolean?
@@ -637,7 +638,7 @@
     (when (-> path name (clojure.string/ends-with? "-dir"))
       (debug (format "creating '%s' directory: %s" path val))
       (fs/mkdirs val)))
-  (utils/prune-html-download-cache (paths :cache-dir))
+  (http/prune-html-download-cache (paths :cache-dir))
   nil)
 
 (defn -start

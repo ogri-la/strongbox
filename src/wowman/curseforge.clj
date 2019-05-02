@@ -1,6 +1,7 @@
 (ns wowman.curseforge
   (:require
    [wowman
+    [http :as http]
     [specs :as sp]
     [utils :as utils :refer [to-int to-json fmap join from-epoch]]]
    [clj-time
@@ -21,14 +22,14 @@
   [page int?]
   (let [;; 'filter-sort=name' means 'order alphabetically, a to z'
         uri-template (str curseforge-host "/wow/addons?filter-sort=name&page=%s")]
-    (utils/download (format uri-template page))))
+    (http/download (format uri-template page))))
 
 (defn-spec download-summary-page-by-updated-date ::sp/html
   "downloads a page of results from curseforge, sorted by most recently updated"
   [page int?]
   (let [;; 'filter-sort=2' means 'order by updated date, most recent to least recent'
         uri-template (str curseforge-host "/wow/addons?filter-sort=2&page=%s")]
-    (utils/download (format uri-template page))))
+    (http/download (format uri-template page))))
 
 ;; TODO: test 'nil?' return value
 (defn-spec num-summary-pages (s/or :ok int?, :error nil?)
@@ -83,7 +84,7 @@
         ;;detail-uri (str curseforge-host "/wow/addons/" (:name addon-summary)) ;; :name here is unreliable. it may be the 'altname' used to match.
         detail-uri (:uri addon-summary)
         versions-uri (str detail-uri "/files")
-        versions-html (html/html-snippet (utils/download versions-uri :message message))
+        versions-html (html/html-snippet (http/download versions-uri :message message))
         latest-release (-> (html/select versions-html [:table.project-file-listing :tbody :tr]) first)
         info-box (-> (html/select versions-html [:aside.project-details__sidebar]) first)
         prefix #(str curseforge-host %)]
