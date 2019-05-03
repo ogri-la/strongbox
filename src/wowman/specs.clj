@@ -9,6 +9,8 @@
 (s/def ::list-of-keywords (s/coll-of keyword?))
 (s/def ::list-of-list-of-keywords (s/coll-of ::list-of-keywords))
 
+(s/def ::short-string #(<= (count %) 80))
+
 (defn-spec has-ext boolean?
   [path string?, ext-list ::list-of-strings]
   (some #{(fs/extension path)} ext-list))
@@ -99,5 +101,7 @@
 (s/def ::reason-phrase (s/and string? #(<= (count %) 50)))
 (s/def ::status int?) ;; a little too general but ok for now
 (s/def ::http-error (s/keys :req-un [::reason-phrase ::status]))
+(s/def ::body ::anything)
+(s/def ::http-resp (s/keys :req-un [::status ::body])) ;; *at least* these keys, it will definitely have others
 
 (s/def ::empty-coll (s/and coll? #(empty? %)))

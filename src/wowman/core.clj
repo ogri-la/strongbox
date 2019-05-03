@@ -83,6 +83,8 @@
    ;; see specs/toc-addon
    :installed-addon-list nil
 
+   :etag-db {}
+
    ;; ui
 
    ;; the root swing window
@@ -109,6 +111,20 @@
       (if-not (empty? path)
         (get-in state path)
         state))))
+
+(defn set-etag
+  ([filename]
+   (swap! state update-in [:etag-db] dissoc filename)
+   nil)
+  ([filename etag]
+   (swap! state assoc-in [:etag-db filename] etag)
+   nil))
+
+(defn cache
+  []
+  {:etag-db (get-state :etag-db)
+   :set-etag set-etag
+   :cache-dir (paths :cache-dir)})
 
 (defn-spec state-bind nil?
   [path ::sp/list-of-keywords, callback fn?]
@@ -229,8 +245,10 @@
   (when-let [download-uri (:download-uri addon)]
     (let [output-fname (downloaded-addon-fname (:name addon) (:version addon)) ;; addonname--1-2-3.zip
           output-path (join (fs/absolute download-dir) output-fname)] ;; /path/to/installed/addons/addonname--1.2.3.zip
-      (binding [http/*cache-dir* (paths :cache-dir)]
-        (http/download-file download-uri output-path :overwrite? false)))))
+      (if-not (fs/exists? output-path)
+        (binding [http/*cache* (cache)]
+          (http/download-file download-uri output-path))
+        output-path))))
 
 ;; don't do this. `download-addon` is wrapped by `install-addon` that is already affecting the addon
 ;;(def download-addon
@@ -339,7 +357,7 @@
 (defn-spec download-addon-summary-file ::sp/extant-file
   "downloads addon summary file to expected location, nothing more"
   []
-  (binding [http/*cache-dir* (paths :daily-cache-dir)]
+  (binding [http/*cache* (cache)]
     (http/download-file remote-addon-summary-file (paths :addon-summary-file))))
 
 (defn-spec load-addon-summaries nil?
@@ -439,7 +457,7 @@
 
 (defn expand-summary-wrapper
   [addon-summary]
-  (binding [http/*cache-dir* (paths :daily-cache-dir)]
+  (binding [http/*cache* (cache)]
     (let [wrapper (affects-addon-wrapper curseforge/expand-summary)]
       (wrapper addon-summary))))
 
@@ -603,7 +621,7 @@
 (defn-spec latest-wowman-release string?
   "returns the most recently released version of wowman it can find"
   []
-  (binding [http/*cache-dir* (paths :cache-dir)]
+  (binding [http/*cache* (cache)]
     (let [resp (utils/from-json (http/download "https://api.github.com/repos/ogri-la/wowman/releases/latest"))]
       (-> resp :tag_name))))
 
