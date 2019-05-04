@@ -14,7 +14,6 @@
    [clojure.data.codec.base64 :as b64]
    [taoensso.timbre :refer [debug info warn error spy]]
    [trptcolin.versioneer.core :as versioneer]
-   [clj-http.conn-mgr]
    [clj-http.client :as client]))
 
 (def ^:dynamic *cache* nil)
@@ -40,25 +39,26 @@
           (encode-url-path loc))))))
 
 (defn- add-etag-or-not
-  [etag-path req]
-  (if-let [etag (-> *cache* :etag-db (get etag-path))]
-    (assoc-in req [:headers :if-none-match] etag)
+  [etag-key req]
+  (if-let [stored-etag (-> *cache* :etag-db (get etag-key))]
+    (assoc-in req [:headers :if-none-match] stored-etag)
     req))
 
 (defn- write-etag
-  [etag-path resp]
-  (when etag-path
-    ((:set-etag *cache*) etag-path (-> resp :headers (get "etag"))))
+  [etag-key resp]
+  (when-let [etag (and etag-key (-> resp :headers (get "etag")))]
+    ;;(debug "got headers" (-> resp :headers)) ;; cloudflare isn't adding etags to *all* responses, just binaries I think
+    ((:set-etag *cache*) etag-key etag))
   resp)
 
 (defn etag-middleware
-  [etag-path]
+  [etag-key]
   (fn [client]
     (fn
       ([req]
-       (write-etag etag-path (client (add-etag-or-not etag-path req))))
+       (write-etag etag-key (client (add-etag-or-not etag-key req))))
       ([req resp raise]
-       (write-etag etag-path (client (add-etag-or-not etag-path req) resp raise))))))
+       (write-etag etag-key (client (add-etag-or-not etag-key req) resp raise))))))
 
 (defn-spec user-agent map?
   [use-anon-useragent? boolean?]
@@ -69,60 +69,73 @@
 
 (defn-spec -download (s/or :file ::sp/extant-file, :raw ::sp/http-resp, :error ::sp/http-error)
   [uri ::sp/uri, output-file (s/nilable ::sp/file), message (s/nilable ::sp/short-string), extra-params map?]
-   (let [cache? (not (nil? *cache*))
-         
-         ;; if we're caching and no output-file has been given, create an output path
-         ;; it lasts for N hours and is cleaned up on restart
-         ext (-> uri fs/split-ext second (or ".?"))
-         encoded-path (-> uri .getBytes b64/encode String. (str ext))
-         alt-output-file (when cache?
-                           (utils/join (:cache-dir *cache*) encoded-path)) ;; "/path/to/cache/aHR0[...]cHM6=.html"
+  (let [cache? (not (nil? *cache*))
+        ext (-> uri fs/split-ext second (or ".?"))
+        encoded-path (-> uri .getBytes b64/encode String. (str ext))
+        alt-output-file (when cache?
+                          (utils/join (:cache-dir *cache*) encoded-path)) ;; "/path/to/cache/aHR0[...]cHM6=.html"
+        output-file (or output-file alt-output-file) ;; `output-file` may still be `nil` after this.
 
-         ;; if output file not provided and caching is enabled, use a generated one. if caching not enabled, don't write anything at all.
-         ;; `output-file` may still be `nil` after this.
-         output-file (or output-file alt-output-file)
+        etag-key (when cache? (-> output-file fs/base-name (str ".etag")))]
 
-         etag-path (when cache?
-                     (-> output-file fs/base-name (str ".etag")))]
+    ;; ensures orphaned .etag files don't prevent download of missing files
+    (when (and cache?
+               (-> *cache* :etag-db (get etag-key))
+               (not (fs/exists? output-file)))
+      (warn "orphaned .etag found:" etag-key)
+      ((:set-etag *cache*) etag-key)) ;; dissoc etag from db
 
-     ;; ensures orphaned .etag files don't prevent download of missing files
-     (when (and cache?
-                (-> *cache* :etag-db (get etag-path))
-                (not (fs/exists? output-file)))
-       (warn "orphaned .etag found:" etag-path)
-       ((:set-etag *cache*) etag-path)) ;; dissoc etag from db
+    (try
+      (info (or message (format "downloading %s to %s" (fs/base-name uri) output-file)))
+      (client/with-additional-middleware [client/wrap-lower-case-headers (etag-middleware etag-key)]
+        (let [params {:redirect-strategy curse-crap-redirect-strategy}
+              use-anon-useragent? false
+              params (merge params (user-agent use-anon-useragent?) extra-params)
+              _ (debug "requesting" uri "with params" params)
+              resp (client/get uri params)
+              _ (debug "response status" (:status resp))
 
-     (try
-       (info (or message (format "downloading %s to %s" (fs/base-name uri) output-file)))
-       (client/with-additional-middleware [client/wrap-lower-case-headers (etag-middleware etag-path)]
-         (let [params {:redirect-strategy curse-crap-redirect-strategy}
-               use-anon-useragent? false
-               params (merge params (user-agent use-anon-useragent?) extra-params)
-               resp (client/get uri params)
-               modified? (not (= 304 (:status resp)))] ;; 304 is "not modified" (local file is still fresh)
-           
-           (when (and output-file
-                      modified?) ;; data has changed, write body to disk
-             (info "writing" output-file)
-             ;; closes :body
-             ;;(spit output-file (:body resp))
-             ;; doesn't close :body
-             (clojure.java.io/copy (:body resp) (java.io.File. output-file)))
+              not-modified (= 304 (:status resp)) ;; 304 is "not modified" (local file is still fresh). only happens when caching
+              modified (not not-modified)]
 
-           resp))
+          (when not-modified
+            (debug "not modified, contents will be read from cache:" output-file))
 
-       (catch Exception ex
-         (if (-> ex ex-data :status)
-           ;; "Note that the connection to the server will NOT be closed until the stream has been read"
-           ;;  - https://github.com/dakrone/clj-http
-           (let [_ (some-> ex ex-data :body .close)
-                 http-error (select-keys (ex-data ex) [:reason-phrase :status])]
-             (error (format "failed to download file '%s': %s (HTTP %s)"
-                            uri (:reason-phrase http-error) (:status http-error)))
-             http-error)
+          (cond
+            ;; remote data has changed, write body to disk
+            (and output-file modified) (do
+                                         (clojure.java.io/copy (:body resp) (java.io.File. output-file)) ;; doesn't .close on streams
+                                         (if (-> params :as (= :stream))
+                                           (do
+                                             ;; stream request responses get written to a file, the stream closed and the path to the output file returned
+                                             (-> resp :body .close) ;; not all requests are streams with a :body that needs to be closed
+                                             (assoc resp :body output-file))
+                                           ;; regular request responses get the :body as-is
+                                           resp))
 
-           ;; unhandled non-http exception
-           (throw ex))))))
+            ;; remote data has not changed, :body is nil, replace it with path to file
+            (and output-file not-modified) (if (-> params :as (= :stream))
+                                             ;; stream request response already written to file
+                                             (assoc resp :body output-file)
+                                             (assoc resp :body (slurp output-file)))
+
+            ;; (and (not output-file) modified) ;; standard http request of textual content with caching turned off. return the resp as-is
+            ;; (and (not output-file) not-modified) ;; not possible. if-none-match header only added if etag-key found in etag-db. etag-key is derived from output-file
+
+            :else resp)))
+
+      (catch Exception ex
+        (if (-> ex ex-data :status)
+          ;; "Note that the connection to the server will NOT be closed until the stream has been read"
+          ;;  - https://github.com/dakrone/clj-http
+          (let [_ (some-> ex ex-data :body .close)
+                http-error (select-keys (ex-data ex) [:reason-phrase :status])]
+            (error (format "failed to download file '%s': %s (HTTP %s)"
+                           uri (:reason-phrase http-error) (:status http-error)))
+            http-error)
+
+          ;; unhandled non-http exception
+          (throw ex))))))
 
 (defn-spec http-error? boolean?
   [http-resp ::sp/http-resp]

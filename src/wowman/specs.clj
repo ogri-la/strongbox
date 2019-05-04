@@ -101,7 +101,7 @@
 (s/def ::reason-phrase (s/and string? #(<= (count %) 50)))
 (s/def ::status int?) ;; a little too general but ok for now
 (s/def ::http-error (s/keys :req-un [::reason-phrase ::status]))
-(s/def ::body ::anything)
+(s/def ::body any?) ;; even a nil body is allowed (304 Not Modified)
 (s/def ::http-resp (s/keys :req-un [::status ::body])) ;; *at least* these keys, it will definitely have others
 
 (s/def ::empty-coll (s/and coll? #(empty? %)))
