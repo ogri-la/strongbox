@@ -50,7 +50,8 @@
 (defn- write-etag
   [etag-key resp]
   (when-let [etag (and etag-key (-> resp :headers (get "etag")))]
-    ;;(debug "got headers" (-> resp :headers)) ;; cloudflare isn't adding etags to *all* responses, just binaries I think
+    ;; curseforge/cloudflare are not adding etags to *all* responses, just binaries (I think)
+    ;;(debug "got headers" (-> resp :headers)) 
     ((:set-etag *cache*) etag-key etag))
   resp)
 
@@ -91,8 +92,8 @@
     (not (file-older-than output-file expiry-offset-hours))))
 
 (defn-spec -download (s/or :file ::sp/extant-file, :raw ::sp/http-resp, :error ::sp/http-error)
-  "if writing to a file is possible, then the output file will be returned, otherwise the raw http response
-   writing to a file is possible when caching is available or an `output-file` is given to us."
+  "if writing to a file is possible then the output file is returned, else the raw http response.
+   writing response body to a file is possible when caching is available or `output-file` provided."
   [uri ::sp/uri, output-file (s/nilable ::sp/file), message (s/nilable ::sp/short-string), extra-params map?]
   (let [cache? (not (nil? *cache*))
         ext (-> uri fs/split-ext second (or ".html")) ;; *probably* html, we don't particularly care
@@ -183,7 +184,7 @@
 ;;(defn-spec download-file (s/or :file ::sp/extant-file, :error ::sp/http-error)
 ;;  [uri ::sp/uri, output-file ::sp/file, & {:keys [message]}]
 (defn download-file
-  [uri, output-file & {:keys [message]}]
+  [uri, output-file, & {:keys [message]}]
   (let [resp (-download uri output-file message {:as :stream})]
     (if-not (http-error? resp)
       output-file
