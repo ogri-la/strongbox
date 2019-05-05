@@ -52,7 +52,7 @@
         cfg-file (join config-dir "config.json") ;; /home/$you/.config/wowman/config.json
         etag-db-file (join data-dir "etag-db.json") ;; /home/$you/.local/share/wowman/etag-db.json
 
-        addon-summary-file (join cache-dir "curseforge.json") ;; /home/$you/.local/share/wowman/cache/$today/curseforge.json
+        addon-summary-file (join cache-dir "curseforge.json") ;; /home/$you/.local/share/wowman/cache/curseforge.json
         addon-summary-updates-file (join cache-dir "curseforge-updates.json")
 
         path-map {:config-dir config-dir
@@ -247,10 +247,8 @@
   (when-let [download-uri (:download-uri addon)]
     (let [output-fname (downloaded-addon-fname (:name addon) (:version addon)) ;; addonname--1-2-3.zip
           output-path (join (fs/absolute download-dir) output-fname)] ;; /path/to/installed/addons/addonname--1.2.3.zip
-      (if-not (fs/exists? output-path)
-        (binding [http/*cache* (cache)]
-          (http/download-file download-uri output-path))
-        output-path))))
+      (binding [http/*cache* (cache)]
+        (http/download-file download-uri output-path)))))
 
 ;; don't do this. `download-addon` is wrapped by `install-addon` that is already affecting the addon
 ;;(def download-addon
