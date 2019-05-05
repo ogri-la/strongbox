@@ -33,21 +33,26 @@ see CHANGELOG.md for a more formal list of changes by release
             - daily cache dirs now pruned entirely
                 - daily cache dir removed as well
             - files older than default expiry date now pruned at app start
+* capture 'total downloads' from curseforge
+    - more than anything this will help distinguish main addons from the noise of supplementary addons
+        - see 'Titan Panel' or 'BigWigs' or 'DBM'
+    - done
 
 ### todo
 
 * add a version to the curseforge.json file
     - wowman-data may be changing to accept addons from different sources
-* capture 'total downloads' from curseforge
-    - more than anything this will help distinguish main addons from the noise of supplementary addons
-        - see 'Titan Panel' or 'BigWigs' or 'DBM'
-* generate aliases for the top 10/20 installed addons that need them
+* generate aliases for the top 10-20 installed addons that need them
     - depends on capturing total downloads
 * gui, search, add 'go' link and row highlighting
     - feels weird to go from having it (installed) to not (search)
 
 ## todo bucket
 
+* curseforge, addons whose :name changes
+    - see 'speedyloot' that changed to 'speedyautoloot'
+        - they share the same creation date
+        - /speedyloot now redirects to /speedyautoloot, so curseforge definitely have support for name changing
 * refuse to run as the root user
 * handling loading of bad json files better
     - empty and malformed json files just error out
