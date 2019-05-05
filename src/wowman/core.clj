@@ -44,6 +44,9 @@
         data-dir (or (System/getenv "XDG_DATA_HOME") "~/.local/share/wowman")
         data-dir (-> data-dir fs/expand-home fs/normalized fs/absolute str)
 
+        ;; cache files are deleted regularly. even if you fuck up with XDG_DATA_HOME=/ then the worse that
+        ;; can happen, even if you run wowman as root, is you get /cache/ or /home/$you/cache/ created and
+        ;; files within it deleted. and /cache or /home/$you/cache is not a common directory
         cache-dir (join data-dir "cache") ;; /home/you/.local/share/wowman/cache
 
         cfg-file (join config-dir "config.json") ;; /home/$you/.config/wowman/config.json
@@ -654,7 +657,7 @@
     (when (-> path name (clojure.string/ends-with? "-dir"))
       (debug (format "creating '%s' directory: %s" path val))
       (fs/mkdirs val)))
-  (http/prune-html-download-cache (paths :cache-dir))
+  (http/prune-cache-dir (paths :cache-dir))
   nil)
 
 (defn -start

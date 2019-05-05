@@ -3,7 +3,6 @@
    [wowman
     [specs :as sp]
     [utils :as utils :refer [join]]]
-   [clojure.string]
    [clojure.java.io]
    [clojure.spec.alpha :as s]
    [clj-time
@@ -19,6 +18,7 @@
    [trptcolin.versioneer.core :as versioneer]
    [clj-http.client :as client]))
 
+(def expiry-offset-hours 24) ;; hours
 (def ^:dynamic *cache* nil)
 
 (defn-spec encode-url-path uri?
@@ -70,18 +70,25 @@
         wowman-useragent (format "Wowman/%s (https://github.com/ogri-la/wowman)" wowman-version)]
     {"http.useragent" (if use-anon-useragent? anon-useragent wowman-useragent)}))
 
+(defn-spec file-older-than boolean?
+  [file ::sp/extant-file, hours pos-int?]
+  (let [modtime (coerce-time/from-long (fs/mod-time file))
+        now (t/now)
+        expiry-offset (t/hours hours)
+        expiry-date (t/plus modtime expiry-offset)
+        expired? (t/before? expiry-date now)]
+    (debug (format "modtime %s; expiry-offset %s; expiry-date %s; now %s; expired? %s"
+                   modtime expiry-offset expiry-date now expired?))
+    (when expired?
+      (debug (format "file expired %s minutes ago: %s"
+                     (t/in-minutes (t/interval modtime expiry-date)) file)))
+    expired?))
+
 (defn fresh-cache-file-exists?
   "returns `true` if the last modification time on given file is before the expiry date of +N hours"
   [output-file]
   (when (and output-file (fs/exists? output-file))
-    (let [modtime (coerce-time/from-long (fs/mod-time output-file))
-          now (t/now)
-          expiry-offset (t/hours 24)
-          expiry-date (t/plus modtime expiry-offset)
-          expired? (t/before? expiry-date now)]
-      (debug (format "modtime %s; expiry-offset %s; expiry-date %s; now %s; expired? %s"
-                     modtime expiry-offset expiry-date now expired?))
-      (not expired?))))
+    (not (file-older-than output-file expiry-offset-hours))))
 
 (defn-spec -download (s/or :file ::sp/extant-file, :raw ::sp/http-resp, :error ::sp/http-error)
   "if writing to a file is possible, then the output file will be returned, otherwise the raw http response
@@ -186,10 +193,18 @@
   "deprecated, will be removed in 0.8.0.
    removes directories in the :cache-dir that match a year-month-day pattern"
   [cache-dir ::sp/extant-dir]
-  (let [todays-cache-dir (utils/datestamp-now-ymd)
-        all-cache-dirs (fs/find-files cache-dir #"\d{4}\-\d{2}\-\d{2}")]
-    (doseq [cache-dir all-cache-dirs]
+  (let [ymd-cache-dirs (fs/find-files cache-dir #"\d{4}\-\d{2}\-\d{2}")]
+    (doseq [cache-dir ymd-cache-dirs]
       (warn "deleting cache dir " cache-dir)
       (fs/delete-dir cache-dir))))
+
+(defn-spec prune-cache-dir nil?
+  [cache-dir ::sp/extant-dir]
+  (prune-html-download-cache cache-dir)
+  (doseq [cache-file (fs/list-dir cache-dir)
+          :when (and (fs/file? cache-file)
+                     (file-older-than (str cache-file) (* 2 expiry-offset-hours)))]
+    (warn "deleting cached file (expired):" cache-file)
+    (fs/delete cache-file)))
 
 (st/instrument)
