@@ -45,18 +45,18 @@
         data-dir (-> data-dir fs/expand-home fs/normalized fs/absolute str)
 
         cache-dir (join data-dir "cache") ;; /home/you/.local/share/wowman/cache
-        daily-cache-dir (join cache-dir (utils/datestamp-now-ymd)) ;; /home/$you/.local/share/wowman/cache/$today
 
         cfg-file (join config-dir "config.json") ;; /home/$you/.config/wowman/config.json
+        etag-db-file (join data-dir "etag-db.json") ;; /home/$you/.local/share/wowman/etag-db.json
 
-        addon-summary-file (join daily-cache-dir "curseforge.json") ;; /home/$you/.local/share/wowman/cache/$today/curseforge.json
-        addon-summary-updates-file (join daily-cache-dir "curseforge-updates.json")
+        addon-summary-file (join cache-dir "curseforge.json") ;; /home/$you/.local/share/wowman/cache/$today/curseforge.json
+        addon-summary-updates-file (join cache-dir "curseforge-updates.json")
 
         path-map {:config-dir config-dir
                   :data-dir data-dir
                   :cache-dir cache-dir
-                  :daily-cache-dir daily-cache-dir
                   :cfg-file cfg-file
+                  :etag-db-file etag-db-file
                   :addon-summary-file addon-summary-file
                   :addon-summary-updates-file addon-summary-updates-file}]
     (if-not (empty? path)
@@ -183,8 +183,10 @@
   []
   ;; warning: this will preserve any once-off command line parameters as well
   ;; this might make sense within the gui but be careful about auto-saving elsewhere
-  (info "saving settings to " (paths :cfg-file))
-  (utils/dump-json-file (paths :cfg-file) (get-state :cfg)))
+  (debug "saving settings to" (paths :cfg-file))
+  (utils/dump-json-file (paths :cfg-file) (get-state :cfg))
+  (debug "saving etag-db to" (paths :etag-db-file))
+  (utils/dump-json-file (paths :etag-db-file) (get-state :etag-db)))
 
 (defn load-settings
   ([]
@@ -195,15 +197,12 @@
      (warn "configuration file not found: " (paths :cfg-file)))
 
    (let [file-opts (if (fs/exists? (paths :cfg-file)) (utils/load-json-file (paths :cfg-file)) {})
-         cfg (configure file-opts cli-opts)]
-     (dosync
-      (swap! state assoc :cfg cfg)
-
-      ;; possibly not necessary, we'll see
-      (swap! state assoc :cli-opts cli-opts)
-      (swap! state assoc :file-opts file-opts)
-
-      (when (:verbosity cli-opts) (logging/change-log-level (:verbosity cli-opts)))))))
+         cfg (configure file-opts cli-opts)
+         etag-db (if (fs/exists? (paths :etag-db-file)) (utils/load-json-file (paths :etag-db-file)) {})
+         new-state {:cfg cfg, :cli-opts cli-opts, :file-opts file-opts, :etag-db etag-db}]
+     (swap! state merge new-state)
+     (when (:verbosity cli-opts)
+       (logging/change-log-level (:verbosity cli-opts))))))
 
 (defn-spec set-install-dir! nil?
   [install-dir ::sp/install-dir]
@@ -473,7 +472,6 @@
   (fs/delete-dir (paths :cache-dir))
   ;; todo: this and `init-dirs` needs revisiting
   (fs/mkdirs (paths :cache-dir))
-  (fs/mkdirs (paths :daily-cache-dir))
   nil)
 
 (defn-spec list-downloaded-addon-zips (s/coll-of ::sp/extant-file)
@@ -539,7 +537,7 @@
   (load-installed-addons) ;; parse toc files in install-dir
   (match-installed-addons-with-online-addons) ;; match installed addons to those in curseforge.json
   (check-for-updates)     ;; for those addons that have matches, download their full details from curseforge
-
+  (save-settings)         ;; seems like a good place to preserve the etag-db
   nil)
 
 (defn-spec -install-update-these nil?
