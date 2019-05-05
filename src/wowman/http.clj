@@ -94,7 +94,7 @@
                           (utils/join (:cache-dir *cache*) encoded-path)) ;; "/path/to/cache/aHR0[...]cHM6=.html"
         output-file (or output-file alt-output-file) ;; `output-file` may still be nil after this!
 
-        etag-key (when cache? (-> output-file fs/base-name (str ".etag")))
+        etag-key (when cache? (fs/base-name output-file))
         streaming-response? (-> extra-params :as (= :stream))]
 
     ;; ensures orphaned .etag files don't prevent download of missing files
