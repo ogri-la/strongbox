@@ -22,9 +22,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * improve caching logic
     - Move downloading logic to separate file
         - done
-
-### todo
-
 * bug, curseforge.etag file is inside the daily cache dir
     - Move etag handling to single file vs multiple files
         - added etag-db to state
@@ -32,6 +29,12 @@ see CHANGELOG.md for a more formal list of changes by release
     - use modification time of file on disk to determine if a request should even be made
         - done
     - update prune-cache-dir logic
+        - done
+            - daily cache dirs now pruned entirely
+                - daily cache dir removed as well
+            - files older than default expiry date now pruned at app start
+
+### todo
 
 * add a version to the curseforge.json file
     - wowman-data may be changing to accept addons from different sources
@@ -45,6 +48,10 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
+* refuse to run as the root user
+* handling loading of bad json files better
+    - empty and malformed json files just error out
+        - a simple warning and a default could prevent this
 * memory usage
     - we're big and fat :(
     - lets explore some ways to measure and then reduce memory usage
