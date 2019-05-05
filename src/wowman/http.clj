@@ -183,11 +183,12 @@
       resp)))
 
 (defn-spec prune-html-download-cache nil?
+  "deprecated, will be removed in 0.8.0.
+   removes directories in the :cache-dir that match a year-month-day pattern"
   [cache-dir ::sp/extant-dir]
   (let [todays-cache-dir (utils/datestamp-now-ymd)
-        all-cache-dirs (fs/find-files cache-dir #"\d{4}\-\d{2}\-\d{2}")
-        all-except-today (remove #(clojure.string/ends-with? (fs/base-name %) todays-cache-dir) all-cache-dirs)]
-    (doseq [cache-dir all-except-today]
+        all-cache-dirs (fs/find-files cache-dir #"\d{4}\-\d{2}\-\d{2}")]
+    (doseq [cache-dir all-cache-dirs]
       (warn "deleting cache dir " cache-dir)
       (fs/delete-dir cache-dir))))
 
