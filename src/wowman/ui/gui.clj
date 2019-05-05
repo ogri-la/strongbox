@@ -250,6 +250,7 @@
         max-width-map {"installed" 200
                        "available" 200
                        "updated" 100
+                       "downloads" 100
                        "go" 120}
         pre-width-map {"WoW" 50
                        "updated" 100}] ;; we would like these a little larger, if possible
@@ -361,6 +362,7 @@
                                             :description
                                             {:key :installed-version :text "installed"}
                                             {:key :version :text "available"}
+                                            {:key :download-count :text "downloads" :class Integer}
                                             {:key :updated-date :text "updated"}
                                             {:key :interface-version :text "WoW"}
                                             {:key :category-list :text "categories"}]
@@ -448,10 +450,12 @@
 
 (defn search-results-panel
   []
-  (let [tblmdl (sstbl/table-model :columns [{:key :label :text "Name"}
+  (let [tblmdl (sstbl/table-model :columns [;;{:key :uri :text "go"}
+                                            {:key :label :text "name"}
                                             :description
+                                            {:key :updated-date :text "updated"}
                                             {:key :category-list :text "categories"}
-                                            {:key :updated-date :text "updated"}]
+                                            {:key :download-count :text "downloads" :class Integer}]
                                   :rows [])
 
         grid (x/table-x :id :tbl-search-addons :model tblmdl)
@@ -462,7 +466,7 @@
         _ (state-bind [:installed-addon-list] update-label-idx) ;; update internal idx of labels whenever installed addons change
 
         addon-installed? (fn [adapter]
-                           (let [label-column (find-column-by-label grid "Name")
+                           (let [label-column (find-column-by-label grid "name")
                                  value (.getValue adapter label-column)]
                              (contains? @label-idx value)))
 

@@ -35,6 +35,7 @@
   {:name  "everyaddon",
    :created-date  "2009-02-08T13:30:30Z",
    :updated-date  "2016-09-08T14:18:33Z",
+   :download-count 1
    :description  "Does what no other addon does, slightly differently"
    :category-list  ["Auction & Economy", "Data Broker"],
    :interface-version  70000,
@@ -130,7 +131,6 @@
                     :category-list ["Data Export" "Professions"]
                     :updated-date "2017-08-29T23:43:00Z"
                     :created-date "2008-04-05T06:40:54Z"
-                    :download-count 230257314
-                    })]
+                    :download-count 230257314})]
 
     (is (= expected scraped))))

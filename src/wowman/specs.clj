@@ -17,7 +17,7 @@
 
 ;; a subset of addon attributes, just those that can be scraped from the listing pages
 (s/def ::addon-summary
-  (s/keys :req-un [::uri ::name ::label ::description ::category-list ::created-date ::updated-date]))
+  (s/keys :req-un [::uri ::name ::label ::description ::category-list ::created-date ::updated-date ::download-count]))
 
 ;; complete description of an addon
 ;; everything we need in order to download an addon
@@ -80,6 +80,7 @@
                                   false))))
 (s/def ::created-date ::inst)
 (s/def ::updated-date ::inst)
+(s/def ::download-count pos-int?)
 (s/def ::donation-uri (s/nilable ::uri))
 (s/def ::json string?)
 (s/def ::html string?)
