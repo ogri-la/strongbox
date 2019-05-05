@@ -19,29 +19,23 @@ see CHANGELOG.md for a more formal list of changes by release
 * submit pkgbuild to aur
     - done!
     - it's really very cool to see my baby appear in the aur
+* improve caching logic
+    - Move downloading logic to separate file
+        - done
+* bug, curseforge.etag file is inside the daily cache dir
+    - Move etag handling to single file vs multiple files
+        - added etag-db to state
+    - preserve etag-db between app restarts
+    - use modification time of file on disk to determine if a request should even be made
+        - done
+    - update prune-cache-dir logic
+        - done
+            - daily cache dirs now pruned entirely
+                - daily cache dir removed as well
+            - files older than default expiry date now pruned at app start
 
 ### todo
 
-* bug, curseforge.etag file is inside the daily cache dir
-    - it should be in the regular cache dir, the parent.
-        - this is awkard
-            - we have two caching regimes
-        - while developing we don't want requests for curseforge.json going out into the world
-            - so we use file based cache
-        - however, this prevents a fresh curseforge.json from being downloaded, ever
-        - so curseforge.json was stuck in the daily cache to ensure it got downloaded at least daily
-        - the etag file is written to the same directory the file is downloaded
-    - etag files should always be written to the cache directory
-        - regardless of where the file is actually downloaded to
-        - but only if cache dir is set, obviously
-    - we need the two systems to work more harmoniously
-        - for example, every cached request gets an etag, but file cache is used for a period before sending another request
-            - if we do 100 requests/minute for the same file how many of those should go out into the world?
-                - we have a local cached copy *and* an etag
-            - perhaps send request with etag once an hour? rely on file based cache on the interim
-                - do other types of file have different age requirements? 
-                - once a day seems appropriate for addon pages
-                - once a day seems appropriate for curseforge.json ...
 * add a version to the curseforge.json file
     - wowman-data may be changing to accept addons from different sources
 * capture 'total downloads' from curseforge
@@ -54,6 +48,10 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
+* refuse to run as the root user
+* handling loading of bad json files better
+    - empty and malformed json files just error out
+        - a simple warning and a default could prevent this
 * memory usage
     - we're big and fat :(
     - lets explore some ways to measure and then reduce memory usage

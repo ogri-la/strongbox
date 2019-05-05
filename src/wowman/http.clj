@@ -3,28 +3,23 @@
    [wowman
     [specs :as sp]
     [utils :as utils :refer [join]]]
-   [clojure.string]
    [clojure.java.io]
    [clojure.spec.alpha :as s]
+   [clj-time
+    [core :as t]
+    [coerce :as coerce-time]]
    [orchestra.core :refer [defn-spec]]
    [orchestra.spec.test :as st]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
-   [cheshire.core :as json]
-   [clojure.data.json]
    [me.raynes.fs :as fs]
-   [me.raynes.fs.compression :as zip]
-   [slugify.core :as sluglib]
    [orchestra.core :refer [defn-spec]]
    [clojure.data.codec.base64 :as b64]
    [taoensso.timbre :refer [debug info warn error spy]]
    [trptcolin.versioneer.core :as versioneer]
-   [clj-http.conn-mgr]
-   [clj-http.client :as client]
-   [clj-time
-    [coerce :as coerce-time]
-    [format :as format-time]]))
+   [clj-http.client :as client]))
 
-(def ^:dynamic *cache-dir* nil)
+(def expiry-offset-hours 24) ;; hours
+(def ^:dynamic *cache* nil)
 
 (defn-spec encode-url-path uri?
   "given a url, explodes it, encodes the path, returns a uri object"
@@ -47,26 +42,27 @@
           (encode-url-path loc))))))
 
 (defn- add-etag-or-not
-  [etag-path req]
-  (if (and etag-path (fs/file? etag-path))
-    (assoc-in req [:headers :if-none-match] (slurp etag-path))
+  [etag-key req]
+  (if-let [stored-etag (-> *cache* :etag-db (get etag-key))]
+    (assoc-in req [:headers :if-none-match] stored-etag)
     req))
 
 (defn- write-etag
-  [etag-path resp]
-  (when etag-path
-    (fs/mkdirs (fs/parent etag-path)) ;; when the clock ticks over and the app hasn't been restarted ...
-    (spit etag-path (-> resp :headers (get "etag"))))
+  [etag-key resp]
+  (when-let [etag (and etag-key (-> resp :headers (get "etag")))]
+    ;; curseforge/cloudflare are not adding etags to *all* responses, just binaries (I think)
+    ;;(debug "got headers" (-> resp :headers)) 
+    ((:set-etag *cache*) etag-key etag))
   resp)
 
 (defn etag-middleware
-  [etag-path]
+  [etag-key]
   (fn [client]
     (fn
       ([req]
-       (write-etag etag-path (client (add-etag-or-not etag-path req))))
+       (write-etag etag-key (client (add-etag-or-not etag-key req))))
       ([req resp raise]
-       (write-etag etag-path (client (add-etag-or-not etag-path req) resp raise))))))
+       (write-etag etag-key (client (add-etag-or-not etag-key req) resp raise))))))
 
 (defn-spec user-agent map?
   [use-anon-useragent? boolean?]
@@ -75,113 +71,141 @@
         wowman-useragent (format "Wowman/%s (https://github.com/ogri-la/wowman)" wowman-version)]
     {"http.useragent" (if use-anon-useragent? anon-useragent wowman-useragent)}))
 
-;; disabled until I figure out how to spec the parameters:
-;;(defn-spec download-file (s/or :ok ::sp/extant-file, :http-error ::sp/http-error)
-;;  [uri ::sp/uri, output-file ::sp/file, & {:keys [overwrite?]} (s/map-of keyword? any?)]
-(defn download-file
-  [uri output-file & {:keys [overwrite?]}]
-  (let [;; we can have local file based caching or we can rely on etags for fresh data
-        cache? (not (nil? *cache-dir*))
-        etag-path (when cache?
-                    (join *cache-dir* (-> output-file fs/base-name (str ".etag"))))]
+(defn-spec file-older-than boolean?
+  [file ::sp/extant-file, hours pos-int?]
+  (let [modtime (coerce-time/from-long (fs/mod-time file))
+        now (t/now)
+        expiry-offset (t/hours hours)
+        expiry-date (t/plus modtime expiry-offset)
+        expired? (t/before? expiry-date now)]
+    (debug (format "modtime %s; expiry-offset %s; expiry-date %s; now %s; expired? %s"
+                   modtime expiry-offset expiry-date now expired?))
+    (when expired?
+      (debug (format "file expired %s minutes ago: %s"
+                     (t/in-minutes (t/interval modtime expiry-date)) file)))
+    expired?))
 
-    ;; when etag path exists but output file doesn't, delete etag file
-    ;; ensures orphaned .etag files don't prevent download
-    (when (and (fs/exists? etag-path)
+(defn fresh-cache-file-exists?
+  "returns `true` if the last modification time on given file is before the expiry date of +N hours"
+  [output-file]
+  (when (and output-file (fs/exists? output-file))
+    (not (file-older-than output-file expiry-offset-hours))))
+
+(defn-spec -download (s/or :file ::sp/extant-file, :raw ::sp/http-resp, :error ::sp/http-error)
+  "if writing to a file is possible then the output file is returned, else the raw http response.
+   writing response body to a file is possible when caching is available or `output-file` provided."
+  [uri ::sp/uri, output-file (s/nilable ::sp/file), message (s/nilable ::sp/short-string), extra-params map?]
+  (let [cache? (not (nil? *cache*))
+        ext (-> uri fs/split-ext second (or ".html")) ;; *probably* html, we don't particularly care
+        encoded-path (-> uri .getBytes b64/encode String. (str ext))
+        alt-output-file (when cache?
+                          (utils/join (:cache-dir *cache*) encoded-path)) ;; "/path/to/cache/aHR0[...]cHM6=.html"
+        output-file (or output-file alt-output-file) ;; `output-file` may still be nil after this!
+
+        etag-key (when cache? (fs/base-name output-file))
+        streaming-response? (-> extra-params :as (= :stream))]
+
+    ;; ensures orphaned .etag files don't prevent download of missing files
+    (when (and cache?
+               (-> *cache* :etag-db (get etag-key))
                (not (fs/exists? output-file)))
-      (warn "orphaned .etag found:" etag-path)
-      (fs/delete etag-path))
+      (warn "orphaned .etag found:" etag-key)
+      ((:set-etag *cache*) etag-key)) ;; dissoc etag from db
 
-    ;; file exists and we're not overwriting existing file, return path to what we have
-    (if (and
-         (fs/exists? output-file)
-         (not overwrite?))
-      (do
-        (debug "cache hit for" output-file)
-        ;;(Thread/sleep 50) ;; simulates a slow download
-        output-file)
+    ;; use the file on disk if it's not too old ...
+    (if (fresh-cache-file-exists? output-file)
+      output-file
 
-      ;; we're overwriting files. still a chance nothing is downloaded or overwritten
+      ;; ... otherwise, we must sing and dance
       (try
-        (debug "cache miss for" output-file)
-        (info (format "downloading %s to %s" uri output-file))
-        (client/with-additional-middleware [client/wrap-lower-case-headers (etag-middleware etag-path)]
-          (let [params {:as :stream
-                        :redirect-strategy curse-crap-redirect-strategy}
+        (info (or message (format "downloading %s to %s" (fs/base-name uri) output-file)))
+        (client/with-additional-middleware [client/wrap-lower-case-headers (etag-middleware etag-key)]
+          (let [params {:redirect-strategy curse-crap-redirect-strategy}
                 use-anon-useragent? false
-                params (merge params (user-agent use-anon-useragent?))
-                resp (client/get uri params)]
+                params (merge params (user-agent use-anon-useragent?) extra-params)
+                _ (debug "requesting" uri "with params" params)
+                resp (client/get uri params)
+                _ (debug "response status" (:status resp))
 
-            (when-not (= 304 (:status resp)) ;; 'when-not not-modified' or just 'when modified'
-              (clojure.java.io/copy (:body resp) (java.io.File. output-file)))
-            output-file))
+                not-modified (= 304 (:status resp)) ;; 304 is "not modified" (local file is still fresh). only happens when caching
+                modified (not not-modified)]
 
-        (catch Exception e
-          (if (-> e ex-data :status)
+            (when not-modified
+              (debug "not modified, contents will be read from cache:" output-file))
+
+            (cond
+              ;; remote data has changed, write body to disk
+              (and output-file modified) (do
+                                           (clojure.java.io/copy (:body resp) (java.io.File. output-file)) ;; doesn't .close on streams
+                                           (when streaming-response?
+                                             ;; stream request responses get written to a file, the stream closed and the path to the output file returned
+                                             (-> resp :body .close)) ;; not all requests are streams with a :body that needs to be closed
+                                           output-file)
+
+              ;; remote data has not changed, :body is nil, replace it with path to file
+              (and output-file not-modified) (do
+                                               (fs/touch output-file) ;; update modtime
+                                               output-file)
+
+              ;; (and (not output-file) modified) ;; standard http request of textual content with caching turned off. return the resp as-is
+              ;; (and (not output-file) not-modified) ;; not possible. if-none-match header only added if etag-key found in etag-db. etag-key is derived from output-file
+
+              :else resp)))
+
+        (catch Exception ex
+          (if (-> ex ex-data :status)
             ;; "Note that the connection to the server will NOT be closed until the stream has been read"
             ;;  - https://github.com/dakrone/clj-http
-            ;; not sure if necessary, but can't hurt: https://github.com/dakrone/clj-http/issues/461
-            (let [_ (some-> e ex-data :body .close)
-                  http-error (select-keys (ex-data e) [:reason-phrase :status])]
+            (let [_ (some-> ex ex-data :body .close)
+                  http-error (select-keys (ex-data ex) [:reason-phrase :status])]
               (error (format "failed to download file '%s': %s (HTTP %s)"
                              uri (:reason-phrase http-error) (:status http-error)))
               http-error)
 
             ;; unhandled non-http exception
-            (throw e)))))))
+            (throw ex)))))))
 
-;; todo: revisit this
-;; https://github.com/dakrone/clj-http/blob/master/src/clj_http/conn_mgr.clj#L251
-(def conn-manager (clj-http.conn-mgr/make-reusable-conn-manager
-                   {:default-per-route 4 ;; max simultaneous connections per host
-                    }))
+(defn http-error?
+  [http-resp]
+  (and (map? http-resp)
+       (<= 400 (:status http-resp))))
 
-;;
-;;
-
-;; disabled until I figure out how to spec the parameters:
-;; https://github.com/jeaye/orchestra/issues/43
-;;(defn-spec download (s/or :ok ::sp/html :error nil?)
-;;  "downloads content at given path if contents of uri not on fs already."
-;;  [uri ::sp/uri, & {:keys [message]} (s/map-of keyword? string?)]
-
+;;(defn-spec download (s/or :ok ::sp/http-resp, :error ::sp/http-error)
+;;  [uri ::sp/uri, message ::sp/short-string]
 (defn download
   [uri & {:keys [message]}]
-  (let [cache? (not (nil? *cache-dir*)) ;; only cache when we have somewhere to cache.
-        ;; only the filename is being encoded, not the contents of the download. it's ugly, but safe and reversible.
-        cache-key (-> uri .getBytes b64/encode String. (str ".html"))
-        cache-path (fs/file *cache-dir* cache-key)] ;; "/path/to/cache/aHR0[...]cHM6=.html"
+  (let [output-file nil
+        resp (-download uri output-file message {})]
+    (cond
+      (http-error? resp) resp ;; error http response
+      (map? resp) (:body resp) ;; regular http response + caching disabled
+      (fs/file? resp) (slurp resp)))) ;; file on disk + caching enabled
 
-    ;; it's part of `core/init-dirs`, but I like `download` available regardless of whether app has started
-    (when cache?
-      (fs/mkdirs *cache-dir*))
-
-    (if (and cache? (fs/exists? cache-path))
-      (do
-        (debug "cache hit: " uri)
-        ;;(Thread/sleep 50) ;; simulates a slow download
-        (slurp cache-path))
-
-      ;; not caching or cache miss
-      (let [_ (when message (info message))
-            _ (when cache? (debug "cache miss: " uri))
-            params {:connection-manager conn-manager
-                    :cookie-policy :none ;; Completely ignore cookies
-                    :redirect-strategy :none} ;; do not follow redirects
-            use-anon-useragent? false
-            params (merge params (user-agent use-anon-useragent?))
-            remote-content (client/get uri params)
-            remote-content (:body remote-content)]
-
-        (when cache?
-          (spit cache-path remote-content))
-        remote-content))))
+;;(defn-spec download-file (s/or :file ::sp/extant-file, :error ::sp/http-error)
+;;  [uri ::sp/uri, output-file ::sp/file, & {:keys [message]}]
+(defn download-file
+  [uri, output-file, & {:keys [message]}]
+  (let [resp (-download uri output-file message {:as :stream})]
+    (if-not (http-error? resp)
+      output-file
+      resp)))
 
 (defn-spec prune-html-download-cache nil?
+  "deprecated, will be removed in 0.8.0.
+   removes directories in the :cache-dir that match a year-month-day pattern"
   [cache-dir ::sp/extant-dir]
-  (let [todays-cache-dir (utils/datestamp-now-ymd)
-        all-cache-dirs (fs/find-files cache-dir #"\d{4}\-\d{2}\-\d{2}")
-        all-except-today (remove #(clojure.string/ends-with? (fs/base-name %) todays-cache-dir) all-cache-dirs)]
-    (doseq [cache-dir all-except-today]
+  (let [ymd-cache-dirs (fs/find-files cache-dir #"\d{4}\-\d{2}\-\d{2}")]
+    (doseq [cache-dir ymd-cache-dirs]
       (warn "deleting cache dir " cache-dir)
       (fs/delete-dir cache-dir))))
+
+(defn-spec prune-cache-dir nil?
+  [cache-dir ::sp/extant-dir]
+  (prune-html-download-cache cache-dir)
+  (doseq [cache-file (fs/list-dir cache-dir)
+          :when (and (fs/file? cache-file)
+                     (file-older-than (str cache-file) (* 2 expiry-offset-hours)))]
+    (warn "deleting cached file (expired):" cache-file)
+    (fs/delete cache-file)))
+
+(st/instrument)

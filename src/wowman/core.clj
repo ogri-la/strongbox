@@ -44,19 +44,22 @@
         data-dir (or (System/getenv "XDG_DATA_HOME") "~/.local/share/wowman")
         data-dir (-> data-dir fs/expand-home fs/normalized fs/absolute str)
 
+        ;; cache files are deleted regularly. even if you fuck up with XDG_DATA_HOME=/ then the worse that
+        ;; can happen, even if you run wowman as root, is you get /cache/ or /home/$you/cache/ created and
+        ;; files within it deleted. and /cache or /home/$you/cache is not a common directory
         cache-dir (join data-dir "cache") ;; /home/you/.local/share/wowman/cache
-        daily-cache-dir (join cache-dir (utils/datestamp-now-ymd)) ;; /home/$you/.local/share/wowman/cache/$today
 
         cfg-file (join config-dir "config.json") ;; /home/$you/.config/wowman/config.json
+        etag-db-file (join data-dir "etag-db.json") ;; /home/$you/.local/share/wowman/etag-db.json
 
-        addon-summary-file (join daily-cache-dir "curseforge.json") ;; /home/$you/.local/share/wowman/cache/$today/curseforge.json
-        addon-summary-updates-file (join daily-cache-dir "curseforge-updates.json")
+        addon-summary-file (join cache-dir "curseforge.json") ;; /home/$you/.local/share/wowman/cache/curseforge.json
+        addon-summary-updates-file (join cache-dir "curseforge-updates.json")
 
         path-map {:config-dir config-dir
                   :data-dir data-dir
                   :cache-dir cache-dir
-                  :daily-cache-dir daily-cache-dir
                   :cfg-file cfg-file
+                  :etag-db-file etag-db-file
                   :addon-summary-file addon-summary-file
                   :addon-summary-updates-file addon-summary-updates-file}]
     (if-not (empty? path)
@@ -82,6 +85,8 @@
    ;; ... then updated again with live data from curseforge
    ;; see specs/toc-addon
    :installed-addon-list nil
+
+   :etag-db {}
 
    ;; ui
 
@@ -109,6 +114,20 @@
       (if-not (empty? path)
         (get-in state path)
         state))))
+
+(defn set-etag
+  ([filename]
+   (swap! state update-in [:etag-db] dissoc filename)
+   nil)
+  ([filename etag]
+   (swap! state assoc-in [:etag-db filename] etag)
+   nil))
+
+(defn cache
+  []
+  {:etag-db (get-state :etag-db)
+   :set-etag set-etag
+   :cache-dir (paths :cache-dir)})
 
 (defn-spec state-bind nil?
   [path ::sp/list-of-keywords, callback fn?]
@@ -167,8 +186,10 @@
   []
   ;; warning: this will preserve any once-off command line parameters as well
   ;; this might make sense within the gui but be careful about auto-saving elsewhere
-  (info "saving settings to " (paths :cfg-file))
-  (utils/dump-json-file (paths :cfg-file) (get-state :cfg)))
+  (debug "saving settings to" (paths :cfg-file))
+  (utils/dump-json-file (paths :cfg-file) (get-state :cfg))
+  (debug "saving etag-db to" (paths :etag-db-file))
+  (utils/dump-json-file (paths :etag-db-file) (get-state :etag-db)))
 
 (defn load-settings
   ([]
@@ -179,15 +200,12 @@
      (warn "configuration file not found: " (paths :cfg-file)))
 
    (let [file-opts (if (fs/exists? (paths :cfg-file)) (utils/load-json-file (paths :cfg-file)) {})
-         cfg (configure file-opts cli-opts)]
-     (dosync
-      (swap! state assoc :cfg cfg)
-
-      ;; possibly not necessary, we'll see
-      (swap! state assoc :cli-opts cli-opts)
-      (swap! state assoc :file-opts file-opts)
-
-      (when (:verbosity cli-opts) (logging/change-log-level (:verbosity cli-opts)))))))
+         cfg (configure file-opts cli-opts)
+         etag-db (if (fs/exists? (paths :etag-db-file)) (utils/load-json-file (paths :etag-db-file)) {})
+         new-state {:cfg cfg, :cli-opts cli-opts, :file-opts file-opts, :etag-db etag-db}]
+     (swap! state merge new-state)
+     (when (:verbosity cli-opts)
+       (logging/change-log-level (:verbosity cli-opts))))))
 
 (defn-spec set-install-dir! nil?
   [install-dir ::sp/install-dir]
@@ -229,8 +247,8 @@
   (when-let [download-uri (:download-uri addon)]
     (let [output-fname (downloaded-addon-fname (:name addon) (:version addon)) ;; addonname--1-2-3.zip
           output-path (join (fs/absolute download-dir) output-fname)] ;; /path/to/installed/addons/addonname--1.2.3.zip
-      (binding [http/*cache-dir* (paths :cache-dir)]
-        (http/download-file download-uri output-path :overwrite? false)))))
+      (binding [http/*cache* (cache)]
+        (http/download-file download-uri output-path)))))
 
 ;; don't do this. `download-addon` is wrapped by `install-addon` that is already affecting the addon
 ;;(def download-addon
@@ -339,7 +357,7 @@
 (defn-spec download-addon-summary-file ::sp/extant-file
   "downloads addon summary file to expected location, nothing more"
   []
-  (binding [http/*cache-dir* (paths :daily-cache-dir)]
+  (binding [http/*cache* (cache)]
     (http/download-file remote-addon-summary-file (paths :addon-summary-file))))
 
 (defn-spec load-addon-summaries nil?
@@ -439,7 +457,7 @@
 
 (defn expand-summary-wrapper
   [addon-summary]
-  (binding [http/*cache-dir* (paths :daily-cache-dir)]
+  (binding [http/*cache* (cache)]
     (let [wrapper (affects-addon-wrapper curseforge/expand-summary)]
       (wrapper addon-summary))))
 
@@ -455,7 +473,6 @@
   (fs/delete-dir (paths :cache-dir))
   ;; todo: this and `init-dirs` needs revisiting
   (fs/mkdirs (paths :cache-dir))
-  (fs/mkdirs (paths :daily-cache-dir))
   nil)
 
 (defn-spec list-downloaded-addon-zips (s/coll-of ::sp/extant-file)
@@ -521,7 +538,7 @@
   (load-installed-addons) ;; parse toc files in install-dir
   (match-installed-addons-with-online-addons) ;; match installed addons to those in curseforge.json
   (check-for-updates)     ;; for those addons that have matches, download their full details from curseforge
-
+  (save-settings)         ;; seems like a good place to preserve the etag-db
   nil)
 
 (defn-spec -install-update-these nil?
@@ -603,7 +620,7 @@
 (defn-spec latest-wowman-release string?
   "returns the most recently released version of wowman it can find"
   []
-  (binding [http/*cache-dir* (paths :cache-dir)]
+  (binding [http/*cache* (cache)]
     (let [resp (utils/from-json (http/download "https://api.github.com/repos/ogri-la/wowman/releases/latest"))]
       (-> resp :tag_name))))
 
@@ -638,7 +655,7 @@
     (when (-> path name (clojure.string/ends-with? "-dir"))
       (debug (format "creating '%s' directory: %s" path val))
       (fs/mkdirs val)))
-  (http/prune-html-download-cache (paths :cache-dir))
+  (http/prune-cache-dir (paths :cache-dir))
   nil)
 
 (defn -start

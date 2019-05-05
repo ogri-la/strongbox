@@ -1,8 +1,7 @@
 (ns wowman.http-test
   (:require
    [clojure.test :refer [deftest testing is use-fixtures]]
-   [wowman.http :as http]
-   [me.raynes.fs :as fs]))
+   [wowman.http :as http]))
 
 (deftest encode-url-path
   (testing "url whose path has spaces is correctly encoded"
