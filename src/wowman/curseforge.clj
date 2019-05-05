@@ -40,6 +40,11 @@
         pN (-> (html/select p1 [:ul.paging-list :li.b-pagination-item :a]) butlast last :content first Integer.)]
     pN))
 
+(defn-spec formatted-str-to-num int?
+  [string string?]
+  (info "got string" string)
+  (-> string (clojure.string/replace #"[^\d]*" "") clojure.string/trim Integer.))
+
 ;;
 ;;
 
@@ -54,7 +59,8 @@
          :category-list (mapv #(-> % :attrs :title)
                               (-> snippet (html/select [:div.list-item__categories :a.category__item])))
          :created-date (-> snippet (html/select [:span.date--created :abbr]) first :attrs :data-epoch Integer. from-epoch)
-         :updated-date (-> snippet (html/select [:span.date--updated :abbr]) first :attrs :data-epoch Integer. from-epoch)}]
+         :updated-date (-> snippet (html/select [:span.date--updated :abbr]) first :attrs :data-epoch Integer. from-epoch)
+         :download-count (-> snippet (html/select [:span.count--download]) first :content first formatted-str-to-num)}]
 
     ;; we first attempt to match based on :name, and if no match found, we try alt-name, a
     ;; more-slugified label with hyphens and underscores removed
