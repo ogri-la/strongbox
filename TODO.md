@@ -37,11 +37,13 @@ see CHANGELOG.md for a more formal list of changes by release
     - more than anything this will help distinguish main addons from the noise of supplementary addons
         - see 'Titan Panel' or 'BigWigs' or 'DBM'
     - done
+* add a version to the curseforge.json file
+    - wowman-data may be changing to accept addons from different sources
+* added alphabetical ordering of keys to curseforge.json catalog
+    - introduction of :download-count caused the backing algorithim to change and preservation of insertion order evaporated on me    
 
 ### todo
 
-* add a version to the curseforge.json file
-    - wowman-data may be changing to accept addons from different sources
 * generate aliases for the top 10-20 installed addons that need them
     - depends on capturing total downloads
 * gui, search, add 'go' link and row highlighting
