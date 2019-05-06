@@ -11,6 +11,7 @@
                  [org.clojure/tools.namespace "0.2.11"] ;; reload code
                  [org.clojure/data.codec "0.1.1"] ;; base64 encoding
                  [org.clojure/data.json "0.2.6"] ;; better json decoding
+                 [org.flatland/ordered "1.5.2"] ;; better ordered map
                  [orchestra "2018.12.06-2"] ;; improved clojure.spec instrumentation
                  ;; see lein deps :tree
                  [metosin/spec-tools "0.9.0" :exclusions [com.fasterxml.jackson.core/jackson-core]] ;; more improvements to clojure.spec handling

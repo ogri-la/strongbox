@@ -8,6 +8,7 @@
     [core :as ct]
     [coerce :as cte]]
    [slugify.core :refer [slugify]]
+   [flatland.ordered.map :as omap]
    [clojure.spec.alpha :as s]
    [orchestra.spec.test :as st]
    [orchestra.core :refer [defn-spec]]
@@ -42,7 +43,6 @@
 
 (defn-spec formatted-str-to-num int?
   [string string?]
-  (info "got string" string)
   (-> string (clojure.string/replace #"[^\d]*" "") clojure.string/trim Integer.))
 
 ;;
@@ -137,9 +137,12 @@
   (let [{created-date :datestamp, addons-list :addon-summary-list} (utils/load-json-file addon-summary-file)
         updated-addons-list (utils/load-json-file addon-summary-updates-file)
         updated-date (utils/datestamp-now-ymd)
-        merged-addons-list (utils/merge-lists :name addons-list updated-addons-list :prepend? true)]
+        merged-addons-list (utils/merge-lists :name addons-list updated-addons-list :prepend? true)
+        ;; ensure consistent key order during serialisation for nicer diffs
+        merged-addons-list (mapv #(into (omap/ordered-map) (sort %)) merged-addons-list)]
     (info "updating addon summary file:" addon-summary-file)
-    (spit addon-summary-file (utils/to-json {:datestamp created-date
+    (spit addon-summary-file (utils/to-json {:spec {:version 1}
+                                             :datestamp created-date
                                              :updated-datestamp updated-date
                                              :total (count merged-addons-list)
                                              :addon-summary-list merged-addons-list}))
@@ -148,9 +151,12 @@
 (defn-spec download-all-addon-summaries ::sp/extant-file
   "downloads all addon summaries from curseforge. path to data file is returned"
   [output-path ::sp/file]
-  (let [all-summaries (sort-by :name (download-all-summaries-alphabetically))]
+  (let [all-summaries (sort-by :name (download-all-summaries-alphabetically))
+        ;; ensure consistent key order during serialisation for nicer diffs
+        all-summaries (mapv #(into (omap/ordered-map) (sort %)) all-summaries)]
     (info "writing addon updates:" output-path)
-    (spit output-path (utils/to-json {:datestamp (utils/datestamp-now-ymd)
+    (spit output-path (utils/to-json {:spec {:version 1}
+                                      :datestamp (utils/datestamp-now-ymd)
                                       :updated-datestamp (utils/datestamp-now-ymd)
                                       :total (count all-summaries)
                                       :addon-summary-list all-summaries}))

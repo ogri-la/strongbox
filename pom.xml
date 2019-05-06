@@ -3,7 +3,7 @@
   <groupId>ogri-la</groupId>
   <artifactId>wowman</artifactId>
   <packaging>jar</packaging>
-  <version>0.5.0</version>
+  <version>0.6.0-unreleased</version>
   <name>wowman</name>
   <description>World Of Warcraft Addon Manager</description>
   <url>http://github.com/ogri-la/wowman</url>
@@ -17,7 +17,7 @@
     <url>https://github.com/ogri-la/wowman</url>
     <connection>scm:git:git://github.com/ogri-la/wowman.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/ogri-la/wowman.git</developerConnection>
-    <tag>9304df9ddeeead96c26cad532f3a8b9a7dceb484</tag>
+    <tag>10ce5cc56fd47ddb42e13f0ae100d7828cd75929</tag>
   </scm>
   <build>
     <sourceDirectory>src</sourceDirectory>
@@ -96,6 +96,11 @@
       <groupId>org.clojure</groupId>
       <artifactId>data.json</artifactId>
       <version>0.2.6</version>
+    </dependency>
+    <dependency>
+      <groupId>org.flatland</groupId>
+      <artifactId>ordered</artifactId>
+      <version>1.5.2</version>
     </dependency>
     <dependency>
       <groupId>orchestra</groupId>
