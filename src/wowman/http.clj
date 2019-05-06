@@ -78,8 +78,7 @@
         expiry-offset (t/hours hours)
         expiry-date (t/plus modtime expiry-offset)
         expired? (t/before? expiry-date now)]
-    (debug (format "modtime %s; expiry-offset %s; expiry-date %s; now %s; expired? %s"
-                   modtime expiry-offset expiry-date now expired?))
+    ;;(debug (format "modtime %s; expiry-offset %s; expiry-date %s; now %s; expired? %s" modtime expiry-offset expiry-date now expired?))
     (when expired?
       (debug (format "file expired %s minutes ago: %s"
                      (t/in-minutes (t/interval modtime expiry-date)) file)))
@@ -120,7 +119,8 @@
       (try
         (info (or message (format "downloading %s to %s" (fs/base-name uri) output-file)))
         (client/with-additional-middleware [client/wrap-lower-case-headers (etag-middleware etag-key)]
-          (let [params {:redirect-strategy curse-crap-redirect-strategy}
+          (let [params {:redirect-strategy curse-crap-redirect-strategy
+                        :cookie-policy :ignore} ;; completely ignore cookies. doesn't stop HttpComponents warning
                 use-anon-useragent? false
                 params (merge params (user-agent use-anon-useragent?) extra-params)
                 _ (debug "requesting" uri "with params" params)
