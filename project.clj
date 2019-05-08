@@ -1,4 +1,4 @@
-(defproject ogri-la/wowman "0.5.0"
+(defproject ogri-la/wowman "0.6.0"
   :description "World Of Warcraft Addon Manager"
   :url "http://github.com/ogri-la/wowman"
   :license {:name "GNU Affero General Public License (AGPL)"
@@ -23,6 +23,7 @@
                  [slugify "0.0.1"]
                  [clj-time "0.15.0"]
                  [trptcolin/versioneer "0.2.0"] ;; version number wrangling. it's more involved than you might suspect
+                 [org.flatland/ordered "1.5.2"] ;; better ordered map
 
                  ;; remember to update the LICENCE.txt
                  ;; remember to update pom file (`lein pom`)

@@ -4,72 +4,81 @@ this is my own scratchpad for keeping track of things. it gets truncated frequen
 
 see CHANGELOG.md for a more formal list of changes by release
 
-## 0.5.0 release
+## 0.6.0 release
 
 ### done
 
-* gui, a 'go' link
-    - takes you to the curseforge site
-        - this was *fucking agonising* and it's still a compromise. I really *hate* java/swing sometimes
-* re-order position of columns
-    - 'go' link should be closer name and description
-        - done
-    - 'categories' should be hidden until we're doing something with it
-        - done
-    - shouldn't be specifying column indicies when adding highlighters
-        - done
-* move to XDG preferred data/config directories
-    - https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
-    - perhaps ignore data directory for now and just use config (~/.config/wowman/)
-    - make this customisable?
-    - I think this would be a breaking change requiring a major version bump to 1.0 ... ?
-        - https://semver.org/, point 4: "Major version zero (0.y.z) is for initial development. Anything may change at any time. "
-        - so I'm all good :)
-    - done
-        - you will need to re-select your addons dir
-        - local state directory can be safely deleted
-* notice logger now appears to be roughly the same width as the panes above it
-    - at extreme widths you can see its still a bit off
-* highlight errors and warnings in notice logger
-    - done
-* highlight unmatched addons
-    - done, partially
-        - support has been added, but ...
-            - on first start the number of unmatched addons will be quite large and a solid block of this warning-colour was a bit overwhelming
-            - I plan to re-introduce it under selectable highlighters
-* 're-install all' should handle cases where .wowman.json is missing
-    - it *is*, but some addons are not being handled (no match, presumably)
-        - the undermine journal (match)
-        - bartender4 (match)
-        - Healbot (no match)
-        - DBM (no match)
-        - champion commander (no match)
-    - some of these are common cases and we should have a static lookup for them
-        - healbot = healbot-continued
-        - dbm = deadly-boss-mods
-    - bartender and undermine journal not matching smell like bugs
-    - done
-        - matching has been improved across multiple joins
-        - parsed toc files now have a static 'alias' key for the catalog name
-* status bar indicating number matched
-    - done
-* add an 'about' top level menu
-    - it checks if a new version of wowman available
-        - done
-    - link where to find it
-        - done
-    - licence
-        - done
-    - done
-
-### todo
-
-## todo bucket
-
 * arch linux AUR package
+    - before any 0.6.0 changes
     - investigate if any further code changes required, then release, then make a package
         - done investigation. no further code changes needed. 
         - will release, then try my hand at building a package
+    - done
+        - you can find it here: https://raw.githubusercontent.com/ogri-la/wowman-pkgbuild/master/PKGBUILD
+* gui, refresh addons after deleting .wowman.json files
+* submit pkgbuild to aur
+    - done!
+    - it's really very cool to see my baby appear in the aur
+* improve caching logic
+    - Move downloading logic to separate file
+        - done
+* bug, curseforge.etag file is inside the daily cache dir
+    - Move etag handling to single file vs multiple files
+        - added etag-db to state
+    - preserve etag-db between app restarts
+    - use modification time of file on disk to determine if a request should even be made
+        - done
+    - update prune-cache-dir logic
+        - done
+            - daily cache dirs now pruned entirely
+                - daily cache dir removed as well
+            - files older than default expiry date now pruned at app start
+* capture 'total downloads' from curseforge
+    - more than anything this will help distinguish main addons from the noise of supplementary addons
+        - see 'Titan Panel' or 'BigWigs' or 'DBM'
+    - done
+* add a version to the curseforge.json file
+    - wowman-data may be changing to accept addons from different sources
+* added alphabetical ordering of keys to curseforge.json catalog
+    - introduction of :download-count caused the backing algorithim to change and preservation of insertion order evaporated on me    
+* generate aliases for the top 10-20 installed addons that need them
+    - depends on capturing total downloads
+    - done
+* gui, search, add 'go' link and row highlighting
+    - feels weird to go from having it (installed) to not (search)
+
+### todo
+
+* release 6.0
+
+## todo bucket
+
+* gui, search, deselect selected addons after successful installation
+* curseforge, addons whose :name changes
+    - see 'speedyloot' that changed to 'speedyautoloot'
+        - they share the same creation date
+        - /speedyloot now redirects to /speedyautoloot, so curseforge definitely have support for name changing
+* refuse to run as the root user
+* handling loading of bad json files better
+    - empty and malformed json files just error out
+        - a simple warning and a default could prevent this
+* memory usage
+    - we're big and fat :(
+    - lets explore some ways to measure and then reduce memory usage
+    - measuring:
+        - https://github.com/clojure-goes-fast/clj-memory-meter
+* 'export' addons
+    - an idle thought until I saw wowmatrix has it
+        - they have a wordpress plugin and a simple text file
+    - json, yaml and xml serialisations as a minimum
+        - these are the most common and versatile
+    - friendly text and html formats
+        - who on earth would use such a thing? and is it worth the added complexity?
+* cli, data path is now broken after moving to XDG paths
+    - I just realised. 
+    - this is affecting tests as well, as they're picking up on config outside of temp dirs
+* code quality, we're sorely lacking in tests and test coverage metrics
+* refactor, rename fs.clj to toc.clj
 * move away from this merging toc/addon/expanded addon data strategy
     - it's confusing to debug!
     - namespaced keys might be a good alternative:
@@ -79,34 +88,6 @@ see CHANGELOG.md for a more formal list of changes by release
             - :group-id, :group-count
         - how to pick preferred attributes without continuous (or key else other-key) ?
             - (getattr addon :label) ;; does multiple lookups ...? seems kinda meh
-* gui, refresh addons after deleting .wowman.json files
-* bug, curseforge.etag file is inside the daily cache dir
-    - it should be in the regular cache dir, the parent.
-        - this is awkard
-            - we have two caching regimes
-        - while developing we don't want requests for curseforge.json going out into the world
-            - so we use file based cache
-        - however, this prevents a fresh curseforge.json from being downloaded, ever
-        - so curseforge.json was stuck in the daily cache to ensure it got downloaded at least daily
-        - the etag file is written to the same directory the file is downloaded
-    - etag files should always be written to the cache directory
-        - regardless of where the file is actually downloaded to
-        - but only if cache dir is set, obviously
-    - we need the two systems to work more harmoniously
-        - for example, every cached request gets an etag, but file cache is used for a period before sending another request
-            - if we do 100 requests/minute for the same file how many of those should go out into the world?
-                - we have a local cached copy *and* an etag
-            - perhaps send request with etag once an hour? rely on file based cache on the interim
-                - do other types of file have different age requirements? 
-                - once a day seems appropriate for addon pages
-                - once a day seems appropriate for curseforge.json ...
-* capture 'total downloads' from curseforge
-    - more than anything this will help distinguish main addons from the noise of supplementary addons
-        - see 'Titan Panel' or 'BigWigs' or 'DBM'
-* generate aliases for the top 10/20 installed addons that need them
-    - depends on capturing total downloads
-* gui, search, add 'go' link and row highlighting
-    - feels weird to go from having it (installed) to not (search)
 * revisit group records, I can't believe we can't pull a good name or description from *somewhere*
 * toggleable highlighers as a menuitem
     - highlight unmatched

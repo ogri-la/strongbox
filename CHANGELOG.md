@@ -8,6 +8,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Removed
+
+## 0.6.0 - 2019-05-08
+
+### Added
+
+* Arch Linux [PKGBUILD](https://github.com/ogri-la/wowman-pkgbuild) ([AUR](https://aur.archlinux.org/packages/wowman/))
+* total number of downloads is now captured in the catalog and is available in the gui; visible in the search tab
+* a 'spec' section to the catalog with a 'version' of '1'. I expect it to change soon and want to support older versions
+* more aliases for the top 50 most installed addons. This will help with automatic matching and re-installion of addons
+* added a 'go' link to the search column so you can visit the curseforge addon page in your browser
+* row highlighting on mouseover in the search tab, matches the installed tab. helps the eyes trace across columns
+
+### Changed
+
+* improved download caching
+    - etags now live in a single `$cache-dir/etag-db.json` file versus individual `.etag` files
+    - http request is not even made if a filesystem cache hit occurs and the file is still fresh (24hrs by default)
+    - pruning cache files now prunes the old 'daily' cache directories but also based on last modification time.
+* addons in catalog are now ordered alphabetically by their keys. I was relying on an implementation detail previously
+
+### Fixed
+
+* installed addons are refreshed after `.wowman.json` files are deleted
+* column widths in the search tab got some TLC
+
+### Removed
+
+* the `daily-cache-dir`. cache files now expire based on their last modification time.
+
+## 0.5.0 - 2019-04-25
+
+### Added
+
 * a 'go' link that will open a link to the addon's catalog page
 * a simple row highlighting on the installed addons screen when moving your cursor over an addon
 * errors and warnings in the notice logger are now highlighted yellow and red

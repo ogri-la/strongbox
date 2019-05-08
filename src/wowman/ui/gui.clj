@@ -250,6 +250,7 @@
         max-width-map {"installed" 200
                        "available" 200
                        "updated" 100
+                       "downloads" 100
                        "go" 120}
         pre-width-map {"WoW" 50
                        "updated" 100}] ;; we would like these a little larger, if possible
@@ -350,7 +351,7 @@
 (defn installed-addons-panel
   []
   (let [;; always visible when debugging and always available from the column menu
-        hidden-by-default-cols [:addon-id :group-id :primary? :update? :matched? :categories :updated :WoW]
+        hidden-by-default-cols [:addon-id :group-id :primary? :update? :matched? :categories :downloads :updated :WoW]
         tblmdl (sstbl/table-model :columns [{:key :name :text "addon-id"}
                                             :group-id
                                             :primary?
@@ -361,6 +362,7 @@
                                             :description
                                             {:key :installed-version :text "installed"}
                                             {:key :version :text "available"}
+                                            {:key :download-count :text "downloads" :class Integer}
                                             {:key :updated-date :text "updated"}
                                             {:key :interface-version :text "WoW"}
                                             {:key :category-list :text "categories"}]
@@ -448,13 +450,17 @@
 
 (defn search-results-panel
   []
-  (let [tblmdl (sstbl/table-model :columns [{:key :label :text "Name"}
+  (let [tblmdl (sstbl/table-model :columns [{:key :uri :text "go"}
+                                            {:key :label :text "name"}
                                             :description
                                             {:key :category-list :text "categories"}
-                                            {:key :updated-date :text "updated"}]
+                                            {:key :updated-date :text "updated"}
+                                            {:key :download-count :text "downloads" :class Integer}]
                                   :rows [])
 
-        grid (x/table-x :id :tbl-search-addons :model tblmdl)
+        grid (x/table-x :id :tbl-search-addons
+                        :model tblmdl
+                        :highlighters [((x/hl-color :background (colours :installed/hovering)) :rollover-row)])
 
         label-idx (atom (set []))
         update-label-idx (fn [_]
@@ -462,7 +468,7 @@
         _ (state-bind [:installed-addon-list] update-label-idx) ;; update internal idx of labels whenever installed addons change
 
         addon-installed? (fn [adapter]
-                           (let [label-column (find-column-by-label grid "Name")
+                           (let [label-column (find-column-by-label grid "name")
                                  value (.getValue adapter label-column)]
                              (contains? @label-idx value)))
 
@@ -472,6 +478,11 @@
         update-rows-fn (fn [state]
                          (let [known-addons (search-rows (:addon-summary-list state) (:search-field-input state))]
                            (insert-all grid (take cap known-addons))))]
+
+    ;; I'm rather pleased these just work as-is :)
+    ;; todo: rename these to something a bit more general
+    (installed-addons-go-links grid)
+    (installed-addons-panel-column-widths grid)
 
     (add-cell-renderer grid "updated" date-renderer)
     (add-highlighter grid addon-installed? (colours :search/already-installed))
@@ -590,7 +601,7 @@
                     (ss/action :name "Clear all" :handler (async-handler core/clear-all-temp-files))
                     :separator
                     (ss/action :name "Delete WowMatrix.dat files" :handler (async-handler core/delete-wowmatrix-dat-files))
-                    (ss/action :name "Delete .wowman.json files" :handler (async-handler core/delete-wowman-json-files))]
+                    (ss/action :name "Delete .wowman.json files" :handler (async-handler (comp core/refresh core/delete-wowman-json-files)))]
 
         help-menu [(ss/action :name "About wowman" :handler (handler about-wowman-dialog))]
 

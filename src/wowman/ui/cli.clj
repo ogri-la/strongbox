@@ -2,6 +2,7 @@
   (:require
    [taoensso.timbre :as timbre :refer [spy info]]
    [wowman
+    [http :as http]
     [utils :as utils]
     [curseforge :as curseforge]
     [core :as core :refer [get-state paths]]]))
@@ -17,12 +18,12 @@
 
 (defmethod action :scrape-addon-list
   [_]
-  (binding [utils/*cache-dir* (paths :cache-dir)]
+  (binding [http/*cache* (core/cache)]
     (curseforge/download-all-addon-summaries (paths :addon-summary-file))))
 
 (defmethod action :update-addon-list
   [_]
-  (binding [utils/*cache-dir* (paths :cache-dir)]
+  (binding [http/*cache* (core/cache)]
     (let [{since :datestamp} (utils/load-json-file (paths :addon-summary-file))]
       ;; download any updates to a file
       (curseforge/download-all-addon-summary-updates since (paths :addon-summary-updates-file))

@@ -35,6 +35,7 @@
   {:name  "everyaddon",
    :created-date  "2009-02-08T13:30:30Z",
    :updated-date  "2016-09-08T14:18:33Z",
+   :download-count 1
    :description  "Does what no other addon does, slightly differently"
    :category-list  ["Auction & Economy", "Data Broker"],
    :interface-version  70000,
@@ -89,7 +90,8 @@
                         :description "Alert your friends when you ding, get an achivement, or get phat lewts!"
                         :category-list ["Chat & Communication" "Mail" "Quests & Leveling" "Achievements"]
                         :created-date "2010-07-15T20:55:54Z"
-                        :updated-date "2016-04-19T17:00:28Z"}]
+                        :updated-date "2016-04-19T17:00:28Z"
+                        :download-count 7357}]
     (is (= 20 (count scraped)))
     (is (= expected-first (first scraped)))))
 
@@ -102,6 +104,7 @@
             </h2>
         </a>
         <p class='list-item__stats'>
+            <span class='count--download'>230,257,314 </span>
             <span class='date--updated'>Updated <abbr data-epoch='1504050180'>Aug 29, 2017</abbr></span>
             <span class='date--created'>Created <abbr data-epoch='1207377654'>Apr 4, 2008</abbr></span>
         </p>
@@ -127,6 +130,7 @@
                     :description "Ackis Recipe List is an addon which will scan your trade skills and provide information..."
                     :category-list ["Data Export" "Professions"]
                     :updated-date "2017-08-29T23:43:00Z"
-                    :created-date "2008-04-05T06:40:54Z"})]
+                    :created-date "2008-04-05T06:40:54Z"
+                    :download-count 230257314})]
 
     (is (= expected scraped))))

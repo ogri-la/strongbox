@@ -9,13 +9,15 @@
 (s/def ::list-of-keywords (s/coll-of keyword?))
 (s/def ::list-of-list-of-keywords (s/coll-of ::list-of-keywords))
 
+(s/def ::short-string #(<= (count %) 80))
+
 (defn-spec has-ext boolean?
   [path string?, ext-list ::list-of-strings]
   (some #{(fs/extension path)} ext-list))
 
 ;; a subset of addon attributes, just those that can be scraped from the listing pages
 (s/def ::addon-summary
-  (s/keys :req-un [::uri ::name ::label ::description ::category-list ::created-date ::updated-date]))
+  (s/keys :req-un [::uri ::name ::label ::description ::category-list ::created-date ::updated-date ::download-count]))
 
 ;; complete description of an addon
 ;; everything we need in order to download an addon
@@ -78,6 +80,7 @@
                                   false))))
 (s/def ::created-date ::inst)
 (s/def ::updated-date ::inst)
+(s/def ::download-count pos-int?)
 (s/def ::donation-uri (s/nilable ::uri))
 (s/def ::json string?)
 (s/def ::html string?)
@@ -99,5 +102,7 @@
 (s/def ::reason-phrase (s/and string? #(<= (count %) 50)))
 (s/def ::status int?) ;; a little too general but ok for now
 (s/def ::http-error (s/keys :req-un [::reason-phrase ::status]))
+(s/def ::body any?) ;; even a nil body is allowed (304 Not Modified)
+(s/def ::http-resp (s/keys :req-un [::status ::body])) ;; *at least* these keys, it will definitely have others
 
 (s/def ::empty-coll (s/and coll? #(empty? %)))

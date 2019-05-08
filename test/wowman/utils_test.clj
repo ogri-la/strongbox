@@ -56,12 +56,6 @@
           out-path (join *temp-dir-path* "test.zip")]
       (is (= (utils/zip-directory in-path out-path) out-path)))))
 
-(deftest encode-url-path
-  (testing "url whose path has spaces is correctly encoded"
-    (let [path-with-spaces "https://addons.cursecdn.com/files/2548/794/AR 4.5.7.3.zip"
-          path-enc-spaces "https://addons.cursecdn.com/files/2548/794/AR%204.5.7.3.zip"]
-      (is (= path-enc-spaces (str (utils/encode-url-path path-with-spaces)))))))
-
 (deftest format-interface-version
   (testing "integer interface version converted to dot-notation correctly"
     (let [cases

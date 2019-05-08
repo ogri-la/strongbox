@@ -1,12 +1,14 @@
 (ns wowman.curseforge
   (:require
    [wowman
+    [http :as http]
     [specs :as sp]
     [utils :as utils :refer [to-int to-json fmap join from-epoch]]]
    [clj-time
     [core :as ct]
     [coerce :as cte]]
    [slugify.core :refer [slugify]]
+   [flatland.ordered.map :as omap]
    [clojure.spec.alpha :as s]
    [orchestra.spec.test :as st]
    [orchestra.core :refer [defn-spec]]
@@ -21,14 +23,14 @@
   [page int?]
   (let [;; 'filter-sort=name' means 'order alphabetically, a to z'
         uri-template (str curseforge-host "/wow/addons?filter-sort=name&page=%s")]
-    (utils/download (format uri-template page))))
+    (http/download (format uri-template page))))
 
 (defn-spec download-summary-page-by-updated-date ::sp/html
   "downloads a page of results from curseforge, sorted by most recently updated"
   [page int?]
   (let [;; 'filter-sort=2' means 'order by updated date, most recent to least recent'
         uri-template (str curseforge-host "/wow/addons?filter-sort=2&page=%s")]
-    (utils/download (format uri-template page))))
+    (http/download (format uri-template page))))
 
 ;; TODO: test 'nil?' return value
 (defn-spec num-summary-pages (s/or :ok int?, :error nil?)
@@ -38,6 +40,10 @@
         ;; content of the second-to-last list item (the last page of results) converted to an integer 
         pN (-> (html/select p1 [:ul.paging-list :li.b-pagination-item :a]) butlast last :content first Integer.)]
     pN))
+
+(defn-spec formatted-str-to-num int?
+  [string string?]
+  (-> string (clojure.string/replace #"[^\d]*" "") clojure.string/trim Integer.))
 
 ;;
 ;;
@@ -53,7 +59,8 @@
          :category-list (mapv #(-> % :attrs :title)
                               (-> snippet (html/select [:div.list-item__categories :a.category__item])))
          :created-date (-> snippet (html/select [:span.date--created :abbr]) first :attrs :data-epoch Integer. from-epoch)
-         :updated-date (-> snippet (html/select [:span.date--updated :abbr]) first :attrs :data-epoch Integer. from-epoch)}]
+         :updated-date (-> snippet (html/select [:span.date--updated :abbr]) first :attrs :data-epoch Integer. from-epoch)
+         :download-count (-> snippet (html/select [:span.count--download]) first :content first formatted-str-to-num)}]
 
     ;; we first attempt to match based on :name, and if no match found, we try alt-name, a
     ;; more-slugified label with hyphens and underscores removed
@@ -83,7 +90,7 @@
         ;;detail-uri (str curseforge-host "/wow/addons/" (:name addon-summary)) ;; :name here is unreliable. it may be the 'altname' used to match.
         detail-uri (:uri addon-summary)
         versions-uri (str detail-uri "/files")
-        versions-html (html/html-snippet (utils/download versions-uri :message message))
+        versions-html (html/html-snippet (http/download versions-uri :message message))
         latest-release (-> (html/select versions-html [:table.project-file-listing :tbody :tr]) first)
         info-box (-> (html/select versions-html [:aside.project-details__sidebar]) first)
         prefix #(str curseforge-host %)]
@@ -130,9 +137,12 @@
   (let [{created-date :datestamp, addons-list :addon-summary-list} (utils/load-json-file addon-summary-file)
         updated-addons-list (utils/load-json-file addon-summary-updates-file)
         updated-date (utils/datestamp-now-ymd)
-        merged-addons-list (utils/merge-lists :name addons-list updated-addons-list :prepend? true)]
+        merged-addons-list (utils/merge-lists :name addons-list updated-addons-list :prepend? true)
+        ;; ensure consistent key order during serialisation for nicer diffs
+        merged-addons-list (mapv #(into (omap/ordered-map) (sort %)) merged-addons-list)]
     (info "updating addon summary file:" addon-summary-file)
-    (spit addon-summary-file (utils/to-json {:datestamp created-date
+    (spit addon-summary-file (utils/to-json {:spec {:version 1}
+                                             :datestamp created-date
                                              :updated-datestamp updated-date
                                              :total (count merged-addons-list)
                                              :addon-summary-list merged-addons-list}))
@@ -141,9 +151,12 @@
 (defn-spec download-all-addon-summaries ::sp/extant-file
   "downloads all addon summaries from curseforge. path to data file is returned"
   [output-path ::sp/file]
-  (let [all-summaries (sort-by :name (download-all-summaries-alphabetically))]
+  (let [all-summaries (sort-by :name (download-all-summaries-alphabetically))
+        ;; ensure consistent key order during serialisation for nicer diffs
+        all-summaries (mapv #(into (omap/ordered-map) (sort %)) all-summaries)]
     (info "writing addon updates:" output-path)
-    (spit output-path (utils/to-json {:datestamp (utils/datestamp-now-ymd)
+    (spit output-path (utils/to-json {:spec {:version 1}
+                                      :datestamp (utils/datestamp-now-ymd)
                                       :updated-datestamp (utils/datestamp-now-ymd)
                                       :total (count all-summaries)
                                       :addon-summary-list all-summaries}))

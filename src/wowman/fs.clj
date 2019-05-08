@@ -13,14 +13,25 @@
    [clojure.string :refer [lower-case ends-with?]]))
 
 ;; matches a tocfile's 'Title' (label) to a catalog's name
-;; aliases are maintained for the top-N downloaded addons only
-;; best way to avoid needing an alias is to have your .toc 'Title' attribute match your curseforge addon name
+;; aliases are maintained for the top-50 downloaded addons (ever) only, and only for those that need it
+;; best and nicest way to avoid needing an alias is to have your .toc 'Title' attribute match your curseforge addon name
 (def aliases
-  {"|cffffd200Deadly Boss Mods|r |cff69ccf0Core|r" "deadly-boss-mods"
+  {"AtlasLoot |cFF22B14C[Core]|r" "atlasloot-enhanced"
+   "BigWigs [|cffeda55fCore|r]" "big-wigs"
+   "|cffffd200Deadly Boss Mods|r |cff69ccf0Core|r" "deadly-boss-mods"
    "|cffffe00a<|r|cffff7d0aDBM|r|cffffe00a>|r |cff69ccf0Azeroth (Classic)|r" "dbm-bc"
-   "AtlasLoot |cFF22B14C[Core]|r" "atlasloot-enhanced"
+   "Raider.IO Mythic Plus and Raiding" "raiderio"
+   "HealBot" "heal-bot-continued"
    "Auc-Auctioneer |cff774422(core)" "auctioneer"
-   "HealBot" "heal-bot-continued"})
+   "Titan Panel |cff00aa005.17.1.80100|r" "titan-panel"
+   "BadBoy" "bad-boy"
+   "Mik's Scrolling Battle Text" "mik-scrolling-battle-text"
+   "|cffffe00a<|r|cffff7d0aDBM|r|cffffe00a>|r |cff69ccf0Icecrown Citadel|r" "deadly-boss-mods-wotlk"
+   "Prat |cff8080ff3.0|r" "prat-3-0"
+   "Omen3" "omen-threat-meter"
+   "|cffffe00a<|r|cffff7d0aDBM|r|cffffe00a>|r |cff69ccf0Firelands|r" "deadly-boss-mods-cataclysm-mods"
+   "X-Perl UnitFrames by |cFFFF8080Zek|r" "xperl"
+   })
 
 (defn-spec -read-toc-file map?
   [toc-contents string?]
