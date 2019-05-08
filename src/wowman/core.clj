@@ -376,11 +376,11 @@
 (defn -match-installed-addons-with-catalog
   "for each installed addon, search the catalog across multiple joins until a match is found."
   [installed-addon-list catalog]
-  (let [;; [{toc-key catalog-key}, ...]
+  (let [;; [[toc-key catalog-key], ...]
         ;; most -> least desirable match
         match-on [[:alias :name] [:name :name] [:name :alt-name] [:label :label] [:dirname :label]]
         ;;[:description :description]] ;; matching on description actually works :P
-        ;; it's not a good enough unique identifier though
+        ;; it's not a good enough *unique* identifier though
 
         idx-idx (into {} (mapv (fn [[toc-key catalog-key]]
                                  {catalog-key (utils/idx catalog catalog-key)}) match-on))
@@ -631,6 +631,14 @@
         version-running (wowman-version)
         sorted-asc (utils/sort-semver-strings [latest-release version-running])]
     (= version-running (last sorted-asc))))
+
+(defn alias-wrangling
+  "temporary code until it finds a better home. downloads the top-50 addons and prints out the addon's and subaddon's labels. see `fs/aliases`"
+  []
+  (let [top-50 (take 50 (sort-by :download-count > (get-state :addon-summary-list)))
+        _ (mapv #(-> % expand-summary-wrapper (install-addon-guard (get-state :cfg :install-dir))) top-50)
+        ia (wowman.fs/installed-addons (get-state :cfg :install-dir))]
+    (-> (mapv (fn [r] {(:name r) (if (:group-addons r) (mapv :label (:group-addons r)) [(:label r)])}) ia) clojure.pprint/pprint)))
 
 ;;
 ;; init

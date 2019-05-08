@@ -41,11 +41,12 @@ see CHANGELOG.md for a more formal list of changes by release
     - wowman-data may be changing to accept addons from different sources
 * added alphabetical ordering of keys to curseforge.json catalog
     - introduction of :download-count caused the backing algorithim to change and preservation of insertion order evaporated on me    
+* generate aliases for the top 10-20 installed addons that need them
+    - depends on capturing total downloads
+    - done
 
 ### todo
 
-* generate aliases for the top 10-20 installed addons that need them
-    - depends on capturing total downloads
 * gui, search, add 'go' link and row highlighting
     - feels weird to go from having it (installed) to not (search)
 
