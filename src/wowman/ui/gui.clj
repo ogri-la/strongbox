@@ -351,7 +351,7 @@
 (defn installed-addons-panel
   []
   (let [;; always visible when debugging and always available from the column menu
-        hidden-by-default-cols [:addon-id :group-id :primary? :update? :matched? :categories :updated :WoW]
+        hidden-by-default-cols [:addon-id :group-id :primary? :update? :matched? :categories :downloads :updated :WoW]
         tblmdl (sstbl/table-model :columns [{:key :name :text "addon-id"}
                                             :group-id
                                             :primary?
