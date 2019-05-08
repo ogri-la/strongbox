@@ -4,52 +4,11 @@ this is my own scratchpad for keeping track of things. it gets truncated frequen
 
 see CHANGELOG.md for a more formal list of changes by release
 
-## 0.6.0 release
+## 0.7.0 release
 
 ### done
 
-* arch linux AUR package
-    - before any 0.6.0 changes
-    - investigate if any further code changes required, then release, then make a package
-        - done investigation. no further code changes needed. 
-        - will release, then try my hand at building a package
-    - done
-        - you can find it here: https://raw.githubusercontent.com/ogri-la/wowman-pkgbuild/master/PKGBUILD
-* gui, refresh addons after deleting .wowman.json files
-* submit pkgbuild to aur
-    - done!
-    - it's really very cool to see my baby appear in the aur
-* improve caching logic
-    - Move downloading logic to separate file
-        - done
-* bug, curseforge.etag file is inside the daily cache dir
-    - Move etag handling to single file vs multiple files
-        - added etag-db to state
-    - preserve etag-db between app restarts
-    - use modification time of file on disk to determine if a request should even be made
-        - done
-    - update prune-cache-dir logic
-        - done
-            - daily cache dirs now pruned entirely
-                - daily cache dir removed as well
-            - files older than default expiry date now pruned at app start
-* capture 'total downloads' from curseforge
-    - more than anything this will help distinguish main addons from the noise of supplementary addons
-        - see 'Titan Panel' or 'BigWigs' or 'DBM'
-    - done
-* add a version to the curseforge.json file
-    - wowman-data may be changing to accept addons from different sources
-* added alphabetical ordering of keys to curseforge.json catalog
-    - introduction of :download-count caused the backing algorithim to change and preservation of insertion order evaporated on me    
-* generate aliases for the top 10-20 installed addons that need them
-    - depends on capturing total downloads
-    - done
-* gui, search, add 'go' link and row highlighting
-    - feels weird to go from having it (installed) to not (search)
-
 ### todo
-
-* release 6.0
 
 ## todo bucket
 
