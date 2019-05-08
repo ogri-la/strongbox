@@ -450,15 +450,17 @@
 
 (defn search-results-panel
   []
-  (let [tblmdl (sstbl/table-model :columns [;;{:key :uri :text "go"}
+  (let [tblmdl (sstbl/table-model :columns [{:key :uri :text "go"}
                                             {:key :label :text "name"}
                                             :description
-                                            {:key :updated-date :text "updated"}
                                             {:key :category-list :text "categories"}
+                                            {:key :updated-date :text "updated"}
                                             {:key :download-count :text "downloads" :class Integer}]
                                   :rows [])
 
-        grid (x/table-x :id :tbl-search-addons :model tblmdl)
+        grid (x/table-x :id :tbl-search-addons
+                        :model tblmdl
+                        :highlighters [((x/hl-color :background (colours :installed/hovering)) :rollover-row)])
 
         label-idx (atom (set []))
         update-label-idx (fn [_]
@@ -476,6 +478,11 @@
         update-rows-fn (fn [state]
                          (let [known-addons (search-rows (:addon-summary-list state) (:search-field-input state))]
                            (insert-all grid (take cap known-addons))))]
+
+    ;; I'm rather pleased these just work as-is :)
+    ;; todo: rename these to something a bit more general
+    (installed-addons-go-links grid)
+    (installed-addons-panel-column-widths grid)
 
     (add-cell-renderer grid "updated" date-renderer)
     (add-highlighter grid addon-installed? (colours :search/already-installed))

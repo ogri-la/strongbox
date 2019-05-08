@@ -44,11 +44,12 @@ see CHANGELOG.md for a more formal list of changes by release
 * generate aliases for the top 10-20 installed addons that need them
     - depends on capturing total downloads
     - done
+* gui, search, add 'go' link and row highlighting
+    - feels weird to go from having it (installed) to not (search)
 
 ### todo
 
-* gui, search, add 'go' link and row highlighting
-    - feels weird to go from having it (installed) to not (search)
+* release 6.0
 
 ## todo bucket
 
