@@ -53,6 +53,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
+* gui, search, deselect selected addons after successful installation
 * curseforge, addons whose :name changes
     - see 'speedyloot' that changed to 'speedyautoloot'
         - they share the same creation date
