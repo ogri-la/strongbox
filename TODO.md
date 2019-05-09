@@ -10,6 +10,20 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### todo
 
+* refuse to run as the root user
+* handling loading of bad json files better
+    - empty and malformed json files just error out
+        - a simple warning and a default could prevent this
+* cli, data path is now broken after moving to XDG paths
+    - I just realised. 
+    - this is affecting tests as well, as they're picking up on config outside of temp dirs
+* refactor, rename fs.clj to toc.clj
+* support for wowinterface.com
+    - turns out curseforge isn't the sole addon host around (good!)
+    - see AbyssUI
+        - it disappeared from curseforge but showed up on wowinterface
+    - I suspect Tukui is similar as well, a self-host for addons 
+
 ## todo bucket
 
 * gui, search, deselect selected addons after successful installation
@@ -17,10 +31,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - see 'speedyloot' that changed to 'speedyautoloot'
         - they share the same creation date
         - /speedyloot now redirects to /speedyautoloot, so curseforge definitely have support for name changing
-* refuse to run as the root user
-* handling loading of bad json files better
-    - empty and malformed json files just error out
-        - a simple warning and a default could prevent this
 * memory usage
     - we're big and fat :(
     - lets explore some ways to measure and then reduce memory usage
@@ -33,11 +43,7 @@ see CHANGELOG.md for a more formal list of changes by release
         - these are the most common and versatile
     - friendly text and html formats
         - who on earth would use such a thing? and is it worth the added complexity?
-* cli, data path is now broken after moving to XDG paths
-    - I just realised. 
-    - this is affecting tests as well, as they're picking up on config outside of temp dirs
 * code quality, we're sorely lacking in tests and test coverage metrics
-* refactor, rename fs.clj to toc.clj
 * move away from this merging toc/addon/expanded addon data strategy
     - it's confusing to debug!
     - namespaced keys might be a good alternative:
@@ -57,15 +63,11 @@ see CHANGELOG.md for a more formal list of changes by release
 * download progress bar *inside* the grid ...?
     - pure fantasy?
 * nightly unstable builds
-* support for wowinterface.com
-    - turns out curseforge isn't the sole addon host around (good!)
-    - see AbyssUI
-        - it disappeared from curseforge but showed up on wowinterface
-    - I suspect Tukui is similar as well, a self-host for addons 
 * internationalisation? 
     - Akitools has no english description but it does have a "Notes-zhCN" in the toc file that could be used
 * a 'stop' button to stop updates would be nice ...
-* bug, changing sort order during refresh doesn't accurate reflect what is being updated
+    - closing gui would stop ongoing updates
+* bug, changing sort order during refresh doesn't reflect which addon is being updated
 * download addon details in parallel
     - speed benefits, mostly
     - share a pool of connections between threads
