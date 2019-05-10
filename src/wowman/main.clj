@@ -87,17 +87,7 @@
   [parsed]
   (let [{:keys [options errors]} parsed]
     (cond
-      (:help options) {:ok? true, :exit-message (usage parsed)}
-      errors {:ok? false, :exit-message (str "The following errors occurred while parsing your command:\n\n"
-                                             (clojure.string/join \newline errors))}
-      :else parsed)))
-
-(defn parse
-  [args]
-  (let [args (clojure.tools.cli/parse-opts args cli-options)]
-    (cond
-      ;; problems with user args, no further processing
-      (:errors args) args
+      (= "root" (System/getProperty "user.name")) {:ok? false, :exit-message "wowman should not be run as the 'root' user"}
 
       ;; data directory doesn't exist and parent directory isn't writable
       ;; nowhere to create data dir, nowhere to store download catalog. non-starter
@@ -109,6 +99,19 @@
       ;; another non-starter
       (and (fs/exists? (paths :data-dir))
            (not (fs/writeable? (paths :data-dir)))) {:ok? false, :exit-message (str "Data directory isn't writeable:" (paths :data-dir))}
+
+      (:help options) {:ok? true, :exit-message (usage parsed)}
+
+      errors {:ok? false, :exit-message (str "The following errors occurred while parsing your command:\n\n"
+                                             (clojure.string/join \newline errors))}
+      :else parsed)))
+
+(defn parse
+  [args]
+  (let [args (clojure.tools.cli/parse-opts args cli-options)]
+    (cond
+      ;; problems with user args, no further processing
+      (:errors args) args
 
       :else
 
