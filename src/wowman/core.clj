@@ -638,7 +638,7 @@
   (let [top-50 (take 50 (sort-by :download-count > (get-state :addon-summary-list)))
         _ (mapv #(-> % expand-summary-wrapper (install-addon-guard (get-state :cfg :install-dir))) top-50)
         ia (wowman.fs/installed-addons (get-state :cfg :install-dir))]
-    (-> (mapv (fn [r] {(:name r) (if (:group-addons r) (mapv :label (:group-addons r)) [(:label r)])}) ia) clojure.pprint/pprint)))
+    (mapv (fn [r] {(:name r) (if (:group-addons r) (mapv :label (:group-addons r)) [(:label r)])}) ia)))
 
 ;;
 ;; init
