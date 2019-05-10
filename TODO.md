@@ -8,9 +8,11 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### done
 
+* refuse to run as the root user
+    - done
+
 ### todo
 
-* refuse to run as the root user
 * handling loading of bad json files better
     - empty and malformed json files just error out
         - a simple warning and a default could prevent this
