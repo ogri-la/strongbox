@@ -6,7 +6,6 @@
     [specs :as sp]
     [utils :as utils :refer [items]]]
    [clojure.instant]
-   [clojure.core.async :as async]
    [clojure.string :refer [lower-case starts-with? trim]]
    [slugify.core :refer [slugify]]
    [taoensso.timbre :as timbre :refer [debug info warn error spy]]
@@ -86,7 +85,7 @@
   [& fl]
   (fn [_]
     (doseq [f fl]
-      (async/go (f)))))
+      (future (f)))))
 
 (defn selected-rows-handler
   "calls given `f` with last event when selection has stopped adjusting"
@@ -613,7 +612,7 @@
 
         init (fn [_]
                ;; prevents an empty grey screen from appearing while addon summaries are downloaded
-               (async/go (core/refresh))
+               (future (core/refresh))
                _)]
 
     (ss/invoke-later
