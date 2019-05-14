@@ -513,16 +513,18 @@
         _ (.setHorizontalAlignment cell-renderer javax.swing.SwingConstants/CENTER)
 
         level-width 50
-        level-col (doto (.getColumn (.getColumnModel grid) 0)
-                    (.setMinWidth level-width)
-                    (.setMaxWidth (* level-width 2))
-                    (.setPreferredWidth (* level-width 1.5))
-                    (.setCellRenderer cell-renderer))]
+        level-col-idx 0]
+
+    (doto (.getColumn (.getColumnModel grid) level-col-idx)
+      (.setMinWidth level-width)
+      (.setMaxWidth (* level-width 2))
+      (.setPreferredWidth (* level-width 1.5))
+      (.setCellRenderer cell-renderer))
 
     (logging/add-appender :gui gui-logger {:timestamp-opts {:pattern "HH:mm:ss"}})
 
-    (add-highlighter grid #(= (.getValue % 0) :warn) (colours :notice/warning))
-    (add-highlighter grid #(= (.getValue % 0) :error) (colours :notice/error))
+    (add-highlighter grid #(= (.getValue % level-col-idx) :warn) (colours :notice/warning))
+    (add-highlighter grid #(= (.getValue % level-col-idx) :error) (colours :notice/error))
 
     ;; hide header when not debugging
     (when-not (core/debugging?)
