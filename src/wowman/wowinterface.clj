@@ -76,17 +76,30 @@
       nil)))
 
 (defn scrape-addon-page
-  [category]
-  (let [page-content (-> category :url http/download html/html-snippet)
-        ;; todo: extract page range, generate paginated urls
-        snippet-list (-> page-content (html/select [:#filepage :div.file]))
+  [category page-num]
+  (let [url (clojure.string/replace (:url category) #"page=\d+" (str "page=" page-num))
+        page-content (-> url http/download html/html-snippet)
+        addon-list (-> page-content (html/select [:#filepage :div.file]))
         extractor (fn [snippet]
                     (assoc (extract-addon-summary snippet) :category-list [(:label category)]))
         ]
-    (remove nil? (mapv extractor snippet-list))))
+    (mapv extractor addon-list)))
+
+(defn scrape-category
+  [category]
+  (let [;; extract the number of results from the page navigation
+        ;; (longest thread expression ever??)
+        page-count (-> category :url http/download html/html-snippet
+                       (html/select [:.pagenav [:td.alt1 html/last-of-type] :a])
+                       first :attrs :href
+                       (clojure.string/split #"=") last Integer.)
+        page-range (range 1 (inc page-count))
+        extractor (partial scrape-addon-page category)]
+    (info (format "scraping %s in category '%s'" page-count (:label category)))
+    (flatten (mapv extractor page-range))))
 
 ;; todo: this will be moved to core
 (defn scrape
   []
   (binding [http/*cache* (core/cache)]
-    (mapv scrape-addon-page (parse-category-list))))
+    (flatten (mapv scrape-category (subvec (parse-category-list) 7)))))
