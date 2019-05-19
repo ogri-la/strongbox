@@ -10,11 +10,10 @@
    [net.cgrand.enlive-html :as html]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
    [java-time]
-   [java-time.format]
-   ))
+   [java-time.format]))
 
 (comment
-  "wowinterface.com requires browing addons by category rather than alphabetically or by recently updated. 
+  "wowinterface.com requires browsing addons by category rather than alphabetically or by recently updated. 
    An RSS file is available to scrape the recently updated.")
 
 (defn download-category-list
@@ -39,8 +38,7 @@
 
         extractor (fn [cat]
                     {:label (-> cat :content first)
-                     :url (-> cat :attrs :href final-url)})
-        ]
+                     :url (-> cat :attrs :href final-url)})]
     (debug (format "%s categories found" (count cat-list)))
     (mapv extractor cat-list)))
 
@@ -69,8 +67,7 @@
        ;;:category-list [] ;; not available in summary, added by caller
        ;;:created-date nil ;; not available in summary
        :updated-date (-> snippet (html/select [:div.updated html/content]) first extract-updated-date)
-       :download-count (-> snippet (html/select [:div.downloads html/content]) first (clojure.string/replace #"\D*" "") Integer.)
-       })
+       :download-count (-> snippet (html/select [:div.downloads html/content]) first (clojure.string/replace #"\D*" "") Integer.)})
     (catch RuntimeException re
       (error re "failed to scrape snippet, excluding from results:" (utils/pprint snippet))
       nil)))
@@ -81,8 +78,7 @@
         page-content (-> url http/download html/html-snippet)
         addon-list (-> page-content (html/select [:#filepage :div.file]))
         extractor (fn [snippet]
-                    (assoc (extract-addon-summary snippet) :category-list [(:label category)]))
-        ]
+                    (assoc (extract-addon-summary snippet) :category-list [(:label category)]))]
     (mapv extractor addon-list)))
 
 (defn scrape-category
@@ -93,13 +89,13 @@
                    "Suites" ;; no navigation. happens on some of the above sub-category pages as well
                    ]]
     (if (some #{(:label category)} skippable)
-      [] 
+      []
       (let [;; extract the number of results from the page navigation
             page-content (-> category :url http/download html/html-snippet)
             page-nav (-> page-content (html/select [:.pagenav [:td.alt1 html/last-of-type] :a]))
             page-nav (-> page-nav first :attrs :href)
             page-count (-> page-nav (clojure.string/split #"=") last Integer.)
-            
+
             page-range (range 1 (inc page-count))
             extractor (partial scrape-addon-page category)]
         (info (format "scraping %s in category '%s'" page-count (:label category)))
@@ -110,7 +106,7 @@
   []
   (binding [http/*cache* (core/cache)]
     (let [output-path (fs/file (core/paths :data-dir) "wowinterface.json")
-          addon-list (flatten (mapv scrape-category (subvec (parse-category-list) 7)))]
+          addon-list (flatten (mapv scrape-category (parse-category-list)))]
       (spit output-path (utils/to-json {:spec {:version 1}
                                         :datestamp (utils/datestamp-now-ymd)
                                         :updated-datestamp (utils/datestamp-now-ymd)
