@@ -1,5 +1,6 @@
 (ns wowman.wowinterface
   (:require
+   [me.raynes.fs :as fs]
    [slugify.core :refer [slugify]]
    [wowman
     [core :as core]
@@ -23,14 +24,28 @@
 (defn parse-category-list
   []
   (let [snippet (html/html-snippet (download-category-list))
-        cat-list (-> snippet (html/select [:div#colleft :div.subcats :div.subtitle :a]))]
+        cat-list (-> snippet (html/select [:div#colleft :div.subcats :div.subtitle :a]))
+
+        final-url (fn [href]
+                    "converts the href that looks like '/downloads/cat19.html' to '/downloads/index.php?cid=19"
+                    (let [page (fs/base-name href) ;; cat19.html
+                          cat-id (str "index.php?cid=" (clojure.string/replace href #"\D*" "")) ;; index.php?cid=19
+                          sort-by "&sb=dec_date" ;; updated date, most recent to least recent
+                          another-sort-by "&so=desc" ;; most recent to least recent. must be consistent with `sort-by` prefix
+                          pt "&pt=f" ;; nfi but it's mandatory
+                          page "&page=1" ;; not necessary, and `1` is default. we'll add it here to avoid a cache miss later
+                          ]
+                      (str "https://www.wowinterface.com/downloads/", cat-id, sort-by, another-sort-by, pt, page)))
+
+        extractor (fn [cat]
+                    {:label (-> cat :content first)
+                     :url (-> cat :attrs :href final-url)})
+        ]
     (debug (format "%s categories found" (count cat-list)))
-    (mapv (fn [cat]
-            {:label (-> cat :content first)
-             :url (-> cat :attrs :href)}) cat-list)))
+    (mapv extractor cat-list)))
 
 (defn format-wowinterface-dt
-  "formats a shitty US-style m/d/y date with shitty 12 hour time component sans timezone"
+  "formats a shitty US-style m/d/y date with a shitty 12 hour time component and no timezone into a glorious RFC3399 formatted UTC string"
   [dt]
   (let [dt (java-time/local-date-time "MM-dd-yy hh:mm a" dt) ;; "09-07-18 01:27 PM" => obj with no tz
         ;; no tz info available on site, assume utc
@@ -62,14 +77,16 @@
 
 (defn scrape-addon-page
   [category]
-  (let [snippet (-> category :url http/download html/html-snippet)
+  (let [page-content (-> category :url http/download html/html-snippet)
+        ;; todo: extract page range, generate paginated urls
+        snippet-list (-> page-content (html/select [:#filepage :div.file]))
         extractor (fn [snippet]
-                    (assoc (extract-addon-summary snippet) :category-list [(:label category)]))]
-    (remove nil? (mapv extractor (-> snippet (html/select [:#filepage :div.file]))))))
+                    (assoc (extract-addon-summary snippet) :category-list [(:label category)]))
+        ]
+    (remove nil? (mapv extractor snippet-list))))
 
 ;; todo: this will be moved to core
 (defn scrape
   []
-  (binding [http/*cache* (core/cache)]    
-    (-> (parse-category-list) first scrape-addon-page)))
-    
+  (binding [http/*cache* (core/cache)]
+    (mapv scrape-addon-page (parse-category-list))))
