@@ -18,6 +18,10 @@
     [coerce :as coerce-time]
     [format :as format-time]]))
 
+(defn pprint
+  [x]
+  (with-out-str (clojure.pprint/pprint x)))
+
 (defn items
   [& lst]
   (vec (remove nil? (flatten lst))))

@@ -40,29 +40,32 @@
 
 (defn extract-addon-summary
   [snippet]
-  ;;(clojure.pprint/pprint snippet)
-  ;;(prn "---")
-  (html/set-ns-parser! net.cgrand.tagsoup/parser)
-  (let [uri "https://www.wowinterface.com/downloads/"
-        extract-id #(str "info" (-> % (clojure.string/split #"&.+=") last)) ;; ...?foo=bar&id=24731 => info24731
-        extract-updated-date (fn [x]
-                               (let [dmy-hm (-> x (subs 8) clojure.string/trim)] ;; "Updated 09-07-18 01:27 PM " => "09-07-18 01:27 PM"
-                                 (format-wowinterface-dt dmy-hm)))
-        
-        label (-> snippet (html/select [:a]) second :content first)]
-    {:uri (str uri (-> snippet (html/select [:a]) last :attrs :href extract-id))
-     :name (-> label (or "") slugify)
-     :label label
-     ;;:description nil ;; not available in summary
-     :category-list []
-     :created-date nil
-     :updated-date (-> snippet (html/select [:div.updated html/content]) first extract-updated-date)
-     :download-count 0}))
+  (try
+    (let [uri "https://www.wowinterface.com/downloads/"
+          extract-id #(str "info" (-> % (clojure.string/split #"&.+=") last)) ;; ...?foo=bar&id=24731 => info24731
+          extract-updated-date (fn [x]
+                                 (let [dmy-hm (-> x (subs 8) clojure.string/trim)] ;; "Updated 09-07-18 01:27 PM " => "09-07-18 01:27 PM"
+                                   (format-wowinterface-dt dmy-hm)))
+          label (-> snippet (html/select [[:a (html/attr-contains :href "fileinfo")] html/content]) first)]
+      {:uri (str uri (-> snippet (html/select [:a]) last :attrs :href extract-id))
+       :name (-> label slugify)
+       :label label
+       ;;:description nil ;; not available in summary
+       ;;:category-list [] ;; not available in summary, added by caller
+       ;;:created-date nil ;; not available in summary
+       :updated-date (-> snippet (html/select [:div.updated html/content]) first extract-updated-date)
+       :download-count (-> snippet (html/select [:div.downloads html/content]) first (clojure.string/replace #"\D*" "") Integer.)
+       })
+    (catch RuntimeException re
+      (error re "failed to scrape snippet, excluding from results:" (utils/pprint snippet))
+      nil)))
 
 (defn scrape-addon-page
   [category]
-  (let [snippet (-> category :url http/download html/html-snippet)]
-    (mapv extract-addon-summary (-> snippet (html/select [:#filepage :div.file])))))
+  (let [snippet (-> category :url http/download html/html-snippet)
+        extractor (fn [snippet]
+                    (assoc (extract-addon-summary snippet) :category-list [(:label category)]))]
+    (remove nil? (mapv extractor (-> snippet (html/select [:#filepage :div.file]))))))
 
 ;; todo: this will be moved to core
 (defn scrape
