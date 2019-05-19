@@ -87,19 +87,32 @@
 
 (defn scrape-category
   [category]
-  (let [;; extract the number of results from the page navigation
-        ;; (longest thread expression ever??)
-        page-count (-> category :url http/download html/html-snippet
-                       (html/select [:.pagenav [:td.alt1 html/last-of-type] :a])
-                       first :attrs :href
-                       (clojure.string/split #"=") last Integer.)
-        page-range (range 1 (inc page-count))
-        extractor (partial scrape-addon-page category)]
-    (info (format "scraping %s in category '%s'" page-count (:label category)))
-    (flatten (mapv extractor page-range))))
+  (info (:label category))
+  (let [;; I don't handle these cases yet
+        skippable ["Class & Role Specific" "Info, Plug-in Bars" ;; pages of sub-categories
+                   "Suites" ;; no navigation. happens on some of the above sub-category pages as well
+                   ]]
+    (if (some #{(:label category)} skippable)
+      [] 
+      (let [;; extract the number of results from the page navigation
+            page-content (-> category :url http/download html/html-snippet)
+            page-nav (-> page-content (html/select [:.pagenav [:td.alt1 html/last-of-type] :a]))
+            page-nav (-> page-nav first :attrs :href)
+            page-count (-> page-nav (clojure.string/split #"=") last Integer.)
+            
+            page-range (range 1 (inc page-count))
+            extractor (partial scrape-addon-page category)]
+        (info (format "scraping %s in category '%s'" page-count (:label category)))
+        (flatten (mapv extractor page-range))))))
 
 ;; todo: this will be moved to core
 (defn scrape
   []
   (binding [http/*cache* (core/cache)]
-    (flatten (mapv scrape-category (subvec (parse-category-list) 7)))))
+    (let [output-path (fs/file (core/paths :data-dir) "wowinterface.json")
+          addon-list (flatten (mapv scrape-category (subvec (parse-category-list) 7)))]
+      (spit output-path (utils/to-json {:spec {:version 1}
+                                        :datestamp (utils/datestamp-now-ymd)
+                                        :updated-datestamp (utils/datestamp-now-ymd)
+                                        :total (count addon-list)
+                                        :addon-summary-list addon-list})))))
