@@ -4,6 +4,7 @@
    [clojure.string]
    [clojure.java.io]
    [clojure.spec.alpha :as s]
+   [clojure.pprint]
    [orchestra.core :refer [defn-spec]]
    [orchestra.spec.test :as st]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
@@ -17,6 +18,10 @@
    [clj-time
     [coerce :as coerce-time]
     [format :as format-time]]))
+
+(defn pprint
+  [x]
+  (with-out-str (clojure.pprint/pprint x)))
 
 (defn items
   [& lst]

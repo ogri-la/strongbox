@@ -27,6 +27,8 @@
                  ;; remember to update the LICENCE.txt
                  ;; remember to update pom file (`lein pom`)
 
+                 [clojure.java-time "0.3.2"] ;; yet-another java date/time handling library. to replace clj-time
+
                  ]
 
   :profiles {:uberjar {:aot :all}}
