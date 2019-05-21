@@ -10,6 +10,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * refuse to run as the root user
     - done
+* support wowinterface.com
+    - addon data scraped and available in wowman-data
+        - done
 
 ### todo
 
@@ -21,13 +24,26 @@ see CHANGELOG.md for a more formal list of changes by release
     - this is affecting tests as well, as they're picking up on config outside of temp dirs
 * refactor, rename fs.clj to toc.clj
 * support for wowinterface.com
-    - turns out curseforge isn't the sole addon host around (good!)
     - see AbyssUI
         - it disappeared from curseforge but showed up on wowinterface
-    - I suspect Tukui is similar as well, a self-host for addons 
+    - addon data scraped and available in wowman-data
+        - done
+    - unintrusive scrape of most recently updated addons
+        - this looks like the ticket: https://www.wowinterface.com/downloads/latest.php
+            - goes back several months
+    - single muxed 'catalog' of addons from different sources
+        - catalog must include 'source' (wowinterface/curseforge)
+        - catalog must group the set of addons that overlap
+            - and then what? always download from the first? make the user pick their preferred source?
+                - it would suck to see a bunch of duplicate addons in the search results...
+            - I think we can hold off on grouping for this release. see how it goes
+    - change contents of 'go' column in installed+search fields
+        - must be the value of :source above
 
 ## todo bucket
 
+* windows support
+    - eh. I figure I can do it with a VM. I just don't really wanna.
 * gui, search, deselect selected addons after successful installation
 * curseforge, addons whose :name changes
     - see 'speedyloot' that changed to 'speedyautoloot'
