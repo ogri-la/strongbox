@@ -5,6 +5,7 @@
     [http :as http]
     [utils :as utils]
     [curseforge :as curseforge]
+    [wowinterface :as wowinterface]
     [core :as core :refer [get-state paths]]]))
 
 (defmulti action
@@ -19,7 +20,8 @@
 (defmethod action :scrape-addon-list
   [_]
   (binding [http/*cache* (core/cache)]
-    (curseforge/download-all-addon-summaries (paths :addon-summary-file))))
+    (wowinterface/scrape (paths :wowinterface-catalog))
+    (curseforge/download-all-addon-summaries (paths :curseforge-catalog))))
 
 (defmethod action :update-addon-list
   [_]

@@ -5,7 +5,6 @@
    [me.raynes.fs :as fs]
    [slugify.core :refer [slugify]]
    [wowman
-    [core :as core]
     [utils :as utils]
     [http :as http]]
    [flatland.ordered.map :as omap]
@@ -97,33 +96,30 @@
         (info (format "scraping %s in category '%s'" page-count (:label category)))
         (flatten (mapv extractor page-range))))))
 
-;; todo: this will be moved to core
 (defn scrape
-  []
-  (binding [http/*cache* (core/cache)]
-    (let [output-path (utils/join (core/paths :data-dir) "wowinterface.json")
-          category-pages ["https://www.wowinterface.com/downloads/cat23.html" ;; 'Stand-Alone addons'
-                          "https://www.wowinterface.com/downloads/cat39.html" ;; 'Class & Role Specific
-                          "https://www.wowinterface.com/downloads/cat109.html" ;; 'Info, Plug-in Bars'
-                          ]
-          category-list (flatten (mapv parse-category-list category-pages))
-          addon-list (flatten (mapv scrape-category category-list))
+  [output-path]
+  (let [category-pages ["https://www.wowinterface.com/downloads/cat23.html" ;; 'Stand-Alone addons'
+                        "https://www.wowinterface.com/downloads/cat39.html" ;; 'Class & Role Specific
+                        "https://www.wowinterface.com/downloads/cat109.html" ;; 'Info, Plug-in Bars'
+                        ]
+        category-list (flatten (mapv parse-category-list category-pages))
+        addon-list (flatten (mapv scrape-category category-list))
           ;;addon-list (utils/load-json-file "/home/torkus/.local/share/wowman/wowinterface.json")
           ;;addon-list (:addon-summary-list addon-list) ;; temp
 
           ;; an addon may belong to many categories
           ;; group addons by their :label (guaranteed to be unique) and then merge the categories together
-          addon-groups (group-by :label addon-list)
-          addon-list (for [[_ group-list] addon-groups
-                           :let [addon (first group-list)]]
-                       (assoc addon :category-list
-                              (reduce clojure.set/union (map :category-list group-list))))
+        addon-groups (group-by :label addon-list)
+        addon-list (for [[_ group-list] addon-groups
+                         :let [addon (first group-list)]]
+                     (assoc addon :category-list
+                            (reduce clojure.set/union (map :category-list group-list))))
 
           ;; copied from curseforge.clj, ensure addon keys are ordered for better diffs
-          addon-list (mapv #(into (omap/ordered-map) (sort %)) addon-list)
+        addon-list (mapv #(into (omap/ordered-map) (sort %)) addon-list)
 
           ;; the addons themselves should be ordered now. alphabetically I suppose
-          addon-list (sort-by :label addon-list)
+        addon-list (sort-by :label addon-list)
 
           ;; this actually reveals 5 pairs of addons whose :label is slightly different
           ;; all 10 addons are unique though, so besides being confusing for the user, it should't break anything
@@ -131,11 +127,11 @@
           ;;          (when (> (count group-list) 1)
           ;;            (error "two different addons slugify to the same :name" (utils/pprint group-list))))
           ;;        (group-by :name addon-list))
-          ]
+        ]
 
-      (spit output-path (utils/to-json {:spec {:version 1}
-                                        :datestamp (utils/datestamp-now-ymd)
-                                        :updated-datestamp (utils/datestamp-now-ymd)
-                                        :total (count addon-list)
-                                        :addon-summary-list addon-list}))
-      output-path)))
+    (spit output-path (utils/to-json {:spec {:version 1}
+                                      :datestamp (utils/datestamp-now-ymd)
+                                      :updated-datestamp (utils/datestamp-now-ymd)
+                                      :total (count addon-list)
+                                      :addon-summary-list addon-list}))
+    output-path))

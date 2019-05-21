@@ -52,8 +52,13 @@
         cfg-file (join config-dir "config.json") ;; /home/$you/.config/wowman/config.json
         etag-db-file (join data-dir "etag-db.json") ;; /home/$you/.local/share/wowman/etag-db.json
 
-        addon-summary-file (join cache-dir "curseforge.json") ;; /home/$you/.local/share/wowman/cache/curseforge.json
-        addon-summary-updates-file (join cache-dir "curseforge-updates.json")
+        ;; todo: change value to 'catalog.json'
+        ;; todo: change 'addon-summary' to 'catalog'
+        addon-summary-file (join data-dir "curseforge.json") ;; /home/$you/.local/share/wowman/cache/curseforge.json
+        addon-summary-updates-file (join data-dir "curseforge-updates.json")
+
+        curseforge-catalog addon-summary-file
+        wowinterface-catalog (join data-dir "wowinterface.json")
 
         path-map {:config-dir config-dir
                   :data-dir data-dir
@@ -61,7 +66,10 @@
                   :cfg-file cfg-file
                   :etag-db-file etag-db-file
                   :addon-summary-file addon-summary-file
-                  :addon-summary-updates-file addon-summary-updates-file}]
+                  :addon-summary-updates-file addon-summary-updates-file
+
+                  :curseforge-catalog curseforge-catalog
+                  :wowinterface-catalog wowinterface-catalog}]
     (if-not (empty? path)
       (get-in path-map path)
       path-map)))
