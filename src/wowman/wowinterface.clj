@@ -1,5 +1,6 @@
 (ns wowman.wowinterface
   (:require
+   [clojure.string]
    [me.raynes.fs :as fs]
    [slugify.core :refer [slugify]]
    [wowman
@@ -26,7 +27,7 @@
         cat-list (-> snippet (html/select [:div#colleft :div.subcats :div.subtitle :a]))
 
         final-url (fn [href]
-                    "converts the href that looks like '/downloads/cat19.html' to '/downloads/index.php?cid=19"
+                    ;; converts the href that looks like '/downloads/cat19.html' to '/downloads/index.php?cid=19"
                     (let [page (fs/base-name href) ;; cat19.html
                           cat-id (str "index.php?cid=" (clojure.string/replace href #"\D*" "")) ;; index.php?cid=19
                           sort-by "&sb=dec_date" ;; updated date, most recent to least recent
@@ -85,19 +86,17 @@
   [category]
   (info (:label category))
   (let [;; I don't handle these cases yet
-        skippable ["Class & Role Specific" "Info, Plug-in Bars" ;; pages of sub-categories
-                   "Suites" ;; no navigation. happens on some of the above sub-category pages as well
-                   ]]
+        skippable ["Class & Role Specific" "Info, Plug-in Bars"]] ;; pages of sub-categories
     (if (some #{(:label category)} skippable)
       []
       (let [;; extract the number of results from the page navigation
             page-content (-> category :url http/download html/html-snippet)
-            page-nav (-> page-content (html/select [:.pagenav [:td.alt1 html/last-of-type] :a]))
-            page-nav (-> page-nav first :attrs :href)
-            page-count (-> page-nav (clojure.string/split #"=") last Integer.)
-
-            page-range (range 1 (inc page-count))
-            extractor (partial scrape-addon-page category)]
+            extractor (partial scrape-addon-page category)
+            page-nav (spy :info (-> page-content (html/select [:.pagenav [:td.alt1 html/last-of-type] :a])))
+            ;; just scrape first page if page-nav is empty (page already downloaded to scrape nav ;)
+            page-count (if (empty? page-nav) 1 (-> page-nav first :attrs :href
+                                                   (clojure.string/split #"=") last Integer.))
+            page-range (range 1 (inc page-count))]
         (info (format "scraping %s in category '%s'" page-count (:label category)))
         (flatten (mapv extractor page-range))))))
 
