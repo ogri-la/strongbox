@@ -1,13 +1,14 @@
 (ns wowman.wowinterface
   (:require
    [clojure.string]
+   [clojure.set]
    [me.raynes.fs :as fs]
    [slugify.core :refer [slugify]]
    [wowman
     [core :as core]
-    [logging]
     [utils :as utils]
     [http :as http]]
+   [flatland.ordered.map :as omap]
    [net.cgrand.enlive-html :as html]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
    [java-time]
@@ -17,13 +18,9 @@
   "wowinterface.com requires browsing addons by category rather than alphabetically or by recently updated. 
    An RSS file is available to scrape the recently updated.")
 
-(defn download-category-list
-  []
-  (http/download "https://www.wowinterface.com/downloads/cat23.html"))
-
 (defn parse-category-list
-  []
-  (let [snippet (html/html-snippet (download-category-list))
+  [root-url]
+  (let [snippet (html/html-snippet (http/download root-url))
         cat-list (-> snippet (html/select [:div#colleft :div.subcats :div.subtitle :a]))
 
         final-url (fn [href]
@@ -60,7 +57,7 @@
           extract-updated-date (fn [x]
                                  (let [dmy-hm (-> x (subs 8) clojure.string/trim)] ;; "Updated 09-07-18 01:27 PM " => "09-07-18 01:27 PM"
                                    (format-wowinterface-dt dmy-hm)))
-          label (-> snippet (html/select [[:a (html/attr-contains :href "fileinfo")] html/content]) first)]
+          label (-> snippet (html/select [[:a (html/attr-contains :href "fileinfo")] html/content]) first clojure.string/trim)]
       {:uri (str uri (-> snippet (html/select [:a]) last :attrs :href extract-id))
        :name (-> label slugify)
        :label label
@@ -79,20 +76,20 @@
         page-content (-> url http/download html/html-snippet)
         addon-list (-> page-content (html/select [:#filepage :div.file]))
         extractor (fn [snippet]
-                    (assoc (extract-addon-summary snippet) :category-list [(:label category)]))]
+                    (assoc (extract-addon-summary snippet) :category-list #{(:label category)}))]
     (mapv extractor addon-list)))
 
 (defn scrape-category
   [category]
   (info (:label category))
-  (let [;; I don't handle these cases yet
+  (let [;; these are sub-category pages and are handled 
         skippable ["Class & Role Specific" "Info, Plug-in Bars"]] ;; pages of sub-categories
     (if (some #{(:label category)} skippable)
       []
       (let [;; extract the number of results from the page navigation
             page-content (-> category :url http/download html/html-snippet)
             extractor (partial scrape-addon-page category)
-            page-nav (spy :info (-> page-content (html/select [:.pagenav [:td.alt1 html/last-of-type] :a])))
+            page-nav (-> page-content (html/select [:.pagenav [:td.alt1 html/last-of-type] :a]))
             ;; just scrape first page if page-nav is empty (page already downloaded to scrape nav ;)
             page-count (if (empty? page-nav) 1 (-> page-nav first :attrs :href
                                                    (clojure.string/split #"=") last Integer.))
@@ -104,10 +101,41 @@
 (defn scrape
   []
   (binding [http/*cache* (core/cache)]
-    (let [output-path (fs/file (core/paths :data-dir) "wowinterface.json")
-          addon-list (flatten (mapv scrape-category (parse-category-list)))]
+    (let [output-path (utils/join (core/paths :data-dir) "wowinterface.json")
+          category-pages ["https://www.wowinterface.com/downloads/cat23.html" ;; 'Stand-Alone addons'
+                          "https://www.wowinterface.com/downloads/cat39.html" ;; 'Class & Role Specific
+                          "https://www.wowinterface.com/downloads/cat109.html" ;; 'Info, Plug-in Bars'
+                          ]
+          category-list (flatten (mapv parse-category-list category-pages))
+          addon-list (flatten (mapv scrape-category category-list))
+          ;;addon-list (utils/load-json-file "/home/torkus/.local/share/wowman/wowinterface.json")
+          ;;addon-list (:addon-summary-list addon-list) ;; temp
+
+          ;; an addon may belong to many categories
+          ;; group addons by their :label (guaranteed to be unique) and then merge the categories together
+          addon-groups (group-by :label addon-list)
+          addon-list (for [[_ group-list] addon-groups
+                           :let [addon (first group-list)]]
+                       (assoc addon :category-list
+                              (reduce clojure.set/union (map :category-list group-list))))
+
+          ;; copied from curseforge.clj, ensure addon keys are ordered for better diffs
+          addon-list (mapv #(into (omap/ordered-map) (sort %)) addon-list)
+
+          ;; the addons themselves should be ordered now. alphabetically I suppose
+          addon-list (sort-by :label addon-list)
+
+          ;; this actually reveals 5 pairs of addons whose :label is slightly different
+          ;; all 10 addons are unique though, so besides being confusing for the user, it should't break anything
+          ;;_ (mapv (fn [[_ group-list]]
+          ;;          (when (> (count group-list) 1)
+          ;;            (error "two different addons slugify to the same :name" (utils/pprint group-list))))
+          ;;        (group-by :name addon-list))
+          ]
+
       (spit output-path (utils/to-json {:spec {:version 1}
                                         :datestamp (utils/datestamp-now-ymd)
                                         :updated-datestamp (utils/datestamp-now-ymd)
                                         :total (count addon-list)
-                                        :addon-summary-list addon-list})))))
+                                        :addon-summary-list addon-list}))
+      output-path)))
