@@ -4,7 +4,11 @@
    [clojure.set]
    [me.raynes.fs :as fs]
    [slugify.core :refer [slugify]]
+   [clojure.spec.alpha :as s]
+   [orchestra.spec.test :as st]
+   [orchestra.core :refer [defn-spec]]
    [wowman
+    [specs :as sp]
     [utils :as utils]
     [http :as http]]
    [flatland.ordered.map :as omap]
@@ -78,7 +82,7 @@
                     (assoc (extract-addon-summary snippet) :category-list #{(:label category)}))]
     (mapv extractor addon-list)))
 
-(defn scrape-category
+(defn scrape-category-page
   [category]
   (info (:label category))
   (let [;; these are sub-category pages and are handled 
@@ -96,6 +100,45 @@
         (info (format "scraping %s in category '%s'" page-count (:label category)))
         (flatten (mapv extractor page-range))))))
 
+(defn scrape-latest-updates-page
+  [page-n]
+  (let [url (str "https://www.wowinterface.com/downloads/latest.php?sb=lastupdate&so=desc&sh=full&pt=f&page=" page-n)
+        page-content (-> url http/download html/html-snippet)
+        rows (-> page-content (html/select [:div#innerpage :table.tborder :tr]) rest rest) ;; discard first two rows (nav and header)
+        rows (drop-last 7 rows) ;; and last 7 (nav and search)
+        extractor (fn [row]
+                    (let [label (-> row (html/select [:a html/content]) first clojure.string/trim) ;; two links in each row, we want the first one
+                          dt (-> row (html/select [:td]) (nth 5) (html/select [:div]) last :content)
+                          date (-> dt first clojure.string/trim)
+                          time (-> dt second :content first)]
+                      {:name (slugify label)
+                       :label label
+                       :downloads (-> row (html/select [:td]) (nth 4) :content first (clojure.string/replace #"\D*" "") Integer.)
+                       :updated-date (format-wowinterface-dt (str date " " time))}))]
+
+    (mapv extractor rows)))
+
+(defn-spec scrape-latest-updates ::sp/addon-summary-list
+  "downloads latest update pages until given date reached or exceeded"
+  [since-date ::sp/inst]
+  (loop [page-n 1
+         accumulator []]
+    (info "downloading addon updates page" page-n)
+    (let [;;results (extract-addon-summary-list (download-summary-page-by-updated-date page-n))
+          results (scrape-latest-updates-page page-n)
+
+          target-addon (last results)
+          future-date? (= -1 (compare (clojure.instant/read-instant-date since-date)
+                                      (clojure.instant/read-instant-date (:updated-date target-addon))))]
+      (if future-date?
+      ;; loop until the dates we're seeing are in the past (compared to given date)
+        (recur (inc page-n) (into accumulator results))
+        (into accumulator results)))))
+
+
+;;
+
+
 (defn scrape
   [output-path]
   (let [category-pages ["https://www.wowinterface.com/downloads/cat23.html" ;; 'Stand-Alone addons'
@@ -103,7 +146,7 @@
                         "https://www.wowinterface.com/downloads/cat109.html" ;; 'Info, Plug-in Bars'
                         ]
         category-list (flatten (mapv parse-category-list category-pages))
-        addon-list (flatten (mapv scrape-category category-list))
+        addon-list (flatten (mapv scrape-category-page category-list))
           ;;addon-list (utils/load-json-file "/home/torkus/.local/share/wowman/wowinterface.json")
           ;;addon-list (:addon-summary-list addon-list) ;; temp
 
@@ -135,3 +178,5 @@
                                       :total (count addon-list)
                                       :addon-summary-list addon-list}))
     output-path))
+
+(st/instrument)
