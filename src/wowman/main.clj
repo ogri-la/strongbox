@@ -58,8 +58,8 @@
 
 (def catalog-actions
   #{:scrape-catalog :update-catalog
-   :scrape-curseforge-catalog :update-curseforge-catalog
-   :scrape-wowinterface-catalog :update-wowinterface-catalog})
+    :scrape-curseforge-catalog :update-curseforge-catalog
+    :scrape-wowinterface-catalog :update-wowinterface-catalog})
 
 (def catalog-action-str (clojure.string/join ", " (mapv #(format "'%s'" (name %)) (sort catalog-actions))))
 
