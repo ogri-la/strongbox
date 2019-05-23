@@ -13,6 +13,10 @@ see CHANGELOG.md for a more formal list of changes by release
 * support wowinterface.com
     - addon data scraped and available in wowman-data
         - done
+    - unintrusive scrape of most recently updated addons
+        - this looks like the ticket: https://www.wowinterface.com/downloads/latest.php
+            - goes back several months
+        - done
 
 ### todo
 
@@ -26,9 +30,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * support for wowinterface.com
     - see AbyssUI
         - it disappeared from curseforge but showed up on wowinterface
-    - unintrusive scrape of most recently updated addons
-        - this looks like the ticket: https://www.wowinterface.com/downloads/latest.php
-            - goes back several months
     - single muxed 'catalog' of addons from different sources
         - catalog must include 'source' (wowinterface/curseforge)
         - catalog must group the set of addons that overlap
