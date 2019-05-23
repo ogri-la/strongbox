@@ -1,5 +1,6 @@
 (ns wowman.wowinterface
   (:require
+   [clojure.instant]
    [clojure.string]
    [clojure.set]
    [me.raynes.fs :as fs]
@@ -52,16 +53,20 @@
         fmt (get java-time.format/predefined-formatters "iso-offset-date-time")]
     (java-time/format fmt dt-utc)))
 
+(defn extract-addon-uri
+  [a]
+  (let [uri "https://www.wowinterface.com/downloads/"
+        extract-id #(str "info" (-> % (clojure.string/split #"&.+=") last))] ;; ...?foo=bar&id=24731 => info24731
+    (str uri (-> a :attrs :href extract-id))))
+
 (defn extract-addon-summary
   [snippet]
   (try
-    (let [uri "https://www.wowinterface.com/downloads/"
-          extract-id #(str "info" (-> % (clojure.string/split #"&.+=") last)) ;; ...?foo=bar&id=24731 => info24731
-          extract-updated-date (fn [x]
+    (let [extract-updated-date (fn [x]
                                  (let [dmy-hm (-> x (subs 8) clojure.string/trim)] ;; "Updated 09-07-18 01:27 PM " => "09-07-18 01:27 PM"
                                    (format-wowinterface-dt dmy-hm)))
           label (-> snippet (html/select [[:a (html/attr-contains :href "fileinfo")] html/content]) first clojure.string/trim)]
-      {:uri (str uri (-> snippet (html/select [:a]) last :attrs :href extract-id))
+      {:uri (extract-addon-uri (-> snippet (html/select [:a]) last))
        :name (-> label slugify)
        :label label
        ;;:description nil ;; not available in summary
@@ -100,7 +105,7 @@
         (info (format "scraping %s in category '%s'" page-count (:label category)))
         (flatten (mapv extractor page-range))))))
 
-(defn scrape-latest-updates-page
+(defn scrape-updates-page
   [page-n]
   (let [url (str "https://www.wowinterface.com/downloads/latest.php?sb=lastupdate&so=desc&sh=full&pt=f&page=" page-n)
         page-content (-> url http/download html/html-snippet)
@@ -111,33 +116,45 @@
                           dt (-> row (html/select [:td]) (nth 5) (html/select [:div]) last :content)
                           date (-> dt first clojure.string/trim)
                           time (-> dt second :content first)]
-                      {:name (slugify label)
+                      {:uri (extract-addon-uri (-> row (html/select [:a]) first))
+                       :name (slugify label)
                        :label label
-                       :downloads (-> row (html/select [:td]) (nth 4) :content first (clojure.string/replace #"\D*" "") Integer.)
-                       :updated-date (format-wowinterface-dt (str date " " time))}))]
-
+                       :category-list #{} ;; known limitation. updates for wowinterface are missing their category
+                       :updated-date (format-wowinterface-dt (str date " " time))
+                       :download-count (-> row (html/select [:td]) (nth 4) :content first (clojure.string/replace #"\D*" "") Integer.)}))]
     (mapv extractor rows)))
 
-(defn-spec scrape-latest-updates ::sp/addon-summary-list
+(defn -scrape-updates
   "downloads latest update pages until given date reached or exceeded"
-  [since-date ::sp/inst]
+  [since-date]
   (loop [page-n 1
          accumulator []]
     (info "downloading addon updates page" page-n)
-    (let [;;results (extract-addon-summary-list (download-summary-page-by-updated-date page-n))
-          results (scrape-latest-updates-page page-n)
-
+    (let [results (scrape-updates-page page-n)
           target-addon (last results)
           future-date? (= -1 (compare (clojure.instant/read-instant-date since-date)
                                       (clojure.instant/read-instant-date (:updated-date target-addon))))]
       (if future-date?
-      ;; loop until the dates we're seeing are in the past (compared to given date)
+        ;; loop until the dates we're seeing are in the past (compared to given date)
         (recur (inc page-n) (into accumulator results))
         (into accumulator results)))))
 
+(defn-spec scrape-updates ::sp/extant-file
+  [catalog ::sp/extant-file]
+  (let [{created-date :datestamp, addons-list :addon-summary-list} (utils/load-json-file catalog)
+        updated-addons-list (-scrape-updates created-date)
+        merged-addons-list (utils/merge-lists :name addons-list updated-addons-list :prepend? true)
+        ;; ensure consistent key order during serialisation for nicer diffs
+        merged-addons-list (mapv #(into (omap/ordered-map) (sort %)) merged-addons-list)]
+    (info "updating addon summary file:" catalog)
+    (spit catalog (utils/to-json {:spec {:version 1}
+                                  :datestamp created-date
+                                  :updated-datestamp (utils/datestamp-now-ymd)
+                                  :total (count merged-addons-list)
+                                  :addon-summary-list merged-addons-list}))
+    catalog))
 
 ;;
-
 
 (defn scrape
   [output-path]
