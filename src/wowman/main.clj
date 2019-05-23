@@ -56,6 +56,13 @@
 
 ;;
 
+(def catalog-actions
+  #{:scrape-catalog :update-catalog
+   :scrape-curseforge-catalog :update-curseforge-catalog
+   :scrape-wowinterface-catalog :update-wowinterface-catalog})
+
+(def catalog-action-str (clojure.string/join ", " (mapv #(format "'%s'" (name %)) (sort catalog-actions))))
+
 (def cli-options
   [["-h" "--help"]
 
@@ -78,13 +85,10 @@
     :parse-fn #(-> % lower-case keyword)
     :validate [(in? [:cli :gui])]]
 
-   ["-a" "--action ACTION" "perform action and exit. action is one of: 'list', 'list-updates', 'update', 'update-all', 'scrape-catalog', 'update-catalog', 'scrape-curseforge-catalog', 'scrape-wowinterface-catalog', 'update-curseforge-catalog', 'update-wowinterface-catalog'"
+   ["-a" "--action ACTION" (str "perform action and exit. action is one of: 'list', 'list-updates', 'update', 'update-all'," catalog-action-str)
     :id :action
     :parse-fn #(-> % lower-case keyword)
-    :validate [(in? [:list :list-updates :update :update-all
-                     :scrape-catalog :update-catalog
-                     :scrape-curseforge-catalog :update-curseforge-catalog
-                     :scrape-wowinterface-catalog :update-wowinterface-catalog])]]])
+    :validate [(in? (concat [:list :list-updates :update :update-all] catalog-actions))]]])
 
 (defn validate
   [parsed]
@@ -127,7 +131,7 @@
                    args)
 
             ;; force :cli for certain actions
-            args (if (contains? #{:scrape-addon-list :update-addon-list} (:action options))
+            args (if (contains? catalog-actions (:action options))
                    (assoc-in args [:options :ui] :cli)
                    args)]
         args))))
