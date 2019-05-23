@@ -78,10 +78,13 @@
     :parse-fn #(-> % lower-case keyword)
     :validate [(in? [:cli :gui])]]
 
-   ["-a" "--action ACTION" "perform action and exit. action is one of 'list', 'list-updates', 'update', 'update-all', 'scrape-addon-list', 'update-addon-list'"
+   ["-a" "--action ACTION" "perform action and exit. action is one of: 'list', 'list-updates', 'update', 'update-all', 'scrape-catalog', 'update-catalog', 'scrape-curseforge-catalog', 'scrape-wowinterface-catalog', 'update-curseforge-catalog', 'update-wowinterface-catalog'"
     :id :action
     :parse-fn #(-> % lower-case keyword)
-    :validate [(in? [:list :list-updates :update :update-all :scrape-addon-list :update-addon-list])]]])
+    :validate [(in? [:list :list-updates :update :update-all
+                     :scrape-catalog :update-catalog
+                     :scrape-curseforge-catalog :update-curseforge-catalog
+                     :scrape-wowinterface-catalog :update-wowinterface-catalog])]]])
 
 (defn validate
   [parsed]

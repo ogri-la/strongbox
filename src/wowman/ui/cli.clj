@@ -17,30 +17,22 @@
     :update-all - updates all installed addons with updates available"
   :action)
 
-(defmethod action :scrape-addon-list
+(defmethod action :scrape-wowinterface-catalog
   [_]
   (binding [http/*cache* (core/cache)]
-    (wowinterface/scrape (paths :wowinterface-catalog))
-    (curseforge/download-all-addon-summaries (paths :curseforge-catalog))))
+    (wowinterface/scrape (paths :wowinterface-catalog))))
 
-(defmethod action :scrape-wowinterface
-  [_]
-  (binding [http/*cache* (core/cache)]
-    (wowinterface/scrape (paths :wowinterface-catalog)))
-  nil)
-
-(defmethod action :update-wowinterface
+(defmethod action :update-wowinterface-catalog
   [_]
   (binding [http/*cache* (core/cache)]
     (wowinterface/scrape-updates (paths :wowinterface-catalog))))
 
-(defmethod action :scrape-curseforge
+(defmethod action :scrape-curseforge-catalog
   [_]
   (binding [http/*cache* (core/cache)]
-    (curseforge/download-all-addon-summaries (paths :curseforge-catalog)))
-  nil)
+    (curseforge/download-all-addon-summaries (paths :curseforge-catalog))))
 
-(defmethod action :update-addon-list
+(defmethod action :update-curseforge-catalog
   [_]
   (binding [http/*cache* (core/cache)]
     (let [{since :datestamp} (utils/load-json-file (paths :addon-summary-file))]
@@ -49,6 +41,16 @@
       ;; merge those updates with the main summary file
       (curseforge/update-addon-summary-file (paths :addon-summary-file)
                                             (paths :addon-summary-updates-file)))))
+
+(defmethod action :scrape-catalog
+  [_]
+  (action {:action :scrape-curseforge-catalog})
+  (action {:action :scrape-wowinterface-catalog}))
+
+(defmethod action :update-catalog
+  [_]
+  (action {:action :update-curseforge-catalog})
+  (action {:action :update-wowinterface-catalog}))
 
 (defmethod action :list
   [_]
