@@ -23,11 +23,22 @@
     (wowinterface/scrape (paths :wowinterface-catalog))
     (curseforge/download-all-addon-summaries (paths :curseforge-catalog))))
 
+(defmethod action :scrape-wowinterface
+  [_]
+  (binding [http/*cache* (core/cache)]
+    (wowinterface/scrape (paths :wowinterface-catalog)))
+  nil)
+
 (defmethod action :update-wowinterface
   [_]
   (binding [http/*cache* (core/cache)]
-    (let [{since :datestamp} (utils/load-json-file (paths :wowinterface-catalog))]
-      (wowinterface/scrape-latest-updates-page 1)))) ;; since 
+    (wowinterface/scrape-updates (paths :wowinterface-catalog))))
+
+(defmethod action :scrape-curseforge
+  [_]
+  (binding [http/*cache* (core/cache)]
+    (curseforge/download-all-addon-summaries (paths :curseforge-catalog)))
+  nil)
 
 (defmethod action :update-addon-list
   [_]
