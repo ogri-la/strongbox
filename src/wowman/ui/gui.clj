@@ -1,7 +1,7 @@
 (ns wowman.ui.gui
   (:require
    [wowman
-    [core :as core :refer [get-state state-bind state-binds colours]]
+    [core :as core :refer [get-state state-bind colours]]
     [logging :as logging]
     [specs :as sp]
     [utils :as utils :refer [items]]]
@@ -487,7 +487,8 @@
     (add-highlighter grid addon-installed? (colours :search/already-installed))
 
     (ss/listen grid :selection (selected-rows-handler search-results-selection-handler))
-    (state-binds [[:addon-summary-list] [:search-field-input]] update-rows-fn)
+    (state-bind [:addon-summary-list] update-rows-fn)
+    (state-bind [:search-field-input] update-rows-fn)
     (ss/scrollable grid)))
 
 (defn search-panel

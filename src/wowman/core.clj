@@ -13,13 +13,10 @@
     [http :as http]
     [logging :as logging]
     [nfo :as nfo]
-    [utils :as utils :refer [join not-empty?]]
+    [utils :as utils :refer [join not-empty? false-if-nil]]
     [curseforge :as curseforge]
     [fs]
     [specs :as sp]]))
-
-;; TODO: allow user to specify their own catalog
-(def remote-addon-summary-file "https://raw.githubusercontent.com/ogri-la/wowman-data/master/curseforge.json")
 
 (defn colours
   [& path]
@@ -44,35 +41,35 @@
         data-dir (or (System/getenv "XDG_DATA_HOME") "~/.local/share/wowman")
         data-dir (-> data-dir fs/expand-home fs/normalized fs/absolute str)
 
-        ;; cache files are deleted regularly. even if you fuck up with XDG_DATA_HOME=/ then the worse that
+        ;; cache files are deleted regularly. even if you fuck up with "XDG_DATA_HOME=/" then the worse that
         ;; can happen, even if you run wowman as root, is you get /cache/ or /home/$you/cache/ created and
-        ;; files within it deleted. and /cache or /home/$you/cache is not a common directory
+        ;; files within it deleted. /cache and /home/$you/cache are not common directories
         cache-dir (join data-dir "cache") ;; /home/you/.local/share/wowman/cache
 
         cfg-file (join config-dir "config.json") ;; /home/$you/.config/wowman/config.json
         etag-db-file (join data-dir "etag-db.json") ;; /home/$you/.local/share/wowman/etag-db.json
 
-        ;; todo: change value to 'catalog.json'
-        ;; todo: change 'addon-summary' to 'catalog'
-        addon-summary-file (join data-dir "curseforge.json") ;; /home/$you/.local/share/wowman/cache/curseforge.json
-        addon-summary-updates-file (join data-dir "curseforge-updates.json")
-
-        curseforge-catalog addon-summary-file
+        curseforge-catalog (join data-dir "curseforge.json") ;; /home/$you/.local/share/wowman/cache/curseforge.json
+        curseforge-catalog-updates (join data-dir "catalog-updates.json") ;; todo: remove this intermediate file
         wowinterface-catalog (join data-dir "wowinterface.json")
+
+        catalog curseforge-catalog
+        catalog-updates curseforge-catalog-updates
 
         path-map {:config-dir config-dir
                   :data-dir data-dir
                   :cache-dir cache-dir
                   :cfg-file cfg-file
                   :etag-db-file etag-db-file
-                  :addon-summary-file addon-summary-file
-                  :addon-summary-updates-file addon-summary-updates-file
+
+                  :catalog catalog
+                  :remote-catalog "https://raw.githubusercontent.com/ogri-la/wowman-data/master/curseforge.json"
+                  :catalog-updates catalog-updates ;; todo: remove this intermediate file
 
                   :curseforge-catalog curseforge-catalog
                   :wowinterface-catalog wowinterface-catalog}]
-    (if-not (empty? path)
-      (get-in path-map path)
-      path-map)))
+
+    (if (empty? path) path-map (get-in path-map path))))
 
 (def -state-template
   {:cleanup []
@@ -114,16 +111,14 @@
 (def state (atom nil))
 
 (defn get-state
-  "state accessor, really should be using this"
+  "returns the state map of the value at the given path within the map, if path provided"
   [& path]
-  (let [state @state]
-    (if (nil? state)
-      (throw (RuntimeException. "application must be `start`ed before state may be accessed."))
-      (if-not (empty? path)
-        (get-in state path)
-        state))))
+  (if-let [state @state]
+    (if (empty? path) state (get-in state path))
+    (AssertionError. "application must be `start`ed before state may be accessed.")))
 
 (defn set-etag
+  "convenient wrapper around adding and removing etag values from state map"
   ([filename]
    (swap! state update-in [:etag-db] dissoc filename)
    nil)
@@ -132,12 +127,15 @@
    nil))
 
 (defn cache
+  "data and a setter that gets bound to http/*cache* when caching http requests"
   []
   {:etag-db (get-state :etag-db)
    :set-etag set-etag
    :cache-dir (paths :cache-dir)})
 
 (defn-spec state-bind nil?
+  "executes given callback function when value at path in state map changes. 
+  trigger is discarded if old and new values are identical"
   [path ::sp/list-of-keywords, callback fn?]
   (let [prefn identity
         has-changed (fn [old-state new-state]
@@ -155,15 +153,10 @@
     (swap! state update-in [:cleanup] conj rmwatch)
     nil))
 
-(defn-spec state-binds nil?
-  [path-list ::sp/list-of-list-of-keywords, callback fn?]
-  (doseq [path path-list]
-    (state-bind path callback)))
-
 (defn-spec debugging? boolean?
-  "'debug mode'"
+  "true, if we we're in 'debug' mode"
   []
-  (get-state :cfg :debug?))
+  (false-if-nil (get-state :cfg :debug?)))
 
 ;;
 ;; settings
@@ -172,7 +165,7 @@
 (defn-spec configure ::sp/user-config
   "handles the user configurable bit of the app. command line args override args from from the config file."
   [file-opts map?, cli-opts map?]
-  (debug "loading config from file:" file-opts)
+  (debug "loading file config:" file-opts)
   (let [default-cfg (:cfg -state-template)
         cfg (merge default-cfg file-opts)
         cfg (spec-tools/coerce ::sp/user-config cfg spec-tools/strip-extra-keys-transformer)
@@ -180,7 +173,7 @@
     (when-not valid?
       (warn "configuration from file is invalid and will be ignored:" (s/explain-str ::sp/user-config cfg)))
 
-    (debug "loading config from runtime args:" cli-opts)
+    (debug "loading runtime config:" cli-opts)
     (let [cfg (if valid? cfg default-cfg)
           final-cfg (merge cfg cli-opts)
           final-cfg (spec-tools/coerce ::sp/user-config final-cfg spec-tools/strip-extra-keys-transformer)
@@ -194,9 +187,9 @@
   []
   ;; warning: this will preserve any once-off command line parameters as well
   ;; this might make sense within the gui but be careful about auto-saving elsewhere
-  (debug "saving settings to" (paths :cfg-file))
+  (debug "saving settings to:" (paths :cfg-file))
   (utils/dump-json-file (paths :cfg-file) (get-state :cfg))
-  (debug "saving etag-db to" (paths :etag-db-file))
+  (debug "saving etag-db to:" (paths :etag-db-file))
   (utils/dump-json-file (paths :etag-db-file) (get-state :etag-db)))
 
 (defn load-settings
@@ -226,7 +219,7 @@
 
 (defn start-affecting-addon
   [addon]
-  (swap! state update-in [:unsteady-addons] clojure.set/union #{(:name addon)})) ;; TLC, set?
+  (swap! state update-in [:unsteady-addons] clojure.set/union #{(:name addon)}))
 
 (defn stop-affecting-addon
   [addon]
@@ -246,11 +239,11 @@
 ;;
 
 (defn-spec downloaded-addon-fname string?
-  [name string? version string?]
+  [name string?, version string?]
   (format "%s--%s.zip" name (utils/slugify version))) ;; addonname--1-2-3.zip
 
 (defn-spec download-addon (s/or :ok ::sp/archive-file, :http-error ::sp/http-error, :error nil?)
-  [addon ::sp/addon-or-toc-addon download-dir ::sp/writeable-dir]
+  [addon ::sp/addon-or-toc-addon, download-dir ::sp/writeable-dir]
   (info "downloading" (:label addon) "...")
   (when-let [download-uri (:download-uri addon)]
     (let [output-fname (downloaded-addon-fname (:name addon) (:version addon)) ;; addonname--1-2-3.zip
@@ -296,8 +289,6 @@
        ;; all dirs are prefixed with the name of the first toplevel dir
        (every? #(clojure.string/starts-with? (path-val %) (path-val first-toplevel-dir)) toplevel-dirs))
       first-toplevel-dir
-
-      ;; todo: option to do a lookup in a static map here
 
       ;; couldn't reasonably determine the primary directory
       :else nil)))
@@ -362,17 +353,17 @@
 ;; addon summaries
 ;;
 
-(defn-spec download-addon-summary-file ::sp/extant-file
-  "downloads addon summary file to expected location, nothing more"
+(defn-spec download-catalog ::sp/extant-file
+  "downloads catalog to expected location, nothing more"
   []
   (binding [http/*cache* (cache)]
-    (http/download-file remote-addon-summary-file (paths :addon-summary-file))))
+    (http/download-file (paths :remote-catalog) (paths :catalog))))
 
 (defn-spec load-addon-summaries nil?
   []
-  (download-addon-summary-file)
-  (info "loading addon summary list from:" (paths :addon-summary-file))
-  (let [{:keys [addon-summary-list]} (utils/load-json-file (paths :addon-summary-file))]
+  (download-catalog)
+  (info "loading addon summaries from catalog:" (paths :catalog))
+  (let [{:keys [addon-summary-list]} (utils/load-json-file (paths :catalog))]
     (swap! state assoc :addon-summary-list addon-summary-list)
     nil))
 
@@ -387,8 +378,6 @@
   (let [;; [[toc-key catalog-key], ...]
         ;; most -> least desirable match
         match-on [[:alias :name] [:name :name] [:name :alt-name] [:label :label] [:dirname :label]]
-        ;;[:description :description]] ;; matching on description actually works :P
-        ;; it's not a good enough *unique* identifier though
 
         idx-idx (into {} (mapv (fn [[toc-key catalog-key]]
                                  {catalog-key (utils/idx catalog catalog-key)}) match-on))

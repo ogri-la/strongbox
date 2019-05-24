@@ -19,6 +19,10 @@
     [coerce :as coerce-time]
     [format :as format-time]]))
 
+(defn false-if-nil
+  [x]
+  (if (nil? x) false x))
+
 (defn pprint
   [x]
   (with-out-str (clojure.pprint/pprint x)))
