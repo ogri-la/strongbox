@@ -15,9 +15,24 @@
    [slugify.core :as sluglib]
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :refer [debug info warn error spy]]
+   [java-time]
+   [java-time.format]
    [clj-time
     [coerce :as coerce-time]
     [format :as format-time]]))
+
+;; todo: handy, but target for pruning.
+(defn detect-dt-formatting
+  [dtstr]
+  (info "testing" dtstr)
+  (let [fmt (fn [dtfmt]
+              (try
+                (when-let [result (java-time/zoned-date-time (get java-time.format/predefined-formatters dtfmt) dtstr)]
+                  (info "success with" dtfmt ":" result)
+                  {dtfmt result})
+                (catch Exception e
+                  (info "failed testing" dtfmt))))]
+    (into {} (mapv fmt (keys java-time.format/predefined-formatters)))))
 
 (defn false-if-nil
   [x]
@@ -111,11 +126,11 @@
   [x]
   (clojure.data.json/read-str x :key-fn keyword))
 
-(defn-spec dump-json-file nil?
-  [path ::sp/file data ::sp/anything]
+(defn-spec dump-json-file ::sp/extant-file
+  [path ::sp/file, data ::sp/anything]
   ;; this `{:pretty true}` is the only reason we're keeping cheshire around
   (json/generate-stream data (clojure.java.io/writer path) {:pretty true})
-  nil)
+  path)
 
 (defn-spec load-json-file ::sp/anything
   [path ::sp/extant-file]

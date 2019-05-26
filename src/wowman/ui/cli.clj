@@ -2,6 +2,7 @@
   (:require
    [taoensso.timbre :as timbre :refer [spy info]]
    [wowman
+    [catalog :as catalog]
     [http :as http]
     [utils :as utils]
     [curseforge :as curseforge]
@@ -45,7 +46,9 @@
 (defmethod action :scrape-catalog
   [_]
   (action {:action :scrape-curseforge-catalog})
-  (action {:action :scrape-wowinterface-catalog}))
+  (action {:action :scrape-wowinterface-catalog})
+  (let [addon-list (catalog/merge-catalogs (paths :curseforge-catalog) (paths :wowinterface-catalog))]
+    (utils/dump-json-file (paths :catalog) addon-list)))
 
 (defmethod action :update-catalog
   [_]

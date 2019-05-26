@@ -7,7 +7,6 @@
    [clj-time
     [core :as ct]
     [coerce :as cte]]
-   [slugify.core :refer [slugify]]
    [flatland.ordered.map :as omap]
    [clojure.spec.alpha :as s]
    [orchestra.spec.test :as st]
@@ -16,6 +15,23 @@
    [taoensso.timbre :as log :refer [debug info warn error spy]]))
 
 (def curseforge-host "https://www.curseforge.com")
+
+;; TODO: move to utils
+(defn to-uri
+  [v]
+  (when-not (empty? v)
+    (-> v java.net.URI. str)))
+
+(defn suffix
+  [v sfx]
+  (when-not (empty? v)
+    (str v sfx)))
+
+(defn-spec formatted-str-to-num int?
+  [string string?]
+  (-> string (clojure.string/replace #"[^\d]*" "") clojure.string/trim Integer.))
+
+;;
 
 ;; TODO: test 'nil?' return value
 (defn-spec download-summary-page-alphabetically (s/or :ok ::sp/html, :error nil?)
@@ -41,47 +57,26 @@
         pN (-> (html/select p1 [:ul.paging-list :li.b-pagination-item :a]) butlast last :content first Integer.)]
     pN))
 
-(defn-spec formatted-str-to-num int?
-  [string string?]
-  (-> string (clojure.string/replace #"[^\d]*" "") clojure.string/trim Integer.))
-
-;;
 ;;
 
 (defn-spec extract-addon-summary ::sp/addon-summary
   "converts a snippet of html extracted from a page into an ::sp/addon-summary"
   [snippet map?]
-  (let [addon-summary
-        {:uri (str curseforge-host (-> snippet (html/select [:div.list-item__details :a]) first :attrs :href))
-         :name (-> snippet (html/select [:div.list-item__details :a]) first :attrs :href (clojure.string/split #"/") last)
-         :label (-> snippet (html/select [:h2]) first :content first clojure.string/trim)
-         :description (-> snippet (html/select [:div.list-item__description :p]) first :content first)
-         :category-list (mapv #(-> % :attrs :title)
-                              (-> snippet (html/select [:div.list-item__categories :a.category__item])))
-         :created-date (-> snippet (html/select [:span.date--created :abbr]) first :attrs :data-epoch Integer. from-epoch)
-         :updated-date (-> snippet (html/select [:span.date--updated :abbr]) first :attrs :data-epoch Integer. from-epoch)
-         :download-count (-> snippet (html/select [:span.count--download]) first :content first formatted-str-to-num)}]
-
-    ;; we first attempt to match based on :name, and if no match found, we try alt-name, a
-    ;; more-slugified label with hyphens and underscores removed
-    (assoc addon-summary :alt-name (-> addon-summary :label (slugify "")))))
+  {:uri (str curseforge-host (-> snippet (html/select [:div.list-item__details :a]) first :attrs :href))
+   :name (-> snippet (html/select [:div.list-item__details :a]) first :attrs :href (clojure.string/split #"/") last)
+   :label (-> snippet (html/select [:h2]) first :content first clojure.string/trim)
+   :description (-> snippet (html/select [:div.list-item__description :p]) first :content first)
+   :category-list (mapv #(-> % :attrs :title)
+                        (-> snippet (html/select [:div.list-item__categories :a.category__item])))
+   :created-date (-> snippet (html/select [:span.date--created :abbr]) first :attrs :data-epoch Integer. from-epoch)
+   :updated-date (-> snippet (html/select [:span.date--updated :abbr]) first :attrs :data-epoch Integer. from-epoch)
+   :download-count (-> snippet (html/select [:span.count--download]) first :content first formatted-str-to-num)})
 
 (defn-spec extract-addon-summary-list (s/or :ok ::sp/addon-summary-list, :error empty?)
   "returns a list of snippets extracted from a page of html"
   [html string?]
   (let [parsed (html/html-snippet html)]
     (map extract-addon-summary (html/select parsed [:ul.listing :li.project-list-item]))))
-
-;; TODO: move to utils
-(defn to-uri
-  [v]
-  (when-not (empty? v)
-    (-> v java.net.URI. str)))
-
-(defn suffix
-  [v sfx]
-  (when-not (empty? v)
-    (str v sfx)))
 
 (defn-spec expand-summary (s/or :ok ::sp/addon, :error nil?)
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
@@ -101,8 +96,6 @@
             :donation-uri (-> (html/select info-box [:div.infobox__actions :a.actions__donate]) first :attrs :href to-uri)})))
 
 ;;
-;;
-
 
 (defn-spec download-all-summaries-alphabetically (s/or :ok ::sp/addon-summary-list, :error nil?)
   []
@@ -128,7 +121,7 @@
           future-date? (= -1 (compare (clojure.instant/read-instant-date since-date)
                                       (clojure.instant/read-instant-date (:updated-date target-addon))))]
       (if future-date?
-      ;; loop until the dates we're seeing are in the past (compared to given date)
+        ;; loop until the dates we're seeing are in the past (compared to given date)
         (recur (inc page-n) (into accumulator results))
         (into accumulator results)))))
 
@@ -172,7 +165,6 @@
       (spit output-path (utils/to-json (download-recent-addon-summaries datestamp)))
       output-path)))
 
-;;
 ;;
 
 (st/instrument)

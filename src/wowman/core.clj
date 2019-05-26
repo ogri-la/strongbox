@@ -50,11 +50,10 @@
         etag-db-file (join data-dir "etag-db.json") ;; /home/$you/.local/share/wowman/etag-db.json
 
         curseforge-catalog (join data-dir "curseforge.json") ;; /home/$you/.local/share/wowman/cache/curseforge.json
-        curseforge-catalog-updates (join data-dir "catalog-updates.json") ;; todo: remove this intermediate file
+        curseforge-catalog-updates (join data-dir "curseforge-updates.json") ;; todo: remove this intermediate file
         wowinterface-catalog (join data-dir "wowinterface.json")
 
-        catalog curseforge-catalog
-        catalog-updates curseforge-catalog-updates
+        catalog (join data-dir "catalog.json")
 
         path-map {:config-dir config-dir
                   :data-dir data-dir
@@ -64,9 +63,9 @@
 
                   :catalog catalog
                   :remote-catalog "https://raw.githubusercontent.com/ogri-la/wowman-data/master/curseforge.json"
-                  :catalog-updates catalog-updates ;; todo: remove this intermediate file
 
                   :curseforge-catalog curseforge-catalog
+                  :curseforge-catalog-updates curseforge-catalog-updates
                   :wowinterface-catalog wowinterface-catalog}]
 
     (if (empty? path) path-map (get-in path-map path))))
