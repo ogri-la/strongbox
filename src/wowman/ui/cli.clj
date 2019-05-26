@@ -47,8 +47,7 @@
   [_]
   (action {:action :scrape-curseforge-catalog})
   (action {:action :scrape-wowinterface-catalog})
-  (let [addon-list (catalog/merge-catalogs (paths :curseforge-catalog) (paths :wowinterface-catalog))]
-    (utils/dump-json-file (paths :catalog) addon-list)))
+  (catalog/merge-catalogs (paths :catalog) (paths :curseforge-catalog) (paths :wowinterface-catalog)))
 
 (defmethod action :update-catalog
   [_]

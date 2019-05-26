@@ -1,5 +1,6 @@
 (ns wowman.specs
   (:require
+   [java-time]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
    [me.raynes.fs :as fs]))
@@ -17,7 +18,8 @@
 
 ;; a subset of addon attributes, just those that can be scraped from the listing pages
 (s/def ::addon-summary
-  (s/keys :req-un [::uri ::name ::label ::description ::category-list ::created-date ::updated-date ::download-count]))
+  (s/keys :req-un [::uri ::name ::label ::category-list ::updated-date ::download-count]
+          :opt [::description  ::created-date]))
 
 ;; complete description of an addon
 ;; everything we need in order to download an addon
@@ -78,8 +80,14 @@
                                 (clojure.instant/read-instant-date %)
                                 (catch RuntimeException e
                                   false))))
+(s/def ::ymd-dt (s/and string? #(try
+                                  (java-time/local-date %)
+                                  (catch RuntimeException e
+                                    false))))
 (s/def ::created-date ::inst)
 (s/def ::updated-date ::inst)
+(s/def ::catalog-created-date ::ymd-dt)
+(s/def ::catalog-updated-date ::ymd-dt)
 (s/def ::download-count pos-int?)
 (s/def ::donation-uri (s/nilable ::uri))
 (s/def ::json string?)

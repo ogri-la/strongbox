@@ -1,5 +1,6 @@
 (ns wowman.catalog
   (:require
+   [flatland.ordered.map :as omap]
    [slugify.core :refer [slugify]]
    [clojure.spec.alpha :as s]
    [orchestra.spec.test :as st]
@@ -32,16 +33,30 @@
   [dt]
   (java-time/zoned-date-time (get java-time.format/predefined-formatters "iso-zoned-date-time") dt))
 
+;;
+
+(defn-spec write-addon-file ::sp/extant-file
+  [output-file ::sp/file, addon-list ::sp/addon-summary-list, created-date ::sp/catalog-created-date, updated-date ::sp/catalog-updated-date]
+  (let [addon-list (mapv #(into (omap/ordered-map) (sort-by :name %)) (sort-by :name addon-list))]
+    (spit output-file (utils/to-json {:spec {:version 1}
+                                      :datestamp created-date
+                                      :updated-datestamp updated-date
+                                      :total (count addon-list)
+                                      :addon-summary-list addon-list}))
+    output-file))
+
+;;
+
 ;; todo: test this logic. it feels sound but also a quiet place for logic bugs to lurk
-(defn-spec merge-catalogs any?
-  [catalog-a ::sp/extant-file, catalog-b ::sp/extant-file]
+(defn-spec merge-catalogs ::sp/extant-file
+  [output-file ::sp/file, catalog-a ::sp/extant-file, catalog-b ::sp/extant-file]
   (let [aa (utils/load-json-file catalog-a)
         ab (utils/load-json-file catalog-b)
 
-        now (utils/datestamp-now-ymd)
-        catalog-created-date now
-        updated-date (first (sort [(:updated-date aa)
-                                   (:updated-date ab)]))
+        ;; should these two dates belong to the catalog proper or derived from the component catalogs?
+        ;; lets go with derived for now
+        created-date (first (sort [(:datestamp aa) (:datestamp ab)])) ;; earliest of the two catalogs
+        updated-date (last (sort [(:updated-datestamp aa) (:updated-datestamp ab)])) ;; most recent of the two catalogs
 
         addon-list (into (:addon-summary-list aa)
                          (:addon-summary-list ab))
@@ -106,8 +121,13 @@
                        (let [source (if-not (contains? a :description) :wowinterface :curseforge)
                              ;; an even more slugified label with hyphens and underscores removed
                              alt-name (-> a :label (slugify ""))]
-                         (merge a {:source (keyword source), :alt-name alt-name})))]
-    (mapv update-addon addon-list)))
+                         (merge a {:source (keyword source)
+                                   :alt-name alt-name
+                                   })))
+
+        addon-list (mapv update-addon addon-list)]
+
+    (write-addon-file output-file, addon-list, created-date, updated-date)))
 
 ;;
 
