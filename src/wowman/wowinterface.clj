@@ -1,7 +1,7 @@
 (ns wowman.wowinterface
   (:require
    [clojure.instant]
-   [clojure.string]
+   [clojure.string :refer [trim]]
    [clojure.set]
    [me.raynes.fs :as fs]
    [slugify.core :refer [slugify]]
@@ -13,7 +13,7 @@
     [utils :as utils]
     [http :as http]]
    [flatland.ordered.map :as omap]
-   [net.cgrand.enlive-html :as html]
+   [net.cgrand.enlive-html :as html :refer [html-snippet select]]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
    [java-time]
    [java-time.format]))
@@ -26,8 +26,8 @@
 
 (defn parse-category-list
   [category-page]
-  (let [snippet (html/html-snippet (http/download (str host category-page)))
-        cat-list (-> snippet (html/select [:div#colleft :div.subcats :div.subtitle :a]))
+  (let [snippet (-> host (str category-page) http/download html-snippet)
+        cat-list (-> snippet (select [:div#colleft :div.subcats :div.subtitle :a]))
         final-url (fn [href]
                     ;; converts the href that looks like '/downloads/cat19.html' to '/downloads/index.php?cid=19"
                     (let [page (fs/base-name href) ;; cat19.html
@@ -62,16 +62,16 @@
   [snippet]
   (try
     (let [extract-updated-date #(format-wowinterface-dt
-                                 (-> % (subs 8) clojure.string/trim)) ;; "Updated 09-07-18 01:27 PM " => "09-07-18 01:27 PM"
-          label (-> snippet (html/select [[:a (html/attr-contains :href "fileinfo")] html/content]) first clojure.string/trim)]
-      {:uri (extract-addon-uri (-> snippet (html/select [:a]) last))
+                                 (-> % (subs 8) trim)) ;; "Updated 09-07-18 01:27 PM " => "09-07-18 01:27 PM"
+          label (-> snippet (select [[:a (html/attr-contains :href "fileinfo")] html/content]) first trim)]
+      {:uri (extract-addon-uri (-> snippet (select [:a]) last))
        :name (-> label slugify)
        :label label
        ;;:description nil ;; not available in summary
        ;;:category-list [] ;; not available in summary, added by caller
        ;;:created-date nil ;; not available in summary
-       :updated-date (-> snippet (html/select [:div.updated html/content]) first extract-updated-date)
-       :download-count (-> snippet (html/select [:div.downloads html/content]) first (clojure.string/replace #"\D*" "") Integer.)})
+       :updated-date (-> snippet (select [:div.updated html/content]) first extract-updated-date)
+       :download-count (-> snippet (select [:div.downloads html/content]) first (clojure.string/replace #"\D*" "") Integer.)})
     (catch RuntimeException re
       (error re "failed to scrape snippet, excluding from results:" (utils/pprint snippet))
       nil)))
@@ -79,8 +79,8 @@
 (defn scrape-addon-page
   [category page-num]
   (let [url (clojure.string/replace (:url category) #"page=\d+" (str "page=" page-num))
-        page-content (-> url http/download html/html-snippet)
-        addon-list (-> page-content (html/select [:#filepage :div.file]))
+        page-content (-> url http/download html-snippet)
+        addon-list (-> page-content (select [:#filepage :div.file]))
         extractor (fn [snippet]
                     (assoc (extract-addon-summary snippet) :category-list #{(:label category)}))]
     (mapv extractor addon-list)))
@@ -93,9 +93,9 @@
     (if (some #{(:label category)} skippable)
       []
       (let [;; extract the number of results from the page navigation
-            page-content (-> category :url http/download html/html-snippet)
+            page-content (-> category :url http/download html-snippet)
             extractor (partial scrape-addon-page category)
-            page-nav (-> page-content (html/select [:.pagenav [:td.alt1 html/last-of-type] :a]))
+            page-nav (-> page-content (select [:.pagenav [:td.alt1 html/last-of-type] :a]))
             ;; just scrape first page if page-nav is empty (page already downloaded to scrape nav ;)
             page-count (if (empty? page-nav) 1 (-> page-nav first :attrs :href
                                                    (clojure.string/split #"=") last Integer.))
@@ -106,20 +106,20 @@
 (defn scrape-updates-page
   [page-n]
   (let [url (str host "latest.php?sb=lastupdate&so=desc&sh=full&pt=f&page=" page-n)
-        page-content (-> url http/download html/html-snippet)
-        rows (-> page-content (html/select [:div#innerpage :table.tborder :tr]) rest rest) ;; discard first two rows (nav and header)
+        page-content (-> url http/download html-snippet)
+        rows (-> page-content (select [:div#innerpage :table.tborder :tr]) rest rest) ;; discard first two rows (nav and header)
         rows (drop-last 7 rows) ;; and last 7 (more nav and search)
         extractor (fn [row]
-                    (let [label (-> row (html/select [:a html/content]) first clojure.string/trim) ;; two links in each row, we want the first one
-                          dt (-> row (html/select [:td]) (nth 5) (html/select [:div]) last :content)
-                          date (-> dt first clojure.string/trim)
+                    (let [label (-> row (select [:a html/content]) first trim) ;; two links in each row, we want the first one
+                          dt (-> row (select [:td]) (nth 5) (select [:div]) last :content)
+                          date (-> dt first trim)
                           time (-> dt second :content first)]
-                      {:uri (extract-addon-uri (-> row (html/select [:a]) first))
+                      {:uri (extract-addon-uri (-> row (select [:a]) first))
                        :name (slugify label)
                        :label label
                        :category-list #{} ;; known limitation. updates for wowinterface are missing their category
                        :updated-date (format-wowinterface-dt (str date " " time))
-                       :download-count (-> row (html/select [:td]) (nth 4) :content first (clojure.string/replace #"\D*" "") Integer.)}))]
+                       :download-count (-> row (select [:td]) (nth 4) :content first (clojure.string/replace #"\D*" "") Integer.)}))]
     (mapv extractor rows)))
 
 (defn -scrape-updates
