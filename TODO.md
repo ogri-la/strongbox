@@ -17,6 +17,77 @@ see CHANGELOG.md for a more formal list of changes by release
         - this looks like the ticket: https://www.wowinterface.com/downloads/latest.php
             - goes back several months
         - done
+    - single muxed 'catalog' of addons from different sources
+        - why provide multiple sources for addons?
+            - greater range of addons available to install
+            - users may prefer one source over another
+        - what is the extent of the overlap?
+            - join on :name and see
+        - two approaches:
+            - single list of addons with a :source attribute
+                - *probably* a lot of duplicates in search
+                    - won't know until I join on :name and see
+                - some might prefer the explicitness of seeing the two same addons side-by-side
+                    - you would see different download counts
+                    - two distinct links
+                    - you could remove the results of one in favour of the other
+                        - this would undermine providing a greater range of addons for users
+                        - could we discard only those results where multiple sources exist in favour of preferred?
+                            - this seems like an interesting optimisation we could add later
+                                - a drop down in search options: 
+                                    "just curseforge", "just wowinterface", "prefer curseforge", "prefer wowinterface"
+                                - preferring one source over another would see cases where multiple sources for a single addon has one elided
+                                - this list would grow quickly if we add many more sources ...
+                    - we *are* targetting a linux audience by the way
+                        - minimal hand holding
+                    - upgrade path to clojure's defrecord and would be straightforward
+            - grouped list where each addon may have multiple sources
+                - less noise in search results
+                    - but won't truly know until we join on :name and see
+                - would have to deal with:
+                    - user setting a preferred :source
+                        - do they care? 
+                    - merging the contents of the two
+                    - creating a policy of wowman preferring one :source over another
+                        - not just to download, but in which information to present to user
+                        - I don't really want to pick sides
+                - it may go against stated goals of:
+                    * be plain and uncomplicated
+                    * do the least surprising thing
+        - I think a single list with potential duplicates from different sources is the way to go for now
+        - how to merge catalogs into a single catalog
+            - :datetime-created becomes the date the catalog was muxed
+                - no, I decided it should be either completely-derived or completely new
+                - went with derived for now
+                - done
+            - :updated-date becomes the highest :updated-date of the two catalogs
+                - they should be very close anyway
+                - done
+            - every addon gets a :source attribute
+                - done
+            - remove the :altname from curseforge
+                - done
+            - add :altname and any other derived fields
+                - done
+            - exclude addons that haven't been updated in N years (2? 5?)
+                - I think this would be useful for the addons that overlap
+                - in some cases there are years of difference between updated dates between the two sources
+                    - after investigation:
+                        - curseforge is much more preferred than wowinterface for the 1178 addons that overlap
+                        - a value around ~360 minutes difference keep reappearing
+                            - I suspect the wowinterface datetime offset is +/- 6 hours
+                            - probably -6 as this would place it firmly in the US
+                                - but the value is +6, which is the middle east, so nfi
+                            - curseforge dt is constructed from a unix-time timestamp, which is UTC, so I trust that
+                - done
+                    - settled on 2 years difference between :updated-dates, removing about ~270 duplicates
+                    - this seems wide enough to consider one or the other abandoned and save us some noise
+                        - dropping down to 1 month removes about twice as many.
+            - generate rss/atom feeds?
+                - not in this release
+            - generate a database?
+                - not in this release
+        - done
 
 ### todo
 
@@ -28,19 +99,17 @@ see CHANGELOG.md for a more formal list of changes by release
     - this is affecting tests as well, as they're picking up on config outside of temp dirs
 * refactor, rename fs.clj to toc.clj
 * support for wowinterface.com
-    - see AbyssUI
-        - it disappeared from curseforge but showed up on wowinterface
-    - single muxed 'catalog' of addons from different sources
-        - catalog must include 'source' (wowinterface/curseforge)
-        - catalog must group the set of addons that overlap
-            - and then what? always download from the first? make the user pick their preferred source?
-                - it would suck to see a bunch of duplicate addons in the search results...
-            - I think we can hold off on grouping for this release. see how it goes
+    - fetch full addon data
+        - version
+        - download-uri
+    - download the wowinterface addon
     - change contents of 'go' column in installed+search fields
         - must be the value of :source above
 
 ## todo bucket
 
+* cache, make caching opt-out and remove all those ugly binding calls
+    - bind the value at core app start
 * windows support
     - eh. I figure I can do it with a VM. I just don't really wanna.
 * gui, search, deselect selected addons after successful installation
@@ -115,6 +184,7 @@ see CHANGELOG.md for a more formal list of changes by release
         - fresh install and
         - your network connection goes down, or
         - you're a victim of github's 99.999 uptime rating
+* allow user to specify their own catalog
 
 ## wontfix
 * gui, search pane, clear search button
