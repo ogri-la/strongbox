@@ -47,7 +47,8 @@
 
 (defn-spec write-addon-file ::sp/extant-file
   [output-file ::sp/file, addon-list ::sp/addon-summary-list, created-date ::sp/catalog-created-date, updated-date ::sp/catalog-updated-date]
-  (let [addon-list (mapv #(into (omap/ordered-map) (sort-by :name %)) (sort-by :name addon-list))]
+  (let [addon-list (mapv #(into (omap/ordered-map) (sort %))
+                         (sort-by :name addon-list))]
     (spit output-file (utils/to-json {:spec {:version 1}
                                       :datestamp created-date
                                       :updated-datestamp updated-date
@@ -137,11 +138,11 @@
                              dtobj (java-time/zoned-date-time (:updated-date a))
                              age-in-days (java-time/as (java-time/duration dtobj today) :days)
                              version-age (condp #(< %2 %1) age-in-days
-                                           7 :brand-new
-                                           14 :new
-                                           30 :recent
-                                           90 :aging
-                                           360 :old
+                                           7 :brand-new ;; < 1 week old
+                                           14 :new      ;; 1-2 weeks old
+                                           42 :recent   ;; 2-6 weeks old
+                                           168 :mature  ;; 6 weeks-6 months old (28*6)
+                                           504 :aging   ;; 6-18 months old (28*18)
                                            :ancient)
                              ]
                          (merge a {:source source ;; json serialisation will stringify this :(
