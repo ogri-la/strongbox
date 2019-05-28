@@ -86,7 +86,6 @@
         expected-first {:uri "https://www.curseforge.com/wow/addons/auto-toast"
                         :name "auto-toast"
                         :label "Achievement Broadcaster"
-                        :alt-name "achievementbroadcaster"
                         :description "Alert your friends when you ding, get an achivement, or get phat lewts!"
                         :category-list ["Chat & Communication" "Mail" "Quests & Leveling" "Achievements"]
                         :created-date "2010-07-15T20:55:54Z"
@@ -126,7 +125,6 @@
         expected '({:uri "https://www.curseforge.com/wow/addons/arl",
                     :name "arl"
                     :label "Ackis Recipe List"
-                    :alt-name "ackisrecipelist"
                     :description "Ackis Recipe List is an addon which will scan your trade skills and provide information..."
                     :category-list ["Data Export" "Professions"]
                     :updated-date "2017-08-29T23:43:00Z"
