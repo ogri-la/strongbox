@@ -15,23 +15,33 @@
     [curseforge :as curseforge]
     [wowinterface :as wowinterface]]))
 
-;; ... this feels like boilerplate. better way?
-;; curseforge/wowinterface won't be able to 'reach back' into catalog.clj ...
-
-(comment
-  (defmulti expand-addon-summary :source)
-
-  (defmethod expand-addon-summary :curseforge
-    [addon-summary]
-    (curseforge/expand-addon-summary addon-summary))
-
-  (defmethod expand-addon-summary :wowinterface
-    [addon-summary]
-    (wowinterface/expand-addon-summary addon-summary)))
-
 (defn todt
   [dt]
   (java-time/zoned-date-time (get java-time.format/predefined-formatters "iso-zoned-date-time") dt))
+
+(defn utcnow
+  []
+  (java-time/zoned-date-time (java-time/local-date-time) "UTC"))
+
+;;
+
+;; ... this feels like boilerplate. better way?
+;; curseforge/wowinterface won't be able to 'reach back' into catalog.clj ...
+
+(defmulti expand-summary (comp keyword :source))
+
+(defmethod expand-summary :curseforge
+  [addon-summary]
+  (curseforge/expand-summary addon-summary))
+
+(defmethod expand-summary :wowinterface
+  [addon-summary]
+  (warn "summary expansion not implemented for wowinterface yet!")
+  addon-summary)
+
+(defmethod expand-summary :default
+  [addon-summary]
+  (error "malformed addon-summary:" (utils/pprint addon-summary)))
 
 ;;
 
@@ -100,7 +110,9 @@
                                        neg? (java-time/negative? diff)
                                        diff-days (java-time/as diff :days)
                                        diff-days (if neg? (- diff-days) diff-days)
-                                       threshold (* 365 2) ;; two years
+                                       ;;threshold (* 365 2) ;; two years
+                                       ;;threshold (/ 366 2) ;; six-ish months
+                                       threshold 28 ;; 1 moonth. if an addon author hasn't updated both hosts within four weeks, then ...
                                        ]
                                    (if (> diff-days threshold)
                                      ;; if the diff is negative, that means B (curseforge) is older than A (wowinterface)
@@ -117,12 +129,24 @@
         addon-list (into addon-list filtered-group-addons)
         _ (info "final addon count" (count addon-list) (format "(%s survived duplicate pruning)" (count filtered-group-addons)))
 
+        today (utcnow)
         update-addon (fn [a]
                        (let [source (if-not (contains? a :description) :wowinterface :curseforge)
                              ;; an even more slugified label with hyphens and underscores removed
-                             alt-name (-> a :label (slugify ""))]
-                         (merge a {:source (keyword source)
+                             alt-name (-> a :label (slugify ""))
+                             dtobj (java-time/zoned-date-time (:updated-date a))
+                             age-in-days (java-time/as (java-time/duration dtobj today) :days)
+                             version-age (condp #(< %2 %1) age-in-days
+                                           7 :brand-new
+                                           14 :new
+                                           30 :recent
+                                           90 :aging
+                                           360 :old
+                                           :ancient)
+                             ]
+                         (merge a {:source source ;; json serialisation will stringify this :(
                                    :alt-name alt-name
+                                   :age version-age
                                    })))
 
         addon-list (mapv update-addon addon-list)]
