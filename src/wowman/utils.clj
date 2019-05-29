@@ -21,6 +21,11 @@
     [coerce :as coerce-time]
     [format :as format-time]]))
 
+(defn to-uri
+  [v]
+  (when-not (empty? v)
+    (-> v java.net.URI. str)))
+
 ;; todo: handy, but target for pruning.
 (defn detect-dt-formatting
   [dtstr]

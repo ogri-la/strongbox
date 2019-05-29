@@ -245,12 +245,12 @@
   [grid]
   (let [default-min-width 80 ;; solid default for all columns
         min-width-map {"WoW" 45
-                       "go" 100} ;; these can be a little smaller
+                       "go" 120} ;; these can be a little smaller
         max-width-map {"installed" 200
                        "available" 200
                        "updated" 100
                        "downloads" 100
-                       "go" 120}
+                       "go" 140}
         pre-width-map {"WoW" 50
                        "updated" 100}] ;; we would like these a little larger, if possible
     (doseq [column (.getColumns grid)]
@@ -293,7 +293,7 @@
 
     ;; lawdy dawdy this is awful. 
     (when (= column-name "go")
-      (.setHorizontalAlignment cell-renderer javax.swing.SwingConstants/CENTER))
+      (.setHorizontalAlignment cell-renderer javax.swing.SwingConstants/LEFT))
 
     nil))
 
@@ -339,7 +339,10 @@
                                      (.setCursor grid (cursor :hand))
                                      (.setCursor grid (cursor :default))))))
 
-        uri-renderer #(when % "<html><font color='blue'>↪ curseforge</font></html>")]
+        uri-renderer (fn [x]
+                       (when x
+                         (let [label (if (= (subs x 12 22) "curseforge") "curseforge" "wowinterface")]
+                           (str "<html><font color='blue'>&nbsp;↪ " label "</font></html>"))))]
 
     (ss/listen grid :mouse-motion hand-cursor-on-hover)
     (ss/listen grid :mouse-clicked go-link-clicked)
@@ -392,7 +395,9 @@
                                         (ss/invoke-now
                                          (if-let [idx (first (find-row-by-value grid "addon-id" (first unsteady)))]
                                            (select-one grid idx) ;; if the rows are hidden you won't be able to see it
-                                           (warn "failed to find value" (first unsteady) "in column 'addon-id'"))))))]
+                                           ;; downgrading to 'debug' for now as I only see it when installing new addons
+                                           ;; so if the addon is installed and we're seeing it, it's a BUG
+                                           (debug "failed to find value" (first unsteady) "in column 'addon-id'."))))))]
 
     ;; this is before render and before hiding and before user has had a chance to move or resize columns
     (installed-addons-panel-column-widths grid)

@@ -3,7 +3,7 @@
    [wowman
     [http :as http]
     [specs :as sp]
-    [utils :as utils :refer [to-int to-json fmap join from-epoch]]]
+    [utils :as utils :refer [to-int to-json fmap join from-epoch to-uri]]]
    [clj-time
     [core :as ct]
     [coerce :as cte]]
@@ -15,12 +15,6 @@
    [taoensso.timbre :as log :refer [debug info warn error spy]]))
 
 (def curseforge-host "https://www.curseforge.com")
-
-;; TODO: move to utils
-(defn to-uri
-  [v]
-  (when-not (empty? v)
-    (-> v java.net.URI. str)))
 
 (defn suffix
   [v sfx]

@@ -24,7 +24,8 @@
 ;; complete description of an addon
 ;; everything we need in order to download an addon
 (s/def ::addon
-  (s/merge ::addon-summary (s/keys :req-un [::version ::interface-version ::download-uri ::donation-uri])))
+  (s/merge ::addon-summary (s/keys :req-un [::version ::download-uri]
+                                   :opt [::donation-uri ::interface-version])))
 
 ;; .toc files live in the root of an addon and include the author's metadata about the addon
 ;; minimum needed to be scraped from a toc file

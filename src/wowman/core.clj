@@ -14,7 +14,7 @@
     [logging :as logging]
     [nfo :as nfo]
     [utils :as utils :refer [join not-empty? false-if-nil]]
-    [curseforge :as curseforge]
+    [catalog :as catalog]
     [fs]
     [specs :as sp]]))
 
@@ -62,7 +62,7 @@
                   :etag-db-file etag-db-file
 
                   :catalog catalog
-                  :remote-catalog "https://raw.githubusercontent.com/ogri-la/wowman-data/master/curseforge.json"
+                  :remote-catalog "https://raw.githubusercontent.com/ogri-la/wowman-data/master/catalog.json"
 
                   :curseforge-catalog curseforge-catalog
                   :curseforge-catalog-updates curseforge-catalog-updates
@@ -454,7 +454,7 @@
 (defn expand-summary-wrapper
   [addon-summary]
   (binding [http/*cache* (cache)]
-    (let [wrapper (affects-addon-wrapper curseforge/expand-summary)]
+    (let [wrapper (affects-addon-wrapper catalog/expand-summary)]
       (wrapper addon-summary))))
 
 ;;

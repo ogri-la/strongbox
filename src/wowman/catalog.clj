@@ -36,8 +36,7 @@
 
 (defmethod expand-summary :wowinterface
   [addon-summary]
-  (warn "summary expansion not implemented for wowinterface yet!")
-  addon-summary)
+  (wowinterface/expand-summary addon-summary))
 
 (defmethod expand-summary :default
   [addon-summary]
@@ -144,11 +143,12 @@
                                            168 :mature  ;; 6 weeks-6 months old (28*6)
                                            504 :aging   ;; 6-18 months old (28*18)
                                            :ancient)
+
+                             ;; todo: normalise categories here
                              ]
                          (merge a {:source source ;; json serialisation will stringify this :(
                                    :alt-name alt-name
-                                   :age version-age
-                                   })))
+                                   :age version-age})))
 
         addon-list (mapv update-addon addon-list)]
 

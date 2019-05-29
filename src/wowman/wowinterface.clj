@@ -10,7 +10,7 @@
    [orchestra.core :refer [defn-spec]]
    [wowman
     [specs :as sp]
-    [utils :as utils]
+    [utils :as utils :refer [to-uri]]
     [http :as http]]
    [flatland.ordered.map :as omap]
    [net.cgrand.enlive-html :as html :refer [html-snippet select]]
@@ -23,6 +23,45 @@
 (def category-pages {"cat23.html" "Stand-Alone addons"
                      "cat39.html" "Class & Role Specific"
                      "cat109.html" "Info, Plug-in Bars"})
+
+(defn format-wowinterface-dt
+  "formats a shitty US-style m/d/y date with a shitty 12 hour time component and no timezone
+  into a glorious RFC3399 formatted UTC string"
+  [dt]
+  (let [dt (java-time/local-date-time "MM-dd-yy hh:mm a" dt) ;; "09-07-18 01:27 PM" => obj with no tz
+        ;; no tz info available on site, assume utc
+        dt-utc (java-time/zoned-date-time dt "UTC") ;; obj with no tz => utc obj
+        fmt (get java-time.format/predefined-formatters "iso-offset-date-time")]
+    (java-time/format fmt dt-utc)))
+
+;;
+
+(defn-spec expand-summary (s/or :ok ::sp/addon, :error nil?)
+  "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
+  [addon-summary ::sp/addon-summary]
+  (let [message (str "downloading summary data: " (:name addon-summary))
+        addon-id (-> addon-summary :uri (clojure.string/replace #"\D*" "")) ;; https://.../info21651 => 21651
+        detail-html (-> addon-summary :uri http/download html-snippet)
+        version (-> detail-html (select [:#author :#version html/content]) first (subs (count "Version: ")))
+
+        ;; fun fact: download-uri can be almost anything. for example "https://cdn.wowinterface.com/downloads/file<addon-id>/whatever.zip" works
+        ;; we'll play nicely though, and use it as intended
+        slugified-label (-> addon-summary :label (slugify "_"))
+        download-uri (format "https://cdn.wowinterface.com/downloads/file%s/%s-%s.zip" addon-id slugified-label version)
+
+        ;; only available on addons that support the current wow version (I think?)
+        ;; which means with the next release the value will disappear unless we hold on to it? urgh.
+        ;; at least it's available from the toc file
+        iface-version (some-> detail-html (select [:#patch :abbr html/content]) first utils/game-version-to-interface-version)
+        iface-version (when iface-version {:interface-version iface-version})
+
+        updates {:download-uri download-uri
+                 :version version
+                 ;;:donation-uri ;; not available in any structured or consistent way :(
+                 }]
+    (merge addon-summary updates iface-version)))
+
+;;
 
 (defn parse-category-list
   [category-page]
@@ -42,16 +81,6 @@
                      :url (-> cat :attrs :href final-url)})]
     (debug (format "%s categories found" (count cat-list)))
     (mapv extractor cat-list)))
-
-(defn format-wowinterface-dt
-  "formats a shitty US-style m/d/y date with a shitty 12 hour time component and no timezone
-  into a glorious RFC3399 formatted UTC string"
-  [dt]
-  (let [dt (java-time/local-date-time "MM-dd-yy hh:mm a" dt) ;; "09-07-18 01:27 PM" => obj with no tz
-        ;; no tz info available on site, assume utc
-        dt-utc (java-time/zoned-date-time dt "UTC") ;; obj with no tz => utc obj
-        fmt (get java-time.format/predefined-formatters "iso-offset-date-time")]
-    (java-time/format fmt dt-utc)))
 
 (defn extract-addon-uri
   [a]
@@ -177,5 +206,7 @@
                                       :total (count addon-list)
                                       :addon-summary-list addon-list}))
     output-path))
+
+;;
 
 (st/instrument)
