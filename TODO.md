@@ -10,6 +10,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * refuse to run as the root user
     - done
+* add new field 'age' to an addon
+    - done
 * support wowinterface.com
     - addon data scraped and available in wowman-data
         - done
@@ -88,7 +90,13 @@ see CHANGELOG.md for a more formal list of changes by release
             - generate a database?
                 - not in this release
         - done
-
+    - fetch full addon data (expand-summary)
+        - done
+    - download the wowinterface addon
+        - done
+    - change contents of 'go' column in installed+search fields
+        - must be the value of :source above
+        - done
 ### todo
 
 * handling loading of bad json files better
@@ -99,15 +107,37 @@ see CHANGELOG.md for a more formal list of changes by release
     - this is affecting tests as well, as they're picking up on config outside of temp dirs
 * refactor, rename fs.clj to toc.clj
 * support for wowinterface.com
-    - fetch full addon data
-        - version
-        - download-uri
-    - download the wowinterface addon
-    - change contents of 'go' column in installed+search fields
-        - must be the value of :source above
+    - when installing an addon, set the source of the addon
+    - when matching addons 
+        - we never had multiple :name joins before with curseforge, now we have 2k+ of them
+        - when loading a .wowman.json file, we need to add a :source with "curseforge" if :source is missing
+            - we'll use this when matching the installed addon to the catalog
+            - this will help me avoid preferring one host over another
+                - or matching an older version of an addon on one catalog with that in another
 
 ## todo bucket
 
+* normalise catagories between addons that overlap 
+* better handling of shitty addons
+    - below addons are known to be mangled/corrupt/shit in some way
+        * "99 bottles of beer", wowinterface
+            - extracts to Interface/Addons/
+        * "!Borders", "!Pager", wowinterface
+            - have top-level folder "__MACOSX"
+        * "-ractionbuttonstyle-luna"
+            - has top-level folder "media"
+        * "Desdinova BGArt", wowinterface
+            - has no .toc file
+    - all of the above can be 'fixed' by looking for a .toc file in the top level directories
+        - if *any* top level directory has no .toc file, refuse to install addon
+    - another potential cause of shittiness is top-level files
+        - same logic applies. refuse to install addon if top-level *files* exist
+* automatically exclude 'ancient' addons from search results
+    - these are addons that haven't been updated in ~18 months
+        - wowinterface has a lot of them
+* group search results?
+    - group by downloads/age/category?
+        - it would finally be the best use for category data
 * cache, make caching opt-out and remove all those ugly binding calls
     - bind the value at core app start
 * windows support
