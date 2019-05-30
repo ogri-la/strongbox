@@ -16,7 +16,10 @@
     :list - lists all installed addons
     :list-updates - lists all installed addons with updates available
     :update-all - updates all installed addons with updates available"
-  :action)
+  (fn [x]
+    (cond
+      (map? x) (:action x)
+      (keyword? x) x)))
 
 (defmethod action :scrape-wowinterface-catalog
   [_]
@@ -43,16 +46,21 @@
       (curseforge/update-addon-summary-file (paths :addon-summary-file)
                                             (paths :addon-summary-updates-file)))))
 
+(defmethod action :merge-catalog
+  [_]
+  (catalog/merge-catalogs (paths :catalog) (paths :curseforge-catalog) (paths :wowinterface-catalog)))
+
 (defmethod action :scrape-catalog
   [_]
-  (action {:action :scrape-curseforge-catalog})
-  (action {:action :scrape-wowinterface-catalog})
-  (catalog/merge-catalogs (paths :catalog) (paths :curseforge-catalog) (paths :wowinterface-catalog)))
+  (action :scrape-curseforge-catalog)
+  (action :scrape-wowinterface-catalog)
+  (action :merge-catalog))
 
 (defmethod action :update-catalog
   [_]
-  (action {:action :update-curseforge-catalog})
-  (action {:action :update-wowinterface-catalog}))
+  (action :update-curseforge-catalog)
+  (action :update-wowinterface-catalog)
+  (action :merge-catalog))
 
 (defmethod action :list
   [_]
@@ -72,7 +80,7 @@
 (defmethod action :update-all
   [_]
   (core/install-update-all)
-  (action {:action :list-updates}))
+  (action :list-updates))
 
 (defmethod action :default
   [opts]
