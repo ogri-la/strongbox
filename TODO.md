@@ -97,6 +97,19 @@ see CHANGELOG.md for a more formal list of changes by release
     - change contents of 'go' column in installed+search fields
         - must be the value of :source above
         - done
+    - when matching addons 
+        - we never had multiple :name joins before with curseforge, now we have 2k+ of them
+        - when loading a .wowman.json file, we need to add a :source with "curseforge" if :source is missing
+            - we'll use this when matching the installed addon to the catalog
+            - this will help me avoid preferring one host over another
+                - or matching an older version of an addon on one catalog with that in another
+            - nothing can be done to avoid a preference when matching unknown addons against the catalog
+                - except perhaps randomising the addon picked.
+                - I prefer deterministic results though
+        - done
+    - when installing an addon, set the source of the addon
+    - done
+
 ### todo
 
 * handling loading of bad json files better
@@ -106,14 +119,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - I just realised. 
     - this is affecting tests as well, as they're picking up on config outside of temp dirs
 * refactor, rename fs.clj to toc.clj
-* support for wowinterface.com
-    - when installing an addon, set the source of the addon
-    - when matching addons 
-        - we never had multiple :name joins before with curseforge, now we have 2k+ of them
-        - when loading a .wowman.json file, we need to add a :source with "curseforge" if :source is missing
-            - we'll use this when matching the installed addon to the catalog
-            - this will help me avoid preferring one host over another
-                - or matching an older version of an addon on one catalog with that in another
 
 ## todo bucket
 
