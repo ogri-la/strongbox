@@ -371,6 +371,11 @@
   ;; merges left->right. catalog-addon overwrites installed-addon, ':matched' overwrites catalog-addon, etc
   (merge installed-addon catalog-addon {:matched? true}))
 
+(defn source-from-group-id
+  [addon-summary]
+  (when-let [uri (:group-id addon-summary)]
+    (-> uri java.net.URI. .getHost (clojure.string/split #"\.") second)))
+
 (defn -match-installed-addons-with-catalog
   "for each installed addon, search the catalog across multiple joins until a match is found."
   [installed-addon-list catalog]
@@ -378,27 +383,61 @@
         ;; most -> least desirable match
         match-on [[:alias :name] [:name :name] [:name :alt-name] [:label :label] [:dirname :label]]
 
-        idx-idx (into {} (mapv (fn [[toc-key catalog-key]]
-                                 {catalog-key (utils/idx catalog catalog-key)}) match-on))
+        ;; split the catalog into it's source parts (curseforge, wowinterface)
+        catalog-source-idx (group-by :source catalog)
+
+        ;; split each source catalog into multiple indicies (:name, :alt-name, etc)
+        idx-idx-fn (fn [source catalog-source]
+                     (info "building index for" source)
+                     (into {} (mapv (fn [[toc-key catalog-key]]
+                                      {catalog-key (utils/idx catalog-source catalog-key)}) match-on)))
+
+        ;; idx-idx-idx is a structure that resembles this:
+        ;; {"curseforge" {:name {"addon-name-1" {:name "addon-name-1" ...}
+        ;;                       "addon-name-2" {:name "addon-name-2" ...}
+        ;;                       ...}
+        ;;                :alt-name {"addonname1" {:name "addon-name-1" ...}
+        ;;                           "addonname2" {:name "addon-name-2" ...}
+        ;;                           ...}
+        ;;                :label {"Addon Name 1" {:name "addon-name-1" ...}
+        ;;                        "Addon Name 2" {:name "addon-name-2" ...}
+        ;;                        ...}}
+        ;; "wowinterface" {...}}
+        idx-idx-idx (utils/fmap idx-idx-fn catalog-source-idx)
 
         finder (fn [installed-addon]
-                 (let [-finder (fn [[toc-key catalog-key]]
-                                 (let [idx (get idx-idx catalog-key)
-                                       key (get installed-addon toc-key)
-                                       match (get idx key)]
-                                   (debug (format "checking %s=>%s for %s" toc-key catalog-key (:name installed-addon)))
+                 (let [;; figure out where this addon was installed from
+                       source (or
+                               (:source installed-addon) ;; perfect case
+                               (source-from-group-id installed-addon))
 
-                                   (when match
-                                     ;; {:idx [:name :alt-name], :key "deadly-boss-mods", :match {...}, ...}
-                                     {:idx [toc-key catalog-key]
-                                      :key key
-                                      :installed-addon installed-addon
-                                      :match match
-                                      :final (moosh-addons installed-addon match)})))
+                       ;; if we can't figure out where the addon came from, search all sources for a match
+                       source-list (sort ;; alphabetically, curseforge will come first
+                                    (if (nil? source)
+                                      (keys idx-idx-idx)
+                                      [source]))
+
+                       -finder (fn [source]
+                                 (mapv (fn [[toc-key catalog-key]]
+                                         (let [catalog (get idx-idx-idx source)
+                                               idx (get catalog catalog-key)
+                                               key (get installed-addon toc-key)
+                                               match (get idx key)]
+                                           ;; "checking wowinterface :alias=>:name for AdiBags"
+                                           (debug (format "checking %s %s=>%s for %s" source toc-key catalog-key (:name installed-addon)))
+
+                                           (when match
+                                             ;; {:idx [:name :alt-name], :key "deadly-boss-mods", :match {...}, ...}
+                                             {:idx [toc-key catalog-key]
+                                              :key key
+                                              :installed-addon installed-addon
+                                              :match match
+                                              :final (moosh-addons installed-addon match)}))) match-on))
 
                        ;; clojure has peculiar laziness rules and this will actually visit *all* of the `match-on` pairs
                        ;; see chunking: http://clojure-doc.org/articles/language/laziness.html
-                       match (first (remove nil? (map -finder match-on)))]
+
+                       match (first (remove nil? (flatten (map -finder source-list))))]
 
                    (if match match {:installed-addon installed-addon})))]
 
