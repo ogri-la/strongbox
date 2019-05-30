@@ -388,7 +388,7 @@
 
         ;; split each source catalog into multiple indicies (:name, :alt-name, etc)
         idx-idx-fn (fn [source catalog-source]
-                     (info "building index for" source)
+                     (debug "building index for" source)
                      (into {} (mapv (fn [[toc-key catalog-key]]
                                       {catalog-key (utils/idx catalog-source catalog-key)}) match-on)))
 
