@@ -64,7 +64,9 @@
         ab (utils/load-json-file wowinterface-catalog)
 
         ;; at time of writing, wowinterface has 5 pairs of duplicate addons with slightly different labels
-        ;; for each pair we'll pick the most recently updated
+        ;; for each pair we'll pick the most recently updated.
+        ;; these pairs *may* get picked up and filtered out further down when comparing merged catalogs, depending on threshold
+        ;; this is 80% sanity check, 20% correctness
         de-dupe-wowinterface (mapv (fn [[_ group-list]]
                                      (if (> (count group-list) 1)
                                        (do
