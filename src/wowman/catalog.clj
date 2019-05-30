@@ -59,14 +59,20 @@
 
 ;; todo: test this logic. it feels sound but also a quiet place for logic bugs to lurk
 (defn-spec merge-catalogs ::sp/extant-file
-  [output-file ::sp/file, catalog-a ::sp/extant-file, catalog-b ::sp/extant-file]
-  (let [aa (utils/load-json-file catalog-a)
-        ab (utils/load-json-file catalog-b)
+  [output-file ::sp/file, curseforge-catalog ::sp/extant-file, wowinterface-catalog ::sp/extant-file]
+  (let [aa (utils/load-json-file curseforge-catalog)
+        ab (utils/load-json-file wowinterface-catalog)
 
-        ;; should these two dates belong to the catalog proper or derived from the component catalogs?
-        ;; lets go with derived for now
-        created-date (first (sort [(:datestamp aa) (:datestamp ab)])) ;; earliest of the two catalogs
-        updated-date (last (sort [(:updated-datestamp aa) (:updated-datestamp ab)])) ;; most recent of the two catalogs
+        ;; at time of writing, wowinterface has 5 pairs of duplicate addons with slightly different labels
+        ;; for each pair we'll pick the most recently updated
+        de-dupe-wowinterface (mapv (fn [[_ group-list]]
+                                     (if (> (count group-list) 1)
+                                       (do
+                                         (warn "wowinterface: multiple addons slugify to the same :name" (utils/pprint group-list))
+                                         (last (sort-by :updated-date group-list)))
+                                       (first group-list)))
+                                   (group-by :name (:addon-summary-list ab)))
+        ab (assoc ab :addon-summary-list de-dupe-wowinterface)
 
         addon-list (into (:addon-summary-list aa)
                          (:addon-summary-list ab))
@@ -87,7 +93,7 @@
         addon-list (remove #(some #{(:name %)} multiple-sources-key-set) addon-list)
         ;;_ (info "addons sans multiples:" (count addon-list))
 
-        ;; when there is a very large gap between updated-dates (2yrs), drop one addon in favour of the other
+        ;; when there is a very large gap between updated-dates, drop one addon in favour of the other
         ;; at time of writing:
         ;; - filtering for > 2 years removes  231 of the 2356 addons overlapping, leaving 2125 addons appearing in both catalogs
         ;; - filtering for > 1 year removes   338 of the 2356 addons overlapping, leaving 2018 addons appearing in both catalogs
@@ -103,7 +109,7 @@
                                    ;; update: definitely the case after checking the duplicates within wowinterface.
                                    (error "addon has more than 2 entries in group:" (:name (first group-list)) (count group-list)))
 
-                                 (let [[aa ab] (take 2 (sort-by #(-> % :description count) group-list))
+                                 (let [[aa ab] (take 2 (sort-by #(-> % :description count) group-list)) ;; :description is nil for wowinterface
                                        adt (todt (:updated-date aa)) ;; wowinterface
                                        bdt (todt (:updated-date ab)) ;; curseforge (probably)
                                        diff (java-time/duration adt bdt)
@@ -112,7 +118,7 @@
                                        diff-days (if neg? (- diff-days) diff-days)
                                        ;;threshold (* 365 2) ;; two years
                                        ;;threshold (/ 366 2) ;; six-ish months
-                                       threshold 28 ;; 1 moonth. if an addon author hasn't updated both hosts within four weeks, then ...
+                                       threshold 28 ;; 1 moonth. if an addon author hasn't updated both hosts within four weeks, then one is preferred over the other
                                        ]
                                    (if (> diff-days threshold)
                                      ;; if the diff is negative, that means B (curseforge) is older than A (wowinterface)
@@ -121,7 +127,6 @@
                                        [ab])
                                      [aa ab])))
                                multiple-sources)
-
         filtered-group-addons (flatten drop-some-addons)
         _ (info "duplicate addons pruned after filtering for age:" (- (count (flatten (vals multiple-sources)))
                                                                       (count filtered-group-addons)))
@@ -149,8 +154,13 @@
                          (merge a {:source source ;; json serialisation will stringify this :(
                                    :alt-name alt-name
                                    :age version-age})))
+        addon-list (mapv update-addon addon-list)
 
-        addon-list (mapv update-addon addon-list)]
+        ;; should these two dates belong to the catalog proper or derived from the component catalogs?
+        ;; lets go with derived for now
+        created-date (first (sort [(:datestamp aa) (:datestamp ab)])) ;; earliest of the two catalogs
+        updated-date (last (sort [(:updated-datestamp aa) (:updated-datestamp ab)]))] ;; most recent of the two catalogs
+
 
     (write-addon-file output-file, addon-list, created-date, updated-date)))
 
