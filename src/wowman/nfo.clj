@@ -22,7 +22,7 @@
    :name (:name addon) ;; normalised name, used to match to online addon
    :group-id (:uri addon) ;; groups all of an addon's directories together
    :primary? primary? ;; if addon is one of multiple addons, is this addon considered the primary one?
-   })
+   :source (:source addon)})
 
 (defn-spec nfo-path ::sp/file
   [install-dir ::sp/extant-dir, dirname string?]
