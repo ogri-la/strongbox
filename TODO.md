@@ -109,6 +109,8 @@ see CHANGELOG.md for a more formal list of changes by release
         - done
     - when installing an addon, set the source of the addon
     - done
+* refactor, rename fs.clj to toc.clj
+    - done
 
 ### todo
 
@@ -118,10 +120,14 @@ see CHANGELOG.md for a more formal list of changes by release
 * cli, data path is now broken after moving to XDG paths
     - I just realised. 
     - this is affecting tests as well, as they're picking up on config outside of temp dirs
-* refactor, rename fs.clj to toc.clj
 
 ## todo bucket
 
+* backups
+    - wowman is strictly an addon manager, not an auxillary WoW manager
+        - I won't be backing up screenshots or addon state or anything like that
+    - wowman could maintain a simple list of addons to restore
+        - it might tie in with the 'export' function below
 * normalise catagories between addons that overlap 
 * better handling of shitty addons
     - below addons are known to be mangled/corrupt/shit in some way
