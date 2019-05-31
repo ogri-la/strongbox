@@ -15,7 +15,7 @@
     [nfo :as nfo]
     [utils :as utils :refer [join not-empty? false-if-nil]]
     [catalog :as catalog]
-    [fs]
+    [toc]
     [specs :as sp]]))
 
 (defn colours
@@ -346,7 +346,7 @@
   []
   (when-let [install-dir (get-state :cfg :install-dir)]
     (info "(re)loading installed addons:" install-dir)
-    (update-installed-addon-list! (wowman.fs/installed-addons install-dir))))
+    (update-installed-addon-list! (wowman.toc/installed-addons install-dir))))
 
 ;;
 ;; addon summaries
@@ -672,7 +672,7 @@
   []
   (let [top-50 (take 50 (sort-by :download-count > (get-state :addon-summary-list)))
         _ (mapv #(-> % expand-summary-wrapper (install-addon-guard (get-state :cfg :install-dir))) top-50)
-        ia (wowman.fs/installed-addons (get-state :cfg :install-dir))]
+        ia (wowman.toc/installed-addons (get-state :cfg :install-dir))]
     (mapv (fn [r] {(:name r) (if (:group-addons r) (mapv :label (:group-addons r)) [(:label r)])}) ia)))
 
 ;;

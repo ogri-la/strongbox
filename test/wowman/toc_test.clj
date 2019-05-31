@@ -1,7 +1,7 @@
-(ns wowman.fs-test
+(ns wowman.toc-test
   (:require
    [clojure.test :refer [deftest testing is use-fixtures]]
-   [wowman.fs]
+   [wowman.toc]
    [wowman.utils :refer [join]]
    [me.raynes.fs :as fs]))
 
@@ -61,7 +61,7 @@ SomeAddon.lua")
 
                     :over "written" ;; duplicate attributes are overwritten
                     }]
-      (is (= expected (wowman.fs/-read-toc-file toc-file-contents)))))
+      (is (= expected (wowman.toc/-read-toc-file toc-file-contents)))))
 
   (testing "parsing of scraped toc-file key-vals"
     (let [expected {:name "addon-name"
@@ -71,4 +71,4 @@ SomeAddon.lua")
                     :interface-version 80000
                     :installed-version "1.6.1"}]
 
-      (is (= expected (wowman.fs/parse-addon-toc (addon-path)))))))
+      (is (= expected (wowman.toc/parse-addon-toc (addon-path)))))))

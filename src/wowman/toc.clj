@@ -1,4 +1,4 @@
-(ns wowman.fs
+(ns wowman.toc
   (:refer-clojure :rename {replace clj-replace})
   (:require
    [wowman
