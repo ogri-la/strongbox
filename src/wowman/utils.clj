@@ -43,6 +43,10 @@
   [x]
   (if (nil? x) false x))
 
+(defn nil-if-false
+  [x]
+  (if (false? x) nil x))
+
 (defn pprint
   [x]
   (with-out-str (clojure.pprint/pprint x)))
@@ -137,9 +141,30 @@
   (json/generate-stream data (clojure.java.io/writer path) {:pretty true})
   path)
 
-(defn-spec load-json-file ::sp/anything
+(defn-spec load-json-file (s/or :ok ::sp/anything, :error nil?)
   [path ::sp/extant-file]
-  (clojure.data.json/read (clojure.java.io/reader path), :key-fn keyword))
+  (try
+    (clojure.data.json/read (clojure.java.io/reader path), :key-fn keyword)
+    (catch Exception e
+      (warn e (format "failed to read data \"%s\" in file: %s" (.getMessage e) path)))))
+
+(defn call-if-fn
+  [x]
+  (if (fn? x) (x) x))
+
+(defn load-json-file-safely
+  "loads json file at given path with handling for common error cases (no file, bad data, invalid data)
+  if :invalid-data? given, then a :data-spec must also be given else nothing happens and you get nil back"
+  [path & {:keys [no-file? bad-data? invalid-data? data-spec]}]
+  (if-not (fs/file? path)
+    (call-if-fn no-file?)
+    (let [data (load-json-file path)]
+      (cond
+        (not data) (call-if-fn bad-data?)
+        (and ;; both are present AND data is invalid
+         (and invalid-data? data-spec)
+         (not (s/valid? data-spec data))) (call-if-fn invalid-data?)
+        :else data))))
 
 (defn-spec to-int (s/or :ok int? :error nil?)
   [x any?]

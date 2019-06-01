@@ -108,17 +108,21 @@ see CHANGELOG.md for a more formal list of changes by release
                 - I prefer deterministic results though
         - done
     - when installing an addon, set the source of the addon
-    - done
+        - done
+    - all done
 * refactor, rename fs.clj to toc.clj
     - done
-
-### todo
-
 * handling loading of bad json files better
     - empty and malformed json files just error out
         - a simple warning and a default could prevent this
+    - done
+        - handling present for "no-file", "bad-data" and "invalid-data"
+        - several (not all) cases now handled
+
+### todo
+
 * cli, data path is now broken after moving to XDG paths
-    - I just realised. 
+    - I just realised.
     - this is affecting tests as well, as they're picking up on config outside of temp dirs
 
 ## todo bucket
@@ -128,7 +132,7 @@ see CHANGELOG.md for a more formal list of changes by release
         - I won't be backing up screenshots or addon state or anything like that
     - wowman could maintain a simple list of addons to restore
         - it might tie in with the 'export' function below
-* normalise catagories between addons that overlap 
+* catalog, normalise catagories between addons that overlap 
 * better handling of shitty addons
     - below addons are known to be mangled/corrupt/shit in some way
         * "99 bottles of beer", wowinterface
@@ -140,7 +144,7 @@ see CHANGELOG.md for a more formal list of changes by release
         * "Desdinova BGArt", wowinterface
             - has no .toc file
     - all of the above can be 'fixed' by looking for a .toc file in the top level directories
-        - if *any* top level directory has no .toc file, refuse to install addon
+        - if *any* top level directory is missing a .toc file, refuse to install addon
     - another potential cause of shittiness is top-level files
         - same logic applies. refuse to install addon if top-level *files* exist
 * automatically exclude 'ancient' addons from search results

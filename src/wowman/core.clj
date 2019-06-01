@@ -199,9 +199,9 @@
    (when-not (fs/exists? (paths :cfg-file))
      (warn "configuration file not found: " (paths :cfg-file)))
 
-   (let [file-opts (if (fs/exists? (paths :cfg-file)) (utils/load-json-file (paths :cfg-file)) {})
+   (let [file-opts (utils/load-json-file-safely (paths :cfg-file) :no-file? {} :bad-data? {})
          cfg (configure file-opts cli-opts)
-         etag-db (if (fs/exists? (paths :etag-db-file)) (utils/load-json-file (paths :etag-db-file)) {})
+         etag-db (utils/load-json-file-safely (paths :etag-db-file) :no-file? {} :bad-data? {})
          new-state {:cfg cfg, :cli-opts cli-opts, :file-opts file-opts, :etag-db etag-db}]
      (swap! state merge new-state)
      (when (:verbosity cli-opts)
@@ -362,7 +362,7 @@
   []
   (download-catalog)
   (info "loading addon summaries from catalog:" (paths :catalog))
-  (let [{:keys [addon-summary-list]} (utils/load-json-file (paths :catalog))]
+  (let [{:keys [addon-summary-list]} (utils/load-json-file-safely (paths :catalog) :bad-data? {:addon-summary-list {}})]
     (swap! state assoc :addon-summary-list addon-summary-list)
     nil))
 

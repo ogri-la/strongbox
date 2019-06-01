@@ -39,7 +39,7 @@
 (defmethod action :update-curseforge-catalog
   [_]
   (binding [http/*cache* (core/cache)]
-    (let [{since :datestamp} (utils/load-json-file (paths :addon-summary-file))]
+    (when-let [{since :datestamp} (utils/load-json-file (paths :addon-summary-file))]
       ;; download any updates to a file
       (curseforge/download-all-addon-summary-updates since (paths :addon-summary-updates-file))
       ;; merge those updates with the main summary file
