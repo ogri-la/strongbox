@@ -1,8 +1,26 @@
 (ns wowman.core-test
   (:require
+   [clojure.string :refer [starts-with? ends-with?]]
    [clojure.test :refer [deftest testing is use-fixtures]]
    [wowman
     [core :as core]]))
+
+(deftest paths
+  (testing "all path keys are using suffix"
+    (doseq [key (keys (core/paths))]
+      (is (some #{"dir" "file" "uri"} (clojure.string/split (name key) #"\-")))))
+
+  (testing "all paths to files and directories are absolute"
+    (let [files+dirs (filter (fn [[k v]] (or (ends-with? k "-dir")
+                                             (ends-with? k "-file")))
+                             (core/paths))]
+      (doseq [[key path] files+dirs]
+        (is (-> path (starts-with? "/")) (format "path %s is not absolute: %s" key path)))))
+
+  (testing "all remote paths are using https"
+    (let [remote-paths (filter (fn [[k v]] (ends-with? k "-uri")) (core/paths))]
+      (doseq [[key path] remote-paths]
+        (is (-> path (starts-with? "https://")) (format "remote path %s is not using HTTPS: %s" key path))))))
 
 (deftest determine-primary-subdir
   (testing "basic failure cases"

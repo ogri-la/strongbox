@@ -24,17 +24,17 @@
 (defmethod action :scrape-wowinterface-catalog
   [_]
   (binding [http/*cache* (core/cache)]
-    (wowinterface/scrape (paths :wowinterface-catalog))))
+    (wowinterface/scrape (paths :wowinterface-catalog-file))))
 
 (defmethod action :update-wowinterface-catalog
   [_]
   (binding [http/*cache* (core/cache)]
-    (wowinterface/scrape-updates (paths :wowinterface-catalog))))
+    (wowinterface/scrape-updates (paths :wowinterface-catalog-file))))
 
 (defmethod action :scrape-curseforge-catalog
   [_]
   (binding [http/*cache* (core/cache)]
-    (curseforge/download-all-addon-summaries (paths :curseforge-catalog))))
+    (curseforge/download-all-addon-summaries (paths :curseforge-catalog-file))))
 
 (defmethod action :update-curseforge-catalog
   [_]
@@ -48,7 +48,7 @@
 
 (defmethod action :merge-catalog
   [_]
-  (catalog/merge-catalogs (paths :catalog) (paths :curseforge-catalog) (paths :wowinterface-catalog)))
+  (catalog/merge-catalogs (paths :catalog-file) (paths :curseforge-catalog-file) (paths :wowinterface-catalog-file)))
 
 (defmethod action :scrape-catalog
   [_]

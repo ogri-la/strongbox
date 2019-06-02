@@ -36,7 +36,8 @@
   :main wowman.main
 
   :plugins [[lein-cljfmt "0.6.4"]
-            [jonase/eastwood "0.3.5"]]
+            [jonase/eastwood "0.3.5"]
+            [lein-cloverage "1.1.1"]]
   :eastwood {:exclude-linters [:constant-test]
              :add-linters [:unused-namespaces
                            ;;:unused-locals :unused-fn-args ;; too many false positives to always be enabled

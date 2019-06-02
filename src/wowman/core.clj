@@ -13,22 +13,21 @@
     [http :as http]
     [logging :as logging]
     [nfo :as nfo]
-    [utils :as utils :refer [join not-empty? false-if-nil]]
+    [utils :as utils :refer [join not-empty? false-if-nil nav-map nav-map-fn]]
     [catalog :as catalog]
     [toc]
     [specs :as sp]]))
 
-(defn colours
-  [& path]
-  (let [colour-map {:notice/error :tomato
-                    :notice/warning :lemonchiffon
-                    ;;:installed/unmatched :tomato
-                    :installed/needs-updating :lemonchiffon
-                    :installed/hovering "#e6e6e6"
-                    :search/already-installed "#99bc6b"}] ;; greenish
-    (if-not (empty? path)
-      (get-in colour-map path)
-      colour-map)))
+(def -colour-map
+  {:notice/error :tomato
+   :notice/warning :lemonchiffon
+   ;;:installed/unmatched :tomato
+   :installed/needs-updating :lemonchiffon
+   :installed/hovering "#e6e6e6"
+   :search/already-installed "#99bc6b"} ;; greenish
+  )
+
+(def colours (utils/nav-map-fn -colour-map))
 
 (defn paths
   "returns a map of paths whose location may vary depending on the location of the current working directory"
@@ -55,20 +54,20 @@
 
         catalog (join data-dir "catalog.json")
 
+        ;; ensure path ends with `-file` or `-dir` or `-uri`
         path-map {:config-dir config-dir
                   :data-dir data-dir
                   :cache-dir cache-dir
                   :cfg-file cfg-file
                   :etag-db-file etag-db-file
 
-                  :catalog catalog
-                  :remote-catalog "https://raw.githubusercontent.com/ogri-la/wowman-data/master/catalog.json"
+                  :catalog-file catalog
+                  :remote-catalog-uri "https://raw.githubusercontent.com/ogri-la/wowman-data/master/catalog.json"
 
-                  :curseforge-catalog curseforge-catalog
-                  :curseforge-catalog-updates curseforge-catalog-updates
-                  :wowinterface-catalog wowinterface-catalog}]
-
-    (if (empty? path) path-map (get-in path-map path))))
+                  :curseforge-catalog-file curseforge-catalog
+                  :curseforge-catalog-updates-file curseforge-catalog-updates ;; todo, remove
+                  :wowinterface-catalog-file wowinterface-catalog}]
+    (nav-map path-map path)))
 
 (def -state-template
   {:cleanup []
@@ -113,7 +112,7 @@
   "returns the state map of the value at the given path within the map, if path provided"
   [& path]
   (if-let [state @state]
-    (if (empty? path) state (get-in state path))
+    (nav-map state path)
     (AssertionError. "application must be `start`ed before state may be accessed.")))
 
 (defn set-etag
@@ -356,13 +355,13 @@
   "downloads catalog to expected location, nothing more"
   []
   (binding [http/*cache* (cache)]
-    (http/download-file (paths :remote-catalog) (paths :catalog))))
+    (http/download-file (paths :remote-catalog-uri) (paths :catalog-file))))
 
 (defn-spec load-addon-summaries nil?
   []
   (download-catalog)
-  (info "loading addon summaries from catalog:" (paths :catalog))
-  (let [{:keys [addon-summary-list]} (utils/load-json-file-safely (paths :catalog) :bad-data? {:addon-summary-list {}})]
+  (info "loading addon summaries from catalog:" (paths :catalog-file))
+  (let [{:keys [addon-summary-list]} (utils/load-json-file-safely (paths :catalog-file) :bad-data? {:addon-summary-list {}})]
     (swap! state assoc :addon-summary-list addon-summary-list)
     nil))
 

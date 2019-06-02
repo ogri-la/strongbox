@@ -21,6 +21,30 @@
     [coerce :as coerce-time]
     [format :as format-time]]))
 
+(comment
+  (defn ensure
+    "wraps `assert` but fails on `nil` or `false` rather than passing on `true`. a message is required"
+    [x message]
+    (if (or (nil? x)
+            (false? x))
+      (AssertionError. message)
+      x)))
+
+(defn nav-map
+  "wrapper around `get-in` that returns the map as-is if given `path` is empty"
+  [m path]
+  (if (empty? path)
+    m
+    ;; temporary, to shake out any bad lookups in state
+    ;;(ensure (get-in m path) (str "path does not exist: " (clojure.string/join ", " path)))))
+    (get-in m path)))
+
+(defn-spec nav-map-fn fn?
+  "given a map `m`, returns a function that accepts an optional path of keywords into that map"
+  [m map?]
+  (fn [& path]
+    (nav-map m path)))
+
 (defn to-uri
   [v]
   (when-not (empty? v)
