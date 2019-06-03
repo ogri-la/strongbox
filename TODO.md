@@ -82,8 +82,8 @@ see CHANGELOG.md for a more formal list of changes by release
                                 - but the value is +6, which is the middle east, so nfi
                             - curseforge dt is constructed from a unix-time timestamp, which is UTC, so I trust that
                 - done
-                    - settled on 2 years difference between :updated-dates, removing about ~270 duplicates
-                    - this seems wide enough to consider one or the other abandoned and save us some noise
+                    - settled on ~2 years~ 4 weeks difference between :updated-dates, removing about ~270~ 471 duplicates
+                    - this seems wide enough to consider one or the other as preferred by the author and save us some noise
                         - dropping down to 1 month removes about twice as many.
             - generate rss/atom feeds?
                 - not in this release
@@ -112,7 +112,7 @@ see CHANGELOG.md for a more formal list of changes by release
     - all done
 * refactor, rename fs.clj to toc.clj
     - done
-* handling loading of bad json files better
+* handle loading of bad json files better
     - empty and malformed json files just error out
         - a simple warning and a default could prevent this
     - done
@@ -127,12 +127,24 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
-* backups
-    - wowman is strictly an addon manager, not an auxillary WoW manager
-        - I won't be backing up screenshots or addon state or anything like that
-    - wowman could maintain a simple list of addons to restore
-        - it might tie in with the 'export' function below
-* catalog, normalise catagories between addons that overlap 
+* consolidate date/time wrangling logic around one library, please
+* updates to catalog via travis
+    - sources have their latest updates scraped daily
+    - sources are completely scraped weekly
+    - can Travis commit to the same repository that it's testing?
+        - won't that mess with triggers?
+    - catalog.json becomes a build artifact and a 'release'
+        - but we replace the release daily rather than accumulate them
+* testing, capture metrics with an eye to improving performance and speed
+    - we have coverage metrics now
+    - would like some timing around certain operations, like loading the catalog
+        - identify slow things and measure their improvement
+* code quality, we're sorely lacking in tests and test coverage metrics
+    - I've added cloverage to get some coverage feedback
+    - average coverage is 53%
+    - raising that to 60% initially seems like a good goal with 80% or 90% as a stretch
+* cache, make caching opt-out and remove all those ugly binding calls
+    - bind the value at core app start
 * better handling of shitty addons
     - below addons are known to be mangled/corrupt/shit in some way
         * "99 bottles of beer", wowinterface
@@ -147,14 +159,18 @@ see CHANGELOG.md for a more formal list of changes by release
         - if *any* top level directory is missing a .toc file, refuse to install addon
     - another potential cause of shittiness is top-level files
         - same logic applies. refuse to install addon if top-level *files* exist
+* backups
+    - wowman is strictly an addon manager, not an auxillary WoW manager
+        - I won't be backing up screenshots or addon state or anything like that
+    - wowman could maintain a simple list of addons to restore
+        - it might tie in with the 'export' function below
+* catalog, normalise catagories between addons that overlap 
 * automatically exclude 'ancient' addons from search results
     - these are addons that haven't been updated in ~18 months
         - wowinterface has a lot of them
 * group search results?
     - group by downloads/age/category?
         - it would finally be the best use for category data
-* cache, make caching opt-out and remove all those ugly binding calls
-    - bind the value at core app start
 * windows support
     - eh. I figure I can do it with a VM. I just don't really wanna.
 * gui, search, deselect selected addons after successful installation
@@ -174,7 +190,6 @@ see CHANGELOG.md for a more formal list of changes by release
         - these are the most common and versatile
     - friendly text and html formats
         - who on earth would use such a thing? and is it worth the added complexity?
-* code quality, we're sorely lacking in tests and test coverage metrics
 * move away from this merging toc/addon/expanded addon data strategy
     - it's confusing to debug!
     - namespaced keys might be a good alternative:
@@ -209,9 +224,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * cli, colours!
 * gui, both panes, filter by categories
 * gui, pagination controls in search pane
-* gui, feature, install addon from local zipfile
-    - *not* the 'reinstallation' feature, but literally selecting a zipfile from somewhere and installing it
-    - would be good for installing older versions of an addon?
 * gui, scroll tabs with mouse
 * gui, search, order by date only orders the *current page* of results
 * addon 'detail' tab
@@ -219,7 +231,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - donation url
     - other addons by author ?
     - list the hidden/sub dependencies
-* testing, capture metrics with an eye to improving performance and speed
 * issue a warning when addons unpack directories that don't share a common prefix
     - this would hopefully alert users that some shitty addons are being sneakily installed, like SlideBar or Stubby
         - we could go one further and filter/prompt the user if they actually want to unpack these directories
@@ -232,6 +243,13 @@ see CHANGELOG.md for a more formal list of changes by release
 * allow user to specify their own catalog
 
 ## wontfix
+* gui, feature, install addon from local zipfile
+    - *not* the 'reinstallation' feature, but literally selecting a zipfile from somewhere and installing it
+    - would be good for installing older versions of an addon?
+    - would be good for installing addons from unsupported sources
+        - wouldn't be able to update it however :(
+        - I think I'll stick with supporting sources of addons 
+            - rather than enabling ad-hoc installation of unsupported addons
 * gui, search pane, clear search button
     - I don't think this is necessary anymore
 * bug, 'whoa thick frames' is reporting a version number of '0.9.zip'
