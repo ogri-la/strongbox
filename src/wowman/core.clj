@@ -9,6 +9,7 @@
    [spec-tools.core :as spec-tools]
    [me.raynes.fs :as fs]
    [trptcolin.versioneer.core :as versioneer]
+   [envvar.core :refer [env]]
    [wowman
     [http :as http]
     [logging :as logging]
@@ -34,10 +35,10 @@
   [& path]
   (let [;; https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
         ;; ignoring XDG_CONFIG_DIRS and XDG_DATA_DIRS for now
-        config-dir (or (System/getenv "XDG_CONFIG_HOME") "~/.config/wowman")
+        config-dir (or (:xdg-config-home @env) "~/.config/wowman")
         config-dir (-> config-dir fs/expand-home fs/normalized fs/absolute str)
 
-        data-dir (or (System/getenv "XDG_DATA_HOME") "~/.local/share/wowman")
+        data-dir (or (:xdg-data-home @env) "~/.local/share/wowman")
         data-dir (-> data-dir fs/expand-home fs/normalized fs/absolute str)
 
         ;; cache files are deleted regularly. even if you fuck up with "XDG_DATA_HOME=/" then the worse that

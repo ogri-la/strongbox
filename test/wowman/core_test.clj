@@ -2,6 +2,7 @@
   (:require
    [clojure.string :refer [starts-with? ends-with?]]
    [clojure.test :refer [deftest testing is use-fixtures]]
+   [envvar.core :refer [with-env]]
    [wowman
     [core :as core]]))
 
@@ -20,7 +21,12 @@
   (testing "all remote paths are using https"
     (let [remote-paths (filter (fn [[k v]] (ends-with? k "-uri")) (core/paths))]
       (doseq [[key path] remote-paths]
-        (is (-> path (starts-with? "https://")) (format "remote path %s is not using HTTPS: %s" key path))))))
+        (is (-> path (starts-with? "https://")) (format "remote path %s is not using HTTPS: %s" key path)))))
+
+  (testing "XDG data paths can be overridden with environment variables"
+    (with-env [:xdg-data-home "/foo", :xdg-config-home "/bar"]
+      (is (= "/foo" (:data-dir (core/paths))))
+      (is (= "/bar" (:config-dir (core/paths)))))))
 
 (deftest determine-primary-subdir
   (testing "basic failure cases"

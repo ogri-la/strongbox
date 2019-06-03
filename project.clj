@@ -28,7 +28,7 @@
                  ;; remember to update pom file (`lein pom`)
 
                  [clojure.java-time "0.3.2"] ;; yet-another java date/time handling library. to replace clj-time
-
+                 [envvar "1.1.0"] ;; environment variable wrangling
                  ]
 
   :profiles {:uberjar {:aot :all}}
