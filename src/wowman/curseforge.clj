@@ -7,6 +7,7 @@
    [clj-time
     [core :as ct]
     [coerce :as cte]]
+   [slugify.core :refer [slugify]]
    [flatland.ordered.map :as omap]
    [clojure.spec.alpha :as s]
    [orchestra.spec.test :as st]
@@ -56,15 +57,20 @@
 (defn-spec extract-addon-summary ::sp/addon-summary
   "converts a snippet of html extracted from a page into an ::sp/addon-summary"
   [snippet map?]
-  {:uri (str curseforge-host (-> snippet (html/select [:div.list-item__details :a]) first :attrs :href))
-   :name (-> snippet (html/select [:div.list-item__details :a]) first :attrs :href (clojure.string/split #"/") last)
-   :label (-> snippet (html/select [:h2]) first :content first clojure.string/trim)
-   :description (-> snippet (html/select [:div.list-item__description :p]) first :content first)
-   :category-list (mapv #(-> % :attrs :title)
-                        (-> snippet (html/select [:div.list-item__categories :a.category__item])))
-   :created-date (-> snippet (html/select [:span.date--created :abbr]) first :attrs :data-epoch Integer. from-epoch)
-   :updated-date (-> snippet (html/select [:span.date--updated :abbr]) first :attrs :data-epoch Integer. from-epoch)
-   :download-count (-> snippet (html/select [:span.count--download]) first :content first formatted-str-to-num)})
+  (let [label (-> snippet (html/select [:h2]) first :content first clojure.string/trim)]
+    {:uri (str curseforge-host (-> snippet (html/select [:div.list-item__details :a]) first :attrs :href))
+     :name (-> snippet (html/select [:div.list-item__details :a]) first :attrs :href (clojure.string/split #"/") last)
+     :label label
+     :description (-> snippet (html/select [:div.list-item__description :p]) first :content first)
+     :category-list (mapv #(-> % :attrs :title)
+                          (-> snippet (html/select [:div.list-item__categories :a.category__item])))
+     :created-date (-> snippet (html/select [:span.date--created :abbr]) first :attrs :data-epoch Integer. from-epoch)
+     :updated-date (-> snippet (html/select [:span.date--updated :abbr]) first :attrs :data-epoch Integer. from-epoch)
+     :download-count (-> snippet (html/select [:span.count--download]) first :content first formatted-str-to-num)
+
+     ;; deprecated, to be removed from curseforge catalog in 8.0
+     ;; is now part of catalog generation 
+     :alt-name (-> label (slugify ""))}))
 
 (defn-spec extract-addon-summary-list (s/or :ok ::sp/addon-summary-list, :error empty?)
   "returns a list of snippets extracted from a page of html"
