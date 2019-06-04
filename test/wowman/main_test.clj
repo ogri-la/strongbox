@@ -1,20 +1,24 @@
 (ns wowman.main-test
   (:require
+   [envvar.core :refer [env with-env]]
    [clojure.test :refer [deftest testing is use-fixtures]]
    [taoensso.timbre :as timbre :refer [debug info warn error spy]]
    [me.raynes.fs :as fs]
    [wowman
+    [utils :refer [join]]
     [main :as main]]))
 
 (defn tempcwd-fixture
   "each test is executed in a new location (accessible as fs/*cwd*)"
   [f]
   (let [temp-dir-path (fs/temp-dir "wowman.main-test.")]
-    (fs/with-cwd temp-dir-path
-      (debug "created temp working directory" fs/*cwd*)
-      (f)
-      (debug "destroying temp working directory" fs/*cwd*) ;; "with contents" (vec (file-seq fs/*cwd*)))
-      (fs/delete-dir temp-dir-path))))
+    (with-env [:xdg-data-home (join temp-dir-path "data")
+               :xdg-config-home (join temp-dir-path "config")]
+      (fs/with-cwd temp-dir-path
+        (debug "created temp working directory" fs/*cwd*)
+        (f)
+        (debug "destroying temp working directory" fs/*cwd*) ;; "with contents" (vec (file-seq fs/*cwd*)))
+        (fs/delete-dir temp-dir-path)))))
 
 (use-fixtures :each tempcwd-fixture)
 
