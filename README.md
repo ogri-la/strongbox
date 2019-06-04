@@ -42,11 +42,11 @@ First time usage:
 
 1. select your "Addons" directory (`/path/to/WoW/_retail_/Interface/Addons`)
 2. from the `Addons` menu select `Re-install all` to automatically re-install all **matching** addons
-3. addons that are not automatically matched can be searched for and installed from the `search` tab
+3. addons that are **not** automatically matched can be searched for and installed from the `search` tab
 4. finally, addons can be deleted by selecting them, right-clicking, and selecting `delete`. Multiple addons can be 
 selected and removed at once.
 
-Afterwards, daily usage is simply using the `Update all` button to update any addons with newer versions. 
+Afterwards, simply use the `Update all` button to update all addons with new versions available. 
 Addons with new versions available will be highlighted.
 
 ## Recognition
