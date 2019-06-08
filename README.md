@@ -18,7 +18,7 @@ It may work on other platforms but it is only tested and supported on Linux.
 
 ## Installation
 
-1. [download the jar](https://github.com/ogri-la/wowman/releases/download/0.6.0/wowman-0.6.0-standalone.jar) file
+1. [download the jar](https://github.com/ogri-la/wowman/releases/download/0.7.0/wowman-0.7.0-standalone.jar) file
 2. run with `java -jar wowman-x.x.x-standalone.jar`
 
 ### Arch Linux users
@@ -67,7 +67,7 @@ This software also tries very hard to:
 I benefit so much from the hard work of those who write free and open source software, including addon developers, 
 that it's my privilege to offer this small piece back.
 
-[![wowman version 0.5.0](screenshot-0.5.0-thumbnail.jpg)](screenshot-0.5.0.png?raw=true)
+[![wowman version 0.7.0](screenshot-0.7.0-installed-thumbnail.jpg)](screenshot-0.7.0-installed.png?raw=true) [![wowman version 0.7.0](screenshot-0.7.0-search-thumbnail.jpg)](screenshot-0.7.0-search.png?raw=true)
 
 ## Notes
 
