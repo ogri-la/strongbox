@@ -685,3 +685,6 @@ If you modify this Program, or any covered work, by linking or combining it with
 * clj-time
 * trptcolin/versioneer
 * org.flatland/ordered
+* clojure.java-time
+* envvar
+* clj-http-fake

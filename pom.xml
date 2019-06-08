@@ -3,7 +3,7 @@
   <groupId>ogri-la</groupId>
   <artifactId>wowman</artifactId>
   <packaging>jar</packaging>
-  <version>0.6.0</version>
+  <version>0.7.0</version>
   <name>wowman</name>
   <description>World Of Warcraft Addon Manager</description>
   <url>http://github.com/ogri-la/wowman</url>
@@ -17,7 +17,7 @@
     <url>https://github.com/ogri-la/wowman</url>
     <connection>scm:git:git://github.com/ogri-la/wowman.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/ogri-la/wowman.git</developerConnection>
-    <tag>36fc0630bcfe0361b84abb36670415154b656bdd</tag>
+    <tag>9b36761558d39200027950f55b8080a8d352bc1b</tag>
   </scm>
   <build>
     <sourceDirectory>src</sourceDirectory>
@@ -69,18 +69,13 @@
     </dependency>
     <dependency>
       <groupId>org.clojure</groupId>
-      <artifactId>core.async</artifactId>
-      <version>0.4.474</version>
-    </dependency>
-    <dependency>
-      <groupId>org.clojure</groupId>
       <artifactId>spec.alpha</artifactId>
       <version>0.2.176</version>
     </dependency>
     <dependency>
       <groupId>org.clojure</groupId>
       <artifactId>tools.cli</artifactId>
-      <version>0.4.1</version>
+      <version>0.4.2</version>
     </dependency>
     <dependency>
       <groupId>org.clojure</groupId>
@@ -105,7 +100,7 @@
     <dependency>
       <groupId>metosin</groupId>
       <artifactId>spec-tools</artifactId>
-      <version>0.9.0</version>
+      <version>0.9.2</version>
       <exclusions>
         <exclusion>
           <artifactId>jackson-core</artifactId>
@@ -126,7 +121,7 @@
     <dependency>
       <groupId>clj-http</groupId>
       <artifactId>clj-http</artifactId>
-      <version>3.8.0</version>
+      <version>3.10.0</version>
     </dependency>
     <dependency>
       <groupId>cheshire</groupId>
@@ -162,6 +157,21 @@
       <groupId>org.flatland</groupId>
       <artifactId>ordered</artifactId>
       <version>1.5.2</version>
+    </dependency>
+    <dependency>
+      <groupId>clojure.java-time</groupId>
+      <artifactId>clojure.java-time</artifactId>
+      <version>0.3.2</version>
+    </dependency>
+    <dependency>
+      <groupId>envvar</groupId>
+      <artifactId>envvar</artifactId>
+      <version>1.1.0</version>
+    </dependency>
+    <dependency>
+      <groupId>clj-http-fake</groupId>
+      <artifactId>clj-http-fake</artifactId>
+      <version>1.0.3</version>
     </dependency>
   </dependencies>
 </project>

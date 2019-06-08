@@ -2,9 +2,11 @@
   (:require
    [taoensso.timbre :as timbre :refer [spy info]]
    [wowman
+    [catalog :as catalog]
     [http :as http]
     [utils :as utils]
     [curseforge :as curseforge]
+    [wowinterface :as wowinterface]
     [core :as core :refer [get-state paths]]]))
 
 (defmulti action
@@ -14,22 +16,51 @@
     :list - lists all installed addons
     :list-updates - lists all installed addons with updates available
     :update-all - updates all installed addons with updates available"
-  :action)
+  (fn [x]
+    (cond
+      (map? x) (:action x)
+      (keyword? x) x)))
 
-(defmethod action :scrape-addon-list
+(defmethod action :scrape-wowinterface-catalog
   [_]
   (binding [http/*cache* (core/cache)]
-    (curseforge/download-all-addon-summaries (paths :addon-summary-file))))
+    (wowinterface/scrape (paths :wowinterface-catalog-file))))
 
-(defmethod action :update-addon-list
+(defmethod action :update-wowinterface-catalog
   [_]
   (binding [http/*cache* (core/cache)]
-    (let [{since :datestamp} (utils/load-json-file (paths :addon-summary-file))]
+    (wowinterface/scrape-updates (paths :wowinterface-catalog-file))))
+
+(defmethod action :scrape-curseforge-catalog
+  [_]
+  (binding [http/*cache* (core/cache)]
+    (curseforge/download-all-addon-summaries (paths :curseforge-catalog-file))))
+
+(defmethod action :update-curseforge-catalog
+  [_]
+  (binding [http/*cache* (core/cache)]
+    (when-let [{since :datestamp} (utils/load-json-file (paths :addon-summary-file))]
       ;; download any updates to a file
       (curseforge/download-all-addon-summary-updates since (paths :addon-summary-updates-file))
       ;; merge those updates with the main summary file
       (curseforge/update-addon-summary-file (paths :addon-summary-file)
                                             (paths :addon-summary-updates-file)))))
+
+(defmethod action :merge-catalog
+  [_]
+  (catalog/merge-catalogs (paths :catalog-file) (paths :curseforge-catalog-file) (paths :wowinterface-catalog-file)))
+
+(defmethod action :scrape-catalog
+  [_]
+  (action :scrape-curseforge-catalog)
+  (action :scrape-wowinterface-catalog)
+  (action :merge-catalog))
+
+(defmethod action :update-catalog
+  [_]
+  (action :update-curseforge-catalog)
+  (action :update-wowinterface-catalog)
+  (action :merge-catalog))
 
 (defmethod action :list
   [_]
@@ -49,7 +80,7 @@
 (defmethod action :update-all
   [_]
   (core/install-update-all)
-  (action {:action :list-updates}))
+  (action :list-updates))
 
 (defmethod action :default
   [opts]

@@ -1,12 +1,11 @@
 (ns wowman.ui.gui
   (:require
    [wowman
-    [core :as core :refer [get-state state-bind state-binds colours]]
+    [core :as core :refer [get-state state-bind colours]]
     [logging :as logging]
     [specs :as sp]
     [utils :as utils :refer [items]]]
    [clojure.instant]
-   [clojure.core.async :as async]
    [clojure.string :refer [lower-case starts-with? trim]]
    [slugify.core :refer [slugify]]
    [taoensso.timbre :as timbre :refer [debug info warn error spy]]
@@ -86,7 +85,7 @@
   [& fl]
   (fn [_]
     (doseq [f fl]
-      (async/go (f)))))
+      (future (f)))))
 
 (defn selected-rows-handler
   "calls given `f` with last event when selection has stopped adjusting"
@@ -246,12 +245,12 @@
   [grid]
   (let [default-min-width 80 ;; solid default for all columns
         min-width-map {"WoW" 45
-                       "go" 100} ;; these can be a little smaller
+                       "go" 120} ;; these can be a little smaller
         max-width-map {"installed" 200
                        "available" 200
                        "updated" 100
                        "downloads" 100
-                       "go" 120}
+                       "go" 140}
         pre-width-map {"WoW" 50
                        "updated" 100}] ;; we would like these a little larger, if possible
     (doseq [column (.getColumns grid)]
@@ -294,7 +293,7 @@
 
     ;; lawdy dawdy this is awful. 
     (when (= column-name "go")
-      (.setHorizontalAlignment cell-renderer javax.swing.SwingConstants/CENTER))
+      (.setHorizontalAlignment cell-renderer javax.swing.SwingConstants/LEFT))
 
     nil))
 
@@ -340,7 +339,10 @@
                                      (.setCursor grid (cursor :hand))
                                      (.setCursor grid (cursor :default))))))
 
-        uri-renderer #(when % "<html><font color='blue'>↪ curseforge</font></html>")]
+        uri-renderer (fn [x]
+                       (when x
+                         (let [label (if (= (subs x 12 22) "curseforge") "curseforge" "wowinterface")]
+                           (str "<html><font color='blue'>&nbsp;↪ " label "</font></html>"))))]
 
     (ss/listen grid :mouse-motion hand-cursor-on-hover)
     (ss/listen grid :mouse-clicked go-link-clicked)
@@ -393,7 +395,9 @@
                                         (ss/invoke-now
                                          (if-let [idx (first (find-row-by-value grid "addon-id" (first unsteady)))]
                                            (select-one grid idx) ;; if the rows are hidden you won't be able to see it
-                                           (warn "failed to find value" (first unsteady) "in column 'addon-id'"))))))]
+                                           ;; downgrading to 'debug' for now as I only see it when installing new addons
+                                           ;; so if the addon is installed and we're seeing it, it's a BUG
+                                           (debug "failed to find value" (first unsteady) "in column 'addon-id'."))))))]
 
     ;; this is before render and before hiding and before user has had a chance to move or resize columns
     (installed-addons-panel-column-widths grid)
@@ -488,7 +492,8 @@
     (add-highlighter grid addon-installed? (colours :search/already-installed))
 
     (ss/listen grid :selection (selected-rows-handler search-results-selection-handler))
-    (state-binds [[:addon-summary-list] [:search-field-input]] update-rows-fn)
+    (state-bind [:addon-summary-list] update-rows-fn)
+    (state-bind [:search-field-input] update-rows-fn)
     (ss/scrollable grid)))
 
 (defn search-panel
@@ -514,16 +519,18 @@
         _ (.setHorizontalAlignment cell-renderer javax.swing.SwingConstants/CENTER)
 
         level-width 50
-        level-col (doto (.getColumn (.getColumnModel grid) 0)
-                    (.setMinWidth level-width)
-                    (.setMaxWidth (* level-width 2))
-                    (.setPreferredWidth (* level-width 1.5))
-                    (.setCellRenderer cell-renderer))]
+        level-col-idx 0]
+
+    (doto (.getColumn (.getColumnModel grid) level-col-idx)
+      (.setMinWidth level-width)
+      (.setMaxWidth (* level-width 2))
+      (.setPreferredWidth (* level-width 1.5))
+      (.setCellRenderer cell-renderer))
 
     (logging/add-appender :gui gui-logger {:timestamp-opts {:pattern "HH:mm:ss"}})
 
-    (add-highlighter grid #(= (.getValue % 0) :warn) (colours :notice/warning))
-    (add-highlighter grid #(= (.getValue % 0) :error) (colours :notice/error))
+    (add-highlighter grid #(= (.getValue % level-col-idx) :warn) (colours :notice/warning))
+    (add-highlighter grid #(= (.getValue % level-col-idx) :error) (colours :notice/error))
 
     ;; hide header when not debugging
     (when-not (core/debugging?)
@@ -582,7 +589,7 @@
                                         ["debug,flowy"]
                                         ["flowy"])
                          :items [[root "height 100%, width 100%:100%:100%"]])
-               :on-close :dispose)
+               :on-close (if (utils/in-repl?) :dispose :exit)) ;; exit app entirely when not in repl
 
         file-menu (items
                    (ss/action :name "Installed" :key "menu I" :mnemonic "i" :handler (switch-tab-handler INSTALLED-TAB))
@@ -613,7 +620,7 @@
 
         init (fn [_]
                ;; prevents an empty grey screen from appearing while addon summaries are downloaded
-               (async/go (core/refresh))
+               (future (core/refresh))
                _)]
 
     (ss/invoke-later

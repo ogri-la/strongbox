@@ -22,7 +22,7 @@
    :name (:name addon) ;; normalised name, used to match to online addon
    :group-id (:uri addon) ;; groups all of an addon's directories together
    :primary? primary? ;; if addon is one of multiple addons, is this addon considered the primary one?
-   })
+   :source (:source addon)})
 
 (defn-spec nfo-path ::sp/file
   [install-dir ::sp/extant-dir, dirname string?]
@@ -34,14 +34,18 @@
     (utils/dump-json-file path (derive addon primary?))
     path))
 
+(defn-spec rm-nfo nil?
+  [path ::sp/extant-file]
+  (when (clojure.string/ends-with? path ".wowman.json")
+    (fs/delete path)
+    nil))
+
 (defn-spec read-nfo (s/or :ok ::sp/nfo, :error nil?)
+  "reads the .wowman.json file. 
+  failure to load the json results in the file being deleted. 
+  failure to validate the json data results in the file being deleted."
   [install-dir ::sp/extant-dir, dirname string?]
-  (try
-    (let [path (nfo-path install-dir dirname)]
-      (when (fs/exists? path)
-        (let [nfo (utils/load-json-file path)]
-          (if (s/valid? ::sp/nfo nfo)
-            nfo
-            (error (format "invalid .wowman.json file, skipping: %s" path))))))
-    (catch Exception e
-      (error "unhandled exception attempting to read .wowman.json file: " (str e)))))
+  (let [path (nfo-path install-dir dirname)
+        bad-data (fn [] (warn "bad data, deleting file:" path) (rm-nfo path))
+        invalid-data (fn [] (warn "invalid data, deleting file:" path) (rm-nfo path))]
+    (utils/load-json-file-safely path :bad-data? bad-data, :invalid-data? invalid-data, :data-spec ::sp/nfo)))

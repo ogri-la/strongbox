@@ -43,10 +43,14 @@
   (start cli-opts))
 
 (defn test
-  []
+  [& [path]]
   (clojure.tools.namespace.repl/refresh) ;; reloads all namespaces, including wowman.whatever-test ones
   (logging/change-log-level :debug)
-  (clojure.test/run-all-tests #"wowman\..*-test"))
+  (if path
+    (if (some #{path} [:core :http :main :toc :utils :curseforge])
+      (clojure.test/run-all-tests (re-pattern (str "wowman." (name path) "-test")))
+      (error "unknown test file:" path))
+    (clojure.test/run-all-tests #"wowman\..*-test")))
 
 ;;
 
@@ -55,6 +59,13 @@
   (str "Usage: ./wowman [--action] [--addons-dir]\n\n" (:summary parsed-opts)))
 
 ;;
+
+(def catalog-actions
+  #{:scrape-catalog :update-catalog
+    :scrape-curseforge-catalog :update-curseforge-catalog
+    :scrape-wowinterface-catalog :update-wowinterface-catalog})
+
+(def catalog-action-str (clojure.string/join ", " (mapv #(format "'%s'" (name %)) (sort catalog-actions))))
 
 (def cli-options
   [["-h" "--help"]
@@ -78,26 +89,16 @@
     :parse-fn #(-> % lower-case keyword)
     :validate [(in? [:cli :gui])]]
 
-   ["-a" "--action ACTION" "perform action and exit. action is one of 'list', 'list-updates', 'update', 'update-all', 'scrape-addon-list', 'update-addon-list'"
+   ["-a" "--action ACTION" (str "perform action and exit. action is one of: 'list', 'list-updates', 'update', 'update-all'," catalog-action-str)
     :id :action
     :parse-fn #(-> % lower-case keyword)
-    :validate [(in? [:list :list-updates :update :update-all :scrape-addon-list :update-addon-list])]]])
+    :validate [(in? (concat [:list :list-updates :update :update-all] catalog-actions))]]])
 
 (defn validate
   [parsed]
   (let [{:keys [options errors]} parsed]
     (cond
-      (:help options) {:ok? true, :exit-message (usage parsed)}
-      errors {:ok? false, :exit-message (str "The following errors occurred while parsing your command:\n\n"
-                                             (clojure.string/join \newline errors))}
-      :else parsed)))
-
-(defn parse
-  [args]
-  (let [args (clojure.tools.cli/parse-opts args cli-options)]
-    (cond
-      ;; problems with user args, no further processing
-      (:errors args) args
+      (= "root" (System/getProperty "user.name")) {:ok? false, :exit-message "wowman should not be run as the 'root' user"}
 
       ;; data directory doesn't exist and parent directory isn't writable
       ;; nowhere to create data dir, nowhere to store download catalog. non-starter
@@ -110,6 +111,19 @@
       (and (fs/exists? (paths :data-dir))
            (not (fs/writeable? (paths :data-dir)))) {:ok? false, :exit-message (str "Data directory isn't writeable:" (paths :data-dir))}
 
+      (:help options) {:ok? true, :exit-message (usage parsed)}
+
+      errors {:ok? false, :exit-message (str "The following errors occurred while parsing your command:\n\n"
+                                             (clojure.string/join \newline errors))}
+      :else parsed)))
+
+(defn parse
+  [args]
+  (let [args (clojure.tools.cli/parse-opts args cli-options)]
+    (cond
+      ;; problems with user args, no further processing
+      (:errors args) args
+
       :else
 
       ;; post-processing
@@ -121,7 +135,7 @@
                    args)
 
             ;; force :cli for certain actions
-            args (if (contains? #{:scrape-addon-list :update-addon-list} (:action options))
+            args (if (contains? catalog-actions (:action options))
                    (assoc-in args [:options :ui] :cli)
                    args)]
         args))))

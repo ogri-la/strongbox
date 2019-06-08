@@ -4,6 +4,7 @@
    [clojure.string]
    [clojure.java.io]
    [clojure.spec.alpha :as s]
+   [clojure.pprint]
    [orchestra.core :refer [defn-spec]]
    [orchestra.spec.test :as st]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
@@ -14,9 +15,75 @@
    [slugify.core :as sluglib]
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :refer [debug info warn error spy]]
+   [java-time]
+   [java-time.format]
    [clj-time
     [coerce :as coerce-time]
     [format :as format-time]]))
+
+(defn repl-stack-element?
+  [stack-element]
+  (and (= "clojure.main$repl" (.getClassName  stack-element))
+       (= "doInvoke"          (.getMethodName stack-element))))
+
+(defn in-repl?
+  []
+  (let [current-stack-trace (.getStackTrace (Thread/currentThread))]
+    (some repl-stack-element? current-stack-trace)))
+
+(comment
+  (defn ensure
+    "wraps `assert` but fails on `nil` or `false` rather than passing on `true`. a message is required"
+    [x message]
+    (if (or (nil? x)
+            (false? x))
+      (AssertionError. message)
+      x)))
+
+(defn nav-map
+  "wrapper around `get-in` that returns the map as-is if given `path` is empty"
+  [m path]
+  (if (empty? path)
+    m
+    ;; temporary, to shake out any bad lookups in state
+    ;;(ensure (get-in m path) (str "path does not exist: " (clojure.string/join ", " path)))))
+    (get-in m path)))
+
+(defn-spec nav-map-fn fn?
+  "given a map `m`, returns a function that accepts an optional path of keywords into that map"
+  [m map?]
+  (fn [& path]
+    (nav-map m path)))
+
+(defn to-uri
+  [v]
+  (when-not (empty? v)
+    (-> v java.net.URI. str)))
+
+;; todo: handy, but target for pruning.
+(defn detect-dt-formatting
+  [dtstr]
+  (info "testing" dtstr)
+  (let [fmt (fn [dtfmt]
+              (try
+                (when-let [result (java-time/zoned-date-time (get java-time.format/predefined-formatters dtfmt) dtstr)]
+                  (info "success with" dtfmt ":" result)
+                  {dtfmt result})
+                (catch Exception e
+                  (info "failed testing" dtfmt))))]
+    (into {} (mapv fmt (keys java-time.format/predefined-formatters)))))
+
+(defn false-if-nil
+  [x]
+  (if (nil? x) false x))
+
+(defn nil-if-false
+  [x]
+  (if (false? x) nil x))
+
+(defn pprint
+  [x]
+  (with-out-str (clojure.pprint/pprint x)))
 
 (defn items
   [& lst]
@@ -102,15 +169,36 @@
   [x]
   (clojure.data.json/read-str x :key-fn keyword))
 
-(defn-spec dump-json-file nil?
-  [path ::sp/file data ::sp/anything]
+(defn-spec dump-json-file ::sp/extant-file
+  [path ::sp/file, data ::sp/anything]
   ;; this `{:pretty true}` is the only reason we're keeping cheshire around
   (json/generate-stream data (clojure.java.io/writer path) {:pretty true})
-  nil)
+  path)
 
-(defn-spec load-json-file ::sp/anything
+(defn-spec load-json-file (s/or :ok ::sp/anything, :error nil?)
   [path ::sp/extant-file]
-  (clojure.data.json/read (clojure.java.io/reader path), :key-fn keyword))
+  (try
+    (clojure.data.json/read (clojure.java.io/reader path), :key-fn keyword)
+    (catch Exception e
+      (warn e (format "failed to read data \"%s\" in file: %s" (.getMessage e) path)))))
+
+(defn call-if-fn
+  [x]
+  (if (fn? x) (x) x))
+
+(defn load-json-file-safely
+  "loads json file at given path with handling for common error cases (no file, bad data, invalid data)
+  if :invalid-data? given, then a :data-spec must also be given else nothing happens and you get nil back"
+  [path & {:keys [no-file? bad-data? invalid-data? data-spec]}]
+  (if-not (fs/file? path)
+    (call-if-fn no-file?)
+    (let [data (load-json-file path)]
+      (cond
+        (not data) (call-if-fn bad-data?)
+        (and ;; both are present AND data is invalid
+         (and invalid-data? data-spec)
+         (not (s/valid? data-spec data))) (call-if-fn invalid-data?)
+        :else data))))
 
 (defn-spec to-int (s/or :ok int? :error nil?)
   [x any?]

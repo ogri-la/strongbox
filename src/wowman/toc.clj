@@ -1,4 +1,4 @@
-(ns wowman.fs
+(ns wowman.toc
   (:refer-clojure :rename {replace clj-replace})
   (:require
    [wowman
@@ -30,8 +30,7 @@
    "Prat |cff8080ff3.0|r" "prat-3-0"
    "Omen3" "omen-threat-meter"
    "|cffffe00a<|r|cffff7d0aDBM|r|cffffe00a>|r |cff69ccf0Firelands|r" "deadly-boss-mods-cataclysm-mods"
-   "X-Perl UnitFrames by |cFFFF8080Zek|r" "xperl"
-   })
+   "X-Perl UnitFrames by |cFFFF8080Zek|r" "xperl"})
 
 (defn-spec -read-toc-file map?
   [toc-contents string?]
