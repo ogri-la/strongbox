@@ -1,4 +1,4 @@
-(defproject ogri-la/wowman "0.7.0-unreleased"
+(defproject ogri-la/wowman "0.7.0"
   :description "World Of Warcraft Addon Manager"
   :url "http://github.com/ogri-la/wowman"
   :license {:name "GNU Affero General Public License (AGPL)"
@@ -23,13 +23,13 @@
                  [clj-time "0.15.0"]
                  [trptcolin/versioneer "0.2.0"] ;; version number wrangling. it's more involved than you might suspect
                  [org.flatland/ordered "1.5.2"] ;; better ordered map
+                 [clojure.java-time "0.3.2"] ;; yet-another java date/time handling library. to replace clj-time
+                 [envvar "1.1.0"] ;; environment variable wrangling
+                 [clj-http-fake "1.0.3"] ;; fake http responses for testing
 
                  ;; remember to update the LICENCE.txt
                  ;; remember to update pom file (`lein pom`)
 
-                 [clojure.java-time "0.3.2"] ;; yet-another java date/time handling library. to replace clj-time
-                 [envvar "1.1.0"] ;; environment variable wrangling
-                 [clj-http-fake "1.0.3"] ;; fake http responses for testing
                  ]
 
   :profiles {:uberjar {:aot :all}}

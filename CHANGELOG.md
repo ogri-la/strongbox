@@ -14,6 +14,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## 0.7.0 - 2019-06-08
+
+### Added
+
+* wowinterface.com support. addons can now be installed from wowinterface.com just like they can from curseforge.com
+* `catalog.json` is now downloaded instead of `curseforge.json`. This muxes the contents of wowinterface and curseforge.
+* an 'age' field for addons. Intended to help filter really ancient addons from search results in a later release.
+* better handling of `.json` files for the following cases: missing file, bad data in file, invalid data in file.
+* more actions that can be called from the command line. Nothing fancy, just wowinterface/curseforge specific versions
+of existing actions.
+
+### Changed
+
+* wowman will refuse to run as the 'root' user
+* 'go' field now has a link to wowinterface.com for wowinterface addons
+* slight change to addon matching rules to account for multiple catalog sources. There is now a preference for
+curseforge if an addon appears in multiple sources.
+* renamed `fs.clj` to `toc.clj`
+
+### Fixed
+
+* Application wasn't exiting (properly) when run as a jar. It would exit eventually, but not immediately.
+* Paths to cache and configuration directories fixed up during testing so tests run in a more isolated environment
+* Fake HTTP responses added to tests so curseforge.json/catalog.json is not downloaded while testing
+
+### Removed
+
 ## 0.6.0 - 2019-05-08
 
 ### Added
