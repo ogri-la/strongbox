@@ -589,7 +589,7 @@
                                         ["debug,flowy"]
                                         ["flowy"])
                          :items [[root "height 100%, width 100%:100%:100%"]])
-               :on-close :dispose)
+               :on-close (if (utils/in-repl?) :dispose :exit)) ;; exit app entirely when not in repl
 
         file-menu (items
                    (ss/action :name "Installed" :key "menu I" :mnemonic "i" :handler (switch-tab-handler INSTALLED-TAB))

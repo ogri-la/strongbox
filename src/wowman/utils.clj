@@ -21,6 +21,16 @@
     [coerce :as coerce-time]
     [format :as format-time]]))
 
+(defn repl-stack-element?
+  [stack-element]
+  (and (= "clojure.main$repl" (.getClassName  stack-element))
+       (= "doInvoke"          (.getMethodName stack-element))))
+
+(defn in-repl?
+  []
+  (let [current-stack-trace (.getStackTrace (Thread/currentThread))]
+    (some repl-stack-element? current-stack-trace)))
+
 (comment
   (defn ensure
     "wraps `assert` but fails on `nil` or `false` rather than passing on `true`. a message is required"
