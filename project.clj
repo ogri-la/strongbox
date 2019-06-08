@@ -29,6 +29,7 @@
 
                  [clojure.java-time "0.3.2"] ;; yet-another java date/time handling library. to replace clj-time
                  [envvar "1.1.0"] ;; environment variable wrangling
+                 [clj-http-fake "1.0.3"] ;; fake http responses for testing
                  ]
 
   :profiles {:uberjar {:aot :all}}
