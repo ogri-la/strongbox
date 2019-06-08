@@ -118,15 +118,18 @@ see CHANGELOG.md for a more formal list of changes by release
     - done
         - handling present for "no-file", "bad-data" and "invalid-data"
         - several (not all) cases now handled
-
-### todo
-
 * cli, data path is now broken after moving to XDG paths
     - I just realised.
     - this is affecting tests as well, as they're picking up on config outside of temp dirs
+        - done
+
+### todo
+
+* 0.7.0 release
 
 ## todo bucket
 
+* download release information in background after every has been init'ed
 * consolidate date/time wrangling logic around one library, please
 * updates to catalog via travis
     - sources have their latest updates scraped daily
