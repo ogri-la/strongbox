@@ -10,8 +10,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### todo
 
-## todo bucket
-
 * download release information in background after every has been init'ed
 * consolidate date/time wrangling logic around one library, please
 * updates to catalog via travis
@@ -21,14 +19,6 @@ see CHANGELOG.md for a more formal list of changes by release
         - won't that mess with triggers?
     - catalog.json becomes a build artifact and a 'release'
         - but we replace the release daily rather than accumulate them
-* testing, capture metrics with an eye to improving performance and speed
-    - we have coverage metrics now
-    - would like some timing around certain operations, like loading the catalog
-        - identify slow things and measure their improvement
-* code quality, we're sorely lacking in tests and test coverage metrics
-    - I've added cloverage to get some coverage feedback
-    - average coverage is 53%
-    - raising that to 60% initially seems like a good goal with 80% or 90% as a stretch
 * cache, make caching opt-out and remove all those ugly binding calls
     - bind the value at core app start
 * better handling of shitty addons
@@ -45,12 +35,44 @@ see CHANGELOG.md for a more formal list of changes by release
         - if *any* top level directory is missing a .toc file, refuse to install addon
     - another potential cause of shittiness is top-level files
         - same logic applies. refuse to install addon if top-level *files* exist
-* backups
+* gui, search, deselect selected addons after successful installation
+* issue a warning when addons unpack directories that don't share a common prefix
+    - this would hopefully alert users that some shitty addons are being sneakily installed, like SlideBar or Stubby
+        - we could go one further and filter/prompt the user if they actually want to unpack these directories
+* code quality, we're sorely lacking in tests and test coverage metrics
+    - I've added cloverage to get some coverage feedback
+    - average coverage is 53%
+    - raising that to 60% initially seems like a good goal with 80% or 90% as a stretch
+* export+import
     - wowman is strictly an addon manager, not an auxillary WoW manager
         - I won't be backing up screenshots or addon state or anything like that
-    - wowman could maintain a simple list of addons to restore
-        - it might tie in with the 'export' function below
-* catalog, normalise catagories between addons that overlap 
+    - export a simple list of addons that can be re-read (imported) later
+    - an idle thought until I saw wowmatrix has it
+        - they have a wordpress plugin and a simple text file
+    - json, yaml and xml serialisations as a minimum
+        - these are the most common and versatile
+    - friendly text and html formats
+        - who on earth would use such a thing? and is it worth the added complexity?
+
+## todo bucket
+
+* allow user to specify their own catalog
+    - what can we do to support adhoc lists of addons from unsupported hosts?
+    - we have both curseforge and wowinterface supported now
+* testing, capture metrics with an eye to improving performance and speed
+    - we have coverage metrics now
+    - would like some timing around certain operations
+        - like loading the catalog
+        - like downloading and installing the top-10, top-20, top-N addons
+            - this could be a good benchmark actually
+                - how quickly can one go from 'nothing installed' to '20 addons installed' ?
+                - could be tied in with backups/exports
+                    - got to have backups+imports happening first
+        - identify slow things and measure their improvement
+* catalog, normalise catagories between addons that overlap
+    - perhaps expand them into 'tags'? 
+    - a lot of these categories are composite
+        - break each composite one down into a singular, normalise, have a unique set of tags
 * automatically exclude 'ancient' addons from search results
     - these are addons that haven't been updated in ~18 months
         - wowinterface has a lot of them
@@ -59,23 +81,12 @@ see CHANGELOG.md for a more formal list of changes by release
         - it would finally be the best use for category data
 * windows support
     - eh. I figure I can do it with a VM. I just don't really wanna.
-* gui, search, deselect selected addons after successful installation
-* curseforge, addons whose :name changes
-    - see 'speedyloot' that changed to 'speedyautoloot'
-        - they share the same creation date
-        - /speedyloot now redirects to /speedyautoloot, so curseforge definitely have support for name changing
+    - for the 1.0.0 release
 * memory usage
     - we're big and fat :(
     - lets explore some ways to measure and then reduce memory usage
     - measuring:
         - https://github.com/clojure-goes-fast/clj-memory-meter
-* 'export' addons
-    - an idle thought until I saw wowmatrix has it
-        - they have a wordpress plugin and a simple text file
-    - json, yaml and xml serialisations as a minimum
-        - these are the most common and versatile
-    - friendly text and html formats
-        - who on earth would use such a thing? and is it worth the added complexity?
 * move away from this merging toc/addon/expanded addon data strategy
     - it's confusing to debug!
     - namespaced keys might be a good alternative:
@@ -85,7 +96,6 @@ see CHANGELOG.md for a more formal list of changes by release
             - :group-id, :group-count
         - how to pick preferred attributes without continuous (or key else other-key) ?
             - (getattr addon :label) ;; does multiple lookups ...? seems kinda meh
-* revisit group records, I can't believe we can't pull a good name or description from *somewhere*
 * toggleable highlighers as a menuitem
     - highlight unmatched
     - highlight updates
@@ -117,18 +127,27 @@ see CHANGELOG.md for a more formal list of changes by release
     - donation url
     - other addons by author ?
     - list the hidden/sub dependencies
-* issue a warning when addons unpack directories that don't share a common prefix
-    - this would hopefully alert users that some shitty addons are being sneakily installed, like SlideBar or Stubby
-        - we could go one further and filter/prompt the user if they actually want to unpack these directories
+
+## wontfix
+
 * fallback to using :group-id (a uri) if curseforge.json is not available
     - low priority
     - curseforge.json will only ever be missing:
         - fresh install and
         - your network connection goes down, or
         - you're a victim of github's 99.999 uptime rating
-* allow user to specify their own catalog
-
-## wontfix
+    - wontfix because:
+        - group-id is 'group-id' and *not* 'uri'
+            - it may change in the future
+        - there is a really really slim chance of this actually happening
+            - I don't think it justifies the extra complexity tbh
+* curseforge, addons whose :name changes
+    - see 'speedyloot' that changed to 'speedyautoloot'
+        - they share the same creation date
+        - /speedyloot now redirects to /speedyautoloot, so curseforge definitely have support for name changing
+        - wowinterface probably doesn't
+            - or it does, users are creating duplicate addons
+    - ignoring until this becomes a problem somehow
 * gui, feature, install addon from local zipfile
     - *not* the 'reinstallation' feature, but literally selecting a zipfile from somewhere and installing it
     - would be good for installing older versions of an addon?
@@ -136,6 +155,7 @@ see CHANGELOG.md for a more formal list of changes by release
         - wouldn't be able to update it however :(
         - I think I'll stick with supporting sources of addons 
             - rather than enabling ad-hoc installation of unsupported addons
+    - see item in TODO for custom user catalogs
 * gui, search pane, clear search button
     - I don't think this is necessary anymore
 * bug, 'whoa thick frames' is reporting a version number of '0.9.zip'
