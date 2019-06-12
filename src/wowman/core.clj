@@ -496,6 +496,32 @@
     (let [wrapper (affects-addon-wrapper catalog/expand-summary)]
       (wrapper addon-summary))))
 
+(defn-spec check-for-updates nil?
+  "downloads full details for all installed addons that can be found in summary list"
+  []
+  (info "checking for updates")
+  (update-installed-addon-list! (mapv (fn [ia]
+                                        (if (and
+                                             (:matched? ia)
+                                             ;; don't expand if we have a dummy uri.
+                                             ;; this isn't the right place for test code, but eh
+                                             (nil? (clojure.string/index-of (:uri ia) "example.org")))
+                                          ;; we have a match!
+                                          (merge-addons ia (expand-summary-wrapper ia))
+                                          ;; no match, can't update
+                                          (assoc ia :update? false))) ;; hack. this whole bit needs looking at
+                                      (get-state :installed-addon-list)))
+  (info "done checking for updates"))
+
+(defn alias-wrangling
+  "temporary code until it finds a better home. downloads the top-50 addons and prints out the addon's and subaddon's labels. see `fs/aliases`"
+  []
+  (let [top-50 (take 50 (sort-by :download-count > (get-state :addon-summary-list)))
+        _ (mapv #(-> % expand-summary-wrapper (install-addon-guard (get-state :cfg :install-dir))) top-50)
+        ia (wowman.toc/installed-addons (get-state :cfg :install-dir))]
+    (mapv (fn [r] {(:name r) (if (:group-addons r) (mapv :label (:group-addons r)) [(:label r)])}) ia)))
+
+
 ;;
 ;; ui interface
 ;; 
@@ -550,29 +576,37 @@
   (delete-downloaded-addon-zips)
   (delete-cache))
 
-(defn-spec check-for-updates nil?
-  "downloads full details for all installed addons that can be found in summary list"
+;; version checking
+
+(defn-spec wowman-version string?
+  "returns this version of wowman"
   []
-  (info "checking for updates")
-  (update-installed-addon-list! (mapv (fn [ia]
-                                        (if (and
-                                             (:matched? ia)
-                                             ;; don't expand if we have a dummy uri.
-                                             ;; this isn't the right place for test code, but eh
-                                             (nil? (clojure.string/index-of (:uri ia) "example.org")))
-                                          ;; we have a match!
-                                          (merge-addons ia (expand-summary-wrapper ia))
-                                          ;; no match, can't update
-                                          (assoc ia :update? false))) ;; hack. this whole bit needs looking at
-                                      (get-state :installed-addon-list)))
-  (info "done checking for updates"))
+  (versioneer/get-version "ogri-la" "wowman"))
+
+(defn-spec latest-wowman-release string?
+  "returns the most recently released version of wowman it can find"
+  []
+  (binding [http/*cache* (cache)]
+    (let [resp (utils/from-json (http/download "https://api.github.com/repos/ogri-la/wowman/releases/latest"))]
+      (-> resp :tag_name))))
+
+(defn-spec latest-wowman-version? boolean?
+  "returns true if the *running instance* of wowman is the *most recent known* version of wowman."
+  []
+  (let [latest-release (latest-wowman-release)
+        version-running (wowman-version)
+        sorted-asc (utils/sort-semver-strings [latest-release version-running])]
+    (= version-running (last sorted-asc))))
+
+;; 
 
 (defn refresh
   [& _]
+  (load-installed-addons) ;; parse toc files in install-dir. do this first so we see *something* while catalog downloads (next)
   (load-addon-summaries)  ;; load the contents of the curseforge.json file
-  (load-installed-addons) ;; parse toc files in install-dir
   (match-installed-addons-with-online-addons) ;; match installed addons to those in curseforge.json
   (check-for-updates)     ;; for those addons that have matches, download their full details from curseforge
+  (latest-wowman-release) ;; check for updates after everything else is done
   (save-settings)         ;; seems like a good place to preserve the etag-db
   nil)
 
@@ -645,36 +679,6 @@
   []
   (-> (get-state) :selected-installed vec remove-many-addons))
 
-;; version checking
-
-(defn-spec wowman-version string?
-  "returns this version of wowman"
-  []
-  (versioneer/get-version "ogri-la" "wowman"))
-
-(defn-spec latest-wowman-release string?
-  "returns the most recently released version of wowman it can find"
-  []
-  (binding [http/*cache* (cache)]
-    (let [resp (utils/from-json (http/download "https://api.github.com/repos/ogri-la/wowman/releases/latest"))]
-      (-> resp :tag_name))))
-
-(defn-spec latest-wowman-version? boolean?
-  "returns true if the *running instance* of wowman is the *most recent known* version of wowman."
-  []
-  (let [latest-release (latest-wowman-release)
-        version-running (wowman-version)
-        sorted-asc (utils/sort-semver-strings [latest-release version-running])]
-    (= version-running (last sorted-asc))))
-
-(defn alias-wrangling
-  "temporary code until it finds a better home. downloads the top-50 addons and prints out the addon's and subaddon's labels. see `fs/aliases`"
-  []
-  (let [top-50 (take 50 (sort-by :download-count > (get-state :addon-summary-list)))
-        _ (mapv #(-> % expand-summary-wrapper (install-addon-guard (get-state :cfg :install-dir))) top-50)
-        ia (wowman.toc/installed-addons (get-state :cfg :install-dir))]
-    (mapv (fn [r] {(:name r) (if (:group-addons r) (mapv :label (:group-addons r)) [(:label r)])}) ia)))
-
 ;;
 ;; init
 ;;
@@ -711,7 +715,6 @@
   (info "starting app")
   (init-dirs)
   (load-settings cli-opts)
-  ;;(load-addon-summaries)  ;; load the contents of the curseforge.json file. defer to ui
   (watch-for-install-dir-change)
 
   state)

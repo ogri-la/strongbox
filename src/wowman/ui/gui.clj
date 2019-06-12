@@ -618,10 +618,7 @@
                                  (ss/menu :text "Help" :items help-menu)])
         _ (.setJMenuBar newui menu)
 
-        init (fn [_]
-               ;; prevents an empty grey screen from appearing while addon summaries are downloaded
-               (future (core/refresh))
-               _)]
+        init (fn [newui] (future-call core/refresh) newui)]
 
     (ss/invoke-later
      (-> newui ss/pack! ss/show! init))
