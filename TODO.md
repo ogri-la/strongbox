@@ -8,9 +8,12 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### done
 
+* download release information in background after every has been init'ed
+    - done
+
 ### todo
 
-* download release information in background after every has been init'ed
+* delete 'curseforge.json' if present in data-dir
 * consolidate date/time wrangling logic around one library, please
 * updates to catalog via travis
     - sources have their latest updates scraped daily
