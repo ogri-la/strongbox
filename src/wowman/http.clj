@@ -190,18 +190,21 @@
       output-file
       resp)))
 
-(defn-spec prune-html-download-cache nil?
-  "deprecated, will be removed in 0.8.0.
-   removes directories in the :cache-dir that match a year-month-day pattern"
+;; deprecated, to be removed in 0.10.0
+(defn-spec prune-old-curseforge-files nil?
+  "curseforge.json may be hanging around in the cache-dir or in the parent (:data-dir)"
   [cache-dir ::sp/extant-dir]
-  (let [ymd-cache-dirs (fs/find-files cache-dir #"\d{4}\-\d{2}\-\d{2}")]
-    (doseq [cache-dir ymd-cache-dirs]
-      (warn "deleting cache dir " cache-dir)
-      (fs/delete-dir cache-dir))))
+  (let [cache-cf-file (join cache-dir "curseforge.json")
+        data-cf-file (join (fs/parent cache-dir) "curseforge.json")]
+    (when (fs/exists? cache-cf-file)
+      (fs/delete cache-cf-file))
+    (when (fs/exists? data-cf-file)
+      (fs/delete data-cf-file)))
+  nil)
 
 (defn-spec prune-cache-dir nil?
   [cache-dir ::sp/extant-dir]
-  (prune-html-download-cache cache-dir)
+  (prune-old-curseforge-files cache-dir)
   (doseq [cache-file (fs/list-dir cache-dir)
           :when (and (fs/file? cache-file)
                      (file-older-than (str cache-file) (* 2 expiry-offset-hours)))]
