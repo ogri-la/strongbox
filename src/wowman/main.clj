@@ -40,6 +40,7 @@
 (defn restart
   [& [cli-opts]]
   (stop)
+  (Thread/sleep 750) ;; gives me time to switch panes
   (start cli-opts))
 
 (defn test
