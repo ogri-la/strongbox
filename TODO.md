@@ -12,10 +12,10 @@ see CHANGELOG.md for a more formal list of changes by release
     - done
 * delete 'curseforge.json' if present in data-dir
     - done
+* consolidate date/time wrangling logic around one library, please
+    - done
 
 ### todo
-
-* consolidate date/time wrangling logic around one library, please
 * updates to catalog via travis
     - sources have their latest updates scraped daily
     - sources are completely scraped weekly
