@@ -3,7 +3,7 @@
   <groupId>ogri-la</groupId>
   <artifactId>wowman</artifactId>
   <packaging>jar</packaging>
-  <version>0.7.0</version>
+  <version>0.8.0-unreleased</version>
   <name>wowman</name>
   <description>World Of Warcraft Addon Manager</description>
   <url>http://github.com/ogri-la/wowman</url>
@@ -17,7 +17,7 @@
     <url>https://github.com/ogri-la/wowman</url>
     <connection>scm:git:git://github.com/ogri-la/wowman.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/ogri-la/wowman.git</developerConnection>
-    <tag>9b36761558d39200027950f55b8080a8d352bc1b</tag>
+    <tag>964b08930c922ca3f6bd88a9e93361a6409f2495</tag>
   </scm>
   <build>
     <sourceDirectory>src</sourceDirectory>
@@ -142,11 +142,6 @@
       <groupId>slugify</groupId>
       <artifactId>slugify</artifactId>
       <version>0.0.1</version>
-    </dependency>
-    <dependency>
-      <groupId>clj-time</groupId>
-      <artifactId>clj-time</artifactId>
-      <version>0.15.0</version>
     </dependency>
     <dependency>
       <groupId>trptcolin</groupId>

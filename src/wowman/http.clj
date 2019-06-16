@@ -5,9 +5,6 @@
     [utils :as utils :refer [join]]]
    [clojure.java.io]
    [clojure.spec.alpha :as s]
-   [clj-time
-    [core :as t]
-    [coerce :as coerce-time]]
    [orchestra.core :refer [defn-spec]]
    [orchestra.spec.test :as st]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
@@ -71,24 +68,11 @@
         wowman-useragent (format "Wowman/%s (https://github.com/ogri-la/wowman)" wowman-version)]
     {"http.useragent" (if use-anon-useragent? anon-useragent wowman-useragent)}))
 
-(defn-spec file-older-than boolean?
-  [file ::sp/extant-file, hours pos-int?]
-  (let [modtime (coerce-time/from-long (fs/mod-time file))
-        now (t/now)
-        expiry-offset (t/hours hours)
-        expiry-date (t/plus modtime expiry-offset)
-        expired? (t/before? expiry-date now)]
-    ;;(debug (format "modtime %s; expiry-offset %s; expiry-date %s; now %s; expired? %s" modtime expiry-offset expiry-date now expired?))
-    (when expired?
-      (debug (format "file expired %s minutes ago: %s"
-                     (t/in-minutes (t/interval modtime expiry-date)) file)))
-    expired?))
-
 (defn fresh-cache-file-exists?
   "returns `true` if the last modification time on given file is before the expiry date of +N hours"
   [output-file]
   (when (and output-file (fs/exists? output-file))
-    (not (file-older-than output-file expiry-offset-hours))))
+    (not (utils/file-older-than output-file expiry-offset-hours))))
 
 (defn-spec -download (s/or :file ::sp/extant-file, :raw ::sp/http-resp, :error ::sp/http-error)
   "if writing to a file is possible then the output file is returned, else the raw http response.
@@ -207,7 +191,7 @@
   (prune-old-curseforge-files cache-dir)
   (doseq [cache-file (fs/list-dir cache-dir)
           :when (and (fs/file? cache-file)
-                     (file-older-than (str cache-file) (* 2 expiry-offset-hours)))]
+                     (utils/file-older-than (str cache-file) (* 2 expiry-offset-hours)))]
     (warn "deleting cached file (expired):" cache-file)
     (fs/delete cache-file)))
 

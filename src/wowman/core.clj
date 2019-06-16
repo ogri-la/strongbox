@@ -526,6 +526,7 @@
 ;; ui interface
 ;; 
 
+
 (defn-spec delete-cache nil?
   "deletes the 'cache' directory that contains scraped html files, etag files, the catalog, etc. 
   nothing that isn't regenerated when missing."

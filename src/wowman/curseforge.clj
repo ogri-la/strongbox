@@ -4,9 +4,6 @@
     [http :as http]
     [specs :as sp]
     [utils :as utils :refer [to-int to-json fmap join from-epoch to-uri]]]
-   [clj-time
-    [core :as ct]
-    [coerce :as cte]]
    [slugify.core :refer [slugify]]
    [flatland.ordered.map :as omap]
    [clojure.spec.alpha :as s]
@@ -158,12 +155,9 @@
 (defn-spec download-all-addon-summary-updates (s/or :ok ::sp/extant-file, :no-updates nil?)
   "fetches updates from curseforge since the last major scrape"
   [datestamp ::sp/inst, output-path ::sp/file]
-  (let [then (cte/from-string datestamp)
-        now (ct/now)
-        days-between-then-and-now (ct/in-days (ct/interval then now))]
-    (when (> days-between-then-and-now 0)
-      (spit output-path (utils/to-json (download-recent-addon-summaries datestamp)))
-      output-path)))
+  (when (> (utils/days-between-then-and-now datestamp) 0)
+    (spit output-path (utils/to-json (download-recent-addon-summaries datestamp)))
+    output-path))
 
 ;;
 

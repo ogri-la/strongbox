@@ -15,11 +15,29 @@
    [slugify.core :as sluglib]
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :refer [debug info warn error spy]]
-   [java-time]
-   [java-time.format]
-   [clj-time
-    [coerce :as coerce-time]
-    [format :as format-time]]))
+   [java-time :as jt]
+   [java-time.format]))
+
+(comment "unused"
+(defn utcnow
+  []
+  (java-time/zoned-date-time (java-time/zone-id "UTC"))))
+
+(defn-spec file-older-than boolean?
+  [file ::sp/extant-file, hours pos-int?]
+  (let [modtime (jt/instant (fs/mod-time file))
+        now (java-time/instant)
+        expiry-offset (jt/hours hours)
+        expiry-date (jt/plus modtime expiry-offset)
+        expired? (jt/before? expiry-date now)]
+    (debug (format "path %s; modtime %s; expiry-offset %s; expiry-date %s; now %s; expired? %s" file modtime expiry-offset expiry-date now expired?))
+    expired?))
+
+(defn-spec days-between-then-and-now int?
+  [datestamp ::sp/inst]
+  (let [then (java-time/local-date datestamp)
+        now (java-time/local-date)]
+    (.getDays (java-time/period then now))))
 
 (defn repl-stack-element?
   [stack-element]
@@ -129,7 +147,7 @@
                  (next ilist)
                  (conj list3 row)))))))
 
-;; TODO: replace with clj-time equivalent
+;; TODO: replace with java-time equivalent
 (defn fmt-date
   ([dateobj]
    (fmt-date dateobj "yyyy-MM-dd'T'HH:mm:ss'Z'"))
@@ -137,9 +155,10 @@
    (.format (java.text.SimpleDateFormat. fmt) dateobj)))
 
 (defn-spec from-epoch string?
+  "epoch-time-with-ms to ymdhmstz"
   [epoch int?]
-  (format-time/unparse ;; "unparse" ? what a dumb fucking name
-   (format-time/formatters :date-time-no-ms) (coerce-time/from-epoch epoch)))
+  ;; we *1000 to get the ms
+  (-> epoch (* 1000) java-time/instant str))
 
 (defn datestamp-now-ymd
   []
