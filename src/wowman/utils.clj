@@ -18,11 +18,6 @@
    [java-time :as jt]
    [java-time.format]))
 
-(comment "unused"
-(defn utcnow
-  []
-  (java-time/zoned-date-time (java-time/zone-id "UTC"))))
-
 (defn-spec file-older-than boolean?
   [file ::sp/extant-file, hours pos-int?]
   (let [modtime (jt/instant (fs/mod-time file))
@@ -38,6 +33,37 @@
   (let [then (java-time/local-date datestamp)
         now (java-time/local-date)]
     (.getDays (java-time/period then now))))
+
+(defn fmt-date
+  ([dateobj]
+   (fmt-date dateobj "yyyy-MM-dd'T'HH:mm:ss'Z'"))
+  ([dateobj fmt]
+   (.format (java.text.SimpleDateFormat. fmt) dateobj)))
+
+(defn-spec from-epoch string?
+  "epoch-time-with-ms to ymdhmstz"
+  [epoch int?]
+  ;; we *1000 to get the ms
+  (-> epoch (* 1000) java-time/instant str))
+
+(defn datestamp-now-ymd
+  []
+  (.format (java.text.SimpleDateFormat. "yyyy-MM-dd") (java.util.Date.)))
+
+;; todo: handy, but target for pruning.
+(defn detect-dt-formatting
+  [dtstr]
+  (info "testing" dtstr)
+  (let [fmt (fn [dtfmt]
+              (try
+                (when-let [result (java-time/zoned-date-time (get java-time.format/predefined-formatters dtfmt) dtstr)]
+                  (info "success with" dtfmt ":" result)
+                  {dtfmt result})
+                (catch Exception e
+                  (info "failed testing" dtfmt))))]
+    (into {} (mapv fmt (keys java-time.format/predefined-formatters)))))
+
+;;
 
 (defn repl-stack-element?
   [stack-element]
@@ -77,19 +103,6 @@
   [v]
   (when-not (empty? v)
     (-> v java.net.URI. str)))
-
-;; todo: handy, but target for pruning.
-(defn detect-dt-formatting
-  [dtstr]
-  (info "testing" dtstr)
-  (let [fmt (fn [dtfmt]
-              (try
-                (when-let [result (java-time/zoned-date-time (get java-time.format/predefined-formatters dtfmt) dtstr)]
-                  (info "success with" dtfmt ":" result)
-                  {dtfmt result})
-                (catch Exception e
-                  (info "failed testing" dtfmt))))]
-    (into {} (mapv fmt (keys java-time.format/predefined-formatters)))))
 
 (defn false-if-nil
   [x]
@@ -146,24 +159,6 @@
           (recur index
                  (next ilist)
                  (conj list3 row)))))))
-
-;; TODO: replace with java-time equivalent
-(defn fmt-date
-  ([dateobj]
-   (fmt-date dateobj "yyyy-MM-dd'T'HH:mm:ss'Z'"))
-  ([dateobj fmt]
-   (.format (java.text.SimpleDateFormat. fmt) dateobj)))
-
-(defn-spec from-epoch string?
-  "epoch-time-with-ms to ymdhmstz"
-  [epoch int?]
-  ;; we *1000 to get the ms
-  (-> epoch (* 1000) java-time/instant str))
-
-(defn datestamp-now-ymd
-  []
-  (.format (java.text.SimpleDateFormat. "yyyy-MM-dd") (java.util.Date.)))
-;;  (fmt-date (java.util.Date.) "yyyy-MM-dd"))
 
 ;; Applies function f to each item in the data structure m
 ;; https://github.com/clojure/clojure-contrib/blob/b8d2743d3a89e13fc9deb2844ca2167b34aaa9b6/src/main/clojure/clojure/contrib/generic/functor.clj#L34
@@ -252,10 +247,6 @@
         minor (to-int minor)]
     (when (and major minor)
       (+ (* 10000 major) (* 100 minor)))))
-
-(defn-spec timestamp int?
-  []
-  (quot (System/currentTimeMillis) 100)) ;; 1000 = seconds
 
 ;; https://stackoverflow.com/questions/13789092/length-of-the-first-line-in-an-utf-8-file-with-bom
 (defn debomify
