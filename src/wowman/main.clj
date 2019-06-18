@@ -93,7 +93,7 @@
    ["-a" "--action ACTION" (str "perform action and exit. action is one of: 'list', 'list-updates', 'update', 'update-all'," catalog-action-str)
     :id :action
     :parse-fn #(-> % lower-case keyword)
-    :validate [(in? (concat [:list :list-updates :update :update-all] catalog-actions))]]])
+    :validate [(in? (concat [:list :list-updates :update-all] catalog-actions))]]])
 
 (defn validate
   [parsed]
