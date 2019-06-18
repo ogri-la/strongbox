@@ -14,8 +14,13 @@ see CHANGELOG.md for a more formal list of changes by release
     - done
 * consolidate date/time wrangling logic around one library, please
     - done
+* updates to catalog via travis
+    - script to scrape catalog
+        - done
+        - see wowman-data/update.sh
 
 ### todo
+
 * updates to catalog via travis
     - sources have their latest updates scraped daily
     - sources are completely scraped weekly
@@ -60,6 +65,17 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
+* support for multiple addon directories
+* 'scrape' and 'update' are not great terms
+    - scrape means 'complete update'
+    - update means 'partial update'
+* curseforge scraping is very quiet when everything is cached
+    - unlike wowinterface
+* 'default' action in the cli should exit with retcode other than 0
+    - it means an action wasn't specified or an unsupported action was specified
+        - main/validate would prevent casual bypassing of this
+* rename 'install-dir' config to 'addon-dir' perhaps?
+    - 'install-dir' is ambiguous, it could be talking about installation dir of wowman
 * allow user to specify their own catalog
     - what can we do to support adhoc lists of addons from unsupported hosts?
     - we have both curseforge and wowinterface supported now
