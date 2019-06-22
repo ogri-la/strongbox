@@ -75,9 +75,6 @@ User configuration is stored in `~/.config/wowman` unless run with the envvar `$
 
 Temporary data is stored in `~/.local/share/wowman` unless run with the envvar `$XDG_DATA_HOME` set.
 
-Previously a sub-directory called `state` created in the current working directory was used for both data and config.  
-This local `state` directory can be safely deleted now.
-
 Addon zip files are downloaded to your WoW `Addons` directory.
 
 A file called `.wowman.json` is created within newly installed or re-installed addons. This file maps specific 
@@ -111,16 +108,17 @@ See [CONTRIBUTING](CONTRIBUTING.md) for more detail.
 
 ### Maintained (I think)
 
-| name                        | url                                            | Linux | Mac  | Windows | maintained? | f/oss? | source available? | ads? | EULA? | language   | 
-|-----------------------------|------------------------------------------------|-------|------|---------|-------------|--------|-------------------|------|-------|------------| 
-| instawow                    | https://github.com/layday/instawow             | yes*  | yes* | yes*    | yes         | yes    | yes               | no   | no    | python     | 
-| lcurse                      | https://github.com/ephraim/lcurse              | yes   | no   | no      | yes         | no     | yes               | no   | no    | python     | 
-| Minion                      | https://minion.mmoui.com/                      | yes*  | yes  | yes     | yes         | no     | no                | yes  | yes   | java       | 
-| Saionaro/wow-addons-updater | https://github.com/Saionaro/wow-addons-updater | yes   | yes  | yes     | yes         | yes    | yes               | no   | no    | javascript | 
-| Tukui Client                | https://www.tukui.org/download.php?client=win  | no    | no   | yes     | yes         | no     | no                | ?    | ?     | ?          | 
-| WorldOfAddons               | https://github.com/WorldofAddons/worldofaddons | yes*  | yes* | yes     | yes         | yes    | yes               | no   | no    | javascript | 
-| wow-addon-manager           | https://github.com/qwezarty/wow-addon-manager  | yes*  | no   | no      | yes         | yes    | yes               | no   | no    | python     | 
-| wowmatrix                   | https://www.wowmatrix.com/                     | yes   | yes  | yes     | yes         | no     | no                | yes  | yes   | ?          | 
+| name                        | url                                            | Linux | Mac  | Windows | maintained? | f/oss? | source available? | ads? | EULA?      | language   | 
+|-----------------------------|------------------------------------------------|-------|------|---------|-------------|--------|-------------------|------|------------|------------| 
+| instawow                    | https://github.com/layday/instawow             | yes*  | yes* | yes*    | yes         | yes    | yes               | no   | no         | python     | 
+| lcurse                      | https://github.com/ephraim/lcurse              | yes   | no   | no      | yes         | no     | yes               | no   | no         | python     | 
+| Minion                      | https://minion.mmoui.com/                      | yes*  | yes  | yes     | yes         | no     | no                | yes  | yes        | java       | 
+| Saionaro/wow-addons-updater | https://github.com/Saionaro/wow-addons-updater | yes   | yes  | yes     | yes         | yes    | yes               | no   | no         | javascript | 
+| Tukui Client                | https://www.tukui.org/download.php?client=win  | no    | no   | yes     | yes         | no     | no                | ?    | ?          | ?          | 
+| WorldOfAddons               | https://github.com/WorldofAddons/worldofaddons | yes*  | yes* | yes     | yes         | yes    | yes               | no   | no         | javascript | 
+| wow-addon-manager           | https://github.com/qwezarty/wow-addon-manager  | yes*  | no   | no      | yes         | yes    | yes               | no   | no         | python     | 
+| wowa                        | https://github.com/antiwinter/wowa             | yes*  | yes* | yes*    | yes         | yes    | no                | no   | javascript |            | 
+| wowmatrix                   | https://www.wowmatrix.com/                     | yes   | yes  | yes     | yes         | no     | no                | yes  | yes        | ?          | 
 
 \* with caveats. may require compilation, partial functionality or not work at all, or be officially unsupported, or ...
 
