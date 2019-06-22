@@ -85,7 +85,11 @@
   [& fl]
   (fn [_]
     (doseq [f fl]
-      (future (f)))))
+      (future
+        (try
+          (f)
+          (catch Exception e
+            (error e "unhandled exception in thread")))))))
 
 (defn selected-rows-handler
   "calls given `f` with last event when selection has stopped adjusting"
