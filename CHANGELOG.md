@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## 0.7.1 - 2019-06-23
+
+### Fixed
+
+* Fixed issue where a curseforge 404 response killed an async thread the GUI was using to download addon updates. 
+
 ## 0.7.0 - 2019-06-08
 
 ### Added
