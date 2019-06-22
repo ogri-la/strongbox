@@ -138,9 +138,11 @@
 
         (catch Exception ex
           (if (-> ex ex-data :status)
-            ;; "Note that the connection to the server will NOT be closed until the stream has been read"
-            ;;  - https://github.com/dakrone/clj-http
-            (let [_ (some-> ex ex-data :body .close)
+            ;; http error (status >=400)
+            (let [_ (when streaming-response?
+                      ;; "Note that the connection to the server will NOT be closed until the stream has been read"
+                      ;;  - https://github.com/dakrone/clj-http
+                      (some-> ex ex-data :body .close))
                   http-error (select-keys (ex-data ex) [:reason-phrase :status])]
               (error (format "failed to download file '%s': %s (HTTP %s)"
                              uri (:reason-phrase http-error) (:status http-error)))

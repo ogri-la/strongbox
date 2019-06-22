@@ -79,18 +79,18 @@
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
   [addon-summary ::sp/addon-summary]
   (let [message (str "downloading summary data: " (:name addon-summary))
-        ;;detail-uri (str curseforge-host "/wow/addons/" (:name addon-summary)) ;; :name here is unreliable. it may be the 'altname' used to match.
-        detail-uri (:uri addon-summary)
-        versions-uri (str detail-uri "/files")
-        versions-html (html/html-snippet (http/download versions-uri :message message))
-        latest-release (-> (html/select versions-html [:table.project-file-listing :tbody :tr]) first)
-        info-box (-> (html/select versions-html [:aside.project-details__sidebar]) first)
-        prefix #(str curseforge-host %)]
-    (merge addon-summary
-           {:download-uri (-> (html/select latest-release [[:a (html/attr= :data-action "download-file")]]) first :attrs :href prefix (suffix "/file") to-uri)
-            :version (-> (html/select latest-release [:td.project-file__name]) first :attrs :title)
-            :interface-version (-> (html/select latest-release [:span.version__label]) first :content first utils/game-version-to-interface-version)
-            :donation-uri (-> (html/select info-box [:div.infobox__actions :a.actions__donate]) first :attrs :href to-uri)})))
+        versions-uri (-> addon-summary :uri (str "/files"))
+        versions-data (http/download versions-uri :message message)]
+    (when (string? versions-data) ;; map on error
+      (let [versions-html (html/html-snippet versions-data)
+            latest-release (-> (html/select versions-html [:table.project-file-listing :tbody :tr]) first)
+            info-box (-> (html/select versions-html [:aside.project-details__sidebar]) first)
+            prefix #(str curseforge-host %)]
+        (merge addon-summary
+               {:download-uri (-> (html/select latest-release [[:a (html/attr= :data-action "download-file")]]) first :attrs :href prefix (suffix "/file") to-uri)
+                :version (-> (html/select latest-release [:td.project-file__name]) first :attrs :title)
+                :interface-version (-> (html/select latest-release [:span.version__label]) first :content first utils/game-version-to-interface-version)
+                :donation-uri (-> (html/select info-box [:div.infobox__actions :a.actions__donate]) first :attrs :href to-uri)})))))
 
 ;;
 
