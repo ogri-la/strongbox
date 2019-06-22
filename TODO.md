@@ -28,8 +28,6 @@ see CHANGELOG.md for a more formal list of changes by release
         - won't that mess with triggers?
     - catalog.json becomes a build artifact and a 'release'
         - but we replace the release daily rather than accumulate them
-* cache, make caching opt-out and remove all those ugly binding calls
-    - bind the value at core app start
 * better handling of shitty addons
     - below addons are known to be mangled/corrupt/shit in some way
         * "99 bottles of beer", wowinterface
@@ -64,7 +62,13 @@ see CHANGELOG.md for a more formal list of changes by release
         - who on earth would use such a thing? and is it worth the added complexity?
 
 ## todo bucket
-
+* cache, make caching opt-out and remove all those ugly binding calls
+    - bind the value at core app start
+    - this may not be possible. 
+        - binding happens at the thread level
+        - if we start doing download concurrently, we need to pass our binds to the threads
+            - which I'm not sure if is possible
+        - moving back into bucket until I get around to doing parallel downloads
 * support for multiple addon directories
 * 'scrape' and 'update' are not great terms
     - scrape means 'complete update'
