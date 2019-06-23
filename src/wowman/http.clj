@@ -177,6 +177,9 @@
       resp)))
 
 ;; deprecated, to be removed in 0.10.0
+;; both curseforge and wowinterface catalogs are needed to scrape their respective updates
+;; settle for some cache misses as we delete these files on startup then download them again for a scrape?
+;; becomes less relevant as scrapes become automated
 (defn-spec prune-old-curseforge-files nil?
   "curseforge.json may be hanging around in the cache-dir or in the parent (:data-dir)"
   [cache-dir ::sp/extant-dir]

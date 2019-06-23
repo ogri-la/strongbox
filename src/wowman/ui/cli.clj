@@ -29,6 +29,7 @@
 (defmethod action :update-wowinterface-catalog
   [_]
   (binding [http/*cache* (core/cache)]
+    (core/download-catalog :wowinterface-catalog-file)
     (wowinterface/scrape-updates (paths :wowinterface-catalog-file))))
 
 (defmethod action :scrape-curseforge-catalog
@@ -39,6 +40,7 @@
 (defmethod action :update-curseforge-catalog
   [_]
   (binding [http/*cache* (core/cache)]
+    (core/download-catalog :curseforge-catalog-file)
     (when-let [{since :datestamp} (utils/load-json-file (paths :curseforge-catalog-file))]
       ;; download any updates to a file
       (curseforge/download-all-addon-summary-updates since (paths :curseforge-catalog-updates-file))

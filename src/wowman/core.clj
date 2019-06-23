@@ -63,7 +63,6 @@
                   :etag-db-file etag-db-file
 
                   :catalog-file catalog
-                  :remote-catalog-uri "https://raw.githubusercontent.com/ogri-la/wowman-data/master/catalog.json"
 
                   :curseforge-catalog-file curseforge-catalog
                   :curseforge-catalog-updates-file curseforge-catalog-updates ;; todo, remove
@@ -352,11 +351,14 @@
 ;; addon summaries
 ;;
 
-(defn-spec download-catalog ::sp/extant-file
+(defn-spec download-catalog (s/or :ok ::sp/extant-file, :error nil?)
   "downloads catalog to expected location, nothing more"
-  []
+  [& [catalog] (s/* keyword?)]
   (binding [http/*cache* (cache)]
-    (http/download-file (paths :remote-catalog-uri) (paths :catalog-file))))
+    (if-let [local-catalog (paths (or catalog :catalog-file))]
+      (http/download-file (str "https://raw.githubusercontent.com/ogri-la/wowman-data/master/" (fs/base-name local-catalog))
+                          local-catalog)
+      (error "failed to find catalog:" catalog))))
 
 (defn-spec load-addon-summaries nil?
   []
