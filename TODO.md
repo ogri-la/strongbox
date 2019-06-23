@@ -29,6 +29,8 @@ see CHANGELOG.md for a more formal list of changes by release
     - catalog.json becomes a build artifact and a 'release'
         - but we replace the release daily rather than accumulate them
         - done!
+* fixed bug in updating curseforge where old/bad paths to files caused a NPE
+* fixed bug in updating curseforge and wowinterface where data directories without the respective catalog would fail spec
 
 ### todo
 
