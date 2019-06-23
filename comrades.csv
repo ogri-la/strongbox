@@ -7,5 +7,5 @@ Saionaro/wow-addons-updater,https://github.com/Saionaro/wow-addons-updater,yes,y
 Tukui Client,https://www.tukui.org/download.php?client=win,no,no,yes,yes,no,no,?,?,?
 WorldOfAddons,https://github.com/WorldofAddons/worldofaddons,yes*,yes*,yes,yes,yes,yes,no,no,javascript
 wow-addon-manager,https://github.com/qwezarty/wow-addon-manager,yes*,no,no,yes,yes,yes,no,no,python
-wowa,https://github.com/antiwinter/wowa,yes*,yes*,yes*,yes,yes,no,no,javascript
+wowa,https://github.com/antiwinter/wowa,yes*,yes*,yes*,yes,yes,no,no,no,javascript
 wowmatrix,https://www.wowmatrix.com/,yes,yes,yes,yes,no,no,yes,yes,?
