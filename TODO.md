@@ -18,16 +18,20 @@ see CHANGELOG.md for a more formal list of changes by release
     - script to scrape catalog
         - done
         - see wowman-data/update.sh
+    - sources have their latest updates scraped daily
+        - done
+    - sources are completely scraped weekly
+        - done ... to be confirmed
+    - can Travis commit to the same repository that it's testing?
+        - won't that mess with triggers?
+            - not if you turn them off! but also if you leave them on! lets not mess with infinite testing loops
+        - it can!
+    - catalog.json becomes a build artifact and a 'release'
+        - but we replace the release daily rather than accumulate them
+        - done!
 
 ### todo
 
-* updates to catalog via travis
-    - sources have their latest updates scraped daily
-    - sources are completely scraped weekly
-    - can Travis commit to the same repository that it's testing?
-        - won't that mess with triggers?
-    - catalog.json becomes a build artifact and a 'release'
-        - but we replace the release daily rather than accumulate them
 * better handling of shitty addons
     - below addons are known to be mangled/corrupt/shit in some way
         * "99 bottles of beer", wowinterface
