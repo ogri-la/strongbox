@@ -31,6 +31,9 @@ see CHANGELOG.md for a more formal list of changes by release
         - done!
 * fixed bug in updating curseforge where old/bad paths to files caused a NPE
 * fixed bug in updating curseforge and wowinterface where data directories without the respective catalog would fail spec
+* gui, search, deselect selected addons after successful installation
+    - done
+        - this was *very* minor, can't believe it ever bothered me
 
 ### todo
 
@@ -48,7 +51,7 @@ see CHANGELOG.md for a more formal list of changes by release
         - if *any* top level directory is missing a .toc file, refuse to install addon
     - another potential cause of shittiness is top-level files
         - same logic applies. refuse to install addon if top-level *files* exist
-* gui, search, deselect selected addons after successful installation
+
 * issue a warning when addons unpack directories that don't share a common prefix
     - this would hopefully alert users that some shitty addons are being sneakily installed, like SlideBar or Stubby
         - we could go one further and filter/prompt the user if they actually want to unpack these directories
