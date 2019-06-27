@@ -1,5 +1,6 @@
 (ns wowman.curseforge-test
   (:require
+   [clj-http.fake :refer [with-fake-routes-in-isolation]]
    [clojure.test :refer [deftest testing is use-fixtures]]
    [wowman
     [core :as core]
@@ -80,8 +81,9 @@
                    (is (= (count nfo-file-list) 1))
                    (is (fs/exists? (first nfo-file-list)))))))))
 
-(deftest scrape-addon-summary
-  (let [fixture (slurp "test/fixtures/addon-summary-listing.html")
+;; todo: update fixture
+(deftest scrape-addon-summary-listing
+  (let [fixture (slurp "test/fixtures/curseforge-addon-summary-listing.html")
         scraped (curseforge/extract-addon-summary-list fixture)
         expected-first {:uri "https://www.curseforge.com/wow/addons/auto-toast"
                         :name "auto-toast"
@@ -94,6 +96,48 @@
                         :alt-name "achievementbroadcaster"}]
     (is (= 20 (count scraped)))
     (is (= expected-first (first scraped)))))
+
+(deftest scrape-addon
+  (testing "scraping addon (without a donation link)"
+    (let [fixture (slurp "test/fixtures/curseforge-addon-file--no-donation.html")
+          summary {:name "datastore" :label "Datastore" :category-list []
+                   :uri "https://www.curseforge.com/wow/addons/datastore"
+                   :updated-date "2001-01-01T00:00:00Z"
+                   :download-count 0}
+
+          fake-routes {"https://www.curseforge.com/wow/addons/datastore/files"
+                       {:get (fn [req] {:status 200 :body fixture})}}
+
+          expected (merge summary {:interface-version 60000,
+                                   :download-uri "https://www.curseforge.com/wow/addons/datastore/files/841838",
+                                   :label "Datastore",
+                                   :donation-uri nil,
+                                   :version "6.0.002"})]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= (curseforge/expand-summary summary) expected)))))
+
+  (testing "scraping addon (with a donation link)"
+    (let [fixture (slurp "test/fixtures/curseforge-addon-file--w.donation.html")
+          summary {:name "details" :label "Details" :category-list []
+                   :uri "https://www.curseforge.com/wow/addons/details"
+                   :updated-date "2001-01-01T00:00:00Z"
+                   :download-count 0}
+
+          fake-routes {"https://www.curseforge.com/wow/addons/details/files"
+                       {:get (fn [req] {:status 200 :body fixture})}}
+
+          expected (merge summary
+                          {:interface-version 80200,
+                           :download-uri "https://www.curseforge.com/wow/addons/details/files/2730880",
+                           :donation-uri "https://www.paypal.com/cgi-bin/webscr?return=https://www.curseforge.com/projects/61284?gameCategorySlug=addons&projectSlug=details&cn=Add+special+instructions+to+the+addon+author()&business=terciob19%40hotmail.com&bn=PP-DonationsBF:btn_donateCC_LG.gif:NonHosted&cancel_return=https://www.curseforge.com/projects/61284?gameCategorySlug=addons&projectSlug=details&lc=US&item_name=Details!+Damage+Meter+(from+curseforge.com)&cmd=_donations&rm=1&no_shipping=1&currency_code=USD",
+                           :version "v8.2.0-v1.13.2-7135.139"})]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= (curseforge/expand-summary summary) expected))))))
+
+
+
+;; todo: update/remove
+
 
 (deftest scrape-contrived-summary
   (let [fixture "<ul class='listing'><li class='project-list-item'>

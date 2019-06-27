@@ -52,7 +52,7 @@
 ;;
 
 (defn-spec extract-addon-summary ::sp/addon-summary
-  "converts a snippet of html extracted from a page into an ::sp/addon-summary"
+  "converts a snippet of html extracted from a listing into an ::sp/addon-summary"
   [snippet map?]
   (let [label (-> snippet (html/select [:h2]) first :content first clojure.string/trim)]
     {:uri (str curseforge-host (-> snippet (html/select [:div.list-item__details :a]) first :attrs :href))
@@ -83,14 +83,27 @@
         versions-data (http/download versions-uri :message message)]
     (when (string? versions-data) ;; map on error
       (let [versions-html (html/html-snippet versions-data)
-            latest-release (-> (html/select versions-html [:table.project-file-listing :tbody :tr]) first)
-            info-box (-> (html/select versions-html [:aside.project-details__sidebar]) first)
+            latest-release (-> (html/select versions-html [:article :div :div]) first)
+
+            ;; urgh. no fucking #ids in this new version of curseforge
+            header (-> (html/select versions-html [:header :div :div :div]) (nth 4) :content rest butlast)
+
+            ;; first inner box on right hand side column
+            info-box (-> (html/select versions-html [:aside :div]) (nth 4))
+            info-box-links (-> (html/select info-box [[:a (html/attr= "href")]]) vec)
+
+            ;; donation button may not exist, 'report' and 'follow' buttons always exist
+            info-box-links (first (utils/filter+map (fn [x]
+                                                      (try
+                                                        (if (= (some-> x :content second :content first clojure.string/trim) "Donate")
+                                                          (-> x :attrs :href to-uri))
+                                                        (catch Exception e nil))) info-box-links))
             prefix #(str curseforge-host %)]
         (merge addon-summary
-               {:download-uri (-> (html/select latest-release [[:a (html/attr= :data-action "download-file")]]) first :attrs :href prefix (suffix "/file") to-uri)
-                :version (-> (html/select latest-release [:td.project-file__name]) first :attrs :title)
-                :interface-version (-> (html/select latest-release [:span.version__label]) first :content first utils/game-version-to-interface-version)
-                :donation-uri (-> (html/select info-box [:div.infobox__actions :a.actions__donate]) first :attrs :href to-uri)})))))
+               {:download-uri (-> (html/select latest-release [:a]) first :attrs :href prefix)
+                :version (-> (html/select latest-release [:h3 html/content]) first)
+                :interface-version (-> header (nth 4) :content first (subs 14) utils/game-version-to-interface-version) ;; (count "Game Version: ") => 14
+                :donation-uri info-box-links})))))
 
 ;;
 
