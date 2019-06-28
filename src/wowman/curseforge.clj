@@ -79,7 +79,7 @@
 (defn-spec expand-summary (s/or :ok ::sp/addon, :error nil?)
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
   [addon-summary ::sp/addon-summary]
-  (let [message (str "downloading summary data: " (:name addon-summary))
+  (let [message (str "downloading addon data: " (:name addon-summary))
         versions-uri (-> addon-summary :uri (str "/files"))
         versions-data (http/download versions-uri :message message)]
     (when (string? versions-data) ;; map on error
@@ -101,7 +101,7 @@
                                                         (catch Exception e nil))) info-box-links))
             prefix #(str curseforge-host %)]
         (merge addon-summary
-               {:download-uri (-> (html/select latest-release [:a]) first :attrs :href prefix)
+               {:download-uri (-> versions-html (html/select [:section :article :div :a]) second :attrs :href (str "/file") prefix)
                 :version (-> (html/select latest-release [:h3 html/content]) first)
                 :interface-version (-> header (nth 4) :content first (subs 14) utils/game-version-to-interface-version) ;; (count "Game Version: ") => 14
                 :donation-uri info-box-links})))))

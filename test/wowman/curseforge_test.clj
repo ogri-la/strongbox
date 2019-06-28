@@ -122,7 +122,7 @@
                        {:get (fn [req] {:status 200 :body fixture})}}
 
           expected (merge summary {:interface-version 60000,
-                                   :download-uri "https://www.curseforge.com/wow/addons/datastore/files/841838",
+                                   :download-uri "https://www.curseforge.com/wow/addons/datastore/download/841838/file",
                                    :label "Datastore",
                                    :donation-uri nil,
                                    :version "6.0.002"})]
@@ -141,7 +141,7 @@
 
           expected (merge summary
                           {:interface-version 80200,
-                           :download-uri "https://www.curseforge.com/wow/addons/details/files/2730880",
+                           :download-uri "https://www.curseforge.com/wow/addons/details/download/2730880/file",
                            :donation-uri "https://www.paypal.com/cgi-bin/webscr?return=https://www.curseforge.com/projects/61284?gameCategorySlug=addons&projectSlug=details&cn=Add+special+instructions+to+the+addon+author()&business=terciob19%40hotmail.com&bn=PP-DonationsBF:btn_donateCC_LG.gif:NonHosted&cancel_return=https://www.curseforge.com/projects/61284?gameCategorySlug=addons&projectSlug=details&lc=US&item_name=Details!+Damage+Meter+(from+curseforge.com)&cmd=_donations&rm=1&no_shipping=1&currency_code=USD",
                            :version "v8.2.0-v1.13.2-7135.139"})]
       (with-fake-routes-in-isolation fake-routes
