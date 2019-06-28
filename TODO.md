@@ -4,7 +4,7 @@ this is my own scratchpad for keeping track of things. it gets truncated frequen
 
 see CHANGELOG.md for a more formal list of changes by release
 
-## 0.8.0 release
+## 0.7.2 release
 
 ### done
 
@@ -34,6 +34,14 @@ see CHANGELOG.md for a more formal list of changes by release
 * gui, search, deselect selected addons after successful installation
     - done
         - this was *very* minor, can't believe it ever bothered me
+* unexpected Curseforge webste revamp broke scraping
+    - curseforge scraping is now up to date
+        - I got some weirdness during development, probably because of old/bad/wrong/corrupted cache files
+        - I recommend using Cache -> Clear from the menu if you get this
+
+## 0.8.0 release
+
+### done
 
 ### todo
 

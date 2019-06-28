@@ -17,7 +17,7 @@
     <url>https://github.com/ogri-la/wowman</url>
     <connection>scm:git:git://github.com/ogri-la/wowman.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/ogri-la/wowman.git</developerConnection>
-    <tag>bd4eed47bb22ed4098ae3b7a4224f4c830f628cc</tag>
+    <tag>487f756860ca1873cae33e94b3dda7d73e686ed8</tag>
   </scm>
   <build>
     <sourceDirectory>src</sourceDirectory>
