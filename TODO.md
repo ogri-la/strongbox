@@ -10,6 +10,13 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### todo
 
+* bug, wowman-data update script is getting a strange 403 fetching latest release info
+    - grr
+* I flubbed and 0.7.2 has the version number (internally) as '0.8.0-unreleased'
+    - not sure how that happened, I distinctly remember updating it.
+    - not sure if there is anything I can do about it until 0.8.0 proper gets released
+
+
 * better handling of shitty addons
     - below addons are known to be mangled/corrupt/shit in some way
         * "99 bottles of beer", wowinterface
