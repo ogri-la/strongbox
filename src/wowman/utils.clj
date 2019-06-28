@@ -163,12 +163,19 @@
 ;; Applies function f to each item in the data structure m
 ;; https://github.com/clojure/clojure-contrib/blob/b8d2743d3a89e13fc9deb2844ca2167b34aaa9b6/src/main/clojure/clojure/contrib/generic/functor.clj#L34
 (defn fmap
+  "applies fn to each key-val in map"
   [f m]
   (into (empty m) (for [[k v] m] [k (f k v)])))
 
 (defn filter-map
+  "filters a map using f"
   [f m]
   (select-keys m (for [[k v] m :when (f k v)] k)))
+
+(defn filter+map
+  "filters and transforms a list at the same time. transformed value must be truth-y"
+  [f l]
+  (for [x l :let [tx (f x)] :when tx] tx))
 
 (defn nil-if-empty
   [s]

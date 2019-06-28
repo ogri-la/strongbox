@@ -1,0 +1,1812 @@
+
+<!DOCTYPE html>
+<!--[if lt IE 7 ]> <html lang="en" class="no-js ie6"> <![endif]-->
+<!--[if IE 7 ]>    <html lang="en" class="no-js ie7"> <![endif]-->
+<!--[if IE 8 ]>    <html lang="en" class="no-js ie8"> <![endif]-->
+<!--[if IE 9 ]>    <html lang="en" class="no-js ie9"> <![endif]-->
+<!--[if (gt IE 9)|!(IE)]><!-->
+<html lang="en-us" class="no-js">
+<!--<![endif]-->
+<!-- this prefix is to comply with open graph standards presented here https://d2eeipcrcdle6.cloudfront.net/seo-cheat-sheet.pdf -->
+
+<head>
+    <meta charset="UTF-8">
+    <title> DataStore - Addons - World of Warcraft - CurseForge </title>
+    <meta name="description" content="" />
+    <meta name="theme-color" content="#121212" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Responsive Meta Tag -->
+    
+
+
+        <link rel="shortcut icon" href="https://media.forgecdn.net/avatars/130/458/636460205549127215.png" />
+
+
+    <!-- Links -->
+
+    <!-- Meta Properties -->
+<meta property="og:type" content="website" />
+<meta property="og:title" content="DataStore" />
+<meta property="og:description" content="Main DataStore Module" />
+<meta property="og:url" content="https://www.curseforge.com/wow/addons/datastore" />
+<meta property="og:image" content="https://media.forgecdn.net/avatars/130/458/636460205549127215.png" />
+<meta property="og:site_name" content="CurseForge" />
+<meta name="description" content="Main DataStore Module" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:site" content="@CurseForge" />
+<meta name="twitter:creator" content="@CurseForge" />
+<meta name="twitter:title" content="DataStore" />
+<meta name="twitter:description" content="Main DataStore Module" />
+<meta name="twitter:image" content="https://media.forgecdn.net/avatars/130/458/636460205549127215.png" />
+
+    <!-- Stylesheets -->
+<link rel="stylesheet" href="/Content/2-0-7116-38081/Skins/Blocks/css/compiled.css"/>
+<link rel="stylesheet" href="/Content/2-0-7116-38081/Skins/CurseForge/css/compiled.css"/>
+<link rel="stylesheet" type="text/css" href="/api/custom-css" />
+
+    <script type="text/javascript">
+        var onloadCallback = function () {
+            Cobalt.runOnHtmlInsert(Cobalt.Forms.handlegReCaptchaRender);
+        };
+    </script>
+
+    <script src='https://www.google.com/recaptcha/api.js?onload=onloadCallback&render=explicit' async defer></script>
+    <script src="https://apis.google.com/js/platform.js"></script>
+
+    <!-- JavaScript -->
+<script src="/js/jquery-migration?v=GjyiFSP641QXo5QcmpaUW1L8laD5rKWzPP0n7lEpHPo1"></script>
+<script src="/js/jquery?v=-l4Om55ehZs1gYrKtDvYMCO02R2CD_KZGhdbRy2UTxw1"></script>
+<script src="/js/cobalt?v=Wu_3QopCOE4lD2KY9t_JOiRJwBYoNyPsuYs04kJLJAA1"></script>
+<script src="/js/Elerium?v=nBv0rFhT9MiRGxPvURu3JXiYZw4R6czSyMjB7TGyc0A1"></script>
+
+
+<script>
+window.factorem = {};
+window.factorem.slotSizes =  [
+    [[728,90],[970,250],[980,250],[970,150],[980,150]],
+    [[300,250],[300,600]],
+    [[300,250],[300,600]],
+    [[728,90]],
+    [[728,90]],
+    [[300,250]],
+    [[160,600]],
+    [[160,600]]
+];
+var script = document.createElement('script');
+var tstamp = new Date();
+script.id = 'factorem';
+script.src = '//cdm.cursecdn.com/js/curseforge/cdmfactorem_min.js?misc=' + tstamp.getTime();
+script.async = false;
+script.type='text/javascript';
+document.head.appendChild(script);
+</script> 
+    
+    
+    
+
+
+</head>
+<body class="site  site-curseforge site-curseforge body-publicproject body-publicproject-recentfiles show-ads user-anonymous lang-en site-lang-en template-none skin-light-on-dark flex flex-col h-full" data-user-lang="1">
+
+
+
+    
+    <!-- No Script -->
+    <noscript class="b-noscript">
+        <p><i class="b-noscript-icon"></i> This site works best with JavaScript enabled. Please enable JavaScript to get the best experience from this site.</p>
+    </noscript>
+    <div class="flex flex-col min-h-full min-h-screen">
+        <div class="flex-none">
+            
+
+
+
+
+<nav class="bg-primary-500 flex px-2 curseforge-header h-10">
+    <div class="flex items-center w-full h-full container mx-auto">
+        <div class="mr-4 curseforge-logo">
+            <a href="/">
+                <figure class="curseforge-logo__container relative w-9 h-5">
+                    <img src="/Content/2-0-7116-38081/Skins/CurseForge/images/anvil.svg" alt="CurseForge" class="w-full h-full absolute" />
+                </figure>
+            </a>
+        </div>
+        <div class="flex text-white">
+
+
+        <a href="https://www.curseforge.com/all-games"  class="top-nav__nav-link no-underline " >
+            Browse
+        </a>
+        <a href="https://app.twitch.tv"  class="top-nav__nav-link no-underline " >
+            Get Desktop
+        </a>
+        <a href="https://bit.ly/CurseForgeFeedback" target='_blank' class="top-nav__nav-link no-underline " >
+            Feedback
+        </a>
+        <a href="https://authors.curseforge.com/forums"  class="top-nav__nav-link no-underline hide" >
+            Forums
+        </a>
+
+    <a data-action="become-author-nav" href="https://authors.curseforge.com/" class="top-nav__nav-link">Become an author</a>
+        <a href="https://support.curseforge.com"  class="top-nav__nav-link no-underline " >
+            Support
+        </a>
+
+        </div>
+        <div class="ml-auto h-full">
+                    <div class="flex h-full">
+            <div class="mr-2">
+                <div class="flex items-center h-full">
+                    <a class="button button--hollow button--overlay" href="/twitch-login?returnUrl=%2fwow%2faddons%2fdatastore%2ffiles">
+                        <span class="button__text">
+                            Login
+                        </span>
+                    </a>
+                </div>
+            </div>
+            <div class="flex items-center h-full">
+                <a class="button button--overlay button--hollow" href="/twitch-signup?returnUrl=%2fwow%2faddons%2fdatastore%2ffiles">
+                    <span class="button__text">
+                        Sign Up
+                    </span>
+                </a>
+            </div>
+
+        </div>
+
+        </div>
+    </div>
+</nav>
+        </div>
+        <main class="flex-1 root-content z-1 flex flex-col w-full h-full">
+            
+
+<div class="z-0">
+
+
+<header class="relative game-header overflow-hidden h-40 flex flex-col justify-between">
+    <div class="w-full h-full absolute bg-no-repeat bg-cover z--1 game-header__art" style="background-image: url(&#39;https://static-cdn.jtvnw.net/community-images/070c8589-f5d4-4e0f-9c5d-c6e3ef274175/3ba16baa-2836-46e3-8db2-e16cd0f34d43-1200x180.jpeg&#39;);">
+    </div>
+    <div class="mx-auto mt-4">
+        <div class="mx-auto container mt-4 flex justify-center items-center">
+<div id='cdm-zone-01'></div>
+</div>
+
+    </div>
+    <div class="container mx-auto mt-auto flex justify-between">
+        <div class="flex">
+            <figure class="mr-2">
+
+<div class="project-avatar project-avatar-64">
+    <a href="/wow/addons/datastore" class="" >
+    </a>
+</div>
+            </figure>
+            <div class="flex flex-col mt-auto mb-auto">
+                <div>
+                        <h2 class="font-bold text-lg break-all">DataStore</h2>
+                </div>
+                <a href="/wow/addons" class="text-primary-500">
+                    Addons
+                </a>
+                <div class="flex">
+                    <span class="mr-2 text-sm text-gray-500">1,520,655 Downloads</span>
+                        <span class="mr-2 text-gray-500">Last Updated: Jul 22, 2018</span>
+                                            <span class="text-gray-500">Game Version: 6.0.3</span>
+                </div>
+            </div>
+        </div>
+        <div class="ml-2 flex">
+            <div class="flex mb-2">
+
+
+
+
+<div class="-mx-1 lg:flex hidden">    <div class="px-1">
+        <a href="/wow/addons/datastore/download" class="button button--hollow" >
+            <span class="button__text">
+                Download
+            </span>
+        </a>
+    </div>
+    <div class="px-1">
+        <a href="/wow/addons/datastore/download?client=y" class="button " >
+<svg class="icon icon-margin mr-1" viewBox="0 0 90 90" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Logo/Glitch.svg#Logo/Glitch"/></svg>            <span class="button__text">
+                Install
+            </span>
+        </a>
+    </div>
+</div>
+
+
+
+            </div>
+        </div>
+    </div>
+</header>
+    <div class="nav">
+        <a id="leftArrow"></a>
+        <a id="rightArrow"></a>
+        <nav class="container mx-auto">
+            <ul class="flex mt-6 mb-5 border-b border-gray-200 w-full">
+
+
+    <li id="nav-description" class=" b-list-item p-nav-item px-2 pb-1/10 -mb-1/10 text-gray-500"  >
+            <a href="/wow/addons/datastore"  class="text-gray-500" >
+                <span class="b-list-label">
+                    Description
+                </span>
+            </a>
+                
+    </li>
+    <li id="nav-files" class=" border-b-2 border-primary-500 b-list-item p-nav-item px-2 pb-1/10 -mb-1/10 text-gray-500"  >
+            <a href="/wow/addons/datastore/files"  class="text-primary-500" >
+                <span class="b-list-label">
+                    Files
+                </span>
+            </a>
+                
+    </li>
+    <li id="nav-issues" class=" b-list-item p-nav-item px-2 pb-1/10 -mb-1/10 text-gray-500"  >
+            <a href="/wow/addons/datastore/issues"  class="text-gray-500" >
+                <span class="b-list-label">
+                    Issues
+                </span>
+            </a>
+                
+    </li>
+    <li id="nav-localization" class=" b-list-item p-nav-item px-2 pb-1/10 -mb-1/10 text-gray-500"  >
+            <a href="/wow/addons/datastore/localization"  class="text-gray-500" >
+                <span class="b-list-label">
+                    Localization
+                </span>
+            </a>
+                
+    </li>
+    <li id="nav-pages" class=" b-list-item p-nav-item px-2 pb-1/10 -mb-1/10 text-gray-500"  >
+            <a href="/wow/addons/datastore/pages"  class="text-gray-500" >
+                <span class="b-list-label">
+                    Pages
+                </span>
+            </a>
+                
+    </li>
+    <li id="nav-changes" class=" b-list-item p-nav-item px-2 pb-1/10 -mb-1/10 text-gray-500"  >
+            <a href="/wow/addons/datastore/changes"  class="text-gray-500" >
+                <span class="b-list-label">
+                    Changes
+                </span>
+            </a>
+                
+    </li>
+    <li id="nav-relations" class=" b-list-item p-nav-item px-2 pb-1/10 -mb-1/10 text-gray-500"  >
+            <a href="/wow/addons/datastore/relations/dependencies"  class="text-gray-500" >
+                <span class="b-list-label">
+                    Relations
+                </span>
+            </a>
+                
+    </li>
+
+            </ul>
+        </nav>
+    </div>
+    <div class="mx-auto container pb-5">
+        <section class="-mx-2 flex flex-col-reverse lg:flex-row ">
+            <div class="flex-1 px-2">
+                <div class="flex flex-col">
+                    <div class="mb-4">
+                        
+
+<section>
+    <div class="flex justify-between mb-2">
+        <h2 class="text-xl font-bold">Main File</h2>
+    </div>
+
+
+
+<article class="box p-4 flex flex-col">
+    <div class="flex justify-between items-center mb-4">
+        <div class="flex align-center items-center">
+            <div class="mr-2">
+                    <div class="h-6 w-6 bg-green-500 text-white rounded flex justify-center items-center">
+                        <span class="text-white" title="Release">R</span>
+                    </div>
+            </div>
+            <a href="/wow/addons/datastore/files/841838">
+                <h3 class="text-primary-500 text-lg">6.0.002</h3>
+            </a>
+        </div>
+                <div class="flex">
+                        <div class="mr-2">
+                            <a href="/wow/addons/datastore/download/841838" class="button button--hollow">
+                                <span class="button__text"><svg class="icon icon-margin" viewBox="0 0 20 20" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Action/Download.svg#Action/Download"/></svg> Download</span>
+                            </a>
+                        </div>
+                                            <div>
+                            <a href="/wow/addons/datastore/download/841838?client=y" class="button">
+                                <span class="button__text"><svg class="icon icon-margin" viewBox="0 0 90 90" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Logo/Glitch.svg#Logo/Glitch"/></svg> Install</span>
+                            </a>
+                        </div>
+                </div>
+    </div>
+    <div class="flex justify-between border-b border-gray--100 mb-2 pb-4">
+        <div class="flex flex-col mr-2">
+            <span class="font-bold text-sm leading-loose mb-1">Filename</span>
+            <span class="text-sm">DataStore-6.0.002.zip</span>
+        </div>
+        <div class="flex flex-col mr-2">
+            <span class="font-bold text-sm leading-loose mb-1">Uploaded by</span>
+            <a href="/members/thaokyaltoholic"><span class="text-sm">thaokyaltoholic</span></a>
+        </div>
+        <div class="flex flex-col mr-2">
+            <span class="font-bold text-sm leading-loose mb-1">Uploaded</span>
+            <span class="text-sm">Dec 24, 2014</span>
+        </div>
+        <div class="flex flex-col mr-2">
+            <span class="font-bold text-sm leading-loose mb-1">Size</span>
+            <span class="text-sm">86.30 KB</span>
+        </div>
+        <div class="flex flex-col mr-2">
+            <span class="font-bold text-sm leading-loose mb-1">Downloads</span>
+            <span class="text-sm">453,982</span>
+        </div>
+        <div class="flex flex-col">
+            <span class="font-bold text-sm leading-loose mb-1">MD5</span>
+                <span class="text-sm">1178acc3015bfd404dd339982b0c9c3e</span>
+        </div>
+    </div>
+    <div class="flex flex-col">
+        <h4 class="font-bold text-sm mb-2">Changelog</h4>
+        <div class="bg-accent rounded py-1 pl-1 border-primary-100 border text-gray-500">
+                <div class="user-content min max-h-30 overflow-auto block">
+                    <p>------------------------------------------------------------------------<br>
+r50 | thaoky | 2014-12-24 14:10:58 +0000 (Wed, 24 Dec 2014) | 1 line<br>
+Changed paths:<br>
+&nbsp; &nbsp;A /tags/6.0.002 (from /trunk:49)</p>
+
+<p>Tagging as 6.0.002<br>
+------------------------------------------------------------------------<br>
+r49 | thaoky | 2014-12-24 13:41:50 +0000 (Wed, 24 Dec 2014) | 1 line<br>
+Changed paths:<br>
+&nbsp; &nbsp;M /trunk/DataStore.toc</p>
+
+<p>.toc update to use project-version<br>
+------------------------------------------------------------------------<br>
+r48 | thaoky | 2014-10-17 17:01:33 +0000 (Fri, 17 Oct 2014) | 1 line<br>
+Changed paths:<br>
+&nbsp; &nbsp;M /trunk/DataStore.lua<br>
+&nbsp; &nbsp;M /trunk/DataStore.toc</p>
+
+<p>6.0.001 Commit<br>
+------------------------------------------------------------------------</p>
+                </div>
+        </div>
+    </div>
+
+</article>
+        <div class="my-4">
+            <h2 class="text-xl font-bold">Additional Files</h2>
+            <div class="my-2">
+
+
+
+<article class="box p-4 flex flex-col">
+    <div class="flex justify-between items-center mb-4">
+        <div class="flex align-center items-center">
+            <div class="mr-2">
+                    <div class="h-6 w-6 bg-green-500 text-white rounded flex justify-center items-center">
+                        <span class="text-white" title="Release">R</span>
+                    </div>
+            </div>
+            <a href="/wow/addons/datastore/files/841837">
+                <h3 class="text-primary-500 text-lg">6.0.002-nolib</h3>
+            </a>
+        </div>
+                <div class="flex">
+                        <div class="mr-2">
+                            <a href="/wow/addons/datastore/download/841837" class="button button--hollow">
+                                <span class="button__text"><svg class="icon icon-margin" viewBox="0 0 20 20" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Action/Download.svg#Action/Download"/></svg> Download</span>
+                            </a>
+                        </div>
+                                            <div>
+                            <a href="/wow/addons/datastore/download/841837?client=y" class="button">
+                                <span class="button__text"><svg class="icon icon-margin" viewBox="0 0 90 90" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Logo/Glitch.svg#Logo/Glitch"/></svg> Install</span>
+                            </a>
+                        </div>
+                </div>
+    </div>
+    <div class="flex justify-between border-b border-gray--100 mb-2 pb-4">
+        <div class="flex flex-col mr-2">
+            <span class="font-bold text-sm leading-loose mb-1">Filename</span>
+            <span class="text-sm">DataStore-6.0.002-nolib.zip</span>
+        </div>
+        <div class="flex flex-col mr-2">
+            <span class="font-bold text-sm leading-loose mb-1">Uploaded by</span>
+            <a href="/members/thaokyaltoholic"><span class="text-sm">thaokyaltoholic</span></a>
+        </div>
+        <div class="flex flex-col mr-2">
+            <span class="font-bold text-sm leading-loose mb-1">Uploaded</span>
+            <span class="text-sm">Dec 24, 2014</span>
+        </div>
+        <div class="flex flex-col mr-2">
+            <span class="font-bold text-sm leading-loose mb-1">Size</span>
+            <span class="text-sm">25.91 KB</span>
+        </div>
+        <div class="flex flex-col mr-2">
+            <span class="font-bold text-sm leading-loose mb-1">Downloads</span>
+            <span class="text-sm">873</span>
+        </div>
+        <div class="flex flex-col">
+            <span class="font-bold text-sm leading-loose mb-1">MD5</span>
+                <span class="text-sm">24ebe873cfedbcc3f111a55078bd4d49</span>
+        </div>
+    </div>
+    <div class="flex flex-col">
+        <h4 class="font-bold text-sm mb-2">Changelog</h4>
+        <div class="bg-accent rounded py-1 pl-1 border-primary-100 border text-gray-500">
+                <div class="user-content min max-h-30 overflow-auto block">
+                    <p>------------------------------------------------------------------------<br>
+r50 | thaoky | 2014-12-24 14:10:58 +0000 (Wed, 24 Dec 2014) | 1 line<br>
+Changed paths:<br>
+&nbsp; &nbsp;A /tags/6.0.002 (from /trunk:49)</p>
+
+<p>Tagging as 6.0.002<br>
+------------------------------------------------------------------------<br>
+r49 | thaoky | 2014-12-24 13:41:50 +0000 (Wed, 24 Dec 2014) | 1 line<br>
+Changed paths:<br>
+&nbsp; &nbsp;M /trunk/DataStore.toc</p>
+
+<p>.toc update to use project-version<br>
+------------------------------------------------------------------------<br>
+r48 | thaoky | 2014-10-17 17:01:33 +0000 (Fri, 17 Oct 2014) | 1 line<br>
+Changed paths:<br>
+&nbsp; &nbsp;M /trunk/DataStore.lua<br>
+&nbsp; &nbsp;M /trunk/DataStore.toc</p>
+
+<p>6.0.001 Commit<br>
+------------------------------------------------------------------------</p>
+                </div>
+        </div>
+    </div>
+
+</article>
+            </div>
+        </div>
+            <div class="flex flex-col mt-4">
+            <div class="flex justify-between items-center">
+                <h3 class="text-xl font-bold">Recent Files</h3>
+                <a href="/wow/addons/datastore/files/all" class="button button--hollow">
+                    <span class="button__text">View All</span>
+                </a>
+            </div>
+            <div>
+<div class="listing-container listing-container-table"><div class="listing-body">
+
+<table class="listing listing-project-file project-file-listing b-table b-table-a" data-viewstate="" data-ajax-set-window-state="true"     data-row-selector="&gt;tbody&gt;tr"   data-default-sort-slug="datecreated"  data-default-sort-order="desc">
+        <thead class="b-table-header j-listing-table-header">
+                <tr>
+                        <th class="b-table-heading col-release-type asc" data-default-sort-order="asc"
+                             >
+                                    <a class="asc" href="/wow/addons/datastore/files?sort=releasetype">Type</a>
+                        </th>
+                        <th class="b-table-heading col-name asc" data-default-sort-order="asc"
+                             >
+                                    <a class="asc" href="/wow/addons/datastore/files?sort=name">Name</a>
+                        </th>
+                        <th class="b-table-heading col-size asc" data-default-sort-order="asc"
+                             >
+                                    <a class="asc" href="/wow/addons/datastore/files?sort=filelength">Size</a>
+                        </th>
+                        <th class="b-table-heading col-date-created asc" data-default-sort-order="asc"
+                             >
+                                    <a class="selected desc" href="/wow/addons/datastore/files?sort=datecreated">Uploaded</a>
+                        </th>
+                        <th class="b-table-heading col-game-version asc" data-default-sort-order="asc"
+                             >
+                                    <a class="asc" href="/wow/addons/datastore/files?sort=game-version">Game Version</a>
+                        </th>
+                        <th class="b-table-heading col-downloads asc" data-default-sort-order="asc"
+                             >
+                                    <a class="asc" href="/wow/addons/datastore/files?sort=totaldownloads">Downloads</a>
+                        </th>
+                        <th class="b-table-heading col-action asc" data-default-sort-order="asc"
+                             >
+Actions                        </th>
+                </tr>
+        </thead>
+    <tbody>
+
+<tr>
+    <td class="mx-auto">
+            <div class="w-5 h-5 bg-red-500 flex items-center justify-center text-white mx-auto rounded-sm">
+                <span class="text-white">A</span>
+            </div>
+    </td>
+    <td>
+
+        <a data-action="file-link" href="/wow/addons/datastore/files/2588918">r65-alpha</a>
+
+<a class="p-1 bg-accent rounded border border-gray--100 text-charcoal hover:no-underline ml-1" href="/wow/addons/datastore/files/2588918">+1 More</a>    </td>
+    <td>
+        81.47 KB
+    </td>
+    <td>
+        Jul 22, 2018
+    </td>
+    <td>
+        <div class="flex justify-center items-center">
+            <div class="mr-2">
+8.0.1            </div>
+        </div>
+    </td>
+    <td>
+        10,573
+    </td>
+    <td>
+        <div class="mx-auto flex justify-center">
+                <a href="/wow/addons/datastore/download/2588918" class="button button--hollow mr-2 button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 20 20" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Action/Download.svg#Action/Download"/></svg>
+                    </span>
+                </a>
+                            <a href="/wow/addons/datastore/download/2588918?client=y" class="button button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 90 90" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Logo/Glitch.svg#Logo/Glitch"/></svg>
+                    </span>
+                </a>
+        </div>
+    </td>
+</tr>
+<tr>
+    <td class="mx-auto">
+            <div class="w-5 h-5 bg-red-500 flex items-center justify-center text-white mx-auto rounded-sm">
+                <span class="text-white">A</span>
+            </div>
+    </td>
+    <td>
+
+        <a data-action="file-link" href="/wow/addons/datastore/files/2475711">r64-alpha</a>
+
+<a class="p-1 bg-accent rounded border border-gray--100 text-charcoal hover:no-underline ml-1" href="/wow/addons/datastore/files/2475711">+1 More</a>    </td>
+    <td>
+        81.69 KB
+    </td>
+    <td>
+        Sep 04, 2017
+    </td>
+    <td>
+        <div class="flex justify-center items-center">
+            <div class="mr-2">
+7.3.0            </div>
+        </div>
+    </td>
+    <td>
+        14,425
+    </td>
+    <td>
+        <div class="mx-auto flex justify-center">
+                <a href="/wow/addons/datastore/download/2475711" class="button button--hollow mr-2 button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 20 20" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Action/Download.svg#Action/Download"/></svg>
+                    </span>
+                </a>
+                            <a href="/wow/addons/datastore/download/2475711?client=y" class="button button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 90 90" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Logo/Glitch.svg#Logo/Glitch"/></svg>
+                    </span>
+                </a>
+        </div>
+    </td>
+</tr>
+<tr>
+    <td class="mx-auto">
+            <div class="w-5 h-5 bg-red-500 flex items-center justify-center text-white mx-auto rounded-sm">
+                <span class="text-white">A</span>
+            </div>
+    </td>
+    <td>
+
+        <a data-action="file-link" href="/wow/addons/datastore/files/2413011">r63-alpha</a>
+
+<a class="p-1 bg-accent rounded border border-gray--100 text-charcoal hover:no-underline ml-1" href="/wow/addons/datastore/files/2413011">+1 More</a>    </td>
+    <td>
+        81.59 KB
+    </td>
+    <td>
+        Apr 28, 2017
+    </td>
+    <td>
+        <div class="flex justify-center items-center">
+            <div class="mr-2">
+7.2.0            </div>
+        </div>
+    </td>
+    <td>
+        16,211
+    </td>
+    <td>
+        <div class="mx-auto flex justify-center">
+                <a href="/wow/addons/datastore/download/2413011" class="button button--hollow mr-2 button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 20 20" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Action/Download.svg#Action/Download"/></svg>
+                    </span>
+                </a>
+                            <a href="/wow/addons/datastore/download/2413011?client=y" class="button button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 90 90" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Logo/Glitch.svg#Logo/Glitch"/></svg>
+                    </span>
+                </a>
+        </div>
+    </td>
+</tr>
+<tr>
+    <td class="mx-auto">
+            <div class="w-5 h-5 bg-red-500 flex items-center justify-center text-white mx-auto rounded-sm">
+                <span class="text-white">A</span>
+            </div>
+    </td>
+    <td>
+
+        <a data-action="file-link" href="/wow/addons/datastore/files/2399776">r62-alpha</a>
+
+<a class="p-1 bg-accent rounded border border-gray--100 text-charcoal hover:no-underline ml-1" href="/wow/addons/datastore/files/2399776">+1 More</a>    </td>
+    <td>
+        81.54 KB
+    </td>
+    <td>
+        Mar 29, 2017
+    </td>
+    <td>
+        <div class="flex justify-center items-center">
+            <div class="mr-2">
+7.2.0            </div>
+        </div>
+    </td>
+    <td>
+        16,410
+    </td>
+    <td>
+        <div class="mx-auto flex justify-center">
+                <a href="/wow/addons/datastore/download/2399776" class="button button--hollow mr-2 button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 20 20" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Action/Download.svg#Action/Download"/></svg>
+                    </span>
+                </a>
+                            <a href="/wow/addons/datastore/download/2399776?client=y" class="button button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 90 90" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Logo/Glitch.svg#Logo/Glitch"/></svg>
+                    </span>
+                </a>
+        </div>
+    </td>
+</tr>
+<tr>
+    <td class="mx-auto">
+            <div class="w-5 h-5 bg-red-500 flex items-center justify-center text-white mx-auto rounded-sm">
+                <span class="text-white">A</span>
+            </div>
+    </td>
+    <td>
+
+        <a data-action="file-link" href="/wow/addons/datastore/files/955162">r61</a>
+
+<a class="p-1 bg-accent rounded border border-gray--100 text-charcoal hover:no-underline ml-1" href="/wow/addons/datastore/files/955162">+1 More</a>    </td>
+    <td>
+        79.90 KB
+    </td>
+    <td>
+        Nov 09, 2016
+    </td>
+    <td>
+        <div class="flex justify-center items-center">
+            <div class="mr-2">
+7.1.0            </div>
+        </div>
+    </td>
+    <td>
+        25,500
+    </td>
+    <td>
+        <div class="mx-auto flex justify-center">
+                <a href="/wow/addons/datastore/download/955162" class="button button--hollow mr-2 button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 20 20" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Action/Download.svg#Action/Download"/></svg>
+                    </span>
+                </a>
+                            <a href="/wow/addons/datastore/download/955162?client=y" class="button button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 90 90" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Logo/Glitch.svg#Logo/Glitch"/></svg>
+                    </span>
+                </a>
+        </div>
+    </td>
+</tr>
+<tr>
+    <td class="mx-auto">
+            <div class="w-5 h-5 bg-red-500 flex items-center justify-center text-white mx-auto rounded-sm">
+                <span class="text-white">A</span>
+            </div>
+    </td>
+    <td>
+
+        <a data-action="file-link" href="/wow/addons/datastore/files/952200">r60</a>
+
+<a class="p-1 bg-accent rounded border border-gray--100 text-charcoal hover:no-underline ml-1" href="/wow/addons/datastore/files/952200">+1 More</a>    </td>
+    <td>
+        79.76 KB
+    </td>
+    <td>
+        Oct 26, 2016
+    </td>
+    <td>
+        <div class="flex justify-center items-center">
+            <div class="mr-2">
+7.1.0            </div>
+        </div>
+    </td>
+    <td>
+        12,371
+    </td>
+    <td>
+        <div class="mx-auto flex justify-center">
+                <a href="/wow/addons/datastore/download/952200" class="button button--hollow mr-2 button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 20 20" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Action/Download.svg#Action/Download"/></svg>
+                    </span>
+                </a>
+                            <a href="/wow/addons/datastore/download/952200?client=y" class="button button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 90 90" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Logo/Glitch.svg#Logo/Glitch"/></svg>
+                    </span>
+                </a>
+        </div>
+    </td>
+</tr>
+<tr>
+    <td class="mx-auto">
+            <div class="w-5 h-5 bg-red-500 flex items-center justify-center text-white mx-auto rounded-sm">
+                <span class="text-white">A</span>
+            </div>
+    </td>
+    <td>
+
+        <a data-action="file-link" href="/wow/addons/datastore/files/934924">r59</a>
+
+<a class="p-1 bg-accent rounded border border-gray--100 text-charcoal hover:no-underline ml-1" href="/wow/addons/datastore/files/934924">+1 More</a>    </td>
+    <td>
+        79.85 KB
+    </td>
+    <td>
+        Aug 09, 2016
+    </td>
+    <td>
+        <div class="flex justify-center items-center">
+            <div class="mr-2">
+7.0.3            </div>
+        </div>
+    </td>
+    <td>
+        18,106
+    </td>
+    <td>
+        <div class="mx-auto flex justify-center">
+                <a href="/wow/addons/datastore/download/934924" class="button button--hollow mr-2 button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 20 20" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Action/Download.svg#Action/Download"/></svg>
+                    </span>
+                </a>
+                            <a href="/wow/addons/datastore/download/934924?client=y" class="button button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 90 90" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Logo/Glitch.svg#Logo/Glitch"/></svg>
+                    </span>
+                </a>
+        </div>
+    </td>
+</tr>
+<tr>
+    <td class="mx-auto">
+            <div class="w-5 h-5 bg-red-500 flex items-center justify-center text-white mx-auto rounded-sm">
+                <span class="text-white">A</span>
+            </div>
+    </td>
+    <td>
+
+        <a data-action="file-link" href="/wow/addons/datastore/files/932346">r58</a>
+
+<a class="p-1 bg-accent rounded border border-gray--100 text-charcoal hover:no-underline ml-1" href="/wow/addons/datastore/files/932346">+1 More</a>    </td>
+    <td>
+        79.67 KB
+    </td>
+    <td>
+        Jul 31, 2016
+    </td>
+    <td>
+        <div class="flex justify-center items-center">
+            <div class="mr-2">
+7.0.3            </div>
+        </div>
+    </td>
+    <td>
+        10,232
+    </td>
+    <td>
+        <div class="mx-auto flex justify-center">
+                <a href="/wow/addons/datastore/download/932346" class="button button--hollow mr-2 button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 20 20" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Action/Download.svg#Action/Download"/></svg>
+                    </span>
+                </a>
+                            <a href="/wow/addons/datastore/download/932346?client=y" class="button button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 90 90" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Logo/Glitch.svg#Logo/Glitch"/></svg>
+                    </span>
+                </a>
+        </div>
+    </td>
+</tr>
+<tr>
+    <td class="mx-auto">
+            <div class="w-5 h-5 bg-red-500 flex items-center justify-center text-white mx-auto rounded-sm">
+                <span class="text-white">A</span>
+            </div>
+    </td>
+    <td>
+
+        <a data-action="file-link" href="/wow/addons/datastore/files/932323">r57</a>
+
+<a class="p-1 bg-accent rounded border border-gray--100 text-charcoal hover:no-underline ml-1" href="/wow/addons/datastore/files/932323">+1 More</a>    </td>
+    <td>
+        79.61 KB
+    </td>
+    <td>
+        Jul 31, 2016
+    </td>
+    <td>
+        <div class="flex justify-center items-center">
+            <div class="mr-2">
+7.0.3            </div>
+        </div>
+    </td>
+    <td>
+        885
+    </td>
+    <td>
+        <div class="mx-auto flex justify-center">
+                <a href="/wow/addons/datastore/download/932323" class="button button--hollow mr-2 button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 20 20" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Action/Download.svg#Action/Download"/></svg>
+                    </span>
+                </a>
+                            <a href="/wow/addons/datastore/download/932323?client=y" class="button button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 90 90" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Logo/Glitch.svg#Logo/Glitch"/></svg>
+                    </span>
+                </a>
+        </div>
+    </td>
+</tr>
+<tr>
+    <td class="mx-auto">
+            <div class="w-5 h-5 bg-red-500 flex items-center justify-center text-white mx-auto rounded-sm">
+                <span class="text-white">A</span>
+            </div>
+    </td>
+    <td>
+
+        <a data-action="file-link" href="/wow/addons/datastore/files/924859">r56</a>
+
+<a class="p-1 bg-accent rounded border border-gray--100 text-charcoal hover:no-underline ml-1" href="/wow/addons/datastore/files/924859">+1 More</a>    </td>
+    <td>
+        79.93 KB
+    </td>
+    <td>
+        Jul 18, 2016
+    </td>
+    <td>
+        <div class="flex justify-center items-center">
+            <div class="mr-2">
+7.0.3            </div>
+        </div>
+    </td>
+    <td>
+        12,357
+    </td>
+    <td>
+        <div class="mx-auto flex justify-center">
+                <a href="/wow/addons/datastore/download/924859" class="button button--hollow mr-2 button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 20 20" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Action/Download.svg#Action/Download"/></svg>
+                    </span>
+                </a>
+                            <a href="/wow/addons/datastore/download/924859?client=y" class="button button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 90 90" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Logo/Glitch.svg#Logo/Glitch"/></svg>
+                    </span>
+                </a>
+        </div>
+    </td>
+</tr>
+<tr>
+    <td class="mx-auto">
+            <div class="w-5 h-5 bg-red-500 flex items-center justify-center text-white mx-auto rounded-sm">
+                <span class="text-white">A</span>
+            </div>
+    </td>
+    <td>
+
+        <a data-action="file-link" href="/wow/addons/datastore/files/894204">r55</a>
+
+<a class="p-1 bg-accent rounded border border-gray--100 text-charcoal hover:no-underline ml-1" href="/wow/addons/datastore/files/894204">+1 More</a>    </td>
+    <td>
+        79.91 KB
+    </td>
+    <td>
+        Aug 17, 2015
+    </td>
+    <td>
+        <div class="flex justify-center items-center">
+            <div class="mr-2">
+6.2.0            </div>
+        </div>
+    </td>
+    <td>
+        26,266
+    </td>
+    <td>
+        <div class="mx-auto flex justify-center">
+                <a href="/wow/addons/datastore/download/894204" class="button button--hollow mr-2 button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 20 20" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Action/Download.svg#Action/Download"/></svg>
+                    </span>
+                </a>
+                            <a href="/wow/addons/datastore/download/894204?client=y" class="button button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 90 90" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Logo/Glitch.svg#Logo/Glitch"/></svg>
+                    </span>
+                </a>
+        </div>
+    </td>
+</tr>
+<tr>
+    <td class="mx-auto">
+            <div class="w-5 h-5 bg-red-500 flex items-center justify-center text-white mx-auto rounded-sm">
+                <span class="text-white">A</span>
+            </div>
+    </td>
+    <td>
+
+        <a data-action="file-link" href="/wow/addons/datastore/files/873485">r54</a>
+
+<a class="p-1 bg-accent rounded border border-gray--100 text-charcoal hover:no-underline ml-1" href="/wow/addons/datastore/files/873485">+1 More</a>    </td>
+    <td>
+        79.94 KB
+    </td>
+    <td>
+        Apr 06, 2015
+    </td>
+    <td>
+        <div class="flex justify-center items-center">
+            <div class="mr-2">
+6.1.0            </div>
+        </div>
+    </td>
+    <td>
+        26,977
+    </td>
+    <td>
+        <div class="mx-auto flex justify-center">
+                <a href="/wow/addons/datastore/download/873485" class="button button--hollow mr-2 button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 20 20" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Action/Download.svg#Action/Download"/></svg>
+                    </span>
+                </a>
+                            <a href="/wow/addons/datastore/download/873485?client=y" class="button button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 90 90" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Logo/Glitch.svg#Logo/Glitch"/></svg>
+                    </span>
+                </a>
+        </div>
+    </td>
+</tr>
+<tr>
+    <td class="mx-auto">
+            <div class="w-5 h-5 bg-red-500 flex items-center justify-center text-white mx-auto rounded-sm">
+                <span class="text-white">A</span>
+            </div>
+    </td>
+    <td>
+
+        <a data-action="file-link" href="/wow/addons/datastore/files/865005">r53</a>
+
+<a class="p-1 bg-accent rounded border border-gray--100 text-charcoal hover:no-underline ml-1" href="/wow/addons/datastore/files/865005">+1 More</a>    </td>
+    <td>
+        79.92 KB
+    </td>
+    <td>
+        Feb 25, 2015
+    </td>
+    <td>
+        <div class="flex justify-center items-center">
+            <div class="mr-2">
+6.1.0            </div>
+        </div>
+    </td>
+    <td>
+        23,682
+    </td>
+    <td>
+        <div class="mx-auto flex justify-center">
+                <a href="/wow/addons/datastore/download/865005" class="button button--hollow mr-2 button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 20 20" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Action/Download.svg#Action/Download"/></svg>
+                    </span>
+                </a>
+                            <a href="/wow/addons/datastore/download/865005?client=y" class="button button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 90 90" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Logo/Glitch.svg#Logo/Glitch"/></svg>
+                    </span>
+                </a>
+        </div>
+    </td>
+</tr>
+<tr>
+    <td class="mx-auto">
+            <div class="w-5 h-5 bg-red-500 flex items-center justify-center text-white mx-auto rounded-sm">
+                <span class="text-white">A</span>
+            </div>
+    </td>
+    <td>
+
+        <a data-action="file-link" href="/wow/addons/datastore/files/853533">r52</a>
+
+<a class="p-1 bg-accent rounded border border-gray--100 text-charcoal hover:no-underline ml-1" href="/wow/addons/datastore/files/853533">+1 More</a>    </td>
+    <td>
+        79.19 KB
+    </td>
+    <td>
+        Jan 09, 2015
+    </td>
+    <td>
+        <div class="flex justify-center items-center">
+            <div class="mr-2">
+6.0.3            </div>
+        </div>
+    </td>
+    <td>
+        24,501
+    </td>
+    <td>
+        <div class="mx-auto flex justify-center">
+                <a href="/wow/addons/datastore/download/853533" class="button button--hollow mr-2 button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 20 20" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Action/Download.svg#Action/Download"/></svg>
+                    </span>
+                </a>
+                            <a href="/wow/addons/datastore/download/853533?client=y" class="button button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 90 90" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Logo/Glitch.svg#Logo/Glitch"/></svg>
+                    </span>
+                </a>
+        </div>
+    </td>
+</tr>
+<tr>
+    <td class="mx-auto">
+            <div class="w-5 h-5 bg-red-500 flex items-center justify-center text-white mx-auto rounded-sm">
+                <span class="text-white">A</span>
+            </div>
+    </td>
+    <td>
+
+        <a data-action="file-link" href="/wow/addons/datastore/files/842395">r51</a>
+
+<a class="p-1 bg-accent rounded border border-gray--100 text-charcoal hover:no-underline ml-1" href="/wow/addons/datastore/files/842395">+1 More</a>    </td>
+    <td>
+        79.19 KB
+    </td>
+    <td>
+        Dec 27, 2014
+    </td>
+    <td>
+        <div class="flex justify-center items-center">
+            <div class="mr-2">
+6.0.3            </div>
+        </div>
+    </td>
+    <td>
+        20,431
+    </td>
+    <td>
+        <div class="mx-auto flex justify-center">
+                <a href="/wow/addons/datastore/download/842395" class="button button--hollow mr-2 button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 20 20" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Action/Download.svg#Action/Download"/></svg>
+                    </span>
+                </a>
+                            <a href="/wow/addons/datastore/download/842395?client=y" class="button button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 90 90" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Logo/Glitch.svg#Logo/Glitch"/></svg>
+                    </span>
+                </a>
+        </div>
+    </td>
+</tr>
+<tr>
+    <td class="mx-auto">
+            <div class="w-5 h-5 bg-green-500 flex items-center justify-center text-white mx-auto rounded-sm">
+                <span class="text-white">R</span>
+            </div>
+    </td>
+    <td>
+
+        <a data-action="file-link" href="/wow/addons/datastore/files/841838">6.0.002</a>
+
+<a class="p-1 bg-accent rounded border border-gray--100 text-charcoal hover:no-underline ml-1" href="/wow/addons/datastore/files/841838">+1 More</a>    </td>
+    <td>
+        86.30 KB
+    </td>
+    <td>
+        Dec 24, 2014
+    </td>
+    <td>
+        <div class="flex justify-center items-center">
+            <div class="mr-2">
+6.0.3            </div>
+        </div>
+    </td>
+    <td>
+        453,982
+    </td>
+    <td>
+        <div class="mx-auto flex justify-center">
+                <a href="/wow/addons/datastore/download/841838" class="button button--hollow mr-2 button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 20 20" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Action/Download.svg#Action/Download"/></svg>
+                    </span>
+                </a>
+                            <a href="/wow/addons/datastore/download/841838?client=y" class="button button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 90 90" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Logo/Glitch.svg#Logo/Glitch"/></svg>
+                    </span>
+                </a>
+        </div>
+    </td>
+</tr>
+<tr>
+    <td class="mx-auto">
+            <div class="w-5 h-5 bg-red-500 flex items-center justify-center text-white mx-auto rounded-sm">
+                <span class="text-white">A</span>
+            </div>
+    </td>
+    <td>
+
+        <a data-action="file-link" href="/wow/addons/datastore/files/841811">r49</a>
+
+<a class="p-1 bg-accent rounded border border-gray--100 text-charcoal hover:no-underline ml-1" href="/wow/addons/datastore/files/841811">+1 More</a>    </td>
+    <td>
+        79.05 KB
+    </td>
+    <td>
+        Dec 24, 2014
+    </td>
+    <td>
+        <div class="flex justify-center items-center">
+            <div class="mr-2">
+6.0.3            </div>
+        </div>
+    </td>
+    <td>
+        479
+    </td>
+    <td>
+        <div class="mx-auto flex justify-center">
+                <a href="/wow/addons/datastore/download/841811" class="button button--hollow mr-2 button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 20 20" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Action/Download.svg#Action/Download"/></svg>
+                    </span>
+                </a>
+                            <a href="/wow/addons/datastore/download/841811?client=y" class="button button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 90 90" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Logo/Glitch.svg#Logo/Glitch"/></svg>
+                    </span>
+                </a>
+        </div>
+    </td>
+</tr>
+<tr>
+    <td class="mx-auto">
+            <div class="w-5 h-5 bg-red-500 flex items-center justify-center text-white mx-auto rounded-sm">
+                <span class="text-white">A</span>
+            </div>
+    </td>
+    <td>
+
+        <a data-action="file-link" href="/wow/addons/datastore/files/821937">r48</a>
+
+<a class="p-1 bg-accent rounded border border-gray--100 text-charcoal hover:no-underline ml-1" href="/wow/addons/datastore/files/821937">+1 More</a>    </td>
+    <td>
+        79.18 KB
+    </td>
+    <td>
+        Oct 17, 2014
+    </td>
+    <td>
+        <div class="flex justify-center items-center">
+            <div class="mr-2">
+6.0.2            </div>
+        </div>
+    </td>
+    <td>
+        31,470
+    </td>
+    <td>
+        <div class="mx-auto flex justify-center">
+                <a href="/wow/addons/datastore/download/821937" class="button button--hollow mr-2 button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 20 20" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Action/Download.svg#Action/Download"/></svg>
+                    </span>
+                </a>
+                            <a href="/wow/addons/datastore/download/821937?client=y" class="button button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 90 90" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Logo/Glitch.svg#Logo/Glitch"/></svg>
+                    </span>
+                </a>
+        </div>
+    </td>
+</tr>
+<tr>
+    <td class="mx-auto">
+            <div class="w-5 h-5 bg-red-500 flex items-center justify-center text-white mx-auto rounded-sm">
+                <span class="text-white">A</span>
+            </div>
+    </td>
+    <td>
+
+        <a data-action="file-link" href="/wow/addons/datastore/files/809135">r47</a>
+
+<a class="p-1 bg-accent rounded border border-gray--100 text-charcoal hover:no-underline ml-1" href="/wow/addons/datastore/files/809135">+1 More</a>    </td>
+    <td>
+        78.94 KB
+    </td>
+    <td>
+        Aug 08, 2014
+    </td>
+    <td>
+        <div class="flex justify-center items-center">
+            <div class="mr-2">
+5.4.8            </div>
+        </div>
+    </td>
+    <td>
+        29,288
+    </td>
+    <td>
+        <div class="mx-auto flex justify-center">
+                <a href="/wow/addons/datastore/download/809135" class="button button--hollow mr-2 button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 20 20" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Action/Download.svg#Action/Download"/></svg>
+                    </span>
+                </a>
+                            <a href="/wow/addons/datastore/download/809135?client=y" class="button button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 90 90" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Logo/Glitch.svg#Logo/Glitch"/></svg>
+                    </span>
+                </a>
+        </div>
+    </td>
+</tr>
+<tr>
+    <td class="mx-auto">
+            <div class="w-5 h-5 bg-red-500 flex items-center justify-center text-white mx-auto rounded-sm">
+                <span class="text-white">A</span>
+            </div>
+    </td>
+    <td>
+
+        <a data-action="file-link" href="/wow/addons/datastore/files/807083">r46</a>
+
+<a class="p-1 bg-accent rounded border border-gray--100 text-charcoal hover:no-underline ml-1" href="/wow/addons/datastore/files/807083">+1 More</a>    </td>
+    <td>
+        78.62 KB
+    </td>
+    <td>
+        Jul 27, 2014
+    </td>
+    <td>
+        <div class="flex justify-center items-center">
+            <div class="mr-2">
+5.4.8            </div>
+        </div>
+    </td>
+    <td>
+        16,268
+    </td>
+    <td>
+        <div class="mx-auto flex justify-center">
+                <a href="/wow/addons/datastore/download/807083" class="button button--hollow mr-2 button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 20 20" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Action/Download.svg#Action/Download"/></svg>
+                    </span>
+                </a>
+                            <a href="/wow/addons/datastore/download/807083?client=y" class="button button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 90 90" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Logo/Glitch.svg#Logo/Glitch"/></svg>
+                    </span>
+                </a>
+        </div>
+    </td>
+</tr>
+<tr>
+    <td class="mx-auto">
+            <div class="w-5 h-5 bg-green-500 flex items-center justify-center text-white mx-auto rounded-sm">
+                <span class="text-white">R</span>
+            </div>
+    </td>
+    <td>
+
+        <a data-action="file-link" href="/wow/addons/datastore/files/806634">5.4.007</a>
+
+<a class="p-1 bg-accent rounded border border-gray--100 text-charcoal hover:no-underline ml-1" href="/wow/addons/datastore/files/806634">+1 More</a>    </td>
+    <td>
+        85.71 KB
+    </td>
+    <td>
+        Jul 24, 2014
+    </td>
+    <td>
+        <div class="flex justify-center items-center">
+            <div class="mr-2">
+5.4.8            </div>
+        </div>
+    </td>
+    <td>
+        24,615
+    </td>
+    <td>
+        <div class="mx-auto flex justify-center">
+                <a href="/wow/addons/datastore/download/806634" class="button button--hollow mr-2 button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 20 20" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Action/Download.svg#Action/Download"/></svg>
+                    </span>
+                </a>
+                            <a href="/wow/addons/datastore/download/806634?client=y" class="button button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 90 90" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Logo/Glitch.svg#Logo/Glitch"/></svg>
+                    </span>
+                </a>
+        </div>
+    </td>
+</tr>
+<tr>
+    <td class="mx-auto">
+            <div class="w-5 h-5 bg-red-500 flex items-center justify-center text-white mx-auto rounded-sm">
+                <span class="text-white">A</span>
+            </div>
+    </td>
+    <td>
+
+        <a data-action="file-link" href="/wow/addons/datastore/files/806340">r44</a>
+
+<a class="p-1 bg-accent rounded border border-gray--100 text-charcoal hover:no-underline ml-1" href="/wow/addons/datastore/files/806340">+1 More</a>    </td>
+    <td>
+        78.37 KB
+    </td>
+    <td>
+        Jul 22, 2014
+    </td>
+    <td>
+        <div class="flex justify-center items-center">
+            <div class="mr-2">
+5.4.8            </div>
+        </div>
+    </td>
+    <td>
+        8,559
+    </td>
+    <td>
+        <div class="mx-auto flex justify-center">
+                <a href="/wow/addons/datastore/download/806340" class="button button--hollow mr-2 button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 20 20" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Action/Download.svg#Action/Download"/></svg>
+                    </span>
+                </a>
+                            <a href="/wow/addons/datastore/download/806340?client=y" class="button button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 90 90" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Logo/Glitch.svg#Logo/Glitch"/></svg>
+                    </span>
+                </a>
+        </div>
+    </td>
+</tr>
+<tr>
+    <td class="mx-auto">
+            <div class="w-5 h-5 bg-red-500 flex items-center justify-center text-white mx-auto rounded-sm">
+                <span class="text-white">A</span>
+            </div>
+    </td>
+    <td>
+
+        <a data-action="file-link" href="/wow/addons/datastore/files/806088">r43</a>
+
+<a class="p-1 bg-accent rounded border border-gray--100 text-charcoal hover:no-underline ml-1" href="/wow/addons/datastore/files/806088">+1 More</a>    </td>
+    <td>
+        78.26 KB
+    </td>
+    <td>
+        Jul 21, 2014
+    </td>
+    <td>
+        <div class="flex justify-center items-center">
+            <div class="mr-2">
+5.4.8            </div>
+        </div>
+    </td>
+    <td>
+        6,817
+    </td>
+    <td>
+        <div class="mx-auto flex justify-center">
+                <a href="/wow/addons/datastore/download/806088" class="button button--hollow mr-2 button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 20 20" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Action/Download.svg#Action/Download"/></svg>
+                    </span>
+                </a>
+                            <a href="/wow/addons/datastore/download/806088?client=y" class="button button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 90 90" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Logo/Glitch.svg#Logo/Glitch"/></svg>
+                    </span>
+                </a>
+        </div>
+    </td>
+</tr>
+<tr>
+    <td class="mx-auto">
+            <div class="w-5 h-5 bg-red-500 flex items-center justify-center text-white mx-auto rounded-sm">
+                <span class="text-white">A</span>
+            </div>
+    </td>
+    <td>
+
+        <a data-action="file-link" href="/wow/addons/datastore/files/743682">r42</a>
+
+<a class="p-1 bg-accent rounded border border-gray--100 text-charcoal hover:no-underline ml-1" href="/wow/addons/datastore/files/743682">+1 More</a>    </td>
+    <td>
+        78.20 KB
+    </td>
+    <td>
+        Oct 06, 2013
+    </td>
+    <td>
+        <div class="flex justify-center items-center">
+            <div class="mr-2">
+5.4.0            </div>
+        </div>
+    </td>
+    <td>
+        57,996
+    </td>
+    <td>
+        <div class="mx-auto flex justify-center">
+                <a href="/wow/addons/datastore/download/743682" class="button button--hollow mr-2 button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 20 20" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Action/Download.svg#Action/Download"/></svg>
+                    </span>
+                </a>
+                            <a href="/wow/addons/datastore/download/743682?client=y" class="button button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 90 90" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Logo/Glitch.svg#Logo/Glitch"/></svg>
+                    </span>
+                </a>
+        </div>
+    </td>
+</tr>
+<tr>
+    <td class="mx-auto">
+            <div class="w-5 h-5 bg-red-500 flex items-center justify-center text-white mx-auto rounded-sm">
+                <span class="text-white">A</span>
+            </div>
+    </td>
+    <td>
+
+        <a data-action="file-link" href="/wow/addons/datastore/files/733838">r41</a>
+
+<a class="p-1 bg-accent rounded border border-gray--100 text-charcoal hover:no-underline ml-1" href="/wow/addons/datastore/files/733838">+1 More</a>    </td>
+    <td>
+        78.10 KB
+    </td>
+    <td>
+        Sep 11, 2013
+    </td>
+    <td>
+        <div class="flex justify-center items-center">
+            <div class="mr-2">
+5.4.0            </div>
+        </div>
+    </td>
+    <td>
+        32,124
+    </td>
+    <td>
+        <div class="mx-auto flex justify-center">
+                <a href="/wow/addons/datastore/download/733838" class="button button--hollow mr-2 button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 20 20" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Action/Download.svg#Action/Download"/></svg>
+                    </span>
+                </a>
+                            <a href="/wow/addons/datastore/download/733838?client=y" class="button button--icon-only">
+                    <span class="button__text">
+                        <svg class="icon icon-fixed-width icon-margin" viewBox="0 0 90 90" width="18" height="18"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Logo/Glitch.svg#Logo/Glitch"/></svg>
+                    </span>
+                </a>
+        </div>
+    </td>
+</tr>
+
+    </tbody>
+</table>
+</div></div>
+            </div>
+        </div>
+</section>
+                    </div>
+
+                </div>
+            </div>
+            <aside class="lg:block w-full lg:w-64 px-2">
+
+                <div class="mg-b-2">
+  <div id='cdm-zone-02'></div>
+</div>
+
+                <div class="my-4">
+
+<div class="flex box p-4 flex-col">
+    <div class="pb-4 border-b border-gray--100">
+        <div class="flex justify-between mb-3">
+            <h3 class="font-bold text-lg">About Project</h3>
+            <div class="flex">
+
+                                    <div class="flex">
+                        <a href="/wow/addons/datastore/source"  class="my-auto">
+<svg class="icon" viewBox="0 0 20 20" width="20" height="20"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Feature/Browse.svg#Feature/Browse"/></svg>                            Source
+                        </a>
+                    </div>
+            </div>
+        </div>
+        <div class="flex flex-col mb-3">
+            <div class="w-full flex justify-between">
+                <span>Project ID</span>
+                <span>20204</span>
+            </div>
+            <div class="w-full flex justify-between">
+                <span>Created </span>
+                <span>Jul 30, 2009</span>
+            </div>
+            <div class="w-full flex justify-between">
+                <span>Updated</span>
+                <span>Jul 22, 2018</span>
+            </div>
+            <div class="w-full flex justify-between">
+                <span>Total Downloads</span>
+                <span>1,520,655</span>
+            </div>
+            <div class="w-full flex justify-between">
+                <span>
+                    License
+                </span>
+
+                <a href="/project/20204/license" rel="modal:open">
+                    All Rights Rese...
+                </a>
+            </div>
+        </div>
+        <div class="flex justify-between items-center">
+
+                <button class="button button--hollow w-15" title="You must be logged in to report a Project." disabled>
+                    <span class="button__text">Report</span>
+                </button>
+                            <a href="/login?returnUrl=%252fwow%252faddons%252fdatastore%252ffiles" class="button w-15">
+                    <span class="button__text">
+                        Follow
+                    </span>
+                </a>
+                    </div>
+    </div>
+
+    <div class="pb-4 border-b border-gray--100 hidden lg:flex flex-col mt-3">
+        <h3 class="mb-3 font-bold text-lg">Categories</h3>
+        <div class="flex -mx-1">
+
+                <div class="px-1">
+                    <a href="/wow/addons/libraries">
+                        <figure class="relative h-6 w-6" title="Libraries">
+                            <img src="https://media.forgecdn.net/avatars/thumbnails/54/446/30/30/636135209667351870.png" class="rounded absolute inset-0 h-full w-full" />
+                        </figure>
+                    </a>
+                </div>
+        </div>
+    </div>
+    <div class="hidden lg:flex flex-col mt-3">
+        <h3 class="font-bold mb-3 text-lg">Members</h3>
+            <div class="flex mb-2">
+                <a href="/members/thaokyaltoholic">
+                    <figure class="relative w-6 h-6 mr-2">
+                        <img src="https://static-cdn.jtvnw.net/user-default-pictures/4cbf10f1-bb9f-4f57-90e1-15bf06cfe6f5-profile_image-150x150.jpg" />
+                    </figure>
+                </a>
+                <div class="flex flex-col flex-grow">
+                    <p class="text-sm text-primary-500 flex">
+                        <a href="/members/thaokyaltoholic">
+                            <span>
+                                thaokyaltoholic
+                            </span>
+                        </a>
+                    </p>
+                    <p class="text-xs">Owner</p>
+                </div>
+            </div>
+    </div>
+</div>
+                </div>
+                <div id='cdm-zone-03'></div>
+            </aside>
+        </section>
+    </div>
+</div>
+
+            <div id="analytics">
+                <!-- Google Analytics -->
+<script type="text/javascript">
+var _gaq = _gaq || [];
+_gaq.push(
+        ['_setAccount', 'UA-389142-3'],
+        ['_setDomainName', 'curseforge.com'],
+        ['_addIgnoredRef', 'curseforge.com'],
+        ['_trackPageview'],
+        ['b._setAccount', 'UA-389142-31'],
+        ['b._setDomainName', 'curseforge.com'],
+        ['b._addIgnoredRef', 'curseforge.com'],
+        ['b._trackPageview']
+);
+(function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+})();
+</script>
+<!-- End Google Analytics -->
+
+<!-- Lotame -->
+<script src="https://tags.crwdcntrl.net/c/3613/cc.js?ns=_cc3613" id="LOTCC_3613"></script>
+<script>
+_cc3613.bcp();
+</script>
+<!-- End Lotame -->
+            </div>
+        </main>
+        <!-- Layout End -->
+
+
+        <div class="flex-none">
+            
+
+
+
+<script type="text/javascript">
+    Cobalt.Device.initialize();
+    Cobalt.Burger.initializeEarly();
+
+    Cobalt.Constants.initialize({"StaticURL":"/Content/2-0-7116-38081","SkinPath":"/Content/2-0-7116-38081/Skins/CurseForge","MediaURL":"https://media.forgecdn.net/","AvatarURL":"https://media.forgecdn.net/avatars","AttachmentURL":"https://media.forgecdn.net/attachments","ActiveConfiguration":"production"});
+
+    Cobalt.Constants.BuildVersion = "2-0-7116-38081";
+    Cobalt.Constants.IsDevelopment = false;
+    Cobalt.Constants.IgnoredUserIDs = [];
+    Cobalt.Constants.ServerTimestamp = 1561643260266.1
+    Cobalt.Constants.FacebookAppID = "";
+    Cobalt.Constants.QuoteCssClasses = "";
+    Cobalt.User.EnabledLanguageIDs = [1,2,3,4,7,8,9,15,16];
+    Cobalt.User.MaxQuoteDepth = 5;
+    Cobalt.User.AuthToken = "";
+    Cobalt.TinyMCE.extraPlugins = "";
+    Cobalt.TinyMCE.extraButtons = "";
+    Cobalt.TinyMCE.extraCustomPlugins = "";
+
+    // NOTE: if you need to debug into tinymce, then change the following line to tinymce.js
+    Cobalt.TinyMCE.url = "/Content/js/tinymce/tiny_mce/tinymce.min.js";
+    Cobalt.TinyMCE.customPluginUrl = "/Content/js/tinymce/custom_plugins";
+    Cobalt.TinyMCE.skin_url = "/Content/js/tinymce/custom_skin";
+
+
+    Cobalt.Constants.SiteID = 23;
+    Cobalt.Constants.SiteName = "CurseForge";
+    Cobalt.TinyMCE.fontColorEnabled = false;
+    Cobalt.TinyMCE.fontSizeEnabled = false;
+    Cobalt.TinyMCE.fontFamilyEnabled = false;
+    Cobalt.TinyMCE.textAlignmentEnabled = false;
+    Cobalt.TinyMCE.smiliesEnabled = false;
+    Cobalt.TinyMCE.forceSimpleBBCodeEditor = false;
+    Cobalt.Constants.NestedQuotePreference  = 1;
+    $.ajaxSetup({
+        data: {},
+        timeout: 30000
+    });
+
+
+    //bbcode entries
+
+
+    Cobalt.Markup.customBBcodeButtons = [];
+
+
+
+    Cobalt.CMS.CobaltCss = ["/Content/2-0-7116-38081/Skins/Global-TinyMCE/css/compiled.css"];
+    Cobalt.CMS.ProjectCss = ["/Content/2-0-7116-38081/Skins/CurseForge/css/compiled.css"];
+
+    // set the tracking id for google analytics on this site
+    Cobalt.Analytics.trackingId = 'UA-389142-31';
+
+</script>
+
+
+
+<script>
+    hljs.initHighlighting();
+</script><script type="text/javascript">
+    Cobalt.runOnLoad(function () {
+        Cobalt.initialize([{dependency:Cobalt.Listing, priority:99, name:'Cobalt.Listing'},{dependency:Elerium.AdResize, priority:99, name:'Elerium.AdResize'},{dependency:Cobalt.TinyMCE, priority:99, name:'Cobalt.TinyMCE'},{dependency:Elerium.Dropdown, priority:99, name:'Elerium.Dropdown'},{dependency:Elerium.Notifications, priority:99, name:'Elerium.Notifications'},{dependency:Cobalt.Tabs, priority:99, name:'Cobalt.Tabs'},{dependency:Cobalt.NiceDates, priority:99, name:'Cobalt.NiceDates'},{dependency:Cobalt.Core, priority:99, name:'Cobalt.Core'},{dependency:Cobalt.Forms, priority:99, name:'Cobalt.Forms'},{dependency:Cobalt.UI, priority:99, name:'Cobalt.UI'},{dependency:Cobalt.Notifications, priority:99, name:'Cobalt.Notifications'},{dependency:Cobalt.Feedback, priority:99, name:'Cobalt.Feedback'},{dependency:Cobalt.WarningNotification, priority:99, name:'Cobalt.WarningNotification'},{dependency:Cobalt.Footer, priority:99, name:'Cobalt.Footer'},{dependency:Cobalt.Tidbit, priority:99, name:'Cobalt.Tidbit'},{dependency:Cobalt.BunnyEars, priority:99, name:'Cobalt.BunnyEars'},{dependency:Elerium.OverflowTip, priority:99, name:'Elerium.OverflowTip'},{dependency:Elerium.PostAction, priority:99, name:'Elerium.PostAction'},{dependency:Elerium.Analytics, priority:99, name:'Elerium.Analytics'},{dependency:Elerium.TwitchNurture, priority:99, name:'Elerium.TwitchNurture'}]);
+    });
+</script>
+            
+<footer class="flex align-items-center bg-charcoal px-6 justify-center flex-col">
+    <div class="container mx-auto">
+        <nav class="flex justify-between w-full py-4 sm:mb-2">
+            <section class="flex flex-col">
+                <a href="https://twitch.tv" target="_blank" title="Twitch">
+                    <figure class="mb-2 text-white">
+                        <svg class="icon icon-white" viewBox="0 0 282 96" width="94" height="32"><use xlink:href="/Content/2-0-7116-38081/Skins/CurseForge/images/twitch/Logo/Twitch.svg#Logo/Twitch"/></svg>
+                    </figure>
+                </a>
+                <span class="text-white">©2019 Twitch Interactive, Inc</span>
+            </section>
+            <section class="hidden md:flex flex-col">
+                <a href="https://twitch.tv/p/about/" target="_blank" class="footer-link">About</a>
+                <a href="https://twitch.tv/jobs/" target="_blank" class="footer-link">Careers</a>
+                <a href="https://twitch.tv/blog/" target="_blank" class="footer-link">Blog</a>
+                <a href="https://twitch.tv/p/about/press-releases/" target="_blank" class="footer-link">Press</a>
+            </section>
+            <section class="hidden md:flex flex-col">
+                <a href="https://twitch.tv/p/brand/" target="_blank" class="footer-link">Brand</a>
+                <a href="https://music.twitch.tv/" target="_blank" class="footer-link">Music</a>
+                <a href="https://twitchadvertising.tv/" target="_blank" class="footer-link">Advertise</a>
+                <a href="https://twitch.tv/legal/ad-choices/" target="_blank" class="footer-link">Ad Choices</a>
+            </section>
+            <section class="hidden md:flex flex-col">
+                <a href="https://www.twitch.tv/prime/" target="_blank" class="footer-link">Prime</a>
+                <a href="https://twitch.tv/p/partners/" target="_blank" class="footer-link">Partners</a>
+                <a href="https://affiliate.twitch.tv/" target="_blank" class="footer-link">Affiliates</a>
+            </section>
+            <section class="hidden md:flex flex-col">
+                <a href="https://dev.twitch.tv/" target="_blank" class="footer-link">Developers</a>
+                <a href="https://support.curseforge.com/hc/en-us" target="_blank" class="footer-link">Help</a>
+                <a href="https://twitch.uservoice.com/forums/915910-game-mods-curseforge" target="_blank" class="footer-link">Feedback</a>
+            </section>
+            <section class="hidden md:flex flex-col">
+                <a href="https://twitch.tv/legal/terms-of-service/" target="_blank" class="footer-link">Terms of Service</a>
+                <a href="https://twitch.tv/legal/privacy-policy/" target="_blank" class="footer-link">Privacy Policy</a>
+                <a href="https://twitch.tv/legal/cookie-policy/" target="_blank" class="footer-link">Cookie Policy</a>
+            </section>
+        </nav>
+        <div class="curseforge-footer__copyright-container">
+            <span class="text-white display flex md:hidden">©2019 Twitch Interactive, Inc</span>
+        </div>
+    </div>
+</footer>
+
+        </div>
+    </div>
+
+    <!-- Layout Start -->
+</body>
+</html>

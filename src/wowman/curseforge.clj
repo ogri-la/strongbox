@@ -4,6 +4,7 @@
     [http :as http]
     [specs :as sp]
     [utils :as utils :refer [to-int to-json fmap join from-epoch to-uri]]]
+   [me.raynes.fs :as fs]
    [slugify.core :refer [slugify]]
    [flatland.ordered.map :as omap]
    [clojure.spec.alpha :as s]
@@ -18,10 +19,6 @@
   [v sfx]
   (when-not (empty? v)
     (str v sfx)))
-
-(defn-spec formatted-str-to-num int?
-  [string string?]
-  (-> string (clojure.string/replace #"[^\d]*" "") clojure.string/trim Integer.))
 
 ;;
 
@@ -52,45 +49,62 @@
 ;;
 
 (defn-spec extract-addon-summary ::sp/addon-summary
-  "converts a snippet of html extracted from a page into an ::sp/addon-summary"
+  "converts a snippet of html extracted from a listing into an ::sp/addon-summary"
   [snippet map?]
-  (let [label (-> snippet (html/select [:h2]) first :content first clojure.string/trim)]
-    {:uri (str curseforge-host (-> snippet (html/select [:div.list-item__details :a]) first :attrs :href))
-     :name (-> snippet (html/select [:div.list-item__details :a]) first :attrs :href (clojure.string/split #"/") last)
+  (let [uri (-> snippet (html/select [#{:a :h3}]) first :attrs :href)
+        name (fs/base-name uri) ;; not sure if this holds true. will need to check updated catalog
+        [updated created] (-> snippet (html/select [:abbr]) vec)
+        formatted-str-to-num (fn [string]
+                               (let [[nom mag] (rest (re-find #"([\d\.]+)([KM]?) Downloads$" string))
+                                     mag (get {"" 1, "K" 1000, "M" 1000000} mag)]
+                                 (-> nom Double. (* mag) int)))
+        label (-> snippet (html/select [:h3]) first :content first clojure.string/trim)]
+    {:uri (str curseforge-host uri)
+     :name name
+     :alt-name (-> label (slugify ""))
      :label label
-     :description (-> snippet (html/select [:div.list-item__description :p]) first :content first)
-     :category-list (mapv #(-> % :attrs :title)
-                          (-> snippet (html/select [:div.list-item__categories :a.category__item])))
-     :created-date (-> snippet (html/select [:span.date--created :abbr]) first :attrs :data-epoch Integer. from-epoch)
-     :updated-date (-> snippet (html/select [:span.date--updated :abbr]) first :attrs :data-epoch Integer. from-epoch)
-     :download-count (-> snippet (html/select [:span.count--download]) first :content first formatted-str-to-num)
-
-     ;; deprecated, to be removed from curseforge catalog in 8.0
-     ;; is now part of catalog generation 
-     :alt-name (-> label (slugify ""))}))
+     :description (-> snippet (html/select [:p html/content]) first clojure.string/trim)
+     :category-list (mapv #(-> % :attrs :title) (html/select snippet [:figure]))
+     :created-date (-> created :attrs :data-epoch Integer. from-epoch)
+     :updated-date (-> updated :attrs :data-epoch Integer. from-epoch)
+     :download-count (-> snippet (html/select [:div :span]) second :content first formatted-str-to-num)}))
 
 (defn-spec extract-addon-summary-list (s/or :ok ::sp/addon-summary-list, :error empty?)
   "returns a list of snippets extracted from a page of html"
   [html string?]
-  (let [parsed (html/html-snippet html)]
-    (map extract-addon-summary (html/select parsed [:ul.listing :li.project-list-item]))))
+  (let [parsed (html/html-snippet html)
+        section-list (html/select parsed [:section :div.my-2])]
+    (mapv extract-addon-summary section-list)))
 
 (defn-spec expand-summary (s/or :ok ::sp/addon, :error nil?)
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
   [addon-summary ::sp/addon-summary]
-  (let [message (str "downloading summary data: " (:name addon-summary))
+  (let [message (str "downloading addon data: " (:name addon-summary))
         versions-uri (-> addon-summary :uri (str "/files"))
         versions-data (http/download versions-uri :message message)]
     (when (string? versions-data) ;; map on error
       (let [versions-html (html/html-snippet versions-data)
-            latest-release (-> (html/select versions-html [:table.project-file-listing :tbody :tr]) first)
-            info-box (-> (html/select versions-html [:aside.project-details__sidebar]) first)
+            latest-release (-> (html/select versions-html [:article :div :div]) first)
+
+            ;; urgh. no fucking #ids in this new version of curseforge
+            header (-> (html/select versions-html [:header :div :div :div]) (nth 4) :content rest butlast)
+
+            ;; first inner box on right hand side column
+            info-box (-> (html/select versions-html [:aside :div]) (nth 4))
+            info-box-links (-> (html/select info-box [[:a (html/attr= "href")]]) vec)
+
+            ;; donation button may not exist, 'report' and 'follow' buttons always exist
+            info-box-links (first (utils/filter+map (fn [x]
+                                                      (try
+                                                        (if (= (some-> x :content second :content first clojure.string/trim) "Donate")
+                                                          (-> x :attrs :href to-uri))
+                                                        (catch Exception e nil))) info-box-links))
             prefix #(str curseforge-host %)]
         (merge addon-summary
-               {:download-uri (-> (html/select latest-release [[:a (html/attr= :data-action "download-file")]]) first :attrs :href prefix (suffix "/file") to-uri)
-                :version (-> (html/select latest-release [:td.project-file__name]) first :attrs :title)
-                :interface-version (-> (html/select latest-release [:span.version__label]) first :content first utils/game-version-to-interface-version)
-                :donation-uri (-> (html/select info-box [:div.infobox__actions :a.actions__donate]) first :attrs :href to-uri)})))))
+               {:download-uri (-> versions-html (html/select [:section :article :div :a]) second :attrs :href (str "/file") prefix)
+                :version (-> (html/select latest-release [:h3 html/content]) first)
+                :interface-version (-> header (nth 4) :content first (subs 14) utils/game-version-to-interface-version) ;; (count "Game Version: ") => 14
+                :donation-uri info-box-links})))))
 
 ;;
 

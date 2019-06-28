@@ -1,5 +1,6 @@
 (ns wowman.curseforge-test
   (:require
+   [clj-http.fake :refer [with-fake-routes-in-isolation]]
    [clojure.test :refer [deftest testing is use-fixtures]]
    [wowman
     [core :as core]
@@ -80,57 +81,68 @@
                    (is (= (count nfo-file-list) 1))
                    (is (fs/exists? (first nfo-file-list)))))))))
 
-(deftest scrape-addon-summary
-  (let [fixture (slurp "test/fixtures/addon-summary-listing.html")
+(deftest scrape-addon-summary-listing
+  (let [fixture (slurp "test/fixtures/curseforge-addon-summary-listing.html")
         scraped (curseforge/extract-addon-summary-list fixture)
-        expected-first {:uri "https://www.curseforge.com/wow/addons/auto-toast"
-                        :name "auto-toast"
-                        :label "Achievement Broadcaster"
-                        :description "Alert your friends when you ding, get an achivement, or get phat lewts!"
-                        :category-list ["Chat & Communication" "Mail" "Quests & Leveling" "Achievements"]
-                        :created-date "2010-07-15T20:55:54Z"
-                        :updated-date "2016-04-19T17:00:28Z"
-                        :download-count 7357
-                        :alt-name "achievementbroadcaster"}]
-    (is (= 20 (count scraped)))
-    (is (= expected-first (first scraped)))))
+        expected-num 20
 
-(deftest scrape-contrived-summary
-  (let [fixture "<ul class='listing'><li class='project-list-item'>
-    <div class='list-item__details'>
-        <a href='/wow/addons/arl'>
-            <h2 class='list-item__title'>
-                Ackis Recipe List
-            </h2>
-        </a>
-        <p class='list-item__stats'>
-            <span class='count--download'>230,257,314 </span>
-            <span class='date--updated'>Updated <abbr data-epoch='1504050180'>Aug 29, 2017</abbr></span>
-            <span class='date--created'>Created <abbr data-epoch='1207377654'>Apr 4, 2008</abbr></span>
-        </p>
-        <div class='list-item__description'>
-            <p>Ackis Recipe List is an addon which will scan your trade skills and provide information...</p>
-        </div>
-    </div>
+        expected-first {:uri "https://www.curseforge.com/wow/addons/elonoris_pathfinder",
+                        :name "elonoris_pathfinder",
+                        :alt-name "elonorispathfinder"
+                        :label "!Elonoris_Pathfinder",
+                        :description "!Elonoris_Pathfinder is a Addon to get \"broken isles pathfinder flying\" or \"Verheerte Inseln Pfadfinder\" Achievement...",
 
-    <div class='list-item__categories'>
-        <div class='list--item--categories-container'>
-            <a title='Data Export' class='category__item'></a>
-            <a title='Professions' class='category__item'></a>
-        </div>
-    </div>
+                        :category-list ["Achievements" "Map & Minimap" "Quests & Leveling" "Tooltip" "Unit Frames"]
+                        :created-date "2017-01-29T10:24:59Z",
+                        :updated-date "2017-02-27T20:01:59Z",
+                        :download-count 4100}
 
-</li></ul>"
+        expected-last {:uri "https://www.curseforge.com/wow/addons/mecs-seals-tempered-fate-broker",
+                       :name "mecs-seals-tempered-fate-broker",
+                       :alt-name "mecssealsoftemperedfatebroker"
+                       :label "[MEC's] Seals of Tempered Fate broker",
+                       :description "[MEC's] Seals of Tempered Fate broker",
+                       :category-list ["Data Broker"],
+                       :created-date "2015-05-13T16:18:35Z",
+                       :updated-date "2017-06-14T14:31:56Z",
+                       :download-count 1300}]
+    (is (= (count scraped) expected-num))
+    (is (= (first scraped) expected-first))
+    (is (= (last scraped) expected-last))))
 
-        scraped (curseforge/extract-addon-summary-list fixture)
-        expected '({:uri "https://www.curseforge.com/wow/addons/arl",
-                    :name "arl"
-                    :label "Ackis Recipe List"
-                    :description "Ackis Recipe List is an addon which will scan your trade skills and provide information..."
-                    :category-list ["Data Export" "Professions"]
-                    :updated-date "2017-08-29T23:43:00Z"
-                    :created-date "2008-04-05T06:40:54Z"
-                    :download-count 230257314
-                    :alt-name "ackisrecipelist"})]
+(deftest scrape-addon
+  (testing "scraping addon (without a donation link)"
+    (let [fixture (slurp "test/fixtures/curseforge-addon-file--no-donation.html")
+          summary {:name "datastore" :label "Datastore" :category-list []
+                   :uri "https://www.curseforge.com/wow/addons/datastore"
+                   :updated-date "2001-01-01T00:00:00Z"
+                   :download-count 0}
 
-    (is (= expected scraped))))
+          fake-routes {"https://www.curseforge.com/wow/addons/datastore/files"
+                       {:get (fn [req] {:status 200 :body fixture})}}
+
+          expected (merge summary {:interface-version 60000,
+                                   :download-uri "https://www.curseforge.com/wow/addons/datastore/download/841838/file",
+                                   :label "Datastore",
+                                   :donation-uri nil,
+                                   :version "6.0.002"})]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= (curseforge/expand-summary summary) expected)))))
+
+  (testing "scraping addon (with a donation link)"
+    (let [fixture (slurp "test/fixtures/curseforge-addon-file--w.donation.html")
+          summary {:name "details" :label "Details" :category-list []
+                   :uri "https://www.curseforge.com/wow/addons/details"
+                   :updated-date "2001-01-01T00:00:00Z"
+                   :download-count 0}
+
+          fake-routes {"https://www.curseforge.com/wow/addons/details/files"
+                       {:get (fn [req] {:status 200 :body fixture})}}
+
+          expected (merge summary
+                          {:interface-version 80200,
+                           :download-uri "https://www.curseforge.com/wow/addons/details/download/2730880/file",
+                           :donation-uri "https://www.paypal.com/cgi-bin/webscr?return=https://www.curseforge.com/projects/61284?gameCategorySlug=addons&projectSlug=details&cn=Add+special+instructions+to+the+addon+author()&business=terciob19%40hotmail.com&bn=PP-DonationsBF:btn_donateCC_LG.gif:NonHosted&cancel_return=https://www.curseforge.com/projects/61284?gameCategorySlug=addons&projectSlug=details&lc=US&item_name=Details!+Damage+Meter+(from+curseforge.com)&cmd=_donations&rm=1&no_shipping=1&currency_code=USD",
+                           :version "v8.2.0-v1.13.2-7135.139"})]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= (curseforge/expand-summary summary) expected))))))

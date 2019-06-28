@@ -187,6 +187,7 @@
   (doseq [selected (get-state :selected-search)]
     (-> selected core/expand-summary-wrapper vector core/-install-update-these)
     (core/load-installed-addons))
+  (ss/selection! (select-ui :#tbl-search-addons) nil) ;; deselect rows in search table
   (core/refresh))
 
 (defn-spec remove-selected-handler nil?
@@ -470,10 +471,12 @@
                         :model tblmdl
                         :highlighters [((x/hl-color :background (colours :installed/hovering)) :rollover-row)])
 
+        ;; an index of labels for all installed addons that gets updated whenever a new addon is installed
         label-idx (atom (set []))
         update-label-idx (fn [_]
-                           (reset! label-idx (set (remove nil? (map :label (get-state :installed-addon-list))))))
-        _ (state-bind [:installed-addon-list] update-label-idx) ;; update internal idx of labels whenever installed addons change
+                           (reset! label-idx
+                                   (->> (get-state :installed-addon-list) (map :label) (remove nil?) set)))
+        _ (state-bind [:installed-addon-list] update-label-idx)
 
         addon-installed? (fn [adapter]
                            (let [label-column (find-column-by-label grid "name")
