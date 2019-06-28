@@ -4,41 +4,6 @@ this is my own scratchpad for keeping track of things. it gets truncated frequen
 
 see CHANGELOG.md for a more formal list of changes by release
 
-## 0.7.2 release
-
-### done
-
-* download release information in background after every has been init'ed
-    - done
-* delete 'curseforge.json' if present in data-dir
-    - done
-* consolidate date/time wrangling logic around one library, please
-    - done
-* updates to catalog via travis
-    - script to scrape catalog
-        - done
-        - see wowman-data/update.sh
-    - sources have their latest updates scraped daily
-        - done
-    - sources are completely scraped weekly
-        - done ... to be confirmed
-    - can Travis commit to the same repository that it's testing?
-        - won't that mess with triggers?
-            - not if you turn them off! but also if you leave them on! lets not mess with infinite testing loops
-        - it can!
-    - catalog.json becomes a build artifact and a 'release'
-        - but we replace the release daily rather than accumulate them
-        - done!
-* fixed bug in updating curseforge where old/bad paths to files caused a NPE
-* fixed bug in updating curseforge and wowinterface where data directories without the respective catalog would fail spec
-* gui, search, deselect selected addons after successful installation
-    - done
-        - this was *very* minor, can't believe it ever bothered me
-* unexpected Curseforge webste revamp broke scraping
-    - curseforge scraping is now up to date
-        - I got some weirdness during development, probably because of old/bad/wrong/corrupted cache files
-        - I recommend using Cache -> Clear from the menu if you get this
-
 ## 0.8.0 release
 
 ### done
