@@ -1,5 +1,6 @@
 (ns wowman.utils-test
   (:require
+   ;;[taoensso.timbre :refer [debug info warn error spy]]
    [clojure.test :refer [deftest testing is use-fixtures]]
    [wowman.utils :as utils :refer [join]]
    [me.raynes.fs :as fs]))
@@ -130,3 +131,25 @@
           expected '("1.2" "1.2.3" "1.2.3" "1.2.3.4" "1.5.5" "1.5.19" "1.6.0" "1.6.0-unstable" "1.6.0-aaaaaa" "2.3.1" "4.1.3" "4.2.0" "4.11.6" "10.5.5" "11.3.0")]
       (is (= expected (utils/sort-semver-strings given))))))
 
+(deftest from-epoch
+  (testing "a ymd string is returned from an epoch Long without ms precision"
+    (is (= (utils/from-epoch 0) "1970-01-01T00:00:00Z"))
+    (is (= (utils/from-epoch 1504050180) "2017-08-29T23:43:00Z"))
+    (is (= (utils/from-epoch 1207377654) "2008-04-05T06:40:54Z"))))
+
+(deftest days-between-then-and-now
+  (testing "the number of days between two dates"
+    (java-time/with-clock (java-time/fixed-clock "2001-01-02T00:00:00Z")
+      (is (= (utils/days-between-then-and-now "2001-01-01") 1)))))
+
+(deftest file-older-than
+  (testing "files whose modification times are older than N hours"
+    (java-time/with-clock (java-time/fixed-clock "1970-01-01T02:00:00Z") ;; jan 1st 1970, 2 am
+      (let [path (utils/join *temp-dir-path* "foo")]
+        (try
+          (fs/touch path 0) ;; created Jan 1st 1970
+          (.setLastModified (fs/file path) 0) ;; modified Jan 1st 1970
+          (is (utils/file-older-than path 1))
+          (is (not (utils/file-older-than path 3)))
+          (finally
+            (fs/delete path)))))))

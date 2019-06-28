@@ -14,6 +14,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## 0.7.2 - 2019-06-29
+
+### Added
+
+* not part of codebase, but `wowman-data`, where wowman pulls it's catalog from, now has automated daily/weekly updates
+
+### Changed
+
+* Curseforge changed their website, breaking scraping. Scraping has now been tentatively marked as fixed.
+* wowman release info now downloaded in background after app start so there is no delay when clicking Help -> About
+* date+time manipulation is now done by `java-time` to remove a dependency and some complexity
+
+### Fixed
+
+* fixed bug in updating curseforge catalog where old paths to files caused a NullPointerException
+* fixed bug in updating curseforge *and* wowinterface where data dirs without their catalog present would fail spec
+* selected search results are now de-selected after a successful installation of addons
+
+### Removed
+
+* `clj-time` in favour of `clojure.java-time`
+
 ## 0.7.1 - 2019-06-23
 
 ### Fixed

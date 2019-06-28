@@ -1,4 +1,4 @@
-(defproject ogri-la/wowman "0.7.1"
+(defproject ogri-la/wowman "0.8.0-unreleased"
   :description "World Of Warcraft Addon Manager"
   :url "http://github.com/ogri-la/wowman"
   :license {:name "GNU Affero General Public License (AGPL)"
@@ -20,10 +20,9 @@
                  [seesaw "1.5.0"] ;; swing
                  [me.raynes/fs "1.4.6"] ;; file system wrangling
                  [slugify "0.0.1"]
-                 [clj-time "0.15.0"]
                  [trptcolin/versioneer "0.2.0"] ;; version number wrangling. it's more involved than you might suspect
                  [org.flatland/ordered "1.5.2"] ;; better ordered map
-                 [clojure.java-time "0.3.2"] ;; yet-another java date/time handling library. to replace clj-time
+                 [clojure.java-time "0.3.2"] ;; date/time handling library
                  [envvar "1.1.0"] ;; environment variable wrangling
                  [clj-http-fake "1.0.3"] ;; fake http responses for testing
 

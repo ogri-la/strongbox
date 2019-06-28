@@ -1,15 +1,11 @@
 name,url,Linux,Mac,Windows,maintained?,f/oss?,source available?,ads?,EULA?,language
-addon-manager,https://github.com/vargen2/addonmanager,no,no,yes*,no,yes,yes,no,no,"java, javafx"
-GWAM,https://github.com/JonasKnarbakk/GWAM,yes*,yes*,yes*,no^,yes,yes,no,no,c++
-lcurse,https://github.com/ephraim/lcurse,yes,no,no,yes,no,yes,no,no,"python, qt"
+addon,https://github.com/vargen2/Addon,no,no,yes,yes,yes,yes,no,no,C#
+instawow,https://github.com/layday/instawow,yes*,yes*,yes*,yes,yes,yes,no,no,python
+lcurse,https://github.com/ephraim/lcurse,yes,no,no,yes,no,yes,no,no,python
 Minion,https://minion.mmoui.com/,yes*,yes,yes,yes,no,no,yes,yes,java
+Saionaro/wow-addons-updater,https://github.com/Saionaro/wow-addons-updater,yes,yes,yes,yes,yes,yes,no,no,javascript
 Tukui Client,https://www.tukui.org/download.php?client=win,no,no,yes,yes,no,no,?,?,?
 WorldOfAddons,https://github.com/WorldofAddons/worldofaddons,yes*,yes*,yes,yes,yes,yes,no,no,javascript
-WoWAceUpdater,https://sourceforge.net/projects/wowaceupdater/,no,no,yes,no,yes,yes,?,?,?
-wowaddon,https://github.com/wttw/wowaddon,yes,yes,yes,no^,yes,yes,no,no,go
 wow-addon-manager,https://github.com/qwezarty/wow-addon-manager,yes*,no,no,yes,yes,yes,no,no,python
-wow-addon-updater,https://github.com/kuhnertdm/wow-addon-updater,yes*,yes,yes,no^,yes,yes,no,no,python
-wowam,https://github.com/sysworx/wowam,no,yes,yes,no^,no,yes,no,yes*,xojo
-wow-better-cli,https://github.com/DayBr3ak/wow-better-cli,yes*,yes*,yes*,no^,yes,yes,no,no,javascript
+wowa,https://github.com/antiwinter/wowa,yes*,yes*,yes*,yes,yes,no,no,no,javascript
 wowmatrix,https://www.wowmatrix.com/,yes,yes,yes,yes,no,no,yes,yes,?
-WoWutils,https://github.com/SeriousBug/WoWutils,yes,no,no,no,yes,yes,no,no,bash

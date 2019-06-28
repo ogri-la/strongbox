@@ -75,9 +75,6 @@ User configuration is stored in `~/.config/wowman` unless run with the envvar `$
 
 Temporary data is stored in `~/.local/share/wowman` unless run with the envvar `$XDG_DATA_HOME` set.
 
-Previously a sub-directory called `state` created in the current working directory was used for both data and config.  
-This local `state` directory can be safely deleted now.
-
 Addon zip files are downloaded to your WoW `Addons` directory.
 
 A file called `.wowman.json` is created within newly installed or re-installed addons. This file maps specific 
@@ -109,28 +106,43 @@ See [CONTRIBUTING](CONTRIBUTING.md) for more detail.
 
 ## Other unofficial addon managers
 
-| name              | url                                             | Linux | Mac  | Windows | maintained? | f/oss? | source available? | ads? | EULA? | language       | 
-|-------------------|-------------------------------------------------|-------|------|---------|-------------|--------|-------------------|------|-------|----------------| 
-| addon-manager     | https://github.com/vargen2/addonmanager         | no    | no   | yes*    | no          | yes    | yes               | no   | no    | "java, javafx" | 
-| GWAM              | https://github.com/JonasKnarbakk/GWAM           | yes*  | yes* | yes*    | no^         | yes    | yes               | no   | no    | c++            | 
-| lcurse            | https://github.com/ephraim/lcurse               | yes   | no   | no      | yes         | no     | yes               | no   | no    | "python, qt"   | 
-| Minion            | https://minion.mmoui.com/                       | yes*  | yes  | yes     | yes         | no     | no                | yes  | yes   | java           | 
-| Tukui Client      | https://www.tukui.org/download.php?client=win   | no    | no   | yes     | yes         | no     | no                | ?    | ?     | ?              | 
-| WorldOfAddons     | https://github.com/WorldofAddons/worldofaddons  | yes*  | yes* | yes     | yes         | yes    | yes               | no   | no    | javascript     | 
-| WoWAceUpdater     | https://sourceforge.net/projects/wowaceupdater/ | no    | no   | yes     | no          | yes    | yes               | ?    | ?     | ?              | 
-| wowaddon          | https://github.com/wttw/wowaddon                | yes   | yes  | yes     | no^         | yes    | yes               | no   | no    | go             | 
-| wow-addon-manager | https://github.com/qwezarty/wow-addon-manager   | yes*  | no   | no      | yes         | yes    | yes               | no   | no    | python         | 
-| wow-addon-updater | https://github.com/kuhnertdm/wow-addon-updater  | yes*  | yes  | yes     | no^         | yes    | yes               | no   | no    | python         | 
-| wowam             | https://github.com/sysworx/wowam                | no    | yes  | yes     | no^         | no     | yes               | no   | yes*  | xojo           | 
-| wow-better-cli    | https://github.com/DayBr3ak/wow-better-cli      | yes*  | yes* | yes*    | no^         | yes    | yes               | no   | no    | javascript     | 
-| wowmatrix         | https://www.wowmatrix.com/                      | yes   | yes  | yes     | yes         | no     | no                | yes  | yes   | ?              | 
-| WoWutils          | https://github.com/SeriousBug/WoWutils          | yes   | no   | no      | no          | yes    | yes               | no   | no    | bash           | 
+### Maintained (I think)
+
+| name                        | url                                            | Linux | Mac  | Windows | maintained? | f/oss? | source available? | ads? | EULA? | language   | 
+|-----------------------------|------------------------------------------------|-------|------|---------|-------------|--------|-------------------|------|-------|------------| 
+| addon                       | https://github.com/vargen2/Addon               | no    | no   | yes     | yes         | yes    | yes               | no   | no    | C#         | 
+| instawow                    | https://github.com/layday/instawow             | yes*  | yes* | yes*    | yes         | yes    | yes               | no   | no    | python     | 
+| lcurse                      | https://github.com/ephraim/lcurse              | yes   | no   | no      | yes         | no     | yes               | no   | no    | python     | 
+| Minion                      | https://minion.mmoui.com/                      | yes*  | yes  | yes     | yes         | no     | no                | yes  | yes   | java       | 
+| Saionaro/wow-addons-updater | https://github.com/Saionaro/wow-addons-updater | yes   | yes  | yes     | yes         | yes    | yes               | no   | no    | javascript | 
+| Tukui Client                | https://www.tukui.org/download.php?client=win  | no    | no   | yes     | yes         | no     | no                | ?    | ?     | ?          | 
+| WorldOfAddons               | https://github.com/WorldofAddons/worldofaddons | yes*  | yes* | yes     | yes         | yes    | yes               | no   | no    | javascript | 
+| wow-addon-manager           | https://github.com/qwezarty/wow-addon-manager  | yes*  | no   | no      | yes         | yes    | yes               | no   | no    | python     | 
+| wowa                        | https://github.com/antiwinter/wowa             | yes*  | yes* | yes*    | yes         | yes    | no                | no   | no    | javascript | 
+| wowmatrix                   | https://www.wowmatrix.com/                     | yes   | yes  | yes     | yes         | no     | no                | yes  | yes   | ?          | 
+
+\* with caveats. may require compilation, partial functionality or not work at all, or be officially unsupported, or ...
+
+(see [comrades.csv](comrades.csv))
+
+### Unmaintained (I think)
+
+| name                        | url                                             | Linux | Mac  | Windows | maintained? | f/oss? | source available? | ads? | EULA? | language   | 
+|-----------------------------|-------------------------------------------------|-------|------|---------|-------------|--------|-------------------|------|-------|------------| 
+| addon-manager               | https://github.com/vargen2/addonmanager         | no    | no   | yes*    | no          | yes    | yes               | no   | no    | java       | 
+| GWAM                        | https://github.com/JonasKnarbakk/GWAM           | yes*  | yes* | yes*    | no^         | yes    | yes               | no   | no    | c++        | 
+| kuhnertdm/wow-addon-updater | https://github.com/kuhnertdm/wow-addon-updater  | yes*  | yes  | yes     | no^         | yes    | yes               | no   | no    | python     | 
+| wow-better-cli              | https://github.com/DayBr3ak/wow-better-cli      | yes*  | yes* | yes*    | no^         | yes    | yes               | no   | no    | javascript | 
+| WoWAceUpdater               | https://sourceforge.net/projects/wowaceupdater/ | no    | no   | yes     | no          | yes    | yes               | ?    | ?     | ?          | 
+| wowaddon                    | https://github.com/wttw/wowaddon                | yes   | yes  | yes     | no^         | yes    | yes               | no   | no    | go         | 
+| wowam                       | https://github.com/sysworx/wowam                | no    | yes  | yes     | no^         | no     | yes               | no   | yes*  | xojo       | 
+| WoWutils                    | https://github.com/SeriousBug/WoWutils          | yes   | no   | no      | no          | yes    | yes               | no   | no    | bash       | 
 
 \* with caveats. may require compilation, partial functionality or not work at all, or be officially unsupported, or ...
 
 \^ hasn't seen an update in over a year. It may be extremely stable bug-free software or it may be unmaintained.
 
-(see [comrades.csv](comrades.csv))
+(see [fallen-comrades.csv](fallen-comrades.csv))
 
 ## License
 
