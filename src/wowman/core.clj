@@ -11,6 +11,7 @@
    [trptcolin.versioneer.core :as versioneer]
    [envvar.core :refer [env]]
    [wowman
+    [zip :as zip]
     [http :as http]
     [logging :as logging]
     [nfo :as nfo]
@@ -297,14 +298,14 @@
 (defn-spec -install-addon (s/or :ok (s/coll-of ::sp/extant-file), :error ::sp/empty-coll)
   "installs an addon given an addon description, a place to install the addon and the addon zip file itself"
   [addon ::sp/addon-or-toc-addon, install-dir ::sp/writeable-dir, downloaded-file ::sp/archive-file]
-  (let [toplevel-entries (utils/zipfile-toplevel-entries downloaded-file)
+  (let [toplevel-entries (zip/zipfile-toplevel-entries downloaded-file)
         [toplevel-dirs, toplevel-files] (utils/split-filter :dir? toplevel-entries)]
     (if (> (count toplevel-files) 0)
       (do
         ;; todo: shift this (somehow) into `install-addon-guard`
         (error "refusing to unzip addon, it contains top-level *files*:" toplevel-files)
         [])
-      (let [_ (utils/unzip-file downloaded-file install-dir)
+      (let [_ (zip/unzip-file downloaded-file install-dir)
             primary-dirname (determine-primary-subdir toplevel-dirs)
 
             ;; an addon may unzip to many directories, each directory needs the nfo file
@@ -327,10 +328,10 @@
       (info "installing" (:label addon) "...")
       (cond
         (map? downloaded-file) (error "failed to download addon, could not install" (:name addon))
-        (not (utils/valid-zip-file? downloaded-file)) (do
-                                                        (error (format "failed to read zip file '%s', could not install %s" downloaded-file (:name addon)))
-                                                        (fs/delete downloaded-file)
-                                                        (warn "removed bad zipfile" downloaded-file))
+        (not (zip/valid-zip-file? downloaded-file)) (do
+                                                      (error (format "failed to read zip file '%s', could not install %s" downloaded-file (:name addon)))
+                                                      (fs/delete downloaded-file)
+                                                      (warn "removed bad zipfile" downloaded-file))
         (nil? downloaded-file) (error "non-http error downloading addon, could not install" (:name addon)) ;; I dunno. /shrug
         :else (-install-addon addon install-dir downloaded-file)))))
 
