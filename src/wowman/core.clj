@@ -305,7 +305,7 @@
         ;; todo: shift this (somehow) into `install-addon-guard`
         (error "refusing to unzip addon, it contains top-level *files*:" toplevel-files)
         [])
-      (let [_ (zip/unzip-file downloaded-file install-dir)
+      (let [_ (zip/unzip-addon downloaded-file install-dir)
             primary-dirname (determine-primary-subdir toplevel-dirs)
 
             ;; an addon may unzip to many directories, each directory needs the nfo file
