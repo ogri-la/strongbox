@@ -11,6 +11,8 @@ see CHANGELOG.md for a more formal list of changes by release
 * bug, wowman-data update script is getting a strange 403 fetching latest release info
     - grr
     - not a fix, but I've moved the call to api.github.com so it only happens in the gui
+    - new problem: curseforge results page page structure is different depending on type of results!
+        - I've had to do a slightly different extraction for alphabetical results vs recently updated results
 
 ### todo
 
