@@ -30,6 +30,9 @@
 
 (def colours (utils/nav-map-fn -colour-map))
 
+;; not in `paths` because it's not configurable
+(def remote-catalog "https://github.com/ogri-la/wowman-data/releases/download/daily/catalog.json")
+
 (defn paths
   "returns a map of paths whose location may vary depending on the location of the current working directory"
   [& path]
@@ -356,8 +359,7 @@
   [& [catalog] (s/* keyword?)]
   (binding [http/*cache* (cache)]
     (if-let [local-catalog (paths (or catalog :catalog-file))]
-      (http/download-file (str "https://raw.githubusercontent.com/ogri-la/wowman-data/master/" (fs/base-name local-catalog))
-                          local-catalog)
+      (http/download-file remote-catalog local-catalog)
       (error "failed to find catalog:" catalog))))
 
 (defn-spec load-addon-summaries nil?
