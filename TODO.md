@@ -13,14 +13,12 @@ see CHANGELOG.md for a more formal list of changes by release
     - not a fix, but I've moved the call to api.github.com so it only happens in the gui
     - new problem: curseforge results page page structure is different depending on type of results!
         - I've had to do a slightly different extraction for alphabetical results vs recently updated results
+* use the `catalog.json` *release* file rather than the raw repo file
+    - just to make it clear that the catalog.json file is *derived* from the other catalogs
+        - it will be removed from version control in 1.0.0
+    - done
 
 ### todo
-
-
-* I flubbed and 0.7.2 has the version number (internally) as '0.8.0-unreleased'
-    - not sure how that happened, I distinctly remember updating it.
-    - not sure if there is anything I can do about it until 0.8.0 proper gets released
-
 
 * better handling of shitty addons
     - below addons are known to be mangled/corrupt/shit in some way
@@ -56,6 +54,16 @@ see CHANGELOG.md for a more formal list of changes by release
         - who on earth would use such a thing? and is it worth the added complexity?
 
 ## todo bucket
+
+* catalog, normalise catagories between addons that overlap
+    - perhaps expand them into 'tags'? 
+    - a lot of these categories are composite
+        - break each composite one down into a singular, normalise, have a unique set of tags
+* investigate `.csv` as a human-readable but more compact representation
+    - might be able to save a MB on extraneous syntax
+    - might be able to speed up parsing and loading
+    - might be able to drop the two json libraries in favour of just one extra lib
+    - depends on profile task
 * cache, make caching opt-out and remove all those ugly binding calls
     - bind the value at core app start
     - this may not be possible. 
@@ -87,10 +95,6 @@ see CHANGELOG.md for a more formal list of changes by release
                 - could be tied in with backups/exports
                     - got to have backups+imports happening first
         - identify slow things and measure their improvement
-* catalog, normalise catagories between addons that overlap
-    - perhaps expand them into 'tags'? 
-    - a lot of these categories are composite
-        - break each composite one down into a singular, normalise, have a unique set of tags
 * automatically exclude 'ancient' addons from search results
     - these are addons that haven't been updated in ~18 months
         - wowinterface has a lot of them
