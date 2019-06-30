@@ -8,10 +8,13 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### done
 
-### todo
-
 * bug, wowman-data update script is getting a strange 403 fetching latest release info
     - grr
+    - not a fix, but I've moved the call to api.github.com so it only happens in the gui
+
+### todo
+
+
 * I flubbed and 0.7.2 has the version number (internally) as '0.8.0-unreleased'
     - not sure how that happened, I distinctly remember updating it.
     - not sure if there is anything I can do about it until 0.8.0 proper gets released

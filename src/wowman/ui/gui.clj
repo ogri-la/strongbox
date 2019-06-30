@@ -625,7 +625,11 @@
                                  (ss/menu :text "Help" :items help-menu)])
         _ (.setJMenuBar newui menu)
 
-        init (fn [newui] (future-call core/refresh) newui)]
+        init (fn [newui]
+               (future
+                 (core/refresh)
+                 (core/latest-wowman-release))
+               newui)]
 
     (ss/invoke-later
      (-> newui ss/pack! ss/show! init))

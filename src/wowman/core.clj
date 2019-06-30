@@ -590,7 +590,9 @@
   "returns the most recently released version of wowman it can find"
   []
   (binding [http/*cache* (cache)]
-    (let [resp (utils/from-json (http/download "https://api.github.com/repos/ogri-la/wowman/releases/latest"))]
+    (let [message "downloading wowman version data"
+          url "https://api.github.com/repos/ogri-la/wowman/releases/latest"
+          resp (utils/from-json (http/download url :message message))]
       (-> resp :tag_name))))
 
 (defn-spec latest-wowman-version? boolean?
@@ -609,7 +611,7 @@
   (load-addon-summaries)  ;; load the contents of the curseforge.json file
   (match-installed-addons-with-online-addons) ;; match installed addons to those in curseforge.json
   (check-for-updates)     ;; for those addons that have matches, download their full details from curseforge
-  (latest-wowman-release) ;; check for updates after everything else is done
+  ;;(latest-wowman-release) ;; check for updates after everything else is done ;; 2019-06-30, travis is failing with 403: Forbidden. Moved to gui init
   (save-settings)         ;; seems like a good place to preserve the etag-db
   nil)
 
