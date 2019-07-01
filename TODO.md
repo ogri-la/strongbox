@@ -17,9 +17,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - just to make it clear that the catalog.json file is *derived* from the other catalogs
         - it will be removed from version control in 1.0.0
     - done
-
-### todo
-
 * better handling of shitty addons
     - below addons are known to be mangled/corrupt/shit in some way
         * "99 bottles of beer", wowinterface
@@ -32,8 +29,18 @@ see CHANGELOG.md for a more formal list of changes by release
             - has no .toc file
     - all of the above can be 'fixed' by looking for a .toc file in the top level directories
         - if *any* top level directory is missing a .toc file, refuse to install addon
+        - done
     - another potential cause of shittiness is top-level files
         - same logic applies. refuse to install addon if top-level *files* exist
+        - done
+    - all done :)
+* fixed another shitty addon case by improving the zipfile check
+    - "2 UI", wowinterface
+        - engrampa says corrupt headers
+    - it just enumerates the contents of the file, but java may choke here where it wouldn't before
+
+
+### todo
 
 * issue a warning when addons unpack directories that don't share a common prefix
     - this would hopefully alert users that some shitty addons are being sneakily installed, like SlideBar or Stubby
@@ -55,6 +62,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
+* moves raynes.fs to clj-commons/fs
 * catalog, normalise catagories between addons that overlap
     - perhaps expand them into 'tags'? 
     - a lot of these categories are composite
@@ -152,6 +160,14 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## wontfix
 
+* addons distributed as .rar files
+    - !BeautyLoot on wowinterface is an example of this
+        - https://www.wowinterface.com/downloads/info20212
+    - rar is a proprietary format
+    - the vast majority of addons use .zip
+    - no native support in java/clojure for it
+    - would I consider .tar.gz distributed addons?
+        - mmmmmmmm I want to say yes, but 'no', for now.
 * fallback to using :group-id (a uri) if curseforge.json is not available
     - low priority
     - curseforge.json will only ever be missing:

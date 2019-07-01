@@ -298,41 +298,43 @@
 (defn-spec -install-addon (s/or :ok (s/coll-of ::sp/extant-file), :error ::sp/empty-coll)
   "installs an addon given an addon description, a place to install the addon and the addon zip file itself"
   [addon ::sp/addon-or-toc-addon, install-dir ::sp/writeable-dir, downloaded-file ::sp/archive-file]
-  (let [toplevel-entries (zip/zipfile-toplevel-entries downloaded-file)
-        [toplevel-dirs, toplevel-files] (utils/split-filter :dir? toplevel-entries)]
-    (if (> (count toplevel-files) 0)
-      (do
-        ;; todo: shift this (somehow) into `install-addon-guard`
-        (error "refusing to unzip addon, it contains top-level *files*:" toplevel-files)
-        [])
-      (let [_ (zip/unzip-addon downloaded-file install-dir)
-            primary-dirname (determine-primary-subdir toplevel-dirs)
+  (let [zipfile-entries (zip/zipfile-normal-entries downloaded-file)
+        toplevel-dirs (filter (every-pred :dir? :toplevel?) zipfile-entries)
 
-            ;; an addon may unzip to many directories, each directory needs the nfo file
-            update-nfo-fn (fn [zipentry]
-                            (let [addon-dirname (:path zipentry)
-                                  primary? (= addon-dirname (:path primary-dirname))]
-                              (nfo/write-nfo install-dir addon addon-dirname primary?)))
+        _ (zip/unzip-file downloaded-file install-dir)
+        primary-dirname (determine-primary-subdir toplevel-dirs)
 
-            ;; write the nfo files, return a list of all nfo files written
-            retval (mapv update-nfo-fn toplevel-dirs)]
-        (info (:label addon) "installed.")
-        retval))))
+        ;; an addon may unzip to many directories, each directory needs the nfo file
+        update-nfo-fn (fn [zipentry]
+                        (let [addon-dirname (:path zipentry)
+                              primary? (= addon-dirname (:path primary-dirname))]
+                          (nfo/write-nfo install-dir addon addon-dirname primary?)))
+
+        ;; write the nfo files, return a list of all nfo files written
+        retval (mapv update-nfo-fn toplevel-dirs)]
+    (info (:label addon) "installed.")
+    retval))
 
 (defn-spec install-addon-guard (s/or :ok (s/coll-of ::sp/extant-file), :error nil?)
   "downloads an addon and installs it. handles http and non-http errors"
   [addon ::sp/addon-or-toc-addon, install-dir ::sp/extant-dir]
   (if (not (fs/writeable? install-dir))
     (error "failed to install addon, directory not writeable" install-dir)
-    (let [downloaded-file (download-addon addon install-dir)]
+    (let [downloaded-file (download-addon addon install-dir)
+          bad-zipfile-msg (format "failed to read zip file '%s', could not install %s" downloaded-file (:name addon))
+          bad-addon-msg (format "refusing to install '%s'. It contains top-level files or top-level directories missing .toc files."  (:name addon))]
       (info "installing" (:label addon) "...")
       (cond
         (map? downloaded-file) (error "failed to download addon, could not install" (:name addon))
+        (nil? downloaded-file) (error "non-http error downloading addon, could not install" (:name addon)) ;; I dunno. /shrug
         (not (zip/valid-zip-file? downloaded-file)) (do
-                                                      (error (format "failed to read zip file '%s', could not install %s" downloaded-file (:name addon)))
+                                                      (error bad-zipfile-msg)
                                                       (fs/delete downloaded-file)
                                                       (warn "removed bad zipfile" downloaded-file))
-        (nil? downloaded-file) (error "non-http error downloading addon, could not install" (:name addon)) ;; I dunno. /shrug
+        (not (zip/valid-addon-zip-file? downloaded-file)) (do
+                                                            (error bad-addon-msg)
+                                                            (fs/delete downloaded-file) ;; I could be more lenient
+                                                            (warn "removed bad addon" downloaded-file))
         :else (-install-addon addon install-dir downloaded-file)))))
 
 (def install-addon

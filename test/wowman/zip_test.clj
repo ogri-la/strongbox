@@ -1,6 +1,6 @@
 (ns wowman.zip-test
   (:require
-   [taoensso.timbre :refer [debug info warn error spy]]
+   ;;[taoensso.timbre :refer [debug info warn error spy]]
    [clojure.test :refer [deftest testing is use-fixtures]]
    [wowman
     [utils :as utils :refer [join]]
@@ -17,21 +17,6 @@
     (fs/delete-dir *temp-dir-path*)))
 
 (use-fixtures :once tempdir-fixture)
-
-(comment "unused"
-         (deftest zip-directory
-           (testing "directory of files can be zipped"
-             (let [in-path "test-dir"
-                   out-path (join *temp-dir-path* "test.zip")]
-               (is (= (zip/zip-directory in-path out-path) out-path)))))
-
-         (deftest list-files
-           (testing "listing a directory returns a list of pairs [[path, filename], ...] sorted alphabetically"
-             (let [target "test-dir"
-                   expected [(join target "d1" "d2" "f3")
-                             (join target "f1")
-                             (join target "f2")]]
-               (is (= (zip/list-files target) expected))))))
 
 (deftest valid-zip-file?
   (testing "detects basic problems with zip files"
