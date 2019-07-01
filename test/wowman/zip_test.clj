@@ -1,6 +1,6 @@
 (ns wowman.zip-test
   (:require
-   ;;[taoensso.timbre :refer [debug info warn error spy]]
+   [taoensso.timbre :refer [debug info warn error spy]]
    [clojure.test :refer [deftest testing is use-fixtures]]
    [wowman
     [utils :as utils :refer [join]]
@@ -34,10 +34,20 @@
                (is (= (zip/list-files target) expected))))))
 
 (deftest valid-zip-file?
-  (testing "predicate detects basic problems with zip files"
-    (is (= (zip/valid-zip-file? "test/fixtures/bad-empty.zip") false))
-    (is (= (zip/valid-zip-file? "test/fixtures/bad-truncated.zip") false))
-    (is (= (zip/valid-zip-file? "test/fixtures/everyaddon--1-2-3.zip") true))))
+  (testing "detects basic problems with zip files"
+    (is (false? (zip/valid-zip-file? "test/fixtures/bad-empty.zip")))
+    (is (false? (zip/valid-zip-file? "test/fixtures/bad-truncated.zip")))
+    (is (true? (zip/valid-zip-file? "test/fixtures/empty.zip")))
+    (is (true? (zip/valid-zip-file? "test/fixtures/everyaddon--1-2-3.zip")))))
+
+(deftest valid-addon-zip-file?
+  (testing "valid addon zip files are a subset of valid zip files"
+    (is (false? (zip/valid-addon-zip-file? "test/fixtures/bad-empty.zip")))
+    (is (false? (zip/valid-addon-zip-file? "test/fixtures/bad-truncated.zip")))
+    (is (false? (zip/valid-addon-zip-file? "test/fixtures/empty.zip")) "contains top-level file") ;; it's not quite empty
+    (is (false? (zip/valid-addon-zip-file? "test/fixtures/everyaddon--1-2-3--non-addon-tld.zip")) "contains non-addon top-level directories")
+
+    (is (true? (zip/valid-addon-zip-file? "test/fixtures/everyaddon--1-2-3.zip")))))
 
 (deftest unzip-file
   (testing "unzipping a file returns it's given output path. given output path contains unzipped contents"

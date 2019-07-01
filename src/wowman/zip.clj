@@ -6,7 +6,8 @@
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
    [orchestra.spec.test :as st]
-   [clojure.string :refer [split]]
+   [clojure.set]
+   [clojure.string :refer [split ends-with?]]
    [wowman
     [specs :as sp]]))
 
@@ -82,35 +83,70 @@
     (let [mkrow (fn [zipentry]
                   (let [path (.getName zipentry)
                         dir? (.isDirectory zipentry)
-                        bits (split path #"/")]
+                        bits (split path #"/")
+                        level (count bits)]
                     {:dir? dir?
-                     :toplevel? (-> bits count (= 1)) ;; exists at the very top of the file hierarchy
+                     :level level
+                     :toplevel? (= level 1) ;; exists at the very top of the file hierarchy
                      :path path}))
 
           fake-rows (fn [row]
-                      (let [parents (map str (fs/parents (str "/" (:path row))))
-                            parents (butlast parents)] ;; exclude final "/"
-                        (for [p parents :let [pp (str (subs p 1) "/")]] ;; pp => foo/bar/
+                      (let [parents (->> row :path (str "/") fs/parents (map str) butlast)]
+                        (for [p parents :let [pp (-> p (subs 1) (str "/")) ;; /foo/bar => foo/bar/
+                                              bits (split pp #"/") ;; ["foo" "bar"]
+                                              level (count bits)]]
                           {:dir? true
                            ;; fs/parents strips trailing slashes, java ZipEntry objects preserve them
                            ;; subs strips leading slash introduced when calling fs/parents
-                           :toplevel? (->> pp (re-seq #"/") count (= 1))
+                           :level level
+                           :toplevel? (= level 1)
                            :path pp})))
 
           rows (mapv mkrow (enumeration-seq (.entries zipfile)))]
 
       (->> rows (map fake-rows) flatten (into rows) distinct))))
 
+;;
+;;
+;;
+
+(defn -top-level-files?
+  "returns true if there are top-level files"
+  [zipfile-entries]
+  (let [targets (->> zipfile-entries (filter :toplevel?) (remove :dir?))]
+    (> (count targets) 0)))
+
+(defn -top-level-non-addon-dirs?
+  "returns true if there are top-level directories missing a toc file"
+  [zipfile-entries]
+  (let [;; what is happening here?
+        ;; we create a set of all top-level directories, and a set of the parents of second-level toc files
+        ;; if there are any directories left after we diff them
+        toplevel-dirs (set (map :path (filter (every-pred :dir? :toplevel?) zipfile-entries)))
+        toplevel-tocfiles (filter #(and (-> % :level (= 2))
+                                        (-> % :path (ends-with? ".toc"))) zipfile-entries)
+        toplevel-tocfile-dirs (set (map #(-> % :path (split #"/") first (str "/")) toplevel-tocfiles))
+        diff (clojure.set/difference toplevel-dirs toplevel-tocfile-dirs)]
+    (not (empty? diff))))
+
+(defn-spec valid-addon-zip-file? boolean?
+  "returns true if there are no apparent problems reading the given zip file AND the addon isn't smelly"
+  [zipfile-path ::sp/extant-archive-file]
+  (if (valid-zip-file? zipfile-path)
+    (let [entries (zipfile-normal-entries zipfile-path)]
+      ;; if either check fails, return false
+      ;; if neither check fails, return true
+      (not (or (-top-level-files? entries)
+               (-top-level-non-addon-dirs? entries))))
+    ;; couldn't get past the bad zip file
+    false))
+
 (defn-spec unzip-addon  (s/or :ok ::sp/extant-dir, :failed nil?)
   "wrapper around `unzip-file` that does additional addon-level checks against the content of the zipfile.
   if the addon zip file is bad, it will refuse to unzip the contents."
   ;; todo: it should be possible to have a more lenient strategy as well, simply excluding any bad files/folders.
   [zipfile-path ::sp/extant-archive-file, output-dir-path ::sp/extant-dir]
-
-  ;; test addon file:
-  ;; - every top-level directory must have a something.toc file in it
-  ;; - no top-level files should exist
-
-  (unzip-file zipfile-path output-dir-path))
+  (when (valid-addon-zip-file? zipfile-path)
+    (unzip-file zipfile-path output-dir-path)))
 
 (st/instrument)
