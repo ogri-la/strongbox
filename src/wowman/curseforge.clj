@@ -52,7 +52,8 @@
   (let [uri (-> snippet (html/select [#{:a :h3}]) first :attrs :href) ;; '/wow/addon/addonname'
         name (fs/base-name uri) ;; 'addonname'
 
-          ;; it's possible for an addon listing to have *just* the created date, no updated date
+        ;; it's possible for an addon listing to have *just* the created date, no updated date
+        ;; see: https://www.curseforge.com/wow/addons/search?search=addontcc
         dates (-> snippet (html/select [:abbr]) vec reverse) ;; [{:tag :abbr, :attrs {:data-epoch ...}}, {...}]
         [created updated] (if (= (count dates) 1)
                               ;; only one date found (created date)
