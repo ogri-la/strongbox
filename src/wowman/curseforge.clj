@@ -51,7 +51,15 @@
   [snippet map?]
   (let [uri (-> snippet (html/select [#{:a :h3}]) first :attrs :href) ;; '/wow/addon/addonname'
         name (fs/base-name uri) ;; 'addonname'
-        [updated created] (-> snippet (html/select [:abbr]) vec) ;; [{:tag :abbr, :attrs {:data-epoch ...}}, {...}]
+
+          ;; it's possible for an addon listing to have *just* the created date, no updated date
+        dates (-> snippet (html/select [:abbr]) vec reverse) ;; [{:tag :abbr, :attrs {:data-epoch ...}}, {...}]
+        [created updated] (if (= (count dates) 1)
+                              ;; only one date found (created date)
+                              ;; updated-date is now the same as created-date
+                            [(first dates) (first dates)]
+                            dates)
+
         formatted-str-to-num (fn [string]
                                (let [[nom mag] (rest (re-find #"([\d\.]+)([KM]?) Downloads$" string))
                                      mag (get {"" 1, "K" 1000, "M" 1000000} mag)]
