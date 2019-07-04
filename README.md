@@ -83,6 +83,12 @@ to multiple directories. It's a simple `txt` file in a structured format called 
 
 Addon zip files, `.wowman.json` files, cached data and `WowMatrix.dat` files can all be removed from the `Cache` menu.
 
+Addon `.zip` files that contain top-level files or top-level directories missing a `.toc` file **will not be installed**
+and the downloaded `.zip` file will be deleted immediately. This is a guard against poorly or maliciously constructed
+`.zip` files.
+
+Addon `.rar` files are not and will not be supported.
+
 This software interacts with the following remote hosts:
 
 * [www.curseforge.com](https://www.curseforge.com) and [wowinterface.com](https://wowinterface.com) to download detailed 
