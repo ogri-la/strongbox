@@ -19,7 +19,7 @@
       (vec (enumeration-seq (.entries zipfile))))
     true
     (catch java.util.zip.ZipException ze
-      (debug ze "failed to open+close zip file:" zipfile-path)
+      (debug "failed to open+close zip file:" zipfile-path)
       false)
     (catch java.lang.IllegalArgumentException ze
       ;; encountered 2019-07-02 attempting to read "2 UI" (no test for this case yet)
@@ -28,7 +28,7 @@
       ;; engrampa can read the contents but fails integrity check, complaining:
       ;;   ERROR: Headers Error : Interface/Addons/_ShiGuang/Modules/Nameplate/Nameplate - 副本.lua
       ;;   ERROR: Headers Error : Interface/Addons/_ShiGuang/Modules/Nameplate/Nameplate哎.lua
-      (debug ze "failed to open/read/close zip file (IllegalArgumentException):" zipfile-path)
+      (debug "failed to open/read/close zip file (IllegalArgumentException):" zipfile-path)
       false)))
 
 (defn-spec unzip-file (s/or :ok ::sp/extant-dir, :failed nil?)
@@ -39,7 +39,7 @@
     (zip/unzip zipfile-path output-dir-path)
     output-dir-path
     (catch java.util.zip.ZipException ze
-      (error ze (format "failed to unzip '%s': %s" zipfile-path (.getMessage ze))))))
+      (error (format "failed to unzip '%s': %s" zipfile-path (.getMessage ze))))))
 
 (defn zipfile-normal-entries
   "not all zip files are created equally. some have explicit entries for directories within them, some do not.
