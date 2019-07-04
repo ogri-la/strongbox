@@ -62,7 +62,7 @@
 ;;
 
 (def catalog-actions
-  #{:scrape-catalog :update-catalog
+  #{:scrape-catalog :update-catalog :merge-catalog
     :scrape-curseforge-catalog :update-curseforge-catalog
     :scrape-wowinterface-catalog :update-wowinterface-catalog})
 
