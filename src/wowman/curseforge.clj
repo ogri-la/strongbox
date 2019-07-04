@@ -37,13 +37,11 @@
         uri-template (str curseforge-host "/wow/addons?filter-sort=2&page=%s")]
     (http/download (format uri-template page))))
 
-;; TODO: test 'nil?' return value
 (defn-spec num-summary-pages (s/or :ok int?, :error nil?)
   "returns the total number of summary pages available"
   []
   (let [p1 (html/html-snippet (download-summary-page-alphabetically 1))
-        ;; content of the second-to-last list item (the last page of results) converted to an integer 
-        pN (-> (html/select p1 [:ul.paging-list :li.b-pagination-item :a]) butlast last :content first Integer.)]
+        pN (some-> (html/select p1 [:section :a.pagination-item :span html/content]) vec last Integer.)]
     pN))
 
 ;;
