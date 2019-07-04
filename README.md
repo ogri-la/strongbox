@@ -106,7 +106,9 @@ See [CONTRIBUTING](CONTRIBUTING.md) for more detail.
 
 ## Other unofficial addon managers
 
-### Maintained (I think)
+### Maintained 
+
+(I think)
 
 | name                        | url                                            | Linux | Mac  | Windows | maintained? | f/oss? | source available? | ads? | EULA? | language   | 
 |-----------------------------|------------------------------------------------|-------|------|---------|-------------|--------|-------------------|------|-------|------------| 
@@ -125,7 +127,9 @@ See [CONTRIBUTING](CONTRIBUTING.md) for more detail.
 
 (see [comrades.csv](comrades.csv))
 
-### Unmaintained (I think)
+### Unmaintained 
+
+(I think)
 
 | name                        | url                                             | Linux | Mac  | Windows | maintained? | f/oss? | source available? | ads? | EULA? | language   | 
 |-----------------------------|-------------------------------------------------|-------|------|---------|-------------|--------|-------------------|------|-------|------------| 

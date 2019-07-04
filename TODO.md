@@ -38,7 +38,9 @@ see CHANGELOG.md for a more formal list of changes by release
     - "2 UI", wowinterface
         - engrampa says corrupt headers
     - it just enumerates the contents of the file, but java may choke here where it wouldn't before
-
+* fixed two more bugs that emerged from the curseforge update
+    - failed to scrape pagination information 
+    - failed to handle addons with no 'updated' date
 
 ### todo
 
