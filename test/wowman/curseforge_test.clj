@@ -176,3 +176,12 @@
                            :version "v8.2.0-v1.13.2-7135.139"})]
       (with-fake-routes-in-isolation fake-routes
         (is (= (curseforge/expand-summary summary) expected))))))
+
+(deftest num-summary-pages
+  (testing "extraction of the number of summary pages"
+    (let [fixture (slurp "test/fixtures/curseforge-addon-summary-listing.html")
+          fake-routes {"https://www.curseforge.com/wow/addons?filter-sort=name&page=1"
+                       {:get (fn [req] {:status 200 :body fixture})}}
+          expected 346]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= (curseforge/num-summary-pages) expected))))))
