@@ -97,7 +97,9 @@
 
     ;; use the file on disk if it's not too old ...
     (if (fresh-cache-file-exists? output-file)
-      output-file
+      (do
+        (debug "cache hit for:" uri)
+        output-file)
 
       ;; ... otherwise, we must sing and dance
       (try
@@ -193,7 +195,7 @@
 
 (defn-spec prune-cache-dir nil?
   [cache-dir ::sp/extant-dir]
-  (prune-old-curseforge-files cache-dir)
+  ;;(prune-old-curseforge-files cache-dir) ;; this is problematic when generating the curseforge catalog
   (doseq [cache-file (fs/list-dir cache-dir)
           :when (and (fs/file? cache-file)
                      (utils/file-older-than (str cache-file) (* 2 expiry-offset-hours)))]
