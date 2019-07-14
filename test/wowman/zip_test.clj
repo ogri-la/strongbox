@@ -1,6 +1,6 @@
 (ns wowman.zip-test
   (:require
-   [taoensso.timbre :refer [debug info warn error spy]]
+   ;;[taoensso.timbre :refer [debug info warn error spy]]
    [clojure.test :refer [deftest testing is use-fixtures]]
    [wowman
     [utils :as utils :refer [join]]
