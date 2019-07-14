@@ -113,7 +113,6 @@
 
   (testing "a (updated) summary listing page can be scraped"
     (let [fixture (slurp "test/fixtures/curseforge-addon-summary-listing-updates.html")
-          _ (info "!!!! scraping")
           scraped (curseforge/extract-addon-summary-list-updates fixture)
 
           expected-first {:created-date "2008-07-10T16:30:06Z",
