@@ -337,7 +337,7 @@
         (not (zip/valid-zip-file? downloaded-file)) (do
                                                       (error bad-zipfile-msg)
                                                       (fs/delete downloaded-file)
-                                                      (warn "removed bad zipfile" downloaded-file))
+                                                      (warn "removed bad zip file" downloaded-file))
         (not (zip/valid-addon-zip-file? downloaded-file)) (do
                                                             (error bad-addon-msg)
                                                             (fs/delete downloaded-file) ;; I could be more lenient
@@ -663,7 +663,6 @@
 
 (defn -remove-addon
   [addon-dir]
-  (warn "attempting to remove" addon-dir)
   (let [install-dir (get-state :cfg :install-dir)
         addon-dir (fs/file install-dir addon-dir)
         addon-dir (-> addon-dir fs/absolute fs/normalized)]
@@ -672,11 +671,11 @@
          (fs/directory? addon-dir)
          (clojure.string/starts-with? addon-dir install-dir)) ;; don't delete anything outside of install dir!
       (do
-        (warn "removing" addon-dir)
         (fs/delete-dir addon-dir)
+        (warn (format "removed '%s'" addon-dir))
         nil)
 
-      (warn (format "addon-dir '%s' is outside the current installation dir of '%s'. not removing." addon-dir install-dir)))))
+      (warn (format "not removing '%s', directory is outside the current installation dir of '%s'" addon-dir install-dir)))))
 
 (defn-spec remove-addon nil?
   "removes the given addon. if addon is part of a group, all addons in group are removed"
