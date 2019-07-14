@@ -4,6 +4,7 @@ cursebreaker,https://github.com/AcidWeb/CurseBreaker,no,no,yes,yes,yes,yes,no,no
 instawow,https://github.com/layday/instawow,yes*,yes*,yes*,yes,yes,yes,no,no,python
 lcurse,https://github.com/ephraim/lcurse,yes,no,no,yes,no,yes,no,no,python
 Minion,https://minion.mmoui.com/,yes*,yes,yes,yes,no,no,yes,yes,java
+OpenAddOnManager,https://github.com/OpenAddOnManager/OpenAddOnManager,no,no,yes,yes,yes,yes,no,no,C#
 Saionaro/wow-addons-updater,https://github.com/Saionaro/wow-addons-updater,yes,yes,yes,yes,yes,yes,no,no,javascript
 Tukui Client,https://www.tukui.org/download.php?client=win,no,no,yes,yes,no,no,?,?,?
 WorldOfAddons,https://github.com/WorldofAddons/worldofaddons,yes*,yes*,yes,yes,yes,yes,no,no,javascript
