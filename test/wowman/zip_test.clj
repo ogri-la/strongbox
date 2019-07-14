@@ -116,7 +116,6 @@
                              {:dir? true :level 1 :toplevel? true :path "foo-bar/"}
                              {:dir? true :level 1 :toplevel? true :path "foo-baz/"}]
             expected ["bup" "bup-bar"]]
-        (info ">>>")
         (is (= (zip/inconsistently-prefixed zipfile-entries) expected))))
 
     (testing "ambiguous case: multiple addons (foo, bar), no common group."

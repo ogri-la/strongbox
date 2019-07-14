@@ -88,29 +88,27 @@
   it's assumed this check is being done *after* the validity checks on the zip and addon and that the zipfile-entry list has been normalised"
   [zipfile-entries ::sp/zipfile-entries]
   (let [grouped-entries (prefix-groups zipfile-entries) ;; [[{...}, {...}], [{...}]]
-        _ (info (utils/pprint grouped-entries))
-
-        magnitude 3
-        ;;grouped-entries (remove #(> (count %) magnitude) grouped-entries)
-
+        magnitude 3 ;; ignore if there are no groups smaller than this
         num-groups (count grouped-entries) ;; 3
         num-group-members (mapv count grouped-entries) ;; [2 1]
         strip-suffix #(utils/rtrim % "/")]
-
     (cond
+      ;; single group, ignore
       ;; this condition is actually catered for in the ambiguity checking below ((= 1) => true), but for clarity I'll keep it separate
       (< num-groups 2) nil
 
-      ;; where there are multiple large groups
+      ;; multiple large groups, ignore
       ;; altoholic has two very large groups of addons: DataStore* and Altoholic*
-      ;;(-> num-group-members last (> magnitude)) nil
+      ;; since `grouped-entries` is sorted, if the smallest group is larger than our threshold, ignore
+      (-> num-group-members last (> magnitude)) nil
 
-      ;; ambiguous cases where there is no largest group
-      ;; when each of the groups has the same number of members like [1 1] or [2 2 2] it's consistently inconsistent (ambiguous)
-      ;; as to which is the common group. in this case we turn a blind eye.
+      ;; ambiguous case, multiple groups with no largest group. ignore.
+      ;; each of the groups has the same number of members like [1 1] or [2 2 2]
       (apply = num-group-members) nil
 
-      ;; anything that doesn't share the common prefix is considered suspicious
+      ;; multiple groups with at least one group below the cutoff
+      ;; in this case, anything that doesn't share the most common prefix is considered suspicious
+      ;; this is not perfect! there will be outliers
       :else (->> grouped-entries rest flatten (map :path) (map strip-suffix) vec))))
 
 ;;
