@@ -48,7 +48,7 @@
   (clojure.tools.namespace.repl/refresh) ;; reloads all namespaces, including wowman.whatever-test ones
   (logging/change-log-level :debug)
   (if path
-    (if (some #{path} [:core :http :main :toc :utils :curseforge :zip])
+    (if (some #{path} [:core :http :main :toc :utils :curseforge :zip :catalog])
       (clojure.test/run-all-tests (re-pattern (str "wowman." (name path) "-test")))
       (error "unknown test file:" path))
     (clojure.test/run-all-tests #"wowman\..*-test")))

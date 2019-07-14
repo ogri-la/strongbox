@@ -89,6 +89,7 @@
 (s/def ::updated-date ::inst)
 (s/def ::catalog-created-date ::ymd-dt)
 (s/def ::catalog-updated-date ::ymd-dt)
+(s/def ::zoned-dt-obj #(instance? java.time.ZonedDateTime %))
 (s/def ::download-count (s/and int? #(>= % 0)))
 (s/def ::donation-uri (s/nilable ::uri))
 (s/def ::json string?)
