@@ -41,12 +41,14 @@ see CHANGELOG.md for a more formal list of changes by release
 * fixed two more bugs that emerged from the curseforge update
     - failed to scrape pagination information 
     - failed to handle addons with no 'updated' date
-
-### todo
-
 * issue a warning when addons unpack directories that don't share a common prefix
     - this would hopefully alert users that some shitty addons are being sneakily installed, like SlideBar or Stubby
         - we could go one further and filter/prompt the user if they actually want to unpack these directories
+
+### todo
+
+* bug, adibags 1.9.17 is failing to unzip
+    - zip file looks fine
 * code quality, we're sorely lacking in tests and test coverage metrics
     - I've added cloverage to get some coverage feedback
     - average coverage is 53%
@@ -64,6 +66,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
+* coloured warnings/errors on console output
+    - when running with :debug on the wall of text is difficult to read
 * moves raynes.fs to clj-commons/fs
 * catalog, normalise catagories between addons that overlap
     - perhaps expand them into 'tags'? 

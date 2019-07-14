@@ -298,10 +298,17 @@
 (defn-spec -install-addon (s/or :ok (s/coll-of ::sp/extant-file), :error ::sp/empty-coll)
   "installs an addon given an addon description, a place to install the addon and the addon zip file itself"
   [addon ::sp/addon-or-toc-addon, install-dir ::sp/writeable-dir, downloaded-file ::sp/archive-file]
+  ;; TODO: this function is becoming a mess. clean it up
   (let [zipfile-entries (zip/zipfile-normal-entries downloaded-file)
-        toplevel-dirs (filter (every-pred :dir? :toplevel?) zipfile-entries)
+        sus-addons (zip/inconsistently-prefixed zipfile-entries)
+
+        ;; one single line message or multi-line?
+        msg "%s will install inconsistently prefixed addons: %s"
+        _ (when sus-addons
+            (warn (format msg (:label addon) (clojure.string/join ", " sus-addons))))
 
         _ (zip/unzip-file downloaded-file install-dir)
+        toplevel-dirs (filter (every-pred :dir? :toplevel?) zipfile-entries)
         primary-dirname (determine-primary-subdir toplevel-dirs)
 
         ;; an addon may unzip to many directories, each directory needs the nfo file
@@ -316,7 +323,7 @@
     retval))
 
 (defn-spec install-addon-guard (s/or :ok (s/coll-of ::sp/extant-file), :error nil?)
-  "downloads an addon and installs it. handles http and non-http errors"
+  "downloads an addon and installs it. handles http and non-http errors, bad zip files, bad addons"
   [addon ::sp/addon-or-toc-addon, install-dir ::sp/extant-dir]
   (if (not (fs/writeable? install-dir))
     (error "failed to install addon, directory not writeable" install-dir)
