@@ -44,11 +44,15 @@ see CHANGELOG.md for a more formal list of changes by release
 * issue a warning when addons unpack directories that don't share a common prefix
     - this would hopefully alert users that some shitty addons are being sneakily installed, like SlideBar or Stubby
         - we could go one further and filter/prompt the user if they actually want to unpack these directories
+* bug, adibags 1.9.17 is failing to unzip
+    - zip file looks fine
+    - one of the test directories managed to update it without a problem ...
+    - and now the problem has fixed itself ... huh. not cool.
+    - done
+        - but keeping an eye on it. 
 
 ### todo
 
-* bug, adibags 1.9.17 is failing to unzip
-    - zip file looks fine
 * code quality, we're sorely lacking in tests and test coverage metrics
     - I've added cloverage to get some coverage feedback
     - average coverage is 53%
