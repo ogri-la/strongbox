@@ -9,6 +9,7 @@
    [clojure.set]
    [clojure.string :refer [split ends-with?]]
    [wowman
+    [utils :as utils]
     [specs :as sp]]))
 
 (defn-spec valid-zip-file? boolean?
@@ -69,6 +70,48 @@
     (with-open [zipfile (java.util.zip.ZipFile. zipfile-path)]
       (let [rows (mapv mkrow (enumeration-seq (.entries zipfile)))]
         (->> rows (map fake-rows) flatten (into rows) distinct)))))
+
+;;
+
+(defn-spec prefix-groups sequential?
+  "groups top-level directories by their :path prefix, sorts by size of group (largest to smallest)"
+  [zipfile-entries ::sp/zipfile-entries]
+  (let [desc #(compare %2 %1)
+        group (fn [x]
+                (group-by #(utils/safe-subs (:path %) 3) x))] ;; first three characters
+    ;; to be called *after* validity check so there should be no toplevel files. doesn't hurt to exclude them though
+    (->> zipfile-entries (filter :toplevel?) (filter :dir?) group vals (sort-by count desc))))
+
+(defn-spec inconsistently-prefixed (s/or :ok nil?, :inconsistencies sequential?)
+  "returns a list of inconsistently prefixed top-level directories sorted by most to least common (with the most common excluded).
+  nil if no inconsistencies found.
+  it's assumed this check is being done *after* the validity checks on the zip and addon and that the zipfile-entry list has been normalised"
+  [zipfile-entries ::sp/zipfile-entries]
+  (let [grouped-entries (prefix-groups zipfile-entries) ;; [[{...}, {...}], [{...}]]
+        _ (info (utils/pprint grouped-entries))
+
+        magnitude 3
+        ;;grouped-entries (remove #(> (count %) magnitude) grouped-entries)
+
+        num-groups (count grouped-entries) ;; 3
+        num-group-members (mapv count grouped-entries) ;; [2 1]
+        strip-suffix #(utils/rtrim % "/")]
+
+    (cond
+      ;; this condition is actually catered for in the ambiguity checking below ((= 1) => true), but for clarity I'll keep it separate
+      (< num-groups 2) nil
+
+      ;; where there are multiple large groups
+      ;; altoholic has two very large groups of addons: DataStore* and Altoholic*
+      ;;(-> num-group-members last (> magnitude)) nil
+
+      ;; ambiguous cases where there is no largest group
+      ;; when each of the groups has the same number of members like [1 1] or [2 2 2] it's consistently inconsistent (ambiguous)
+      ;; as to which is the common group. in this case we turn a blind eye.
+      (apply = num-group-members) nil
+
+      ;; anything that doesn't share the common prefix is considered suspicious
+      :else (->> grouped-entries rest flatten (map :path) (map strip-suffix) vec))))
 
 ;;
 ;;

@@ -115,3 +115,13 @@
 (s/def ::http-resp (s/keys :req-un [::status ::body])) ;; *at least* these keys, it will definitely have others
 
 (s/def ::empty-coll (s/and coll? #(empty? %)))
+
+;;
+
+(s/def ::dir? boolean?)
+(s/def ::level pos-int?)
+(s/def ::toplevel? boolean?)
+(s/def ::path string?)
+
+(s/def ::zipfile-entry (s/keys :req-un [::path ::toplevel? ::level ::dir?]))
+(s/def ::zipfile-entries (s/coll-of ::zipfile-entry))
