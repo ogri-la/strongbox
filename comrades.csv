@@ -1,6 +1,7 @@
 name,url,Linux,Mac,Windows,maintained?,f/oss?,source available?,ads?,EULA?,language
 addon,https://github.com/vargen2/Addon,no,no,yes,yes,yes,yes,no,no,C#
 cursebreaker,https://github.com/AcidWeb/CurseBreaker,no,no,yes,yes,yes,yes,no,no,python
+GitAddonsManager,https://gitlab.com/woblight/GitAddonsManager,yes,?,?,yes,yes,yes,no,no,C++
 instawow,https://github.com/layday/instawow,yes*,yes*,yes*,yes,yes,yes,no,no,python
 lcurse,https://github.com/ephraim/lcurse,yes,no,no,yes,no,yes,no,no,python
 Minion,https://minion.mmoui.com/,yes*,yes,yes,yes,no,no,yes,yes,java

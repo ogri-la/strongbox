@@ -110,7 +110,7 @@ All code contributions should take the form of a pull request with unit tests.
 
 See [CONTRIBUTING](CONTRIBUTING.md) for more detail.
 
-## Other unofficial addon managers
+## Other addon managers
 
 ### Maintained 
 
@@ -120,6 +120,7 @@ See [CONTRIBUTING](CONTRIBUTING.md) for more detail.
 |-----------------------------|------------------------------------------------------|-------|------|---------|-------------|--------|-------------------|------|-------|------------| 
 | addon                       | https://github.com/vargen2/Addon                     | no    | no   | yes     | yes         | yes    | yes               | no   | no    | C#         | 
 | cursebreaker                | https://github.com/AcidWeb/CurseBreaker              | no    | no   | yes     | yes         | yes    | yes               | no   | no    | python     | 
+| GitAddonsManager            | https://gitlab.com/woblight/GitAddonsManager         | yes   | ?    | ?       | yes         | yes    | yes               | no   | no    | C++        | 
 | instawow                    | https://github.com/layday/instawow                   | yes*  | yes* | yes*    | yes         | yes    | yes               | no   | no    | python     | 
 | lcurse                      | https://github.com/ephraim/lcurse                    | yes   | no   | no      | yes         | no     | yes               | no   | no    | python     | 
 | Minion                      | https://minion.mmoui.com/                            | yes*  | yes  | yes     | yes         | no     | no                | yes  | yes   | java       | 
@@ -151,7 +152,7 @@ See [CONTRIBUTING](CONTRIBUTING.md) for more detail.
 | wowam                       | https://github.com/sysworx/wowam                | no    | yes  | yes     | no^         | no     | yes               | no   | yes*  | xojo       | 
 | WoWutils                    | https://github.com/SeriousBug/WoWutils          | yes   | no   | no      | no          | yes    | yes               | no   | no    | bash       | 
 
-\* with caveats. may require compilation, partial functionality or not work at all, or be officially unsupported, or ...
+\* with caveats. may require compilation, partial functionality or not work at all, or be unsupported, or ...
 
 \^ hasn't seen an update in over a year. It may be extremely stable bug-free software or it may be unmaintained.
 
