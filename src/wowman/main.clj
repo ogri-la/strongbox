@@ -23,9 +23,9 @@
 
 (defn stop
   []
-  (let [opts (:cli-opts core/state)]
+  (let [opts (:cli-opts @core/state)]
     (if (= :cli (:ui opts))
-      (cli/stop core/state)
+      (cli/stop)
       (gui/stop))
     (core/stop core/state)))
 
@@ -48,7 +48,7 @@
   (clojure.tools.namespace.repl/refresh) ;; reloads all namespaces, including wowman.whatever-test ones
   (logging/change-log-level :debug)
   (if path
-    (if (some #{path} [:core :http :main :toc :utils :curseforge :zip :catalog])
+    (if (some #{path} [:core :http :main :toc :utils :curseforge :zip :catalog :cli])
       (clojure.test/run-all-tests (re-pattern (str "wowman." (name path) "-test")))
       (error "unknown test file:" path))
     (clojure.test/run-all-tests #"wowman\..*-test")))
@@ -90,7 +90,7 @@
     :parse-fn #(-> % lower-case keyword)
     :validate [(in? [:cli :gui])]]
 
-   ["-a" "--action ACTION" (str "perform action and exit. action is one of: 'list', 'list-updates', 'update', 'update-all'," catalog-action-str)
+   ["-a" "--action ACTION" (str "perform action and exit. action is one of: 'list', 'list-updates', 'update-all'," catalog-action-str)
     :id :action
     :parse-fn #(-> % lower-case keyword)
     :validate [(in? (concat [:list :list-updates :update-all] catalog-actions))]]])
