@@ -34,7 +34,7 @@
 
 ;;
 
-(defn-spec format-catalog-data map?
+(defn-spec format-catalog-data ::sp/catalog
   "formats given catalog data"
   [addon-list ::sp/addon-summary-list, created-date ::sp/catalog-created-date, updated-date ::sp/catalog-updated-date]
   (let [addon-list (mapv #(into (omap/ordered-map) (sort %))
@@ -45,10 +45,10 @@
      :total (count addon-list)
      :addon-summary-list addon-list}))
 
-(defn-spec write-addon-file ::sp/extant-file
+(defn-spec write-catalog-data ::sp/extant-file
   "formats given catalog data and writes it to given `output-file` as json. returns path to the output file"
-  [output-file ::sp/file, addon-list ::sp/addon-summary-list, created-date ::sp/catalog-created-date, updated-date ::sp/catalog-updated-date]
-  (spit output-file (utils/to-json (format-catalog-data addon-list created-date updated-date)))
+  [output-file ::sp/file, catalog-data map?]
+  (spit output-file (utils/to-json catalog-data))
   output-file)
 
 ;;
@@ -70,13 +70,9 @@
 
 ;;
 
-;; todo: test this logic. it feels sound but also a quiet place for logic bugs to lurk
-(defn-spec merge-catalogs ::sp/extant-file
-  [output-file ::sp/file, curseforge-catalog ::sp/extant-file, wowinterface-catalog ::sp/extant-file]
-  (let [aa (utils/load-json-file curseforge-catalog)
-        ab (utils/load-json-file wowinterface-catalog)
-
-        ;; this is 80% sanity check, 20% correctness
+(defn-spec -merge-catalogs ::sp/catalog
+  [aa ::sp/catalog ab ::sp/catalog]
+  (let [;; this is 80% sanity check, 20% correctness
         ab (assoc ab :addon-summary-list (de-dupe-wowinterface (:addon-summary-list ab)))
 
         addon-list (into (:addon-summary-list aa)
@@ -166,8 +162,13 @@
         created-date (first (sort [(:datestamp aa) (:datestamp ab)])) ;; earliest of the two catalogs
         updated-date (last (sort [(:updated-datestamp aa) (:updated-datestamp ab)]))] ;; most recent of the two catalogs
 
+    (format-catalog-data addon-list created-date updated-date)))
 
-    (write-addon-file output-file, addon-list, created-date, updated-date)))
+(defn-spec merge-catalogs ::sp/extant-file
+  [output-file ::sp/file, curseforge-catalog ::sp/extant-file, wowinterface-catalog ::sp/extant-file]
+  (let [aa (utils/load-json-file curseforge-catalog)
+        ab (utils/load-json-file wowinterface-catalog)]
+    (write-catalog-data output-file (-merge-catalogs aa ab))))
 
 ;;
 

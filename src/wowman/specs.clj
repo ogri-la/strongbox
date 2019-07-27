@@ -126,3 +126,11 @@
 
 (s/def ::zipfile-entry (s/keys :req-un [::path ::toplevel? ::level ::dir?]))
 (s/def ::zipfile-entries (s/coll-of ::zipfile-entry))
+
+;;
+
+(s/def ::spec map?) ;; grr. ::version conflicts with above
+(s/def ::datestamp ::inst)
+(s/def ::updated-datestamp ::inst)
+(s/def ::total int?)
+(s/def ::catalog (s/keys :req-un [::spec ::datestamp ::updated-datestamp ::total ::addon-summary-list]))

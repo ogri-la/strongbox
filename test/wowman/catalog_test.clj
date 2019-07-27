@@ -1,11 +1,10 @@
 (ns wowman.catalog-test
   (:require
-   [clj-http.fake :refer [with-fake-routes-in-isolation]]
    [clojure.test :refer [deftest testing is use-fixtures]]
    [wowman
     [catalog :as catalog]]
-   [me.raynes.fs :as fs]
-   [taoensso.timbre :as log :refer [debug info warn error spy]]))
+   ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
+   ))
 
 (deftest de-dupe-wowinterface
   (testing "given multiple addons with the same name, the most recently updated one is preferred"
@@ -31,3 +30,14 @@
                     :total 0
                     :addon-summary-list addon-list}]
       (is (= (catalog/format-catalog-data addon-list created updated) expected)))))
+
+(deftest merge-catalogs
+  (testing "dates are correct after a merge"
+    (let [aa {:datestamp "2001-01-01" :updated-datestamp "2001-01-02" :spec {:version 1} :addon-summary-list [] :total 0}
+          ab {:datestamp "2001-01-03" :updated-datestamp "2001-01-04" :spec {:version 1} :addon-summary-list [] :total 0}
+          expected {:spec {:version 1}
+                    :datestamp "2001-01-01"
+                    :updated-datestamp "2001-01-04"
+                    :total 0
+                    :addon-summary-list []}]
+      (is (= (catalog/-merge-catalogs aa ab) expected)))))
