@@ -26,7 +26,7 @@
 
 (defn format-wowinterface-dt
   "formats a shitty US-style m/d/y date with a shitty 12 hour time component and no timezone
-  into a glorious RFC3399 formatted UTC string"
+  into a glorious RFC3399 formatted UTC string."
   [dt]
   (let [dt (java-time/local-date-time "MM-dd-yy hh:mm a" dt) ;; "09-07-18 01:27 PM" => obj with no tz
         ;; no tz info available on site, assume utc
@@ -114,6 +114,17 @@
                     (assoc (extract-addon-summary snippet) :category-list #{(:label category)}))]
     (mapv extractor addon-list)))
 
+(defn scrape-category-page-range
+  [category]
+  (let [;; extract the number of results from the page navigation
+        page-content (-> category :url http/download html-snippet)
+        page-nav (-> page-content (select [:.pagenav [:td.alt1 html/last-of-type] :a]))
+        ;; just scrape first page when page-nav is empty
+        page-count (if (empty? page-nav) 1 (-> page-nav first :attrs :href
+                                               (clojure.string/split #"=") last Integer.))
+        page-range (range 1 (inc page-count))]
+    page-range))
+
 (defn scrape-category-page
   [category]
   (info (:label category))
@@ -121,15 +132,9 @@
         skippable (vals category-pages)] ;; ["Class & Role Specific", ...]
     (if (some #{(:label category)} skippable)
       []
-      (let [;; extract the number of results from the page navigation
-            page-content (-> category :url http/download html-snippet)
-            extractor (partial scrape-addon-page category)
-            page-nav (-> page-content (select [:.pagenav [:td.alt1 html/last-of-type] :a]))
-            ;; just scrape first page if page-nav is empty (page already downloaded to scrape nav ;)
-            page-count (if (empty? page-nav) 1 (-> page-nav first :attrs :href
-                                                   (clojure.string/split #"=") last Integer.))
-            page-range (range 1 (inc page-count))]
-        (info (format "scraping %s pages in '%s'" page-count (:label category)))
+      (let [extractor (partial scrape-addon-page category)
+            page-range (scrape-category-page-range category)]
+        (info (format "scraping %s pages in '%s'" (last page-range) (:label category)))
         (flatten (mapv extractor page-range))))))
 
 (defn scrape-updates-page
