@@ -50,13 +50,17 @@ see CHANGELOG.md for a more formal list of changes by release
     - and now the problem has fixed itself ... huh. not cool.
     - done
         - but keeping an eye on it. 
-
-### todo
-
 * code quality, we're sorely lacking in tests and test coverage metrics
     - I've added cloverage to get some coverage feedback
     - average coverage is 53%
     - raising that to 60% initially seems like a good goal with 80% or 90% as a stretch
+        - coverage is now at 70%
+        - done
+
+### todo
+
+* curseforge.json is getting a strange duplication of results while generating the catalog
+    - this is preventing automated catalog updates
 * export+import
     - wowman is strictly an addon manager, not an auxillary WoW manager
         - I won't be backing up screenshots or addon state or anything like that
