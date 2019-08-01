@@ -8,9 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* badly behaved addons are no longer installable
+    - these are addons that bundle non-addon files, like top-level files or top-level directories with no .toc file
+* a warning is now issued when an addon installs what it thinks are other 'unrelated' addons
+    - these are addons like Slidebar or Stubby
+    - this is troublesome because it's unexpected and the versions of these bundled addons must surely differ ...
+* test coverage is now at 70%
+
 ### Changed
 
+* the catalog is now downloaded from the wowman-data 'release' files rather than a raw repository file
+    - this catalog file in version control is now deprecated and will be removed in 1.0.0
+
 ### Fixed
+
+* fixed two bugs related to catalog generation that came out of the Curseforge site update
 
 ### Removed
 
