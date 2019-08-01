@@ -44,9 +44,9 @@
   (let [expected "0 installed\n0 updates\n"]
     (testing "action func can accept a plain keyword"
       (is (= (with-out-str (cli/action :list-updates)) expected))
-    (testing "action func can accept a map of args"
-      (is (= (with-out-str (cli/action {:action :list-updates})) expected))))))
-    
+      (testing "action func can accept a map of args"
+        (is (= (with-out-str (cli/action {:action :list-updates})) expected))))))
+
 (deftest shameless-coverage-bump
   (let [safe-actions [:???
                       :list :list-updates :update-all]]

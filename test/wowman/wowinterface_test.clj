@@ -3,11 +3,9 @@
    [clj-http.fake :refer [with-fake-routes-in-isolation]]
    [clojure.test :refer [deftest testing is use-fixtures]]
    [wowman
-    [core :as core]
-    [wowinterface :as wowinterface]
-    [utils :as utils :refer [join]]]
-   [me.raynes.fs :as fs]
-   [taoensso.timbre :as log :refer [debug info warn error spy]]))
+    [wowinterface :as wowinterface]]
+   ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
+   ))
 
 (deftest format-wowinterface-dt
   (testing "conversion"
@@ -47,10 +45,35 @@
           page 1
           expected []
           num-addons 25
-          first-addon {:uri "https://www.wowinterface.com/downloads/info25079", :name "rotation-master", :label "Rotation Master", :updated-date "2019-07-29T21:37:00Z", :download-count 80, :category-list #{"dummy"}}
-          last-addon  {:uri "https://www.wowinterface.com/downloads/info24805", :name "mattbars-mattui", :label "MattBars (MattUI)", :updated-date "2018-10-30T17:56:00Z", :download-count 1911, :category-list #{"dummy"}}]
+          first-addon {:uri "https://www.wowinterface.com/downloads/info25079",
+                       :name "rotation-master", :label "Rotation Master",
+                       :updated-date "2019-07-29T21:37:00Z",
+                       :download-count 80, :category-list #{"dummy"}}
+          last-addon  {:uri "https://www.wowinterface.com/downloads/info24805",
+                       :name "mattbars-mattui", :label "MattBars (MattUI)",
+                       :updated-date "2018-10-30T17:56:00Z",
+                       :download-count 1911, :category-list #{"dummy"}}]
       (with-fake-routes-in-isolation fake-routes
         (let [results (wowinterface/scrape-addon-page category page)]
           (is (= num-addons (count results)))
           (is (= first-addon (first results)))
           (is (= last-addon (last results))))))))
+
+(deftest expand-summary
+  (testing "addon details are correctly scraped"
+    (let [fixture (slurp "test/fixtures/wowinterface-addon-page.html")
+          fake-routes {#".*" ;;https://www.wowinterface.com/downloads/info00000"
+                       {:get (fn [req] {:status 200 :body fixture})}}
+          addon-summary {:uri "https://www.wowinterface.com/downloads/info00000",
+                         :name "everyaddon", :label "Everyaddon",
+                         :updated-date "2001-01-01T00:00:00Z",
+                         :download-count 1, :category-list #{"dummy"}}
+
+          expected (merge addon-summary
+                          {:download-uri "https://cdn.wowinterface.com/downloads/file00000/everyaddon-8.2.10.zip",
+                           :version "8.2.10",
+                           :interface-version 80200})]
+      (with-fake-routes-in-isolation fake-routes
+        ;; there is a suspicious 'pause' here with the http/download take 461 msecs of 480 msec execution
+        (let [results (wowinterface/expand-summary addon-summary)]
+          (is (= expected results)))))))
