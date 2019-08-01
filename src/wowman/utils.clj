@@ -60,7 +60,20 @@
                   (info "failed testing" dtfmt))))]
     (into {} (mapv fmt (keys java-time.format/predefined-formatters)))))
 
+(defn-spec todt ::sp/zoned-dt-obj
+  "takes an ISO8901 string and returns a java.time.ZonedDateTime object. 
+  these are needed to calculate durations"
+  [dt ::sp/inst]
+  (java-time/zoned-date-time (get java-time.format/predefined-formatters "iso-zoned-date-time") dt))
+
+(defn-spec utcnow ::sp/zoned-dt-obj
+  "returns a UTC timestamp for *right now*"
+  []
+  (java-time/zoned-date-time (java-time/local-date-time) "UTC"))
+
+
 ;;
+
 
 (defn repl-stack-element?
   [stack-element]

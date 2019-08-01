@@ -10,20 +10,10 @@
    [java-time.format]
    [wowman
     ;;[core :as core]
-    [utils :as utils]
+    [utils :as utils :refer [todt utcnow]]
     [specs :as sp]
     [curseforge :as curseforge]
     [wowinterface :as wowinterface]]))
-
-(defn todt
-  [dt]
-  (java-time/zoned-date-time (get java-time.format/predefined-formatters "iso-zoned-date-time") dt))
-
-(defn utcnow
-  []
-  (java-time/zoned-date-time (java-time/local-date-time) "UTC"))
-
-;;
 
 ;; ... this feels like boilerplate. better way?
 ;; curseforge/wowinterface won't be able to 'reach back' into catalog.clj ...
@@ -44,37 +34,46 @@
 
 ;;
 
-(defn-spec write-addon-file ::sp/extant-file
-  [output-file ::sp/file, addon-list ::sp/addon-summary-list, created-date ::sp/catalog-created-date, updated-date ::sp/catalog-updated-date]
+(defn-spec format-catalog-data ::sp/catalog
+  "formats given catalog data"
+  [addon-list ::sp/addon-summary-list, created-date ::sp/catalog-created-date, updated-date ::sp/catalog-updated-date]
   (let [addon-list (mapv #(into (omap/ordered-map) (sort %))
                          (sort-by :name addon-list))]
-    (spit output-file (utils/to-json {:spec {:version 1}
-                                      :datestamp created-date
-                                      :updated-datestamp updated-date
-                                      :total (count addon-list)
-                                      :addon-summary-list addon-list}))
-    output-file))
+    {:spec {:version 1}
+     :datestamp created-date
+     :updated-datestamp updated-date
+     :total (count addon-list)
+     :addon-summary-list addon-list}))
+
+(defn-spec write-catalog-data ::sp/extant-file
+  "formats given catalog data and writes it to given `output-file` as json. returns path to the output file"
+  [output-file ::sp/file, catalog-data map?]
+  (spit output-file (utils/to-json catalog-data))
+  output-file)
 
 ;;
 
-;; todo: test this logic. it feels sound but also a quiet place for logic bugs to lurk
-(defn-spec merge-catalogs ::sp/extant-file
-  [output-file ::sp/file, curseforge-catalog ::sp/extant-file, wowinterface-catalog ::sp/extant-file]
-  (let [aa (utils/load-json-file curseforge-catalog)
-        ab (utils/load-json-file wowinterface-catalog)
+(defn de-dupe-wowinterface
+  "at time of writing, wowinterface has 5 pairs of duplicate addons with slightly different labels
+  for each pair we'll pick the most recently updated.
+  these pairs *may* get picked up and filtered out further down when comparing merged catalogs,
+  depending on the time difference between the two updated dates"
+  [addon-list]
+  (let [de-duper (fn [[_ group-list]]
+                   (if (> (count group-list) 1)
+                     (do
+                       (warn "wowinterface: multiple addons slugify to the same :name" (utils/pprint group-list))
+                       (last (sort-by :updated-date group-list)))
+                     (first group-list)))
+        addon-groups (group-by :name addon-list)]
+    (mapv de-duper addon-groups)))
 
-        ;; at time of writing, wowinterface has 5 pairs of duplicate addons with slightly different labels
-        ;; for each pair we'll pick the most recently updated.
-        ;; these pairs *may* get picked up and filtered out further down when comparing merged catalogs, depending on threshold
-        ;; this is 80% sanity check, 20% correctness
-        de-dupe-wowinterface (mapv (fn [[_ group-list]]
-                                     (if (> (count group-list) 1)
-                                       (do
-                                         (warn "wowinterface: multiple addons slugify to the same :name" (utils/pprint group-list))
-                                         (last (sort-by :updated-date group-list)))
-                                       (first group-list)))
-                                   (group-by :name (:addon-summary-list ab)))
-        ab (assoc ab :addon-summary-list de-dupe-wowinterface)
+;;
+
+(defn-spec -merge-catalogs ::sp/catalog
+  [aa ::sp/catalog ab ::sp/catalog]
+  (let [;; this is 80% sanity check, 20% correctness
+        ab (assoc ab :addon-summary-list (de-dupe-wowinterface (:addon-summary-list ab)))
 
         addon-list (into (:addon-summary-list aa)
                          (:addon-summary-list ab))
@@ -163,8 +162,13 @@
         created-date (first (sort [(:datestamp aa) (:datestamp ab)])) ;; earliest of the two catalogs
         updated-date (last (sort [(:updated-datestamp aa) (:updated-datestamp ab)]))] ;; most recent of the two catalogs
 
+    (format-catalog-data addon-list created-date updated-date)))
 
-    (write-addon-file output-file, addon-list, created-date, updated-date)))
+(defn-spec merge-catalogs ::sp/extant-file
+  [output-file ::sp/file, curseforge-catalog ::sp/extant-file, wowinterface-catalog ::sp/extant-file]
+  (let [aa (utils/load-json-file curseforge-catalog)
+        ab (utils/load-json-file wowinterface-catalog)]
+    (write-catalog-data output-file (-merge-catalogs aa ab))))
 
 ;;
 

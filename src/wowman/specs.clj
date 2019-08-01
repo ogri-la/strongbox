@@ -89,6 +89,7 @@
 (s/def ::updated-date ::inst)
 (s/def ::catalog-created-date ::ymd-dt)
 (s/def ::catalog-updated-date ::ymd-dt)
+(s/def ::zoned-dt-obj #(instance? java.time.ZonedDateTime %))
 (s/def ::download-count (s/and int? #(>= % 0)))
 (s/def ::donation-uri (s/nilable ::uri))
 (s/def ::json string?)
@@ -125,3 +126,11 @@
 
 (s/def ::zipfile-entry (s/keys :req-un [::path ::toplevel? ::level ::dir?]))
 (s/def ::zipfile-entries (s/coll-of ::zipfile-entry))
+
+;;
+
+(s/def ::spec map?) ;; grr. ::version conflicts with above
+(s/def ::datestamp ::inst)
+(s/def ::updated-datestamp ::inst)
+(s/def ::total int?)
+(s/def ::catalog (s/keys :req-un [::spec ::datestamp ::updated-datestamp ::total ::addon-summary-list]))

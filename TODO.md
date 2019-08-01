@@ -70,6 +70,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
+* add checksum checks after downloading
+    - curseforge have an md5 that can be used
+    - wowinterface checksum is hidden behind a javascript tabber but still available
 * coloured warnings/errors on console output
     - when running with :debug on the wall of text is difficult to read
 * moves raynes.fs to clj-commons/fs
