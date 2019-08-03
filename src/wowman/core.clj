@@ -628,14 +628,14 @@
     (info "exported installed addons to" output-file "using format" (name output-type))))
 
 (defn-spec export-installed-addon-list-safely nil?
-  [file ::sp/file]
-  (let [path (-> file fs/absolute str)
+  [output-file ::sp/file]
+  (let [output-file (-> output-file fs/absolute str)
         ;; /tmp/foo.edn => :edn
         ;; /tmp/foo     =>  nil
-        ext (some-> path fs/extension (subs 1) trim lower-case keyword)
+        ext (some-> output-file fs/extension (subs 1) trim lower-case keyword)
         ext (some #{ext} [:edn :json])
         ext (or ext :json)]
-    (export-installed-addon-list path ext)))
+    (export-installed-addon-list output-file ext)))
 
 (defn import-addon
   "caveats:
