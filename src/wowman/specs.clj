@@ -134,3 +134,7 @@
 (s/def ::updated-datestamp ::inst)
 (s/def ::total int?)
 (s/def ::catalog (s/keys :req-un [::spec ::datestamp ::updated-datestamp ::total ::addon-summary-list]))
+
+;;
+
+(s/def ::export-type #{:json :edn})

@@ -43,6 +43,11 @@
   (Thread/sleep 750) ;; gives me time to switch panes
   (start cli-opts))
 
+(defn restart-cli
+  "convenience while developing. starts app, does not start gui"
+  []
+  (restart {:ui :cli}))
+
 (defn test
   [& [path]]
   (clojure.tools.namespace.repl/refresh) ;; reloads all namespaces, including wowman.whatever-test ones

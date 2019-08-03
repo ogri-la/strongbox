@@ -89,7 +89,7 @@
         (try
           (f)
           (catch Exception e
-            (error e "unhandled exception in thread")))))))
+            (error (timbre/stacktrace e) "unhandled exception in thread")))))))
 
 (defn selected-rows-handler
   "calls given `f` with last event when selection has stopped adjusting"
@@ -580,6 +580,16 @@
     (state-bind [:installed-addon-list] update-label)
     status))
 
+(defn export-installed-addon-list-handler
+  []
+  (when-let [path (chooser/choose-file :type "Export"
+                                       :selection-mode :files-only
+                                       :filters [["JSON" ["json"]]
+                                                 ["EDN" ["edn"]]]
+                                       :success-fn (fn [_ file]
+                                                     (str (.getAbsolutePath file))))]
+    (core/export-installed-addon-list-safely path)))
+
 (defn start-ui
   []
   (let [root->splitter (ss/top-bottom-split (mk-tabber) (notice-logger))
@@ -617,10 +627,13 @@
                     (ss/action :name "Delete WowMatrix.dat files" :handler (async-handler core/delete-wowmatrix-dat-files))
                     (ss/action :name "Delete .wowman.json files" :handler (async-handler (comp core/refresh core/delete-wowman-json-files)))]
 
+        impexp-menu [(ss/action :name "Export installed addon list" :handler (async-handler export-installed-addon-list-handler))]
+
         help-menu [(ss/action :name "About wowman" :handler (handler about-wowman-dialog))]
 
         menu (ss/menubar :items [(ss/menu :text "File" :mnemonic "F" :items file-menu)
                                  (ss/menu :text "Addons" :mnemonic "A" :items addon-menu)
+                                 (ss/menu :text "Import/Export" :mnemonic "i" :items impexp-menu)
                                  (ss/menu :text "Cache" :items cache-menu)
                                  (ss/menu :text "Help" :items help-menu)])
         _ (.setJMenuBar newui menu)

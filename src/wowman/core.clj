@@ -1,7 +1,7 @@
 (ns wowman.core
   (:require
    [clojure.set]
-   [clojure.string]
+   [clojure.string :refer [lower-case starts-with? trim]]
    [taoensso.timbre :as timbre :refer [debug info warn error spy]]
    [clojure.spec.alpha :as s]
    [orchestra.spec.test :as st]
@@ -615,6 +615,34 @@
         sorted-asc (utils/sort-semver-strings [latest-release version-running])]
     (= version-running (last sorted-asc))))
 
+;; import/export
+
+(defn-spec export-installed-addon-list nil?
+  [output-file ::sp/file output-type ::sp/export-type]
+  (let [;;addon-list (get-state :installed-addon-list) ;; at this point the data is merged with catalog data
+        addon-list (wowman.toc/installed-addons (get-state :cfg :install-dir))]
+    (spit output-file
+          (case output-type
+            :edn (utils/pprint addon-list)
+            :json (utils/to-json addon-list)))
+    (info "exported installed addons to" output-file "using format" (name output-type))))
+
+(defn-spec export-installed-addon-list-safely nil?
+  [file ::sp/file]
+  (let [path (-> file fs/absolute str)
+        ;; /tmp/foo.edn => :edn
+        ;; /tmp/foo     =>  nil
+        ext (some-> path fs/extension (subs 1) trim lower-case keyword)
+        ext (some #{ext} [:edn :json])
+        ext (or ext :json)]
+    (export-installed-addon-list path ext)))
+
+(defn import-addon
+  "caveats:
+  - imports the *latest* version of the addon, if found addon found"
+  [addon]
+  nil)
+
 ;; 
 
 (defn refresh
@@ -691,13 +719,12 @@
     (remove-addon toc))
   (refresh))
 
-(defn remove-selected
+(defn-spec remove-selected nil?
   []
-  (-> (get-state) :selected-installed vec remove-many-addons))
+  (-> (get-state) :selected-installed vec remove-many-addons)
+  nil)
 
-;;
 ;; init
-;;
 
 (defn watch-for-install-dir-change
   "when the install directory changes, the list of installed addons should be re-read"
