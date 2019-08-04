@@ -4,7 +4,10 @@
    [clojure.test :refer [deftest testing is use-fixtures]]
    [envvar.core :refer [with-env]]
    [wowman
+    [test-helper :as helper]
     [core :as core]]))
+
+(use-fixtures :each helper/fixture-tempcwd)
 
 (deftest paths
   (testing "all path keys are using suffix"
@@ -82,3 +85,13 @@
           file-opts {:debug? false}
           expected (assoc (:cfg core/-state-template) :debug? true)]
       (is (= expected (core/configure file-opts cli-opts))))))
+
+(deftest export-installed-addon-list
+  (testing "exported data looks as expected"
+    (let [addon-list (read-string (slurp "test/fixtures/installed-addons-export.edn"))
+          output-path "./exports.edn"
+          _ (core/export-installed-addon-list output-path :edn addon-list)
+          expected [{:name "adibags" :source "curseforge"}
+                    {:name "carbonite" :source "curseforge"}]]
+      (is (= expected (read-string (slurp output-path)))))))
+

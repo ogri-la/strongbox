@@ -618,9 +618,8 @@
 ;; import/export
 
 (defn-spec export-installed-addon-list nil?
-  [output-file ::sp/file output-type ::sp/export-type]
-  (let [;;addon-list (get-state :installed-addon-list) ;; at this point the data is merged with catalog data
-        addon-list (wowman.toc/installed-addons (get-state :cfg :install-dir))]
+  [output-file ::sp/file, output-type ::sp/export-type, addon-list ::sp/addon-summary-list]
+  (let [addon-list (map #(select-keys % [:name :source]) addon-list)]
     (spit output-file
           (case output-type
             :edn (utils/pprint addon-list)
@@ -634,8 +633,10 @@
         ;; /tmp/foo     =>  nil
         ext (some-> output-file fs/extension (subs 1) trim lower-case keyword)
         ext (some #{ext} [:edn :json])
-        ext (or ext :json)]
-    (export-installed-addon-list output-file ext)))
+        ext (or ext :json)
+        addon-list (wowman.toc/installed-addons (get-state :installed-addon-list))]
+    ;; todo: print warning if any to be exported are unmatched (check for presence of :download-uri
+    (export-installed-addon-list output-file ext addon-list)))
 
 (defn import-addon
   "caveats:
