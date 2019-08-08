@@ -120,6 +120,7 @@ See [CONTRIBUTING](CONTRIBUTING.md) for more detail.
 |-----------------------------|------------------------------------------------------|-------|------|---------|-------------|--------|-------------------|------|-------|------------| 
 | addon                       | https://github.com/vargen2/Addon                     | no    | no   | yes     | yes         | yes    | yes               | no   | no    | C#         | 
 | antiwinter/wowa             | https://github.com/antiwinter/wowa                   | yes*  | yes* | yes*    | yes         | yes    | no                | no   | no    | javascript | 
+| braier/wow-addon-updater    | https://www.braier.net/wow-addon-updater/index.html  | yes   | yes  | yes     | yes         | yes    | yes               | no   | no    | pascal     | 
 | cursebreaker                | https://github.com/AcidWeb/CurseBreaker              | no    | no   | yes     | yes         | yes    | yes               | no   | no    | python     | 
 | GitAddonsManager            | https://gitlab.com/woblight/GitAddonsManager         | yes   | ?    | ?       | yes         | yes    | yes               | no   | no    | C++        | 
 | instawow                    | https://github.com/layday/instawow                   | yes*  | yes* | yes*    | yes         | yes    | yes               | no   | no    | python     | 
