@@ -40,7 +40,14 @@
 
 (defn- add-etag-or-not
   [etag-key req]
-  (if-let [stored-etag ((:get-etag *cache*) etag-key)]
+  (if-let [;; for some reason this dynamic binding of *cache* to nil results in:
+           ;; (wowman.http/*cache* nil) => NullPointerException
+           ;; but not this:
+           ;; (nil nil) => CompilerException java.lang.IllegalArgumentException: Can't call nil, form: (nil nil)
+           ;; I suspect the devil is in the difference between compilation-time and run-time
+           ;;stored-etag ((:get-etag *cache*) etag-key)
+           ;; this totally does work though :)
+           stored-etag (and *cache* ((:get-etag *cache*) etag-key))]
     (assoc-in req [:headers :if-none-match] stored-etag)
     req))
 
