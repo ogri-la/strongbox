@@ -231,6 +231,22 @@
          (not (s/valid? data-spec data))) (call-if-fn invalid-data?)
         :else data))))
 
+(defn-spec load-edn-file any?
+  [path ::sp/extant-file]
+  (-> path slurp read-string))
+
+(defn load-edn-file-safely
+  [path & {:keys [no-file? bad-data? invalid-data? data-spec]}]
+  (if-not (fs/file? path)
+    (call-if-fn no-file?)
+    (let [data (load-edn-file path)]
+      (cond
+        (not data) (call-if-fn bad-data?)
+        (and ;; both are present AND data is invalid
+         (and invalid-data? data-spec)
+         (not (s/valid? data-spec data))) (call-if-fn invalid-data?)
+        :else data))))
+
 (defn-spec to-int (s/or :ok int? :error nil?)
   [x any?]
   (try (Integer. x)

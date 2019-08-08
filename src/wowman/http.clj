@@ -40,7 +40,7 @@
 
 (defn- add-etag-or-not
   [etag-key req]
-  (if-let [stored-etag (-> *cache* :etag-db (get etag-key))]
+  (if-let [stored-etag ((:get-etag *cache*) etag-key)]
     (assoc-in req [:headers :if-none-match] stored-etag)
     req))
 
@@ -90,7 +90,7 @@
 
     ;; ensures orphaned .etag files don't prevent download of missing files
     (when (and cache?
-               (-> *cache* :etag-db (get etag-key))
+               ((:get-etag *cache*) etag-key)
                (not (fs/exists? output-file)))
       (warn "orphaned .etag found:" etag-key)
       ((:set-etag *cache*) etag-key)) ;; dissoc etag from db

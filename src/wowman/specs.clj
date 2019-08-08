@@ -89,6 +89,7 @@
 (s/def ::updated-date ::inst)
 (s/def ::catalog-created-date ::ymd-dt)
 (s/def ::catalog-updated-date ::ymd-dt)
+(s/def ::catalog-source #{"curseforge" "wowinterface"})
 (s/def ::zoned-dt-obj #(instance? java.time.ZonedDateTime %))
 (s/def ::download-count (s/and int? #(>= % 0)))
 (s/def ::donation-uri (s/nilable ::uri))
@@ -138,3 +139,6 @@
 ;;
 
 (s/def ::export-type #{:json :edn})
+(s/def ::source ::catalog-source) ;; alias :(
+(s/def ::export-record (s/keys :req-un [::name ::source]))
+(s/def ::export-record-list (s/coll-of ::export-record))

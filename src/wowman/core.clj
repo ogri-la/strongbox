@@ -117,7 +117,7 @@
   [& path]
   (if-let [state @state]
     (nav-map state path)
-    (AssertionError. "application must be `start`ed before state may be accessed.")))
+    (throw (AssertionError. "application must be `start`ed before state may be accessed."))))
 
 (defn set-etag
   "convenient wrapper around adding and removing etag values from state map"
@@ -131,8 +131,9 @@
 (defn cache
   "data and a setter that gets bound to http/*cache* when caching http requests"
   []
-  {:etag-db (get-state :etag-db)
+  {;;:etag-db (get-state :etag-db) ;; don't do this. encourages stale reads of the etag-db
    :set-etag set-etag
+   :get-etag #(get-state :etag-db %) ;; do this instead
    :cache-dir (paths :cache-dir)})
 
 (defn-spec state-bind nil?
@@ -376,7 +377,8 @@
   []
   (download-catalog)
   (info "loading addon summaries from catalog:" (paths :catalog-file))
-  (let [{:keys [addon-summary-list]} (utils/load-json-file-safely (paths :catalog-file) :bad-data? {:addon-summary-list {}})]
+  (let [{:keys [addon-summary-list]} (utils/load-json-file-safely (paths :catalog-file)
+                                                                  :bad-data? {:addon-summary-list {}})]
     (swap! state assoc :addon-summary-list addon-summary-list)
     nil))
 
@@ -626,23 +628,72 @@
             :json (utils/to-json addon-list)))
     (info "exported installed addons to" output-file "using format" (name output-type))))
 
+(defn-spec file-ext-as-kw (s/or :ok keyword?, :error nil?)
+  [path ::sp/file]
+  ;; /tmp/foo.edn => :edn
+  ;; /tmp/foo     =>  nil
+  (some-> path fs/extension (subs 1) trim lower-case keyword))
+
 (defn-spec export-installed-addon-list-safely nil?
   [output-file ::sp/file]
   (let [output-file (-> output-file fs/absolute str)
-        ;; /tmp/foo.edn => :edn
-        ;; /tmp/foo     =>  nil
-        ext (some-> output-file fs/extension (subs 1) trim lower-case keyword)
+        ext (file-ext-as-kw output-file)
         ext (some #{ext} [:edn :json])
         ext (or ext :json)
-        addon-list (wowman.toc/installed-addons (get-state :installed-addon-list))]
+        addon-list (get-state :installed-addon-list)]
     ;; todo: print warning if any to be exported are unmatched (check for presence of :download-uri
     (export-installed-addon-list output-file ext addon-list)))
 
-(defn import-addon
-  "caveats:
-  - imports the *latest* version of the addon, if found addon found"
-  [addon]
-  nil)
+;; created to investigate some performance issues, seems sensible to keep it separate
+(defn -mk-import-idx
+  [addon-list]
+  (let [key-fn #(select-keys % [:source :name])
+        addon-summary-list (get-state :addon-summary-list)
+        ;; todo: this sucks. use a database
+        catalog-idx (group-by key-fn addon-summary-list)
+        find-expand (fn [addon]
+                      (when-let [matching-addon (first (get catalog-idx (key-fn addon)))]
+                        (expand-summary-wrapper matching-addon)))
+        matching-addon-list (->> addon-list (map find-expand) (remove nil?) vec)]
+    matching-addon-list))
+
+(defn import-addon-list
+  "caveats: imports the *latest* version of the addon, if addon found"
+  [addon-list] ;; todo: spec
+  (info "attempting to import" addon-list)
+  (let [matching-addon-list (-mk-import-idx addon-list)
+        install-dir (get-state :cfg :install-dir)]
+    (doseq [addon matching-addon-list]
+      (install-addon addon install-dir))))
+
+(defn-spec import-exported-file nil?
+  [path ::sp/extant-file]
+  (let [ext (file-ext-as-kw path)
+        ;; edn? json? can't trust file extension
+        ;; json is pretty finicky, try it first then try edn
+        nil-me (constantly nil)
+        invalid-warn #(warn "invalid!")
+        json-loader #(utils/load-json-file-safely %
+                                                  :bad-data? nil-me
+                                                  :data-spec ::sp/export-record-list
+                                                  :invalid-data? nil-me)
+        ;; perhaps get rid of this. json-only
+        edn-loader #(utils/load-edn-file-safely %
+                                                :bad-data? nil-me
+                                                :data-spec ::sp/export-record-list
+                                                :invalid-data? invalid-warn)
+
+        _ (info "importing exports file:" path "as format" ext)
+
+        addon-list (case ext
+                     :json (json-loader path)
+                     :edn (edn-loader path)
+
+                     (or (json-loader path) (edn-loader path)))
+
+        _ (info "got" addon-list)]
+    (when-not (empty? addon-list)
+      (import-addon-list addon-list))))
 
 ;; 
 

@@ -580,7 +580,7 @@
     (state-bind [:installed-addon-list] update-label)
     status))
 
-(defn export-installed-addon-list-handler
+(defn export-addon-list-handler
   []
   (when-let [path (chooser/choose-file :type "Export"
                                        :selection-mode :files-only
@@ -589,6 +589,17 @@
                                        :success-fn (fn [_ file]
                                                      (str (.getAbsolutePath file))))]
     (core/export-installed-addon-list-safely path)))
+
+(defn import-addon-list-handler
+  []
+  (when-let [path (chooser/choose-file :type "Import"
+                                       :selection-mode :files-only
+                                       :filters [["JSON" ["json"]]
+                                                 ["EDN" ["edn"]]]
+                                       :success-fn (fn [_ file]
+                                                     (str (.getAbsolutePath file))))]
+    (core/import-exported-file path)
+    (core/refresh)))
 
 (defn start-ui
   []
@@ -627,7 +638,8 @@
                     (ss/action :name "Delete WowMatrix.dat files" :handler (async-handler core/delete-wowmatrix-dat-files))
                     (ss/action :name "Delete .wowman.json files" :handler (async-handler (comp core/refresh core/delete-wowman-json-files)))]
 
-        impexp-menu [(ss/action :name "Export installed addon list" :handler (async-handler export-installed-addon-list-handler))]
+        impexp-menu [(ss/action :name "Export addon list" :handler (async-handler export-addon-list-handler))
+                     (ss/action :name "Import addon list" :handler (async-handler import-addon-list-handler))]
 
         help-menu [(ss/action :name "About wowman" :handler (handler about-wowman-dialog))]
 
@@ -658,7 +670,9 @@
   []
   (info "stopping gui")
   (try
-    (ss/dispose! (get-state :gui))
+    ;; don't do this. state may not be started yet for it to be stopped!
+    ;;(ss/dispose! (get-state :gui))
+    (ss/dispose! (:gui @core/state))
     (catch RuntimeException re
       (warn "failed to stop state:" (.getMessage re)))))
 
