@@ -56,24 +56,46 @@ see CHANGELOG.md for a more formal list of changes by release
     - raising that to 60% initially seems like a good goal with 80% or 90% as a stretch
         - coverage is now at 70%
         - done
+* export+import
+    - wowman is strictly an addon manager, not an auxillary WoW manager
+        - I won't be backing up screenshots or addon state or anything like that
+            - at least not here
+    - export a simple list of addons 
+        - json, yaml and xml serialisations as a minimum
+            - these are the most common and versatile
+                - eh, no
+        - json
+            - done
+        - edn
+            - done
+            - undone
+                - one format is enough. we don't need choice here
+        - export only what is necessary to import again later
+            - :name
+            - :source
+            - :installed-version ... ? 
+                - no. it would be nice to import precisely the version that was exported
+                - future feature perhaps
+            - done
+        - if there are unmatched addons at time of export, display warning that these will not be importable later
+            - why? because the import process is:
+                - find addon in catalog using :source and :name
+                - install addon
+            - and addons that can't be found in catalog will not be imported
+            - done
+    - that can be re-read (imported) later
+        - import added
+        - done
 
 ### todo
 
 * curseforge.json is getting a strange duplication of results while generating the catalog
     - this is preventing automated catalog updates
-* export+import
-    - wowman is strictly an addon manager, not an auxillary WoW manager
-        - I won't be backing up screenshots or addon state or anything like that
-    - export a simple list of addons that can be re-read (imported) later
-    - an idle thought until I saw wowmatrix has it
-        - they have a wordpress plugin and a simple text file
-    - json, yaml and xml serialisations as a minimum
-        - these are the most common and versatile
-    - friendly text and html formats
-        - who on earth would use such a thing? and is it worth the added complexity?
 
 ## todo bucket
 
+* can a list of subscribers be setup in github to announce releases?
+* ensure test coverage doesn't drop below threshold
 * add checksum checks after downloading
     - curseforge have an md5 that can be used
     - wowinterface checksum is hidden behind a javascript tabber but still available
