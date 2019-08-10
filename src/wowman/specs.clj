@@ -141,5 +141,6 @@
 
 (s/def ::export-type #{:json :edn})
 (s/def ::source ::catalog-source) ;; alias :(
-(s/def ::export-record (s/keys :req-un [::name ::source]))
+(s/def ::export-record (s/keys :req-un [::name]
+                               :opt [::source]))
 (s/def ::export-record-list (s/coll-of ::export-record))

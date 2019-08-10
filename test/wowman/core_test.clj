@@ -97,6 +97,7 @@
           output-path (temp-path "exports.json")
           _ (core/export-installed-addon-list output-path addon-list)
           expected [{:name "adibags" :source "curseforge"}
+                    {:name "noname"} ;; an addon whose name is not present in the catalog (umatched)
                     {:name "carbonite" :source "curseforge"}]]
       (is (= expected (utils/load-json-file output-path))))))
 

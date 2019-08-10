@@ -39,6 +39,12 @@
   :primary? true,
   :matched? true,
   :group-addon-count 2}
+ {:name "noname"
+  :label "No Name"
+  :description "An addon with no match in the catalog"
+  :dirname "noname"
+  :interface-version 80200
+  :installed-version "7.8.9"}
  {:created-date "2011-01-04T05:42:23Z",
   :description
   "CARBONITE® is a multi feature addon developed by game industry veterans.",

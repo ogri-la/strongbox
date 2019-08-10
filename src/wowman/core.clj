@@ -620,7 +620,7 @@
 ;; import/export
 
 (defn-spec export-installed-addon-list nil?
-  [output-file ::sp/file, addon-list ::sp/addon-summary-list]
+  [output-file ::sp/file, addon-list ::sp/toc-list]
   (let [addon-list (map #(select-keys % [:name :source]) addon-list)]
     (utils/dump-json-file output-file addon-list)
     (info "exported installed addons to" output-file)))
