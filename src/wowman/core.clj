@@ -620,29 +620,18 @@
 ;; import/export
 
 (defn-spec export-installed-addon-list nil?
-  [output-file ::sp/file, output-type ::sp/export-type, addon-list ::sp/addon-summary-list]
+  [output-file ::sp/file, addon-list ::sp/addon-summary-list]
   (let [addon-list (map #(select-keys % [:name :source]) addon-list)]
-    (spit output-file
-          (case output-type
-            :edn (utils/pprint addon-list)
-            :json (utils/to-json addon-list)))
-    (info "exported installed addons to" output-file "using format" (name output-type))))
-
-(defn-spec file-ext-as-kw (s/or :ok keyword?, :error nil?)
-  [path ::sp/file]
-  ;; /tmp/foo.edn => :edn
-  ;; /tmp/foo     =>  nil
-  (some-> path fs/extension (subs 1) trim lower-case keyword))
+    (utils/dump-json-file output-file addon-list)
+    (info "exported installed addons to" output-file)))
 
 (defn-spec export-installed-addon-list-safely nil?
   [output-file ::sp/file]
   (let [output-file (-> output-file fs/absolute str)
-        ext (file-ext-as-kw output-file)
-        ext (some #{ext} [:edn :json])
-        ext (or ext :json)
+        ;; todo: add .json extension if one doesn't exist
         addon-list (get-state :installed-addon-list)]
     ;; todo: print warning if any to be exported are unmatched (check for presence of :download-uri
-    (export-installed-addon-list output-file ext addon-list)))
+    (export-installed-addon-list output-file addon-list)))
 
 ;; created to investigate some performance issues, seems sensible to keep it separate
 (defn -mk-import-idx
@@ -668,30 +657,13 @@
 
 (defn-spec import-exported-file nil?
   [path ::sp/extant-file]
-  (let [ext (file-ext-as-kw path)
-        ;; edn? json? can't trust file extension
-        ;; json is pretty finicky, try it first then try edn
-        nil-me (constantly nil)
+  (info "importing exports file:" path)
+  (let [nil-me (constantly nil)
         invalid-warn #(warn "invalid!")
-        json-loader #(utils/load-json-file-safely %
-                                                  :bad-data? nil-me
-                                                  :data-spec ::sp/export-record-list
-                                                  :invalid-data? nil-me)
-        ;; perhaps get rid of this. json-only
-        edn-loader #(utils/load-edn-file-safely %
+        addon-list (utils/load-json-file-safely path
                                                 :bad-data? nil-me
                                                 :data-spec ::sp/export-record-list
-                                                :invalid-data? invalid-warn)
-
-        _ (info "importing exports file:" path "as format" ext)
-
-        addon-list (case ext
-                     :json (json-loader path)
-                     :edn (edn-loader path)
-
-                     (or (json-loader path) (edn-loader path)))
-
-        _ (info "got" addon-list)]
+                                                :invalid-data? nil-me)]
     (when-not (empty? addon-list)
       (import-addon-list addon-list))))
 

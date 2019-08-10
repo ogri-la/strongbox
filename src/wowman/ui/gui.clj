@@ -584,8 +584,7 @@
   []
   (when-let [path (chooser/choose-file :type "Export"
                                        :selection-mode :files-only
-                                       :filters [["JSON" ["json"]]
-                                                 ["EDN" ["edn"]]]
+                                       :filters [["JSON" ["json"]]]
                                        :success-fn (fn [_ file]
                                                      (str (.getAbsolutePath file))))]
     (core/export-installed-addon-list-safely path)))
@@ -594,8 +593,7 @@
   []
   (when-let [path (chooser/choose-file :type "Import"
                                        :selection-mode :files-only
-                                       :filters [["JSON" ["json"]]
-                                                 ["EDN" ["edn"]]]
+                                       :filters [["JSON" ["json"]]]
                                        :success-fn (fn [_ file]
                                                      (str (.getAbsolutePath file))))]
     (core/import-exported-file path)

@@ -9,7 +9,7 @@
    [wowman
     [main :as main]
     [utils :as utils]
-    [test-helper :as helper :refer [fixture-path]]
+    [test-helper :as helper :refer [fixture-path temp-path]]
     [core :as core]]))
 
 (use-fixtures :each helper/fixture-tempcwd)
@@ -94,11 +94,11 @@
 (deftest export-installed-addon-list
   (testing "exported data looks as expected"
     (let [addon-list (read-string (slurp "test/fixtures/export--installed-addons-list.edn"))
-          output-path "./exports.edn"
-          _ (core/export-installed-addon-list output-path :edn addon-list)
+          output-path (temp-path "exports.json")
+          _ (core/export-installed-addon-list output-path addon-list)
           expected [{:name "adibags" :source "curseforge"}
                     {:name "carbonite" :source "curseforge"}]]
-      (is (= expected (read-string (slurp output-path)))))))
+      (is (= expected (utils/load-json-file output-path))))))
 
 (deftest import-exported-addon-list-file
   (testing "an export can be imported"

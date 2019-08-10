@@ -1,7 +1,7 @@
 (ns wowman.utils
   (:require
    [wowman.specs :as sp]
-   [clojure.string]
+   [clojure.string :refer [trim lower-case]]
    [clojure.java.io]
    [clojure.spec.alpha :as s]
    [clojure.pprint]
@@ -14,6 +14,13 @@
    [taoensso.timbre :refer [debug info warn error spy]]
    [java-time :as jt]
    [java-time.format]))
+
+;; orphaned, might be useful still?
+(defn-spec file-ext-as-kw (s/or :ok keyword?, :error nil?)
+  [path ::sp/file]
+  ;; /tmp/foo.edn => :edn
+  ;; /tmp/foo     =>  nil
+  (some-> path fs/extension (subs 1) trim lower-case keyword))
 
 (defn-spec file-older-than boolean?
   [file ::sp/extant-file, hours pos-int?]

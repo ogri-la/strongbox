@@ -8,11 +8,15 @@
     [core :as core]
     [utils :refer [join]]]))
 
-(def fixture-dir (-> "test/fixtures" fs/absolute fs/normalized))
+(def fixture-dir (-> "test/fixtures" fs/absolute fs/normalized str))
 
 (defn fixture-path
   [filename]
   (join fixture-dir filename))
+
+(defn temp-path
+  [filename]
+  (-> filename fs/absolute fs/normalized str))
 
 (defn fixture-tempcwd
   "each test is executed in a new and self-contained location, accessible as fs/*cwd*
