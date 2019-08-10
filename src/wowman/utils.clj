@@ -309,17 +309,29 @@
   (let [pattern (java.util.regex.Pattern/compile (format "[%s]*$" m))]
     (clojure.string/replace s pattern "")))
 
-(defn-spec file-to-lazy-byte-array ::sp/file-byte-array-pair
-  [path ::sp/extant-file root ::sp/extant-dir]
-  (let [;; /foo/bar/baz/ => foo/bar/
-        rooted-at (ltrim (clojure.string/replace path (str (fs/parent root)) "") "/")
+;; https://stackoverflow.com/questions/26790881/clojure-file-to-byte-array
+(comment "orphaned. was once used in zip.clj to create a zip file of a directory."
+         (defn-spec file-to-lazy-byte-array ::sp/file-byte-array-pair
+           [path ::sp/extant-file root ::sp/extant-dir]
+           (let [;; /foo/bar/baz/ => foo/bar/
+                 rooted-at (ltrim (clojure.string/replace path (str (fs/parent root)) "") "/")
         ;;f (java.io.File. path)
-        f path
-        ary (byte-array (.length f))
-        is (java.io.FileInputStream. f)]
+                 f path
+                 ary (byte-array (.length f))
+                 is (java.io.FileInputStream. f)]
+             (.read is ary)
+             (.close is)
+             [rooted-at ary])))
+
+;; repurposing
+(defn-spec file-to-lazy-byte-array bytes?
+  [path ::sp/extant-file]
+  (let [fobj (java.io.File. path)
+        ary (byte-array (.length fobj))
+        is (java.io.FileInputStream. fobj)]
     (.read is ary)
     (.close is)
-    [rooted-at ary]))
+    ary))
 
 (defn split-filter
   [f c]

@@ -101,6 +101,7 @@
 
 (s/def ::nfo map?) ;; todo: not cool
 
+;; orphaned
 (s/def ::file-byte-array-pair (s/cat :file ::file
                                      :file-contents bytes?))
 

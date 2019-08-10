@@ -2,9 +2,14 @@
   (:require
    [clojure.string :refer [starts-with? ends-with?]]
    [clojure.test :refer [deftest testing is use-fixtures]]
+   [clj-http.fake :refer [with-fake-routes-in-isolation]]
    [envvar.core :refer [with-env]]
+   [me.raynes.fs :as fs]
+   ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [wowman
-    [test-helper :as helper]
+    [main :as main]
+    [utils :as utils]
+    [test-helper :as helper :refer [fixture-path]]
     [core :as core]]))
 
 (use-fixtures :each helper/fixture-tempcwd)
@@ -88,10 +93,75 @@
 
 (deftest export-installed-addon-list
   (testing "exported data looks as expected"
-    (let [addon-list (read-string (slurp "test/fixtures/installed-addons-export.edn"))
+    (let [addon-list (read-string (slurp "test/fixtures/export--installed-addons-list.edn"))
           output-path "./exports.edn"
           _ (core/export-installed-addon-list output-path :edn addon-list)
           expected [{:name "adibags" :source "curseforge"}
                     {:name "carbonite" :source "curseforge"}]]
       (is (= expected (read-string (slurp output-path)))))))
 
+(deftest import-exported-addon-list-file
+  (testing "an export can be imported"
+    (try
+      (main/start {:ui :cli})
+      (let [;; will trigger a refresh. call it here before it affects our crafted state
+            _ (core/set-install-dir! (str fs/*cwd*))
+
+            ;; add catalog to app state
+            addon-summary-list (utils/load-json-file (fixture-path "import--dummy-catalog.json"))
+            _ (swap! core/state assoc :addon-summary-list addon-summary-list)
+
+            ;; our list of addons to import
+            output-path (fixture-path "import--exports.json")
+
+            ;; modified curseforge addon files to generate fake links
+            every-addon-file (slurp (fixture-path "curseforge-addon-file--everyaddon.html"))
+            every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
+            every-other-addon-file (slurp (fixture-path "curseforge-addon-file--everyotheraddon.html"))
+            every-other-addon-zip-file (fixture-path "everyotheraddon--4-5-6.zip")
+
+            fake-routes {;; every-addon
+                         "https://www.curseforge.com/wow/addons/everyaddon/files"
+                         {:get (fn [req] {:status 200 :body every-addon-file})}
+
+                         ;; ... it's zip file
+                         "https://www.curseforge.com/wow/addons/everyaddon/download/123/file"
+                         {:as :stream
+                          :get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-addon-zip-file)})}
+
+                         ;; every-other-addon
+                         "https://www.curseforge.com/wow/addons/everyotheraddon/files"
+                         {:get (fn [req] {:status 200 :body every-other-addon-file})}
+
+                         ;; ... it's zip file
+                         "https://www.curseforge.com/wow/addons/everyotheraddon/download/456/file"
+                         {:as :stream
+                          :get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-other-addon-zip-file)})}}
+
+            expected [{:description "Does what no other addon does, slightly differently",
+                       :update? false,
+                       :group-id "https://www.curseforge.com/wow/addons/everyaddon",
+                       :installed-version "v8.2.0-v1.13.2-7135.139",
+                       :name "everyaddon",
+                       :source "curseforge",
+                       :interface-version 70000,
+                       :label "EveryAddon 1.2.3",
+                       :dirname "EveryAddon",
+                       :primary? true}
+                      {:description "Does what every addon does, just better",
+                       :update? false,
+                       :group-id "https://www.curseforge.com/wow/addons/everyotheraddon",
+                       :installed-version "v8.2.0-v1.13.2-7135.139",
+                       :name "everyotheraddon",
+                       :source "curseforge",
+                       :interface-version 70000,
+                       :label "EveryOtherAddon 4.5.6",
+                       :dirname "EveryOtherAddon",
+                       :primary? true}]]
+        (with-fake-routes-in-isolation fake-routes
+          (core/import-exported-file output-path)
+          (core/refresh) ;; re-read the installation directory
+          (is (= expected (core/get-state :installed-addon-list)))))
+
+      (finally
+        (main/stop)))))
