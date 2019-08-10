@@ -279,9 +279,6 @@
         dirname-lengths (mapv path-len toplevel-dirs)
         first-toplevel-dir (first toplevel-dirs)]
 
-    ;; todo: issue a warning if all subfolders don't share a common prefix?
-    ;; do people care if SlideBar and Stubby are being installed when they install things like Auctioneer/Healbot?
-
     (cond
       (= 1 (count toplevel-dirs)) ;; single dir, perfect case
       first-toplevel-dir
@@ -623,14 +620,16 @@
   [output-file ::sp/file, addon-list ::sp/toc-list]
   (let [addon-list (map #(select-keys % [:name :source]) addon-list)]
     (utils/dump-json-file output-file addon-list)
-    (info "exported installed addons to" output-file)))
+    (info "wrote:" output-file)))
 
 (defn-spec export-installed-addon-list-safely nil?
   [output-file ::sp/file]
   (let [output-file (-> output-file fs/absolute str)
-        ;; todo: add .json extension if one doesn't exist
-        addon-list (get-state :installed-addon-list)]
-    ;; todo: print warning if any to be exported are unmatched (check for presence of :download-uri
+        output-file (utils/replace-file-ext output-file ".json")
+        addon-list (get-state :installed-addon-list)
+        unmatched-addon-list (remove :source addon-list)]
+    (doseq [addon unmatched-addon-list]
+      (warn (format "Addon '%s' has no match in the catalog and will be skipped during import. Ensure all addons match before doing an export." (:name addon))))
     (export-installed-addon-list output-file addon-list)))
 
 ;; created to investigate some performance issues, seems sensible to keep it separate

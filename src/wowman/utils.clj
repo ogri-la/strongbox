@@ -22,6 +22,10 @@
   ;; /tmp/foo     =>  nil
   (some-> path fs/extension (subs 1) trim lower-case keyword))
 
+(defn-spec replace-file-ext (s/or :ok string?, :error nil?)
+  [path ::sp/file, ext string?]
+  (-> path str fs/split-ext first (str ext)))
+
 (defn-spec file-older-than boolean?
   [file ::sp/extant-file, hours pos-int?]
   (let [modtime (jt/instant (fs/mod-time file))
