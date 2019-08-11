@@ -89,9 +89,24 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### todo
 
+* release 0.8.0
 
 ## todo bucket
 
+* classic addons handling
+    - curseforge have addons bundling classic versions in with regular versions
+        - the api distinguishes them with a 'game_flavour' field
+* bug, I don't see deadly-boss-mods-classic in wowi catalog
+    - it should have definitely made it into the last scrape
+* investigate switching from scraping to api
+    - maintain the scraping interface as well? 
+        - am I worried the api will go away??
+    - catalogs won't be going away, their equivalent will still need to be scraped
+        - certain calls could be switched though, like expand-addon-summary
+    - curseforge 
+        - spec here: https://twitchappapi.docs.apiary.io/
+        - example here: https://addons-ecs.forgesvc.net/api/v2/addon/3358/files
+    - wowinterface
 * bug, curseforge.json is getting a strange duplication of results while generating the catalog
     - this is preventing automated catalog *updates*, not the full regeneration apparently
     - I can't replicate this anymore. It may show up later, but for now it's blocking a 0.8.0 release
