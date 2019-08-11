@@ -89,11 +89,12 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### todo
 
-* curseforge.json is getting a strange duplication of results while generating the catalog
-    - this is preventing automated catalog updates
 
 ## todo bucket
 
+* bug, curseforge.json is getting a strange duplication of results while generating the catalog
+    - this is preventing automated catalog *updates*, not the full regeneration apparently
+    - I can't replicate this anymore. It may show up later, but for now it's blocking a 0.8.0 release
 * can a list of subscribers be setup in github to announce releases?
 * ensure test coverage doesn't drop below threshold
 * add checksum checks after downloading
