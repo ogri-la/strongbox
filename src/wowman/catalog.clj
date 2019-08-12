@@ -144,9 +144,8 @@
                              age-in-days (java-time/as (java-time/duration dtobj today) :days)
                              version-age (condp #(< %2 %1) age-in-days
                                            7 :brand-new ;; < 1 week old
-                                           14 :new      ;; 1-2 weeks old
-                                           42 :recent   ;; 2-6 weeks old
-                                           168 :mature  ;; 6 weeks-6 months old (28*6)
+                                           42 :new      ;; 1-6 weeks old
+                                           168 :recent  ;; 6 weeks-6 months old (28*6)
                                            504 :aging   ;; 6-18 months old (28*18)
                                            :ancient)
 
