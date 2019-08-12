@@ -4,94 +4,11 @@ this is my own scratchpad for keeping track of things. it gets truncated frequen
 
 see CHANGELOG.md for a more formal list of changes by release
 
-## 0.8.0 release
+## 0.9.0 release
 
 ### done
 
-* bug, wowman-data update script is getting a strange 403 fetching latest release info
-    - grr
-    - not a fix, but I've moved the call to api.github.com so it only happens in the gui
-    - new problem: curseforge results page page structure is different depending on type of results!
-        - I've had to do a slightly different extraction for alphabetical results vs recently updated results
-* use the `catalog.json` *release* file rather than the raw repo file
-    - just to make it clear that the catalog.json file is *derived* from the other catalogs
-        - it will be removed from version control in 1.0.0
-    - done
-* better handling of shitty addons
-    - below addons are known to be mangled/corrupt/shit in some way
-        * "99 bottles of beer", wowinterface
-            - extracts to Interface/Addons/
-        * "!Borders", "!Pager", wowinterface
-            - have top-level folder "__MACOSX"
-        * "-ractionbuttonstyle-luna"
-            - has top-level folder "media"
-        * "Desdinova BGArt", wowinterface
-            - has no .toc file
-    - all of the above can be 'fixed' by looking for a .toc file in the top level directories
-        - if *any* top level directory is missing a .toc file, refuse to install addon
-        - done
-    - another potential cause of shittiness is top-level files
-        - same logic applies. refuse to install addon if top-level *files* exist
-        - done
-    - all done :)
-* fixed another shitty addon case by improving the zipfile check
-    - "2 UI", wowinterface
-        - engrampa says corrupt headers
-    - it just enumerates the contents of the file, but java may choke here where it wouldn't before
-* fixed two more bugs that emerged from the curseforge update
-    - failed to scrape pagination information 
-    - failed to handle addons with no 'updated' date
-* issue a warning when addons unpack directories that don't share a common prefix
-    - this would hopefully alert users that some shitty addons are being sneakily installed, like SlideBar or Stubby
-        - we could go one further and filter/prompt the user if they actually want to unpack these directories
-* bug, adibags 1.9.17 is failing to unzip
-    - zip file looks fine
-    - one of the test directories managed to update it without a problem ...
-    - and now the problem has fixed itself ... huh. not cool.
-    - done
-        - but keeping an eye on it. 
-        - found bug and fixed it.
-            - it had to do with a stale read on the etag db
-* code quality, we're sorely lacking in tests and test coverage metrics
-    - I've added cloverage to get some coverage feedback
-    - average coverage is 53%
-    - raising that to 60% initially seems like a good goal with 80% or 90% as a stretch
-        - coverage is now at 70%
-        - done
-* export+import
-    - wowman is strictly an addon manager, not an auxillary WoW manager
-        - I won't be backing up screenshots or addon state or anything like that
-            - at least not here
-    - export a simple list of addons 
-        - json, yaml and xml serialisations as a minimum
-            - these are the most common and versatile
-                - eh, no
-        - json
-            - done
-        - edn
-            - done
-            - undone
-                - one format is enough. we don't need choice here
-        - export only what is necessary to import again later
-            - :name
-            - :source
-            - :installed-version ... ? 
-                - no. it would be nice to import precisely the version that was exported
-                - future feature perhaps
-            - done
-        - if there are unmatched addons at time of export, display warning that these will not be importable later
-            - why? because the import process is:
-                - find addon in catalog using :source and :name
-                - install addon
-            - and addons that can't be found in catalog will not be imported
-            - done
-    - that can be re-read (imported) later
-        - import added
-        - done
-
 ### todo
-
-* release 0.8.0
 
 ## todo bucket
 
