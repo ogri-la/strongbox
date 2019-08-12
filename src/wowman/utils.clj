@@ -1,22 +1,30 @@
 (ns wowman.utils
   (:require
    [wowman.specs :as sp]
-   [clojure.string]
+   [clojure.string :refer [trim lower-case]]
    [clojure.java.io]
    [clojure.spec.alpha :as s]
    [clojure.pprint]
    [orchestra.core :refer [defn-spec]]
    [orchestra.spec.test :as st]
-   [taoensso.timbre :as log :refer [debug info warn error spy]]
    [cheshire.core :as json]
    [clojure.data.json]
    [me.raynes.fs :as fs]
-   [me.raynes.fs.compression :as zip]
    [slugify.core :as sluglib]
-   [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :refer [debug info warn error spy]]
    [java-time :as jt]
    [java-time.format]))
+
+;; orphaned, might be useful still?
+(defn-spec file-ext-as-kw (s/or :ok keyword?, :error nil?)
+  [path ::sp/file]
+  ;; /tmp/foo.edn => :edn
+  ;; /tmp/foo     =>  nil
+  (some-> path fs/extension (subs 1) trim lower-case keyword))
+
+(defn-spec replace-file-ext (s/or :ok string?, :error nil?)
+  [path ::sp/file, ext string?]
+  (-> path str fs/split-ext first (str ext)))
 
 (defn-spec file-older-than boolean?
   [file ::sp/extant-file, hours pos-int?]
@@ -63,7 +71,20 @@
                   (info "failed testing" dtfmt))))]
     (into {} (mapv fmt (keys java-time.format/predefined-formatters)))))
 
+(defn-spec todt ::sp/zoned-dt-obj
+  "takes an ISO8901 string and returns a java.time.ZonedDateTime object. 
+  these are needed to calculate durations"
+  [dt ::sp/inst]
+  (java-time/zoned-date-time (get java-time.format/predefined-formatters "iso-zoned-date-time") dt))
+
+(defn-spec utcnow ::sp/zoned-dt-obj
+  "returns a UTC timestamp for *right now*"
+  []
+  (java-time/zoned-date-time (java-time/local-date-time) "UTC"))
+
+
 ;;
+
 
 (defn repl-stack-element?
   [stack-element]
@@ -221,6 +242,22 @@
          (not (s/valid? data-spec data))) (call-if-fn invalid-data?)
         :else data))))
 
+(defn-spec load-edn-file any?
+  [path ::sp/extant-file]
+  (-> path slurp read-string))
+
+(defn load-edn-file-safely
+  [path & {:keys [no-file? bad-data? invalid-data? data-spec]}]
+  (if-not (fs/file? path)
+    (call-if-fn no-file?)
+    (let [data (load-edn-file path)]
+      (cond
+        (not data) (call-if-fn bad-data?)
+        (and ;; both are present AND data is invalid
+         (and invalid-data? data-spec)
+         (not (s/valid? data-spec data))) (call-if-fn invalid-data?)
+        :else data))))
+
 (defn-spec to-int (s/or :ok int? :error nil?)
   [x any?]
   (try (Integer. x)
@@ -283,77 +320,29 @@
   (let [pattern (java.util.regex.Pattern/compile (format "[%s]*$" m))]
     (clojure.string/replace s pattern "")))
 
-(defn-spec file-to-lazy-byte-array ::sp/file-byte-array-pair
-  [path ::sp/extant-file root ::sp/extant-dir]
-  (let [;; /foo/bar/baz/ => foo/bar/
-        rooted-at (ltrim (clojure.string/replace path (str (fs/parent root)) "") "/")
+;; https://stackoverflow.com/questions/26790881/clojure-file-to-byte-array
+(comment "orphaned. was once used in zip.clj to create a zip file of a directory."
+         (defn-spec file-to-lazy-byte-array ::sp/file-byte-array-pair
+           [path ::sp/extant-file root ::sp/extant-dir]
+           (let [;; /foo/bar/baz/ => foo/bar/
+                 rooted-at (ltrim (clojure.string/replace path (str (fs/parent root)) "") "/")
         ;;f (java.io.File. path)
-        f path
-        ary (byte-array (.length f))
-        is (java.io.FileInputStream. f)]
+                 f path
+                 ary (byte-array (.length f))
+                 is (java.io.FileInputStream. f)]
+             (.read is ary)
+             (.close is)
+             [rooted-at ary])))
+
+;; repurposing
+(defn-spec file-to-lazy-byte-array bytes?
+  [path ::sp/extant-file]
+  (let [fobj (java.io.File. path)
+        ary (byte-array (.length fobj))
+        is (java.io.FileInputStream. fobj)]
     (.read is ary)
     (.close is)
-    [rooted-at ary]))
-
-(defn-spec list-files ::sp/list-of-files
-  "returns a simple list of files and files in sub-directories rooted at `path`"
-  [path ::sp/extant-dir]
-  (mapv str (sort (remove fs/directory? (file-seq (java.io.File. path))))))
-
-(defn-spec zip-directory (s/or :ok ::sp/extant-archive-file :error nil?)
-  "zips a directory of files. contents of zip will always live in a single top level directory"
-  [in-path ::sp/extant-dir out-path ::sp/file]
-  (let [files-to-be-zipped (list-files in-path)]
-    (when-not (empty? files-to-be-zipped)
-      (zip/zip out-path (mapv #(file-to-lazy-byte-array % in-path) files-to-be-zipped))
-      out-path)))
-
-(defn-spec valid-zip-file? boolean?
-  "returns true if there are no apparent problems reading the given zip file."
-  [zipfile-path ::sp/extant-archive-file]
-  (try
-    (-> zipfile-path java.util.zip.ZipFile. .close)
-    true
-    (catch java.util.zip.ZipException _
-      false)))
-
-(defn-spec unzip-file (s/or :ok ::sp/extant-dir, :failed nil?)
-  [zipfile-path ::sp/extant-archive-file, output-dir-path ::sp/extant-dir]
-  (debug (format "unzipping %s to %s" zipfile-path output-dir-path))
-  (try
-    (zip/unzip zipfile-path output-dir-path)
-    output-dir-path
-    (catch java.util.zip.ZipException e
-      (error (format "failed to unzip '%s': %s" zipfile-path (.getMessage e)))
-      nil)))
-
-(defn zipfile-entries
-  [zipfile-path]
-  (with-open [zipfile (java.util.zip.ZipFile. zipfile-path)]
-    (let [mkrow (fn [zipentry]
-                  {:dir? (.isDirectory zipentry)
-                   :path (.getName zipentry)})]
-      (mapv mkrow (enumeration-seq (.entries zipfile))))))
-
-(defn zipfile-toplevel-entries
-  "a list of paths in the top-level of the zipfile"
-  [zipfile-path]
-  (let [entries (zipfile-entries zipfile-path)
-        fake-row (fn [ziprow]
-                   (let [bits (clojure.string/split (:path ziprow) #"/")
-                         toplevel? (= (count bits) 1)]
-                     (if-not toplevel?
-                       {:dir? true, :path (str (first bits) "/")})))
-
-        ;; mostly duplicates, but we have to visit each row
-        fake-rows (map fake-row entries)
-
-        ;; single list of unique entries
-        padded-rows (remove nil? (distinct (into entries fake-rows)))
-
-        ;; urgh, repeated code :(
-        tl? #(-> % :path (clojure.string/split #"/") count (= 1))]
-    (filterv tl? padded-rows)))
+    ary))
 
 (defn split-filter
   [f c]

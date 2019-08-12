@@ -6,6 +6,7 @@
    [me.raynes.fs :as fs :refer [with-cwd]]
    [clj-http.fake :refer [with-fake-routes-in-isolation]]
    [wowman
+    [core :as core]
     [utils :refer [join]]
     [main :as main]]))
 
@@ -14,7 +15,7 @@
   [f]
   (let [temp-dir-path (fs/temp-dir "wowman.main-test.")
         fake-routes {;; catalog
-                     "https://raw.githubusercontent.com/ogri-la/wowman-data/master/catalog.json"
+                     core/remote-catalog
                      ;; return dummy data. we can do this because the catalog isn't loaded/parsed/validated
                      ;; until the UI (gui or cli) tells it to via a later call to `refresh`
                      {:get (fn [req] {:status 200 :body "{}"})}

@@ -16,47 +16,6 @@
 
 (use-fixtures :once tempdir-fixture)
 
-;;
-;;
-;;
-
-(deftest valid-zip-file?
-  (testing "predicate detects basic problems with zip files"
-    (is (= (utils/valid-zip-file? "test/fixtures/bad-empty.zip") false))
-    (is (= (utils/valid-zip-file? "test/fixtures/bad-truncated.zip") false))
-    (is (= (utils/valid-zip-file? "test/fixtures/everyaddon--1-2-3.zip") true))))
-
-(deftest unzip-file
-  (testing "unzipping a file returns it's given output path. given output path contains unzipped contents"
-    (let [zip-file "test/fixtures/empty.zip"
-          output-path *temp-dir-path*
-          result (utils/unzip-file zip-file output-path)
-          expected-file (join *temp-dir-path* "empty.txt")]
-      (is (= result output-path))
-      (is (fs/exists? expected-file))))
-
-  (testing "attempting to unzip a bad zip file (empty) returns nil"
-    (let [zip-file "test/fixtures/bad-empty.zip"]
-      (is (= (utils/unzip-file zip-file *temp-dir-path*) nil))))
-
-  (testing "attempting to unzip a bad zip file (truncated/corrupted) returns nil"
-    (let [zip-file "test/fixtures/bad-truncated.zip"]
-      (is (= (utils/unzip-file zip-file *temp-dir-path*) nil)))))
-
-(deftest list-files
-  (testing "listing a directory returns a list of pairs [[path, filename], ...] sorted alphabetically"
-    (let [target "test-dir"
-          expected [(join target "d1" "d2" "f3")
-                    (join target "f1")
-                    (join target "f2")]]
-      (is (= (utils/list-files target) expected)))))
-
-(deftest zip-directory
-  (testing "directory of files can be zipped"
-    (let [in-path "test-dir"
-          out-path (join *temp-dir-path* "test.zip")]
-      (is (= (utils/zip-directory in-path out-path) out-path)))))
-
 (deftest format-interface-version
   (testing "integer interface version converted to dot-notation correctly"
     (let [cases

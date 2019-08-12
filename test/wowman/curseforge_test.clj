@@ -82,33 +82,62 @@
                    (is (fs/exists? (first nfo-file-list)))))))))
 
 (deftest scrape-addon-summary-listing
-  (let [fixture (slurp "test/fixtures/curseforge-addon-summary-listing.html")
-        scraped (curseforge/extract-addon-summary-list fixture)
-        expected-num 20
+  (testing "an (alphabetical) summary listing page can be scraped"
+    (let [fixture (slurp "test/fixtures/curseforge-addon-summary-listing.html")
+          scraped (curseforge/extract-addon-summary-list fixture)
+          expected-num 20
 
-        expected-first {:uri "https://www.curseforge.com/wow/addons/elonoris_pathfinder",
-                        :name "elonoris_pathfinder",
-                        :alt-name "elonorispathfinder"
-                        :label "!Elonoris_Pathfinder",
-                        :description "!Elonoris_Pathfinder is a Addon to get \"broken isles pathfinder flying\" or \"Verheerte Inseln Pfadfinder\" Achievement...",
+          expected-first {:uri "https://www.curseforge.com/wow/addons/elonoris_pathfinder",
+                          :name "elonoris_pathfinder",
+                          :alt-name "elonorispathfinder"
+                          :label "!Elonoris_Pathfinder",
+                          :description "!Elonoris_Pathfinder is a Addon to get \"broken isles pathfinder flying\" or \"Verheerte Inseln Pfadfinder\" Achievement...",
 
-                        :category-list ["Achievements" "Map & Minimap" "Quests & Leveling" "Tooltip" "Unit Frames"]
-                        :created-date "2017-01-29T10:24:59Z",
-                        :updated-date "2017-02-27T20:01:59Z",
-                        :download-count 4100}
+                          :category-list ["Achievements" "Map & Minimap" "Quests & Leveling" "Tooltip" "Unit Frames"]
+                          :created-date "2017-01-29T10:24:59Z",
+                          :updated-date "2017-02-27T20:01:59Z",
+                          :download-count 4100}
 
-        expected-last {:uri "https://www.curseforge.com/wow/addons/mecs-seals-tempered-fate-broker",
-                       :name "mecs-seals-tempered-fate-broker",
-                       :alt-name "mecssealsoftemperedfatebroker"
-                       :label "[MEC's] Seals of Tempered Fate broker",
-                       :description "[MEC's] Seals of Tempered Fate broker",
-                       :category-list ["Data Broker"],
-                       :created-date "2015-05-13T16:18:35Z",
-                       :updated-date "2017-06-14T14:31:56Z",
-                       :download-count 1300}]
-    (is (= (count scraped) expected-num))
-    (is (= (first scraped) expected-first))
-    (is (= (last scraped) expected-last))))
+          expected-last {:uri "https://www.curseforge.com/wow/addons/mecs-seals-tempered-fate-broker",
+                         :name "mecs-seals-tempered-fate-broker",
+                         :alt-name "mecssealsoftemperedfatebroker"
+                         :label "[MEC's] Seals of Tempered Fate broker",
+                         :description "[MEC's] Seals of Tempered Fate broker",
+                         :category-list ["Data Broker"],
+                         :created-date "2015-05-13T16:18:35Z",
+                         :updated-date "2017-06-14T14:31:56Z",
+                         :download-count 1300}]
+      (is (= (count scraped) expected-num))
+      (is (= (first scraped) expected-first))
+      (is (= (last scraped) expected-last))))
+
+  (testing "a (updated) summary listing page can be scraped"
+    (let [fixture (slurp "test/fixtures/curseforge-addon-summary-listing-updates.html")
+          scraped (curseforge/extract-addon-summary-list-updates fixture)
+
+          expected-first {:created-date "2008-07-10T16:30:06Z",
+                          :description "Minimap addon of awesomeness. *chewing sound*. It'll nibble your hay pellets.",
+                          :category-list ["Map & Minimap"],
+                          :updated-date "2019-06-30T11:21:25Z",
+                          :name "chinchilla",
+                          :alt-name "chinchillaminimap",
+                          :label "Chinchilla Minimap",
+                          :download-count 1500000,
+                          :uri "https://www.curseforge.com/wow/addons/chinchilla"}
+
+          expected-last {:created-date "2016-07-20T22:50:09Z",
+                         :description "GSE is an advanced macro editor that is an alternative to the limits provided by...",
+                         :category-list ["Action Bars" "Combat" "Development Tools"],
+                         :updated-date "2019-06-30T07:50:51Z",
+                         :name "gse-gnome-sequencer-enhanced-advanced-macros",
+                         :alt-name "gsegnomesequencerenhancedadvancedmacros",
+                         :label "GSE: Gnome Sequencer Enhanced : Advanced Macros",
+                         :download-count 1500000,
+                         :uri "https://www.curseforge.com/wow/addons/gse-gnome-sequencer-enhanced-advanced-macros"}]
+
+      (is (= (count scraped) 20))
+      (is (= (first scraped) expected-first))
+      (is (= (last scraped) expected-last)))))
 
 (deftest scrape-addon
   (testing "scraping addon (without a donation link)"
@@ -146,3 +175,12 @@
                            :version "v8.2.0-v1.13.2-7135.139"})]
       (with-fake-routes-in-isolation fake-routes
         (is (= (curseforge/expand-summary summary) expected))))))
+
+(deftest num-summary-pages
+  (testing "extraction of the number of summary pages"
+    (let [fixture (slurp "test/fixtures/curseforge-addon-summary-listing.html")
+          fake-routes {"https://www.curseforge.com/wow/addons?filter-sort=name&page=1"
+                       {:get (fn [req] {:status 200 :body fixture})}}
+          expected 346]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= (curseforge/num-summary-pages) expected))))))

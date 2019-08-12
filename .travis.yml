@@ -4,6 +4,9 @@ jdk:
     - openjdk8
     - openjdk10
 
+services:
+  - xvfb
+
 # https://github.com/travis-ci/travis-ci/issues/3897
 #branches:
 #    only:

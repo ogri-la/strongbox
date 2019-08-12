@@ -1,0 +1,25 @@
+[ {
+  "created-date" : "2010-05-07T18:48:16Z",
+  "description" : "Does what no other addon does, slightly differently",
+  "category-list" : [ "Bags & Inventory" ],
+  "updated-date" : "2019-06-26T01:21:39Z",
+  "age" : "new",
+  "name" : "everyaddon",
+  "source" : "curseforge",
+  "alt-name" : "everyaddon",
+  "label" : "EveryAddon",
+  "download-count" : 3000000,
+  "uri" : "https://www.curseforge.com/wow/addons/everyaddon"
+}, {
+  "created-date" : "2011-01-04T05:42:23Z",
+  "description" : "Does what every addon does, just better",
+  "category-list" : [ "Map & Minimap", "Professions" ],
+  "updated-date" : "2019-07-03T07:11:47Z",
+  "age" : "brand-new",
+  "name" : "everyotheraddon",
+  "source" : "curseforge",
+  "alt-name" : "everyotheraddon",
+  "label" : "Every Other Addon",
+  "download-count" : 5400000,
+  "uri" : "https://www.curseforge.com/wow/addons/everyotheraddon"
+} ]

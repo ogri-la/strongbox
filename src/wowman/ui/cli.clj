@@ -75,7 +75,8 @@
   [_]
   (let [installed-addons (get-state :installed-addon-list)
         updates (filter :update? installed-addons)]
-    (println (count installed-addons) "installed addons, " (count updates) " updates")
+    (println (count installed-addons) "installed")
+    (println (count updates) "updates")
     (doseq [{:keys [dirname installed-version version]} updates]
       (println (format "%s (%s => %s)" dirname, installed-version version)))))
 
@@ -95,6 +96,6 @@
   (action opts))
 
 (defn stop
-  [state]
+  []
   (info "stopping cli")
   nil)

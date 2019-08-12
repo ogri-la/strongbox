@@ -1,7 +1,7 @@
 (ns wowman.core
   (:require
    [clojure.set]
-   [clojure.string]
+   [clojure.string :refer [lower-case starts-with? trim]]
    [taoensso.timbre :as timbre :refer [debug info warn error spy]]
    [clojure.spec.alpha :as s]
    [orchestra.spec.test :as st]
@@ -11,6 +11,7 @@
    [trptcolin.versioneer.core :as versioneer]
    [envvar.core :refer [env]]
    [wowman
+    [zip :as zip]
     [http :as http]
     [logging :as logging]
     [nfo :as nfo]
@@ -29,6 +30,9 @@
   )
 
 (def colours (utils/nav-map-fn -colour-map))
+
+;; not in `paths` because it's not configurable
+(def remote-catalog "https://github.com/ogri-la/wowman-data/releases/download/daily/catalog.json")
 
 (defn paths
   "returns a map of paths whose location may vary depending on the location of the current working directory"
@@ -113,7 +117,7 @@
   [& path]
   (if-let [state @state]
     (nav-map state path)
-    (AssertionError. "application must be `start`ed before state may be accessed.")))
+    (throw (AssertionError. "application must be `start`ed before state may be accessed."))))
 
 (defn set-etag
   "convenient wrapper around adding and removing etag values from state map"
@@ -127,8 +131,9 @@
 (defn cache
   "data and a setter that gets bound to http/*cache* when caching http requests"
   []
-  {:etag-db (get-state :etag-db)
+  {;;:etag-db (get-state :etag-db) ;; don't do this. encourages stale reads of the etag-db
    :set-etag set-etag
+   :get-etag #(get-state :etag-db %) ;; do this instead
    :cache-dir (paths :cache-dir)})
 
 (defn-spec state-bind nil?
@@ -274,9 +279,6 @@
         dirname-lengths (mapv path-len toplevel-dirs)
         first-toplevel-dir (first toplevel-dirs)]
 
-    ;; todo: issue a warning if all subfolders don't share a common prefix?
-    ;; do people care if SlideBar and Stubby are being installed when they install things like Auctioneer/Healbot?
-
     (cond
       (= 1 (count toplevel-dirs)) ;; single dir, perfect case
       first-toplevel-dir
@@ -294,41 +296,50 @@
 (defn-spec -install-addon (s/or :ok (s/coll-of ::sp/extant-file), :error ::sp/empty-coll)
   "installs an addon given an addon description, a place to install the addon and the addon zip file itself"
   [addon ::sp/addon-or-toc-addon, install-dir ::sp/writeable-dir, downloaded-file ::sp/archive-file]
-  (let [toplevel-entries (utils/zipfile-toplevel-entries downloaded-file)
-        [toplevel-dirs, toplevel-files] (utils/split-filter :dir? toplevel-entries)]
-    (if (> (count toplevel-files) 0)
-      (do
-        ;; todo: shift this (somehow) into `install-addon-guard`
-        (error "refusing to unzip addon, it contains top-level *files*:" toplevel-files)
-        [])
-      (let [_ (utils/unzip-file downloaded-file install-dir)
-            primary-dirname (determine-primary-subdir toplevel-dirs)
+  ;; TODO: this function is becoming a mess. clean it up
+  (let [zipfile-entries (zip/zipfile-normal-entries downloaded-file)
+        sus-addons (zip/inconsistently-prefixed zipfile-entries)
 
-            ;; an addon may unzip to many directories, each directory needs the nfo file
-            update-nfo-fn (fn [zipentry]
-                            (let [addon-dirname (:path zipentry)
-                                  primary? (= addon-dirname (:path primary-dirname))]
-                              (nfo/write-nfo install-dir addon addon-dirname primary?)))
+        ;; one single line message or multi-line?
+        msg "%s will install inconsistently prefixed addons: %s"
+        _ (when sus-addons
+            (warn (format msg (:label addon) (clojure.string/join ", " sus-addons))))
 
-            ;; write the nfo files, return a list of all nfo files written
-            retval (mapv update-nfo-fn toplevel-dirs)]
-        (info (:label addon) "installed.")
-        retval))))
+        _ (zip/unzip-file downloaded-file install-dir)
+        toplevel-dirs (filter (every-pred :dir? :toplevel?) zipfile-entries)
+        primary-dirname (determine-primary-subdir toplevel-dirs)
+
+        ;; an addon may unzip to many directories, each directory needs the nfo file
+        update-nfo-fn (fn [zipentry]
+                        (let [addon-dirname (:path zipentry)
+                              primary? (= addon-dirname (:path primary-dirname))]
+                          (nfo/write-nfo install-dir addon addon-dirname primary?)))
+
+        ;; write the nfo files, return a list of all nfo files written
+        retval (mapv update-nfo-fn toplevel-dirs)]
+    (info (:label addon) "installed.")
+    retval))
 
 (defn-spec install-addon-guard (s/or :ok (s/coll-of ::sp/extant-file), :error nil?)
-  "downloads an addon and installs it. handles http and non-http errors"
+  "downloads an addon and installs it. handles http and non-http errors, bad zip files, bad addons"
   [addon ::sp/addon-or-toc-addon, install-dir ::sp/extant-dir]
   (if (not (fs/writeable? install-dir))
     (error "failed to install addon, directory not writeable" install-dir)
-    (let [downloaded-file (download-addon addon install-dir)]
+    (let [downloaded-file (download-addon addon install-dir)
+          bad-zipfile-msg (format "failed to read zip file '%s', could not install %s" downloaded-file (:name addon))
+          bad-addon-msg (format "refusing to install '%s'. It contains top-level files or top-level directories missing .toc files."  (:name addon))]
       (info "installing" (:label addon) "...")
       (cond
         (map? downloaded-file) (error "failed to download addon, could not install" (:name addon))
-        (not (utils/valid-zip-file? downloaded-file)) (do
-                                                        (error (format "failed to read zip file '%s', could not install %s" downloaded-file (:name addon)))
-                                                        (fs/delete downloaded-file)
-                                                        (warn "removed bad zipfile" downloaded-file))
         (nil? downloaded-file) (error "non-http error downloading addon, could not install" (:name addon)) ;; I dunno. /shrug
+        (not (zip/valid-zip-file? downloaded-file)) (do
+                                                      (error bad-zipfile-msg)
+                                                      (fs/delete downloaded-file)
+                                                      (warn "removed bad zip file" downloaded-file))
+        (not (zip/valid-addon-zip-file? downloaded-file)) (do
+                                                            (error bad-addon-msg)
+                                                            (fs/delete downloaded-file) ;; I could be more lenient
+                                                            (warn "removed bad addon" downloaded-file))
         :else (-install-addon addon install-dir downloaded-file)))))
 
 (def install-addon
@@ -356,15 +367,15 @@
   [& [catalog] (s/* keyword?)]
   (binding [http/*cache* (cache)]
     (if-let [local-catalog (paths (or catalog :catalog-file))]
-      (http/download-file (str "https://raw.githubusercontent.com/ogri-la/wowman-data/master/" (fs/base-name local-catalog))
-                          local-catalog)
+      (http/download-file remote-catalog local-catalog)
       (error "failed to find catalog:" catalog))))
 
 (defn-spec load-addon-summaries nil?
   []
   (download-catalog)
   (info "loading addon summaries from catalog:" (paths :catalog-file))
-  (let [{:keys [addon-summary-list]} (utils/load-json-file-safely (paths :catalog-file) :bad-data? {:addon-summary-list {}})]
+  (let [{:keys [addon-summary-list]} (utils/load-json-file-safely (paths :catalog-file)
+                                                                  :bad-data? {:addon-summary-list {}})]
     (swap! state assoc :addon-summary-list addon-summary-list)
     nil))
 
@@ -590,7 +601,9 @@
   "returns the most recently released version of wowman it can find"
   []
   (binding [http/*cache* (cache)]
-    (let [resp (utils/from-json (http/download "https://api.github.com/repos/ogri-la/wowman/releases/latest"))]
+    (let [message "downloading wowman version data"
+          url "https://api.github.com/repos/ogri-la/wowman/releases/latest"
+          resp (utils/from-json (http/download url :message message))]
       (-> resp :tag_name))))
 
 (defn-spec latest-wowman-version? boolean?
@@ -601,6 +614,58 @@
         sorted-asc (utils/sort-semver-strings [latest-release version-running])]
     (= version-running (last sorted-asc))))
 
+;; import/export
+
+(defn-spec export-installed-addon-list nil?
+  [output-file ::sp/file, addon-list ::sp/toc-list]
+  (let [addon-list (map #(select-keys % [:name :source]) addon-list)]
+    (utils/dump-json-file output-file addon-list)
+    (info "wrote:" output-file)))
+
+(defn-spec export-installed-addon-list-safely nil?
+  [output-file ::sp/file]
+  (let [output-file (-> output-file fs/absolute str)
+        output-file (utils/replace-file-ext output-file ".json")
+        addon-list (get-state :installed-addon-list)
+        unmatched-addon-list (remove :source addon-list)]
+    (doseq [addon unmatched-addon-list]
+      (warn (format "Addon '%s' has no match in the catalog and will be skipped during import. Ensure all addons match before doing an export." (:name addon))))
+    (export-installed-addon-list output-file addon-list)))
+
+;; created to investigate some performance issues, seems sensible to keep it separate
+(defn -mk-import-idx
+  [addon-list]
+  (let [key-fn #(select-keys % [:source :name])
+        addon-summary-list (get-state :addon-summary-list)
+        ;; todo: this sucks. use a database
+        catalog-idx (group-by key-fn addon-summary-list)
+        find-expand (fn [addon]
+                      (when-let [matching-addon (first (get catalog-idx (key-fn addon)))]
+                        (expand-summary-wrapper matching-addon)))
+        matching-addon-list (->> addon-list (map find-expand) (remove nil?) vec)]
+    matching-addon-list))
+
+(defn import-addon-list
+  "caveats: imports the *latest* version of the addon, if addon found"
+  [addon-list] ;; todo: spec
+  (info "attempting to import" addon-list)
+  (let [matching-addon-list (-mk-import-idx addon-list)
+        install-dir (get-state :cfg :install-dir)]
+    (doseq [addon matching-addon-list]
+      (install-addon addon install-dir))))
+
+(defn-spec import-exported-file nil?
+  [path ::sp/extant-file]
+  (info "importing exports file:" path)
+  (let [nil-me (constantly nil)
+        invalid-warn #(warn "invalid!")
+        addon-list (utils/load-json-file-safely path
+                                                :bad-data? nil-me
+                                                :data-spec ::sp/export-record-list
+                                                :invalid-data? nil-me)]
+    (when-not (empty? addon-list)
+      (import-addon-list addon-list))))
+
 ;; 
 
 (defn refresh
@@ -609,7 +674,7 @@
   (load-addon-summaries)  ;; load the contents of the curseforge.json file
   (match-installed-addons-with-online-addons) ;; match installed addons to those in curseforge.json
   (check-for-updates)     ;; for those addons that have matches, download their full details from curseforge
-  (latest-wowman-release) ;; check for updates after everything else is done
+  ;;(latest-wowman-release) ;; check for updates after everything else is done ;; 2019-06-30, travis is failing with 403: Forbidden. Moved to gui init
   (save-settings)         ;; seems like a good place to preserve the etag-db
   nil)
 
@@ -649,7 +714,6 @@
 
 (defn -remove-addon
   [addon-dir]
-  (warn "attempting to remove" addon-dir)
   (let [install-dir (get-state :cfg :install-dir)
         addon-dir (fs/file install-dir addon-dir)
         addon-dir (-> addon-dir fs/absolute fs/normalized)]
@@ -658,11 +722,11 @@
          (fs/directory? addon-dir)
          (clojure.string/starts-with? addon-dir install-dir)) ;; don't delete anything outside of install dir!
       (do
-        (warn "removing" addon-dir)
         (fs/delete-dir addon-dir)
+        (warn (format "removed '%s'" addon-dir))
         nil)
 
-      (warn (format "addon-dir '%s' is outside the current installation dir of '%s'. not removing." addon-dir install-dir)))))
+      (warn (format "not removing '%s', directory is outside the current installation dir of '%s'" addon-dir install-dir)))))
 
 (defn-spec remove-addon nil?
   "removes the given addon. if addon is part of a group, all addons in group are removed"
@@ -678,13 +742,12 @@
     (remove-addon toc))
   (refresh))
 
-(defn remove-selected
+(defn-spec remove-selected nil?
   []
-  (-> (get-state) :selected-installed vec remove-many-addons))
+  (-> (get-state) :selected-installed vec remove-many-addons)
+  nil)
 
-;;
 ;; init
-;;
 
 (defn watch-for-install-dir-change
   "when the install directory changes, the list of installed addons should be re-read"

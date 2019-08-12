@@ -35,12 +35,19 @@
       (try
         (java.net.URI. loc)
         (catch java.net.URISyntaxException e
-          (warn "redirected to bad URI! encoding path:" loc)
+          (debug "redirected to bad URI! encoding path:" loc)
           (encode-url-path loc))))))
 
 (defn- add-etag-or-not
   [etag-key req]
-  (if-let [stored-etag (-> *cache* :etag-db (get etag-key))]
+  (if-let [;; for some reason this dynamic binding of *cache* to nil results in:
+           ;; (wowman.http/*cache* nil) => NullPointerException
+           ;; but not this:
+           ;; (nil nil) => CompilerException java.lang.IllegalArgumentException: Can't call nil, form: (nil nil)
+           ;; I suspect the devil is in the difference between compilation-time and run-time
+           ;;stored-etag ((:get-etag *cache*) etag-key)
+           ;; this totally does work though :)
+           stored-etag (and *cache* ((:get-etag *cache*) etag-key))]
     (assoc-in req [:headers :if-none-match] stored-etag)
     req))
 
@@ -90,14 +97,16 @@
 
     ;; ensures orphaned .etag files don't prevent download of missing files
     (when (and cache?
-               (-> *cache* :etag-db (get etag-key))
+               ((:get-etag *cache*) etag-key)
                (not (fs/exists? output-file)))
       (warn "orphaned .etag found:" etag-key)
       ((:set-etag *cache*) etag-key)) ;; dissoc etag from db
 
     ;; use the file on disk if it's not too old ...
     (if (fresh-cache-file-exists? output-file)
-      output-file
+      (do
+        (debug "cache hit for:" uri)
+        output-file)
 
       ;; ... otherwise, we must sing and dance
       (try
@@ -193,7 +202,7 @@
 
 (defn-spec prune-cache-dir nil?
   [cache-dir ::sp/extant-dir]
-  (prune-old-curseforge-files cache-dir)
+  ;;(prune-old-curseforge-files cache-dir) ;; this is problematic when generating the curseforge catalog
   (doseq [cache-file (fs/list-dir cache-dir)
           :when (and (fs/file? cache-file)
                      (utils/file-older-than (str cache-file) (* 2 expiry-offset-hours)))]

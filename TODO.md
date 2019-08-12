@@ -4,47 +4,19 @@ this is my own scratchpad for keeping track of things. it gets truncated frequen
 
 see CHANGELOG.md for a more formal list of changes by release
 
-## 0.7.2 release
-
-### done
-
-* download release information in background after every has been init'ed
-    - done
-* delete 'curseforge.json' if present in data-dir
-    - done
-* consolidate date/time wrangling logic around one library, please
-    - done
-* updates to catalog via travis
-    - script to scrape catalog
-        - done
-        - see wowman-data/update.sh
-    - sources have their latest updates scraped daily
-        - done
-    - sources are completely scraped weekly
-        - done ... to be confirmed
-    - can Travis commit to the same repository that it's testing?
-        - won't that mess with triggers?
-            - not if you turn them off! but also if you leave them on! lets not mess with infinite testing loops
-        - it can!
-    - catalog.json becomes a build artifact and a 'release'
-        - but we replace the release daily rather than accumulate them
-        - done!
-* fixed bug in updating curseforge where old/bad paths to files caused a NPE
-* fixed bug in updating curseforge and wowinterface where data directories without the respective catalog would fail spec
-* gui, search, deselect selected addons after successful installation
-    - done
-        - this was *very* minor, can't believe it ever bothered me
-* unexpected Curseforge webste revamp broke scraping
-    - curseforge scraping is now up to date
-        - I got some weirdness during development, probably because of old/bad/wrong/corrupted cache files
-        - I recommend using Cache -> Clear from the menu if you get this
-
 ## 0.8.0 release
 
 ### done
 
-### todo
-
+* bug, wowman-data update script is getting a strange 403 fetching latest release info
+    - grr
+    - not a fix, but I've moved the call to api.github.com so it only happens in the gui
+    - new problem: curseforge results page page structure is different depending on type of results!
+        - I've had to do a slightly different extraction for alphabetical results vs recently updated results
+* use the `catalog.json` *release* file rather than the raw repo file
+    - just to make it clear that the catalog.json file is *derived* from the other catalogs
+        - it will be removed from version control in 1.0.0
+    - done
 * better handling of shitty addons
     - below addons are known to be mangled/corrupt/shit in some way
         * "99 bottles of beer", wowinterface
@@ -57,28 +29,106 @@ see CHANGELOG.md for a more formal list of changes by release
             - has no .toc file
     - all of the above can be 'fixed' by looking for a .toc file in the top level directories
         - if *any* top level directory is missing a .toc file, refuse to install addon
+        - done
     - another potential cause of shittiness is top-level files
         - same logic applies. refuse to install addon if top-level *files* exist
-
+        - done
+    - all done :)
+* fixed another shitty addon case by improving the zipfile check
+    - "2 UI", wowinterface
+        - engrampa says corrupt headers
+    - it just enumerates the contents of the file, but java may choke here where it wouldn't before
+* fixed two more bugs that emerged from the curseforge update
+    - failed to scrape pagination information 
+    - failed to handle addons with no 'updated' date
 * issue a warning when addons unpack directories that don't share a common prefix
     - this would hopefully alert users that some shitty addons are being sneakily installed, like SlideBar or Stubby
         - we could go one further and filter/prompt the user if they actually want to unpack these directories
+* bug, adibags 1.9.17 is failing to unzip
+    - zip file looks fine
+    - one of the test directories managed to update it without a problem ...
+    - and now the problem has fixed itself ... huh. not cool.
+    - done
+        - but keeping an eye on it. 
+        - found bug and fixed it.
+            - it had to do with a stale read on the etag db
 * code quality, we're sorely lacking in tests and test coverage metrics
     - I've added cloverage to get some coverage feedback
     - average coverage is 53%
     - raising that to 60% initially seems like a good goal with 80% or 90% as a stretch
+        - coverage is now at 70%
+        - done
 * export+import
     - wowman is strictly an addon manager, not an auxillary WoW manager
         - I won't be backing up screenshots or addon state or anything like that
-    - export a simple list of addons that can be re-read (imported) later
-    - an idle thought until I saw wowmatrix has it
-        - they have a wordpress plugin and a simple text file
-    - json, yaml and xml serialisations as a minimum
-        - these are the most common and versatile
-    - friendly text and html formats
-        - who on earth would use such a thing? and is it worth the added complexity?
+            - at least not here
+    - export a simple list of addons 
+        - json, yaml and xml serialisations as a minimum
+            - these are the most common and versatile
+                - eh, no
+        - json
+            - done
+        - edn
+            - done
+            - undone
+                - one format is enough. we don't need choice here
+        - export only what is necessary to import again later
+            - :name
+            - :source
+            - :installed-version ... ? 
+                - no. it would be nice to import precisely the version that was exported
+                - future feature perhaps
+            - done
+        - if there are unmatched addons at time of export, display warning that these will not be importable later
+            - why? because the import process is:
+                - find addon in catalog using :source and :name
+                - install addon
+            - and addons that can't be found in catalog will not be imported
+            - done
+    - that can be re-read (imported) later
+        - import added
+        - done
+
+### todo
+
+* release 0.8.0
 
 ## todo bucket
+
+* classic addons handling
+    - curseforge have addons bundling classic versions in with regular versions
+        - the api distinguishes them with a 'game_flavour' field
+* bug, I don't see deadly-boss-mods-classic in wowi catalog
+    - it should have definitely made it into the last scrape
+* investigate switching from scraping to api
+    - maintain the scraping interface as well? 
+        - am I worried the api will go away??
+    - catalogs won't be going away, their equivalent will still need to be scraped
+        - certain calls could be switched though, like expand-addon-summary
+    - curseforge 
+        - spec here: https://twitchappapi.docs.apiary.io/
+        - example here: https://addons-ecs.forgesvc.net/api/v2/addon/3358/files
+    - wowinterface
+* bug, curseforge.json is getting a strange duplication of results while generating the catalog
+    - this is preventing automated catalog *updates*, not the full regeneration apparently
+    - I can't replicate this anymore. It may show up later, but for now it's blocking a 0.8.0 release
+* can a list of subscribers be setup in github to announce releases?
+* ensure test coverage doesn't drop below threshold
+* add checksum checks after downloading
+    - curseforge have an md5 that can be used
+    - wowinterface checksum is hidden behind a javascript tabber but still available
+* coloured warnings/errors on console output
+    - when running with :debug on the wall of text is difficult to read
+* moves raynes.fs to clj-commons/fs
+* catalog, normalise catagories between addons that overlap
+    - perhaps expand them into 'tags'? 
+    - a lot of these categories are composite
+        - break each composite one down into a singular, normalise, have a unique set of tags
+* investigate `.csv` as a human-readable but more compact representation
+    - might be able to save a MB on extraneous syntax
+    - might be able to speed up parsing and loading
+    - might be able to drop the two json libraries in favour of just one extra lib
+    - depends on profile task
 * cache, make caching opt-out and remove all those ugly binding calls
     - bind the value at core app start
     - this may not be possible. 
@@ -110,10 +160,6 @@ see CHANGELOG.md for a more formal list of changes by release
                 - could be tied in with backups/exports
                     - got to have backups+imports happening first
         - identify slow things and measure their improvement
-* catalog, normalise catagories between addons that overlap
-    - perhaps expand them into 'tags'? 
-    - a lot of these categories are composite
-        - break each composite one down into a singular, normalise, have a unique set of tags
 * automatically exclude 'ancient' addons from search results
     - these are addons that haven't been updated in ~18 months
         - wowinterface has a lot of them
@@ -171,6 +217,14 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## wontfix
 
+* addons distributed as .rar files
+    - !BeautyLoot on wowinterface is an example of this
+        - https://www.wowinterface.com/downloads/info20212
+    - rar is a proprietary format
+    - the vast majority of addons use .zip
+    - no native support in java/clojure for it
+    - would I consider .tar.gz distributed addons?
+        - mmmmmmmm I want to say yes, but 'no', for now.
 * fallback to using :group-id (a uri) if curseforge.json is not available
     - low priority
     - curseforge.json will only ever be missing:

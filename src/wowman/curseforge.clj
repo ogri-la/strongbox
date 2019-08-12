@@ -37,13 +37,11 @@
         uri-template (str curseforge-host "/wow/addons?filter-sort=2&page=%s")]
     (http/download (format uri-template page))))
 
-;; TODO: test 'nil?' return value
 (defn-spec num-summary-pages (s/or :ok int?, :error nil?)
   "returns the total number of summary pages available"
   []
   (let [p1 (html/html-snippet (download-summary-page-alphabetically 1))
-        ;; content of the second-to-last list item (the last page of results) converted to an integer 
-        pN (-> (html/select p1 [:ul.paging-list :li.b-pagination-item :a]) butlast last :content first Integer.)]
+        pN (some-> (html/select p1 [:section :a.pagination-item :span html/content]) vec last Integer.)]
     pN))
 
 ;;
@@ -51,29 +49,46 @@
 (defn-spec extract-addon-summary ::sp/addon-summary
   "converts a snippet of html extracted from a listing into an ::sp/addon-summary"
   [snippet map?]
-  (let [uri (-> snippet (html/select [#{:a :h3}]) first :attrs :href)
-        name (fs/base-name uri) ;; not sure if this holds true. will need to check updated catalog
-        [updated created] (-> snippet (html/select [:abbr]) vec)
+  (let [uri (-> snippet (html/select [#{:a :h3}]) first :attrs :href) ;; '/wow/addon/addonname'
+        name (fs/base-name uri) ;; 'addonname'
+
+        ;; it's possible for an addon listing to have *just* the created date, no updated date
+        ;; see: https://www.curseforge.com/wow/addons/search?search=addontcc
+        dates (-> snippet (html/select [:abbr]) vec reverse) ;; [{:tag :abbr, :attrs {:data-epoch ...}}, {...}]
+        [created updated] (if (= (count dates) 1)
+                              ;; only one date found (created date)
+                              ;; updated-date is now the same as created-date
+                            [(first dates) (first dates)]
+                            dates)
+
         formatted-str-to-num (fn [string]
                                (let [[nom mag] (rest (re-find #"([\d\.]+)([KM]?) Downloads$" string))
                                      mag (get {"" 1, "K" 1000, "M" 1000000} mag)]
-                                 (-> nom Double. (* mag) int)))
-        label (-> snippet (html/select [:h3]) first :content first clojure.string/trim)]
+                                 (when (and nom mag)
+                                   (-> nom Double. (* mag) int))))
+        label (-> snippet (html/select [:h3]) first :content first clojure.string/trim)] ;; 'Addon Name'
     {:uri (str curseforge-host uri)
      :name name
      :alt-name (-> label (slugify ""))
      :label label
-     :description (-> snippet (html/select [:p html/content]) first clojure.string/trim)
+     :description (-> snippet (html/select [:p html/content]) first clojure.string/trim) ;; 'Addon that does stuff ...'
      :category-list (mapv #(-> % :attrs :title) (html/select snippet [:figure]))
      :created-date (-> created :attrs :data-epoch Integer. from-epoch)
      :updated-date (-> updated :attrs :data-epoch Integer. from-epoch)
-     :download-count (-> snippet (html/select [:div :span]) second :content first formatted-str-to-num)}))
+     :download-count (-> snippet (html/select [:div :span.text-xs html/content]) first formatted-str-to-num)}))
 
 (defn-spec extract-addon-summary-list (s/or :ok ::sp/addon-summary-list, :error empty?)
   "returns a list of snippets extracted from a page of html"
   [html string?]
   (let [parsed (html/html-snippet html)
         section-list (html/select parsed [:section :div.my-2])]
+    (mapv extract-addon-summary section-list)))
+
+(defn-spec extract-addon-summary-list-updates (s/or :ok ::sp/addon-summary-list, :error empty?)
+  "the search results for latest updates are structurally different to those listed by alphabetically"
+  [html string?]
+  (let [parsed (html/html-snippet html)
+        section-list (html/select parsed [:section :div.project-listing-row])]
     (mapv extract-addon-summary section-list)))
 
 (defn-spec expand-summary (s/or :ok ::sp/addon, :error nil?)
@@ -122,7 +137,7 @@
   (loop [page-n 1
          accumulator []]
     (info "downloading addon updates page" page-n)
-    (let [results (extract-addon-summary-list (download-summary-page-by-updated-date page-n))
+    (let [results (extract-addon-summary-list-updates (download-summary-page-by-updated-date page-n))
 
           ;; curseforge have updated addons appearing out of order, sometimes months out of order.
           ;; this happens often and may cause the loop to exit early if the last addon date is malformed.

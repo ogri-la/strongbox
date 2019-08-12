@@ -89,6 +89,8 @@
 (s/def ::updated-date ::inst)
 (s/def ::catalog-created-date ::ymd-dt)
 (s/def ::catalog-updated-date ::ymd-dt)
+(s/def ::catalog-source #{"curseforge" "wowinterface"})
+(s/def ::zoned-dt-obj #(instance? java.time.ZonedDateTime %))
 (s/def ::download-count (s/and int? #(>= % 0)))
 (s/def ::donation-uri (s/nilable ::uri))
 (s/def ::json string?)
@@ -99,6 +101,7 @@
 
 (s/def ::nfo map?) ;; todo: not cool
 
+;; orphaned
 (s/def ::file-byte-array-pair (s/cat :file ::file
                                      :file-contents bytes?))
 
@@ -115,3 +118,29 @@
 (s/def ::http-resp (s/keys :req-un [::status ::body])) ;; *at least* these keys, it will definitely have others
 
 (s/def ::empty-coll (s/and coll? #(empty? %)))
+
+;;
+
+(s/def ::dir? boolean?)
+(s/def ::level pos-int?)
+(s/def ::toplevel? boolean?)
+(s/def ::path string?)
+
+(s/def ::zipfile-entry (s/keys :req-un [::path ::toplevel? ::level ::dir?]))
+(s/def ::zipfile-entries (s/coll-of ::zipfile-entry))
+
+;;
+
+(s/def ::spec map?) ;; grr. ::version conflicts with above
+(s/def ::datestamp ::inst)
+(s/def ::updated-datestamp ::inst)
+(s/def ::total int?)
+(s/def ::catalog (s/keys :req-un [::spec ::datestamp ::updated-datestamp ::total ::addon-summary-list]))
+
+;;
+
+(s/def ::export-type #{:json :edn})
+(s/def ::source ::catalog-source) ;; alias :(
+(s/def ::export-record (s/keys :req-un [::name]
+                               :opt [::source]))
+(s/def ::export-record-list (s/coll-of ::export-record))

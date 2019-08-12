@@ -89,7 +89,7 @@
         (try
           (f)
           (catch Exception e
-            (error e "unhandled exception in thread")))))))
+            (error (timbre/stacktrace e) "unhandled exception in thread")))))))
 
 (defn selected-rows-handler
   "calls given `f` with last event when selection has stopped adjusting"
@@ -580,6 +580,25 @@
     (state-bind [:installed-addon-list] update-label)
     status))
 
+(defn export-addon-list-handler
+  []
+  (when-let [path (chooser/choose-file :type "Export"
+                                       :selection-mode :files-only
+                                       :filters [["JSON" ["json"]]]
+                                       :success-fn (fn [_ file]
+                                                     (str (.getAbsolutePath file))))]
+    (core/export-installed-addon-list-safely path)))
+
+(defn import-addon-list-handler
+  []
+  (when-let [path (chooser/choose-file :type "Import"
+                                       :selection-mode :files-only
+                                       :filters [["JSON" ["json"]]]
+                                       :success-fn (fn [_ file]
+                                                     (str (.getAbsolutePath file))))]
+    (core/import-exported-file path)
+    (core/refresh)))
+
 (defn start-ui
   []
   (let [root->splitter (ss/top-bottom-split (mk-tabber) (notice-logger))
@@ -617,15 +636,23 @@
                     (ss/action :name "Delete WowMatrix.dat files" :handler (async-handler core/delete-wowmatrix-dat-files))
                     (ss/action :name "Delete .wowman.json files" :handler (async-handler (comp core/refresh core/delete-wowman-json-files)))]
 
+        impexp-menu [(ss/action :name "Export addon list" :handler (async-handler export-addon-list-handler))
+                     (ss/action :name "Import addon list" :handler (async-handler import-addon-list-handler))]
+
         help-menu [(ss/action :name "About wowman" :handler (handler about-wowman-dialog))]
 
         menu (ss/menubar :items [(ss/menu :text "File" :mnemonic "F" :items file-menu)
                                  (ss/menu :text "Addons" :mnemonic "A" :items addon-menu)
+                                 (ss/menu :text "Import/Export" :mnemonic "i" :items impexp-menu)
                                  (ss/menu :text "Cache" :items cache-menu)
                                  (ss/menu :text "Help" :items help-menu)])
         _ (.setJMenuBar newui menu)
 
-        init (fn [newui] (future-call core/refresh) newui)]
+        init (fn [newui]
+               (future
+                 (core/refresh)
+                 (core/latest-wowman-release))
+               newui)]
 
     (ss/invoke-later
      (-> newui ss/pack! ss/show! init))
@@ -641,7 +668,9 @@
   []
   (info "stopping gui")
   (try
-    (ss/dispose! (get-state :gui))
+    ;; don't do this. state may not be started yet for it to be stopped!
+    ;;(ss/dispose! (get-state :gui))
+    (ss/dispose! (:gui @core/state))
     (catch RuntimeException re
       (warn "failed to stop state:" (.getMessage re)))))
 
