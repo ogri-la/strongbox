@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file. This change
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## 0.8.0 - 2019-08-12
 
 ### Added
 
@@ -14,17 +14,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - these are addons like Slidebar or Stubby
     - this is troublesome because it's unexpected and the versions of these bundled addons must surely differ ...
 * test coverage is now at 70%
+* addon export and import
 
 ### Changed
 
 * the catalog is now downloaded from the wowman-data 'release' files rather than a raw repository file
     - this catalog file in version control is now deprecated and will be removed in 1.0.0
+* improved the zip file integrity check
 
 ### Fixed
 
 * fixed two bugs related to catalog generation that came out of the Curseforge site update
-
-### Removed
+* fixed a bug involving stale reads of the etag database causing empty files to be created
 
 ## 0.7.2 - 2019-06-29
 

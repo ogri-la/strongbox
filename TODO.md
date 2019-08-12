@@ -50,6 +50,8 @@ see CHANGELOG.md for a more formal list of changes by release
     - and now the problem has fixed itself ... huh. not cool.
     - done
         - but keeping an eye on it. 
+        - found bug and fixed it.
+            - it had to do with a stale read on the etag db
 * code quality, we're sorely lacking in tests and test coverage metrics
     - I've added cloverage to get some coverage feedback
     - average coverage is 53%
