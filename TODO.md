@@ -10,13 +10,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### todo
 
-## todo bucket
-
-* classic addons handling
-    - curseforge have addons bundling classic versions in with regular versions
-        - the api distinguishes them with a 'game_flavour' field
-* bug, I don't see deadly-boss-mods-classic in wowi catalog
-    - it should have definitely made it into the last scrape
 * investigate switching from scraping to api
     - maintain the scraping interface as well? 
         - am I worried the api will go away??
@@ -26,17 +19,28 @@ see CHANGELOG.md for a more formal list of changes by release
         - spec here: https://twitchappapi.docs.apiary.io/
         - example here: https://addons-ecs.forgesvc.net/api/v2/addon/3358/files
     - wowinterface
-* bug, curseforge.json is getting a strange duplication of results while generating the catalog
-    - this is preventing automated catalog *updates*, not the full regeneration apparently
-    - I can't replicate this anymore. It may show up later, but for now it's blocking a 0.8.0 release
-* can a list of subscribers be setup in github to announce releases?
-* ensure test coverage doesn't drop below threshold
+* classic addons handling
+    - curseforge have addons bundling classic versions in with regular versions
+        - the api distinguishes them with a 'game_flavour' field
 * add checksum checks after downloading
     - curseforge have an md5 that can be used
     - wowinterface checksum is hidden behind a javascript tabber but still available
+* can a list of subscribers be setup in github to announce releases?
 * coloured warnings/errors on console output
     - when running with :debug on the wall of text is difficult to read
 * moves raynes.fs to clj-commons/fs
+* 'default' action in the cli should exit with retcode other than 0
+    - it means an action wasn't specified or an unsupported action was specified
+        - main/validate would prevent casual bypassing of this
+
+## todo bucket
+
+* bug, I don't see deadly-boss-mods-classic in wowi catalog
+    - it should have definitely made it into the last scrape
+* bug, curseforge.json is getting a strange duplication of results while generating the catalog
+    - this is preventing automated catalog *updates*, not the full regeneration apparently
+    - I can't replicate this anymore. It may show up later, but for now it's blocking a 0.8.0 release
+* ensure test coverage doesn't drop below threshold
 * catalog, normalise catagories between addons that overlap
     - perhaps expand them into 'tags'? 
     - a lot of these categories are composite
@@ -54,14 +58,12 @@ see CHANGELOG.md for a more formal list of changes by release
             - which I'm not sure if is possible
         - moving back into bucket until I get around to doing parallel downloads
 * support for multiple addon directories
+    - well, supporting for remembering and quickly switching between addon dirs
 * 'scrape' and 'update' are not great terms
     - scrape means 'complete update'
     - update means 'partial update'
 * curseforge scraping is very quiet when everything is cached
     - unlike wowinterface
-* 'default' action in the cli should exit with retcode other than 0
-    - it means an action wasn't specified or an unsupported action was specified
-        - main/validate would prevent casual bypassing of this
 * rename 'install-dir' config to 'addon-dir' perhaps?
     - 'install-dir' is ambiguous, it could be talking about installation dir of wowman
 * allow user to specify their own catalog
