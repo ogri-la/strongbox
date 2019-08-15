@@ -7,7 +7,6 @@
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
    [java-time]
-   [java-time.format]
    [wowman
     ;;[core :as core]
     [utils :as utils :refer [todt utcnow]]
@@ -47,7 +46,7 @@
 
 (defn-spec write-catalog-data ::sp/extant-file
   "formats given catalog data and writes it to given `output-file` as json. returns path to the output file"
-  [output-file ::sp/file, catalog-data map?]
+  [output-file ::sp/file, catalog-data map?] ;; todo: spec catalog structure
   (spit output-file (utils/to-json catalog-data))
   output-file)
 
