@@ -10,6 +10,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### todo
 
+* bug, muffinfactionaliser have removed their files and wowman is crashing
+    - see issue here: https://github.com/ogri-la/wowman/issues/26
+    - *any* problem while scraping should issue an error, Keep Calm, and Carry On
 * investigate switching from scraping to api
     - maintain the scraping interface as well? 
         - am I worried the api will go away??
@@ -18,6 +21,13 @@ see CHANGELOG.md for a more formal list of changes by release
     - curseforge 
         - spec here: https://twitchappapi.docs.apiary.io/
         - example here: https://addons-ecs.forgesvc.net/api/v2/addon/3358/files
+        - switching to api-scraped addons I've gone from 6998 to 6763 (253 difference)
+            - can't see any pattern between them
+            - after closer inspection I still can't see anything
+            - I can't leave any addon behind, especially not for mysterious reasons
+                - I'm going to generate the catalog the old fashioned way but add the project id
+                - project id can be used with api
+                    - missing addons are available directly
     - wowinterface
 * classic addons handling
     - curseforge have addons bundling classic versions in with regular versions
@@ -35,6 +45,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
+* bug, 'clear cache' didn't delete the catalog.json
 * bug, I don't see deadly-boss-mods-classic in wowi catalog
     - it should have definitely made it into the last scrape
 * bug, curseforge.json is getting a strange duplication of results while generating the catalog
