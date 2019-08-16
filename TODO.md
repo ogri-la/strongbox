@@ -8,11 +8,18 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### done
 
-### todo
-
+* api
+    - curseforge
+        - I've added some initial logic that will generate the curseforge catalog and fetch addon details
+            - not hooked in to anything yet
 * bug, muffinfactionaliser have removed their files and wowman is crashing
     - see issue here: https://github.com/ogri-la/wowman/issues/26
-    - *any* problem while scraping should issue an error, Keep Calm, and Carry On
+    - *any* problem while scraping should issue an error, Keep Calm and Carry On
+    - done
+        - will do a 0.9.1 release for this I think
+
+### todo
+
 * investigate switching from scraping to api
     - maintain the scraping interface as well? 
         - am I worried the api will go away??
@@ -28,6 +35,8 @@ see CHANGELOG.md for a more formal list of changes by release
                 - I'm going to generate the catalog the old fashioned way but add the project id
                 - project id can be used with api
                     - missing addons are available directly
+        - add project id to catalog
+        - use api to expand addon summaries
     - wowinterface
 * classic addons handling
     - curseforge have addons bundling classic versions in with regular versions
