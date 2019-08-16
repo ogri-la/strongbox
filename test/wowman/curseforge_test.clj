@@ -174,6 +174,21 @@
                            :donation-uri "https://www.paypal.com/cgi-bin/webscr?return=https://www.curseforge.com/projects/61284?gameCategorySlug=addons&projectSlug=details&cn=Add+special+instructions+to+the+addon+author()&business=terciob19%40hotmail.com&bn=PP-DonationsBF:btn_donateCC_LG.gif:NonHosted&cancel_return=https://www.curseforge.com/projects/61284?gameCategorySlug=addons&projectSlug=details&lc=US&item_name=Details!+Damage+Meter+(from+curseforge.com)&cmd=_donations&rm=1&no_shipping=1&currency_code=USD",
                            :version "v8.2.0-v1.13.2-7135.139"})]
       (with-fake-routes-in-isolation fake-routes
+        (is (= (curseforge/expand-summary summary) expected)))))
+
+  (testing "scraping addon with no files"
+    (let [fixture (slurp "test/fixtures/curseforge-addon-file--no-files.html")
+          summary {:name "details" :label "Details" :category-list []
+                   :uri "https://www.curseforge.com/wow/addons/details"
+                   :updated-date "2001-01-01T00:00:00Z"
+                   :download-count 0}
+
+          fake-routes {"https://www.curseforge.com/wow/addons/details/files"
+                       {:get (fn [req] {:status 200 :body fixture})}}
+
+          expected nil]
+
+      (with-fake-routes-in-isolation fake-routes
         (is (= (curseforge/expand-summary summary) expected))))))
 
 (deftest num-summary-pages
