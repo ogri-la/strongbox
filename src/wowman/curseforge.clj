@@ -94,32 +94,40 @@
 (defn-spec expand-summary (s/or :ok ::sp/addon, :error nil?)
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
   [addon-summary ::sp/addon-summary]
-  (let [message (str "downloading addon data: " (:name addon-summary))
-        versions-uri (-> addon-summary :uri (str "/files"))
-        versions-data (http/download versions-uri :message message)]
-    (when (string? versions-data) ;; map on error
-      (let [versions-html (html/html-snippet versions-data)
-            latest-release (-> (html/select versions-html [:article :div :div]) first)
+  (try
+    (let [message (str "downloading addon data: " (:name addon-summary))
+          versions-uri (-> addon-summary :uri (str "/files"))
+          versions-data (http/download versions-uri :message message)]
+      (when (string? versions-data) ;; map on error
+        (let [versions-html (html/html-snippet versions-data)
+              latest-release (-> (html/select versions-html [:article :div :div]) first)]
+          (if-not latest-release
+            (warn (:name addon-summary) "has no files:" versions-uri) ;; returns nil
 
-            ;; urgh. no fucking #ids in this new version of curseforge
-            header (-> (html/select versions-html [:header :div :div :div]) (nth 4) :content rest butlast)
+            (let [;; urgh. no fucking #ids in this new version of curseforge
+                  header (-> (html/select versions-html [:header :div :div :div]) (nth 4) :content rest butlast)
 
-            ;; first inner box on right hand side column
-            info-box (-> (html/select versions-html [:aside :div]) (nth 4))
-            info-box-links (-> (html/select info-box [[:a (html/attr= "href")]]) vec)
+                  ;; first inner box on right hand side column
+                  info-box (-> (html/select versions-html [:aside :div]) (nth 4))
+                  info-box-links (-> (html/select info-box [[:a (html/attr= "href")]]) vec)
 
-            ;; donation button may not exist, 'report' and 'follow' buttons always exist
-            info-box-links (first (utils/filter+map (fn [x]
-                                                      (try
-                                                        (if (= (some-> x :content second :content first clojure.string/trim) "Donate")
-                                                          (-> x :attrs :href to-uri))
-                                                        (catch Exception e nil))) info-box-links))
-            prefix #(str curseforge-host %)]
-        (merge addon-summary
-               {:download-uri (-> versions-html (html/select [:section :article :div :a]) second :attrs :href (str "/file") prefix)
-                :version (-> (html/select latest-release [:h3 html/content]) first)
-                :interface-version (-> header (nth 4) :content first (subs 14) utils/game-version-to-interface-version) ;; (count "Game Version: ") => 14
-                :donation-uri info-box-links})))))
+                  ;; donation button may not exist, 'report' and 'follow' buttons always exist
+                  info-box-links (first (utils/filter+map (fn [x]
+                                                            (try
+                                                              (if (= (some-> x :content second :content first clojure.string/trim) "Donate")
+                                                                (-> x :attrs :href to-uri))
+                                                              (catch Exception e nil))) info-box-links))
+                  prefix #(str curseforge-host %)]
+              (merge addon-summary
+                     {:download-uri (-> versions-html (html/select [:section :article :div :a]) second :attrs :href (str "/file") prefix)
+                      :version (-> (html/select latest-release [:h3 html/content]) first)
+                      ;;                             (count "Game Version: ") => 14
+                      :interface-version (-> header (nth 4) :content first (subs 14) utils/game-version-to-interface-version)
+                      :donation-uri info-box-links}))))))
+
+    (catch Exception e
+      (error "please report all errors: github.com/ogri-la/wowman/issues")
+      (error e "uncaught exception fetching addon details for" (:name addon-summary) ":" e))))
 
 ;;
 
