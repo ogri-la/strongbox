@@ -39,12 +39,12 @@
   (binding [http/*cache* (core/cache)]
     (curseforge/download-all-addon-summaries (paths :curseforge-catalog-file))
     (comment "disabled until the missing addons can be reconciled"
-      (let [output-file (paths :curseforge-catalog-file)
-            catalog-data (curseforge-api/download-all-summaries-alphabetically)
-            created (utils/datestamp-now-ymd)
-            updated created
-            formatted-catalog-data (catalog/format-catalog-data catalog-data created updated)]
-        (catalog/write-catalog-data output-file formatted-catalog-data)))))
+             (let [output-file (paths :curseforge-catalog-file)
+                   catalog-data (curseforge-api/download-all-summaries-alphabetically)
+                   created (utils/datestamp-now-ymd)
+                   updated created
+                   formatted-catalog-data (catalog/format-catalog-data catalog-data created updated)]
+               (catalog/write-catalog-data output-file formatted-catalog-data)))))
 
 (defmethod action :update-curseforge-catalog
   [_]
