@@ -105,7 +105,7 @@
     ;; use the file on disk if it's not too old ...
     (if (fresh-cache-file-exists? output-file)
       (do
-        (debug "cache hit for:" uri)
+        (debug "cache hit for:" uri "(" output-file ")")
         output-file)
 
       ;; ... otherwise, we must sing and dance
