@@ -7,6 +7,7 @@ Just for my own reference
 * run lein clean
 * ensure all non-gpl dependencies have an exclusion in LICENCE
 * update version in project.clj to the new version
+    - remove the '-unreleased' extension
 * update CHANGELOG
     - ensure contents of TODO are captured succintly
     - include new empty sections

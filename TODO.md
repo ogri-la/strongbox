@@ -4,7 +4,7 @@ this is my own scratchpad for keeping track of things. it gets truncated frequen
 
 see CHANGELOG.md for a more formal list of changes by release
 
-## 0.9.0 release
+## 0.8.1 release
 
 ### done
 

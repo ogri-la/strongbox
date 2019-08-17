@@ -14,6 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## 0.8.1 - 2019-08-17
+
+### Fixed
+
+* fixed case of a curseforge addon with no files crashing thread. a warning is issued with a link to the empty page.
+* any unhandled exceptions while fetching addon information will now simply report the error and carry on
+
 ## 0.8.0 - 2019-08-12
 
 ### Added
