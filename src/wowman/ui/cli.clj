@@ -6,6 +6,7 @@
     [http :as http]
     [utils :as utils]
     [curseforge :as curseforge]
+    [curseforge-api :as curseforge-api]
     [wowinterface :as wowinterface]
     [core :as core :refer [get-state paths]]]))
 
@@ -34,11 +35,20 @@
 
 (defmethod action :scrape-curseforge-catalog
   [_]
+  ;; todo: move to core.clj
   (binding [http/*cache* (core/cache)]
-    (curseforge/download-all-addon-summaries (paths :curseforge-catalog-file))))
+    (curseforge/download-all-addon-summaries (paths :curseforge-catalog-file))
+    (comment "disabled until the missing addons can be reconciled"
+             (let [output-file (paths :curseforge-catalog-file)
+                   catalog-data (curseforge-api/download-all-summaries-alphabetically)
+                   created (utils/datestamp-now-ymd)
+                   updated created
+                   formatted-catalog-data (catalog/format-catalog-data catalog-data created updated)]
+               (catalog/write-catalog-data output-file formatted-catalog-data)))))
 
 (defmethod action :update-curseforge-catalog
   [_]
+  ;; todo: move to core.clj
   (binding [http/*cache* (core/cache)]
     (core/download-catalog :curseforge-catalog-file)
     (when-let [{since :datestamp} (utils/load-json-file (paths :curseforge-catalog-file))]

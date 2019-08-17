@@ -514,15 +514,18 @@
   []
   (info "checking for updates")
   (update-installed-addon-list! (mapv (fn [ia]
-                                        (if (and
-                                             (:matched? ia)
-                                             ;; don't expand if we have a dummy uri.
-                                             ;; this isn't the right place for test code, but eh
-                                             (nil? (clojure.string/index-of (:uri ia) "example.org")))
-                                          ;; we have a match!
-                                          (merge-addons ia (expand-summary-wrapper ia))
-                                          ;; no match, can't update
-                                          (assoc ia :update? false))) ;; hack. this whole bit needs looking at
+                                        (let [check? (and
+                                                      (:matched? ia)
+                                                      ;; don't expand if we have a dummy uri.
+                                                      ;; this isn't the right place for test code, but eh
+                                                      (nil? (clojure.string/index-of (:uri ia) "example.org")))
+                                              no-result {:update? false}
+                                              result (if check?
+                                                       ;; return the no-result when we fail to expand the summary for whatever reason
+                                                       (or (expand-summary-wrapper ia) no-result)
+                                                       ;; no match, can't update
+                                                       no-result)]
+                                          (merge ia result)))
                                       (get-state :installed-addon-list)))
   (info "done checking for updates"))
 
