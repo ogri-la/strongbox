@@ -8,15 +8,10 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### done
 
-
-
-### todo
-
 * investigate switching from scraping to api
     - maintain the scraping interface as well? 
         - am I worried the api will go away??
-    - catalogs won't be going away, their equivalent will still need to be scraped
-        - certain calls could be switched though, like expand-addon-summary
+        - added a separate todo for removing html scraping interface
     - curseforge 
         - spec here: https://twitchappapi.docs.apiary.io/
         - example here: https://addons-ecs.forgesvc.net/api/v2/addon/3358/files
@@ -27,9 +22,27 @@ see CHANGELOG.md for a more formal list of changes by release
                 - I'm going to generate the catalog the old fashioned way but add the project id
                 - project id can be used with api
                     - missing addons are available directly
+            - layday (of instawow) has been good enough to do some investigation of the missing addons
+                - they are either: marked as experimental, unavailable or have no files that can be downloaded
+                - one missing addon popped up overnight in a fresh scrape which was interesting
+                    - it's last modified date was last month though
         - add project id to catalog
+            - done
         - use api to expand addon summaries
+            - done
+
+
+### todo
+
+* investigate switching from scraping to api
+    - maintain the scraping interface as well? 
+        - am I worried the api will go away??
+    - catalogs won't be going away, their equivalent will still need to be scraped
+        - certain calls could be switched though, like expand-addon-summary
     - wowinterface
+        - investigate
+        - catalog generation
+        - addon expansion
 * classic addons handling
     - curseforge have addons bundling classic versions in with regular versions
         - the api distinguishes them with a 'game_flavour' field
