@@ -4,19 +4,9 @@ this is my own scratchpad for keeping track of things. it gets truncated frequen
 
 see CHANGELOG.md for a more formal list of changes by release
 
-## 0.8.1 release
+## 0.9.0 release
 
 ### done
-
-* api
-    - curseforge
-        - I've added some initial logic that will generate the curseforge catalog and fetch addon details
-            - not hooked in to anything yet
-* bug, muffinfactionaliser have removed their files and wowman is crashing
-    - see issue here: https://github.com/ogri-la/wowman/issues/26
-    - *any* problem while scraping should issue an error, Keep Calm and Carry On
-    - done
-        - will do a 0.9.1 release for this I think
 
 ### todo
 
