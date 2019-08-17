@@ -8,6 +8,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### done
 
+
+
 ### todo
 
 * investigate switching from scraping to api
@@ -44,6 +46,12 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
+* remove 'updating' catalogs
+    - a full weekly scrape is good enough
+    - this logic has introduced a *lot* of code that can be removed
+    - scraping curseforge api doesn't seem too onerous anymore
+* remove html scraping of catalogs
+    - pending investigation of wowinterface
 * bug, 'clear cache' didn't delete the catalog.json
 * bug, I don't see deadly-boss-mods-classic in wowi catalog
     - it should have definitely made it into the last scrape

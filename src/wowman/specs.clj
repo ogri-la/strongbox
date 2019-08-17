@@ -19,10 +19,14 @@
 ;; a subset of addon attributes, just those that can be scraped from the listing pages
 (s/def ::addon-summary
   (s/keys :req-un [::uri ::name ::label ::category-list ::updated-date ::download-count]
-          :opt [::description  ::created-date]))
+          :opt [::source ;; only present in catalog which messes with tests right now
+                ::source-id ;; make required if/when we switch to wowinterface api
+                ::description ;; wowinterface summaries have no description
+                ::created-date ;; wowinterface summaries have no created date
+                ]))
 
-;; complete description of an addon
-;; everything we need in order to download an addon
+;; 'expanded' addon summary, everything we need in order to download an addon
+;; see catalog/expand-addon-summary
 (s/def ::addon
   (s/merge ::addon-summary (s/keys :req-un [::version ::download-uri]
                                    :opt [::donation-uri ::interface-version])))

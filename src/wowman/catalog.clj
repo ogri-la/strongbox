@@ -11,7 +11,7 @@
     ;;[core :as core]
     [utils :as utils :refer [todt utcnow]]
     [specs :as sp]
-    [curseforge :as curseforge]
+    [curseforge-api :as curseforge-api]
     [wowinterface :as wowinterface]]))
 
 ;; ... this feels like boilerplate. better way?
@@ -21,7 +21,7 @@
 
 (defmethod expand-summary :curseforge
   [addon-summary]
-  (curseforge/expand-summary addon-summary))
+  (curseforge-api/expand-summary addon-summary))
 
 (defmethod expand-summary :wowinterface
   [addon-summary]

@@ -116,28 +116,43 @@
             output-path (fixture-path "import--exports.json")
 
             ;; modified curseforge addon files to generate fake links
-            every-addon-file (slurp (fixture-path "curseforge-addon-file--everyaddon.html"))
+            ;;every-addon-file (slurp (fixture-path "curseforge-addon-file--everyaddon.html"))
             every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
-            every-other-addon-file (slurp (fixture-path "curseforge-addon-file--everyotheraddon.html"))
+            ;;every-other-addon-file (slurp (fixture-path "curseforge-addon-file--everyotheraddon.html"))
             every-other-addon-zip-file (fixture-path "everyotheraddon--4-5-6.zip")
 
+            every-addon-api (slurp (fixture-path "curseforge-api-addon--everyaddon.json"))
+            every-other-addon-api (slurp (fixture-path "curseforge-api-addon--everyotheraddon.json"))
+
             fake-routes {;; every-addon
-                         "https://www.curseforge.com/wow/addons/everyaddon/files"
-                         {:get (fn [req] {:status 200 :body every-addon-file})}
+                         ;;"https://www.curseforge.com/wow/addons/everyaddon/files"
+                         ;;{:get (fn [req] {:status 200 :body every-addon-file})}
+
+                         "https://addons-ecs.forgesvc.net/api/v2/addon/1"
+                         {:get (fn [req] {:status 200 :body every-addon-api})}
 
                          ;; ... it's zip file
-                         "https://www.curseforge.com/wow/addons/everyaddon/download/123/file"
-                         {:as :stream
-                          :get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-addon-zip-file)})}
+                         ;;"https://www.curseforge.com/wow/addons/everyaddon/download/123/file"
+                         ;;{:as :stream
+                         ;; :get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-addon-zip-file)})}
+                         "https://edge.forgecdn.net/files/1/1/EveryAddon.zip"
+                         {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-addon-zip-file)})}
 
                          ;; every-other-addon
-                         "https://www.curseforge.com/wow/addons/everyotheraddon/files"
-                         {:get (fn [req] {:status 200 :body every-other-addon-file})}
+                         ;;"https://www.curseforge.com/wow/addons/everyotheraddon/files"
+                         ;;{:get (fn [req] {:status 200 :body every-other-addon-file})}
+
+                         "https://addons-ecs.forgesvc.net/api/v2/addon/2"
+                         {:get (fn [req] {:status 200 :body every-other-addon-api})}
+
 
                          ;; ... it's zip file
-                         "https://www.curseforge.com/wow/addons/everyotheraddon/download/456/file"
-                         {:as :stream
-                          :get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-other-addon-zip-file)})}}
+                         ;;"https://www.curseforge.com/wow/addons/everyotheraddon/download/456/file"
+                         ;;{:as :stream
+                         ;; :get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-other-addon-zip-file)})}}
+
+                         "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip"
+                         {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-other-addon-zip-file)})}}
 
             expected [{:description "Does what no other addon does, slightly differently",
                        :update? false,

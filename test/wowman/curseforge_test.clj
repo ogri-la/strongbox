@@ -22,7 +22,7 @@
 
 (use-fixtures :each tempdir-fixture)
 
-;; local
+;; local addon .toc file
 (def toc
   {:name "everyaddon",
    :description "Does what no other addon does, slightly differently"
@@ -31,20 +31,27 @@
    :interface-version 70000,
    :installed-version "1.2.3"})
 
-;; remote
-(def addon
-  {:name  "everyaddon",
-   :created-date  "2009-02-08T13:30:30Z",
-   :updated-date  "2016-09-08T14:18:33Z",
-   :download-count 1
+;; catalog of summaries
+(def addon-summary
+  {:label "EveryAddon",
+   :name  "everyaddon",
+   :alt-name "everyaddon"
    :description  "Does what no other addon does, slightly differently"
    :category-list  ["Auction & Economy", "Data Broker"],
-   :interface-version  70000,
-   :download-uri  "https://www.example.org/wow/addons/everyaddon/download/123456/file",
-   :label  "EveryAddon",
-   :donation-uri  nil,
-   :uri  "https://www.example.org/wow/addons/everyaddon",
-   :version  "1.2.3"})
+   :source "curseforge"
+   :source-id 1
+   :created-date  "2009-02-08T13:30:30Z",
+   :updated-date  "2016-09-08T14:18:33Z",
+   :uri "https://www.example.org/wow/addons/everyaddon"})
+
+;; remote addon detail
+(def addon
+  (merge addon-summary
+         {:download-count 1
+          :interface-version  70000,
+          :download-uri  "https://www.example.org/wow/addons/everyaddon/download/123456/file",
+          :donation-uri nil,
+          :version  "1.2.3"}))
 
 (def toc-addon (core/merge-addons toc addon))
 
@@ -92,7 +99,6 @@
                           :alt-name "elonorispathfinder"
                           :label "!Elonoris_Pathfinder",
                           :description "!Elonoris_Pathfinder is a Addon to get \"broken isles pathfinder flying\" or \"Verheerte Inseln Pfadfinder\" Achievement...",
-
                           :category-list ["Achievements" "Map & Minimap" "Quests & Leveling" "Tooltip" "Unit Frames"]
                           :created-date "2017-01-29T10:24:59Z",
                           :updated-date "2017-02-27T20:01:59Z",

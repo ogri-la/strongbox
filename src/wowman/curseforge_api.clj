@@ -19,7 +19,7 @@
 (defn-spec expand-summary (s/or :ok ::sp/addon, :error nil?)
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
   [addon-summary ::sp/addon-summary]
-  (let [pid (-> addon-summary :addon :source-id)
+  (let [pid (-> addon-summary :source-id)
         uri (api-uri "/addon/%s" pid)
         result (-> uri http/download utils/from-json)
         ;; TODO: this is no longer good enough. we now need to differentiate between regular ('retail') and classic
