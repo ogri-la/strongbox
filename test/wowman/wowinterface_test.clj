@@ -46,13 +46,19 @@
           expected []
           num-addons 25
           first-addon {:uri "https://www.wowinterface.com/downloads/info25079",
-                       :name "rotation-master", :label "Rotation Master",
+                       :name "rotation-master",
+                       :label "Rotation Master",
                        :updated-date "2019-07-29T21:37:00Z",
-                       :download-count 80, :category-list #{"dummy"}}
+                       :download-count 80,
+                       :category-list #{"dummy"}
+                       :source-id 25079}
           last-addon  {:uri "https://www.wowinterface.com/downloads/info24805",
-                       :name "mattbars-mattui", :label "MattBars (MattUI)",
+                       :name "mattbars-mattui",
+                       :label "MattBars (MattUI)",
                        :updated-date "2018-10-30T17:56:00Z",
-                       :download-count 1911, :category-list #{"dummy"}}]
+                       :download-count 1911,
+                       :category-list #{"dummy"}
+                       :source-id 24805}]
       (with-fake-routes-in-isolation fake-routes
         (let [results (wowinterface/scrape-addon-page category page)]
           (is (= num-addons (count results)))

@@ -82,20 +82,26 @@
     (debug (format "%s categories found" (count cat-list)))
     (mapv extractor cat-list)))
 
+(defn extract-source-id
+  [a]
+  ;; fileinfo.php?s=c33edd26881a6a6509fd43e9a871809c&amp;id=23145 => 23145
+  (-> a :attrs :href (clojure.string/split #"&.+=") last Integer.))
+
 (defn extract-addon-uri
   [a]
-  (let [extract-id #(str "info" (-> % (clojure.string/split #"&.+=") last))] ;; ...?foo=bar&id=24731 => info24731
-    (str host (-> a :attrs :href extract-id))))
+  (str host "info" (extract-source-id a)))
 
 (defn extract-addon-summary
   [snippet]
   (try
     (let [extract-updated-date #(format-wowinterface-dt
                                  (-> % (subs 8) trim)) ;; "Updated 09-07-18 01:27 PM " => "09-07-18 01:27 PM"
-          label (-> snippet (select [[:a (html/attr-contains :href "fileinfo")] html/content]) first trim)]
-      {:uri (extract-addon-uri (-> snippet (select [:a]) last))
+          label (-> snippet (select [[:a (html/attr-contains :href "fileinfo")] html/content]) first trim)
+          last-a (-> snippet (select [:a]) last)]
+      {:uri (extract-addon-uri last-a)
        :name (-> label slugify)
        :label label
+       :source-id (extract-source-id last-a)
        ;;:description nil ;; not available in summary
        ;;:category-list [] ;; not available in summary, added by caller
        ;;:created-date nil ;; not available in summary

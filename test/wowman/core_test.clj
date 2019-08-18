@@ -151,6 +151,7 @@
                          ;;{:as :stream
                          ;; :get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-other-addon-zip-file)})}}
 
+
                          "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip"
                          {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-other-addon-zip-file)})}}
 
