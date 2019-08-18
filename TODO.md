@@ -41,11 +41,31 @@ see CHANGELOG.md for a more formal list of changes by release
         - certain calls could be switched though, like expand-addon-summary
     - wowinterface
         - investigate
+            - https://github.com/layday/instawow/blob/master/instawow/resolvers.py#L158-L160
         - catalog generation
+            - api not suitable for catalog generation
+                - it's cool I can download all the details in just one call, but there is no category information
+                - it's already missing a description and a created date as well
         - addon expansion
+            - there is actually very little data in the /filedetails endpoint
+            - there is more addon data in the full catalog download that the details endpoint
+                - perhaps combine the two?
+                    - do a web scrape and moosh it with the API catalog?
 * classic addons handling
     - curseforge have addons bundling classic versions in with regular versions
         - the api distinguishes them with a 'game_flavour' field
+    - change :interface-verson to a list?
+        - wowinterface supports this with it's "UICompatibility" 
+        - curseforge has "gameVersion" and "sortableGameVersion" 
+            - but these look like they're handling the most recent release (which may or may not be classic)
+            - better yet, CF has "gameVersionLatestFiles" with a "gameVersion" and "gameVersionFlavor"
+                - also has "fileType" which indicates alpha (3)/beta (2)/stable (1) type releases
+                - can't count on 'classic' and 'retail' ever being the only two.
+                    - the interface version and game flavour should be combined
+                        - (classic, 1.13.2)
+                        - (retail, 8.2.0)
+                        - (classic-bc, 2.?.?)
+                    - https://us.forums.blizzard.com/en/wow/t/will-classic-have-the-expansions-added/133699/19
 * add checksum checks after downloading
     - curseforge have an md5 that can be used
     - wowinterface checksum is hidden behind a javascript tabber but still available
@@ -173,6 +193,8 @@ see CHANGELOG.md for a more formal list of changes by release
     - rar is a proprietary format
     - the vast majority of addons use .zip
     - no native support in java/clojure for it
+        - library here: https://github.com/junrar/junrar
+            - just found it while going through minion source
     - would I consider .tar.gz distributed addons?
         - mmmmmmmm I want to say yes, but 'no', for now.
 * fallback to using :group-id (a uri) if curseforge.json is not available
