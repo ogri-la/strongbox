@@ -30,15 +30,6 @@ see CHANGELOG.md for a more formal list of changes by release
             - done
         - use api to expand addon summaries
             - done
-
-
-### todo
-
-* investigate switching from scraping to api
-    - maintain the scraping interface as well? 
-        - am I worried the api will go away??
-    - catalogs won't be going away, their equivalent will still need to be scraped
-        - certain calls could be switched though, like expand-addon-summary
     - wowinterface
         - investigate
             - https://github.com/layday/instawow/blob/master/instawow/resolvers.py#L158-L160
@@ -46,11 +37,16 @@ see CHANGELOG.md for a more formal list of changes by release
             - api not suitable for catalog generation
                 - it's cool I can download all the details in just one call, but there is no category information
                 - it's already missing a description and a created date as well
+            - done
         - addon expansion
             - there is actually very little data in the /filedetails endpoint
             - there is more addon data in the full catalog download that the details endpoint
                 - perhaps combine the two?
                     - do a web scrape and moosh it with the API catalog?
+            - done
+
+### todo
+
 * classic addons handling
     - curseforge have addons bundling classic versions in with regular versions
         - the api distinguishes them with a 'game_flavour' field
