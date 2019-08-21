@@ -110,7 +110,7 @@
 
       ;; ... otherwise, we must sing and dance
       (try
-        (info (or message (format "downloading %s to %s" (fs/base-name uri) output-file)))
+        (debug (or message (format "downloading %s to %s" (fs/base-name uri) output-file)))
         (client/with-additional-middleware [client/wrap-lower-case-headers (etag-middleware etag-key)]
           (let [params {:redirect-strategy curse-crap-redirect-strategy
                         :cookie-policy :ignore} ;; completely ignore cookies. doesn't stop HttpComponents warning
