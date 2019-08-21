@@ -67,7 +67,7 @@ This software also tries very hard to:
 I benefit so much from the hard work of those who write free and open source software, including addon developers, 
 that it's my privilege to offer this small piece back.
 
-[![wowman version 0.8.0](screenshot-0.8.0-installed-thumbnail.jpg)](screenshot-0.8.0-installed.png?raw=true) [![wowman version 0.8.0](screenshot-0.8.0-search-thumbnail.jpg)](screenshot-0.8.0-search.png?raw=true)
+[![wowman version 0.8.0](./screenshots/screenshot-0.8.0-installed-thumbnail.jpg)](./screenshots/screenshot-0.8.0-installed.png?raw=true) [![wowman version 0.8.0](./screenshots/screenshot-0.8.0-search-thumbnail.jpg)](./screenshots/screenshot-0.8.0-search.png?raw=true)
 
 ## Notes
 
