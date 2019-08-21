@@ -5,7 +5,7 @@
    [clj-http.fake :refer [with-fake-routes-in-isolation]]
    [envvar.core :refer [with-env]]
    [me.raynes.fs :as fs]
-   ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
+   [taoensso.timbre :as log :refer [debug info warn error spy]]
    [wowman
     [main :as main]
     [utils :as utils]
@@ -177,6 +177,7 @@
                        :primary? true}]]
         (with-fake-routes-in-isolation fake-routes
           (core/import-exported-file output-path)
+          ;; TODO: this refresh isn't able to match the installed addons to the dummy catalog!
           (core/refresh) ;; re-read the installation directory
           (is (= expected (core/get-state :installed-addon-list)))))
 

@@ -24,10 +24,13 @@
         result (-> uri http/download utils/from-json)
         ;; TODO: this is no longer good enough. we now need to differentiate between regular ('retail') and classic
         ;; see :gameVersionFlavor
-        latest-release (-> result :latestFiles first)]
+        latest-release (-> result :latestFiles first)
+
+        ;; TODO: this 'first' result will need exploring for classic handling
+        interface-version (-> latest-release :gameVersion first utils/game-version-to-interface-version)]
     (merge addon-summary {:download-uri (:downloadUrl latest-release)
                           :version (:fileName latest-release)
-                          :interface-version (:gameVersion latest-release)
+                          :interface-version interface-version
                           ;;:donation-uri ;; not present in api?
                           })))
 
