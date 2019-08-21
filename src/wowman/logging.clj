@@ -20,7 +20,7 @@
                          :async? false
                          :output-fn :inherit
                          ;;:fn anon-println-appender ;; not printing out the exception as the first arg!
-                         }}}) 
+                         }}})
 
 (logging/merge-config! default-logging-config)
 

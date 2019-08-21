@@ -96,19 +96,19 @@
   (try
     (let [extract-updated-date #(format-wowinterface-dt
                                  (-> % (subs 8) trim)) ;; "Updated 09-07-18 01:27 PM " => "09-07-18 01:27 PM"
-          label (-> snippet (select [[:a (html/attr-contains :href "fileinfo")] html/content]) first trim)
-          last-a (-> snippet (select [:a]) last)]
-      {:uri (extract-addon-uri last-a)
+          anchor (-> snippet (select [[:a (html/attr-contains :href "fileinfo")]]) first)
+          label (-> anchor :content first trim)]
+      {:uri (extract-addon-uri anchor)
        :name (-> label slugify)
        :label label
-       :source-id (extract-source-id last-a)
+       :source-id (extract-source-id anchor)
        ;;:description nil ;; not available in summary
        ;;:category-list [] ;; not available in summary, added by caller
        ;;:created-date nil ;; not available in summary
        :updated-date (-> snippet (select [:div.updated html/content]) first extract-updated-date)
        :download-count (-> snippet (select [:div.downloads html/content]) first (clojure.string/replace #"\D*" "") Integer.)})
     (catch RuntimeException re
-      (error re "failed to scrape snippet, excluding from results:" (utils/pprint snippet))
+      (error re (format "failed to scrape snippet with '%s', excluding from results: %s" (.getMessage re) (utils/pprint snippet)))
       nil)))
 
 (defn scrape-addon-page

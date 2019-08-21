@@ -12,7 +12,7 @@
     [utils :as utils :refer [todt utcnow]]
     [specs :as sp]
     [curseforge-api :as curseforge-api]
-    [wowinterface :as wowinterface]]))
+    [wowinterface-api :as wowinterface-api]]))
 
 ;; ... this feels like boilerplate. better way?
 ;; curseforge/wowinterface won't be able to 'reach back' into catalog.clj ...
@@ -25,7 +25,7 @@
 
 (defmethod expand-summary :wowinterface
   [addon-summary]
-  (wowinterface/expand-summary addon-summary))
+  (wowinterface-api/expand-summary addon-summary))
 
 (defmethod expand-summary :default
   [addon-summary]

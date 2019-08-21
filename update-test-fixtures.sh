@@ -25,3 +25,6 @@ cp "test/fixtures/curseforge-api-addon--everyaddon.json" "test/fixtures/cursefor
 dl "https://wowinterface.com/addons.php" "wowinterface-category-list.html"
 dl "https://www.wowinterface.com/downloads/cat19.html" "wowinterface-category-page.html"
 dl "https://www.wowinterface.com/downloads/info9085-Dominos.html" "wowinterface-addon-page.html"
+
+# wowinterface api
+dl "https://api.mmoui.com/v3/game/WOW/filedetails/25122.json" "wowinterface-api--addon-details.json"
