@@ -46,12 +46,14 @@ see CHANGELOG.md for a more formal list of changes by release
             - done
 * add :source-id and :source to .wowman.json file
     - done
-
-### todo
-
 * use :source-id as preferred way to match installed addons to the catalog
     - preserve backwards compatibility for older installations missing :source-id
     - preserve extended matching (on :name, etc) for addons not yet matched to catalog
+    - done
+        - I just added another dimension to the matching, nothing else was changed
+
+### todo
+
 * classic addons handling
     - curseforge have addons bundling classic versions in with regular versions
         - the api distinguishes them with a 'game_flavour' field

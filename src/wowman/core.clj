@@ -389,12 +389,15 @@
   (when-let [uri (:group-id addon-summary)]
     (-> uri java.net.URI. .getHost (clojure.string/split #"\.") second)))
 
+;; todo: this belongs in a database. whatever laziness I'm trying to do isn't working
 (defn -match-installed-addons-with-catalog
   "for each installed addon, search the catalog across multiple joins until a match is found."
   [installed-addon-list catalog]
   (let [;; [[toc-key catalog-key], ...]
         ;; most -> least desirable match
-        match-on [[:alias :name] [:name :name] [:name :alt-name] [:label :label] [:dirname :label]]
+        match-on [[:source-id :source-id]
+                  [:alias :name]
+                  [:name :name] [:name :alt-name] [:label :label] [:dirname :label]]
 
         ;; split the catalog into it's source parts (curseforge, wowinterface)
         catalog-source-idx (group-by :source catalog)
@@ -449,9 +452,8 @@
 
                        ;; clojure has peculiar laziness rules and this will actually visit *all* of the `match-on` pairs
                        ;; see chunking: http://clojure-doc.org/articles/language/laziness.html
-
                        match (first (remove nil? (flatten (map -finder source-list))))]
-
+                   
                    (if match match {:installed-addon installed-addon})))]
 
     (mapv finder installed-addon-list)))
