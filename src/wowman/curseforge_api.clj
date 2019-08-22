@@ -26,13 +26,14 @@
         ;; see :gameVersionFlavor
         latest-release (-> result :latestFiles first)
 
-        ;; TODO: this 'first' result will need exploring for classic handling
-        interface-version (-> latest-release :gameVersion first utils/game-version-to-interface-version)]
-    (merge addon-summary {:download-uri (:downloadUrl latest-release)
-                          :version (:fileName latest-release)
-                          :interface-version interface-version
-                          ;;:donation-uri ;; not present in api?
-                          })))
+        ;; api value is empty in some cases (carbonite, improved loot frames, skada damage meter)
+        ;; this value overrides the one found in .toc files, so if it can't be scraped, use the .toc version
+        interface-version (some-> latest-release :gameVersion first utils/game-version-to-interface-version)
+        interface-version (when interface-version {:interface-version interface-version})
+
+        details {:download-uri (:downloadUrl latest-release)
+                 :version (:displayName latest-release)}]
+    (merge addon-summary details interface-version)))
 
 (defn-spec extract-addon-summary ::sp/addon-summary
   "converts addon data extracted from a listing into an ::sp/addon-summary"
