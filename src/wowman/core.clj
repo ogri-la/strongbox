@@ -453,7 +453,7 @@
                        ;; clojure has peculiar laziness rules and this will actually visit *all* of the `match-on` pairs
                        ;; see chunking: http://clojure-doc.org/articles/language/laziness.html
                        match (first (remove nil? (flatten (map -finder source-list))))]
-                   
+
                    (if match match {:installed-addon installed-addon})))]
 
     (mapv finder installed-addon-list)))

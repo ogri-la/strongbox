@@ -24,7 +24,10 @@
         result (-> uri http/download utils/from-json)
         ;; TODO: this is no longer good enough. we now need to differentiate between regular ('retail') and classic
         ;; see :gameVersionFlavor
-        latest-release (-> result :latestFiles first)
+        ;;latest-release (-> result :latestFiles first) ;; this list isn't sorted!
+        ;; also, :latestFiles seems to be a selection of all files.
+        ;; these files (I think) are selected by release type (alpha/beta/released etc), padded out with the last N proper releases
+        latest-release (->> result :latestFiles (sort-by :fileDate) last)
 
         ;; api value is empty in some cases (carbonite, improved loot frames, skada damage meter)
         ;; this value overrides the one found in .toc files, so if it can't be scraped, use the .toc version
