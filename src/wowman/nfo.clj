@@ -17,18 +17,22 @@
 
 (defn-spec derive ::sp/nfo
   [addon ::sp/addon-or-toc-addon, primary? boolean?]
-  {;; important! as an addon is (re)installed the addon :installed-version scraped from the toc file is replaced with the more-consistent :version from the catalog
+  {;; important! as an addon is (re)installed the addon :installed-version scraped from the toc file is replaced with the :version from the catalog
+   ;; later, when comparing installed addons against the catalog, the comparisons will be more consistent
    :installed-version (:version addon)
-   :name (:name addon) ;; normalised name, used to match to online addon
-   :group-id (:uri addon) ;; groups all of an addon's directories together
+   :name (:name addon) ;; normalised name. once used to match to online addon, we now use source+source-id
+   :group-id (:uri addon) ;; groups all of an addon's directories together. this is a verbose but natural way of specifying source+source-id
    :primary? primary? ;; if addon is one of multiple addons, is this addon considered the primary one?
-   :source (:source addon)})
+   :source (:source addon)
+   :source-id (:source-id addon)})
 
 (defn-spec nfo-path ::sp/file
+  "given an installation directory and the directory name of an addon, return the absolute path to the nfo file"
   [install-dir ::sp/extant-dir, dirname string?]
   (join install-dir dirname ".wowman.json")) ;; /path/to/Addons/AddonName/.wowman.json
 
 (defn-spec write-nfo ::sp/extant-file
+  "given an installation directory and an addon, extract the neccessary bits and write them to a nfo file"
   [install-dir ::sp/extant-dir, addon ::sp/addon-or-toc-addon, addon-dirname string?, primary? boolean?]
   (let [path (nfo-path install-dir addon-dirname)]
     (utils/dump-json-file path (derive addon primary?))
@@ -36,7 +40,7 @@
 
 (defn-spec rm-nfo nil?
   [path ::sp/extant-file]
-  (when (clojure.string/ends-with? path ".wowman.json")
+  (when (= ".wowman.json" (fs/base-name path))
     (fs/delete path)
     nil))
 

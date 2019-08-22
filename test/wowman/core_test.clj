@@ -5,7 +5,7 @@
    [clj-http.fake :refer [with-fake-routes-in-isolation]]
    [envvar.core :refer [with-env]]
    [me.raynes.fs :as fs]
-   [taoensso.timbre :as log :refer [debug info warn error spy]]
+   ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [wowman
     [main :as main]
     [utils :as utils]
@@ -116,42 +116,25 @@
             output-path (fixture-path "import--exports.json")
 
             ;; modified curseforge addon files to generate fake links
-            ;;every-addon-file (slurp (fixture-path "curseforge-addon-file--everyaddon.html"))
             every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
-            ;;every-other-addon-file (slurp (fixture-path "curseforge-addon-file--everyotheraddon.html"))
             every-other-addon-zip-file (fixture-path "everyotheraddon--4-5-6.zip")
 
             every-addon-api (slurp (fixture-path "curseforge-api-addon--everyaddon.json"))
             every-other-addon-api (slurp (fixture-path "curseforge-api-addon--everyotheraddon.json"))
 
             fake-routes {;; every-addon
-                         ;;"https://www.curseforge.com/wow/addons/everyaddon/files"
-                         ;;{:get (fn [req] {:status 200 :body every-addon-file})}
-
                          "https://addons-ecs.forgesvc.net/api/v2/addon/1"
                          {:get (fn [req] {:status 200 :body every-addon-api})}
 
                          ;; ... it's zip file
-                         ;;"https://www.curseforge.com/wow/addons/everyaddon/download/123/file"
-                         ;;{:as :stream
-                         ;; :get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-addon-zip-file)})}
                          "https://edge.forgecdn.net/files/1/1/EveryAddon.zip"
                          {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-addon-zip-file)})}
 
                          ;; every-other-addon
-                         ;;"https://www.curseforge.com/wow/addons/everyotheraddon/files"
-                         ;;{:get (fn [req] {:status 200 :body every-other-addon-file})}
-
                          "https://addons-ecs.forgesvc.net/api/v2/addon/2"
                          {:get (fn [req] {:status 200 :body every-other-addon-api})}
 
-
                          ;; ... it's zip file
-                         ;;"https://www.curseforge.com/wow/addons/everyotheraddon/download/456/file"
-                         ;;{:as :stream
-                         ;; :get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-other-addon-zip-file)})}}
-
-
                          "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip"
                          {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-other-addon-zip-file)})}}
 
@@ -161,6 +144,7 @@
                        :installed-version "v8.2.0-v1.13.2-7135.139",
                        :name "everyaddon",
                        :source "curseforge",
+                       :source-id 1
                        :interface-version 70000,
                        :label "EveryAddon 1.2.3",
                        :dirname "EveryAddon",
@@ -171,6 +155,7 @@
                        :installed-version "v8.2.0-v1.13.2-7135.139",
                        :name "everyotheraddon",
                        :source "curseforge",
+                       :source-id 2
                        :interface-version 70000,
                        :label "EveryOtherAddon 4.5.6",
                        :dirname "EveryOtherAddon",

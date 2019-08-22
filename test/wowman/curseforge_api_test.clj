@@ -1,17 +1,11 @@
 (ns wowman.curseforge-api-test
   (:require
-   [clojure.string :refer [starts-with? ends-with?]]
    [clojure.test :refer [deftest testing is use-fixtures]]
    [clj-http.fake :refer [with-fake-routes-in-isolation]]
-   [envvar.core :refer [with-env]]
-   [me.raynes.fs :as fs]
-   [taoensso.timbre :as log :refer [debug info warn error spy]]
+   ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [wowman
     [curseforge-api :as curseforge-api]
-    [main :as main]
-    [utils :as utils]
-    [test-helper :as helper :refer [fixture-path temp-path]]
-    [core :as core]]))
+    [test-helper :as helper :refer [fixture-path temp-path]]]))
 
 (deftest expand-summary
   (testing "curseforge-api addon expansion"
