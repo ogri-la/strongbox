@@ -106,7 +106,7 @@
     (try
       (main/start {:ui :cli})
       (let [;; will trigger a refresh. call it here before it affects our crafted state
-            _ (core/set-install-dir! (str fs/*cwd*))
+            _ (core/set-addon-dir! (str fs/*cwd*))
 
             ;; add catalog to app state
             addon-summary-list (utils/load-json-file (fixture-path "import--dummy-catalog.json"))

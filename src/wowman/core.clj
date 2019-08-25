@@ -20,6 +20,8 @@
     [toc]
     [specs :as sp]]))
 
+(def game-tracks ["retail" "classic"])
+
 (def -colour-map
   {:notice/error :tomato
    :notice/warning :lemonchiffon
@@ -80,7 +82,7 @@
    :cli-opts {} ;; options passed in on the command line
 
    ;; final config, result of merging :file-opts and :cli-opts
-   :cfg {:install-dir nil
+   :cfg {:addon-dir-list []
          :debug? false}
 
    ;; summary data about ALL available addons, scraped from listing pages.
@@ -99,6 +101,9 @@
 
    ;; the root swing window
    :gui nil
+
+   ;; which of the addon directories is currently selected
+   :selected-addon-dir nil
 
    ;; addons in an unsteady state (data being updated, addon being installed, etc)
    ;; allows a UI to watch and update with progress
@@ -161,9 +166,52 @@
   []
   (false-if-nil (get-state :cfg :debug?)))
 
-;;
+;; addon dirs
+
+(defn addon-dir-exists?
+  ([addon-dir]
+   (addon-dir-exists? addon-dir (get-state :cfg :addon-dir-list)))
+  ([addon-dir addon-dir-list]
+   (not (nil? (some #{addon-dir} (mapv :addon-dir addon-dir-list))))))
+
+(defn add-addon-dir!
+  ([addon-dir]
+   (add-addon-dir! addon-dir "retail"))
+  ([addon-dir game-track]
+   (let [stub {:addon-dir addon-dir :game-track game-track}]
+     (when-not (spy :info (addon-dir-exists? addon-dir))
+       (swap! state update-in [:cfg :addon-dir-list] conj stub))
+     nil)))
+
+(defn-spec set-addon-dir! nil?
+  "adds a new :addon-dir to :addon-dir-list (if it doesn't already exist) and marks it as selected"
+  [addon-dir ::sp/addon-dir]
+  (let [addon-dir (-> addon-dir fs/absolute fs/normalized str)]
+    (add-addon-dir! addon-dir)
+    (swap! state assoc-in [:selected-addon-dir] addon-dir)
+    nil))
+
+(defn available-addon-dirs
+  []
+  (mapv :addon-dir (get-state :cfg :addon-dir-list)))
+
+(defn addon-dir-map
+  [addon-dir]
+  (first (filterv #(= addon-dir (:addon-dir %)) (get-state :cfg :addon-dir-list))))
+
 ;; settings
-;;
+
+(defn handle-addon-dirs
+  [cfg]
+  (let [install-dir (:install-dir cfg)
+        stub {:addon-dir install-dir :game-track "retail"}
+        ;; add stub to addon-dir-list if install-dir isn't nil and doesn't match anything already present
+        cfg (if (and install-dir
+                     (not (addon-dir-exists? install-dir (:addon-dir-list cfg))))
+              (update-in cfg [:addon-dir-list] conj stub)
+              cfg)]
+      ;; finally, ensure :install-dir is removed from whatever we received
+    (dissoc cfg :install-dir)))
 
 (defn-spec configure ::sp/user-config
   "handles the user configurable bit of the app. command line args override args from from the config file."
@@ -171,14 +219,17 @@
   (debug "loading file config:" file-opts)
   (let [default-cfg (:cfg -state-template)
         cfg (merge default-cfg file-opts)
+        cfg (handle-addon-dirs cfg)
         cfg (spec-tools/coerce ::sp/user-config cfg spec-tools/strip-extra-keys-transformer)
         valid? (s/valid? ::sp/user-config cfg)]
     (when-not valid?
-      (warn "configuration from file is invalid and will be ignored:" (s/explain-str ::sp/user-config cfg)))
+      (warn "configuration from saved settings is invalid and will be ignored:" (s/explain-str ::sp/user-config cfg)))
 
     (debug "loading runtime config:" cli-opts)
     (let [cfg (if valid? cfg default-cfg)
           final-cfg (merge cfg cli-opts)
+          ;; :install-dir may be re-introduced at this point. handle it exactly as we did above
+          final-cfg (handle-addon-dirs final-cfg)
           final-cfg (spec-tools/coerce ::sp/user-config final-cfg spec-tools/strip-extra-keys-transformer)
           valid? (s/valid? ::sp/user-config cfg)]
       (when-not valid?
@@ -206,19 +257,17 @@
    (let [file-opts (utils/load-json-file-safely (paths :cfg-file) :no-file? {} :bad-data? {})
          cfg (configure file-opts cli-opts)
          etag-db (utils/load-json-file-safely (paths :etag-db-file) :no-file? {} :bad-data? {})
-         new-state {:cfg cfg, :cli-opts cli-opts, :file-opts file-opts, :etag-db etag-db}]
+         new-state {:cfg cfg, :cli-opts cli-opts, :file-opts file-opts, :etag-db etag-db
+                    :selected-addon-dir (-> cfg :addon-dir-list first :addon-dir)}]
      (swap! state merge new-state)
      (when (:verbosity cli-opts)
        (logging/change-log-level (:verbosity cli-opts))))))
 
-(defn-spec set-install-dir! nil?
-  [install-dir ::sp/install-dir]
-  (swap! state assoc-in [:cfg :install-dir] (-> install-dir fs/absolute fs/normalized str))
-  nil)
 
 ;;
 ;; utils
 ;;
+
 
 (defn start-affecting-addon
   [addon]
@@ -354,9 +403,9 @@
 
 (defn-spec load-installed-addons nil?
   []
-  (when-let [install-dir (get-state :cfg :install-dir)]
-    (info "(re)loading installed addons:" install-dir)
-    (update-installed-addon-list! (wowman.toc/installed-addons install-dir))))
+  (when-let [addon-dir (get-state :selected-addon-dir)]
+    (info "(re)loading installed addons:" addon-dir)
+    (update-installed-addon-list! (wowman.toc/installed-addons addon-dir))))
 
 ;;
 ;; addon summaries
@@ -535,8 +584,8 @@
   "temporary code until it finds a better home. downloads the top-50 addons and prints out the addon's and subaddon's labels. see `fs/aliases`"
   []
   (let [top-50 (take 50 (sort-by :download-count > (get-state :addon-summary-list)))
-        _ (mapv #(-> % expand-summary-wrapper (install-addon-guard (get-state :cfg :install-dir))) top-50)
-        ia (wowman.toc/installed-addons (get-state :cfg :install-dir))]
+        _ (mapv #(-> % expand-summary-wrapper (install-addon-guard (get-state :selected-addon-dir))) top-50)
+        ia (wowman.toc/installed-addons (get-state :selected-addon-dir))]
     (mapv (fn [r] {(:name r) (if (:group-addons r) (mapv :label (:group-addons r)) [(:label r)])}) ia)))
 
 
@@ -564,17 +613,17 @@
 (defn-spec delete-downloaded-addon-zips nil?
   "deletes all of the addon zip files downloaded to '/path/to/Addons/'"
   []
-  (when-let [install-dir (get-state :cfg :install-dir)]
-    (let [zip-files (list-downloaded-addon-zips install-dir)
+  (when-let [addon-dir (get-state :selected-addon-dir)]
+    (let [zip-files (list-downloaded-addon-zips addon-dir)
           alert #(warn "deleting file " %)]
       (warn (format "deleting %s downloaded addon zip files" (count zip-files)))
       (dorun (map (juxt alert fs/delete) zip-files)))))
 
 (defn delete-wowman-json-files
   []
-  (when-let [install-dir (get-state :cfg :install-dir)]
+  (when-let [addon-dir (get-state :selected-addon-dir)]
     (let [wowman-json #(fs/find-files % #"\.wowman\.json$")
-          subdirs (filter fs/directory? (fs/list-dir install-dir))
+          subdirs (filter fs/directory? (fs/list-dir addon-dir))
           wowman-files (flatten (map wowman-json subdirs))
           alert #(warn "deleting file " %)]
       (warn (format "deleting %s .wowman.json files" (count wowman-files)))
@@ -582,9 +631,9 @@
 
 (defn delete-wowmatrix-dat-files
   []
-  (when-let [install-dir (get-state :cfg :install-dir)]
+  (when-let [addon-dir (get-state :selected-addon-dir)]
     (let [wowman-json #(fs/find-files % #"WowMatrix.dat$")
-          subdirs (filter fs/directory? (fs/list-dir install-dir))
+          subdirs (filter fs/directory? (fs/list-dir addon-dir))
           wowman-files (flatten (map wowman-json subdirs))
           alert #(warn "deleting file " %)]
       (warn (format "deleting %s WowMatrix.dat files" (count wowman-files)))
@@ -655,9 +704,9 @@
   [addon-list] ;; todo: spec
   (info "attempting to import" addon-list)
   (let [matching-addon-list (-mk-import-idx addon-list)
-        install-dir (get-state :cfg :install-dir)]
+        addon-dir (get-state :selected-addon-dir)]
     (doseq [addon matching-addon-list]
-      (install-addon addon install-dir))))
+      (install-addon addon addon-dir))))
 
 (defn-spec import-exported-file nil?
   [path ::sp/extant-file]
@@ -686,7 +735,7 @@
 (defn-spec -install-update-these nil?
   [updateable-toc-addons (s/coll-of ::sp/addon-or-toc-addon)]
   (doseq [toc-addon updateable-toc-addons]
-    (install-addon toc-addon (get-state :cfg :install-dir))))
+    (install-addon toc-addon (get-state :selected-addon-dir))))
 
 (defn -updateable?
   [rows]
@@ -718,20 +767,20 @@
   (refresh))
 
 (defn -remove-addon
-  [addon-dir]
-  (let [install-dir (get-state :cfg :install-dir)
-        addon-dir (fs/file install-dir addon-dir)
-        addon-dir (-> addon-dir fs/absolute fs/normalized)]
+  [addon-dirname]
+  (let [addon-dir (get-state :selected-addon-dir)
+        addon-path (fs/file addon-dir addon-dirname) ;; todo: perhaps this (addon-dir (base-name addon-dirname)) is safer
+        addon-path (-> addon-path fs/absolute fs/normalized)]
     ;; if after resolving the given addon dir it's still within the install-dir, remove it
     (if (and
-         (fs/directory? addon-dir)
-         (clojure.string/starts-with? addon-dir install-dir)) ;; don't delete anything outside of install dir!
+         (fs/directory? addon-path)
+         (clojure.string/starts-with? addon-path addon-dir)) ;; don't delete anything outside of install dir!
       (do
-        (fs/delete-dir addon-dir)
-        (warn (format "removed '%s'" addon-dir))
+        (fs/delete-dir addon-path)
+        (warn (format "removed '%s'" addon-path))
         nil)
 
-      (warn (format "not removing '%s', directory is outside the current installation dir of '%s'" addon-dir install-dir)))))
+      (error (format "directory '%s' is outside the current installation dir of '%s', not removing" addon-path addon-dir)))))
 
 (defn-spec remove-addon nil?
   "removes the given addon. if addon is part of a group, all addons in group are removed"
@@ -754,8 +803,8 @@
 
 ;; init
 
-(defn watch-for-install-dir-change
-  "when the install directory changes, the list of installed addons should be re-read"
+(defn watch-for-addon-dir-change
+  "when the addon directory changes, the list of installed addons should be re-read"
   []
   (let [state-atm state
         reset-state-fn (fn [state]
@@ -765,7 +814,7 @@
                          (let [default-state (dissoc state :cfg :addon-summary-list)]
                            (swap! state-atm merge default-state)
                            (refresh)))]
-    (state-bind [:cfg :install-dir] reset-state-fn)))
+    (state-bind [:selected-addon-dir] reset-state-fn)))
 
 (defn-spec init-dirs nil?
   []
@@ -786,7 +835,7 @@
   (info "starting app")
   (init-dirs)
   (load-settings cli-opts)
-  (watch-for-install-dir-change)
+  (watch-for-addon-dir-change)
 
   state)
 

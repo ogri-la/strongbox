@@ -13,7 +13,7 @@
     [invoke :as ssi]
     [chooser :as chooser]
     [mig :as mig]
-    ;;[dev :refer [show-options show-events]]
+    [dev :refer [show-options show-events]]
     [color]
     [cursor :refer [cursor]]
     [swingx :as x]
@@ -34,6 +34,11 @@
 
 (def INSTALLED-TAB 0)
 (def SEARCH-TAB 1)
+
+(defn inspect
+  [x]
+  (show-events x)
+  (show-options x))
 
 (defn tab
   [title body]
@@ -230,7 +235,7 @@
   []
   (let [picker (fn []
                  (when-let [dir (chooser/choose-file :type "select" :selection-mode :dirs-only)]
-                   (core/set-install-dir! (str dir))
+                   (core/set-addon-dir! (str dir))
                    (core/save-settings)))
         ;; important! release the event thread using async-handler else updates during process won't be shown until complete
         refresh-button (button "Refresh" (async-handler core/refresh))
@@ -238,12 +243,37 @@
 
         wow-dir-button (button "WoW directory" (async-handler picker))
 
-        wow-dir-label (ss/label :id :wow-dir-lbl :text (or (get-state :cfg :install-dir) "No directory"))
-        wow-dir-label-fn (fn [state]
-                           (ss/value! wow-dir-label (get-in state [:cfg :install-dir])))]
-    (state-bind [:cfg :install-dir] wow-dir-label-fn)
+        wow-dir-combo (ss/combobox :model (core/available-addon-dirs))
+
+        wow-game-version (ss/combobox :model core/game-tracks)
+
+        ;; called when combobox selection is changed
+        wow-dir-combo-listener (fn []
+                                 (core/set-addon-dir! (ss/selection wow-dir-combo))
+                                 (core/save-settings))
+
+        ;; when the :selected-addon-dir changes, ensure the combobox matches program state
+        ;; only set the selection if it's different from the one it thinks is selected
+        wow-dir-combo-selected-handler (fn [state]
+                                         (let [addon-dir (:selected-addon-dir state)]
+                                           (info "hit")
+                                           (when-not (= (ss/selection wow-dir-combo) addon-dir)
+                                             (ss/selection! wow-dir-combo addon-dir))
+                                           ;; todo: perhaps put this in it's own listener
+                                           (ss/invoke-later
+                                            (ss/selection! wow-game-version (spy :info (:game-track (core/addon-dir-map addon-dir)))))))
+
+        ;; when the number of known addon-dirs changes, update the options in the combobox
+        wow-dir-combo-options-handler (fn [state]
+                                        (ss/config! wow-dir-combo :model (core/available-addon-dirs)))]
+
+    (ss/listen wow-dir-combo :selection (async-handler wow-dir-combo-listener))
+    (state-bind [:selected-addon-dir] wow-dir-combo-selected-handler)
+    (state-bind [:cfg :addon-dir-list] wow-dir-combo-options-handler)
     (ss/vertical-panel
-     :items [(ss/flow-panel :align :left :items [refresh-button update-all-button wow-dir-button wow-dir-label])])))
+     :items [(ss/flow-panel :align :left
+                            :items [refresh-button update-all-button wow-dir-button
+                                    wow-dir-combo wow-game-version])])))
 
 (defn installed-addons-panel-column-widths
   "this sucks"
@@ -627,7 +657,12 @@
                    (ss/action :name "Exit" :key "menu Q" :mnemonic "x" :handler (handler #(ss/dispose! newui))))
 
         addon-menu [(ss/action :name "Update all" :key "menu U" :mnemonic "u" :handler (async-handler core/install-update-all))
-                    (ss/action :name "Re-install all" :handler (async-handler core/re-install-all))]
+                    (ss/action :name "Re-install all" :handler (async-handler core/re-install-all))
+                    :separator
+                    "Retail"
+                    "Classic"
+                    :separator
+                    "Remove from list"]
 
         cache-menu [(ss/action :name "Clear cache" :handler (async-handler core/delete-cache))
                     (ss/action :name "Clear addon zips" :handler (async-handler core/delete-downloaded-addon-zips))

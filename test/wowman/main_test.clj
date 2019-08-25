@@ -65,7 +65,7 @@
     (is (= :cli (-> (main/parse ["--action" "scrape-catalog" "--ui" "gui"]) :options :ui)))))
 
 (deftest start-app
-  (testing "starting app from a clean state, no dirs, no summary file, nothing"
+  (testing "starting app from a clean state, no dirs, no catalog, nothing"
     (try
       (main/-main "--ui" "cli")
       (finally
