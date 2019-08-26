@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## 0.8.2 - 2019-08-26
+
+### Fixed
+
+* fixed a regression introduced in release 0.8.1 where addons needing an update were not being marked as such
+
 ## 0.8.1 - 2019-08-17
 
 ### Fixed
