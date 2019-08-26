@@ -525,7 +525,7 @@
                                                        (or (expand-summary-wrapper ia) no-result)
                                                        ;; no match, can't update
                                                        no-result)]
-                                          (merge ia result)))
+                                          (merge-addons ia result)))
                                       (get-state :installed-addon-list)))
   (info "done checking for updates"))
 
