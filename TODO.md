@@ -51,9 +51,16 @@ see CHANGELOG.md for a more formal list of changes by release
     - preserve extended matching (on :name, etc) for addons not yet matched to catalog
     - done
         - I just added another dimension to the matching, nothing else was changed
+* un-hid by default the interface-version column ('WoW') in the installed addons tab
+    - this will give a *hint* about which version of an addon is installed
+* support for multiple addon directories
+    - well, supporting for remembering and quickly switching between addon dirs
+
 
 ### todo
 
+* regression, update? column is no longer being populated
+    - all tests passing. this means you need more and better tests
 * classic addons handling
     - curseforge have addons bundling classic versions in with regular versions
         - the api distinguishes them with a 'game_flavour' field
@@ -111,8 +118,7 @@ see CHANGELOG.md for a more formal list of changes by release
         - if we start doing download concurrently, we need to pass our binds to the threads
             - which I'm not sure if is possible
         - moving back into bucket until I get around to doing parallel downloads
-* support for multiple addon directories
-    - well, supporting for remembering and quickly switching between addon dirs
+
 * 'scrape' and 'update' are not great terms
     - scrape means 'complete update'
     - update means 'partial update'
