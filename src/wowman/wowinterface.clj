@@ -22,7 +22,8 @@
 
 (def category-pages {"cat23.html" "Stand-Alone addons"
                      "cat39.html" "Class & Role Specific"
-                     "cat109.html" "Info, Plug-in Bars"})
+                     "cat109.html" "Info, Plug-in Bars"
+                     "cat158.html" "Classic - General"})
 
 (defn format-wowinterface-dt
   "formats a shitty US-style m/d/y date with a shitty 12 hour time component and no timezone
