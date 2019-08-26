@@ -564,19 +564,19 @@
   "downloads full details for all installed addons that can be found in summary list"
   []
   (info "checking for updates")
-  (update-installed-addon-list! (mapv (fn [ia]
+  (update-installed-addon-list! (mapv (fn [toc]
                                         (let [check? (and
-                                                      (:matched? ia)
-                                                      ;; don't expand if we have a dummy uri.
-                                                      ;; this isn't the right place for test code, but eh
-                                                      (nil? (clojure.string/index-of (:uri ia) "example.org")))
+                                                      ;; don't attempt expanding if we have no catalog match
+                                                      (:matched? toc)
+                                                      ;; don't expand if we have a dummy uri 
+                                                      ;; (this isn't the right place for test code, but eh)
+                                                      (nil? (clojure.string/index-of (:uri toc) "example.org")))
                                               no-result {:update? false}
-                                              result (if check?
-                                                       ;; return the no-result when we fail to expand the summary for whatever reason
-                                                       (or (expand-summary-wrapper ia) no-result)
-                                                       ;; no match, can't update
-                                                       no-result)]
-                                          (merge ia result)))
+                                              result (when check?
+                                                       (expand-summary-wrapper toc))]
+                                          (if result
+                                            (merge-addons toc result)
+                                            (merge toc no-result))))
                                       (get-state :installed-addon-list)))
   (info "done checking for updates"))
 

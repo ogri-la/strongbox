@@ -15,6 +15,10 @@ Just for my own reference
 * commit+push
 * open a pr for master
 * wait for build to successfully complete, then merge
+    - if build fails
+        - fix fail
+        - run `lein pom` again
+        - commit+push
 * checkout master+pull
 * update README with expected path to download release
 * if UI has changed significantly, add a screenshot
