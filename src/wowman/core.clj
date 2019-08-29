@@ -213,6 +213,11 @@
          new-addon-dir-map-list (mapv tform (get-state :cfg :addon-dir-list))]
      (swap! state update-in [:cfg] assoc :addon-dir-list new-addon-dir-map-list))))
 
+(defn get-game-track
+  ([]
+   (get-game-track (get-state :selected-addon-dir)))
+  ([addon-dir]
+   (-> addon-dir addon-dir-map :game-track)))
 
 ;; settings
 
@@ -573,8 +578,9 @@
 (defn expand-summary-wrapper
   [addon-summary]
   (binding [http/*cache* (cache)]
-    (let [wrapper (affects-addon-wrapper catalog/expand-summary)]
-      (wrapper addon-summary))))
+    (let [game-track (get-game-track) ;; scope creep, but it fits so nicely
+          wrapper (affects-addon-wrapper catalog/expand-summary)]
+      (wrapper addon-summary game-track))))
 
 (defn-spec check-for-updates nil?
   "downloads full details for all installed addons that can be found in summary list"

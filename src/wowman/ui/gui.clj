@@ -273,7 +273,7 @@
                             (ss/invoke-later
                              ;; it's possible the addon-dir-list data has changed as well, so update the dropdown model
                              ;; adding a second listener for :addon-dir-list risks two updates being performed
-                             (ss/config! wow-dir-dropdown :model (core/available-addon-dirs)) 
+                             (ss/config! wow-dir-dropdown :model (core/available-addon-dirs))
                              (ss/selection! wow-dir-dropdown new-addon-dir)
                              (ss/selection! wow-game-track game-track))))))
 

@@ -16,27 +16,70 @@
   [path string?, & args (s/* any?)]
   (str curseforge-api (apply format path args)))
 
+(defn latest-versions-by-game-track
+  "given a curseforge-api result, returns a map of release data"
+  [api-result]
+
+  ;; 'latestFiles' :
+  ;; - gameVersionFlavour: that is either "wow_retail" or "wow_classic"
+  ;; - fileStatus: 4 means ... ?
+  ;; - releaseType: 1 is regular, 2 is beta, 3 is alpha
+  ;; - exposeAsAlternative: nil is no, true is yes
+  ;;    - see Recount. there is a '-nolib' alternative available.
+
+  ;; we want to say "give me the latest stable release of the wow classic track of this addon
+  ;; for now we're going to ignore anything that isn't a releaseType of 1
+  ;; installing alpha/beta quality addons will come later
+
+  (let [latest-files (:latestFiles api-result)
+
+        ;; results appear sorted, but lets be sure because we'll be taking the most recent
+        desc (comp - compare) ;; most to least recent (desc)
+        latest-files (sort-by :fileDate desc latest-files)
+
+        ;; stable releases only, for now
+        stable 1 ;; 2 is beta, 3 is alpha
+        stable-releases (filterv #(= (:releaseType %) stable) latest-files)
+
+        ;; no alternative versions, for now
+        stable-releases (remove :exposeAsAlternative stable-releases)
+
+        ;; I don't know if it's possible, but a group may still have more than one result
+        ;; results are ordered and group-by preserves ordering desc, so take the first
+        ]
+    (group-by :gameVersionFlavor stable-releases)))
+
 (defn-spec expand-summary (s/or :ok ::sp/addon, :error nil?)
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
-  [addon-summary ::sp/addon-summary]
+  [addon-summary ::sp/addon-summary game-track ::sp/game-track]
   (let [pid (-> addon-summary :source-id)
         uri (api-uri "/addon/%s" pid)
         result (-> uri http/download utils/from-json)
+
+        ;;_ (info (utils/pprint (latest-versions-by-game-track result)))
+
+        game-track-alias-map {"retail" "wow_retail"
+                              "classic" "wow_classic"}
+        game-track-alias (game-track-alias-map game-track)
+
         ;; TODO: this is no longer good enough. we now need to differentiate between regular ('retail') and classic
         ;; see :gameVersionFlavor
         ;;latest-release (-> result :latestFiles first) ;; this list isn't sorted!
         ;; also, :latestFiles seems to be a selection of all files.
         ;; these files (I think) are selected by release type (alpha/beta/released etc), padded out with the last N proper releases
-        latest-release (->> result :latestFiles (sort-by :fileDate) last)
+        ;;latest-release (->> result :latestFiles (sort-by :fileDate) last)
+        latest-release (-> result latest-versions-by-game-track (get game-track-alias) first)]
+    (when-not latest-release
+      (warn (format "no '%s' release available for '%s'" game-track (:name addon-summary))))
+    (when latest-release
+      (let [;; api value is empty in some cases (carbonite, improved loot frames, skada damage meter)
+            ;; this value overrides the one found in .toc files, so if it can't be scraped, use the .toc version
+            interface-version (some-> latest-release :gameVersion first utils/game-version-to-interface-version)
+            interface-version (when interface-version {:interface-version interface-version})
 
-        ;; api value is empty in some cases (carbonite, improved loot frames, skada damage meter)
-        ;; this value overrides the one found in .toc files, so if it can't be scraped, use the .toc version
-        interface-version (some-> latest-release :gameVersion first utils/game-version-to-interface-version)
-        interface-version (when interface-version {:interface-version interface-version})
-
-        details {:download-uri (:downloadUrl latest-release)
-                 :version (:displayName latest-release)}]
-    (merge addon-summary details interface-version)))
+            details {:download-uri (:downloadUrl latest-release)
+                     :version (:displayName latest-release)}]
+        (merge addon-summary details interface-version)))))
 
 (defn-spec extract-addon-summary ::sp/addon-summary
   "converts addon data extracted from a listing into an ::sp/addon-summary"
