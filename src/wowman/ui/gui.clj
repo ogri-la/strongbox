@@ -286,7 +286,8 @@
                            (debug (format "selected game track changed from %s to %s" old-game-track new-game-track))
                            (ss/invoke-later
                             (core/set-game-track! new-game-track) ;; this will affect [:cfg :addon-dir-list]
-                            (core/save-settings))))))]
+                            ;; will save settings
+                            (core/refresh))))))]
 
     (ss/vertical-panel
      :items [(ss/flow-panel :align :left
