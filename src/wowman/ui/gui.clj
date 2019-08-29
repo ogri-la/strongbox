@@ -241,39 +241,95 @@
         refresh-button (button "Refresh" (async-handler core/refresh))
         update-all-button (button "Update all" (async-handler core/install-update-all))
 
+
+
+        ;; click to select a new addon directory
+
+
         wow-dir-button (button "WoW directory" (async-handler picker))
 
-        wow-dir-combo (ss/combobox :model (core/available-addon-dirs))
+        ;; list of existing addon directories
+        wow-dir-dropdown (ss/combobox :model (core/available-addon-dirs))
 
-        wow-game-version (ss/combobox :model core/game-tracks)
+        wow-game-track (ss/combobox :model core/game-tracks)
 
-        ;; called when combobox selection is changed
-        wow-dir-combo-listener (fn []
-                                 (core/set-addon-dir! (ss/selection wow-dir-combo))
-                                 (core/save-settings))
+        ;;wow-dir-dropdown-listener (fn []
+        _ (ss/listen wow-dir-dropdown :selection
+                     (async-handler ;; execute elsewhere
+                      (fn []
+                        "called when a different addon dir is selected"
+                        (let [old-addon-dir (get-state :selected-addon-dir)
+                              new-addon-dir (ss/selection wow-dir-dropdown)]
+                          (when-not (= new-addon-dir old-addon-dir)
+                            (info "addon-dir selection changed to" new-addon-dir)
+                            ;; positioned here so the dropdown change is shown immediately
+                            (ss/invoke-later
+                             (ss/selection! wow-game-track (:game-track (core/addon-dir-map new-addon-dir))))
 
-        ;; when the :selected-addon-dir changes, ensure the combobox matches program state
-        ;; only set the selection if it's different from the one it thinks is selected
-        wow-dir-combo-selected-handler (fn [state]
-                                         (let [addon-dir (:selected-addon-dir state)]
-                                           (info "hit")
-                                           (when-not (= (ss/selection wow-dir-combo) addon-dir)
-                                             (ss/selection! wow-dir-combo addon-dir))
-                                           ;; todo: perhaps put this in it's own listener
-                                           (ss/invoke-later
-                                            (ss/selection! wow-game-version (spy :info (:game-track (core/addon-dir-map addon-dir)))))))
+                            (core/set-addon-dir! new-addon-dir)
+                            (core/save-settings))))))
 
+        ;; called when the :selected-addon-dir changes (like via `core.set-addon-dir!`)
+        ;; ensure list of available addon directories matches program state
+        ;;wow-dir-dropdown-selected-handler (fn [state]
+
+
+        _ (state-bind [:selected-addon-dir]
+                      (fn [state]
+                        "called when the :selected-addon-dir changes (like via `core.set-addon-dir!`)"
+                        (let [new-addon-dir (:selected-addon-dir state)
+                              {:keys [game-track]} (core/addon-dir-map new-addon-dir)
+                              selected-addon-dir (ss/selection wow-dir-dropdown)]
+                          (when-not (= selected-addon-dir new-addon-dir)
+                            (info ":selected-addon-dir changed to:" new-addon-dir)
+                            (ss/invoke-later
+                             (ss/selection! wow-dir-dropdown new-addon-dir)
+                             (ss/selection! wow-game-track game-track))))))
+
+        ;; todo, still necessary
         ;; when the number of known addon-dirs changes, update the options in the combobox
-        wow-dir-combo-options-handler (fn [state]
-                                        (ss/config! wow-dir-combo :model (core/available-addon-dirs)))]
+        ;;wow-dir-dropdown-options-handler (fn [state]
+        ;;                                   (info "options have changed")
+        ;;                                   (ss/config! wow-dir-dropdown :model (core/available-addon-dirs)))
 
-    (ss/listen wow-dir-combo :selection (async-handler wow-dir-combo-listener))
-    (state-bind [:selected-addon-dir] wow-dir-combo-selected-handler)
-    (state-bind [:cfg :addon-dir-list] wow-dir-combo-options-handler)
+        ;; ---
+
+        ;; covered by wow-dir-dropdown-selected-handler
+        ;; called when the :selected-addon-dir changes
+        ;; ensure the selected game track matches program state
+        ;;wow-game-track-handler (fn [state]
+        ;;_ (ss/listen wow-game-track :selection
+        ;;             (async-handler (fn [state]
+        ;;                         (info "game track, selected addon dir has changed")
+        ;;                         (ss/selection! wow-game-track (-> state :selected-addon-dir core/addon-dir-map :game-track)))
+
+        ;;wow-game-track-listener (fn []
+        _ (ss/listen wow-game-track :selection
+                     (fn [ev]
+                       "called when a different game track is selected"
+                       (let [new-game-track (ss/selection wow-game-track)
+                             old-game-track (:game-track (core/addon-dir-map))]
+                         (when-not (= new-game-track old-game-track)
+                           (info (format "selected game track changed from %s to %s" old-game-track new-game-track))
+                           (ss/invoke-later
+                            (core/set-game-track! new-game-track) ;; this will affect [:cfg :addon-dir-list]
+                            (core/save-settings))))))
+
+        ;; cases not handled: [:cfg :addon-dir-list] changing, either through set-game-track! or set-addon-dir!
+        ]
+
+    ;;(ss/listen wow-dir-dropdown :selection (async-handler wow-dir-dropdown-listener))
+    ;;(state-bind [:selected-addon-dir] wow-dir-dropdown-selected-handler)
+    ;;(state-bind [:cfg :addon-dir-list] wow-dir-dropdown-options-handler)
+
+    ;;(state-bind [:selected-addon-dir] wow-game-track-handler)
+    ;;(ss/listen wow-game-track :selection (async-handler wow-game-track-listener))
+
+
     (ss/vertical-panel
      :items [(ss/flow-panel :align :left
                             :items [refresh-button update-all-button wow-dir-button
-                                    wow-dir-combo wow-game-version])])))
+                                    wow-dir-dropdown wow-game-track])])))
 
 (defn installed-addons-panel-column-widths
   "this sucks"

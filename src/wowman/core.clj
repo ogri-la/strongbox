@@ -179,7 +179,7 @@
    (add-addon-dir! addon-dir "retail"))
   ([addon-dir game-track]
    (let [stub {:addon-dir addon-dir :game-track game-track}]
-     (when-not (spy :info (addon-dir-exists? addon-dir))
+     (when-not (addon-dir-exists? addon-dir)
        (swap! state update-in [:cfg :addon-dir-list] conj stub))
      nil)))
 
@@ -187,8 +187,9 @@
   "adds a new :addon-dir to :addon-dir-list (if it doesn't already exist) and marks it as selected"
   [addon-dir ::sp/addon-dir]
   (let [addon-dir (-> addon-dir fs/absolute fs/normalized str)]
-    (add-addon-dir! addon-dir)
-    (swap! state assoc-in [:selected-addon-dir] addon-dir)
+    (dosync
+     (add-addon-dir! addon-dir)
+     (swap! state assoc-in [:selected-addon-dir] addon-dir))
     nil))
 
 (defn available-addon-dirs
@@ -196,10 +197,25 @@
   (mapv :addon-dir (get-state :cfg :addon-dir-list)))
 
 (defn addon-dir-map
-  [addon-dir]
-  (first (filterv #(= addon-dir (:addon-dir %)) (get-state :cfg :addon-dir-list))))
+  ([]
+   (addon-dir-map (get-state :selected-addon-dir)))
+  ([addon-dir]
+   (first (filterv #(= addon-dir (:addon-dir %)) (get-state :cfg :addon-dir-list)))))
+
+(defn set-game-track!
+  ([game-track]
+   (set-game-track! game-track (get-state :selected-addon-dir)))
+  ([game-track addon-dir]
+   (let [tform (fn [addon-dir-map]
+                 (if (= addon-dir (:addon-dir addon-dir-map))
+                   (assoc addon-dir-map :game-track game-track)
+                   addon-dir-map))
+         new-addon-dir-map-list (mapv tform (get-state :cfg :addon-dir-list))]
+     (swap! state update-in [:cfg] assoc :addon-dir-list new-addon-dir-map-list))))
+
 
 ;; settings
+
 
 (defn handle-addon-dirs
   [cfg]
