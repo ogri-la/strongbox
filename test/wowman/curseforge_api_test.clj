@@ -33,4 +33,4 @@
                                          :interface-version 11300 ;; "1.13.2" => 11300
                                          })]
       (with-fake-routes-in-isolation fake-routes
-        (is (= expected (curseforge-api/expand-summary addon-summary)))))))
+        (is (= expected (curseforge-api/expand-summary addon-summary "retail")))))))
