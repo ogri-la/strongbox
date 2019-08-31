@@ -84,8 +84,7 @@ see CHANGELOG.md for a more formal list of changes by release
 ### todo
 
 * classic addons handling
-    - add ability to switch between tracks from menu
-        - not really necessary but should make it obvious the 'Addons' menu is affecting the *current addon-dir*
+    - wowinterface support now after curseforge support led the way
 * regression, update? column is no longer being populated
     - all tests passing. this means you need more and better tests
 * add checksum checks after downloading
