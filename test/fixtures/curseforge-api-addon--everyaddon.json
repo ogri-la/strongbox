@@ -73,7 +73,7 @@
       "gameId": 1,
       "isServerPack": false,
       "serverPackFileId": null,
-      "gameVersionFlavor": "wow_classic"
+      "gameVersionFlavor": "wow_retail"
     }
   ],
   "categories": [
@@ -108,7 +108,7 @@
       "projectFileId": 1,
       "projectFileName": "EveryAddon.zip",
       "fileType": 1,
-      "gameVersionFlavor": "wow_classic"
+      "gameVersionFlavor": "wow_retail"
     }
   ],
   "isFeatured": false,

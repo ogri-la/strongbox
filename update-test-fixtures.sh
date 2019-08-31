@@ -20,6 +20,8 @@ dl "https://www.curseforge.com/wow/addons?filter-sort=name&page=1" "curseforge-a
 # curseforge api
 dl "https://addons-ecs.forgesvc.net/api/v2/addon/327019" "curseforge-api-addon--everyaddon.json"
 cp "test/fixtures/curseforge-api-addon--everyaddon.json" "test/fixtures/curseforge-api-addon--everyotheraddon.json"
+## one search result
+dl "https://addons-ecs.forgesvc.net/api/v2/addon/search?gameId=1&index=0&pageSize=1&searchFilter=&sort=2" "curseforge-api-search--truncated.json"
 
 # wowinterface
 dl "https://wowinterface.com/addons.php" "wowinterface-category-list.html"

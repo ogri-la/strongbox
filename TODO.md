@@ -51,9 +51,13 @@ see CHANGELOG.md for a more formal list of changes by release
     - preserve extended matching (on :name, etc) for addons not yet matched to catalog
     - done
         - I just added another dimension to the matching, nothing else was changed
-
-### todo
-
+* un-hid by default the interface-version column ('WoW') in the installed addons tab
+    - this will give a *hint* about which version of an addon is installed
+* support for multiple addon directories
+    - well, supporting for remembering and quickly switching between addon dirs
+        - done
+    - add ability to remove an addon-dir
+        - done
 * classic addons handling
     - curseforge have addons bundling classic versions in with regular versions
         - the api distinguishes them with a 'game_flavour' field
@@ -69,9 +73,28 @@ see CHANGELOG.md for a more formal list of changes by release
                         - (retail, 8.2.0)
                         - (classic-bc, 2.?.?)
                     - https://us.forums.blizzard.com/en/wow/t/will-classic-have-the-expansions-added/133699/19
+    - calling these 'game tracks'
+        - an addon-dir can switch between different tracks and the right release will be downloaded for them
+            - rather than 'the most recent' release
+        - only affects curseforge right now as wowinterface doesn't appear to do 'releases' like cforge does
+        - addons with no release for given track get a warning and nothing is installed
+    - done
+
+
+### todo
+
+* classic addons handling
+    - add ability to switch between tracks from menu
+        - not really necessary but should make it obvious the 'Addons' menu is affecting the *current addon-dir*
+* regression, update? column is no longer being populated
+    - all tests passing. this means you need more and better tests
 * add checksum checks after downloading
     - curseforge have an md5 that can be used
+        - unfortunately no checksum in api results
+        - they do have a 'fileLength' and a 'fingerprint'
+            - fingerprint is 9 digits and all decimal, so not a hex digest
     - wowinterface checksum is hidden behind a javascript tabber but still available
+        - wowinterface do have a md5sum in results! score
 * can a list of subscribers be setup in github to announce releases?
 * coloured warnings/errors on console output
     - when running with :debug on the wall of text is difficult to read
@@ -111,8 +134,7 @@ see CHANGELOG.md for a more formal list of changes by release
         - if we start doing download concurrently, we need to pass our binds to the threads
             - which I'm not sure if is possible
         - moving back into bucket until I get around to doing parallel downloads
-* support for multiple addon directories
-    - well, supporting for remembering and quickly switching between addon dirs
+
 * 'scrape' and 'update' are not great terms
     - scrape means 'complete update'
     - update means 'partial update'

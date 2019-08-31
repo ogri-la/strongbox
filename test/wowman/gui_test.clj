@@ -1,45 +1,35 @@
 (ns wowman.gui-test
   (:require
-   [envvar.core :refer [env with-env]]
-   [clj-http.fake :refer [with-fake-routes-in-isolation]]
    [clojure.test :refer [deftest testing is use-fixtures]]
    [wowman.ui.gui :as gui]
    [wowman
     [main :as main]
-    [core :as core]
-    [utils :as utils :refer [join]]]
-   [me.raynes.fs :as fs :refer [with-cwd]]
-   [taoensso.timbre :as log :refer [debug info warn error spy]]))
+    [test-helper :as helper :refer [fixture-path temp-path]]]
+  ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
+   ))
 
-(defn tempcwd-fixture
-  "each test is executed in a new location (accessible as fs/*cwd*)"
-  [f]
-  (let [temp-dir-path (fs/temp-dir "wowman.main-test.")
-        fake-routes {;; catalog
-                     core/remote-catalog
-                     ;; return dummy data. we can do this because the catalog isn't loaded/parsed/validated
-                     ;; until the UI (gui or cli) tells it to via a later call to `refresh`
-                     {:get (fn [req] {:status 200 :body "{}"})}
-
-                     ;; latest wowman version
-                     "https://api.github.com/repos/ogri-la/wowman/releases/latest"
-                     {:get (fn [req] {:status 200 :body "{\"tag_name\": \"0.0.0\"}"})}}]
-    (try
-      (with-fake-routes-in-isolation fake-routes
-        (with-env [:xdg-data-home (join temp-dir-path "data")
-                   :xdg-config-home (join temp-dir-path "config")]
-          ;; Is this still necessary any more? I guess it improves test isolation
-          (with-cwd temp-dir-path
-            (debug "created temp working directory" fs/*cwd*)
-            (main/start {:ui :gui})
-            (f))))
-      (finally
-        (main/stop)
-        (debug "destroying temp working directory" fs/*cwd*) ;; "with contents" (vec (file-seq fs/*cwd*)))
-        (fs/delete-dir temp-dir-path)))))
-
-(use-fixtures :each tempcwd-fixture)
+(use-fixtures :each helper/fixture-tempcwd)
 
 (deftest gui-init
   (testing "the gui can be started and stopped"
-    (is (gui/select-ui :#root))))
+    (try
+      (main/start {:ui :gui})
+      (is (gui/select-ui :#root))
+      (finally
+        (main/stop))))
+
+  (testing "attempting to select bits of the gui when not the app is started but the gui isn't causes a runtime error"
+    (try
+      (main/start {:ui :cli})
+      (is (thrown? RuntimeException (gui/select-ui :#root)))
+      (finally
+        (main/stop))))
+
+  (testing "gui debug tools don't require an initialised anything in order to be accessed"
+    (with-out-str ;; hide the debug output
+      (is (nil? (gui/inspect (seesaw.core/vertical-panel)))))))
+
+(deftest gui-stateless-calls
+  (testing "shameless coverage bump for all the stateless parts in gui"
+    (is (= nil (gui/donothing "event object")))
+    (is (= nil ((gui/handler (constantly :foo) (constantly :bar)) "event object")))))

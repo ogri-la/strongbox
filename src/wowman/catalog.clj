@@ -20,15 +20,15 @@
 (defmulti expand-summary (comp keyword :source))
 
 (defmethod expand-summary :curseforge
-  [addon-summary]
-  (curseforge-api/expand-summary addon-summary))
+  [addon-summary game-track]
+  (curseforge-api/expand-summary addon-summary game-track))
 
 (defmethod expand-summary :wowinterface
-  [addon-summary]
+  [addon-summary game-track]
   (wowinterface-api/expand-summary addon-summary))
 
 (defmethod expand-summary :default
-  [addon-summary]
+  [addon-summary game-track]
   (error "malformed addon-summary:" (utils/pprint addon-summary)))
 
 ;;
