@@ -86,18 +86,16 @@
    :category-list (sort (mapv :name (:categories snippet)))
    :created-date (:dateCreated snippet) ;; omg *yes*. perfectly formed dates
    ;; we now have :dateModified and :dateReleased to pick from
-   ;; :dateReleased (:fileDate of latest release) appears to be closest to what was being scraped
    ;;:updated-date (:dateModified snippet)
-   :updated-date (:dateReleased snippet)
+   :updated-date (:dateReleased snippet) ;; this seems closest to what we originaly had
    :download-count (-> snippet :downloadCount int) ;; I got a '511.0' ...?
-   :source-id (:id snippet) ;; I imagine wowinterface will have its own as well
-   })
+   :source-id (:id snippet)})
 
 (defn-spec download-summary-page-alphabetically (s/or :ok (s/coll-of map?), :error nil?)
   "downloads a page of results from the curseforge API, sorted A to Z"
   [page int? page-size pos-int?]
   (info "downloading" page-size "results from api, page" page)
-  (let [index (* page-size page) ;; +1 ?
+  (let [index (* page-size page)
         game-id 1 ;; WoW
         sort-by 3 ;; alphabetically, asc (a-z)
         results (http/download (api-uri "/addon/search?gameId=%s&index=%s&pageSize=%s&searchFilter=&sort=%s" game-id index page-size sort-by))

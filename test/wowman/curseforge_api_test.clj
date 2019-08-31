@@ -55,7 +55,7 @@
           game-track "classic"
           expected nil]
       (with-fake-routes-in-isolation fake-routes
-        (is (= expected (curseforge-api/expand-summary addon-summary game-track)))))))          
+        (is (= expected (curseforge-api/expand-summary addon-summary game-track)))))))
 
 (deftest latest-versions-by-game-track
   (testing "data in :latestFiles is filtered and grouped correctly"
@@ -76,4 +76,22 @@
           expected {"wow_retail" [{:gameVersionFlavor "wow_retail", :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}]
                     "wow_classic" [{:gameVersionFlavor "wow_classic", :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}]}]
       (is (= expected (curseforge-api/latest-versions-by-game-track fixture))))))
+
+(deftest extract-addon-summary
+  (testing "data extracted from curseforge api 'search' results is correct"
+    (let [fixture (slurp (fixture-path "curseforge-api-search--truncated.json"))
+          fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/search?gameId=1&index=0&pageSize=255&searchFilter=&sort=3"
+                       {:get (fn [req] {:status 200 :body fixture})}}
+          expected [{:created-date "2016-05-09T17:21:30.1Z",
+                     :description "Restores access to removed interface options in Legion",
+                     :category-list '("Miscellaneous" "Miscellaneous"),
+                     :updated-date "2019-08-30T14:39:44.943Z",
+                     :name "advancedinterfaceoptions",
+                     :alt-name "advancedinterfaceoptions",
+                     :label "AdvancedInterfaceOptions",
+                     :download-count 2923589,
+                     :source-id 99982,
+                     :uri "https://www.curseforge.com/wow/addons/advancedinterfaceoptions"}]]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (curseforge-api/download-all-summaries-alphabetically)))))))
 
