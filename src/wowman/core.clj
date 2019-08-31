@@ -122,7 +122,7 @@
   [& path]
   (if-let [state @state]
     (nav-map state path)
-    (throw (AssertionError. "application must be `start`ed before state may be accessed."))))
+    (throw (RuntimeException. "application must be `start`ed before state may be accessed."))))
 
 (defn set-etag
   "convenient wrapper around adding and removing etag values from state map"
@@ -168,16 +168,16 @@
 
 ;; addon dirs
 
-(defn addon-dir-exists?
-  ([addon-dir]
+(defn-spec addon-dir-exists? boolean?
+  ([addon-dir ::sp/addon-dir]
    (addon-dir-exists? addon-dir (get-state :cfg :addon-dir-list)))
-  ([addon-dir addon-dir-list]
+  ([addon-dir ::sp/addon-dir, addon-dir-list ::sp/addon-dir-list]
    (not (nil? (some #{addon-dir} (mapv :addon-dir addon-dir-list))))))
 
-(defn add-addon-dir!
-  ([addon-dir]
+(defn-spec add-addon-dir! nil?
+  ([addon-dir ::sp/addon-dir]
    (add-addon-dir! addon-dir "retail"))
-  ([addon-dir game-track]
+  ([addon-dir ::sp/addon-dir, game-track ::sp/game-track]
    (let [stub {:addon-dir addon-dir :game-track game-track}]
      (when-not (addon-dir-exists? addon-dir)
        (swap! state update-in [:cfg :addon-dir-list] conj stub))
@@ -192,42 +192,47 @@
      (swap! state assoc :selected-addon-dir addon-dir))
     nil))
 
-(defn remove-addon-dir!
+(defn-spec remove-addon-dir! nil?
   ([]
    (remove-addon-dir! (get-state :selected-addon-dir)))
-  ([addon-dir]
+  ([addon-dir ::sp/addon-dir]
    (dosync
     (let [matching #(= addon-dir (:addon-dir %))
           new-addon-dir-list (->> (get-state :cfg :addon-dir-list) (remove matching) vec)]
       (swap! state assoc-in [:cfg :addon-dir-list] new-addon-dir-list)
       ;; this may be nil if the new addon-dir-list is empty
-      (swap! state assoc :selected-addon-dir (-> new-addon-dir-list first :addon-dir))))))
+      (swap! state assoc :selected-addon-dir (-> new-addon-dir-list first :addon-dir))))
+   nil))
 
 (defn available-addon-dirs
   []
   (mapv :addon-dir (get-state :cfg :addon-dir-list)))
 
-(defn addon-dir-map
+(defn-spec addon-dir-map (s/or :ok ::sp/addon-dir-map, :missing nil?)
   ([]
    (addon-dir-map (get-state :selected-addon-dir)))
-  ([addon-dir]
-   (first (filterv #(= addon-dir (:addon-dir %)) (get-state :cfg :addon-dir-list)))))
+  ([addon-dir ::sp/addon-dir]
+   (let [addon-dir-list (get-state :cfg :addon-dir-list)]
+     (when-not (empty? addon-dir-list)
+       (first (filter #(= addon-dir (:addon-dir %)) addon-dir-list))))))
 
-(defn set-game-track!
-  ([game-track]
+(defn-spec set-game-track! nil?
+  ([game-track ::sp/game-track]
    (set-game-track! game-track (get-state :selected-addon-dir)))
-  ([game-track addon-dir]
+  ([game-track ::sp/game-track, addon-dir ::sp/addon-dir]
    (let [tform (fn [addon-dir-map]
                  (if (= addon-dir (:addon-dir addon-dir-map))
                    (assoc addon-dir-map :game-track game-track)
                    addon-dir-map))
          new-addon-dir-map-list (mapv tform (get-state :cfg :addon-dir-list))]
-     (swap! state update-in [:cfg] assoc :addon-dir-list new-addon-dir-map-list))))
+     (swap! state update-in [:cfg] assoc :addon-dir-list new-addon-dir-map-list)
+     nil)))
 
-(defn get-game-track
+(defn-spec get-game-track (s/or :ok ::sp/game-track, :missing nil?)
   ([]
-   (get-game-track (get-state :selected-addon-dir)))
-  ([addon-dir]
+   (when-let [addon-dir (get-state :selected-addon-dir)]
+     (get-game-track addon-dir)))
+  ([addon-dir ::sp/addon-dir]
    (-> addon-dir addon-dir-map :game-track)))
 
 ;; settings
@@ -242,7 +247,7 @@
                      (not (addon-dir-exists? install-dir (:addon-dir-list cfg))))
               (update-in cfg [:addon-dir-list] conj stub)
               cfg)]
-      ;; finally, ensure :install-dir is removed from whatever we received
+      ;; finally, ensure :install-dir is absent from whatever we return
     (dissoc cfg :install-dir)))
 
 (defn-spec configure ::sp/user-config
@@ -600,20 +605,20 @@
   (when (get-state :selected-addon-dir)
     (info "checking for updates")
     (let [;; this sucks, make it better
-          asdf (fn [toc]
-                 (let [check? (and
-                               ;; don't attempt expanding if we have no catalog match
-                               (:matched? toc)
-                               ;; don't expand if we have a dummy uri 
-                               ;; (this isn't the right place for test code, but eh)
-                               (nil? (clojure.string/index-of (:uri toc) "example.org")))
-                       no-result {:update? false}
-                       result (when check?
-                                (expand-summary-wrapper toc))]
-                   (if result
-                     (merge-addons toc result)
-                     (merge toc no-result))))]
-      (update-installed-addon-list! (mapv asdf (get-state :installed-addon-list)))
+          check-for-update (fn [toc]
+                             (let [check? (and
+                                            ;; don't attempt expanding if we have no catalog match
+                                           (:matched? toc)
+                                            ;; don't expand if we have a dummy uri 
+                                            ;; (this isn't the right place for test code, but eh)
+                                           (nil? (clojure.string/index-of (:uri toc) "example.org")))
+                                   no-result {:update? false}
+                                   result (when check?
+                                            (expand-summary-wrapper toc))]
+                               (if result
+                                 (merge-addons toc result)
+                                 (merge toc no-result))))]
+      (update-installed-addon-list! (mapv check-for-update (get-state :installed-addon-list)))
       (info "done checking for updates"))))
 
 (defn alias-wrangling

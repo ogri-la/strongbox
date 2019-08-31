@@ -44,7 +44,7 @@
         stable-releases (remove :exposeAsAlternative stable-releases)
 
         ;; I don't know if it's possible, but a group may still have more than one result
-        ;; results are ordered and group-by preserves ordering desc, so take the first
+        ;; results are ordered and group-by preserves ordering, so take the first
         ]
     (group-by :gameVersionFlavor stable-releases)))
 

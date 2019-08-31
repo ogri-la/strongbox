@@ -118,8 +118,7 @@
 (s/def ::selected? boolean?)
 (s/def ::addon-dir-map (s/keys :req-un [::addon-dir ::game-track]))
 (s/def ::addon-dir-list (s/coll-of ::addon-dir-map))
-(s/def ::user-config (s/keys :req-un [;;::install-dir
-                                      ::addon-dir-list
+(s/def ::user-config (s/keys :req-un [::addon-dir-list
                                       ::debug?]))
 
 (s/def ::reason-phrase (s/and string? #(<= (count %) 50)))

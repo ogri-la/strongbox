@@ -14,6 +14,26 @@
 
 (use-fixtures :each helper/fixture-tempcwd)
 
+(deftest handle-legacy-install-dir
+  (testing ":install-dir in user config is converted correctly"
+    (let [install-dir (str fs/*cwd*)
+          cfg {:install-dir install-dir :addon-dir-list []}
+          expected {:addon-dir-list [{:addon-dir install-dir :game-track "retail"}]}]
+      (is (= expected (core/handle-legacy-install-dir cfg)))))
+
+  (testing ":install-dir in user config is appended to existing list correctly"
+    (let [install-dir (str fs/*cwd*)
+          install-dir2 "/tmp"
+
+          addon-dir1 {:addon-dir install-dir :game-track "retail"}
+          addon-dir2 {:addon-dir install-dir2 :game-track "retail"}
+
+          cfg {:install-dir install-dir2
+               :addon-dir-list [addon-dir1]}
+
+          expected {:addon-dir-list [addon-dir1 addon-dir2]}]
+      (is (= expected (core/handle-legacy-install-dir cfg))))))
+
 (deftest paths
   (testing "all path keys are using suffix"
     (doseq [key (keys (core/paths))]
@@ -105,10 +125,11 @@
   (testing "an export can be imported"
     (try
       (main/start {:ui :cli})
-      (let [;; will trigger a refresh. call it here before it affects our crafted state
-            _ (core/set-addon-dir! (str fs/*cwd*))
 
-            ;; add catalog to app state
+      ;; will trigger a refresh. call it here before it affects our crafted state
+      (core/set-addon-dir! (str fs/*cwd*))
+
+      (let [;; add catalog to app state
             addon-summary-list (utils/load-json-file (fixture-path "import--dummy-catalog.json"))
             _ (swap! core/state assoc :addon-summary-list addon-summary-list)
 

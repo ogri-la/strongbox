@@ -27,7 +27,7 @@
 
   (testing "gui debug tools don't require an initialised anything in order to be accessed"
     (with-out-str ;; hide the debug output
-      (is (gui/inspect (seesaw.core/vertical-panel))))))
+      (is (nil? (gui/inspect (seesaw.core/vertical-panel)))))))
 
 (deftest gui-stateless-calls
   (testing "shameless coverage bump for all the stateless parts in gui"

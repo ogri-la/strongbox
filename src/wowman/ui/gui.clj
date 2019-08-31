@@ -28,7 +28,6 @@
   [& path]
   (if-let [ui (get-state :gui)]
     (ss/select ui (vec path))
-    ;; todo: should this be an assertionerror to match the one in core?
     (throw (RuntimeException. "attempted to access an uninitialised GUI"))))
 
 (def INSTALLED-TAB 0)
@@ -37,8 +36,7 @@
 (defn inspect
   [x]
   (show-events x)
-  (show-options x)
-  true)
+  (show-options x))
 
 (defn tab
   [title body]
@@ -254,7 +252,7 @@
         _ (ss/listen wow-dir-dropdown :selection
                      (async-handler ;; execute elsewhere
                       (fn []
-                        "called when a different addon dir is selected"
+                        ;; called when a different addon dir is selected
                         (let [old-addon-dir (get-state :selected-addon-dir)
                               new-addon-dir (ss/selection wow-dir-dropdown)]
                           (when-not (= new-addon-dir old-addon-dir)
@@ -268,9 +266,9 @@
 
         _ (state-bind [:selected-addon-dir]
                       (fn [state]
-                        "called when the :selected-addon-dir changes (like via `core.set-addon-dir!`)"
+                        ;; called when the :selected-addon-dir changes (like via `core.set-addon-dir!`)
                         (let [new-addon-dir (:selected-addon-dir state)
-                              {:keys [game-track]} (core/addon-dir-map new-addon-dir)
+                              game-track (-> new-addon-dir core/addon-dir-map :game-track)
                               selected-addon-dir (ss/selection wow-dir-dropdown)]
                           (when-not (= selected-addon-dir new-addon-dir)
                             (debug ":selected-addon-dir changed to:" new-addon-dir)
@@ -283,7 +281,7 @@
 
         _ (ss/listen wow-game-track :selection
                      (fn [ev]
-                       "called when a different game track is selected"
+                       ;; called when a different game track is selected
                        (let [new-game-track (ss/selection wow-game-track)
                              old-game-track (:game-track (core/addon-dir-map))]
                          (when-not (= new-game-track old-game-track)
@@ -693,7 +691,7 @@
         addon-menu [(ss/action :name "Update all" :key "menu U" :mnemonic "u" :handler (async-handler core/install-update-all))
                     (ss/action :name "Re-install all" :handler (async-handler core/re-install-all))
                     :separator
-                    (ss/action :name "Remove from list" :handler (async-handler core/remove-addon-dir!))]
+                    (ss/action :name "Remove directory" :handler (async-handler core/remove-addon-dir!))]
 
         cache-menu [(ss/action :name "Clear cache" :handler (async-handler core/delete-cache))
                     (ss/action :name "Clear addon zips" :handler (async-handler core/delete-downloaded-addon-zips))
