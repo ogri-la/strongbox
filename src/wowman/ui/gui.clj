@@ -639,11 +639,12 @@
                              ia-count (count ia)
                              uia-count (count uia)
 
-                             strings [(if (= ia-count uia-count)
-                                        all-matching-template
-                                        (format num-matching-template uia-count ia-count))
+                             strings [(format catalog-count-template a-count)
 
-                                      (format catalog-count-template a-count)]]
+                                      (if (= ia-count uia-count)
+                                        all-matching-template
+                                        (format num-matching-template uia-count ia-count))]]
+
                          (ss/text! status (clojure.string/join " " strings))))]
     (state-bind [:installed-addon-list] update-label)
     status))
@@ -695,7 +696,7 @@
                     "Retail"
                     "Classic"
                     :separator
-                    "Remove from list"]
+                    (ss/action :name "Remove from list" :handler (async-handler core/remove-addon-dir!))]
 
         cache-menu [(ss/action :name "Clear cache" :handler (async-handler core/delete-cache))
                     (ss/action :name "Clear addon zips" :handler (async-handler core/delete-downloaded-addon-zips))

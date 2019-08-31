@@ -189,8 +189,20 @@
   (let [addon-dir (-> addon-dir fs/absolute fs/normalized str)]
     (dosync
      (add-addon-dir! addon-dir)
-     (swap! state assoc-in [:selected-addon-dir] addon-dir))
+     (swap! state assoc :selected-addon-dir addon-dir))
     nil))
+
+(defn remove-addon-dir!
+  ([]
+   (remove-addon-dir! (get-state :selected-addon-dir)))
+  ([addon-dir]
+   (dosync
+    (let [matching #(= addon-dir (:addon-dir %))
+          new-addon-dir-list (->> (get-state :cfg :addon-dir-list) (remove matching) vec)]
+      (info "new addon dir list" new-addon-dir-list)
+      (swap! state assoc-in [:cfg :addon-dir-list] new-addon-dir-list)
+      ;; this may be nil if :addon-dir-list is empty
+      (swap! state assoc :selected-addon-dir (-> new-addon-dir-list first :addon-dir))))))
 
 (defn available-addon-dirs
   []
@@ -222,7 +234,7 @@
 ;; settings
 
 
-(defn handle-addon-dirs
+(defn handle-legacy-install-dir
   [cfg]
   (let [install-dir (:install-dir cfg)
         stub {:addon-dir install-dir :game-track "retail"}
@@ -240,7 +252,7 @@
   (debug "loading file config:" file-opts)
   (let [default-cfg (:cfg -state-template)
         cfg (merge default-cfg file-opts)
-        cfg (handle-addon-dirs cfg)
+        cfg (handle-legacy-install-dir cfg)
         cfg (spec-tools/coerce ::sp/user-config cfg spec-tools/strip-extra-keys-transformer)
         valid? (s/valid? ::sp/user-config cfg)]
     (when-not valid?
@@ -250,7 +262,7 @@
     (let [cfg (if valid? cfg default-cfg)
           final-cfg (merge cfg cli-opts)
           ;; :install-dir may be re-introduced at this point. handle it exactly as we did above
-          final-cfg (handle-addon-dirs final-cfg)
+          final-cfg (handle-legacy-install-dir final-cfg)
           final-cfg (spec-tools/coerce ::sp/user-config final-cfg spec-tools/strip-extra-keys-transformer)
           valid? (s/valid? ::sp/user-config cfg)]
       (when-not valid?
@@ -424,9 +436,12 @@
 
 (defn-spec load-installed-addons nil?
   []
-  (when-let [addon-dir (get-state :selected-addon-dir)]
-    (info "(re)loading installed addons:" addon-dir)
-    (update-installed-addon-list! (wowman.toc/installed-addons addon-dir))))
+  (if-let [addon-dir (get-state :selected-addon-dir)]
+    (do
+      (info "(re)loading installed addons:" addon-dir)
+      (update-installed-addon-list! (wowman.toc/installed-addons addon-dir)))
+    ;; ensure the previous list of addon dirs are cleared if :selected-addon-dir is unset
+    (update-installed-addon-list! [])))
 
 ;;
 ;; addon summaries
@@ -440,7 +455,7 @@
       (http/download-file remote-catalog local-catalog)
       (error "failed to find catalog:" catalog))))
 
-(defn-spec load-addon-summaries nil?
+(defn-spec load-catalog nil?
   []
   (download-catalog)
   (info "loading addon summaries from catalog:" (paths :catalog-file))
@@ -528,38 +543,36 @@
 
     (mapv finder installed-addon-list)))
 
-(defn -match-installed-addons-with-catalog-debug
-  "good for when you have addons that don't have a match"
-  []
-  (-match-installed-addons-with-catalog (get-state :installed-addon-list) (get-state :addon-summary-list)))
-
-(defn-spec match-installed-addons-with-online-addons nil?
+(defn-spec match-installed-addons-with-catalog nil?
   "when we have a list of installed addons as well as the addon list,
    merge what we can into ::specs/addon-toc records and update state.
    any installed addon not found in :addon-idx has a mapping problem"
   []
-  (info "matching installed addons to online addons")
-  (let [inst-addons (get-state :installed-addon-list)
-        catalog (get-state :addon-summary-list)
+  (when (get-state :selected-addon-dir) ;; don't even bother if we have nothing to match it to
+    (info "matching installed addons to online addons")
+    (let [inst-addons (get-state :installed-addon-list)
+          catalog (get-state :addon-summary-list)
 
-        match-results (-match-installed-addons-with-catalog inst-addons catalog)
-        [matched unmatched] (utils/split-filter #(contains? % :final) match-results)
+          match-results (-match-installed-addons-with-catalog inst-addons catalog)
+          [matched unmatched] (utils/split-filter #(contains? % :final) match-results)
 
-        matched (mapv :final matched)
-        unmatched (mapv :installed-addon unmatched)
-        unmatched-names (set (map :name unmatched))
+          matched (mapv :final matched)
+          unmatched (mapv :installed-addon unmatched)
+          unmatched-names (set (map :name unmatched))
 
-        expanded-installed-addon-list (into matched unmatched)
-        ;;expanded-installed-addon-list (utils/merge-lists :name (get-state :installed-addon-list) matched)
-        ]
+          expanded-installed-addon-list (into matched unmatched)
+          ;;expanded-installed-addon-list (utils/merge-lists :name (get-state :installed-addon-list) matched)
 
-    (info "num installed" (count inst-addons) ", num matched" (count matched))
+          [num-installed num-matched] [(count inst-addons) (count matched)]]
 
-    (when-not (empty? unmatched)
-      (warn "you need to manually search for them and then re-install them")
-      (warn (format "failed to match %s installed addons to online addons: %s" (count unmatched) (clojure.string/join ", " unmatched-names))))
+      (when-not (= num-installed num-matched)
+        (info "num installed" num-installed ", num matched" num-matched))
 
-    (update-installed-addon-list! expanded-installed-addon-list)))
+      (when-not (empty? unmatched)
+        (warn "you need to manually search for them and then re-install them")
+        (warn (format "failed to find %s installed addons in the catalog: %s" (count unmatched) (clojure.string/join ", " unmatched-names))))
+
+      (update-installed-addon-list! expanded-installed-addon-list))))
 
 ;;
 ;; addon summary and toc merging
@@ -585,22 +598,24 @@
 (defn-spec check-for-updates nil?
   "downloads full details for all installed addons that can be found in summary list"
   []
-  (info "checking for updates")
-  (update-installed-addon-list! (mapv (fn [toc]
-                                        (let [check? (and
-                                                      ;; don't attempt expanding if we have no catalog match
-                                                      (:matched? toc)
-                                                      ;; don't expand if we have a dummy uri 
-                                                      ;; (this isn't the right place for test code, but eh)
-                                                      (nil? (clojure.string/index-of (:uri toc) "example.org")))
-                                              no-result {:update? false}
-                                              result (when check?
-                                                       (expand-summary-wrapper toc))]
-                                          (if result
-                                            (merge-addons toc result)
-                                            (merge toc no-result))))
-                                      (get-state :installed-addon-list)))
-  (info "done checking for updates"))
+  (when (get-state :selected-addon-dir)
+    (info "checking for updates")
+    (let [;; this sucks, make it better
+          asdf (fn [toc]
+                 (let [check? (and
+                               ;; don't attempt expanding if we have no catalog match
+                               (:matched? toc)
+                               ;; don't expand if we have a dummy uri 
+                               ;; (this isn't the right place for test code, but eh)
+                               (nil? (clojure.string/index-of (:uri toc) "example.org")))
+                       no-result {:update? false}
+                       result (when check?
+                                (expand-summary-wrapper toc))]
+                   (if result
+                     (merge-addons toc result)
+                     (merge toc no-result))))]
+      (update-installed-addon-list! (mapv asdf (get-state :installed-addon-list)))
+      (info "done checking for updates"))))
 
 (defn alias-wrangling
   "temporary code until it finds a better home. downloads the top-50 addons and prints out the addon's and subaddon's labels. see `fs/aliases`"
@@ -747,9 +762,9 @@
 (defn refresh
   [& _]
   (load-installed-addons) ;; parse toc files in install-dir. do this first so we see *something* while catalog downloads (next)
-  (load-addon-summaries)  ;; load the contents of the curseforge.json file
-  (match-installed-addons-with-online-addons) ;; match installed addons to those in curseforge.json
-  (check-for-updates)     ;; for those addons that have matches, download their full details from curseforge
+  (load-catalog)          ;; load the contents of the catalog
+  (match-installed-addons-with-catalog) ;; match installed addons to those in catalog
+  (check-for-updates)     ;; for those addons that have matches, download their details
   ;;(latest-wowman-release) ;; check for updates after everything else is done ;; 2019-06-30, travis is failing with 403: Forbidden. Moved to gui init
   (save-settings)         ;; seems like a good place to preserve the etag-db
   nil)
