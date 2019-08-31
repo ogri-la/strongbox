@@ -248,10 +248,8 @@
 
         wow-dir-dropdown (ss/combobox :model (core/available-addon-dirs))
 
-        ;; TODO: initial game track version not selected on startup
-        ;; for example, if dir 'foo' is switched to classic, wowman closed and started again, default selected is 'retail'
-
-        wow-game-track (ss/combobox :model core/game-tracks)
+        wow-game-track (ss/combobox :model core/game-tracks
+                                    :selected-item (core/get-game-track))
 
         _ (ss/listen wow-dir-dropdown :selection
                      (async-handler ;; execute elsewhere
@@ -625,13 +623,28 @@
 (defn status-bar
   "this is the litle strip of text at the bottom of the application."
   []
-  (let [template " %s of %s installed addons matched. %s addons in catalog."
-        status (ss/label :text (format template 0 0 0)
+  (let [num-matching-template "%s of %s installed addons found in catalog."
+        all-matching-template "all installed addons found in catalog."
+        catalog-count-template "%s addons in catalog."
+
+        status (ss/label :text ""
                          :font (font :size 11))
+
         update-label (fn [state]
-                       (let [ia (:installed-addon-list state)
-                             uia (filter :matched? ia)]
-                         (ss/text! status (format template (count uia) (count ia) (count (:addon-summary-list state))))))]
+                       (let [a (:addon-summary-list state)
+                             ia (:installed-addon-list state)
+                             uia (filter :matched? ia)
+
+                             a-count (count a)
+                             ia-count (count ia)
+                             uia-count (count uia)
+
+                             strings [(if (= ia-count uia-count)
+                                        all-matching-template
+                                        (format num-matching-template uia-count ia-count))
+
+                                      (format catalog-count-template a-count)]]
+                         (ss/text! status (clojure.string/join " " strings))))]
     (state-bind [:installed-addon-list] update-label)
     status))
 
