@@ -79,12 +79,25 @@ see CHANGELOG.md for a more formal list of changes by release
         - only affects curseforge right now as wowinterface doesn't appear to do 'releases' like cforge does
         - addons with no release for given track get a warning and nothing is installed
     - done
-
+* bug, I don't see deadly-boss-mods-classic in wowi catalog
+    - it should have definitely made it into the last scrape
+    - fixed
+        - wowinterface.clj was only scraping the first collection of addon categories
+* ensure test coverage doesn't drop below threshold
+    - done
+        - threshold is at 72%
+        - local and travis reports are *slightly* different for some reason, so threshold needs some padding
+* rename 'install-dir' config to 'addon-dir' perhaps?
+    - 'install-dir' is ambiguous, it could be talking about installation dir of wowman
+    - done
+        - we now have 'addon-dir' and 'addon-dir-list' 
 
 ### todo
 
 * classic addons handling
     - wowinterface support now after curseforge support led the way
+        - the filedetails.json data will need to be merged with the catalog
+        - we'll need to add a 'game-tracks' type list and munge a value from it's 'compatibility' list
 * regression, update? column is no longer being populated
     - all tests passing. this means you need more and better tests
 * add checksum checks after downloading
@@ -111,12 +124,10 @@ see CHANGELOG.md for a more formal list of changes by release
 * remove html scraping of catalogs
     - pending investigation of wowinterface
 * bug, 'clear cache' didn't delete the catalog.json
-* bug, I don't see deadly-boss-mods-classic in wowi catalog
-    - it should have definitely made it into the last scrape
 * bug, curseforge.json is getting a strange duplication of results while generating the catalog
     - this is preventing automated catalog *updates*, not the full regeneration apparently
     - I can't replicate this anymore. It may show up later, but for now it's blocking a 0.8.0 release
-* ensure test coverage doesn't drop below threshold
+    - also, catalog generation is now done via the api
 * catalog, normalise catagories between addons that overlap
     - perhaps expand them into 'tags'? 
     - a lot of these categories are composite
@@ -133,14 +144,10 @@ see CHANGELOG.md for a more formal list of changes by release
         - if we start doing download concurrently, we need to pass our binds to the threads
             - which I'm not sure if is possible
         - moving back into bucket until I get around to doing parallel downloads
-
 * 'scrape' and 'update' are not great terms
     - scrape means 'complete update'
     - update means 'partial update'
-* curseforge scraping is very quiet when everything is cached
-    - unlike wowinterface
-* rename 'install-dir' config to 'addon-dir' perhaps?
-    - 'install-dir' is ambiguous, it could be talking about installation dir of wowman
+    - I may be removing the updating of catalogs in favour of full scrapes
 * allow user to specify their own catalog
     - what can we do to support adhoc lists of addons from unsupported hosts?
     - we have both curseforge and wowinterface supported now
@@ -163,6 +170,9 @@ see CHANGELOG.md for a more formal list of changes by release
 * windows support
     - eh. I figure I can do it with a VM. I just don't really wanna.
     - for the 1.0.0 release
+    - I now have an old WinXP (64bit!) machine
+        - one of the first 64bit Athlons available
+        - this should force some performance optimisations as well
 * memory usage
     - we're big and fat :(
     - lets explore some ways to measure and then reduce memory usage
@@ -177,6 +187,7 @@ see CHANGELOG.md for a more formal list of changes by release
             - :group-id, :group-count
         - how to pick preferred attributes without continuous (or key else other-key) ?
             - (getattr addon :label) ;; does multiple lookups ...? seems kinda meh
+    - post 1.0
 * toggleable highlighers as a menuitem
     - highlight unmatched
     - highlight updates
@@ -186,11 +197,18 @@ see CHANGELOG.md for a more formal list of changes by release
 * download progress bar *inside* the grid ...?
     - pure fantasy?
 * nightly unstable builds
+    - building the 'develop' branch once a day
+        - making it available as the 'unstable' release that always gets replaced
+    - project.clj "x.y.z-unreleased" would be changed to "x.y.z-unstable"
+    - development would happen mainly in feature branches
 * internationalisation? 
     - Akitools has no english description but it does have a "Notes-zhCN" in the toc file that could be used
+    - wowman was mentioned on a french forum the other day ..
 * a 'stop' button to stop updates would be nice ...
     - closing gui would stop ongoing updates
 * bug, changing sort order during refresh doesn't reflect which addon is being updated
+    - I think changing column ordering and moving columns should be disabled while updates happen
+        - just freeze or disable them or something.
 * download addon details in parallel
     - speed benefits, mostly
     - share a pool of connections between threads
