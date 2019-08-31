@@ -20,4 +20,11 @@
       (main/start {:ui :gui})
       (is (gui/select-ui :#root))
       (finally
+        (main/stop))))
+
+  (testing "attempting to select bits of the gui when not the app is started but the gui isn't causes a runtime error"
+    (try
+      (main/start {:ui :cli})
+      (is (thrown? RuntimeException (gui/select-ui :#root)))
+      (finally
         (main/stop)))))

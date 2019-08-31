@@ -30,6 +30,7 @@
   [& path]
   (if-let [ui (get-state :gui)]
     (ss/select ui (vec path))
+    ;; todo: should this be an assertionerror to match the one in core?
     (throw (RuntimeException. "attempted to access an uninitialised GUI"))))
 
 (def INSTALLED-TAB 0)
@@ -244,6 +245,9 @@
         wow-dir-button (button "WoW directory" (async-handler picker))
 
         wow-dir-dropdown (ss/combobox :model (core/available-addon-dirs))
+
+        ;; TODO: initial game track version not selected on startup
+        ;; for example, if dir 'foo' is switched to classic, wowman closed and started again, default selected is 'retail'
 
         wow-game-track (ss/combobox :model core/game-tracks)
 
