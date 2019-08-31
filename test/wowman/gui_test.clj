@@ -1,16 +1,12 @@
 (ns wowman.gui-test
   (:require
-   [envvar.core :refer [env with-env]]
-   [clj-http.fake :refer [with-fake-routes-in-isolation]]
    [clojure.test :refer [deftest testing is use-fixtures]]
    [wowman.ui.gui :as gui]
    [wowman
     [main :as main]
-    [core :as core]
-    [utils :as utils :refer [join]]
     [test-helper :as helper :refer [fixture-path temp-path]]]
-   [me.raynes.fs :as fs :refer [with-cwd]]
-   [taoensso.timbre :as log :refer [debug info warn error spy]]))
+  ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
+   ))
 
 (use-fixtures :each helper/fixture-tempcwd)
 
@@ -27,4 +23,13 @@
       (main/start {:ui :cli})
       (is (thrown? RuntimeException (gui/select-ui :#root)))
       (finally
-        (main/stop)))))
+        (main/stop))))
+
+  (testing "gui debug tools don't require an initialised anything in order to be accessed"
+    (with-out-str ;; hide the debug output
+      (is (gui/inspect (seesaw.core/vertical-panel))))))
+
+(deftest gui-stateless-calls
+  (testing "shameless coverage bump for all the stateless parts in gui"
+    (is (= nil (gui/donothing "event object")))
+    (is (= nil ((gui/handler (constantly :foo) (constantly :bar)) "event object")))))

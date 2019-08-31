@@ -24,8 +24,6 @@
    [orchestra.core :refer [defn-spec]]
    [orchestra.spec.test :as st]))
 
-(s/def ::content-pane #(instance? java.awt.Component %))
-
 (defn select-ui
   [& path]
   (if-let [ui (get-state :gui)]
@@ -39,7 +37,8 @@
 (defn inspect
   [x]
   (show-events x)
-  (show-options x))
+  (show-options x)
+  true)
 
 (defn tab
   [title body]
@@ -82,9 +81,12 @@
   [_]
   nil)
 
-(defn handler [& fl]
+(defn handler
+  "returns a function that calls each given argument function sequentially, discards result, returns nil"
+  [& fn-list]
   (fn [_]
-    (doseq [f fl] (f))))
+    (doseq [f fn-list]
+      (f))))
 
 (defn async-handler
   "like `handler`, but each function is executed inside a `go` block instead of sequentially"
@@ -664,18 +666,13 @@
                :title "wowman"
                :size [640 :by 480]
                :content (mig/mig-panel
-                         :constraints (if (core/debugging?)
-                                        ["debug,flowy"]
-                                        ["flowy"])
+                         :constraints ["flowy"] ;; ["debug,flowy"]
                          :items [[root "height 100%, width 100%:100%:100%"]])
                :on-close (if (utils/in-repl?) :dispose :exit)) ;; exit app entirely when not in repl
 
         file-menu (items
                    (ss/action :name "Installed" :key "menu I" :mnemonic "i" :handler (switch-tab-handler INSTALLED-TAB))
                    (ss/action :name "Search" :key "menu H" :mnemonic "h" :handler (switch-tab-handler SEARCH-TAB))
-                   (when (core/debugging?) ;; these have never been useful outside of dev
-                     (ss/action :name "Load settings" :handler (handler core/load-settings))
-                     (ss/action :name "Save settings" :key "menu S" :mnemonic "s" :handler (handler core/save-settings)))
                    :separator
                    (ss/action :name "Exit" :key "menu Q" :mnemonic "x" :handler (handler #(ss/dispose! newui))))
 
