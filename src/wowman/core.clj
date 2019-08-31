@@ -199,9 +199,8 @@
    (dosync
     (let [matching #(= addon-dir (:addon-dir %))
           new-addon-dir-list (->> (get-state :cfg :addon-dir-list) (remove matching) vec)]
-      (info "new addon dir list" new-addon-dir-list)
       (swap! state assoc-in [:cfg :addon-dir-list] new-addon-dir-list)
-      ;; this may be nil if :addon-dir-list is empty
+      ;; this may be nil if the new addon-dir-list is empty
       (swap! state assoc :selected-addon-dir (-> new-addon-dir-list first :addon-dir))))))
 
 (defn available-addon-dirs

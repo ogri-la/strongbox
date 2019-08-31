@@ -693,9 +693,6 @@
         addon-menu [(ss/action :name "Update all" :key "menu U" :mnemonic "u" :handler (async-handler core/install-update-all))
                     (ss/action :name "Re-install all" :handler (async-handler core/re-install-all))
                     :separator
-                    "Retail"
-                    "Classic"
-                    :separator
                     (ss/action :name "Remove from list" :handler (async-handler core/remove-addon-dir!))]
 
         cache-menu [(ss/action :name "Clear cache" :handler (async-handler core/delete-cache))

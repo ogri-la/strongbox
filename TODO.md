@@ -55,6 +55,9 @@ see CHANGELOG.md for a more formal list of changes by release
     - this will give a *hint* about which version of an addon is installed
 * support for multiple addon directories
     - well, supporting for remembering and quickly switching between addon dirs
+        - done
+    - add ability to remove an addon-dir
+        - done
 * classic addons handling
     - curseforge have addons bundling classic versions in with regular versions
         - the api distinguishes them with a 'game_flavour' field
@@ -80,8 +83,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### todo
 
-* support for multiple addon directories
-    - add ability to remove an addon-dir
+* classic addons handling
     - add ability to switch between tracks from menu
         - not really necessary but should make it obvious the 'Addons' menu is affecting the *current addon-dir*
 * regression, update? column is no longer being populated
