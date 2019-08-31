@@ -34,3 +34,24 @@
                                          })]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (curseforge-api/expand-summary addon-summary "retail")))))))
+
+(deftest latest-versions-by-game-track
+  (testing "data in :latestFiles is filtered and grouped correctly"
+    (let [[alpha, beta, stable] [3 2 1]
+          latest-files [;; retail versions
+                        {:gameVersionFlavor "wow_retail", :fileDate "2001-01-03T00:00:00.000Z", :releaseType alpha, :exposeAsAlternative nil}
+                        {:gameVersionFlavor "wow_retail", :fileDate "2001-01-02T00:00:00.000Z", :releaseType beta, :exposeAsAlternative nil}
+                        {:gameVersionFlavor "wow_retail", :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}
+                        {:gameVersionFlavor "wow_retail", :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative true}
+
+                        ;; classic versions, mirror retail releases
+                        {:gameVersionFlavor "wow_classic", :fileDate "2001-01-03T00:00:00.000Z", :releaseType alpha, :exposeAsAlternative nil}
+                        {:gameVersionFlavor "wow_classic", :fileDate "2001-01-02T00:00:00.000Z", :releaseType beta, :exposeAsAlternative nil}
+                        {:gameVersionFlavor "wow_classic", :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}
+                        {:gameVersionFlavor "wow_classic", :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative true}]
+
+          fixture {:latestFiles latest-files}
+          expected {"wow_retail" [{:gameVersionFlavor "wow_retail", :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}]
+                    "wow_classic" [{:gameVersionFlavor "wow_classic", :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}]}]
+      (is (= expected (curseforge-api/latest-versions-by-game-track fixture))))))
+

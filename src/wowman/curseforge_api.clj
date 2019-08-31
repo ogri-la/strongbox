@@ -29,7 +29,6 @@
 
   ;; we want to say "give me the latest stable release of the wow classic track of this addon
   ;; for now we're going to ignore anything that isn't a releaseType of 1
-  ;; installing alpha/beta quality addons will come later
 
   (let [latest-files (:latestFiles api-result)
 
@@ -56,18 +55,10 @@
         uri (api-uri "/addon/%s" pid)
         result (-> uri http/download utils/from-json)
 
-        ;;_ (info (utils/pprint (latest-versions-by-game-track result)))
-
         game-track-alias-map {"retail" "wow_retail"
                               "classic" "wow_classic"}
         game-track-alias (game-track-alias-map game-track)
 
-        ;; TODO: this is no longer good enough. we now need to differentiate between regular ('retail') and classic
-        ;; see :gameVersionFlavor
-        ;;latest-release (-> result :latestFiles first) ;; this list isn't sorted!
-        ;; also, :latestFiles seems to be a selection of all files.
-        ;; these files (I think) are selected by release type (alpha/beta/released etc), padded out with the last N proper releases
-        ;;latest-release (->> result :latestFiles (sort-by :fileDate) last)
         latest-release (-> result latest-versions-by-game-track (get game-track-alias) first)]
     (when-not latest-release
       (warn (format "no '%s' release available for '%s'" game-track (:name addon-summary))))
