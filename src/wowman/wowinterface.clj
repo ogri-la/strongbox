@@ -216,7 +216,7 @@
         compatibility (->> filelist-addon :UICompatibility (map :name) set)
         many-results? (> (count compatibility) 1)
         wowi-classic "WoW Classic"
-        
+
         mapping {[wowi-classic true]  #{"classic" "retail"}
                  [wowi-classic false] #{"classic"}
                  [nil true] #{"retail"}
@@ -240,7 +240,7 @@
                             (reduce clojure.set/union (map :category-list group-list))))
 
         filelist (download-parse-filelist-file)
-        
+
         ;; there are 186 (at time of writing) addons scraped from the site that are not present in the filelist.json file.
         ;; these appear to be discontinued/obsolete/beta-only/'removed at author's request'/etc type addons.
         ;; remove these addons from the addon-list
