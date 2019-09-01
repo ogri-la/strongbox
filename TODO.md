@@ -91,6 +91,8 @@ see CHANGELOG.md for a more formal list of changes by release
     - 'install-dir' is ambiguous, it could be talking about installation dir of wowman
     - done
         - we now have 'addon-dir' and 'addon-dir-list' 
+* move raynes.fs to clj-commons/fs
+    - done
 
 ### todo
 
@@ -110,13 +112,14 @@ see CHANGELOG.md for a more formal list of changes by release
 * can a list of subscribers be setup in github to announce releases?
 * coloured warnings/errors on console output
     - when running with :debug on the wall of text is difficult to read
-* moves raynes.fs to clj-commons/fs
 * 'default' action in the cli should exit with retcode other than 0
     - it means an action wasn't specified or an unsupported action was specified
         - main/validate would prevent casual bypassing of this
 
 ## todo bucket
 
+* gui tests are bypassing the path wrangling because the envvar library is using thread-local `binding`
+    - change path access to an atom
 * remove 'updating' catalogs
     - a full weekly scrape is good enough
     - this logic has introduced a *lot* of code that can be removed
