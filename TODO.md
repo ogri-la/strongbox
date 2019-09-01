@@ -117,6 +117,16 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
+* short catalog, full catalog
+    - the catalog is getting big now and will only get larger
+        - curseforge and wowinterface keep accumulating new addons
+        - other sources will come along
+    - a lot of addons could be removed as simply being 'too old'
+        - addons that haven't been updated for two or three releases (6 years) for example
+    - I want to preserve the entirety of the catalog if possible though
+        - perhaps a game setting to opt-in to the larger download
+    - investigate how small we can reasonably get the catalog
+        - might tie in with creating a database
 * remove 'updating' catalogs
     - a full weekly scrape is good enough
     - this logic has introduced a *lot* of code that can be removed
