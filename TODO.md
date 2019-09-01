@@ -93,6 +93,9 @@ see CHANGELOG.md for a more formal list of changes by release
         - we now have 'addon-dir' and 'addon-dir-list' 
 * move raynes.fs to clj-commons/fs
     - done
+* can a list of subscribers be setup in github to announce releases?
+    - done
+        - see https://github.com/ogri-la/wowman/issues/37
 
 ### todo
 
@@ -102,6 +105,14 @@ see CHANGELOG.md for a more formal list of changes by release
         - we'll need to add a 'game-tracks' type list and munge a value from it's 'compatibility' list
 * regression, update? column is no longer being populated
     - all tests passing. this means you need more and better tests
+
+## todo bucket
+* coloured warnings/errors on console output
+    - when running with :debug on the wall of text is difficult to read
+    - I'm thinking about switching away from timbre to something more traditional
+        - he's not addressing tickets
+        - it may have been simpler to use in 3.x.x but in 4.x.x it's gotten a bit archaic
+        - I can't drop hostname without leaving pretty-printed stacktraces behind
 * add checksum checks after downloading
     - curseforge have an md5 that can be used
         - unfortunately no checksum in api results
@@ -109,15 +120,6 @@ see CHANGELOG.md for a more formal list of changes by release
             - fingerprint is 9 digits and all decimal, so not a hex digest
     - wowinterface checksum is hidden behind a javascript tabber but still available
         - wowinterface do have a md5sum in results! score
-* can a list of subscribers be setup in github to announce releases?
-* coloured warnings/errors on console output
-    - when running with :debug on the wall of text is difficult to read
-* 'default' action in the cli should exit with retcode other than 0
-    - it means an action wasn't specified or an unsupported action was specified
-        - main/validate would prevent casual bypassing of this
-
-## todo bucket
-
 * gui tests are bypassing the path wrangling because the envvar library is using thread-local `binding`
     - change path access to an atom
 * remove 'updating' catalogs
