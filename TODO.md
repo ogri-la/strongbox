@@ -96,13 +96,15 @@ see CHANGELOG.md for a more formal list of changes by release
 * can a list of subscribers be setup in github to announce releases?
     - done
         - see https://github.com/ogri-la/wowman/issues/37
-
-### todo
-
+        - discarded, see 'Watch -> Releases'
 * classic addons handling
     - wowinterface support now after curseforge support led the way
         - the filedetails.json data will need to be merged with the catalog
         - we'll need to add a 'game-tracks' type list and munge a value from it's 'compatibility' list
+    - done
+
+### todo
+
 * regression, update? column is no longer being populated
     - all tests passing. this means you need more and better tests
 
@@ -122,6 +124,16 @@ see CHANGELOG.md for a more formal list of changes by release
         - wowinterface do have a md5sum in results! score
 * gui tests are bypassing the path wrangling because the envvar library is using thread-local `binding`
     - change path access to an atom
+* short catalog, full catalog
+    - the catalog is getting big now and will only get larger
+        - curseforge and wowinterface keep accumulating new addons
+        - other sources will come along
+    - a lot of addons could be removed as simply being 'too old'
+        - addons that haven't been updated for two or three releases (6 years) for example
+    - I want to preserve the entirety of the catalog if possible though
+        - perhaps a game setting to opt-in to the larger download
+    - investigate how small we can reasonably get the catalog
+        - might tie in with creating a database
 * remove 'updating' catalogs
     - a full weekly scrape is good enough
     - this logic has introduced a *lot* of code that can be removed

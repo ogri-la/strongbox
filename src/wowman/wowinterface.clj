@@ -193,6 +193,38 @@
                                   :addon-summary-list merged-addons-list}))
     catalog))
 
+(defn download-parse-filelist-file
+  "returns a map of wowinterface addons, keyed by their :source-id (as a string).
+  wowinterface.com has a single large file with all/most of their addon data in it called 'filelist.json'.
+  the addon details endpoint is missing supported versions of wow it in.
+  Instead that data is in this list and must be incorporated in the catalog."
+  []
+  (let [url "https://api.mmoui.com/v3/game/WOW/filelist.json"
+        resp (http/download url)
+        file-details (utils/from-json resp)
+        file-details (mapv (fn [addon]
+                             (update addon :UID #(Integer/parseInt %))) file-details)]
+    (group-by :UID file-details)))
+
+(defn expand-addon-with-filelist
+  [filelist addon]
+  (let [filelist-addon (first (get filelist (:source-id addon)))
+        ;; supported game version is not the same as game track ('classic' or 'retail')
+        ;; wowinterface conflates the two (or am I splitting hairs?)
+        ;; if 'WoW Classic' is found, then the 'classic' game track is supported
+        ;; if more results are found, retail is supported as well
+        compatibility (->> filelist-addon :UICompatibility (map :name) set)
+        many-results? (> (count compatibility) 1)
+        wowi-classic "WoW Classic"
+
+        mapping {[wowi-classic true]  #{"classic" "retail"}
+                 [wowi-classic false] #{"classic"}
+                 [nil true] #{"retail"}
+                 [nil false] #{"retail"}}
+
+        key [(some #{wowi-classic} compatibility) many-results?]]
+    (assoc addon :game-track-list (get mapping key))))
+
 (defn scrape
   [output-path]
   (let [category-pages (keys category-pages) ;; [cat23.html, ...]
@@ -206,6 +238,17 @@
                          :let [addon (first group-list)]]
                      (assoc addon :category-list
                             (reduce clojure.set/union (map :category-list group-list))))
+
+        filelist (download-parse-filelist-file)
+
+        ;; there are 186 (at time of writing) addons scraped from the site that are not present in the filelist.json file.
+        ;; these appear to be discontinued/obsolete/beta-only/'removed at author's request'/etc type addons.
+        ;; remove these addons from the addon-list
+        addon-list (filter (fn [addon]
+                             (get filelist (:source-id addon))) addon-list)
+
+        ;; moosh extra data into each addon from the filelist
+        addon-list (mapv (partial expand-addon-with-filelist filelist) addon-list)
 
         ;; ensure addon keys are ordered for better diffs
         addon-list (mapv #(into (omap/ordered-map) (sort %)) addon-list)

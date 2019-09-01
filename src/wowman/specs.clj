@@ -16,13 +16,14 @@
   [path string?, ext-list ::list-of-strings]
   (some #{(fs/extension path)} ext-list))
 
-;; a subset of addon attributes, just those that can be scraped from the listing pages
+;; addon data that can be scraped from the listing pages
 (s/def ::addon-summary
   (s/keys :req-un [::uri ::name ::label ::category-list ::updated-date ::download-count]
           :opt [::source ;; only present in catalog which messes with tests right now
-                ::source-id ;; make required if/when we switch to wowinterface api
+                ::source-id ;; make required when we drop html scraping
                 ::description ;; wowinterface summaries have no description
                 ::created-date ;; wowinterface summaries have no created date
+                ::game-track-list ;; more of a set, really
                 ]))
 
 ;; 'expanded' addon summary, everything we need in order to download an addon
@@ -114,6 +115,7 @@
 (s/def ::install-dir (s/nilable ::extant-dir))
 (s/def ::debug? boolean?)
 (s/def ::game-track #{"retail" "classic"})
+(s/def ::game-track-list ::game-track) ;; just an alias for the catalog, consistent with category-list (also a set)
 (s/def ::addon-dir ::extant-dir)
 (s/def ::selected? boolean?)
 (s/def ::addon-dir-map (s/keys :req-un [::addon-dir ::game-track]))
