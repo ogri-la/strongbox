@@ -194,10 +194,10 @@
     catalog))
 
 (defn download-parse-filelist-file
-  "returns a map of wowinterface addons, keyed by their :source-id (as a string)
+  "returns a map of wowinterface addons, keyed by their :source-id (as a string).
   wowinterface.com has a single large file with all/most of their addon data in it called 'filelist.json'.
-  the addon details endpoint doesn't have what is needed to know which versions of wow it is compatible with
-  when creating a wowinterface catalog we need data from this fileDetails file."
+  the addon details endpoint is missing supported versions of wow it in.
+  Instead that data is in this list and must be incorporated in the catalog."
   []
   (let [url "https://api.mmoui.com/v3/game/WOW/filelist.json"
         resp (http/download url)
@@ -241,13 +241,13 @@
 
         filelist (download-parse-filelist-file)
         
-        ;; there are 186 (at time of writing) addons scraped from the site that are not present in the filelist.json file
-        ;; these appear to be discontinued/obsolete or beta-only or removed at author's request, etc type addons
+        ;; there are 186 (at time of writing) addons scraped from the site that are not present in the filelist.json file.
+        ;; these appear to be discontinued/obsolete/beta-only/'removed at author's request'/etc type addons.
         ;; remove these addons from the addon-list
         addon-list (filter (fn [addon]
                              (get filelist (:source-id addon))) addon-list)
 
-        ;; moosh extra data into each addon from their 'api'
+        ;; moosh extra data into each addon from the filelist
         addon-list (mapv (partial expand-addon-with-filelist filelist) addon-list)
 
         ;; ensure addon keys are ordered for better diffs

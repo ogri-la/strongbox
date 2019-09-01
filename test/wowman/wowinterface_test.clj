@@ -80,6 +80,6 @@
                            :version "8.2.10",
                            :interface-version 80200})]
       (with-fake-routes-in-isolation fake-routes
-        ;; the suspicious 'pause' here taking 461 msecs of 480 msec execution is the conversion of the body into a html snippet
+        ;; the suspicious pause here taking 461 msecs of 480 msec execution is the conversion of the body into a html snippet
         (let [results (wowinterface/expand-summary addon-summary)]
           (is (= expected results)))))))

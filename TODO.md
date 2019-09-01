@@ -97,13 +97,14 @@ see CHANGELOG.md for a more formal list of changes by release
     - done
         - see https://github.com/ogri-la/wowman/issues/37
         - discarded, see 'Watch -> Releases'
-
-### todo
-
 * classic addons handling
     - wowinterface support now after curseforge support led the way
         - the filedetails.json data will need to be merged with the catalog
         - we'll need to add a 'game-tracks' type list and munge a value from it's 'compatibility' list
+    - done
+
+### todo
+
 * regression, update? column is no longer being populated
     - all tests passing. this means you need more and better tests
 
