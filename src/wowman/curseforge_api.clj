@@ -61,7 +61,7 @@
 
         latest-release (-> result latest-versions-by-game-track (get game-track-alias) first)]
     (when-not latest-release
-      (warn (format "no '%s' release available for '%s'" game-track (:name addon-summary))))
+      (warn (format "no '%s' release available for '%s' on curseforge" game-track (:name addon-summary))))
     (when latest-release
       (let [;; api value is empty in some cases (carbonite, improved loot frames, skada damage meter)
             ;; this value overrides the one found in .toc files, so if it can't be scraped, use the .toc version

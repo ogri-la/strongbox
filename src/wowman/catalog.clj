@@ -25,7 +25,7 @@
 
 (defmethod expand-summary :wowinterface
   [addon-summary game-track]
-  (wowinterface-api/expand-summary addon-summary))
+  (wowinterface-api/expand-summary addon-summary game-track))
 
 (defmethod expand-summary :default
   [addon-summary game-track]
