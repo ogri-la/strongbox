@@ -38,12 +38,11 @@
       (with-fake-routes-in-isolation fake-routes
         (with-env [:xdg-data-home (join temp-dir-path "data")
                    :xdg-config-home (join temp-dir-path "config")]
-          ;; Is this still necessary any more? I guess it improves test isolation
           (with-cwd temp-dir-path
             (debug "created temp working directory" fs/*cwd*)
             (f))))
       (finally
-        (debug "destroying temp working directory" fs/*cwd*) ;; "with contents" (vec (file-seq fs/*cwd*)))
+        (debug "destroying temp working directory" temp-dir-path) ;; "with contents" (vec (file-seq fs/*cwd*)))
         (fs/delete-dir temp-dir-path)))))
 
 ;; usage:
