@@ -680,7 +680,7 @@ If you modify this Program, or any covered work, by linking or combining it with
 * clj-http
 * cheshire
 * seesaw
-* me.raynes/fs
+* clj-commons/fs
 * slugify
 * trptcolin/versioneer
 * org.flatland/ordered

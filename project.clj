@@ -18,7 +18,7 @@
                  [clj-http "3.10.0"] ;; better http slurping
                  [cheshire "5.8.1"] ;; nicer json serialisation (indents)
                  [seesaw "1.5.0"] ;; swing
-                 [me.raynes/fs "1.4.6"] ;; file system wrangling
+                 [clj-commons/fs "1.5.0"] ;; file system wrangling
                  [slugify "0.0.1"]
                  [trptcolin/versioneer "0.2.0"] ;; version number wrangling. it's more involved than you might suspect
                  [org.flatland/ordered "1.5.2"] ;; better ordered map
