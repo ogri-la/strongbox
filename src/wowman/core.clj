@@ -599,27 +599,28 @@
           wrapper (affects-addon-wrapper catalog/expand-summary)]
       (wrapper addon-summary game-track))))
 
+(defn check-for-update
+  [toc]
+  (let [check? (and
+                ;; don't attempt expanding if we have no catalog match
+                (:matched? toc)
+                ;; don't expand if we have a dummy uri 
+                ;; (this isn't the right place for test code, but eh)
+                (nil? (clojure.string/index-of (:uri toc) "example.org")))
+        no-result {:update? false}
+        result (when check?
+                 (expand-summary-wrapper toc))]
+    (if result
+      (merge-addons toc result)
+      (merge toc no-result))))
+
 (defn-spec check-for-updates nil?
   "downloads full details for all installed addons that can be found in summary list"
   []
   (when (get-state :selected-addon-dir)
     (info "checking for updates")
-    (let [;; this sucks, make it better
-          check-for-update (fn [toc]
-                             (let [check? (and
-                                            ;; don't attempt expanding if we have no catalog match
-                                           (:matched? toc)
-                                            ;; don't expand if we have a dummy uri 
-                                            ;; (this isn't the right place for test code, but eh)
-                                           (nil? (clojure.string/index-of (:uri toc) "example.org")))
-                                   no-result {:update? false}
-                                   result (when check?
-                                            (expand-summary-wrapper toc))]
-                               (if result
-                                 (merge-addons toc result)
-                                 (merge toc no-result))))]
-      (update-installed-addon-list! (mapv check-for-update (get-state :installed-addon-list)))
-      (info "done checking for updates"))))
+    (update-installed-addon-list! (mapv check-for-update (get-state :installed-addon-list)))
+    (info "done checking for updates")))
 
 (defn alias-wrangling
   "temporary code until it finds a better home. downloads the top-50 addons and prints out the addon's and subaddon's labels. see `fs/aliases`"
