@@ -4,111 +4,11 @@ this is my own scratchpad for keeping track of things. it gets truncated frequen
 
 see CHANGELOG.md for a more formal list of changes by release
 
-## 0.9.0 release
+## 0.10.0 release
 
 ### done
 
-* investigate switching from scraping to api
-    - maintain the scraping interface as well? 
-        - am I worried the api will go away??
-        - added a separate todo for removing html scraping interface
-    - curseforge 
-        - spec here: https://twitchappapi.docs.apiary.io/
-        - example here: https://addons-ecs.forgesvc.net/api/v2/addon/3358/files
-        - switching to api-scraped addons I've gone from 6998 to 6763 (253 difference)
-            - can't see any pattern between them
-            - after closer inspection I still can't see anything
-            - I can't leave any addon behind, especially not for mysterious reasons
-                - I'm going to generate the catalog the old fashioned way but add the project id
-                - project id can be used with api
-                    - missing addons are available directly
-            - layday (of instawow) has been good enough to do some investigation of the missing addons
-                - they are either: marked as experimental, unavailable or have no files that can be downloaded
-                - one missing addon popped up overnight in a fresh scrape which was interesting
-                    - it's last modified date was last month though
-        - add project id to catalog
-            - done
-        - use api to expand addon summaries
-            - done
-    - wowinterface
-        - investigate
-            - https://github.com/layday/instawow/blob/master/instawow/resolvers.py#L158-L160
-        - catalog generation
-            - api not suitable for catalog generation
-                - it's cool I can download all the details in just one call, but there is no category information
-                - it's already missing a description and a created date as well
-            - done
-        - addon expansion
-            - there is actually very little data in the /filedetails endpoint
-            - there is more addon data in the full catalog download that the details endpoint
-                - perhaps combine the two?
-                    - do a web scrape and moosh it with the API catalog?
-            - done
-* add :source-id and :source to .wowman.json file
-    - done
-* use :source-id as preferred way to match installed addons to the catalog
-    - preserve backwards compatibility for older installations missing :source-id
-    - preserve extended matching (on :name, etc) for addons not yet matched to catalog
-    - done
-        - I just added another dimension to the matching, nothing else was changed
-* un-hid by default the interface-version column ('WoW') in the installed addons tab
-    - this will give a *hint* about which version of an addon is installed
-* support for multiple addon directories
-    - well, supporting for remembering and quickly switching between addon dirs
-        - done
-    - add ability to remove an addon-dir
-        - done
-* classic addons handling
-    - curseforge have addons bundling classic versions in with regular versions
-        - the api distinguishes them with a 'game_flavour' field
-    - change :interface-verson to a list?
-        - wowinterface supports this with it's "UICompatibility" 
-        - curseforge has "gameVersion" and "sortableGameVersion" 
-            - but these look like they're handling the most recent release (which may or may not be classic)
-            - better yet, CF has "gameVersionLatestFiles" with a "gameVersion" and "gameVersionFlavor"
-                - also has "fileType" which indicates alpha (3)/beta (2)/stable (1) type releases
-                - can't count on 'classic' and 'retail' ever being the only two.
-                    - the interface version and game flavour should be combined
-                        - (classic, 1.13.2)
-                        - (retail, 8.2.0)
-                        - (classic-bc, 2.?.?)
-                    - https://us.forums.blizzard.com/en/wow/t/will-classic-have-the-expansions-added/133699/19
-    - calling these 'game tracks'
-        - an addon-dir can switch between different tracks and the right release will be downloaded for them
-            - rather than 'the most recent' release
-        - only affects curseforge right now as wowinterface doesn't appear to do 'releases' like cforge does
-        - addons with no release for given track get a warning and nothing is installed
-    - wowinterface support now after curseforge support led the way
-        - the filedetails.json data will need to be merged with the catalog
-        - we'll need to add a 'game-tracks' type list and munge a value from it's 'compatibility' list
-    - done
-* bug, I don't see deadly-boss-mods-classic in wowi catalog
-    - it should have definitely made it into the last scrape
-    - fixed
-        - wowinterface.clj was only scraping the first collection of addon categories
-* ensure test coverage doesn't drop below threshold
-    - done
-        - threshold is at 72%
-        - local and travis reports are *slightly* different for some reason, so threshold needs some padding
-* rename 'install-dir' config to 'addon-dir' perhaps?
-    - 'install-dir' is ambiguous, it could be talking about installation dir of wowman
-    - done
-        - we now have 'addon-dir' and 'addon-dir-list' 
-* move raynes.fs to clj-commons/fs
-    - done
-* can a list of subscribers be setup in github to announce releases?
-    - done
-        - see https://github.com/ogri-la/wowman/issues/37
-        - discarded, see 'Watch -> Releases'
-* regression, update? column is no longer being populated
-    - all tests passing. this means you need more and better tests
-    - done
-* bug in removing directories
-    - removing the last one results in a stack trace
-    
 ### todo
-
-* 0.9.0 release
 
 ## todo bucket
 * coloured warnings/errors on console output
