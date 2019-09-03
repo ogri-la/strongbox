@@ -106,10 +106,12 @@ see CHANGELOG.md for a more formal list of changes by release
     - all tests passing. this means you need more and better tests
     - done
     
-### todo
-
 * bug in removing directories
     - removing the last one results in a stack trace
+    
+### todo
+
+* 0.9.0 release
 
 ## todo bucket
 * coloured warnings/errors on console output
