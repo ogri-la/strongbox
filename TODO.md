@@ -10,13 +10,12 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### todo
 
-## todo bucket
-* coloured warnings/errors on console output
-    - when running with :debug on the wall of text is difficult to read
-    - I'm thinking about switching away from timbre to something more traditional
-        - he's not addressing tickets
-        - it may have been simpler to use in 3.x.x but in 4.x.x it's gotten a bit archaic
-        - I can't drop hostname without leaving pretty-printed stacktraces behind
+* bug, 'clear cache' didn't delete the catalog.json
+* user-agent needs to be updated
+    - it using a naive (subs ...) call
+* gui tests are bypassing the path wrangling because the envvar library is using thread-local `binding`
+    - change path access to an atom
+    - I *think* this may have something to do with a truncated catalog I've encountered now (twice)
 * add checksum checks after downloading
     - curseforge have an md5 that can be used
         - unfortunately no checksum in api results
@@ -24,8 +23,13 @@ see CHANGELOG.md for a more formal list of changes by release
             - fingerprint is 9 digits and all decimal, so not a hex digest
     - wowinterface checksum is hidden behind a javascript tabber but still available
         - wowinterface do have a md5sum in results! score
-* gui tests are bypassing the path wrangling because the envvar library is using thread-local `binding`
-    - change path access to an atom
+* investigate switching to an embedded database
+    - there is a lot of catalog-wrangling code happening and it's getting obscure
+    - searching for addons is really limited
+        - especially now that we have new dimensions
+    - db creation could happen in place of catalog generation
+        - or the database could be created from the catalog
+            - if db is smaller than catalog, this might be a consideration
 * short catalog, full catalog
     - the catalog is getting big now and will only get larger
         - curseforge and wowinterface keep accumulating new addons
@@ -41,12 +45,24 @@ see CHANGELOG.md for a more formal list of changes by release
     - this logic has introduced a *lot* of code that can be removed
     - scraping curseforge api doesn't seem too onerous anymore
 * remove html scraping of catalogs
-    - pending investigation of wowinterface
-* bug, 'clear cache' didn't delete the catalog.json
+    - wowinterface will have some exceptions
+* 'scrape' and 'update' are not great terms
+    - scrape means 'complete update'
+    - update means 'partial update'
+    - I may be removing the updating of catalogs in favour of full scrapes
 * bug, curseforge.json is getting a strange duplication of results while generating the catalog
     - this is preventing automated catalog *updates*, not the full regeneration apparently
     - I can't replicate this anymore. It may show up later, but for now it's blocking a 0.8.0 release
     - also, catalog generation is now done via the api
+
+## todo bucket
+
+* coloured warnings/errors on console output
+    - when running with :debug on the wall of text is difficult to read
+    - I'm thinking about switching away from timbre to something more traditional
+        - he's not addressing tickets
+        - it may have been simpler to use in 3.x.x but in 4.x.x it's gotten a bit archaic
+        - I can't drop hostname without leaving pretty-printed stacktraces behind
 * catalog, normalise catagories between addons that overlap
     - perhaps expand them into 'tags'? 
     - a lot of these categories are composite
@@ -63,10 +79,6 @@ see CHANGELOG.md for a more formal list of changes by release
         - if we start doing download concurrently, we need to pass our binds to the threads
             - which I'm not sure if is possible
         - moving back into bucket until I get around to doing parallel downloads
-* 'scrape' and 'update' are not great terms
-    - scrape means 'complete update'
-    - update means 'partial update'
-    - I may be removing the updating of catalogs in favour of full scrapes
 * allow user to specify their own catalog
     - what can we do to support adhoc lists of addons from unsupported hosts?
     - we have both curseforge and wowinterface supported now

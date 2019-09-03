@@ -35,7 +35,7 @@ Just for my own reference
 * merge changes from master
 * update TODO, truncating old DONE
 * update project.clj, changing version to next version with "-unreleased" after it
-* commit
+* commit+push
 
 * download release file to /tmp
 * run sha256sum wowman-x.x.x-standalone.jar
