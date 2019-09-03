@@ -4,27 +4,14 @@ this is my own scratchpad for keeping track of things. it gets truncated frequen
 
 see CHANGELOG.md for a more formal list of changes by release
 
-## 0.8.1 release
+## 0.9.0 release
 
 ### done
-
-* api
-    - curseforge
-        - I've added some initial logic that will generate the curseforge catalog and fetch addon details
-            - not hooked in to anything yet
-* bug, muffinfactionaliser have removed their files and wowman is crashing
-    - see issue here: https://github.com/ogri-la/wowman/issues/26
-    - *any* problem while scraping should issue an error, Keep Calm and Carry On
-    - done
-        - will do a 0.9.1 release for this I think
-
-### todo
 
 * investigate switching from scraping to api
     - maintain the scraping interface as well? 
         - am I worried the api will go away??
-    - catalogs won't be going away, their equivalent will still need to be scraped
-        - certain calls could be switched though, like expand-addon-summary
+        - added a separate todo for removing html scraping interface
     - curseforge 
         - spec here: https://twitchappapi.docs.apiary.io/
         - example here: https://addons-ecs.forgesvc.net/api/v2/addon/3358/files
@@ -35,32 +22,131 @@ see CHANGELOG.md for a more formal list of changes by release
                 - I'm going to generate the catalog the old fashioned way but add the project id
                 - project id can be used with api
                     - missing addons are available directly
+            - layday (of instawow) has been good enough to do some investigation of the missing addons
+                - they are either: marked as experimental, unavailable or have no files that can be downloaded
+                - one missing addon popped up overnight in a fresh scrape which was interesting
+                    - it's last modified date was last month though
         - add project id to catalog
+            - done
         - use api to expand addon summaries
+            - done
     - wowinterface
+        - investigate
+            - https://github.com/layday/instawow/blob/master/instawow/resolvers.py#L158-L160
+        - catalog generation
+            - api not suitable for catalog generation
+                - it's cool I can download all the details in just one call, but there is no category information
+                - it's already missing a description and a created date as well
+            - done
+        - addon expansion
+            - there is actually very little data in the /filedetails endpoint
+            - there is more addon data in the full catalog download that the details endpoint
+                - perhaps combine the two?
+                    - do a web scrape and moosh it with the API catalog?
+            - done
+* add :source-id and :source to .wowman.json file
+    - done
+* use :source-id as preferred way to match installed addons to the catalog
+    - preserve backwards compatibility for older installations missing :source-id
+    - preserve extended matching (on :name, etc) for addons not yet matched to catalog
+    - done
+        - I just added another dimension to the matching, nothing else was changed
+* un-hid by default the interface-version column ('WoW') in the installed addons tab
+    - this will give a *hint* about which version of an addon is installed
+* support for multiple addon directories
+    - well, supporting for remembering and quickly switching between addon dirs
+        - done
+    - add ability to remove an addon-dir
+        - done
 * classic addons handling
     - curseforge have addons bundling classic versions in with regular versions
         - the api distinguishes them with a 'game_flavour' field
-* add checksum checks after downloading
-    - curseforge have an md5 that can be used
-    - wowinterface checksum is hidden behind a javascript tabber but still available
-* can a list of subscribers be setup in github to announce releases?
-* coloured warnings/errors on console output
-    - when running with :debug on the wall of text is difficult to read
-* moves raynes.fs to clj-commons/fs
-* 'default' action in the cli should exit with retcode other than 0
-    - it means an action wasn't specified or an unsupported action was specified
-        - main/validate would prevent casual bypassing of this
-
-## todo bucket
-
-* bug, 'clear cache' didn't delete the catalog.json
+    - change :interface-verson to a list?
+        - wowinterface supports this with it's "UICompatibility" 
+        - curseforge has "gameVersion" and "sortableGameVersion" 
+            - but these look like they're handling the most recent release (which may or may not be classic)
+            - better yet, CF has "gameVersionLatestFiles" with a "gameVersion" and "gameVersionFlavor"
+                - also has "fileType" which indicates alpha (3)/beta (2)/stable (1) type releases
+                - can't count on 'classic' and 'retail' ever being the only two.
+                    - the interface version and game flavour should be combined
+                        - (classic, 1.13.2)
+                        - (retail, 8.2.0)
+                        - (classic-bc, 2.?.?)
+                    - https://us.forums.blizzard.com/en/wow/t/will-classic-have-the-expansions-added/133699/19
+    - calling these 'game tracks'
+        - an addon-dir can switch between different tracks and the right release will be downloaded for them
+            - rather than 'the most recent' release
+        - only affects curseforge right now as wowinterface doesn't appear to do 'releases' like cforge does
+        - addons with no release for given track get a warning and nothing is installed
+    - wowinterface support now after curseforge support led the way
+        - the filedetails.json data will need to be merged with the catalog
+        - we'll need to add a 'game-tracks' type list and munge a value from it's 'compatibility' list
+    - done
 * bug, I don't see deadly-boss-mods-classic in wowi catalog
     - it should have definitely made it into the last scrape
+    - fixed
+        - wowinterface.clj was only scraping the first collection of addon categories
+* ensure test coverage doesn't drop below threshold
+    - done
+        - threshold is at 72%
+        - local and travis reports are *slightly* different for some reason, so threshold needs some padding
+* rename 'install-dir' config to 'addon-dir' perhaps?
+    - 'install-dir' is ambiguous, it could be talking about installation dir of wowman
+    - done
+        - we now have 'addon-dir' and 'addon-dir-list' 
+* move raynes.fs to clj-commons/fs
+    - done
+* can a list of subscribers be setup in github to announce releases?
+    - done
+        - see https://github.com/ogri-la/wowman/issues/37
+        - discarded, see 'Watch -> Releases'
+* regression, update? column is no longer being populated
+    - all tests passing. this means you need more and better tests
+    - done
+* bug in removing directories
+    - removing the last one results in a stack trace
+    
+### todo
+
+* 0.9.0 release
+
+## todo bucket
+* coloured warnings/errors on console output
+    - when running with :debug on the wall of text is difficult to read
+    - I'm thinking about switching away from timbre to something more traditional
+        - he's not addressing tickets
+        - it may have been simpler to use in 3.x.x but in 4.x.x it's gotten a bit archaic
+        - I can't drop hostname without leaving pretty-printed stacktraces behind
+* add checksum checks after downloading
+    - curseforge have an md5 that can be used
+        - unfortunately no checksum in api results
+        - they do have a 'fileLength' and a 'fingerprint'
+            - fingerprint is 9 digits and all decimal, so not a hex digest
+    - wowinterface checksum is hidden behind a javascript tabber but still available
+        - wowinterface do have a md5sum in results! score
+* gui tests are bypassing the path wrangling because the envvar library is using thread-local `binding`
+    - change path access to an atom
+* short catalog, full catalog
+    - the catalog is getting big now and will only get larger
+        - curseforge and wowinterface keep accumulating new addons
+        - other sources will come along
+    - a lot of addons could be removed as simply being 'too old'
+        - addons that haven't been updated for two or three releases (6 years) for example
+    - I want to preserve the entirety of the catalog if possible though
+        - perhaps a game setting to opt-in to the larger download
+    - investigate how small we can reasonably get the catalog
+        - might tie in with creating a database
+* remove 'updating' catalogs
+    - a full weekly scrape is good enough
+    - this logic has introduced a *lot* of code that can be removed
+    - scraping curseforge api doesn't seem too onerous anymore
+* remove html scraping of catalogs
+    - pending investigation of wowinterface
+* bug, 'clear cache' didn't delete the catalog.json
 * bug, curseforge.json is getting a strange duplication of results while generating the catalog
     - this is preventing automated catalog *updates*, not the full regeneration apparently
     - I can't replicate this anymore. It may show up later, but for now it's blocking a 0.8.0 release
-* ensure test coverage doesn't drop below threshold
+    - also, catalog generation is now done via the api
 * catalog, normalise catagories between addons that overlap
     - perhaps expand them into 'tags'? 
     - a lot of these categories are composite
@@ -77,15 +163,10 @@ see CHANGELOG.md for a more formal list of changes by release
         - if we start doing download concurrently, we need to pass our binds to the threads
             - which I'm not sure if is possible
         - moving back into bucket until I get around to doing parallel downloads
-* support for multiple addon directories
-    - well, supporting for remembering and quickly switching between addon dirs
 * 'scrape' and 'update' are not great terms
     - scrape means 'complete update'
     - update means 'partial update'
-* curseforge scraping is very quiet when everything is cached
-    - unlike wowinterface
-* rename 'install-dir' config to 'addon-dir' perhaps?
-    - 'install-dir' is ambiguous, it could be talking about installation dir of wowman
+    - I may be removing the updating of catalogs in favour of full scrapes
 * allow user to specify their own catalog
     - what can we do to support adhoc lists of addons from unsupported hosts?
     - we have both curseforge and wowinterface supported now
@@ -108,6 +189,9 @@ see CHANGELOG.md for a more formal list of changes by release
 * windows support
     - eh. I figure I can do it with a VM. I just don't really wanna.
     - for the 1.0.0 release
+    - I now have an old WinXP (64bit!) machine
+        - one of the first 64bit Athlons available
+        - this should force some performance optimisations as well
 * memory usage
     - we're big and fat :(
     - lets explore some ways to measure and then reduce memory usage
@@ -122,6 +206,7 @@ see CHANGELOG.md for a more formal list of changes by release
             - :group-id, :group-count
         - how to pick preferred attributes without continuous (or key else other-key) ?
             - (getattr addon :label) ;; does multiple lookups ...? seems kinda meh
+    - post 1.0
 * toggleable highlighers as a menuitem
     - highlight unmatched
     - highlight updates
@@ -131,11 +216,18 @@ see CHANGELOG.md for a more formal list of changes by release
 * download progress bar *inside* the grid ...?
     - pure fantasy?
 * nightly unstable builds
+    - building the 'develop' branch once a day
+        - making it available as the 'unstable' release that always gets replaced
+    - project.clj "x.y.z-unreleased" would be changed to "x.y.z-unstable"
+    - development would happen mainly in feature branches
 * internationalisation? 
     - Akitools has no english description but it does have a "Notes-zhCN" in the toc file that could be used
+    - wowman was mentioned on a french forum the other day ..
 * a 'stop' button to stop updates would be nice ...
     - closing gui would stop ongoing updates
 * bug, changing sort order during refresh doesn't reflect which addon is being updated
+    - I think changing column ordering and moving columns should be disabled while updates happen
+        - just freeze or disable them or something.
 * download addon details in parallel
     - speed benefits, mostly
     - share a pool of connections between threads
@@ -162,6 +254,8 @@ see CHANGELOG.md for a more formal list of changes by release
     - rar is a proprietary format
     - the vast majority of addons use .zip
     - no native support in java/clojure for it
+        - library here: https://github.com/junrar/junrar
+            - just found it while going through minion source
     - would I consider .tar.gz distributed addons?
         - mmmmmmmm I want to say yes, but 'no', for now.
 * fallback to using :group-id (a uri) if curseforge.json is not available

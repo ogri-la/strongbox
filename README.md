@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/ogri-la/wowman.svg?branch=master)](https://travis-ci.org/ogri-la/wowman)
 
 `wowman` is an **open source**, **advertisement free** and **privacy respecting** addon manager for World of Warcraft. 
-It interacts with [www.curseforge.com](https://www.curseforge.com/wow/addons) and 
+It interacts with the Twitch (Curseforge) [Addons API](https://addons-ecs.forgesvc.net) and 
 [wowinterface.com](https://wowinterface.com/addons.php) and with the addons in your `Addons` directory.
 
 ## Audience
@@ -67,7 +67,7 @@ This software also tries very hard to:
 I benefit so much from the hard work of those who write free and open source software, including addon developers, 
 that it's my privilege to offer this small piece back.
 
-[![wowman version 0.8.0](screenshot-0.8.0-installed-thumbnail.jpg)](screenshot-0.8.0-installed.png?raw=true) [![wowman version 0.8.0](screenshot-0.8.0-search-thumbnail.jpg)](screenshot-0.8.0-search.png?raw=true)
+[![wowman version 0.8.0](./screenshots/screenshot-0.8.0-installed-thumbnail.jpg)](./screenshots/screenshot-0.8.0-installed.png?raw=true) [![wowman version 0.8.0](./screenshots/screenshot-0.8.0-search-thumbnail.jpg)](./screenshots/screenshot-0.8.0-search.png?raw=true)
 
 ## Notes
 
@@ -91,9 +91,10 @@ Addon `.rar` files are not and will not be supported.
 
 This software interacts with the following remote hosts:
 
-* [www.curseforge.com](https://www.curseforge.com) and [wowinterface.com](https://wowinterface.com) to download detailed 
-addon data. These hosts may redirect requests.
-* [github.com/ogri-la](https://github.com/ogri-la), to download a list of summary addon information
+* Twitch (Curseforge) [Addons API](https://addons-ecs.forgesvc.net/) and it's [CDN](https://edge.forgecdn.net/) to 
+download detailed addon data.
+* [wowinterface.com](https://wowinterface.com) to download detailed addon data. These hosts may redirect requests.
+* [github.com/ogri-la](https://github.com/ogri-la), to download a collated list of summary addon data
 * [api.github.com](https://developer.github.com/v3/repos/releases), to download the latest `wowman` release data
 
 These interactions use a HTTP user agent header unique to `wowman` so that it may be identified easily.
@@ -116,24 +117,25 @@ See [CONTRIBUTING](CONTRIBUTING.md) for more detail.
 
 (I think)
 
-| name                        | url                                                  | Linux | Mac  | Windows | maintained? | f/oss? | source available? | ads? | EULA? | language   | 
-|-----------------------------|------------------------------------------------------|-------|------|---------|-------------|--------|-------------------|------|-------|------------| 
-| addon                       | https://github.com/vargen2/Addon                     | no    | no   | yes     | yes         | yes    | yes               | no   | no    | C#         | 
-| antiwinter/wowa             | https://github.com/antiwinter/wowa                   | yes*  | yes* | yes*    | yes         | yes    | no                | no   | no    | javascript | 
-| braier/wow-addon-updater    | https://www.braier.net/wow-addon-updater/index.html  | yes   | yes  | yes     | yes         | yes    | yes               | no   | no    | pascal     | 
-| cursebreaker                | https://github.com/AcidWeb/CurseBreaker              | no    | no   | yes     | yes         | yes    | yes               | no   | no    | python     | 
-| GitAddonsManager            | https://gitlab.com/woblight/GitAddonsManager         | yes   | ?    | ?       | yes         | yes    | yes               | no   | no    | C++        | 
-| instawow                    | https://github.com/layday/instawow                   | yes*  | yes* | yes*    | yes         | yes    | yes               | no   | no    | python     | 
-| lcurse                      | https://github.com/ephraim/lcurse                    | yes   | no   | no      | yes         | no     | yes               | no   | no    | python     | 
-| Minion                      | https://minion.mmoui.com/                            | yes*  | yes  | yes     | yes         | no     | no                | yes  | yes   | java       | 
-| nazarov-tech/wowa           | https://github.com/nazarov-tech/wowa                 | yes*  | yes* | yes     | yes         | yes    | yes               | no   | no    | python     | 
-| OpenAddOnManager            | https://github.com/OpenAddOnManager/OpenAddOnManager | no    | no   | yes     | yes         | yes    | yes               | no   | no    | C#         | 
-| Saionaro/wow-addons-updater | https://github.com/Saionaro/wow-addons-updater       | yes   | yes  | yes     | yes         | yes    | yes               | no   | no    | javascript | 
-| Tukui Client                | https://www.tukui.org/download.php?client=win        | no    | no   | yes     | yes         | no     | no                | ?    | ?     | ?          | 
-| WorldOfAddons               | https://github.com/WorldofAddons/worldofaddons       | yes*  | yes* | yes     | yes         | yes    | yes               | no   | no    | javascript | 
-| qwezarty/wow-addon-manager  | https://github.com/qwezarty/wow-addon-manager        | yes*  | no   | no      | yes         | yes    | yes               | no   | no    | python     | 
-| Lund259/WoW-Addon-Manager   | https://github.com/Lund259/WoW-Addon-Manager         | no    | no   | yes     | yes         | yes    | yes               | no   | no    | C#         | 
-| wowmatrix                   | https://www.wowmatrix.com/                           | yes   | yes  | yes     | yes         | no     | no                | yes  | yes   | ?          | 
+| name                           | url                                                  | Linux | Mac  | Windows | maintained? | f/oss? | source available? | ads? | EULA? | language   | 
+|--------------------------------|------------------------------------------------------|-------|------|---------|-------------|--------|-------------------|------|-------|------------| 
+| addon                          | https://github.com/vargen2/Addon                     | no    | no   | yes     | yes         | yes    | yes               | no   | no    | C#         | 
+| antiwinter/wowa                | https://github.com/antiwinter/wowa                   | yes*  | yes* | yes*    | yes         | yes    | no                | no   | no    | Javascript | 
+| braier/wow-addon-updater       | https://www.braier.net/wow-addon-updater/index.html  | yes   | yes  | yes     | yes         | yes    | yes               | no   | no    | Pascal     | 
+| erikabp123/ClassicAddonManager | https://github.com/erikabp123/ClassicAddonManager    | no    | no   | yes     | yes         | yes    | yes               | no   | no    | Java       | 
+| cursebreaker                   | https://github.com/AcidWeb/CurseBreaker              | no    | no   | yes     | yes         | yes    | yes               | no   | no    | Python     | 
+| GitAddonsManager               | https://gitlab.com/woblight/GitAddonsManager         | yes   | ?    | ?       | yes         | yes    | yes               | no   | no    | C++        | 
+| instawow                       | https://github.com/layday/instawow                   | yes*  | yes* | yes*    | yes         | yes    | yes               | no   | no    | Python     | 
+| lcurse                         | https://github.com/ephraim/lcurse                    | yes   | no   | no      | yes         | no     | yes               | no   | no    | Python     | 
+| Minion                         | https://minion.mmoui.com/                            | yes*  | yes  | yes     | yes         | no     | no                | yes  | yes   | Java       | 
+| nazarov-tech/wowa              | https://github.com/nazarov-tech/wowa                 | yes*  | yes* | yes     | yes         | yes    | yes               | no   | no    | Python     | 
+| OpenAddOnManager               | https://github.com/OpenAddOnManager/OpenAddOnManager | no    | no   | yes     | yes         | yes    | yes               | no   | no    | C#         | 
+| Saionaro/wow-addons-updater    | https://github.com/Saionaro/wow-addons-updater       | yes   | yes  | yes     | yes         | yes    | yes               | no   | no    | Javascript | 
+| Tukui Client                   | https://www.tukui.org/download.php?client=win        | no    | no   | yes     | yes         | no     | no                | ?    | ?     | ?          | 
+| WorldOfAddons                  | https://github.com/WorldofAddons/worldofaddons       | yes*  | yes* | yes     | yes         | yes    | yes               | no   | no    | Javascript | 
+| qwezarty/wow-addon-manager     | https://github.com/qwezarty/wow-addon-manager        | yes*  | no   | no      | yes         | yes    | yes               | no   | no    | Python     | 
+| Lund259/WoW-Addon-Manager      | https://github.com/Lund259/WoW-Addon-Manager         | no    | no   | yes     | yes         | yes    | yes               | no   | no    | C#         | 
+| wowmatrix                      | https://www.wowmatrix.com/                           | yes   | yes  | yes     | yes         | no     | no                | yes  | yes   | ?          | 
 
 \* with caveats. may require compilation, partial functionality or not work at all, or be officially unsupported, or ...
 

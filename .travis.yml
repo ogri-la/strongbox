@@ -7,6 +7,8 @@ jdk:
 services:
   - xvfb
 
+script: ./test.sh
+
 # https://github.com/travis-ci/travis-ci/issues/3897
 #branches:
 #    only:

@@ -11,8 +11,8 @@
     ;;[core :as core]
     [utils :as utils :refer [todt utcnow]]
     [specs :as sp]
-    [curseforge :as curseforge]
-    [wowinterface :as wowinterface]]))
+    [curseforge-api :as curseforge-api]
+    [wowinterface-api :as wowinterface-api]]))
 
 ;; ... this feels like boilerplate. better way?
 ;; curseforge/wowinterface won't be able to 'reach back' into catalog.clj ...
@@ -20,15 +20,15 @@
 (defmulti expand-summary (comp keyword :source))
 
 (defmethod expand-summary :curseforge
-  [addon-summary]
-  (curseforge/expand-summary addon-summary))
+  [addon-summary game-track]
+  (curseforge-api/expand-summary addon-summary game-track))
 
 (defmethod expand-summary :wowinterface
-  [addon-summary]
-  (wowinterface/expand-summary addon-summary))
+  [addon-summary game-track]
+  (wowinterface-api/expand-summary addon-summary game-track))
 
 (defmethod expand-summary :default
-  [addon-summary]
+  [addon-summary game-track]
   (error "malformed addon-summary:" (utils/pprint addon-summary)))
 
 ;;

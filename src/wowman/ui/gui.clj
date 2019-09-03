@@ -13,7 +13,7 @@
     [invoke :as ssi]
     [chooser :as chooser]
     [mig :as mig]
-    ;;[dev :refer [show-options show-events]]
+    [dev :refer [show-options show-events]]
     [color]
     [cursor :refer [cursor]]
     [swingx :as x]
@@ -24,8 +24,6 @@
    [orchestra.core :refer [defn-spec]]
    [orchestra.spec.test :as st]))
 
-(s/def ::content-pane #(instance? java.awt.Component %))
-
 (defn select-ui
   [& path]
   (if-let [ui (get-state :gui)]
@@ -34,6 +32,11 @@
 
 (def INSTALLED-TAB 0)
 (def SEARCH-TAB 1)
+
+(defn inspect
+  [x]
+  (show-events x)
+  (show-options x))
 
 (defn tab
   [title body]
@@ -76,9 +79,12 @@
   [_]
   nil)
 
-(defn handler [& fl]
+(defn handler
+  "returns a function that calls each given argument function sequentially, discards result, returns nil"
+  [& fn-list]
   (fn [_]
-    (doseq [f fl] (f))))
+    (doseq [f fn-list]
+      (f))))
 
 (defn async-handler
   "like `handler`, but each function is executed inside a `go` block instead of sequentially"
@@ -230,7 +236,7 @@
   []
   (let [picker (fn []
                  (when-let [dir (chooser/choose-file :type "select" :selection-mode :dirs-only)]
-                   (core/set-install-dir! (str dir))
+                   (core/set-addon-dir! (str dir))
                    (core/save-settings)))
         ;; important! release the event thread using async-handler else updates during process won't be shown until complete
         refresh-button (button "Refresh" (async-handler core/refresh))
@@ -238,12 +244,57 @@
 
         wow-dir-button (button "WoW directory" (async-handler picker))
 
-        wow-dir-label (ss/label :id :wow-dir-lbl :text (or (get-state :cfg :install-dir) "No directory"))
-        wow-dir-label-fn (fn [state]
-                           (ss/value! wow-dir-label (get-in state [:cfg :install-dir])))]
-    (state-bind [:cfg :install-dir] wow-dir-label-fn)
+        wow-dir-dropdown (ss/combobox :model (core/available-addon-dirs))
+
+        wow-game-track (ss/combobox :model core/game-tracks
+                                    :selected-item (core/get-game-track))
+
+        _ (ss/listen wow-dir-dropdown :selection
+                     (async-handler ;; execute elsewhere
+                      (fn []
+                        ;; called when a different addon dir is selected
+                        (let [old-addon-dir (get-state :selected-addon-dir)
+                              new-addon-dir (ss/selection wow-dir-dropdown)]
+                          (when-not (= new-addon-dir old-addon-dir)
+                            (debug "addon-dir selection changed to" new-addon-dir)
+                            ;; positioned here so the dropdown change is shown immediately
+                            (ss/invoke-later
+                             (ss/selection! wow-game-track (:game-track (core/addon-dir-map new-addon-dir))))
+
+                            (core/set-addon-dir! new-addon-dir)
+                            (core/save-settings))))))
+
+        _ (state-bind [:selected-addon-dir]
+                      (fn [state]
+                        ;; called when the :selected-addon-dir changes (like via `core.set-addon-dir!`)
+                        (let [new-addon-dir (:selected-addon-dir state)
+                              game-track (-> new-addon-dir core/addon-dir-map :game-track)
+                              selected-addon-dir (ss/selection wow-dir-dropdown)]
+                          (when-not (= selected-addon-dir new-addon-dir)
+                            (debug ":selected-addon-dir changed to:" new-addon-dir)
+                            (ss/invoke-later
+                             ;; it's possible the addon-dir-list data has changed as well, so update the dropdown model
+                             ;; adding a second listener for :addon-dir-list risks two updates being performed
+                             (ss/config! wow-dir-dropdown :model (core/available-addon-dirs))
+                             (ss/selection! wow-dir-dropdown new-addon-dir)
+                             (ss/selection! wow-game-track game-track))))))
+
+        _ (ss/listen wow-game-track :selection
+                     (fn [ev]
+                       ;; called when a different game track is selected
+                       (let [new-game-track (ss/selection wow-game-track)
+                             old-game-track (:game-track (core/addon-dir-map))]
+                         (when-not (= new-game-track old-game-track)
+                           (debug (format "selected game track changed from %s to %s" old-game-track new-game-track))
+                           (ss/invoke-later
+                            (core/set-game-track! new-game-track) ;; this will affect [:cfg :addon-dir-list]
+                            ;; will save settings
+                            (core/refresh))))))]
+
     (ss/vertical-panel
-     :items [(ss/flow-panel :align :left :items [refresh-button update-all-button wow-dir-button wow-dir-label])])))
+     :items [(ss/flow-panel :align :left
+                            :items [refresh-button update-all-button wow-dir-button
+                                    wow-dir-dropdown wow-game-track])])))
 
 (defn installed-addons-panel-column-widths
   "this sucks"
@@ -358,7 +409,7 @@
 (defn installed-addons-panel
   []
   (let [;; always visible when debugging and always available from the column menu
-        hidden-by-default-cols [:addon-id :group-id :primary? :update? :matched? :categories :downloads :updated :WoW]
+        hidden-by-default-cols [:addon-id :group-id :primary? :update? :matched? :categories :downloads :updated]
         tblmdl (sstbl/table-model :columns [{:key :name :text "addon-id"}
                                             :group-id
                                             :primary?
@@ -570,13 +621,29 @@
 (defn status-bar
   "this is the litle strip of text at the bottom of the application."
   []
-  (let [template " %s of %s installed addons matched. %s addons in catalog."
-        status (ss/label :text (format template 0 0 0)
+  (let [num-matching-template "%s of %s installed addons found in catalog."
+        all-matching-template "all installed addons found in catalog."
+        catalog-count-template "%s addons in catalog."
+
+        status (ss/label :text ""
                          :font (font :size 11))
+
         update-label (fn [state]
-                       (let [ia (:installed-addon-list state)
-                             uia (filter :matched? ia)]
-                         (ss/text! status (format template (count uia) (count ia) (count (:addon-summary-list state))))))]
+                       (let [a (:addon-summary-list state)
+                             ia (:installed-addon-list state)
+                             uia (filter :matched? ia)
+
+                             a-count (count a)
+                             ia-count (count ia)
+                             uia-count (count uia)
+
+                             strings [(format catalog-count-template a-count)
+
+                                      (if (= ia-count uia-count)
+                                        all-matching-template
+                                        (format num-matching-template uia-count ia-count))]]
+
+                         (ss/text! status (clojure.string/join " " strings))))]
     (state-bind [:installed-addon-list] update-label)
     status))
 
@@ -611,23 +678,20 @@
                :title "wowman"
                :size [640 :by 480]
                :content (mig/mig-panel
-                         :constraints (if (core/debugging?)
-                                        ["debug,flowy"]
-                                        ["flowy"])
+                         :constraints ["flowy"] ;; ["debug,flowy"]
                          :items [[root "height 100%, width 100%:100%:100%"]])
                :on-close (if (utils/in-repl?) :dispose :exit)) ;; exit app entirely when not in repl
 
         file-menu (items
                    (ss/action :name "Installed" :key "menu I" :mnemonic "i" :handler (switch-tab-handler INSTALLED-TAB))
                    (ss/action :name "Search" :key "menu H" :mnemonic "h" :handler (switch-tab-handler SEARCH-TAB))
-                   (when (core/debugging?) ;; these have never been useful outside of dev
-                     (ss/action :name "Load settings" :handler (handler core/load-settings))
-                     (ss/action :name "Save settings" :key "menu S" :mnemonic "s" :handler (handler core/save-settings)))
                    :separator
                    (ss/action :name "Exit" :key "menu Q" :mnemonic "x" :handler (handler #(ss/dispose! newui))))
 
         addon-menu [(ss/action :name "Update all" :key "menu U" :mnemonic "u" :handler (async-handler core/install-update-all))
-                    (ss/action :name "Re-install all" :handler (async-handler core/re-install-all))]
+                    (ss/action :name "Re-install all" :handler (async-handler core/re-install-all))
+                    :separator
+                    (ss/action :name "Remove directory" :handler (async-handler core/remove-addon-dir!))]
 
         cache-menu [(ss/action :name "Clear cache" :handler (async-handler core/delete-cache))
                     (ss/action :name "Clear addon zips" :handler (async-handler core/delete-downloaded-addon-zips))

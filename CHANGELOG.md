@@ -14,6 +14,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## 0.9.0 - 2019-09-03
+
+### Added
+
+* support for multiple addon directories
+    - directories can be removed by click 'remove directory' from the 'addons' menu
+* support for multiple 'game tracks' (retail and classic)
+* 'source-id' to the catalog. It makes for quicker and more confident matching of wowman-installed addons to the catalog
+* improved test coverage.
+    - tests will now fail if coverage drops below a certain threshold
+
+### Changed
+
+* the 'WoW' column has been re-enabled on the installed addons tab
+    - many other columns are available but hidden. Use the little square to the far right of column bar to select them.
+* curseforge scraping is now happening entirely from their API
+* wowinterface scraping is now using a mixture of their API and HTML
+* raynes/fs library has been switched to clj-commons/fs
+    - RIP
+
+### Fixed
+
+* better handling of curseforge addon releases in general
+    - not just in regards to selecting retail/classic but also skipping alpha/beta and 'alt' releases
+
 ## 0.8.2 - 2019-08-26
 
 ### Fixed

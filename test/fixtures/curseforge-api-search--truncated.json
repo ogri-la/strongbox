@@ -1,0 +1,581 @@
+[
+  {
+    "id": 99982,
+    "name": "AdvancedInterfaceOptions",
+    "authors": [
+      {
+        "name": "Stanzilla",
+        "url": "https://www.curseforge.com/members/293212-stanzilla?username=stanzilla",
+        "projectId": 99982,
+        "id": 76927,
+        "projectTitleId": null,
+        "projectTitleTitle": null,
+        "userId": 293212,
+        "twitchId": 26732732
+      },
+      {
+        "name": "semlar",
+        "url": "https://www.curseforge.com/members/2718421-semlar?username=semlar",
+        "projectId": 99982,
+        "id": 76928,
+        "projectTitleId": 2,
+        "projectTitleTitle": "Author",
+        "userId": 2718421,
+        "twitchId": 47558054
+      }
+    ],
+    "attachments": [
+      {
+        "id": 63046,
+        "projectId": 99982,
+        "description": "",
+        "isDefault": true,
+        "thumbnailUrl": "https://media.forgecdn.net/avatars/thumbnails/63/46/256/256/636142228065658810.png",
+        "title": "636142228065658810.png",
+        "url": "https://media.forgecdn.net/avatars/63/46/636142228065658810.png",
+        "status": 1
+      },
+      {
+        "id": 111241,
+        "projectId": 99982,
+        "description": "<p>The Floating Combat Text Options</p>",
+        "isDefault": false,
+        "thumbnailUrl": "https://media.forgecdn.net/attachments/thumbnails/111/241/310/172/Wow-64_2016-08-15_17-16-12.png",
+        "title": "Wow-64_2016-08-15_17-16-12.png",
+        "url": "https://media.forgecdn.net/attachments/111/241/Wow-64_2016-08-15_17-16-12.png",
+        "status": 1
+      },
+      {
+        "id": 111245,
+        "projectId": 99982,
+        "description": "<p>Basic Options</p>",
+        "isDefault": false,
+        "thumbnailUrl": "https://media.forgecdn.net/attachments/thumbnails/111/245/310/172/WowB-64_2016-06-16_21-03-41.png",
+        "title": "WowB-64_2016-06-16_21-03-41.png",
+        "url": "https://media.forgecdn.net/attachments/111/245/WowB-64_2016-06-16_21-03-41.png",
+        "status": 1
+      },
+      {
+        "id": 111243,
+        "projectId": 99982,
+        "description": "<p>CVar Browser with Search</p>",
+        "isDefault": false,
+        "thumbnailUrl": "https://media.forgecdn.net/attachments/thumbnails/111/243/310/172/WowB-64_2016-06-16_21-04-09.png",
+        "title": "WowB-64_2016-06-16_21-04-09.png",
+        "url": "https://media.forgecdn.net/attachments/111/243/WowB-64_2016-06-16_21-04-09.png",
+        "status": 1
+      },
+      {
+        "id": 111244,
+        "projectId": 99982,
+        "description": "<p>CVar Browser</p>",
+        "isDefault": false,
+        "thumbnailUrl": "https://media.forgecdn.net/attachments/thumbnails/111/244/310/172/WowB-64_2016-06-16_21-03-57.png",
+        "title": "WowB-64_2016-06-16_21-03-57.png",
+        "url": "https://media.forgecdn.net/attachments/111/244/WowB-64_2016-06-16_21-03-57.png",
+        "status": 1
+      }
+    ],
+    "websiteUrl": "https://www.curseforge.com/wow/addons/advancedinterfaceoptions",
+    "gameId": 1,
+    "summary": "Restores access to removed interface options in Legion",
+    "defaultFileId": 2774524,
+    "downloadCount": 2923589,
+    "latestFiles": [
+      {
+        "id": 924345,
+        "displayName": "beta.6",
+        "fileName": "AdvancedInterfaceOptions-beta.6.zip",
+        "fileDate": "2016-07-16T18:01:48.933Z",
+        "fileLength": 19903,
+        "releaseType": 2,
+        "fileStatus": 4,
+        "downloadUrl": "https://edge.forgecdn.net/files/924/345/AdvancedInterfaceOptions-beta.6.zip",
+        "isAlternate": false,
+        "alternateFileId": 0,
+        "dependencies": [],
+        "isAvailable": true,
+        "modules": [
+          {
+            "foldername": "AdvancedInterfaceOptions",
+            "fingerprint": 599349438,
+            "type": 3
+          }
+        ],
+        "packageFingerprint": 3636987504,
+        "gameVersion": [
+          "7.0.3"
+        ],
+        "sortableGameVersion": [
+          {
+            "gameVersionPadded": "0000000007.0000000000.0000000003",
+            "gameVersion": "7.0.3",
+            "gameVersionReleaseDate": "2016-07-19T00:00:00Z",
+            "gameVersionName": "7.0.3"
+          }
+        ],
+        "installMetadata": null,
+        "changelog": null,
+        "hasInstallScript": false,
+        "isCompatibleWithClient": true,
+        "categorySectionPackageType": 1,
+        "restrictProjectFileAccess": 1,
+        "projectStatus": 4,
+        "renderCacheId": 387623,
+        "fileLegacyMappingId": null,
+        "projectId": 99982,
+        "parentProjectFileId": null,
+        "parentFileLegacyMappingId": null,
+        "fileTypeId": null,
+        "exposeAsAlternative": null,
+        "packageFingerprintId": 114394929,
+        "gameVersionDateReleased": "2016-07-19T00:00:00Z",
+        "gameVersionMappingId": 614736,
+        "gameVersionId": 589,
+        "gameId": 1,
+        "isServerPack": false,
+        "serverPackFileId": null,
+        "gameVersionFlavor": "wow_retail"
+      },
+      {
+        "id": 2727265,
+        "displayName": "1.2.12-2-gef0af13",
+        "fileName": "AdvancedInterfaceOptions-1.2.12-2-gef0af13.zip",
+        "fileDate": "2019-06-20T15:33:44.43Z",
+        "fileLength": 42743,
+        "releaseType": 3,
+        "fileStatus": 4,
+        "downloadUrl": "https://edge.forgecdn.net/files/2727/265/AdvancedInterfaceOptions-1.2.12-2-gef0af13.zip",
+        "isAlternate": false,
+        "alternateFileId": 0,
+        "dependencies": [],
+        "isAvailable": true,
+        "modules": [
+          {
+            "foldername": "AdvancedInterfaceOptions",
+            "fingerprint": 1845006304,
+            "type": 3
+          }
+        ],
+        "packageFingerprint": 2311270537,
+        "gameVersion": [
+          "8.1.5"
+        ],
+        "sortableGameVersion": [
+          {
+            "gameVersionPadded": "0000000008.0000000001.0000000005",
+            "gameVersion": "8.1.5",
+            "gameVersionReleaseDate": "2019-03-12T00:00:00Z",
+            "gameVersionName": "8.1.5"
+          }
+        ],
+        "installMetadata": null,
+        "changelog": null,
+        "hasInstallScript": false,
+        "isCompatibleWithClient": true,
+        "categorySectionPackageType": 1,
+        "restrictProjectFileAccess": 1,
+        "projectStatus": 4,
+        "renderCacheId": 1578952,
+        "fileLegacyMappingId": null,
+        "projectId": 99982,
+        "parentProjectFileId": null,
+        "parentFileLegacyMappingId": null,
+        "fileTypeId": null,
+        "exposeAsAlternative": null,
+        "packageFingerprintId": 325580770,
+        "gameVersionDateReleased": "2019-03-12T00:00:00Z",
+        "gameVersionMappingId": 1838603,
+        "gameVersionId": 7262,
+        "gameId": 1,
+        "isServerPack": false,
+        "serverPackFileId": null,
+        "gameVersionFlavor": "wow_retail"
+      },
+      {
+        "id": 2727266,
+        "displayName": "1.2.12-2-gef0af13",
+        "fileName": "AdvancedInterfaceOptions-1.2.12-2-gef0af13-classic.zip",
+        "fileDate": "2019-06-20T15:33:48.73Z",
+        "fileLength": 42743,
+        "releaseType": 3,
+        "fileStatus": 4,
+        "downloadUrl": "https://edge.forgecdn.net/files/2727/266/AdvancedInterfaceOptions-1.2.12-2-gef0af13-classic.zip",
+        "isAlternate": false,
+        "alternateFileId": 0,
+        "dependencies": [],
+        "isAvailable": true,
+        "modules": [
+          {
+            "foldername": "AdvancedInterfaceOptions",
+            "fingerprint": 1845006304,
+            "type": 3
+          }
+        ],
+        "packageFingerprint": 991536247,
+        "gameVersion": [
+          "1.13.2"
+        ],
+        "sortableGameVersion": [
+          {
+            "gameVersionPadded": "0000000001.0000000013.0000000002",
+            "gameVersion": "1.13.2",
+            "gameVersionReleaseDate": "2001-01-01T00:00:00Z",
+            "gameVersionName": "1.13.2"
+          }
+        ],
+        "installMetadata": null,
+        "changelog": null,
+        "hasInstallScript": false,
+        "isCompatibleWithClient": true,
+        "categorySectionPackageType": 1,
+        "restrictProjectFileAccess": 1,
+        "projectStatus": 4,
+        "renderCacheId": 1578953,
+        "fileLegacyMappingId": null,
+        "projectId": 99982,
+        "parentProjectFileId": null,
+        "parentFileLegacyMappingId": null,
+        "fileTypeId": null,
+        "exposeAsAlternative": null,
+        "packageFingerprintId": 325580782,
+        "gameVersionDateReleased": "2001-01-01T00:00:00Z",
+        "gameVersionMappingId": 1838604,
+        "gameVersionId": 7350,
+        "gameId": 1,
+        "isServerPack": false,
+        "serverPackFileId": null,
+        "gameVersionFlavor": "wow_classic"
+      },
+      {
+        "id": 2774524,
+        "displayName": "1.3.2",
+        "fileName": "AdvancedInterfaceOptions-1.3.2.zip",
+        "fileDate": "2019-08-30T14:39:39.89Z",
+        "fileLength": 42654,
+        "releaseType": 1,
+        "fileStatus": 4,
+        "downloadUrl": "https://edge.forgecdn.net/files/2774/524/AdvancedInterfaceOptions-1.3.2.zip",
+        "isAlternate": false,
+        "alternateFileId": 0,
+        "dependencies": [],
+        "isAvailable": true,
+        "modules": [
+          {
+            "foldername": "AdvancedInterfaceOptions",
+            "fingerprint": 1974670497,
+            "type": 3
+          }
+        ],
+        "packageFingerprint": 4273948722,
+        "gameVersion": [
+          "8.2.0"
+        ],
+        "sortableGameVersion": [
+          {
+            "gameVersionPadded": "0000000008.0000000002.0000000000",
+            "gameVersion": "8.2.0",
+            "gameVersionReleaseDate": "2019-06-25T00:00:00Z",
+            "gameVersionName": "8.2.0"
+          }
+        ],
+        "installMetadata": null,
+        "changelog": null,
+        "hasInstallScript": false,
+        "isCompatibleWithClient": true,
+        "categorySectionPackageType": 1,
+        "restrictProjectFileAccess": 1,
+        "projectStatus": 4,
+        "renderCacheId": 1639623,
+        "fileLegacyMappingId": null,
+        "projectId": 99982,
+        "parentProjectFileId": null,
+        "parentFileLegacyMappingId": null,
+        "fileTypeId": null,
+        "exposeAsAlternative": null,
+        "packageFingerprintId": 351408298,
+        "gameVersionDateReleased": "2019-06-25T00:00:00Z",
+        "gameVersionMappingId": 1916538,
+        "gameVersionId": 7417,
+        "gameId": 1,
+        "isServerPack": false,
+        "serverPackFileId": null,
+        "gameVersionFlavor": "wow_retail"
+      },
+      {
+        "id": 2774525,
+        "displayName": "1.3.2-classic",
+        "fileName": "AdvancedInterfaceOptions-1.3.2-classic.zip",
+        "fileDate": "2019-08-30T14:39:44.943Z",
+        "fileLength": 42653,
+        "releaseType": 1,
+        "fileStatus": 4,
+        "downloadUrl": "https://edge.forgecdn.net/files/2774/525/AdvancedInterfaceOptions-1.3.2-classic.zip",
+        "isAlternate": false,
+        "alternateFileId": 0,
+        "dependencies": [],
+        "isAvailable": true,
+        "modules": [
+          {
+            "foldername": "AdvancedInterfaceOptions",
+            "fingerprint": 3586248084,
+            "type": 3
+          }
+        ],
+        "packageFingerprint": 3413475370,
+        "gameVersion": [
+          "1.13.2"
+        ],
+        "sortableGameVersion": [
+          {
+            "gameVersionPadded": "0000000001.0000000013.0000000002",
+            "gameVersion": "1.13.2",
+            "gameVersionReleaseDate": "2001-01-01T00:00:00Z",
+            "gameVersionName": "1.13.2"
+          }
+        ],
+        "installMetadata": null,
+        "changelog": null,
+        "hasInstallScript": false,
+        "isCompatibleWithClient": true,
+        "categorySectionPackageType": 1,
+        "restrictProjectFileAccess": 1,
+        "projectStatus": 4,
+        "renderCacheId": 1639624,
+        "fileLegacyMappingId": null,
+        "projectId": 99982,
+        "parentProjectFileId": null,
+        "parentFileLegacyMappingId": null,
+        "fileTypeId": null,
+        "exposeAsAlternative": null,
+        "packageFingerprintId": 351408310,
+        "gameVersionDateReleased": "2001-01-01T00:00:00Z",
+        "gameVersionMappingId": 1916539,
+        "gameVersionId": 7350,
+        "gameId": 1,
+        "isServerPack": false,
+        "serverPackFileId": null,
+        "gameVersionFlavor": "wow_classic"
+      }
+    ],
+    "categories": [
+      {
+        "categoryId": 1017,
+        "name": "Miscellaneous",
+        "url": "https://www.curseforge.com/wow/addons/miscellaneous",
+        "avatarUrl": "https://media.forgecdn.net/avatars/54/453/636135209712202362.png",
+        "parentId": 1,
+        "rootId": 1,
+        "projectId": 99982,
+        "avatarId": 54453,
+        "gameId": 1
+      },
+      {
+        "categoryId": 1017,
+        "name": "Miscellaneous",
+        "url": "https://www.curseforge.com/wow/addons/miscellaneous",
+        "avatarUrl": "https://media.forgecdn.net/avatars/54/453/636135209712202362.png",
+        "parentId": 1,
+        "rootId": 1,
+        "projectId": 99982,
+        "avatarId": 54453,
+        "gameId": 1
+      }
+    ],
+    "status": 4,
+    "primaryCategoryId": 1017,
+    "categorySection": {
+      "id": 1,
+      "gameId": 1,
+      "name": "Addons",
+      "packageType": 1,
+      "path": "Interface\\Addons",
+      "initialInclusionPattern": "(?i)^([^/]+)[\\\\/]\\1\\.toc$",
+      "extraIncludePattern": "(?i)^[^/\\\\]+[/\\\\]Bindings\\.xml$",
+      "gameCategoryId": 1
+    },
+    "slug": "advancedinterfaceoptions",
+    "gameVersionLatestFiles": [
+      {
+        "gameVersion": "1.13.2",
+        "projectFileId": 2774525,
+        "projectFileName": "AdvancedInterfaceOptions-1.3.2-classic.zip",
+        "fileType": 1,
+        "gameVersionFlavor": "wow_classic"
+      },
+      {
+        "gameVersion": "8.2.0",
+        "projectFileId": 2774524,
+        "projectFileName": "AdvancedInterfaceOptions-1.3.2.zip",
+        "fileType": 1,
+        "gameVersionFlavor": "wow_retail"
+      },
+      {
+        "gameVersion": "1.13.2",
+        "projectFileId": 2727266,
+        "projectFileName": "AdvancedInterfaceOptions-1.2.12-2-gef0af13-classic.zip",
+        "fileType": 3,
+        "gameVersionFlavor": "wow_classic"
+      },
+      {
+        "gameVersion": "8.1.5",
+        "projectFileId": 2727265,
+        "projectFileName": "AdvancedInterfaceOptions-1.2.12-2-gef0af13.zip",
+        "fileType": 3,
+        "gameVersionFlavor": "wow_retail"
+      },
+      {
+        "gameVersion": "8.1.5",
+        "projectFileId": 2724354,
+        "projectFileName": "AdvancedInterfaceOptions-1.2.12.zip",
+        "fileType": 1,
+        "gameVersionFlavor": "wow_retail"
+      },
+      {
+        "gameVersion": "8.1.0",
+        "projectFileId": 2647622,
+        "projectFileName": "AdvancedInterfaceOptions-1.2.9.zip",
+        "fileType": 1,
+        "gameVersionFlavor": "wow_retail"
+      },
+      {
+        "gameVersion": "8.1.0",
+        "projectFileId": 2647621,
+        "projectFileName": "AdvancedInterfaceOptions-1.2.8-1-gb95519e-alpha.zip",
+        "fileType": 3,
+        "gameVersionFlavor": "wow_retail"
+      },
+      {
+        "gameVersion": "8.0.1",
+        "projectFileId": 2623029,
+        "projectFileName": "AdvancedInterfaceOptions-1.2.8.zip",
+        "fileType": 1,
+        "gameVersionFlavor": "wow_retail"
+      },
+      {
+        "gameVersion": "8.0.1",
+        "projectFileId": 2623028,
+        "projectFileName": "AdvancedInterfaceOptions-1.2.7-1-g48f0d5d-alpha.zip",
+        "fileType": 3,
+        "gameVersionFlavor": "wow_retail"
+      },
+      {
+        "gameVersion": "7.3.5",
+        "projectFileId": 2484814,
+        "projectFileName": "AdvancedInterfaceOptions-1.2.2.zip",
+        "fileType": 1,
+        "gameVersionFlavor": "wow_retail"
+      },
+      {
+        "gameVersion": "7.3.0",
+        "projectFileId": 2484814,
+        "projectFileName": "AdvancedInterfaceOptions-1.2.2.zip",
+        "fileType": 1,
+        "gameVersionFlavor": "wow_retail"
+      },
+      {
+        "gameVersion": "7.3.2",
+        "projectFileId": 2484814,
+        "projectFileName": "AdvancedInterfaceOptions-1.2.2.zip",
+        "fileType": 1,
+        "gameVersionFlavor": "wow_retail"
+      },
+      {
+        "gameVersion": "7.2.5",
+        "projectFileId": 2435289,
+        "projectFileName": "AdvancedInterfaceOptions-1.1.4-1-g4858b3f-alpha.zip",
+        "fileType": 3,
+        "gameVersionFlavor": "wow_retail"
+      },
+      {
+        "gameVersion": "7.2.0",
+        "projectFileId": 2415252,
+        "projectFileName": "AdvancedInterfaceOptions-1.1.4.zip",
+        "fileType": 1,
+        "gameVersionFlavor": "wow_retail"
+      },
+      {
+        "gameVersion": "7.2.0",
+        "projectFileId": 2412788,
+        "projectFileName": "AdvancedInterfaceOptions-1.1.3-6-gca31774-alpha.zip",
+        "fileType": 3,
+        "gameVersionFlavor": "wow_retail"
+      },
+      {
+        "gameVersion": "7.1.5",
+        "projectFileId": 2376060,
+        "projectFileName": "AdvancedInterfaceOptions-1.1.0.zip",
+        "fileType": 1,
+        "gameVersionFlavor": "wow_retail"
+      },
+      {
+        "gameVersion": "7.1.5",
+        "projectFileId": 2372910,
+        "projectFileName": "AdvancedInterfaceOptions-23e9754-alpha.zip",
+        "fileType": 3,
+        "gameVersionFlavor": "wow_retail"
+      },
+      {
+        "gameVersion": "7.1.0",
+        "projectFileId": 2353759,
+        "projectFileName": "AdvancedInterfaceOptions-1.0.8.zip",
+        "fileType": 1,
+        "gameVersionFlavor": "wow_retail"
+      },
+      {
+        "gameVersion": "7.1.0",
+        "projectFileId": 2353758,
+        "projectFileName": "AdvancedInterfaceOptions-bc4ea03-alpha.zip",
+        "fileType": 3,
+        "gameVersionFlavor": "wow_retail"
+      },
+      {
+        "gameVersion": "7.0.3",
+        "projectFileId": 947098,
+        "projectFileName": "AdvancedInterfaceOptions-1.0.5-6-g9186ec9.zip",
+        "fileType": 3,
+        "gameVersionFlavor": "wow_retail"
+      },
+      {
+        "gameVersion": "7.0.3",
+        "projectFileId": 936645,
+        "projectFileName": "AdvancedInterfaceOptions-1.0.5.zip",
+        "fileType": 1,
+        "gameVersionFlavor": "wow_retail"
+      },
+      {
+        "gameVersion": "7.0.3",
+        "projectFileId": 924345,
+        "projectFileName": "AdvancedInterfaceOptions-beta.6.zip",
+        "fileType": 2,
+        "gameVersionFlavor": "wow_retail"
+      },
+      {
+        "gameVersion": "6.2.4",
+        "projectFileId": 918696,
+        "projectFileName": "AdvancedInterfaceOptions-beta.3.zip",
+        "fileType": 2,
+        "gameVersionFlavor": "wow_retail"
+      },
+      {
+        "gameVersion": "6.2.4",
+        "projectFileId": 918695,
+        "projectFileName": "AdvancedInterfaceOptions-beta.2-8-g8aaa8ae.zip",
+        "fileType": 3,
+        "gameVersionFlavor": "wow_retail"
+      }
+    ],
+    "isFeatured": false,
+    "popularityScore": 18631.87890625,
+    "gamePopularityRank": 59,
+    "primaryLanguage": "enUS",
+    "gameSlug": "wow",
+    "gameName": "World of Warcraft",
+    "portalName": "www.curseforge.com",
+    "dateModified": "2019-08-30T14:40:33.22Z",
+    "dateCreated": "2016-05-09T17:21:30.1Z",
+    "dateReleased": "2019-08-30T14:39:44.943Z",
+    "isAvailable": true,
+    "isExperiemental": false
+  }
+]

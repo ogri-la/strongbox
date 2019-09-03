@@ -22,7 +22,8 @@
 
 (def category-pages {"cat23.html" "Stand-Alone addons"
                      "cat39.html" "Class & Role Specific"
-                     "cat109.html" "Info, Plug-in Bars"})
+                     "cat109.html" "Info, Plug-in Bars"
+                     "cat158.html" "Classic - General"})
 
 (defn format-wowinterface-dt
   "formats a shitty US-style m/d/y date with a shitty 12 hour time component and no timezone
@@ -82,27 +83,33 @@
     (debug (format "%s categories found" (count cat-list)))
     (mapv extractor cat-list)))
 
+(defn extract-source-id
+  [a]
+  ;; fileinfo.php?s=c33edd26881a6a6509fd43e9a871809c&amp;id=23145 => 23145
+  (-> a :attrs :href (clojure.string/split #"&.+=") last Integer.))
+
 (defn extract-addon-uri
   [a]
-  (let [extract-id #(str "info" (-> % (clojure.string/split #"&.+=") last))] ;; ...?foo=bar&id=24731 => info24731
-    (str host (-> a :attrs :href extract-id))))
+  (str host "info" (extract-source-id a)))
 
 (defn extract-addon-summary
   [snippet]
   (try
     (let [extract-updated-date #(format-wowinterface-dt
                                  (-> % (subs 8) trim)) ;; "Updated 09-07-18 01:27 PM " => "09-07-18 01:27 PM"
-          label (-> snippet (select [[:a (html/attr-contains :href "fileinfo")] html/content]) first trim)]
-      {:uri (extract-addon-uri (-> snippet (select [:a]) last))
+          anchor (-> snippet (select [[:a (html/attr-contains :href "fileinfo")]]) first)
+          label (-> anchor :content first trim)]
+      {:uri (extract-addon-uri anchor)
        :name (-> label slugify)
        :label label
+       :source-id (extract-source-id anchor)
        ;;:description nil ;; not available in summary
        ;;:category-list [] ;; not available in summary, added by caller
        ;;:created-date nil ;; not available in summary
        :updated-date (-> snippet (select [:div.updated html/content]) first extract-updated-date)
        :download-count (-> snippet (select [:div.downloads html/content]) first (clojure.string/replace #"\D*" "") Integer.)})
     (catch RuntimeException re
-      (error re "failed to scrape snippet, excluding from results:" (utils/pprint snippet))
+      (error re (format "failed to scrape snippet with '%s', excluding from results: %s" (.getMessage re) (utils/pprint snippet)))
       nil)))
 
 (defn scrape-addon-page
@@ -186,6 +193,38 @@
                                   :addon-summary-list merged-addons-list}))
     catalog))
 
+(defn download-parse-filelist-file
+  "returns a map of wowinterface addons, keyed by their :source-id (as a string).
+  wowinterface.com has a single large file with all/most of their addon data in it called 'filelist.json'.
+  the addon details endpoint is missing supported versions of wow it in.
+  Instead that data is in this list and must be incorporated in the catalog."
+  []
+  (let [url "https://api.mmoui.com/v3/game/WOW/filelist.json"
+        resp (http/download url)
+        file-details (utils/from-json resp)
+        file-details (mapv (fn [addon]
+                             (update addon :UID #(Integer/parseInt %))) file-details)]
+    (group-by :UID file-details)))
+
+(defn expand-addon-with-filelist
+  [filelist addon]
+  (let [filelist-addon (first (get filelist (:source-id addon)))
+        ;; supported game version is not the same as game track ('classic' or 'retail')
+        ;; wowinterface conflates the two (or am I splitting hairs?)
+        ;; if 'WoW Classic' is found, then the 'classic' game track is supported
+        ;; if more results are found, retail is supported as well
+        compatibility (->> filelist-addon :UICompatibility (map :name) set)
+        many-results? (> (count compatibility) 1)
+        wowi-classic "WoW Classic"
+
+        mapping {[wowi-classic true]  #{"classic" "retail"}
+                 [wowi-classic false] #{"classic"}
+                 [nil true] #{"retail"}
+                 [nil false] #{"retail"}}
+
+        key [(some #{wowi-classic} compatibility) many-results?]]
+    (assoc addon :game-track-list (get mapping key))))
+
 (defn scrape
   [output-path]
   (let [category-pages (keys category-pages) ;; [cat23.html, ...]
@@ -199,6 +238,17 @@
                          :let [addon (first group-list)]]
                      (assoc addon :category-list
                             (reduce clojure.set/union (map :category-list group-list))))
+
+        filelist (download-parse-filelist-file)
+
+        ;; there are 186 (at time of writing) addons scraped from the site that are not present in the filelist.json file.
+        ;; these appear to be discontinued/obsolete/beta-only/'removed at author's request'/etc type addons.
+        ;; remove these addons from the addon-list
+        addon-list (filter (fn [addon]
+                             (get filelist (:source-id addon))) addon-list)
+
+        ;; moosh extra data into each addon from the filelist
+        addon-list (mapv (partial expand-addon-with-filelist filelist) addon-list)
 
         ;; ensure addon keys are ordered for better diffs
         addon-list (mapv #(into (omap/ordered-map) (sort %)) addon-list)

@@ -16,20 +16,60 @@
   [path string?, & args (s/* any?)]
   (str curseforge-api (apply format path args)))
 
+(defn latest-versions-by-game-track
+  "given a curseforge-api result, returns a map of release data"
+  [api-result]
+
+  ;; 'latestFiles' :
+  ;; - gameVersionFlavour: that is either "wow_retail" or "wow_classic"
+  ;; - fileStatus: 4 means ... ?
+  ;; - releaseType: 1 is regular, 2 is beta, 3 is alpha
+  ;; - exposeAsAlternative: nil is no, true is yes
+  ;;    - see Recount. there is a '-nolib' alternative available.
+
+  ;; we want to say "give me the latest stable release of the wow classic track of this addon
+  ;; for now we're going to ignore anything that isn't a releaseType of 1
+
+  (let [latest-files (:latestFiles api-result)
+
+        ;; results appear sorted, but lets be sure because we'll be taking the most recent
+        desc (comp - compare) ;; most to least recent (desc)
+        latest-files (sort-by :fileDate desc latest-files)
+
+        ;; stable releases only, for now
+        stable 1 ;; 2 is beta, 3 is alpha
+        stable-releases (filterv #(= (:releaseType %) stable) latest-files)
+
+        ;; no alternative versions, for now
+        stable-releases (remove :exposeAsAlternative stable-releases)
+
+        ;; I don't know if it's possible, but a group may still have more than one result
+        ;; results are ordered and group-by preserves ordering, so take the first
+        ]
+    (group-by :gameVersionFlavor stable-releases)))
+
 (defn-spec expand-summary (s/or :ok ::sp/addon, :error nil?)
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
-  [addon-summary ::sp/addon-summary]
-  (let [pid (-> addon-summary :addon :source-id)
+  [addon-summary ::sp/addon-summary game-track ::sp/game-track]
+  (let [pid (-> addon-summary :source-id)
         uri (api-uri "/addon/%s" pid)
         result (-> uri http/download utils/from-json)
-        ;; TODO: this is no longer good enough. we now need to differentiate between regular ('retail') and classic
-        ;; see :gameVersionFlavor
-        latest-release (-> result :latestFiles first)]
-    (merge addon-summary {:download-uri (:downloadUrl latest-release)
-                          :version (:fileName latest-release)
-                          :interface-version (:gameVersion latest-release)
-                          ;;:donation-uri ;; not present in api?
-                          })))
+
+        game-track-alias-map {"retail" "wow_retail"
+                              "classic" "wow_classic"}
+        game-track-alias (game-track-alias-map game-track)
+
+        latest-release (-> result latest-versions-by-game-track (get game-track-alias) first)]
+    (if-not latest-release
+      (warn (format "no '%s' release available for '%s' on curseforge" game-track (:name addon-summary)))
+      (let [;; api value is empty in some cases (carbonite, improved loot frames, skada damage meter)
+            ;; this value overrides the one found in .toc files, so if it can't be scraped, use the .toc version
+            interface-version (some-> latest-release :gameVersion first utils/game-version-to-interface-version)
+            interface-version (when interface-version {:interface-version interface-version})
+
+            details {:download-uri (:downloadUrl latest-release)
+                     :version (:displayName latest-release)}]
+        (merge addon-summary details interface-version)))))
 
 (defn-spec extract-addon-summary ::sp/addon-summary
   "converts addon data extracted from a listing into an ::sp/addon-summary"
@@ -45,18 +85,16 @@
    :category-list (sort (mapv :name (:categories snippet)))
    :created-date (:dateCreated snippet) ;; omg *yes*. perfectly formed dates
    ;; we now have :dateModified and :dateReleased to pick from
-   ;; :dateReleased (:fileDate of latest release) appears to be closest to what was being scraped
    ;;:updated-date (:dateModified snippet)
-   :updated-date (:dateReleased snippet)
+   :updated-date (:dateReleased snippet) ;; this seems closest to what we originaly had
    :download-count (-> snippet :downloadCount int) ;; I got a '511.0' ...?
-   :source-id (:id snippet) ;; I imagine wowinterface will have its own as well
-   })
+   :source-id (:id snippet)})
 
 (defn-spec download-summary-page-alphabetically (s/or :ok (s/coll-of map?), :error nil?)
   "downloads a page of results from the curseforge API, sorted A to Z"
   [page int? page-size pos-int?]
   (info "downloading" page-size "results from api, page" page)
-  (let [index (* page-size page) ;; +1 ?
+  (let [index (* page-size page)
         game-id 1 ;; WoW
         sort-by 3 ;; alphabetically, asc (a-z)
         results (http/download (api-uri "/addon/search?gameId=%s&index=%s&pageSize=%s&searchFilter=&sort=%s" game-id index page-size sort-by))
