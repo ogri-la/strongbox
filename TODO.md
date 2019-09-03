@@ -102,11 +102,14 @@ see CHANGELOG.md for a more formal list of changes by release
         - the filedetails.json data will need to be merged with the catalog
         - we'll need to add a 'game-tracks' type list and munge a value from it's 'compatibility' list
     - done
-
-### todo
-
 * regression, update? column is no longer being populated
     - all tests passing. this means you need more and better tests
+    - done
+    
+### todo
+
+* bug in removing directories
+    - removing the last one results in a stack trace
 
 ## todo bucket
 * coloured warnings/errors on console output

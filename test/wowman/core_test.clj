@@ -189,3 +189,85 @@
 
       (finally
         (main/stop)))))
+
+(deftest check-for-update
+  (testing "the key :update? is set on an addon when there is a difference between the installed version of an addon and it's matching catalog verison"
+
+    ;; this test turned out to be a pretty clear flow of how data is ingested and transformed and merged
+
+    (let [;; we start off with a list of these called a catalog
+          catalog {:category-list ["Auction House & Vendors"],
+                   :download-count 1
+                   :label "Every Addon"
+                   :name "every-addon",
+                   :source "curseforge",
+                   :source-id 0
+                   :updated-date "2012-09-20T05:32:00Z",
+                   :uri "https://www.curseforge.com/wow/addons/every-addon"}
+
+          ;; and a collection of these scraped from the installed addons
+          toc {:name "every-addon"
+               :label "Every Addon"
+               :description "foo"
+               :dirname "EveryAddon"
+               :interface-version 70000
+               :installed-version "v8.10.00"}
+
+          ;; and optionally these from .wowman.json if we installed the addon
+          nfo {:installed-version "v8.10.00",
+               :name "every-addon",
+               :group-id "doesntmatter"
+               :primary? true,
+               :source "curseforge"
+               :source-id 0}
+
+          ;; the nfo data is simply merged over the top of the scraped toc data
+          toc (merge toc nfo)
+
+          ;; we then attempt to match this 'toc+nfo' to an addon in the catalog
+          catalog-match (core/-match-installed-addons-with-catalog [toc] [catalog])
+
+          ;; this is a m:n match and we typically get back heaps of results
+          ;; in this case we have a catalog of 1 and are not interested in how the addon was matched (:final)
+          toc-addon (-> catalog-match first :final) ;; :update? will be false
+          alt-toc-addon (assoc toc-addon :source-id 1) ;; :update? will be true
+
+          ;; this is subset of the data the remote addon host (curseforge in this case) serves us
+          api-result {:latestFiles [{:downloadUrl "https://example.org/foo"
+                                     :displayName "v8.10.00"
+                                     :gameVersionFlavor "wow_retail",
+                                     :fileDate "2001-01-03T00:00:00.000Z",
+                                     :releaseType 1,
+                                     :exposeAsAlternative nil}]}
+          alt-api-result (assoc-in api-result [:latestFiles 0 :displayName] "v8.20.00")
+
+          ;; and what we 'expand' that data into
+          api-xform {:download-uri "https://example.org/foo",
+                     :version "v8.10.00"}
+          alt-api-xform (assoc api-xform :version "v8.20.00")
+
+          ;; after calling `check-for-update` we expect the result to be the merged sum of the below parts
+          expected (merge toc-addon api-xform {:update? false})
+          alt-expected (merge alt-toc-addon alt-api-xform {:update? true})
+
+          fake-routes {;; catalog
+                       "https://github.com/ogri-la/wowman-data/releases/download/daily/catalog.json"
+                       {:get (fn [req] {:status 200 :body (utils/to-json {:addon-summary-list [catalog]})})}
+
+                       ;; every-addon
+                       "https://addons-ecs.forgesvc.net/api/v2/addon/0"
+                       {:get (fn [req] {:status 200 :body (utils/to-json api-result)})}
+
+                       "https://addons-ecs.forgesvc.net/api/v2/addon/1"
+                       {:get (fn [req] {:status 200 :body (utils/to-json alt-api-result)})}}]
+
+      (with-fake-routes-in-isolation fake-routes
+        (try
+          (main/start {:ui :cli})
+          (core/set-addon-dir! (str fs/*cwd*)) ;; default game track of 'retail'
+          (is (= expected (core/check-for-update toc-addon)))
+          (is (= alt-expected (core/check-for-update alt-toc-addon)))
+
+          (finally
+            (main/stop)))))))
+
