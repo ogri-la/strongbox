@@ -582,16 +582,6 @@
 ;; addon summary and toc merging
 ;;
 
-(defn-spec merge-addons ::sp/toc-addon
-  [toc ::sp/toc, addon ::sp/addon]
-  (let [toc-addon (merge toc addon)
-        {:keys [installed-version version]} toc-addon
-        ;; update only if we have a new version and it's different from the installed version
-        update? (and version (not= installed-version version))]
-    (if update?
-      (assoc toc-addon :update? update?)
-      toc-addon)))
-
 (defn expand-summary-wrapper
   [addon-summary]
   (binding [http/*cache* (cache)]
@@ -599,20 +589,20 @@
           wrapper (affects-addon-wrapper catalog/expand-summary)]
       (wrapper addon-summary game-track))))
 
-(defn check-for-update
-  [toc]
-  (let [check? (and
-                ;; don't attempt expanding if we have no catalog match
-                (:matched? toc)
-                ;; don't expand if we have a dummy uri 
-                ;; (this isn't the right place for test code, but eh)
-                (nil? (clojure.string/index-of (:uri toc) "example.org")))
-        no-result {:update? false}
-        result (when check?
-                 (expand-summary-wrapper toc))]
-    (if result
-      (merge-addons toc result)
-      (merge toc no-result))))
+(defn-spec check-for-update ::sp/toc
+  [toc ::sp/toc]
+  (if-let [addon (when (:matched? toc)
+                   (expand-summary-wrapper toc))]
+    ;; we have a match and were successful in expanding the summary
+    (let [toc-addon (merge toc addon)
+          {:keys [installed-version version]} toc-addon
+          ;; update only if we have a new version and it's different from the installed version
+          update? (and version (not= installed-version version))]
+      (assoc toc-addon :update? update?))
+
+    ;; failed to match against catalog or expand-summary returned nil (couldn't expand for whatever reason)
+    ;; in this case, we set a flag saying this addon shouldn't be updated
+    (assoc toc :update? false)))
 
 (defn-spec check-for-updates nil?
   "downloads full details for all installed addons that can be found in summary list"

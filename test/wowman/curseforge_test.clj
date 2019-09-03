@@ -53,7 +53,7 @@
           :donation-uri nil,
           :version  "1.2.3"}))
 
-(def toc-addon (core/merge-addons toc addon))
+(def toc-addon (merge toc addon {:update? false}))
 
 ;; TODO: move to core_test.clj
 (deftest install-addon
