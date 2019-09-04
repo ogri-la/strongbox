@@ -57,6 +57,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
+* add ElvUI support. they have json that can be scraped
+* add a 'tabula rasa' option that wipes *everything* 
+    - cache, catalog, config, downloaded zip files
 * coloured warnings/errors on console output
     - when running with :debug on the wall of text is difficult to read
     - I'm thinking about switching away from timbre to something more traditional
