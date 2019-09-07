@@ -15,6 +15,14 @@
    [java-time :as jt]
    [java-time.format]))
 
+(defn uuid
+  []
+  (.toString (java.util.UUID/randomUUID)))
+
+(defn dissoc-all
+  [m l]
+  (apply dissoc m l))
+
 ;; orphaned, might be useful still?
 (defn-spec file-ext-as-kw (s/or :ok keyword?, :error nil?)
   [path ::sp/file]
@@ -148,9 +156,11 @@
   (subs x 0 (min (count x) max)))
 
 (defn in?
-  [vals]
-  (fn [v]
-    (some #{v} vals)))
+  ([needle haystack]
+   (not (nil? (some #{needle} haystack))))
+  ([haystack]
+   (fn [needle]
+     (in? needle haystack))))
 
 (defn-spec idx map?
   [list-of-maps ::sp/list-of-maps, key keyword?]

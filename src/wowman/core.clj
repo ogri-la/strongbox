@@ -1,6 +1,6 @@
 (ns wowman.core
   (:require
-   [clojure.set]
+   [clojure.set :refer [rename-keys]]
    [clojure.string :refer [lower-case starts-with? trim]]
    [taoensso.timbre :as timbre :refer [debug info warn error spy]]
    [clojure.spec.alpha :as s]
@@ -10,6 +10,8 @@
    [me.raynes.fs :as fs]
    [trptcolin.versioneer.core :as versioneer]
    [envvar.core :refer [env]]
+   [next.jdbc :as jdbc]
+   [next.jdbc.sql :as sql]
    [wowman
     [zip :as zip]
     [http :as http]
@@ -96,6 +98,8 @@
    :installed-addon-list nil
 
    :etag-db {}
+
+   :db nil
 
    ;; ui
 
@@ -296,7 +300,8 @@
          cfg (configure file-opts cli-opts)
          etag-db (utils/load-json-file-safely (paths :etag-db-file) :no-file? {} :bad-data? {})
          new-state {:cfg cfg, :cli-opts cli-opts, :file-opts file-opts, :etag-db etag-db
-                    :selected-addon-dir (-> cfg :addon-dir-list first :addon-dir)}]
+                    :selected-addon-dir (-> cfg :addon-dir-list first :addon-dir)
+                    :db (jdbc/get-datasource {:dbtype "h2:mem" :dbname (utils/uuid)})}]
      (swap! state merge new-state)
      (when (:verbosity cli-opts)
        (logging/change-log-level (:verbosity cli-opts))))))
@@ -449,7 +454,7 @@
     (update-installed-addon-list! [])))
 
 ;;
-;; addon summaries
+;; catalog handling
 ;;
 
 (defn-spec download-catalog (s/or :ok ::sp/extant-file, :error nil?)
@@ -462,7 +467,6 @@
 
 (defn-spec load-catalog nil?
   []
-  (download-catalog)
   (info "loading addon summaries from catalog:" (paths :catalog-file))
   (let [{:keys [addon-summary-list]} (utils/load-json-file-safely (paths :catalog-file)
                                                                   :bad-data? {:addon-summary-list {}})]
@@ -578,6 +582,46 @@
         (warn (format "failed to find %s installed addons in the catalog: %s" (count unmatched) (clojure.string/join ", " unmatched-names))))
 
       (update-installed-addon-list! expanded-installed-addon-list))))
+
+;; catalog db handling
+
+(defn db-query
+  [sqlquery]
+  (jdbc/execute! (get-state :db) [sqlquery]))
+
+(defn-spec db-init nil?
+  []
+  (info "creating 'catalog' table")
+  (jdbc/execute! (get-state :db) [(slurp "resources/table--catalog.sql")])
+  ;;(info "creating 'category' table")
+  ;;(jdbc/execute! ds [(slurp "resources/table--category.sql")])
+  
+  (swap! state update-in [:cleanup] conj (fn []
+                                           (try
+                                             (db-query "shutdown")
+                                             (catch org.h2.jdbc.JdbcSQLNonTransientConnectionException e
+                                               ;; "Database is already closed" (it's not)
+                                               (debug (str e))))))
+  nil)
+
+(defn db-load-catalog
+  []
+  (info "loading addon summaries from catalog into database:" (paths :catalog-file))
+  (let [ds (get-state :db)
+        {:keys [addon-summary-list]} (utils/load-json-file (paths :catalog-file))
+        xform-row (fn [row]
+                    (let [ignored [:category-list :age :game-track-list]
+                          mapping {:source-id :source_id
+                                   :alt-name :alt_name
+                                   :download-count :download_count
+                                   :created-date :created_date
+                                   :updated-date :updated_date}
+                          new {:retail_track (utils/in? "retail" (:game-track-list row))
+                               :vanilla_track (utils/in? "classic" (:game-track-list row))}]
+                      (-> row (utils/dissoc-all ignored) (rename-keys mapping) (merge new))))]
+    (jdbc/with-transaction [tx ds]
+      (doseq [row addon-summary-list]
+        (sql/insert! ds :catalog (xform-row row))))))
 
 ;;
 ;; addon summary and toc merging
@@ -757,9 +801,17 @@
 
 (defn refresh
   [& _]
+  (download-catalog)      ;; downloads the big long list of addon information stored on github
+
+  (db-init)               ;; creates an in-memory database and some empty tables
+
   (load-installed-addons) ;; parse toc files in install-dir. do this first so we see *something* while catalog downloads (next)
+
   (load-catalog)          ;; load the contents of the catalog
+  (db-load-catalog)       ;; load the contents of the catalog into the database
+
   (match-installed-addons-with-catalog) ;; match installed addons to those in catalog
+
   (check-for-updates)     ;; for those addons that have matches, download their details
   ;;(latest-wowman-release) ;; check for updates after everything else is done ;; 2019-06-30, travis is failing with 403: Forbidden. Moved to gui init
   (save-settings)         ;; seems like a good place to preserve the etag-db

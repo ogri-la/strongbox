@@ -1,0 +1,4 @@
+create table category (
+    
+
+);
