@@ -11,7 +11,9 @@
    [trptcolin.versioneer.core :as versioneer]
    [envvar.core :refer [env]]
    [next.jdbc :as jdbc]
-   [next.jdbc.sql :as sql]
+   [next.jdbc
+    [sql :as sql]
+    [result-set :as rs]]
    [wowman
     [zip :as zip]
     [http :as http]
@@ -127,6 +129,29 @@
   (if-let [state @state]
     (nav-map state path)
     (throw (RuntimeException. "application must be `start`ed before state may be accessed."))))
+
+(defn as-unqualified-hyphenated-maps
+  "used to coerce keys in each row of resultset
+  adapted from https://github.com/seancorfield/next-jdbc/blob/master/doc/result-set-builders.md#rowbuilder-and-resultsetbuilder"
+  [rs opts]
+  (let [xform #(-> % name lower-case (clojure.string/replace #"_" "-"))
+        unqualified (constantly nil)]
+    (rs/as-modified-maps rs (assoc opts :qualifier-fn unqualified :label-fn xform))))
+
+(defn db-query
+  ([query]
+   (db-query query nil))
+  ([query arg-list]
+   (jdbc/execute! (get-state :db) (into [query] arg-list)
+                  {:builder-fn as-unqualified-hyphenated-maps})))
+
+(defn get-db
+  "like `get-state`, uses 'paths' (keywords) to do predefined queries"
+  [kw]
+  (case kw
+    :addon-summary-list (db-query "select * from catalog")
+
+    nil))
 
 (defn set-etag
   "convenient wrapper around adding and removing etag values from state map"
@@ -483,7 +508,62 @@
   (when-let [uri (:group-id addon-summary)]
     (-> uri java.net.URI. .getHost (clojure.string/split #"\.") second)))
 
-;; todo: this belongs in a database. whatever laziness I'm trying to do isn't working
+
+;;
+
+(defn db-coerce-row-values
+  [row]
+  (when row
+    (assoc
+     (utils/coerce-row-values {:updated-date str} row)
+     ;; these need to be dealt with properly
+     :category-list []
+     :game-track-list [(when (:retail-track row) "retail")
+                       (when (:vanilla-track row) "classic")]
+     )))
+
+(defn find-in-db [installed-addon toc-keys catalog-keys]
+  (let [catalog-keys (if (vector? catalog-keys) catalog-keys [catalog-keys]) ;; ["source" "source_id"] => ["source" "source_id"], "name" => ["name"]
+        sql-arg-template (clojure.string/join " AND " (mapv #(format "%s = ?" %) catalog-keys)) ;; "source = ? AND source_id = ?", "name = ?"
+
+        toc-keys (if (vector? toc-keys) toc-keys [toc-keys])
+        sql-arg-vals (mapv #(get installed-addon %) toc-keys) ;; [:source :source-id] => ["curseforge" 12345], [:name] => ["foo"]
+
+        sql (str "select * from catalog where " sql-arg-template)
+        _ (info sql-arg-vals) ;; there are cases where an arg is nil. should we still query if we don't have all the facts?
+        results (db-query sql sql-arg-vals)
+        match (-> results first db-coerce-row-values)]
+    (when match
+      ;; {:idx [:name :alt-name], :key "deadly-boss-mods", :match {...}, ...}
+      {:idx [toc-keys catalog-keys]
+       :key sql-arg-vals
+       :installed-addon installed-addon
+       :match match
+       :final (moosh-addons installed-addon match)})))
+
+(defn find-first-in-db
+  [installed-addon match-on-list]
+  (info (:name installed-addon))
+  (let [[toc-keys catalog-keys] (first match-on-list)
+        match (find-in-db installed-addon toc-keys catalog-keys)]
+    (if-not match
+      ;; recur
+      (find-first-in-db installed-addon (rest match-on-list))
+      match)))
+
+(defn -db-match-installed-addons-with-catalog
+  "for each installed addon, search the catalog across multiple joins until a match is found. returns immediately when first match is found"
+  [installed-addon-list catalog]
+  (let [;; toc-key -> catalog-key
+        ;; most -> least desirable match
+        match-on-list [[[:source :source-id]  ["source" "source_id"]] ;; search across multiple parameters
+                       [:alias "name"]
+                       [:name "name"] [:name "alt_name"] [:label "label"] [:dirname "label"]]]
+    (for [installed-addon installed-addon-list]
+      (find-first-in-db installed-addon match-on-list))))
+
+;;
+
 (defn -match-installed-addons-with-catalog
   "for each installed addon, search the catalog across multiple joins until a match is found."
   [installed-addon-list catalog]
@@ -560,9 +640,11 @@
   (when (get-state :selected-addon-dir) ;; don't even bother if we have nothing to match it to
     (info "matching installed addons to online addons")
     (let [inst-addons (get-state :installed-addon-list)
-          catalog (get-state :addon-summary-list)
+          ;;catalog (get-state :addon-summary-list)
+          catalog (get-db :addon-summary-list)
 
-          match-results (-match-installed-addons-with-catalog inst-addons catalog)
+          ;;match-results (-match-installed-addons-with-catalog inst-addons catalog)
+          match-results (-db-match-installed-addons-with-catalog inst-addons catalog)
           [matched unmatched] (utils/split-filter #(contains? % :final) match-results)
 
           matched (mapv :final matched)
@@ -585,10 +667,6 @@
 
 ;; catalog db handling
 
-(defn db-query
-  [sqlquery]
-  (jdbc/execute! (get-state :db) [sqlquery]))
-
 (defn-spec db-init nil?
   []
   (info "creating 'catalog' table")
@@ -610,16 +688,17 @@
   (let [ds (get-state :db)
         {:keys [addon-summary-list]} (utils/load-json-file (paths :catalog-file))
         xform-row (fn [row]
-                    (let [ignored [:category-list :age :game-track-list]
+                    (let [ignored [:category-list :age :game-track-list :created-date]
                           mapping {:source-id :source_id
                                    :alt-name :alt_name
                                    :download-count :download_count
-                                   :created-date :created_date
+                                   ;;:created-date :created_date ;; curseforge only and unused
                                    :updated-date :updated_date}
-                          new {:retail_track (utils/in? "retail" (:game-track-list row))
+                          new {:retail_track (utils/in? "retail" (:game-track-list row)) ;; todo: something wrong here. weakauras2 is getting a 
                                :vanilla_track (utils/in? "classic" (:game-track-list row))}]
                       (-> row (utils/dissoc-all ignored) (rename-keys mapping) (merge new))))]
     (jdbc/with-transaction [tx ds]
+      (db-query "delete from catalog") ;; or else it tries to install duplicates
       (doseq [row addon-summary-list]
         (sql/insert! ds :catalog (xform-row row))))))
 

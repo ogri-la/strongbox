@@ -1,4 +1,4 @@
-create table category (
+create table if not exists category (
     
 
 );

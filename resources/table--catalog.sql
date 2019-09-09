@@ -1,4 +1,4 @@
-create table catalog (
+create table if not exists catalog (
     source enum('wowinterface', 'curseforge'),
     source_id int,
 
@@ -8,8 +8,9 @@ create table catalog (
     description varchar(255),
     uri varchar(255),
     download_count int,
-    created_date timestamp with time zone,
-    updated_date timestamp with time zone,
+    -- created_date timestamp with time zone, -- curseforge only and unused
+    -- updated_date timestamp with time zone, -- nobody can seem to do dates without *fucking them up* somehow
+    updated_date varchar(24), -- we have dates with micro second precision 
 
     retail_track boolean,
     vanilla_track boolean,
