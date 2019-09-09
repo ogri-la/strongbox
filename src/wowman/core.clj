@@ -89,12 +89,9 @@
    :cfg {:addon-dir-list []
          :debug? false}
 
-   ;; summary data about ALL available addons, scraped from listing pages.
-   :addon-summary-list nil
-
    ;; subset of possible data about all INSTALLED addons
    ;; starts as parsed .toc file data
-   ;; ... then updated with data from :addon-summary-list above
+   ;; ... then updated with data from catalog
    ;; ... then updated again with live data from curseforge
    ;; see specs/toc-addon
    :installed-addon-list nil
@@ -490,14 +487,6 @@
       (http/download-file remote-catalog local-catalog)
       (error "failed to find catalog:" catalog))))
 
-(defn-spec load-catalog nil?
-  []
-  (info "loading addon summaries from catalog:" (paths :catalog-file))
-  (let [{:keys [addon-summary-list]} (utils/load-json-file-safely (paths :catalog-file)
-                                                                  :bad-data? {:addon-summary-list {}})]
-    (swap! state assoc :addon-summary-list addon-summary-list)
-    nil))
-
 (defn moosh-addons
   [installed-addon catalog-addon]
   ;; merges left->right. catalog-addon overwrites installed-addon, ':matched' overwrites catalog-addon, etc
@@ -530,7 +519,7 @@
         sql-arg-vals (mapv #(get installed-addon %) toc-keys) ;; [:source :source-id] => ["curseforge" 12345], [:name] => ["foo"]
 
         sql (str "select * from catalog where " sql-arg-template)
-        _ (info sql-arg-vals) ;; there are cases where an arg is nil. should we still query if we don't have all the facts?
+        ;;_ (info sql-arg-vals) ;; there are cases where an arg is nil. should we still query if we don't have all the facts?
         results (db-query sql sql-arg-vals)
         match (-> results first db-coerce-row-values)]
     (when match
@@ -543,11 +532,9 @@
 
 (defn find-first-in-db
   [installed-addon match-on-list]
-  (info (:name installed-addon))
   (let [[toc-keys catalog-keys] (first match-on-list)
         match (find-in-db installed-addon toc-keys catalog-keys)]
-    (if-not match
-      ;; recur
+    (if-not match ;; recur
       (find-first-in-db installed-addon (rest match-on-list))
       match)))
 
@@ -564,74 +551,6 @@
 
 ;;
 
-(defn -match-installed-addons-with-catalog
-  "for each installed addon, search the catalog across multiple joins until a match is found."
-  [installed-addon-list catalog]
-  (let [;; [[toc-key catalog-key], ...]
-        ;; most -> least desirable match
-        match-on [[:source-id :source-id]
-                  [:alias :name]
-                  [:name :name] [:name :alt-name] [:label :label] [:dirname :label]]
-
-        ;; split the catalog into it's source parts (curseforge, wowinterface)
-        catalog-source-idx (group-by :source catalog)
-
-        ;; split each source catalog into multiple indicies (:name, :alt-name, etc)
-        idx-idx-fn (fn [source catalog-source]
-                     (debug "building index for" source)
-                     (into {} (mapv (fn [[toc-key catalog-key]]
-                                      {catalog-key (utils/idx catalog-source catalog-key)}) match-on)))
-
-        ;; idx-idx-idx is a structure that resembles this:
-        ;; {"curseforge" {:name {"addon-name-1" {:name "addon-name-1" ...}
-        ;;                       "addon-name-2" {:name "addon-name-2" ...}
-        ;;                       ...}
-        ;;                :alt-name {"addonname1" {:name "addon-name-1" ...}
-        ;;                           "addonname2" {:name "addon-name-2" ...}
-        ;;                           ...}
-        ;;                :label {"Addon Name 1" {:name "addon-name-1" ...}
-        ;;                        "Addon Name 2" {:name "addon-name-2" ...}
-        ;;                        ...}}
-        ;; "wowinterface" {...}}
-        idx-idx-idx (utils/fmap idx-idx-fn catalog-source-idx)
-
-        finder (fn [installed-addon]
-                 (let [;; figure out where this addon was installed from
-                       source (or
-                               (:source installed-addon) ;; perfect case
-                               (source-from-group-id installed-addon))
-
-                       ;; if we can't figure out where the addon came from, search all sources for a match
-                       source-list (sort ;; alphabetically, curseforge will come first
-                                    (if (nil? source)
-                                      (keys idx-idx-idx)
-                                      [source]))
-
-                       -finder (fn [source]
-                                 (mapv (fn [[toc-key catalog-key]]
-                                         (let [catalog (get idx-idx-idx source)
-                                               idx (get catalog catalog-key)
-                                               key (get installed-addon toc-key)
-                                               match (get idx key)]
-                                           ;; "checking wowinterface :alias=>:name for AdiBags"
-                                           (debug (format "checking %s %s=>%s for %s" source toc-key catalog-key (:name installed-addon)))
-
-                                           (when match
-                                             ;; {:idx [:name :alt-name], :key "deadly-boss-mods", :match {...}, ...}
-                                             {:idx [toc-key catalog-key]
-                                              :key key
-                                              :installed-addon installed-addon
-                                              :match match
-                                              :final (moosh-addons installed-addon match)}))) match-on))
-
-                       ;; clojure has peculiar laziness rules and this will actually visit *all* of the `match-on` pairs
-                       ;; see chunking: http://clojure-doc.org/articles/language/laziness.html
-                       match (first (remove nil? (flatten (map -finder source-list))))]
-
-                   (if match match {:installed-addon installed-addon})))]
-
-    (mapv finder installed-addon-list)))
-
 (defn-spec match-installed-addons-with-catalog nil?
   "when we have a list of installed addons as well as the addon list,
    merge what we can into ::specs/addon-toc records and update state.
@@ -640,10 +559,8 @@
   (when (get-state :selected-addon-dir) ;; don't even bother if we have nothing to match it to
     (info "matching installed addons to online addons")
     (let [inst-addons (get-state :installed-addon-list)
-          ;;catalog (get-state :addon-summary-list)
           catalog (get-db :addon-summary-list)
 
-          ;;match-results (-match-installed-addons-with-catalog inst-addons catalog)
           match-results (-db-match-installed-addons-with-catalog inst-addons catalog)
           [matched unmatched] (utils/split-filter #(contains? % :final) match-results)
 
@@ -652,7 +569,6 @@
           unmatched-names (set (map :name unmatched))
 
           expanded-installed-addon-list (into matched unmatched)
-          ;;expanded-installed-addon-list (utils/merge-lists :name (get-state :installed-addon-list) matched)
 
           [num-installed num-matched] [(count inst-addons) (count matched)]]
 
@@ -682,6 +598,8 @@
                                                (debug (str e))))))
   nil)
 
+;; todo: exception here when switching directories
+;; possibly something to do with deleting and recreating the database
 (defn db-load-catalog
   []
   (info "loading addon summaries from catalog into database:" (paths :catalog-file))
@@ -735,15 +653,6 @@
     (info "checking for updates")
     (update-installed-addon-list! (mapv check-for-update (get-state :installed-addon-list)))
     (info "done checking for updates")))
-
-(defn alias-wrangling
-  "temporary code until it finds a better home. downloads the top-50 addons and prints out the addon's and subaddon's labels. see `fs/aliases`"
-  []
-  (let [top-50 (take 50 (sort-by :download-count > (get-state :addon-summary-list)))
-        _ (mapv #(-> % expand-summary-wrapper (install-addon-guard (get-state :selected-addon-dir))) top-50)
-        ia (wowman.toc/installed-addons (get-state :selected-addon-dir))]
-    (mapv (fn [r] {(:name r) (if (:group-addons r) (mapv :label (:group-addons r)) [(:label r)])}) ia)))
-
 
 ;;
 ;; ui interface
@@ -846,7 +755,7 @@
 (defn -mk-import-idx
   [addon-list]
   (let [key-fn #(select-keys % [:source :name])
-        addon-summary-list (get-state :addon-summary-list)
+        addon-summary-list (get-db :addon-summary-list)
         ;; todo: this sucks. use a database
         catalog-idx (group-by key-fn addon-summary-list)
         find-expand (fn [addon]
@@ -886,7 +795,6 @@
 
   (load-installed-addons) ;; parse toc files in install-dir. do this first so we see *something* while catalog downloads (next)
 
-  (load-catalog)          ;; load the contents of the catalog
   (db-load-catalog)       ;; load the contents of the catalog into the database
 
   (match-installed-addons-with-catalog) ;; match installed addons to those in catalog
@@ -974,8 +882,7 @@
         reset-state-fn (fn [state]
                          ;; TODO: revisit this
                          ;; remove :cfg because it's controlled by user
-                         ;; remove :addon-summary-list because there is no need to load it multiple times
-                         (let [default-state (dissoc state :cfg :addon-summary-list)]
+                         (let [default-state (dissoc state :cfg)]
                            (swap! state-atm merge default-state)
                            (refresh)))]
     (state-bind [:selected-addon-dir] reset-state-fn)))

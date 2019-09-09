@@ -225,7 +225,7 @@
           toc (merge toc nfo)
 
           ;; we then attempt to match this 'toc+nfo' to an addon in the catalog
-          catalog-match (core/-match-installed-addons-with-catalog [toc] [catalog])
+          catalog-match (core/-db-match-installed-addons-with-catalog [toc] [catalog])
 
           ;; this is a m:n match and we typically get back heaps of results
           ;; in this case we have a catalog of 1 and are not interested in how the addon was matched (:final)
