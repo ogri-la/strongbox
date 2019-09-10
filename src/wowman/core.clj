@@ -147,6 +147,7 @@
   [kw]
   (case kw
     :addon-summary-list (db-query "select * from catalog")
+    :catalog-size (-> "select count(*) as num from catalog" db-query first :num)
 
     nil))
 
@@ -484,7 +485,7 @@
   [& [catalog] (s/* keyword?)]
   (binding [http/*cache* (cache)]
     (if-let [local-catalog (paths (or catalog :catalog-file))]
-      (http/download-file remote-catalog local-catalog)
+      (http/download-file remote-catalog local-catalog :message "downloading catalog (~5MB)")
       (error "failed to find catalog:" catalog))))
 
 (defn moosh-addons
@@ -598,27 +599,31 @@
                                                (debug (str e))))))
   nil)
 
+(defn db-catalog-loaded?
+  []
+  (> (get-db :catalog-size) 0))
+
 ;; todo: exception here when switching directories
 ;; possibly something to do with deleting and recreating the database
 (defn db-load-catalog
   []
-  (info "loading addon summaries from catalog into database:" (paths :catalog-file))
-  (let [ds (get-state :db)
-        {:keys [addon-summary-list]} (utils/load-json-file (paths :catalog-file))
-        xform-row (fn [row]
-                    (let [ignored [:category-list :age :game-track-list :created-date]
-                          mapping {:source-id :source_id
-                                   :alt-name :alt_name
-                                   :download-count :download_count
-                                   ;;:created-date :created_date ;; curseforge only and unused
-                                   :updated-date :updated_date}
-                          new {:retail_track (utils/in? "retail" (:game-track-list row)) ;; todo: something wrong here. weakauras2 is getting a 
-                               :vanilla_track (utils/in? "classic" (:game-track-list row))}]
-                      (-> row (utils/dissoc-all ignored) (rename-keys mapping) (merge new))))]
-    (jdbc/with-transaction [tx ds]
-      (db-query "delete from catalog") ;; or else it tries to install duplicates
-      (doseq [row addon-summary-list]
-        (sql/insert! ds :catalog (xform-row row))))))
+  (when-not (db-catalog-loaded?)
+    (debug "loading addon summaries from catalog into database:" (paths :catalog-file))
+    (let [ds (get-state :db)
+          {:keys [addon-summary-list]} (utils/load-json-file (paths :catalog-file))
+          xform-row (fn [row]
+                      (let [ignored [:category-list :age :game-track-list :created-date]
+                            mapping {:source-id :source_id
+                                     :alt-name :alt_name
+                                     :download-count :download_count
+                                     ;;:created-date :created_date ;; curseforge only and unused
+                                     :updated-date :updated_date}
+                            new {:retail_track (utils/in? "retail" (:game-track-list row)) ;; todo: something wrong here. weakauras2 is getting a 
+                                 :vanilla_track (utils/in? "classic" (:game-track-list row))}]
+                        (-> row (utils/dissoc-all ignored) (rename-keys mapping) (merge new))))]
+      (jdbc/with-transaction [tx ds]
+        (doseq [row addon-summary-list]
+          (sql/insert! ds :catalog (xform-row row)))))))
 
 ;;
 ;; addon summary and toc merging
