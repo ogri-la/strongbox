@@ -498,16 +498,6 @@
         search-input (ss/text :id :search-input-txt :columns 40 :listen [:key-released search-input-handler])]
     (ss/flow-panel :align :left :items ["search" search-input install-button])))
 
-(defn search-rows
-  [rows uinput]
-  (let [uinput (-> uinput (or "") trim lower-case)
-        search-fn (fn [row]
-                    (when (:label row)
-                      (starts-with? (-> row :label lower-case) uinput)))]
-    (if (empty? uinput)
-      rows
-      (filter search-fn rows))))
-
 (defn search-results-panel
   []
   (let [tblmdl (sstbl/table-model :columns [{:key :uri :text "go"}
@@ -536,10 +526,12 @@
 
         date-renderer #(when % (-> % clojure.instant/read-instant-date (utils/fmt-date "yyyy-MM-dd")))
 
-        cap 250 ;; jxtable + autopack. more rows and searching becomes noticibly laggy
         update-rows-fn (fn [state]
-                         (let [known-addons (search-rows (:addon-summary-list state) (:search-field-input state))]
-                           (insert-all grid (take cap known-addons))))]
+                         (let [uinput (-> state :search-field-input (or "") trim)
+                               search-results (if (empty? uinput)
+                                                (core/db-search)
+                                                (core/db-search uinput))]
+                           (insert-all grid search-results)))]
 
     ;; I'm rather pleased these just work as-is :)
     ;; todo: rename these to something a bit more general
@@ -550,7 +542,7 @@
     (add-highlighter grid addon-installed? (colours :search/already-installed))
 
     (ss/listen grid :selection (selected-rows-handler search-results-selection-handler))
-    (state-bind [:addon-summary-list] update-rows-fn)
+    (state-bind [:catalog-size] update-rows-fn)
     (state-bind [:search-field-input] update-rows-fn)
     (ss/scrollable grid)))
 
@@ -618,6 +610,7 @@
                                        (ss/request-focus! (select-ui :#search-input-txt))))))
     tabber))
 
+;; todo: push this into core
 (defn status-bar
   "this is the litle strip of text at the bottom of the application."
   []
@@ -629,11 +622,10 @@
                          :font (font :size 11))
 
         update-label (fn [state]
-                       (let [a (:addon-summary-list state)
-                             ia (:installed-addon-list state)
+                       (let [ia (:installed-addon-list state)
                              uia (filter :matched? ia)
 
-                             a-count (count a)
+                             a-count (:catalog-size state)
                              ia-count (count ia)
                              uia-count (count uia)
 

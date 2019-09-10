@@ -99,6 +99,8 @@
    :etag-db {}
 
    :db nil
+   :catalog-size nil ;; used to trigger those waiting for the catalog to become available
+   :search-results-cap 150 ;; number of results to display in search results pane.
 
    ;; ui
 
@@ -141,6 +143,18 @@
   ([query arg-list]
    (jdbc/execute! (get-state :db) (into [query] arg-list)
                   {:builder-fn as-unqualified-hyphenated-maps})))
+
+(defn db-search
+  ([]
+   ;; random list of addons, no preference
+   (db-query "select * from catalog order by RAND() limit ?" [(get-state :search-results-cap)]))
+  ([uin]
+   (let [uin+ (str uin "%")
+         +uin+ (str "%" uin "%")]
+     (sql/find-by-keys (get-state :db) :catalog ["label ilike ? or description ilike ?"
+                                                 uin+ +uin+]
+                       {:max-rows (get-state :search-results-cap) ;; used to be 250 but with better searching there is less scrolling
+                        :builder-fn as-unqualified-hyphenated-maps}))))
 
 (defn get-db
   "like `get-state`, uses 'paths' (keywords) to do predefined queries"
@@ -504,8 +518,8 @@
 (defn db-coerce-row-values
   [row]
   (when row
-    (assoc
-     (utils/coerce-row-values {:updated-date str} row)
+    (assoc row
+     ;;(utils/coerce-row-values {:updated-date str} row)
      ;; these need to be dealt with properly
      :category-list []
      :game-track-list [(when (:retail-track row) "retail")
@@ -605,7 +619,7 @@
 
 ;; todo: exception here when switching directories
 ;; possibly something to do with deleting and recreating the database
-(defn db-load-catalog
+(defn-spec db-load-catalog nil?
   []
   (when-not (db-catalog-loaded?)
     (debug "loading addon summaries from catalog into database:" (paths :catalog-file))
@@ -623,7 +637,9 @@
                         (-> row (utils/dissoc-all ignored) (rename-keys mapping) (merge new))))]
       (jdbc/with-transaction [tx ds]
         (doseq [row addon-summary-list]
-          (sql/insert! ds :catalog (xform-row row)))))))
+          (sql/insert! ds :catalog (xform-row row))))
+      (swap! state assoc :catalog-size (get-db :catalog-size))
+      nil)))
 
 ;;
 ;; addon summary and toc merging

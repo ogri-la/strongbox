@@ -17,3 +17,6 @@ create table if not exists catalog (
     
     primary key(source_id, source)
 );
+
+create index label_idx on catalog (label);
+create index description_idx on catalog (description);
