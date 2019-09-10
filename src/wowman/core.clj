@@ -149,10 +149,10 @@
    ;; random list of addons, no preference
    (db-query "select * from catalog order by RAND() limit ?" [(get-state :search-results-cap)]))
   ([uin]
-   (let [uin+ (str uin "%")
-         +uin+ (str "%" uin "%")]
+   (let [uin% (str uin "%")
+         %uin% (str "%" uin "%")]
      (sql/find-by-keys (get-state :db) :catalog ["label ilike ? or description ilike ?"
-                                                 uin+ +uin+]
+                                                 uin% %uin%]
                        {:max-rows (get-state :search-results-cap) ;; used to be 250 but with better searching there is less scrolling
                         :builder-fn as-unqualified-hyphenated-maps}))))
 
