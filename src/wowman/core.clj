@@ -235,7 +235,7 @@
 
 (defn-spec remove-addon-dir! nil?
   ([]
-   (when-let [addon-dir (get-state :selected-addon-dir)] 
+   (when-let [addon-dir (get-state :selected-addon-dir)]
      (remove-addon-dir! addon-dir)))
   ([addon-dir ::sp/addon-dir]
    (dosync
@@ -515,16 +515,16 @@
 
 ;;
 
+
 (defn db-coerce-row-values
   [row]
   (when row
     (assoc row
      ;;(utils/coerce-row-values {:updated-date str} row)
      ;; these need to be dealt with properly
-     :category-list []
-     :game-track-list [(when (:retail-track row) "retail")
-                       (when (:vanilla-track row) "classic")]
-     )))
+           :category-list []
+           :game-track-list [(when (:retail-track row) "retail")
+                             (when (:vanilla-track row) "classic")])))
 
 (defn find-in-db [installed-addon toc-keys catalog-keys]
   (let [catalog-keys (if (vector? catalog-keys) catalog-keys [catalog-keys]) ;; ["source" "source_id"] => ["source" "source_id"], "name" => ["name"]
@@ -547,11 +547,13 @@
 
 (defn find-first-in-db
   [installed-addon match-on-list]
-  (let [[toc-keys catalog-keys] (first match-on-list)
-        match (find-in-db installed-addon toc-keys catalog-keys)]
-    (if-not match ;; recur
-      (find-first-in-db installed-addon (rest match-on-list))
-      match)))
+  (if (empty? match-on-list) ;; we may have exhausted all possibilities. not finding a match is ok
+    installed-addon
+    (let [[toc-keys catalog-keys] (first match-on-list)
+          match (find-in-db installed-addon toc-keys catalog-keys)]
+      (if-not match ;; recur
+        (find-first-in-db installed-addon (rest match-on-list))
+        match))))
 
 (defn -db-match-installed-addons-with-catalog
   "for each installed addon, search the catalog across multiple joins until a match is found. returns immediately when first match is found"
@@ -604,7 +606,7 @@
   (jdbc/execute! (get-state :db) [(slurp "resources/table--catalog.sql")])
   ;;(info "creating 'category' table")
   ;;(jdbc/execute! ds [(slurp "resources/table--category.sql")])
-  
+
   (swap! state update-in [:cleanup] conj (fn []
                                            (try
                                              (db-query "shutdown")

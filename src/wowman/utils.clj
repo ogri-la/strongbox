@@ -26,7 +26,6 @@
                            v)))]
     (reduce reducer {} row)))
 
-
 (defn uuid
   []
   (.toString (java.util.UUID/randomUUID)))

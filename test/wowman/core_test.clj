@@ -123,79 +123,76 @@
 
 (deftest import-exported-addon-list-file
   (testing "an export can be imported"
-    (try
-      (main/start {:ui :cli})
+    (let [;; modified curseforge addon files to generate fake links
+          every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
+          every-other-addon-zip-file (fixture-path "everyotheraddon--4-5-6.zip")
 
-      ;; will trigger a refresh. call it here before it affects our crafted state
-      (core/set-addon-dir! (str fs/*cwd*))
+          every-addon-api (slurp (fixture-path "curseforge-api-addon--everyaddon.json"))
+          every-other-addon-api (slurp (fixture-path "curseforge-api-addon--everyotheraddon.json"))
 
-      (let [;; add catalog to app state
-            addon-summary-list (utils/load-json-file (fixture-path "import--dummy-catalog.json"))
-            _ (swap! core/state assoc :addon-summary-list addon-summary-list)
+          addon-summary-list (utils/load-json-file (fixture-path "import--dummy-catalog.json"))
 
-            ;; our list of addons to import
-            output-path (fixture-path "import--exports.json")
+          fake-routes {;; catalog
+                       "https://github.com/ogri-la/wowman-data/releases/download/daily/catalog.json"
+                       {:get (fn [req] {:status 200 :body (utils/to-json {:addon-summary-list addon-summary-list})})}
 
-            ;; modified curseforge addon files to generate fake links
-            every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
-            every-other-addon-zip-file (fixture-path "everyotheraddon--4-5-6.zip")
+                       ;; every-addon
+                       "https://addons-ecs.forgesvc.net/api/v2/addon/1"
+                       {:get (fn [req] {:status 200 :body every-addon-api})}
 
-            every-addon-api (slurp (fixture-path "curseforge-api-addon--everyaddon.json"))
-            every-other-addon-api (slurp (fixture-path "curseforge-api-addon--everyotheraddon.json"))
+                       ;; ... it's zip file
+                       "https://edge.forgecdn.net/files/1/1/EveryAddon.zip"
+                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-addon-zip-file)})}
 
-            fake-routes {;; every-addon
-                         "https://addons-ecs.forgesvc.net/api/v2/addon/1"
-                         {:get (fn [req] {:status 200 :body every-addon-api})}
+                       ;; every-other-addon
+                       "https://addons-ecs.forgesvc.net/api/v2/addon/2"
+                       {:get (fn [req] {:status 200 :body every-other-addon-api})}
 
-                         ;; ... it's zip file
-                         "https://edge.forgecdn.net/files/1/1/EveryAddon.zip"
-                         {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-addon-zip-file)})}
+                       ;; ... it's zip file
+                       "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip"
+                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-other-addon-zip-file)})}}]
+      (with-fake-routes-in-isolation fake-routes
+        (try
+          (main/start {:ui :cli, :install-dir (str fs/*cwd*)})
 
-                         ;; every-other-addon
-                         "https://addons-ecs.forgesvc.net/api/v2/addon/2"
-                         {:get (fn [req] {:status 200 :body every-other-addon-api})}
+          (let [;; our list of addons to import
+                output-path (fixture-path "import--exports.json")
 
-                         ;; ... it's zip file
-                         "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip"
-                         {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-other-addon-zip-file)})}}
+                expected [{:description "Does what no other addon does, slightly differently",
+                           :update? false,
+                           :group-id "https://www.curseforge.com/wow/addons/everyaddon",
+                           :installed-version "v8.2.0-v1.13.2-7135.139",
+                           :name "everyaddon",
+                           :source "curseforge",
+                           :source-id 1
+                           :interface-version 70000,
+                           :label "EveryAddon 1.2.3",
+                           :dirname "EveryAddon",
+                           :primary? true}
+                          {:description "Does what every addon does, just better",
+                           :update? false,
+                           :group-id "https://www.curseforge.com/wow/addons/everyotheraddon",
+                           :installed-version "v8.2.0-v1.13.2-7135.139",
+                           :name "everyotheraddon",
+                           :source "curseforge",
+                           :source-id 2
+                           :interface-version 70000,
+                           :label "EveryOtherAddon 4.5.6",
+                           :dirname "EveryOtherAddon",
+                           :primary? true}]]
 
-            expected [{:description "Does what no other addon does, slightly differently",
-                       :update? false,
-                       :group-id "https://www.curseforge.com/wow/addons/everyaddon",
-                       :installed-version "v8.2.0-v1.13.2-7135.139",
-                       :name "everyaddon",
-                       :source "curseforge",
-                       :source-id 1
-                       :interface-version 70000,
-                       :label "EveryAddon 1.2.3",
-                       :dirname "EveryAddon",
-                       :primary? true}
-                      {:description "Does what every addon does, just better",
-                       :update? false,
-                       :group-id "https://www.curseforge.com/wow/addons/everyotheraddon",
-                       :installed-version "v8.2.0-v1.13.2-7135.139",
-                       :name "everyotheraddon",
-                       :source "curseforge",
-                       :source-id 2
-                       :interface-version 70000,
-                       :label "EveryOtherAddon 4.5.6",
-                       :dirname "EveryOtherAddon",
-                       :primary? true}]]
-        (with-fake-routes-in-isolation fake-routes
-          (core/import-exported-file output-path)
-          ;; TODO: this refresh isn't able to match the installed addons to the dummy catalog!
-          (core/refresh) ;; re-read the installation directory
-          (is (= expected (core/get-state :installed-addon-list)))))
+            (core/import-exported-file output-path)
+            ;; TODO: this refresh isn't able to match the installed addons to the dummy catalog!
+            (core/refresh) ;; re-read the installation directory
+            (is (= expected (core/get-state :installed-addon-list))))
 
-      (finally
-        (main/stop)))))
+          (finally
+            (main/stop)))))))
 
 (deftest check-for-update
   (testing "the key :update? is set on an addon when there is a difference between the installed version of an addon and it's matching catalog verison"
 
-    ;; this test turned out to be a pretty clear flow of how data is ingested and transformed and merged
-
-    (let [;; we start off with a list of these called a catalog
+    (let [;; we start off with a list of these called a catalog. it's downloaded from github
           catalog {:category-list ["Auction House & Vendors"],
                    :download-count 1
                    :label "Every Addon"
@@ -205,33 +202,6 @@
                    :updated-date "2012-09-20T05:32:00Z",
                    :uri "https://www.curseforge.com/wow/addons/every-addon"}
 
-          ;; and a collection of these scraped from the installed addons
-          toc {:name "every-addon"
-               :label "Every Addon"
-               :description "foo"
-               :dirname "EveryAddon"
-               :interface-version 70000
-               :installed-version "v8.10.00"}
-
-          ;; and optionally these from .wowman.json if we installed the addon
-          nfo {:installed-version "v8.10.00",
-               :name "every-addon",
-               :group-id "doesntmatter"
-               :primary? true,
-               :source "curseforge"
-               :source-id 0}
-
-          ;; the nfo data is simply merged over the top of the scraped toc data
-          toc (merge toc nfo)
-
-          ;; we then attempt to match this 'toc+nfo' to an addon in the catalog
-          catalog-match (core/-db-match-installed-addons-with-catalog [toc] [catalog])
-
-          ;; this is a m:n match and we typically get back heaps of results
-          ;; in this case we have a catalog of 1 and are not interested in how the addon was matched (:final)
-          toc-addon (-> catalog-match first :final) ;; :update? will be false
-          alt-toc-addon (assoc toc-addon :source-id 1) ;; :update? will be true
-
           ;; this is subset of the data the remote addon host (curseforge in this case) serves us
           api-result {:latestFiles [{:downloadUrl "https://example.org/foo"
                                      :displayName "v8.10.00"
@@ -240,15 +210,6 @@
                                      :releaseType 1,
                                      :exposeAsAlternative nil}]}
           alt-api-result (assoc-in api-result [:latestFiles 0 :displayName] "v8.20.00")
-
-          ;; and what we 'expand' that data into
-          api-xform {:download-uri "https://example.org/foo",
-                     :version "v8.10.00"}
-          alt-api-xform (assoc api-xform :version "v8.20.00")
-
-          ;; after calling `check-for-update` we expect the result to be the merged sum of the below parts
-          expected (merge toc-addon api-xform {:update? false})
-          alt-expected (merge alt-toc-addon alt-api-xform {:update? true})
 
           fake-routes {;; catalog
                        "https://github.com/ogri-la/wowman-data/releases/download/daily/catalog.json"
@@ -263,10 +224,47 @@
 
       (with-fake-routes-in-isolation fake-routes
         (try
-          (main/start {:ui :cli})
-          (core/set-addon-dir! (str fs/*cwd*)) ;; default game track of 'retail'
-          (is (= expected (core/check-for-update toc-addon)))
-          (is (= alt-expected (core/check-for-update alt-toc-addon)))
+          ;; init the app, which downloads the catalog and loads the db
+          (main/start {:ui :cli, :install-dir (str fs/*cwd*)})
+
+          (let [;; a collection of these are scraped from the installed addons
+                toc {:name "every-addon"
+                     :label "Every Addon"
+                     :description "foo"
+                     :dirname "EveryAddon"
+                     :interface-version 70000
+                     :installed-version "v8.10.00"}
+
+                ;; and optionally these from .wowman.json if we installed the addon
+                nfo {:installed-version "v8.10.00",
+                     :name "every-addon",
+                     :group-id "doesntmatter"
+                     :primary? true,
+                     :source "curseforge"
+                     :source-id 0}
+
+                ;; the nfo data is simply merged over the top of the scraped toc data
+                toc (merge toc nfo)
+
+                ;; we then attempt to match this 'toc+nfo' to an addon in the catalog
+                catalog-match (core/-db-match-installed-addons-with-catalog [toc] [catalog])
+
+                ;; this is a m:n match and we typically get back heaps of results
+                ;; in this case we have a catalog of 1 and are not interested in how the addon was matched (:final)
+                toc-addon (-> catalog-match first :final) ;; :update? will be false
+                alt-toc-addon (assoc toc-addon :source-id 1) ;; :update? will be true
+
+                ;; and what we 'expand' that data into
+                api-xform {:download-uri "https://example.org/foo",
+                           :version "v8.10.00"}
+                alt-api-xform (assoc api-xform :version "v8.20.00")
+
+                ;; after calling `check-for-update` we expect the result to be the merged sum of the below parts
+                expected (merge toc-addon api-xform {:update? false})
+                alt-expected (merge alt-toc-addon alt-api-xform {:update? true})]
+
+            (is (= expected (core/check-for-update toc-addon)))
+            (is (= alt-expected (core/check-for-update alt-toc-addon))))
 
           (finally
             (main/stop)))))))
