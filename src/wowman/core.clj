@@ -560,7 +560,7 @@
   [installed-addon-list catalog]
   (let [;; toc-key -> catalog-key
         ;; most -> least desirable match
-        match-on-list [[[:source :source-id]  ["source" "source_id"]] ;; search across multiple parameters
+        match-on-list [[[:source :source-id]  ["source" "source_id"]] ;; nest to search across multiple parameters
                        [:alias "name"]
                        [:name "name"] [:name "alt_name"] [:label "label"] [:dirname "label"]]]
     (for [installed-addon installed-addon-list]
@@ -602,10 +602,10 @@
 
 (defn-spec db-init nil?
   []
-  (info "creating 'catalog' table")
+  (debug "creating 'catalog' table")
   (jdbc/execute! (get-state :db) [(slurp "resources/table--catalog.sql")])
-  ;;(info "creating 'category' table")
-  ;;(jdbc/execute! ds [(slurp "resources/table--category.sql")])
+  (debug "creating 'category' table")
+  (jdbc/execute! (get-state :db) [(slurp "resources/table--category.sql")])
 
   (swap! state update-in [:cleanup] conj (fn []
                                            (try
@@ -619,14 +619,27 @@
   []
   (> (get-db :catalog-size) 0))
 
-;; todo: exception here when switching directories
-;; possibly something to do with deleting and recreating the database
+;; slow and stupid way of loading addons into a normalised db schema
 (defn-spec db-load-catalog nil?
   []
   (when-not (db-catalog-loaded?)
     (debug "loading addon summaries from catalog into database:" (paths :catalog-file))
     (let [ds (get-state :db)
           {:keys [addon-summary-list]} (utils/load-json-file (paths :catalog-file))
+
+          addon-categories (mapv (fn [{:keys [source-id source category-list]}]
+                                   (mapv (fn [category]
+                                           [source-id source category]) category-list)) addon-summary-list)
+          ;; todo: we have addons in multiple identical categories. fix this in catalog.clj
+          ;; see curseforge:319346
+          addon-categories (->> addon-categories (mapcat identity) set vec)
+
+          _ (info "num addon-categories" (count addon-categories))
+
+          ;; distinct list of :categories
+          ;; (mapcat identity) => single level of flattening
+          category-list (->> addon-categories (mapv rest) set vec)
+
           xform-row (fn [row]
                       (let [ignored [:category-list :age :game-track-list :created-date]
                             mapping {:source-id :source_id
@@ -634,12 +647,29 @@
                                      :download-count :download_count
                                      ;;:created-date :created_date ;; curseforge only and unused
                                      :updated-date :updated_date}
-                            new {:retail_track (utils/in? "retail" (:game-track-list row)) ;; todo: something wrong here. weakauras2 is getting a 
+                            new {:retail_track (utils/in? "retail" (:game-track-list row))
                                  :vanilla_track (utils/in? "classic" (:game-track-list row))}]
                         (-> row (utils/dissoc-all ignored) (rename-keys mapping) (merge new))))]
       (jdbc/with-transaction [tx ds]
-        (doseq [row addon-summary-list]
-          (sql/insert! ds :catalog (xform-row row))))
+        ;;    1.703391 msec
+        ;; ~100 items
+        (time (sql/insert-multi! ds :category [:source :name] category-list))
+        ;;  871.427154 msec
+        ;; ~10k items
+        (time (doseq [row addon-summary-list]
+                (sql/insert! ds :catalog (xform-row row))))
+
+        ;; 1337.340542 msec
+        ;; ~20k items (avg 2 categories per addon)
+        (time (let [category-map (db-query "select name, id from category")
+                    category-map (into {} (mapv (fn [{:keys [name id]}]
+                                                  {name id}) category-map))]
+
+                (doseq [[source-id source category] addon-categories]
+                  (sql/insert! ds :addon_category {:addon_source source
+                                                   :addon_source_id source-id
+                                                   :category_id (get category-map category)})))))
+
       (swap! state assoc :catalog-size (get-db :catalog-size))
       nil)))
 
