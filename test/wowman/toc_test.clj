@@ -43,7 +43,7 @@ SomeAddon.lua")
 
 (use-fixtures :once temp-addon-fixture)
 
-(deftest -parse-addon-toc
+(deftest parse-addon-toc
   (testing "scrape of toc-file contents"
     (let [expected {:interface "80000"
                     :version "1.6.1"
@@ -72,3 +72,35 @@ SomeAddon.lua")
                     :installed-version "1.6.1"}]
 
       (is (= expected (wowman.toc/parse-addon-toc (addon-path)))))))
+
+(deftest rm-trailing-version
+  (testing "parsing of 'Title' attribute in toc file"
+    (let [cases [["Grid" "Grid"] ;; no trailing version? no problems
+                 ["Bagnon Void Storage" "Bagnon Void Storage"]
+                 
+                 ["Grid2" "Grid2"] ;; trailing digit, but not separated by a space
+                 ["Bartender4" "Bartender4"]
+                 
+                 ["Grid 2" "Grid"] ;; trailing digit is removed ...
+                 ["WeakAuras 2" "WeakAuras"] ;; ...even when we don't want them to
+
+                 ;; encoded colours are preserved
+                 ["AtlasLoot |cFF0099FF[Battle for Azeroth]|r" "AtlasLoot |cFF0099FF[Battle for Azeroth]|r"]
+
+                 ;; string of trailing digits and dots are removed
+                 ["Carbonite Maps 8.2.0" "Carbonite Maps"]
+                 ;; even if they are prefixed with a 'v'
+                 ["Carbonite Maps v8.2.0" "Carbonite Maps"]
+
+                 ;; foreign glyphs are preserved
+                 ["GatherMate2 採集助手" "GatherMate2 採集助手"]
+
+                 ;; contrived examples
+                 ["foo ..." "foo"]
+                 ["foo v.0." "foo"]
+                 ["foo v..." "foo"]
+                 ["foo ...v" "foo ...v"]
+                 ["foo v2019.01.01" "foo"]] ;; haven't seen this case yet, doesn't seem unreasonable
+          ]
+      (doseq [[given expected] cases]
+        (is (= expected (wowman.toc/rm-trailing-version given)))))))
