@@ -8,14 +8,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### done
 
-### todo
-
-* download-catalog bug
-    - I *think* something or things are trying to read the catalog before it has finished downloading
-        - this is causing malformed json errors
-    - download the catalog to a temporary name and then move into place
 * investigate switching to an embedded database
     - there is a lot of catalog-wrangling code happening and it's getting obscure
+        - there is new code now but it's less obscure
     - searching for addons is really limited
         - especially now that we have new dimensions
     - db creation could happen in place of catalog generation
@@ -28,9 +23,25 @@ see CHANGELOG.md for a more formal list of changes by release
         - done
     - update tests so we get a fresh db
         - follow per-case/per-test fixture rules
+        - done
     - replace :addon-summary-list usage internally with database
+        - done
+
+### todo
+
+* download-catalog bug
+    - I *think* something or things are trying to read the catalog before it has finished downloading
+        - this is causing malformed json errors
+    - download the catalog to a temporary name and then move into place
+* investigate switching to an embedded database
     - replace :installed-addon-list usage internally with database
         - we'll need some way of triggering changes
+            - I've done this by updating the state with some stats 
+        - need to think a bit more about this one now that :addon-summary-list is happening
+            - should this replace .wowman.json files?
+                - no, because database isn't permanent
+            - what benefits are there to storing the list of installed addons in the database rather than in an array?
+                - we've already discovered it can be painful to re-create arrays and maps
 * bug, 'clear cache' didn't delete the catalog.json
 * user-agent needs to be updated
     - it using a naive (subs ...) call
@@ -44,7 +55,6 @@ see CHANGELOG.md for a more formal list of changes by release
             - fingerprint is 9 digits and all decimal, so not a hex digest
     - wowinterface checksum is hidden behind a javascript tabber but still available
         - wowinterface do have a md5sum in results! score
-
 * short catalog, full catalog
     - the catalog is getting big now and will only get larger
         - curseforge and wowinterface keep accumulating new addons
