@@ -552,6 +552,9 @@
         toc-keys (if (vector? toc-keys) toc-keys [toc-keys])
         sql-arg-vals (mapv #(get installed-addon %) toc-keys) ;; [:source :source-id] => ["curseforge" 12345], [:name] => ["foo"]
 
+        _ (when (some nil? sql-arg-vals)
+            (warn "(debug) failed to find all values for sql query. keys:" toc-keys "vals:" sql-arg-vals))
+
         sql (str select-*-catalog "where " sql-arg-template)
         ;;_ (info sql-arg-vals) ;; there are cases where an arg is nil. should we still query if we don't have all the facts?
         results (db-query sql :arg-list sql-arg-vals)
@@ -601,7 +604,6 @@
           [matched unmatched] (utils/split-filter #(contains? % :final) match-results)
 
           matched (mapv :final matched)
-          unmatched (mapv :installed-addon unmatched)
           unmatched-names (set (map :name unmatched))
 
           expanded-installed-addon-list (into matched unmatched)
