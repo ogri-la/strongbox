@@ -15,6 +15,29 @@
    [java-time :as jt]
    [java-time.format]))
 
+(defn shallow-flatten
+  [lst]
+  (mapcat identity lst))
+
+(defn coerce-map-values
+  "given a mapping of {key fn} matching keys in given map will be transformed
+  (coerce-map-values {:foo str} {:foo 123}) => {:foo '123'}"
+  [mapping row]
+  (let [reducer (fn [ncoll [k v]]
+                  (assoc ncoll k
+                         (if (contains? mapping k)
+                           ((get mapping k) v)
+                           v)))]
+    (reduce reducer {} row)))
+
+(defn uuid
+  []
+  (.toString (java.util.UUID/randomUUID)))
+
+(defn dissoc-all
+  [m l]
+  (apply dissoc m l))
+
 ;; orphaned, might be useful still?
 (defn-spec file-ext-as-kw (s/or :ok keyword?, :error nil?)
   [path ::sp/file]
@@ -148,9 +171,11 @@
   (subs x 0 (min (count x) max)))
 
 (defn in?
-  [vals]
-  (fn [v]
-    (some #{v} vals)))
+  ([needle haystack]
+   (not (nil? (some #{needle} haystack))))
+  ([haystack]
+   (fn [needle]
+     (in? needle haystack))))
 
 (defn-spec idx map?
   [list-of-maps ::sp/list-of-maps, key keyword?]
