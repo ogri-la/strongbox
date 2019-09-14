@@ -68,6 +68,7 @@ see CHANGELOG.md for a more formal list of changes by release
     - the catalog is getting big now and will only get larger
         - curseforge and wowinterface keep accumulating new addons
         - other sources will come along
+        - database loading operation is already taking a little too long for my liking
     - a lot of addons could be removed as simply being 'too old'
         - addons that haven't been updated for two or three releases (6 years) for example
     - I want to preserve the entirety of the catalog if possible though
