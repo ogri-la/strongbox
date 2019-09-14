@@ -140,14 +140,38 @@
 (defn db-query
   ([query]
    (db-query query nil))
-  ([query arg-list]
+  ([query arg-list & {:keys [opts]}]
    (jdbc/execute! (get-state :db) (into [query] arg-list)
-                  {:builder-fn as-unqualified-hyphenated-maps})))
+                  (merge {:builder-fn as-unqualified-hyphenated-maps} opts))))
+
+(def select-*-catalog (slurp "resources/query--all-catalog.sql"))
+
+(defn db-split-category-list
+  [category-list-str]
+  (if (empty? category-list-str)
+    []
+    (clojure.string/split category-list-str #"\|")))
+
+(defn db-gen-game-track-list
+  [row]
+  (let [track-list (vec (remove nil? [(when (:retail-track row) "retail")
+                                      (when (:vanilla-track row) "classic")]))
+        row (dissoc row :retail-track :vanilla-track)]
+    (if (empty? track-list)
+      row
+      (assoc row :game-track-list track-list))))
+
+(defn db-coerce-row-values
+  [row]
+  (when row
+    (->> row
+         (utils/coerce-row-values {:category-list db-split-category-list})
+         (db-gen-game-track-list))))
 
 (defn db-search
   ([]
    ;; random list of addons, no preference
-   (db-query "select * from catalog order by RAND() limit ?" [(get-state :search-results-cap)]))
+   (db-query (str select-*-catalog "order by RAND() limit ?") [(get-state :search-results-cap)]))
   ([uin]
    (let [uin% (str uin "%")
          %uin% (str "%" uin "%")]
@@ -160,7 +184,7 @@
   "like `get-state`, uses 'paths' (keywords) to do predefined queries"
   [kw]
   (case kw
-    :addon-summary-list (db-query "select * from catalog")
+    :addon-summary-list (->> (db-query select-*-catalog) (mapv db-coerce-row-values))
     :catalog-size (-> "select count(*) as num from catalog" db-query first :num)
 
     nil))
@@ -516,16 +540,6 @@
 ;;
 
 
-(defn db-coerce-row-values
-  [row]
-  (when row
-    (assoc row
-     ;;(utils/coerce-row-values {:updated-date str} row)
-     ;; these need to be dealt with properly
-           :category-list []
-           :game-track-list [(when (:retail-track row) "retail")
-                             (when (:vanilla-track row) "classic")])))
-
 (defn find-in-db [installed-addon toc-keys catalog-keys]
   (let [catalog-keys (if (vector? catalog-keys) catalog-keys [catalog-keys]) ;; ["source" "source_id"] => ["source" "source_id"], "name" => ["name"]
         sql-arg-template (clojure.string/join " AND " (mapv #(format "%s = ?" %) catalog-keys)) ;; "source = ? AND source_id = ?", "name = ?"
@@ -533,7 +547,7 @@
         toc-keys (if (vector? toc-keys) toc-keys [toc-keys])
         sql-arg-vals (mapv #(get installed-addon %) toc-keys) ;; [:source :source-id] => ["curseforge" 12345], [:name] => ["foo"]
 
-        sql (str "select * from catalog where " sql-arg-template)
+        sql (str select-*-catalog "where " sql-arg-template)
         ;;_ (info sql-arg-vals) ;; there are cases where an arg is nil. should we still query if we don't have all the facts?
         results (db-query sql sql-arg-vals)
         match (-> results first db-coerce-row-values)]

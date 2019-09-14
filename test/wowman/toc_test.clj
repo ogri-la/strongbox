@@ -77,10 +77,10 @@ SomeAddon.lua")
   (testing "parsing of 'Title' attribute in toc file"
     (let [cases [["Grid" "Grid"] ;; no trailing version? no problems
                  ["Bagnon Void Storage" "Bagnon Void Storage"]
-                 
+
                  ["Grid2" "Grid2"] ;; trailing digit, but not separated by a space
                  ["Bartender4" "Bartender4"]
-                 
+
                  ["Grid 2" "Grid"] ;; trailing digit is removed ...
                  ["WeakAuras 2" "WeakAuras"] ;; ...even when we don't want them to
 

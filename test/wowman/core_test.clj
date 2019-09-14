@@ -159,30 +159,46 @@
                 output-path (fixture-path "import--exports.json")
 
                 expected [{:description "Does what no other addon does, slightly differently",
+                           :category-list ["Bags & Inventory"],
                            :update? false,
+                           :updated-date "2019-06-26T01:21:39Z",
                            :group-id "https://www.curseforge.com/wow/addons/everyaddon",
                            :installed-version "v8.2.0-v1.13.2-7135.139",
                            :name "everyaddon",
                            :source "curseforge",
-                           :source-id 1
-                           :interface-version 70000,
-                           :label "EveryAddon 1.2.3",
+                           :interface-version 11300,
+                           :download-uri "https://edge.forgecdn.net/files/1/1/EveryAddon.zip",
+                           :alt-name "everyaddon",
+                           :label "EveryAddon",
+                           :download-count 3000000,
+                           :source-id 1,
+                           :uri "https://www.curseforge.com/wow/addons/everyaddon",
+                           :version "v8.2.0-v1.13.2-7135.139",
                            :dirname "EveryAddon",
-                           :primary? true}
+                           :primary? true,
+                           :matched? true}
+
                           {:description "Does what every addon does, just better",
+                           :category-list ["Professions" "Map & Minimap"],
                            :update? false,
+                           :updated-date "2019-07-03T07:11:47Z",
                            :group-id "https://www.curseforge.com/wow/addons/everyotheraddon",
                            :installed-version "v8.2.0-v1.13.2-7135.139",
                            :name "everyotheraddon",
                            :source "curseforge",
-                           :source-id 2
-                           :interface-version 70000,
-                           :label "EveryOtherAddon 4.5.6",
+                           :interface-version 11300,
+                           :download-uri "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip",
+                           :alt-name "everyotheraddon",
+                           :label "Every Other Addon",
+                           :download-count 5400000,
+                           :source-id 2,
+                           :uri "https://www.curseforge.com/wow/addons/everyotheraddon",
+                           :version "v8.2.0-v1.13.2-7135.139",
                            :dirname "EveryOtherAddon",
-                           :primary? true}]]
+                           :primary? true,
+                           :matched? true}]]
 
             (core/import-exported-file output-path)
-            ;; TODO: this refresh isn't able to match the installed addons to the dummy catalog!
             (core/refresh) ;; re-read the installation directory
             (is (= expected (core/get-state :installed-addon-list))))
 
