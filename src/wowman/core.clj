@@ -120,8 +120,7 @@
    :selected-search []
    ;; number of results to display in search results pane.
    ;; used to be 250 but with better searching there is less scrolling
-   :search-results-cap 150
-   })
+   :search-results-cap 150})
 
 (def state (atom nil))
 
@@ -145,7 +144,7 @@
   (jdbc/execute! (get-state :db) (into [query] arg-list)
                  (merge {:builder-fn as-unqualified-hyphenated-maps} opts)))
 
-(def select-*-catalog (slurp "resources/query--all-catalog.sql"))
+(def select-*-catalog (str (slurp "resources/query--all-catalog.sql") " ")) ;; trailing space is important
 
 (defn-spec db-split-category-list vector?
   "converts a pipe-separated list of categories into a vector"
@@ -181,10 +180,9 @@
   ([uin]
    (let [uin% (str uin "%")
          %uin% (str "%" uin "%")]
-     (sql/find-by-keys (get-state :db) :catalog ["label ilike ? or description ilike ?"
-                                                 uin% %uin%]
-                       {:max-rows (get-state :search-results-cap)
-                        :builder-fn as-unqualified-hyphenated-maps}))))
+     (db-query (str select-*-catalog "where label ilike ? or description ilike ?")
+               :arg-list [uin% %uin%]
+               :opts {:max-rows (get-state :search-results-cap)}))))
 
 (defn get-db
   "like `get-state`, uses 'paths' (keywords) to do predefined queries"
