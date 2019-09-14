@@ -91,6 +91,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
+* openjdk11 support
+    - see `switch-openjdk10-to-openjdk11-builds` branch
+    - problem with clojure.java-time library right now and html scraping of wowinterface, but that looks like it
 * add custom highlighting colours 
     - I don't mind my colours but not everybody may
 * add ElvUI support. they have json that can be scraped
