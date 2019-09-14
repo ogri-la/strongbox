@@ -68,12 +68,19 @@
       ([req resp raise]
        (write-etag etag-key (client (add-etag-or-not etag-key req) resp raise))))))
 
+(defn-spec wowman-user-agent string?
+  [wowman-version string?]
+  (let [regex #"(\d{1,3})\.(\d{1,3})\.(\d{1,3})(.*)?"
+        ;; => {:major "0" :minor "10" :patch "0" :qualifier "-unreleased"}
+        v (zipmap [:major :minor :patch :qualifier] (rest (re-find regex wowman-version)))]
+    (format "Wowman/%s.%s%s (https://github.com/ogri-la/wowman)" (:major v) (:minor v) (:qualifier v))))
+
 (defn-spec user-agent map?
   [use-anon-useragent? boolean?]
-  (let [anon-useragent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36"
-        wowman-version (-> (versioneer/get-version "ogri-la" "wowman") (subs 0 3)) ;; `subs` here is fine until major or minor exceeds double digits
-        wowman-useragent (format "Wowman/%s (https://github.com/ogri-la/wowman)" wowman-version)]
-    {"http.useragent" (if use-anon-useragent? anon-useragent wowman-useragent)}))
+  (let [;; https://techblog.willshouse.com/2012/01/03/most-common-user-agents/ (last updated 2019-09-14)
+        anon-useragent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36"
+        useragent (wowman-user-agent (versioneer/get-version "ogri-la" "wowman"))]
+    {"http.useragent" (if use-anon-useragent? anon-useragent useragent)}))
 
 (defn fresh-cache-file-exists?
   "returns `true` if the last modification time on given file is before the expiry date of +N hours"

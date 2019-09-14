@@ -26,6 +26,10 @@ see CHANGELOG.md for a more formal list of changes by release
         - done
     - replace :addon-summary-list usage internally with database
         - done
+* user-agent needs to be updated
+    - it using a naive (subs ...) call
+    - done
+        - should handle anything I throw it from now on
 
 ### todo
 
@@ -49,8 +53,7 @@ see CHANGELOG.md for a more formal list of changes by release
             - what benefits are there to storing the list of installed addons in the database rather than in an array?
                 - we've already discovered it can be painful to re-create arrays and maps
 * bug, 'clear cache' didn't delete the catalog.json
-* user-agent needs to be updated
-    - it using a naive (subs ...) call
+
 * gui tests are bypassing the path wrangling because the envvar library is using thread-local `binding`
     - change path access to an atom
     - I *think* this may have something to do with a truncated catalog I've encountered now (twice)
