@@ -21,7 +21,7 @@
                  [clj-commons/fs "1.5.0"] ;; file system wrangling
                  [slugify "0.0.1"]
                  [trptcolin/versioneer "0.2.0"] ;; version number wrangling. it's more involved than you might suspect
-                 [org.flatland/ordered "1.5.2"] ;; better ordered map
+                 [org.flatland/ordered "1.5.7"] ;; better ordered map
                  [clojure.java-time "0.3.2"] ;; date/time handling library
                  [envvar "1.1.0"] ;; environment variable wrangling
                  [clj-http-fake "1.0.3"] ;; fake http responses for testing
