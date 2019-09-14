@@ -180,9 +180,10 @@
   ([uin]
    (let [uin% (str uin "%")
          %uin% (str "%" uin "%")]
-     (db-query (str select-*-catalog "where label ilike ? or description ilike ?")
-               :arg-list [uin% %uin%]
-               :opts {:max-rows (get-state :search-results-cap)}))))
+     (mapv db-coerce-catalog-values
+           (db-query (str select-*-catalog "where label ilike ? or description ilike ?")
+                     :arg-list [uin% %uin%]
+                     :opts {:max-rows (get-state :search-results-cap)})))))
 
 (defn get-db
   "like `get-state`, uses 'paths' (keywords) to do predefined queries"
