@@ -15,9 +15,13 @@
    [java-time :as jt]
    [java-time.format]))
 
-(defn coerce-row-values
-  "given a mapping of {key fn} matching keys in given row will be transformed
-  (coerce-row-values {:foo str} {:foo 123}) => {:foo '123'}"
+(defn shallow-flatten
+  [lst]
+  (mapcat identity lst))
+
+(defn coerce-map-values
+  "given a mapping of {key fn} matching keys in given map will be transformed
+  (coerce-map-values {:foo str} {:foo 123}) => {:foo '123'}"
   [mapping row]
   (let [reducer (fn [ncoll [k v]]
                   (assoc ncoll k

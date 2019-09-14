@@ -29,11 +29,17 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### todo
 
+* bug, we have addons in multiple identical categories. fix this in catalog.clj
+    - see 319346
+    - remove call to set in db-load-catalog
 * download-catalog bug
     - I *think* something or things are trying to read the catalog before it has finished downloading
         - this is causing malformed json errors
     - download the catalog to a temporary name and then move into place
 * investigate switching to an embedded database
+    - compare current speed and code against loading addon category data serially
+        - as opposed to in three blocks (categories, addons, category-addons). We might save some time and code
+    - investigate prepared statements when inserting 
     - replace :installed-addon-list usage internally with database
         - we'll need some way of triggering changes
             - I've done this by updating the state with some stats 

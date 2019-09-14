@@ -100,7 +100,6 @@
 
    :db nil
    :catalog-size nil ;; used to trigger those waiting for the catalog to become available
-   :search-results-cap 150 ;; number of results to display in search results pane.
 
    ;; ui
 
@@ -118,7 +117,11 @@
    :selected-installed []
 
    :search-field-input nil
-   :selected-search []})
+   :selected-search []
+   ;; number of results to display in search results pane.
+   ;; used to be 250 but with better searching there is less scrolling
+   :search-results-cap 150
+   })
 
 (def state (atom nil))
 
@@ -138,21 +141,21 @@
     (rs/as-modified-maps rs (assoc opts :qualifier-fn unqualified :label-fn xform))))
 
 (defn db-query
-  ([query]
-   (db-query query nil))
-  ([query arg-list & {:keys [opts]}]
-   (jdbc/execute! (get-state :db) (into [query] arg-list)
-                  (merge {:builder-fn as-unqualified-hyphenated-maps} opts))))
+  [query & {:keys [arg-list opts]}]
+  (jdbc/execute! (get-state :db) (into [query] arg-list)
+                 (merge {:builder-fn as-unqualified-hyphenated-maps} opts)))
 
 (def select-*-catalog (slurp "resources/query--all-catalog.sql"))
 
-(defn db-split-category-list
-  [category-list-str]
+(defn-spec db-split-category-list vector?
+  "converts a pipe-separated list of categories into a vector"
+  [category-list-str (s/nilable string?)]
   (if (empty? category-list-str)
     []
     (clojure.string/split category-list-str #"\|")))
 
 (defn db-gen-game-track-list
+  "converts the 'retail_track' and 'vanilla_track' boolean values into a list of strings"
   [row]
   (let [track-list (vec (remove nil? [(when (:retail-track row) "retail")
                                       (when (:vanilla-track row) "classic")]))
@@ -161,30 +164,33 @@
       row
       (assoc row :game-track-list track-list))))
 
-(defn db-coerce-row-values
+(defn db-coerce-catalog-values
+  "further per-row processing of catalog data after retrieving it from the database"
   [row]
   (when row
     (->> row
-         (utils/coerce-row-values {:category-list db-split-category-list})
+         (utils/coerce-map-values {:category-list db-split-category-list})
          (db-gen-game-track-list))))
 
 (defn db-search
+  "searches database for addons whose name or description contains given user input.
+  if no user input, returns a list of randomly ordered results"
   ([]
    ;; random list of addons, no preference
-   (db-query (str select-*-catalog "order by RAND() limit ?") [(get-state :search-results-cap)]))
+   (db-query (str select-*-catalog "order by RAND() limit ?") :arg-list [(get-state :search-results-cap)]))
   ([uin]
    (let [uin% (str uin "%")
          %uin% (str "%" uin "%")]
      (sql/find-by-keys (get-state :db) :catalog ["label ilike ? or description ilike ?"
                                                  uin% %uin%]
-                       {:max-rows (get-state :search-results-cap) ;; used to be 250 but with better searching there is less scrolling
+                       {:max-rows (get-state :search-results-cap)
                         :builder-fn as-unqualified-hyphenated-maps}))))
 
 (defn get-db
   "like `get-state`, uses 'paths' (keywords) to do predefined queries"
   [kw]
   (case kw
-    :addon-summary-list (->> (db-query select-*-catalog) (mapv db-coerce-row-values))
+    :addon-summary-list (->> (db-query select-*-catalog) (mapv db-coerce-catalog-values))
     :catalog-size (-> "select count(*) as num from catalog" db-query first :num)
 
     nil))
@@ -549,8 +555,8 @@
 
         sql (str select-*-catalog "where " sql-arg-template)
         ;;_ (info sql-arg-vals) ;; there are cases where an arg is nil. should we still query if we don't have all the facts?
-        results (db-query sql sql-arg-vals)
-        match (-> results first db-coerce-row-values)]
+        results (db-query sql :arg-list sql-arg-vals)
+        match (-> results first db-coerce-catalog-values)]
     (when match
       ;; {:idx [:name :alt-name], :key "deadly-boss-mods", :match {...}, ...}
       {:idx [toc-keys catalog-keys]
@@ -618,7 +624,7 @@
   []
   (debug "creating 'catalog' table")
   (jdbc/execute! (get-state :db) [(slurp "resources/table--catalog.sql")])
-  (debug "creating 'category' table")
+  (debug "creating category tables")
   (jdbc/execute! (get-state :db) [(slurp "resources/table--category.sql")])
 
   (swap! state update-in [:cleanup] conj (fn []
@@ -633,7 +639,6 @@
   []
   (> (get-db :catalog-size) 0))
 
-;; slow and stupid way of loading addons into a normalised db schema
 (defn-spec db-load-catalog nil?
   []
   (when-not (db-catalog-loaded?)
@@ -646,12 +651,9 @@
                                            [source-id source category]) category-list)) addon-summary-list)
           ;; todo: we have addons in multiple identical categories. fix this in catalog.clj
           ;; see curseforge:319346
-          addon-categories (->> addon-categories (mapcat identity) set vec)
-
-          _ (info "num addon-categories" (count addon-categories))
+          addon-categories (->> addon-categories utils/shallow-flatten set vec)
 
           ;; distinct list of :categories
-          ;; (mapcat identity) => single level of flattening
           category-list (->> addon-categories (mapv rest) set vec)
 
           xform-row (fn [row]
