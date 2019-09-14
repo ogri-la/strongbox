@@ -37,7 +37,7 @@
                  ["10.10.10" "Wowman/10.10 (https://github.com/ogri-la/wowman)"]
                  ["10.10.10-unreleased" "Wowman/10.10-unreleased (https://github.com/ogri-la/wowman)"]
 
-                 ["999.999.999-unreleased" "Wowman/999.999-unreleased (https://github.com/ogri-la/wowman)"]]]
+                 ["991.992.993-unreleased" "Wowman/991.992-unreleased (https://github.com/ogri-la/wowman)"]]]
 
       (doseq [[given expected] cases]
         (is (= expected (http/wowman-user-agent given)))))))
