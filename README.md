@@ -14,7 +14,7 @@ It may work on other platforms but it is only tested and supported on Linux.
 
 ## Requirements
 
-* Java 8+
+* Java 8+ (but not Java 11)
 
 ## Installation
 
