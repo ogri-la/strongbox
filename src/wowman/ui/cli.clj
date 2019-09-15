@@ -43,7 +43,7 @@
           created (utils/datestamp-now-ymd)
           updated created
           formatted-catalog-data (catalog/format-catalog-data catalog-data created updated)]
-      (catalog/write-catalog-data output-file formatted-catalog-data))))
+      (catalog/write-catalog formatted-catalog-data output-file))))
 
 (defmethod action :update-curseforge-catalog
   [_]
@@ -57,21 +57,29 @@
       (curseforge/update-addon-summary-file (paths :curseforge-catalog-file)
                                             (paths :curseforge-catalog-updates-file)))))
 
-(defmethod action :merge-catalog
+(defmethod action :write-catalog
   [_]
-  (catalog/merge-catalogs (paths :catalog-file) (paths :curseforge-catalog-file) (paths :wowinterface-catalog-file)))
+    ;; writes the 'full' and 'short' catalog files by combining the individual host catalogs
+  (let [curseforge-catalog (paths :curseforge-catalog-file)
+        wowinterface-catalog (paths :wowinterface-catalog-file)
+        catalog (catalog/merge-catalogs curseforge-catalog wowinterface-catalog)]
+    (-> catalog
+        (catalog/write-catalog (paths :catalog-file))
+
+        catalog/shorten-catalog
+        (catalog/write-catalog (paths :catalog-file-short)))))
 
 (defmethod action :scrape-catalog
   [_]
   (action :scrape-curseforge-catalog)
   (action :scrape-wowinterface-catalog)
-  (action :merge-catalog))
+  (action :write-catalog))
 
 (defmethod action :update-catalog
   [_]
   (action :update-curseforge-catalog)
   (action :update-wowinterface-catalog)
-  (action :merge-catalog))
+  (action :write-catalog))
 
 (defmethod action :list
   [_]

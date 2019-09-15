@@ -64,6 +64,7 @@
         wowinterface-catalog (join data-dir "wowinterface.json")
 
         catalog (join data-dir "catalog.json")
+        catalog-short (join data-dir "catalog-short.json")
 
         ;; ensure path ends with `-file` or `-dir` or `-uri`
         path-map {:config-dir config-dir
@@ -73,6 +74,7 @@
                   :etag-db-file etag-db-file
 
                   :catalog-file catalog
+                  :catalog-file-short catalog-short
 
                   :curseforge-catalog-file curseforge-catalog
                   :curseforge-catalog-updates-file curseforge-catalog-updates ;; todo, remove
