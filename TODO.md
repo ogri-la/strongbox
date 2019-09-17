@@ -35,11 +35,17 @@ see CHANGELOG.md for a more formal list of changes by release
         - after removing addons not updated since before beginning of last expac (Legion):
             - 6555 addons total
             - 3.1MB file
+            - 1.5 second db load time
+                "Elapsed time: 1.222319 msecs" (categories)
+                "Elapsed time: 483.493881 msecs" (addons)
+                "Elapsed time: 860.562001 msecs" (category->addons)
+
         - there are other tricks I could use to cut out some of the fields and just generate them at load time
             - I think the structure of the catalog will need a more thoughtful revision though
 
 ### todo
 
+* remove debugging? mode
 * bug,export addon list isn't using selected directory
 * export to markdown
     - I think I'd like a simple list like:
@@ -55,6 +61,10 @@ see CHANGELOG.md for a more formal list of changes by release
         - addons that haven't been updated for two or three releases (6 years) for example
     - I want to preserve the entirety of the catalog if possible though
         - perhaps a game setting to opt-in to the larger download
+    - there is another todo about supporting custom catalogs
+        - what about supporting N number of catalogs? 
+            - not concurrently, only one could be selected at a time, at least for now
+            - curseforge, wowinterface, full, short, curseforge-short, wowinterface-short ...
 * bug, we have addons in multiple identical categories. fix this in catalog.clj
     - see 319346
     - remove call to set in db-load-catalog

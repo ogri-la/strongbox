@@ -38,6 +38,7 @@
 (def colours (utils/nav-map-fn -colour-map))
 
 ;; not in `paths` because it's not configurable
+;; deprecated
 (def remote-catalog "https://github.com/ogri-la/wowman-data/releases/download/daily/catalog.json")
 
 (defn paths
@@ -59,12 +60,12 @@
         cfg-file (join config-dir "config.json") ;; /home/$you/.config/wowman/config.json
         etag-db-file (join data-dir "etag-db.json") ;; /home/$you/.local/share/wowman/etag-db.json
 
-        curseforge-catalog (join data-dir "curseforge.json") ;; /home/$you/.local/share/wowman/cache/curseforge.json
-        curseforge-catalog-updates (join data-dir "curseforge-updates.json") ;; todo: remove this intermediate file
-        wowinterface-catalog (join data-dir "wowinterface.json")
+        ;;curseforge-catalog (join data-dir "curseforge.json") ;; /home/$you/.local/share/wowman/cache/curseforge.json
+        ;;curseforge-catalog-updates (join data-dir "curseforge-updates.json") ;; todo: remove this intermediate file
+        ;;wowinterface-catalog (join data-dir "wowinterface.json")
 
-        catalog (join data-dir "catalog.json")
-        catalog-short (join data-dir "catalog-short.json")
+        ;;catalog (join data-dir "catalog.json")
+        ;;catalog-short (join data-dir "catalog-short.json")
 
         ;; ensure path ends with `-file` or `-dir` or `-uri`
         path-map {:config-dir config-dir
@@ -73,12 +74,15 @@
                   :cfg-file cfg-file
                   :etag-db-file etag-db-file
 
-                  :catalog-file catalog
-                  :catalog-file-short catalog-short
+                  :catalog-dir data-dir
 
-                  :curseforge-catalog-file curseforge-catalog
-                  :curseforge-catalog-updates-file curseforge-catalog-updates ;; todo, remove
-                  :wowinterface-catalog-file wowinterface-catalog}]
+                  ;;:catalog-file catalog
+                  ;;:catalog-file-short catalog-short
+
+                  ;;:curseforge-catalog-file curseforge-catalog
+                  ;;:curseforge-catalog-updates-file curseforge-catalog-updates ;; todo, remove
+                  ;;:wowinterface-catalog-file wowinterface-catalog
+                  }]
     (nav-map path-map path)))
 
 (def -state-template
@@ -89,8 +93,18 @@
 
    ;; final config, result of merging :file-opts and :cli-opts
    :cfg {:addon-dir-list []
-         :debug? false}
+         :debug? false ;; todo, remove
+         :selected-catalog :short}
 
+   :catalog-source-list [{:name :short :label "Short (default)" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/catalog-short.json"}
+                         ;; todo: change the name of the release from 'daily' to something else
+                         {:name :full :label "Full" :source remote-catalog}
+
+                         {:name :curseforge-catalog-file :label "Curseforge" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/curseforge.json"}
+                         {:name :wowinterface-catalog-file :label "WoWInterface" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/wowinterface.json"}
+
+                         ]
+   
    ;; subset of possible data about all INSTALLED addons
    ;; starts as parsed .toc file data
    ;; ... then updated with data from catalog
@@ -328,8 +342,15 @@
   [file-opts map?, cli-opts map?]
   (debug "loading file config:" file-opts)
   (let [default-cfg (:cfg -state-template)
+
+        ;; todo: this sucks,fix
+        file-opts (if (contains? file-opts :selected-catalog)
+                    (update-in file-opts [:selected-catalog] keyword)
+                    file-opts)
+
         cfg (merge default-cfg file-opts)
         cfg (handle-legacy-install-dir cfg)
+        ;; doesn't support optional :opt keysets
         cfg (spec-tools/coerce ::sp/user-config cfg spec-tools/strip-extra-keys-transformer)
         valid? (s/valid? ::sp/user-config cfg)]
     (when-not valid?
@@ -525,12 +546,34 @@
 ;; catalog handling
 ;;
 
+(defn-spec get-catalog-source (s/nilable ::sp/catalog-source)
+  ([]
+   (get-catalog-source (get-state :cfg :selected-catalog)))
+  ([catalog-name keyword?]
+   (->> (get-state :catalog-source-list) (filter #(= catalog-name (:name %))) first)))
+
+(defn-spec set-catalog-source! nil?
+  [catalog-name keyword?]
+  (if-let [catalog (get-catalog-source catalog-name)]
+    (swap! state assoc-in [:cfg :selected-catalog] (:name catalog))
+    (warn "catalog not found" catalog-name))
+  nil)
+
+(defn-spec catalog-local-path ::sp/file
+  "given a catalog-source map, returns the local path to the catalog."
+  [catalog-source ::sp/catalog-source]
+  ;; {:name :full ...} => "/path/to/catalog/dir/full-catalog.json"
+  (utils/join (paths :catalog-dir) (-> catalog-source :name name (str "-catalog.json"))))
+
 (defn-spec download-catalog (s/or :ok ::sp/extant-file, :error nil?)
   "downloads catalog to expected location, nothing more"
   [& [catalog] (s/* keyword?)]
   (binding [http/*cache* (cache)]
-    (if-let [local-catalog (paths (or catalog :catalog-file))]
-      (http/download-file remote-catalog local-catalog :message "downloading catalog (~5MB)")
+    (if-let [current-catalog (get-state :cfg :selected-catalog)]
+      (let [catalog-source (get-catalog-source (or catalog current-catalog)) ;; {:name :full :label "Full" :source "https://..."}
+            remote-catalog (:source catalog-source)
+            local-catalog (catalog-local-path catalog-source)]
+        (http/download-file remote-catalog local-catalog :message (format "downloading catalog '%s'" (:label catalog-source))))
       (error "failed to find catalog:" catalog))))
 
 (defn moosh-addons
@@ -645,9 +688,11 @@
 (defn-spec db-load-catalog nil?
   []
   (when-not (db-catalog-loaded?)
-    (debug "loading addon summaries from catalog into database:" (paths :catalog-file))
     (let [ds (get-state :db)
-          {:keys [addon-summary-list]} (utils/load-json-file (paths :catalog-file))
+          catalog-source (get-catalog-source)
+          catalog-path (catalog-local-path catalog-source)
+          _ (debug "loading addon summaries from catalog into database:" catalog-path)
+          {:keys [addon-summary-list]} (utils/load-json-file catalog-path)
 
           addon-categories (mapv (fn [{:keys [source-id source category-list]}]
                                    (mapv (fn [category]
