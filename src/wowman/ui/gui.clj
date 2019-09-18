@@ -236,7 +236,8 @@
 (defn configure-app-panel
   []
   (let [picker (fn []
-                 (when-let [dir (chooser/choose-file :type "select" :selection-mode :dirs-only)]
+                 (when-let [dir (chooser/choose-file :type :open ;; ':open' forces a better dialog type in mac for opening directories
+                                                     :selection-mode :dirs-only)]
                    (if (fs/directory? dir)
                      (do
                        (core/set-addon-dir! (str dir))
