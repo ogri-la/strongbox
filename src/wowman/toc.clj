@@ -12,6 +12,10 @@
    [me.raynes.fs :as fs]
    [clojure.string :refer [lower-case ends-with?]]))
 
+;; interface version to use if .toc file is missing theirs
+;; assume addon is compatible with the most recent version
+(def default-interface-version 80200)
+
 ;; matches a tocfile's 'Title' (label) to a catalog's name
 ;; aliases are maintained for the top-50 downloaded addons (ever) only, and only for those that need it
 ;; best and nicest way to avoid needing an alias is to have your .toc 'Title' attribute match your curseforge addon name
@@ -100,13 +104,12 @@
 
 (defn-spec parse-addon-toc ::sp/toc
   [addon-dir ::sp/extant-dir, keyvals map?]
-  (let [;;decoded-title (:title keyvals) ;; TODO: title may be encoded: https://wow.gamepedia.com/UI_escape_sequences
-        dirname (fs/base-name addon-dir) ;; /foo/bar/baz => baz
+  (let [dirname (fs/base-name addon-dir) ;; /foo/bar/baz => baz
         install-dir (str (fs/parent addon-dir)) ;; /foo/bar/baz => /foo/bar
         nfo-contents (nfo/read-nfo install-dir dirname)
 
-        ;; doesn't appear to mess with catalog matching
-        ;; if a match in the catalog is found, then that title will be used
+        ;; https://github.com/ogri-la/wowman/issues/47 - user encountered addon sans 'Title' attribute
+        ;; if a match in the catalog is found even after munging the title, it will overwrite this one
         no-label-label (str dirname " *") ;; "EveryAddon *"
         label (:title keyvals)
         label (if-not (empty? label) label no-label-label)
@@ -117,12 +120,11 @@
         alias (when (contains? aliases label)
                 {:alias (get aliases label)})
 
-        default-interface-version 80200
-
         addon {:name (normalise-name label)
                :dirname dirname
                :label label
-               :description (or (:notes keyvals) (:description keyvals)) ;; :notes is preferred but we'll fall back to :description
+               ;; :notes is preferred but we'll fall back to :description
+               :description (or (:notes keyvals) (:description keyvals))
                :interface-version (or (some-> keyvals :interface utils/to-int)
                                       default-interface-version)
                :installed-version (:version keyvals)
@@ -143,10 +145,10 @@
       (parse-addon-toc addon-dir keyvals)
       ;; we didn't find a .toc file, but just ignore it if it looks like an official addon dir
       (when-not (.startsWith (fs/base-name addon-dir) "Blizzard_")
-        ;; we didn't find a .toc file and it really should have one. warn the user
+        ;; not an official addon and we didn't find a .toc file. warn the user
         (warn "failed to find .toc file:" addon-dir)))
     (catch Exception e
-      ;; this addon really messed us up. don't propagate the failure, just report it and return nil
+      ;; this addon failed somehow. don't propagate the exception, just report it and return nil
       (error "please report this! https://github.com/ogri-la/wowman/issues")
       (error e (format "unhandled error parsing addon in directory '%s': %s" addon-dir (.getMessage e))))))
 
