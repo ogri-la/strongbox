@@ -194,7 +194,7 @@
 
 (defn-spec remove-addon-dir! nil?
   ([]
-   (when-let [addon-dir (get-state :selected-addon-dir)] 
+   (when-let [addon-dir (get-state :selected-addon-dir)]
      (remove-addon-dir! addon-dir)))
   ([addon-dir ::sp/addon-dir]
    (dosync

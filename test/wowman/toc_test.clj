@@ -1,7 +1,9 @@
 (ns wowman.toc-test
   (:require
    [clojure.test :refer [deftest testing is use-fixtures]]
-   [wowman.toc]
+   [wowman
+    [utils :as utils]
+    [toc :as toc]]
    [wowman.utils :refer [join]]
    [me.raynes.fs :as fs]))
 
@@ -61,7 +63,7 @@ SomeAddon.lua")
 
                     :over "written" ;; duplicate attributes are overwritten
                     }]
-      (is (= expected (wowman.toc/-read-toc-file toc-file-contents)))))
+      (is (= expected (toc/-read-toc-file toc-file-contents)))))
 
   (testing "parsing of scraped toc-file key-vals"
     (let [expected {:name "addon-name"
@@ -70,17 +72,26 @@ SomeAddon.lua")
                     :description "Description of the addon here"
                     :interface-version 80000
                     :installed-version "1.6.1"}]
+      (is (= expected (toc/parse-addon-toc-guard (addon-path))))))
 
-      (is (= expected (wowman.toc/parse-addon-toc (addon-path)))))))
+  (testing "parsing scraped keyvals in .toc value yields expected values"
+    (let [cases [[{"title" ""} {:name "everyaddon-*", :dirname "EveryAddon", :label "EveryAddon *", :description nil, :interface-version 80200, :installed-version nil}]
+                 [{"Title" ""} {:name "everyaddon-*", :dirname "EveryAddon", :label "EveryAddon *", :description nil, :interface-version 80200, :installed-version nil}]
+                 [{"Title" nil} {:name "everyaddon-*", :dirname "EveryAddon", :label "EveryAddon *", :description nil, :interface-version 80200, :installed-version nil}]]
+          install-dir fs/*cwd*
+          addon-dir (utils/join install-dir "EveryAddon")]
+      (fs/mkdir addon-dir)
+      (doseq [[given expected] cases]
+        (is (= expected (toc/parse-addon-toc addon-dir given)))))))
 
 (deftest rm-trailing-version
   (testing "parsing of 'Title' attribute in toc file"
     (let [cases [["Grid" "Grid"] ;; no trailing version? no problems
                  ["Bagnon Void Storage" "Bagnon Void Storage"]
-                 
+
                  ["Grid2" "Grid2"] ;; trailing digit, but not separated by a space
                  ["Bartender4" "Bartender4"]
-                 
+
                  ["Grid 2" "Grid"] ;; trailing digit is removed ...
                  ["WeakAuras 2" "WeakAuras"] ;; ...even when we don't want them to
 
@@ -103,4 +114,4 @@ SomeAddon.lua")
                  ["foo v2019.01.01" "foo"]] ;; haven't seen this case yet, doesn't seem unreasonable
           ]
       (doseq [[given expected] cases]
-        (is (= expected (wowman.toc/rm-trailing-version given)))))))
+        (is (= expected (toc/rm-trailing-version given)))))))
