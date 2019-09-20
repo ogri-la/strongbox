@@ -82,7 +82,7 @@
 (defn-spec rm-trailing-version string?
   "'foo 1.2.3' => 'foo', 'foo 1"
   [str string?]
-  (let [matching-suffix #"[ \d\.]+$"
+  (let [matching-suffix #" v?[\d\.]+$"
         nothing ""]
     (clojure.string/replace str matching-suffix nothing)))
 
