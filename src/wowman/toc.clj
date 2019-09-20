@@ -12,6 +12,10 @@
    [me.raynes.fs :as fs]
    [clojure.string :refer [lower-case ends-with?]]))
 
+;; interface version to use if .toc file is missing theirs
+;; assume addon is compatible with the most recent version
+(def default-interface-version 80200)
+
 ;; matches a tocfile's 'Title' (label) to a catalog's name
 ;; aliases are maintained for the top-50 downloaded addons (ever) only, and only for those that need it
 ;; best and nicest way to avoid needing an alias is to have your .toc 'Title' attribute match your curseforge addon name
@@ -54,10 +58,10 @@
         toc-bname (str (fs/base-name addon))
 
         ;; the ideal, perfect case
-        toc-file (clojure.java.io/file toc-dir (str toc-bname ".toc")) ;; /foo/Addon/Addon.toc
+        toc-file (utils/join toc-dir (str toc-bname ".toc")) ;; /foo/Addon/Addon.toc
 
         ;; less than ideal, probably case-insensitive filesystem + lazy dev
-        alt-toc-file (clojure.java.io/file toc-dir (-> toc-bname lower-case (str ".toc"))) ;; /foo/Addon/addon.toc
+        alt-toc-file (utils/join toc-dir (-> toc-bname lower-case (str ".toc"))) ;; /foo/Addon/addon.toc
 
         ;; fubar case, toc file doesn't match dir
         any-toc-file (first (filter #(-> % lower-case (ends-with? ".toc")) (fs/list-dir toc-dir)))
@@ -67,12 +71,12 @@
                         (debug warning))
                       (-> toc-file utils/de-bom-slurp -read-toc-file))]
     (cond
-      (.exists toc-file) (do-toc-file toc-file)
+      (fs/file? toc-file) (do-toc-file toc-file)
 
       ;; Archaelogy Helper
-      (.exists alt-toc-file) (do-toc-file
-                              alt-toc-file
-                              (format "expecting '%s', found '%s'. filename should be case sensitive" toc-file alt-toc-file))
+      (fs/file? alt-toc-file) (do-toc-file
+                               alt-toc-file
+                               (format "expecting '%s', found '%s'. filename should be case sensitive" toc-file alt-toc-file))
 
       ;; TradeSkillMaster_AuctioningScanSummary
       (not (nil? any-toc-file)) (do-toc-file
@@ -82,7 +86,7 @@
 (defn-spec rm-trailing-version string?
   "'foo 1.2.3' => 'foo', 'foo 1"
   [str string?]
-  (let [matching-suffix #"[ \d\.]+$"
+  (let [matching-suffix #" v?[\d\.]+$"
         nothing ""]
     (clojure.string/replace str matching-suffix nothing)))
 
@@ -98,40 +102,61 @@
   ;; todo, replace this with a slugify fn
   (-> label lower-case rm-trailing-version (replace ":" "") (replace " " "-") (replace "\\?" "")))
 
-;; TODO: test this nil? error
-(defn-spec parse-addon-toc (s/or :ok ::sp/toc, :error nil?)
+(defn-spec parse-addon-toc ::sp/toc
+  [addon-dir ::sp/extant-dir, keyvals map?]
+  (let [dirname (fs/base-name addon-dir) ;; /foo/bar/baz => baz
+        install-dir (str (fs/parent addon-dir)) ;; /foo/bar/baz => /foo/bar
+        nfo-contents (nfo/read-nfo install-dir dirname)
+
+        ;; https://github.com/ogri-la/wowman/issues/47 - user encountered addon sans 'Title' attribute
+        ;; if a match in the catalog is found even after munging the title, it will overwrite this one
+        no-label-label (str dirname " *") ;; "EveryAddon *"
+        label (:title keyvals)
+        label (if-not (empty? label) label no-label-label)
+        _ (when (= label no-label-label)
+            (warn "addon with no \"Title\" value found:" addon-dir))
+
+        ;; if :title is present in list of aliases, add that alias to what we return
+        alias (when (contains? aliases label)
+                {:alias (get aliases label)})
+
+        addon {:name (normalise-name label)
+               :dirname dirname
+               :label label
+               ;; :notes is preferred but we'll fall back to :description
+               :description (or (:notes keyvals) (:description keyvals))
+               :interface-version (or (some-> keyvals :interface utils/to-int)
+                                      default-interface-version)
+               :installed-version (:version keyvals)
+
+               ;; toc file dependency values describe *load order*, not *packaging*
+               ;;:dependencies (:dependencies keyvals)
+               ;;:optional-dependencies (:optionaldependencies keyvals)
+               ;;:required-dependencies (:requireddeps keyvals)
+               }]
+    (merge alias addon nfo-contents)))
+
+(defn-spec parse-addon-toc-guard (s/or :ok ::sp/toc, :error nil?)
+  "wraps the `parse-addon-toc` function and ensures no unhandled exceptions cause a cascading failure"
   [addon-dir ::sp/extant-dir]
-  (if-let [keyvals (read-addon-dir addon-dir)]
-    (let [;;decoded-title (:title keyvals) ;; TODO: title may be encoded: https://wow.gamepedia.com/UI_escape_sequences
-          dirname (fs/base-name addon-dir) ;; /foo/bar/baz => baz
-          install-dir (str (fs/parent addon-dir)) ;; /foo/bar/baz => /foo/bar
-          nfo-contents (nfo/read-nfo install-dir dirname)
-          label (:title keyvals)
-          alias (when (contains? aliases label) ;; ensure :alias is absent if not present
-                  {:alias (get aliases label)})
-          addon {:name (normalise-name (:title keyvals))
-                 :dirname dirname
-                 :label label
-                 :description (or (:notes keyvals) (:description keyvals)) ;; :notes is preferred but we'll fall back to :description
-                 :interface-version (-> keyvals :interface utils/to-int)
-                 :installed-version (:version keyvals)
-
-                 ;; toc file dependency values describe *load order*, not *packaging*
-                 ;;:dependencies (:dependencies keyvals)
-                 ;;:optional-dependencies (:optionaldependencies keyvals)
-                 ;;:required-dependencies (:requireddeps keyvals)
-                 }]
-      (merge alias addon nfo-contents))
-
-    ;; ignore failures to parse Blizzard addons
-    (when-not (.startsWith (fs/base-name addon-dir) "Blizzard_")
-      (warn "failed to find .toc file:" addon-dir))))
+  (try
+    (if-let [keyvals (read-addon-dir addon-dir)]
+      ;; we found a .toc file, now parse it
+      (parse-addon-toc addon-dir keyvals)
+      ;; we didn't find a .toc file, but just ignore it if it looks like an official addon dir
+      (when-not (.startsWith (fs/base-name addon-dir) "Blizzard_")
+        ;; not an official addon and we didn't find a .toc file. warn the user
+        (warn "failed to find .toc file:" addon-dir)))
+    (catch Exception e
+      ;; this addon failed somehow. don't propagate the exception, just report it and return nil
+      (error "please report this! https://github.com/ogri-la/wowman/issues")
+      (error e (format "unhandled error parsing addon in directory '%s': %s" addon-dir (.getMessage e))))))
 
 ;; TODO: test this nil? error
 (defn-spec installed-addons (s/or :ok ::sp/toc-list, :error nil?)
   [addons-dir ::sp/extant-dir]
   (let [addon-dir-list (filter fs/directory? (fs/list-dir addons-dir))
-        addon-list (remove nil? (mapv (comp parse-addon-toc str) addon-dir-list))
+        addon-list (remove nil? (mapv (comp parse-addon-toc-guard str) addon-dir-list))
 
         ;; an addon may actually be many addons bundled together in a single download
         ;; wowman tags the bundled addons as they are unzipped and tries to determine the primary one

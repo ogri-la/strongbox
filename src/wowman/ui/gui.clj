@@ -1,5 +1,6 @@
 (ns wowman.ui.gui
   (:require
+   [me.raynes.fs :as fs]
    [wowman
     [core :as core :refer [get-state state-bind colours]]
     [logging :as logging]
@@ -235,9 +236,13 @@
 (defn configure-app-panel
   []
   (let [picker (fn []
-                 (when-let [dir (chooser/choose-file :type "select" :selection-mode :dirs-only)]
-                   (core/set-addon-dir! (str dir))
-                   (core/save-settings)))
+                 (when-let [dir (chooser/choose-file :type :open ;; ':open' forces a better dialog type in mac for opening directories
+                                                     :selection-mode :dirs-only)]
+                   (if (fs/directory? dir)
+                     (do
+                       (core/set-addon-dir! (str dir))
+                       (core/save-settings))
+                     (ss/alert (format "Directory doesn't exist: %s" (str dir))))))
         ;; important! release the event thread using async-handler else updates during process won't be shown until complete
         refresh-button (button "Refresh" (async-handler core/refresh))
         update-all-button (button "Update all" (async-handler core/install-update-all))
