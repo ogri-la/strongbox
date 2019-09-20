@@ -14,6 +14,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## 0.9.1 - 2019-09-20
+
+### Fixed
+
+* a regular expression that stripped version information from the 'title' value in a .toc file was too aggressive and
+was causing incorrect matches against the catalog.
+* the GUI directory picker looks and behaves differently on a Mac if it's 'type' is 'open' rather than my custom 
+'select'. The change doesn't appear to affect the directory picker on Linux at all except for the label change.
+* a missing 'Title' attribute in a `.toc` file could cause the GUI to crash. The problem has been fixed as well as a 
+measure to prevent individual `.toc` files from causing a crash.
+
 ## 0.9.0 - 2019-09-03
 
 ### Added
