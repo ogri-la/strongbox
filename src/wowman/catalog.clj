@@ -14,22 +14,17 @@
     [curseforge-api :as curseforge-api]
     [wowinterface-api :as wowinterface-api]]))
 
-;; ... this feels like boilerplate. better way?
-;; curseforge/wowinterface won't be able to 'reach back' into catalog.clj ...
-
-(defmulti expand-summary (comp keyword :source))
-
-(defmethod expand-summary :curseforge
+(defn expand-summary
   [addon-summary game-track]
-  (curseforge-api/expand-summary addon-summary game-track))
-
-(defmethod expand-summary :wowinterface
-  [addon-summary game-track]
-  (wowinterface-api/expand-summary addon-summary game-track))
-
-(defmethod expand-summary :default
-  [addon-summary game-track]
-  (error "malformed addon-summary:" (utils/pprint addon-summary)))
+  (let [dispatch-map {"curseforge" curseforge-api/expand-summary
+                      "wowinterface" wowinterface-api/expand-summary
+                      nil (fn [_ _] (error "malformed addon-summary:" (utils/pprint addon-summary)))}
+        dispatch (get dispatch-map (:source addon-summary))]
+    (try
+      (dispatch addon-summary game-track)
+      (catch Exception e
+        (error e "unhandled exception attempting to expand addon summary")
+        (error "please report this! https://github.com/ogri-la/wowman/issues")))))
 
 ;;
 
