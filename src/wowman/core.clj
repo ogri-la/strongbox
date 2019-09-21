@@ -777,7 +777,12 @@
 (defn -re-installable?
   "an addon can only be re-installed if it's been matched to an addon in the catalog"
   [rows]
-  (filterv :uri rows)) ;; :uri is only present in addons that have a match
+  ;; no longer true in 0.9.0. an addon may be found in the catalog but may not match the selected game track
+  ;;(filterv :uri rows)) ;; :uri is only present in addons that have a match
+
+  ;; todo: this indirect logic smells. something like this should be done instead:
+  ;; (filterv (comp :release-available? :matched?) rows)
+  (filterv :download-uri rows))
 
 (defn re-install-selected
   []
