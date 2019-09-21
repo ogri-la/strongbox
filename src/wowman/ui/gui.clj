@@ -192,7 +192,7 @@
   ;;(core/-install-update-these (map curseforge/expand-summary (get-state :selected-search))) ;; original approach. efficient but no feedback for user
   (switch-tab INSTALLED-TAB)
   (doseq [selected (get-state :selected-search)]
-    (-> selected core/expand-summary-wrapper vector core/-install-update-these)
+    (some-> selected core/expand-summary-wrapper vector core/-install-update-these)
     (core/load-installed-addons))
   (ss/selection! (select-ui :#tbl-search-addons) nil) ;; deselect rows in search table
   (core/refresh))

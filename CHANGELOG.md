@@ -14,6 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## 0.9.2 - 2019-09-21
+
+### Fixed
+
+* attempting to install an addon from the search pane that is classic-onlyinto an addon-dir that is 'retail' 
+(or vice versa) caused a fault
+* attempting to re-install an addon that is classic-only into an addon-dir that is 'retail' (or vice versa) caused a fault
+
 ## 0.9.1 - 2019-09-20
 
 ### Fixed
