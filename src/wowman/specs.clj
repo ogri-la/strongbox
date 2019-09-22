@@ -28,6 +28,7 @@
 
 ;; 'expanded' addon summary, everything we need in order to download an addon
 ;; see catalog/expand-addon-summary
+;; todo: rename '::expanded-addon' or similar
 (s/def ::addon
   (s/merge ::addon-summary (s/keys :req-un [::version ::download-uri]
                                    :opt [::donation-uri ::interface-version])))
@@ -40,6 +41,7 @@
 
 ;; the result of merging an installed addon (toc) with an installable addon
 ;; this is very much a utility-type shape for convenience over purity
+;; todo: renamed '::matched-addon' or similar
 (s/def ::toc-addon
   (s/merge ::toc ::addon (s/keys :opt [::update?])))
 

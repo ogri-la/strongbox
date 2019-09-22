@@ -285,3 +285,5 @@
           (finally
             (main/stop)))))))
 
+
+;; todo: install classic addon into retail game track

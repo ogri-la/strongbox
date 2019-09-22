@@ -112,6 +112,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
+* add a sha256 sum to release file
+    - will prevent me from having to download release to generate a sumfile
 * add custom highlighting colours 
     - I don't mind my colours but not everybody may
 * add ElvUI support. they have json that can be scraped
