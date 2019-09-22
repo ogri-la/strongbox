@@ -701,11 +701,17 @@
           catalog-source (get-catalog-source)
           catalog-path (catalog-local-path catalog-source)
           _ (debug "loading addon summaries from catalog into database:" catalog-path)
+
+          ;; total hack and to be removed once curseforge/wowinterface catalogs have a :source field
+          missing-source (if (= (:name catalog-source) :curseforge-catalog-file)
+                           "curseforge"
+                           "wowinterface")
+
           {:keys [addon-summary-list]} (utils/load-json-file catalog-path)
 
           addon-categories (mapv (fn [{:keys [source-id source category-list]}]
                                    (mapv (fn [category]
-                                           [source-id source category]) category-list)) addon-summary-list)
+                                           [source-id (or source missing-source) category]) category-list)) addon-summary-list)
           ;; todo: we have addons in multiple identical categories. fix this in catalog.clj
           ;; see curseforge:319346
           addon-categories (->> addon-categories utils/shallow-flatten set vec)
@@ -721,8 +727,10 @@
                                      ;;:created-date :created_date ;; curseforge only and unused
                                      :updated-date :updated_date}
                             new {:retail_track (utils/in? "retail" (:game-track-list row))
-                                 :vanilla_track (utils/in? "classic" (:game-track-list row))}]
-                        (-> row (utils/dissoc-all ignored) (rename-keys mapping) (merge new))))]
+                                 :vanilla_track (utils/in? "classic" (:game-track-list row))}
+
+                            absent-source {:source (or (:source row) missing-source)}]
+                        (-> row (utils/dissoc-all ignored) (rename-keys mapping) (merge new) (merge absent-source))))]
       (jdbc/with-transaction [tx ds]
         ;;    1.703391 msec
         ;; ~100 items
@@ -739,7 +747,7 @@
                                                   {name id}) category-map))]
 
                 (doseq [[source-id source category] addon-categories]
-                  (sql/insert! ds :addon_category {:addon_source source
+                  (sql/insert! ds :addon_category {:addon_source (or source missing-source)
                                                    :addon_source_id source-id
                                                    :category_id (get category-map category)})))))
 
