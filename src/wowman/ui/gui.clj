@@ -674,11 +674,17 @@
                          :items [[root "height 100%, width 100%:100%:100%"]])
                :on-close (if (utils/in-repl?) :dispose :exit)) ;; exit app entirely when not in repl
 
-        file-menu (items
-                   (ss/action :name "Installed" :key "menu I" :mnemonic "i" :handler (switch-tab-handler INSTALLED-TAB))
+        file-menu [(ss/action :name "Installed" :key "menu I" :mnemonic "i" :handler (switch-tab-handler INSTALLED-TAB))
                    (ss/action :name "Search" :key "menu H" :mnemonic "h" :handler (switch-tab-handler SEARCH-TAB))
                    :separator
-                   (ss/action :name "Exit" :key "menu Q" :mnemonic "x" :handler (handler #(ss/dispose! newui))))
+                   (ss/action :name "Exit" :key "menu Q" :mnemonic "x" :handler (handler #(ss/dispose! newui)))]
+
+        catalog-button-grp (ss/button-group)
+        catalog-menu (mapv (fn [catalog-source]
+                             (ss/radio-menu-item :id (-> catalog-source :name name (str "catalog-menu-") keyword)
+                                                 :text (:label catalog-source)
+                                                 :group catalog-button-grp))
+                           (core/get-state :catalog-source-list))
 
         addon-menu [(ss/action :name "Update all" :key "menu U" :mnemonic "u" :handler (async-handler core/install-update-all))
                     (ss/action :name "Re-install all" :handler (async-handler core/re-install-all))
@@ -697,7 +703,9 @@
 
         help-menu [(ss/action :name "About wowman" :handler (handler about-wowman-dialog))]
 
-        menu (ss/menubar :items [(ss/menu :text "File" :mnemonic "F" :items file-menu)
+        menu (ss/menubar :id :main-menu
+                         :items [(ss/menu :text "File" :mnemonic "F" :items file-menu)
+                                 (ss/menu :text "Catalog" :items catalog-menu)
                                  (ss/menu :text "Addons" :mnemonic "A" :items addon-menu)
                                  (ss/menu :text "Import/Export" :mnemonic "i" :items impexp-menu)
                                  (ss/menu :text "Cache" :items cache-menu)
