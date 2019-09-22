@@ -101,15 +101,15 @@
                          {:name :full :label "Full" :source remote-catalog}
 
                          {:name :curseforge-catalog-file :label "Curseforge" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/curseforge.json"}
-                         {:name :wowinterface-catalog-file :label "WoWInterface" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/wowinterface.json"}
+                         {:name :wowinterface-catalog-file :label "WoWInterface" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/wowinterface.json"}]
 
-                         ]
-   
    ;; subset of possible data about all INSTALLED addons
    ;; starts as parsed .toc file data
    ;; ... then updated with data from catalog
    ;; ... then updated again with live data from curseforge
    ;; see specs/toc-addon
+
+
    :installed-addon-list nil
 
    :etag-db {}
@@ -242,7 +242,12 @@
                (fn [_ _ old-state new-state] ;; key, atom, old-state, new-state
                  (when (has-changed old-state new-state)
                    (debug (format "path %s triggered %s" path wid))
-                   (callback new-state))))
+                   (try
+                     (callback new-state)
+                     (catch Exception e
+                       (error e "error caught in watch! your callback *must* be catching these or the thread dies silently! rethrowing")
+                       (throw e)
+                     )))))
 
     (swap! state update-in [:cleanup] conj rmwatch)
     nil))
@@ -555,7 +560,9 @@
 (defn-spec set-catalog-source! nil?
   [catalog-name keyword?]
   (if-let [catalog (get-catalog-source catalog-name)]
-    (swap! state assoc-in [:cfg :selected-catalog] (:name catalog))
+    (do
+      (swap! state assoc-in [:cfg :selected-catalog] (:name catalog))
+      (save-settings))
     (warn "catalog not found" catalog-name))
   nil)
 
@@ -666,19 +673,21 @@
 
 ;; catalog db handling
 
+(defn db-shutdown
+  []
+  (try
+    (db-query "shutdown")
+    (catch org.h2.jdbc.JdbcSQLNonTransientConnectionException e
+      ;; "Database is already closed" (it's not)
+      (debug (str e)))))
+
 (defn-spec db-init nil?
   []
   (debug "creating 'catalog' table")
   (jdbc/execute! (get-state :db) [(slurp "resources/table--catalog.sql")])
   (debug "creating category tables")
   (jdbc/execute! (get-state :db) [(slurp "resources/table--category.sql")])
-
-  (swap! state update-in [:cleanup] conj (fn []
-                                           (try
-                                             (db-query "shutdown")
-                                             (catch org.h2.jdbc.JdbcSQLNonTransientConnectionException e
-                                               ;; "Database is already closed" (it's not)
-                                               (debug (str e))))))
+  (swap! state update-in [:cleanup] conj db-shutdown)
   nil)
 
 (defn db-catalog-loaded?
@@ -1009,6 +1018,13 @@
                            (refresh)))]
     (state-bind [:selected-addon-dir] reset-state-fn)))
 
+(defn watch-for-catalog-change
+  "when the catalog changes, the list of available addons should be re-read"
+  []
+  (state-bind [:cfg :selected-catalog] (fn [state]
+                                         (db-shutdown)
+                                         (refresh))))
+
 (defn-spec init-dirs nil?
   []
   (doseq [[path val] (paths)]
@@ -1029,6 +1045,7 @@
   (init-dirs)
   (load-settings cli-opts)
   (watch-for-addon-dir-change)
+  (watch-for-catalog-change)
 
   state)
 

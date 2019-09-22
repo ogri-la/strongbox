@@ -20,6 +20,7 @@
     [swingx :as x]
     [core :as ss]
     [font :refer [font]]
+    [bind :as sb]
     [table :as sstbl]]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
@@ -30,6 +31,11 @@
   (if-let [ui (get-state :gui)]
     (ss/select ui (vec path))
     (throw (RuntimeException. "attempted to access an uninitialised GUI"))))
+
+(defn as-selector
+  "converts a regular :keyword to a seesaw selector :#keyword"
+  [kw]
+  (->> kw name (str "#") keyword))
 
 (def INSTALLED-TAB 0)
 (def SEARCH-TAB 1)
@@ -87,16 +93,20 @@
     (doseq [f fn-list]
       (f))))
 
+(defn async
+  [f]
+  (future
+    (try
+      (f)
+      (catch RuntimeException re
+        (error re "unhandled exception in thread")))))
+  
 (defn async-handler
-  "like `handler`, but each function is executed inside a `go` block instead of sequentially"
+  "like `handler`, but each function is executed on a separate thread instead of sequentially"
   [& fl]
   (fn [_]
     (doseq [f fl]
-      (future
-        (try
-          (f)
-          (catch Exception e
-            (error (timbre/stacktrace e) "unhandled exception in thread")))))))
+      (async f))))
 
 (defn selected-rows-handler
   "calls given `f` with last event when selection has stopped adjusting"
@@ -663,6 +673,35 @@
     (core/import-exported-file path)
     (core/refresh)))
 
+(defn build-catalog-menu
+  []
+  (let [catalog-to-id (fn [catalog]
+                        (-> catalog :name name (str "catalog-menu-") keyword))
+
+        catalog-button-grp (ss/button-group)
+        catalog-menu (mapv (fn [catalog-source]
+                             (ss/radio-menu-item :id (catalog-to-id catalog-source)
+                                                 :text (:label catalog-source)
+                                                 :user-data catalog-source
+                                                 :group catalog-button-grp
+                                                 :selected? (= (core/get-state :cfg :selected-catalog) (:name catalog-source))))
+                           (core/get-state :catalog-source-list))]
+
+    ;; user selection updates application state
+    (sb/bind (sb/selection catalog-button-grp)
+             (sb/b-do* (fn [val]
+                         (when val ;; hrm, we're getting two events here, one where the value is nil ...
+                           (async #(core/set-catalog-source! (-> val ss/user-data :name)))))))
+
+    ;; application state updates menu selection
+    (core/state-bind [:cfg :selected-catalog]
+                     (fn [state]
+                       (let [catalog-source (core/get-catalog-source (-> state :cfg :selected-catalog))
+                             button (-> catalog-source catalog-to-id as-selector select-ui)]
+                         (ss/selection! catalog-button-grp button))))
+
+    catalog-menu))
+
 (defn start-ui
   []
   (let [root->splitter (ss/top-bottom-split (mk-tabber) (notice-logger))
@@ -684,17 +723,15 @@
                    :separator
                    (ss/action :name "Exit" :key "menu Q" :mnemonic "x" :handler (handler #(ss/dispose! newui)))]
 
-        catalog-button-grp (ss/button-group)
-        catalog-menu (mapv (fn [catalog-source]
-                             (ss/radio-menu-item :id (-> catalog-source :name name (str "catalog-menu-") keyword)
-                                                 :text (:label catalog-source)
-                                                 :group catalog-button-grp))
-                           (core/get-state :catalog-source-list))
+        catalog-menu (build-catalog-menu)
 
         addon-menu [(ss/action :name "Update all" :key "menu U" :mnemonic "u" :handler (async-handler core/install-update-all))
                     (ss/action :name "Re-install all" :handler (async-handler core/re-install-all))
                     :separator
                     (ss/action :name "Remove directory" :handler (async-handler core/remove-addon-dir!))]
+
+        impexp-menu [(ss/action :name "Export addon list" :handler (async-handler export-addon-list-handler))
+                     (ss/action :name "Import addon list" :handler (async-handler import-addon-list-handler))]
 
         cache-menu [(ss/action :name "Clear cache" :handler (async-handler core/delete-cache))
                     (ss/action :name "Clear addon zips" :handler (async-handler core/delete-downloaded-addon-zips))
@@ -702,9 +739,6 @@
                     :separator
                     (ss/action :name "Delete WowMatrix.dat files" :handler (async-handler core/delete-wowmatrix-dat-files))
                     (ss/action :name "Delete .wowman.json files" :handler (async-handler (comp core/refresh core/delete-wowman-json-files)))]
-
-        impexp-menu [(ss/action :name "Export addon list" :handler (async-handler export-addon-list-handler))
-                     (ss/action :name "Import addon list" :handler (async-handler import-addon-list-handler))]
 
         help-menu [(ss/action :name "About wowman" :handler (handler about-wowman-dialog))]
 

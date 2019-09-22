@@ -19,7 +19,7 @@
 (Thread/setDefaultUncaughtExceptionHandler
  (reify Thread$UncaughtExceptionHandler
    (uncaughtException [_ thread ex]
-     (error (timbre/stacktrace ex) "Uncaught exception on" (.getName thread)))))
+     (error ex "Uncaught exception on" (.getName thread)))))
 
 (defn stop
   []
