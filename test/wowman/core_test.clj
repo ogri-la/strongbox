@@ -133,7 +133,7 @@
           addon-summary-list (utils/load-json-file (fixture-path "import--dummy-catalog.json"))
 
           fake-routes {;; catalog
-                       "https://github.com/ogri-la/wowman-data/releases/download/daily/catalog.json"
+                       "https://raw.githubusercontent.com/ogri-la/wowman-data/master/catalog-short.json"
                        {:get (fn [req] {:status 200 :body (utils/to-json {:addon-summary-list addon-summary-list})})}
 
                        ;; every-addon
@@ -228,7 +228,7 @@
           alt-api-result (assoc-in api-result [:latestFiles 0 :displayName] "v8.20.00")
 
           fake-routes {;; catalog
-                       "https://github.com/ogri-la/wowman-data/releases/download/daily/catalog.json"
+                       "https://raw.githubusercontent.com/ogri-la/wowman-data/master/catalog-short.json"
                        {:get (fn [req] {:status 200 :body (utils/to-json {:addon-summary-list [catalog]})})}
 
                        ;; every-addon

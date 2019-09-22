@@ -42,6 +42,14 @@ see CHANGELOG.md for a more formal list of changes by release
 
         - there are other tricks I could use to cut out some of the fields and just generate them at load time
             - I think the structure of the catalog will need a more thoughtful revision though
+        - done
+    - support N catalogs
+        - full, short, curseforge, wowinterface
+            - done
+        - curseforge and wowinterface are proper catalogs
+            - they're missing 'source'
+                - hacked around for now
+            - done
 
 ### todo
 
