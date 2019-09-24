@@ -117,25 +117,27 @@ See [CONTRIBUTING](CONTRIBUTING.md) for more detail.
 
 (I think)
 
-| name                           | url                                                  | Linux | Mac  | Windows | retail? | classic? | f/oss? | source available? | ads? | EULA? | language   | 
-|--------------------------------|------------------------------------------------------|-------|------|---------|---------|----------|--------|-------------------|------|-------|------------| 
-| vargen2/Addon                  | https://github.com/vargen2/Addon                     | no    | no   | yes     | yes     | yes      | yes    | yes               | no   | no    | C#         | 
-| antiwinter/wowa                | https://github.com/antiwinter/wowa                   | yes*  | yes* | yes*    | yes     | yes      | yes    | no                | no   | no    | Javascript | 
-| braier/wow-addon-updater       | https://www.braier.net/wow-addon-updater/index.html  | yes   | yes  | yes     | yes     | no       | yes    | yes               | no   | no    | Pascal     | 
-| erikabp123/ClassicAddonManager | https://github.com/erikabp123/ClassicAddonManager    | no    | no   | yes     | no      | yes      | yes    | yes               | no   | no    | Java       | 
-| cursebreaker                   | https://github.com/AcidWeb/CurseBreaker              | no    | no   | yes     | yes     | yes      | yes    | yes               | no   | no    | Python     | 
-| GitAddonsManager               | https://gitlab.com/woblight/GitAddonsManager         | yes   | ?    | ?       | yes     | no       | yes    | yes               | no   | no    | C++        | 
-| instawow                       | https://github.com/layday/instawow                   | yes*  | yes* | yes*    | yes     | yes      | yes    | yes               | no   | no    | Python     | 
-| lcurse                         | https://github.com/ephraim/lcurse                    | yes   | no   | no      | yes     | no       | no     | yes               | no   | no    | Python     | 
-| Minion                         | https://minion.mmoui.com/                            | yes*  | yes  | yes     | yes     | yes      | no     | no                | yes  | yes   | Java       | 
-| karolswdev/wow                 | https://github.com/karolswdev/wow                    | no    | no   | yes     | no      | yes      | no     | yes               | no   | no    | C#         | 
-| nazarov-tech/wowa              | https://github.com/nazarov-tech/wowa                 | yes*  | yes* | yes     | yes     | no       | yes    | yes               | no   | no    | Python     | 
-| OpenAddOnManager               | https://github.com/OpenAddOnManager/OpenAddOnManager | no    | no   | yes     | yes     | no       | yes    | yes               | no   | no    | C#         | 
-| Saionaro/wow-addons-updater    | https://github.com/Saionaro/wow-addons-updater       | yes   | yes  | yes     | yes     | no       | yes    | yes               | no   | no    | Javascript | 
-| Tukui Client                   | https://www.tukui.org/download.php?client=win        | no    | no   | yes     | yes     | no       | no     | no                | ?    | ?     | ?          | 
-| WorldOfAddons                  | https://github.com/WorldofAddons/worldofaddons       | yes*  | yes* | yes     | yes     | no       | yes    | yes               | no   | no    | Javascript | 
-| qwezarty/wow-addon-manager     | https://github.com/qwezarty/wow-addon-manager        | yes*  | no   | no      | yes     | no       | yes    | yes               | no   | no    | Python     | 
-| Lund259/WoW-Addon-Manager      | https://github.com/Lund259/WoW-Addon-Manager         | no    | no   | yes     | yes     | no       | yes    | yes               | no   | no    | C#         | 
+| name                           | url                                                  | Linux | Mac  | Windows | UI   | retail? | classic? | f/oss? | source available? | ads? | EULA? | language   | 
+|--------------------------------|------------------------------------------------------|-------|------|---------|------|---------|----------|--------|-------------------|------|-------|------------| 
+| antiwinter/wowa                | https://github.com/antiwinter/wowa                   | yes*  | yes* | yes*    | CLI  | yes     | yes      | yes    | yes               | no   | no    | Javascript | 
+| braier/wow-addon-updater       | https://www.braier.net/wow-addon-updater/index.html  | yes   | yes  | yes     | GUI  | yes     | no       | yes    | yes               | no   | no    | Pascal     | 
+| cursebreaker                   | https://github.com/AcidWeb/CurseBreaker              | no    | no   | yes     | TUI^ | yes     | yes      | yes    | yes               | no   | no    | Python     | 
+| dark0dave/wow-addon-updater    | https://gitlab.com/dark0dave/wow-addon-updater       | yes*  | yes  | yes     | CLI  | yes     | yes      | yes    | yes               | no   | no    | python     | 
+| erikabp123/ClassicAddonManager | https://github.com/erikabp123/ClassicAddonManager    | no    | no   | yes     | GUI  | no      | yes      | yes    | yes               | no   | no    | Java       | 
+| GitAddonsManager               | https://gitlab.com/woblight/GitAddonsManager         | yes   | ?    | ?       | GUI  | yes     | no       | yes    | yes               | no   | no    | C++        | 
+| grrttedwards/wow-addon-updater | https://github.com/grrttedwards/wow-addon-updater    | yes*  | yes  | yes     | CLI  | yes     | yes      | yes    | yes               | no   | no    | python     | 
+| instawow                       | https://github.com/layday/instawow                   | yes*  | yes* | yes*    | CLI  | yes     | yes      | yes    | yes               | no   | no    | Python     | 
+| karolswdev/wow                 | https://github.com/karolswdev/wow                    | no    | no   | yes     | CLI  | no      | yes      | no     | yes               | no   | no    | C#         | 
+| lcurse                         | https://github.com/ephraim/lcurse                    | yes   | no   | no      | GUI  | yes     | no       | no     | yes               | no   | no    | Python     | 
+| Lund259/WoW-Addon-Manager      | https://github.com/Lund259/WoW-Addon-Manager         | no    | no   | yes     | GUI  | yes     | no       | yes    | yes               | no   | no    | C#         | 
+| Minion                         | https://minion.mmoui.com/                            | yes*  | yes  | yes     | GUI  | yes     | yes      | no     | no                | yes  | yes   | Java       | 
+| nazarov-tech/wowa              | https://github.com/nazarov-tech/wowa                 | yes*  | yes* | yes     | CLI  | yes     | no       | yes    | yes               | no   | no    | Python     | 
+| OpenAddOnManager               | https://github.com/OpenAddOnManager/OpenAddOnManager | no    | no   | yes     | GUI  | yes     | no       | yes    | yes               | no   | no    | C#         | 
+| qwezarty/wow-addon-manager     | https://github.com/qwezarty/wow-addon-manager        | yes*  | no   | no      | CLI  | yes     | no       | yes    | yes               | no   | no    | Python     | 
+| Saionaro/wow-addons-updater    | https://github.com/Saionaro/wow-addons-updater       | yes   | yes  | yes     | GUI  | yes     | no       | yes    | yes               | no   | no    | Javascript | 
+| Tukui Client                   | https://www.tukui.org/download.php?client=win        | no    | no   | yes     | GUI  | yes     | no       | no     | no                | ?    | ?     | ?          | 
+| vargen2/Addon                  | https://github.com/vargen2/Addon                     | no    | no   | yes     | GUI  | yes     | yes      | yes    | yes               | no   | no    | C#         | 
+| WorldOfAddons                  | https://github.com/WorldofAddons/worldofaddons       | yes*  | yes* | yes     | GUI  | yes     | no       | yes    | yes               | no   | no    | Javascript | 
 
 \* with caveats. may require compilation, partial functionality or not work at all, or be officially unsupported, or ...
 
