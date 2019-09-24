@@ -141,6 +141,8 @@ See [CONTRIBUTING](CONTRIBUTING.md) for more detail.
 
 \* with caveats. may require compilation, partial functionality or not work at all, or be officially unsupported, or ...
 
+^ TUI, [Text User Interface](https://en.m.wikipedia.org/wiki/Text-based_user_interface)
+
 (see [comrades.csv](comrades.csv))
 
 ### Unmaintained 
