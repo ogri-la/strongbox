@@ -6,7 +6,6 @@
    [wowman.ui.cli :as cli]
    [wowman
     [main :as main]
-    [core :as core]
     [utils :as utils :refer [join]]]
    [me.raynes.fs :as fs :refer [with-cwd]]
    [taoensso.timbre :as log :refer [debug info warn error spy]]))

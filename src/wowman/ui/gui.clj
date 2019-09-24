@@ -100,7 +100,7 @@
       (f)
       (catch RuntimeException re
         (error re "unhandled exception in thread")))))
-  
+
 (defn async-handler
   "like `handler`, but each function is executed on a separate thread instead of sequentially"
   [& fl]

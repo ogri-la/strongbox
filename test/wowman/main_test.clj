@@ -6,7 +6,6 @@
    [me.raynes.fs :as fs :refer [with-cwd]]
    [clj-http.fake :refer [with-fake-routes-in-isolation]]
    [wowman
-    [core :as core]
     [utils :refer [join]]
     [main :as main]]))
 

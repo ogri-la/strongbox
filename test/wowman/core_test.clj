@@ -14,6 +14,11 @@
 
 (use-fixtures :each helper/fixture-tempcwd)
 
+(deftest app-must-be-started
+  (testing "application must be started before state can be accessed"
+    (is (thrown? RuntimeException
+                 (core/get-state :installed-addon-list)))))
+
 (deftest handle-legacy-install-dir
   (testing ":install-dir in user config is converted correctly"
     (let [install-dir (str fs/*cwd*)
@@ -33,6 +38,68 @@
 
           expected {:addon-dir-list [addon-dir1 addon-dir2]}]
       (is (= expected (core/handle-legacy-install-dir cfg))))))
+
+(deftest addon-dir-handling
+  (let [app-state (core/start {})
+        [dir1 dir2 dir3] (mapv (fn [path]
+                                 (let [path (utils/join fs/*cwd* path)]
+                                   (fs/mkdir path)
+                                   path)) ["foo" "bar" "baz"])]
+    (try
+
+      ;; big long stateful test
+
+      (testing "add-addon-dir!"
+        (core/add-addon-dir! dir1 "retail")
+        (is (= [{:addon-dir dir1 :game-track "retail"}] (core/get-state :cfg :addon-dir-list))))
+
+      (testing "add-addon-dir! idempotence"
+        (core/add-addon-dir! dir1 "retail")
+        (is (= [{:addon-dir dir1 :game-track "retail"}] (core/get-state :cfg :addon-dir-list))))
+
+      (testing "add-addon-dir! just adds the dir, doesn't set it as selected"
+        (is (= nil (core/get-state :selected-addon-dir))))
+
+      (testing "set-addon-dir! sets the addon directory as selected and is also idempotent"
+        (core/set-addon-dir! dir1)
+        (is (= [{:addon-dir dir1 :game-track "retail"}] (core/get-state :cfg :addon-dir-list)))
+        (is (= dir1 (core/get-state :selected-addon-dir))))
+
+      (testing "remove-addon-dir! without args removes the currently selected addon-dir and ensures it's no longer selected"
+        (core/remove-addon-dir!)
+        (is (= [] (core/get-state :cfg :addon-dir-list)))
+        (is (= nil (core/get-state :selected-addon-dir))))
+
+      (testing "remove-addon-dir! without args won't do anything stupid when there is nothing to remove"
+        (core/remove-addon-dir!))
+
+      (testing "remove-addon-dir! with args is idempotent"
+        (core/set-addon-dir! dir1)
+        (core/set-addon-dir! dir2)
+        (core/remove-addon-dir! dir2)
+        (core/remove-addon-dir! dir2) ;; repeat
+        (is (= dir1 (core/get-state :selected-addon-dir)))
+        (is (= [{:addon-dir dir1 :game-track "retail"}] (core/get-state :cfg :addon-dir-list))))
+
+      (testing "addon-dir-map, without args, returns the currently selected addon-dir"
+        (is (= {:addon-dir dir1 :game-track "retail"} (core/addon-dir-map)))
+        (core/set-addon-dir! dir2)
+        (is (= {:addon-dir dir2 :game-track "retail"} (core/addon-dir-map)))
+        (is (= {:addon-dir dir1 :game-track "retail"} (core/addon-dir-map dir1))))
+
+      (testing "addon-dir-map returns nil if map cannot be found"
+        (is (= nil (core/addon-dir-map dir3))))
+
+      (testing "set-game-track! changes the game track of the given addon dir"
+        (core/set-game-track! "classic" dir1)
+        (is (= {:addon-dir dir1 :game-track "classic"} (core/addon-dir-map dir1))))
+
+      (testing "set-game-track! without addon-dir, changes the game track of the currently selected addon dir"
+        (core/set-game-track! "classic")
+        (is (= {:addon-dir dir2 :game-track "classic"} (core/addon-dir-map dir2))))
+
+      (finally
+        (core/stop app-state)))))
 
 (deftest paths
   (testing "all path keys are using suffix"
@@ -285,5 +352,29 @@
           (finally
             (main/stop)))))))
 
-
 ;; todo: install classic addon into retail game track
+
+(deftest db-row-wrangling
+  (testing "converting a tab separated list back into an actual list works as expected"
+    (let [cases [[nil []]
+                 ["" []]
+                 ["|" []]
+                 ["foo" ["foo"]]
+                 ["bar|baz" ["bar" "baz"]]]]
+
+      (doseq [[given expected] cases]
+        (is (= expected (core/db-split-category-list given))))))
+
+  (testing "game track fields are turned back into a list"
+    (let [cases [[{} {}]
+                 [{:retail-track true} {:game-track-list ["retail"]}]
+                 [{:vanilla-track true} {:game-track-list ["classic"]}]
+                 [{:retail-track true, :vanilla-track true} {:game-track-list ["retail" "classic"]}]
+                 [{:retail-track false, :vanilla-track true} {:game-track-list ["classic"]}]
+                 [{:retail-track false, :vanilla-track false} {}]
+
+                 ;; order is predictable
+                 [{:vanilla-track true, :retail-track true} {:game-track-list ["retail" "classic"]}]]]
+      (doseq [[given expected] cases]
+        (is (= expected (core/db-gen-game-track-list given)))))))
+

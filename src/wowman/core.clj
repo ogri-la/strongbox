@@ -246,8 +246,7 @@
                      (callback new-state)
                      (catch Exception e
                        (error e "error caught in watch! your callback *must* be catching these or the thread dies silently! rethrowing")
-                       (throw e)
-                     )))))
+                       (throw e))))))
 
     (swap! state update-in [:cleanup] conj rmwatch)
     nil))
@@ -266,34 +265,30 @@
    (not (nil? (some #{addon-dir} (mapv :addon-dir addon-dir-list))))))
 
 (defn-spec add-addon-dir! nil?
-  ([addon-dir ::sp/addon-dir]
-   (add-addon-dir! addon-dir "retail"))
-  ([addon-dir ::sp/addon-dir, game-track ::sp/game-track]
-   (let [stub {:addon-dir addon-dir :game-track game-track}]
-     (when-not (addon-dir-exists? addon-dir)
-       (swap! state update-in [:cfg :addon-dir-list] conj stub))
-     nil)))
+  [addon-dir ::sp/addon-dir, game-track ::sp/game-track]
+  (let [stub {:addon-dir addon-dir :game-track game-track}]
+    (when-not (addon-dir-exists? addon-dir)
+      (swap! state update-in [:cfg :addon-dir-list] conj stub))
+    nil))
 
 (defn-spec set-addon-dir! nil?
   "adds a new :addon-dir to :addon-dir-list (if it doesn't already exist) and marks it as selected"
   [addon-dir ::sp/addon-dir]
   (let [addon-dir (-> addon-dir fs/absolute fs/normalized str)]
-    (dosync
-     (add-addon-dir! addon-dir)
-     (swap! state assoc :selected-addon-dir addon-dir))
-    nil))
+    (add-addon-dir! addon-dir "retail")
+    (swap! state assoc :selected-addon-dir addon-dir))
+  nil)
 
 (defn-spec remove-addon-dir! nil?
   ([]
    (when-let [addon-dir (get-state :selected-addon-dir)]
      (remove-addon-dir! addon-dir)))
   ([addon-dir ::sp/addon-dir]
-   (dosync
-    (let [matching #(= addon-dir (:addon-dir %))
-          new-addon-dir-list (->> (get-state :cfg :addon-dir-list) (remove matching) vec)]
-      (swap! state assoc-in [:cfg :addon-dir-list] new-addon-dir-list)
-      ;; this may be nil if the new addon-dir-list is empty
-      (swap! state assoc :selected-addon-dir (-> new-addon-dir-list first :addon-dir))))
+   (let [matching #(= addon-dir (:addon-dir %))
+         new-addon-dir-list (->> (get-state :cfg :addon-dir-list) (remove matching) vec)]
+     (swap! state assoc-in [:cfg :addon-dir-list] new-addon-dir-list)
+     ;; this may be nil if the new addon-dir-list is empty
+     (swap! state assoc :selected-addon-dir (-> new-addon-dir-list first :addon-dir)))
    nil))
 
 (defn available-addon-dirs
