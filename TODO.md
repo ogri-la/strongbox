@@ -26,11 +26,29 @@ see CHANGELOG.md for a more formal list of changes by release
         - done
     - replace :addon-summary-list usage internally with database
         - done
+    - replace :installed-addon-list usage internally with database
+        - we'll need some way of triggering changes
+            - I've done this by updating the state with some stats 
+        - need to think a bit more about this one now that :addon-summary-list is happening
+            - should this replace .wowman.json files?
+                - no, because database isn't permanent
+            - what benefits are there to storing the list of installed addons in the database rather than in an array?
+                - we've already discovered it can be painful to re-create arrays and maps
+        
 * user-agent needs to be updated
     - it using a naive (subs ...) call
     - done
         - should handle anything I throw it from now on
 * short catalog, full catalog
+    - the catalog is getting big now and will only get larger
+        - curseforge and wowinterface keep accumulating new addons
+        - other sources will come along
+        - database loading operation is already taking a little too long for my liking
+    - a lot of addons could be removed as simply being 'too old'
+        - addons that haven't been updated for two or three releases (6 years) for example
+    - I want to preserve the entirety of the catalog if possible though
+        - perhaps a game setting to opt-in to the larger download
+        - done
     - investigate how small we can reasonably get the catalog
         - after removing addons not updated since before beginning of last expac (Legion):
             - 6555 addons total
@@ -39,7 +57,6 @@ see CHANGELOG.md for a more formal list of changes by release
                 "Elapsed time: 1.222319 msecs" (categories)
                 "Elapsed time: 483.493881 msecs" (addons)
                 "Elapsed time: 860.562001 msecs" (category->addons)
-
         - there are other tricks I could use to cut out some of the fields and just generate them at load time
             - I think the structure of the catalog will need a more thoughtful revision though
         - done
@@ -50,35 +67,11 @@ see CHANGELOG.md for a more formal list of changes by release
             - they're missing 'source'
                 - hacked around for now
             - done
+        - done
+
 
 ### todo
 
-* investigate usage of spec-tools/coerce and remove if necessary
-* wowman-data, stop publishing a 'daily' release
-    - we have multiple catalogs now
-* remove debugging? mode
-* bug,export addon list isn't using selected directory
-* export to markdown
-    - I think I'd like a simple list like:
-        * [addon name](https://source/path/to/addon)
-    - of course, this would be a different type of export than the one used for import
-        - although ... I could possibly parse the list ... and nah.
-* short catalog, full catalog
-    - the catalog is getting big now and will only get larger
-        - curseforge and wowinterface keep accumulating new addons
-        - other sources will come along
-        - database loading operation is already taking a little too long for my liking
-    - a lot of addons could be removed as simply being 'too old'
-        - addons that haven't been updated for two or three releases (6 years) for example
-    - I want to preserve the entirety of the catalog if possible though
-        - perhaps a game setting to opt-in to the larger download
-    - there is another todo about supporting custom catalogs
-        - what about supporting N number of catalogs? 
-            - not concurrently, only one could be selected at a time, at least for now
-            - curseforge, wowinterface, full, short, curseforge-short, wowinterface-short ...
-* bug, we have addons in multiple identical categories. fix this in catalog.clj
-    - see 319346
-    - remove call to set in db-load-catalog
 * download-catalog bug
     - I *think* something or things are trying to read the catalog before it has finished downloading
         - this is causing malformed json errors
@@ -86,15 +79,7 @@ see CHANGELOG.md for a more formal list of changes by release
 * investigate switching to an embedded database
     - compare current speed and code against loading addon category data serially
         - as opposed to in three blocks (categories, addons, category-addons). We might save some time and code
-    - investigate prepared statements when inserting 
-    - replace :installed-addon-list usage internally with database
-        - we'll need some way of triggering changes
-            - I've done this by updating the state with some stats 
-        - need to think a bit more about this one now that :addon-summary-list is happening
-            - should this replace .wowman.json files?
-                - no, because database isn't permanent
-            - what benefits are there to storing the list of installed addons in the database rather than in an array?
-                - we've already discovered it can be painful to re-create arrays and maps
+    - investigate prepared statements when inserting
 * bug, 'clear cache' didn't delete the catalog.json
 * gui tests are bypassing the path wrangling because the envvar library is using thread-local `binding`
     - change path access to an atom
@@ -123,6 +108,19 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
+* bug, we have addons in multiple identical categories. fix this in catalog.clj
+    - see 319346
+    - remove call to set in db-load-catalog
+* investigate usage of spec-tools/coerce and remove if necessary
+* wowman-data, stop publishing a 'daily' release
+    - we have multiple catalogs now
+* remove debugging? mode
+* bug, export addon list isn't using selected directory
+* export to markdown
+    - I think I'd like a simple list like:
+        * [addon name](https://source/path/to/addon)
+    - of course, this would be a different type of export than the one used for import
+        - although ... I could possibly parse the list ... and nah.
 * switch catalog loading to load-json-file-safely
 * when adding an addon-dir, if path ends with /_classic_/Interface/Addons, set game track to classic
 * add a sha256 sum to release file
