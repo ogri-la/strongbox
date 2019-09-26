@@ -161,4 +161,4 @@
 
 ;;
 
-(s/def ::catalog-source map?)
+(s/def ::catalog-source-map map?)

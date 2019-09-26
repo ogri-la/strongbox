@@ -525,7 +525,7 @@
 ;; catalog handling
 ;;
 
-(defn-spec get-catalog-source (s/or :ok ::sp/catalog-source, :not-found nil?)
+(defn-spec get-catalog-source (s/or :ok ::sp/catalog-source-map, :not-found nil?)
   ([]
    (get-catalog-source (get-state :cfg :selected-catalog)))
   ([catalog-name keyword?]
@@ -540,7 +540,7 @@
 
 (defn-spec catalog-local-path ::sp/file
   "given a catalog-source map, returns the local path to the catalog."
-  [catalog-source ::sp/catalog-source]
+  [catalog-source ::sp/catalog-source-map]
   ;; {:name :full ...} => "/path/to/catalog/dir/full-catalog.json"
   (utils/join (paths :catalog-dir) (-> catalog-source :name name (str "-catalog.json"))))
 
@@ -679,7 +679,7 @@
     (let [ds (get-state :db)
           catalog-source (get-catalog-source)
           catalog-path (catalog-local-path catalog-source)
-          _ (info "loading catalog")
+          _ (info (format "loading catalog '%s'" (name (get-state :cfg :selected-catalog))))
           _ (debug "loading addon summaries from catalog into database:" catalog-path)
 
           ;; total hack and to be removed once curseforge/wowinterface catalogs have a :source field
