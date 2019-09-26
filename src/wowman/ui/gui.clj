@@ -32,9 +32,9 @@
     (ss/select ui (vec path))
     (throw (RuntimeException. "attempted to access an uninitialised GUI"))))
 
-(defn as-selector
+(defn-spec as-selector keyword?
   "converts a regular :keyword to a seesaw selector :#keyword"
-  [kw]
+  [kw keyword?]
   (->> kw name (str "#") keyword))
 
 (def INSTALLED-TAB 0)

@@ -33,3 +33,9 @@
   (testing "shameless coverage bump for all the stateless parts in gui"
     (is (= nil (gui/donothing "event object")))
     (is (= nil ((gui/handler (constantly :foo) (constantly :bar)) "event object")))))
+
+(deftest as-selector
+  (testing "a keyword is transformed into a selector as expected"
+    (let [cases [[:foo :#foo]]]
+      (doseq [[given expected] cases]
+        (is (= expected (gui/as-selector given)))))))
