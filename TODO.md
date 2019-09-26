@@ -30,9 +30,52 @@ see CHANGELOG.md for a more formal list of changes by release
     - it using a naive (subs ...) call
     - done
         - should handle anything I throw it from now on
+* short catalog, full catalog
+    - investigate how small we can reasonably get the catalog
+        - after removing addons not updated since before beginning of last expac (Legion):
+            - 6555 addons total
+            - 3.1MB file
+            - 1.5 second db load time
+                "Elapsed time: 1.222319 msecs" (categories)
+                "Elapsed time: 483.493881 msecs" (addons)
+                "Elapsed time: 860.562001 msecs" (category->addons)
+
+        - there are other tricks I could use to cut out some of the fields and just generate them at load time
+            - I think the structure of the catalog will need a more thoughtful revision though
+        - done
+    - support N catalogs
+        - full, short, curseforge, wowinterface
+            - done
+        - curseforge and wowinterface are proper catalogs
+            - they're missing 'source'
+                - hacked around for now
+            - done
 
 ### todo
 
+* investigate usage of spec-tools/coerce and remove if necessary
+* wowman-data, stop publishing a 'daily' release
+    - we have multiple catalogs now
+* remove debugging? mode
+* bug,export addon list isn't using selected directory
+* export to markdown
+    - I think I'd like a simple list like:
+        * [addon name](https://source/path/to/addon)
+    - of course, this would be a different type of export than the one used for import
+        - although ... I could possibly parse the list ... and nah.
+* short catalog, full catalog
+    - the catalog is getting big now and will only get larger
+        - curseforge and wowinterface keep accumulating new addons
+        - other sources will come along
+        - database loading operation is already taking a little too long for my liking
+    - a lot of addons could be removed as simply being 'too old'
+        - addons that haven't been updated for two or three releases (6 years) for example
+    - I want to preserve the entirety of the catalog if possible though
+        - perhaps a game setting to opt-in to the larger download
+    - there is another todo about supporting custom catalogs
+        - what about supporting N number of catalogs? 
+            - not concurrently, only one could be selected at a time, at least for now
+            - curseforge, wowinterface, full, short, curseforge-short, wowinterface-short ...
 * bug, we have addons in multiple identical categories. fix this in catalog.clj
     - see 319346
     - remove call to set in db-load-catalog
@@ -53,7 +96,6 @@ see CHANGELOG.md for a more formal list of changes by release
             - what benefits are there to storing the list of installed addons in the database rather than in an array?
                 - we've already discovered it can be painful to re-create arrays and maps
 * bug, 'clear cache' didn't delete the catalog.json
-
 * gui tests are bypassing the path wrangling because the envvar library is using thread-local `binding`
     - change path access to an atom
     - I *think* this may have something to do with a truncated catalog I've encountered now (twice)
@@ -64,16 +106,6 @@ see CHANGELOG.md for a more formal list of changes by release
             - fingerprint is 9 digits and all decimal, so not a hex digest
     - wowinterface checksum is hidden behind a javascript tabber but still available
         - wowinterface do have a md5sum in results! score
-* short catalog, full catalog
-    - the catalog is getting big now and will only get larger
-        - curseforge and wowinterface keep accumulating new addons
-        - other sources will come along
-    - a lot of addons could be removed as simply being 'too old'
-        - addons that haven't been updated for two or three releases (6 years) for example
-    - I want to preserve the entirety of the catalog if possible though
-        - perhaps a game setting to opt-in to the larger download
-    - investigate how small we can reasonably get the catalog
-        - might tie in with creating a database
 * remove 'updating' catalogs
     - a full weekly scrape is good enough
     - this logic has introduced a *lot* of code that can be removed
@@ -91,6 +123,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
+* switch catalog loading to load-json-file-safely
+* when adding an addon-dir, if path ends with /_classic_/Interface/Addons, set game track to classic
 * add a sha256 sum to release file
     - will prevent me from having to download release to generate a sumfile
 * add custom highlighting colours 

@@ -122,8 +122,8 @@
 (s/def ::selected? boolean?)
 (s/def ::addon-dir-map (s/keys :req-un [::addon-dir ::game-track]))
 (s/def ::addon-dir-list (s/coll-of ::addon-dir-map))
-(s/def ::user-config (s/keys :req-un [::addon-dir-list
-                                      ::debug?]))
+(s/def ::selected-catalog keyword?)
+(s/def ::user-config (s/keys :req-un [::addon-dir-list ::debug? ::selected-catalog]))
 
 (s/def ::reason-phrase (s/and string? #(<= (count %) 50)))
 (s/def ::status int?) ;; a little too general but ok for now
@@ -158,3 +158,7 @@
 (s/def ::export-record (s/keys :req-un [::name]
                                :opt [::source]))
 (s/def ::export-record-list (s/coll-of ::export-record))
+
+;;
+
+(s/def ::catalog-source-map map?)

@@ -37,9 +37,6 @@
 
 (def colours (utils/nav-map-fn -colour-map))
 
-;; not in `paths` because it's not configurable
-(def remote-catalog "https://github.com/ogri-la/wowman-data/releases/download/daily/catalog.json")
-
 (defn paths
   "returns a map of paths whose location may vary depending on the location of the current working directory"
   [& path]
@@ -59,12 +56,6 @@
         cfg-file (join config-dir "config.json") ;; /home/$you/.config/wowman/config.json
         etag-db-file (join data-dir "etag-db.json") ;; /home/$you/.local/share/wowman/etag-db.json
 
-        curseforge-catalog (join data-dir "curseforge.json") ;; /home/$you/.local/share/wowman/cache/curseforge.json
-        curseforge-catalog-updates (join data-dir "curseforge-updates.json") ;; todo: remove this intermediate file
-        wowinterface-catalog (join data-dir "wowinterface.json")
-
-        catalog (join data-dir "catalog.json")
-
         ;; ensure path ends with `-file` or `-dir` or `-uri`
         path-map {:config-dir config-dir
                   :data-dir data-dir
@@ -72,11 +63,7 @@
                   :cfg-file cfg-file
                   :etag-db-file etag-db-file
 
-                  :catalog-file catalog
-
-                  :curseforge-catalog-file curseforge-catalog
-                  :curseforge-catalog-updates-file curseforge-catalog-updates ;; todo, remove
-                  :wowinterface-catalog-file wowinterface-catalog}]
+                  :catalog-dir data-dir}]
     (nav-map path-map path)))
 
 (def -state-template
@@ -87,13 +74,22 @@
 
    ;; final config, result of merging :file-opts and :cli-opts
    :cfg {:addon-dir-list []
-         :debug? false}
+         :debug? false ;; todo, remove
+         :selected-catalog :short}
+
+   :catalog-source-list [{:name :short :label "Short (default)" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/catalog-short.json"}
+                         {:name :full :label "Full" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/catalog.json"}
+
+                         {:name :curseforge :label "Curseforge" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/curseforge.json"}
+                         {:name :wowinterface :label "WoWInterface" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/wowinterface.json"}]
 
    ;; subset of possible data about all INSTALLED addons
    ;; starts as parsed .toc file data
    ;; ... then updated with data from catalog
    ;; ... then updated again with live data from curseforge
    ;; see specs/toc-addon
+
+
    :installed-addon-list nil
 
    :etag-db {}
@@ -154,11 +150,11 @@
     (clojure.string/split category-list-str #"\|")))
 
 (defn db-gen-game-track-list
-  "converts the 'retail_track' and 'vanilla_track' boolean values into a list of strings"
+  "converts the 'retail_track' and 'classic_track' boolean values in db into a list of strings"
   [row]
   (let [track-list (vec (remove nil? [(when (:retail-track row) "retail")
-                                      (when (:vanilla-track row) "classic")]))
-        row (dissoc row :retail-track :vanilla-track)]
+                                      (when (:classic-track row) "classic")]))
+        row (dissoc row :retail-track :classic-track)]
     (if (empty? track-list)
       row
       (assoc row :game-track-list track-list))))
@@ -226,7 +222,10 @@
                (fn [_ _ old-state new-state] ;; key, atom, old-state, new-state
                  (when (has-changed old-state new-state)
                    (debug (format "path %s triggered %s" path wid))
-                   (callback new-state))))
+                   (try
+                     (callback new-state)
+                     (catch Exception e
+                       (error e "error caught in watch! your callback *must* be catching these or the thread dies silently!"))))))
 
     (swap! state update-in [:cleanup] conj rmwatch)
     nil))
@@ -245,34 +244,30 @@
    (not (nil? (some #{addon-dir} (mapv :addon-dir addon-dir-list))))))
 
 (defn-spec add-addon-dir! nil?
-  ([addon-dir ::sp/addon-dir]
-   (add-addon-dir! addon-dir "retail"))
-  ([addon-dir ::sp/addon-dir, game-track ::sp/game-track]
-   (let [stub {:addon-dir addon-dir :game-track game-track}]
-     (when-not (addon-dir-exists? addon-dir)
-       (swap! state update-in [:cfg :addon-dir-list] conj stub))
-     nil)))
+  [addon-dir ::sp/addon-dir, game-track ::sp/game-track]
+  (let [stub {:addon-dir addon-dir :game-track game-track}]
+    (when-not (addon-dir-exists? addon-dir)
+      (swap! state update-in [:cfg :addon-dir-list] conj stub))
+    nil))
 
 (defn-spec set-addon-dir! nil?
   "adds a new :addon-dir to :addon-dir-list (if it doesn't already exist) and marks it as selected"
   [addon-dir ::sp/addon-dir]
   (let [addon-dir (-> addon-dir fs/absolute fs/normalized str)]
-    (dosync
-     (add-addon-dir! addon-dir)
-     (swap! state assoc :selected-addon-dir addon-dir))
-    nil))
+    (add-addon-dir! addon-dir "retail")
+    (swap! state assoc :selected-addon-dir addon-dir))
+  nil)
 
 (defn-spec remove-addon-dir! nil?
   ([]
    (when-let [addon-dir (get-state :selected-addon-dir)]
      (remove-addon-dir! addon-dir)))
   ([addon-dir ::sp/addon-dir]
-   (dosync
-    (let [matching #(= addon-dir (:addon-dir %))
-          new-addon-dir-list (->> (get-state :cfg :addon-dir-list) (remove matching) vec)]
-      (swap! state assoc-in [:cfg :addon-dir-list] new-addon-dir-list)
-      ;; this may be nil if the new addon-dir-list is empty
-      (swap! state assoc :selected-addon-dir (-> new-addon-dir-list first :addon-dir))))
+   (let [matching #(= addon-dir (:addon-dir %))
+         new-addon-dir-list (->> (get-state :cfg :addon-dir-list) (remove matching) vec)]
+     (swap! state assoc-in [:cfg :addon-dir-list] new-addon-dir-list)
+     ;; this may be nil if the new addon-dir-list is empty
+     (swap! state assoc :selected-addon-dir (-> new-addon-dir-list first :addon-dir)))
    nil))
 
 (defn available-addon-dirs
@@ -328,6 +323,7 @@
   (let [default-cfg (:cfg -state-template)
         cfg (merge default-cfg file-opts)
         cfg (handle-legacy-install-dir cfg)
+        ;; doesn't support optional :opt keysets
         cfg (spec-tools/coerce ::sp/user-config cfg spec-tools/strip-extra-keys-transformer)
         valid? (s/valid? ::sp/user-config cfg)]
     (when-not valid?
@@ -362,7 +358,10 @@
    (when-not (fs/exists? (paths :cfg-file))
      (warn "configuration file not found: " (paths :cfg-file)))
 
-   (let [file-opts (utils/load-json-file-safely (paths :cfg-file) :no-file? {} :bad-data? {})
+   (let [file-opts (utils/load-json-file-safely (paths :cfg-file)
+                                                :no-file? {}
+                                                :bad-data? {}
+                                                :transform-map {:selected-catalog keyword})
          cfg (configure file-opts cli-opts)
          etag-db (utils/load-json-file-safely (paths :etag-db-file) :no-file? {} :bad-data? {})
          new-state {:cfg cfg, :cli-opts cli-opts, :file-opts file-opts, :etag-db etag-db
@@ -523,23 +522,45 @@
 ;; catalog handling
 ;;
 
+(defn-spec get-catalog-source (s/or :ok ::sp/catalog-source-map, :not-found nil?)
+  ([]
+   (get-catalog-source (get-state :cfg :selected-catalog)))
+  ([catalog-name keyword?]
+   (->> (get-state :catalog-source-list) (filter #(= catalog-name (:name %))) first)))
+
+(defn-spec set-catalog-source! nil?
+  [catalog-name keyword?]
+  (if-let [catalog (get-catalog-source catalog-name)]
+    (swap! state assoc-in [:cfg :selected-catalog] (:name catalog))
+    (warn "catalog not found" catalog-name))
+  nil)
+
+(defn-spec catalog-local-path ::sp/file
+  "given a catalog-source map, returns the local path to the catalog."
+  [catalog-source ::sp/catalog-source-map]
+  ;; {:name :full ...} => "/path/to/catalog/dir/full-catalog.json"
+  (utils/join (paths :catalog-dir) (-> catalog-source :name name (str "-catalog.json"))))
+
+(defn-spec find-catalog-local-path (s/or :ok ::sp/file, :not-found nil?)
+  "convenience wrapper around `catalog-local-path`"
+  [catalog-name keyword?]
+  (some-> catalog-name get-catalog-source catalog-local-path))
+
 (defn-spec download-catalog (s/or :ok ::sp/extant-file, :error nil?)
   "downloads catalog to expected location, nothing more"
   [& [catalog] (s/* keyword?)]
   (binding [http/*cache* (cache)]
-    (if-let [local-catalog (paths (or catalog :catalog-file))]
-      (http/download-file remote-catalog local-catalog :message "downloading catalog (~5MB)")
+    (if-let [current-catalog (get-state :cfg :selected-catalog)]
+      (let [catalog-source (get-catalog-source (or catalog current-catalog)) ;; {:name :full :label "Full" :source "https://..."}
+            remote-catalog (:source catalog-source)
+            local-catalog (catalog-local-path catalog-source)]
+        (http/download-file remote-catalog local-catalog :message (format "downloading catalog '%s'" (:label catalog-source))))
       (error "failed to find catalog:" catalog))))
 
 (defn moosh-addons
   [installed-addon catalog-addon]
   ;; merges left->right. catalog-addon overwrites installed-addon, ':matched' overwrites catalog-addon, etc
   (merge installed-addon catalog-addon {:matched? true}))
-
-(defn source-from-group-id
-  [addon-summary]
-  (when-let [uri (:group-id addon-summary)]
-    (-> uri java.net.URI. .getHost (clojure.string/split #"\.") second)))
 
 
 ;;
@@ -552,12 +573,16 @@
         toc-keys (if (vector? toc-keys) toc-keys [toc-keys])
         sql-arg-vals (mapv #(get installed-addon %) toc-keys) ;; [:source :source-id] => ["curseforge" 12345], [:name] => ["foo"]
 
-        _ (when (some nil? sql-arg-vals)
-            (warn "(debug) failed to find all values for sql query. keys:" toc-keys "vals:" sql-arg-vals))
+        missing-args? (some nil? sql-arg-vals)
+
+        ;; there are cases where the installed-addon is missing an attribute to match on. typically happens on :alias
+        _ (when missing-args?
+            (debug "(debug) failed to find all values for sql query, refusing to match on nil. keys:" toc-keys "vals:" sql-arg-vals))
 
         sql (str select-*-catalog "where " sql-arg-template)
-        ;;_ (info sql-arg-vals) ;; there are cases where an arg is nil. should we still query if we don't have all the facts?
-        results (db-query sql :arg-list sql-arg-vals)
+        results (if missing-args?
+                  [] ;; don't look for 'nil', just skip with no results
+                  (db-query sql :arg-list sql-arg-vals))
         match (-> results first db-coerce-catalog-values)]
     (when match
       ;; {:idx [:name :alt-name], :key "deadly-boss-mods", :match {...}, ...}
@@ -596,7 +621,7 @@
    any installed addon not found in :addon-idx has a mapping problem"
   []
   (when (get-state :selected-addon-dir) ;; don't even bother if we have nothing to match it to
-    (info "matching installed addons to online addons")
+    (info "matching installed addons to catalog")
     (let [inst-addons (get-state :installed-addon-list)
           catalog (get-db :addon-summary-list)
 
@@ -615,11 +640,22 @@
 
       (when-not (empty? unmatched)
         (warn "you need to manually search for them and then re-install them")
-        (warn (format "failed to find %s installed addons in the catalog: %s" (count unmatched) (clojure.string/join ", " unmatched-names))))
+        (warn (format "failed to find %s installed addons in the '%s' catalog: %s"
+                      (count unmatched)
+                      (name (get-state :cfg :selected-catalog))
+                      (clojure.string/join ", " unmatched-names))))
 
       (update-installed-addon-list! expanded-installed-addon-list))))
 
 ;; catalog db handling
+
+(defn db-shutdown
+  []
+  (try
+    (db-query "shutdown")
+    (catch org.h2.jdbc.JdbcSQLNonTransientConnectionException e
+      ;; "Database is already closed" (it's not)
+      (debug (str e)))))
 
 (defn-spec db-init nil?
   []
@@ -627,13 +663,7 @@
   (jdbc/execute! (get-state :db) [(slurp "resources/table--catalog.sql")])
   (debug "creating category tables")
   (jdbc/execute! (get-state :db) [(slurp "resources/table--category.sql")])
-
-  (swap! state update-in [:cleanup] conj (fn []
-                                           (try
-                                             (db-query "shutdown")
-                                             (catch org.h2.jdbc.JdbcSQLNonTransientConnectionException e
-                                               ;; "Database is already closed" (it's not)
-                                               (debug (str e))))))
+  (swap! state update-in [:cleanup] conj db-shutdown)
   nil)
 
 (defn db-catalog-loaded?
@@ -643,13 +673,22 @@
 (defn-spec db-load-catalog nil?
   []
   (when-not (db-catalog-loaded?)
-    (debug "loading addon summaries from catalog into database:" (paths :catalog-file))
     (let [ds (get-state :db)
-          {:keys [addon-summary-list]} (utils/load-json-file (paths :catalog-file))
+          catalog-source (get-catalog-source)
+          catalog-path (catalog-local-path catalog-source)
+          _ (info (format "loading catalog '%s'" (name (get-state :cfg :selected-catalog))))
+          _ (debug "loading addon summaries from catalog into database:" catalog-path)
+
+          ;; total hack and to be removed once curseforge/wowinterface catalogs have a :source field
+          missing-source (if (= (:name catalog-source) :curseforge)
+                           "curseforge"
+                           "wowinterface")
+
+          {:keys [addon-summary-list]} (utils/load-json-file catalog-path)
 
           addon-categories (mapv (fn [{:keys [source-id source category-list]}]
                                    (mapv (fn [category]
-                                           [source-id source category]) category-list)) addon-summary-list)
+                                           [source-id (or source missing-source) category]) category-list)) addon-summary-list)
           ;; todo: we have addons in multiple identical categories. fix this in catalog.clj
           ;; see curseforge:319346
           addon-categories (->> addon-categories utils/shallow-flatten set vec)
@@ -665,8 +704,10 @@
                                      ;;:created-date :created_date ;; curseforge only and unused
                                      :updated-date :updated_date}
                             new {:retail_track (utils/in? "retail" (:game-track-list row))
-                                 :vanilla_track (utils/in? "classic" (:game-track-list row))}]
-                        (-> row (utils/dissoc-all ignored) (rename-keys mapping) (merge new))))]
+                                 :classic_track (utils/in? "classic" (:game-track-list row))}
+
+                            absent-source {:source (or (:source row) missing-source)}]
+                        (-> row (utils/dissoc-all ignored) (rename-keys mapping) (merge new) (merge absent-source))))]
       (jdbc/with-transaction [tx ds]
         ;;    1.703391 msec
         ;; ~100 items
@@ -683,7 +724,7 @@
                                                   {name id}) category-map))]
 
                 (doseq [[source-id source category] addon-categories]
-                  (sql/insert! ds :addon_category {:addon_source source
+                  (sql/insert! ds :addon_category {:addon_source (or source missing-source)
                                                    :addon_source_id source-id
                                                    :category_id (get category-map category)})))))
 
@@ -962,6 +1003,13 @@
                            (refresh)))]
     (state-bind [:selected-addon-dir] reset-state-fn)))
 
+(defn watch-for-catalog-change
+  "when the catalog changes, the list of available addons should be re-read"
+  []
+  (state-bind [:cfg :selected-catalog] (fn [state]
+                                         (db-shutdown)
+                                         (refresh))))
+
 (defn-spec init-dirs nil?
   []
   (doseq [[path val] (paths)]
@@ -982,6 +1030,7 @@
   (init-dirs)
   (load-settings cli-opts)
   (watch-for-addon-dir-change)
+  (watch-for-catalog-change)
 
   state)
 

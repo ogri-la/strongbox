@@ -39,10 +39,11 @@
      :total (count addon-list)
      :addon-summary-list addon-list}))
 
-(defn-spec write-catalog-data ::sp/extant-file
-  "formats given catalog data and writes it to given `output-file` as json. returns path to the output file"
-  [output-file ::sp/file, catalog-data map?] ;; todo: spec catalog structure
-  (spit output-file (utils/to-json catalog-data))
+(defn-spec write-catalog ::sp/extant-file
+  "writes catalog to given `output-file` as json. returns path to the output file"
+  [catalog-data ::sp/catalog, output-file ::sp/file]  ;; addon-list at this point has been ordered and doesn't resemble a hashmap anymore
+  (utils/dump-json-file output-file catalog-data)
+  (info "wrote" output-file)
   output-file)
 
 ;;
@@ -157,11 +158,28 @@
 
     (format-catalog-data addon-list created-date updated-date)))
 
-(defn-spec merge-catalogs ::sp/extant-file
-  [output-file ::sp/file, curseforge-catalog ::sp/extant-file, wowinterface-catalog ::sp/extant-file]
+(defn-spec shorten-catalog (s/or :ok ::sp/catalog, :problem nil?)
+  [full-catalog-path ::sp/extant-file]
+  (let [{:keys [addon-summary-list datestamp]}
+        (utils/load-json-file-safely
+         full-catalog-path
+         :no-file? #(error (format "catalog '%s' could not be found" full-catalog-path))
+         :bad-data? #(error (format "catalog '%s' is malformed and cannot be parsed" full-catalog-path))
+         :invalid-data? #(error (format "catalog '%s' is incorrectly structured and will not be parsed" full-catalog-path))
+         :data-spec ::sp/catalog)
+
+        unmaintained? (fn [addon]
+                        (let [dtobj (java-time/zoned-date-time (:updated-date addon))
+                              release-of-previous-expansion (utils/todt "2016-08-30T00:00:00Z")]
+                          (java-time/before? dtobj release-of-previous-expansion)))]
+    (when addon-summary-list
+      (format-catalog-data (remove unmaintained? addon-summary-list) datestamp datestamp))))
+
+(defn-spec merge-catalogs ::sp/catalog
+  [curseforge-catalog ::sp/extant-file, wowinterface-catalog ::sp/extant-file]
   (let [aa (utils/load-json-file curseforge-catalog)
         ab (utils/load-json-file wowinterface-catalog)]
-    (write-catalog-data output-file (-merge-catalogs aa ab))))
+    (-merge-catalogs aa ab)))
 
 ;;
 

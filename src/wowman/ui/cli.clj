@@ -8,7 +8,7 @@
     [curseforge :as curseforge]
     [curseforge-api :as curseforge-api]
     [wowinterface :as wowinterface]
-    [core :as core :refer [get-state paths]]]))
+    [core :as core :refer [get-state paths find-catalog-local-path]]]))
 
 (defmulti action
   "handles the following actions:
@@ -25,53 +25,60 @@
 (defmethod action :scrape-wowinterface-catalog
   [_]
   (binding [http/*cache* (core/cache)]
-    (wowinterface/scrape (paths :wowinterface-catalog-file))))
+    (wowinterface/scrape (find-catalog-local-path :wowinterface))))
 
 (defmethod action :update-wowinterface-catalog
   [_]
   (binding [http/*cache* (core/cache)]
-    (core/download-catalog :wowinterface-catalog-file)
-    (wowinterface/scrape-updates (paths :wowinterface-catalog-file))))
+    (core/download-catalog :wowinterface)
+    (wowinterface/scrape-updates (find-catalog-local-path :wowinterface))))
 
 (defmethod action :scrape-curseforge-catalog
   [_]
   ;; todo: move to core.clj
   (binding [http/*cache* (core/cache)]
-    ;;(curseforge/download-all-addon-summaries (paths :curseforge-catalog-file))
-    (let [output-file (paths :curseforge-catalog-file)
+    (let [output-file (find-catalog-local-path :curseforge)
           catalog-data (curseforge-api/download-all-summaries-alphabetically)
           created (utils/datestamp-now-ymd)
           updated created
           formatted-catalog-data (catalog/format-catalog-data catalog-data created updated)]
-      (catalog/write-catalog-data output-file formatted-catalog-data))))
+      (catalog/write-catalog formatted-catalog-data output-file))))
 
 (defmethod action :update-curseforge-catalog
   [_]
   ;; todo: move to core.clj
   (binding [http/*cache* (core/cache)]
-    (core/download-catalog :curseforge-catalog-file)
-    (when-let [{since :datestamp} (utils/load-json-file (paths :curseforge-catalog-file))]
+    (core/download-catalog :curseforge)
+    (when-let [{since :datestamp} (utils/load-json-file (find-catalog-local-path :curseforge))]
       ;; download any updates to a file
       (curseforge/download-all-addon-summary-updates since (paths :curseforge-catalog-updates-file))
       ;; merge those updates with the main summary file
       (curseforge/update-addon-summary-file (paths :curseforge-catalog-file)
                                             (paths :curseforge-catalog-updates-file)))))
 
-(defmethod action :merge-catalog
+(defmethod action :write-catalog
   [_]
-  (catalog/merge-catalogs (paths :catalog-file) (paths :curseforge-catalog-file) (paths :wowinterface-catalog-file)))
+    ;; writes the 'full' and 'short' catalog files by combining the individual host catalogs
+  (let [curseforge-catalog (find-catalog-local-path :curseforge)
+        wowinterface-catalog (find-catalog-local-path :wowinterface)
+        catalog (catalog/merge-catalogs curseforge-catalog wowinterface-catalog)]
+    (-> catalog
+        (catalog/write-catalog (find-catalog-local-path :full))
+
+        catalog/shorten-catalog
+        (catalog/write-catalog (find-catalog-local-path :short)))))
 
 (defmethod action :scrape-catalog
   [_]
   (action :scrape-curseforge-catalog)
   (action :scrape-wowinterface-catalog)
-  (action :merge-catalog))
+  (action :write-catalog))
 
 (defmethod action :update-catalog
   [_]
   (action :update-curseforge-catalog)
   (action :update-wowinterface-catalog)
-  (action :merge-catalog))
+  (action :write-catalog))
 
 (defmethod action :list
   [_]
