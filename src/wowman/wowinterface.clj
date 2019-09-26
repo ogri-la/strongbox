@@ -1,9 +1,7 @@
 (ns wowman.wowinterface
   (:require
-   [clojure.instant]
    [clojure.string :refer [trim]]
    [clojure.set]
-   [me.raynes.fs :as fs]
    [slugify.core :refer [slugify]]
    [clojure.spec.alpha :as s]
    [orchestra.spec.test :as st]
@@ -41,9 +39,10 @@
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
   [addon-summary ::sp/addon-summary]
   (let [message (str "downloading summary data: " (:name addon-summary))
-        addon-id (-> addon-summary :uri (clojure.string/replace #"\D*" "")) ;; https://.../info21651 => 21651
-        detail-html (-> addon-summary :uri http/download html-snippet)
+        data (http/download (:uri addon-summary) :message message)
+        detail-html (html-snippet data)
         version (-> detail-html (select [:#author :#version html/content]) first (subs (count "Version: ")))
+        addon-id (-> addon-summary :uri (clojure.string/replace #"\D*" "")) ;; https://.../info21651 => 21651
 
         ;; fun fact: download-uri can be almost anything. for example "https://cdn.wowinterface.com/downloads/file<addon-id>/whatever.zip" works
         ;; we'll play nicely though, and use it as intended
@@ -70,8 +69,7 @@
         cat-list (-> snippet (select [:div#colleft :div.subcats :div.subtitle :a]))
         final-url (fn [href]
                     ;; converts the href that looks like '/downloads/cat19.html' to '/downloads/index.php?cid=19"
-                    (let [page (fs/base-name href) ;; cat19.html
-                          cat-id (str "index.php?cid=" (clojure.string/replace href #"\D*" "")) ;; index.php?cid=19
+                    (let [cat-id (str "index.php?cid=" (clojure.string/replace href #"\D*" "")) ;; index.php?cid=19
                           sort-by "&sb=dec_date" ;; updated date, most recent to least recent
                           another-sort-by "&so=desc" ;; most to least recent. must be consistent with `sort-by` prefix
                           pt "&pt=f" ;; nfi but it's mandatory
@@ -194,7 +192,7 @@
 
         ;; there are 186 (at time of writing) addons scraped from the site that are not present in the filelist.json file.
         ;; these appear to be discontinued/obsolete/beta-only/'removed at author's request'/etc type addons.
-        ;; remove these addons from the addon-list
+        ;; this removes those addons from the addon-list
         addon-list (filter (fn [addon]
                              (get filelist (:source-id addon))) addon-list)
 

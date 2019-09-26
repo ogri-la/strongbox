@@ -604,7 +604,7 @@
 
 (defn -db-match-installed-addons-with-catalog
   "for each installed addon, search the catalog across multiple joins until a match is found. returns immediately when first match is found"
-  [installed-addon-list catalog]
+  [installed-addon-list]
   (let [;; toc-key -> catalog-key
         ;; most -> least desirable match
         match-on-list [[[:source :source-id]  ["source" "source_id"]] ;; nest to search across multiple parameters
@@ -625,7 +625,7 @@
     (let [inst-addons (get-state :installed-addon-list)
           catalog (get-db :addon-summary-list)
 
-          match-results (-db-match-installed-addons-with-catalog inst-addons catalog)
+          match-results (-db-match-installed-addons-with-catalog inst-addons)
           [matched unmatched] (utils/split-filter #(contains? % :final) match-results)
 
           matched (mapv :final matched)
@@ -888,7 +888,6 @@
   [path ::sp/extant-file]
   (info "importing exports file:" path)
   (let [nil-me (constantly nil)
-        invalid-warn #(warn "invalid!")
         addon-list (utils/load-json-file-safely path
                                                 :bad-data? nil-me
                                                 :data-spec ::sp/export-record-list
@@ -1006,7 +1005,7 @@
 (defn watch-for-catalog-change
   "when the catalog changes, the list of available addons should be re-read"
   []
-  (state-bind [:cfg :selected-catalog] (fn [state]
+  (state-bind [:cfg :selected-catalog] (fn [_]
                                          (db-shutdown)
                                          (refresh))))
 
