@@ -39,11 +39,11 @@
      :total (count addon-list)
      :addon-summary-list addon-list}))
 
-;; todo: can this be replaced with a simple 'utils/write-json-file' type fn?
 (defn-spec write-catalog ::sp/extant-file
   "writes catalog to given `output-file` as json. returns path to the output file"
-  [catalog-data ::sp/catalog, output-file ::sp/file]
-  (spit output-file (utils/to-json catalog-data))
+  [catalog-data ::sp/catalog, output-file ::sp/file]  ;; addon-list at this point has been ordered and doesn't resemble a hashmap anymore
+  (utils/dump-json-file output-file catalog-data)
+  (info "wrote" output-file)
   output-file)
 
 ;;
@@ -158,10 +158,8 @@
 
     (format-catalog-data addon-list created-date updated-date)))
 
-;;(defn-spec shorten-catalog (s/or :ok ::sp/catalog, :problem nil?)
-;;  [full-catalog-path ::sp/extant-file] ;; addon-list at this point has been ordered and doesn't resemble a hashmap anymore
-(defn shorten-catalog
-  [full-catalog-path]
+(defn-spec shorten-catalog (s/or :ok ::sp/catalog, :problem nil?)
+  [full-catalog-path ::sp/extant-file]
   (let [{:keys [addon-summary-list datestamp]}
         (utils/load-json-file-safely
          full-catalog-path

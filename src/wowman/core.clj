@@ -567,6 +567,11 @@
   ;; {:name :full ...} => "/path/to/catalog/dir/full-catalog.json"
   (utils/join (paths :catalog-dir) (-> catalog-source :name name (str "-catalog.json"))))
 
+(defn-spec find-catalog-local-path ::sp/file
+  "convenience wrapper around `catalog-local-path`"
+  [catalog-name keyword?]
+  (catalog-local-path (get-catalog-source catalog-name)))
+
 (defn-spec download-catalog (s/or :ok ::sp/extant-file, :error nil?)
   "downloads catalog to expected location, nothing more"
   [& [catalog] (s/* keyword?)]

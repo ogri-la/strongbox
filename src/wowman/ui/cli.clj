@@ -25,7 +25,7 @@
 (defmethod action :scrape-wowinterface-catalog
   [_]
   (binding [http/*cache* (core/cache)]
-    (wowinterface/scrape (paths :wowinterface-catalog-file))))
+    (wowinterface/scrape (core/find-catalog-local-path :wowinterface-catalog-file))))
 
 (defmethod action :update-wowinterface-catalog
   [_]
@@ -37,8 +37,7 @@
   [_]
   ;; todo: move to core.clj
   (binding [http/*cache* (core/cache)]
-    ;;(curseforge/download-all-addon-summaries (paths :curseforge-catalog-file))
-    (let [output-file (paths :curseforge-catalog-file)
+    (let [output-file (core/find-catalog-local-path :curseforge-catalog-file)
           catalog-data (curseforge-api/download-all-summaries-alphabetically)
           created (utils/datestamp-now-ymd)
           updated created
@@ -60,14 +59,14 @@
 (defmethod action :write-catalog
   [_]
     ;; writes the 'full' and 'short' catalog files by combining the individual host catalogs
-  (let [curseforge-catalog (paths :curseforge-catalog-file)
-        wowinterface-catalog (paths :wowinterface-catalog-file)
+  (let [curseforge-catalog (core/find-catalog-local-path :curseforge-catalog-file)
+        wowinterface-catalog (core/find-catalog-local-path :wowinterface-catalog-file)
         catalog (catalog/merge-catalogs curseforge-catalog wowinterface-catalog)]
     (-> catalog
-        (catalog/write-catalog (paths :catalog-file))
+        (catalog/write-catalog (core/find-catalog-local-path :full))
 
         catalog/shorten-catalog
-        (catalog/write-catalog (paths :catalog-file-short)))))
+        (catalog/write-catalog (core/find-catalog-local-path :short)))))
 
 (defmethod action :scrape-catalog
   [_]
