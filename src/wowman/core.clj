@@ -576,12 +576,16 @@
         toc-keys (if (vector? toc-keys) toc-keys [toc-keys])
         sql-arg-vals (mapv #(get installed-addon %) toc-keys) ;; [:source :source-id] => ["curseforge" 12345], [:name] => ["foo"]
 
-        _ (when (some nil? sql-arg-vals)
-            (warn "(debug) failed to find all values for sql query. keys:" toc-keys "vals:" sql-arg-vals))
+        missing-args? (some nil? sql-arg-vals)
+
+        ;; there are cases where the installed-addon is missing an attribute to match on. typically happens on :alias
+        _ (when missing-args?
+            (debug "(debug) failed to find all values for sql query, refusing to match on nil. keys:" toc-keys "vals:" sql-arg-vals))
 
         sql (str select-*-catalog "where " sql-arg-template)
-        ;;_ (info sql-arg-vals) ;; there are cases where an arg is nil. should we still query if we don't have all the facts?
-        results (db-query sql :arg-list sql-arg-vals)
+        results (if missing-args?
+                  [] ;; don't look for 'nil', just skip with no results
+                  (db-query sql :arg-list sql-arg-vals))
         match (-> results first db-coerce-catalog-values)]
     (when match
       ;; {:idx [:name :alt-name], :key "deadly-boss-mods", :match {...}, ...}
@@ -620,7 +624,7 @@
    any installed addon not found in :addon-idx has a mapping problem"
   []
   (when (get-state :selected-addon-dir) ;; don't even bother if we have nothing to match it to
-    (info "matching installed addons to online addons")
+    (info "matching installed addons to catalog")
     (let [inst-addons (get-state :installed-addon-list)
           catalog (get-db :addon-summary-list)
 
@@ -639,7 +643,10 @@
 
       (when-not (empty? unmatched)
         (warn "you need to manually search for them and then re-install them")
-        (warn (format "failed to find %s installed addons in the catalog: %s" (count unmatched) (clojure.string/join ", " unmatched-names))))
+        (warn (format "failed to find %s installed addons in the '%s' catalog: %s"
+                      (count unmatched)
+                      (name (get-state :cfg :selected-catalog))
+                      (clojure.string/join ", " unmatched-names))))
 
       (update-installed-addon-list! expanded-installed-addon-list))))
 
@@ -672,6 +679,7 @@
     (let [ds (get-state :db)
           catalog-source (get-catalog-source)
           catalog-path (catalog-local-path catalog-source)
+          _ (info "loading catalog")
           _ (debug "loading addon summaries from catalog into database:" catalog-path)
 
           ;; total hack and to be removed once curseforge/wowinterface catalogs have a :source field
