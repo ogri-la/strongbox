@@ -78,8 +78,7 @@
          :selected-catalog :short}
 
    :catalog-source-list [{:name :short :label "Short (default)" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/catalog-short.json"}
-                         ;; todo: change the name of the release from 'daily' to something else
-                         {:name :full :label "Full" :source "https://github.com/ogri-la/wowman-data/releases/download/daily/catalog.json"}
+                         {:name :full :label "Full" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/catalog.json"}
 
                          {:name :curseforge-catalog-file :label "Curseforge" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/curseforge.json"}
                          {:name :wowinterface-catalog-file :label "WoWInterface" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/wowinterface.json"}]
@@ -226,8 +225,7 @@
                    (try
                      (callback new-state)
                      (catch Exception e
-                       (error e "error caught in watch! your callback *must* be catching these or the thread dies silently! rethrowing")
-                       (throw e))))))
+                       (error e "error caught in watch! your callback *must* be catching these or the thread dies silently! rethrowing"))))))
 
     (swap! state update-in [:cleanup] conj rmwatch)
     nil))
