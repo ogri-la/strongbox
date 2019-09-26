@@ -321,12 +321,6 @@
   [file-opts map?, cli-opts map?]
   (debug "loading file config:" file-opts)
   (let [default-cfg (:cfg -state-template)
-
-        ;; todo: this sucks,fix
-        file-opts (if (contains? file-opts :selected-catalog)
-                    (update-in file-opts [:selected-catalog] keyword)
-                    file-opts)
-
         cfg (merge default-cfg file-opts)
         cfg (handle-legacy-install-dir cfg)
         ;; doesn't support optional :opt keysets
@@ -364,7 +358,10 @@
    (when-not (fs/exists? (paths :cfg-file))
      (warn "configuration file not found: " (paths :cfg-file)))
 
-   (let [file-opts (utils/load-json-file-safely (paths :cfg-file) :no-file? {} :bad-data? {})
+   (let [file-opts (utils/load-json-file-safely (paths :cfg-file)
+                                                :no-file? {}
+                                                :bad-data? {}
+                                                :transform-map {:selected-catalog keyword})
          cfg (configure file-opts cli-opts)
          etag-db (utils/load-json-file-safely (paths :etag-db-file) :no-file? {} :bad-data? {})
          new-state {:cfg cfg, :cli-opts cli-opts, :file-opts file-opts, :etag-db etag-db

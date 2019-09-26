@@ -110,7 +110,7 @@
 
       (testing "core/get-catalog-source returns the requested catalog if found"
         (is (= short-catalog (core/get-catalog-source :short))))
-      
+
       (testing "core/get-catalog-source, without args, returns the currently selected catalog"
         (is (= short-catalog (core/get-catalog-source))))
 
@@ -120,7 +120,7 @@
       (testing "core/set-catalog-source! always returns nil, even when it successfully completes"
         (is (= nil (core/set-catalog-source! :foo)))
         (is (= short-catalog (core/get-catalog-source)))
-        
+
         (is (= nil (core/set-catalog-source! :full)))
         (is (= full-catalog (core/get-catalog-source))))
 

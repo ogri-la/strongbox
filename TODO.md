@@ -123,6 +123,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
+* switch catalog loading to load-json-file-safely
 * when adding an addon-dir, if path ends with /_classic_/Interface/Addons, set game track to classic
 * add a sha256 sum to release file
     - will prevent me from having to download release to generate a sumfile
