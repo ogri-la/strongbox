@@ -49,7 +49,7 @@
 
       ;; big long stateful test
 
-      (testing "add-addon-dir!"
+      (testing "add-addon-dir! adds an addon dir with a default game track of 'retail'"
         (core/add-addon-dir! dir1 "retail")
         (is (= [{:addon-dir dir1 :game-track "retail"}] (core/get-state :cfg :addon-dir-list))))
 
@@ -373,7 +373,7 @@
                  [{:retail-track false, :vanilla-track true} {:game-track-list ["classic"]}]
                  [{:retail-track false, :vanilla-track false} {}]
 
-                 ;; order is predictable
+                 ;; order is deterministic
                  [{:vanilla-track true, :retail-track true} {:game-track-list ["retail" "classic"]}]]]
       (doseq [[given expected] cases]
         (is (= expected (core/db-gen-game-track-list given)))))))

@@ -53,6 +53,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### todo
 
+* wowman-data, stop publishing a 'daily' release
+    - we have multiple catalogs now
 * remove debugging? mode
 * bug,export addon list isn't using selected directory
 * export to markdown
@@ -120,6 +122,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
+* when adding an addon-dir, if path ends with /_classic_/Interface/Addons, set game track to classic
 * add a sha256 sum to release file
     - will prevent me from having to download release to generate a sumfile
 * add custom highlighting colours 
