@@ -53,6 +53,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### todo
 
+* investigate usage of spec-tools/coerce and remove if necessary
 * wowman-data, stop publishing a 'daily' release
     - we have multiple catalogs now
 * remove debugging? mode
