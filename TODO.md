@@ -111,6 +111,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
+* openjdk11 support
+    - see `switch-openjdk10-to-openjdk11-builds` branch
+    - problem with clojure.java-time library right now and html scraping of wowinterface, but that looks like it
 * bug, we have addons in multiple identical categories. fix this in catalog.clj
     - see 319346
     - remove call to set in db-load-catalog
