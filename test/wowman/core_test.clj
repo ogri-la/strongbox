@@ -404,13 +404,13 @@
   (testing "game track fields are turned back into a list"
     (let [cases [[{} {}]
                  [{:retail-track true} {:game-track-list ["retail"]}]
-                 [{:vanilla-track true} {:game-track-list ["classic"]}]
-                 [{:retail-track true, :vanilla-track true} {:game-track-list ["retail" "classic"]}]
-                 [{:retail-track false, :vanilla-track true} {:game-track-list ["classic"]}]
-                 [{:retail-track false, :vanilla-track false} {}]
+                 [{:classic-track true} {:game-track-list ["classic"]}]
+                 [{:retail-track true, :classic-track true} {:game-track-list ["retail" "classic"]}]
+                 [{:retail-track false, :classic-track true} {:game-track-list ["classic"]}]
+                 [{:retail-track false, :classic-track false} {}]
 
                  ;; order is deterministic
-                 [{:vanilla-track true, :retail-track true} {:game-track-list ["retail" "classic"]}]]]
+                 [{:classic-track true, :retail-track true} {:game-track-list ["retail" "classic"]}]]]
       (doseq [[given expected] cases]
         (is (= expected (core/db-gen-game-track-list given)))))))
 

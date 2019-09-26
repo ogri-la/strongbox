@@ -150,11 +150,11 @@
     (clojure.string/split category-list-str #"\|")))
 
 (defn db-gen-game-track-list
-  "converts the 'retail_track' and 'vanilla_track' boolean values into a list of strings"
+  "converts the 'retail_track' and 'classic_track' boolean values in db into a list of strings"
   [row]
   (let [track-list (vec (remove nil? [(when (:retail-track row) "retail")
-                                      (when (:vanilla-track row) "classic")]))
-        row (dissoc row :retail-track :vanilla-track)]
+                                      (when (:classic-track row) "classic")]))
+        row (dissoc row :retail-track :classic-track)]
     (if (empty? track-list)
       row
       (assoc row :game-track-list track-list))))
@@ -704,7 +704,7 @@
                                      ;;:created-date :created_date ;; curseforge only and unused
                                      :updated-date :updated_date}
                             new {:retail_track (utils/in? "retail" (:game-track-list row))
-                                 :vanilla_track (utils/in? "classic" (:game-track-list row))}
+                                 :classic_track (utils/in? "classic" (:game-track-list row))}
 
                             absent-source {:source (or (:source row) missing-source)}]
                         (-> row (utils/dissoc-all ignored) (rename-keys mapping) (merge new) (merge absent-source))))]

@@ -12,7 +12,7 @@ create table if not exists catalog (
     updated_date varchar(24), -- we have dates with micro second precision 
 
     retail_track boolean,
-    vanilla_track boolean,
+    classic_track boolean,
     
     primary key(source_id, source)
 );
