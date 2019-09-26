@@ -28,6 +28,7 @@
 
 ;; 'expanded' addon summary, everything we need in order to download an addon
 ;; see catalog/expand-addon-summary
+;; todo: rename '::expanded-addon' or similar
 (s/def ::addon
   (s/merge ::addon-summary (s/keys :req-un [::version ::download-uri]
                                    :opt [::donation-uri ::interface-version])))
@@ -40,6 +41,7 @@
 
 ;; the result of merging an installed addon (toc) with an installable addon
 ;; this is very much a utility-type shape for convenience over purity
+;; todo: renamed '::matched-addon' or similar
 (s/def ::toc-addon
   (s/merge ::toc ::addon (s/keys :opt [::update?])))
 
@@ -120,8 +122,8 @@
 (s/def ::selected? boolean?)
 (s/def ::addon-dir-map (s/keys :req-un [::addon-dir ::game-track]))
 (s/def ::addon-dir-list (s/coll-of ::addon-dir-map))
-(s/def ::user-config (s/keys :req-un [::addon-dir-list
-                                      ::debug?]))
+(s/def ::selected-catalog keyword?)
+(s/def ::user-config (s/keys :req-un [::addon-dir-list ::debug? ::selected-catalog]))
 
 (s/def ::reason-phrase (s/and string? #(<= (count %) 50)))
 (s/def ::status int?) ;; a little too general but ok for now
@@ -156,3 +158,7 @@
 (s/def ::export-record (s/keys :req-un [::name]
                                :opt [::source]))
 (s/def ::export-record-list (s/coll-of ::export-record))
+
+;;
+
+(s/def ::catalog-source-map map?)

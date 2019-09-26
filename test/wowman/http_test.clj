@@ -2,7 +2,9 @@
   (:require
    [clojure.test :refer [deftest testing is use-fixtures]]
    [clj-http.fake :refer [with-fake-routes-in-isolation]]
-   [wowman.http :as http]))
+   [wowman
+    [catalog :as catalog]
+    [http :as http]]))
 
 (deftest encode-url-path
   (testing "url whose path has spaces is correctly encoded"
@@ -21,7 +23,7 @@
           fake-routes {"https://www.curseforge.com/wow/addons/brewmastertools/files"
                        {:get (fn [req] {:status 404 :reason-phrase "Not Found" :body "<h1>Not Found</h1>"})}}]
       (with-fake-routes-in-isolation fake-routes
-        (is (nil? (wowman.curseforge/expand-summary zombie-addon)))))))
+        (is (nil? (catalog/expand-summary zombie-addon "retail")))))))
 
 (deftest user-agent
   (testing "user agent version number"

@@ -14,22 +14,17 @@
     [curseforge-api :as curseforge-api]
     [wowinterface-api :as wowinterface-api]]))
 
-;; ... this feels like boilerplate. better way?
-;; curseforge/wowinterface won't be able to 'reach back' into catalog.clj ...
-
-(defmulti expand-summary (comp keyword :source))
-
-(defmethod expand-summary :curseforge
+(defn expand-summary
   [addon-summary game-track]
-  (curseforge-api/expand-summary addon-summary game-track))
-
-(defmethod expand-summary :wowinterface
-  [addon-summary game-track]
-  (wowinterface-api/expand-summary addon-summary game-track))
-
-(defmethod expand-summary :default
-  [addon-summary game-track]
-  (error "malformed addon-summary:" (utils/pprint addon-summary)))
+  (let [dispatch-map {"curseforge" curseforge-api/expand-summary
+                      "wowinterface" wowinterface-api/expand-summary
+                      nil (fn [_ _] (error "malformed addon-summary:" (utils/pprint addon-summary)))}
+        dispatch (get dispatch-map (:source addon-summary))]
+    (try
+      (dispatch addon-summary game-track)
+      (catch Exception e
+        (error e "unhandled exception attempting to expand addon summary")
+        (error "please report this! https://github.com/ogri-la/wowman/issues")))))
 
 ;;
 
@@ -44,10 +39,11 @@
      :total (count addon-list)
      :addon-summary-list addon-list}))
 
-(defn-spec write-catalog-data ::sp/extant-file
-  "formats given catalog data and writes it to given `output-file` as json. returns path to the output file"
-  [output-file ::sp/file, catalog-data map?] ;; todo: spec catalog structure
-  (spit output-file (utils/to-json catalog-data))
+(defn-spec write-catalog ::sp/extant-file
+  "writes catalog to given `output-file` as json. returns path to the output file"
+  [catalog-data ::sp/catalog, output-file ::sp/file]  ;; addon-list at this point has been ordered and doesn't resemble a hashmap anymore
+  (utils/dump-json-file output-file catalog-data)
+  (info "wrote" output-file)
   output-file)
 
 ;;
@@ -82,7 +78,7 @@
         _ (info "total unique addons:" (count addon-groups))
 
         ;; addons that appear in both catalogs
-        multiple-sources (filter (fn [[name group-list]]
+        multiple-sources (filter (fn [[_ group-list]]
                                    (> (count group-list) 1)) addon-groups)
         _ (info "total overlap:" (count multiple-sources) "(addons)" (count (flatten (vals multiple-sources))) "(entries)")
 
@@ -99,7 +95,7 @@
         ;; - filtering for > 1 year removes   338 of the 2356 addons overlapping, leaving 2018 addons appearing in both catalogs
         ;; - filtering for > 6 months removes 389 of the 2356 addons overlapping, leaving 1967 addons appearing in both catalogs
         ;; - filtering for > 1 month removes  471 of the 2356 addons overlapping, leaving 1885 addons appearing in both catalogs
-        drop-some-addons (mapv (fn [[name group-list]]
+        drop-some-addons (mapv (fn [[_ group-list]]
 
                                  ;; sanity check. it's definitely possible for an addon to appear more than twice
                                  (when (> (count group-list) 2)
@@ -162,11 +158,28 @@
 
     (format-catalog-data addon-list created-date updated-date)))
 
-(defn-spec merge-catalogs ::sp/extant-file
-  [output-file ::sp/file, curseforge-catalog ::sp/extant-file, wowinterface-catalog ::sp/extant-file]
+(defn-spec shorten-catalog (s/or :ok ::sp/catalog, :problem nil?)
+  [full-catalog-path ::sp/extant-file]
+  (let [{:keys [addon-summary-list datestamp]}
+        (utils/load-json-file-safely
+         full-catalog-path
+         :no-file? #(error (format "catalog '%s' could not be found" full-catalog-path))
+         :bad-data? #(error (format "catalog '%s' is malformed and cannot be parsed" full-catalog-path))
+         :invalid-data? #(error (format "catalog '%s' is incorrectly structured and will not be parsed" full-catalog-path))
+         :data-spec ::sp/catalog)
+
+        unmaintained? (fn [addon]
+                        (let [dtobj (java-time/zoned-date-time (:updated-date addon))
+                              release-of-previous-expansion (utils/todt "2016-08-30T00:00:00Z")]
+                          (java-time/before? dtobj release-of-previous-expansion)))]
+    (when addon-summary-list
+      (format-catalog-data (remove unmaintained? addon-summary-list) datestamp datestamp))))
+
+(defn-spec merge-catalogs ::sp/catalog
+  [curseforge-catalog ::sp/extant-file, wowinterface-catalog ::sp/extant-file]
   (let [aa (utils/load-json-file curseforge-catalog)
         ab (utils/load-json-file wowinterface-catalog)]
-    (write-catalog-data output-file (-merge-catalogs aa ab))))
+    (-merge-catalogs aa ab)))
 
 ;;
 

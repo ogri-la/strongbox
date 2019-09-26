@@ -243,11 +243,15 @@
   path)
 
 (defn-spec load-json-file (s/or :ok ::sp/anything, :error nil?)
-  [path ::sp/extant-file]
-  (try
-    (clojure.data.json/read (clojure.java.io/reader path), :key-fn keyword)
-    (catch Exception e
-      (warn e (format "failed to read data \"%s\" in file: %s" (.getMessage e) path)))))
+  ([path ::sp/extant-file]
+   (load-json-file path {}))
+  ([path ::sp/extant-file, transform-map (s/nilable map?)]
+   (try
+     (let [value-fn (fn [key val]
+                      ((get transform-map key (constantly val)) val))]
+       (clojure.data.json/read (clojure.java.io/reader path), :key-fn keyword, :value-fn value-fn))
+     (catch Exception e
+       (warn e (format "failed to read data \"%s\" in file: %s" (.getMessage e) path))))))
 
 (defn call-if-fn
   [x]
@@ -256,10 +260,10 @@
 (defn load-json-file-safely
   "loads json file at given path with handling for common error cases (no file, bad data, invalid data)
   if :invalid-data? given, then a :data-spec must also be given else nothing happens and you get nil back"
-  [path & {:keys [no-file? bad-data? invalid-data? data-spec]}]
+  [path & {:keys [no-file? bad-data? invalid-data? data-spec transform-map]}]
   (if-not (fs/file? path)
     (call-if-fn no-file?)
-    (let [data (load-json-file path)]
+    (let [data (load-json-file path transform-map)]
       (cond
         (not data) (call-if-fn bad-data?)
         (and ;; both are present AND data is invalid

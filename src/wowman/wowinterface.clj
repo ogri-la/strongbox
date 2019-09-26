@@ -1,9 +1,7 @@
 (ns wowman.wowinterface
   (:require
-   [clojure.instant]
    [clojure.string :refer [trim]]
    [clojure.set]
-   [me.raynes.fs :as fs]
    [slugify.core :refer [slugify]]
    [clojure.spec.alpha :as s]
    [orchestra.spec.test :as st]
@@ -41,9 +39,10 @@
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
   [addon-summary ::sp/addon-summary]
   (let [message (str "downloading summary data: " (:name addon-summary))
-        addon-id (-> addon-summary :uri (clojure.string/replace #"\D*" "")) ;; https://.../info21651 => 21651
-        detail-html (-> addon-summary :uri http/download html-snippet)
+        data (http/download (:uri addon-summary) :message message)
+        detail-html (html-snippet data)
         version (-> detail-html (select [:#author :#version html/content]) first (subs (count "Version: ")))
+        addon-id (-> addon-summary :uri (clojure.string/replace #"\D*" "")) ;; https://.../info21651 => 21651
 
         ;; fun fact: download-uri can be almost anything. for example "https://cdn.wowinterface.com/downloads/file<addon-id>/whatever.zip" works
         ;; we'll play nicely though, and use it as intended
@@ -70,8 +69,7 @@
         cat-list (-> snippet (select [:div#colleft :div.subcats :div.subtitle :a]))
         final-url (fn [href]
                     ;; converts the href that looks like '/downloads/cat19.html' to '/downloads/index.php?cid=19"
-                    (let [page (fs/base-name href) ;; cat19.html
-                          cat-id (str "index.php?cid=" (clojure.string/replace href #"\D*" "")) ;; index.php?cid=19
+                    (let [cat-id (str "index.php?cid=" (clojure.string/replace href #"\D*" "")) ;; index.php?cid=19
                           sort-by "&sb=dec_date" ;; updated date, most recent to least recent
                           another-sort-by "&so=desc" ;; most to least recent. must be consistent with `sort-by` prefix
                           pt "&pt=f" ;; nfi but it's mandatory
@@ -144,55 +142,6 @@
         (info (format "scraping %s pages in '%s'" (last page-range) (:label category)))
         (flatten (mapv extractor page-range))))))
 
-(defn scrape-updates-page
-  [page-n]
-  (let [url (str host "latest.php?sb=lastupdate&so=desc&sh=full&pt=f&page=" page-n)
-        page-content (-> url http/download html-snippet)
-        rows (-> page-content (select [:div#innerpage :table.tborder :tr]) rest rest) ;; discard first two rows (nav and header)
-        rows (drop-last 7 rows) ;; and last 7 (more nav and search)
-        extractor (fn [row]
-                    (let [label (-> row (select [:a html/content]) first trim) ;; two links in each row, we want the first one
-                          dt (-> row (select [:td]) (nth 5) (select [:div]) last :content)
-                          date (-> dt first trim)
-                          time (-> dt second :content first)]
-                      {:uri (extract-addon-uri (-> row (select [:a]) first))
-                       :name (slugify label)
-                       :label label
-                       :category-list #{} ;; known limitation. updates for wowinterface are missing their category
-                       :updated-date (format-wowinterface-dt (str date " " time))
-                       :download-count (-> row (select [:td]) (nth 4) :content first (clojure.string/replace #"\D*" "") Integer.)}))]
-    (mapv extractor rows)))
-
-(defn -scrape-updates
-  "downloads latest update pages until given date reached or exceeded"
-  [since-date]
-  (loop [page-n 1
-         accumulator []]
-    (info "downloading addon updates page" page-n)
-    (let [results (scrape-updates-page page-n)
-          target-addon (last results)
-          future-date? (= -1 (compare (clojure.instant/read-instant-date since-date)
-                                      (clojure.instant/read-instant-date (:updated-date target-addon))))]
-      (if future-date?
-        ;; loop until the dates we're seeing are in the past (compared to given date)
-        (recur (inc page-n) (into accumulator results))
-        (into accumulator results)))))
-
-(defn-spec scrape-updates ::sp/extant-file
-  [catalog ::sp/extant-file]
-  (let [{created-date :datestamp, addons-list :addon-summary-list} (utils/load-json-file catalog)
-        updated-addons-list (-scrape-updates created-date)
-        merged-addons-list (utils/merge-lists :name addons-list updated-addons-list :prepend? true)
-        ;; ensure consistent key order during serialisation for nicer diffs
-        merged-addons-list (mapv #(into (omap/ordered-map) (sort %)) merged-addons-list)]
-    (info "updating addon summary file:" catalog)
-    (spit catalog (utils/to-json {:spec {:version 1}
-                                  :datestamp created-date
-                                  :updated-datestamp (utils/datestamp-now-ymd)
-                                  :total (count merged-addons-list)
-                                  :addon-summary-list merged-addons-list}))
-    catalog))
-
 (defn download-parse-filelist-file
   "returns a map of wowinterface addons, keyed by their :source-id (as a string).
   wowinterface.com has a single large file with all/most of their addon data in it called 'filelist.json'.
@@ -243,7 +192,7 @@
 
         ;; there are 186 (at time of writing) addons scraped from the site that are not present in the filelist.json file.
         ;; these appear to be discontinued/obsolete/beta-only/'removed at author's request'/etc type addons.
-        ;; remove these addons from the addon-list
+        ;; this removes those addons from the addon-list
         addon-list (filter (fn [addon]
                              (get filelist (:source-id addon))) addon-list)
 
