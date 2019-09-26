@@ -37,10 +37,6 @@
 
 (def colours (utils/nav-map-fn -colour-map))
 
-;; not in `paths` because it's not configurable
-;; deprecated
-(def remote-catalog "https://github.com/ogri-la/wowman-data/releases/download/daily/catalog.json")
-
 (defn paths
   "returns a map of paths whose location may vary depending on the location of the current working directory"
   [& path]
@@ -60,13 +56,6 @@
         cfg-file (join config-dir "config.json") ;; /home/$you/.config/wowman/config.json
         etag-db-file (join data-dir "etag-db.json") ;; /home/$you/.local/share/wowman/etag-db.json
 
-        ;;curseforge-catalog (join data-dir "curseforge.json") ;; /home/$you/.local/share/wowman/cache/curseforge.json
-        ;;curseforge-catalog-updates (join data-dir "curseforge-updates.json") ;; todo: remove this intermediate file
-        ;;wowinterface-catalog (join data-dir "wowinterface.json")
-
-        ;;catalog (join data-dir "catalog.json")
-        ;;catalog-short (join data-dir "catalog-short.json")
-
         ;; ensure path ends with `-file` or `-dir` or `-uri`
         path-map {:config-dir config-dir
                   :data-dir data-dir
@@ -74,15 +63,7 @@
                   :cfg-file cfg-file
                   :etag-db-file etag-db-file
 
-                  :catalog-dir data-dir
-
-                  ;;:catalog-file catalog
-                  ;;:catalog-file-short catalog-short
-
-                  ;;:curseforge-catalog-file curseforge-catalog
-                  ;;:curseforge-catalog-updates-file curseforge-catalog-updates ;; todo, remove
-                  ;;:wowinterface-catalog-file wowinterface-catalog
-                  }]
+                  :catalog-dir data-dir}]
     (nav-map path-map path)))
 
 (def -state-template
@@ -98,7 +79,7 @@
 
    :catalog-source-list [{:name :short :label "Short (default)" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/catalog-short.json"}
                          ;; todo: change the name of the release from 'daily' to something else
-                         {:name :full :label "Full" :source remote-catalog}
+                         {:name :full :label "Full" :source "https://github.com/ogri-la/wowman-data/releases/download/daily/catalog.json"}
 
                          {:name :curseforge-catalog-file :label "Curseforge" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/curseforge.json"}
                          {:name :wowinterface-catalog-file :label "WoWInterface" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/wowinterface.json"}]
