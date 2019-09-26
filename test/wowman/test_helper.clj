@@ -5,7 +5,7 @@
    [me.raynes.fs :as fs :refer [with-cwd]]
    [clj-http.fake :refer [with-fake-routes-in-isolation]]
    [wowman
-    [utils :refer [join]]]))
+    [utils :as utils]]))
 
 (def fixture-dir (-> "test/fixtures" fs/absolute fs/normalized str))
 
@@ -15,7 +15,7 @@
 
 (defn fixture-path
   [filename]
-  (join fixture-dir filename))
+  (utils/join fixture-dir filename))
 
 (defn temp-path
   [filename]
@@ -42,8 +42,8 @@
                      {:get (fn [req] {:status 200 :body "{\"tag_name\": \"0.0.0\"}"})}}]
     (try
       (with-fake-routes-in-isolation fake-routes
-        (with-env [:xdg-data-home (join temp-dir-path data-dir)
-                   :xdg-config-home (join temp-dir-path config-dir)]
+        (with-env [:xdg-data-home (utils/join temp-dir-path data-dir)
+                   :xdg-config-home (utils/join temp-dir-path config-dir)]
           (with-cwd temp-dir-path
             (debug "created temp working directory" fs/*cwd*)
             (f))))

@@ -34,7 +34,6 @@ see CHANGELOG.md for a more formal list of changes by release
                 - no, because database isn't permanent
             - what benefits are there to storing the list of installed addons in the database rather than in an array?
                 - we've already discovered it can be painful to re-create arrays and maps
-        
 * user-agent needs to be updated
     - it using a naive (subs ...) call
     - done
@@ -68,7 +67,21 @@ see CHANGELOG.md for a more formal list of changes by release
                 - hacked around for now
             - done
         - done
-
+* remove 'updating' catalogs
+    - a full weekly scrape is good enough
+    - this logic has introduced a *lot* of code that can be removed
+    - scraping curseforge api doesn't seem too onerous anymore
+    - done
+* remove html scraping of catalogs
+    - wowinterface will have some exceptions
+    - done
+* 'scrape' and 'update' are not great terms
+    - scrape means 'complete update'
+    - update means 'partial update'
+    - I may be removing the updating of catalogs in favour of full scrapes
+    - done
+        - only 'scrape' remains now
+        - 'update' reserved soley for 'updating addons' now
 
 ### todo
 
@@ -91,16 +104,6 @@ see CHANGELOG.md for a more formal list of changes by release
             - fingerprint is 9 digits and all decimal, so not a hex digest
     - wowinterface checksum is hidden behind a javascript tabber but still available
         - wowinterface do have a md5sum in results! score
-* remove 'updating' catalogs
-    - a full weekly scrape is good enough
-    - this logic has introduced a *lot* of code that can be removed
-    - scraping curseforge api doesn't seem too onerous anymore
-* remove html scraping of catalogs
-    - wowinterface will have some exceptions
-* 'scrape' and 'update' are not great terms
-    - scrape means 'complete update'
-    - update means 'partial update'
-    - I may be removing the updating of catalogs in favour of full scrapes
 * bug, curseforge.json is getting a strange duplication of results while generating the catalog
     - this is preventing automated catalog *updates*, not the full regeneration apparently
     - I can't replicate this anymore. It may show up later, but for now it's blocking a 0.8.0 release

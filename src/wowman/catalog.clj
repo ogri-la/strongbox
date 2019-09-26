@@ -78,7 +78,7 @@
         _ (info "total unique addons:" (count addon-groups))
 
         ;; addons that appear in both catalogs
-        multiple-sources (filter (fn [[name group-list]]
+        multiple-sources (filter (fn [[_ group-list]]
                                    (> (count group-list) 1)) addon-groups)
         _ (info "total overlap:" (count multiple-sources) "(addons)" (count (flatten (vals multiple-sources))) "(entries)")
 
@@ -95,7 +95,7 @@
         ;; - filtering for > 1 year removes   338 of the 2356 addons overlapping, leaving 2018 addons appearing in both catalogs
         ;; - filtering for > 6 months removes 389 of the 2356 addons overlapping, leaving 1967 addons appearing in both catalogs
         ;; - filtering for > 1 month removes  471 of the 2356 addons overlapping, leaving 1885 addons appearing in both catalogs
-        drop-some-addons (mapv (fn [[name group-list]]
+        drop-some-addons (mapv (fn [[_ group-list]]
 
                                  ;; sanity check. it's definitely possible for an addon to appear more than twice
                                  (when (> (count group-list) 2)
