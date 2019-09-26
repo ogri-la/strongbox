@@ -144,55 +144,6 @@
         (info (format "scraping %s pages in '%s'" (last page-range) (:label category)))
         (flatten (mapv extractor page-range))))))
 
-(defn scrape-updates-page
-  [page-n]
-  (let [url (str host "latest.php?sb=lastupdate&so=desc&sh=full&pt=f&page=" page-n)
-        page-content (-> url http/download html-snippet)
-        rows (-> page-content (select [:div#innerpage :table.tborder :tr]) rest rest) ;; discard first two rows (nav and header)
-        rows (drop-last 7 rows) ;; and last 7 (more nav and search)
-        extractor (fn [row]
-                    (let [label (-> row (select [:a html/content]) first trim) ;; two links in each row, we want the first one
-                          dt (-> row (select [:td]) (nth 5) (select [:div]) last :content)
-                          date (-> dt first trim)
-                          time (-> dt second :content first)]
-                      {:uri (extract-addon-uri (-> row (select [:a]) first))
-                       :name (slugify label)
-                       :label label
-                       :category-list #{} ;; known limitation. updates for wowinterface are missing their category
-                       :updated-date (format-wowinterface-dt (str date " " time))
-                       :download-count (-> row (select [:td]) (nth 4) :content first (clojure.string/replace #"\D*" "") Integer.)}))]
-    (mapv extractor rows)))
-
-(defn -scrape-updates
-  "downloads latest update pages until given date reached or exceeded"
-  [since-date]
-  (loop [page-n 1
-         accumulator []]
-    (info "downloading addon updates page" page-n)
-    (let [results (scrape-updates-page page-n)
-          target-addon (last results)
-          future-date? (= -1 (compare (clojure.instant/read-instant-date since-date)
-                                      (clojure.instant/read-instant-date (:updated-date target-addon))))]
-      (if future-date?
-        ;; loop until the dates we're seeing are in the past (compared to given date)
-        (recur (inc page-n) (into accumulator results))
-        (into accumulator results)))))
-
-(defn-spec scrape-updates ::sp/extant-file
-  [catalog ::sp/extant-file]
-  (let [{created-date :datestamp, addons-list :addon-summary-list} (utils/load-json-file catalog)
-        updated-addons-list (-scrape-updates created-date)
-        merged-addons-list (utils/merge-lists :name addons-list updated-addons-list :prepend? true)
-        ;; ensure consistent key order during serialisation for nicer diffs
-        merged-addons-list (mapv #(into (omap/ordered-map) (sort %)) merged-addons-list)]
-    (info "updating addon summary file:" catalog)
-    (spit catalog (utils/to-json {:spec {:version 1}
-                                  :datestamp created-date
-                                  :updated-datestamp (utils/datestamp-now-ymd)
-                                  :total (count merged-addons-list)
-                                  :addon-summary-list merged-addons-list}))
-    catalog))
-
 (defn download-parse-filelist-file
   "returns a map of wowinterface addons, keyed by their :source-id (as a string).
   wowinterface.com has a single large file with all/most of their addon data in it called 'filelist.json'.

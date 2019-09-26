@@ -414,3 +414,55 @@
       (doseq [[given expected] cases]
         (is (= expected (core/db-gen-game-track-list given)))))))
 
+;; legacy
+
+;; local addon .toc file
+(def toc
+  {:name "everyaddon",
+   :description "Does what no other addon does, slightly differently"
+   :dirname "EveryAddon",
+   :label "EveryAddon 1.2.3",
+   :interface-version 70000,
+   :installed-version "1.2.3"})
+
+;; catalog of summaries
+(def addon-summary
+  {:label "EveryAddon",
+   :name  "everyaddon",
+   :alt-name "everyaddon"
+   :description  "Does what no other addon does, slightly differently"
+   :category-list  ["Auction & Economy", "Data Broker"],
+   :source "curseforge"
+   :source-id 1
+   :created-date  "2009-02-08T13:30:30Z",
+   :updated-date  "2016-09-08T14:18:33Z",
+   :uri "https://www.example.org/wow/addons/everyaddon"})
+
+;; remote addon detail
+(def addon
+  (merge addon-summary
+         {:download-count 1
+          :interface-version  70000,
+          :download-uri  "https://www.example.org/wow/addons/everyaddon/download/123456/file",
+          :donation-uri nil,
+          :version  "1.2.3"}))
+
+(deftest install-addon
+  (testing "installing an addon"
+    (let [install-dir (str fs/*cwd*)
+          ;; move dummy addon file into place so there is no cache miss
+          fname (core/downloaded-addon-fname (:name addon) (:version addon))
+          _ (utils/cp (fixture-path fname) install-dir)
+          file-list (core/install-addon addon install-dir)]
+
+      (testing "addon directory created, single file written (.wowman.json nfo file)"
+        (is (= (count file-list) 1))
+        (is (fs/exists? (first file-list)))))))
+
+(deftest install-bad-addon
+  (testing "installing a bad addon"
+    (let [install-dir (str fs/*cwd*)
+          fname (core/downloaded-addon-fname (:name addon) (:version addon))]
+      (fs/copy (fixture-path "bad-truncated.zip") (utils/join install-dir fname)) ;; hoho, so evil
+      (is (= (core/install-addon addon install-dir) nil))
+      (is (= (count (fs/list-dir install-dir)) 0))))) ;; bad zip file deleted

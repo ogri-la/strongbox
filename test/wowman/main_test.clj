@@ -54,9 +54,6 @@
 
   (testing "certain actions force the 'cli' ui"
     (is (= :cli (-> (main/parse ["--action" "scrape-catalog"]) :options :ui)))
-    (is (= :cli (-> (main/parse ["--action" "update-catalog"]) :options :ui)))
-    (is (= :cli (-> (main/parse ["--action" "update-wowinterface-catalog"]) :options :ui)))
-    (is (= :cli (-> (main/parse ["--action" "update-curseforge-catalog"]) :options :ui)))
     (is (= :cli (-> (main/parse ["--action" "scrape-curseforge-catalog"]) :options :ui)))
     (is (= :cli (-> (main/parse ["--action" "scrape-curseforge-catalog"]) :options :ui))))
 
