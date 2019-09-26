@@ -691,7 +691,9 @@
     (sb/bind (sb/selection catalog-button-grp)
              (sb/b-do* (fn [val]
                          (when val ;; hrm, we're getting two events here, one where the value is nil ...
-                           (async #(core/set-catalog-source! (-> val ss/user-data :name)))))))
+                           (async (fn []
+                                    (core/set-catalog-source! (-> val ss/user-data :name))
+                                    (core/save-settings)))))))
 
     ;; application state updates menu selection
     (core/state-bind [:cfg :selected-catalog]

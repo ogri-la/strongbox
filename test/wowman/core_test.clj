@@ -9,7 +9,7 @@
    [wowman
     [main :as main]
     [utils :as utils]
-    [test-helper :as helper :refer [fixture-path temp-path]]
+    [test-helper :as helper :refer [fixture-path temp-path data-dir]]
     [core :as core]]))
 
 (use-fixtures :each helper/fixture-tempcwd)
@@ -97,6 +97,42 @@
       (testing "set-game-track! without addon-dir, changes the game track of the currently selected addon dir"
         (core/set-game-track! "classic")
         (is (= {:addon-dir dir2 :game-track "classic"} (core/addon-dir-map dir2))))
+
+      (finally
+        (core/stop app-state)))))
+
+(deftest catalog
+  (let [app-state (core/start {})
+        [short-catalog full-catalog] (->> core/-state-template :catalog-source-list (take 2))]
+    (try
+      (testing "by default we have at least 2 (short and full composite) + N (source) catalogs available to us"
+        (is (> (count (core/get-state :catalog-source-list)) 2)))
+
+      (testing "core/get-catalog-source returns the requested catalog if found"
+        (is (= short-catalog (core/get-catalog-source :short))))
+      
+      (testing "core/get-catalog-source, without args, returns the currently selected catalog"
+        (is (= short-catalog (core/get-catalog-source))))
+
+      (testing "core/get-catalog-source returns nil if it can't find the requested catalog"
+        (is (= nil (core/get-catalog-source :foo))))
+
+      (testing "core/set-catalog-source! always returns nil, even when it successfully completes"
+        (is (= nil (core/set-catalog-source! :foo)))
+        (is (= short-catalog (core/get-catalog-source)))
+        
+        (is (= nil (core/set-catalog-source! :full)))
+        (is (= full-catalog (core/get-catalog-source))))
+
+      (testing "core/catalog-local-path returns the expected path to the catalog file on the filesystem"
+        (is (= (utils/join fs/*cwd* data-dir "short-catalog.json") (core/catalog-local-path short-catalog)))
+        (is (= (utils/join fs/*cwd* data-dir "full-catalog.json") (core/catalog-local-path full-catalog))))
+
+      (testing "core/find-catalog-local-path just needs a catalog :name"
+        (is (= (utils/join fs/*cwd* data-dir "short-catalog.json") (core/find-catalog-local-path :short))))
+
+      (testing "core/find-catalog-local-path returns nil if the given catalog can't be found"
+        (is (= nil (core/find-catalog-local-path :foo))))
 
       (finally
         (core/stop app-state)))))

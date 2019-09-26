@@ -225,7 +225,7 @@
                    (try
                      (callback new-state)
                      (catch Exception e
-                       (error e "error caught in watch! your callback *must* be catching these or the thread dies silently! rethrowing"))))))
+                       (error e "error caught in watch! your callback *must* be catching these or the thread dies silently!"))))))
 
     (swap! state update-in [:cleanup] conj rmwatch)
     nil))
@@ -525,7 +525,7 @@
 ;; catalog handling
 ;;
 
-(defn-spec get-catalog-source (s/nilable ::sp/catalog-source)
+(defn-spec get-catalog-source (s/or :ok ::sp/catalog-source, :not-found nil?)
   ([]
    (get-catalog-source (get-state :cfg :selected-catalog)))
   ([catalog-name keyword?]
@@ -534,9 +534,7 @@
 (defn-spec set-catalog-source! nil?
   [catalog-name keyword?]
   (if-let [catalog (get-catalog-source catalog-name)]
-    (do
-      (swap! state assoc-in [:cfg :selected-catalog] (:name catalog))
-      (save-settings))
+    (swap! state assoc-in [:cfg :selected-catalog] (:name catalog))
     (warn "catalog not found" catalog-name))
   nil)
 
@@ -546,10 +544,10 @@
   ;; {:name :full ...} => "/path/to/catalog/dir/full-catalog.json"
   (utils/join (paths :catalog-dir) (-> catalog-source :name name (str "-catalog.json"))))
 
-(defn-spec find-catalog-local-path ::sp/file
+(defn-spec find-catalog-local-path (s/or :ok ::sp/file, :not-found nil?)
   "convenience wrapper around `catalog-local-path`"
   [catalog-name keyword?]
-  (catalog-local-path (get-catalog-source catalog-name)))
+  (some-> catalog-name get-catalog-source catalog-local-path))
 
 (defn-spec download-catalog (s/or :ok ::sp/extant-file, :error nil?)
   "downloads catalog to expected location, nothing more"
@@ -566,11 +564,6 @@
   [installed-addon catalog-addon]
   ;; merges left->right. catalog-addon overwrites installed-addon, ':matched' overwrites catalog-addon, etc
   (merge installed-addon catalog-addon {:matched? true}))
-
-(defn source-from-group-id
-  [addon-summary]
-  (when-let [uri (:group-id addon-summary)]
-    (-> uri java.net.URI. .getHost (clojure.string/split #"\.") second)))
 
 
 ;;

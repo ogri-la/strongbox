@@ -9,6 +9,10 @@
 
 (def fixture-dir (-> "test/fixtures" fs/absolute fs/normalized str))
 
+(def data-dir "data")
+
+(def config-dir "config")
+
 (defn fixture-path
   [filename]
   (join fixture-dir filename))
@@ -30,13 +34,16 @@
                      "https://raw.githubusercontent.com/ogri-la/wowman-data/master/catalog-short.json"
                      {:get (fn [req] {:status 200 :body "{}"})}
 
+                     "https://raw.githubusercontent.com/ogri-la/wowman-data/master/catalog.json"
+                     {:get (fn [req] {:status 200 :body "{}"})}
+
                      ;; latest wowman version
                      "https://api.github.com/repos/ogri-la/wowman/releases/latest"
                      {:get (fn [req] {:status 200 :body "{\"tag_name\": \"0.0.0\"}"})}}]
     (try
       (with-fake-routes-in-isolation fake-routes
-        (with-env [:xdg-data-home (join temp-dir-path "data")
-                   :xdg-config-home (join temp-dir-path "config")]
+        (with-env [:xdg-data-home (join temp-dir-path data-dir)
+                   :xdg-config-home (join temp-dir-path config-dir)]
           (with-cwd temp-dir-path
             (debug "created temp working directory" fs/*cwd*)
             (f))))
