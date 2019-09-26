@@ -80,8 +80,8 @@
    :catalog-source-list [{:name :short :label "Short (default)" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/catalog-short.json"}
                          {:name :full :label "Full" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/catalog.json"}
 
-                         {:name :curseforge-catalog-file :label "Curseforge" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/curseforge.json"}
-                         {:name :wowinterface-catalog-file :label "WoWInterface" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/wowinterface.json"}]
+                         {:name :curseforge :label "Curseforge" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/curseforge.json"}
+                         {:name :wowinterface :label "WoWInterface" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/wowinterface.json"}]
 
    ;; subset of possible data about all INSTALLED addons
    ;; starts as parsed .toc file data
@@ -682,7 +682,7 @@
           _ (debug "loading addon summaries from catalog into database:" catalog-path)
 
           ;; total hack and to be removed once curseforge/wowinterface catalogs have a :source field
-          missing-source (if (= (:name catalog-source) :curseforge-catalog-file)
+          missing-source (if (= (:name catalog-source) :curseforge)
                            "curseforge"
                            "wowinterface")
 

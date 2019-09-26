@@ -8,7 +8,7 @@
     [curseforge :as curseforge]
     [curseforge-api :as curseforge-api]
     [wowinterface :as wowinterface]
-    [core :as core :refer [get-state paths]]]))
+    [core :as core :refer [get-state paths find-catalog-local-path]]]))
 
 (defmulti action
   "handles the following actions:
@@ -25,19 +25,19 @@
 (defmethod action :scrape-wowinterface-catalog
   [_]
   (binding [http/*cache* (core/cache)]
-    (wowinterface/scrape (core/find-catalog-local-path :wowinterface-catalog-file))))
+    (wowinterface/scrape (find-catalog-local-path :wowinterface))))
 
 (defmethod action :update-wowinterface-catalog
   [_]
   (binding [http/*cache* (core/cache)]
-    (core/download-catalog :wowinterface-catalog-file)
-    (wowinterface/scrape-updates (paths :wowinterface-catalog-file))))
+    (core/download-catalog :wowinterface)
+    (wowinterface/scrape-updates (find-catalog-local-path :wowinterface))))
 
 (defmethod action :scrape-curseforge-catalog
   [_]
   ;; todo: move to core.clj
   (binding [http/*cache* (core/cache)]
-    (let [output-file (core/find-catalog-local-path :curseforge-catalog-file)
+    (let [output-file (find-catalog-local-path :curseforge)
           catalog-data (curseforge-api/download-all-summaries-alphabetically)
           created (utils/datestamp-now-ymd)
           updated created
@@ -48,8 +48,8 @@
   [_]
   ;; todo: move to core.clj
   (binding [http/*cache* (core/cache)]
-    (core/download-catalog :curseforge-catalog-file)
-    (when-let [{since :datestamp} (utils/load-json-file (paths :curseforge-catalog-file))]
+    (core/download-catalog :curseforge)
+    (when-let [{since :datestamp} (utils/load-json-file (find-catalog-local-path :curseforge))]
       ;; download any updates to a file
       (curseforge/download-all-addon-summary-updates since (paths :curseforge-catalog-updates-file))
       ;; merge those updates with the main summary file
@@ -59,14 +59,14 @@
 (defmethod action :write-catalog
   [_]
     ;; writes the 'full' and 'short' catalog files by combining the individual host catalogs
-  (let [curseforge-catalog (core/find-catalog-local-path :curseforge-catalog-file)
-        wowinterface-catalog (core/find-catalog-local-path :wowinterface-catalog-file)
+  (let [curseforge-catalog (find-catalog-local-path :curseforge)
+        wowinterface-catalog (find-catalog-local-path :wowinterface)
         catalog (catalog/merge-catalogs curseforge-catalog wowinterface-catalog)]
     (-> catalog
-        (catalog/write-catalog (core/find-catalog-local-path :full))
+        (catalog/write-catalog (find-catalog-local-path :full))
 
         catalog/shorten-catalog
-        (catalog/write-catalog (core/find-catalog-local-path :short)))))
+        (catalog/write-catalog (find-catalog-local-path :short)))))
 
 (defmethod action :scrape-catalog
   [_]
