@@ -82,6 +82,8 @@ see CHANGELOG.md for a more formal list of changes by release
     - done
         - only 'scrape' remains now
         - 'update' reserved soley for 'updating addons' now
+* openjdk 11 (LTS) support
+    - done
 
 ### todo
 
@@ -111,9 +113,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
-* openjdk11 support
-    - see `switch-openjdk10-to-openjdk11-builds` branch
-    - problem with clojure.java-time library right now and html scraping of wowinterface, but that looks like it
+* we need locking around catalog switching
+    - the old one must have any open transactions closed and be shutdown before switching
+    - this should be easy to recreate
 * bug, we have addons in multiple identical categories. fix this in catalog.clj
     - see 319346
     - remove call to set in db-load-catalog

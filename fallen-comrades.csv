@@ -1,9 +1,0 @@
-name,url,Linux,Mac,Windows,maintained?,f/oss?,source available?,ads?,EULA?,language
-addon-manager,https://github.com/vargen2/addonmanager,no,no,yes*,no,yes,yes,no,no,java
-GWAM,https://github.com/JonasKnarbakk/GWAM,yes*,yes*,yes*,no^,yes,yes,no,no,c++
-kuhnertdm/wow-addon-updater,https://github.com/kuhnertdm/wow-addon-updater,yes*,yes,yes,no^,yes,yes,no,no,python
-wow-better-cli,https://github.com/DayBr3ak/wow-better-cli,yes*,yes*,yes*,no^,yes,yes,no,no,javascript
-WoWAceUpdater,https://sourceforge.net/projects/wowaceupdater/,no,no,yes,no,yes,yes,?,?,?
-wowaddon,https://github.com/wttw/wowaddon,yes,yes,yes,no^,yes,yes,no,no,go
-wowam,https://github.com/sysworx/wowam,no,yes,yes,no^,no,yes,no,yes*,xojo
-WoWutils,https://github.com/SeriousBug/WoWutils,yes,no,no,no,yes,yes,no,no,bash
