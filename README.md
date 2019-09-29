@@ -117,6 +117,9 @@ See [CONTRIBUTING](CONTRIBUTING.md) for more detail.
 
 An addon manager is 'maintained' if it has seen an update in 12 months.
 
+When an addon manager requires the *separate* installation of other software like Python or Java or NPM or GTK/QT etc, 
+or requires compilation or similar, then it gets the big fat caveat asterisk '**\***'.
+
 See [comrades.csv](comrades.csv) for a complete list.
 
 ### Maintained 
@@ -143,7 +146,7 @@ See [comrades.csv](comrades.csv) for a complete list.
 | woblight/GitAddonsManager      | https://gitlab.com/woblight/GitAddonsManager         | yes        | yes   | no   | yes     | GUI | yes    | no      | yes   | yes              | no  | no   | C++        | 
 | WorldOfAddons                  | https://github.com/WorldofAddons/worldofaddons       | yes        | yes*  | yes* | yes     | GUI | yes    | no      | yes   | yes              | no  | no   | Javascript | 
 
-\* installation on this platform is more involved than running a simple executable
+\* installation on this platform is more involved than downloading and running an executable
 
 ### Unmaintained 
 
@@ -158,7 +161,7 @@ See [comrades.csv](comrades.csv) for a complete list.
 | WoWAceUpdater               | https://sourceforge.net/projects/wowaceupdater/ | no         | no    | no   | yes     | GUI | yes    | no      | yes   | yes              | ?   | ?    | ?          | 
 | wttw/wowaddon               | https://github.com/wttw/wowaddon                | no         | yes   | yes  | yes     | CLI | yes    | no      | yes   | yes              | no  | no   | Go         | 
 
-\* installation on this platform is more involved than running a simple executable
+\* installation on this platform is more involved than downloading and running an executable
 
 ## License
 
