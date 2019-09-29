@@ -113,6 +113,8 @@ See [CONTRIBUTING](CONTRIBUTING.md) for more detail.
 
 ## Other addon managers
 
+**NEW! A more convenient version here: https://ogri-la.github.io/wow-addon-managers/**
+
 An addon manager is 'maintained' if it has seen an update in 12 months.
 
 See [comrades.csv](comrades.csv) for a complete list.
