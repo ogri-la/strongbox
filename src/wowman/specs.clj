@@ -10,6 +10,7 @@
 (s/def ::list-of-keywords (s/coll-of keyword?))
 (s/def ::list-of-list-of-keywords (s/coll-of ::list-of-keywords))
 
+(s/def ::regex #(instance? java.util.regex.Pattern %))
 (s/def ::short-string #(<= (count %) 80))
 
 (defn-spec has-ext boolean?
@@ -66,6 +67,7 @@
 (s/def ::extant-archive-file (s/and ::extant-file ::archive-file))
 (s/def ::list-of-files (s/coll-of ::file))
 (s/def ::anything (complement nil?)) ;; like `any?` but nil is considered false
+(s/def ::dir ::file) ;; directory must also be a string and a valid File object, but not necessarily exist (yet)
 (s/def ::extant-dir (s/and string? fs/directory?))
 (s/def ::writeable-dir (s/and ::extant-dir fs/writeable?))
 (s/def ::download-uri ::uri)

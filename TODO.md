@@ -88,6 +88,9 @@ see CHANGELOG.md for a more formal list of changes by release
     - the old one must have any open transactions closed and be shutdown before switching
     - this should be easy to recreate
     - done
+* bug, 'clear cache' didn't delete the catalog.json
+    - added option to 'Cache' menu to 'Clear catalogs'
+    - done
 
 ### todo
 
@@ -95,7 +98,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - compare current speed and code against loading addon category data serially
         - as opposed to in three blocks (categories, addons, category-addons). We might save some time and code
     - investigate prepared statements when inserting
-* bug, 'clear cache' didn't delete the catalog.json
 * gui tests are bypassing the path wrangling because the envvar library is using thread-local `binding`
     - change path access to an atom
     - I *think* this may have something to do with a truncated catalog I've encountered now (twice)
@@ -117,6 +119,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
+* bug, if an addon directory goes missing between restarts, user configuration is lost
+    - initially it's ignored, but then the new settings are saved over the top
 * bug, we have addons in multiple identical categories. fix this in catalog.clj
     - see 319346
     - remove call to set in db-load-catalog
