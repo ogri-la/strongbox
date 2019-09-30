@@ -777,7 +777,7 @@
 
 (defn-spec delete-cache! nil?
   "deletes the 'cache' directory that contains scraped html files and the etag db file.
-  all these are regenerated when missing"
+  these are regenerated when missing"
   []
   (warn "deleting cache")
   (fs/delete-dir (paths :cache-dir))
@@ -786,27 +786,27 @@
   (fs/mkdirs (paths :cache-dir)) ;; todo: this and `init-dirs` needs revisiting
   nil)
 
-(defn delete-downloaded-addon-zips!
+(defn-spec delete-downloaded-addon-zips! nil?
   []
   (delete-many-files! (get-state :selected-addon-dir) #".+\-\-.+\.zip$" "downloaded addon zip"))
 
-(defn delete-wowman-json-files!
+(defn-spec delete-wowman-json-files! nil?
   []
   (delete-many-files! (get-state :selected-addon-dir) #"\.wowman\.json$" ".wowman.json"))
 
-(defn delete-wowmatrix-dat-files!
+(defn-spec delete-wowmatrix-dat-files! nil?
   []
   (delete-many-files! (get-state :selected-addon-dir) #"(?i)WowMatrix.dat$" "WowMatrix.dat"))
 
-(defn delete-catalog-files!
+(defn-spec delete-catalog-files! nil?
   []
   (delete-many-files! (paths :data-dir) #".+\-catalog\.json$" "catalog"))
 
 (defn-spec clear-all-temp-files! nil?
   []
   (delete-downloaded-addon-zips!)
-  (delete-cache!)
-  (delete-catalog-files!))
+  (delete-catalog-files!)
+  (delete-cache!))
 
 ;; version checking
 

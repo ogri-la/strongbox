@@ -16,7 +16,7 @@
    [java-time.format]))
 
 (defn-spec safe-to-delete? boolean?
-  "predicate, returns true if given file, stripped of parents, is rooted in given directory"
+  "predicate, returns true if given file is rooted in given directory"
   [dir ::sp/extant-dir file ::sp/extant-file]
   (clojure.string/starts-with? file dir))
 
@@ -24,7 +24,7 @@
   "deletes a list of files rooted in given directory"
   [dir ::sp/dir, regex ::sp/regex, file-type ::sp/short-string]
   (if-not (fs/exists? dir)
-    (warn "directory does not exist:" dir) ;; yet ...
+    (warn "directory does not exist:" dir) ;; app may not have been started yet
     (let [file-list (mapv str (fs/find-files dir regex))
           suspicious (remove (partial safe-to-delete? dir) file-list)
           alert #(warn "deleting file " %)]

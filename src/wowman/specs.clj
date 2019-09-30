@@ -68,7 +68,7 @@
 (s/def ::list-of-files (s/coll-of ::file))
 (s/def ::anything (complement nil?)) ;; like `any?` but nil is considered false
 (s/def ::dir ::file) ;; directory must also be a string and a valid File object, but not necessarily exist (yet)
-(s/def ::extant-dir (s/and string? fs/directory?))
+(s/def ::extant-dir (s/and ::dir fs/directory?))
 (s/def ::writeable-dir (s/and ::extant-dir fs/writeable?))
 (s/def ::download-uri ::uri)
 (s/def ::name string?) ;; normalised name of the addon, shared between toc file and curseforge
