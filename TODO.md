@@ -84,13 +84,13 @@ see CHANGELOG.md for a more formal list of changes by release
         - 'update' reserved soley for 'updating addons' now
 * openjdk 11 (LTS) support
     - done
+* we need locking around catalog switching
+    - the old one must have any open transactions closed and be shutdown before switching
+    - this should be easy to recreate
+    - done
 
 ### todo
 
-* download-catalog bug
-    - I *think* something or things are trying to read the catalog before it has finished downloading
-        - this is causing malformed json errors
-    - download the catalog to a temporary name and then move into place
 * investigate switching to an embedded database
     - compare current speed and code against loading addon category data serially
         - as opposed to in three blocks (categories, addons, category-addons). We might save some time and code
@@ -110,12 +110,13 @@ see CHANGELOG.md for a more formal list of changes by release
     - this is preventing automated catalog *updates*, not the full regeneration apparently
     - I can't replicate this anymore. It may show up later, but for now it's blocking a 0.8.0 release
     - also, catalog generation is now done via the api
+* download-catalog bug
+    - I *think* something or things are trying to read the catalog before it has finished downloading
+        - this is causing malformed json errors
+    - download the catalog to a temporary name and then move into place
 
 ## todo bucket
 
-* we need locking around catalog switching
-    - the old one must have any open transactions closed and be shutdown before switching
-    - this should be easy to recreate
 * bug, we have addons in multiple identical categories. fix this in catalog.clj
     - see 319346
     - remove call to set in db-load-catalog

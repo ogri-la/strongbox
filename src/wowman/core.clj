@@ -24,6 +24,10 @@
     [toc]
     [specs :as sp]]))
 
+;; acquired when switching between catalogs so the old database is shutdown
+;; properly in one thread before being recreated in another
+(def db-lock (Object.))
+
 (def game-tracks ["retail" "classic"])
 
 (def -colour-map
@@ -225,7 +229,7 @@
                    (try
                      (callback new-state)
                      (catch Exception e
-                       (error e "error caught in watch! your callback *must* be catching these or the thread dies silently!"))))))
+                       (error e "error caught in watch! your callback *must* be catching these or the thread dies silently:" path))))))
 
     (swap! state update-in [:cleanup] conj rmwatch)
     nil))
@@ -708,6 +712,7 @@
 
                             absent-source {:source (or (:source row) missing-source)}]
                         (-> row (utils/dissoc-all ignored) (rename-keys mapping) (merge new) (merge absent-source))))]
+
       (jdbc/with-transaction [tx ds]
         ;;    1.703391 msec
         ;; ~100 items
@@ -1006,8 +1011,9 @@
   "when the catalog changes, the list of available addons should be re-read"
   []
   (state-bind [:cfg :selected-catalog] (fn [_]
-                                         (db-shutdown)
-                                         (refresh))))
+                                         (locking db-lock
+                                           (db-shutdown)
+                                           (refresh)))))
 
 (defn-spec init-dirs nil?
   []
