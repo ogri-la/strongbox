@@ -15,6 +15,29 @@
    [java-time :as jt]
    [java-time.format]))
 
+(defn-spec safe-to-delete? boolean?
+  "predicate, returns true if given file is rooted in given directory"
+  [dir ::sp/extant-dir file ::sp/extant-file]
+  (clojure.string/starts-with? file dir))
+
+(defn-spec delete-many-files! nil?
+  "deletes a list of files rooted in given directory"
+  [dir ::sp/dir, regex ::sp/regex, file-type ::sp/short-string]
+  (if-not (fs/exists? dir)
+    (warn "directory does not exist:" dir) ;; app may not have been started yet
+    (let [file-list (mapv str (fs/find-files dir regex))
+          suspicious (remove (partial safe-to-delete? dir) file-list)
+          alert #(warn "deleting file " %)]
+      (if-not (empty? suspicious)
+        ;; this is a programming error, not a user error. if there is a problem we don't want N-1 more problems
+        (error (format "refusing to delete all files. files were found not rooted at %s" (count suspicious) dir))
+
+        (if (empty? file-list)
+          (info (format "no %s files to delete" file-type))
+          (do
+            (warn (format "deleting %s %s files" (count file-list) file-type))
+            (dorun (map (juxt alert fs/delete) file-list))))))))
+
 (defn shallow-flatten
   [lst]
   (mapcat identity lst))

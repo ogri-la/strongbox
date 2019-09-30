@@ -19,7 +19,7 @@
     [http :as http]
     [logging :as logging]
     [nfo :as nfo]
-    [utils :as utils :refer [join not-empty? false-if-nil nav-map nav-map-fn]]
+    [utils :as utils :refer [join not-empty? false-if-nil nav-map nav-map-fn delete-many-files!]]
     [catalog :as catalog]
     [toc]
     [specs :as sp]]))
@@ -775,55 +775,38 @@
 ;; 
 
 
-(defn-spec delete-cache nil?
-  "deletes the 'cache' directory that contains scraped html files, etag files, the catalog, etc. 
-  nothing that isn't regenerated when missing."
+(defn-spec delete-cache! nil?
+  "deletes the 'cache' directory that contains scraped html files and the etag db file.
+  these are regenerated when missing"
   []
   (warn "deleting cache")
   (fs/delete-dir (paths :cache-dir))
-  ;; todo: this and `init-dirs` needs revisiting
-  (fs/mkdirs (paths :cache-dir))
+  (fs/delete (paths :etag-db-file))
+
+  (fs/mkdirs (paths :cache-dir)) ;; todo: this and `init-dirs` needs revisiting
   nil)
 
-(defn-spec list-downloaded-addon-zips (s/coll-of ::sp/extant-file)
-  [dir ::sp/extant-dir]
-  (mapv str (fs/find-files dir #".+\-\-.+\.zip")))
-
-;; todo: these are all variations on a theme. consider something generic
-
-(defn-spec delete-downloaded-addon-zips nil?
-  "deletes all of the addon zip files downloaded to '/path/to/Addons/'"
+(defn-spec delete-downloaded-addon-zips! nil?
   []
-  (when-let [addon-dir (get-state :selected-addon-dir)]
-    (let [zip-files (list-downloaded-addon-zips addon-dir)
-          alert #(warn "deleting file " %)]
-      (warn (format "deleting %s downloaded addon zip files" (count zip-files)))
-      (dorun (map (juxt alert fs/delete) zip-files)))))
+  (delete-many-files! (get-state :selected-addon-dir) #".+\-\-.+\.zip$" "downloaded addon zip"))
 
-(defn delete-wowman-json-files
+(defn-spec delete-wowman-json-files! nil?
   []
-  (when-let [addon-dir (get-state :selected-addon-dir)]
-    (let [wowman-json #(fs/find-files % #"\.wowman\.json$")
-          subdirs (filter fs/directory? (fs/list-dir addon-dir))
-          wowman-files (flatten (map wowman-json subdirs))
-          alert #(warn "deleting file " %)]
-      (warn (format "deleting %s .wowman.json files" (count wowman-files)))
-      (dorun (vec (map (juxt alert fs/delete) wowman-files))))))
+  (delete-many-files! (get-state :selected-addon-dir) #"\.wowman\.json$" ".wowman.json"))
 
-(defn delete-wowmatrix-dat-files
+(defn-spec delete-wowmatrix-dat-files! nil?
   []
-  (when-let [addon-dir (get-state :selected-addon-dir)]
-    (let [wowman-json #(fs/find-files % #"WowMatrix.dat$")
-          subdirs (filter fs/directory? (fs/list-dir addon-dir))
-          wowman-files (flatten (map wowman-json subdirs))
-          alert #(warn "deleting file " %)]
-      (warn (format "deleting %s WowMatrix.dat files" (count wowman-files)))
-      (dorun (vec (map (juxt alert fs/delete) wowman-files))))))
+  (delete-many-files! (get-state :selected-addon-dir) #"(?i)WowMatrix.dat$" "WowMatrix.dat"))
 
-(defn-spec clear-all-temp-files nil?
+(defn-spec delete-catalog-files! nil?
   []
-  (delete-downloaded-addon-zips)
-  (delete-cache))
+  (delete-many-files! (paths :data-dir) #".+\-catalog\.json$" "catalog"))
+
+(defn-spec clear-all-temp-files! nil?
+  []
+  (delete-downloaded-addon-zips!)
+  (delete-catalog-files!)
+  (delete-cache!))
 
 ;; version checking
 
