@@ -17,7 +17,7 @@
         fake-routes {;; catalog
                      ;; return dummy data. we can do this because the catalog isn't loaded/parsed/validated
                      ;; until the UI (gui or cli) tells it to via a later call to `refresh`
-                     "https://raw.githubusercontent.com/ogri-la/wowman-data/master/catalog-short.json"
+                     "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
                      {:get (fn [req] {:status 200 :body "{}"})}
 
                      ;; latest wowman version
