@@ -91,27 +91,20 @@ see CHANGELOG.md for a more formal list of changes by release
 * bug, 'clear cache' didn't delete the catalog.json
     - added option to 'Cache' menu to 'Clear catalogs'
     - done
-
-### todo
-
-* investigate switching to an embedded database
-    - compare current speed and code against loading addon category data serially
-        - as opposed to in three blocks (categories, addons, category-addons). We might save some time and code
-    - investigate prepared statements when inserting
-* gui tests are bypassing the path wrangling because the envvar library is using thread-local `binding`
-    - change path access to an atom
-    - I *think* this may have something to do with a truncated catalog I've encountered now (twice)
-* add checksum checks after downloading
-    - curseforge have an md5 that can be used
-        - unfortunately no checksum in api results
-        - they do have a 'fileLength' and a 'fingerprint'
-            - fingerprint is 9 digits and all decimal, so not a hex digest
-    - wowinterface checksum is hidden behind a javascript tabber but still available
-        - wowinterface do have a md5sum in results! score
 * bug, curseforge.json is getting a strange duplication of results while generating the catalog
     - this is preventing automated catalog *updates*, not the full regeneration apparently
     - I can't replicate this anymore. It may show up later, but for now it's blocking a 0.8.0 release
-    - also, catalog generation is now done via the api
+    - also,
+    - obsolete
+        - catalog generation is now done via the api
+        - intermediate file is no longer generated
+        - updates are no longer performed, full scrapes only
+
+### todo
+
+* gui tests are bypassing the path wrangling because the envvar library is using thread-local `binding`
+    - change path access to an atom
+    - I *think* this may have something to do with a truncated catalog I've encountered now (twice)
 * download-catalog bug
     - I *think* something or things are trying to read the catalog before it has finished downloading
         - this is causing malformed json errors
@@ -119,6 +112,16 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
+* add checksum checks after downloading
+    - curseforge have an md5 that can be used
+        - unfortunately no checksum in api results
+        - they do have a 'fileLength' and a 'fingerprint'
+            - fingerprint is 9 digits and all decimal, so not a hex digest
+    - wowinterface checksum is hidden behind a javascript tabber but still available
+        - wowinterface do have a md5sum in results! score
+* database, compare current speed and code against loading addon category data serially
+    - as opposed to in three blocks (categories, addons, category-addons). We might save some time and code
+* database, investigate prepared statements when inserting for improved speed
 * bug, if an addon directory goes missing between restarts, user configuration is lost
     - initially it's ignored, but then the new settings are saved over the top
 * bug, we have addons in multiple identical categories. fix this in catalog.clj
