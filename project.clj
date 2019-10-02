@@ -1,6 +1,6 @@
 (defproject ogri-la/wowman "0.10.0-unreleased"
   :description "World Of Warcraft Addon Manager"
-  :url "http://github.com/ogri-la/wowman"
+  :url "https://github.com/ogri-la/wowman"
   :license {:name "GNU Affero General Public License (AGPL)"
             :url "https://www.gnu.org/licenses/agpl-3.0.en.html"}
 
