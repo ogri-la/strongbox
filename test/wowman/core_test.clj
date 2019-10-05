@@ -269,7 +269,7 @@
                            :installed-version "v8.2.0-v1.13.2-7135.139",
                            :name "everyaddon",
                            :source "curseforge",
-                           :interface-version 11300,
+                           :interface-version 80000,
                            :download-uri "https://edge.forgecdn.net/files/1/1/EveryAddon.zip",
                            :alt-name "everyaddon",
                            :label "EveryAddon",
@@ -289,7 +289,7 @@
                            :installed-version "v8.2.0-v1.13.2-7135.139",
                            :name "everyotheraddon",
                            :source "curseforge",
-                           :interface-version 11300,
+                           :interface-version 80200,
                            :download-uri "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip",
                            :alt-name "everyotheraddon",
                            :label "Every Other Addon",
@@ -324,7 +324,7 @@
           ;; this is subset of the data the remote addon host (curseforge in this case) serves us
           api-result {:latestFiles [{:downloadUrl "https://example.org/foo"
                                      :displayName "v8.10.00"
-                                     :gameVersionFlavor "wow_retail",
+                                     :gameVersionFlavor "retail",
                                      :fileDate "2001-01-03T00:00:00.000Z",
                                      :releaseType 1,
                                      :exposeAsAlternative nil}]}
