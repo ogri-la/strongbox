@@ -57,7 +57,7 @@
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (curseforge-api/expand-summary addon-summary game-track)))))))
 
-(deftest latest-versions-by-game-track
+(deftest latest-versions-by-gameVersionFlavor
   (testing "data in :latestFiles is filtered and grouped correctly"
     (let [[alpha, beta, stable] [3 2 1]
           latest-files [;; retail versions
@@ -75,7 +75,7 @@
           fixture {:latestFiles latest-files}
           expected {"wow_retail" [{:gameVersionFlavor "wow_retail", :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}]
                     "wow_classic" [{:gameVersionFlavor "wow_classic", :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}]}]
-      (is (= expected (curseforge-api/latest-versions-by-game-track fixture))))))
+      (is (= expected (curseforge-api/latest-versions-by-gameVersionFlavor fixture))))))
 
 (deftest extract-addon-summary
   (testing "data extracted from curseforge api 'search' results is correct"
