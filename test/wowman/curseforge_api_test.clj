@@ -73,26 +73,26 @@
                         {:gameVersionFlavor "wow_classic", :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative true}]
 
           fixture {:latestFiles latest-files}
-          expected {"wow_retail" [{:gameVersionFlavor "wow_retail", :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}]
-                    "wow_classic" [{:gameVersionFlavor "wow_classic", :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}]}]
+          expected {"retail" [{:gameVersionFlavor "retail", :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}]
+                    "classic" [{:gameVersionFlavor "classic", :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}]}]
       (is (= expected (curseforge-api/latest-versions-by-gameVersionFlavor fixture))))))
 
 (deftest latest-versions-by-gameVersion
-  (testing "releases supporting multiple game tracks are expanded into multiple releases"
+  (testing "a release supporting multiple game tracks is expanded into multiple releases"
     (let [stable 1
           latest-files [{:gameVersionFlavor "wow_retail", :gameVersion ["1.13.1" "8.2.5"]
                          :fileDate "2001-01-03T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}]
           fixture {:latestFiles latest-files}
 
-          expected {"wow_retail" [{:gameVersionFlavor "wow_retail", :gameVersion ["8.2.5"]
+          expected {"retail" [{:gameVersionFlavor "retail", :gameVersion ["8.2.5"]
                                    :fileDate "2001-01-03T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}]
 
-                    "wow_classic" [{:gameVersionFlavor "wow_classic", :gameVersion ["1.13.1"]
+                    "classic" [{:gameVersionFlavor "classic", :gameVersion ["1.13.1"]
                                     :fileDate "2001-01-03T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}]}]
       (is (= expected (curseforge-api/latest-versions-by-gameVersion fixture)))))
 
-  (testing "previous releases for different game tracks not supported in later releases are available"
-    (let [[alpha, beta, stable] [3 2 1]
+  (testing "previous releases with multiple game tracks are still available even when dropped in the latest release"
+    (let [stable 1
           latest-files [{:gameVersionFlavor "wow_retail", :gameVersion ["8.2.5"]
                          :fileDate "2001-01-03T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}
 
@@ -100,14 +100,14 @@
                          :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}]
           fixture {:latestFiles latest-files}
 
-          expected {;; available retail versions from 2001-01-03 and 2001-01-01 releases
-                    "wow_retail" [{:gameVersionFlavor "wow_retail", :gameVersion ["8.2.5"]
+          expected {;; retail versions available from 2001-01-03 and 2001-01-01 releases
+                    "retail" [{:gameVersionFlavor "retail", :gameVersion ["8.2.5"]
                                    :fileDate "2001-01-03T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}
-                                  {:gameVersionFlavor "wow_retail", :gameVersion ["8.2.5"]
+                                  {:gameVersionFlavor "retail", :gameVersion ["8.2.5"]
                                    :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}]
 
                     ;; classic version available from the 2001-01-01 release
-                    "wow_classic" [{:gameVersionFlavor "wow_classic", :gameVersion ["1.13.1"]
+                    "classic" [{:gameVersionFlavor "classic", :gameVersion ["1.13.1"]
                                     :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}]}]
       (is (= expected (curseforge-api/latest-versions-by-gameVersion fixture)))))
 
@@ -124,9 +124,9 @@
                          :fileDate "2001-01-01T00:00:00.000Z", :releaseType alpha, :exposeAsAlternative nil}]
           fixture {:latestFiles latest-files}
 
-          expected {"wow_retail" [{:gameVersionFlavor "wow_retail", :gameVersion ["8.2.5"]
+          expected {"retail" [{:gameVersionFlavor "retail", :gameVersion ["8.2.5"]
                                    :fileDate "2001-01-04T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}]
-                    "wow_classic" [{:gameVersionFlavor "wow_classic", :gameVersion ["1.13.1"]
+                    "classic" [{:gameVersionFlavor "classic", :gameVersion ["1.13.1"]
                                     :fileDate "2001-01-04T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}]}]
       (is (= expected (curseforge-api/latest-versions-by-gameVersion fixture))))))
 
@@ -137,9 +137,9 @@
                          :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}]
           fixture {:latestFiles latest-files}
 
-          expected {"wow_retail" [{:gameVersionFlavor "wow_retail", :gameVersion ["8.2.5"]
+          expected {"retail" [{:gameVersionFlavor "retail", :gameVersion ["8.2.5"]
                                    :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}]
-                    "wow_classic" [{:gameVersionFlavor "wow_classic", :gameVersion ["1.13.1"]
+                    "classic" [{:gameVersionFlavor "classic", :gameVersion ["1.13.1"]
                                     :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}]}]
       (is (= expected (curseforge-api/latest-versions fixture)))))
 
@@ -153,9 +153,9 @@
                          :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}]
           fixture {:latestFiles latest-files}
 
-          expected {"wow_retail" [{:gameVersionFlavor "wow_retail", :gameVersion ["1.13.1" "8.2.5"]
+          expected {"retail" [{:gameVersionFlavor "retail", :gameVersion ["1.13.1" "8.2.5"]
                                    :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}]
-                    "wow_classic" [{:gameVersionFlavor "wow_classic", :gameVersion []
+                    "classic" [{:gameVersionFlavor "classic", :gameVersion []
                                     :fileDate "2019-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}]}]
       (is (= expected (curseforge-api/latest-versions fixture))))))
 

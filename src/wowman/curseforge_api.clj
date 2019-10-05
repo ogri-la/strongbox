@@ -24,16 +24,16 @@
   ;; 'latestFiles' :
   ;; - gameVersionFlavour: that is either "wow_retail" or "wow_classic"
   ;; - fileStatus: 4 means ... ?
-  ;; - releaseType: 1 is regular, 2 is beta, 3 is alpha
+  ;; - releaseType: 1 is regular/stable, 2 is beta, 3 is alpha
   ;; - exposeAsAlternative: nil is no, true is yes
   ;;    - see Recount. there is a '-nolib' alternative available.
 
   ;; we want to say "give me the latest stable release of the wow classic track of this addon
-  ;; for now we're going to ignore anything that isn't a releaseType of 1
+  ;; for now we're going to ignore anything that isn't a releaseType of 1 (stable)
 
   (let [latest-files (:latestFiles api-result)
 
-        ;; results appear sorted, but lets be sure because we'll be taking the most recent
+        ;; results appear sorted, but lets be sure as we'll be taking the first
         desc (comp - compare) ;; most to least recent (desc)
         latest-files (sort-by :fileDate desc latest-files)
 
@@ -42,7 +42,14 @@
         stable-releases (filterv #(= (:releaseType %) stable) latest-files)
 
         ;; no alternative versions, for now
-        stable-releases (remove :exposeAsAlternative stable-releases)]
+        stable-releases (remove :exposeAsAlternative stable-releases)
+
+        ;; replace usage of "wow_retail" and "wow_classic" with "retail" and "classic"
+        stable-releases (mapv (fn [release]
+                                (let [new-flavor (if (= "wow_classic" (:gameVersionFlavor release))
+                                                   "classic" "retail")]
+                                  (assoc release :gameVersionFlavor new-flavor)))
+                              stable-releases)]
 
     ;; I don't know if it's possible, but a group may still have more than one result
     ;; results are ordered and group-by preserves ordering, so take the first
@@ -51,23 +58,18 @@
 (defn latest-versions-by-gameVersion
   "given a curseforge-api result, returns a map of release data
   uses :gameVersion which, if present, indicates the game tracks a release supports
-  prefer this over `latest-versions-by-game-track`"
+  prefer this over `latest-versions-by-gameVersionFlavor`"
   [api-result]
 
-  ;; issue#63: curseforge actually allow a release to be on both retail and classic game tracks
-  ;; the single value under "gameVersionFlavor" is inaccurate and misleading then and we can't trust it
-  ;; instead, we must look at the list "gameVersion" and convert the numbers we find there into game tracks
+  ;; issue #63: curseforge actually allow a release to be on both retail and classic game tracks.
+  ;; the single value under "gameVersionFlavor" is inaccurate and misleading and we can't trust it.
+  ;; instead we look at the "gameVersion" list and convert the versions we find there into game tracks.
   ;; 8.2.0 and 8.2.5 => 'wow_retail'
   ;; 1.13.2 => 'wow_classic'
 
-  ;; sort latest-files
-  ;; filter stable releases only
-  ;; remove alternate releases
-  ;; create index of latest-files to 
-
   (let [latest-files (:latestFiles api-result)
 
-        ;; results appear sorted, but lets be sure because we'll be taking the most recent
+        ;; results appear sorted, but lets be sure as we'll be taking the first
         desc (comp - compare) ;; most to least recent (desc)
         latest-files (sort-by :fileDate desc latest-files)
 
@@ -80,13 +82,13 @@
 
         ;; for each release, set the correct value for :gameVersionFlavor and :gameVersion
         ;; returning multiple instances of the release if necessary
-        set-game-track (fn [release]
+        expand-release (fn [release]
                          (mapv (fn [game-version]
                                  (merge release {:gameVersionFlavor (utils/game-version-to-game-track game-version)
                                                  :gameVersion [game-version]}))
                                (:gameVersion release)))]
 
-    (->> stable-releases (map set-game-track) flatten (group-by :gameVersionFlavor))))
+    (->> stable-releases (map expand-release) flatten (group-by :gameVersionFlavor))))
 
 (defn latest-versions
   [api-result]
@@ -103,11 +105,12 @@
         result (-> uri http/download utils/from-json)
 
         ;; todo: push this logic back into latest-versions-by-..., update utils/game-version-to-game-track
-        game-track-alias-map {"retail" "wow_retail"
-                              "classic" "wow_classic"}
-        game-track-alias (game-track-alias-map game-track)
+        ;;game-track-alias-map {"retail" "wow_retail"
+        ;;                      "classic" "wow_classic"}
+        ;;game-track-alias (game-track-alias-map game-track)
 
-        latest-release (-> result latest-versions (get game-track-alias) first)]
+        ;;latest-release (-> result latest-versions (get game-track-alias) first)]
+        latest-release (-> result latest-versions (get game-track) first)]
     (if-not latest-release
       (warn (format "no '%s' release available for '%s' on curseforge" game-track (:name addon-summary)))
       (let [;; api value is empty in some cases (carbonite, improved loot frames, skada damage meter)

@@ -345,12 +345,12 @@
       (+ (* 10000 major) (* 100 minor)))))
 
 (defn game-version-to-game-track
-  "'1.13.2' => 'wow_classic', '8.2.0' => 'wow_retail'"
+  "'1.13.2' => 'classic', '8.2.0' => 'retail'"
   [game-version]
   (if (= "1." (subs game-version 0 2))
     ;; 1.x.x == classic (for now)
-    "wow_classic"
-    "wow_retail"))
+    "classic"
+    "retail"))
 
 ;; https://stackoverflow.com/questions/13789092/length-of-the-first-line-in-an-utf-8-file-with-bom
 (defn debomify

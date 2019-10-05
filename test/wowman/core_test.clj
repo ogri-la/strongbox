@@ -324,7 +324,7 @@
           ;; this is subset of the data the remote addon host (curseforge in this case) serves us
           api-result {:latestFiles [{:downloadUrl "https://example.org/foo"
                                      :displayName "v8.10.00"
-                                     :gameVersionFlavor "wow_retail",
+                                     :gameVersionFlavor "retail",
                                      :fileDate "2001-01-03T00:00:00.000Z",
                                      :releaseType 1,
                                      :exposeAsAlternative nil}]}
