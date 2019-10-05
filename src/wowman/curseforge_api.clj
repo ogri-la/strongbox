@@ -78,7 +78,7 @@
         ;; no alternative versions, for now
         stable-releases (remove :exposeAsAlternative stable-releases)
 
-        ;; for each release, set the correct value for :gameVersionFlavor, :gameVersion
+        ;; for each release, set the correct value for :gameVersionFlavor and :gameVersion
         ;; returning multiple instances of the release if necessary
         set-game-track (fn [release]
                          (mapv (fn [game-version]
