@@ -78,18 +78,13 @@
         ;; no alternative versions, for now
         stable-releases (remove :exposeAsAlternative stable-releases)
 
-        ;; ["1.13.2" "8.2.0" "8.2.5"] => ["wow_classic" "wow_retail"]
-        game-version-to-game-track (fn [version]
-                                     (if (= "1." (subs version 0 2))
-                                       ;; 1.x.x == retail (for now)
-                                       "wow_classic"
-                                       "wow_retail"))
-
-        ;; for each release, set the correct value for :gameVersionFlavor
+        ;; for each release, set the correct value for :gameVersionFlavor, :gameVersion
         ;; returning multiple instances of the release if necessary
         set-game-track (fn [release]
-                         (let [supported-game-tracks (->> release :gameVersion (map game-version-to-game-track) distinct)]
-                           (mapv #(assoc release :gameVersionFlavor %) supported-game-tracks)))]
+                         (mapv (fn [game-version]
+                                 (merge release {:gameVersionFlavor (utils/game-version-to-game-track game-version)
+                                                 :gameVersion [game-version]}))
+                               (:gameVersion release)))]
 
     (->> stable-releases (map set-game-track) flatten (group-by :gameVersionFlavor))))
 
@@ -107,6 +102,7 @@
         uri (api-uri "/addon/%s" pid)
         result (-> uri http/download utils/from-json)
 
+        ;; todo: push this logic back into latest-versions-by-..., update utils/game-version-to-game-track
         game-track-alias-map {"retail" "wow_retail"
                               "classic" "wow_classic"}
         game-track-alias (game-track-alias-map game-track)

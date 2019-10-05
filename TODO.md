@@ -112,6 +112,12 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
+* gui 'wow' column is inconsistent
+    - for curseforge, it's pulling it's value from :gameVersion, which may be empty
+        - in which case it pulls it's value from the toc file, which may be different from the selected game track
+    - since this is the 'installed addons pane', should the value reflect the value of the installed addon?
+        - (and not the value of the addon to be installed)
+        - and would this be inconsistent with the other fields that are also changing with new catalog information?
 * add checksum checks after downloading
     - curseforge have an md5 that can be used
         - unfortunately no checksum in api results
