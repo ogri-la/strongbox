@@ -64,8 +64,8 @@
   ;; issue #63: curseforge actually allow a release to be on both retail and classic game tracks.
   ;; the single value under "gameVersionFlavor" is inaccurate and misleading and we can't trust it.
   ;; instead we look at the "gameVersion" list and convert the versions we find there into game tracks.
-  ;; 8.2.0 and 8.2.5 => 'wow_retail'
-  ;; 1.13.2 => 'wow_classic'
+  ;; 8.2.0 and 8.2.5 => 'retail'
+  ;; 1.13.2 => 'classic'
 
   (let [latest-files (:latestFiles api-result)
 
@@ -103,13 +103,6 @@
   (let [pid (-> addon-summary :source-id)
         uri (api-uri "/addon/%s" pid)
         result (-> uri http/download utils/from-json)
-
-        ;; todo: push this logic back into latest-versions-by-..., update utils/game-version-to-game-track
-        ;;game-track-alias-map {"retail" "wow_retail"
-        ;;                      "classic" "wow_classic"}
-        ;;game-track-alias (game-track-alias-map game-track)
-
-        ;;latest-release (-> result latest-versions (get game-track-alias) first)]
         latest-release (-> result latest-versions (get game-track) first)]
     (if-not latest-release
       (warn (format "no '%s' release available for '%s' on curseforge" game-track (:name addon-summary)))

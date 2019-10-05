@@ -35,7 +35,7 @@
       (try
         (java.net.URI. loc)
         (catch java.net.URISyntaxException e
-          (debug "redirected to bad URI! encoding path:" loc)
+          (warn "redirected to bad URI! encoding path:" loc)
           (encode-url-path loc))))))
 
 (defn- add-etag-or-not

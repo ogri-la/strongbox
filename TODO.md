@@ -118,6 +118,10 @@ see CHANGELOG.md for a more formal list of changes by release
     - since this is the 'installed addons pane', should the value reflect the value of the installed addon?
         - (and not the value of the addon to be installed)
         - and would this be inconsistent with the other fields that are also changing with new catalog information?
+* have the info box scroll the other direction
+    - this is possible, see the seesaw examples
+* remove the 'curse-crap-redirect-strategy' in http.clj
+    - was used when curse *website* (not api) would redirect us to an unencoded path
 * add checksum checks after downloading
     - curseforge have an md5 that can be used
         - unfortunately no checksum in api results
