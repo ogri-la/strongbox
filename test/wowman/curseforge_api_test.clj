@@ -30,7 +30,7 @@
           ;; what is added to figure out how to download file
           expected (merge addon-summary {:download-uri "https://edge.forgecdn.net/files/1/1/EveryAddon.zip"
                                          :version "v8.2.0-v1.13.2-7135.139"
-                                         :interface-version 11300 ;; "1.13.2" => 11300
+                                         :interface-version 80000 ;; "8.0.1" => 80000
                                          })
           game-track "retail"]
       (with-fake-routes-in-isolation fake-routes
