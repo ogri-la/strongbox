@@ -688,7 +688,19 @@
                            "curseforge"
                            "wowinterface")
 
-          {:keys [addon-summary-list]} (utils/load-json-file catalog-path)
+          ;; where the json can't be read, download from remote and try again
+          bad-json-file-handler (fn []
+                                  (warn "catalog corrupted. re-downloading and trying again.")
+                                  (fs/delete catalog-path)
+                                  (download-catalog)
+                                  (utils/load-json-file-safely
+                                   catalog-path
+                                   :bad-data? (fn []
+                                                (error "please report this! https://github.com/ogri-la/wowman/issues")
+                                                (error "catalog *still* corrupted and cannot be loaded. try another catalog from the 'catalog' menu")
+                                                {})))
+
+          {:keys [addon-summary-list]} (utils/load-json-file-safely catalog-path :bad-data? bad-json-file-handler)
 
           addon-categories (mapv (fn [{:keys [source-id source category-list]}]
                                    (mapv (fn [category]
