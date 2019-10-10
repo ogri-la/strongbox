@@ -99,6 +99,11 @@ see CHANGELOG.md for a more formal list of changes by release
         - catalog generation is now done via the api
         - intermediate file is no longer generated
         - updates are no longer performed, full scrapes only
+* download-catalog bug
+    - I *think* something or things are trying to read the catalog before it has finished downloading
+        - this is causing malformed json errors
+    - download the catalog to a temporary name and then move into place
+        - done
 
 ### todo
 
@@ -108,7 +113,9 @@ see CHANGELOG.md for a more formal list of changes by release
 * download-catalog bug
     - I *think* something or things are trying to read the catalog before it has finished downloading
         - this is causing malformed json errors
-    - download the catalog to a temporary name and then move into place
+    - regression in load-catalog
+        - 0.9.2 used load-json-safely and in develop we're just using load-json
+        - on bad data, attempt to download the catalog once more
 
 ## todo bucket
 
