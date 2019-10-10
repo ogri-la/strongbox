@@ -11,7 +11,6 @@
    [me.raynes.fs :as fs]
    [orchestra.core :refer [defn-spec]]
    [clojure.data.codec.base64 :as b64]
-   [taoensso.timbre :refer [debug info warn error spy]]
    [trptcolin.versioneer.core :as versioneer]
    [clj-http.client :as client]))
 
@@ -103,6 +102,8 @@
         streaming-response? (-> extra-params :as (= :stream))]
 
     ;; ensures orphaned .etag files don't prevent download of missing files
+
+
     (when (and cache?
                ((:get-etag *cache*) etag-key)
                (not (fs/exists? output-file)))
@@ -129,7 +130,16 @@
                 _ (debug "response status" (:status resp))
 
                 not-modified (= 304 (:status resp)) ;; 304 is "not modified" (local file is still fresh). only happens when caching
-                modified (not not-modified)]
+                modified (not not-modified)
+
+                ;; streaming responses are not buffered entirely in memory as their full length cannot be anticipated.
+                ;; instead we open a file handle and pour the response bytes into it as we receive them.
+                ;; if the output file already exists (like a catalog file) it may be possible another thread is reading this file
+                ;; leading to malformed/invalid data.
+                ;; so we write the incoming bytes to a unique temporary file and then move that file into place, using the intended
+                ;; output file as a lock.
+                partial-output-file (when output-file
+                                      (join (fs/parent output-file) (fs/temp-name "wowman-" ".part")))]
 
             (when not-modified
               (debug "not modified, contents will be read from cache:" output-file))
@@ -137,10 +147,14 @@
             (cond
               ;; remote data has changed, write body to disk
               (and output-file modified) (do
-                                           (clojure.java.io/copy (:body resp) (java.io.File. output-file)) ;; doesn't .close on streams
+                                           (clojure.java.io/copy (:body resp) (java.io.File. partial-output-file)) ;; doesn't .close on streams
                                            (when streaming-response?
                                              ;; stream request responses get written to a file, the stream closed and the path to the output file returned
                                              (-> resp :body .close)) ;; not all requests are streams with a :body that needs to be closed
+                                           ;; lock is held for ~0.11 msecs to ~0.18 msecs
+                                           ;; much shorter than N seconds to download a file
+                                           (locking output-file
+                                             (fs/rename partial-output-file output-file))
                                            output-file)
 
               ;; remote data has not changed, :body is nil, replace it with path to file
