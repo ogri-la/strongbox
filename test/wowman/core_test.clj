@@ -466,3 +466,55 @@
       (fs/copy (fixture-path "bad-truncated.zip") (utils/join install-dir fname)) ;; hoho, so evil
       (is (= (core/install-addon addon install-dir) nil))
       (is (= (count (fs/list-dir install-dir)) 0))))) ;; bad zip file deleted
+
+(deftest re-download-catalog-on-bad-data
+  (testing "catalog data is re-downloaded if it can't be read"
+    (let [app-state (core/start {})
+          fake-routes {;; catalog
+                       ;; return dummy data. we can do this because the catalog isn't loaded/parsed/validated
+                       ;; until the UI (gui or cli) tells it to via a later call to `refresh`
+                       "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
+                       {:get (fn [req] {:status 200 :body (slurp (fixture-path "dummy-catalog--single-entry.json"))})}}]
+      (try
+        (core/refresh)
+        ;; catalog fixture in test-helper is an empty map, this should always return false
+        ;; this is the guard to the `db-load-catalog` fn
+        (is (not (core/db-catalog-loaded?)))
+
+        ;; empty the file. quickest way to bad data
+        (-> (core/get-catalog-source) core/catalog-local-path (spit ""))
+
+        (with-fake-routes-in-isolation fake-routes
+          (core/db-load-catalog))
+
+        ;; the catalog will be re-requested, this time we've swapped out the fixture with one with a single entry
+        (is (core/db-catalog-loaded?))
+
+        (finally
+          (core/stop app-state))))))
+
+(deftest re-download-catalog-on-bad-data-2
+  (testing "db-load-catalog doesn't fail catastrophically when re-downloaded is still bad"
+    (let [app-state (core/start {})
+          fake-routes {;; catalog
+                       ;; return dummy data. we can do this because the catalog isn't loaded/parsed/validated
+                       ;; until the UI (gui or cli) tells it to via a later call to `refresh`
+                       "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
+                       {:get (fn [req] {:status 200 :body "borked json"})}}]
+      (try
+        (core/refresh)
+        ;; catalog fixture in test-helper is an empty map, this should always return false
+        ;; this is the guard to the `db-load-catalog` fn
+        (is (not (core/db-catalog-loaded?)))
+
+        ;; empty the file. quickest way to bad data
+        (-> (core/get-catalog-source) core/catalog-local-path (spit ""))
+
+        (with-fake-routes-in-isolation fake-routes
+          (core/db-load-catalog))
+
+        ;; the catalog will be re-requested, this time the remote file is also corrupt
+        (is (not (core/db-catalog-loaded?)))
+
+        (finally
+          (core/stop app-state))))))
