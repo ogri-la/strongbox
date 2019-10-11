@@ -688,7 +688,7 @@
                            "curseforge"
                            "wowinterface")
 
-          ;; where the json can't be read, download from remote and try again
+          ;; download from remote and try again when json can't be read
           bad-json-file-handler (fn []
                                   (warn "catalog corrupted. re-downloading and trying again.")
                                   (fs/delete catalog-path)
