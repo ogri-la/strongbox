@@ -104,21 +104,20 @@ see CHANGELOG.md for a more formal list of changes by release
         - this is causing malformed json errors
     - download the catalog to a temporary name and then move into place
         - done
+    - regression in load-catalog
+        - 0.9.2 used load-json-safely and in develop we're just using load-json
+        - on bad data, attempt to download the catalog once more
+        - done
 
 ### todo
 
 * gui tests are bypassing the path wrangling because the envvar library is using thread-local `binding`
     - change path access to an atom
     - I *think* this may have something to do with a truncated catalog I've encountered now (twice)
-* download-catalog bug
-    - I *think* something or things are trying to read the catalog before it has finished downloading
-        - this is causing malformed json errors
-    - regression in load-catalog
-        - 0.9.2 used load-json-safely and in develop we're just using load-json
-        - on bad data, attempt to download the catalog once more
 
 ## todo bucket
 
+* add 'source' properties to curseforge and wowinterface catalogs
 * gui 'wow' column is inconsistent
     - for curseforge, it's pulling it's value from :gameVersion, which may be empty
         - in which case it pulls it's value from the toc file, which may be different from the selected game track
