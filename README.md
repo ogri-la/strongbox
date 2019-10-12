@@ -120,6 +120,9 @@ An addon manager is 'maintained' if it has seen an update in 12 months.
 When an addon manager requires the *separate* installation of other software like Python or Java or NPM or GTK/QT etc, 
 or requires compilation or similar, then it gets the big fat caveat asterisk '**\***'.
 
+If a packaged version of the addon manager exists for *at least one* distribution of Linux, I drop the caveat asterisk.
+This may be an AUR, DEB, RPM/DNF, Snap, Flatpak, Zypper, AppImage, etc.
+
 See [comrades.csv](comrades.csv) for a complete list.
 
 ### Maintained 
@@ -134,14 +137,14 @@ See [comrades.csv](comrades.csv) for a complete list.
 | ephraim/lcurse                 | https://github.com/ephraim/lcurse                    | yes        | yes*  | yes* | yes*    | GUI | yes    | no      | no    | yes              | no  | no   | Python     | 
 | erikabp123/ClassicAddonManager | https://github.com/erikabp123/ClassicAddonManager    | yes        | no    | no   | yes     | GUI | no     | yes     | yes   | yes              | no  | no   | Java       | 
 | Gonzih/wow-addon-manager       | https://github.com/Gonzih/wow-addon-manager          | yes        | yes*  | yes* | yes*    | CLI | yes    | no      | no    | yes              | no  | no   | Go         | 
-| grrttedwards/wow-addon-updater | https://github.com/grrttedwards/wow-addon-updater    | yes        | yes*  | yes  | yes     | CLI | yes    | yes     | yes   | yes              | no  | no   | Python     | 
+| grrttedwards/wow-addon-updater | https://github.com/grrttedwards/wow-addon-updater    | yes        | yes*  | yes* | yes*    | CLI | yes    | yes     | yes   | yes              | no  | no   | Python     | 
 | Jerry-Ma/wowplug               | https://github.com/Jerry-Ma/wowplug                  | yes        | yes*  | yes* | yes*    | CLI | yes    | no      | yes   | yes              | no  | no   | Python     | 
 | karolswdev/wow                 | https://github.com/karolswdev/wow                    | yes        | no    | no   | yes*    | CLI | no     | yes     | no    | yes              | no  | no   | C#         | 
 | layday/instawow                | https://github.com/layday/instawow                   | yes        | yes*  | yes* | yes*    | CLI | yes    | yes     | yes   | yes              | no  | no   | Python     | 
 | Lund259/WoW-Addon-Manager      | https://github.com/Lund259/WoW-Addon-Manager         | yes        | no    | no   | yes     | GUI | yes    | no      | yes   | yes              | no  | no   | C#         | 
 | Mangmasta/MangManager          | https://github.com/Mangmasta/MangManager             | yes        | yes*  | yes* | yes*    | CLI | yes    | no      | no    | yes              | no  | no   | C++        | 
 | MBODM/WADM                     | https://github.com/MBODM/WADM                        | yes        | no    | no   | yes     | GUI | yes    | no      | yes   | yes              | no  | no   | C#         | 
-| Minion                         | https://minion.mmoui.com/                            | yes        | yes   | yes  | yes     | GUI | yes    | yes     | no    | no               | yes | yes  | Java       | 
+| Minion                         | https://minion.mmoui.com/                            | yes        | yes*  | yes  | yes     | GUI | yes    | yes     | no    | no               | yes | yes  | Java       | 
 | nazarov-tech/wowa              | https://github.com/nazarov-tech/wowa                 | yes        | yes*  | yes* | yes*    | CLI | yes    | no      | yes   | yes              | no  | no   | Python     | 
 | ogri-la/wowman                 | https://github.com/ogri-la/wowman                    | yes        | yes   | no   | no      | GUI | yes    | yes     | yes   | yes              | no  | no   | Clojure    | 
 | OpenAddOnManager               | https://github.com/OpenAddOnManager/OpenAddOnManager | yes        | no    | no   | yes     | GUI | yes    | no      | yes   | yes              | no  | no   | C#         | 
