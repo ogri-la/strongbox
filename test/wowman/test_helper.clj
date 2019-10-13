@@ -5,6 +5,7 @@
    [me.raynes.fs :as fs :refer [with-cwd]]
    [clj-http.fake :refer [with-fake-routes-in-isolation]]
    [wowman
+    [main :as main]
     [utils :as utils]]))
 
 (def fixture-dir (-> "test/fixtures" fs/absolute fs/normalized str))
@@ -41,6 +42,9 @@
                      "https://api.github.com/repos/ogri-la/wowman/releases/latest"
                      {:get (fn [req] {:status 200 :body "{\"tag_name\": \"0.0.0\"}"})}}]
     (try
+      (debug "stopping application if it hasn't already been stopped")
+      (main/stop)
+
       (with-fake-routes-in-isolation fake-routes
         (with-env [:xdg-data-home (utils/join temp-dir-path data-dir)
                    :xdg-config-home (utils/join temp-dir-path config-dir)]

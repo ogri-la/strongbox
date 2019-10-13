@@ -41,9 +41,11 @@
 
 (def colours (utils/nav-map-fn -colour-map))
 
-(defn paths
-  "returns a map of paths whose location may vary depending on the location of the current working directory"
-  [& path]
+(defn generate-path-map
+  "generates filesystem paths whose location may vary based on the current working directory and environment variables.
+  this map of paths is generated during init and is then fixed in application state.
+  ensure the correct environment variables and cwd are set prior to init for proper isolation during tests"
+  []
   (let [;; https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
         ;; ignoring XDG_CONFIG_DIRS and XDG_DATA_DIRS for now
         config-dir (or (:xdg-config-home @env) "~/.config/wowman")
@@ -68,7 +70,7 @@
                   :etag-db-file etag-db-file
 
                   :catalog-dir data-dir}]
-    (nav-map path-map path)))
+    path-map))
 
 (def -state-template
   {:cleanup []
@@ -101,6 +103,9 @@
    :db nil
    :catalog-size nil ;; used to trigger those waiting for the catalog to become available
 
+   ;; a map of paths whose location may vary according to the cwd and envvars.
+   :paths nil
+
    ;; ui
 
    ;; the root swing window
@@ -130,6 +135,10 @@
   (if-let [state @state]
     (nav-map state path)
     (throw (RuntimeException. "application must be `start`ed before state may be accessed."))))
+
+(defn paths
+  [& path]
+  (nav-map (get-state :paths) path))
 
 (defn as-unqualified-hyphenated-maps
   "used to coerce keys in each row of resultset
@@ -1012,11 +1021,33 @@
 
 (defn-spec init-dirs nil?
   []
+  ;; 2019-10-13: transplanted from `main/validate`
+  ;; this validation depends on paths that are not generated until application init
+
+  ;; data directory doesn't exist and parent directory isn't writable
+  ;; nowhere to create data dir, nowhere to store download catalog. non-starter
+  (when (and
+         (not (fs/exists? (paths :data-dir)))
+         (not (fs/writeable? (fs/parent (paths :data-dir)))))
+    (throw (RuntimeException. (str "Data directory doesn't exist and it cannot be created: " (paths :data-dir)))))
+
+  ;; state directory *does* exist but isn't writeable
+  ;; another non-starter
+  (when (and (fs/exists? (paths :data-dir))
+             (not (fs/writeable? (paths :data-dir))))
+    (throw (RuntimeException. (str "Data directory isn't writeable:" (paths :data-dir)))))
+
+  ;; ensure all '-dir' suffixed paths exist, creating them if necessary
   (doseq [[path val] (paths)]
     (when (-> path name (clojure.string/ends-with? "-dir"))
       (debug (format "creating '%s' directory: %s" path val))
       (fs/mkdirs val)))
   (http/prune-cache-dir (paths :cache-dir))
+  nil)
+
+(defn-spec set-paths! nil?
+  []
+  (swap! state assoc :paths (generate-path-map))
   nil)
 
 (defn -start
@@ -1027,6 +1058,7 @@
   [& [cli-opts]]
   (-start)
   (info "starting app")
+  (set-paths!)
   (init-dirs)
   (load-settings cli-opts)
   (watch-for-addon-dir-change)

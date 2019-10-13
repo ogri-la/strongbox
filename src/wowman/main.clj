@@ -9,7 +9,7 @@
    [me.raynes.fs :as fs]
    [wowman
     [logging :as logging]
-    [core :as core :refer [paths]]
+    [core :as core]
     [utils :as utils :refer [in?]]]
    [wowman.ui
     [cli :as cli]
@@ -107,17 +107,6 @@
   (let [{:keys [options errors]} parsed]
     (cond
       (= "root" (System/getProperty "user.name")) {:ok? false, :exit-message "wowman should not be run as the 'root' user"}
-
-      ;; data directory doesn't exist and parent directory isn't writable
-      ;; nowhere to create data dir, nowhere to store download catalog. non-starter
-      (and
-       (not (fs/exists? (paths :data-dir)))
-       (not (fs/writeable? (fs/parent (paths :data-dir))))) {:ok? false, :exit-message (str "Data directory doesn't exist and it cannot be created: " (paths :data-dir))}
-
-      ;; state directory *does* exist but isn't writeable
-      ;; another non-starter
-      (and (fs/exists? (paths :data-dir))
-           (not (fs/writeable? (paths :data-dir)))) {:ok? false, :exit-message (str "Data directory isn't writeable:" (paths :data-dir))}
 
       (:help options) {:ok? true, :exit-message (usage parsed)}
 
