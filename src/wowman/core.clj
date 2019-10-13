@@ -41,9 +41,11 @@
 
 (def colours (utils/nav-map-fn -colour-map))
 
-(defn paths
-  "returns a map of paths whose location may vary depending on the location of the current working directory"
-  [& path]
+(defn generate-path-map
+  "generates a map of filesystem paths whose location may vary according to the current working directory and environment variables.
+  this map of paths is generated during init and is then fixed in application state.
+  ensure the correct environment variables and cwd are set prior to init to ensure isolation during tests"
+  []
   (let [;; https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
         ;; ignoring XDG_CONFIG_DIRS and XDG_DATA_DIRS for now
         config-dir (or (:xdg-config-home @env) "~/.config/wowman")
@@ -68,7 +70,7 @@
                   :etag-db-file etag-db-file
 
                   :catalog-dir data-dir}]
-    (nav-map path-map path)))
+    path-map))
 
 (def -state-template
   {:cleanup []
@@ -101,6 +103,9 @@
    :db nil
    :catalog-size nil ;; used to trigger those waiting for the catalog to become available
 
+   ;; a map of paths whose location may vary according to the cwd and envvars.
+   :paths nil
+
    ;; ui
 
    ;; the root swing window
@@ -130,6 +135,10 @@
   (if-let [state @state]
     (nav-map state path)
     (throw (RuntimeException. "application must be `start`ed before state may be accessed."))))
+
+(defn paths
+  [& path]
+  (nav-map (get-state :paths) path))
 
 (defn as-unqualified-hyphenated-maps
   "used to coerce keys in each row of resultset
@@ -1019,6 +1028,11 @@
   (http/prune-cache-dir (paths :cache-dir))
   nil)
 
+(defn-spec set-paths! nil?
+  []
+  (swap! state assoc :paths (generate-path-map))
+  nil)
+
 (defn -start
   []
   (alter-var-root #'state (constantly (atom -state-template))))
@@ -1027,6 +1041,7 @@
   [& [cli-opts]]
   (-start)
   (info "starting app")
+  (set-paths!)
   (init-dirs)
   (load-settings cli-opts)
   (watch-for-addon-dir-change)
