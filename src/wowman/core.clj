@@ -1021,6 +1021,23 @@
 
 (defn-spec init-dirs nil?
   []
+  ;; 2019-10-13: transplanted from `main/validate`
+  ;; this validation depends on paths that are not generated until application init
+
+  ;; data directory doesn't exist and parent directory isn't writable
+  ;; nowhere to create data dir, nowhere to store download catalog. non-starter
+  (when (and
+         (not (fs/exists? (paths :data-dir)))
+         (not (fs/writeable? (fs/parent (paths :data-dir)))))
+    (throw (RuntimeException. (str "Data directory doesn't exist and it cannot be created: " (paths :data-dir)))))
+
+  ;; state directory *does* exist but isn't writeable
+  ;; another non-starter
+  (when (and (fs/exists? (paths :data-dir))
+             (not (fs/writeable? (paths :data-dir))))
+    (throw (RuntimeException. (str "Data directory isn't writeable:" (paths :data-dir)))))
+
+  ;; ensure all '-dir' suffixed paths exist, creating them if necessary
   (doseq [[path val] (paths)]
     (when (-> path name (clojure.string/ends-with? "-dir"))
       (debug (format "creating '%s' directory: %s" path val))

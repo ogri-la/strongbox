@@ -138,26 +138,38 @@
         (core/stop app-state)))))
 
 (deftest paths
-  (testing "all path keys are using suffix"
-    (doseq [key (keys (core/paths))]
-      (is (some #{"dir" "file" "uri"} (clojure.string/split (name key) #"\-")))))
+  (let [app-state (core/start {})]
+    (try
+      (testing "all path keys are using a known suffix"
+        (doseq [key (keys (core/paths))]
+          (is (some #{"dir" "file" "uri"} (clojure.string/split (name key) #"\-")))))
 
-  (testing "all paths to files and directories are absolute"
-    (let [files+dirs (filter (fn [[k v]] (or (ends-with? k "-dir")
-                                             (ends-with? k "-file")))
-                             (core/paths))]
-      (doseq [[key path] files+dirs]
-        (is (-> path (starts-with? "/")) (format "path %s is not absolute: %s" key path)))))
+      (testing "all paths to files and directories are absolute"
+        (let [files+dirs (filter (fn [[k v]] (or (ends-with? k "-dir")
+                                                 (ends-with? k "-file")))
+                                 (core/paths))]
+          (doseq [[key path] files+dirs]
+            (is (-> path (starts-with? "/")) (format "path %s is not absolute: %s" key path)))))
 
-  (testing "all remote paths are using https"
-    (let [remote-paths (filter (fn [[k v]] (ends-with? k "-uri")) (core/paths))]
-      (doseq [[key path] remote-paths]
-        (is (-> path (starts-with? "https://")) (format "remote path %s is not using HTTPS: %s" key path)))))
+      (testing "all remote paths are using https"
+        (let [remote-paths (filter (fn [[k v]] (ends-with? k "-uri")) (core/paths))]
+          (doseq [[key path] remote-paths]
+            (is (-> path (starts-with? "https://")) (format "remote path %s is not using HTTPS: %s" key path)))))
 
-  (testing "XDG data paths can be overridden with environment variables"
-    (with-env [:xdg-data-home "/foo", :xdg-config-home "/bar"]
-      (is (= "/foo" (:data-dir (core/paths))))
-      (is (= "/bar" (:config-dir (core/paths)))))))
+      (comment
+        "what exactly am I testing here again? this path overriding has plenty of coverage already. see test_helper.clj"
+        (testing "XDG data paths can be overridden with environment variables"
+          (with-env [:xdg-data-home "/foo", :xdg-config-home "/bar"]
+            (is (= "/foo" (:data-dir (core/paths))))
+            (is (= "/bar" (:config-dir (core/paths)))))))
+
+      (testing "paths that cannot be written to raise a runtime exception"
+        (with-env [:xdg-data-home "/foo", :xdg-config-home "/bar"]
+          (core/stop app-state)
+          (is (thrown? RuntimeException (core/start {})))))
+
+      (finally
+        (core/stop app-state)))))
 
 (deftest determine-primary-subdir
   (testing "basic failure cases"
