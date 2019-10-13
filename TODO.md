@@ -112,13 +112,14 @@ see CHANGELOG.md for a more formal list of changes by release
     - done
 * mac, add native look+feel
     - done
-
-### todo
-
 * gui tests are bypassing the path wrangling because the envvar library is using thread-local `binding`
     - change path access to an atom
     - I *think* this may have something to do with a truncated catalog I've encountered now (twice)
         - entirely possible. this should have been addressed in other todos
+
+### todo
+
+* 0.10.0 prep
 
 ## todo bucket
 
