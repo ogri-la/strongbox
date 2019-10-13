@@ -42,9 +42,9 @@
 (def colours (utils/nav-map-fn -colour-map))
 
 (defn generate-path-map
-  "generates a map of filesystem paths whose location may vary according to the current working directory and environment variables.
+  "generates filesystem paths whose location may vary based on the current working directory and environment variables.
   this map of paths is generated during init and is then fixed in application state.
-  ensure the correct environment variables and cwd are set prior to init to ensure isolation during tests"
+  ensure the correct environment variables and cwd are set prior to init for proper isolation during tests"
   []
   (let [;; https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
         ;; ignoring XDG_CONFIG_DIRS and XDG_DATA_DIRS for now
