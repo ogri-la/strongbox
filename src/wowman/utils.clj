@@ -15,6 +15,12 @@
    [java-time :as jt]
    [java-time.format]))
 
+(defmacro static-slurp
+  "just like `slurp`, but file is read at compile time.
+  good for static, unchanging, files. less good during development"
+  [path]
+  (slurp path))
+
 (defn-spec safe-to-delete? boolean?
   "predicate, returns true if given file is rooted in given directory"
   [dir ::sp/extant-dir file ::sp/extant-file]

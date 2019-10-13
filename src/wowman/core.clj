@@ -19,7 +19,7 @@
     [http :as http]
     [logging :as logging]
     [nfo :as nfo]
-    [utils :as utils :refer [join not-empty? false-if-nil nav-map nav-map-fn delete-many-files!]]
+    [utils :as utils :refer [join not-empty? false-if-nil nav-map nav-map-fn delete-many-files! static-slurp]]
     [catalog :as catalog]
     [toc]
     [specs :as sp]]))
@@ -144,7 +144,7 @@
   (jdbc/execute! (get-state :db) (into [query] arg-list)
                  (merge {:builder-fn as-unqualified-hyphenated-maps} opts)))
 
-(def select-*-catalog (str (slurp "resources/query--all-catalog.sql") " ")) ;; trailing space is important
+(def select-*-catalog (str (static-slurp "resources/query--all-catalog.sql") " ")) ;; trailing space is important
 
 (defn-spec db-split-category-list vector?
   "converts a pipe-separated list of categories into a vector"
@@ -664,9 +664,9 @@
 (defn-spec db-init nil?
   []
   (debug "creating 'catalog' table")
-  (jdbc/execute! (get-state :db) [(slurp "resources/table--catalog.sql")])
+  (jdbc/execute! (get-state :db) [(static-slurp "resources/table--catalog.sql")])
   (debug "creating category tables")
-  (jdbc/execute! (get-state :db) [(slurp "resources/table--category.sql")])
+  (jdbc/execute! (get-state :db) [(static-slurp "resources/table--category.sql")])
   (swap! state update-in [:cleanup] conj db-shutdown)
   nil)
 
