@@ -108,10 +108,13 @@ see CHANGELOG.md for a more formal list of changes by release
         - 0.9.2 used load-json-safely and in develop we're just using load-json
         - on bad data, attempt to download the catalog once more
         - done
+* bug, sql files are not being read from the .jar but from the filesystem
+    - done
+* mac, add native look+feel
+    - done
 
 ### todo
 
-* bug, sql files are not being read from the .jar but from the filesystem
 * gui tests are bypassing the path wrangling because the envvar library is using thread-local `binding`
     - change path access to an atom
     - I *think* this may have something to do with a truncated catalog I've encountered now (twice)
