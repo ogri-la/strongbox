@@ -26,6 +26,11 @@
    [orchestra.core :refer [defn-spec]]
    [orchestra.spec.test :as st]))
 
+;; "Call ... early in your program (like before any other Swing or Seesaw function is called) 
+;; to get a more 'native' behavior"
+;; - https://github.com/daveray/seesaw/wiki#native-look-and-feel
+(ss/native!)
+
 (defn select-ui
   [& path]
   (if-let [ui (get-state :gui)]
@@ -714,7 +719,11 @@
 
         newui (ss/frame
                :title "wowman"
-               :size [640 :by 480]
+
+               ;; 2019-10 Steam survey says 63% of users run at 1920x1080 (1080p)
+               ;; followed by 11% at 1366x768 (16:9 at a lower resolution, think laptops)
+               :size [1024 :by 768]
+
                :content (mig/mig-panel
                          :constraints ["flowy"] ;; ["debug,flowy"]
                          :items [[root "height 100%, width 100%:100%:100%"]])
@@ -761,7 +770,7 @@
                newui)]
 
     (ss/invoke-later
-     (-> newui ss/pack! ss/show! init))
+     (-> newui ss/show! init))
 
     newui))
 

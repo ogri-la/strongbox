@@ -114,6 +114,7 @@ see CHANGELOG.md for a more formal list of changes by release
 * gui tests are bypassing the path wrangling because the envvar library is using thread-local `binding`
     - change path access to an atom
     - I *think* this may have something to do with a truncated catalog I've encountered now (twice)
+        - entirely possible. this should have been addressed in other todos
 
 ## todo bucket
 
