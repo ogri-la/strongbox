@@ -10,10 +10,48 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### todo
 
-## todo bucket
+* github as addon host
+    - https://github.com/search?q=wow+addon&type=Repositories
+* gitlab as addon host
+    - https://gitlab.com/search?search=wow+addon
+* add TUKUI addon host
+    - TUKUI appears to be both addon manager and addon host
+    - ELVUI is their flagship addon
+    - they have json that can be scraped
+        - https://www.tukui.org/api.php
+
+* allow user to specify their own catalogs
+    - a url to a catalog that is downloaded and included while loading up the db
+* allow user to accumulate addons in a 'user' catalogue
+    - the addon may exist on github or similar where no catalogue is maintained
+
+* mac support
+    - must be included in CI
+* windows support
+    - must be included in CI
+* investigate state of java packaging
+    - https://www.infoq.com/news/2019/03/jep-343-jpackage/
+* add a sha256 sum to release file
+    - will prevent me from having to download release to generate a sumfile
 
 * it's possible for `.part` files to exist and not be cleaned up
 * add 'source' properties to curseforge and wowinterface catalogs
+* remove the 'curse-crap-redirect-strategy' in http.clj
+    - was used when curse *website* (not api) would redirect us to an unencoded path
+* bug, if an addon directory goes missing between restarts, user configuration is lost
+    - initially it's ignored, but then the new settings are saved over the top
+* bug, we have addons in multiple identical categories. fix this in catalog.clj
+    - see 319346
+    - remove call to set in db-load-catalog
+    - I suspect curseforge
+* investigate usage of spec-tools/coerce and remove if unnecessary
+* bug, export addon list isn't using selected directory
+* when adding an addon-dir, if path ends with /_classic_/Interface/Addons, set game track to classic
+
+## todo bucket
+
+* investigate better popularity metric than 'downloads'
+    - if we make an effort to scrape everyday, we can generate this popularity graph ourselves
 * gui 'wow' column is inconsistent
     - for curseforge, it's pulling it's value from :gameVersion, which may be empty
         - in which case it pulls it's value from the toc file, which may be different from the selected game track
@@ -22,8 +60,6 @@ see CHANGELOG.md for a more formal list of changes by release
         - and would this be inconsistent with the other fields that are also changing with new catalog information?
 * have the info box scroll the other direction
     - this is possible, see the seesaw examples
-* remove the 'curse-crap-redirect-strategy' in http.clj
-    - was used when curse *website* (not api) would redirect us to an unencoded path
 * add checksum checks after downloading
     - curseforge have an md5 that can be used
         - unfortunately no checksum in api results
@@ -34,28 +70,19 @@ see CHANGELOG.md for a more formal list of changes by release
 * database, compare current speed and code against loading addon category data serially
     - as opposed to in three blocks (categories, addons, category-addons). We might save some time and code
 * database, investigate prepared statements when inserting for improved speed
-* bug, if an addon directory goes missing between restarts, user configuration is lost
-    - initially it's ignored, but then the new settings are saved over the top
-* bug, we have addons in multiple identical categories. fix this in catalog.clj
-    - see 319346
-    - remove call to set in db-load-catalog
-* investigate usage of spec-tools/coerce and remove if necessary
 * wowman-data, stop publishing a 'daily' release
     - we have multiple catalogs now
+    - 0.10.0 uses the raw catalog files directly
+    - 0.9.2 was still using the daily release
+    - remove the 'daily' release after 0.11.0 is released
 * remove debugging? mode
-* bug, export addon list isn't using selected directory
 * export to markdown
     - I think I'd like a simple list like:
         * [addon name](https://source/path/to/addon)
     - of course, this would be a different type of export than the one used for import
         - although ... I could possibly parse the list ... and nah.
-* switch catalog loading to load-json-file-safely
-* when adding an addon-dir, if path ends with /_classic_/Interface/Addons, set game track to classic
-* add a sha256 sum to release file
-    - will prevent me from having to download release to generate a sumfile
 * add custom highlighting colours 
     - I don't mind my colours but not everybody may
-* add ElvUI support. they have json that can be scraped
 * add a 'tabula rasa' option that wipes *everything* 
     - cache, catalog, config, downloaded zip files
 * coloured warnings/errors on console output
@@ -80,13 +107,11 @@ see CHANGELOG.md for a more formal list of changes by release
         - if we start doing download concurrently, we need to pass our binds to the threads
             - which I'm not sure if is possible
         - moving back into bucket until I get around to doing parallel downloads
-* allow user to specify their own catalog
-    - what can we do to support adhoc lists of addons from unsupported hosts?
-    - we have both curseforge and wowinterface supported now
 * testing, capture metrics with an eye to improving performance and speed
     - we have coverage metrics now
     - would like some timing around certain operations
         - like loading the catalog
+            - done
         - like downloading and installing the top-10, top-20, top-N addons
             - this could be a good benchmark actually
                 - how quickly can one go from 'nothing installed' to '20 addons installed' ?
@@ -99,12 +124,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * group search results?
     - group by downloads/age/category?
         - it would finally be the best use for category data
-* windows support
-    - eh. I figure I can do it with a VM. I just don't really wanna.
-    - for the 1.0.0 release
-    - I now have an old WinXP (64bit!) machine
-        - one of the first 64bit Athlons available
-        - this should force some performance optimisations as well
 * memory usage
     - we're big and fat :(
     - lets explore some ways to measure and then reduce memory usage
@@ -120,6 +139,7 @@ see CHANGELOG.md for a more formal list of changes by release
         - how to pick preferred attributes without continuous (or key else other-key) ?
             - (getattr addon :label) ;; does multiple lookups ...? seems kinda meh
     - post 1.0
+    - wait until spec2 is released for an overhaul of current specs
 * toggleable highlighers as a menuitem
     - highlight unmatched
     - highlight updates
@@ -133,7 +153,7 @@ see CHANGELOG.md for a more formal list of changes by release
         - making it available as the 'unstable' release that always gets replaced
     - project.clj "x.y.z-unreleased" would be changed to "x.y.z-unstable"
     - development would happen mainly in feature branches
-* internationalisation? 
+* internationalisation?
     - Akitools has no english description but it does have a "Notes-zhCN" in the toc file that could be used
     - wowman was mentioned on a french forum the other day ..
 * a 'stop' button to stop updates would be nice ...
@@ -153,14 +173,15 @@ see CHANGELOG.md for a more formal list of changes by release
 * gui, pagination controls in search pane
 * gui, scroll tabs with mouse
 * gui, search, order by date only orders the *current page* of results
+
+## wontfix
+
 * addon 'detail' tab
     - link to curseforge
     - donation url
     - other addons by author ?
     - list the hidden/sub dependencies
-
-## wontfix
-
+    - too vague, too open ended, too much effort
 * addons distributed as .rar files
     - !BeautyLoot on wowinterface is an example of this
         - https://www.wowinterface.com/downloads/info20212
