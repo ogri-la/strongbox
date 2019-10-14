@@ -11,6 +11,7 @@ see CHANGELOG.md for a more formal list of changes by release
 ### todo
 
 * github as addon host
+    - https://github.com/ogri-la/wowman/issues/68
     - https://github.com/search?q=wow+addon&type=Repositories
 * gitlab as addon host
     - https://gitlab.com/search?search=wow+addon
@@ -50,6 +51,17 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
+* version pinning
+    - user can opt to install a specific release of an addon
+    - automatic updates for that addon are thereafter blocked
+* alpha/beta opt-in
+    - user can opt to install alpha/beta/no-lib releases per-addon
+* rename 'reinstall all' to 'reconcile'
+    - steal from the best
+    - make the reconcile automatic
+        - if a .wowman.json file isn't found
+    - remove the 'first time instructions' from the readme
+        - it should just fucking do it
 * investigate better popularity metric than 'downloads'
     - if we make an effort to scrape everyday, we can generate this popularity graph ourselves
 * gui 'wow' column is inconsistent
