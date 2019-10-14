@@ -123,6 +123,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
+* it's possible for `.part` files to exist and not be cleaned up
 * add 'source' properties to curseforge and wowinterface catalogs
 * gui 'wow' column is inconsistent
     - for curseforge, it's pulling it's value from :gameVersion, which may be empty

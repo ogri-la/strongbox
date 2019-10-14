@@ -1,4 +1,4 @@
-(defproject ogri-la/wowman "0.10.0-unreleased"
+(defproject ogri-la/wowman "0.10.0"
   :description "World Of Warcraft Addon Manager"
   :url "https://github.com/ogri-la/wowman"
   :license {:name "GNU Affero General Public License (AGPL)"
@@ -25,12 +25,11 @@
                  [clojure.java-time "0.3.2"] ;; date/time handling library
                  [envvar "1.1.0"] ;; environment variable wrangling
                  [clj-http-fake "1.0.3"] ;; fake http responses for testing
+                 [com.h2database/h2 "1.4.199"]
+                 [seancorfield/next.jdbc "1.0.6"]
 
                  ;; remember to update the LICENCE.txt
                  ;; remember to update pom file (`lein pom`)
-
-                 [com.h2database/h2 "1.4.199"]
-                 [seancorfield/next.jdbc "1.0.6"]
 
                  ]
 
