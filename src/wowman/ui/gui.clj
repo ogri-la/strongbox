@@ -20,16 +20,27 @@
     [swingx :as x]
     [core :as ss]
     [font :refer [font]]
+    [bind :as sb]
     [table :as sstbl]]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
    [orchestra.spec.test :as st]))
+
+;; "Call ... early in your program (like before any other Swing or Seesaw function is called) 
+;; to get a more 'native' behavior"
+;; - https://github.com/daveray/seesaw/wiki#native-look-and-feel
+(ss/native!)
 
 (defn select-ui
   [& path]
   (if-let [ui (get-state :gui)]
     (ss/select ui (vec path))
     (throw (RuntimeException. "attempted to access an uninitialised GUI"))))
+
+(defn-spec as-selector keyword?
+  "converts a regular :keyword to a seesaw selector :#keyword"
+  [kw keyword?]
+  (->> kw name (str "#") keyword))
 
 (def INSTALLED-TAB 0)
 (def SEARCH-TAB 1)
@@ -87,16 +98,20 @@
     (doseq [f fn-list]
       (f))))
 
+(defn async
+  [f]
+  (future
+    (try
+      (f)
+      (catch RuntimeException re
+        (error re "unhandled exception in thread")))))
+
 (defn async-handler
-  "like `handler`, but each function is executed inside a `go` block instead of sequentially"
+  "like `handler`, but each function is executed on a separate thread instead of sequentially"
   [& fl]
   (fn [_]
     (doseq [f fl]
-      (future
-        (try
-          (f)
-          (catch Exception e
-            (error (timbre/stacktrace e) "unhandled exception in thread")))))))
+      (async f))))
 
 (defn selected-rows-handler
   "calls given `f` with last event when selection has stopped adjusting"
@@ -503,16 +518,6 @@
         search-input (ss/text :id :search-input-txt :columns 40 :listen [:key-released search-input-handler])]
     (ss/flow-panel :align :left :items ["search" search-input install-button])))
 
-(defn search-rows
-  [rows uinput]
-  (let [uinput (-> uinput (or "") trim lower-case)
-        search-fn (fn [row]
-                    (when (:label row)
-                      (starts-with? (-> row :label lower-case) uinput)))]
-    (if (empty? uinput)
-      rows
-      (filter search-fn rows))))
-
 (defn search-results-panel
   []
   (let [tblmdl (sstbl/table-model :columns [{:key :uri :text "go"}
@@ -541,10 +546,12 @@
 
         date-renderer #(when % (-> % clojure.instant/read-instant-date (utils/fmt-date "yyyy-MM-dd")))
 
-        cap 250 ;; jxtable + autopack. more rows and searching becomes noticibly laggy
         update-rows-fn (fn [state]
-                         (let [known-addons (search-rows (:addon-summary-list state) (:search-field-input state))]
-                           (insert-all grid (take cap known-addons))))]
+                         (let [uinput (-> state :search-field-input (or "") trim)
+                               search-results (if (empty? uinput)
+                                                (core/db-search)
+                                                (core/db-search uinput))]
+                           (insert-all grid search-results)))]
 
     ;; I'm rather pleased these just work as-is :)
     ;; todo: rename these to something a bit more general
@@ -555,7 +562,7 @@
     (add-highlighter grid addon-installed? (colours :search/already-installed))
 
     (ss/listen grid :selection (selected-rows-handler search-results-selection-handler))
-    (state-bind [:addon-summary-list] update-rows-fn)
+    (state-bind [:catalog-size] update-rows-fn)
     (state-bind [:search-field-input] update-rows-fn)
     (ss/scrollable grid)))
 
@@ -623,6 +630,7 @@
                                        (ss/request-focus! (select-ui :#search-input-txt))))))
     tabber))
 
+;; todo: push this into core
 (defn status-bar
   "this is the litle strip of text at the bottom of the application."
   []
@@ -634,11 +642,10 @@
                          :font (font :size 11))
 
         update-label (fn [state]
-                       (let [a (:addon-summary-list state)
-                             ia (:installed-addon-list state)
+                       (let [ia (:installed-addon-list state)
                              uia (filter :matched? ia)
 
-                             a-count (count a)
+                             a-count (:catalog-size state)
                              ia-count (count ia)
                              uia-count (count uia)
 
@@ -671,6 +678,37 @@
     (core/import-exported-file path)
     (core/refresh)))
 
+(defn build-catalog-menu
+  []
+  (let [catalog-to-id (fn [catalog]
+                        (-> catalog :name name (str "catalog-menu-") keyword))
+
+        catalog-button-grp (ss/button-group)
+        catalog-menu (mapv (fn [catalog-source]
+                             (ss/radio-menu-item :id (catalog-to-id catalog-source)
+                                                 :text (:label catalog-source)
+                                                 :user-data catalog-source
+                                                 :group catalog-button-grp
+                                                 :selected? (= (core/get-state :cfg :selected-catalog) (:name catalog-source))))
+                           (core/get-state :catalog-source-list))]
+
+    ;; user selection updates application state
+    (sb/bind (sb/selection catalog-button-grp)
+             (sb/b-do* (fn [val]
+                         (when val ;; hrm, we're getting two events here, one where the value is nil ...
+                           (async (fn []
+                                    (core/set-catalog-source! (-> val ss/user-data :name))
+                                    (core/save-settings)))))))
+
+    ;; application state updates menu selection
+    (core/state-bind [:cfg :selected-catalog]
+                     (fn [state]
+                       (let [catalog-source (core/get-catalog-source (-> state :cfg :selected-catalog))
+                             button (-> catalog-source catalog-to-id as-selector select-ui)]
+                         (ss/selection! catalog-button-grp button))))
+
+    catalog-menu))
+
 (defn start-ui
   []
   (let [root->splitter (ss/top-bottom-split (mk-tabber) (notice-logger))
@@ -681,36 +719,44 @@
 
         newui (ss/frame
                :title "wowman"
-               :size [640 :by 480]
+
+               ;; 2019-10 Steam survey says 63% of users run at 1920x1080 (1080p)
+               ;; followed by 11% at 1366x768 (16:9 at a lower resolution, think laptops)
+               :size [1024 :by 768]
+
                :content (mig/mig-panel
                          :constraints ["flowy"] ;; ["debug,flowy"]
                          :items [[root "height 100%, width 100%:100%:100%"]])
                :on-close (if (utils/in-repl?) :dispose :exit)) ;; exit app entirely when not in repl
 
-        file-menu (items
-                   (ss/action :name "Installed" :key "menu I" :mnemonic "i" :handler (switch-tab-handler INSTALLED-TAB))
+        file-menu [(ss/action :name "Installed" :key "menu I" :mnemonic "i" :handler (switch-tab-handler INSTALLED-TAB))
                    (ss/action :name "Search" :key "menu H" :mnemonic "h" :handler (switch-tab-handler SEARCH-TAB))
                    :separator
-                   (ss/action :name "Exit" :key "menu Q" :mnemonic "x" :handler (handler #(ss/dispose! newui))))
+                   (ss/action :name "Exit" :key "menu Q" :mnemonic "x" :handler (handler #(ss/dispose! newui)))]
+
+        catalog-menu (build-catalog-menu)
 
         addon-menu [(ss/action :name "Update all" :key "menu U" :mnemonic "u" :handler (async-handler core/install-update-all))
                     (ss/action :name "Re-install all" :handler (async-handler core/re-install-all))
                     :separator
                     (ss/action :name "Remove directory" :handler (async-handler core/remove-addon-dir!))]
 
-        cache-menu [(ss/action :name "Clear cache" :handler (async-handler core/delete-cache))
-                    (ss/action :name "Clear addon zips" :handler (async-handler core/delete-downloaded-addon-zips))
-                    (ss/action :name "Clear all" :handler (async-handler core/clear-all-temp-files))
-                    :separator
-                    (ss/action :name "Delete WowMatrix.dat files" :handler (async-handler core/delete-wowmatrix-dat-files))
-                    (ss/action :name "Delete .wowman.json files" :handler (async-handler (comp core/refresh core/delete-wowman-json-files)))]
-
         impexp-menu [(ss/action :name "Export addon list" :handler (async-handler export-addon-list-handler))
                      (ss/action :name "Import addon list" :handler (async-handler import-addon-list-handler))]
 
+        cache-menu [(ss/action :name "Clear cache" :handler (async-handler core/delete-cache!))
+                    (ss/action :name "Clear addon zips" :handler (async-handler core/delete-downloaded-addon-zips!))
+                    (ss/action :name "Clear catalogs" :handler (async-handler core/delete-catalog-files!))
+                    (ss/action :name "Clear all" :handler (async-handler core/clear-all-temp-files!))
+                    :separator
+                    (ss/action :name "Delete WowMatrix.dat files" :handler (async-handler core/delete-wowmatrix-dat-files!))
+                    (ss/action :name "Delete .wowman.json files" :handler (async-handler (comp core/refresh core/delete-wowman-json-files!)))]
+
         help-menu [(ss/action :name "About wowman" :handler (handler about-wowman-dialog))]
 
-        menu (ss/menubar :items [(ss/menu :text "File" :mnemonic "F" :items file-menu)
+        menu (ss/menubar :id :main-menu
+                         :items [(ss/menu :text "File" :mnemonic "F" :items file-menu)
+                                 (ss/menu :text "Catalog" :items catalog-menu)
                                  (ss/menu :text "Addons" :mnemonic "A" :items addon-menu)
                                  (ss/menu :text "Import/Export" :mnemonic "i" :items impexp-menu)
                                  (ss/menu :text "Cache" :items cache-menu)
@@ -724,7 +770,7 @@
                newui)]
 
     (ss/invoke-later
-     (-> newui ss/pack! ss/show! init))
+     (-> newui ss/show! init))
 
     newui))
 

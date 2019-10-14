@@ -14,13 +14,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## 0.10.0 - 2019-10-14
+
+### Added
+
+* the catalogue is now loaded into an embedded database for better addon searching and reduced code complexity
+* support for multiple catalogues, defaulting to a 'short' catalogue with about 6k very old addons pruned from it
+    - 'full', 'curseforge' and 'wowinterface' catalogues are also available to switch between
+* an option to clear the catalogue cache so that they are re-downloaded
+* Java Swing 'native LNF' (look and feel) for Mac users (technically unsupported)
+
+### Changed
+
+* switched from supporting OpenJDK 10 (EOL already) in TravisCI to OpenJDK 11 (EOL 2024)
+* failure to read the catalogue (corrupt data) will see the catalogue deleted, re-downloaded and a load attempted again
+    - a second failure will print an error and ask the user to choose another catalogue
+* search for an addon now searches an addon's name (starting with) and description (contains)
+
+### Fixed
+
+* User Agent value used in HTTP requests would get truncated in releases with a minor version greater than 9
+* partially downloaded files should no longer interfere with normal operation of wowman
+    - files are now downloaded to temporary `.part` files and then moved into place when complete
+* GUI tests were bypassing the file-system path generation that used environment variables
+    - in rare cases this may have caused broken test artefacts to remain after testing or catalogues to be overwritten
+* Curseforge API bug where the 'gameVersionFlavor' misleadingly indicated an addon didn't support Classic or Retail
+    - this occasionally caused older versions of addons to be installed when both retail and classic were supported
+* a 'download' message was not being printed as it had been downgraded from 'info' to 'debug'
+    - this meant there were mysterious pauses while 'stuff' happened
+    - particularly noticable on large addons or with slow connections
+* default resolution was set at 640x480 which was being ignored because the contents of the frame were being 'packed'
+    - packing has been removed and the default resolution is now 1024x768
+* an overzealous regular expression would cause a mis-match between addons with trailing numerals in their name
+
+### Removed
+
+* support for partial catalogue 'updates' and scraping the recently updated pages on wowinterface and curseforge
+    - with the switch to the API, this is now much faster to do with many fewer requests made
+* support for scraping HTML from Curseforge
+    - wowinterface still requires some HTML to be scraped
+
 ## 0.9.2 - 2019-09-21
 
 ### Fixed
 
-* attempting to install an addon from the search pane that is classic-onlyinto an addon-dir that is 'retail' 
-(or vice versa) caused a fault
-* attempting to re-install an addon that is classic-only into an addon-dir that is 'retail' (or vice versa) caused a fault
+* attempting to re-install an addon that is classic-only into an addon-dir that is 'retail' (or vice versa) caused a 
+fault
 
 ## 0.9.1 - 2019-09-20
 

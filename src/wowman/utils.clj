@@ -15,6 +15,58 @@
    [java-time :as jt]
    [java-time.format]))
 
+(defmacro static-slurp
+  "just like `slurp`, but file is read at compile time.
+  good for static, unchanging, files. less good during development"
+  [path]
+  (slurp path))
+
+(defn-spec safe-to-delete? boolean?
+  "predicate, returns true if given file is rooted in given directory"
+  [dir ::sp/extant-dir file ::sp/extant-file]
+  (clojure.string/starts-with? file dir))
+
+(defn-spec delete-many-files! nil?
+  "deletes a list of files rooted in given directory"
+  [dir ::sp/dir, regex ::sp/regex, file-type ::sp/short-string]
+  (if-not (fs/exists? dir)
+    (warn "directory does not exist:" dir) ;; app may not have been started yet
+    (let [file-list (mapv str (fs/find-files dir regex))
+          suspicious (remove (partial safe-to-delete? dir) file-list)
+          alert #(warn "deleting file " %)]
+      (if-not (empty? suspicious)
+        ;; this is a programming error, not a user error. if there is a problem we don't want N-1 more problems
+        (error (format "refusing to delete all files. files were found not rooted at %s" (count suspicious) dir))
+
+        (if (empty? file-list)
+          (info (format "no %s files to delete" file-type))
+          (do
+            (warn (format "deleting %s %s files" (count file-list) file-type))
+            (dorun (map (juxt alert fs/delete) file-list))))))))
+
+(defn shallow-flatten
+  [lst]
+  (mapcat identity lst))
+
+(defn coerce-map-values
+  "given a mapping of {key fn} matching keys in given map will be transformed
+  (coerce-map-values {:foo str} {:foo 123}) => {:foo '123'}"
+  [mapping row]
+  (let [reducer (fn [ncoll [k v]]
+                  (assoc ncoll k
+                         (if (contains? mapping k)
+                           ((get mapping k) v)
+                           v)))]
+    (reduce reducer {} row)))
+
+(defn uuid
+  []
+  (.toString (java.util.UUID/randomUUID)))
+
+(defn dissoc-all
+  [m l]
+  (apply dissoc m l))
+
 ;; orphaned, might be useful still?
 (defn-spec file-ext-as-kw (s/or :ok keyword?, :error nil?)
   [path ::sp/file]
@@ -148,9 +200,11 @@
   (subs x 0 (min (count x) max)))
 
 (defn in?
-  [vals]
-  (fn [v]
-    (some #{v} vals)))
+  ([needle haystack]
+   (not (nil? (some #{needle} haystack))))
+  ([haystack]
+   (fn [needle]
+     (in? needle haystack))))
 
 (defn-spec idx map?
   [list-of-maps ::sp/list-of-maps, key keyword?]
@@ -218,11 +272,15 @@
   path)
 
 (defn-spec load-json-file (s/or :ok ::sp/anything, :error nil?)
-  [path ::sp/extant-file]
-  (try
-    (clojure.data.json/read (clojure.java.io/reader path), :key-fn keyword)
-    (catch Exception e
-      (warn e (format "failed to read data \"%s\" in file: %s" (.getMessage e) path)))))
+  ([path ::sp/extant-file]
+   (load-json-file path {}))
+  ([path ::sp/extant-file, transform-map (s/nilable map?)]
+   (try
+     (let [value-fn (fn [key val]
+                      ((get transform-map key (constantly val)) val))]
+       (clojure.data.json/read (clojure.java.io/reader path), :key-fn keyword, :value-fn value-fn))
+     (catch Exception e
+       (warn e (format "failed to read data \"%s\" in file: %s" (.getMessage e) path))))))
 
 (defn call-if-fn
   [x]
@@ -231,10 +289,10 @@
 (defn load-json-file-safely
   "loads json file at given path with handling for common error cases (no file, bad data, invalid data)
   if :invalid-data? given, then a :data-spec must also be given else nothing happens and you get nil back"
-  [path & {:keys [no-file? bad-data? invalid-data? data-spec]}]
+  [path & {:keys [no-file? bad-data? invalid-data? data-spec transform-map]}]
   (if-not (fs/file? path)
     (call-if-fn no-file?)
-    (let [data (load-json-file path)]
+    (let [data (load-json-file path transform-map)]
       (cond
         (not data) (call-if-fn bad-data?)
         (and ;; both are present AND data is invalid
@@ -291,6 +349,14 @@
         minor (to-int minor)]
     (when (and major minor)
       (+ (* 10000 major) (* 100 minor)))))
+
+(defn game-version-to-game-track
+  "'1.13.2' => 'classic', '8.2.0' => 'retail'"
+  [game-version]
+  (if (= "1." (subs game-version 0 2))
+    ;; 1.x.x == classic (for now)
+    "classic"
+    "retail"))
 
 ;; https://stackoverflow.com/questions/13789092/length-of-the-first-line-in-an-utf-8-file-with-bom
 (defn debomify

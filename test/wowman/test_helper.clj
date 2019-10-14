@@ -5,14 +5,18 @@
    [me.raynes.fs :as fs :refer [with-cwd]]
    [clj-http.fake :refer [with-fake-routes-in-isolation]]
    [wowman
-    [core :as core]
-    [utils :refer [join]]]))
+    [main :as main]
+    [utils :as utils]]))
 
 (def fixture-dir (-> "test/fixtures" fs/absolute fs/normalized str))
 
+(def data-dir "data")
+
+(def config-dir "config")
+
 (defn fixture-path
   [filename]
-  (join fixture-dir filename))
+  (utils/join fixture-dir filename))
 
 (defn temp-path
   [filename]
@@ -26,18 +30,24 @@
   [f]
   (let [temp-dir-path (fs/temp-dir "wowman.main-test.")
         fake-routes {;; catalog
-                     core/remote-catalog
                      ;; return dummy data. we can do this because the catalog isn't loaded/parsed/validated
                      ;; until the UI (gui or cli) tells it to via a later call to `refresh`
+                     "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
+                     {:get (fn [req] {:status 200 :body "{}"})}
+
+                     "https://raw.githubusercontent.com/ogri-la/wowman-data/master/full-catalog.json"
                      {:get (fn [req] {:status 200 :body "{}"})}
 
                      ;; latest wowman version
                      "https://api.github.com/repos/ogri-la/wowman/releases/latest"
                      {:get (fn [req] {:status 200 :body "{\"tag_name\": \"0.0.0\"}"})}}]
     (try
+      (debug "stopping application if it hasn't already been stopped")
+      (main/stop)
+
       (with-fake-routes-in-isolation fake-routes
-        (with-env [:xdg-data-home (join temp-dir-path "data")
-                   :xdg-config-home (join temp-dir-path "config")]
+        (with-env [:xdg-data-home (utils/join temp-dir-path data-dir)
+                   :xdg-config-home (utils/join temp-dir-path config-dir)]
           (with-cwd temp-dir-path
             (debug "created temp working directory" fs/*cwd*)
             (f))))

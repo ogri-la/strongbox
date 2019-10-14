@@ -10,6 +10,7 @@
 (s/def ::list-of-keywords (s/coll-of keyword?))
 (s/def ::list-of-list-of-keywords (s/coll-of ::list-of-keywords))
 
+(s/def ::regex #(instance? java.util.regex.Pattern %))
 (s/def ::short-string #(<= (count %) 80))
 
 (defn-spec has-ext boolean?
@@ -66,7 +67,8 @@
 (s/def ::extant-archive-file (s/and ::extant-file ::archive-file))
 (s/def ::list-of-files (s/coll-of ::file))
 (s/def ::anything (complement nil?)) ;; like `any?` but nil is considered false
-(s/def ::extant-dir (s/and string? fs/directory?))
+(s/def ::dir ::file) ;; directory must also be a string and a valid File object, but not necessarily exist (yet)
+(s/def ::extant-dir (s/and ::dir fs/directory?))
 (s/def ::writeable-dir (s/and ::extant-dir fs/writeable?))
 (s/def ::download-uri ::uri)
 (s/def ::name string?) ;; normalised name of the addon, shared between toc file and curseforge
@@ -122,8 +124,8 @@
 (s/def ::selected? boolean?)
 (s/def ::addon-dir-map (s/keys :req-un [::addon-dir ::game-track]))
 (s/def ::addon-dir-list (s/coll-of ::addon-dir-map))
-(s/def ::user-config (s/keys :req-un [::addon-dir-list
-                                      ::debug?]))
+(s/def ::selected-catalog keyword?)
+(s/def ::user-config (s/keys :req-un [::addon-dir-list ::debug? ::selected-catalog]))
 
 (s/def ::reason-phrase (s/and string? #(<= (count %) 50)))
 (s/def ::status int?) ;; a little too general but ok for now
@@ -158,3 +160,7 @@
 (s/def ::export-record (s/keys :req-un [::name]
                                :opt [::source]))
 (s/def ::export-record-list (s/coll-of ::export-record))
+
+;;
+
+(s/def ::catalog-source-map map?)

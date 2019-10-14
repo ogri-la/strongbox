@@ -3,10 +3,10 @@
   <groupId>ogri-la</groupId>
   <artifactId>wowman</artifactId>
   <packaging>jar</packaging>
-  <version>0.9.2</version>
+  <version>0.10.0</version>
   <name>wowman</name>
   <description>World Of Warcraft Addon Manager</description>
-  <url>http://github.com/ogri-la/wowman</url>
+  <url>https://github.com/ogri-la/wowman</url>
   <licenses>
     <license>
       <name>GNU Affero General Public License (AGPL)</name>
@@ -17,7 +17,7 @@
     <url>https://github.com/ogri-la/wowman</url>
     <connection>scm:git:git://github.com/ogri-la/wowman.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/ogri-la/wowman.git</developerConnection>
-    <tag>6c4ea0576d982b455a27d6be1e274826fa01bddd</tag>
+    <tag>ea90a09ee9b0de1126e06b46eb3acb8d0a8a6dd9</tag>
   </scm>
   <build>
     <sourceDirectory>src</sourceDirectory>
@@ -151,7 +151,7 @@
     <dependency>
       <groupId>org.flatland</groupId>
       <artifactId>ordered</artifactId>
-      <version>1.5.2</version>
+      <version>1.5.7</version>
     </dependency>
     <dependency>
       <groupId>clojure.java-time</groupId>
@@ -167,6 +167,16 @@
       <groupId>clj-http-fake</groupId>
       <artifactId>clj-http-fake</artifactId>
       <version>1.0.3</version>
+    </dependency>
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <version>1.4.199</version>
+    </dependency>
+    <dependency>
+      <groupId>seancorfield</groupId>
+      <artifactId>next.jdbc</artifactId>
+      <version>1.0.6</version>
     </dependency>
   </dependencies>
 </project>

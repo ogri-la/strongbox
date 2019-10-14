@@ -14,7 +14,7 @@
 (deftest scrape-category-list
   (let [fixture (slurp "test/fixtures/wowinterface-category-list.html")
         fake-routes {"https://www.wowinterface.com/downloads/foobar"
-                     {:get (fn [req] {:status 200 :body fixture})}}
+                     {:get (fn [_] {:status 200 :body fixture})}}
         num-categories 52
         first-category {:label "Action Bar Mods",
                         :url "https://www.wowinterface.com/downloads/index.php?cid=19&sb=dec_date&so=desc&pt=f&page=1"}
@@ -31,7 +31,7 @@
   (testing "number of pages in a category is extracted correctly"
     (let [category {:label "dummy" :url "https://www.wowinterface.com/downloads/cat19.html"}
           fixture (slurp "test/fixtures/wowinterface-category-page.html")
-          fake-routes {#".*" {:get (fn [req] {:status 200 :body fixture})}}
+          fake-routes {#".*" {:get (fn [_] {:status 200 :body fixture})}}
           expected (range 1 10)]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (wowinterface/scrape-category-page-range category)))))))
@@ -41,9 +41,8 @@
     (let [category {:label "dummy" :url "https://www.wowinterface.com/downloads/cat19.html"}
           fixture (slurp "test/fixtures/wowinterface-category-page.html")
           fake-routes {"https://www.wowinterface.com/downloads/cat19.html"
-                       {:get (fn [req] {:status 200 :body fixture})}}
+                       {:get (fn [_] {:status 200 :body fixture})}}
           page 1
-          expected []
           num-addons 25
           first-addon {:uri "https://www.wowinterface.com/downloads/info25079",
                        :name "rotation-master",

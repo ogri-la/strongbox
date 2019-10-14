@@ -175,6 +175,7 @@
                              {:dir? true, :level 1, :toplevel? true, :path "Altoholic_Search/"}
                              {:dir? true, :level 1, :toplevel? true, :path "Altoholic_Summary/"}]
 
+            ;; detecting this somehow would be nice ...
             expected ["DataStore_Stats"
                       "DataStore_Talents"
                       "DataStore"
@@ -192,6 +193,9 @@
                       "DataStore_Quests"
                       "DataStore_Reputations"
                       "DataStore_Spells"]
+
+            ;; but in reality there were too many false positives when the size
+            ;; of the groups exceeded the magnitude (3)
             expected nil]
 
         (is (= (zip/inconsistently-prefixed zipfile-entries) expected))))))

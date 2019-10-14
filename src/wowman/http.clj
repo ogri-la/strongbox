@@ -11,7 +11,6 @@
    [me.raynes.fs :as fs]
    [orchestra.core :refer [defn-spec]]
    [clojure.data.codec.base64 :as b64]
-   [taoensso.timbre :refer [debug info warn error spy]]
    [trptcolin.versioneer.core :as versioneer]
    [clj-http.client :as client]))
 
@@ -35,7 +34,7 @@
       (try
         (java.net.URI. loc)
         (catch java.net.URISyntaxException e
-          (debug "redirected to bad URI! encoding path:" loc)
+          (warn "redirected to bad URI! encoding path:" loc)
           (encode-url-path loc))))))
 
 (defn- add-etag-or-not
@@ -68,12 +67,19 @@
       ([req resp raise]
        (write-etag etag-key (client (add-etag-or-not etag-key req) resp raise))))))
 
+(defn-spec wowman-user-agent string?
+  [wowman-version string?]
+  (let [regex #"(\d{1,3})\.(\d{1,3})\.(\d{1,3})(.*)?"
+        ;; => {:major "0" :minor "10" :patch "0" :qualifier "-unreleased"}
+        v (zipmap [:major :minor :patch :qualifier] (rest (re-find regex wowman-version)))]
+    (format "Wowman/%s.%s%s (https://github.com/ogri-la/wowman)" (:major v) (:minor v) (:qualifier v))))
+
 (defn-spec user-agent map?
   [use-anon-useragent? boolean?]
-  (let [anon-useragent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36"
-        wowman-version (-> (versioneer/get-version "ogri-la" "wowman") (subs 0 3)) ;; `subs` here is fine until major or minor exceeds double digits
-        wowman-useragent (format "Wowman/%s (https://github.com/ogri-la/wowman)" wowman-version)]
-    {"http.useragent" (if use-anon-useragent? anon-useragent wowman-useragent)}))
+  (let [;; https://techblog.willshouse.com/2012/01/03/most-common-user-agents/ (last updated 2019-09-14)
+        anon-useragent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36"
+        useragent (wowman-user-agent (versioneer/get-version "ogri-la" "wowman"))]
+    {"http.useragent" (if use-anon-useragent? anon-useragent useragent)}))
 
 (defn fresh-cache-file-exists?
   "returns `true` if the last modification time on given file is before the expiry date of +N hours"
@@ -110,7 +116,8 @@
 
       ;; ... otherwise, we must sing and dance
       (try
-        (debug (or message (format "downloading %s to %s" (fs/base-name uri) output-file)))
+        (when message (info message)) ;; always show the message that was explicitly passed in
+        (debug (format "downloading %s to %s" (fs/base-name uri) output-file))
         (client/with-additional-middleware [client/wrap-lower-case-headers (etag-middleware etag-key)]
           (let [params {:redirect-strategy curse-crap-redirect-strategy
                         :cookie-policy :ignore} ;; completely ignore cookies. doesn't stop HttpComponents warning
@@ -121,7 +128,16 @@
                 _ (debug "response status" (:status resp))
 
                 not-modified (= 304 (:status resp)) ;; 304 is "not modified" (local file is still fresh). only happens when caching
-                modified (not not-modified)]
+                modified (not not-modified)
+
+                ;; streaming responses are not buffered entirely in memory as their full length cannot be anticipated.
+                ;; instead we open a file handle and pour the response bytes into it as we receive them.
+                ;; if the output file already exists (like a catalog file) it may be possible another thread is reading
+                ;; this file leading to malformed/invalid data.
+                ;; so we write the incoming bytes to a unique temporary file and then move that file into place, using 
+                ;; the intended output file as a lock.
+                partial-output-file (when output-file
+                                      (join (fs/parent output-file) (fs/temp-name "wowman-" ".part")))]
 
             (when not-modified
               (debug "not modified, contents will be read from cache:" output-file))
@@ -129,10 +145,14 @@
             (cond
               ;; remote data has changed, write body to disk
               (and output-file modified) (do
-                                           (clojure.java.io/copy (:body resp) (java.io.File. output-file)) ;; doesn't .close on streams
+                                           (clojure.java.io/copy (:body resp) (java.io.File. partial-output-file)) ;; doesn't .close on streams
                                            (when streaming-response?
                                              ;; stream request responses get written to a file, the stream closed and the path to the output file returned
                                              (-> resp :body .close)) ;; not all requests are streams with a :body that needs to be closed
+                                           ;; lock is held for ~0.11 msecs to ~0.18 msecs
+                                           ;; much shorter than N seconds to download a file
+                                           (locking output-file
+                                             (fs/rename partial-output-file output-file))
                                            output-file)
 
               ;; remote data has not changed, :body is nil, replace it with path to file

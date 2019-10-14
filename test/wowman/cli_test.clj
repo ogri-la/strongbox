@@ -6,7 +6,6 @@
    [wowman.ui.cli :as cli]
    [wowman
     [main :as main]
-    [core :as core]
     [utils :as utils :refer [join]]]
    [me.raynes.fs :as fs :refer [with-cwd]]
    [taoensso.timbre :as log :refer [debug info warn error spy]]))
@@ -16,9 +15,9 @@
   [f]
   (let [temp-dir-path (fs/temp-dir "wowman.main-test.")
         fake-routes {;; catalog
-                     core/remote-catalog
                      ;; return dummy data. we can do this because the catalog isn't loaded/parsed/validated
                      ;; until the UI (gui or cli) tells it to via a later call to `refresh`
+                     "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
                      {:get (fn [req] {:status 200 :body "{}"})}
 
                      ;; latest wowman version

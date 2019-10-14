@@ -9,7 +9,7 @@
    [me.raynes.fs :as fs]
    [wowman
     [logging :as logging]
-    [core :as core :refer [paths]]
+    [core :as core]
     [utils :as utils :refer [in?]]]
    [wowman.ui
     [cli :as cli]
@@ -19,7 +19,7 @@
 (Thread/setDefaultUncaughtExceptionHandler
  (reify Thread$UncaughtExceptionHandler
    (uncaughtException [_ thread ex]
-     (error (timbre/stacktrace ex) "Uncaught exception on" (.getName thread)))))
+     (error ex "Uncaught exception on" (.getName thread)))))
 
 (defn stop
   []
@@ -51,12 +51,15 @@
 (defn test
   [& [path]]
   (clojure.tools.namespace.repl/refresh) ;; reloads all namespaces, including wowman.whatever-test ones
-  (logging/change-log-level :debug)
-  (if path
-    (if (some #{path} [:core :http :main :toc :utils :curseforge :curseforge-api :zip :catalog :cli :gui :wowinterface])
-      (clojure.test/run-all-tests (re-pattern (str "wowman." (name path) "-test")))
-      (error "unknown test file:" path))
-    (clojure.test/run-all-tests #"wowman\..*-test")))
+  (try
+    (logging/change-log-level :debug)
+    (if path
+      (if (some #{path} [:core :http :main :toc :utils :curseforge-api :zip :catalog :cli :gui :wowinterface])
+        (clojure.test/run-all-tests (re-pattern (str "wowman." (name path) "-test")))
+        (error "unknown test file:" path))
+      (clojure.test/run-all-tests #"wowman\..*-test"))
+    (finally
+      (logging/change-log-level (:level logging/default-logging-config)))))
 
 ;;
 
@@ -67,9 +70,8 @@
 ;;
 
 (def catalog-actions
-  #{:scrape-catalog :update-catalog :merge-catalog
-    :scrape-curseforge-catalog :update-curseforge-catalog
-    :scrape-wowinterface-catalog :update-wowinterface-catalog})
+  #{:scrape-catalog :write-catalog
+    :scrape-curseforge-catalog :scrape-wowinterface-catalog})
 
 (def catalog-action-str (clojure.string/join ", " (mapv #(format "'%s'" (name %)) (sort catalog-actions))))
 
@@ -105,17 +107,6 @@
   (let [{:keys [options errors]} parsed]
     (cond
       (= "root" (System/getProperty "user.name")) {:ok? false, :exit-message "wowman should not be run as the 'root' user"}
-
-      ;; data directory doesn't exist and parent directory isn't writable
-      ;; nowhere to create data dir, nowhere to store download catalog. non-starter
-      (and
-       (not (fs/exists? (paths :data-dir)))
-       (not (fs/writeable? (fs/parent (paths :data-dir))))) {:ok? false, :exit-message (str "Data directory doesn't exist and it cannot be created: " (paths :data-dir))}
-
-      ;; state directory *does* exist but isn't writeable
-      ;; another non-starter
-      (and (fs/exists? (paths :data-dir))
-           (not (fs/writeable? (paths :data-dir)))) {:ok? false, :exit-message (str "Data directory isn't writeable:" (paths :data-dir))}
 
       (:help options) {:ok? true, :exit-message (usage parsed)}
 
