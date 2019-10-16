@@ -12,7 +12,8 @@
     [utils :as utils :refer [todt utcnow]]
     [specs :as sp]
     [curseforge-api :as curseforge-api]
-    [wowinterface-api :as wowinterface-api]]))
+    [wowinterface-api :as wowinterface-api]
+    [github-api :as github-api]]))
 
 (defn expand-summary
   [addon-summary game-track]
@@ -47,6 +48,20 @@
   output-file)
 
 ;;
+
+(defn-spec parse-user-addon (s/or :ok ::sp/addon-summary, :error nil?)
+  "given a string, figures out the source and dispatches to that source logic.
+  supports 'source:source-id' syntax as well as good old fashioned URLs"
+  [uin string?]
+  (let [dispatch-map {"github.com" github-api/parse-user-addon-url}]
+    (try
+      (when-let [f (->> uin java.net.URL. .getHost (get dispatch-map))]
+        (f uin))
+      (catch java.net.MalformedURLException mue
+        (debug "not a url")))))
+
+;;
+
 
 (defn de-dupe-wowinterface
   "at time of writing, wowinterface has 5 pairs of duplicate addons with slightly different labels

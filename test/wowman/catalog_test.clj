@@ -2,9 +2,10 @@
   (:require
    [clojure.test :refer [deftest testing is use-fixtures]]
    [wowman
-    [catalog :as catalog]]
-   ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
-   ))
+    [catalog :as catalog]
+    ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
+    [test-helper :refer [fixture-path]]]
+   [clj-http.fake :refer [with-fake-routes-in-isolation]]))
 
 (deftest de-dupe-wowinterface
   (testing "given multiple addons with the same name, the most recently updated one is preferred"
@@ -41,3 +42,20 @@
                     :total 0
                     :addon-summary-list []}]
       (is (= (catalog/-merge-catalogs aa ab) expected)))))
+
+(deftest parse-user-addon
+  (testing "user input, presumably a path to an addon, can be parsed into a catalog item"
+    (let [fake-routes {"https://api.github.com/repos/Aviana/HealComm/releases"
+                       {:get (fn [req] {:status 200 :body (slurp (fixture-path "github-repo-releases--aviana-healcomm.json"))})}}]
+      (with-fake-routes-in-isolation fake-routes
+        (let [cases [["https://github.com/Aviana/HealComm" {:uri "https://github.com/Aviana/HealComm"
+                                                            :updated-date "2019-10-09T17:40:01Z"
+                                                            :source "github"
+                                                            :source-id "Aviana/HealComm"
+                                                            :label "HealComm"
+                                                            :name "healcomm"
+                                                            :download-count 30946
+                                                            :category-list []}]]]
+          (doseq [[given expected] cases]
+            (is (= expected (catalog/parse-user-addon given)))))))))
+
