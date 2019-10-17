@@ -53,15 +53,16 @@
   "given a string, figures out the source and dispatches to that source logic.
   supports 'source:source-id' syntax as well as good old fashioned URLs"
   [uin string?]
-  (let [dispatch-map {"github.com" github-api/parse-user-addon-url}]
+  (let [dispatch-map {"github.com" github-api/parse-user-addon
+                      "www.github.com" github-api/parse-user-addon ;; alias
+                      }]
     (try
-      (when-let [f (->> uin java.net.URL. .getHost (get dispatch-map))]
+      (when-let [f (->> uin utils/unmangle-https-url java.net.URL. .getHost (get dispatch-map))]
         (f uin))
       (catch java.net.MalformedURLException mue
         (debug "not a url")))))
 
 ;;
-
 
 (defn de-dupe-wowinterface
   "at time of writing, wowinterface has 5 pairs of duplicate addons with slightly different labels

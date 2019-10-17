@@ -448,4 +448,80 @@
   [semver-list (s/coll-of string?)]
   (sort semver-comp semver-list))
 
+;; https://stackoverflow.com/questions/25892277/clojure-regex-named-groups#answer-25892938
+(defn named-regex-groups
+  [regex groups value]
+  (zipmap groups (rest (re-find regex value))))
+
+(defn-spec unmangle-https-url (s/or :ok ::sp/uri, :error nil?)
+  "given something that is supposed to be a valid http URL, try our hardest to return an actual URL without actually visiting anything.
+  if we fail, return nil, otherwise return a string that can be converted to a URL"
+  [uin string?]
+  (let [;; pretty strict, try this first
+        url (try
+              (java.net.URL. uin)
+              (catch java.net.MalformedURLException _
+                nil))
+
+        ;; looser, but still better than a regex
+        uri (try
+              (java.net.URI. uin)
+              (catch java.net.URISyntaxException _
+                nil))
+
+        ;; and finally, if url and uri approaches fail, try a quick and dirty regex
+        regex #"(\w*:)?(\/\/)?(www\.)?(.+\.\w{2,4})(/?.*)?"
+        groups [:protocol :lines :sub :host        :path]
+        parsed (named-regex-groups regex groups uin)]
+
+    (cond
+      ;; woo! we have something valid already, return as-is
+      (not (nil? url)) uin
+
+      ;; ...woo? we have something with a host that isn't total garbage
+      ;; try to recreate it, filling in a few blanks.
+      (and (not (nil? uri))
+           (.getHost uri)) (format "%s://%s%s"
+                                   (or (.getScheme uri) "https")
+                                   (.getHost uri)
+                                   (or (.getRawPath uri) ""))
+
+      (:host parsed) (format "%s://%s%s"
+                             (or (:protocol parsed) "https")
+                             (:host parsed)
+                             (or (:path parsed) ""))
+
+      ;; completely unparseable
+      :else nil)))
+
+;; https://clojure.atlassian.net/browse/CLJ-2007
+(defmacro if-let*
+  "Multiple binding version of if-let"
+  ([bindings then]
+   `(if-let ~bindings ~then nil))
+  ([bindings then else]
+   ;; assert-args is in clojure.core but private
+   ;;(assert-args
+   ;;  (vector? bindings) "a vector for its binding"
+   ;;  (even? (count bindings)) "exactly even forms in binding vector")
+   (if (== 2 (count bindings))
+     `(let [temp# ~(second bindings)]
+        (if temp#
+          (let [~(first bindings) temp#]
+            ~then)
+          ~else))
+     (let [if-let-else (keyword (name (gensym "if_let_else__")))
+           inner (fn inner [bindings]
+                   (if (seq bindings)
+                     `(if-let [~(first bindings) ~(second bindings)]
+                        ~(inner (drop 2 bindings))
+                        ~if-let-else)
+                     then))]
+       `(let [temp# ~(inner bindings)]
+          (if (= temp# ~if-let-else) ~else temp#))))))
+
+
+;;
+
+
 (st/instrument)

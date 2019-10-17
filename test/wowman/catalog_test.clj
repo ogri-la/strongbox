@@ -44,18 +44,20 @@
       (is (= (catalog/-merge-catalogs aa ab) expected)))))
 
 (deftest parse-user-addon
-  (testing "user input, presumably a path to an addon, can be parsed into a catalog item"
-    (let [fake-routes {"https://api.github.com/repos/Aviana/HealComm/releases"
-                       {:get (fn [req] {:status 200 :body (slurp (fixture-path "github-repo-releases--aviana-healcomm.json"))})}}]
-      (with-fake-routes-in-isolation fake-routes
-        (let [cases [["https://github.com/Aviana/HealComm" {:uri "https://github.com/Aviana/HealComm"
-                                                            :updated-date "2019-10-09T17:40:01Z"
-                                                            :source "github"
-                                                            :source-id "Aviana/HealComm"
-                                                            :label "HealComm"
-                                                            :name "healcomm"
-                                                            :download-count 30946
-                                                            :category-list []}]]]
-          (doseq [[given expected] cases]
+  (let [fake-routes {"https://api.github.com/repos/Aviana/HealComm/releases"
+                     {:get (fn [req] {:status 200 :body (slurp (fixture-path "github-repo-releases--aviana-healcomm.json"))})}}]
+    (with-fake-routes-in-isolation fake-routes
+      (let [github-api {:uri "https://github.com/Aviana/HealComm"
+                        :updated-date "2019-10-09T17:40:01Z"
+                        :source "github"
+                        :source-id "Aviana/HealComm"
+                        :label "HealComm"
+                        :name "healcomm"
+                        :download-count 30946
+                        :category-list []}
+
+            cases [["https://github.com/Aviana/HealComm" github-api]]]
+        (doseq [[given expected] cases]
+          (testing (str "user input is routed to the correct parser")
             (is (= expected (catalog/parse-user-addon given)))))))))
 
