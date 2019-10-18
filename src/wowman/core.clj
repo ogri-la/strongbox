@@ -62,6 +62,8 @@
         cfg-file (join config-dir "config.json") ;; /home/$you/.config/wowman/config.json
         etag-db-file (join data-dir "etag-db.json") ;; /home/$you/.local/share/wowman/etag-db.json
 
+        user-catalog (join data-dir "user-catalog.json")
+
         ;; ensure path ends with `-file` or `-dir` or `-uri`
         path-map {:config-dir config-dir
                   :data-dir data-dir
@@ -69,6 +71,7 @@
                   :cfg-file cfg-file
                   :etag-db-file etag-db-file
 
+                  :user-catalog-file user-catalog
                   :catalog-dir data-dir}]
     path-map))
 
@@ -579,6 +582,26 @@
 ;;
 
 
+(defn-spec get-create-user-catalog ::sp/catalog
+  []
+  (let [user-catalog-path (paths :user-catalog-file)]
+    (catalog/read-catalog
+     (if (fs/exists? user-catalog-path)
+       user-catalog-path
+       (catalog/write-empty-catalog! user-catalog-path)))))
+
+(defn-spec add-user-addon! nil?
+  "adds a single addon to the user catalog"
+  [addon-summary ::sp/addon-summary]
+  (let [user-catalog-path (paths :user-catalog-file)
+        user-catalog (get-create-user-catalog)
+        tmp-catalog (catalog/new-catalog [addon-summary])
+        new-user-catalog (catalog/-merge-catalogs user-catalog tmp-catalog)]
+    (catalog/write-catalog new-user-catalog user-catalog-path))
+  nil)
+
+;;
+
 (defn find-in-db [installed-addon toc-keys catalog-keys]
   (let [catalog-keys (if (vector? catalog-keys) catalog-keys [catalog-keys]) ;; ["source" "source_id"] => ["source" "source_id"], "name" => ["name"]
         sql-arg-template (clojure.string/join " AND " (mapv #(format "%s = ?" %) catalog-keys)) ;; "source = ? AND source_id = ?", "name = ?"
@@ -702,14 +725,14 @@
                                   (warn "catalog corrupted. re-downloading and trying again.")
                                   (fs/delete catalog-path)
                                   (download-catalog)
-                                  (utils/load-json-file-safely
+                                  (catalog/read-catalog
                                    catalog-path
                                    :bad-data? (fn []
                                                 (error "please report this! https://github.com/ogri-la/wowman/issues")
                                                 (error "catalog *still* corrupted and cannot be loaded. try another catalog from the 'catalog' menu")
                                                 {})))
 
-          {:keys [addon-summary-list]} (utils/load-json-file-safely catalog-path :bad-data? bad-json-file-handler)
+          {:keys [addon-summary-list]} (catalog/read-catalog catalog-path :bad-data? bad-json-file-handler)
 
           addon-categories (mapv (fn [{:keys [source-id source category-list]}]
                                    (mapv (fn [category]
@@ -791,10 +814,7 @@
     (update-installed-addon-list! (mapv check-for-update (get-state :installed-addon-list)))
     (info "done checking for updates")))
 
-;;
 ;; ui interface
-;; 
-
 
 (defn-spec delete-cache! nil?
   "deletes the 'cache' directory that contains scraped html files and the etag db file.

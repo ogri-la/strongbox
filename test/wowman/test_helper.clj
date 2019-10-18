@@ -55,6 +55,14 @@
         (debug "destroying temp working directory" temp-dir-path) ;; "with contents" (vec (file-seq fs/*cwd*)))
         (fs/delete-dir temp-dir-path)))))
 
+(defmacro with-running-app
+  [& form]
+  `(try
+     (main/start)
+     ~@form
+     (finally
+       (main/stop))))
+
 ;; usage:
 ;; (:require [wowman.helper :as helper])
 ;; (use-fixtures :each helper/fixture-tempcwd)

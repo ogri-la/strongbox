@@ -40,12 +40,33 @@
      :total (count addon-list)
      :addon-summary-list addon-list}))
 
+(defn read-catalog
+  "read catalog data from given `catalog-path`"
+  [catalog-path & {:keys [bad-data?]}]
+  ;; todo: cheshire claims to be twice as fast: https://github.com/dakrone/cheshire#speed
+  (if bad-data?
+    (utils/load-json-file-safely catalog-path :bad-data? bad-data?)
+    (utils/load-json-file catalog-path)))
+
 (defn-spec write-catalog ::sp/extant-file
-  "writes catalog to given `output-file` as json. returns path to the output file"
-  [catalog-data ::sp/catalog, output-file ::sp/file]  ;; addon-list at this point has been ordered and doesn't resemble a hashmap anymore
+  "write catalog to given `output-file` as JSON. returns path to the output file"
+  [catalog-data ::sp/catalog, output-file ::sp/file]
   (utils/dump-json-file output-file catalog-data)
   (info "wrote" output-file)
   output-file)
+
+(defn-spec new-catalog ::sp/catalog
+  [addon-list ::sp/addon-summary-list]
+  (let [created (utils/datestamp-now-ymd)
+        updated created]
+    (format-catalog-data addon-list created updated)))
+
+(defn-spec write-empty-catalog! ::sp/extant-file
+  "writes a stub catalog to the given `output-file`"
+  [output-file ::sp/file]
+  (let [created (utils/datestamp-now-ymd)
+        updated created]
+    (write-catalog (new-catalog []) output-file)))
 
 ;;
 
@@ -61,6 +82,11 @@
         (f uin))
       (catch java.net.MalformedURLException mue
         (debug "not a url")))))
+
+(defn-spec add-addon-summary-to-catalog ::sp/catalog
+  "inserts the given addon summary into the given catalog, that's all"
+  [addon-summary ::sp/addon-summary, catalog ::sp/catalog]
+  (update-in catalog [:addon-summary-list] into [addon-summary]))
 
 ;;
 
@@ -148,7 +174,8 @@
 
         today (utcnow)
         update-addon (fn [a]
-                       (let [source (if-not (contains? a :description) :wowinterface :curseforge)
+                       (let [;; this is no longer true.
+                             source (if-not (contains? a :description) :wowinterface :curseforge)
                              ;; an even more slugified label with hyphens and underscores removed
                              alt-name (-> a :label (slugify ""))
                              dtobj (java-time/zoned-date-time (:updated-date a))
