@@ -100,6 +100,7 @@
       {:uri (extract-addon-uri anchor)
        :name (-> label slugify)
        :label label
+       :source "wowinterface"
        :source-id (extract-source-id anchor)
        ;;:description nil ;; not available in summary
        ;;:category-list [] ;; not available in summary, added by caller
