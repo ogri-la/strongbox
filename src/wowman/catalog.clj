@@ -132,7 +132,7 @@
 
         today (utcnow)
         update-addon (fn [a]
-                       (let [source (if-not (contains? a :description) :wowinterface :curseforge)
+                       (let [;;source (if-not (contains? a :description) :wowinterface :curseforge)
                              ;; an even more slugified label with hyphens and underscores removed
                              alt-name (-> a :label (slugify ""))
                              dtobj (java-time/zoned-date-time (:updated-date a))
@@ -146,9 +146,9 @@
 
                              ;; todo: normalise categories here
                              ]
-                         (merge a {:source source ;; json serialisation will stringify this :(
-                                   :alt-name alt-name
-                                   :age version-age})))
+                         (merge a {:alt-name alt-name
+                                   :age version-age ;; todo: push this into db catalog loading or just drop altogether
+                                   })))
         addon-list (mapv update-addon addon-list)
 
         ;; should these two dates belong to the catalog proper or derived from the component catalogs?
