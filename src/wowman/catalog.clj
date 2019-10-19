@@ -132,8 +132,7 @@
 
         today (utcnow)
         update-addon (fn [a]
-                       (let [source (if-not (contains? a :description) :wowinterface :curseforge)
-                             ;; an even more slugified label with hyphens and underscores removed
+                       (let [;; an even more slugified label with hyphens and underscores removed
                              alt-name (-> a :label (slugify ""))
                              dtobj (java-time/zoned-date-time (:updated-date a))
                              age-in-days (java-time/as (java-time/duration dtobj today) :days)
@@ -146,8 +145,7 @@
 
                              ;; todo: normalise categories here
                              ]
-                         (merge a {:source source ;; json serialisation will stringify this :(
-                                   :alt-name alt-name
+                         (merge a {:alt-name alt-name
                                    :age version-age})))
         addon-list (mapv update-addon addon-list)
 

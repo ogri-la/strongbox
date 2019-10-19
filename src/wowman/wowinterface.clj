@@ -3,11 +3,8 @@
    [clojure.string :refer [trim]]
    [clojure.set]
    [slugify.core :refer [slugify]]
-   [clojure.spec.alpha :as s]
    [orchestra.spec.test :as st]
-   [orchestra.core :refer [defn-spec]]
    [wowman
-    [specs :as sp]
     [utils :as utils :refer [to-uri]]
     [http :as http]]
    [flatland.ordered.map :as omap]
@@ -32,36 +29,6 @@
         dt-utc (java-time/zoned-date-time dt "UTC") ;; obj with no tz => utc obj
         fmt (get java-time.format/predefined-formatters "iso-offset-date-time")]
     (java-time/format fmt dt-utc)))
-
-;;
-
-(defn-spec expand-summary (s/or :ok ::sp/addon, :error nil?)
-  "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
-  [addon-summary ::sp/addon-summary]
-  (let [message (str "downloading summary data: " (:name addon-summary))
-        data (http/download (:uri addon-summary) :message message)
-        detail-html (html-snippet data)
-        version (-> detail-html (select [:#author :#version html/content]) first (subs (count "Version: ")))
-        addon-id (-> addon-summary :uri (clojure.string/replace #"\D*" "")) ;; https://.../info21651 => 21651
-
-        ;; fun fact: download-uri can be almost anything. for example "https://cdn.wowinterface.com/downloads/file<addon-id>/whatever.zip" works
-        ;; we'll play nicely though, and use it as intended
-        slugified-label (-> addon-summary :label (slugify "_"))
-        download-uri (format "https://cdn.wowinterface.com/downloads/file%s/%s-%s.zip" addon-id slugified-label version)
-
-        ;; only available on addons that support the current wow version (I think?)
-        ;; which means with the next release the value will disappear unless we hold on to it? urgh.
-        ;; at least it's available from the toc file
-        iface-version (some-> detail-html (select [:#patch :abbr html/content]) first utils/game-version-to-interface-version)
-        iface-version (when iface-version {:interface-version iface-version})
-
-        updates {:download-uri download-uri
-                 :version version
-                 ;;:donation-uri ;; not available in any structured or consistent way :(
-                 }]
-    (merge addon-summary updates iface-version)))
-
-;;
 
 (defn parse-category-list
   [category-page]
@@ -100,6 +67,7 @@
       {:uri (extract-addon-uri anchor)
        :name (-> label slugify)
        :label label
+       :source "wowinterface"
        :source-id (extract-source-id anchor)
        ;;:description nil ;; not available in summary
        ;;:category-list [] ;; not available in summary, added by caller

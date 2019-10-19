@@ -132,6 +132,7 @@
    ;;:updated-date (:dateModified snippet)
    :updated-date (:dateReleased snippet) ;; this seems closest to what we originaly had
    :download-count (-> snippet :downloadCount int) ;; I got a '511.0' ...?
+   :source "curseforge"
    :source-id (:id snippet)})
 
 (defn-spec download-summary-page-alphabetically (s/or :ok (s/coll-of map?), :error nil?)
