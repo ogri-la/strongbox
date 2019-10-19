@@ -415,10 +415,16 @@
                                      (.setCursor grid (cursor :hand))
                                      (.setCursor grid (cursor :default))))))
 
+        uri-template "<html><font color='blue'>&nbsp;↪ %s</font></html>"
         uri-renderer (fn [x]
                        (when x
-                         (let [label (if (= (subs x 12 22) "curseforge") "curseforge" "wowinterface")]
-                           (str "<html><font color='blue'>&nbsp;↪ " label "</font></html>"))))]
+                         (let [uri (java.net.URL. x)
+                               label (case (.getHost uri)
+                                       "www.curseforge.com" "curseforge"
+                                       "www.wowinterface.com" "wowinterface"
+                                       "github.com" "github"
+                                       "???")]
+                           (format uri-template label))))]
 
     (ss/listen grid :mouse-motion hand-cursor-on-hover)
     (ss/listen grid :mouse-clicked go-link-clicked)

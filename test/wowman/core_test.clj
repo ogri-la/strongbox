@@ -250,7 +250,7 @@
 
           fake-routes {;; catalog
                        "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
-                       {:get (fn [req] {:status 200 :body (utils/to-json {:addon-summary-list addon-summary-list})})}
+                       {:get (fn [req] {:status 200 :body (utils/to-json (catalog/new-catalog addon-summary-list))})}
 
                        ;; every-addon
                        "https://addons-ecs.forgesvc.net/api/v2/addon/1"
@@ -345,7 +345,7 @@
 
           fake-routes {;; catalog
                        "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
-                       {:get (fn [req] {:status 200 :body (utils/to-json {:addon-summary-list [catalog]})})}
+                       {:get (fn [req] {:status 200 :body (utils/to-json (catalog/new-catalog [catalog]))})}
 
                        ;; every-addon
                        "https://addons-ecs.forgesvc.net/api/v2/addon/0"
@@ -552,8 +552,7 @@
                          :addon-summary-list [(merge user-addon
                                                      {;; properties catalog/-merge-catalogs adds. revisit
                                                       :age "new"
-                                                      :alt-name "healcomm"})]})
-        ]
+                                                      :alt-name "healcomm"})]})]
     (testing "user addon is successfully added to the user catalog, creating it if it doesn't exist"
       (with-running-app
         (core/add-user-addon! user-addon)
