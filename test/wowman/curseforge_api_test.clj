@@ -172,6 +172,7 @@
                      :alt-name "advancedinterfaceoptions",
                      :label "AdvancedInterfaceOptions",
                      :download-count 2923589,
+                     :source "curseforge"
                      :source-id 99982,
                      :uri "https://www.curseforge.com/wow/addons/advancedinterfaceoptions"}]]
       (with-fake-routes-in-isolation fake-routes

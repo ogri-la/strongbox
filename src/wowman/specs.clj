@@ -19,10 +19,8 @@
 
 ;; addon data that can be scraped from the listing pages
 (s/def ::addon-summary
-  (s/keys :req-un [::uri ::name ::label ::category-list ::updated-date ::download-count]
-          :opt [::source ;; only present in catalog which messes with tests right now
-                ::source-id ;; make required when we drop html scraping
-                ::description ;; wowinterface summaries have no description
+  (s/keys :req-un [::uri ::name ::label ::category-list ::updated-date ::download-count ::source ::source-id]
+          :opt [::description ;; wowinterface summaries have no description
                 ::created-date ;; wowinterface summaries have no created date
                 ::game-track-list ;; more of a set, really
                 ]))

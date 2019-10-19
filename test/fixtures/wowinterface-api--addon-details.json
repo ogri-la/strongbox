@@ -1,19 +1,19 @@
 [
   {
-    "UID": "25122",
-    "UICATID": "33",
-    "UIVersion": "1.0",
-    "UIDate": 1565662545000,
-    "UIMD5": "e522cd7ea606300245704e87ecc827de",
-    "UIFileName": "Masque_Qhil_1-0.zip",
-    "UIDownload": "https://cdn.wowinterface.com/downloads/getfile.php?id=25122&d=1565662545&minion",
+    "UID": "25079",
+    "UICATID": "25",
+    "UIVersion": "1.2.3",
+    "UIDate": 1570296493000,
+    "UIMD5": "f3ea7dc82fac500038be1f230759f43d",
+    "UIFileName": "RotationMaster-1.2.3.zip",
+    "UIDownload": "https://cdn.wowinterface.com/downloads/getfile.php?id=25079&d=1570296493&minion",
     "UIPending": "0",
-    "UIName": "Masque: Qhil",
-    "UIAuthorName": "qhil",
-    "UIDescription": "[B][COLOR=\"Orange\"][SIZE=\"3\"]DESCRIPTION[/SIZE][/COLOR][/B]\r\n\r\nThis add-on is a Masque Skin. You have to install [URL=\"https://www.wowinterface.com/downloads/info12097\"]Masque[/URL] first in order to use it.\r\nThis skin is pretty simple and clean. It comes with a 1 Pixel border, no shadows and a plain or World of Warcraft backdrop.\r\n\r\n\r\n[B][COLOR=\"Orange\"][SIZE=\"3\"]INSTALLATION[/SIZE][/COLOR][/B]\r\n\r\nDownload the file and extract the package in your World of Warcraft add-on directory.\r\n\r\nRetail: \"World of Warcraft\\_retail_\\Interface\\AddOns\"\r\nClassic: \"World of Warcraft\\_classic_\\Interface\\AddOns\"\r\n\r\n\r\n[B][COLOR=\"Orange\"][SIZE=\"3\"]BUGS & FEATURES[/SIZE][/COLOR][/B]\r\n\r\nPlease, don't be shy and contact me if you found a bug. I'll try to fix it as fast as possible.\r\n\r\n\r\n[SIZE=\"1\"][COLOR=\"DimGray\"]Last Update: 08/13/2019[/COLOR][/SIZE]",
-    "UIChangeLog": "None",
-    "UIHitCount": "57",
-    "UIHitCountMonthly": "57",
-    "UIFavoriteTotal": "1"
+    "UIName": "Rotation Master",
+    "UIAuthorName": "corporategoth",
+    "UIDescription": "[SIZE=\"4\"]Documentation: [URL=\"https://wiki.neuromancy.net/display/RM/Rotation+Master\"]https://wiki.neuromancy.net/display/RM/Rotation+Master[/URL]\r\nDiscussion Forums: [URL=\"http://neuromancy.net/rotationmaster\"]http://neuromancy.net/rotationmaster[/URL][/SIZE]\r\n\r\nSites like Icy Veins are great for researching your class, what gear is best, spec is best.  And most importantly, the ideal rotation to achieve maximum damage (for AOE or single target).  Sometimes however this is also very situational.  And it's a lot to learn and keep track of to ensure you get it just right.\r\n\r\nThe mod adds an overlay on top of your action bars with what action you should perform next.  However, unlike over action bar overlays, this does not use a hard-coded rotation, or require you to write lua code to create your own rotation, your rotation is configured entirely from within the settings.\r\n\r\nYou can configure both a spell rotation (including what conditions should be in place for each spell), and non-rotation items (eg. available cool downs, or situational spells such as damage reduction).  The conditions can be arbitrarily complicated, and there is a lot of variables to choose from.\r\n\r\nWhat's more, you can have MORE than a single rotation for your class/spec, and even setup a condition to use to automatically switch between them (for example, switch to a specific rotation if you zone into a specific zone?  Or a different one if you are in a party vs. raid or soloing).  Or a different profile for when you are flagged PVP, and have it switch automatically.\r\n\r\nImport and export of profiles is supported (so you can easily share your configured profiles, no need to re-invent the wheel).  You can also specify custom textures, and each 'cooldown' can have it's own texture/color.",
+    "UIChangeLog": "Added hidden buttons for item sets to allow for use in other macros using /click",
+    "UIHitCount": "1195",
+    "UIHitCountMonthly": "404",
+    "UIFavoriteTotal": "3"
   }
 ]
