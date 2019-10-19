@@ -3,11 +3,8 @@
    [clojure.string :refer [trim]]
    [clojure.set]
    [slugify.core :refer [slugify]]
-   ;;[clojure.spec.alpha :as s]
    [orchestra.spec.test :as st]
-   ;;[orchestra.core :refer [defn-spec]]
    [wowman
-    ;;[specs :as sp]
     [utils :as utils :refer [to-uri]]
     [http :as http]]
    [flatland.ordered.map :as omap]
