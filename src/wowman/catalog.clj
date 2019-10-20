@@ -20,9 +20,11 @@
   (let [dispatch-map {"curseforge" curseforge-api/expand-summary
                       "wowinterface" wowinterface-api/expand-summary
                       nil (fn [_ _] (error "malformed addon-summary:" (utils/pprint addon-summary)))}
-        dispatch (get dispatch-map (:source addon-summary))]
+        key (:source addon-summary)]
     (try
-      (dispatch addon-summary game-track)
+      (if-let [dispatch-fn (get dispatch-map key)]
+        (dispatch-fn addon-summary game-track)
+        (error (format "addon '%s' is from source '%s' that isn't supported" (:label addon-summary) key)))
       (catch Exception e
         (error e "unhandled exception attempting to expand addon summary")
         (error "please report this! https://github.com/ogri-la/wowman/issues")))))
