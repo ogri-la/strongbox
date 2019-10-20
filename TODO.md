@@ -11,8 +11,13 @@ see CHANGELOG.md for a more formal list of changes by release
 ### todo
 
 * github as addon host
-    - https://github.com/ogri-la/wowman/issues/68
-    - https://github.com/search?q=wow+addon&type=Repositories
+    - ref
+        - https://github.com/ogri-la/wowman/issues/68
+        - https://github.com/search?q=wow+addon&type=Repositories
+    - github source type supported in catalogues and gui
+        - done
+    - github addons can be installed
+        - github-api/expand-summary added
 * gitlab as addon host
     - https://gitlab.com/search?search=wow+addon
 * add TUKUI addon host
@@ -24,8 +29,12 @@ see CHANGELOG.md for a more formal list of changes by release
 * allow user to specify their own catalogs
     - a url to a catalog that is downloaded and included while loading up the db
 * allow user to accumulate addons in a 'user' catalogue
-    - the addon may exist on github or similar where no catalogue is maintained
-
+    - why? the addon may exist on github or similar where no catalogue is maintained
+    - duplicate addons and categories are handled without fuss in the db
+    - addon is automatically installed when 'added' through the gui
+    - add support for finding addons by url for other hosts
+        - wowinterface
+        - curseforge
 * mac support
     - must be included in CI
 * windows support
