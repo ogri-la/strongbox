@@ -311,10 +311,13 @@
                             ;; will save settings
                             (core/refresh))))))]
 
-    (ss/vertical-panel
-     :items [(ss/flow-panel :align :left
-                            :items [refresh-button update-all-button wow-dir-button
-                                    wow-dir-dropdown wow-game-track])])))
+    (mig/mig-panel
+     :constraints ["insets 0"]
+     :items [[refresh-button]
+             [update-all-button]
+             [wow-dir-button]
+             [wow-dir-dropdown "wmax 200"]
+             [wow-game-track]])))
 
 (defn installed-addons-panel-column-widths
   "this sucks"
@@ -499,9 +502,9 @@
 (defn installed-panel
   []
   (mig/mig-panel
-   :constraints ["wrap 1"]
-   :items [[(configure-app-panel) "width 100%:100%"]
-           [(installed-addons-panel) "height 100%, width 99%::"]]))
+   :constraints ["flowy" "fill,grow"]
+   :items [[(configure-app-panel)]
+           [(installed-addons-panel) "height 100%"]]))
 
 (defn-spec search-input-handler nil?
   [ev ::sp/gui-event]
@@ -569,9 +572,9 @@
 (defn search-panel
   []
   (mig/mig-panel
-   :constraints ["wrap 1"]
-   :items [[(search-input-panel) "width 100%:100%"]
-           [(search-results-panel) "height 100%, width 99%::"]]))
+   :constraints ["flowy" "fill,grow"]
+   :items [[(search-input-panel)]
+           [(search-results-panel) "height 100%"]]))
 
 (defn notice-logger
   []
@@ -608,8 +611,8 @@
 
     ;; would love to know how to make these layouts and widths more consistent and deterministic
     (mig/mig-panel
-     :constraints ["wrap 1"]
-     :items [[(ss/scrollable grid) "height 100%, width 98.75%::"]])))
+     :constraints ["flowy" "fill,grow"]
+     :items [[(ss/scrollable grid) "height 100%"]])))
 
 (defn-spec switch-search-tab-handler nil?
   [_ ::sp/gui-event]
@@ -725,8 +728,8 @@
                :size [1024 :by 768]
 
                :content (mig/mig-panel
-                         :constraints ["flowy"] ;; ["debug,flowy"]
-                         :items [[root "height 100%, width 100%:100%:100%"]])
+                         :constraints ["flowy" "fill,grow"] ;; ["debug,flowy"]
+                         :items [[root "height 100%"]])
                :on-close (if (utils/in-repl?) :dispose :exit)) ;; exit app entirely when not in repl
 
         file-menu [(ss/action :name "Installed" :key "menu I" :mnemonic "i" :handler (switch-tab-handler INSTALLED-TAB))
