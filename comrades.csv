@@ -16,7 +16,7 @@ AvidWeb/cursebreaker,https://github.com/AcidWeb/CurseBreaker,yes,no,no,yes,TUI,y
 braier/wow-addon-updater,https://www.braier.net/wow-addon-updater/index.html,yes,yes,yes,yes,GUI,yes,no,yes,yes,no,no,Pascal
 cowdude/wowaddonmanager,https://github.com/cowdude/wowaddonmanager,yes,yes*,yes*,yes*,CLI,yes,no,no,yes,no,no,Python
 dark0dave/wow-addon-updater,https://gitlab.com/dark0dave/wow-addon-updater,yes,yes*,yes*,yes*,CLI,yes,yes,yes,yes,no,no,Python
-ephraim/lcurse,https://github.com/ephraim/lcurse,yes,yes*,yes*,yes*,GUI,yes,no,no,yes,no,no,Python
+ephraim/lcurse,https://github.com/ephraim/lcurse,yes,yes*,yes*,yes*,GUI,yes,yes,no,yes,no,no,Python
 erikabp123/ClassicAddonManager,https://github.com/erikabp123/ClassicAddonManager,yes,no,no,yes,GUI,no,yes,yes,yes,no,no,Java
 Gonzih/wow-addon-manager,https://github.com/Gonzih/wow-addon-manager,yes,yes*,yes*,yes*,CLI,yes,no,no,yes,no,no,Go
 grrttedwards/wow-addon-updater,https://github.com/grrttedwards/wow-addon-updater,yes,yes*,yes*,yes*,CLI,yes,yes,yes,yes,no,no,Python
