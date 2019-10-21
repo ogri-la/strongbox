@@ -48,7 +48,7 @@
                      {:get (fn [req] {:status 200 :body (slurp (fixture-path "github-repo-releases--aviana-healcomm.json"))})}}]
     (with-fake-routes-in-isolation fake-routes
       (let [github-api {:uri "https://github.com/Aviana/HealComm"
-                        :updated-date "2019-10-09T17:40:01Z"
+                        :updated-date "2019-10-09T17:40:04Z"
                         :source "github"
                         :source-id "Aviana/HealComm"
                         :label "HealComm"

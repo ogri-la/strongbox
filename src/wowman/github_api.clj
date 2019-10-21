@@ -1,22 +1,58 @@
 (ns wowman.github-api
   (:require
+   [me.raynes.fs :as fs]
    [slugify.core :refer [slugify]]
    [clojure.spec.alpha :as s]
    [orchestra.spec.test :as st]
    [orchestra.core :refer [defn-spec]]
-   ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
+   [taoensso.timbre :as log :refer [debug info warn error spy]]
    [wowman
     [http :as http]
-    [utils :as utils :refer [if-let*]]
+    [utils :as utils :refer [pad if-let* nilable]]
     [specs :as sp]]))
 
-(defn-spec pad coll?
-  "given a collection, ensures there are at least pad-amt items in result. pad value is nil"
-  [lst coll?, pad-amt int?]
-  (let [lst-size (count lst)]
-    (if (< lst-size pad-amt)
-      (into lst (repeat (- pad-amt lst-size) nil))
-      lst)))
+(defn-spec release-url ::sp/uri
+  [source-id string?]
+  (format "https://api.github.com/repos/%s/releases" source-id))
+
+(defn-spec download-releases (s/or :ok (s/coll-of map?), :error nil?)
+  [source-id string?]
+  (some-> source-id release-url http/download utils/from-json))
+
+;;
+
+(def classic-regex #"^.+[\-_\.]?(classic)[\.-_]?.+$")
+
+(defn group-assets
+  [latest-release]
+  (let [asset-list (:assets latest-release)
+        grouper (fn [asset]
+                  (let [classic? (nilable
+                                  (utils/named-regex-groups classic-regex [:classic] (:name asset)))
+                        version (:name latest-release)] ;; "v2.10.0"
+                    (if classic?
+                      (merge asset {:game-track "classic" :version (str version "-classic")})
+                      (merge asset {:game-track "retail" :version version}))))
+        asset-list (map grouper asset-list)]
+    (group-by :game-track asset-list)))
+
+(defn-spec expand-summary (s/or :ok ::sp/addon, :error nil?)
+  "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
+  [addon-summary ::sp/addon-summary game-track ::sp/game-track]
+  ;; download latest releases
+  (let [release-list (download-releases (:source-id addon-summary))
+        ;; todo: filter releases by :state = "uploaded"
+        ;; todo: filter releases by content_type = "application/zip"
+        ;; ignore :prerelease = true for now, this is github after all
+
+        ;; todo: I should probably examine all releases rather than just the most recent.
+        latest-release (first release-list)
+        asset (-> latest-release group-assets (get game-track) first)]
+    (if-not asset
+      (warn (format "no '%s' release available for '%s' on github" game-track (:name addon-summary)))
+      (merge addon-summary
+             {:download-uri (:browser_download_url asset)
+              :version (:version asset)}))))
 
 (defn-spec parse-user-addon (s/or :ok ::sp/addon-summary, :error nil?)
   [uin string?]
@@ -24,16 +60,16 @@
             obj (some-> uin utils/unmangle-https-url java.net.URL.)
             path (when-not (empty? (.getPath obj)) (.getPath obj))
             [owner repo] (-> path (subs 1) (clojure.string/split #"/") (pad 2))
-            releases-url (when (and owner repo)
-                           (format "https://api.github.com/repos/%s/%s/releases" owner repo))
-            release-list (some-> releases-url http/download utils/from-json)
-            most-recent (first release-list)
+            source-id (when (and owner repo)
+                        (format "%s/%s" owner repo))
+            release-list (download-releases source-id)
+            latest-release (first release-list)
             download-count (->> release-list (map :assets) flatten (map :download_count) (apply +))]
 
-           {:uri (format "https://github.com/%s/%s" owner repo)
-            :updated-date (-> most-recent :assets first :updated_at)
+           {:uri (str "https://github.com/" source-id)
+            :updated-date (-> latest-release :published_at)
             :source "github"
-            :source-id (format "%s/%s" owner repo)
+            :source-id source-id
             :label repo
             :name (slugify repo "")
             :download-count download-count

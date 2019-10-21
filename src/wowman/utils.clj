@@ -15,6 +15,14 @@
    [java-time :as jt]
    [java-time.format]))
 
+(defn-spec pad coll?
+  "given a collection, ensures there are at least pad-amt items in result. pad value is nil"
+  [lst coll?, pad-amt int?]
+  (let [lst-size (count lst)]
+    (if (< lst-size pad-amt)
+      (into lst (repeat (- pad-amt lst-size) nil))
+      lst)))
+
 (defmacro static-slurp
   "just like `slurp`, but file is read at compile time.
   good for static, unchanging, files. less good during development"
@@ -185,6 +193,15 @@
   [x]
   (if (false? x) nil x))
 
+(defn nilable
+  [x]
+  (cond
+    (nil? x) nil
+    (empty? x) nil
+    (and (string? x)
+         (clojure.string/blank? x)) nil
+    :else x))
+
 (defn pprint
   [x]
   (with-out-str (clojure.pprint/pprint x)))
@@ -251,11 +268,6 @@
   "filters and transforms a list at the same time. transformed value must be truth-y"
   [f l]
   (for [x l :let [tx (f x)] :when tx] tx))
-
-(defn nil-if-empty
-  [s]
-  (when s
-    (if (empty? (clojure.string/trim s)) nil s)))
 
 (defn-spec to-json ::sp/json
   [x ::sp/anything]

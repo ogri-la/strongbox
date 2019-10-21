@@ -12,7 +12,7 @@
                      {:get (fn [req] {:status 200 :body (slurp (fixture-path "github-repo-releases--aviana-healcomm.json"))})}}
 
         expected {:uri "https://github.com/Aviana/HealComm"
-                  :updated-date "2019-10-09T17:40:01Z"
+                  :updated-date "2019-10-09T17:40:04Z"
                   :source "github"
                   :source-id "Aviana/HealComm"
                   :label "HealComm"
@@ -58,3 +58,11 @@
       (doseq [[given expected] cases]
         (is (= expected (github-api/parse-user-addon given)))))))
 
+
+;; todo: test for github-repo-releases--necrosis-classic.json
+;; it's an example of a github addon with no assets to download, thus no download-count to calculate
+;; it seems reasonable we should be able to add it to the user-catalog though as it otherwise meets
+;; the minimum requirements for an ::addon-summary.
+
+;; todo: test for github-repo-releases--ravendwyr-chincilla.json
+;; it's an example of a github addon with two relevant assets available to download, one retail, one for classic
