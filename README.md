@@ -130,7 +130,7 @@ See [comrades.csv](comrades.csv) for a complete list.
 | Name                           | URL                                                  | Maintained | Linux | Mac  | Windows | UI  | Retail | Classic | F/OSS | Source Available | Ads | EULA | Language   | 
 |--------------------------------|------------------------------------------------------|------------|-------|------|---------|-----|--------|---------|-------|------------------|-----|------|------------| 
 | antiwinter/wowa                | https://github.com/antiwinter/wowa                   | yes        | yes*  | yes* | yes*    | CLI | yes    | yes     | yes   | yes              | no  | no   | Javascript | 
-| AvidWeb/cursebreaker           | https://github.com/AcidWeb/CurseBreaker              | yes        | no    | no   | yes     | TUI | yes    | yes     | yes   | yes              | no  | no   | Python     | 
+| AcidWeb/CurseBreaker           | https://github.com/AcidWeb/CurseBreaker              | yes        | yes   | yes  | yes     | TUI | yes    | yes     | yes   | yes              | no  | no   | Python     | 
 | braier/wow-addon-updater       | https://www.braier.net/wow-addon-updater/index.html  | yes        | yes   | yes  | yes     | GUI | yes    | no      | yes   | yes              | no  | no   | Pascal     | 
 | cowdude/wowaddonmanager        | https://github.com/cowdude/wowaddonmanager           | yes        | yes*  | yes* | yes*    | CLI | yes    | no      | no    | yes              | no  | no   | Python     | 
 | dark0dave/wow-addon-updater    | https://gitlab.com/dark0dave/wow-addon-updater       | yes        | yes*  | yes* | yes*    | CLI | yes    | yes     | yes   | yes              | no  | no   | Python     | 

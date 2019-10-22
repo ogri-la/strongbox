@@ -12,7 +12,7 @@ vargen2/addon-manager,https://github.com/vargen2/addonmanager,no,no,no,yes*,GUI,
 WoWAceUpdater,https://sourceforge.net/projects/wowaceupdater/,no,no,no,yes,GUI,yes,no,yes,yes,?,?,?
 wttw/wowaddon,https://github.com/wttw/wowaddon,no,yes,yes,yes,CLI,yes,no,yes,yes,no,no,Go
 antiwinter/wowa,https://github.com/antiwinter/wowa,yes,yes*,yes*,yes*,CLI,yes,yes,yes,yes,no,no,Javascript
-AvidWeb/cursebreaker,https://github.com/AcidWeb/CurseBreaker,yes,no,no,yes,TUI,yes,yes,yes,yes,no,no,Python
+AcidWeb/CurseBreaker,https://github.com/AcidWeb/CurseBreaker,yes,yes,yes,yes,TUI,yes,yes,yes,yes,no,no,Python
 braier/wow-addon-updater,https://www.braier.net/wow-addon-updater/index.html,yes,yes,yes,yes,GUI,yes,no,yes,yes,no,no,Pascal
 cowdude/wowaddonmanager,https://github.com/cowdude/wowaddonmanager,yes,yes*,yes*,yes*,CLI,yes,no,no,yes,no,no,Python
 dark0dave/wow-addon-updater,https://gitlab.com/dark0dave/wow-addon-updater,yes,yes*,yes*,yes*,CLI,yes,yes,yes,yes,no,no,Python
