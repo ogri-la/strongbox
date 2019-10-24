@@ -88,6 +88,36 @@
           fake-routes {"https://api.github.com/repos/Aviana/HealComm/releases"
                        {:get (fn [_] {:status 200 :body fixture})}}]
       (with-fake-routes-in-isolation fake-routes
+        (is (= expected (github-api/expand-summary given game-track))))))
+
+  (testing "classic addons are correctly detected"
+    (let [given {:uri "https://github.com/Ravendwyr/Chinchilla"
+                 :updated-date "2019-10-09T17:40:04Z"
+                 :source "github"
+                 :source-id "Ravendwyr/Chinchilla"
+                 :label "Chinchilla"
+                 :name "chinchilla"
+                 :download-count 30946
+                 :category-list []}
+
+          game-track "classic"
+
+          expected {:category-list []
+                    :updated-date "2019-10-09T17:40:04Z"
+                    :name "chinchilla"
+                    :source "github"
+                    :label "Chinchilla"
+                    :download-count 30946
+                    :source-id "Ravendwyr/Chinchilla"
+                    :uri "https://github.com/Ravendwyr/Chinchilla"
+
+                    :download-uri "https://github.com/Ravendwyr/Chinchilla/releases/download/v2.10.0/Chinchilla-v2.10.0-classic.zip"
+                    :version "v2.10.0-classic"}
+          
+          fixture (slurp (fixture-path "github-repo-releases--ravendwyr-chinchilla.json"))
+          fake-routes {"https://api.github.com/repos/Ravendwyr/Chinchilla/releases"
+                       {:get (fn [_] {:status 200 :body fixture})}}]
+      (with-fake-routes-in-isolation fake-routes
         (is (= expected (github-api/expand-summary given game-track)))))))
 
 
@@ -96,5 +126,3 @@
 ;; it seems reasonable we should be able to add it to the user-catalog though as it otherwise meets
 ;; the minimum requirements for an ::addon-summary.
 
-;; todo: test for github-repo-releases--ravendwyr-chincilla.json
-;; it's an example of a github addon with two relevant assets available to download, one retail, one for classic
