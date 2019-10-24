@@ -891,6 +891,17 @@
         sorted-asc (utils/sort-semver-strings [latest-release version-running])]
     (= version-running (last sorted-asc))))
 
+;; installing addons from strings
+
+(defn-spec add+install-user-addon! (s/or :ok ::sp/addon, :failed nil?)
+  "convenience. parses string, adds to user catalog, installs addon, refreshes"
+  [addon-url string?]
+  (when-let [parse-results (catalog/parse-user-addon addon-url)]
+    (add-user-addon! parse-results)
+    (let [addon (expand-summary-wrapper parse-results)]
+      (install-addon addon (get-state :selected-addon-dir)) ;; todo: simplify install-addon interface
+      addon)))
+
 ;; import/export
 
 (defn-spec export-installed-addon-list nil?
@@ -952,7 +963,7 @@
 
   (load-installed-addons) ;; parse toc files in install-dir. do this first so we see *something* while catalog downloads (next)
 
-  (db-load-catalog)       ;; load the contents of the catalog into the database
+  (spy :info (db-load-catalog))       ;; load the contents of the catalog into the database
 
   (match-installed-addons-with-catalog) ;; match installed addons to those in catalog
 

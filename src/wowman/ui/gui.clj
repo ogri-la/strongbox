@@ -3,6 +3,7 @@
    [me.raynes.fs :as fs]
    [wowman
     [core :as core :refer [get-state state-bind colours]]
+    [catalog :as catalog]
     [logging :as logging]
     [specs :as sp]
     [utils :as utils :refer [items]]]
@@ -684,6 +685,25 @@
     (core/import-exported-file path)
     (core/refresh)))
 
+(defn import-addon-handler
+  []
+  (let [addon-url (ss/input "Enter URL of addon"
+                            :title "Addon URL"
+                            :value "https://github.com/")
+
+        spiel "Failed. URL must be:
+  * valid
+  * originate from github.com
+  * addon uses 'releases'
+  * latest release has a packaged 'asset'
+  * asset must be a .zip file"
+        
+        failure-warning #(ss/alert spiel)]
+    (if (core/add+install-user-addon! addon-url)
+      (core/refresh)
+      (failure-warning)))
+  nil)
+
 (defn build-catalog-menu
   []
   (let [catalog-to-id (fn [catalog]
@@ -737,6 +757,8 @@
 
         file-menu [(ss/action :name "Installed" :key "menu I" :mnemonic "i" :handler (switch-tab-handler INSTALLED-TAB))
                    (ss/action :name "Search" :key "menu H" :mnemonic "h" :handler (switch-tab-handler SEARCH-TAB))
+                   :separator
+                   (ss/action :name "Import addon" :handler (handler import-addon-handler))
                    :separator
                    (ss/action :name "Exit" :key "menu Q" :mnemonic "x" :handler (handler #(ss/dispose! newui)))]
 
