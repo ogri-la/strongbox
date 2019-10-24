@@ -58,6 +58,38 @@
       (doseq [[given expected] cases]
         (is (= expected (github-api/parse-user-addon given)))))))
 
+(deftest expand-addon-summary
+  (testing "expand-summary correctly extracts and adds additional properties"
+    (let [given {:uri "https://github.com/Aviana/HealComm"
+                 :updated-date "2019-10-09T17:40:04Z"
+                 :source "github"
+                 :source-id "Aviana/HealComm"
+                 :label "HealComm"
+                 :name "healcomm"
+                 :download-count 30946
+                 :category-list []}
+
+          game-track "retail"
+
+          expected {:uri "https://github.com/Aviana/HealComm"
+                    :updated-date "2019-10-09T17:40:04Z"
+                    :source "github"
+                    :source-id "Aviana/HealComm"
+                    :label "HealComm"
+                    :name "healcomm"
+                    :download-count 30946
+                    :category-list []
+
+                    :download-uri "https://github.com/Aviana/HealComm/releases/download/2.04/HealComm.zip"
+                    :version "2.04 Beta"
+                    }
+          
+          fixture (slurp (fixture-path "github-repo-releases--aviana-healcomm.json"))
+          fake-routes {"https://api.github.com/repos/Aviana/HealComm/releases"
+                       {:get (fn [_] {:status 200 :body fixture})}}]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (github-api/expand-summary given game-track)))))))
+
 
 ;; todo: test for github-repo-releases--necrosis-classic.json
 ;; it's an example of a github addon with no assets to download, thus no download-count to calculate
