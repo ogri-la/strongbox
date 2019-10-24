@@ -1,6 +1,5 @@
 (ns wowman.github-api
   (:require
-   [me.raynes.fs :as fs]
    [slugify.core :refer [slugify]]
    [clojure.spec.alpha :as s]
    [orchestra.spec.test :as st]
@@ -63,7 +62,8 @@
             source-id (when (and owner repo)
                         (format "%s/%s" owner repo))
             release-list (download-releases source-id)
-            latest-release (first release-list)
+            latest-release (first release-list) ;; releases must be used
+            _ (-> latest-release :assets nilable) ;; releases must be using uploaded assets
             download-count (->> release-list (map :assets) flatten (map :download_count) (apply +))]
 
            {:uri (str "https://github.com/" source-id)

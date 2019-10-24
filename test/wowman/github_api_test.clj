@@ -56,7 +56,17 @@
                  [" asdf " nil]
                  ["213" nil]]]
       (doseq [[given expected] cases]
-        (is (= expected (github-api/parse-user-addon given)))))))
+        (is (= expected (github-api/parse-user-addon given))))))
+
+  (testing "valid looking URLs with invalid release structure return nil"
+    (let [reasonable-looking-url "https://github.com/Robert388/Necrosis-classic"
+          expected nil
+
+          fixture (slurp (fixture-path "github-repo-releases--robert388-necrosis-classic.json"))
+          fake-routes {"https://api.github.com/repos/Robert388/Necrosis-classic/releases"
+                       {:get (fn [_] {:status 200 :body fixture})}}]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (github-api/parse-user-addon reasonable-looking-url)))))))
 
 (deftest expand-addon-summary
   (testing "expand-summary correctly extracts and adds additional properties"
@@ -81,9 +91,8 @@
                     :category-list []
 
                     :download-uri "https://github.com/Aviana/HealComm/releases/download/2.04/HealComm.zip"
-                    :version "2.04 Beta"
-                    }
-          
+                    :version "2.04 Beta"}
+
           fixture (slurp (fixture-path "github-repo-releases--aviana-healcomm.json"))
           fake-routes {"https://api.github.com/repos/Aviana/HealComm/releases"
                        {:get (fn [_] {:status 200 :body fixture})}}]
@@ -113,16 +122,28 @@
 
                     :download-uri "https://github.com/Ravendwyr/Chinchilla/releases/download/v2.10.0/Chinchilla-v2.10.0-classic.zip"
                     :version "v2.10.0-classic"}
-          
+
           fixture (slurp (fixture-path "github-repo-releases--ravendwyr-chinchilla.json"))
           fake-routes {"https://api.github.com/repos/Ravendwyr/Chinchilla/releases"
                        {:get (fn [_] {:status 200 :body fixture})}}]
       (with-fake-routes-in-isolation fake-routes
-        (is (= expected (github-api/expand-summary given game-track)))))))
+        (is (= expected (github-api/expand-summary given game-track))))))
 
+  (testing "addons that have no assets (and no right to be in the catalogue) are not downloaded without error"
+    (let [given {:uri "https://github.com/Robert388/Necrosis-classic"
+                 :updated-date "2019-10-09T17:40:04Z"
+                 :source "github"
+                 :source-id "Robert388/Necrosis-classic"
+                 :label "Necrosis-classic"
+                 :name "necrosis-classic"
+                 :download-count 30946
+                 :category-list []}
 
-;; todo: test for github-repo-releases--necrosis-classic.json
-;; it's an example of a github addon with no assets to download, thus no download-count to calculate
-;; it seems reasonable we should be able to add it to the user-catalog though as it otherwise meets
-;; the minimum requirements for an ::addon-summary.
+          expected nil
 
+          fixture (slurp (fixture-path "github-repo-releases--robert388-necrosis-classic.json"))
+          fake-routes {"https://api.github.com/repos/Robert388/Necrosis-classic/releases"
+                       {:get (fn [_] {:status 200 :body fixture})}}]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (github-api/expand-summary given "classic")))
+        (is (= expected (github-api/expand-summary given "retail")))))))
