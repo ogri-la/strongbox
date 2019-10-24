@@ -129,7 +129,7 @@
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (github-api/expand-summary given game-track))))))
 
-  (testing "addons that have no assets (and no right to be in the catalogue) are not downloaded without error"
+  (testing "addons that have no assets (and no right to be in the catalogue) are not downloaded and no errors occur"
     (let [given {:uri "https://github.com/Robert388/Necrosis-classic"
                  :updated-date "2019-10-09T17:40:04Z"
                  :source "github"
@@ -146,4 +146,26 @@
                        {:get (fn [_] {:status 200 :body fixture})}}]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (github-api/expand-summary given "classic")))
-        (is (= expected (github-api/expand-summary given "retail")))))))
+        (is (= expected (github-api/expand-summary given "retail"))))))
+
+  (testing "releases whose assets are only partially uploaded, due to an upload failure, are ignored"
+    (let [given {:uri "https://github.com/Aviana/HealComm"
+                 :updated-date "2019-10-09T17:40:04Z"
+                 :source "github"
+                 :source-id "Aviana/HealComm"
+                 :label "HealComm"
+                 :name "healcomm"
+                 :download-count 30946
+                 :category-list []}
+
+          game-track "retail"
+
+          expected nil
+
+          fixture (slurp (fixture-path "github-repo-releases--broken-assets.json"))
+          fake-routes {"https://api.github.com/repos/Aviana/HealComm/releases"
+                       {:get (fn [_] {:status 200 :body fixture})}}]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (github-api/expand-summary given game-track)))))))
+
+

@@ -36,3 +36,4 @@ dl "https://api.mmoui.com/v3/game/WOW/filedetails/24910.json" "wowinterface-api-
 # github api
 dl "https://api.github.com/repos/Ravendwyr/Chinchilla/releases" "github-repo-releases--ravendwyr-chinchilla.json" 
 dl "https://api.github.com/repos/Aviana/HealComm/releases" "github-repo-releases--aviana-healcomm.json"
+dl "https://api.github.com/repos/Aviana/HealComm/releases" "github-repo-releases--broken-assets.json"

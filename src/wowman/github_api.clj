@@ -22,14 +22,26 @@
 
 (def classic-regex #"^.+[\-_\.]?(classic)[\.-_]?.+$")
 
+(def supported-zip-mimes #{"application/zip"  "application/x-zip-compressed"})
+
 (defn group-assets
   [latest-release]
   (let [asset-list (:assets latest-release)
+
+        ;; ignore assets whose :content_type is *not* a known zip type
+        asset-list (filter #(-> % :content_type vector set (some supported-zip-mimes)) asset-list)
+
+        ;; ignore any assets that are not completely uploaded
+        ;; https://developer.github.com/v3/repos/releases/#response-for-upstream-failure
+        asset-list (filter #(-> % :state (= "uploaded")) asset-list)
+
         grouper (fn [asset]
                   (let [classic? (nilable
                                   (utils/named-regex-groups classic-regex [:classic] (:name asset)))
                         version (:name latest-release)] ;; "v2.10.0"
                     (if classic?
+                      ;; because we're pulling the version from the release rather than the asset,
+                      ;; tack on '-classic' if the asset looks like a classic release, otherwise version checks fail
                       (merge asset {:game-track "classic" :version (str version "-classic")})
                       (merge asset {:game-track "retail" :version version}))))
         asset-list (map grouper asset-list)]
@@ -40,11 +52,6 @@
   [addon-summary ::sp/addon-summary game-track ::sp/game-track]
   ;; download latest releases
   (let [release-list (download-releases (:source-id addon-summary))
-        ;; todo: filter releases by :state = "uploaded"
-        ;; todo: filter releases by content_type = "application/zip"
-        ;; ignore :prerelease = true for now, this is github after all
-
-        ;; todo: I should probably examine all releases rather than just the most recent.
         latest-release (first release-list)
         asset (-> latest-release group-assets (get game-track) first)]
     (if-not asset
