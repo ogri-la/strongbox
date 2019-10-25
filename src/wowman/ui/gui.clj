@@ -699,9 +699,10 @@
   * asset must be a .zip file"
         
         failure-warning #(ss/alert spiel)]
-    (if (core/add+install-user-addon! addon-url)
-      (core/refresh)
-      (failure-warning)))
+    (when addon-url
+      (if (core/add+install-user-addon! addon-url)
+        (core/refresh)
+        (failure-warning))))
   nil)
 
 (defn build-catalog-menu
@@ -758,8 +759,6 @@
         file-menu [(ss/action :name "Installed" :key "menu I" :mnemonic "i" :handler (switch-tab-handler INSTALLED-TAB))
                    (ss/action :name "Search" :key "menu H" :mnemonic "h" :handler (switch-tab-handler SEARCH-TAB))
                    :separator
-                   (ss/action :name "Import addon" :handler (handler import-addon-handler))
-                   :separator
                    (ss/action :name "Exit" :key "menu Q" :mnemonic "x" :handler (handler #(ss/dispose! newui)))]
 
         catalog-menu (build-catalog-menu)
@@ -769,7 +768,9 @@
                     :separator
                     (ss/action :name "Remove directory" :handler (async-handler core/remove-addon-dir!))]
 
-        impexp-menu [(ss/action :name "Export addon list" :handler (async-handler export-addon-list-handler))
+        impexp-menu [(ss/action :name "Import addon from Github" :handler (handler import-addon-handler))
+                     :separator
+                     (ss/action :name "Export addon list" :handler (async-handler export-addon-list-handler))
                      (ss/action :name "Import addon list" :handler (async-handler import-addon-list-handler))]
 
         cache-menu [(ss/action :name "Clear cache" :handler (async-handler core/delete-cache!))
