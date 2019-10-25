@@ -608,7 +608,7 @@
   (let [user-catalog-path (paths :user-catalog-file)
         user-catalog (get-create-user-catalog)
         tmp-catalog (catalog/new-catalog [addon-summary])
-        new-user-catalog (catalog/-merge-catalogs user-catalog tmp-catalog)]
+        new-user-catalog (catalog/merge-catalogs user-catalog tmp-catalog)]
     (catalog/write-catalog new-user-catalog user-catalog-path))
   nil)
 

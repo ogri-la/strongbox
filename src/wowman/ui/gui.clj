@@ -3,7 +3,6 @@
    [me.raynes.fs :as fs]
    [wowman
     [core :as core :refer [get-state state-bind colours]]
-    [catalog :as catalog]
     [logging :as logging]
     [specs :as sp]
     [utils :as utils :refer [items]]]
@@ -697,7 +696,7 @@
   * addon uses 'releases'
   * latest release has a packaged 'asset'
   * asset must be a .zip file"
-        
+
         failure-warning #(ss/alert spiel)]
     (when addon-url
       (if (core/add+install-user-addon! addon-url)

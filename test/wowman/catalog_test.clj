@@ -32,7 +32,7 @@
                     :addon-summary-list addon-list}]
       (is (= (catalog/format-catalog-data addon-list created updated) expected)))))
 
-(deftest merge-catalogs
+(deftest merge-curse-wowi-catalogs
   (testing "dates are correct after a merge"
     (let [aa {:datestamp "2001-01-01" :updated-datestamp "2001-01-02" :spec {:version 1} :addon-summary-list [] :total 0}
           ab {:datestamp "2001-01-03" :updated-datestamp "2001-01-04" :spec {:version 1} :addon-summary-list [] :total 0}
@@ -41,7 +41,12 @@
                     :updated-datestamp "2001-01-04"
                     :total 0
                     :addon-summary-list []}]
-      (is (= (catalog/-merge-catalogs aa ab) expected)))))
+      (is (= (catalog/-merge-curse-wowi-catalogs aa ab) expected)))))
+
+;; todo: add tests for catalog/merge-catalogs 
+;; - include cat-b precedence over cat-a
+;; - include merging behaviour (vs replacement)
+
 
 (deftest parse-user-addon
   (let [fake-routes {"https://api.github.com/repos/Aviana/HealComm/releases"

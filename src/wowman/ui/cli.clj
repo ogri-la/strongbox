@@ -41,7 +41,7 @@
   [_]
   (let [curseforge-catalog (find-catalog-local-path :curseforge)
         wowinterface-catalog (find-catalog-local-path :wowinterface)
-        catalog (catalog/merge-catalogs curseforge-catalog wowinterface-catalog)]
+        catalog (catalog/merge-curse-wowi-catalogs curseforge-catalog wowinterface-catalog)]
     (-> catalog
         (catalog/write-catalog (find-catalog-local-path :full))
 

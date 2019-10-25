@@ -91,7 +91,23 @@
   [addon-summary ::sp/addon-summary, catalog ::sp/catalog]
   (update-in catalog [:addon-summary-list] into [addon-summary]))
 
-;;
+(defn-spec merge-catalogs ::sp/catalog
+  "merges catalog `cat-b` over catalog `cat-a`.
+  earliest creation date preserved.
+  latest updated date preserved.
+  addon-summary-list is unique by `:source` and `:source-id` with differing values replaced by those in `cat-b`"
+  [cat-a ::sp/catalog, cat-b ::sp/catalog]
+  (let [created-date (first (sort [(:datestamp cat-a) (:datestamp cat-b)])) ;; earliest of the two catalogs
+        updated-date (last (sort [(:updated-datestamp cat-a) (:updated-datestamp cat-b)])) ;; most recent of the two catalogs
+        addons-a (:addon-summary-list cat-a)
+        addons-b (:addon-summary-list cat-b)
+        addon-summary-list (->> (concat addons-a addons-b) ;; join the two lists
+                                (group-by (comp :source-id :source)) ;; group by the key
+                                vals ;; drop the map
+                                (map (partial apply merge)))] ;; merge (not replace) the groups into single maps
+    (format-catalog-data addon-summary-list created-date updated-date)))
+
+;; 
 
 (defn de-dupe-wowinterface
   "at time of writing, wowinterface has 5 pairs of duplicate addons with slightly different labels
@@ -110,8 +126,8 @@
 
 ;;
 
-(defn-spec -merge-catalogs ::sp/catalog
-  [aa ::sp/catalog ab ::sp/catalog]
+(defn-spec -merge-curse-wowi-catalogs ::sp/catalog
+  [aa ::sp/catalog, ab ::sp/catalog]
   (let [;; this is 80% sanity check, 20% correctness
         ab (assoc ab :addon-summary-list (de-dupe-wowinterface (:addon-summary-list ab)))
 
@@ -134,6 +150,7 @@
         addon-list (remove #(some #{(:name %)} multiple-sources-key-set) addon-list)
         ;;_ (info "addons sans multiples:" (count addon-list))
 
+        ;; todo: move this to shorten-catalog
         ;; when there is a very large gap between updated-dates, drop one addon in favour of the other
         ;; at time of writing:
         ;; - filtering for > 2 years removes  231 of the 2356 addons overlapping, leaving 2125 addons appearing in both catalogs
@@ -218,11 +235,11 @@
     (when addon-summary-list
       (format-catalog-data (remove unmaintained? addon-summary-list) datestamp datestamp))))
 
-(defn-spec merge-catalogs ::sp/catalog
+(defn-spec merge-curse-wowi-catalogs ::sp/catalog
   [curseforge-catalog ::sp/extant-file, wowinterface-catalog ::sp/extant-file]
   (let [aa (utils/load-json-file curseforge-catalog)
         ab (utils/load-json-file wowinterface-catalog)]
-    (-merge-catalogs aa ab)))
+    (-merge-curse-wowi-catalogs aa ab)))
 
 ;;
 
