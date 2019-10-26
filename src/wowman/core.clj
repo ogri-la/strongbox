@@ -786,17 +786,15 @@
                                    :bad-data? (fn []
                                                 (error "please report this! https://github.com/ogri-la/wowman/issues")
                                                 (error "catalog *still* corrupted and cannot be loaded. try another catalog from the 'catalog' menu")
-                                                {})))
+                                                nil)))
 
-          catalog-data (catalog/read-catalog catalog-path :bad-data? bad-json-file-handler)
-
-          ;; merge selected catalog with user catalog
-          user-catalog-data (catalog/read-catalog (paths :user-catalog-file) :bad-data? {})]
-
-      (when-not (empty? catalog-data)
-        (-db-load-catalog catalog-data))
-      (when-not (empty? user-catalog-data)
-        (-db-load-catalog user-catalog-data)))))
+          catalog-data (utils/nilable
+                        (catalog/read-catalog catalog-path :bad-data? bad-json-file-handler))
+          user-catalog-data (utils/nilable
+                             (catalog/read-catalog (paths :user-catalog-file) :bad-data? (constantly nil)))
+          final-catalog (catalog/merge-catalogs catalog-data user-catalog-data)]
+      (when-not (empty? final-catalog)
+        (-db-load-catalog final-catalog)))))
 
 ;;
 ;; addon summary and toc merging

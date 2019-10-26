@@ -1,9 +1,9 @@
 (ns wowman.catalog-test
   (:require
    [clojure.test :refer [deftest testing is use-fixtures]]
+   ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [wowman
     [catalog :as catalog]
-    ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
     [test-helper :refer [fixture-path]]]
    [clj-http.fake :refer [with-fake-routes-in-isolation]]))
 
@@ -47,6 +47,38 @@
 ;; - include cat-b precedence over cat-a
 ;; - include merging behaviour (vs replacement)
 
+(deftest merge-catalogs
+  (let [addon1 {:uri "https://github.com/Aviana/HealComm"
+                :updated-date "2019-10-09T17:40:04Z"
+                :source "github"
+                :source-id "Aviana/HealComm"
+                :label "HealComm"
+                :name "healcomm"
+                :download-count 30946
+                :category-list []}
+
+        addon2 {:uri "https://github.com/Ravendwyr/Chinchilla"
+                :updated-date "2019-10-09T17:40:04Z"
+                :source "github"
+                :source-id "Ravendwyr/Chinchilla"
+                :label "Chinchilla"
+                :name "chinchilla"
+                :download-count 30946
+                :category-list []}
+
+        cat-a (catalog/new-catalog [addon1])
+        cat-b (catalog/new-catalog [addon2])
+
+        merged (catalog/new-catalog [addon1 addon2])
+
+        cases [[[nil nil] nil]
+               [[cat-a nil] cat-a]
+               [[nil cat-b] cat-b]
+               [[cat-a cat-b] merged]]]
+
+    (doseq [[[a b] expected] cases]
+      (testing (format "merge catalogs, case '%s'" [a b])
+        (is (= expected (catalog/merge-catalogs a b)))))))
 
 (deftest parse-user-addon
   (let [fake-routes {"https://api.github.com/repos/Aviana/HealComm/releases"

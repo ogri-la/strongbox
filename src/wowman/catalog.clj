@@ -91,21 +91,30 @@
   [addon-summary ::sp/addon-summary, catalog ::sp/catalog]
   (update-in catalog [:addon-summary-list] into [addon-summary]))
 
-(defn-spec merge-catalogs ::sp/catalog
+(defn-spec merge-catalogs (s/or :ok ::sp/catalog, :error nil?)
   "merges catalog `cat-b` over catalog `cat-a`.
   earliest creation date preserved.
   latest updated date preserved.
   addon-summary-list is unique by `:source` and `:source-id` with differing values replaced by those in `cat-b`"
-  [cat-a ::sp/catalog, cat-b ::sp/catalog]
-  (let [created-date (first (sort [(:datestamp cat-a) (:datestamp cat-b)])) ;; earliest of the two catalogs
-        updated-date (last (sort [(:updated-datestamp cat-a) (:updated-datestamp cat-b)])) ;; most recent of the two catalogs
-        addons-a (:addon-summary-list cat-a)
-        addons-b (:addon-summary-list cat-b)
-        addon-summary-list (->> (concat addons-a addons-b) ;; join the two lists
-                                (group-by (comp :source-id :source)) ;; group by the key
-                                vals ;; drop the map
-                                (map (partial apply merge)))] ;; merge (not replace) the groups into single maps
-    (format-catalog-data addon-summary-list created-date updated-date)))
+  [cat-a (s/nilable ::sp/catalog), cat-b (s/nilable ::sp/catalog)]
+  (let [matrix {;;[true true] ;; two non-empty catalogs, ideal case
+                [true false] cat-a ;; cat-b empty, return cat-a
+                [false true] cat-b ;; vice versa
+                [false false] nil} ;; everything sucks
+        not-empty? (complement empty?)
+        key [(not-empty? cat-a) (not-empty? cat-b)]]
+    (if (contains? matrix key)
+      (get matrix key)
+      (let [created-date (first (sort [(:datestamp cat-a) (:datestamp cat-b)])) ;; earliest of the two catalogs
+            updated-date (last (sort [(:updated-datestamp cat-a) (:updated-datestamp cat-b)])) ;; most recent of the two catalogs
+            addons-a (:addon-summary-list cat-a)
+            addons-b (:addon-summary-list cat-b)
+            addon-summary-list (->> (concat addons-a addons-b) ;; join the two lists
+                                    (group-by (juxt :source-id :source)) ;; group by the key
+                                    vals ;; drop the map
+                                    (map (partial apply merge))) ;; merge (not replace) the groups into single maps
+            ]
+        (format-catalog-data addon-summary-list created-date updated-date)))))
 
 ;; 
 
