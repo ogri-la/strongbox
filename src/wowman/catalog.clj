@@ -25,7 +25,7 @@
     (try
       (if-let [dispatch-fn (get dispatch-map key)]
         (dispatch-fn addon-summary game-track)
-        (error (format "addon '%s' is from source '%s' that isn't supported" (:label addon-summary) key)))
+        (error (format "addon '%s' is from source '%s' that is unsupported" (:label addon-summary) key)))
       (catch Exception e
         (error e "unhandled exception attempting to expand addon summary")
         (error "please report this! https://github.com/ogri-la/wowman/issues")))))
@@ -44,15 +44,13 @@
      :addon-summary-list addon-list}))
 
 (defn read-catalog
-  "read catalog data from given `catalog-path`"
-  [catalog-path & {:keys [bad-data?]}]
-  ;; todo: cheshire claims to be twice as fast: https://github.com/dakrone/cheshire#speed
-  (if bad-data?
-    (utils/load-json-file-safely catalog-path :bad-data? bad-data?)
-    (utils/load-json-file catalog-path)))
+  [catalog-path & {:as opts}]
+  ;; cheshire claims to be twice as fast: https://github.com/dakrone/cheshire#speed
+  ;; consolidate catalog access here
+  (apply utils/load-json-file-safely (apply concat [catalog-path] opts)))
 
 (defn-spec write-catalog ::sp/extant-file
-  "write catalog to given `output-file` as JSON. returns path to the output file"
+  "write catalog to given `output-file` as JSON. returns path to output file"
   [catalog-data ::sp/catalog, output-file ::sp/file]
   (utils/dump-json-file output-file catalog-data)
   (info "wrote" output-file)
@@ -73,23 +71,17 @@
 
 ;;
 
-(defn-spec parse-user-addon (s/or :ok ::sp/addon-summary, :error nil?)
-  "given a string, figures out the source and dispatches to that source logic.
-  supports 'source:source-id' syntax as well as good old fashioned URLs"
+(defn-spec parse-user-string (s/or :ok ::sp/addon-summary, :error nil?)
+  "given a string, figures out the addon source (github, etc) and dispatches accordingly."
   [uin string?]
-  (let [dispatch-map {"github.com" github-api/parse-user-addon
-                      "www.github.com" github-api/parse-user-addon ;; alias
+  (let [dispatch-map {"github.com" github-api/parse-user-string
+                      "www.github.com" github-api/parse-user-string ;; alias
                       }]
     (try
-      (when-let [f (->> uin utils/unmangle-https-url java.net.URL. .getHost (get dispatch-map))]
+      (when-let [f (some->> uin utils/unmangle-https-url java.net.URL. .getHost (get dispatch-map))]
         (f uin))
       (catch java.net.MalformedURLException mue
         (debug "not a url")))))
-
-(defn-spec add-addon-summary-to-catalog ::sp/catalog
-  "inserts the given addon summary into the given catalog, that's all"
-  [addon-summary ::sp/addon-summary, catalog ::sp/catalog]
-  (update-in catalog [:addon-summary-list] into [addon-summary]))
 
 (defn-spec merge-catalogs (s/or :ok ::sp/catalog, :error nil?)
   "merges catalog `cat-b` over catalog `cat-a`.
@@ -100,13 +92,13 @@
   (let [matrix {;;[true true] ;; two non-empty catalogs, ideal case
                 [true false] cat-a ;; cat-b empty, return cat-a
                 [false true] cat-b ;; vice versa
-                [false false] nil} ;; everything sucks
+                [false false] nil}
         not-empty? (complement empty?)
         key [(not-empty? cat-a) (not-empty? cat-b)]]
     (if (contains? matrix key)
       (get matrix key)
-      (let [created-date (first (sort [(:datestamp cat-a) (:datestamp cat-b)])) ;; earliest of the two catalogs
-            updated-date (last (sort [(:updated-datestamp cat-a) (:updated-datestamp cat-b)])) ;; most recent of the two catalogs
+      (let [created-date (first (sort [(:datestamp cat-a) (:datestamp cat-b)])) ;; earliest
+            updated-date (last (sort [(:updated-datestamp cat-a) (:updated-datestamp cat-b)])) ;; latest
             addons-a (:addon-summary-list cat-a)
             addons-b (:addon-summary-list cat-b)
             addon-summary-list (->> (concat addons-a addons-b) ;; join the two lists

@@ -197,7 +197,9 @@
   [x]
   (cond
     (nil? x) nil
-    (empty? x) nil
+    (false? x) nil
+    (and (coll? x)
+         (empty? x)) nil
     (and (string? x)
          (clojure.string/blank? x)) nil
     :else x))
@@ -462,6 +464,8 @@
 
 ;; https://stackoverflow.com/questions/25892277/clojure-regex-named-groups#answer-25892938
 (defn named-regex-groups
+  "returns a map of values that were matched in the given regular expression using groups
+  for example: (named-regex-groups #'(.*)' [:foo] 'bar') => {:foo 'bar'}"
   [regex groups value]
   (zipmap groups (rest (re-find regex value))))
 
@@ -503,7 +507,7 @@
                              (:host parsed)
                              (or (:path parsed) ""))
 
-      ;; completely unparseable
+      ;; unparseable
       :else nil)))
 
 ;; https://clojure.atlassian.net/browse/CLJ-2007

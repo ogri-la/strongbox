@@ -546,25 +546,27 @@
                         {;; hack, catalog/format-catalog-data orders the addon summary make them uncomparable
                          :total 1
                          :addon-summary-list [user-addon]})]
+
     (testing "user addon is successfully added to the user catalog, creating it if it doesn't exist"
       (with-running-app
         (core/add-user-addon! user-addon)
         (is (= expected (catalog/read-catalog (core/paths :user-catalog-file)))))))
 
-  (testing "adding addons to the user catalogue is idempotent"
-    (let [user-addon {:uri "https://github.com/Aviana/HealComm"
-                      :updated-date "2019-10-09T17:40:01Z"
-                      :source "github"
-                      :source-id "Aviana/HealComm"
-                      :label "HealComm"
-                      :name "healcomm"
-                      :download-count 30946
-                      :category-list []}
+  (let [user-addon {:uri "https://github.com/Aviana/HealComm"
+                    :updated-date "2019-10-09T17:40:01Z"
+                    :source "github"
+                    :source-id "Aviana/HealComm"
+                    :label "HealComm"
+                    :name "healcomm"
+                    :download-count 30946
+                    :category-list []}
 
-          expected (merge (catalog/new-catalog [])
-                          {;; hack, catalog/format-catalog-data orders the addon summary make them uncomparable
-                           :total 1
-                           :addon-summary-list [user-addon]})]
+        expected (merge (catalog/new-catalog [])
+                        {;; hack, catalog/format-catalog-data orders the addon summary make them uncomparable
+                         :total 1
+                         :addon-summary-list [user-addon]})]
+
+    (testing "adding addons to the user catalogue is idempotent"
       (with-running-app
         (core/add-user-addon! user-addon)
         (core/add-user-addon! user-addon)

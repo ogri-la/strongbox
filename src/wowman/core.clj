@@ -595,6 +595,7 @@
 
 
 (defn-spec get-create-user-catalog ::sp/catalog
+  "returns the contents of the user catalog, creating one if necessary"
   []
   (let [user-catalog-path (paths :user-catalog-file)]
     (catalog/read-catalog
@@ -785,13 +786,12 @@
                                    catalog-path
                                    :bad-data? (fn []
                                                 (error "please report this! https://github.com/ogri-la/wowman/issues")
-                                                (error "catalog *still* corrupted and cannot be loaded. try another catalog from the 'catalog' menu")
-                                                nil)))
+                                                (error "catalog *still* corrupted and cannot be loaded. try another catalog from the 'catalog' menu"))))
 
           catalog-data (utils/nilable
                         (catalog/read-catalog catalog-path :bad-data? bad-json-file-handler))
           user-catalog-data (utils/nilable
-                             (catalog/read-catalog (paths :user-catalog-file) :bad-data? (constantly nil)))
+                             (catalog/read-catalog (paths :user-catalog-file) :bad-data? nil))
           final-catalog (catalog/merge-catalogs catalog-data user-catalog-data)]
       (when-not (empty? final-catalog)
         (-db-load-catalog final-catalog)))))
@@ -892,9 +892,10 @@
 ;; installing addons from strings
 
 (defn-spec add+install-user-addon! (s/or :ok ::sp/addon, :failed nil?)
-  "convenience. parses string, adds to user catalog, installs addon, refreshes"
+  "convenience. parses string, adds to user catalog and then installs addon.
+  relies on UI to call refresh (or not)"
   [addon-url string?]
-  (when-let [parse-results (catalog/parse-user-addon addon-url)]
+  (when-let [parse-results (catalog/parse-user-string addon-url)]
     (add-user-addon! parse-results)
     (let [addon (expand-summary-wrapper parse-results)]
       (install-addon addon (get-state :selected-addon-dir)) ;; todo: simplify install-addon interface
@@ -961,7 +962,7 @@
 
   (load-installed-addons) ;; parse toc files in install-dir. do this first so we see *something* while catalog downloads (next)
 
-  (spy :info (db-load-catalog))       ;; load the contents of the catalog into the database
+  (db-load-catalog)       ;; load the contents of the catalog into the database
 
   (match-installed-addons-with-catalog) ;; match installed addons to those in catalog
 

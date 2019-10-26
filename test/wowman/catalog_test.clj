@@ -43,10 +43,6 @@
                     :addon-summary-list []}]
       (is (= (catalog/-merge-curse-wowi-catalogs aa ab) expected)))))
 
-;; todo: add tests for catalog/merge-catalogs 
-;; - include cat-b precedence over cat-a
-;; - include merging behaviour (vs replacement)
-
 (deftest merge-catalogs
   (let [addon1 {:uri "https://github.com/Aviana/HealComm"
                 :updated-date "2019-10-09T17:40:04Z"
@@ -77,10 +73,39 @@
                [[cat-a cat-b] merged]]]
 
     (doseq [[[a b] expected] cases]
-      (testing (format "merge catalogs, case '%s'" [a b])
-        (is (= expected (catalog/merge-catalogs a b)))))))
+      (testing (format "merging of two catalogs, case '%s'" [a b])
+        (is (= expected (catalog/merge-catalogs a b))))))
 
-(deftest parse-user-addon
+  (let [addon1 {:uri "https://github.com/Aviana/HealComm"
+                :updated-date "2001-01-01T00:00:00Z" ;; <=
+                :description "???" ;; <=
+                :source "github"
+                :source-id "Aviana/HealComm"
+                :label "HealComm"
+                :name "healcomm"
+                :download-count 30946
+                :category-list []}
+
+        addon2 {:uri "https://github.com/Aviana/HealComm"
+                :updated-date "2019-10-09T17:40:04Z" ;; <=
+                :source "github"
+                :source-id "Aviana/HealComm"
+                :label "HealComm"
+                :name "healcomm"
+                :download-count 30946
+                :category-list []}
+
+        cat-a (catalog/new-catalog [addon1])
+        cat-b (catalog/new-catalog [addon2])
+
+        ;; addon1 has been overwritten by data in addon2
+        ;; this means changes will accumulate until the addon summary is refreshed
+        merged (catalog/new-catalog [(assoc addon2 :description "???")])]
+
+    (testing "old catalogue data is replaced by newer catalog data"
+      (is (= merged (catalog/merge-catalogs cat-a cat-b))))))
+
+(deftest parse-user-string-router
   (let [fake-routes {"https://api.github.com/repos/Aviana/HealComm/releases"
                      {:get (fn [req] {:status 200 :body (slurp (fixture-path "github-repo-releases--aviana-healcomm.json"))})}}]
     (with-fake-routes-in-isolation fake-routes
@@ -96,5 +121,18 @@
             cases [["https://github.com/Aviana/HealComm" github-api]]]
         (doseq [[given expected] cases]
           (testing (str "user input is routed to the correct parser")
-            (is (= expected (catalog/parse-user-addon given)))))))))
+            (is (= expected (catalog/parse-user-string given))))))))
+
+  (let [cases [""
+               "foo"
+               "https"
+               "https://"
+               "https://foo"
+               "https://foo.com"
+               "//foo.com"
+               "foo.com"]
+        expected nil]
+    (doseq [given cases]
+      (testing (format "parsing bad user string input, case: '%s'" given)
+        (is (= expected (catalog/parse-user-string given)))))))
 

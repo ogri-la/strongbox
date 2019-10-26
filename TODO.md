@@ -102,7 +102,8 @@ for an addon on github to be installable by wowman, it must:
 
 ## todo bucket
 
-* 
+* simplify `install-addon` interface in core.clj
+    - we need to provide an installation directory which can be pulled from the application state
 * rename references of 'uri' to 'url'
 * version pinning
     - user can opt to install a specific release of an addon
