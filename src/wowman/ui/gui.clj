@@ -418,10 +418,16 @@
                                      (.setCursor grid (cursor :hand))
                                      (.setCursor grid (cursor :default))))))
 
+        uri-template "<html><font color='blue'>&nbsp;↪ %s</font></html>"
         uri-renderer (fn [x]
                        (when x
-                         (let [label (if (= (subs x 12 22) "curseforge") "curseforge" "wowinterface")]
-                           (str "<html><font color='blue'>&nbsp;↪ " label "</font></html>"))))]
+                         (let [uri (java.net.URL. x)
+                               label (case (.getHost uri)
+                                       "www.curseforge.com" "curseforge"
+                                       "www.wowinterface.com" "wowinterface"
+                                       "github.com" "github"
+                                       "???")]
+                           (format uri-template label))))]
 
     (ss/listen grid :mouse-motion hand-cursor-on-hover)
     (ss/listen grid :mouse-clicked go-link-clicked)
@@ -681,6 +687,26 @@
     (core/import-exported-file path)
     (core/refresh)))
 
+(defn import-addon-handler
+  []
+  (let [addon-url (ss/input "Enter URL of addon"
+                            :title "Addon URL"
+                            :value "https://github.com/")
+
+        spiel "Failed. URL must be:
+  * valid
+  * originate from github.com
+  * addon uses 'releases'
+  * latest release has a packaged 'asset'
+  * asset must be a .zip file"
+
+        failure-warning #(ss/alert spiel)]
+    (when addon-url
+      (if (core/add+install-user-addon! addon-url)
+        (core/refresh)
+        (failure-warning))))
+  nil)
+
 (defn build-catalog-menu
   []
   (let [catalog-to-id (fn [catalog]
@@ -744,7 +770,9 @@
                     :separator
                     (ss/action :name "Remove directory" :handler (async-handler core/remove-addon-dir!))]
 
-        impexp-menu [(ss/action :name "Export addon list" :handler (async-handler export-addon-list-handler))
+        impexp-menu [(ss/action :name "Import addon from Github" :handler (handler import-addon-handler))
+                     :separator
+                     (ss/action :name "Export addon list" :handler (async-handler export-addon-list-handler))
                      (ss/action :name "Import addon list" :handler (async-handler import-addon-list-handler))]
 
         cache-menu [(ss/action :name "Clear cache" :handler (async-handler core/delete-cache!))

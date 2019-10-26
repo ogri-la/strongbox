@@ -8,11 +8,59 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### done
 
+* github as addon host
+    - ref
+        - https://github.com/ogri-la/wowman/issues/68
+        - https://github.com/search?q=wow+addon&type=Repositories
+    - github source type supported in catalogues and gui
+        - done
+    - github addons can be installed
+        - github-api/expand-summary added
+            - done
+    - curseforge .pkgmeta parsed and the correct directory name used
+        - https://github.com/oUF-wow/oUF/wiki/Embedding#packagers
+        - oUF .zip downloads have a directory name with the version in it
+            - "oUF-1.8.1"
+            - which will fuck us
+            - adibags does this as well. I suspect most are doing this
+        - https://authors.curseforge.com/knowledge-base/projects/3451-automatic-packaging#release-types
+        - urgh. no. stop. wait
+            - ok, after a short look at 10 github hosted addons there is a lot of variety
+                - too much
+            - only addons that fit a very specific criteria will be installable:
+
+---
+
+for an addon on github to be installable by wowman, it must:
+
+1. be using 'releases'
+2. have at least one ready-to-go asset attached to the release
+3. if the word 'classic' is present in the asset name, it's assumed to belong to the classic game track
+4. if there are multiple assets in a release and no way to distinguish between, 'retail' is assumed and the first retail asset will be used
+5. if a release is determined to be uninstallable, the next release will attempted 
+
+(do we do this with wowi and curse? check ...)
+6. repeat until all releases in the first page of github results have been attempted
+
+---
+
+        - done
+
+    - refresh search results
+        - new github addon is not present for some reason
+        - can't replicate
+        - done
+* allow user to accumulate addons in a 'user' catalogue
+    - why? the addon may exist on github or similar where no catalogue is maintained
+    - duplicate addons and categories are handled without fuss in the db
+        - done
+    - addon is automatically installed when 'added' through the gui
+        - done
+* add 'source' properties to curseforge and wowinterface catalogs
+    - done
+
 ### todo
 
-* github as addon host
-    - https://github.com/ogri-la/wowman/issues/68
-    - https://github.com/search?q=wow+addon&type=Repositories
 * gitlab as addon host
     - https://gitlab.com/search?search=wow+addon
 * add TUKUI addon host
@@ -20,12 +68,17 @@ see CHANGELOG.md for a more formal list of changes by release
     - ELVUI is their flagship addon
     - they have json that can be scraped
         - https://www.tukui.org/api.php
-
 * allow user to specify their own catalogs
     - a url to a catalog that is downloaded and included while loading up the db
+    - different from the 'user catalog'
 * allow user to accumulate addons in a 'user' catalogue
-    - the addon may exist on github or similar where no catalogue is maintained
-
+    - add support for finding addons by url for other hosts
+        - wowinterface
+        - curseforge
+    - how is this catalogue updated?
+        - it will contain information that will remain static after initially created
+        - typically wowman downloads the updated catalogue from remote
+            - that won't happen here
 * mac support
     - must be included in CI
 * windows support
@@ -34,9 +87,7 @@ see CHANGELOG.md for a more formal list of changes by release
     - https://www.infoq.com/news/2019/03/jep-343-jpackage/
 * add a sha256 sum to release file
     - will prevent me from having to download release to generate a sumfile
-
 * it's possible for `.part` files to exist and not be cleaned up
-* add 'source' properties to curseforge and wowinterface catalogs
 * remove the 'curse-crap-redirect-strategy' in http.clj
     - was used when curse *website* (not api) would redirect us to an unencoded path
 * bug, if an addon directory goes missing between restarts, user configuration is lost
@@ -51,6 +102,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket
 
+* simplify `install-addon` interface in core.clj
+    - we need to provide an installation directory which can be pulled from the application state
+* rename references of 'uri' to 'url'
 * version pinning
     - user can opt to install a specific release of an addon
     - automatic updates for that addon are thereafter blocked
