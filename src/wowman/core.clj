@@ -62,6 +62,8 @@
         cfg-file (join config-dir "config.json") ;; /home/$you/.config/wowman/config.json
         etag-db-file (join data-dir "etag-db.json") ;; /home/$you/.local/share/wowman/etag-db.json
 
+        user-catalog (join data-dir "user-catalog.json")
+
         ;; ensure path ends with `-file` or `-dir` or `-uri`
         path-map {:config-dir config-dir
                   :data-dir data-dir
@@ -69,6 +71,7 @@
                   :cfg-file cfg-file
                   :etag-db-file etag-db-file
 
+                  :user-catalog-file user-catalog
                   :catalog-dir data-dir}]
     path-map))
 
@@ -172,12 +175,24 @@
       row
       (assoc row :game-track-list track-list))))
 
+(defn db-preserve-integer-source-id-if-possible
+  "source-id for 99.9999% of addons is an integer.
+  this doesn't hold true for addons on Github or for other hosts in the future, so the database
+  needs to store the value as a string. When coming out of the database, it's also string - it's type has been lost.
+  for no good reason, try to preserve it here"
+  [source-id]
+  (try
+    (Integer. source-id)
+    (catch Exception e
+      source-id)))
+
 (defn db-coerce-catalog-values
   "further per-row processing of catalog data after retrieving it from the database"
   [row]
   (when row
     (->> row
-         (utils/coerce-map-values {:category-list db-split-category-list})
+         (utils/coerce-map-values {:source-id db-preserve-integer-source-id-if-possible
+                                   :category-list db-split-category-list})
          (db-gen-game-track-list))))
 
 (defn db-search
@@ -579,6 +594,27 @@
 ;;
 
 
+(defn-spec get-create-user-catalog ::sp/catalog
+  "returns the contents of the user catalog, creating one if necessary"
+  []
+  (let [user-catalog-path (paths :user-catalog-file)]
+    (catalog/read-catalog
+     (if (fs/exists? user-catalog-path)
+       user-catalog-path
+       (catalog/write-empty-catalog! user-catalog-path)))))
+
+(defn-spec add-user-addon! nil?
+  "adds a single addon to the user catalog"
+  [addon-summary ::sp/addon-summary]
+  (let [user-catalog-path (paths :user-catalog-file)
+        user-catalog (get-create-user-catalog)
+        tmp-catalog (catalog/new-catalog [addon-summary])
+        new-user-catalog (catalog/merge-catalogs user-catalog tmp-catalog)]
+    (catalog/write-catalog new-user-catalog user-catalog-path))
+  nil)
+
+;;
+
 (defn find-in-db [installed-addon toc-keys catalog-keys]
   (let [catalog-keys (if (vector? catalog-keys) catalog-keys [catalog-keys]) ;; ["source" "source_id"] => ["source" "source_id"], "name" => ["name"]
         sql-arg-template (clojure.string/join " AND " (mapv #(format "%s = ?" %) catalog-keys)) ;; "source = ? AND source_id = ?", "name = ?"
@@ -683,79 +719,82 @@
   []
   (> (get-db :catalog-size) 0))
 
+(defn-spec -db-load-catalog nil?
+  [catalog-data ::sp/catalog]
+  (let [ds (get-state :db)
+        {:keys [addon-summary-list]} catalog-data
+
+        addon-categories (mapv (fn [{:keys [source-id source category-list]}]
+                                 (mapv (fn [category]
+                                         [source-id source category]) category-list)) addon-summary-list)
+        ;; todo: we have addons in multiple identical categories. fix this in catalog.clj
+        ;; see curseforge:319346
+        addon-categories (->> addon-categories utils/shallow-flatten set vec)
+
+        ;; distinct list of :categories
+        category-list (->> addon-categories (mapv rest) set vec)
+
+        xform-row (fn [row]
+                    (let [ignored [:category-list :age :game-track-list :created-date]
+                          mapping {:source-id :source_id
+                                   :alt-name :alt_name
+                                   :download-count :download_count
+                                   ;;:created-date :created_date ;; curseforge only and unused
+                                   :updated-date :updated_date}
+                          new {:retail_track (utils/in? "retail" (:game-track-list row))
+                               :classic_track (utils/in? "classic" (:game-track-list row))}]
+
+                      (-> row (utils/dissoc-all ignored) (rename-keys mapping) (merge new))))]
+
+    (jdbc/with-transaction [tx ds]
+      ;;    1.703391 msec
+      ;; ~100 items
+      (time (sql/insert-multi! ds :category [:source :name] category-list))
+      ;;  871.427154 msec
+      ;; ~10k items
+      (time (doseq [row addon-summary-list]
+              (sql/insert! ds :catalog (xform-row row))))
+
+      ;; 1337.340542 msec
+      ;; ~20k items (avg 2 categories per addon)
+      (time (let [category-map (db-query "select name, id from category")
+                  category-map (into {} (mapv (fn [{:keys [name id]}]
+                                                {name id}) category-map))]
+
+              (doseq [[source-id source category] addon-categories]
+                (sql/insert! ds :addon_category {:addon_source source
+                                                 :addon_source_id source-id
+                                                 :category_id (get category-map category)})))))
+
+    (swap! state assoc :catalog-size (get-db :catalog-size)))
+  nil)
+
 (defn-spec db-load-catalog nil?
   []
   (when-not (db-catalog-loaded?)
-    (let [ds (get-state :db)
-          catalog-source (get-catalog-source)
+    (let [catalog-source (get-catalog-source)
           catalog-path (catalog-local-path catalog-source)
           _ (info (format "loading catalog '%s'" (name (get-state :cfg :selected-catalog))))
           _ (debug "loading addon summaries from catalog into database:" catalog-path)
-
-          ;; total hack and to be removed once curseforge/wowinterface catalogs have a :source field
-          missing-source (if (= (:name catalog-source) :curseforge)
-                           "curseforge"
-                           "wowinterface")
 
           ;; download from remote and try again when json can't be read
           bad-json-file-handler (fn []
                                   (warn "catalog corrupted. re-downloading and trying again.")
                                   (fs/delete catalog-path)
                                   (download-catalog)
-                                  (utils/load-json-file-safely
+                                  (catalog/read-catalog
                                    catalog-path
                                    :bad-data? (fn []
                                                 (error "please report this! https://github.com/ogri-la/wowman/issues")
-                                                (error "catalog *still* corrupted and cannot be loaded. try another catalog from the 'catalog' menu")
-                                                {})))
+                                                (error "catalog *still* corrupted and cannot be loaded. try another catalog from the 'catalog' menu"))))
 
-          {:keys [addon-summary-list]} (utils/load-json-file-safely catalog-path :bad-data? bad-json-file-handler)
-
-          addon-categories (mapv (fn [{:keys [source-id source category-list]}]
-                                   (mapv (fn [category]
-                                           [source-id (or source missing-source) category]) category-list)) addon-summary-list)
-          ;; todo: we have addons in multiple identical categories. fix this in catalog.clj
-          ;; see curseforge:319346
-          addon-categories (->> addon-categories utils/shallow-flatten set vec)
-
-          ;; distinct list of :categories
-          category-list (->> addon-categories (mapv rest) set vec)
-
-          xform-row (fn [row]
-                      (let [ignored [:category-list :age :game-track-list :created-date]
-                            mapping {:source-id :source_id
-                                     :alt-name :alt_name
-                                     :download-count :download_count
-                                     ;;:created-date :created_date ;; curseforge only and unused
-                                     :updated-date :updated_date}
-                            new {:retail_track (utils/in? "retail" (:game-track-list row))
-                                 :classic_track (utils/in? "classic" (:game-track-list row))}
-
-                            absent-source {:source (or (:source row) missing-source)}]
-                        (-> row (utils/dissoc-all ignored) (rename-keys mapping) (merge new) (merge absent-source))))]
-
-      (jdbc/with-transaction [tx ds]
-        ;;    1.703391 msec
-        ;; ~100 items
-        (time (sql/insert-multi! ds :category [:source :name] category-list))
-        ;;  871.427154 msec
-        ;; ~10k items
-        (time (doseq [row addon-summary-list]
-                (sql/insert! ds :catalog (xform-row row))))
-
-        ;; 1337.340542 msec
-        ;; ~20k items (avg 2 categories per addon)
-        (time (let [category-map (db-query "select name, id from category")
-                    category-map (into {} (mapv (fn [{:keys [name id]}]
-                                                  {name id}) category-map))]
-
-                (doseq [[source-id source category] addon-categories]
-                  (sql/insert! ds :addon_category {:addon_source (or source missing-source)
-                                                   :addon_source_id source-id
-                                                   :category_id (get category-map category)})))))
-
-      (swap! state assoc :catalog-size (get-db :catalog-size))
-      nil)))
+          catalog-data (utils/nilable
+                        (catalog/read-catalog catalog-path :bad-data? bad-json-file-handler))
+          user-catalog-data (utils/nilable
+                             (catalog/read-catalog (paths :user-catalog-file) :bad-data? nil))
+          final-catalog (catalog/merge-catalogs catalog-data user-catalog-data)]
+      (when-not (empty? final-catalog)
+        (-db-load-catalog final-catalog)))))
 
 ;;
 ;; addon summary and toc merging
@@ -791,10 +830,7 @@
     (update-installed-addon-list! (mapv check-for-update (get-state :installed-addon-list)))
     (info "done checking for updates")))
 
-;;
 ;; ui interface
-;; 
-
 
 (defn-spec delete-cache! nil?
   "deletes the 'cache' directory that contains scraped html files and the etag db file.
@@ -852,6 +888,18 @@
         version-running (wowman-version)
         sorted-asc (utils/sort-semver-strings [latest-release version-running])]
     (= version-running (last sorted-asc))))
+
+;; installing addons from strings
+
+(defn-spec add+install-user-addon! (s/or :ok ::sp/addon, :failed nil?)
+  "convenience. parses string, adds to user catalog and then installs addon.
+  relies on UI to call refresh (or not)"
+  [addon-url string?]
+  (when-let [parse-results (catalog/parse-user-string addon-url)]
+    (add-user-addon! parse-results)
+    (let [addon (expand-summary-wrapper parse-results)]
+      (install-addon addon (get-state :selected-addon-dir)) ;; todo: simplify install-addon interface
+      addon)))
 
 ;; import/export
 

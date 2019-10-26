@@ -8,8 +8,9 @@
    ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [wowman
     [main :as main]
+    [catalog :as catalog]
     [utils :as utils]
-    [test-helper :as helper :refer [fixture-path temp-path data-dir]]
+    [test-helper :as helper :refer [fixture-path temp-path data-dir with-running-app]]
     [core :as core]]))
 
 (use-fixtures :each helper/fixture-tempcwd)
@@ -249,7 +250,7 @@
 
           fake-routes {;; catalog
                        "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
-                       {:get (fn [req] {:status 200 :body (utils/to-json {:addon-summary-list addon-summary-list})})}
+                       {:get (fn [req] {:status 200 :body (utils/to-json (catalog/new-catalog addon-summary-list))})}
 
                        ;; every-addon
                        "https://addons-ecs.forgesvc.net/api/v2/addon/1"
@@ -344,7 +345,7 @@
 
           fake-routes {;; catalog
                        "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
-                       {:get (fn [req] {:status 200 :body (utils/to-json {:addon-summary-list [catalog]})})}
+                       {:get (fn [req] {:status 200 :body (utils/to-json (catalog/new-catalog [catalog]))})}
 
                        ;; every-addon
                        "https://addons-ecs.forgesvc.net/api/v2/addon/0"
@@ -528,3 +529,47 @@
 
         (finally
           (core/stop app-state))))))
+
+;;
+
+(deftest add-user-addon-to-user-catalog
+  (let [user-addon {:uri "https://github.com/Aviana/HealComm"
+                    :updated-date "2019-10-09T17:40:01Z"
+                    :source "github"
+                    :source-id "Aviana/HealComm"
+                    :label "HealComm"
+                    :name "healcomm"
+                    :download-count 30946
+                    :category-list []}
+
+        expected (merge (catalog/new-catalog [])
+                        {;; hack, catalog/format-catalog-data orders the addon summary make them uncomparable
+                         :total 1
+                         :addon-summary-list [user-addon]})]
+
+    (testing "user addon is successfully added to the user catalog, creating it if it doesn't exist"
+      (with-running-app
+        (core/add-user-addon! user-addon)
+        (is (= expected (catalog/read-catalog (core/paths :user-catalog-file)))))))
+
+  (let [user-addon {:uri "https://github.com/Aviana/HealComm"
+                    :updated-date "2019-10-09T17:40:01Z"
+                    :source "github"
+                    :source-id "Aviana/HealComm"
+                    :label "HealComm"
+                    :name "healcomm"
+                    :download-count 30946
+                    :category-list []}
+
+        expected (merge (catalog/new-catalog [])
+                        {;; hack, catalog/format-catalog-data orders the addon summary make them uncomparable
+                         :total 1
+                         :addon-summary-list [user-addon]})]
+
+    (testing "adding addons to the user catalogue is idempotent"
+      (with-running-app
+        (core/add-user-addon! user-addon)
+        (core/add-user-addon! user-addon)
+        (core/add-user-addon! user-addon)
+        (is (= expected (catalog/read-catalog (core/paths :user-catalog-file))))))))
+

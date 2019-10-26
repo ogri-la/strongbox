@@ -54,7 +54,7 @@
   (try
     (logging/change-log-level :debug)
     (if path
-      (if (some #{path} [:core :http :main :toc :utils :curseforge-api :zip :catalog :cli :gui :wowinterface :wowinterface-api])
+      (if (some #{path} [:core :http :main :toc :utils :curseforge-api :zip :catalog :cli :gui :wowinterface :wowinterface-api :github-api])
         (clojure.test/run-all-tests (re-pattern (str "wowman." (name path) "-test")))
         (error "unknown test file:" path))
       (clojure.test/run-all-tests #"wowman\..*-test"))

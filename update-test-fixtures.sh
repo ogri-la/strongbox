@@ -32,3 +32,8 @@ dl "https://www.wowinterface.com/downloads/info9085-Dominos.html" "wowinterface-
 dl "https://api.mmoui.com/v3/game/WOW/filelist.json" "wowinterface-api--complete.json"
 dl "https://api.mmoui.com/v3/game/WOW/filedetails/25122.json" "wowinterface-api--addon-details.json"
 dl "https://api.mmoui.com/v3/game/WOW/filedetails/24910.json" "wowinterface-api--addon-details-classic.json" # WeakAuras2
+
+# github api
+dl "https://api.github.com/repos/Ravendwyr/Chinchilla/releases" "github-repo-releases--ravendwyr-chinchilla.json" 
+dl "https://api.github.com/repos/Aviana/HealComm/releases" "github-repo-releases--aviana-healcomm.json"
+dl "https://api.github.com/repos/Aviana/HealComm/releases" "github-repo-releases--broken-assets.json"

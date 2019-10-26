@@ -112,3 +112,39 @@
           (is (not (utils/file-older-than path 3)))
           (finally
             (fs/delete path)))))))
+
+(deftest pad
+  (let [cases [;;[[nil 2] nil] ;; must be a collection
+               [[[] 0] []]
+               [[[] 2] [nil nil]]
+               [[[nil nil] 2] [nil nil]]
+               [[[:foo :bar] 2] [:foo :bar]]
+               [[[:foo] 2] [:foo nil]]
+               [[[:foo :bar] 1] [:foo :bar]]]]
+    (doseq [[[coll pad-amt] expected] cases]
+      (testing (str "list is padded, case:" expected)
+        (is (= expected (utils/pad coll pad-amt)))))))
+
+(deftest nilable
+  (let [cases [[nil nil]
+               [[] nil]
+               ['() nil]
+               [{} nil]
+               [false nil]
+               ["" nil]
+               ["      " nil]
+
+               [1 1]
+               [:foo :foo]
+               [[1] [1]]
+               [{:foo 1} {:foo 1}]]]
+    (doseq [[given expected] cases]
+      (testing (str "certain false-y values can be coerced to nil, case: " given)
+        (is (= expected (utils/nilable given)))))))
+
+(deftest named-regex-groups
+  (let [cases [[[#"(.*)" [] "bar"] {}]
+               [[#"(.*)" [:foo] "bar"] {:foo "bar"}]]]
+    (doseq [[args expected] cases]
+      (testing (str "pattern matches are extracted into a map correctly, case: " args)
+        (is (= expected (apply utils/named-regex-groups args)))))))
