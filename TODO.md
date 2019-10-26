@@ -8,8 +8,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### done
 
-### todo
-
 * github as addon host
     - ref
         - https://github.com/ogri-la/wowman/issues/68
@@ -46,8 +44,22 @@ for an addon on github to be installable by wowman, it must:
 
 ---
 
+        - done
+
     - refresh search results
         - new github addon is not present for some reason
+        - can't replicate
+        - done
+* allow user to accumulate addons in a 'user' catalogue
+    - why? the addon may exist on github or similar where no catalogue is maintained
+    - duplicate addons and categories are handled without fuss in the db
+        - done
+    - addon is automatically installed when 'added' through the gui
+        - done
+* add 'source' properties to curseforge and wowinterface catalogs
+    - done
+
+### todo
 
 * gitlab as addon host
     - https://gitlab.com/search?search=wow+addon
@@ -58,10 +70,8 @@ for an addon on github to be installable by wowman, it must:
         - https://www.tukui.org/api.php
 * allow user to specify their own catalogs
     - a url to a catalog that is downloaded and included while loading up the db
+    - different from the 'user catalog'
 * allow user to accumulate addons in a 'user' catalogue
-    - why? the addon may exist on github or similar where no catalogue is maintained
-    - duplicate addons and categories are handled without fuss in the db
-    - addon is automatically installed when 'added' through the gui
     - add support for finding addons by url for other hosts
         - wowinterface
         - curseforge
@@ -77,9 +87,7 @@ for an addon on github to be installable by wowman, it must:
     - https://www.infoq.com/news/2019/03/jep-343-jpackage/
 * add a sha256 sum to release file
     - will prevent me from having to download release to generate a sumfile
-
 * it's possible for `.part` files to exist and not be cleaned up
-* add 'source' properties to curseforge and wowinterface catalogs
 * remove the 'curse-crap-redirect-strategy' in http.clj
     - was used when curse *website* (not api) would redirect us to an unencoded path
 * bug, if an addon directory goes missing between restarts, user configuration is lost
