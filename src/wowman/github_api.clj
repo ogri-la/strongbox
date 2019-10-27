@@ -61,17 +61,28 @@
              {:download-uri (:browser_download_url asset)
               :version (:version asset)}))))
 
+(defn-spec extract-source-id string?
+  [url ::sp/uri]
+  (->> url java.net.URL. .getPath (re-matches #"^/([^/]+/[^/]+)[/]?.*") rest first))
+
 (defn-spec parse-user-string (s/or :ok ::sp/addon-summary, :error nil?)
   [uin string?]
   (if-let* [;; if *all* of these conditions succeed (non-nil), return a catalog entry
             obj (some-> uin utils/unmangle-https-url java.net.URL.)
             path (when-not (empty? (.getPath obj)) (.getPath obj))
-            [owner repo] (-> path (subs 1) (clojure.string/split #"/") (pad 2))
-            source-id (when (and owner repo)
-                        (format "%s/%s" owner repo))
-            release-list (download-releases source-id)
+
+            ;; values here are tentative because user URL may resolve to a different URL
+            [-owner -repo] (-> path (subs 1) (clojure.string/split #"/") (pad 2))
+            -source-id (when (and -owner -repo)
+                         (format "%s/%s" -owner -repo))
+            release-list (download-releases -source-id)
             latest-release (first release-list) ;; releases must be used
             _ (-> latest-release :assets nilable) ;; releases must be using uploaded assets
+
+            ;; these are the values we want to be using
+            source-id (-> latest-release :html_url extract-source-id)
+            [owner repo] (clojure.string/split source-id #"/")
+
             download-count (->> release-list (map :assets) flatten (map :download_count) (apply +))]
 
            {:uri (str "https://github.com/" source-id)

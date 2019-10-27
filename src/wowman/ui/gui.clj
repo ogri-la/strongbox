@@ -693,17 +693,20 @@
                             :title "Addon URL"
                             :value "https://github.com/")
 
-        spiel "Failed. URL must be:
+        fail "Failed. URL must be:
   * valid
   * originate from github.com
   * addon uses 'releases'
   * latest release has a packaged 'asset'
   * asset must be a .zip file"
 
-        failure-warning #(ss/alert spiel)]
+        failure-warning #(ss/alert fail)
+
+        less-failure-warning #(ss/alert "Failed. Addon successfully added to catalogue but could not be installed.")]
     (when addon-url
-      (if (core/add+install-user-addon! addon-url)
-        (core/refresh)
+      (if-let [result (core/add+install-user-addon! addon-url)]
+        (when-not (contains? result :download-uri)
+          (less-failure-warning))
         (failure-warning))))
   nil)
 

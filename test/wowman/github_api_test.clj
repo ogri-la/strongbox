@@ -11,6 +11,9 @@
   (let [fixture (slurp (fixture-path "github-repo-releases--aviana-healcomm.json"))
 
         fake-routes {"https://api.github.com/repos/Aviana/HealComm/releases"
+                     {:get (fn [req] {:status 200 :body fixture})}
+
+                     "https://api.github.com/repos/aviana/healcomm/releases"
                      {:get (fn [req] {:status 200 :body fixture})}}
 
         expected {:uri "https://github.com/Aviana/HealComm"
@@ -32,6 +35,9 @@
                "https://github.com/Aviana/HealComm?foo=bar"
                "https://github.com/Aviana/HealComm#foo/bar"
                "https://github.com/Aviana/HealComm?foo=bar&baz=bup"
+
+               ;; valid, for github
+               "https://github.com/aviana/healcomm" ;; no redirect for lowercase :(
 
                ;; looser matching we can support
                "https://github.com/Aviana/HealComm/foo/bar/baz"
