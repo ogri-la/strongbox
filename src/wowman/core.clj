@@ -1047,12 +1047,12 @@
   [addon-url string?]
   (when-let [addon-summary (catalog/parse-user-string addon-url)]
     (add-user-addon! addon-summary)
-    (db-reload-catalog)
-    (if-let [addon (expand-summary-wrapper addon-summary)]
-      (do
-        (install-addon addon (get-state :selected-addon-dir)) ;; todo: simplify install-addon interface
-        addon)
-      addon-summary)))
+    (let [result (or (when-let [addon (expand-summary-wrapper addon-summary)]
+                       (install-addon addon (get-state :selected-addon-dir)) ;; todo: simplify install-addon interface
+                       addon)
+                     addon-summary)]
+      (db-reload-catalog)
+      result)))
 
 ;; init
 
