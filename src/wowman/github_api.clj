@@ -61,7 +61,7 @@
              {:download-uri (:browser_download_url asset)
               :version (:version asset)}))))
 
-(defn-spec extract-source-id string?
+(defn-spec extract-source-id (s/or :ok string?, :error nil?)
   [url ::sp/uri]
   (->> url java.net.URL. .getPath (re-matches #"^/([^/]+/[^/]+)[/]?.*") rest first))
 

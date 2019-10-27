@@ -184,4 +184,18 @@
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (github-api/expand-summary given game-track)))))))
 
+(deftest extract-source-id
+  (let [cases [["https://github.com/Aviana/HealComm" "Aviana/HealComm"] ;; perfect case
+               ["https://github.com/Aviana/HealComm/foo/bar" "Aviana/HealComm"]
+               ["https://github.com/Aviana/HealComm?foo=bar" "Aviana/HealComm"]
+               ["https://github.com/Aviana/HealComm#foo=bar" "Aviana/HealComm"]
+
+               ;; fail cases
+               ["https://github.com" nil]
+               ["https://github.com/" nil]
+               ["https://github.com/Aviana" nil]
+               ["https://github.com/Aviana/" nil]]]
+    (doseq [[given expected] cases]
+      (testing (str "a source-id can be extracted from a github URL, case:" given)
+        (is (= expected (github-api/extract-source-id given)))))))
 
