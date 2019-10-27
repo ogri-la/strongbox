@@ -11,6 +11,9 @@
   (let [fixture (slurp (fixture-path "github-repo-releases--aviana-healcomm.json"))
 
         fake-routes {"https://api.github.com/repos/Aviana/HealComm/releases"
+                     {:get (fn [req] {:status 200 :body fixture})}
+
+                     "https://api.github.com/repos/aviana/healcomm/releases"
                      {:get (fn [req] {:status 200 :body fixture})}}
 
         expected {:uri "https://github.com/Aviana/HealComm"
@@ -32,6 +35,9 @@
                "https://github.com/Aviana/HealComm?foo=bar"
                "https://github.com/Aviana/HealComm#foo/bar"
                "https://github.com/Aviana/HealComm?foo=bar&baz=bup"
+
+               ;; valid, for github
+               "https://github.com/aviana/healcomm" ;; no redirect for lowercase :(
 
                ;; looser matching we can support
                "https://github.com/Aviana/HealComm/foo/bar/baz"
@@ -178,4 +184,18 @@
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (github-api/expand-summary given game-track)))))))
 
+(deftest extract-source-id
+  (let [cases [["https://github.com/Aviana/HealComm" "Aviana/HealComm"] ;; perfect case
+               ["https://github.com/Aviana/HealComm/foo/bar" "Aviana/HealComm"]
+               ["https://github.com/Aviana/HealComm?foo=bar" "Aviana/HealComm"]
+               ["https://github.com/Aviana/HealComm#foo=bar" "Aviana/HealComm"]
+
+               ;; fail cases
+               ["https://github.com" nil]
+               ["https://github.com/" nil]
+               ["https://github.com/Aviana" nil]
+               ["https://github.com/Aviana/" nil]]]
+    (doseq [[given expected] cases]
+      (testing (str "a source-id can be extracted from a github URL, case:" given)
+        (is (= expected (github-api/extract-source-id given)))))))
 

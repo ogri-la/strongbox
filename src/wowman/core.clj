@@ -889,18 +889,6 @@
         sorted-asc (utils/sort-semver-strings [latest-release version-running])]
     (= version-running (last sorted-asc))))
 
-;; installing addons from strings
-
-(defn-spec add+install-user-addon! (s/or :ok ::sp/addon, :failed nil?)
-  "convenience. parses string, adds to user catalog and then installs addon.
-  relies on UI to call refresh (or not)"
-  [addon-url string?]
-  (when-let [parse-results (catalog/parse-user-string addon-url)]
-    (add-user-addon! parse-results)
-    (let [addon (expand-summary-wrapper parse-results)]
-      (install-addon addon (get-state :selected-addon-dir)) ;; todo: simplify install-addon interface
-      addon)))
-
 ;; import/export
 
 (defn-spec export-installed-addon-list nil?
@@ -1045,6 +1033,27 @@
   (-> (get-state) :selected-installed vec remove-many-addons)
   nil)
 
+(defn-spec db-reload-catalog nil?
+  []
+  (locking db-lock
+    (db-shutdown)
+    (refresh)))
+
+;; installing addons from strings
+
+(defn-spec add+install-user-addon! (s/or :ok ::sp/addon, :less-ok ::sp/addon-summary, :failed nil?)
+  "convenience. parses string, adds to user catalog, installs addon then reloads database.
+  relies on UI to call refresh (or not)"
+  [addon-url string?]
+  (when-let [addon-summary (catalog/parse-user-string addon-url)]
+    (add-user-addon! addon-summary)
+    (let [result (or (when-let [addon (expand-summary-wrapper addon-summary)]
+                       (install-addon addon (get-state :selected-addon-dir)) ;; todo: simplify install-addon interface
+                       addon)
+                     addon-summary)]
+      (db-reload-catalog)
+      result)))
+
 ;; init
 
 (defn watch-for-addon-dir-change
@@ -1062,10 +1071,7 @@
 (defn watch-for-catalog-change
   "when the catalog changes, the list of available addons should be re-read"
   []
-  (state-bind [:cfg :selected-catalog] (fn [_]
-                                         (locking db-lock
-                                           (db-shutdown)
-                                           (refresh)))))
+  (state-bind [:cfg :selected-catalog] (fn [_] (db-reload-catalog))))
 
 (defn-spec init-dirs nil?
   []
