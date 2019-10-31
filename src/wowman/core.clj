@@ -200,7 +200,8 @@
   if no user input, returns a list of randomly ordered results"
   ([]
    ;; random list of addons, no preference
-   (db-query (str select-*-catalog "order by RAND() limit ?") :arg-list [(get-state :search-results-cap)]))
+   (mapv db-coerce-catalog-values
+         (db-query (str select-*-catalog "order by RAND() limit ?") :arg-list [(get-state :search-results-cap)])))
   ([uin]
    (let [uin% (str uin "%")
          %uin% (str "%" uin "%")]
