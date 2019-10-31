@@ -251,7 +251,9 @@
 (defn configure-app-panel
   []
   (let [picker (fn []
-                 (when-let [dir (chooser/choose-file :type :open ;; ':open' forces a better dialog type in mac for opening directories
+                 (when-let [dir (chooser/choose-file (select-ui :#root)
+                                                     ;; ':open' forces a better dialog type in mac for opening directories
+                                                     :type :open
                                                      :selection-mode :dirs-only)]
                    (if (fs/directory? dir)
                      (do
@@ -670,7 +672,8 @@
 
 (defn export-addon-list-handler
   []
-  (when-let [path (chooser/choose-file :type "Export"
+  (when-let [path (chooser/choose-file (select-ui :#root)
+                                       :type :save
                                        :selection-mode :files-only
                                        :filters [["JSON" ["json"]]]
                                        :success-fn (fn [_ file]
@@ -679,7 +682,8 @@
 
 (defn import-addon-list-handler
   []
-  (when-let [path (chooser/choose-file :type "Import"
+  (when-let [path (chooser/choose-file (select-ui :#root)
+                                       :type :open
                                        :selection-mode :files-only
                                        :filters [["JSON" ["json"]]]
                                        :success-fn (fn [_ file]
