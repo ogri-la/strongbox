@@ -24,7 +24,8 @@
   "formats a shitty US-style m/d/y date with a shitty 12 hour time component and no timezone
   into a glorious RFC3399 formatted UTC string."
   [dt]
-  (let [dt (java-time/local-date-time "MM-dd-yy hh:mm a" dt) ;; "09-07-18 01:27 PM" => obj with no tz
+  (let [;; https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html
+        dt (java-time/local-date-time "MM-dd-yy hh:mm a" dt) ;; "09-07-18 01:27 PM" => obj with no tz
         ;; no tz info available on site, assume utc
         dt-utc (java-time/zoned-date-time dt "UTC") ;; obj with no tz => utc obj
         fmt (get java-time.format/predefined-formatters "iso-offset-date-time")]

@@ -33,6 +33,9 @@
 
                  ]
 
+  ;; java 11 , java-time localisation issue 
+  ;;:jvm-opts ["-Djava.locale.providers=COMPAT,CLDR"]
+
   :profiles {:uberjar {:aot :all}}
 
   :main wowman.main
