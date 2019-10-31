@@ -61,6 +61,7 @@ for an addon on github to be installable by wowman, it must:
 
 ### todo
 
+* bug, export addon list isn't using selected directory
 * github, non-addon git repo fails to install
     - https://github.com/koekeishiya/yabai
     - make this a softer failure
@@ -104,7 +105,7 @@ for an addon on github to be installable by wowman, it must:
     - remove call to set in db-load-catalog
     - I suspect curseforge
 * investigate usage of spec-tools/coerce and remove if unnecessary
-* bug, export addon list isn't using selected directory
+
 * when adding an addon-dir, if path ends with /_classic_/Interface/Addons, set game track to classic
 
 ## todo bucket
