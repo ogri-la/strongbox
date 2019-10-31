@@ -75,17 +75,6 @@
   [m l]
   (apply dissoc m l))
 
-;; orphaned, might be useful still?
-(defn-spec file-ext-as-kw (s/or :ok keyword?, :error nil?)
-  [path ::sp/file]
-  ;; /tmp/foo.edn => :edn
-  ;; /tmp/foo     =>  nil
-  (some-> path fs/extension (subs 1) trim lower-case keyword))
-
-(defn-spec replace-file-ext (s/or :ok string?, :error nil?)
-  [path ::sp/file, ext string?]
-  (-> path str fs/split-ext first (str ext)))
-
 (defn-spec file-older-than boolean?
   [file ::sp/extant-file, hours pos-int?]
   (let [modtime (jt/instant (fs/mod-time file))
@@ -390,7 +379,7 @@
 
 (defn-spec ltrim string?
   "strips leading chars in `m` from `s`"
-  [s string? m string?]
+  [s string?, m string?]
   (let [pattern (java.util.regex.Pattern/compile (format "^[%s]*" m))]
     (clojure.string/replace s pattern "")))
 
@@ -400,19 +389,13 @@
   (let [pattern (java.util.regex.Pattern/compile (format "[%s]*$" m))]
     (clojure.string/replace s pattern "")))
 
-;; https://stackoverflow.com/questions/26790881/clojure-file-to-byte-array
-(comment "orphaned. was once used in zip.clj to create a zip file of a directory."
-         (defn-spec file-to-lazy-byte-array ::sp/file-byte-array-pair
-           [path ::sp/extant-file root ::sp/extant-dir]
-           (let [;; /foo/bar/baz/ => foo/bar/
-                 rooted-at (ltrim (clojure.string/replace path (str (fs/parent root)) "") "/")
-        ;;f (java.io.File. path)
-                 f path
-                 ary (byte-array (.length f))
-                 is (java.io.FileInputStream. f)]
-             (.read is ary)
-             (.close is)
-             [rooted-at ary])))
+(defn-spec replace-file-ext (s/or :ok ::sp/file, :error nil?)
+  [path ::sp/file, ext string?]
+  (let [ext (ltrim ext ".")
+        ext (str "." ext)
+        ;; "foo" => nil, "foo/bar" => ["foo"], "/foo/bar" => ["/" "foo"]
+        parent (some->> (-> path fs/split butlast) (apply join))]
+    (join parent (-> path str fs/split-ext first (str ext)))))
 
 ;; repurposing
 (defn-spec file-to-lazy-byte-array bytes?

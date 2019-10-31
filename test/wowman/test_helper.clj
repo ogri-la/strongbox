@@ -18,10 +18,6 @@
   [filename]
   (utils/join fixture-dir filename))
 
-(defn temp-path
-  [filename]
-  (-> filename fs/absolute fs/normalized str))
-
 (defn fixture-tempcwd
   "each test is executed in a new and self-contained location, accessible as fs/*cwd*
   if the app is started:

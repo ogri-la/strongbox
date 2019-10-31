@@ -4,7 +4,7 @@
    [wowman.ui.gui :as gui]
    [wowman
     [main :as main]
-    [test-helper :as helper :refer [fixture-path temp-path]]]
+    [test-helper :as helper :refer [fixture-path]]]
   ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    ))
 

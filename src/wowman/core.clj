@@ -891,13 +891,14 @@
 
 ;; import/export
 
-(defn-spec export-installed-addon-list nil?
+(defn-spec export-installed-addon-list ::sp/extant-file
   [output-file ::sp/file, addon-list ::sp/toc-list]
-  (let [addon-list (map #(select-keys % [:name :source]) addon-list)]
+  (let [addon-list (map #(select-keys % [:name :source :source-id]) addon-list)]
     (utils/dump-json-file output-file addon-list)
-    (info "wrote:" output-file)))
+    (info "wrote:" output-file)
+    output-file))
 
-(defn-spec export-installed-addon-list-safely nil?
+(defn-spec export-installed-addon-list-safely ::sp/extant-file
   [output-file ::sp/file]
   (let [output-file (-> output-file fs/absolute str)
         output-file (utils/replace-file-ext output-file ".json")

@@ -10,7 +10,7 @@
     [main :as main]
     [catalog :as catalog]
     [utils :as utils]
-    [test-helper :as helper :refer [fixture-path temp-path data-dir with-running-app]]
+    [test-helper :as helper :refer [fixture-path data-dir with-running-app]]
     [core :as core]]))
 
 (use-fixtures :each helper/fixture-tempcwd)
@@ -230,11 +230,14 @@
 (deftest export-installed-addon-list
   (testing "exported data looks as expected"
     (let [addon-list (read-string (slurp "test/fixtures/export--installed-addons-list.edn"))
-          output-path (temp-path "exports.json")
+          export-dir (utils/join fs/*cwd* "foo" "bar" "exports")
+          _ (fs/mkdirs export-dir)
+          output-path (utils/join export-dir "export.json")
           _ (core/export-installed-addon-list output-path addon-list)
           expected [{:name "adibags" :source "curseforge"}
                     {:name "noname"} ;; an addon whose name is not present in the catalog (umatched)
                     {:name "carbonite" :source "curseforge"}]]
+      (is (fs/exists? output-path))
       (is (= expected (utils/load-json-file output-path))))))
 
 (deftest import-exported-addon-list-file

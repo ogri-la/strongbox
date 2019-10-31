@@ -5,7 +5,7 @@
    ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [wowman
     [curseforge-api :as curseforge-api]
-    [test-helper :as helper :refer [fixture-path temp-path]]]))
+    [test-helper :as helper :refer [fixture-path]]]))
 
 (deftest expand-summary
   (testing "simple addon expansion, ideal conditions"

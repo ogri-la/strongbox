@@ -148,3 +148,14 @@
     (doseq [[args expected] cases]
       (testing (str "pattern matches are extracted into a map correctly, case: " args)
         (is (= expected (apply utils/named-regex-groups args)))))))
+
+(deftest replace-file-ext
+  (let [cases [[["/path/to/foo.ext" ".json"] "/path/to/foo.json"]
+               [["/path/to/foo.ext" "json"] "/path/to/foo.json"]
+               [["foo.ext" ".json"] "foo.json"]
+               [["foo.ext" "json"] "foo.json"]
+
+               [["foo" ".json"] "foo.json"]]]
+    (doseq [[[given given-ext] expected] cases]
+      (testing (format "a file can have it's extension replaced, case: (%s %s)" given given-ext)
+        (is (= expected (utils/replace-file-ext given given-ext)))))))
