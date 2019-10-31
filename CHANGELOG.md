@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## 0.10.1 - 2019-11-31
+
+### Fixed
+
+* fixes issue #83 where an addon would fail to install from the search results if the search results were unfiltered
+
 ## 0.10.0 - 2019-10-14
 
 ### Added
