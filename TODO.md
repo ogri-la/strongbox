@@ -58,10 +58,11 @@ for an addon on github to be installable by wowman, it must:
         - done
 * add 'source' properties to curseforge and wowinterface catalogs
     - done
+* bug, export addon list isn't using selected directory
+    - done
 
 ### todo
 
-* bug, export addon list isn't using selected directory
 * github, non-addon git repo fails to install
     - https://github.com/koekeishiya/yabai
     - make this a softer failure
@@ -110,6 +111,16 @@ for an addon on github to be installable by wowman, it must:
 
 ## todo bucket
 
+* import/export, capture game track of exported addon dir?
+* import/export, export user catalogue
+* github, importing an exported addon list with a github addon won't see that addon installed
+    - unless that addon is present in the user catalogue
+        - which in a fresh install where a list of addons are being restored is unlikely...
+    - this is interesting actually. the exported addon list has become a mini-catalogue
+        - some addons require the larger catalogue to resolve
+        - github addons are resolved and installed by a different means...
+* github, installation from github via import menu not updating log until finished
+    - this is an async issue
 * simplify `install-addon` interface in core.clj
     - we need to provide an installation directory which can be pulled from the application state
 * rename references of 'uri' to 'url'
