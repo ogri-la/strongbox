@@ -829,4 +829,6 @@
     (catch RuntimeException re
       (warn "failed to stop state:" (.getMessage re)))))
 
+;;
+
 (st/instrument)

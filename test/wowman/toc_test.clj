@@ -11,8 +11,7 @@
 
 (defn addon-path [] (join temp-dir-path "SomeAddon"))
 
-(def toc-file-contents "## Interface: 80000
-## Version: 1.6.1
+(def toc-file-contents "## Version: 1.6.1
 ## Title: Addon Name
 ## Notes: Description of the addon here
 ## Description: Another description here??
@@ -32,6 +31,17 @@
 ## Over: to dinner
 ## Over: written
 
+# # Comment1: ignored, must be bang-space-double-bang
+# ## Comment2: comment2
+# ##Comment3:comment3
+
+#@retail@
+## Interface: 80205
+#@end-retail@
+#@non-retail@
+# ## Interface: 11302
+#@end-non-retail@
+  
 SomeAddon.lua")
 
 (defn temp-addon-fixture
@@ -47,8 +57,7 @@ SomeAddon.lua")
 
 (deftest parse-addon-toc
   (testing "scrape of toc-file contents"
-    (let [expected {:interface "80000"
-                    :version "1.6.1"
+    (let [expected {:version "1.6.1"
                     :title "Addon Name"
                     :notes "Description of the addon here"
                     :description "Another description here??"
@@ -62,7 +71,17 @@ SomeAddon.lua")
                     :bup "Foo" ;; n-comments
 
                     :over "written" ;; duplicate attributes are overwritten
-                    }]
+
+                    ;; comment-comments
+                    ;; used in templating .toc files
+                    ;; https://github.com/Ravendwyr/Chinchilla/blob/0bbaec055d978c2082aa703efe7770dc7b796846/Chinchilla.toc#L1-L6
+
+                    :#comment2 "comment2"
+                    :#comment3 "comment3"
+
+                    :interface "80205"
+                    :#interface "11302"}]
+
       (is (= expected (toc/-read-toc-file toc-file-contents)))))
 
   (testing "parsing of scraped toc-file key-vals"
@@ -70,14 +89,29 @@ SomeAddon.lua")
                     :dirname "SomeAddon"
                     :label "Addon Name"
                     :description "Description of the addon here"
-                    :interface-version 80000
+                    :interface-version 80205
                     :installed-version "1.6.1"}]
       (is (= expected (toc/parse-addon-toc-guard (addon-path))))))
 
   (testing "parsing scraped keyvals in .toc value yields expected values"
-    (let [cases [[{"title" ""} {:name "everyaddon-*", :dirname "EveryAddon", :label "EveryAddon *", :description nil, :interface-version 80200, :installed-version nil}]
-                 [{"Title" ""} {:name "everyaddon-*", :dirname "EveryAddon", :label "EveryAddon *", :description nil, :interface-version 80200, :installed-version nil}]
-                 [{"Title" nil} {:name "everyaddon-*", :dirname "EveryAddon", :label "EveryAddon *", :description nil, :interface-version 80200, :installed-version nil}]]
+    (let [cases [[{"title" ""} {:name "everyaddon-*",
+                                :dirname "EveryAddon",
+                                :label "EveryAddon *",
+                                :description nil,
+                                :interface-version 80200,
+                                :installed-version nil}]
+                 [{"Title" ""} {:name "everyaddon-*",
+                                :dirname "EveryAddon",
+                                :label "EveryAddon *",
+                                :description nil,
+                                :interface-version 80200,
+                                :installed-version nil}]
+                 [{"Title" nil} {:name "everyaddon-*",
+                                 :dirname "EveryAddon",
+                                 :label "EveryAddon *",
+                                 :description nil,
+                                 :interface-version 80200,
+                                 :installed-version nil}]]
           install-dir fs/*cwd*
           addon-dir (utils/join install-dir "EveryAddon")]
       (fs/mkdir addon-dir)

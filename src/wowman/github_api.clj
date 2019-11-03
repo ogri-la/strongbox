@@ -4,9 +4,11 @@
    [clojure.spec.alpha :as s]
    [orchestra.spec.test :as st]
    [orchestra.core :refer [defn-spec]]
+   [me.raynes.fs :as fs]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
    [wowman
     [http :as http]
+    [toc :as toc]
     [utils :as utils :refer [pad if-let* nilable]]
     [specs :as sp]]))
 
@@ -17,6 +19,14 @@
 (defn-spec download-releases (s/or :ok (s/coll-of map?), :error nil?)
   [source-id string?]
   (some-> source-id releases-url http/download utils/from-json))
+
+(defn-spec contents-url ::sp/uri
+  [source-id string?]
+  (format "https://api.github.com/repos/%s/contents" source-id))
+
+(defn-spec download-root-listing (s/or :ok (s/coll-of map?), :error nil?)
+  [source-id string?]
+  (some-> source-id contents-url http/download utils/from-json))
 
 ;;
 
@@ -61,6 +71,30 @@
              {:download-uri (:browser_download_url asset)
               :version (:version asset)}))))
 
+;;
+
+(defn-spec find-remote-toc-file (s/or :ok map?, :error nil?)
+  "returns the contents of the first .toc file it finds in the root directory of the remote addon"
+  [source-id string?]
+  (if-let* [contents-listing (download-root-listing source-id)
+            toc-file-list (filterv #(-> % :name fs/split-ext last (= ".toc")) contents-listing)
+            toc-file (first toc-file-list)]
+           (some-> toc-file :download_url http/download toc/-read-toc-file)
+           (warn (format "failed to find/download/parse remote github '.toc' file for '%s'" source-id))))
+
+(defn-spec parse-remote-toc-file (s/or :ok ::sp/game-track-list, :empty nil?, :error nil?)
+  "returns a set of 'retail' and/or 'classic' after inspecting the remote .toc file contents"
+  [toc-data (s/nilable map?)]
+  (when toc-data
+    (->> (-> toc-data
+             (select-keys [:interface :#interface])
+             vals)
+         (map utils/interface-version-to-game-version)
+         (map utils/game-version-to-game-track)
+         set
+         vec
+         utils/nilable)))
+
 (defn-spec extract-source-id (s/or :ok string?, :error nil?)
   [url ::sp/uri]
   (->> url java.net.URL. .getPath (re-matches #"^/([^/]+/[^/]+)[/]?.*") rest first))
@@ -83,6 +117,9 @@
             source-id (-> latest-release :html_url extract-source-id)
             [owner repo] (clojure.string/split source-id #"/")
 
+            ;; disabled until tests are passing
+            ;;game-track-list (parse-remote-toc-file (find-remote-toc-file source-id))
+
             download-count (->> release-list (map :assets) flatten (map :download_count) (apply +))]
 
            {:uri (str "https://github.com/" source-id)
@@ -92,6 +129,7 @@
             :label repo
             :name (slugify repo "")
             :download-count download-count
+            ;;:game-track-list game-track-list
             :category-list []}
 
            ;; 'something' failed to parse :(
