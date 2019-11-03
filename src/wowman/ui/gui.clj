@@ -221,7 +221,8 @@
           content (into header labels)
           content (interleave content (repeat [:separator "growx, wrap"]))
 
-          dialog (ss/dialog :content (mig/mig-panel :items content)
+          dialog (ss/dialog :parent (select-ui :#root)
+                            :content (mig/mig-panel :items content)
                             :resizable? false
                             :type :warning
                             :option-type :ok-cancel
@@ -242,7 +243,8 @@
         content (remove nil? content)
         content (interleave content (repeat [:separator "growx, wrap"]))
 
-        dialog (ss/dialog :content (mig/mig-panel :items content)
+        dialog (ss/dialog :parent (select-ui :#root)
+                          :content (mig/mig-panel :items content)
                           :type :info
                           :resizable? false)]
     (-> dialog ss/pack! ss/show!)
