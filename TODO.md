@@ -86,17 +86,21 @@ how to determine game tracks
 
 if single asset and no game-track present
 - look for 'classic' in asset name, default to retail
+
 if single asset and single game-track present
 - use that game track
+
 if single asset and multiple game tracks present
 - assume asset is compatible with both game tracks
 
 if multiple assets present and no game track present
 - check each asset for mention of 'classic'
+
 if multiple assets present and single game track present
 - do we treat the game tracks in the catalogue (that may be old) as 'hints' rather than law?
     - in which case, we need to check each asset for mention of 'classic'
     - the alternative is assume all assets are of the same game track type, which doesn't seem right
+
 if multiple assets present and multiple game tracks present
 - we still need to differentiate which asset belongs to which game track
     - if we're unable to differentiate then a warning should be issued
