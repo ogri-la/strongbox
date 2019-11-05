@@ -102,14 +102,10 @@
 (defn scrape-category-page
   [category]
   (info (:label category))
-  (let [;; sub-category pages handled in `scrape`
-        skippable (vals category-pages)] ;; ["Class & Role Specific", ...]
-    (if (some #{(:label category)} skippable)
-      []
-      (let [extractor (partial scrape-addon-page category)
-            page-range (scrape-category-page-range category)]
-        (info (format "scraping %s pages in '%s'" (last page-range) (:label category)))
-        (flatten (mapv extractor page-range))))))
+  (let [extractor (partial scrape-addon-page category)
+        page-range (scrape-category-page-range category)]
+    (info (format "scraping %s pages in '%s'" (last page-range) (:label category)))
+    (flatten (mapv extractor page-range))))
 
 (defn download-parse-filelist-file
   "returns a map of wowinterface addons, keyed by their :source-id (as a string).
