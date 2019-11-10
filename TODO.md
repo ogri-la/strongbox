@@ -111,6 +111,9 @@ for an addon on github to be installable by wowman, it must:
 
 ## todo bucket
 
+* bug, clearing catalogues and clicking refresh doesn't see the database rebuilt
+    - the catalog is downloaded though
+* new tab for dedicated log
 * import/export, capture game track of exported addon dir?
 * import/export, export user catalogue
 * github, importing an exported addon list with a github addon won't see that addon installed
