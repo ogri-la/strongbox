@@ -82,7 +82,7 @@
       (error re (format "failed to scrape snippet with '%s', excluding from results: %s" (.getMessage re) (utils/pprint snippet)))
       nil)))
 
-(defn scrape-addon-page
+(defn scrape-addon-list
   [category page-num]
   (let [url (clojure.string/replace (:url category) #"page=\d+" (str "page=" page-num))
         page-content (-> url http/download html-snippet)
@@ -104,10 +104,10 @@
 
 (defn scrape-category
   [category]
-  (let [extractor (partial scrape-addon-page category)
+  (let [extractor (partial scrape-addon-list category)
         ;; note: sometimes a category also lists other categories :(
         ;; in this case, `scrape-category-page-range` will return a single page
-        ;; and `scrape-addon-page` will detect no addons
+        ;; and `scrape-addon-list` will detect no list of addons
         page-range (scrape-category-page-range category)]
     (info (format "scraping %s pages in '%s'" (last page-range) (:label category)))
     (flatten (mapv extractor page-range))))

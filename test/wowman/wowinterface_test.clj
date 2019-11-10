@@ -36,7 +36,7 @@
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (wowinterface/scrape-category-page-range category)))))))
 
-(deftest scrape-addon-page
+(deftest scrape-addon-list
   (testing "a single page of results from a category can be scraped"
     (let [category {:label "dummy" :url "https://www.wowinterface.com/downloads/cat19.html"}
           fixture (slurp "test/fixtures/wowinterface-category-page.html")
@@ -61,7 +61,7 @@
                        :source "wowinterface"
                        :source-id 24805}]
       (with-fake-routes-in-isolation fake-routes
-        (let [results (wowinterface/scrape-addon-page category page)]
+        (let [results (wowinterface/scrape-addon-list category page)]
           (is (= num-addons (count results)))
           (is (= first-addon (first results)))
           (is (= last-addon (last results))))))))
