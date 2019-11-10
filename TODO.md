@@ -106,11 +106,18 @@ for an addon on github to be installable by wowman, it must:
     - remove call to set in db-load-catalog
     - I suspect curseforge
 * investigate usage of spec-tools/coerce and remove if unnecessary
-
 * when adding an addon-dir, if path ends with /_classic_/Interface/Addons, set game track to classic
 
 ## todo bucket
 
+* add an option that forces installation of addon if matching game track not found
+    - enable it by default
+    - add a warning when installing an addon that doesn't match game track
+    - add a summary after each refresh about the state of installed addons
+        - "123 addons installed, 1 unmatched addon, 2 retail addons installed"
+        - "123 addons installed, 2 classic addons installed"
+    - preserve this in user settings
+    - perhaps couple this with the GUI logic for the status bar down the bottom
 * bug, clearing catalogues and clicking refresh doesn't see the database rebuilt
     - the catalog is downloaded though
 * new tab for dedicated log
