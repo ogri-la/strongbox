@@ -81,9 +81,6 @@ for an addon on github to be installable by wowman, it must:
     - a url to a catalog that is downloaded and included while loading up the db
     - different from the 'user catalog'
 * allow user to accumulate addons in a 'user' catalogue
-    - add support for finding addons by url for other hosts
-        - wowinterface
-        - curseforge
     - how is this catalogue updated?
         - it will contain information that will remain static after initially created
         - typically wowman downloads the updated catalogue from remote
@@ -268,6 +265,20 @@ for an addon on github to be installable by wowman, it must:
 * gui, pagination controls in search pane
 * gui, scroll tabs with mouse
 * gui, search, order by date only orders the *current page* of results
+* add support for finding addons by url for other hosts
+    - wowinterface
+    - curseforge
+    - but these addons already exist in the main catalog ...
+        - should they be taken to a search results page?
+        - because what is presumably happening is the user can't find their addon in the search results (or can't be arsed to) and is saying "just install this please"
+            - but wowman uses catalogs as a source of data, so if it can't find the addon in the catalog, then what? 
+                - fail? but the user just gave us a URL (UNIVERSAL RESOURCE LOCATOR) ! what is the fucking problem here?
+    - the problem is expectations. wowman doesn't scrape addon host website HTML if it can avoid it
+        - and user enters addon host website URL
+    - this should be solved with more sophisticated catalogue searching
+        - parse identifiers from URL, like source and source ID, then display search results
+            - again, by encouraging the copying+pasting of URLs and then failing to find results when the URL IS RIGHT THERE AND WORKING we set ourselves up for failure and the user for disappointment/frustration
+    - parking this
 
 ## wontfix
 
