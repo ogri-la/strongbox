@@ -22,7 +22,7 @@
                        :url "https://www.wowinterface.com/downloads/index.php?cid=44&sb=dec_date&so=desc&pt=f&page=1"}]
     (testing "a page of categories can be scraped"
       (with-fake-routes-in-isolation fake-routes
-        (let [results (wowinterface/parse-category-list "foobar")]
+        (let [results (wowinterface/scrape-category-group-page "foobar")]
           (is (= num-categories (count results)))
           (is (= first-category (first results)))
           (is (= last-category (last results))))))))

@@ -15,10 +15,11 @@
 
 (def host "https://www.wowinterface.com/downloads/")
 
-(def category-pages {"cat23.html" "Stand-Alone addons"
-                     "cat39.html" "Class & Role Specific"
-                     "cat109.html" "Info, Plug-in Bars"
-                     "cat158.html" "Classic - General"})
+(def category-group-pages
+  {"cat23.html" "Stand-Alone addons"
+   "cat39.html" "Class & Role Specific"
+   "cat109.html" "Info, Plug-in Bars"
+   "cat158.html" "Classic - General"})
 
 (defn format-wowinterface-dt
   "formats a shitty US-style m/d/y date with a shitty 12 hour time component and no timezone
@@ -31,8 +32,8 @@
         fmt (get java-time.format/predefined-formatters "iso-offset-date-time")]
     (java-time/format fmt dt-utc)))
 
-(defn parse-category-list
-  [category-page]
+(defn scrape-category-group-page
+  [category-page] ;; => "cat23.html"
   (let [snippet (-> host (str category-page) http/download html-snippet)
         cat-list (-> snippet (select [:div#colleft :div.subcats :div.subtitle :a]))
         final-url (fn [href]
@@ -42,6 +43,8 @@
                           another-sort-by "&so=desc" ;; most to least recent. must be consistent with `sort-by` prefix
                           pt "&pt=f" ;; nfi but it's mandatory
                           page "&page=1"] ;; not necessary, and `1` is default. we'll add it here to avoid a cache miss later
+
+                      ;; => https://www.wowinterface.com/downloads/index.php?cid=160&sb=dec_date&so=desc&pt=f&page=1
                       (str host, cat-id, sort-by, another-sort-by, pt, page)))
         extractor (fn [cat]
                     {:label (-> cat :content first)
@@ -99,10 +102,12 @@
         page-range (range 1 (inc page-count))]
     page-range))
 
-(defn scrape-category-page
+(defn scrape-category
   [category]
-  (info (:label category))
   (let [extractor (partial scrape-addon-page category)
+        ;; note: sometimes a category also lists other categories :(
+        ;; in this case, `scrape-category-page-range` will return a single page
+        ;; and `scrape-addon-page` will detect no addons
         page-range (scrape-category-page-range category)]
     (info (format "scraping %s pages in '%s'" (last page-range) (:label category)))
     (flatten (mapv extractor page-range))))
@@ -122,7 +127,7 @@
 
 (defn expand-addon-with-filelist
   [filelist addon]
-  (let [filelist-addon (first (get filelist (:source-id addon)))
+  (let [filelist-addon (->> addon :source-id (get filelist) first)
         ;; supported game version is not the same as game track ('classic' or 'retail')
         ;; wowinterface conflates the two (or am I splitting hairs?)
         ;; if 'WoW Classic' is found, then the 'classic' game track is supported
@@ -140,14 +145,22 @@
     (assoc addon :game-track-list (get mapping key))))
 
 (defn scrape
+  "wowinterface uses 'groups of categories'.
+  the topmost page '/' lists each of the groups and the list of categories within that group.
+  each category group has it's own page, the main one being '/downloads/cat23.html' or 'Stand-Alone addons'.
+  we ignore the top-level '/' list-of-groups-of-categories and scrape the individual category group pages.
+  addons may live in more than one category.
+  after scraping we then group and reduce the duplicates, ensuring the names of the categories are preserved."
   [output-path]
-  (let [category-pages (keys category-pages) ;; [cat23.html, ...]
-        category-list (flatten (mapv parse-category-list category-pages))
-        addon-list (flatten (mapv scrape-category-page category-list))
+  (let [;; create a single list of all categories to scrape
+        all-categories (->> category-group-pages keys (map scrape-category-group-page) flatten)
+
+        ;; create a single list of all addons in all categories
+        addon-list (->> all-categories (map scrape-category) flatten)
 
         ;; an addon may belong to many categories
-        ;; group addons by their :label (guaranteed to be unique) and then merge the categories together
-        addon-groups (group-by :label addon-list)
+        ;; group addons by their :source-id and then merge together, preserving the categories
+        addon-groups (group-by :source-id addon-list)
         addon-list (for [[_ group-list] addon-groups
                          :let [addon (first group-list)]]
                      (assoc addon :category-list
@@ -155,11 +168,16 @@
 
         filelist (download-parse-filelist-file)
 
-        ;; there are 186 (at time of writing) addons scraped from the site that are not present in the filelist.json file.
+        ;; there are 195 (at time of writing) addons scraped from the site that are not present in the filelist.json file.
         ;; these appear to be discontinued/obsolete/beta-only/'removed at author's request'/etc type addons.
         ;; this removes those addons from the addon-list
+        pre-filter-count (count addon-list)
+
         addon-list (filter (fn [addon]
                              (get filelist (:source-id addon))) addon-list)
+
+        _ (info (format "%s addons present on site that are missing from fileList.json"
+                        (- pre-filter-count (count addon-list))))
 
         ;; moosh extra data into each addon from the filelist
         addon-list (mapv (partial expand-addon-with-filelist filelist) addon-list)
