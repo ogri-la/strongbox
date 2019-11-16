@@ -79,7 +79,6 @@
         (is (= expected (github-api/parse-user-string reasonable-looking-url)))))))
 
 (deftest expand-addon-summary
-
   (let [given {:uri "https://github.com/Aviana/HealComm"
                :updated-date "2019-10-09T17:40:04Z"
                :source "github"

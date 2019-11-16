@@ -28,51 +28,6 @@
   [source-id string?]
   (some-> source-id contents-url http/download utils/from-json))
 
-;;
-
-;; matches the word 'classic' bracketed by common delimiters in an addon's release name
-(def classic-regex #"^.+[\-_\.]?(classic)[\.-_]?.+$")
-
-(def supported-zip-mimes #{"application/zip"  "application/x-zip-compressed"})
-
-(defn group-assets
-  [latest-release]
-  (let [asset-list (:assets latest-release)
-
-        ;; ignore assets whose :content_type is *not* a known zip type
-        asset-list (filter #(-> % :content_type vector set (some supported-zip-mimes)) asset-list)
-
-        ;; ignore any assets that are not completely uploaded
-        ;; https://developer.github.com/v3/repos/releases/#response-for-upstream-failure
-        asset-list (filter #(-> % :state (= "uploaded")) asset-list)
-
-        updater (fn [asset]
-                  (let [classic? (nilable
-                                  (utils/named-regex-groups classic-regex [:classic] (:name asset)))
-                        version (:name latest-release)] ;; "v2.10.0"
-                    (if classic?
-                      ;; because we're pulling the version from the release rather than the asset,
-                      ;; tack on '-classic' if the asset looks like a classic release (else version checks fail)
-                      (merge asset {:game-track "classic" :version (str version "-classic")})
-                      (merge asset {:game-track "retail" :version version}))))
-        asset-list (map updater asset-list)]
-    (group-by :game-track asset-list)))
-
-(defn-spec expand-summary (s/or :ok ::sp/addon, :error nil?)
-  "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. 
-  one additional look-up per ::addon required"
-  [addon-summary ::sp/addon-summary game-track ::sp/game-track]
-  (let [release-list (download-releases (:source-id addon-summary))
-        latest-release (first release-list)
-        asset (-> latest-release group-assets (get game-track) first)]
-    (if-not asset
-      (warn (format "no '%s' release available for '%s' on github" game-track (:name addon-summary)))
-      (merge addon-summary
-             {:download-uri (:browser_download_url asset)
-              :version (:version asset)}))))
-
-;;
-
 (defn-spec find-remote-toc-file (s/or :ok map?, :error nil?)
   "returns the contents of the first .toc file it finds in the root directory of the remote addon"
   [source-id string?]
@@ -82,8 +37,8 @@
            (some-> toc-file :download_url http/download toc/-read-toc-file)
            (warn (format "failed to find/download/parse remote github '.toc' file for '%s'" source-id))))
 
-(defn-spec parse-remote-toc-file (s/or :ok ::sp/game-track-list, :empty nil?, :error nil?)
-  "returns a set of 'retail' and/or 'classic' after inspecting the remote .toc file contents"
+(defn-spec -find-gametracks-toc-data (s/or :ok ::sp/game-track-list, :empty nil?, :error nil?)
+  "returns a set of 'retail' and/or 'classic' after inspecting .toc file contents"
   [toc-data (s/nilable map?)]
   (when toc-data
     (->> (-> toc-data
@@ -94,6 +49,100 @@
          set
          vec
          utils/nilable)))
+
+(defn-spec find-gametracks-toc-data (s/or :ok ::sp/game-track-list, :error nil?)
+  "returns a set of 'retail' and/or 'classic' after inspecting .toc file contents"
+  [source-id string?]
+  (-> source-id find-remote-toc-file -find-gametracks-toc-data))
+
+;; matches the word 'classic' bracketed by common delimiters in an addon's release name
+(def classic-regex #"^.+[\-_\.]?(classic)[\.-_]?.+$")
+
+(def supported-zip-mimes #{"application/zip"  "application/x-zip-compressed"})
+
+(defn group-assets
+  [addon-summary latest-release]
+  (let [asset-list (:assets latest-release)
+
+        ;; ignore assets whose :content_type is *not* a known zip type
+        asset-list (filter #(-> % :content_type vector set (some supported-zip-mimes)) asset-list)
+
+        ;; ignore any assets that are not completely uploaded
+        ;; https://developer.github.com/v3/repos/releases/#response-for-upstream-failure
+        asset-list (filter #(-> % :state (= "uploaded")) asset-list)
+        single-asset? (-> asset-list count (= 1))
+        many-assets? (-> asset-list count (> 1))
+
+        ;; derived from the .toc file, if found
+        ;; these serve as hints 
+        known-game-tracks (-> addon-summary :game-track-list (or []))
+        no-known-game-tracks? (-> known-game-tracks count (= 0))
+        single-game-track? (-> known-game-tracks count (= 1))
+        many-game-tracks? (-> known-game-tracks count (> 1))
+
+        updater (fn [asset]
+                  "returns a list of updated versions of this asset. if the asset supports multiple game tracks, two versions are returned"
+                  (let [version (:name latest-release) ;; "v2.10.0"
+                        ;; todo: change this to look for 'classic' or 'retail'
+                        ;; so, "FooAddon-retail" or "BarAddon-classic"
+                        ;; no known cases but it would be forward proof
+                        classic? (nilable
+                                  (utils/named-regex-groups classic-regex [:classic] (:name asset)))
+
+                        update-list ;; is either a map or a list of maps
+                        (cond
+                          ;; game track present in file name, prefer that over known-game-tracks
+                          classic? {:game-track "classic" :version (str version "-classic")}
+
+                          ;; single asset, no game track present in file name, no known game tracks. default to :retail
+                          (and single-asset? no-known-game-tracks?) {:game-track "retail" :version version}
+                          
+                          ;; single asset, no game track present in file name, single known game track. use that
+                          (and single-asset? single-game-track?) {:game-track (first known-game-tracks) :version version}
+
+                          ;; single asset, no game track present in file name, multiple known game tracks. assume all game tracks supported
+                          (and single-asset? many-game-tracks?) [{:game-track "classic" :version (str version "-classic")}
+                                                                 {:game-track "retail" :version version}]
+
+                          ;; multiple assets, no game track present in file name, no known game tracks. default to :retail
+                          ;; ambiguous case, other assets may have game track in their file name
+                          (and many-assets? no-known-game-tracks?) {:game-track "retail" :version version}
+
+                          ;; multiple assets, no game track present in file name, single known game track. use that.
+                          ;; ambiguous case, other assets may have game track in their file name
+                          ;; this or other assets may be variations of the 'main' addon, like '-nolib' ?
+                          (and many-assets? single-game-track?) {:game-track (first known-game-tracks) :version version}
+
+                          ;; multiple assets, no game track present in file name, multiple known game tracks.
+                          ;; ambiguous case, other assets may have game track in their file name. default to :retail
+                          (and many-assets? many-game-tracks?) {:game-track "retail" :version version}
+
+                          :else (error (format "unhandled state attempting to determine game track(s) for asset '%s' in latest release of '%s'"
+                                               asset addon-summary)))
+
+                        update-list (if-not (seq? update-list) [update-list] update-list)]
+
+                    (mapv (fn [update]
+                           (merge asset update)) update-list)))
+
+        asset-list (->> asset-list (map updater) flatten)]
+    (group-by :game-track asset-list)))
+
+(defn-spec expand-summary (s/or :ok ::sp/addon, :error nil?)
+  "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. 
+  one additional look-up per ::addon required"
+  [addon-summary ::sp/addon-summary, game-track ::sp/game-track]
+  (let [release-list (download-releases (:source-id addon-summary))
+        latest-release (first release-list)
+        group-assets (partial group-assets addon-summary)
+        asset (-> latest-release group-assets (get game-track) first)]
+    (if-not asset
+      (warn (format "no '%s' release available for '%s' on github" game-track (:name addon-summary)))
+      (merge addon-summary
+             {:download-uri (:browser_download_url asset)
+              :version (:version asset)}))))
+
+;;
 
 (defn-spec extract-source-id (s/or :ok string?, :error nil?)
   [url ::sp/uri]
@@ -117,9 +166,6 @@
             source-id (-> latest-release :html_url extract-source-id)
             [owner repo] (clojure.string/split source-id #"/")
 
-            ;; disabled until tests are passing
-            ;;game-track-list (parse-remote-toc-file (find-remote-toc-file source-id))
-
             download-count (->> release-list (map :assets) flatten (map :download_count) (apply +))]
 
            {:uri (str "https://github.com/" source-id)
@@ -129,7 +175,7 @@
             :label repo
             :name (slugify repo "")
             :download-count download-count
-            ;;:game-track-list game-track-list
+            ;;:game-track-list (find-gametracks-toc-data source-id)
             :category-list []}
 
            ;; 'something' failed to parse :(
