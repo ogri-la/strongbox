@@ -15,7 +15,10 @@
                        {:get (fn [req] {:status 200 :body fixture})}
 
                        "https://api.github.com/repos/aviana/healcomm/releases"
-                       {:get (fn [req] {:status 200 :body fixture})}}
+                       {:get (fn [req] {:status 200 :body fixture})}
+
+                       "https://api.github.com/repos/Aviana/HealComm/contents"
+                       {:get (fn [req] {:status 200 :body "[]"})}}
 
           expected {:uri "https://github.com/Aviana/HealComm"
                     :updated-date "2019-10-09T17:40:04Z"
@@ -24,6 +27,7 @@
                     :label "HealComm"
                     :name "healcomm"
                     :download-count 30946
+                    :game-track-list []
                     :category-list []}
 
           ;; all of these should yield the above
