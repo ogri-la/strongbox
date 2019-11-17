@@ -1,9 +1,9 @@
 (ns wowman.github-api-test
   (:require
    [clojure.test :refer [deftest testing is use-fixtures]]
+   ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [wowman
     [github-api :as github-api]
-    ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
     [test-helper :refer [fixture-path]]]
    [clj-http.fake :refer [with-fake-routes-in-isolation]]))
 
@@ -203,3 +203,97 @@
       (doseq [[given expected] cases]
         (testing (str "a source-id can be extracted from a github URL, case:" given)
           (is (= expected (github-api/extract-source-id given))))))))
+
+(deftest gametrack-detection
+  (testing "detecting github addon game track, single asset cases"
+    (let [addon-summary
+          {:uri "https://github.com/Aviana/HealComm"
+           :updated-date "2019-10-09T17:40:04Z"
+           :source "github"
+           :source-id "Aviana/HealComm"
+           :label "HealComm"
+           :name "healcomm"
+           :download-count 30946
+           :game-track-list [] ;; 'no game tracks'
+           :category-list []}
+
+          latest-release {:name "Release 1.2.3"
+                          :assets [{:content_type "application/zip"
+                                    :state "uploaded"
+                                    :name "1.2.3"}]}
+
+          cases [;; addon-summary updates, latest-release updates, expected
+
+                 ;; case: asset has 'classic' in it's name
+                 [{} [[:assets 0 :name] "1.2.3-Classic"]
+                  {"classic" [{:content_type "application/zip", :state "uploaded", :name "1.2.3-Classic", :game-track "classic", :version "Release 1.2.3-classic" :-mo :classic-in-name}]}]
+
+                 ;; case: single asset, no game track present in file name, no known game tracks. default to :retail
+                 [{} {}
+                  {"retail" [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track "retail", :version "Release 1.2.3" :-mo :sa--ngt}]}]
+
+                 ;; case: single asset, no game track present in file name, single known game track. use that
+                 [{:game-track-list ["retail"]} {}
+                  {"retail" [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track "retail", :version "Release 1.2.3" :-mo :sa--1gt}]}]
+                 [{:game-track-list ["classic"]} {}
+                  {"classic" [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track "classic", :version "Release 1.2.3-classic" :-mo :sa--1gt}]}]
+
+                 ;; case: single asset, no game track present in file name, multiple known game tracks. assume all game tracks supported
+                 [{:game-track-list ["classic" "retail"]} {}
+                  {"retail" [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track "retail", :version "Release 1.2.3" :-mo :sa--Ngt}]
+                   "classic" [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track "classic", :version "Release 1.2.3-classic" :-mo :sa--Ngt}]}]]]
+
+      (doseq [[addon-summary-updates, release-updates, expected] cases
+              :let [summary (merge addon-summary addon-summary-updates)
+                    release (if (vector? release-updates)
+                              (assoc-in latest-release (first release-updates) (second release-updates))
+                              (merge latest-release release-updates))]]
+        (is (= expected (github-api/group-assets summary release))))))
+
+  (testing "detecting github addon game track, multiple asset cases"
+    (let [addon-summary
+          {:uri "https://github.com/Aviana/HealComm"
+           :updated-date "2019-10-09T17:40:04Z"
+           :source "github"
+           :source-id "Aviana/HealComm"
+           :label "HealComm"
+           :name "healcomm"
+           :download-count 30946
+           :game-track-list [] ;; 'no game tracks'
+           :category-list []}
+
+          latest-release {:name "Release 1.2.3"
+                          :assets [{:content_type "application/zip"
+                                    :state "uploaded"
+                                    :name "1.2.3"}
+
+                                   {:content_type "application/zip"
+                                    :state "uploaded"
+                                    :name "1.2.3-nolib"}]}
+
+          cases [;; addon-summary updates, latest-release updates, expected
+
+                 ;; case: multiple assets, no game track present in file name, no known game tracks. default to :retail
+                 [{} {}
+                  {"retail" [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track "retail", :version "Release 1.2.3" :-mo :ma--ngt}
+                             {:content_type "application/zip", :state "uploaded", :name "1.2.3-nolib", :game-track "retail", :version "Release 1.2.3" :-mo :ma--ngt}]}]
+
+                 ;; case: multiple assets, no game track present in file name, single known game track. use that.
+                 [{:game-track-list ["retail"]} {}
+                  {"retail" [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track "retail", :version "Release 1.2.3" :-mo :ma--1gt}
+                             {:content_type "application/zip", :state "uploaded", :name "1.2.3-nolib", :game-track "retail", :version "Release 1.2.3" :-mo :ma--1gt}]}]
+                 [{:game-track-list ["classic"]} {}
+                  {"classic" [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track "classic", :version "Release 1.2.3-classic" :-mo :ma--1gt}
+                              {:content_type "application/zip", :state "uploaded", :name "1.2.3-nolib", :game-track "classic", :version "Release 1.2.3-classic" :-mo :ma--1gt}]}]
+
+                 ;; case: multiple assets, no game track present in file name, multiple known game tracks. default to :retail
+                 [{:game-track-list ["classic" "retail"]} {}
+                  {"retail" [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track "retail", :version "Release 1.2.3" :-mo :ma--Ngt}
+                             {:content_type "application/zip", :state "uploaded", :name "1.2.3-nolib", :game-track "retail", :version "Release 1.2.3" :-mo :ma--Ngt}]}]]]
+
+      (doseq [[addon-summary-updates, release-updates, expected] cases
+              :let [summary (merge addon-summary addon-summary-updates)
+                    release (if (vector? release-updates)
+                              (assoc-in latest-release (first release-updates) (second release-updates))
+                              (merge latest-release release-updates))]]
+        (is (= expected (github-api/group-assets summary release)))))))

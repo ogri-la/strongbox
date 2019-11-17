@@ -107,7 +107,10 @@
 
 (deftest parse-user-string-router
   (let [fake-routes {"https://api.github.com/repos/Aviana/HealComm/releases"
-                     {:get (fn [req] {:status 200 :body (slurp (fixture-path "github-repo-releases--aviana-healcomm.json"))})}}]
+                     {:get (fn [req] {:status 200 :body (slurp (fixture-path "github-repo-releases--aviana-healcomm.json"))})}
+
+                     "https://api.github.com/repos/Aviana/HealComm/contents"
+                     {:get (fn [req] {:status 200 :body "[]"})}}]
     (with-fake-routes-in-isolation fake-routes
       (let [github-api {:uri "https://github.com/Aviana/HealComm"
                         :updated-date "2019-10-09T17:40:04Z"
@@ -116,6 +119,7 @@
                         :label "HealComm"
                         :name "healcomm"
                         :download-count 30946
+                        :game-track-list []
                         :category-list []}
 
             cases [["https://github.com/Aviana/HealComm" github-api]]]

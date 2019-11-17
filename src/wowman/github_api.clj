@@ -57,8 +57,13 @@
 
 ;; matches the word 'classic' bracketed by common delimiters in an addon's release name
 (def classic-regex #"^.+[\-_\.]?(classic)[\.-_]?.+$")
+;; (utils/named-regex-groups classic-regex [:classic] string)))
 
 (def supported-zip-mimes #{"application/zip"  "application/x-zip-compressed"})
+
+(defn classic-asset?
+  [string]
+  (-> string .toLowerCase (clojure.string/index-of "classic") nil? not))
 
 (defn group-assets
   [addon-summary latest-release]
@@ -80,47 +85,54 @@
         single-game-track? (-> known-game-tracks count (= 1))
         many-game-tracks? (-> known-game-tracks count (> 1))
 
+        track-version (fn [version gametrack]
+                        (if (= gametrack "classic")
+                          (str version "-classic")
+                          version))
+
         updater (fn [asset]
                   ;; "returns a list of updated versions of this asset. if the asset supports multiple game tracks, two versions are returned"
                   (let [version (:name latest-release) ;; "v2.10.0"
                         ;; todo: change this to look for 'classic' or 'retail'
                         ;; so, "FooAddon-retail" or "BarAddon-classic"
                         ;; no known cases but it would be forward proof
-                        classic? (nilable
-                                  (utils/named-regex-groups classic-regex [:classic] (:name asset)))
+
+                        classic? (classic-asset? (:name asset))
 
                         update-list ;; is either a map or a list of maps
                         (cond
                           ;; game track present in file name, prefer that over known-game-tracks
-                          classic? {:game-track "classic" :version (str version "-classic")}
+                          classic? {:game-track "classic" :version (track-version version "classic") :-mo :classic-in-name}
 
                           ;; single asset, no game track present in file name, no known game tracks. default to :retail
-                          (and single-asset? no-known-game-tracks?) {:game-track "retail" :version version}
+                          (and single-asset? no-known-game-tracks?) {:game-track "retail" :version version :-mo :sa--ngt}
 
                           ;; single asset, no game track present in file name, single known game track. use that
-                          (and single-asset? single-game-track?) {:game-track (first known-game-tracks) :version version}
+                          (and single-asset? single-game-track?) {:game-track (first known-game-tracks)
+                                                                  :version (track-version version (first known-game-tracks))  :-mo :sa--1gt}
 
                           ;; single asset, no game track present in file name, multiple known game tracks. assume all game tracks supported
-                          (and single-asset? many-game-tracks?) [{:game-track "classic" :version (str version "-classic")}
-                                                                 {:game-track "retail" :version version}]
+                          (and single-asset? many-game-tracks?) [{:game-track "classic" :version (track-version version "classic") :-mo :sa--Ngt}
+                                                                 {:game-track "retail" :version version :-mo :sa--Ngt}]
 
                           ;; multiple assets, no game track present in file name, no known game tracks. default to :retail
                           ;; ambiguous case, other assets may have game track in their file name
-                          (and many-assets? no-known-game-tracks?) {:game-track "retail" :version version}
+                          (and many-assets? no-known-game-tracks?) {:game-track "retail" :version version :-mo :ma--ngt}
 
                           ;; multiple assets, no game track present in file name, single known game track. use that.
                           ;; ambiguous case, other assets may have game track in their file name
                           ;; this or other assets may be variations of the 'main' addon, like '-nolib' ?
-                          (and many-assets? single-game-track?) {:game-track (first known-game-tracks) :version version}
+                          (and many-assets? single-game-track?) {:game-track (first known-game-tracks)
+                                                                 :version (track-version version (first known-game-tracks)) :-mo :ma--1gt}
 
-                          ;; multiple assets, no game track present in file name, multiple known game tracks.
-                          ;; ambiguous case, other assets may have game track in their file name. default to :retail
-                          (and many-assets? many-game-tracks?) {:game-track "retail" :version version}
+                          ;; multiple assets, no game track present in file name, multiple known game tracks. default to :retail
+                          ;; ambiguous case, other assets may have game track in their file name.
+                          (and many-assets? many-game-tracks?) {:game-track "retail" :version version :-mo :ma--Ngt}
 
                           :else (error (format "unhandled state attempting to determine game track(s) for asset '%s' in latest release of '%s'"
                                                asset addon-summary)))
 
-                        update-list (if-not (seq? update-list) [update-list] update-list)]
+                        update-list (if (sequential? update-list) update-list [update-list])]
 
                     (mapv (fn [update]
                             (merge asset update)) update-list)))
@@ -135,7 +147,7 @@
   (let [release-list (download-releases (:source-id addon-summary))
         latest-release (first release-list)
         group-assets (partial group-assets addon-summary)
-        asset (-> latest-release group-assets (get game-track) first)]
+        asset (-> latest-release group-assets (get game-track) first (dissoc :-mo))]
     (if-not asset
       (warn (format "no '%s' release available for '%s' on github" game-track (:name addon-summary)))
       (merge addon-summary
