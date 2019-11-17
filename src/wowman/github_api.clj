@@ -81,7 +81,7 @@
         many-game-tracks? (-> known-game-tracks count (> 1))
 
         updater (fn [asset]
-                  "returns a list of updated versions of this asset. if the asset supports multiple game tracks, two versions are returned"
+                  ;; "returns a list of updated versions of this asset. if the asset supports multiple game tracks, two versions are returned"
                   (let [version (:name latest-release) ;; "v2.10.0"
                         ;; todo: change this to look for 'classic' or 'retail'
                         ;; so, "FooAddon-retail" or "BarAddon-classic"
@@ -96,7 +96,7 @@
 
                           ;; single asset, no game track present in file name, no known game tracks. default to :retail
                           (and single-asset? no-known-game-tracks?) {:game-track "retail" :version version}
-                          
+
                           ;; single asset, no game track present in file name, single known game track. use that
                           (and single-asset? single-game-track?) {:game-track (first known-game-tracks) :version version}
 
@@ -123,7 +123,7 @@
                         update-list (if-not (seq? update-list) [update-list] update-list)]
 
                     (mapv (fn [update]
-                           (merge asset update)) update-list)))
+                            (merge asset update)) update-list)))
 
         asset-list (->> asset-list (map updater) flatten)]
     (group-by :game-track asset-list)))
