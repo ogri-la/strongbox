@@ -162,12 +162,12 @@
         (is (= expected (github-api/expand-summary given "classic")))
         (is (= expected (github-api/expand-summary given "retail"))))))
 
-  (let [given {:uri "https://github.com/Aviana/HealComm"
+  (let [given {:uri "https://github.com/jsb/RingMenu"
                :updated-date "2019-10-09T17:40:04Z"
                :source "github"
-               :source-id "Aviana/HealComm"
-               :label "HealComm"
-               :name "healcomm"
+               :source-id "jsb/RingMenu"
+               :label "RingMenu"
+               :name "ringmenu"
                :download-count 30946
                :category-list []}
 
@@ -176,7 +176,7 @@
         expected nil
 
         fixture (slurp (fixture-path "github-repo-releases--broken-assets.json"))
-        fake-routes {"https://api.github.com/repos/Aviana/HealComm/releases"
+        fake-routes {"https://api.github.com/repos/jsb/RingMenu/releases"
                      {:get (fn [_] {:status 200 :body fixture})}}]
 
     (testing "releases whose assets are only partially uploaded, due to an upload failure, are ignored"
