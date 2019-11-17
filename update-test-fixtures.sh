@@ -36,8 +36,8 @@ dl "https://api.mmoui.com/v3/game/WOW/filedetails/24910.json" "wowinterface-api-
 # github api
 
 # TODO: rename these two after their test cases
-dl "https://api.github.com/repos/Ravendwyr/Chinchilla/releases" "github-repo-releases--ravendwyr-chinchilla.json" 
-dl "https://api.github.com/repos/Ravendwyr/Chinchilla/contents" "github-repo-contents--ravendwyr-chinchilla.json" 
+dl "https://api.github.com/repos/Ravendwyr/Chinchilla/releases" "github-repo-releases--many-assets-many-gametracks.json" 
+dl "https://api.github.com/repos/Ravendwyr/Chinchilla/contents" "github-repo-contents--many-assets-many-gametracks.json" 
 
 dl "https://api.github.com/repos/Robert388/Necrosis-classic/releases" "github-repo-releases--no-assets.json"
 dl "https://api.github.com/repos/jsb/RingMenu/releases" "github-repo-releases--single-asset-classic.json"

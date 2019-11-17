@@ -175,7 +175,7 @@
             :label repo
             :name (slugify repo "")
             :download-count download-count
-            ;;:game-track-list (find-gametracks-toc-data source-id)
+            :game-track-list (find-gametracks-toc-data source-id)
             :category-list []}
 
            ;; 'something' failed to parse :(
