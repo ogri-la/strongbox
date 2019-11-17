@@ -72,7 +72,7 @@
           expected nil
 
           ;; (fixture is missing uploaded assets)
-          fixture (slurp (fixture-path "github-repo-releases--robert388-necrosis-classic.json"))
+          fixture (slurp (fixture-path "github-repo-releases--no-assets.json"))
           fake-routes {"https://api.github.com/repos/Robert388/Necrosis-classic/releases"
                        {:get (fn [_] {:status 200 :body fixture})}}]
       (with-fake-routes-in-isolation fake-routes
@@ -153,7 +153,7 @@
 
         expected nil
 
-        fixture (slurp (fixture-path "github-repo-releases--robert388-necrosis-classic.json"))
+        fixture (slurp (fixture-path "github-repo-releases--no-assets.json"))
         fake-routes {"https://api.github.com/repos/Robert388/Necrosis-classic/releases"
                      {:get (fn [_] {:status 200 :body fixture})}}]
 
