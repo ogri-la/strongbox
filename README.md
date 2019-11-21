@@ -6,6 +6,10 @@
 It interacts with the Twitch (Curseforge) [Addons API](https://addons-ecs.forgesvc.net) and 
 [wowinterface.com](https://wowinterface.com/addons.php) and with the addons in your `Addons` directory.
 
+## News
+
+* **2019-11-22**: 1000+ downloads! I often forget I build this for others as well and this is a stark reminder of that. If you're a user of wowman and you ever want to get in touch, please just [open an issue](https://github.com/ogri-la/wowman/issues) or [PM me on reddit](https://www.reddit.com/message/compose/?to=torkus-jr&subject=wowman).
+
 ## Audience
 
 This software targets World of Warcraft players using Linux.
