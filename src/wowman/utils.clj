@@ -15,6 +15,16 @@
    [java-time :as jt]
    [java-time.format]))
 
+(defn all
+  "true if all items in `lst` are truth-y"
+  [lst]
+  (every? identity lst))
+
+(defn any
+  "true if any item in `lst` is truth-y (not nil, not false)"
+  [lst]
+  (reduce (fn [a b] (boolean (or a b))) lst))
+
 (defn-spec pad coll?
   "given a collection, ensures there are at least pad-amt items in result. pad value is nil"
   [lst coll?, pad-amt int?]

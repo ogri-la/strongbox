@@ -288,8 +288,10 @@
 
                  ;; case: multiple assets, no game track present in file name, multiple known game tracks. default to :retail
                  [{:game-track-list ["classic" "retail"]} {}
-                  {"retail" [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track "retail", :version "Release 1.2.3" :-mo :ma--Ngt}
-                             {:content_type "application/zip", :state "uploaded", :name "1.2.3-nolib", :game-track "retail", :version "Release 1.2.3" :-mo :ma--Ngt}]}]]]
+                  ;;{"retail" [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track "retail", :version "Release 1.2.3" :-mo :ma--Ngt}
+                  ;;           {:content_type "application/zip", :state "uploaded", :name "1.2.3-nolib", :game-track "retail", :version "Release 1.2.3" :-mo :ma--Ngt}]}]]]
+                  ;; 2019-11-21: changed my mind, refusing to install in very ambiguous caseses
+                  nil]]]
 
       (doseq [[addon-summary-updates, release-updates, expected] cases
               :let [summary (merge addon-summary addon-summary-updates)

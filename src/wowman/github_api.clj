@@ -1,5 +1,6 @@
 (ns wowman.github-api
   (:require
+   [clojure.string :refer [index-of split]]
    [slugify.core :refer [slugify]]
    [clojure.spec.alpha :as s]
    [orchestra.spec.test :as st]
@@ -63,7 +64,7 @@
 
 (defn classic-asset?
   [string]
-  (-> string .toLowerCase (clojure.string/index-of "classic") nil? not))
+  (-> string .toLowerCase (index-of "classic") nil? not))
 
 (defn group-assets
   [addon-summary latest-release]
@@ -84,6 +85,13 @@
         no-known-game-tracks? (-> known-game-tracks count (= 0))
         single-game-track? (-> known-game-tracks count (= 1))
         many-game-tracks? (-> known-game-tracks count (> 1))
+
+        ;; true if at least one asset has 'classic' in it's name
+        classic-in-any-asset? (some->> asset-list (map :name) (map classic-asset?) nilable utils/any)
+
+        too-ambiguous (and many-game-tracks?
+                           many-assets?
+                           (not classic-in-any-asset?))
 
         track-version (fn [version gametrack]
                         (if (= gametrack "classic")
@@ -138,7 +146,10 @@
                             (merge asset update)) update-list)))
 
         asset-list (->> asset-list (map updater) flatten)]
-    (group-by :game-track asset-list)))
+
+    (if too-ambiguous
+      (warn "multiple game tracks (classic and retail) detected with many downloadable assets and unable to differentiate between them. Refusing to pick.")
+      (group-by :game-track asset-list))))
 
 (defn-spec expand-summary (s/or :ok ::sp/addon, :error nil?)
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. 
@@ -146,8 +157,8 @@
   [addon-summary ::sp/addon-summary, game-track ::sp/game-track]
   (let [release-list (download-releases (:source-id addon-summary))
         latest-release (first release-list)
-        group-assets (partial group-assets addon-summary)
-        asset (-> latest-release group-assets (get game-track) first (dissoc :-mo))]
+        -group-assets (partial group-assets addon-summary)
+        asset (-> latest-release -group-assets (get game-track) first (dissoc :-mo))]
     (if-not asset
       (warn (format "no '%s' release available for '%s' on github" game-track (:name addon-summary)))
       (merge addon-summary
@@ -167,7 +178,7 @@
             path (when-not (empty? (.getPath obj)) (.getPath obj))
 
             ;; values here are tentative because user URL may resolve to a different URL
-            [-owner -repo] (-> path (subs 1) (clojure.string/split #"/") (pad 2))
+            [-owner -repo] (-> path (subs 1) (split #"/") (pad 2))
             -source-id (when (and -owner -repo)
                          (format "%s/%s" -owner -repo))
             release-list (download-releases -source-id)
@@ -176,7 +187,7 @@
 
             ;; these are the values we want to be using
             source-id (-> latest-release :html_url extract-source-id)
-            [owner repo] (clojure.string/split source-id #"/")
+            [owner repo] (split source-id #"/")
 
             download-count (->> release-list (map :assets) flatten (map :download_count) (apply +))]
 
