@@ -38,7 +38,7 @@
 ...?
 
 
-# unsupported, but would love to support (somehow):
+# unsupported, but would love to support:
 
 ## no packages
 * https://github.com/AdiAddons/AdiBags

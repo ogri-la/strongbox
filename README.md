@@ -69,6 +69,10 @@ that it's my privilege to offer this small piece back.
 
 [![wowman version 0.9.0](./screenshots/screenshot-0.9.0-installed-thumbnail.jpg)](./screenshots/screenshot-0.9.0-installed.png?raw=true) [![wowman version 0.9.0](./screenshots/screenshot-0.9.0-search-thumbnail.jpg)](./screenshots/screenshot-0.9.0-search.png?raw=true)
 
+## Features
+
+* installation of addons from [curseforge](https://www.curseforge.com/wow/addons), [wowinterface](https://wowinterface.com/addons.php), [github *packages*](./github-addons.md)
+
 ## Notes
 
 User configuration is stored in `~/.config/wowman` unless run with the envvar `$XDG_CONFIG_HOME` set.
