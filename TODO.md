@@ -149,8 +149,10 @@ multiple assets will always require differentiation, but we can tune warnings/er
 * investigate usage of spec-tools/coerce and remove if unnecessary
 * when adding an addon-dir, if path ends with /_classic_/Interface/Addons, set game track to classic
 
-## todo bucket
+## todo bucket (no particular order)
 
+* add support for reconciling addons by 'x-curse' and 'x-wowi' ids
+    - example: https://github.com/ascott18/TellMeWhen/blob/master/TellMeWhen.toc#L19-L20
 * new tab for dedicated log
 * import/export, capture game track of exported addon dir?
 * import/export, export user catalogue
