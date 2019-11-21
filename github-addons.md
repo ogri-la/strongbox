@@ -3,11 +3,11 @@
 ## single asset, classic, no toc file, 'classic' in asset name
 * https://github.com/wardz/ClassicCastbars
 
-## single asset, classic, toc file, 'classic' in asset name
-* https://github.com/sylvanaar/ipop-bar
-
 ## single asset, classic, no toc file, no 'classic' in asset name
 * https://github.com/DeadlyBossMods/DBM-Classic
+
+## single asset, classic, toc file, 'classic' in asset name
+* https://github.com/sylvanaar/ipop-bar
 
 ## single asset, classic, toc file, no 'classic' in asset name
 * https://github.com/jsb/RingMenu
@@ -38,7 +38,7 @@
 ...?
 
 
-## unsupported, but would love to support (somehow):
+# unsupported, but would love to support (somehow):
 
 ## no packages
 * https://github.com/AdiAddons/AdiBags
