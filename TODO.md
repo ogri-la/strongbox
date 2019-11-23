@@ -60,13 +60,6 @@ for an addon on github to be installable by wowman, it must:
     - done
 * bug, export addon list isn't using selected directory
     - done
-
-### todo
-
-* github, non-addon git repo fails to install
-    - https://github.com/koekeishiya/yabai
-    - make this a softer failure
-        - "does not look like an addon"
 * github, look for a .toc file to better determine classic or not
     - fall back to release name scraping only if a .toc file not found
         - not finding a toc file may itself be an indication of problems...
@@ -110,7 +103,17 @@ so, 'peeking' at the `.toc` file will only be helpful in cases where there is a 
 multiple assets will always require differentiation, but we can tune warnings/error messages based on what we know from the toc file
 
 ---
+    - done
+* remove the 'curse-crap-redirect-strategy' in http.clj
+    - was used when curse *website* (not api) would redirect us to an unencoded path
+    - done
 
+### todo
+
+* github, non-addon git repo fails to install
+    - https://github.com/koekeishiya/yabai
+    - make this a softer failure
+        - "does not look like an addon"
 * gitlab as addon host
     - https://gitlab.com/search?search=wow+addon
 * add TUKUI addon host
@@ -130,13 +133,9 @@ multiple assets will always require differentiation, but we can tune warnings/er
     - must be included in CI
 * windows support
     - must be included in CI
-* investigate state of java packaging
-    - https://www.infoq.com/news/2019/03/jep-343-jpackage/
 * add a sha256 sum to release file
     - will prevent me from having to download release to generate a sumfile
 * it's possible for `.part` files to exist and not be cleaned up
-* remove the 'curse-crap-redirect-strategy' in http.clj
-    - was used when curse *website* (not api) would redirect us to an unencoded path
 * bug, if an addon directory goes missing between restarts, user configuration is lost
     - initially it's ignored, but then the new settings are saved over the top
 * bug, we have addons in multiple identical categories. fix this in catalog.clj
@@ -148,6 +147,8 @@ multiple assets will always require differentiation, but we can tune warnings/er
 
 ## todo bucket (no particular order)
 
+* investigate state of java packaging
+    - https://www.infoq.com/news/2019/03/jep-343-jpackage/
 * github-api, also look for 'retail' in addon name to determine game track
     - rather than just 'classic'
 * add support for reconciling addons by 'x-curse' and 'x-wowi' ids
