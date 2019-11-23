@@ -60,13 +60,6 @@ for an addon on github to be installable by wowman, it must:
     - done
 * bug, export addon list isn't using selected directory
     - done
-
-### todo
-
-* github, non-addon git repo fails to install
-    - https://github.com/koekeishiya/yabai
-    - make this a softer failure
-        - "does not look like an addon"
 * github, look for a .toc file to better determine classic or not
     - fall back to release name scraping only if a .toc file not found
         - not finding a toc file may itself be an indication of problems...
@@ -110,7 +103,15 @@ so, 'peeking' at the `.toc` file will only be helpful in cases where there is a 
 multiple assets will always require differentiation, but we can tune warnings/error messages based on what we know from the toc file
 
 ---
+    - done
 
+
+### todo
+
+* github, non-addon git repo fails to install
+    - https://github.com/koekeishiya/yabai
+    - make this a softer failure
+        - "does not look like an addon"
 * gitlab as addon host
     - https://gitlab.com/search?search=wow+addon
 * add TUKUI addon host
