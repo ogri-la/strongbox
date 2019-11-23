@@ -104,7 +104,9 @@ multiple assets will always require differentiation, but we can tune warnings/er
 
 ---
     - done
-
+* remove the 'curse-crap-redirect-strategy' in http.clj
+    - was used when curse *website* (not api) would redirect us to an unencoded path
+    - done
 
 ### todo
 
@@ -131,13 +133,9 @@ multiple assets will always require differentiation, but we can tune warnings/er
     - must be included in CI
 * windows support
     - must be included in CI
-* investigate state of java packaging
-    - https://www.infoq.com/news/2019/03/jep-343-jpackage/
 * add a sha256 sum to release file
     - will prevent me from having to download release to generate a sumfile
 * it's possible for `.part` files to exist and not be cleaned up
-* remove the 'curse-crap-redirect-strategy' in http.clj
-    - was used when curse *website* (not api) would redirect us to an unencoded path
 * bug, if an addon directory goes missing between restarts, user configuration is lost
     - initially it's ignored, but then the new settings are saved over the top
 * bug, we have addons in multiple identical categories. fix this in catalog.clj
@@ -149,6 +147,8 @@ multiple assets will always require differentiation, but we can tune warnings/er
 
 ## todo bucket (no particular order)
 
+* investigate state of java packaging
+    - https://www.infoq.com/news/2019/03/jep-343-jpackage/
 * github-api, also look for 'retail' in addon name to determine game track
     - rather than just 'classic'
 * add support for reconciling addons by 'x-curse' and 'x-wowi' ids

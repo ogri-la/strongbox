@@ -28,15 +28,6 @@
     ;; properly encoded
     (java.net.URI. protocol host path fragment)))
 
-(def curse-crap-redirect-strategy
-  (proxy [org.apache.http.impl.client.DefaultRedirectStrategy] []
-    (createLocationURI [loc]
-      (try
-        (java.net.URI. loc)
-        (catch java.net.URISyntaxException e
-          (warn "redirected to bad URI! encoding path:" loc)
-          (encode-url-path loc))))))
-
 (defn- add-etag-or-not
   [etag-key req]
   (if-let [;; for some reason this dynamic binding of *cache* to nil results in:
@@ -119,8 +110,7 @@
         (when message (info message)) ;; always show the message that was explicitly passed in
         (debug (format "downloading %s to %s" (fs/base-name uri) output-file))
         (client/with-additional-middleware [client/wrap-lower-case-headers (etag-middleware etag-key)]
-          (let [params {:redirect-strategy curse-crap-redirect-strategy
-                        :cookie-policy :ignore} ;; completely ignore cookies. doesn't stop HttpComponents warning
+          (let [params {:cookie-policy :ignore} ;; completely ignore cookies. doesn't stop HttpComponents warning
                 use-anon-useragent? false
                 params (merge params (user-agent use-anon-useragent?) extra-params)
                 _ (debug "requesting" uri "with params" params)
