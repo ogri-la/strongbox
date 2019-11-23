@@ -17,17 +17,6 @@
 (def expiry-offset-hours 24) ;; hours
 (def ^:dynamic *cache* nil)
 
-(defn-spec encode-url-path uri?
-  "given a url, explodes it, encodes the path, returns a uri object"
-  [url string?]
-  (let [url (java.net.URL. url)
-        protocol (.getProtocol url)
-        host (.getHost url)
-        path (.getPath url) ;; unencoded
-        fragment nil]
-    ;; properly encoded
-    (java.net.URI. protocol host path fragment)))
-
 (defn- add-etag-or-not
   [etag-key req]
   (if-let [;; for some reason this dynamic binding of *cache* to nil results in:

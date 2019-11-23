@@ -6,12 +6,6 @@
     [catalog :as catalog]
     [http :as http]]))
 
-(deftest encode-url-path
-  (testing "url whose path has spaces is correctly encoded"
-    (let [path-with-spaces "https://addons.cursecdn.com/files/2548/794/AR 4.5.7.3.zip"
-          path-enc-spaces "https://addons.cursecdn.com/files/2548/794/AR%204.5.7.3.zip"]
-      (is (= path-enc-spaces (str (http/encode-url-path path-with-spaces)))))))
-
 (deftest download-404
   (testing "regular (non-streaming) download that yields a 404 returns an error map"
     (let [;; listed in the curseforge catalog but returns a 404 when fetched
