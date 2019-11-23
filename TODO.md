@@ -70,6 +70,47 @@ for an addon on github to be installable by wowman, it must:
 * github, look for a .toc file to better determine classic or not
     - fall back to release name scraping only if a .toc file not found
         - not finding a toc file may itself be an indication of problems...
+
+---
+
+how to determine game tracks
+* if root level .toc file found
+* download
+* look for interface version in comments
+    - regular toc file parsing won't work here
+    - `## Interface: 80205`
+* look for interface version in commented-comments:
+    - `# ## Interface: 11302`
+    - `# # Interface: ...`
+* set game tracks from what we find
+
+if single asset and no game-track present
+- look for 'classic' in asset name, default to retail
+
+if single asset and single game-track present
+- use that game track
+
+if single asset and multiple game tracks present
+- assume asset is compatible with both game tracks
+
+if multiple assets present and no game track present
+- check each asset for mention of 'classic'
+
+if multiple assets present and single game track present
+- do we treat the game tracks in the catalogue (that may be old) as 'hints' rather than law?
+    - in which case, we need to check each asset for mention of 'classic'
+    - the alternative is assume all assets are of the same game track type, which doesn't seem right
+
+if multiple assets present and multiple game tracks present
+- we still need to differentiate which asset belongs to which game track
+    - if we're unable to differentiate then a warning should be issued
+        - we know the addon supports multiple game tracks but it's not clear from the assets which is which
+
+so, 'peeking' at the `.toc` file will only be helpful in cases where there is a *single* asset. 
+multiple assets will always require differentiation, but we can tune warnings/error messages based on what we know from the toc file
+
+---
+
 * gitlab as addon host
     - https://gitlab.com/search?search=wow+addon
 * add TUKUI addon host
@@ -105,8 +146,12 @@ for an addon on github to be installable by wowman, it must:
 * investigate usage of spec-tools/coerce and remove if unnecessary
 * when adding an addon-dir, if path ends with /_classic_/Interface/Addons, set game track to classic
 
-## todo bucket
+## todo bucket (no particular order)
 
+* github-api, also look for 'retail' in addon name to determine game track
+    - rather than just 'classic'
+* add support for reconciling addons by 'x-curse' and 'x-wowi' ids
+    - example: https://github.com/ascott18/TellMeWhen/blob/master/TellMeWhen.toc#L19-L20
 * add an option that forces installation of addon if matching game track not found
     - enable it by default
     - add a warning when installing an addon that doesn't match game track

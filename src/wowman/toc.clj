@@ -36,20 +36,26 @@
    "|cffffe00a<|r|cffff7d0aDBM|r|cffffe00a>|r |cff69ccf0Firelands|r" "deadly-boss-mods-cataclysm-mods"
    "X-Perl UnitFrames by |cFFFF8080Zek|r" "xperl"})
 
-(defn-spec -read-toc-file map?
+;; todo: rename
+(defn-spec -parse-toc-file map?
   [toc-contents string?]
-  (let [comment? #(clojure.string/starts-with? % "##")
+  (let [comment? #(= (utils/safe-subs % 2) "##")
+        comment-comment? #(= (utils/safe-subs % 4) "# ##")
+        interesting? (some-fn comment-comment? comment?)
+
         parse-comment (fn [comment]
                         (let [[key value] (clojure.string/split comment #":" 2) ;; "##Interface: 70300" => ["##Interface" " 70300"]
-                              ;; handles "##Interface" as well as "## Interface"
-                              key (-> key (utils/ltrim "# ") lower-case keyword)] ;; "## Title" => :title
+
+                              key (if (comment-comment? comment)
+                                    ;; handles "# ##Interface" as well as "# ## Interface"
+                                    (->> (-> key (utils/ltrim "# ") lower-case) (str "#") keyword) ;; "# ## Title" => :#title
+                                    ;; handles "##Interface" as well as "## Interface"
+                                    (-> key (utils/ltrim "# ") lower-case keyword))] ;; "## Title" => :title    
                           (if-not value
                             (debug "cannot parse line, ignoring:" comment)
                             {key (clojure.string/trim value)})))
-        contents (clojure.string/split-lines toc-contents)
-        filtered (filterv comment? contents)
-        parsed (map parse-comment filtered)] ;; list of maps
-    (reduce merge parsed))) ;; single map
+        contents (clojure.string/split-lines toc-contents)]
+    (->> contents (filter interesting?) (map parse-comment) (reduce merge))))
 
 (defn-spec read-addon-dir (s/or :ok map?, :error nil?)
   "returns a map of key-vals scraped from the .toc file in given directory"
@@ -69,7 +75,7 @@
         do-toc-file (fn [toc-file & [warning]]
                       (when warning
                         (debug warning))
-                      (-> toc-file utils/de-bom-slurp -read-toc-file))]
+                      (-> toc-file utils/de-bom-slurp -parse-toc-file))]
     (cond
       (fs/file? toc-file) (do-toc-file toc-file)
 
@@ -81,7 +87,7 @@
       ;; TradeSkillMaster_AuctioningScanSummary
       (not (nil? any-toc-file)) (do-toc-file
                                  any-toc-file
-                                 (format "expecting %s, found %s . please smack developer" toc-file any-toc-file)))))
+                                 (format "expecting '%s', found '%s' . please smack developer" toc-file any-toc-file)))))
 
 (defn-spec rm-trailing-version string?
   "'foo 1.2.3' => 'foo', 'foo 1"

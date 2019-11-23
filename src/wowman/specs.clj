@@ -117,7 +117,7 @@
 (s/def ::install-dir (s/nilable ::extant-dir))
 (s/def ::debug? boolean?)
 (s/def ::game-track #{"retail" "classic"})
-(s/def ::game-track-list ::game-track) ;; just an alias for the catalog, consistent with category-list (also a set)
+(s/def ::game-track-list (s/coll-of ::game-track :kind vector? :distinct true))
 (s/def ::addon-dir ::extant-dir)
 (s/def ::selected? boolean?)
 (s/def ::addon-dir-map (s/keys :req-un [::addon-dir ::game-track]))

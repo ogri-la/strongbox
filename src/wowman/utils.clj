@@ -15,6 +15,16 @@
    [java-time :as jt]
    [java-time.format]))
 
+(defn-spec all boolean?
+  "true if all items in `lst` are neither nil nor false"
+  [lst sequential?]
+  (every? identity lst))
+
+(defn-spec any boolean?
+  "true if any item in `lst` is neither nil nor false"
+  [lst sequential?]
+  ((complement not-any?) identity lst))
+
 (defn-spec pad coll?
   "given a collection, ensures there are at least pad-amt items in result. pad value is nil"
   [lst coll?, pad-amt int?]
