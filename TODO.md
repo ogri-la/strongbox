@@ -148,6 +148,8 @@ multiple assets will always require differentiation, but we can tune warnings/er
 
 ## todo bucket (no particular order)
 
+* github-api, also look for 'retail' in addon name to determine game track
+    - rather than just 'classic'
 * add support for reconciling addons by 'x-curse' and 'x-wowi' ids
     - example: https://github.com/ascott18/TellMeWhen/blob/master/TellMeWhen.toc#L19-L20
 * add an option that forces installation of addon if matching game track not found

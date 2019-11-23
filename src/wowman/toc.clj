@@ -37,7 +37,7 @@
    "X-Perl UnitFrames by |cFFFF8080Zek|r" "xperl"})
 
 ;; todo: rename
-(defn-spec -read-toc-file map?
+(defn-spec -parse-toc-file map?
   [toc-contents string?]
   (let [comment? #(= (utils/safe-subs % 2) "##")
         comment-comment? #(= (utils/safe-subs % 4) "# ##")
@@ -47,7 +47,7 @@
                         (let [[key value] (clojure.string/split comment #":" 2) ;; "##Interface: 70300" => ["##Interface" " 70300"]
 
                               key (if (comment-comment? comment)
-                                    ;; handles "# #Interface", "# # Interface", "# ## Interface"
+                                    ;; handles "# ##Interface" as well as "# ## Interface"
                                     (->> (-> key (utils/ltrim "# ") lower-case) (str "#") keyword) ;; "# ## Title" => :#title
                                     ;; handles "##Interface" as well as "## Interface"
                                     (-> key (utils/ltrim "# ") lower-case keyword))] ;; "## Title" => :title    
@@ -75,7 +75,7 @@
         do-toc-file (fn [toc-file & [warning]]
                       (when warning
                         (debug warning))
-                      (-> toc-file utils/de-bom-slurp -read-toc-file))]
+                      (-> toc-file utils/de-bom-slurp -parse-toc-file))]
     (cond
       (fs/file? toc-file) (do-toc-file toc-file)
 

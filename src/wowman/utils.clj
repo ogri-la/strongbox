@@ -15,15 +15,15 @@
    [java-time :as jt]
    [java-time.format]))
 
-(defn all
-  "true if all items in `lst` are truth-y"
-  [lst]
+(defn-spec all boolean?
+  "true if all items in `lst` are neither nil nor false"
+  [lst sequential?]
   (every? identity lst))
 
-(defn any
-  "true if any item in `lst` is truth-y (not nil, not false)"
-  [lst]
-  (reduce (fn [a b] (boolean (or a b))) lst))
+(defn-spec any boolean?
+  "true if any item in `lst` is neither nil nor false"
+  [lst sequential?]
+  ((complement not-any?) identity lst))
 
 (defn-spec pad coll?
   "given a collection, ensures there are at least pad-amt items in result. pad value is nil"

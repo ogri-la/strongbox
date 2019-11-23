@@ -159,3 +159,44 @@
     (doseq [[[given given-ext] expected] cases]
       (testing (format "a file can have it's extension replaced, case: (%s %s)" given given-ext)
         (is (= expected (utils/replace-file-ext given given-ext)))))))
+
+(deftest all
+  (let [cases [[[nil] false]
+               [[nil nil nil] false]
+               [[false] false]
+               [[false false false] false]
+               [[nil false nil] false]
+               [[false nil false] false]
+
+               [[] true]
+               [[""] true]
+               [[0] true]
+               [[1 2 3] true]
+
+               [[1 2 nil] false]
+               [[1 nil 3] false]
+               [[false 2 3] false]]]
+    (doseq [[given expected] cases]
+      (testing (format "'all', case: (%s %s)" given expected)
+        (is (= expected (utils/all given)))))))
+
+(deftest any
+  (let [cases [[[nil] false]
+               [[nil nil nil] false]
+               [[false] false]
+               [[false false false] false]
+               [[nil false nil] false]
+               [[false nil false] false]
+
+               [[] false] ;; different from 'and' behaviour
+               [[""] true]
+               [[0] true]
+               [[1 2 3] true]
+
+               [[1 2 nil] true]
+               [[1 nil 3] true]
+               [[false 2 3] true]]]
+    (doseq [[given expected] cases]
+      (testing (format "'any', case: (%s %s)" given expected)
+        (is (= expected (utils/any given)))))))
+

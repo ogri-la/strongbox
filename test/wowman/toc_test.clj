@@ -82,7 +82,7 @@ SomeAddon.lua")
                     :interface "80205"
                     :#interface "11302"}]
 
-      (is (= expected (toc/-read-toc-file toc-file-contents)))))
+      (is (= expected (toc/-parse-toc-file toc-file-contents)))))
 
   (testing "parsing of scraped toc-file key-vals"
     (let [expected {:name "addon-name"
