@@ -110,6 +110,12 @@ multiple assets will always require differentiation, but we can tune warnings/er
 
 ### todo
 
+* allow user to accumulate addons in a 'user' catalogue
+    - how is this catalogue updated?
+        - it will contain information that will remain static after initially created
+        - typically wowman downloads the updated catalogue from remote
+            - that won't happen here
+
 * github, non-addon git repo fails to install
     - https://github.com/koekeishiya/yabai
     - make this a softer failure
@@ -124,11 +130,6 @@ multiple assets will always require differentiation, but we can tune warnings/er
 * allow user to specify their own catalogs
     - a url to a catalog that is downloaded and included while loading up the db
     - different from the 'user catalog'
-* allow user to accumulate addons in a 'user' catalogue
-    - how is this catalogue updated?
-        - it will contain information that will remain static after initially created
-        - typically wowman downloads the updated catalogue from remote
-            - that won't happen here
 * mac support
     - must be included in CI
 * windows support

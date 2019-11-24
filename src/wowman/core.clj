@@ -797,6 +797,14 @@
       (when-not (empty? final-catalog)
         (-db-load-catalog final-catalog)))))
 
+(defn refresh-user-catalog
+  "for each entry in user catalog, fetch+parse+write"
+  []
+  (binding [http/*cache* (cache)]
+    (let [addon-url-list (->> (get-create-user-catalog) :addon-summary-list (map :uri))]
+      (doseq [addon-url addon-url-list]
+        (add-user-addon! (catalog/parse-user-string addon-url))))))
+
 ;;
 ;; addon summary and toc merging
 ;;
@@ -954,6 +962,8 @@
 
   (db-load-catalog)       ;; load the contents of the catalog into the database
 
+  (refresh-user-catalog)  ;; 
+
   (match-installed-addons-with-catalog) ;; match installed addons to those in catalog
 
   (check-for-updates)     ;; for those addons that have matches, download their details
@@ -1047,14 +1057,15 @@
   "convenience. parses string, adds to user catalog, installs addon then reloads database.
   relies on UI to call refresh (or not)"
   [addon-url string?]
-  (when-let [addon-summary (catalog/parse-user-string addon-url)]
-    (add-user-addon! addon-summary)
-    (let [result (or (when-let [addon (expand-summary-wrapper addon-summary)]
-                       (install-addon addon (get-state :selected-addon-dir)) ;; todo: simplify install-addon interface
-                       addon)
-                     addon-summary)]
-      (db-reload-catalog)
-      result)))
+  (binding [http/*cache* (cache)]
+    (when-let [addon-summary (catalog/parse-user-string addon-url)]
+      (add-user-addon! addon-summary)
+      (let [result (or (when-let [addon (expand-summary-wrapper addon-summary)]
+                         (install-addon addon (get-state :selected-addon-dir)) ;; todo: simplify install-addon interface
+                         addon)
+                       addon-summary)]
+        (db-reload-catalog)
+        result))))
 
 ;; init
 
