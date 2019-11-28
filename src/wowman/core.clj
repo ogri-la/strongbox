@@ -971,11 +971,6 @@
 
   (check-for-updates)     ;; for those addons that have matches, download their details
 
-  ;; called after checking for updates as most of these will then be cache hits 
-  ;; at two requests per-addon and a github api cap of 60 requests/hour, we're limited to 30 github addons
-  ;; an api request is also made to github for the latest wowman release, so now it's 29 github addons
-  (refresh-user-catalog)
-  
   ;;(latest-wowman-release) ;; check for updates after everything else is done ;; 2019-06-30, travis is failing with 403: Forbidden. Moved to gui init
 
   (save-settings)         ;; seems like a good place to preserve the etag-db

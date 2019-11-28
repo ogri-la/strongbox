@@ -150,6 +150,8 @@ multiple assets will always require differentiation, but we can tune warnings/er
 
 ## todo bucket (no particular order)
 
+* add support for user supplied github token
+    - necessary if they want a large number of github addons without hassles
 * when curseforge api is down users get a wall of red error messages with very little useful information
     - see issue 91: https://github.com/ogri-la/wowman/issues/91
 * investigate state of java packaging
