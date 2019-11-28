@@ -36,7 +36,7 @@
             toc-file-list (filterv #(-> % :name fs/split-ext last (= ".toc")) contents-listing)
             toc-file (first toc-file-list)]
            (some-> toc-file :download_url http/download toc/-parse-toc-file)
-           (warn (format "failed to find/download/parse remote github '.toc' file for '%s'" source-id))))
+           (debug (format "failed to find/download/parse remote github '.toc' file for '%s'" source-id))))
 
 (defn-spec -find-gametracks-toc-data (s/or :ok ::sp/game-track-list, :empty nil?, :error nil?)
   "returns a set of 'retail' and/or 'classic' after inspecting .toc file contents"
