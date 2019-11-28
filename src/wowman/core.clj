@@ -606,10 +606,13 @@
 
 (defn-spec add-user-addon! nil?
   "adds a single addon to the user catalog"
-  [addon-summary ::sp/addon-summary]
-  (let [user-catalog-path (paths :user-catalog-file)
+  [addon-summary (s/or :single ::sp/addon-summary, :many ::sp/addon-summary-list)]
+  (let [addon-summary-list (if (sequential? addon-summary)
+                             addon-summary
+                             [addon-summary])
+        user-catalog-path (paths :user-catalog-file)
         user-catalog (get-create-user-catalog)
-        tmp-catalog (catalog/new-catalog [addon-summary])
+        tmp-catalog (catalog/new-catalog addon-summary-list)
         new-user-catalog (catalog/merge-catalogs user-catalog tmp-catalog)]
     (catalog/write-catalog new-user-catalog user-catalog-path))
   nil)
@@ -801,9 +804,11 @@
   "for each entry in user catalog, fetch+parse+write"
   []
   (binding [http/*cache* (cache)]
-    (let [addon-url-list (->> (get-create-user-catalog) :addon-summary-list (map :uri))]
-      (doseq [addon-url addon-url-list]
-        (add-user-addon! (catalog/parse-user-string addon-url))))))
+    (->> (get-create-user-catalog)
+         :addon-summary-list
+         (map :uri)
+         (map catalog/parse-user-string)
+         add-user-addon!)))
 
 ;;
 ;; addon summary and toc merging
@@ -962,12 +967,17 @@
 
   (db-load-catalog)       ;; load the contents of the catalog into the database
 
-  (refresh-user-catalog)  ;; 
-
   (match-installed-addons-with-catalog) ;; match installed addons to those in catalog
 
   (check-for-updates)     ;; for those addons that have matches, download their details
+
+  ;; called after checking for updates as most of these will then be cache hits 
+  ;; at two requests per-addon and a github api cap of 60 requests/hour, we're limited to 30 github addons
+  ;; an api request is also made to github for the latest wowman release, so now it's 29 github addons
+  (refresh-user-catalog)
+  
   ;;(latest-wowman-release) ;; check for updates after everything else is done ;; 2019-06-30, travis is failing with 403: Forbidden. Moved to gui init
+
   (save-settings)         ;; seems like a good place to preserve the etag-db
   nil)
 

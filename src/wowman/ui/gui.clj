@@ -772,7 +772,9 @@
                    :separator
                    (ss/action :name "Exit" :key "menu Q" :mnemonic "x" :handler (handler #(ss/dispose! newui)))]
 
-        catalog-menu (build-catalog-menu)
+        catalog-menu (into (build-catalog-menu)
+                           [:separator
+                            (ss/action :name "Refresh user catalog" :handler (async-handler core/refresh-user-catalog))])
 
         addon-menu [(ss/action :name "Update all" :key "menu U" :mnemonic "u" :handler (async-handler core/install-update-all))
                     (ss/action :name "Re-install all" :handler (async-handler core/re-install-all))

@@ -569,7 +569,7 @@
                           {;; hack, catalog/format-catalog-data orders the addon summary make them uncomparable
                            :total 1
                            :addon-summary-list [user-addon]})]
-      
+
       (with-running-app
         (core/add-user-addon! user-addon)
         (core/add-user-addon! user-addon)
