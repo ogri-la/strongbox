@@ -151,9 +151,12 @@
                       ;; "Note that the connection to the server will NOT be closed until the stream has been read"
                       ;;  - https://github.com/dakrone/clj-http
                       (some-> ex ex-data :body .close))
-                  http-error (select-keys (ex-data ex) [:reason-phrase :status])]
-              (error (format "failed to download file '%s': %s (HTTP %s)"
-                             uri (:reason-phrase http-error) (:status http-error)))
+                  request-obj (java.net.URL. uri)
+                  http-error (assoc (select-keys (ex-data ex) [:reason-phrase :status])
+                                    :host (.getHost request-obj))]
+              (warn (format "failed to download file '%s': %s (HTTP %s)"
+                            uri (:reason-phrase http-error) (:status http-error)))
+
               http-error)
 
             ;; unhandled non-http exception
@@ -163,6 +166,32 @@
   [http-resp]
   (and (map? http-resp)
        (<= 400 (:status http-resp))))
+
+(defn-spec http-error string?
+  "returns an error specific to code and host"
+  [http-err ::sp/http-error]
+  (let [key (-> http-err (select-keys [:host :status]) vals set)]
+    (condp (comp clojure.set/intersection =) key
+      ;; github api quota exceeded OR github thinks we were making requests too quickly
+      #{"api.github.com" 403} "Github: we've exceeded our request quota and have been blocked for an hour."
+
+      ;; issue 91, CDN problems 
+      #{"addons-ecs.forgesvc.net" 502} "Curseforge: their API is having problems right now (502). Try again later."
+      #{"addons-ecs.forgesvc.net" 504} "Curseforge: their API is habing problems right now (504). Trye again later."
+
+      #{403} "Forbidden: we've been blocked from accessing that (403)"
+
+      (:reason-phrase http-err))))
+
+(defn sink-error
+  "given a http response, if response was unsuccessful, emit warning/error message and return nil, else return response.
+  good for threaded expressions: (some-> x http/download http/sink-error utils/from-json)"
+  [http-resp]
+  (if-not (http-error? http-resp)
+    ;; no error, pass response through
+    http-resp
+    ;; otherwise, scream and yell and return nil
+    (error (http-error http-resp))))
 
 ;;(defn-spec download (s/or :ok ::sp/http-resp, :error ::sp/http-error)
 ;;  [uri ::sp/uri, message ::sp/short-string]

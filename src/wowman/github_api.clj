@@ -19,7 +19,7 @@
 
 (defn-spec download-releases (s/or :ok (s/coll-of map?), :error nil?)
   [source-id string?]
-  (some-> source-id releases-url http/download utils/from-json))
+  (some-> source-id releases-url http/download http/sink-error utils/from-json))
 
 (defn-spec contents-url ::sp/uri
   [source-id string?]
@@ -27,7 +27,7 @@
 
 (defn-spec download-root-listing (s/or :ok (s/coll-of map?), :error nil?)
   [source-id string?]
-  (some-> source-id contents-url http/download utils/from-json))
+  (some-> source-id contents-url http/download http/sink-error utils/from-json))
 
 (defn-spec find-remote-toc-file (s/or :ok map?, :error nil?)
   "returns the contents of the first .toc file it finds in the root directory of the remote addon"
