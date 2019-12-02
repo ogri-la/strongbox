@@ -529,6 +529,13 @@
        `(let [temp# ~(inner bindings)]
           (if (= temp# ~if-let-else) ~else temp#))))))
 
+;;
+
+(defn-spec expand-path ::sp/file
+  "given a path, expands any 'user' directories, relative directories and symbolic links"
+  [path ::sp/file]
+  (-> path fs/expand-home fs/normalized fs/absolute str))
+
 
 ;;
 

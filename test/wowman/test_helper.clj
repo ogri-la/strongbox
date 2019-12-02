@@ -10,9 +10,9 @@
 
 (def fixture-dir (-> "test/fixtures" fs/absolute fs/normalized str))
 
-(def data-dir "data")
+(def data-dir "data/wowman")
 
-(def config-dir "config")
+(def config-dir "config/wowman")
 
 (defn fixture-path
   [filename]

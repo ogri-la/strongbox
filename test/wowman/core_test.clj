@@ -10,7 +10,7 @@
     [main :as main]
     [catalog :as catalog]
     [utils :as utils]
-    [test-helper :as helper :refer [fixture-path data-dir with-running-app]]
+    [test-helper :as helper :refer [fixture-path data-dir config-dir with-running-app]]
     [core :as core]]))
 
 (use-fixtures :each helper/fixture-tempcwd)
@@ -139,38 +139,43 @@
         (core/stop app-state)))))
 
 (deftest paths
-  (let [app-state (core/start {})]
-    (try
-      (testing "all path keys are using a known suffix"
-        (doseq [key (keys (core/paths))]
-          (is (some #{"dir" "file" "uri"} (clojure.string/split (name key) #"\-")))))
+  (with-running-app
+    (testing "all path keys are using a known suffix"
+      (doseq [key (keys (core/paths))]
+        (is (some #{"dir" "file" "uri"} (clojure.string/split (name key) #"\-")))))
 
-      (testing "all paths to files and directories are absolute"
-        (let [files+dirs (filter (fn [[k v]] (or (ends-with? k "-dir")
-                                                 (ends-with? k "-file")))
-                                 (core/paths))]
-          (doseq [[key path] files+dirs]
-            (is (-> path (starts-with? "/")) (format "path %s is not absolute: %s" key path)))))
+    (testing "all paths to files and directories are absolute"
+      (let [files+dirs (filter (fn [[k v]] (or (ends-with? k "-dir")
+                                               (ends-with? k "-file")))
+                               (core/paths))]
+        (doseq [[key path] files+dirs]
+          (is (-> path (starts-with? "/")) (format "path %s is not absolute: %s" key path)))))
 
-      (testing "all remote paths are using https"
-        (let [remote-paths (filter (fn [[k v]] (ends-with? k "-uri")) (core/paths))]
-          (doseq [[key path] remote-paths]
-            (is (-> path (starts-with? "https://")) (format "remote path %s is not using HTTPS: %s" key path)))))
+    (testing "all remote paths are using https"
+      (let [remote-paths (filter (fn [[k v]] (ends-with? k "-uri")) (core/paths))]
+        (doseq [[key path] remote-paths]
+          (is (-> path (starts-with? "https://")) (format "remote path %s is not using HTTPS: %s" key path))))))
 
-      (comment
-        "what exactly am I testing here again? this path overriding has plenty of coverage already. see test_helper.clj"
-        (testing "XDG data paths can be overridden with environment variables"
-          (with-env [:xdg-data-home "/foo", :xdg-config-home "/bar"]
-            (is (= "/foo" (:data-dir (core/paths))))
-            (is (= "/bar" (:config-dir (core/paths)))))))
+  (testing "paths that cannot be written to raise a runtime exception"
+    (let [app-state (core/start {})]
+      (with-env [:xdg-data-home "/foo", :xdg-config-home "/bar"]
+        (core/stop app-state)
+        (is (thrown? RuntimeException (core/start {})))))))
 
-      (testing "paths that cannot be written to raise a runtime exception"
-        (with-env [:xdg-data-home "/foo", :xdg-config-home "/bar"]
-          (core/stop app-state)
-          (is (thrown? RuntimeException (core/start {})))))
+(deftest generate-path-map
+  (testing "XDG data paths can be overridden with environment variables"
+    (with-env [:xdg-data-home "/foo", :xdg-config-home "/home/layday/.config"]
+      (let [paths (core/generate-path-map)]
+        (is (= "/foo/wowman" (:data-dir paths)))
+        (is (= "/home/layday/.config/wowman" (:config-dir paths))))))
 
-      (finally
-        (core/stop app-state)))))
+  (testing "XDG data paths are ignored if present, but empty"
+    (with-env [:xdg-data-home "", :xdg-config-home ""]
+      (let [paths (core/generate-path-map)
+            expected-config-dir (-> core/default-config-dir utils/expand-path)
+            expected-data-dir (-> core/default-data-dir utils/expand-path)]
+        (is (= expected-data-dir (:data-dir paths)))
+        (is (= expected-config-dir (:config-dir paths)))))))
 
 (deftest determine-primary-subdir
   (testing "basic failure cases"

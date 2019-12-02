@@ -1,7 +1,7 @@
 (ns wowman.core
   (:require
    [clojure.set :refer [rename-keys]]
-   [clojure.string :refer [lower-case starts-with? trim]]
+   [clojure.string :refer [lower-case starts-with? ends-with? trim]]
    [taoensso.timbre :as timbre :refer [debug info warn error spy]]
    [clojure.spec.alpha :as s]
    [orchestra.spec.test :as st]
@@ -19,7 +19,7 @@
     [http :as http]
     [logging :as logging]
     [nfo :as nfo]
-    [utils :as utils :refer [join not-empty? false-if-nil nav-map nav-map-fn delete-many-files! static-slurp]]
+    [utils :as utils :refer [join not-empty? false-if-nil nav-map nav-map-fn delete-many-files! static-slurp expand-path]]
     [catalog :as catalog]
     [toc]
     [specs :as sp]]))
@@ -41,22 +41,24 @@
 
 (def colours (utils/nav-map-fn -colour-map))
 
+(def default-config-dir "~/.config/wowman")
+(def default-data-dir "~/.local/share/wowman")
+
 (defn generate-path-map
   "generates filesystem paths whose location may vary based on the current working directory and environment variables.
   this map of paths is generated during init and is then fixed in application state.
   ensure the correct environment variables and cwd are set prior to init for proper isolation during tests"
   []
-  (let [;; https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+  (let [wowman-suffix (fn [path]
+                        (if-not (ends-with? path "/wowman")
+                          (join path "wowman")
+                          path))
+
+        ;; https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
         ;; ignoring XDG_CONFIG_DIRS and XDG_DATA_DIRS for now
-        config-dir (or (:xdg-config-home @env) "~/.config/wowman")
-        config-dir (-> config-dir fs/expand-home fs/normalized fs/absolute str)
+        config-dir (-> @env :xdg-config-home utils/nilable (or default-config-dir) expand-path wowman-suffix)
+        data-dir (-> @env :xdg-data-home utils/nilable (or default-data-dir) expand-path wowman-suffix)
 
-        data-dir (or (:xdg-data-home @env) "~/.local/share/wowman")
-        data-dir (-> data-dir fs/expand-home fs/normalized fs/absolute str)
-
-        ;; cache files are deleted regularly. even if you fuck up with "XDG_DATA_HOME=/" then the worse that
-        ;; can happen, even if you run wowman as root, is you get /cache/ or /home/$you/cache/ created and
-        ;; files within it deleted. /cache and /home/$you/cache are not common directories
         cache-dir (join data-dir "cache") ;; /home/you/.local/share/wowman/cache
 
         cfg-file (join config-dir "config.json") ;; /home/$you/.config/wowman/config.json
@@ -1082,9 +1084,14 @@
 
   ;; data directory doesn't exist and parent directory isn't writable
   ;; nowhere to create data dir, nowhere to store download catalog. non-starter
+
+  ;;(when-not (fs/exists? (paths :data-dir))
+  ;;  (throw (RuntimeException. (str "Data directory doesn't exist: " (paths :data-dir)))))
+
   (when (and
          (not (fs/exists? (paths :data-dir)))
-         (not (fs/writeable? (fs/parent (paths :data-dir)))))
+         ;; :data-dir => "/xdg/data/path/wowman/data"
+         (not (fs/writeable? (fs/parent (fs/parent (paths :data-dir))))))
     (throw (RuntimeException. (str "Data directory doesn't exist and it cannot be created: " (paths :data-dir)))))
 
   ;; state directory *does* exist but isn't writeable
