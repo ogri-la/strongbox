@@ -529,6 +529,20 @@
        `(let [temp# ~(inner bindings)]
           (if (= temp# ~if-let-else) ~else temp#))))))
 
+;;
+
+(defn-spec expand-path ::sp/file
+  "given a path, expands any 'user' directories, relative directories and symbolic links"
+  [path ::sp/file]
+  (-> path fs/expand-home fs/normalized fs/absolute str))
+
+(defn last-writeable-dir
+  "given a path, returns the last writable directory or nil if no writable directory available"
+  [path]
+  (when path
+    (if (and (fs/directory? path) (fs/writeable? path))
+      (str path)
+      (last-writeable-dir (fs/parent path)))))
 
 ;;
 
