@@ -152,8 +152,8 @@
                       ;;  - https://github.com/dakrone/clj-http
                       (some-> ex ex-data :body .close))
                   request-obj (java.net.URL. uri)
-                  http-error (assoc (select-keys (ex-data ex) [:reason-phrase :status])
-                                    :host (.getHost request-obj))]
+                  http-error (merge (select-keys (ex-data ex) [:reason-phrase :status])
+                                    {:host (.getHost request-obj)})]
               (warn (format "failed to download file '%s': %s (HTTP %s)"
                             uri (:reason-phrase http-error) (:status http-error)))
 
@@ -176,16 +176,16 @@
       #{"api.github.com" 403} "Github: we've exceeded our request quota and have been blocked for an hour."
 
       ;; issue 91, CDN problems 
-      #{"addons-ecs.forgesvc.net" 502} "Curseforge: their API is having problems right now (502). Try again later."
-      #{"addons-ecs.forgesvc.net" 504} "Curseforge: their API is habing problems right now (504). Trye again later."
+      #{"addons-ecs.forgesvc.net" 502} "Curseforge: the API is having problems right now (502). Try again later."
+      #{"addons-ecs.forgesvc.net" 504} "Curseforge: the API is habing problems right now (504). Trye again later."
 
       #{403} "Forbidden: we've been blocked from accessing that (403)"
 
       (:reason-phrase http-err))))
 
 (defn sink-error
-  "given a http response, if response was unsuccessful, emit warning/error message and return nil, else return response.
-  good for threaded expressions: (some-> x http/download http/sink-error utils/from-json)"
+  "given a http response, if response was unsuccessful, emit warning/error message and return nil,
+  else return response."
   [http-resp]
   (if-not (http-error? http-resp)
     ;; no error, pass response through

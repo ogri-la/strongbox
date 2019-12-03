@@ -154,6 +154,8 @@ multiple assets will always require differentiation, but we can tune warnings/er
     - necessary if they want a large number of github addons without hassles
 * when curseforge api is down users get a wall of red error messages with very little useful information
     - see issue 91: https://github.com/ogri-la/wowman/issues/91
+        - the error message has been improved but we still get a red wall of text
+        - aggregate error messages?
 * investigate state of java packaging
     - https://www.infoq.com/news/2019/03/jep-343-jpackage/
 * github-api, also look for 'retail' in addon name to determine game track

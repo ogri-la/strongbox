@@ -317,4 +317,33 @@
 
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (logging/buffered-log
-                         :info (github-api/parse-user-string given))))))))
+                         :info (github-api/parse-user-string given)))))))
+
+  (testing "403 while expanding addon is handled"
+    (let [fake-routes {"https://api.github.com/repos/Aviana/HealComm/releases"
+                       {:get (fn [_] {:status 403 :host "api.github.com" :reason-phrase "Forbidden"})}
+
+                       "https://api.github.com/repos/Aviana/HealComm/contents"
+                       {:get (fn [req] {:status 403 :host "api.github.com" :reason-phrase "Forbidden"})}}
+
+          addon-summary
+          {:uri "https://github.com/Aviana/HealComm"
+           :updated-date "2019-10-09T17:40:04Z"
+           :source "github"
+           :source-id "Aviana/HealComm"
+           :label "HealComm"
+           :name "healcomm"
+           :download-count 30946
+           :game-track-list [] ;; 'no game tracks'
+           :category-list []}
+
+          game-track "retail"
+
+          ;; I don't like testing for log messages, but in this case it's the only indication the error has been handled properly
+          expected ["failed to download file 'https://api.github.com/repos/Aviana/HealComm/releases': Forbidden (HTTP 403)"
+                    "Github: we've exceeded our request quota and have been blocked for an hour."
+                    "no 'retail' release available for 'healcomm' on github"]]
+
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (logging/buffered-log
+                         :info (github-api/expand-summary addon-summary game-track))))))))

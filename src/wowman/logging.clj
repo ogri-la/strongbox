@@ -25,6 +25,7 @@
 (logging/merge-config! default-logging-config)
 
 (defn-spec add-appender nil?
+  "adds appender at `key` to logging config"
   ([key keyword?, f fn?]
    (add-appender key f {}))
   ([key keyword?, f fn?, config map?]
@@ -34,6 +35,7 @@
      nil)))
 
 (defn-spec rm-appender! nil?
+  "removes appender at `key` from logging config"
   [key keyword?]
   (logging/merge-config! {:appenders {key nil}})
   nil)

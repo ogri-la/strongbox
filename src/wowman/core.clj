@@ -800,8 +800,8 @@
       (when-not (empty? final-catalog)
         (-db-load-catalog final-catalog)))))
 
-(defn refresh-user-catalog
-  "for each entry in user catalog, fetch+parse+write"
+(defn-spec refresh-user-catalog nil?
+  "re-fetch each item in user catalog using the URI and replace old entry with any updated details"
   []
   (binding [http/*cache* (cache)]
     (->> (get-create-user-catalog)
