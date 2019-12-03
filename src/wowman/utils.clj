@@ -536,6 +536,13 @@
   [path ::sp/file]
   (-> path fs/expand-home fs/normalized fs/absolute str))
 
+(defn last-writeable-dir
+  "given a path, returns the last writable directory or nil if no writable directory available"
+  [path]
+  (when path
+    (if (and (fs/directory? path) (fs/writeable? path))
+      (str path)
+      (last-writeable-dir (fs/parent path)))))
 
 ;;
 

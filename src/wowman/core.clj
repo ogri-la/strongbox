@@ -1085,13 +1085,9 @@
   ;; data directory doesn't exist and parent directory isn't writable
   ;; nowhere to create data dir, nowhere to store download catalog. non-starter
 
-  ;;(when-not (fs/exists? (paths :data-dir))
-  ;;  (throw (RuntimeException. (str "Data directory doesn't exist: " (paths :data-dir)))))
-
   (when (and
-         (not (fs/exists? (paths :data-dir)))
-         ;; :data-dir => "/xdg/data/path/wowman/data"
-         (not (fs/writeable? (fs/parent (fs/parent (paths :data-dir))))))
+         (not (fs/exists? (paths :data-dir))) ;; doesn't exist and ..
+         (not (utils/last-writeable-dir (paths :data-dir)))) ;; .. no writeable parent
     (throw (RuntimeException. (str "Data directory doesn't exist and it cannot be created: " (paths :data-dir)))))
 
   ;; state directory *does* exist but isn't writeable

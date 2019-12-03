@@ -10,7 +10,7 @@
     [main :as main]
     [catalog :as catalog]
     [utils :as utils]
-    [test-helper :as helper :refer [fixture-path data-dir config-dir with-running-app]]
+    [test-helper :as helper :refer [fixture-path helper-data-dir with-running-app]]
     [core :as core]]))
 
 (use-fixtures :each helper/fixture-tempcwd)
@@ -126,11 +126,11 @@
         (is (= full-catalog (core/get-catalog-source))))
 
       (testing "core/catalog-local-path returns the expected path to the catalog file on the filesystem"
-        (is (= (utils/join fs/*cwd* data-dir "short-catalog.json") (core/catalog-local-path short-catalog)))
-        (is (= (utils/join fs/*cwd* data-dir "full-catalog.json") (core/catalog-local-path full-catalog))))
+        (is (= (utils/join fs/*cwd* helper-data-dir "short-catalog.json") (core/catalog-local-path short-catalog)))
+        (is (= (utils/join fs/*cwd* helper-data-dir "full-catalog.json") (core/catalog-local-path full-catalog))))
 
       (testing "core/find-catalog-local-path just needs a catalog :name"
-        (is (= (utils/join fs/*cwd* data-dir "short-catalog.json") (core/find-catalog-local-path :short))))
+        (is (= (utils/join fs/*cwd* helper-data-dir "short-catalog.json") (core/find-catalog-local-path :short))))
 
       (testing "core/find-catalog-local-path returns nil if the given catalog can't be found"
         (is (= nil (core/find-catalog-local-path :foo))))
