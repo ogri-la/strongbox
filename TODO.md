@@ -107,23 +107,22 @@ multiple assets will always require differentiation, but we can tune warnings/er
 * remove the 'curse-crap-redirect-strategy' in http.clj
     - was used when curse *website* (not api) would redirect us to an unencoded path
     - done
-
-### todo
-
 * allow user to accumulate addons in a 'user' catalogue
     - how is this catalogue updated?
         - it will contain information that will remain static after initially created
         - typically wowman downloads the updated catalogue from remote
             - that won't happen here
-    - I think we could get away with updating this catalogue once a week?
-        - inspect 'last-updated' in user-catalogue
+        - I think we could get away with updating this catalogue once a week?
+            - inspect 'last-updated' in user-catalogue
+        - went with a manual update for now
+    - done
+
+### todo
 
 * github, non-addon git repo fails to install
     - https://github.com/koekeishiya/yabai
     - make this a softer failure
         - "does not look like an addon"
-* gitlab as addon host
-    - https://gitlab.com/search?search=wow+addon
 * add TUKUI addon host
     - TUKUI appears to be both addon manager and addon host
     - ELVUI is their flagship addon
@@ -150,6 +149,14 @@ multiple assets will always require differentiation, but we can tune warnings/er
 
 ## todo bucket (no particular order)
 
+* gitlab as addon host
+    - https://gitlab.com/search?search=wow+addon
+    - returned to bucket 2019-12-04, notes:
+        - gitlab doesn't handle releases like github does
+            - https://stackoverflow.com/questions/29520905/how-to-create-releases-in-gitlab
+        - there are very few gitlab addons (88)
+        - api is quite slow
+    - if somebody asks for this especially I'll consider it
 * add support for user supplied github token
     - necessary if they want a large number of github addons without hassles
 * when curseforge api is down users get a wall of red error messages with very little useful information
