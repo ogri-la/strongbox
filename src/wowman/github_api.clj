@@ -19,7 +19,7 @@
 
 (defn-spec download-releases (s/or :ok (s/coll-of map?), :error nil?)
   [source-id string?]
-  (some-> source-id releases-url http/download utils/from-json))
+  (some-> source-id releases-url http/download http/sink-error utils/from-json))
 
 (defn-spec contents-url ::sp/uri
   [source-id string?]
@@ -27,7 +27,7 @@
 
 (defn-spec download-root-listing (s/or :ok (s/coll-of map?), :error nil?)
   [source-id string?]
-  (some-> source-id contents-url http/download utils/from-json))
+  (some-> source-id contents-url http/download http/sink-error utils/from-json))
 
 (defn-spec find-remote-toc-file (s/or :ok map?, :error nil?)
   "returns the contents of the first .toc file it finds in the root directory of the remote addon"
@@ -36,7 +36,7 @@
             toc-file-list (filterv #(-> % :name fs/split-ext last (= ".toc")) contents-listing)
             toc-file (first toc-file-list)]
            (some-> toc-file :download_url http/download toc/-parse-toc-file)
-           (warn (format "failed to find/download/parse remote github '.toc' file for '%s'" source-id))))
+           (debug (format "failed to find/download/parse remote github '.toc' file for '%s'" source-id))))
 
 (defn-spec -find-gametracks-toc-data (s/or :ok ::sp/game-track-list, :empty nil?, :error nil?)
   "returns a set of 'retail' and/or 'classic' after inspecting .toc file contents"

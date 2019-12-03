@@ -276,7 +276,7 @@
 
 (defn from-json
   [x]
-  (clojure.data.json/read-str x :key-fn keyword))
+  (some-> x (clojure.data.json/read-str :key-fn keyword)))
 
 (defn-spec dump-json-file ::sp/extant-file
   [path ::sp/file, data ::sp/anything]

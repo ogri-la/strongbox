@@ -608,10 +608,13 @@
 
 (defn-spec add-user-addon! nil?
   "adds a single addon to the user catalog"
-  [addon-summary ::sp/addon-summary]
-  (let [user-catalog-path (paths :user-catalog-file)
+  [addon-summary (s/or :single ::sp/addon-summary, :many ::sp/addon-summary-list)]
+  (let [addon-summary-list (if (sequential? addon-summary)
+                             addon-summary
+                             [addon-summary])
+        user-catalog-path (paths :user-catalog-file)
         user-catalog (get-create-user-catalog)
-        tmp-catalog (catalog/new-catalog [addon-summary])
+        tmp-catalog (catalog/new-catalog addon-summary-list)
         new-user-catalog (catalog/merge-catalogs user-catalog tmp-catalog)]
     (catalog/write-catalog new-user-catalog user-catalog-path))
   nil)
@@ -799,6 +802,16 @@
       (when-not (empty? final-catalog)
         (-db-load-catalog final-catalog)))))
 
+(defn-spec refresh-user-catalog nil?
+  "re-fetch each item in user catalog using the URI and replace old entry with any updated details"
+  []
+  (binding [http/*cache* (cache)]
+    (->> (get-create-user-catalog)
+         :addon-summary-list
+         (map :uri)
+         (map catalog/parse-user-string)
+         add-user-addon!)))
+
 ;;
 ;; addon summary and toc merging
 ;;
@@ -959,7 +972,9 @@
   (match-installed-addons-with-catalog) ;; match installed addons to those in catalog
 
   (check-for-updates)     ;; for those addons that have matches, download their details
+
   ;;(latest-wowman-release) ;; check for updates after everything else is done ;; 2019-06-30, travis is failing with 403: Forbidden. Moved to gui init
+
   (save-settings)         ;; seems like a good place to preserve the etag-db
   nil)
 
@@ -1049,14 +1064,15 @@
   "convenience. parses string, adds to user catalog, installs addon then reloads database.
   relies on UI to call refresh (or not)"
   [addon-url string?]
-  (when-let [addon-summary (catalog/parse-user-string addon-url)]
-    (add-user-addon! addon-summary)
-    (let [result (or (when-let [addon (expand-summary-wrapper addon-summary)]
-                       (install-addon addon (get-state :selected-addon-dir)) ;; todo: simplify install-addon interface
-                       addon)
-                     addon-summary)]
-      (db-reload-catalog)
-      result)))
+  (binding [http/*cache* (cache)]
+    (when-let [addon-summary (catalog/parse-user-string addon-url)]
+      (add-user-addon! addon-summary)
+      (let [result (or (when-let [addon (expand-summary-wrapper addon-summary)]
+                         (install-addon addon (get-state :selected-addon-dir)) ;; todo: simplify install-addon interface
+                         addon)
+                       addon-summary)]
+        (db-reload-catalog)
+        result))))
 
 ;; init
 
