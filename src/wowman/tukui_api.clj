@@ -11,8 +11,25 @@
     [utils :as utils]
     [specs :as sp]]))
 
+(def summary-url "https://www.tukui.org/api.php?addon=%s")
+(def classic-summary-url "https://www.tukui.org/api.php?classic-addon=%s")
+
 (def summary-list-url "https://www.tukui.org/api.php?addons=all")
 (def classic-summary-list-url "https://www.tukui.org/api.php?classic-addons=all")
+
+(defn expand-summary
+  [addon-summary game-track]
+  (let [url (format (if (= game-track "classic") classic-summary-url summary-url)
+                    (:source-id addon-summary))
+        ti (some-> url http/download utils/from-json spy)
+        ]
+    (merge addon-summary
+           {:download-uri (:url ti)
+            :version (:version ti)
+            :interface-version (-> ti :patch utils/game-version-to-interface-version)})))
+
+;;
+
 
 (defn tukui-date-to-rfc3339
   [tukui-dt]

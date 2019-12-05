@@ -11,6 +11,7 @@
     ;;[core :as core]
     [utils :as utils :refer [todt utcnow]]
     [specs :as sp]
+    [tukui-api :as tukui-api]
     [curseforge-api :as curseforge-api]
     [wowinterface-api :as wowinterface-api]
     [github-api :as github-api]]))
@@ -20,6 +21,8 @@
   (let [dispatch-map {"curseforge" curseforge-api/expand-summary
                       "wowinterface" wowinterface-api/expand-summary
                       "github" github-api/expand-summary
+                      "tukui" tukui-api/expand-summary
+                      "tukui-classic" tukui-api/expand-summary
                       nil (fn [_ _] (error "malformed addon-summary:" (utils/pprint addon-summary)))}
         key (:source addon-summary)]
     (try
