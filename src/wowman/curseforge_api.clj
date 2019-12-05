@@ -138,7 +138,7 @@
 (defn-spec download-summary-page-alphabetically (s/or :ok (s/coll-of map?), :error nil?)
   "downloads a page of results from the curseforge API, sorted A to Z"
   [page int? page-size pos-int?]
-  (info "downloading" page-size "results from api, page" page)
+  (info "downloading" page-size "results from api, page" (inc page))
   (let [index (* page-size page)
         game-id 1 ;; WoW
         sort-by 3 ;; alphabetically, asc (a-z)

@@ -2,6 +2,7 @@
   (:require
    [taoensso.timbre :as timbre :refer [spy info]]
    [wowman
+    [tukui-api :as tukui-api]
     [catalog :as catalog]
     [http :as http]
     [utils :as utils]
@@ -37,14 +38,31 @@
           formatted-catalog-data (catalog/format-catalog-data catalog-data created updated)]
       (catalog/write-catalog formatted-catalog-data output-file))))
 
+(defmethod action :scrape-tukui-catalog
+  [_]
+  (binding [http/*cache* (core/cache)]
+    (let [output-file (find-catalog-local-path :tukui)
+          catalog-data (tukui-api/download-all-summaries)
+          created (utils/datestamp-now-ymd)
+          updated created
+          formatted-catalog-data (catalog/format-catalog-data catalog-data created updated)]
+    (catalog/write-catalog formatted-catalog-data output-file))))
+
 (defmethod action :write-catalog
   [_]
   (let [curseforge-catalog (find-catalog-local-path :curseforge)
         wowinterface-catalog (find-catalog-local-path :wowinterface)
-        catalog (catalog/merge-curse-wowi-catalogs curseforge-catalog wowinterface-catalog)]
+        tukui-catalog (find-catalog-local-path :tukui)
+
+        ;; can't do this yet, older db-enabled clients will barf
+        ;;catalog-path-list [curseforge-catalog wowinterface-catalog tukui-catalog]
+        catalog-path-list [curseforge-catalog wowinterface-catalog]
+        catalog (map utils/load-json-file catalog-path-list)
+        catalog (reduce catalog/merge-catalogs catalog)]
     (-> catalog
         (catalog/write-catalog (find-catalog-local-path :full))
 
+        ;; 'short' catalog is derived from the full catalog
         catalog/shorten-catalog
         (catalog/write-catalog (find-catalog-local-path :short)))))
 
@@ -52,6 +70,7 @@
   [_]
   (action :scrape-curseforge-catalog)
   (action :scrape-wowinterface-catalog)
+  (action :scrape-tukui-catalog)
   (action :write-catalog))
 
 (defmethod action :list

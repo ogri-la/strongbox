@@ -54,7 +54,7 @@
   (try
     (logging/change-log-level :debug)
     (if path
-      (if (some #{path} [:core :http :main :toc :utils :curseforge-api :zip :catalog :cli :gui :wowinterface :wowinterface-api :github-api])
+      (if (some #{path} [:core :http :main :toc :utils :curseforge-api :zip :catalog :cli :gui :wowinterface :wowinterface-api :github-api :tukui-api])
         (clojure.test/run-all-tests (re-pattern (str "wowman." (name path) "-test")))
         (error "unknown test file:" path))
       (clojure.test/run-all-tests #"wowman\..*-test"))
@@ -71,7 +71,7 @@
 
 (def catalog-actions
   #{:scrape-catalog :write-catalog
-    :scrape-curseforge-catalog :scrape-wowinterface-catalog})
+    :scrape-curseforge-catalog :scrape-wowinterface-catalog :scrape-tukui-catalog})
 
 (def catalog-action-str (clojure.string/join ", " (mapv #(format "'%s'" (name %)) (sort catalog-actions))))
 

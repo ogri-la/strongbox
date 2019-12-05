@@ -1,5 +1,5 @@
 create table if not exists catalog (
-    source enum('wowinterface', 'curseforge', 'github'),
+    source enum('wowinterface', 'curseforge', 'github', 'tukui', 'tukui-classic'),
     source_id varchar(50),
 
     label varchar(255),

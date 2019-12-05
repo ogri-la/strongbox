@@ -103,7 +103,9 @@ so, 'peeking' at the `.toc` file will only be helpful in cases where there is a 
 multiple assets will always require differentiation, but we can tune warnings/error messages based on what we know from the toc file
 
 ---
+
     - done
+
 * remove the 'curse-crap-redirect-strategy' in http.clj
     - was used when curse *website* (not api) would redirect us to an unencoded path
     - done
@@ -119,15 +121,20 @@ multiple assets will always require differentiation, but we can tune warnings/er
 
 ### todo
 
-* github, non-addon git repo fails to install
-    - https://github.com/koekeishiya/yabai
-    - make this a softer failure
-        - "does not look like an addon"
+* introducing a new source (tukui) to the catalog will break older wowman clients
+    - the database is quite strict and will refuse/error on unfamiliar data
+* bug, handle 404/whatever errors when switching to a catalog that doesn't exist remotely
+    - like all brand new catalogs and github unavailability
 * add TUKUI addon host
     - TUKUI appears to be both addon manager and addon host
     - ELVUI is their flagship addon
     - they have json that can be scraped
         - https://www.tukui.org/api.php
+
+* github bug, non-addon git repo fails to install
+    - https://github.com/koekeishiya/yabai
+    - make this a softer failure
+        - "does not look like an addon"
 * allow user to specify their own catalogs
     - a url to a catalog that is downloaded and included while loading up the db
     - different from the 'user catalog'

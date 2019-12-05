@@ -430,6 +430,7 @@
                                        "www.curseforge.com" "curseforge"
                                        "www.wowinterface.com" "wowinterface"
                                        "github.com" "github"
+                                       "www.tukui.org" "tukui"
                                        "???")]
                            (format uri-template label))))]
 

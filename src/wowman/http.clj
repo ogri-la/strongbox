@@ -67,17 +67,25 @@
   (when (and output-file (fs/exists? output-file))
     (not (utils/file-older-than output-file expiry-offset-hours))))
 
+(defn uri-to-filename
+  "safely encode a URI to something that can live cached on the filesystem"
+  [uri]
+  (let [;; strip off any nasty parameters or anchors.
+        ;; default to '.html' if there is no extension, it's just decorative
+        ext (-> uri java.net.URL. .getPath (subs 1) fs/split-ext second (or ".html"))]
+    ;; base64 has a '/' as part of it's allowed alphabet!
+    ;; replace these cases with a hyphen (which isn't part of it's alphabet)
+    (-> uri .getBytes b64/encode String. (clojure.string/replace #"/" "-") (str ext))))
+
 (defn-spec -download (s/or :file ::sp/extant-file, :raw ::sp/http-resp, :error ::sp/http-error)
   "if writing to a file is possible then the output file is returned, else the raw http response.
    writing response body to a file is possible when caching is available or `output-file` provided."
   [uri ::sp/uri, output-file (s/nilable ::sp/file), message (s/nilable ::sp/short-string), extra-params map?]
   (let [cache? (not (nil? *cache*))
-        ext (-> uri fs/split-ext second (or ".html")) ;; *probably* html, we don't particularly care
-        encoded-path (-> uri .getBytes b64/encode String. (str ext))
+        encoded-path (uri-to-filename uri)
         alt-output-file (when cache?
                           (utils/join (:cache-dir *cache*) encoded-path)) ;; "/path/to/cache/aHR0[...]cHM6=.html"
         output-file (or output-file alt-output-file) ;; `output-file` may still be nil after this!
-
         etag-key (when cache? (fs/base-name output-file))
         streaming-response? (-> extra-params :as (= :stream))]
 
