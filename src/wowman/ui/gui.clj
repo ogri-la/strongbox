@@ -91,6 +91,11 @@
   [_]
   nil)
 
+(defn browse-to
+  [uri]
+  (fn [_]
+    (.browse (java.awt.Desktop/getDesktop) (java.net.URI. uri))))
+
 (defn handler
   "returns a function that calls each given argument function sequentially, discards result, returns nil"
   [& fn-list]
@@ -309,12 +314,16 @@
                            (ss/invoke-later
                             (core/set-game-track! new-game-track) ;; this will affect [:cfg :addon-dir-list]
                             ;; will save settings
-                            (core/refresh))))))]
+                            (core/refresh))))))
 
+        update-clicker (when (core/latest-wowman-version?)
+                         (button (str "Update Available: " (core/latest-wowman-release))
+                                 (browse-to "https://github.com/ogri-la/wowman/releases")))]
     (ss/vertical-panel
      :items [(ss/flow-panel :align :left
-                            :items [refresh-button update-all-button wow-dir-button
-                                    wow-dir-dropdown wow-game-track])])))
+                            :items (items refresh-button update-all-button wow-dir-button
+                                    wow-dir-dropdown wow-game-track
+                                    update-clicker))])))
 
 (defn installed-addons-panel-column-widths
   "this sucks"
