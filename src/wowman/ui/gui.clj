@@ -92,9 +92,9 @@
   nil)
 
 (defn browse-to
+  "given a URI, open a browser window with it"
   [uri]
-  (fn [_]
-    (.browse (java.awt.Desktop/getDesktop) (java.net.URI. uri))))
+  (.browse (java.awt.Desktop/getDesktop) (java.net.URI. uri)))
 
 (defn handler
   "returns a function that calls each given argument function sequentially, discards result, returns nil"
@@ -316,14 +316,14 @@
                             ;; will save settings
                             (core/refresh))))))
 
-        update-clicker (when (core/latest-wowman-version?)
+        update-clicker (when-not (core/latest-wowman-version?)
                          (button (str "Update Available: " (core/latest-wowman-release))
-                                 (browse-to "https://github.com/ogri-la/wowman/releases")))]
+                                 (handler #(browse-to "https://github.com/ogri-la/wowman/releases"))))]
     (ss/vertical-panel
      :items [(ss/flow-panel :align :left
                             :items (items refresh-button update-all-button wow-dir-button
-                                    wow-dir-dropdown wow-game-track
-                                    update-clicker))])))
+                                          wow-dir-dropdown wow-game-track
+                                          update-clicker))])))
 
 (defn installed-addons-panel-column-widths
   "this sucks"
@@ -415,7 +415,7 @@
                           (when-let [triple (cell-val-for-event e)]
                             (let [[row col val] triple]
                               (if (and (gocol? col) val)
-                                (.browse (java.awt.Desktop/getDesktop) (java.net.URI. val))))))
+                                (browse-to val)))))
 
         hand-cursor-on-hover (fn [e]
                                (when-let [triple (cell-val-for-event e)]
