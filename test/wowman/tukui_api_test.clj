@@ -10,23 +10,22 @@
 (deftest parse-addons
   (testing "parsing retail/'live' addons"
     (let [fixture (format "[%s]" (slurp (fixture-path "tukui--addon-details.json")))
-          
+
           fake-routes {tukui-api/summary-list-url
                        {:get (fn [req] {:status 200 :body fixture})}}
-                       
+
           expected [{:description "Add roleplaying fields to ElvUI to create RP UIs.",
-                    :category-list ["Roleplay"],
-                    :game-track-list ["retail"],
-                    :updated-date "2019-07-29T20:48:25Z",
-                    :name "-rp-tags",
-                    :source "tukui",
+                     :category-list ["Roleplay"],
+                     :game-track-list ["retail"],
+                     :updated-date "2019-07-29T20:48:25Z",
+                     :name "-rp-tags",
+                     :source "tukui",
                     ;;:interface-version 80200,
-                    :alt-name "rptags",
-                    :label "[rp:tags]",
-                    :download-count 2838,
-                    :source-id 98,
-                    :uri "https://www.tukui.org/addons.php?id=98"}]
-          ]
+                     :alt-name "rptags",
+                     :label "[rp:tags]",
+                     :download-count 2838,
+                     :source-id 98,
+                     :uri "https://www.tukui.org/addons.php?id=98"}]]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (tukui-api/download-retail-summaries))))))
 
@@ -46,7 +45,6 @@
                      :label "BenikUI Classic",
                      :download-count 24490,
                      :source-id 13,
-                     :uri "https://www.tukui.org/classic-addons.php?id=13"}]
-          ]
+                     :uri "https://www.tukui.org/classic-addons.php?id=13"}]]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (tukui-api/download-classic-summaries)))))))

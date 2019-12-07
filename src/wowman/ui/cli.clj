@@ -46,7 +46,7 @@
           created (utils/datestamp-now-ymd)
           updated created
           formatted-catalog-data (catalog/format-catalog-data catalog-data created updated)]
-    (catalog/write-catalog formatted-catalog-data output-file))))
+      (catalog/write-catalog formatted-catalog-data output-file))))
 
 (defmethod action :write-catalog
   [_]

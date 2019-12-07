@@ -21,12 +21,15 @@
   [addon-summary game-track]
   (let [url (format (if (= game-track "classic") classic-summary-url summary-url)
                     (:source-id addon-summary))
-        ti (some-> url http/download utils/from-json spy)
-        ]
-    (merge addon-summary
-           {:download-uri (:url ti)
-            :version (:version ti)
-            :interface-version (-> ti :patch utils/game-version-to-interface-version)})))
+
+        ;; tukui will return a successful but-empty response (200) for addons that
+        ;; exist but not for the requested game track.
+        ti (some-> url http/download utils/nilable utils/from-json)]
+    (when ti
+      (merge addon-summary
+             {:download-uri (:url ti)
+              :version (:version ti)
+              :interface-version (-> ti :patch utils/game-version-to-interface-version)}))))
 
 ;;
 
@@ -43,7 +46,7 @@
         addon-summary
         {:source (if classic? "tukui-classic" "tukui")
          :source-id (-> ti :id Integer.)
-         
+
          ;; single case of an addon with no category :(
          ;; 'SkullFlower UI', source-id 143
          :category-list (if-let [cat (:category ti)] [cat] [])
@@ -56,18 +59,14 @@
          :updated-date (-> ti :lastupdate tukui-date-to-rfc3339)
          :uri (:web_url ti)
 
-         ;; when did I drop support for this? db barfs but it's still there in spec
-         ;;:interface-version (-> ti :patch utils/game-version-to-interface-version)
-
          ;; both of these are available in the main download
          ;; however the catalogue is updated weekly and wowman uses a mechanism of
          ;; checking each for updates rather than relying on the catalog.
          ;; perhaps in the future when we scrape daily
          ;;:version (:version ti)
          ;;:download-uri (:url ti)
+         }]
 
-         }
-        ]
     addon-summary))
 
 (defn download-retail-summaries
@@ -82,6 +81,7 @@
   []
   (into (download-retail-summaries)
         (download-classic-summaries)))
-    
+
+;;
 
 (st/instrument)
