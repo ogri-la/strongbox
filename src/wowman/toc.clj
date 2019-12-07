@@ -133,8 +133,22 @@
                ;;:dependencies (:dependencies keyvals)
                ;;:optional-dependencies (:optionaldependencies keyvals)
                ;;:required-dependencies (:requireddeps keyvals)
-               }]
-    (merge alias addon nfo-contents)))
+               }
+
+        addon (merge alias addon)]
+
+    ;; if source present but is not in list of known sources, ignore the nfo-contents
+    (if (and (contains? nfo-contents :source)
+             (not (utils/in? (:source nfo-contents) sp/catalog-sources)))
+      addon
+
+      ;; otherwise, merge the addon with the nfo contents
+      (merge addon nfo-contents))))
+
+(defn-spec blizzard-addon? boolean?
+  "returns `true` if given path looks like an official Blizzard addon"
+  [path ::sp/file]
+  (-> path fs/base-name (.startsWith "Blizzard_")))
 
 (defn-spec parse-addon-toc-guard (s/or :ok ::sp/toc, :error nil?)
   "wraps the `parse-addon-toc` function and ensures no unhandled exceptions cause a cascading failure"

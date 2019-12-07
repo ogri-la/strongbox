@@ -119,10 +119,11 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### todo
 
-* 0.10.0 prep
+* 0.10.2 prep
 
 ## todo bucket
 
+* rename 'go' column to 'catalogue' 
 * it's possible for `.part` files to exist and not be cleaned up
 * add 'source' properties to curseforge and wowinterface catalogs
 * gui 'wow' column is inconsistent
