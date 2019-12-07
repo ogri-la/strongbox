@@ -731,6 +731,9 @@
   (let [ds (get-state :db)
         {:keys [addon-summary-list]} catalog-data
 
+        ;; filter out items from unsupported sources
+        addon-summary-list (filterv #(utils/in? (:source %) sp/catalog-sources) addon-summary-list)
+
         addon-categories (mapv (fn [{:keys [source-id source category-list]}]
                                  (mapv (fn [category]
                                          [source-id source category]) category-list)) addon-summary-list)

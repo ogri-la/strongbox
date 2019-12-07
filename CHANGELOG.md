@@ -12,9 +12,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-### Removed
+## 0.10.2 - 2019-12-07
 
-## 0.10.1 - 2019-11-31
+### Added
+
+* a button that appears next to the retail/classic dropdown menu when a more recent version of wowman is available
+
+### Fixed
+
+* items in the catalogue that are from an unknown/unhandled source are now ignored (rather than crashing)
+    - this lets me update the catalog with new sources and maintain backwards compatibility
+
+## 0.10.1 - 2019-11-01
 
 ### Fixed
 

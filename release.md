@@ -34,6 +34,7 @@ Just for my own reference
 
 * checkout develop
 * merge changes from master
+    - resolve conflicts etc
 * update TODO, truncating old DONE
 * update project.clj, changing version to next version with "-unreleased" after it
 * commit+push
