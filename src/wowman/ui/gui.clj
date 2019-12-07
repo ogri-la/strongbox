@@ -91,9 +91,9 @@
   [_]
   nil)
 
-(defn browse-to
+(defn-spec browse-to nil?
   "given a URI, open a browser window with it"
-  [uri]
+  [uri ::sp/uri]
   (.browse (java.awt.Desktop/getDesktop) (java.net.URI. uri)))
 
 (defn handler

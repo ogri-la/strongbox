@@ -145,8 +145,9 @@
       ;; otherwise, merge the addon with the nfo contents
       (merge addon nfo-contents))))
 
-(defn blizzard-addon?
-  [path]
+(defn-spec blizzard-addon? boolean?
+  "returns `true` if given path looks like an official Blizzard addon"
+  [path ::sp/file]
   (-> path fs/base-name (.startsWith "Blizzard_")))
 
 (defn-spec parse-addon-toc-guard (s/or :ok ::sp/toc, :error nil?)
