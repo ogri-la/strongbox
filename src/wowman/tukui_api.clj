@@ -17,8 +17,9 @@
 (def summary-list-url "https://www.tukui.org/api.php?addons=all")
 (def classic-summary-list-url "https://www.tukui.org/api.php?classic-addons=all")
 
-(defn expand-summary
-  [addon-summary game-track]
+(defn-spec expand-summary (s/or :ok ::sp/addon, :error nil?)
+  "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
+  [addon-summary ::sp/addon-summary game-track ::sp/game-track]
   (let [url (format (if (= game-track "classic") classic-summary-url summary-url)
                     (:source-id addon-summary))
 
@@ -34,15 +35,16 @@
 
 ;;
 
-
-(defn tukui-date-to-rfc3339
-  [tukui-dt]
+(defn-spec tukui-date-to-rfc3339 ::sp/inst
+  "convert a tukui-style datestamp into a mighty RFC3339 formatted one. assumes UTC."
+  [tukui-dt string?]
   (let [[date time] (clojure.string/split tukui-dt #" ")]
     ;; assume UTC, no other tz information available
     (str date "T" time "Z")))
 
-(defn process-tukui-item
-  [tukui-item classic?]
+(defn-spec process-tukui-item ::sp/addon-summary
+  "process an item from a tukui catalogue into an addon-summary. slightly different values by game-track."
+  [tukui-item map?, classic? boolean?]
   (let [ti tukui-item
         addon-summary
         {:source (if classic? "tukui-classic" "tukui")
@@ -70,15 +72,18 @@
 
     addon-summary))
 
-(defn download-retail-summaries
+(defn-spec download-retail-summaries ::sp/addon-summary-list
+  "downloads and processes all items in the tukui 'live' (retail) catalogue"
   []
   (mapv #(process-tukui-item % false) (-> summary-list-url http/download utils/from-json)))
 
-(defn download-classic-summaries
+(defn-spec download-classic-summaries ::sp/addon-summary-list
+  "downloads and processes all items in the tukui classic catalogue"
   []
   (mapv #(process-tukui-item % true) (-> classic-summary-list-url http/download utils/from-json)))
 
-(defn download-all-summaries
+(defn-spec download-all-summaries ::sp/addon-summary-list
+  "downloads and process all items from the tukui 'live' (retail) and classic catalogues"
   []
   (into (download-retail-summaries)
         (download-classic-summaries)))
