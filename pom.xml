@@ -3,7 +3,7 @@
   <groupId>ogri-la</groupId>
   <artifactId>wowman</artifactId>
   <packaging>jar</packaging>
-  <version>0.10.1</version>
+  <version>0.10.2</version>
   <name>wowman</name>
   <description>World Of Warcraft Addon Manager</description>
   <url>https://github.com/ogri-la/wowman</url>
@@ -17,7 +17,7 @@
     <url>https://github.com/ogri-la/wowman</url>
     <connection>scm:git:git://github.com/ogri-la/wowman.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/ogri-la/wowman.git</developerConnection>
-    <tag>5543f767866d602aa08adc647b5abb16ffdc13fb</tag>
+    <tag>3b566623a047f3203556c62f129281ec6db07a11</tag>
   </scm>
   <build>
     <sourceDirectory>src</sourceDirectory>

@@ -22,7 +22,7 @@ It may work on other platforms but it is only tested and supported on Linux.
 
 ## Installation
 
-1. [download the jar](https://github.com/ogri-la/wowman/releases/download/0.10.1/wowman-0.10.1-standalone.jar) file
+1. [download the jar](https://github.com/ogri-la/wowman/releases/download/0.10.2/wowman-0.10.2-standalone.jar) file
 2. run with `java -jar wowman-x.x.x-standalone.jar`
 
 ### Arch Linux users

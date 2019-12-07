@@ -149,6 +149,7 @@ multiple assets will always require differentiation, but we can tune warnings/er
 
 ## todo bucket (no particular order)
 
+* rename 'go' column to 'catalogue' 
 * gitlab as addon host
     - https://gitlab.com/search?search=wow+addon
     - returned to bucket 2019-12-04, notes:
@@ -206,6 +207,7 @@ multiple assets will always require differentiation, but we can tune warnings/er
         - it should just fucking do it
 * investigate better popularity metric than 'downloads'
     - if we make an effort to scrape everyday, we can generate this popularity graph ourselves
+
 * gui 'wow' column is inconsistent
     - for curseforge, it's pulling it's value from :gameVersion, which may be empty
         - in which case it pulls it's value from the toc file, which may be different from the selected game track
