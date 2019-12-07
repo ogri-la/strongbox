@@ -22,8 +22,9 @@
   (let [url (format (if (= game-track "classic") classic-summary-url summary-url)
                     (:source-id addon-summary))
 
-        ;; tukui will return a successful but-empty response (200) for addons that
-        ;; exist but not for the requested game track.
+        ;; tukui addons do not share IDs across game tracks like curseforge does.
+        ;; tukui will also return a successful-but-empty response (200) for addons
+        ;; that don't exist in that catalogue. I'm treating empty responses as 404s
         ti (some-> url http/download utils/nilable utils/from-json)]
     (when ti
       (merge addon-summary
