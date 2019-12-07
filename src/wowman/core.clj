@@ -712,6 +712,9 @@
 
           {:keys [addon-summary-list]} (utils/load-json-file-safely catalog-path :bad-data? bad-json-file-handler)
 
+          ;; filter out items from unsupported sources
+          addon-summary-list (filterv #(utils/in? (:source %) sp/catalog-sources) addon-summary-list)
+
           addon-categories (mapv (fn [{:keys [source-id source category-list]}]
                                    (mapv (fn [category]
                                            [source-id (or source missing-source) category]) category-list)) addon-summary-list)
