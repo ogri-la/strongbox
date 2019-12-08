@@ -20,9 +20,6 @@
 (def tukui-proper-url "https://www.tukui.org/api.php?ui=tukui")
 (def elvui-proper-url "https://www.tukui.org/api.php?ui=elvui")
 
-(def tukui-proper-download-url "https://www.tukui.org/downloads/tukui-%s.zip")
-(def elvui-proper-download-url "https://www.tukui.org/downloads/elvui-%s.zip")
-
 (defn-spec expand-summary (s/or :ok ::sp/addon, :error nil?)
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
   [addon-summary ::sp/addon-summary game-track ::sp/game-track]
