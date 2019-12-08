@@ -3,8 +3,8 @@
 [![Build Status](https://travis-ci.org/ogri-la/wowman.svg?branch=master)](https://travis-ci.org/ogri-la/wowman)
 
 `wowman` is an **open source**, **advertisement free** and **privacy respecting** addon manager for World of Warcraft. 
-It interacts with the Twitch (Curseforge) [Addons API](https://addons-ecs.forgesvc.net) and 
-[wowinterface.com](https://wowinterface.com/addons.php) and with the addons in your `Addons` directory.
+
+It supports addons hosted by Curseforge, wowinterface, Tukui and Github.
 
 ## News
 
@@ -75,7 +75,17 @@ that it's my privilege to offer this small piece back.
 
 ## Features
 
-* installation of addons from [curseforge](https://www.curseforge.com/wow/addons), [wowinterface](https://wowinterface.com/addons.php), [github *packages*](./github-addons.md)
+* classic and retail addons
+* catalogue search
+* bulk update
+* addons from multiple sources:
+    - [curseforge](https://www.curseforge.com/wow/addons)
+    - [wowinterface](https://wowinterface.com/addons.php)
+    - [github](./github-addons.md) using *releases*
+    - [tukui](https://www.tukui.org)
+* import and export of lists of addons
+* safeguards against bad addons
+* warnings when addons install other bundled addons
 
 ## Notes
 
@@ -95,15 +105,19 @@ Addon `.zip` files that contain top-level files or top-level directories missing
 and the downloaded `.zip` file will be deleted immediately. This is a guard against poorly or maliciously constructed
 `.zip` files.
 
-Addon `.rar` files are not and will not be supported.
+Addon `.rar` files are not supported.
 
 This software interacts with the following remote hosts:
 
-* Twitch (Curseforge) [Addons API](https://addons-ecs.forgesvc.net/) and it's [CDN](https://edge.forgecdn.net/) to 
-download detailed addon data.
-* [wowinterface.com](https://wowinterface.com) to download detailed addon data. These hosts may redirect requests.
-* [github.com/ogri-la](https://github.com/ogri-la), to download a collated list of summary addon data
-* [api.github.com](https://developer.github.com/v3/repos/releases), to download the latest `wowman` release data
+* Twitch (Curseforge) [Addons API](https://addons-ecs.forgesvc.net/) and it's [CDN](https://edge.forgecdn.net/)
+* [wowinterface.com](https://wowinterface.com)
+* [www.tukui.org](https://www.tukui.org/api.php)
+* [api.github.com](https://developer.github.com/v3/repos/releases)
+    - to download repository and release data for addons hosted on Github
+    - to download the latest `wowman` release data
+* [github.com/ogri-la/wowman-data](https://github.com/ogri-la/wowman-data), to download addon catalogues
+
+These hosts *may* redirect requests.
 
 These interactions use a HTTP user agent header unique to `wowman` so that it may be identified easily.
 
