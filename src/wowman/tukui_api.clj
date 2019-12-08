@@ -17,6 +17,12 @@
 (def summary-list-url "https://www.tukui.org/api.php?addons=all")
 (def classic-summary-list-url "https://www.tukui.org/api.php?classic-addons=all")
 
+(def tukui-proper-url "https://www.tukui.org/api.php?ui=tukui")
+(def elvui-proper-url "https://www.tukui.org/api.php?ui=elvui")
+
+(def tukui-proper-download-url "https://www.tukui.org/downloads/tukui-%s.zip")
+(def elvui-proper-download-url "https://www.tukui.org/downloads/elvui-%s.zip")
+
 (defn-spec expand-summary (s/or :ok ::sp/addon, :error nil?)
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
   [addon-summary ::sp/addon-summary game-track ::sp/game-track]
@@ -39,8 +45,9 @@
   "convert a tukui-style datestamp into a mighty RFC3339 formatted one. assumes UTC."
   [tukui-dt string?]
   (let [[date time] (clojure.string/split tukui-dt #" ")]
-    ;; assume UTC, no other tz information available
-    (str date "T" time "Z")))
+    (if-not time
+      (str date "T00:00:00Z") ;; tukui and elvui addons proper have no time component
+      (str date "T" time "Z"))))
 
 (defn-spec process-tukui-item ::sp/addon-summary
   "process an item from a tukui catalogue into an addon-summary. slightly different values by game-track."
@@ -72,6 +79,23 @@
 
     addon-summary))
 
+(defn-spec -download-proper-summary ::sp/addon-summary
+  "downloads either the elvui or tukui addon that exists separately and outside of the catalogue"
+  [url ::sp/uri]
+  (let [classic? false ;; put the tukui proper addon in the retail catalogue
+        addon-summary (-> url http/download utils/from-json (process-tukui-item classic?))]
+    (assoc addon-summary :game-track-list ["classic" "retail"])))
+
+(defn-spec download-elvui-summary ::sp/addon-summary
+  "downloads the elvui addon that exists separately and outside of the catalogue"
+  []
+  (-download-proper-summary elvui-proper-url))
+
+(defn-spec download-tukui-summary ::sp/addon-summary
+  "downloads the tukui addon that exists separately and outside of the catalogue"
+  []
+  (-download-proper-summary tukui-proper-url))
+
 (defn-spec download-retail-summaries ::sp/addon-summary-list
   "downloads and processes all items in the tukui 'live' (retail) catalogue"
   []
@@ -85,8 +109,10 @@
 (defn-spec download-all-summaries ::sp/addon-summary-list
   "downloads and process all items from the tukui 'live' (retail) and classic catalogues"
   []
-  (into (download-retail-summaries)
-        (download-classic-summaries)))
+  (vec (concat (download-retail-summaries)
+               (download-classic-summaries)
+               [(download-tukui-summary)]
+               [(download-elvui-summary)])))
 
 ;;
 
