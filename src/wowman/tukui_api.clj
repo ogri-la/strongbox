@@ -17,14 +17,19 @@
 (def summary-list-url "https://www.tukui.org/api.php?addons=all")
 (def classic-summary-list-url "https://www.tukui.org/api.php?classic-addons=all")
 
-(def tukui-proper-url "https://www.tukui.org/api.php?ui=tukui")
-(def elvui-proper-url "https://www.tukui.org/api.php?ui=elvui")
+(def proper-url "https://www.tukui.org/api.php?ui=%s")
+(def tukui-proper-url (format proper-url "tukui"))
+(def elvui-proper-url (format proper-url "elvui"))
 
 (defn-spec expand-summary (s/or :ok ::sp/addon, :error nil?)
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
   [addon-summary ::sp/addon-summary game-track ::sp/game-track]
-  (let [url (format (if (= game-track "classic") classic-summary-url summary-url)
-                    (:source-id addon-summary))
+  (let [source-id (:source-id addon-summary)
+        url (cond
+              (neg? source-id) [proper-url (:name addon-summary)]
+              (= game-track "classic") [classic-summary-url source-id]
+              (= game-track "retail") [summary-url source-id])
+        url (apply format url)
 
         ;; tukui addons do not share IDs across game tracks like curseforge does.
         ;; tukui will also return a successful-but-empty response (200) for addons
@@ -79,7 +84,7 @@
 (defn-spec -download-proper-summary ::sp/addon-summary
   "downloads either the elvui or tukui addon that exists separately and outside of the catalogue"
   [url ::sp/uri]
-  (let [classic? false ;; put the tukui proper addon in the retail catalogue
+  (let [classic? false ;; retail catalogue
         addon-summary (-> url http/download utils/from-json (process-tukui-item classic?))]
     (assoc addon-summary :game-track-list ["classic" "retail"])))
 
