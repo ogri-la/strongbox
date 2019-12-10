@@ -133,6 +133,12 @@ multiple assets will always require differentiation, but we can tune warnings/er
 * add a sha256 sum to release file
     - will prevent me from having to download release to generate a sumfile
     - done
+* bug, we have addons in multiple identical categories. fix this in catalog.clj
+    - remove call to set in db-load-catalog
+    - I suspect curseforge
+        - definitely just affecting curseforge
+        - it was even present in the tests
+    - done
 
 ### todo
 
@@ -147,10 +153,6 @@ multiple assets will always require differentiation, but we can tune warnings/er
     - must be included in CI
 * bug, if an addon directory goes missing between restarts, user configuration is lost
     - initially it's ignored, but then the new settings are saved over the top
-* bug, we have addons in multiple identical categories. fix this in catalog.clj
-    - see 319346
-    - remove call to set in db-load-catalog
-    - I suspect curseforge
 * investigate usage of spec-tools/coerce and remove if unnecessary
 * when adding an addon-dir, if path ends with /_classic_/Interface/Addons, set game track to classic
 
