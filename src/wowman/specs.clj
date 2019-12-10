@@ -96,7 +96,7 @@
 (s/def ::updated-date ::inst)
 (s/def ::catalog-created-date ::ymd-dt)
 (s/def ::catalog-updated-date ::ymd-dt)
-(def catalog-sources #{"curseforge" "wowinterface" "github"})
+(def catalog-sources #{"curseforge" "wowinterface" "github" "tukui" "tukui-classic"})
 (s/def ::catalog-source catalog-sources)
 (s/def ::zoned-dt-obj #(instance? java.time.ZonedDateTime %))
 (s/def ::download-count (s/and int? #(>= % 0)))

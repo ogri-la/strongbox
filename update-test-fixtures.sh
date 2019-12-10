@@ -34,9 +34,14 @@ dl "https://api.mmoui.com/v3/game/WOW/filedetails/25122.json" "wowinterface-api-
 dl "https://api.mmoui.com/v3/game/WOW/filedetails/24910.json" "wowinterface-api--addon-details-classic.json" # WeakAuras2
 
 # github api
-
 dl "https://api.github.com/repos/Robert388/Necrosis-classic/releases" "github-repo-releases--no-assets.json"
 dl "https://api.github.com/repos/jsb/RingMenu/releases" "github-repo-releases--single-asset-classic.json"
 dl "https://api.github.com/repos/jsb/RingMenu/releases" "github-repo-releases--broken-assets.json"
 dl "https://api.github.com/repos/Ravendwyr/Chinchilla/releases" "github-repo-releases--many-assets-many-gametracks.json" 
 dl "https://api.github.com/repos/Ravendwyr/Chinchilla/contents" "github-repo-contents--many-assets-many-gametracks.json" 
+
+# tukui api
+dl "https://www.tukui.org/api.php?addon=98" "tukui--addon-details.json"
+dl "https://www.tukui.org/api.php?classic-addon=13" "tukui--classic-addon-details.json"
+dl "https://www.tukui.org/api.php?ui=tukui" "tukui--tukui-addon-proper.json"
+dl "https://www.tukui.org/api.php?ui=elvui" "tukui--elvui-addon-proper.json"
