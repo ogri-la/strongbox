@@ -4,8 +4,7 @@
    [clojure.spec.alpha :as s]
    [orchestra.spec.test :as st]
    [orchestra.core :refer [defn-spec]]
-   [me.raynes.fs :as fs]
-   [taoensso.timbre :as log :refer [debug info warn error spy]]
+   ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [wowman
     [http :as http]
     [utils :as utils]

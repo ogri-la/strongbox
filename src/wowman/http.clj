@@ -67,9 +67,9 @@
   (when (and output-file (fs/exists? output-file))
     (not (utils/file-older-than output-file expiry-offset-hours))))
 
-(defn uri-to-filename
+(defn-spec uri-to-filename ::sp/file
   "safely encode a URI to something that can live cached on the filesystem"
-  [uri]
+  [uri ::sp/uri]
   (let [;; strip off any nasty parameters or anchors.
         ;; default to '.html' if there is no extension, it's just decorative
         ext (-> uri java.net.URL. .getPath (subs 1) fs/split-ext second (or ".html"))]

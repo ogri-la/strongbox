@@ -19,6 +19,21 @@
       (with-fake-routes-in-isolation fake-routes
         (is (nil? (catalog/expand-summary zombie-addon "retail")))))))
 
+(deftest uri-to-filename
+  (testing "urls can be converted to filenames safe for a filesystem"
+    (let [cases [["https://user:name@example.org/foo#anchor?bar=baz&baz=bar"
+                  "aHR0cHM6Ly91c2VyOm5hbWVAZXhhbXBsZS5vcmcvZm9vI2FuY2hvcj9iYXI9YmF6JmJhej1iYXI=.html"]
+
+                 ;; forward slashes are replaced with hyphens
+                 ["https://example.org/?"
+                  "aHR0cHM6Ly9leGFtcGxlLm9yZy8-.html"]
+
+                 ;; extensions are preserved if possible
+                 ["https://example.org/foo.asdf"
+                  "aHR0cHM6Ly9leGFtcGxlLm9yZy9mb28uYXNkZg==.asdf"]]]
+      (doseq [[given expected] cases]
+        (is (= expected (http/uri-to-filename given)))))))
+
 (deftest user-agent
   (testing "user agent version number"
     (let [cases [["0.1.0" "Wowman/0.1 (https://github.com/ogri-la/wowman)"]
