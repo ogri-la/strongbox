@@ -130,6 +130,9 @@ multiple assets will always require differentiation, but we can tune warnings/er
     - they have json that can be scraped
         - https://www.tukui.org/api.php
     - done
+* add a sha256 sum to release file
+    - will prevent me from having to download release to generate a sumfile
+    - done
 
 ### todo
 
@@ -137,8 +140,6 @@ multiple assets will always require differentiation, but we can tune warnings/er
     - https://github.com/koekeishiya/yabai
     - make this a softer failure
         - "does not look like an addon"
-* add a sha256 sum to release file
-    - will prevent me from having to download release to generate a sumfile
 * it's possible for `.part` files to exist and not be cleaned up
 * mac support
     - must be included in CI
