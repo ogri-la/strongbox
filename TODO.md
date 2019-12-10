@@ -118,33 +118,32 @@ multiple assets will always require differentiation, but we can tune warnings/er
             - inspect 'last-updated' in user-catalogue
         - went with a manual update for now
     - done
-
-### todo
-
 * introducing a new source (tukui) to the catalog will break older wowman clients
     - the database is quite strict and will refuse/error on unfamiliar data
+    - done in 0.10.2
 * bug, handle 404/whatever errors when switching to a catalog that doesn't exist remotely
     - like all brand new catalogs and github unavailability
+    - done in 0.10.2
 * add TUKUI addon host
     - TUKUI appears to be both addon manager and addon host
     - ELVUI is their flagship addon
     - they have json that can be scraped
         - https://www.tukui.org/api.php
+    - done
+
+### todo
 
 * github bug, non-addon git repo fails to install
     - https://github.com/koekeishiya/yabai
     - make this a softer failure
         - "does not look like an addon"
-* allow user to specify their own catalogs
-    - a url to a catalog that is downloaded and included while loading up the db
-    - different from the 'user catalog'
+* add a sha256 sum to release file
+    - will prevent me from having to download release to generate a sumfile
+* it's possible for `.part` files to exist and not be cleaned up
 * mac support
     - must be included in CI
 * windows support
     - must be included in CI
-* add a sha256 sum to release file
-    - will prevent me from having to download release to generate a sumfile
-* it's possible for `.part` files to exist and not be cleaned up
 * bug, if an addon directory goes missing between restarts, user configuration is lost
     - initially it's ignored, but then the new settings are saved over the top
 * bug, we have addons in multiple identical categories. fix this in catalog.clj
@@ -156,6 +155,9 @@ multiple assets will always require differentiation, but we can tune warnings/er
 
 ## todo bucket (no particular order)
 
+* allow user to specify their own catalogs
+    - a url to a catalog that is downloaded and included while loading up the db
+    - different from the 'user catalog'
 * rename 'go' column to 'catalogue' 
 * gitlab as addon host
     - https://gitlab.com/search?search=wow+addon
