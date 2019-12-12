@@ -131,7 +131,7 @@
 
             (cond
               ;; remote data has changed, write body to disk
-              (and output-file modified) (do
+              (and output-file modified) (try
                                            (clojure.java.io/copy (:body resp) (java.io.File. partial-output-file)) ;; doesn't .close on streams
                                            (when streaming-response?
                                              ;; stream request responses get written to a file, the stream closed and the path to the output file returned
@@ -140,7 +140,10 @@
                                            ;; much shorter than N seconds to download a file
                                            (locking output-file
                                              (fs/rename partial-output-file output-file))
-                                           output-file)
+                                           output-file
+                                           (finally
+                                             (if (fs/exists? partial-output-file)
+                                               (fs/delete partial-output-file))))
 
               ;; remote data has not changed, :body is nil, replace it with path to file
               (and output-file not-modified) (do
