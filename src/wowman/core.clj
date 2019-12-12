@@ -742,9 +742,6 @@
         ;; see curseforge 26499, 95177, 351482
         addon-categories (->> addon-categories utils/shallow-flatten set vec)
 
-        ;;_ (info (mapv first (filterv (fn [[key val]]
-        ;;                               (> (count val) 1)) (group-by identity addon-categories))))
-
         ;; distinct list of :categories
         category-list (->> addon-categories (mapv rest) set vec)
 
