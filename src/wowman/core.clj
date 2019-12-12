@@ -19,7 +19,7 @@
     [http :as http]
     [logging :as logging]
     [nfo :as nfo]
-    [utils :as utils :refer [join not-empty? false-if-nil nav-map nav-map-fn delete-many-files! static-slurp expand-path]]
+    [utils :as utils :refer [join not-empty? false-if-nil nav-map nav-map-fn delete-many-files! static-slurp expand-path if-let*]]
     [catalog :as catalog]
     [toc]
     [specs :as sp]]))
@@ -1074,24 +1074,27 @@
   relies on UI to call refresh (or not)"
   [addon-url string?]
   (binding [http/*cache* (cache)]
-    (when-let [addon-summary (catalog/parse-user-string addon-url)]
-      (when-let [;; this is another type of addon test...
-                 addon (or
-                        (catalog/expand-summary addon-summary "retail")
-                        (catalog/expand-summary addon-summary "classic"))]
+    (if-let* [addon-summary (catalog/parse-user-string addon-url)
+              addon (or
+                     (catalog/expand-summary addon-summary "retail")
+                     (catalog/expand-summary addon-summary "classic"))
+              _ (install-addon-guard addon (get-state :selected-addon-dir) true)] ;; test only
+             (let [addon (expand-summary-wrapper addon-summary)]
 
-        ;; tentative installation
-        (when (install-addon-guard addon (get-state :selected-addon-dir) true) ;; test only
-          ;; all good! add to catalog
-          (add-user-addon! addon-summary)
-          ;; install properly
-          ;; may fail depending on selected game track
-          (let [result (or (when-let [addon (expand-summary-wrapper addon-summary)]
-                             (install-addon addon (get-state :selected-addon-dir)) ;; todo: simplify install-addon interface
-                             addon)
-                           addon-summary)]
-            (db-reload-catalog)
-            result))))))
+               (add-user-addon! addon-summary)
+
+               (when addon
+                 (install-addon addon (get-state :selected-addon-dir))
+                 (db-reload-catalog)
+                 addon)
+
+               ;; failed to expand summary, probably because of selected game track
+               ;; gui depends on difference between an addon and addon summary to know
+               ;; what error message to display
+               (or addon addon-summary))
+
+             ;; failed to parse url, or expand summary, or trial install
+             nil)))
 
 ;; init
 
