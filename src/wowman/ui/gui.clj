@@ -719,7 +719,8 @@
   * originate from github.com
   * addon uses 'releases'
   * latest release has a packaged 'asset'
-  * asset must be a .zip file"
+  * asset must be a .zip file
+  * zip file must be structured like an addon"
 
         failure-warning #(ss/alert fail)
 
