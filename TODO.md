@@ -133,19 +133,21 @@ multiple assets will always require differentiation, but we can tune warnings/er
 * add a sha256 sum to release file
     - will prevent me from having to download release to generate a sumfile
     - done
-
-
-### todo
-
+* it's possible for `.part` files to exist and not be cleaned up
+    - done
 * github bug, non-addon git repo fails to install
     - https://github.com/koekeishiya/yabai
     - make this a softer failure
         - "does not look like an addon"
+
             - this is actually pretty hard to determine unless the addon is downloaded and inspected
                 - so ... do that?
     - download and inspect new addons before adding to user catalogue
         - if it fails for whatever reason, abort
-* it's possible for `.part` files to exist and not be cleaned up
+    - done
+
+### todo
+
 * mac support
     - must be included in CI
 * windows support
