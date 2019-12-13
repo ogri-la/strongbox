@@ -139,6 +139,8 @@ multiple assets will always require differentiation, but we can tune warnings/er
         - definitely just affecting curseforge
         - it was even present in the tests
     - done
+* it's possible for `.part` files to exist and not be cleaned up
+    - done
 
 ### todo
 
@@ -146,7 +148,7 @@ multiple assets will always require differentiation, but we can tune warnings/er
     - https://github.com/koekeishiya/yabai
     - make this a softer failure
         - "does not look like an addon"
-* it's possible for `.part` files to exist and not be cleaned up
+
 * mac support
     - must be included in CI
 * windows support
