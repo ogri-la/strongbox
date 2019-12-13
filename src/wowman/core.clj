@@ -737,8 +737,9 @@
         addon-categories (mapv (fn [{:keys [source-id source category-list]}]
                                  (mapv (fn [category]
                                          [source-id source category]) category-list)) addon-summary-list)
-        ;; todo: we have addons in multiple identical categories. fix this in catalog.clj
-        ;; see curseforge:319346
+
+        ;; re `set`, this was a symptom of duplicate categories affecting curseforge only
+        ;; I think it's safer to keep it in there, at least for now
         addon-categories (->> addon-categories utils/shallow-flatten set vec)
 
         ;; distinct list of :categories
