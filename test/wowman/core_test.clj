@@ -630,15 +630,23 @@
 
           expected-addon-dir (utils/join install-dir "EveryAddon")
 
-          expected-user-catalog {:spec {:version 1}, :datestamp "2019-12-14", :updated-datestamp "2019-12-14", :total 1, :addon-summary-list [{:category-list [], :game-track-list [], :updated-date "2019-10-09T17:40:04Z", :name "healcomm", :source "github", :label "HealComm", :download-count 30946, :source-id "Aviana/HealComm", :uri "https://github.com/Aviana/HealComm"}]}]
-
+          expected-user-catalog [{:category-list [],
+                                  :game-track-list [],
+                                  :updated-date "2019-10-09T17:40:04Z",
+                                  :name "healcomm",
+                                  :source "github",
+                                  :label "HealComm",
+                                  :download-count 30946,
+                                  :source-id "Aviana/HealComm",
+                                  :uri "https://github.com/Aviana/HealComm"}]]
       (with-running-app
         (core/set-addon-dir! install-dir)
         (with-fake-routes-in-isolation fake-routes
           (core/add+install-user-addon! user-url)
 
           ;; addon was found and added to user catalog
-          (is (= expected-user-catalog (catalog/read-catalog (core/paths :user-catalog-file))))
+          (is (= expected-user-catalog
+                 (:addon-summary-list (catalog/read-catalog (core/paths :user-catalog-file)))))
 
           ;; addon was successfully download and installed
           (is (fs/exists? expected-addon-dir)))))))
