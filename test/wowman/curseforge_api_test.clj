@@ -166,7 +166,7 @@
                        {:get (fn [req] {:status 200 :body fixture})}}
           expected [{:created-date "2016-05-09T17:21:30.1Z",
                      :description "Restores access to removed interface options in Legion",
-                     :category-list '("Miscellaneous" "Miscellaneous"),
+                     :category-list ["Miscellaneous"],
                      :updated-date "2019-08-30T14:39:44.943Z",
                      :name "advancedinterfaceoptions",
                      :alt-name "advancedinterfaceoptions",
