@@ -474,11 +474,40 @@
           ;; move dummy addon file into place so there is no cache miss
           fname (core/downloaded-addon-fname (:name addon) (:version addon))
           _ (utils/cp (fixture-path fname) install-dir)
-          file-list (core/install-addon addon install-dir)]
+          test-only? false
+          file-list (core/install-addon addon install-dir test-only?)]
 
       (testing "addon directory created, single file written (.wowman.json nfo file)"
         (is (= (count file-list) 1))
-        (is (fs/exists? (first file-list)))))))
+        (is (fs/exists? (first file-list))))))
+
+  (testing "trial installation of a good addon"
+    (let [install-dir (utils/join (str fs/*cwd*) "addons-dir")
+          ;; move dummy addon file into place so there is no cache miss
+          fname (core/downloaded-addon-fname (:name addon) (:version addon))
+          _ (fs/mkdir install-dir)
+          _ (utils/cp (fixture-path fname) install-dir)
+
+          test-only? true
+          result (core/install-addon addon install-dir test-only?)]
+      (is result) ;; success
+
+      ;; ensure nothing was actually unzipped
+      (is (not (fs/exists? (utils/join install-dir "EveryAddon"))))))
+
+  (testing "trial installation of a bad addon"
+    (let [install-dir (utils/join (str fs/*cwd*) "addons-dir")
+          ;; move dummy addon file into place so there is no cache miss
+          fname (core/downloaded-addon-fname (:name addon) (:version addon))
+          _ (fs/mkdir install-dir)
+          _ (fs/copy (fixture-path "bad-truncated.zip") (utils/join install-dir fname)) ;; hoho, so evil
+
+          test-only? true
+          result (core/install-addon addon install-dir test-only?)]
+      (is (not result)) ;; failure
+
+      ;; ensure nothing was actually unzipped
+      (is (not (fs/exists? (utils/join install-dir "EveryAddon")))))))
 
 (deftest install-bad-addon
   (testing "installing a bad addon"
@@ -581,3 +610,43 @@
         (core/add-user-addon! user-addon)
         (is (= expected (catalog/read-catalog (core/paths :user-catalog-file))))))))
 
+(deftest add+install-user-addon!
+  (testing "user addon is successfully addon to the user catalog from just a github url"
+    (let [every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
+
+          fake-routes {"https://api.github.com/repos/Aviana/HealComm/releases"
+                       {:get (fn [req] {:status 200 :body (slurp (fixture-path "github-repo-releases--aviana-healcomm.json"))})}
+
+                       "https://api.github.com/repos/Aviana/HealComm/contents"
+                       {:get (fn [req] {:status 200 :body "[]"})}
+
+                       "https://github.com/Aviana/HealComm/releases/download/2.04/HealComm.zip"
+                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-addon-zip-file)})}}
+
+          user-url "https://github.com/Aviana/HealComm"
+
+          install-dir (utils/join fs/*cwd* "addon-dir")
+          _ (fs/mkdir install-dir)
+
+          expected-addon-dir (utils/join install-dir "EveryAddon")
+
+          expected-user-catalog [{:category-list [],
+                                  :game-track-list [],
+                                  :updated-date "2019-10-09T17:40:04Z",
+                                  :name "healcomm",
+                                  :source "github",
+                                  :label "HealComm",
+                                  :download-count 30946,
+                                  :source-id "Aviana/HealComm",
+                                  :uri "https://github.com/Aviana/HealComm"}]]
+      (with-running-app
+        (core/set-addon-dir! install-dir)
+        (with-fake-routes-in-isolation fake-routes
+          (core/add+install-user-addon! user-url)
+
+          ;; addon was found and added to user catalog
+          (is (= expected-user-catalog
+                 (:addon-summary-list (catalog/read-catalog (core/paths :user-catalog-file)))))
+
+          ;; addon was successfully download and installed
+          (is (fs/exists? expected-addon-dir)))))))

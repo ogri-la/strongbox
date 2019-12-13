@@ -141,13 +141,17 @@ multiple assets will always require differentiation, but we can tune warnings/er
     - done
 * it's possible for `.part` files to exist and not be cleaned up
     - done
-
-### todo
-
 * github bug, non-addon git repo fails to install
     - https://github.com/koekeishiya/yabai
     - make this a softer failure
         - "does not look like an addon"
+            - this is actually pretty hard to determine unless the addon is downloaded and inspected
+                - so ... do that?
+    - download and inspect new addons before adding to user catalogue
+        - if it fails for whatever reason, abort
+    - done
+
+### todo
 
 * mac support
     - must be included in CI
@@ -160,6 +164,8 @@ multiple assets will always require differentiation, but we can tune warnings/er
 
 ## todo bucket (no particular order)
 
+* add a 'addons dir' to the test helper
+    - lots of boilerplate around this in core_test.clj
 * allow user to specify their own catalogs
     - a url to a catalog that is downloaded and included while loading up the db
     - different from the 'user catalog'

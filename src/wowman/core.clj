@@ -19,7 +19,7 @@
     [http :as http]
     [logging :as logging]
     [nfo :as nfo]
-    [utils :as utils :refer [join not-empty? false-if-nil nav-map nav-map-fn delete-many-files! static-slurp expand-path]]
+    [utils :as utils :refer [join not-empty? false-if-nil nav-map nav-map-fn delete-many-files! static-slurp expand-path if-let*]]
     [catalog :as catalog]
     [toc]
     [specs :as sp]]))
@@ -509,27 +509,32 @@
     (info (:label addon) "installed.")
     retval))
 
-(defn-spec install-addon-guard (s/or :ok (s/coll-of ::sp/extant-file), :error nil?)
+(defn-spec install-addon-guard (s/or :ok (s/coll-of ::sp/extant-file), :passed-tests true?, :error nil?)
   "downloads an addon and installs it. handles http and non-http errors, bad zip files, bad addons"
-  [addon ::sp/addon-or-toc-addon, install-dir ::sp/extant-dir]
-  (if (not (fs/writeable? install-dir))
-    (error "failed to install addon, directory not writeable" install-dir)
-    (let [downloaded-file (download-addon addon install-dir)
-          bad-zipfile-msg (format "failed to read zip file '%s', could not install %s" downloaded-file (:name addon))
-          bad-addon-msg (format "refusing to install '%s'. It contains top-level files or top-level directories missing .toc files."  (:name addon))]
-      (info "installing" (:label addon) "...")
-      (cond
-        (map? downloaded-file) (error "failed to download addon, could not install" (:name addon))
-        (nil? downloaded-file) (error "non-http error downloading addon, could not install" (:name addon)) ;; I dunno. /shrug
-        (not (zip/valid-zip-file? downloaded-file)) (do
-                                                      (error bad-zipfile-msg)
-                                                      (fs/delete downloaded-file)
-                                                      (warn "removed bad zip file" downloaded-file))
-        (not (zip/valid-addon-zip-file? downloaded-file)) (do
-                                                            (error bad-addon-msg)
-                                                            (fs/delete downloaded-file) ;; I could be more lenient
-                                                            (warn "removed bad addon" downloaded-file))
-        :else (-install-addon addon install-dir downloaded-file)))))
+  ([addon ::sp/addon-or-toc-addon, install-dir ::sp/extant-dir]
+   (install-addon-guard addon install-dir false))
+  ([addon ::sp/addon-or-toc-addon, install-dir ::sp/extant-dir, test-only? boolean?]
+   (if (not (fs/writeable? install-dir)) ;; todo: is this checked on startup?
+     (error "failed to install addon, directory not writeable" install-dir)
+     (let [downloaded-file (download-addon addon install-dir)
+           bad-zipfile-msg (format "failed to read zip file '%s', could not install %s" downloaded-file (:name addon))
+           bad-addon-msg (format "refusing to install '%s'. It contains top-level files or top-level directories missing .toc files."  (:name addon))]
+       (info "installing" (:label addon) "...")
+       (cond
+         (map? downloaded-file) (error "failed to download addon, could not install" (:name addon))
+         (nil? downloaded-file) (error "non-http error downloading addon, could not install" (:name addon)) ;; I dunno. /shrug
+         (not (zip/valid-zip-file? downloaded-file)) (do
+                                                       (error bad-zipfile-msg)
+                                                       (fs/delete downloaded-file)
+                                                       (warn "removed bad zip file" downloaded-file))
+         (not (zip/valid-addon-zip-file? downloaded-file)) (do
+                                                             (error bad-addon-msg)
+                                                             (fs/delete downloaded-file) ;; I could be more lenient
+                                                             (warn "removed bad addon" downloaded-file))
+
+         test-only? true ;; addon was successfully downloaded and verified as being sound
+
+         :else (-install-addon addon install-dir downloaded-file))))))
 
 (def install-addon
   (affects-addon-wrapper install-addon-guard))
@@ -608,7 +613,7 @@
        (catalog/write-empty-catalog! user-catalog-path)))))
 
 (defn-spec add-user-addon! nil?
-  "adds a single addon to the user catalog"
+  "adds one or many addons to the user catalog"
   [addon-summary (s/or :single ::sp/addon-summary, :many ::sp/addon-summary-list)]
   (let [addon-summary-list (if (sequential? addon-summary)
                              addon-summary
@@ -738,8 +743,8 @@
                                  (mapv (fn [category]
                                          [source-id source category]) category-list)) addon-summary-list)
 
-        ;; re `set`, this was a symptom of duplicate categories affecting curseforge only
-        ;; I think it's safer to keep it in there, at least for now
+        ;; using `set` was a symptom of a problem with duplicate categories affecting curseforge
+        ;; I think it's safest to leave it in for now
         addon-categories (->> addon-categories utils/shallow-flatten set vec)
 
         ;; distinct list of :categories
@@ -1070,14 +1075,28 @@
   relies on UI to call refresh (or not)"
   [addon-url string?]
   (binding [http/*cache* (cache)]
-    (when-let [addon-summary (catalog/parse-user-string addon-url)]
-      (add-user-addon! addon-summary)
-      (let [result (or (when-let [addon (expand-summary-wrapper addon-summary)]
-                         (install-addon addon (get-state :selected-addon-dir)) ;; todo: simplify install-addon interface
-                         addon)
-                       addon-summary)]
-        (db-reload-catalog)
-        result))))
+    (if-let* [addon-summary (catalog/parse-user-string addon-url)
+              addon (or
+                     (catalog/expand-summary addon-summary "retail")
+                     (catalog/expand-summary addon-summary "classic"))
+              test-only? true
+              _ (install-addon-guard addon (get-state :selected-addon-dir) test-only?)]
+             (let [addon (expand-summary-wrapper addon-summary)]
+
+               (add-user-addon! addon-summary)
+
+               (when addon
+                 (install-addon addon (get-state :selected-addon-dir))
+                 (db-reload-catalog)
+                 addon)
+
+               ;; failed to expand summary, probably because of selected game track
+               ;; gui depends on difference between an addon and addon summary to know
+               ;; what error message to display
+               (or addon addon-summary))
+
+             ;; failed to parse url, or expand summary, or trial install
+             nil)))
 
 ;; init
 

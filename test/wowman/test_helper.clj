@@ -54,7 +54,7 @@
 (defmacro with-running-app
   [& form]
   `(try
-     (main/start)
+     (main/start {:ui :cli})
      ~@form
      (finally
        (main/stop))))
