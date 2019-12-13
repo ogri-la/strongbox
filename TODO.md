@@ -164,6 +164,8 @@ multiple assets will always require differentiation, but we can tune warnings/er
 
 ## todo bucket (no particular order)
 
+* add a 'addons dir' to the test helper
+    - lots of boilerplate around this in core_test.clj
 * allow user to specify their own catalogs
     - a url to a catalog that is downloaded and included while loading up the db
     - different from the 'user catalog'

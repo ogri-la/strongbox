@@ -1079,7 +1079,8 @@
               addon (or
                      (catalog/expand-summary addon-summary "retail")
                      (catalog/expand-summary addon-summary "classic"))
-              _ (install-addon-guard addon (get-state :selected-addon-dir) true)] ;; test only
+              test-only? true
+              _ (install-addon-guard addon (get-state :selected-addon-dir) test-only?)]
              (let [addon (expand-summary-wrapper addon-summary)]
 
                (add-user-addon! addon-summary)
