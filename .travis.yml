@@ -1,4 +1,5 @@
 dist: xenial # Ubuntu 16.04
+
 language: clojure
 jdk:
     - openjdk8

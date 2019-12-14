@@ -24,7 +24,8 @@
   * an empty catalog is downloaded
   * fake wowman version data is downloaded"
   [f]
-  (let [temp-dir-path (fs/temp-dir "wowman.main-test.")
+  (let [;; for some reason, Macs symlink /var to /private/var and this needs to be resolved before comparison
+        temp-dir-path (utils/expand-path (str (fs/temp-dir "wowman-test.")))
         fake-routes {;; catalog
                      ;; return dummy data. we can do this because the catalog isn't loaded/parsed/validated
                      ;; until the UI (gui or cli) tells it to via a later call to `refresh`
