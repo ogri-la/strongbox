@@ -150,13 +150,18 @@ multiple assets will always require differentiation, but we can tune warnings/er
     - download and inspect new addons before adding to user catalogue
         - if it fails for whatever reason, abort
     - done
+* mac support
+    - must be included in CI
+        - nope. Fuck OSX. Fuck Travis, Fuck Circle CI, Fuck 'Github Actions', fuck em all.
+        - testing will be done manually prior to release
 
 ### todo
 
-* mac support
-    - must be included in CI
 * windows support
-    - must be included in CI
+    - ~must be included in CI~
+    - tests pass
+    - readme updated
+    - release updated
 * bug, if an addon directory goes missing between restarts, user configuration is lost
     - initially it's ignored, but then the new settings are saved over the top
 * investigate usage of spec-tools/coerce and remove if unnecessary

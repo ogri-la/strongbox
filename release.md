@@ -14,11 +14,20 @@ Just for my own reference
 * run lein pom
 * commit+push
 * open a pr for master
-* wait for build to successfully complete, then merge
+* wait for build to successfully complete
     - if build fails
         - fix fail
         - run `lein pom` again
         - commit+push
+
+on mac:
+    - switch repo to PR branch
+    - ./test.sh
+    - lein clean; lein uberjar; java -jar ./target/wowman...standalone.jar
+    - fix anything that is broken, push to PR branch, wait for green
+
+on linux:
+* merge PR branch
 * checkout master+pull
 * update README with expected path to download release
 * if UI has changed significantly, add a screenshot

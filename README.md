@@ -15,8 +15,6 @@ It supports addons hosted by Curseforge, wowinterface, Tukui and Github.
 
 This software targets World of Warcraft players using Linux.
 
-It may work on other platforms but it is only tested and supported on Linux.
-
 ## Requirements
 
 * Java 8+
