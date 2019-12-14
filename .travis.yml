@@ -1,13 +1,6 @@
-os:
-  - linux
-  - osx
-
 dist: xenial # Ubuntu 16.04
 
-osx_image: xcode9.3 # macOS 10.13
-
 language: clojure
-lein: lein
 jdk:
     - openjdk8
     - openjdk11
