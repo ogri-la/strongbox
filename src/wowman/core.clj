@@ -87,7 +87,7 @@
    ;;:cfg {:addon-dir-list []
    ;;      :debug? false ;; todo, remove
    ;;      :selected-catalog :short}
-   :cfg {} ;; see config.clj
+   :cfg nil ;; see config.clj
    :catalog-source-list [{:name :short :label "Short (default)" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"}
                          {:name :full :label "Full" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/full-catalog.json"}
 
@@ -155,14 +155,15 @@
     (rs/as-modified-maps rs (assoc opts :qualifier-fn unqualified :label-fn xform))))
 
 (defn get-db
+  "returns the database connection if it exists, else creates and sets a new one"
   []
   (if-let [db-conn (get-state :db)]
     ;; connection already exists, return that
     db-conn
-    (and
+    (do
       ;; else, create one, then return that.
-     (swap! state merge {:db (jdbc/get-datasource {:dbtype "h2:mem" :dbname (utils/uuid)})})
-     (get-db))))
+      (swap! state merge {:db (jdbc/get-datasource {:dbtype "h2:mem" :dbname (utils/uuid)})})
+      (get-state :db))))
 
 (defn db-query
   [query & {:keys [arg-list opts]}]
@@ -346,7 +347,7 @@
 ;; settings
 
 (defn save-settings
-  "stateful. writes parts of app state to filesystem "
+  "writes user configuration to the filesystem"
   []
   ;; warning: this will preserve any once-off command line parameters as well
   ;; this might make sense within the gui but be careful about auto-saving elsewhere
@@ -356,7 +357,7 @@
   (utils/dump-json-file (paths :etag-db-file) (get-state :etag-db)))
 
 (defn load-settings
-  "stateful. reads files from filesystem and input from users"
+  "reads user configuration from the filesystem and command line options"
   [cli-opts]
   (let [cfg-file (paths :cfg-file)
         _ (when-not (fs/exists? cfg-file)

@@ -12,27 +12,26 @@
 
 (def default-cfg
   {:addon-dir-list []
-   :debug? false
+   :debug? false ;; todo: remove
    :selected-catalog :short})
 
 (defn handle-install-dir
-  "when `:install-dir` is present in given configuration, expands it to an addon-dir map and removes the value from the config
-  `:install-dir` was once supported in the user configuration but is now only supported in the command line options.
-  this function handles it's presence in both"
+  "`:install-dir` was once supported in the user configuration but is now only supported in the command line options.
+  this function will expand it to an addon-dir-map, if present, and drop the :install-dir key"
   [cfg]
   (let [install-dir (:install-dir cfg)
-        addon-dir-list (->> cfg :addon-dir-list (map :addon-dir) vec)
+        addon-dir-list (->> cfg :addon-dir-list (mapv :addon-dir))
         stub {:addon-dir install-dir :game-track "retail"}
         ;; add stub to addon-dir-list if install-dir isn't nil and doesn't match anything already present
         cfg (if (and install-dir
                      (not (utils/in? install-dir addon-dir-list)))
               (update-in cfg [:addon-dir-list] conj stub)
               cfg)]
-      ;; finally, ensure :install-dir is absent from whatever we return
+    ;; finally, ensure :install-dir is absent from whatever we return
     (dissoc cfg :install-dir)))
 
 (defn remove-non-existant-dirs
-  "removes any addon directories from the given configuration that do not exist"
+  "removes any `addon-dir-map` items from the given configuration whose directories do not exist"
   [cfg]
   (assoc cfg :addon-dir-list
          (filterv (comp fs/directory? :addon-dir) (:addon-dir-list cfg))))
@@ -44,6 +43,7 @@
   (spec-tools/coerce ::sp/user-config cfg spec-tools/strip-extra-keys-transformer))
 
 (defn-spec configure-with ::sp/user-config
+  "merges `cfg-b` over `cfg-a`, returning the result if valid else `cfg-a`"
   [cfg-a map?, cfg-b map?, msg string?]
   (debug "loading config:" msg)
   (let [cfg (-> cfg-a
@@ -58,22 +58,21 @@
       (do (warn message) cfg-a))))
 
 (defn-spec configure ::sp/user-config
+  "merges the default user configuration with the saved settings and any CLI options"
   [file-opts map?, cli-opts map?]
   (-> default-cfg
       (configure-with file-opts "user settings")
       (configure-with cli-opts "command line options")))
 
 (defn load-settings
-  "returns a map that can be merged over the default state template"
+  "returns a map of user configuration settings that can be merged over the default state template"
   [cli-opts file-opts etag-db]
-  (let [cfg (configure file-opts cli-opts)
-        final-state {:cfg cfg,
-                     :cli-opts cli-opts,
-                     :file-opts file-opts,
-                     :etag-db etag-db
-                     :selected-addon-dir (->> cfg :addon-dir-list (map :addon-dir) first)}]
-
-    final-state))
+  (let [cfg (configure file-opts cli-opts)]
+    {:cfg cfg
+     :cli-opts cli-opts
+     :file-opts file-opts
+     :etag-db etag-db
+     :selected-addon-dir (->> cfg :addon-dir-list (map :addon-dir) first)}))
 
 ;;
 

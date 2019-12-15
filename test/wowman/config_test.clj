@@ -28,8 +28,7 @@
 
 (deftest configure
   (testing "called with no overrides gives us whatever is in the state template"
-    (let [;;expected (:cfg core/-state-template)
-          expected config/default-cfg
+    (let [expected config/default-cfg
           file-opts {}
           cli-opts {}]
       (is (= expected (config/configure file-opts cli-opts)))))
@@ -63,10 +62,9 @@
                             :debug? false
                             :selected-catalog :short}
 
-          expected-config {:addon-dir-list [{:addon-dir (str fs/*cwd*) ;; exists
+          expected-config {:addon-dir-list [{:addon-dir (str fs/*cwd*)
                                              :game-track "classic"}]
                            :debug? false
                            :selected-catalog :short}
-
           cli-opts {}]
       (is (= expected-config (config/configure user-file-config cli-opts))))))
