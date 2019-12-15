@@ -6,12 +6,12 @@
    [wowman
     [config :as config]]))
 
-(deftest handle-legacy-install-dir
+(deftest handle-install-dir
   (testing ":install-dir in user config is converted correctly"
     (let [install-dir (str fs/*cwd*)
           cfg {:install-dir install-dir :addon-dir-list []}
           expected {:addon-dir-list [{:addon-dir install-dir :game-track "retail"}]}]
-      (is (= expected (config/handle-legacy-install-dir cfg)))))
+      (is (= expected (config/handle-install-dir cfg)))))
 
   (testing ":install-dir in user config is appended to existing list correctly"
     (let [install-dir (str fs/*cwd*)
@@ -24,7 +24,7 @@
                :addon-dir-list [addon-dir1]}
 
           expected {:addon-dir-list [addon-dir1 addon-dir2]}]
-      (is (= expected (config/handle-legacy-install-dir cfg))))))
+      (is (= expected (config/handle-install-dir cfg))))))
 
 (deftest configure
   (testing "called with no overrides gives us whatever is in the state template"
@@ -53,3 +53,20 @@
           file-opts {:debug? false}
           expected (assoc config/default-cfg :debug? true)]
       (is (= expected (config/configure file-opts cli-opts))))))
+
+(deftest invalid-config
+  (testing "missing directories don't nuke entire config"
+    (let [user-file-config {:addon-dir-list [{:addon-dir (str fs/*cwd*) ;; exists
+                                              :game-track "classic"}
+                                             {:addon-dir "/does/not/exist"
+                                              :game-track "retail"}]
+                            :debug? false
+                            :selected-catalog :short}
+
+          expected-config {:addon-dir-list [{:addon-dir (str fs/*cwd*) ;; exists
+                                             :game-track "classic"}]
+                           :debug? false
+                           :selected-catalog :short}
+
+          cli-opts {}]
+      (is (= expected-config (config/configure user-file-config cli-opts))))))

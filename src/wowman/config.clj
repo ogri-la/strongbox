@@ -1,5 +1,6 @@
 (ns wowman.config
   (:require
+   [me.raynes.fs :as fs]
    [clojure.spec.alpha :as s]
    [orchestra.spec.test :as st]
    [orchestra.core :refer [defn-spec]]
@@ -9,19 +10,15 @@
     [specs :as sp]
     [utils :as utils]]))
 
-(comment "stateless configuration handling. no side effects allowed")
-
 (def default-cfg
-  {;; final config, result of merging :file-opts and :cli-opts
-   :addon-dir-list []
-   :debug? false ;; todo, remove
+  {:addon-dir-list []
+   :debug? false
    :selected-catalog :short})
 
-;; todo: remove 'legacy' here.
-;; it's really convenient to pass in an :install-dir from the CLI and have it handled by this
-
-
-(defn handle-legacy-install-dir
+(defn handle-install-dir
+  "when `:install-dir` is present in given configuration, expands it to an addon-dir map and removes the value from the config
+  `:install-dir` was once supported in the user configuration but is now only supported in the command line options.
+  this function handles it's presence in both"
   [cfg]
   (let [install-dir (:install-dir cfg)
         addon-dir-list (->> cfg :addon-dir-list (map :addon-dir) vec)
@@ -34,32 +31,37 @@
       ;; finally, ensure :install-dir is absent from whatever we return
     (dissoc cfg :install-dir)))
 
+(defn remove-non-existant-dirs
+  "removes any addon directories from the given configuration that do not exist"
+  [cfg]
+  (assoc cfg :addon-dir-list
+         (filterv (comp fs/directory? :addon-dir) (:addon-dir-list cfg))))
+
+(defn strip-unspecced-keys
+  "removes any keys from the given configuration that are not in the spec"
+  [cfg]
+  ;; doesn't support optional :opt keysets
+  (spec-tools/coerce ::sp/user-config cfg spec-tools/strip-extra-keys-transformer))
+
+(defn-spec configure-with ::sp/user-config
+  [cfg-a map?, cfg-b map?, msg string?]
+  (debug "loading config:" msg)
+  (let [cfg (-> cfg-a
+                (merge cfg-b)
+                handle-install-dir
+                remove-non-existant-dirs
+                strip-unspecced-keys)
+        message (format "configuration from %s is invalid and will be ignored: %s"
+                        msg (s/explain-str ::sp/user-config cfg))]
+    (if (s/valid? ::sp/user-config cfg)
+      cfg
+      (do (warn message) cfg-a))))
+
 (defn-spec configure ::sp/user-config
-  "handles the user configurable bit of the app. command line args override args from from the config file."
-  [file-opts map?, cli-opts map?] ;;, addon-dir-list sequential?]
-  (debug "loading file config:" file-opts)
-  (let [cfg (merge default-cfg file-opts)
-        cfg (handle-legacy-install-dir cfg)
-
-        ;; doesn't support optional :opt keysets
-        cfg (spec-tools/coerce ::sp/user-config cfg spec-tools/strip-extra-keys-transformer)
-        valid? (s/valid? ::sp/user-config cfg)]
-
-    (when-not valid?
-      (warn "configuration from saved settings is invalid and will be ignored:" (s/explain-str ::sp/user-config cfg)))
-
-    (debug "loading runtime config:" cli-opts)
-    (let [cfg (if valid? cfg default-cfg)
-          final-cfg (merge cfg cli-opts)
-          ;; :install-dir may be re-introduced at this point. handle it exactly as we did above
-          final-cfg (handle-legacy-install-dir final-cfg)
-          final-cfg (spec-tools/coerce ::sp/user-config final-cfg spec-tools/strip-extra-keys-transformer)
-          valid? (s/valid? ::sp/user-config cfg)]
-
-      (when-not valid?
-        (warn "configuration from command line args is invalid and will be ignored:" (s/explain-str ::sp/user-config cfg)))
-
-      (if valid? final-cfg cfg))))
+  [file-opts map?, cli-opts map?]
+  (-> default-cfg
+      (configure-with file-opts "user settings")
+      (configure-with cli-opts "command line options")))
 
 (defn load-settings
   "returns a map that can be merged over the default state template"

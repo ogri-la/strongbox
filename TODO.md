@@ -154,6 +154,9 @@ multiple assets will always require differentiation, but we can tune warnings/er
     - must be included in CI
         - nope. Fuck OSX. Fuck Travis, Fuck Circle CI, Fuck 'Github Actions', fuck em all.
         - testing will be done manually prior to release
+* bug, if an addon directory goes missing between restarts, user configuration is lost
+    - initially it's ignored, but then the new settings are saved over the top
+    - done
 
 ### todo
 
@@ -162,8 +165,6 @@ multiple assets will always require differentiation, but we can tune warnings/er
     - tests pass
     - readme updated
     - release updated
-* bug, if an addon directory goes missing between restarts, user configuration is lost
-    - initially it's ignored, but then the new settings are saved over the top
 * investigate usage of spec-tools/coerce and remove if unnecessary
 * when adding an addon-dir, if path ends with /_classic_/Interface/Addons, set game track to classic
 
