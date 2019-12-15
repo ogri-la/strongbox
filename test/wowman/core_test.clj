@@ -20,26 +20,6 @@
     (is (thrown? RuntimeException
                  (core/get-state :installed-addon-list)))))
 
-(deftest handle-legacy-install-dir
-  (testing ":install-dir in user config is converted correctly"
-    (let [install-dir (str fs/*cwd*)
-          cfg {:install-dir install-dir :addon-dir-list []}
-          expected {:addon-dir-list [{:addon-dir install-dir :game-track "retail"}]}]
-      (is (= expected (core/handle-legacy-install-dir cfg)))))
-
-  (testing ":install-dir in user config is appended to existing list correctly"
-    (let [install-dir (str fs/*cwd*)
-          install-dir2 "/tmp"
-
-          addon-dir1 {:addon-dir install-dir :game-track "retail"}
-          addon-dir2 {:addon-dir install-dir2 :game-track "retail"}
-
-          cfg {:install-dir install-dir2
-               :addon-dir-list [addon-dir1]}
-
-          expected {:addon-dir-list [addon-dir1 addon-dir2]}]
-      (is (= expected (core/handle-legacy-install-dir cfg))))))
-
 (deftest addon-dir-handling
   (let [app-state (core/start {})
         [dir1 dir2 dir3] (mapv (fn [path]
@@ -204,33 +184,6 @@
 
   (testing "original value is preserved despite modification for comparison"
     (is (= {:path "Foo"} (core/determine-primary-subdir [{:path "Foo"}])))))
-
-(deftest configure
-  (testing "called with no overrides gives us whatever is in the state template"
-    (let [expected (:cfg core/-state-template)
-          file-opts {}
-          cli-opts {}]
-      (is (= expected (core/configure file-opts cli-opts)))))
-
-  (testing "file overrides are preserved and foreign keys are removed"
-    (let [cli-opts {}
-          file-opts {:foo "bar" ;; unknown
-                     :debug? true}
-          expected (assoc (:cfg core/-state-template) :debug? true)]
-      (is (= expected (core/configure file-opts cli-opts)))))
-
-  (testing "cli overrides are preserved and foreign keys are removed"
-    (let [cli-opts {:foo "bar"
-                    :debug? true}
-          file-opts {}
-          expected (assoc (:cfg core/-state-template) :debug? true)]
-      (is (= expected (core/configure file-opts cli-opts)))))
-
-  (testing "cli overrides file overrides"
-    (let [cli-opts {:debug? true}
-          file-opts {:debug? false}
-          expected (assoc (:cfg core/-state-template) :debug? true)]
-      (is (= expected (core/configure file-opts cli-opts))))))
 
 (deftest export-installed-addon-list
   (testing "exported data looks as expected"

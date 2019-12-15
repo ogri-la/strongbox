@@ -6,7 +6,6 @@
    [clojure.spec.alpha :as s]
    [orchestra.spec.test :as st]
    [orchestra.core :refer [defn-spec]]
-   [spec-tools.core :as spec-tools]
    [me.raynes.fs :as fs]
    [trptcolin.versioneer.core :as versioneer]
    [envvar.core :refer [env]]
@@ -15,6 +14,7 @@
     [sql :as sql]
     [result-set :as rs]]
    [wowman
+    [config :as config]
     [zip :as zip]
     [http :as http]
     [logging :as logging]
@@ -84,10 +84,10 @@
    :cli-opts {} ;; options passed in on the command line
 
    ;; final config, result of merging :file-opts and :cli-opts
-   :cfg {:addon-dir-list []
-         :debug? false ;; todo, remove
-         :selected-catalog :short}
-
+   ;;:cfg {:addon-dir-list []
+   ;;      :debug? false ;; todo, remove
+   ;;      :selected-catalog :short}
+   :cfg {} ;; see config.clj
    :catalog-source-list [{:name :short :label "Short (default)" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"}
                          {:name :full :label "Full" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/full-catalog.json"}
 
@@ -106,7 +106,7 @@
 
    :etag-db {}
 
-   :db nil
+   :db nil ;; see get-db
    :catalog-size nil ;; used to trigger those waiting for the catalog to become available
 
    ;; a map of paths whose location may vary according to the cwd and envvars.
@@ -154,9 +154,19 @@
         unqualified (constantly nil)]
     (rs/as-modified-maps rs (assoc opts :qualifier-fn unqualified :label-fn xform))))
 
+(defn get-db
+  []
+  (if-let [db-conn (get-state :db)]
+    ;; connection already exists, return that
+    db-conn
+    (and
+      ;; else, create one, then return that.
+     (swap! state merge {:db (jdbc/get-datasource {:dbtype "h2:mem" :dbname (utils/uuid)})})
+     (get-db))))
+
 (defn db-query
   [query & {:keys [arg-list opts]}]
-  (jdbc/execute! (get-state :db) (into [query] arg-list)
+  (jdbc/execute! (get-db) (into [query] arg-list)
                  (merge {:builder-fn as-unqualified-hyphenated-maps} opts)))
 
 (def select-*-catalog (str (static-slurp "resources/query--all-catalog.sql") " ")) ;; trailing space is important
@@ -213,7 +223,7 @@
                      :arg-list [uin% %uin%]
                      :opts {:max-rows (get-state :search-results-cap)})))))
 
-(defn get-db
+(defn query-db
   "like `get-state`, uses 'paths' (keywords) to do predefined queries"
   [kw]
   (case kw
@@ -273,7 +283,7 @@
   ([addon-dir ::sp/addon-dir]
    (addon-dir-exists? addon-dir (get-state :cfg :addon-dir-list)))
   ([addon-dir ::sp/addon-dir, addon-dir-list ::sp/addon-dir-list]
-   (not (nil? (some #{addon-dir} (mapv :addon-dir addon-dir-list))))))
+   (->> addon-dir-list (map :addon-dir) (some #{addon-dir}) nil? not)))
 
 (defn-spec add-addon-dir! nil?
   [addon-dir ::sp/addon-dir, game-track ::sp/game-track]
@@ -335,45 +345,8 @@
 
 ;; settings
 
-
-(defn handle-legacy-install-dir
-  [cfg]
-  (let [install-dir (:install-dir cfg)
-        stub {:addon-dir install-dir :game-track "retail"}
-        ;; add stub to addon-dir-list if install-dir isn't nil and doesn't match anything already present
-        cfg (if (and install-dir
-                     (not (addon-dir-exists? install-dir (:addon-dir-list cfg))))
-              (update-in cfg [:addon-dir-list] conj stub)
-              cfg)]
-      ;; finally, ensure :install-dir is absent from whatever we return
-    (dissoc cfg :install-dir)))
-
-(defn-spec configure ::sp/user-config
-  "handles the user configurable bit of the app. command line args override args from from the config file."
-  [file-opts map?, cli-opts map?]
-  (debug "loading file config:" file-opts)
-  (let [default-cfg (:cfg -state-template)
-        cfg (merge default-cfg file-opts)
-        cfg (handle-legacy-install-dir cfg)
-        ;; doesn't support optional :opt keysets
-        cfg (spec-tools/coerce ::sp/user-config cfg spec-tools/strip-extra-keys-transformer)
-        valid? (s/valid? ::sp/user-config cfg)]
-    (when-not valid?
-      (warn "configuration from saved settings is invalid and will be ignored:" (s/explain-str ::sp/user-config cfg)))
-
-    (debug "loading runtime config:" cli-opts)
-    (let [cfg (if valid? cfg default-cfg)
-          final-cfg (merge cfg cli-opts)
-          ;; :install-dir may be re-introduced at this point. handle it exactly as we did above
-          final-cfg (handle-legacy-install-dir final-cfg)
-          final-cfg (spec-tools/coerce ::sp/user-config final-cfg spec-tools/strip-extra-keys-transformer)
-          valid? (s/valid? ::sp/user-config cfg)]
-      (when-not valid?
-        (warn "configuration from command line args is invalid and will be ignored:" (s/explain-str ::sp/user-config cfg)))
-
-      (if valid? final-cfg cfg))))
-
 (defn save-settings
+  "stateful. writes parts of app state to filesystem "
   []
   ;; warning: this will preserve any once-off command line parameters as well
   ;; this might make sense within the gui but be careful about auto-saving elsewhere
@@ -383,25 +356,24 @@
   (utils/dump-json-file (paths :etag-db-file) (get-state :etag-db)))
 
 (defn load-settings
-  ([]
-   ;; load settings with previous cli-opts, if they exist, else no opts
-   (load-settings (or (get-state :cli-opts) {})))
-  ([cli-opts]
-   (when-not (fs/exists? (paths :cfg-file))
-     (warn "configuration file not found: " (paths :cfg-file)))
+  "stateful. reads files from filesystem and input from users"
+  [cli-opts]
+  (let [cfg-file (paths :cfg-file)
+        _ (when-not (fs/exists? cfg-file)
+            (warn "configuration file not found: " cfg-file))
 
-   (let [file-opts (utils/load-json-file-safely (paths :cfg-file)
-                                                :no-file? {}
-                                                :bad-data? {}
-                                                :transform-map {:selected-catalog keyword})
-         cfg (configure file-opts cli-opts)
-         etag-db (utils/load-json-file-safely (paths :etag-db-file) :no-file? {} :bad-data? {})
-         new-state {:cfg cfg, :cli-opts cli-opts, :file-opts file-opts, :etag-db etag-db
-                    :selected-addon-dir (-> cfg :addon-dir-list first :addon-dir)
-                    :db (jdbc/get-datasource {:dbtype "h2:mem" :dbname (utils/uuid)})}]
-     (swap! state merge new-state)
-     (when (:verbosity cli-opts)
-       (logging/change-log-level (:verbosity cli-opts))))))
+        file-opts (utils/load-json-file-safely cfg-file
+                                               :no-file? {}
+                                               :bad-data? {}
+                                               :transform-map {:selected-catalog keyword})
+
+        etag-db (utils/load-json-file-safely (paths :etag-db-file) :no-file? {} :bad-data? {})
+
+        final-config (config/load-settings cli-opts file-opts etag-db)]
+    (when (:verbosity cli-opts)
+      (logging/change-log-level (:verbosity cli-opts)))
+    (swap! state merge final-config))
+  nil)
 
 
 ;;
@@ -684,7 +656,7 @@
   (when (get-state :selected-addon-dir) ;; don't even bother if we have nothing to match it to
     (info "matching installed addons to catalog")
     (let [inst-addons (get-state :installed-addon-list)
-          catalog (get-db :addon-summary-list)
+          catalog (query-db :addon-summary-list)
 
           match-results (-db-match-installed-addons-with-catalog inst-addons)
           [matched unmatched] (utils/split-filter #(contains? % :final) match-results)
@@ -721,19 +693,19 @@
 (defn-spec db-init nil?
   []
   (debug "creating 'catalog' table")
-  (jdbc/execute! (get-state :db) [(static-slurp "resources/table--catalog.sql")])
+  (jdbc/execute! (get-db) [(static-slurp "resources/table--catalog.sql")])
   (debug "creating category tables")
-  (jdbc/execute! (get-state :db) [(static-slurp "resources/table--category.sql")])
+  (jdbc/execute! (get-db) [(static-slurp "resources/table--category.sql")])
   (swap! state update-in [:cleanup] conj db-shutdown)
   nil)
 
 (defn db-catalog-loaded?
   []
-  (> (get-db :catalog-size) 0))
+  (> (query-db :catalog-size) 0))
 
 (defn-spec -db-load-catalog nil?
   [catalog-data ::sp/catalog]
-  (let [ds (get-state :db)
+  (let [ds (get-db)
         {:keys [addon-summary-list]} catalog-data
 
         ;; filter out items from unsupported sources
@@ -782,7 +754,7 @@
                                                  :addon_source_id source-id
                                                  :category_id (get category-map category)})))))
 
-    (swap! state assoc :catalog-size (get-db :catalog-size)))
+    (swap! state assoc :catalog-size (query-db :catalog-size)))
   nil)
 
 (defn-spec db-load-catalog nil?
@@ -938,7 +910,7 @@
 (defn -mk-import-idx
   [addon-list]
   (let [key-fn #(select-keys % [:source :name])
-        addon-summary-list (get-db :addon-summary-list)
+        addon-summary-list (query-db :addon-summary-list)
         ;; todo: this sucks. use a database
         catalog-idx (group-by key-fn addon-summary-list)
         find-expand (fn [addon]
@@ -1173,5 +1145,7 @@
     (debug "calling" f)
     (f))
   (reset! state nil))
+
+;;
 
 (st/instrument)
