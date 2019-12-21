@@ -544,6 +544,43 @@
       (str path)
       (last-writeable-dir (fs/parent path)))))
 
+;; fs
+
+(defn-spec prefix string?
+  "given a string and a prefix, if string doesn't start with prefix, prefix string else return string as-is"
+  [string string?, prefix string?]
+  (if-not (clojure.string/starts-with? string prefix)
+    (str prefix string)
+    string))
+
+(defn fs-parent
+  [path]
+  (let [path-string (-> path (or "") (clojure.string/trim))
+        string-length (count path-string)
+        last-slash-idx (clojure.string/last-index-of path-string "/")]
+    (cond
+      (= path-string "/") nil
+
+      (nil? last-slash-idx) nil
+
+      ;; no separator found or we've reached the end of the recursion/given an empty string
+      (or
+       (= last-slash-idx 0)
+       (= string-length 0)) "/"
+
+      ;; target is a directory, call again without trailing slash
+      (= string-length last-slash-idx) (fs-parent (subs path-string 0 last-slash-idx))
+
+      ;; return everything up to the last slash
+      :else (subs path-string 0 last-slash-idx))))
+
+;; https://github.com/Raynes/fs/blob/master/src/me/raynes/fs.clj#L544-L548
+(defn fs-parent-list
+  [path]
+  (when-let [parent (fs-parent path)]
+    (cons parent (fs-parent-list parent))))
+
+
 ;;
 
 

@@ -200,3 +200,43 @@
       (testing (format "'any', case: (%s %s)" given expected)
         (is (= expected (utils/any given)))))))
 
+(deftest fs-parents
+  (testing ""
+    (let [cases [;; root has no parents
+                 ["/" nil]
+
+                 ;; file in root has root as parent
+                 ["/foo" ["/"]]
+
+                 ;; file in subdir has the subdir and root as parents
+                 ["/foo/bar" ["/foo" "/"]]
+
+                 ;; files with extensions are no exception
+                 ["/foo/bar.ext" ["/foo" "/"]]
+
+                 ;; this is where it differs from me.raynes.fs
+                 ;; * the parent of everything is root, except root
+                 ;; * assume root can't be determined with relative paths so don't assume fs/*cwd*
+
+                 ;; relative paths
+                 ["foo" nil]
+                 ["foo.ext" nil]
+                 ["foo/bar" ["foo"]]
+                 ["foo/bar/baz.ext" ["foo/bar" "foo"]]
+
+                 ;; empty/blank strings, whitespace
+                 ["" nil]
+                 ["  " nil]
+                 ["    /    " nil]
+
+                 ;; whitespace within paths is preserved?
+                 ;; this behaviour matches me.raynes.fs/java.io.File
+                 ["foo / bar" ["foo "]]
+
+                 ;; double-root
+                 ;; there can be only one /highlander
+                 ["//" ["/"]]
+                 ["//foo" ["/"]]]]
+      (doseq [[given expected] cases]
+        (is (= expected (utils/fs-parent-list given)), (format "given '%s' I expected '%s'" given expected))))))
+

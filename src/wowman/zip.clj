@@ -1,7 +1,7 @@
 (ns wowman.zip
   (:require
    [taoensso.timbre :refer [debug info warn error spy]]
-   [me.raynes.fs :as fs]
+   ;;[me.raynes.fs :as fs]
    [me.raynes.fs.compression :as zip]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
@@ -49,7 +49,7 @@
   (let [mkrow (fn [zipentry]
                 (let [path (.getName zipentry)
                       dir? (.isDirectory zipentry)
-                      bits (split path #"/")
+                      bits (split path (re-pattern java.io.File/separator))
                       level (count bits)]
                   {:dir? dir?
                    :level level
@@ -57,13 +57,25 @@
                    :path path}))
 
         fake-rows (fn [row]
-                    (let [parents (->> row :path (str "/") fs/parents (map str) butlast)]
+                    (let [;; linux:
+                          ;; (mapv str (fs/parents "/foo/bar/baz.toc")) => ["/foo/bar" "/foo" "/"]
+
+                          ;; windows:
+                          ;; (mapv str (fs/parents "/foo/bar/baz.toc")) ...
+                          ;; ... => ["/home/torkus/dev/clojure/wowman" "/home/torkus/dev/clojure" "/home/torkus/dev" "/home/torkus" "/home" "/"]
+
+                          ;; it's a possible bug in me.raynes.fs where ZipEntry paths are unix-like and
+                          ;; get misinterpretated in windows
+                          ;; - https://github.com/Raynes/fs/issues/98
+
+                          ;;parents (->> row :path (str "/") fs/parents (map str) butlast)
+                          parents (->> row :path (str "/") utils/fs-parent-list (map str) butlast)]
                       (for [p parents :let [pp (-> p (subs 1) (str "/")) ;; /foo/bar => foo/bar/
                                             bits (split pp #"/") ;; ["foo" "bar"]
                                             level (count bits)]]
                         {:dir? true
                          ;; fs/parents strips trailing slashes, java ZipEntry objects preserve them
-                         ;; subs strips leading slash introduced when calling fs/parents
+                         ;; subs strips leading slash introduced when calling fs/parents or utils/fs-parents
                          :level level
                          :toplevel? (= level 1)
                          :path pp})))]
