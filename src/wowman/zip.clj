@@ -49,7 +49,7 @@
   (let [mkrow (fn [zipentry]
                 (let [path (.getName zipentry)
                       dir? (.isDirectory zipentry)
-                      bits (split path (re-pattern java.io.File/separator))
+                      bits (split path #"/")
                       level (count bits)]
                   {:dir? dir?
                    :level level
