@@ -555,7 +555,7 @@
 
 (defn fs-parent
   [path]
-  (let [path-string (-> path (or "") (clojure.string/trim))
+  (let [path-string (-> path (or "") clojure.string/trim)
         string-length (count path-string)
         last-slash-idx (clojure.string/last-index-of path-string "/")]
     (cond
@@ -563,10 +563,9 @@
 
       (nil? last-slash-idx) nil
 
-      ;; no separator found or we've reached the end of the recursion/given an empty string
-      (or
-       (= last-slash-idx 0)
-       (= string-length 0)) "/"
+      ;; given a "/" or reached the penultimate step in the recursion, where going any further
+      ;; backwards leads to an empty string and thus to nil (empty strings have no root/are relative)
+      (= last-slash-idx 0) "/"
 
       ;; target is a directory, call again without trailing slash
       (= string-length last-slash-idx) (fs-parent (subs path-string 0 last-slash-idx))
