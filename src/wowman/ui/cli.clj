@@ -54,9 +54,7 @@
         wowinterface-catalog (find-catalog-local-path :wowinterface)
         tukui-catalog (find-catalog-local-path :tukui)
 
-        ;; can't do this yet, older db-enabled clients will barf
-        ;;catalog-path-list [curseforge-catalog wowinterface-catalog tukui-catalog]
-        catalog-path-list [curseforge-catalog wowinterface-catalog]
+        catalog-path-list [curseforge-catalog wowinterface-catalog tukui-catalog]
         catalog (map utils/load-json-file catalog-path-list)
         catalog (reduce catalog/merge-catalogs catalog)]
     (-> catalog
