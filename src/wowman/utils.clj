@@ -400,12 +400,17 @@
     (clojure.string/replace s pattern "")))
 
 (defn-spec replace-file-ext (s/or :ok ::sp/file, :error nil?)
-  [path ::sp/file, ext string?]
-  (let [ext (ltrim ext ".")
-        ext (str "." ext)
-        ;; "foo" => nil, "foo/bar" => ["foo"], "/foo/bar" => ["/" "foo"]
-        parent (some->> (-> path fs/split butlast) (apply join))]
-    (join parent (-> path str fs/split-ext first (str ext)))))
+  [path ::sp/file, new-ext string?]
+  (let [path (java.io.File. path)
+        parent (.getParent path)
+        base-name (.getName path)
+        ext-idx (clojure.string/index-of base-name ".")
+        ;; foo.ext => foo
+        base-name-sans-ext (if ext-idx
+                             (subs base-name 0 ext-idx)
+                             base-name)
+        new-ext (ltrim new-ext ".")]
+    (join parent (str base-name-sans-ext "." new-ext))))
 
 ;; repurposing
 (defn-spec file-to-lazy-byte-array bytes?
@@ -546,12 +551,13 @@
 
 ;; fs
 
+(comment "unused"
 (defn-spec prefix string?
   "given a string and a prefix, if string doesn't start with prefix, prefix string else return string as-is"
   [string string?, prefix string?]
   (if-not (clojure.string/starts-with? string prefix)
     (str prefix string)
-    string))
+    string)))
 
 (defn fs-parent
   [path]
