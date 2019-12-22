@@ -6,17 +6,17 @@
    [clj-http.fake :refer [with-fake-routes-in-isolation]]
    [wowman
     [main :as main]
-    [utils :as utils]]))
+    [utils :as utils :refer [join]]]))
 
-(def fixture-dir (-> "test/fixtures" fs/absolute fs/normalized str))
+(def fixture-dir (-> (join "test" "fixtures") fs/absolute fs/normalized str))
 
-(def helper-data-dir "data/wowman")
+(def helper-data-dir (join "data" "wowman"))
 
-(def helper-config-dir "config/wowman")
+(def helper-config-dir (join "config" "wowman"))
 
 (defn fixture-path
   [filename]
-  (utils/join fixture-dir filename))
+  (join fixture-dir filename))
 
 (defn fixture-tempcwd
   "each test is executed in a new and self-contained location, accessible as fs/*cwd*
@@ -43,8 +43,8 @@
       (main/stop)
 
       (with-fake-routes-in-isolation fake-routes
-        (with-env [:xdg-data-home (utils/join temp-dir-path helper-data-dir)
-                   :xdg-config-home (utils/join temp-dir-path helper-config-dir)]
+        (with-env [:xdg-data-home (join temp-dir-path helper-data-dir)
+                   :xdg-config-home (join temp-dir-path helper-config-dir)]
           (with-cwd temp-dir-path
             (debug "created temp working directory" fs/*cwd*)
             (f))))
