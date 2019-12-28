@@ -160,16 +160,21 @@ multiple assets will always require differentiation, but we can tune warnings/er
 
 ### todo
 
-* windows support
-    - ~must be included in CI~
-    - tests pass
-    - readme updated
-    - release updated
 * investigate usage of spec-tools/coerce and remove if unnecessary
 * when adding an addon-dir, if path ends with /_classic_/Interface/Addons, set game track to classic
 
 ## todo bucket (no particular order)
 
+* add custom highlighting colours 
+    - I don't mind my colours but not everybody may
+    - my colours don't work very well on native lnf + dark themes:
+        - https://github.com/ogri-la/wowman/issues/105
+* windows support
+    - ~must be included in CI~
+    - tests pass
+    - readme updated
+    - release updated
+    - pushed back to next release
 * add a 'addons dir' to the test helper
     - lots of boilerplate around this in core_test.clj
 * allow user to specify their own catalogs
@@ -263,8 +268,6 @@ multiple assets will always require differentiation, but we can tune warnings/er
         * [addon name](https://source/path/to/addon)
     - of course, this would be a different type of export than the one used for import
         - although ... I could possibly parse the list ... and nah.
-* add custom highlighting colours 
-    - I don't mind my colours but not everybody may
 * add a 'tabula rasa' option that wipes *everything* 
     - cache, catalog, config, downloaded zip files
 * coloured warnings/errors on console output
