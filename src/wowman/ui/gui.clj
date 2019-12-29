@@ -31,7 +31,11 @@
 ;; - https://github.com/daveray/seesaw/wiki#native-look-and-feel
 (ss/native!)
 
-(declare restart)
+(defn-spec trigger-gui-restart nil?
+  "call to dispose of the current gui and let `main.clj` re-start it"
+  []
+  (swap! core/state assoc :gui-restart-flag true)
+  nil)
 
 (defn select-ui
   [& path]
@@ -768,8 +772,21 @@
 
 (defn build-theme-menu
   []
-  (let [menu [(ss/action :name "Light theme" :handler donothing)
-              (ss/action :name "Dark theme" :handler donothing)]]
+  (let [button-grp (ss/button-group)
+
+        menu (mapv (fn [theme-key]
+                     (ss/radio-menu-item :id theme-key
+                                         :text (format "%s theme" (-> theme-key name clojure.string/capitalize))
+                                         :group button-grp
+                                         :selected? (= (core/get-state :cfg :gui-theme) theme-key)))
+                   (keys core/themes))]
+
+    (sb/bind (sb/selection button-grp)
+             (sb/b-do* (fn [val]
+                         (when val ;; sometimes we get nil values?
+                           (swap! core/state assoc-in [:cfg :gui-theme] (ss/id-of val))
+                           (core/save-settings)
+                           (trigger-gui-restart)))))
     menu))
 
 (defn start-ui
@@ -790,16 +807,17 @@
                :content (mig/mig-panel
                          :constraints ["flowy" "fill,grow"] ;; ["debug,flowy"]
                          :items [[root "height 100%"]])
-               :on-close (if (utils/in-repl?) :dispose :exit)) ;; exit app entirely when not in repl
+
+               ;; if the gui is restarted from the gui, this becomes 'false' and then next ctrl-c kills the repl
+               :on-close (if (core/get-state :in-repl?) :dispose :exit)) ;; exit app entirely when not in repl
+
 
         file-menu [(ss/action :name "Installed" :key "menu I" :mnemonic "i" :handler (switch-tab-handler INSTALLED-TAB))
                    (ss/action :name "Search" :key "menu H" :mnemonic "h" :handler (switch-tab-handler SEARCH-TAB))
                    :separator
                    (ss/action :name "Exit" :key "menu Q" :mnemonic "x" :handler (handler #(ss/dispose! newui)))]
 
-        view-menu (into (build-theme-menu)
-                        [:separator
-                         (ss/action :name "Restart GUI" :handler (handler restart))])
+        view-menu (build-theme-menu)
 
         catalog-menu (into (build-catalog-menu)
                            [:separator
@@ -860,11 +878,6 @@
     (ss/dispose! (:gui @core/state))
     (catch RuntimeException re
       (warn "failed to stop state:" (.getMessage re)))))
-
-(defn restart
-  []
-  (stop)
-  (start))
 
 ;;
 

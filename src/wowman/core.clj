@@ -53,8 +53,6 @@
   {:light -colour-map
    :dark -dark-colour-map})
 
-(def colours (utils/nav-map-fn -colour-map))
-
 (def default-config-dir "~/.config/wowman")
 (def default-data-dir "~/.local/share/wowman")
 
@@ -94,6 +92,9 @@
 (def -state-template
   {:cleanup []
 
+   ;; set once per application instance
+   :in-repl? nil ;;(utils/in-repl?)
+
    :file-opts {} ;; options parsed from config file
    :cli-opts {} ;; options passed in on the command line
 
@@ -131,6 +132,9 @@
    ;; the root swing window
    :gui nil
 
+   ;; set to anything other than `nil` to have `main.clj` restart the gui
+   :gui-restart-flag nil
+
    ;; which of the addon directories is currently selected
    :selected-addon-dir nil
 
@@ -159,6 +163,10 @@
 (defn paths
   [& path]
   (nav-map (get-state :paths) path))
+
+(defn colours
+  [& path]
+  (nav-map (get themes (get-state :cfg :gui-theme)) path))
 
 (defn as-unqualified-hyphenated-maps
   "used to coerce keys in each row of resultset
@@ -1145,6 +1153,12 @@
   (swap! state assoc :paths (generate-path-map))
   nil)
 
+(defn-spec detect-repl! nil?
+  "if we're working from the REPL, we don't want the gui closing the session"
+  []
+  (swap! state assoc :in-repl? (utils/in-repl?))
+  nil)
+
 (defn -start
   []
   (alter-var-root #'state (constantly (atom -state-template))))
@@ -1153,7 +1167,9 @@
   [& [cli-opts]]
   (-start)
   (info "starting app")
+  (info @state)
   (set-paths!)
+  (detect-repl!)
   (init-dirs)
   (load-settings cli-opts)
   (watch-for-addon-dir-change)
