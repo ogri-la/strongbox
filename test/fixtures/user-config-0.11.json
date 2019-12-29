@@ -1,0 +1,12 @@
+{
+  "selected-catalog" : "full",
+  "debug?" : true,
+  "gui-theme" : "light",
+  "addon-dir-list" : [ {
+    "addon-dir" : "/home/torkus/bar",
+    "game-track" : "retail"
+  }, {
+    "addon-dir" : "/home/torkus/foo",
+    "game-track" : "classic"
+  } ]
+}
