@@ -4,20 +4,21 @@
    [me.raynes.fs :as fs]
    ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [wowman
+    [test-helper :refer [fixture-path]]
     [config :as config]]))
 
 (deftest handle-install-dir
-  (testing ":install-dir in user config is converted correctly"
+  (testing ":install-dir in user config is converted to an :addon-dir"
     (let [install-dir (str fs/*cwd*)
           cfg {:install-dir install-dir :addon-dir-list []}
           expected {:addon-dir-list [{:addon-dir install-dir :game-track "retail"}]}]
       (is (= expected (config/handle-install-dir cfg)))))
 
-  (testing ":install-dir in user config is appended to existing list correctly"
-    (let [install-dir (str fs/*cwd*)
-          install-dir2 "/tmp"
+  (testing "if both :install-dir and :addon-dir-list exist, :install-dir is appended to :addon-dir-list and then dropped"
+    (let [install-dir1 "/foo"
+          install-dir2 "/bar"
 
-          addon-dir1 {:addon-dir install-dir :game-track "retail"}
+          addon-dir1 {:addon-dir install-dir1 :game-track "retail"}
           addon-dir2 {:addon-dir install-dir2 :game-track "retail"}
 
           cfg {:install-dir install-dir2
@@ -26,45 +27,61 @@
           expected {:addon-dir-list [addon-dir1 addon-dir2]}]
       (is (= expected (config/handle-install-dir cfg))))))
 
-(deftest configure
+(deftest merge-config
   (testing "called with no overrides gives us whatever is in the state template"
     (let [expected config/default-cfg
           file-opts {}
           cli-opts {}]
-      (is (= expected (config/configure file-opts cli-opts)))))
+      (is (= expected (config/merge-config file-opts cli-opts)))))
 
-  (testing "file overrides are preserved and foreign keys are removed"
+  (testing "file overrides are preserved and unknown keys are removed"
     (let [cli-opts {}
           file-opts {:foo "bar" ;; unknown
                      :debug? true}
           expected (assoc config/default-cfg :debug? true)]
-      (is (= expected (config/configure file-opts cli-opts)))))
+      (is (= expected (config/merge-config file-opts cli-opts)))))
 
-  (testing "cli overrides are preserved and foreign keys are removed"
+  (testing "cli overrides are preserved and unknown keys are removed"
     (let [cli-opts {:foo "bar"
                     :debug? true}
           file-opts {}
           expected (assoc config/default-cfg :debug? true)]
-      (is (= expected (config/configure file-opts cli-opts)))))
+      (is (= expected (config/merge-config file-opts cli-opts)))))
 
-  (testing "cli overrides file overrides"
+  (testing "cli options override file options"
     (let [cli-opts {:debug? true}
           file-opts {:debug? false}
           expected (assoc config/default-cfg :debug? true)]
-      (is (= expected (config/configure file-opts cli-opts))))))
+      (is (= expected (config/merge-config file-opts cli-opts))))))
 
-(deftest invalid-config
+(deftest invalid-addon-dirs-in-cfg
   (testing "missing directories don't nuke entire config"
-    (let [user-file-config {:addon-dir-list [{:addon-dir (str fs/*cwd*) ;; exists
-                                              :game-track "classic"}
-                                             {:addon-dir "/does/not/exist"
-                                              :game-track "retail"}]
-                            :debug? false
-                            :selected-catalog :short}
+    (let [cli-opts {}
+          file-opts {:addon-dir-list [{:addon-dir (str fs/*cwd*) ;; exists
+                                       :game-track "classic"}
+                                      {:addon-dir "/does/not/exist"
+                                       :game-track "retail"}]}
+          expected (assoc config/default-cfg
+                          :addon-dir-list [{:addon-dir (str fs/*cwd*)
+                                            :game-track "classic"}])]
+      (is (= expected (config/merge-config file-opts cli-opts))))))
 
-          expected-config {:addon-dir-list [{:addon-dir (str fs/*cwd*)
-                                             :game-track "classic"}]
-                           :debug? false
-                           :selected-catalog :short}
-          cli-opts {}]
-      (is (= expected-config (config/configure user-file-config cli-opts))))))
+(deftest load-settings-from-file
+  (testing "a standard config file circa 0.10 is loaded and parsed as expected"
+    (let [fixture (fixture-path "user-config-0.10.json")
+          cli-opts {}
+          expected {:selected-catalog :full,
+                    :debug? true,
+                    :addon-dir-list [{:addon-dir "/home/torkus/bar", :game-track "retail"}
+                                     {:addon-dir "/home/torkus/foo", :game-track "classic"}]}]
+      (is (= expected (config/load-settings-file fixture)))))
+
+  (testing "a standard config file circa 0.11 is loaded and parsed as expected"
+    (let [fixture (fixture-path "user-config-0.11.json")
+          cli-opts {}
+          expected {:selected-catalog :full,
+                    :debug? true,
+                    :gui-theme :light,
+                    :addon-dir-list [{:addon-dir "/home/torkus/bar", :game-track "retail"}
+                                     {:addon-dir "/home/torkus/foo", :game-track "classic"}]}]
+      (is (= expected (config/load-settings-file fixture))))))

@@ -31,6 +31,8 @@
 ;; - https://github.com/daveray/seesaw/wiki#native-look-and-feel
 (ss/native!)
 
+(declare restart)
+
 (defn select-ui
   [& path]
   (if-let [ui (get-state :gui)]
@@ -436,7 +438,8 @@
                                      (.setCursor grid (cursor :hand))
                                      (.setCursor grid (cursor :default))))))
 
-        uri-template "<html><font color='blue'>&nbsp;↪ %s</font></html>"
+        hyperlink-colour (-> :hyperlink colours name)
+        uri-template (str "<html><font color='" hyperlink-colour "'>&nbsp;↪ %s</font></html>")
         uri-renderer (fn [x]
                        (when x
                          (let [uri (java.net.URL. x)
@@ -763,6 +766,12 @@
 
     catalog-menu))
 
+(defn build-theme-menu
+  []
+  (let [menu [(ss/action :name "Light theme" :handler donothing)
+              (ss/action :name "Dark theme" :handler donothing)]]
+    menu))
+
 (defn start-ui
   []
   (let [root->splitter (ss/top-bottom-split (mk-tabber) (notice-logger))
@@ -787,6 +796,10 @@
                    (ss/action :name "Search" :key "menu H" :mnemonic "h" :handler (switch-tab-handler SEARCH-TAB))
                    :separator
                    (ss/action :name "Exit" :key "menu Q" :mnemonic "x" :handler (handler #(ss/dispose! newui)))]
+
+        view-menu (into (build-theme-menu)
+                        [:separator
+                         (ss/action :name "Restart GUI" :handler (handler restart))])
 
         catalog-menu (into (build-catalog-menu)
                            [:separator
@@ -814,6 +827,7 @@
 
         menu (ss/menubar :id :main-menu
                          :items [(ss/menu :text "File" :mnemonic "F" :items file-menu)
+                                 (ss/menu :text "View" :mnemonic "V" :items view-menu)
                                  (ss/menu :text "Catalog" :items catalog-menu)
                                  (ss/menu :text "Addons" :mnemonic "A" :items addon-menu)
                                  (ss/menu :text "Import/Export" :mnemonic "i" :items impexp-menu)
@@ -846,6 +860,11 @@
     (ss/dispose! (:gui @core/state))
     (catch RuntimeException re
       (warn "failed to stop state:" (.getMessage re)))))
+
+(defn restart
+  []
+  (stop)
+  (start))
 
 ;;
 

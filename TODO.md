@@ -160,6 +160,18 @@ multiple assets will always require differentiation, but we can tune warnings/er
 
 ### todo
 
+* user catalogue belongs in the .config/wowman/user-catalog.json 
+    - ideally, right?
+* github, description is missing?
+    - I think this is what is happening:
+        - catalog has no description
+        - toc file does have a description
+        - catalog is loaded into db
+        - description is now nil
+        - toc file is matched against db
+        - toc file is merged with db data
+        - nil value overrides actual data
+    - yes, I have a fix. needs it's own branch though
 * investigate usage of spec-tools/coerce and remove if unnecessary
 * when adding an addon-dir, if path ends with /_classic_/Interface/Addons, set game track to classic
 

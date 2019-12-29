@@ -35,9 +35,23 @@
    :notice/warning :lemonchiffon
    ;;:installed/unmatched :tomato
    :installed/needs-updating :lemonchiffon
-   :installed/hovering "#e6e6e6"
-   :search/already-installed "#99bc6b"} ;; greenish
-  )
+   :installed/hovering "#e6e6e6" ;; light grey
+   :search/already-installed "#99bc6b" ;; greenish
+   :hyperlink :blue})
+
+;; inverse colours of -colour-map
+(def -dark-colour-map
+  {:notice/error "#009CB8"
+   :notice/warning "#000532"
+   ;;:installed/unmatched :tomato
+   :installed/needs-updating "#000532"
+   :installed/hovering "#191919"
+   :search/already-installed "#664394"
+   :hyperlink :yellow})
+
+(def themes
+  {:light -colour-map
+   :dark -dark-colour-map})
 
 (def colours (utils/nav-map-fn -colour-map))
 
@@ -359,18 +373,7 @@
 (defn load-settings
   "reads user configuration from the filesystem and command line options"
   [cli-opts]
-  (let [cfg-file (paths :cfg-file)
-        _ (when-not (fs/exists? cfg-file)
-            (warn "configuration file not found: " cfg-file))
-
-        file-opts (utils/load-json-file-safely cfg-file
-                                               :no-file? {}
-                                               :bad-data? {}
-                                               :transform-map {:selected-catalog keyword})
-
-        etag-db (utils/load-json-file-safely (paths :etag-db-file) :no-file? {} :bad-data? {})
-
-        final-config (config/load-settings cli-opts file-opts etag-db)]
+  (let [final-config (config/load-settings cli-opts (paths :cfg-file) (paths :etag-db-file))]
     (when (:verbosity cli-opts)
       (logging/change-log-level (:verbosity cli-opts)))
     (swap! state merge final-config))
@@ -626,6 +629,14 @@
        :match match
        :final (moosh-addons installed-addon match)})))
 
+(defn drop-nils
+  [m fields]
+  (if (empty? fields)
+    m
+    (drop-nils
+     (if (nil? (get m (first fields))) (dissoc m (first fields)) m)
+     (rest fields))))
+
 (defn find-first-in-db
   [installed-addon match-on-list]
   (if (empty? match-on-list) ;; we may have exhausted all possibilities. not finding a match is ok
@@ -662,7 +673,19 @@
           match-results (-db-match-installed-addons-with-catalog inst-addons)
           [matched unmatched] (utils/split-filter #(contains? % :final) match-results)
 
+          merge-matched (fn [match]
+                          ;;matched (merge installed-addon (spy :info (drop-nils match [:description])))))))
+                          (let [db-result (:final match)
+                                db-result (drop-nils db-result [:description])
+                                installed (:installed-addon match)]
+                            ;; this is essentially the old 'merge-addons' function
+                            (merge installed db-result)))
+
           matched (mapv :final matched)
+
+          ;; todo: this fixes a regression where empty db data overrides data in installed addons
+          ;;matched (mapv merge-matched matched)
+
           unmatched-names (set (map :name unmatched))
 
           expanded-installed-addon-list (into matched unmatched)

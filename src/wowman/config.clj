@@ -13,7 +13,8 @@
 (def default-cfg
   {:addon-dir-list []
    :debug? false ;; todo: remove
-   :selected-catalog :short})
+   :selected-catalog :short
+   :gui-theme :light})
 
 (defn handle-install-dir
   "`:install-dir` was once supported in the user configuration but is now only supported in the command line options.
@@ -42,7 +43,7 @@
   ;; doesn't support optional :opt keysets
   (spec-tools/coerce ::sp/user-config cfg spec-tools/strip-extra-keys-transformer))
 
-(defn-spec configure-with ::sp/user-config
+(defn-spec -merge-with ::sp/user-config
   "merges `cfg-b` over `cfg-a`, returning the result if valid else `cfg-a`"
   [cfg-a map?, cfg-b map?, msg string?]
   (debug "loading config:" msg)
@@ -57,22 +58,49 @@
       cfg
       (do (warn message) cfg-a))))
 
-(defn-spec configure ::sp/user-config
+(defn-spec merge-config ::sp/user-config
   "merges the default user configuration with the saved settings and any CLI options"
   [file-opts map?, cli-opts map?]
   (-> default-cfg
-      (configure-with file-opts "user settings")
-      (configure-with cli-opts "command line options")))
+      (-merge-with file-opts "user settings")
+      (-merge-with cli-opts "command line options")))
 
-(defn load-settings
-  "returns a map of user configuration settings that can be merged over the default state template"
+;;
+
+(defn -load-settings
+  "returns a map of user configuration settings that can be merged over `core/state`"
   [cli-opts file-opts etag-db]
-  (let [cfg (configure file-opts cli-opts)]
+  (let [cfg (merge-config file-opts cli-opts)]
     {:cfg cfg
      :cli-opts cli-opts
      :file-opts file-opts
      :etag-db etag-db
      :selected-addon-dir (->> cfg :addon-dir-list (map :addon-dir) first)}))
+
+(defn-spec load-settings-file map?
+  "reads application settings from the given file.
+  if file is missing or malformed, returns an empty map"
+  [cfg-file ::sp/file]
+  (when-not (fs/exists? cfg-file)
+    (warn "configuration file not found: " cfg-file))
+  (utils/load-json-file-safely cfg-file
+                               :no-file? {}
+                               :bad-data? {}
+                               :transform-map {:selected-catalog keyword
+                                               :gui-theme keyword}))
+
+(defn-spec load-etag-db-file map?
+  "reads etag database from given file.
+  if file is missing or malformed, returns an empty map"
+  [etag-db-file ::sp/file]
+  (utils/load-json-file-safely etag-db-file :no-file? {} :bad-data? {}))
+
+(defn load-settings
+  "reads config files and returns a map of configuration settings that can be merged over `core/state`"
+  [cli-opts cfg-file etag-db-file]
+  (let [file-opts (load-settings-file cfg-file)
+        etag-db (load-etag-db-file etag-db-file)]
+    (-load-settings cli-opts file-opts etag-db)))
 
 ;;
 
