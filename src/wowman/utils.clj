@@ -544,6 +544,17 @@
       (str path)
       (last-writeable-dir (fs/parent path)))))
 
+(defn drop-nils
+  "given a map and a set of fields, if field is nil, dissoc it"
+  [m fields]
+  (if (empty? fields)
+    m
+    (drop-nils
+     (if (nil? (get m (first fields)))
+       (dissoc m (first fields))
+       m)
+     (rest fields))))
+
 ;;
 
 

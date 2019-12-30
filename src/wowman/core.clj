@@ -639,14 +639,6 @@
        :match match
        :final (moosh-addons installed-addon match)})))
 
-(defn drop-nils
-  [m fields]
-  (if (empty? fields)
-    m
-    (drop-nils
-     (if (nil? (get m (first fields))) (dissoc m (first fields)) m)
-     (rest fields))))
-
 (defn find-first-in-db
   [installed-addon match-on-list]
   (if (empty? match-on-list) ;; we may have exhausted all possibilities. not finding a match is ok
@@ -684,17 +676,12 @@
           [matched unmatched] (utils/split-filter #(contains? % :final) match-results)
 
           merge-matched (fn [match]
-                          ;;matched (merge installed-addon (spy :info (drop-nils match [:description])))))))
-                          (let [db-result (:final match)
-                                db-result (drop-nils db-result [:description])
-                                installed (:installed-addon match)]
-                            ;; this is essentially the old 'merge-addons' function
-                            (merge installed db-result)))
+                          ;; this is essentially the old 'merge-addons' function
+                          (let [db-catalog-addon (-> match :final (utils/drop-nils [:description]))
+                                installed-addon (:installed-addon match)]
+                            (merge installed-addon db-catalog-addon)))
 
-          matched (mapv :final matched)
-
-          ;; todo: this fixes a regression where empty db data overrides data in installed addons
-          ;;matched (mapv merge-matched matched)
+          matched (mapv merge-matched matched)
 
           unmatched-names (set (map :name unmatched))
 
