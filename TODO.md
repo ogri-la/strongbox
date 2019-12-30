@@ -178,6 +178,7 @@ multiple assets will always require differentiation, but we can tune warnings/er
 
 ## todo bucket (no particular order)
 
+* bug, selected directory is incorrect after restarting gui (by switching themes)
 * add custom highlighting colours
     - I don't mind my colours but not everybody may
     - my colours don't work very well on native lnf + dark themes:

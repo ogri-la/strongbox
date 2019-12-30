@@ -580,10 +580,12 @@
         (http/download-file remote-catalog local-catalog :message (format "downloading catalog '%s'" (:label catalog-source))))
       (error "failed to find catalog:" catalog))))
 
-(defn moosh-addons
-  "merges left->right. catalog-addon overwrites installed-addon, ':matched' overwrites catalog-addon, etc"
-  [installed-addon db-catalog-addon]
-  (let [db-catalog-addon (utils/drop-nils db-catalog-addon [:description])]
+(defn-spec moosh-addons ::sp/toc-addon-summary
+  "merges the data from an installed addon with it's match in the catalog"
+  [installed-addon ::sp/toc, db-catalog-addon ::sp/addon-summary]
+  (let [;; nil fields are removed from the catalog item because they might override good values in the .toc or .nfo
+        db-catalog-addon (utils/drop-nils db-catalog-addon [:description])]
+    ;; merges left->right. catalog-addon overwrites installed-addon, ':matched' overwrites catalog-addon, etc
     (merge installed-addon db-catalog-addon {:matched? true})))
 
 
