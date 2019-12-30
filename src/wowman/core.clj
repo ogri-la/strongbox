@@ -320,8 +320,10 @@
 (defn-spec set-addon-dir! nil?
   "adds a new :addon-dir to :addon-dir-list (if it doesn't already exist) and marks it as selected"
   [addon-dir ::sp/addon-dir]
-  (let [addon-dir (-> addon-dir fs/absolute fs/normalized str)]
-    (add-addon-dir! addon-dir "retail")
+  (let [addon-dir (-> addon-dir fs/absolute fs/normalized str)
+        ;; if '_classic_' is in given path, use the classic game track
+        default-game-track (if (clojure.string/index-of addon-dir "_classic_") "classic" "retail")]
+    (add-addon-dir! addon-dir default-game-track)
     (swap! state assoc :selected-addon-dir addon-dir))
   nil)
 
