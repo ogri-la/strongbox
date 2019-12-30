@@ -581,9 +581,10 @@
       (error "failed to find catalog:" catalog))))
 
 (defn moosh-addons
-  [installed-addon catalog-addon]
-  ;; merges left->right. catalog-addon overwrites installed-addon, ':matched' overwrites catalog-addon, etc
-  (merge installed-addon catalog-addon {:matched? true}))
+  "merges left->right. catalog-addon overwrites installed-addon, ':matched' overwrites catalog-addon, etc"
+  [installed-addon db-catalog-addon]
+  (let [db-catalog-addon (utils/drop-nils db-catalog-addon [:description])]
+    (merge installed-addon db-catalog-addon {:matched? true})))
 
 
 ;;
@@ -675,13 +676,7 @@
           match-results (-db-match-installed-addons-with-catalog inst-addons)
           [matched unmatched] (utils/split-filter #(contains? % :final) match-results)
 
-          merge-matched (fn [match]
-                          ;; this is essentially the old 'merge-addons' function
-                          (let [db-catalog-addon (-> match :final (utils/drop-nils [:description]))
-                                installed-addon (:installed-addon match)]
-                            (merge installed-addon db-catalog-addon)))
-
-          matched (mapv merge-matched matched)
+          matched (mapv :final matched)
 
           unmatched-names (set (map :name unmatched))
 

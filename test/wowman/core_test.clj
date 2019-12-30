@@ -283,7 +283,7 @@
             (main/stop)))))))
 
 (deftest check-for-update
-  (testing "the key :update? is set on an addon when there is a difference between the installed version of an addon and it's matching catalog verison"
+  (testing "the key :update? is set on an addon when there is a difference between the installed version of an addon and it's matching catalog version"
 
     (let [;; we start off with a list of these called a catalog. it's downloaded from github
           catalog {:category-list ["Auction House & Vendors"],
