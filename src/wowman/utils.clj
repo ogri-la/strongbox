@@ -544,9 +544,9 @@
       (str path)
       (last-writeable-dir (fs/parent path)))))
 
-(defn drop-nils
-  "given a map and a set of fields, if field is nil, dissoc it"
-  [m fields]
+(defn-spec drop-nils (s/or :ok map?, :empty nil?)
+  "given a map `m` and a set of `fields`, if field is `nil`, `dissoc` it"
+  [m map?, fields sequential?]
   (if (empty? fields)
     m
     (drop-nils
