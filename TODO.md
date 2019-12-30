@@ -160,9 +160,6 @@ multiple assets will always require differentiation, but we can tune warnings/er
 * themes
     - added a 'dark' theme for those using dark widget sets
         - https://github.com/ogri-la/wowman/issues/105
-
-### todo
-
 * github, description is missing?
     - I think this is what is happening:
         - catalog has no description
@@ -173,8 +170,13 @@ multiple assets will always require differentiation, but we can tune warnings/er
         - toc file is merged with db data
         - nil value overrides actual data
     - yes, I have a fix. needs it's own branch though
-* investigate usage of spec-tools/coerce and remove if unnecessary
+    - done
 * when adding an addon-dir, if path ends with /_classic_/Interface/Addons, set game track to classic
+    - done
+
+### todo
+
+* investigate usage of spec-tools/coerce and remove if unnecessary
 
 ## todo bucket (no particular order)
 

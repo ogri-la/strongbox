@@ -21,12 +21,11 @@
                  (core/get-state :installed-addon-list)))))
 
 (deftest addon-dir-handling
-  (let [app-state (core/start {})
-        [dir1 dir2 dir3] (mapv (fn [path]
-                                 (let [path (utils/join fs/*cwd* path)]
-                                   (fs/mkdir path)
-                                   path)) ["foo" "bar" "baz"])]
-    (try
+  (let [[dir1 dir2 dir3 dir4] (mapv (fn [path]
+                                      (let [path (utils/join fs/*cwd* path)]
+                                        (fs/mkdir path)
+                                        path)) ["foo" "bar" "baz" "_classic_"])]
+    (with-running-app
 
       ;; big long stateful test
 
@@ -79,8 +78,11 @@
         (core/set-game-track! "classic")
         (is (= {:addon-dir dir2 :game-track "classic"} (core/addon-dir-map dir2))))
 
-      (finally
-        (core/stop app-state)))))
+      ;;
+
+      (testing "set-game-track! changes default path to 'classic' if detected in addon-dir"
+        (core/set-addon-dir! dir4)
+        (is (= {:addon-dir dir4 :game-track "classic"} (core/addon-dir-map dir4)))))))
 
 (deftest catalog
   (let [app-state (core/start {})
@@ -622,9 +624,9 @@
                          :source-id 1
                          :uri "https://www.wowinterface.com/downloads/info1"
 
-                       ;; wowinterface and tukui don't have descriptions in their api
-                       ;; the database will return a field with `nil` if the addon-summary
-                       ;; was inserted without one
+                         ;; wowinterface and tukui don't have descriptions in their api
+                         ;; the database will return a field with `nil` if the addon-summary
+                         ;; was inserted without one
                          :description nil}
 
           expected {:name "everyaddon"
@@ -641,6 +643,6 @@
                     :source-id 1
                     :uri "https://www.wowinterface.com/downloads/info1"
 
-                  ;; optional, lets the GUI know we have a match that can be checked for updates
+                    ;; optional, lets the GUI know we have a match that can be checked for updates
                     :matched? true}]
       (is (= expected (core/moosh-addons toc addon-summary))))))
