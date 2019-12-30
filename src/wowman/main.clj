@@ -22,19 +22,17 @@
      (error ex "Uncaught exception on" (.getName thread)))))
 
 (defn watch-for-gui-restart
-  "monitors application state for requests to restart the gui
-  logic lives here rather than core.clj because core.clj is a dependency of gui.clj and
-  having the gui restart *itself* feels like a trap, like I might be introducing 
-  hidden threading issues or something..."
+  "monitors application state for requests to restart the gui.
+  logic lives here rather than `core.clj` because `core.clj` is a dependency of `gui.clj` and
+  having the gui restart *itself* requires `declare` statements"
   []
   (let [callback (fn [{:keys [cli-opts gui gui-restart-flag]}]
-                   (info "cli-opts" cli-opts "gui" gui "gui-restart-flag" gui-restart-flag)
                    (when (and (not= :cli (:ui cli-opts))    ;; using a gui
                               (not (nil? gui-restart-flag)) ;; and the restart flag is set
                               (not (nil? gui)))             ;; and we actually have a gui to restart
                      (gui/stop)
                      (gui/start)
-                     ;; set flag back to nil. it will trigger this watch again but the check will prevent infinite recursion
+                     ;; reset flag. will trigger watch again but the checks will prevent infinite recursion
                      (swap! core/state assoc :gui-restart-flag nil)))]
     (core/state-bind [:gui-restart-flag] callback)))
 
@@ -53,7 +51,6 @@
     (cli/start cli-opts)
     (gui/start))
 
-  ;; restart gui if core/state -> :gui changes
   (watch-for-gui-restart)
 
   nil)

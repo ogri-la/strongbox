@@ -14,7 +14,8 @@
           expected {:addon-dir-list [{:addon-dir install-dir :game-track "retail"}]}]
       (is (= expected (config/handle-install-dir cfg)))))
 
-  (testing "if both :install-dir and :addon-dir-list exist, :install-dir is appended to :addon-dir-list and then dropped"
+  (testing "if both `:install-dir` and `:addon-dir-list` exist, `:install-dir` is appended 
+           to `:addon-dir-list` and then dropped"
     (let [install-dir1 "/foo"
           install-dir2 "/bar"
 

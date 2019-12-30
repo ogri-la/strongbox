@@ -32,7 +32,7 @@
 (ss/native!)
 
 (defn-spec trigger-gui-restart nil?
-  "call to dispose of the current gui and let `main.clj` re-start it"
+  "call to dispose of the current gui and let `main.clj` restart it"
   []
   (swap! core/state assoc :gui-restart-flag true)
   nil)
@@ -771,6 +771,7 @@
     catalog-menu))
 
 (defn build-theme-menu
+  "returns a menu of radio buttons that can toggle through the available themes defined in `core/themes`"
   []
   (let [button-grp (ss/button-group)
 
@@ -808,7 +809,6 @@
                          :constraints ["flowy" "fill,grow"] ;; ["debug,flowy"]
                          :items [[root "height 100%"]])
 
-               ;; if the gui is restarted from the gui, this becomes 'false' and then next ctrl-c kills the repl
                :on-close (if (core/get-state :in-repl?) :dispose :exit)) ;; exit app entirely when not in repl
 
 

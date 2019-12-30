@@ -93,7 +93,7 @@
   {:cleanup []
 
    ;; set once per application instance
-   :in-repl? nil ;;(utils/in-repl?)
+   :in-repl? false
 
    :file-opts {} ;; options parsed from config file
    :cli-opts {} ;; options passed in on the command line
@@ -161,10 +161,12 @@
     (throw (RuntimeException. "application must be `start`ed before state may be accessed."))))
 
 (defn paths
+  "like `get-in` and `get-state` but for the map of paths being used. requires running app"
   [& path]
   (nav-map (get-state :paths) path))
 
 (defn colours
+  "like `get-in` but for the currently selected colour theme. requires running app"
   [& path]
   (nav-map (get themes (get-state :cfg :gui-theme)) path))
 
@@ -378,8 +380,8 @@
   (debug "saving etag-db to:" (paths :etag-db-file))
   (utils/dump-json-file (paths :etag-db-file) (get-state :etag-db)))
 
-(defn load-settings
-  "reads user configuration from the filesystem and command line options"
+(defn load-settings!
+  "pulls together configuration from the fs and cli, merges it and sets application state"
   [cli-opts]
   (let [final-config (config/load-settings cli-opts (paths :cfg-file) (paths :etag-db-file))]
     (when (:verbosity cli-opts)
@@ -1167,11 +1169,10 @@
   [& [cli-opts]]
   (-start)
   (info "starting app")
-  (info @state)
   (set-paths!)
   (detect-repl!)
   (init-dirs)
-  (load-settings cli-opts)
+  (load-settings! cli-opts)
   (watch-for-addon-dir-change)
   (watch-for-catalog-change)
 
