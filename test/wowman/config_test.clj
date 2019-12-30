@@ -4,8 +4,23 @@
    [me.raynes.fs :as fs]
    ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [wowman
-    [test-helper :refer [fixture-path]]
+    [utils :as utils]
+    [test-helper :as helper :refer [fixture-path]]
     [config :as config]]))
+
+(use-fixtures :each helper/fixture-tempcwd)
+
+(defn temp-addon-dirs
+  "creates a set of addon directories that match those in the `user-config-x.x.json` fixtures"
+  [f]
+  (let [abs-path-list (mapv #(utils/join (fs/tmpdir) (str ".wowman-" %)) ["foo" "bar"])
+        _ (mapv fs/mkdir abs-path-list)]
+    (try
+      (f)
+      (finally
+        (mapv fs/delete-dir abs-path-list)))))
+
+(use-fixtures :once temp-addon-dirs)
 
 (deftest handle-install-dir
   (testing ":install-dir in user config is converted to an :addon-dir"
@@ -76,14 +91,16 @@
           expected {:cfg {:gui-theme :light
                           :selected-catalog :short
                           :debug? true
-                          :addon-dir-list [{:addon-dir "/home/torkus/bar", :game-track "retail"}
-                                           {:addon-dir "/home/torkus/foo", :game-track "classic"}]}
-                    :selected-addon-dir "/home/torkus/bar"
+                          ;; new
+                          :addon-dir-list [{:addon-dir "/tmp/.wowman-bar", :game-track "retail"}
+                                           {:addon-dir "/tmp/.wowman-foo", :game-track "classic"}]}
+                    ;; new
+                    :selected-addon-dir "/tmp/.wowman-bar" ;; defaults to first entry
 
                     :cli-opts {}
                     :file-opts {:debug? true
-                                :addon-dir-list [{:addon-dir "/home/torkus/bar", :game-track "retail"}
-                                                 {:addon-dir "/home/torkus/foo", :game-track "classic"}]}
+                                :addon-dir-list [{:addon-dir "/tmp/.wowman-bar", :game-track "retail"}
+                                                 {:addon-dir "/tmp/.wowman-foo", :game-track "classic"}]}
                     :etag-db {}}]
 
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file)))))
@@ -96,15 +113,16 @@
           expected {:cfg {:gui-theme :light
                           :selected-catalog :full
                           :debug? true
-                          :addon-dir-list [{:addon-dir "/home/torkus/bar", :game-track "retail"}
-                                           {:addon-dir "/home/torkus/foo", :game-track "classic"}]}
-                    :selected-addon-dir "/home/torkus/bar"
+                          :addon-dir-list [{:addon-dir "/tmp/.wowman-bar", :game-track "retail"}
+                                           {:addon-dir "/tmp/.wowman-foo", :game-track "classic"}]}
+                    :selected-addon-dir "/tmp/.wowman-bar"
 
                     :cli-opts {}
-                    :file-opts {:selected-catalog :full ;; new
+                    :file-opts {;; new
+                                :selected-catalog :full
                                 :debug? true
-                                :addon-dir-list [{:addon-dir "/home/torkus/bar", :game-track "retail"}
-                                                 {:addon-dir "/home/torkus/foo", :game-track "classic"}]}
+                                :addon-dir-list [{:addon-dir "/tmp/.wowman-bar", :game-track "retail"}
+                                                 {:addon-dir "/tmp/.wowman-foo", :game-track "classic"}]}
                     :etag-db {}}]
 
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file)))))
@@ -117,15 +135,16 @@
           expected {:cfg {:gui-theme :dark
                           :selected-catalog :full
                           :debug? true
-                          :addon-dir-list [{:addon-dir "/home/torkus/bar", :game-track "retail"}
-                                           {:addon-dir "/home/torkus/foo", :game-track "classic"}]}
-                    :selected-addon-dir "/home/torkus/bar"
+                          :addon-dir-list [{:addon-dir "/tmp/.wowman-bar", :game-track "retail"}
+                                           {:addon-dir "/tmp/.wowman-foo", :game-track "classic"}]}
+                    :selected-addon-dir "/tmp/.wowman-bar"
 
                     :cli-opts {}
-                    :file-opts {:gui-theme :dark ;; new
+                    :file-opts {;; new
+                                :gui-theme :dark
                                 :selected-catalog :full
                                 :debug? true
-                                :addon-dir-list [{:addon-dir "/home/torkus/bar", :game-track "retail"}
-                                                 {:addon-dir "/home/torkus/foo", :game-track "classic"}]}
+                                :addon-dir-list [{:addon-dir "/tmp/.wowman-bar", :game-track "retail"}
+                                                 {:addon-dir "/tmp/.wowman-foo", :game-track "classic"}]}
                     :etag-db {}}]
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))

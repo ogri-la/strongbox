@@ -2,10 +2,10 @@
   "selected-catalog" : "full",
   "debug?" : true,
   "addon-dir-list" : [ {
-    "addon-dir" : "/home/torkus/bar",
+    "addon-dir" : "/tmp/.wowman-bar",
     "game-track" : "retail"
   }, {
-    "addon-dir" : "/home/torkus/foo",
+    "addon-dir" : "/tmp/.wowman-foo",
     "game-track" : "classic"
   } ]
 }
