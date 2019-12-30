@@ -1,7 +1,7 @@
 {
   "selected-catalog" : "full",
   "debug?" : true,
-  "gui-theme" : "light",
+  "gui-theme" : "dark",
   "addon-dir-list" : [ {
     "addon-dir" : "/home/torkus/bar",
     "game-track" : "retail"

@@ -68,21 +68,64 @@
       (is (= expected (config/merge-config file-opts cli-opts))))))
 
 (deftest load-settings-from-file
+  (testing "a standard config file circa 0.9 is loaded and parsed as expected"
+    (let [cli-opts {}
+          cfg-file (fixture-path "user-config-0.9.json")
+          etag-db-file (fixture-path "empty-map.json")
+
+          expected {:cfg {:gui-theme :light
+                          :selected-catalog :short
+                          :debug? true
+                          :addon-dir-list [{:addon-dir "/home/torkus/bar", :game-track "retail"}
+                                           {:addon-dir "/home/torkus/foo", :game-track "classic"}]}
+                    :selected-addon-dir "/home/torkus/bar"
+
+                    :cli-opts {}
+                    :file-opts {:debug? true
+                                :addon-dir-list [{:addon-dir "/home/torkus/bar", :game-track "retail"}
+                                                 {:addon-dir "/home/torkus/foo", :game-track "classic"}]}
+                    :etag-db {}}]
+
+      (is (= expected (config/load-settings cli-opts cfg-file etag-db-file)))))
+
   (testing "a standard config file circa 0.10 is loaded and parsed as expected"
-    (let [fixture (fixture-path "user-config-0.10.json")
-          cli-opts {}
-          expected {:selected-catalog :full,
-                    :debug? true,
-                    :addon-dir-list [{:addon-dir "/home/torkus/bar", :game-track "retail"}
-                                     {:addon-dir "/home/torkus/foo", :game-track "classic"}]}]
-      (is (= expected (config/load-settings-file fixture)))))
+    (let [cli-opts {}
+          cfg-file (fixture-path "user-config-0.10.json")
+          etag-db-file (fixture-path "empty-map.json")
+
+          expected {:cfg {:gui-theme :light
+                          :selected-catalog :full
+                          :debug? true
+                          :addon-dir-list [{:addon-dir "/home/torkus/bar", :game-track "retail"}
+                                           {:addon-dir "/home/torkus/foo", :game-track "classic"}]}
+                    :selected-addon-dir "/home/torkus/bar"
+
+                    :cli-opts {}
+                    :file-opts {:selected-catalog :full ;; new
+                                :debug? true
+                                :addon-dir-list [{:addon-dir "/home/torkus/bar", :game-track "retail"}
+                                                 {:addon-dir "/home/torkus/foo", :game-track "classic"}]}
+                    :etag-db {}}]
+
+      (is (= expected (config/load-settings cli-opts cfg-file etag-db-file)))))
 
   (testing "a standard config file circa 0.11 is loaded and parsed as expected"
-    (let [fixture (fixture-path "user-config-0.11.json")
-          cli-opts {}
-          expected {:selected-catalog :full,
-                    :debug? true,
-                    :gui-theme :light,
-                    :addon-dir-list [{:addon-dir "/home/torkus/bar", :game-track "retail"}
-                                     {:addon-dir "/home/torkus/foo", :game-track "classic"}]}]
-      (is (= expected (config/load-settings-file fixture))))))
+    (let [cli-opts {}
+          cfg-file (fixture-path "user-config-0.11.json")
+          etag-db-file (fixture-path "empty-map.json")
+
+          expected {:cfg {:gui-theme :dark
+                          :selected-catalog :full
+                          :debug? true
+                          :addon-dir-list [{:addon-dir "/home/torkus/bar", :game-track "retail"}
+                                           {:addon-dir "/home/torkus/foo", :game-track "classic"}]}
+                    :selected-addon-dir "/home/torkus/bar"
+
+                    :cli-opts {}
+                    :file-opts {:gui-theme :dark ;; new
+                                :selected-catalog :full
+                                :debug? true
+                                :addon-dir-list [{:addon-dir "/home/torkus/bar", :game-track "retail"}
+                                                 {:addon-dir "/home/torkus/foo", :game-track "classic"}]}
+                    :etag-db {}}]
+      (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))
