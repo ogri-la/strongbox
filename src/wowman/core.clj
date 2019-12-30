@@ -35,11 +35,23 @@
    :notice/warning :lemonchiffon
    ;;:installed/unmatched :tomato
    :installed/needs-updating :lemonchiffon
-   :installed/hovering "#e6e6e6"
-   :search/already-installed "#99bc6b"} ;; greenish
-  )
+   :installed/hovering "#e6e6e6" ;; light grey
+   :search/already-installed "#99bc6b" ;; greenish
+   :hyperlink :blue})
 
-(def colours (utils/nav-map-fn -colour-map))
+;; inverse colours of -colour-map
+(def -dark-colour-map
+  {:notice/error "#009CB8"
+   :notice/warning "#000532"
+   ;;:installed/unmatched :tomato
+   :installed/needs-updating "#000532"
+   :installed/hovering "#191919"
+   :search/already-installed "#664394"
+   :hyperlink :yellow})
+
+(def themes
+  {:light -colour-map
+   :dark -dark-colour-map})
 
 (def default-config-dir "~/.config/wowman")
 (def default-data-dir "~/.local/share/wowman")
@@ -80,6 +92,9 @@
 (def -state-template
   {:cleanup []
 
+   ;; set once per application instance
+   :in-repl? false
+
    :file-opts {} ;; options parsed from config file
    :cli-opts {} ;; options passed in on the command line
 
@@ -117,6 +132,9 @@
    ;; the root swing window
    :gui nil
 
+   ;; set to anything other than `nil` to have `main.clj` restart the gui
+   :gui-restart-flag nil
+
    ;; which of the addon directories is currently selected
    :selected-addon-dir nil
 
@@ -143,8 +161,14 @@
     (throw (RuntimeException. "application must be `start`ed before state may be accessed."))))
 
 (defn paths
+  "like `get-in` and `get-state` but for the map of paths being used. requires running app"
   [& path]
   (nav-map (get-state :paths) path))
+
+(defn colours
+  "like `get-in` but for the currently selected colour theme. requires running app"
+  [& path]
+  (nav-map (get themes (get-state :cfg :gui-theme)) path))
 
 (defn as-unqualified-hyphenated-maps
   "used to coerce keys in each row of resultset
@@ -356,21 +380,10 @@
   (debug "saving etag-db to:" (paths :etag-db-file))
   (utils/dump-json-file (paths :etag-db-file) (get-state :etag-db)))
 
-(defn load-settings
-  "reads user configuration from the filesystem and command line options"
+(defn load-settings!
+  "pulls together configuration from the fs and cli, merges it and sets application state"
   [cli-opts]
-  (let [cfg-file (paths :cfg-file)
-        _ (when-not (fs/exists? cfg-file)
-            (warn "configuration file not found: " cfg-file))
-
-        file-opts (utils/load-json-file-safely cfg-file
-                                               :no-file? {}
-                                               :bad-data? {}
-                                               :transform-map {:selected-catalog keyword})
-
-        etag-db (utils/load-json-file-safely (paths :etag-db-file) :no-file? {} :bad-data? {})
-
-        final-config (config/load-settings cli-opts file-opts etag-db)]
+  (let [final-config (config/load-settings cli-opts (paths :cfg-file) (paths :etag-db-file))]
     (when (:verbosity cli-opts)
       (logging/change-log-level (:verbosity cli-opts)))
     (swap! state merge final-config))
@@ -626,6 +639,14 @@
        :match match
        :final (moosh-addons installed-addon match)})))
 
+(defn drop-nils
+  [m fields]
+  (if (empty? fields)
+    m
+    (drop-nils
+     (if (nil? (get m (first fields))) (dissoc m (first fields)) m)
+     (rest fields))))
+
 (defn find-first-in-db
   [installed-addon match-on-list]
   (if (empty? match-on-list) ;; we may have exhausted all possibilities. not finding a match is ok
@@ -662,7 +683,19 @@
           match-results (-db-match-installed-addons-with-catalog inst-addons)
           [matched unmatched] (utils/split-filter #(contains? % :final) match-results)
 
+          merge-matched (fn [match]
+                          ;;matched (merge installed-addon (spy :info (drop-nils match [:description])))))))
+                          (let [db-result (:final match)
+                                db-result (drop-nils db-result [:description])
+                                installed (:installed-addon match)]
+                            ;; this is essentially the old 'merge-addons' function
+                            (merge installed db-result)))
+
           matched (mapv :final matched)
+
+          ;; todo: this fixes a regression where empty db data overrides data in installed addons
+          ;;matched (mapv merge-matched matched)
+
           unmatched-names (set (map :name unmatched))
 
           expanded-installed-addon-list (into matched unmatched)
@@ -1122,6 +1155,12 @@
   (swap! state assoc :paths (generate-path-map))
   nil)
 
+(defn-spec detect-repl! nil?
+  "if we're working from the REPL, we don't want the gui closing the session"
+  []
+  (swap! state assoc :in-repl? (utils/in-repl?))
+  nil)
+
 (defn -start
   []
   (alter-var-root #'state (constantly (atom -state-template))))
@@ -1131,8 +1170,9 @@
   (-start)
   (info "starting app")
   (set-paths!)
+  (detect-repl!)
   (init-dirs)
-  (load-settings cli-opts)
+  (load-settings! cli-opts)
   (watch-for-addon-dir-change)
   (watch-for-catalog-change)
 

@@ -31,6 +31,12 @@
 ;; - https://github.com/daveray/seesaw/wiki#native-look-and-feel
 (ss/native!)
 
+(defn-spec trigger-gui-restart nil?
+  "call to dispose of the current gui and let `main.clj` restart it"
+  []
+  (swap! core/state assoc :gui-restart-flag true)
+  nil)
+
 (defn select-ui
   [& path]
   (if-let [ui (get-state :gui)]
@@ -436,7 +442,8 @@
                                      (.setCursor grid (cursor :hand))
                                      (.setCursor grid (cursor :default))))))
 
-        uri-template "<html><font color='blue'>&nbsp;↪ %s</font></html>"
+        hyperlink-colour (-> :hyperlink colours name)
+        uri-template (str "<html><font color='" hyperlink-colour "'>&nbsp;↪ %s</font></html>")
         uri-renderer (fn [x]
                        (when x
                          (let [uri (java.net.URL. x)
@@ -763,6 +770,26 @@
 
     catalog-menu))
 
+(defn build-theme-menu
+  "returns a menu of radio buttons that can toggle through the available themes defined in `core/themes`"
+  []
+  (let [button-grp (ss/button-group)
+
+        menu (mapv (fn [theme-key]
+                     (ss/radio-menu-item :id theme-key
+                                         :text (format "%s theme" (-> theme-key name clojure.string/capitalize))
+                                         :group button-grp
+                                         :selected? (= (core/get-state :cfg :gui-theme) theme-key)))
+                   (keys core/themes))]
+
+    (sb/bind (sb/selection button-grp)
+             (sb/b-do* (fn [val]
+                         (when val ;; sometimes we get nil values?
+                           (swap! core/state assoc-in [:cfg :gui-theme] (ss/id-of val))
+                           (core/save-settings)
+                           (trigger-gui-restart)))))
+    menu))
+
 (defn start-ui
   []
   (let [root->splitter (ss/top-bottom-split (mk-tabber) (notice-logger))
@@ -781,12 +808,16 @@
                :content (mig/mig-panel
                          :constraints ["flowy" "fill,grow"] ;; ["debug,flowy"]
                          :items [[root "height 100%"]])
-               :on-close (if (utils/in-repl?) :dispose :exit)) ;; exit app entirely when not in repl
+
+               :on-close (if (core/get-state :in-repl?) :dispose :exit)) ;; exit app entirely when not in repl
+
 
         file-menu [(ss/action :name "Installed" :key "menu I" :mnemonic "i" :handler (switch-tab-handler INSTALLED-TAB))
                    (ss/action :name "Search" :key "menu H" :mnemonic "h" :handler (switch-tab-handler SEARCH-TAB))
                    :separator
                    (ss/action :name "Exit" :key "menu Q" :mnemonic "x" :handler (handler #(ss/dispose! newui)))]
+
+        view-menu (build-theme-menu)
 
         catalog-menu (into (build-catalog-menu)
                            [:separator
@@ -814,6 +845,7 @@
 
         menu (ss/menubar :id :main-menu
                          :items [(ss/menu :text "File" :mnemonic "F" :items file-menu)
+                                 (ss/menu :text "View" :mnemonic "V" :items view-menu)
                                  (ss/menu :text "Catalog" :items catalog-menu)
                                  (ss/menu :text "Addons" :mnemonic "A" :items addon-menu)
                                  (ss/menu :text "Import/Export" :mnemonic "i" :items impexp-menu)

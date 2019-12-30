@@ -124,7 +124,8 @@
 (s/def ::addon-dir-map (s/keys :req-un [::addon-dir ::game-track]))
 (s/def ::addon-dir-list (s/coll-of ::addon-dir-map))
 (s/def ::selected-catalog keyword?)
-(s/def ::user-config (s/keys :req-un [::addon-dir-list ::debug? ::selected-catalog]))
+(s/def ::gui-theme #{:light :dark})
+(s/def ::user-config (s/keys :req-un [::addon-dir-list ::debug? ::selected-catalog ::gui-theme]))
 
 (s/def ::reason-phrase (s/and string? #(<= (count %) 50)))
 (s/def ::status int?) ;; a little too general but ok for now
