@@ -283,7 +283,7 @@
             (main/stop)))))))
 
 (deftest check-for-update
-  (testing "the key :update? is set on an addon when there is a difference between the installed version of an addon and it's matching catalog verison"
+  (testing "the key :update? is set on an addon when there is a difference between the installed version of an addon and it's matching catalog version"
 
     (let [;; we start off with a list of these called a catalog. it's downloaded from github
           catalog {:category-list ["Auction House & Vendors"],
@@ -603,3 +603,44 @@
 
           ;; addon was successfully download and installed
           (is (fs/exists? expected-addon-dir)))))))
+
+(deftest moosh-addons
+  (testing "addons are mooshed together just right when a match is found in the db"
+    (let [toc {:name "everyaddon"
+               :label "EveryAddon"
+               :description "Toc Description"
+               :dirname "EveryAddon"
+               :interface-version 70000
+               :installed-version "1.2.3"}
+
+          addon-summary {:name "everyaddon"
+                         :label "EveryAddon"
+                         :category-list []
+                         :updated-date "2001-01-01"
+                         :download-count 123
+                         :source "wowinterface"
+                         :source-id 1
+                         :uri "https://www.wowinterface.com/downloads/info1"
+
+                       ;; wowinterface and tukui don't have descriptions in their api
+                       ;; the database will return a field with `nil` if the addon-summary
+                       ;; was inserted without one
+                         :description nil}
+
+          expected {:name "everyaddon"
+                    :label "EveryAddon"
+                    :description "Toc Description"
+                    :dirname "EveryAddon"
+                    :interface-version 70000
+                    :installed-version "1.2.3"
+
+                    :category-list []
+                    :updated-date "2001-01-01"
+                    :download-count 123
+                    :source "wowinterface"
+                    :source-id 1
+                    :uri "https://www.wowinterface.com/downloads/info1"
+
+                  ;; optional, lets the GUI know we have a match that can be checked for updates
+                    :matched? true}]
+      (is (= expected (core/moosh-addons toc addon-summary))))))

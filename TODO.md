@@ -157,11 +157,12 @@ multiple assets will always require differentiation, but we can tune warnings/er
 * bug, if an addon directory goes missing between restarts, user configuration is lost
     - initially it's ignored, but then the new settings are saved over the top
     - done
+* themes
+    - added a 'dark' theme for those using dark widget sets
+        - https://github.com/ogri-la/wowman/issues/105
 
 ### todo
 
-* user catalogue belongs in the .config/wowman/user-catalog.json 
-    - ideally, right?
 * github, description is missing?
     - I think this is what is happening:
         - catalog has no description
@@ -177,7 +178,8 @@ multiple assets will always require differentiation, but we can tune warnings/er
 
 ## todo bucket (no particular order)
 
-* add custom highlighting colours 
+* bug, selected directory is incorrect after restarting gui (by switching themes)
+* add custom highlighting colours
     - I don't mind my colours but not everybody may
     - my colours don't work very well on native lnf + dark themes:
         - https://github.com/ogri-la/wowman/issues/105

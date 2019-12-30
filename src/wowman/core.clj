@@ -580,10 +580,13 @@
         (http/download-file remote-catalog local-catalog :message (format "downloading catalog '%s'" (:label catalog-source))))
       (error "failed to find catalog:" catalog))))
 
-(defn moosh-addons
-  [installed-addon catalog-addon]
-  ;; merges left->right. catalog-addon overwrites installed-addon, ':matched' overwrites catalog-addon, etc
-  (merge installed-addon catalog-addon {:matched? true}))
+(defn-spec moosh-addons ::sp/toc-addon-summary
+  "merges the data from an installed addon with it's match in the catalog"
+  [installed-addon ::sp/toc, db-catalog-addon ::sp/addon-summary]
+  (let [;; nil fields are removed from the catalog item because they might override good values in the .toc or .nfo
+        db-catalog-addon (utils/drop-nils db-catalog-addon [:description])]
+    ;; merges left->right. catalog-addon overwrites installed-addon, ':matched' overwrites catalog-addon, etc
+    (merge installed-addon db-catalog-addon {:matched? true})))
 
 
 ;;
@@ -639,14 +642,6 @@
        :match match
        :final (moosh-addons installed-addon match)})))
 
-(defn drop-nils
-  [m fields]
-  (if (empty? fields)
-    m
-    (drop-nils
-     (if (nil? (get m (first fields))) (dissoc m (first fields)) m)
-     (rest fields))))
-
 (defn find-first-in-db
   [installed-addon match-on-list]
   (if (empty? match-on-list) ;; we may have exhausted all possibilities. not finding a match is ok
@@ -683,18 +678,7 @@
           match-results (-db-match-installed-addons-with-catalog inst-addons)
           [matched unmatched] (utils/split-filter #(contains? % :final) match-results)
 
-          merge-matched (fn [match]
-                          ;;matched (merge installed-addon (spy :info (drop-nils match [:description])))))))
-                          (let [db-result (:final match)
-                                db-result (drop-nils db-result [:description])
-                                installed (:installed-addon match)]
-                            ;; this is essentially the old 'merge-addons' function
-                            (merge installed db-result)))
-
           matched (mapv :final matched)
-
-          ;; todo: this fixes a regression where empty db data overrides data in installed addons
-          ;;matched (mapv merge-matched matched)
 
           unmatched-names (set (map :name unmatched))
 

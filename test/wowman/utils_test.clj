@@ -200,3 +200,19 @@
       (testing (format "'any', case: (%s %s)" given expected)
         (is (= expected (utils/any given)))))))
 
+(deftest drop-nils
+  (let [cases [[{} [] {}]
+               [{} [:foo] {}]
+               [{} [nil] {}]
+               [{} ["foo"] {}]
+
+               [{:foo nil} [] {:foo nil}]
+               [{:foo nil} [:foo] {}]
+               [{:foo :bar} [:foo] {:foo :bar}]
+               [{:foo :bar, :bar nil} [:foo] {:foo :bar, :bar nil}]
+               [{:foo :bar, :bar nil} [:bar] {:foo :bar}]]]
+
+    (doseq [[m fields expected] cases]
+      (testing (format "'drop-nils', case: (%s %s => %s)" m fields expected)
+        (is (= expected (utils/drop-nils m fields)))))))
+

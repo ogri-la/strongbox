@@ -38,9 +38,11 @@
   (s/keys :req-un [::name ::label ::description ::dirname ::interface-version ::installed-version]
           :opt [::group-id ::primary? ::group-addons]))
 
-;; the result of merging an installed addon (toc) with an installable addon
-;; this is very much a utility-type shape for convenience over purity
-;; todo: renamed '::matched-addon' or similar
+;; the result of merging an installed addon (toc) with an installable addon from the catalogue
+(s/def ::toc-addon-summary
+  (s/merge ::toc ::addon-summary (s/keys :opt [::matched?])))
+
+;; the result of 'expanding' an ::toc-addon-summary (matched addon) with further fields from addon host
 (s/def ::toc-addon
   (s/merge ::toc ::addon (s/keys :opt [::update?])))
 
@@ -73,7 +75,7 @@
 (s/def ::label string?) ;; name of the addon without normalisation
 (s/def ::dirname string?)
 (s/def ::description (s/nilable string?))
-
+(s/def ::matched? boolean?)
 (s/def ::group-id string?)
 (s/def ::primary boolean?)
 (s/def ::group-addons ::toc-list)
