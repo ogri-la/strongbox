@@ -5,6 +5,7 @@ Just for my own reference
 * exit emacs
 * make sure nothing is left uncommitted
 * run lein clean
+* new branch '0.x.0-prep'
 * ensure all non-gpl dependencies have an exclusion in LICENCE
 * update version in project.clj to the new version
     - remove the '-unreleased' extension
@@ -19,14 +20,7 @@ Just for my own reference
         - fix fail
         - run `lein pom` again
         - commit+push
-
-on mac:
-    - switch repo to PR branch
-    - ./test.sh
-    - lein clean; lein uberjar; java -jar ./target/wowman...standalone.jar
-    - fix anything that is broken, push to PR branch, wait for green
-
-on linux:
+* test on mac
 * merge PR branch
 * checkout master+pull
 * update README with expected path to download release

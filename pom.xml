@@ -3,7 +3,7 @@
   <groupId>ogri-la</groupId>
   <artifactId>wowman</artifactId>
   <packaging>jar</packaging>
-  <version>0.10.2</version>
+  <version>0.11.0</version>
   <name>wowman</name>
   <description>World Of Warcraft Addon Manager</description>
   <url>https://github.com/ogri-la/wowman</url>
@@ -17,7 +17,7 @@
     <url>https://github.com/ogri-la/wowman</url>
     <connection>scm:git:git://github.com/ogri-la/wowman.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/ogri-la/wowman.git</developerConnection>
-    <tag>3b566623a047f3203556c62f129281ec6db07a11</tag>
+    <tag>04f847173d7fff1cf64fcda7d314e2a614388c0c</tag>
   </scm>
   <build>
     <sourceDirectory>src</sourceDirectory>
@@ -96,17 +96,6 @@
       <groupId>orchestra</groupId>
       <artifactId>orchestra</artifactId>
       <version>2018.12.06-2</version>
-    </dependency>
-    <dependency>
-      <groupId>metosin</groupId>
-      <artifactId>spec-tools</artifactId>
-      <version>0.9.2</version>
-      <exclusions>
-        <exclusion>
-          <artifactId>jackson-core</artifactId>
-          <groupId>com.fasterxml.jackson.core</groupId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.taoensso</groupId>

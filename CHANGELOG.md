@@ -12,6 +12,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+### Removed
+
+## 0.11.0 - 2019-12-31
+
+### Added
+
+* added www.tukui.org as an addon host
+* added github.com as an addon host, using the 'releases' mechanism
+    - some [examples](./github-addons.md) of supported addons
+* 'user' catalogues of addons. This is a catalog controlled by the user with addons from hosts like github.com
+    - this catalogue can be refreshed from `Catalog -> Refresh user catalog`
+* `source` attributes are now present in the curseforge and wowinterface catalogues
+* mac support
+* a 'dark' theme for those Linux users who are using a dark widget set
+    - this is just the inverse colours of the current 'light' theme
+
+### Changed
+
+* new addon directories will have their game track set to `classic` by default if `_classic_` is present in the path
+
+### Fixed
+
+* exporting addons using the `Import/Export -> Export addon list` now uses the currently selected addon directory
+* duplicate categories in the curseforge catalogue generation
+* `.part` files are now removed if an error would cause a download to fail
+* if an addon directory went missing between two calls to save settings, all addon directory settings would be removed
+* a regression introduced in 0.10.0 where missing catalogue fields, like `description`, would become `description=nil` after pulling it out of the database. 
+    - this would cause masking of `.toc` file data that could be used in it's stead
+
+### Removed
+
+* special handling for `curseforge.com` HTTP redirect behaviour
+    - wowman now uses the curseforge API
+* dependency `metosin/spec-tools`. It's a sophisticated tool but I just wasn't taking advantage of it
+
 ## 0.10.2 - 2019-12-07
 
 ### Added
