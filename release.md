@@ -38,9 +38,10 @@ Just for my own reference
 * merge changes from master
     - resolve conflicts etc
 * update TODO, truncating old DONE
-* update project.clj, changing version to next version with "-unreleased" after it
+* update project.clj
+    - change version to next version 
+    - add "-unreleased" after it
 * commit+push
-
 * download release file to /tmp
 * run sha256sum wowman-x.x.x-standalone.jar
 * update wowman-pkgbuild/PKGBUILD

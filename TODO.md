@@ -10,8 +10,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### todo
 
-* release 0.11.0
-
 ## todo bucket (no particular order)
 
 * bug, selected directory is incorrect after restarting gui (by switching themes)
