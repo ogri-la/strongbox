@@ -8,7 +8,7 @@ It supports addons hosted by Curseforge, wowinterface, Tukui and Github.
 
 ## News
 
-* **2019-12-31**: 0.11.0 has been released. Happy new year.
+* **2019-12-31**: [0.11.0 has been released](https://github.com/ogri-la/wowman/releases). Happy new year.
 * **2019-12-13**: Please upgrade to *[0.10.2](https://github.com/ogri-la/wowman/releases/tag/0.10.2)*! *0.10.0* and *0.10.1* versions of wowman will crash when it reads unfamiliar addons from the catalog.
 * **2019-11-22**: 1000+ downloads! I often forget I build this for others as well and this is a stark reminder of that. If you're a user of wowman and you ever want to get in touch, please just [open an issue](https://github.com/ogri-la/wowman/issues) or [PM me on reddit](https://www.reddit.com/message/compose/?to=torkus-jr&subject=wowman).
 

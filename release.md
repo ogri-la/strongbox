@@ -12,8 +12,11 @@ Just for my own reference
 * update CHANGELOG
     - ensure contents of TODO are captured succintly
     - include new empty sections
+* update README with expected path to download release
+* if UI has changed significantly, add a screenshot
+    - update README with link to new screenshot
 * run lein pom
-* commit+push
+* commit + push
 * open a pr for master
 * wait for build to successfully complete
     - if build fails
@@ -22,15 +25,11 @@ Just for my own reference
         - commit+push
 * test on mac
 * merge PR branch
-* checkout master+pull
-* update README with expected path to download release
-* if UI has changed significantly, add a screenshot
-    - update README with link to new screenshot
-* commit but DO NOT PUSH
+* checkout master + pull
 * tag
     git tag 0.6.0
 * push
-    git push && git push --tags
+    git push --tags
 * wait for release to appear
     - https://travis-ci.org/ogri-la/wowman
 * update github release information with that from changelog
