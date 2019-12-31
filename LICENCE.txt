@@ -674,7 +674,6 @@ If you modify this Program, or any covered work, by linking or combining it with
 * org.clojure/data.codec
 * org.clojure/data.json
 * orchestra
-* metosin/spec-tools
 * com.taoensso/timbre
 * enlive
 * clj-http
