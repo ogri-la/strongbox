@@ -5,7 +5,7 @@
    ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [wowman
     [curseforge-api :as curseforge-api]
-    [test-helper :as helper :refer [fixture-path temp-path]]]))
+    [test-helper :as helper :refer [fixture-path]]]))
 
 (deftest expand-summary
   (testing "simple addon expansion, ideal conditions"
@@ -166,12 +166,13 @@
                        {:get (fn [req] {:status 200 :body fixture})}}
           expected [{:created-date "2016-05-09T17:21:30.1Z",
                      :description "Restores access to removed interface options in Legion",
-                     :category-list '("Miscellaneous" "Miscellaneous"),
+                     :category-list ["Miscellaneous"],
                      :updated-date "2019-08-30T14:39:44.943Z",
                      :name "advancedinterfaceoptions",
                      :alt-name "advancedinterfaceoptions",
                      :label "AdvancedInterfaceOptions",
                      :download-count 2923589,
+                     :source "curseforge"
                      :source-id 99982,
                      :uri "https://www.curseforge.com/wow/addons/advancedinterfaceoptions"}]]
       (with-fake-routes-in-isolation fake-routes

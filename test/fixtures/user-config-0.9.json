@@ -1,0 +1,10 @@
+{
+  "debug?" : true,
+  "addon-dir-list" : [ {
+    "addon-dir" : "/tmp/.wowman-bar",
+    "game-track" : "retail"
+  }, {
+    "addon-dir" : "/tmp/.wowman-foo",
+    "game-track" : "classic"
+  } ]
+}

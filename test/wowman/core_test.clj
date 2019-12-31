@@ -8,8 +8,9 @@
    ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [wowman
     [main :as main]
+    [catalog :as catalog]
     [utils :as utils]
-    [test-helper :as helper :refer [fixture-path temp-path data-dir]]
+    [test-helper :as helper :refer [fixture-path helper-data-dir with-running-app]]
     [core :as core]]))
 
 (use-fixtures :each helper/fixture-tempcwd)
@@ -19,33 +20,12 @@
     (is (thrown? RuntimeException
                  (core/get-state :installed-addon-list)))))
 
-(deftest handle-legacy-install-dir
-  (testing ":install-dir in user config is converted correctly"
-    (let [install-dir (str fs/*cwd*)
-          cfg {:install-dir install-dir :addon-dir-list []}
-          expected {:addon-dir-list [{:addon-dir install-dir :game-track "retail"}]}]
-      (is (= expected (core/handle-legacy-install-dir cfg)))))
-
-  (testing ":install-dir in user config is appended to existing list correctly"
-    (let [install-dir (str fs/*cwd*)
-          install-dir2 "/tmp"
-
-          addon-dir1 {:addon-dir install-dir :game-track "retail"}
-          addon-dir2 {:addon-dir install-dir2 :game-track "retail"}
-
-          cfg {:install-dir install-dir2
-               :addon-dir-list [addon-dir1]}
-
-          expected {:addon-dir-list [addon-dir1 addon-dir2]}]
-      (is (= expected (core/handle-legacy-install-dir cfg))))))
-
 (deftest addon-dir-handling
-  (let [app-state (core/start {})
-        [dir1 dir2 dir3] (mapv (fn [path]
-                                 (let [path (utils/join fs/*cwd* path)]
-                                   (fs/mkdir path)
-                                   path)) ["foo" "bar" "baz"])]
-    (try
+  (let [[dir1 dir2 dir3 dir4] (mapv (fn [path]
+                                      (let [path (utils/join fs/*cwd* path)]
+                                        (fs/mkdir path)
+                                        path)) ["foo" "bar" "baz" "_classic_"])]
+    (with-running-app
 
       ;; big long stateful test
 
@@ -98,8 +78,11 @@
         (core/set-game-track! "classic")
         (is (= {:addon-dir dir2 :game-track "classic"} (core/addon-dir-map dir2))))
 
-      (finally
-        (core/stop app-state)))))
+      ;;
+
+      (testing "set-game-track! changes default path to 'classic' if detected in addon-dir"
+        (core/set-addon-dir! dir4)
+        (is (= {:addon-dir dir4 :game-track "classic"} (core/addon-dir-map dir4)))))))
 
 (deftest catalog
   (let [app-state (core/start {})
@@ -125,11 +108,11 @@
         (is (= full-catalog (core/get-catalog-source))))
 
       (testing "core/catalog-local-path returns the expected path to the catalog file on the filesystem"
-        (is (= (utils/join fs/*cwd* data-dir "short-catalog.json") (core/catalog-local-path short-catalog)))
-        (is (= (utils/join fs/*cwd* data-dir "full-catalog.json") (core/catalog-local-path full-catalog))))
+        (is (= (utils/join fs/*cwd* helper-data-dir "short-catalog.json") (core/catalog-local-path short-catalog)))
+        (is (= (utils/join fs/*cwd* helper-data-dir "full-catalog.json") (core/catalog-local-path full-catalog))))
 
       (testing "core/find-catalog-local-path just needs a catalog :name"
-        (is (= (utils/join fs/*cwd* data-dir "short-catalog.json") (core/find-catalog-local-path :short))))
+        (is (= (utils/join fs/*cwd* helper-data-dir "short-catalog.json") (core/find-catalog-local-path :short))))
 
       (testing "core/find-catalog-local-path returns nil if the given catalog can't be found"
         (is (= nil (core/find-catalog-local-path :foo))))
@@ -138,38 +121,43 @@
         (core/stop app-state)))))
 
 (deftest paths
-  (let [app-state (core/start {})]
-    (try
-      (testing "all path keys are using a known suffix"
-        (doseq [key (keys (core/paths))]
-          (is (some #{"dir" "file" "uri"} (clojure.string/split (name key) #"\-")))))
+  (with-running-app
+    (testing "all path keys are using a known suffix"
+      (doseq [key (keys (core/paths))]
+        (is (some #{"dir" "file" "uri"} (clojure.string/split (name key) #"\-")))))
 
-      (testing "all paths to files and directories are absolute"
-        (let [files+dirs (filter (fn [[k v]] (or (ends-with? k "-dir")
-                                                 (ends-with? k "-file")))
-                                 (core/paths))]
-          (doseq [[key path] files+dirs]
-            (is (-> path (starts-with? "/")) (format "path %s is not absolute: %s" key path)))))
+    (testing "all paths to files and directories are absolute"
+      (let [files+dirs (filter (fn [[k v]] (or (ends-with? k "-dir")
+                                               (ends-with? k "-file")))
+                               (core/paths))]
+        (doseq [[key path] files+dirs]
+          (is (-> path (starts-with? "/")) (format "path %s is not absolute: %s" key path)))))
 
-      (testing "all remote paths are using https"
-        (let [remote-paths (filter (fn [[k v]] (ends-with? k "-uri")) (core/paths))]
-          (doseq [[key path] remote-paths]
-            (is (-> path (starts-with? "https://")) (format "remote path %s is not using HTTPS: %s" key path)))))
+    (testing "all remote paths are using https"
+      (let [remote-paths (filter (fn [[k v]] (ends-with? k "-uri")) (core/paths))]
+        (doseq [[key path] remote-paths]
+          (is (-> path (starts-with? "https://")) (format "remote path %s is not using HTTPS: %s" key path))))))
 
-      (comment
-        "what exactly am I testing here again? this path overriding has plenty of coverage already. see test_helper.clj"
-        (testing "XDG data paths can be overridden with environment variables"
-          (with-env [:xdg-data-home "/foo", :xdg-config-home "/bar"]
-            (is (= "/foo" (:data-dir (core/paths))))
-            (is (= "/bar" (:config-dir (core/paths)))))))
+  (testing "paths that cannot be written to raise a runtime exception"
+    (let [app-state (core/start {})]
+      (with-env [:xdg-data-home "/foo", :xdg-config-home "/bar"]
+        (core/stop app-state)
+        (is (thrown? RuntimeException (core/start {})))))))
 
-      (testing "paths that cannot be written to raise a runtime exception"
-        (with-env [:xdg-data-home "/foo", :xdg-config-home "/bar"]
-          (core/stop app-state)
-          (is (thrown? RuntimeException (core/start {})))))
+(deftest generate-path-map
+  (testing "XDG data paths can be overridden with environment variables"
+    (with-env [:xdg-data-home "/foo", :xdg-config-home "/home/layday/.config"]
+      (let [paths (core/generate-path-map)]
+        (is (= "/foo/wowman" (:data-dir paths)))
+        (is (= "/home/layday/.config/wowman" (:config-dir paths))))))
 
-      (finally
-        (core/stop app-state)))))
+  (testing "XDG data paths are ignored if present, but empty"
+    (with-env [:xdg-data-home "", :xdg-config-home ""]
+      (let [paths (core/generate-path-map)
+            expected-config-dir (-> core/default-config-dir utils/expand-path)
+            expected-data-dir (-> core/default-data-dir utils/expand-path)]
+        (is (= expected-data-dir (:data-dir paths)))
+        (is (= expected-config-dir (:config-dir paths)))))))
 
 (deftest determine-primary-subdir
   (testing "basic failure cases"
@@ -199,41 +187,17 @@
   (testing "original value is preserved despite modification for comparison"
     (is (= {:path "Foo"} (core/determine-primary-subdir [{:path "Foo"}])))))
 
-(deftest configure
-  (testing "called with no overrides gives us whatever is in the state template"
-    (let [expected (:cfg core/-state-template)
-          file-opts {}
-          cli-opts {}]
-      (is (= expected (core/configure file-opts cli-opts)))))
-
-  (testing "file overrides are preserved and foreign keys are removed"
-    (let [cli-opts {}
-          file-opts {:foo "bar" ;; unknown
-                     :debug? true}
-          expected (assoc (:cfg core/-state-template) :debug? true)]
-      (is (= expected (core/configure file-opts cli-opts)))))
-
-  (testing "cli overrides are preserved and foreign keys are removed"
-    (let [cli-opts {:foo "bar"
-                    :debug? true}
-          file-opts {}
-          expected (assoc (:cfg core/-state-template) :debug? true)]
-      (is (= expected (core/configure file-opts cli-opts)))))
-
-  (testing "cli overrides file overrides"
-    (let [cli-opts {:debug? true}
-          file-opts {:debug? false}
-          expected (assoc (:cfg core/-state-template) :debug? true)]
-      (is (= expected (core/configure file-opts cli-opts))))))
-
 (deftest export-installed-addon-list
   (testing "exported data looks as expected"
     (let [addon-list (read-string (slurp "test/fixtures/export--installed-addons-list.edn"))
-          output-path (temp-path "exports.json")
+          export-dir (utils/join fs/*cwd* "foo" "bar" "exports")
+          _ (fs/mkdirs export-dir)
+          output-path (utils/join export-dir "export.json")
           _ (core/export-installed-addon-list output-path addon-list)
           expected [{:name "adibags" :source "curseforge"}
                     {:name "noname"} ;; an addon whose name is not present in the catalog (umatched)
                     {:name "carbonite" :source "curseforge"}]]
+      (is (fs/exists? output-path))
       (is (= expected (utils/load-json-file output-path))))))
 
 (deftest import-exported-addon-list-file
@@ -249,7 +213,7 @@
 
           fake-routes {;; catalog
                        "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
-                       {:get (fn [req] {:status 200 :body (utils/to-json {:addon-summary-list addon-summary-list})})}
+                       {:get (fn [req] {:status 200 :body (utils/to-json (catalog/new-catalog addon-summary-list))})}
 
                        ;; every-addon
                        "https://addons-ecs.forgesvc.net/api/v2/addon/1"
@@ -321,7 +285,7 @@
             (main/stop)))))))
 
 (deftest check-for-update
-  (testing "the key :update? is set on an addon when there is a difference between the installed version of an addon and it's matching catalog verison"
+  (testing "the key :update? is set on an addon when there is a difference between the installed version of an addon and it's matching catalog version"
 
     (let [;; we start off with a list of these called a catalog. it's downloaded from github
           catalog {:category-list ["Auction House & Vendors"],
@@ -344,7 +308,7 @@
 
           fake-routes {;; catalog
                        "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
-                       {:get (fn [req] {:status 200 :body (utils/to-json {:addon-summary-list [catalog]})})}
+                       {:get (fn [req] {:status 200 :body (utils/to-json (catalog/new-catalog [catalog]))})}
 
                        ;; every-addon
                        "https://addons-ecs.forgesvc.net/api/v2/addon/0"
@@ -465,11 +429,40 @@
           ;; move dummy addon file into place so there is no cache miss
           fname (core/downloaded-addon-fname (:name addon) (:version addon))
           _ (utils/cp (fixture-path fname) install-dir)
-          file-list (core/install-addon addon install-dir)]
+          test-only? false
+          file-list (core/install-addon addon install-dir test-only?)]
 
       (testing "addon directory created, single file written (.wowman.json nfo file)"
         (is (= (count file-list) 1))
-        (is (fs/exists? (first file-list)))))))
+        (is (fs/exists? (first file-list))))))
+
+  (testing "trial installation of a good addon"
+    (let [install-dir (utils/join (str fs/*cwd*) "addons-dir")
+          ;; move dummy addon file into place so there is no cache miss
+          fname (core/downloaded-addon-fname (:name addon) (:version addon))
+          _ (fs/mkdir install-dir)
+          _ (utils/cp (fixture-path fname) install-dir)
+
+          test-only? true
+          result (core/install-addon addon install-dir test-only?)]
+      (is result) ;; success
+
+      ;; ensure nothing was actually unzipped
+      (is (not (fs/exists? (utils/join install-dir "EveryAddon"))))))
+
+  (testing "trial installation of a bad addon"
+    (let [install-dir (utils/join (str fs/*cwd*) "addons-dir")
+          ;; move dummy addon file into place so there is no cache miss
+          fname (core/downloaded-addon-fname (:name addon) (:version addon))
+          _ (fs/mkdir install-dir)
+          _ (fs/copy (fixture-path "bad-truncated.zip") (utils/join install-dir fname)) ;; hoho, so evil
+
+          test-only? true
+          result (core/install-addon addon install-dir test-only?)]
+      (is (not result)) ;; failure
+
+      ;; ensure nothing was actually unzipped
+      (is (not (fs/exists? (utils/join install-dir "EveryAddon")))))))
 
 (deftest install-bad-addon
   (testing "installing a bad addon"
@@ -528,3 +521,128 @@
 
         (finally
           (core/stop app-state))))))
+
+;;
+
+(deftest add-user-addon-to-user-catalog
+  (testing "user addon is successfully added to the user catalog, creating it if it doesn't exist"
+    (let [user-addon {:uri "https://github.com/Aviana/HealComm"
+                      :updated-date "2019-10-09T17:40:01Z"
+                      :source "github"
+                      :source-id "Aviana/HealComm"
+                      :label "HealComm"
+                      :name "healcomm"
+                      :download-count 30946
+                      :category-list []}
+
+          expected (merge (catalog/new-catalog [])
+                          {;; hack, catalog/format-catalog-data orders the addon summary make them uncomparable
+                           :total 1
+                           :addon-summary-list [user-addon]})]
+
+      (with-running-app
+        (core/add-user-addon! user-addon)
+        (is (= expected (catalog/read-catalog (core/paths :user-catalog-file)))))))
+
+  (testing "adding addons to the user catalogue is idempotent"
+    (let [user-addon {:uri "https://github.com/Aviana/HealComm"
+                      :updated-date "2019-10-09T17:40:01Z"
+                      :source "github"
+                      :source-id "Aviana/HealComm"
+                      :label "HealComm"
+                      :name "healcomm"
+                      :download-count 30946
+                      :category-list []}
+
+          expected (merge (catalog/new-catalog [])
+                          {;; hack, catalog/format-catalog-data orders the addon summary make them uncomparable
+                           :total 1
+                           :addon-summary-list [user-addon]})]
+
+      (with-running-app
+        (core/add-user-addon! user-addon)
+        (core/add-user-addon! user-addon)
+        (core/add-user-addon! user-addon)
+        (is (= expected (catalog/read-catalog (core/paths :user-catalog-file))))))))
+
+(deftest add+install-user-addon!
+  (testing "user addon is successfully addon to the user catalog from just a github url"
+    (let [every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
+
+          fake-routes {"https://api.github.com/repos/Aviana/HealComm/releases"
+                       {:get (fn [req] {:status 200 :body (slurp (fixture-path "github-repo-releases--aviana-healcomm.json"))})}
+
+                       "https://api.github.com/repos/Aviana/HealComm/contents"
+                       {:get (fn [req] {:status 200 :body "[]"})}
+
+                       "https://github.com/Aviana/HealComm/releases/download/2.04/HealComm.zip"
+                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-addon-zip-file)})}}
+
+          user-url "https://github.com/Aviana/HealComm"
+
+          install-dir (utils/join fs/*cwd* "addon-dir")
+          _ (fs/mkdir install-dir)
+
+          expected-addon-dir (utils/join install-dir "EveryAddon")
+
+          expected-user-catalog [{:category-list [],
+                                  :game-track-list [],
+                                  :updated-date "2019-10-09T17:40:04Z",
+                                  :name "healcomm",
+                                  :source "github",
+                                  :label "HealComm",
+                                  :download-count 30946,
+                                  :source-id "Aviana/HealComm",
+                                  :uri "https://github.com/Aviana/HealComm"}]]
+      (with-running-app
+        (core/set-addon-dir! install-dir)
+        (with-fake-routes-in-isolation fake-routes
+          (core/add+install-user-addon! user-url)
+
+          ;; addon was found and added to user catalog
+          (is (= expected-user-catalog
+                 (:addon-summary-list (catalog/read-catalog (core/paths :user-catalog-file)))))
+
+          ;; addon was successfully download and installed
+          (is (fs/exists? expected-addon-dir)))))))
+
+(deftest moosh-addons
+  (testing "addons are mooshed together just right when a match is found in the db"
+    (let [toc {:name "everyaddon"
+               :label "EveryAddon"
+               :description "Toc Description"
+               :dirname "EveryAddon"
+               :interface-version 70000
+               :installed-version "1.2.3"}
+
+          addon-summary {:name "everyaddon"
+                         :label "EveryAddon"
+                         :category-list []
+                         :updated-date "2001-01-01"
+                         :download-count 123
+                         :source "wowinterface"
+                         :source-id 1
+                         :uri "https://www.wowinterface.com/downloads/info1"
+
+                         ;; wowinterface and tukui don't have descriptions in their api
+                         ;; the database will return a field with `nil` if the addon-summary
+                         ;; was inserted without one
+                         :description nil}
+
+          expected {:name "everyaddon"
+                    :label "EveryAddon"
+                    :description "Toc Description"
+                    :dirname "EveryAddon"
+                    :interface-version 70000
+                    :installed-version "1.2.3"
+
+                    :category-list []
+                    :updated-date "2001-01-01"
+                    :download-count 123
+                    :source "wowinterface"
+                    :source-id 1
+                    :uri "https://www.wowinterface.com/downloads/info1"
+
+                    ;; optional, lets the GUI know we have a match that can be checked for updates
+                    :matched? true}]
+      (is (= expected (core/moosh-addons toc addon-summary))))))

@@ -1,6 +1,6 @@
 create table if not exists catalog (
-    source enum('wowinterface', 'curseforge'),
-    source_id int,
+    source enum('wowinterface', 'curseforge', 'github', 'tukui', 'tukui-classic'),
+    source_id varchar(50),
 
     label varchar(255),
     name varchar(150), -- longest in catalog at time of writing is 49

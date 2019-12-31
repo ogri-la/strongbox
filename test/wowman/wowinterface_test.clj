@@ -22,7 +22,7 @@
                        :url "https://www.wowinterface.com/downloads/index.php?cid=44&sb=dec_date&so=desc&pt=f&page=1"}]
     (testing "a page of categories can be scraped"
       (with-fake-routes-in-isolation fake-routes
-        (let [results (wowinterface/parse-category-list "foobar")]
+        (let [results (wowinterface/scrape-category-group-page "foobar")]
           (is (= num-categories (count results)))
           (is (= first-category (first results)))
           (is (= last-category (last results))))))))
@@ -36,7 +36,7 @@
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (wowinterface/scrape-category-page-range category)))))))
 
-(deftest scrape-addon-page
+(deftest scrape-addon-list
   (testing "a single page of results from a category can be scraped"
     (let [category {:label "dummy" :url "https://www.wowinterface.com/downloads/cat19.html"}
           fixture (slurp "test/fixtures/wowinterface-category-page.html")
@@ -50,6 +50,7 @@
                        :updated-date "2019-07-29T21:37:00Z",
                        :download-count 80,
                        :category-list #{"dummy"}
+                       :source "wowinterface"
                        :source-id 25079}
           last-addon  {:uri "https://www.wowinterface.com/downloads/info24805",
                        :name "mattbars-mattui",
@@ -57,28 +58,10 @@
                        :updated-date "2018-10-30T17:56:00Z",
                        :download-count 1911,
                        :category-list #{"dummy"}
+                       :source "wowinterface"
                        :source-id 24805}]
       (with-fake-routes-in-isolation fake-routes
-        (let [results (wowinterface/scrape-addon-page category page)]
+        (let [results (wowinterface/scrape-addon-list category page)]
           (is (= num-addons (count results)))
           (is (= first-addon (first results)))
           (is (= last-addon (last results))))))))
-
-(deftest expand-summary
-  (testing "addon details are correctly scraped"
-    (let [fixture (slurp "test/fixtures/wowinterface-addon-page.html")
-          fake-routes {#".*" ;;https://www.wowinterface.com/downloads/info00000"
-                       {:get (fn [req] {:status 200 :body fixture})}}
-          addon-summary {:uri "https://www.wowinterface.com/downloads/info00000",
-                         :name "everyaddon", :label "Everyaddon",
-                         :updated-date "2001-01-01T00:00:00Z",
-                         :download-count 1, :category-list #{"dummy"}}
-
-          expected (merge addon-summary
-                          {:download-uri "https://cdn.wowinterface.com/downloads/file00000/everyaddon-8.2.10.zip",
-                           :version "8.2.10",
-                           :interface-version 80200})]
-      (with-fake-routes-in-isolation fake-routes
-        ;; the suspicious pause here taking 461 msecs of 480 msec execution is the conversion of the body into a html snippet
-        (let [results (wowinterface/expand-summary addon-summary)]
-          (is (= expected results)))))))

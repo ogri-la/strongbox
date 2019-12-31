@@ -6,12 +6,6 @@
     [catalog :as catalog]
     [http :as http]]))
 
-(deftest encode-url-path
-  (testing "url whose path has spaces is correctly encoded"
-    (let [path-with-spaces "https://addons.cursecdn.com/files/2548/794/AR 4.5.7.3.zip"
-          path-enc-spaces "https://addons.cursecdn.com/files/2548/794/AR%204.5.7.3.zip"]
-      (is (= path-enc-spaces (str (http/encode-url-path path-with-spaces)))))))
-
 (deftest download-404
   (testing "regular (non-streaming) download that yields a 404 returns an error map"
     (let [;; listed in the curseforge catalog but returns a 404 when fetched
@@ -24,6 +18,21 @@
                        {:get (fn [req] {:status 404 :reason-phrase "Not Found" :body "<h1>Not Found</h1>"})}}]
       (with-fake-routes-in-isolation fake-routes
         (is (nil? (catalog/expand-summary zombie-addon "retail")))))))
+
+(deftest uri-to-filename
+  (testing "urls can be converted to filenames safe for a filesystem"
+    (let [cases [["https://user:name@example.org/foo#anchor?bar=baz&baz=bar"
+                  "aHR0cHM6Ly91c2VyOm5hbWVAZXhhbXBsZS5vcmcvZm9vI2FuY2hvcj9iYXI9YmF6JmJhej1iYXI=.html"]
+
+                 ;; forward slashes are replaced with hyphens
+                 ["https://example.org/?"
+                  "aHR0cHM6Ly9leGFtcGxlLm9yZy8-.html"]
+
+                 ;; extensions are preserved if possible
+                 ["https://example.org/foo.asdf"
+                  "aHR0cHM6Ly9leGFtcGxlLm9yZy9mb28uYXNkZg==.asdf"]]]
+      (doseq [[given expected] cases]
+        (is (= expected (http/uri-to-filename given)))))))
 
 (deftest user-agent
   (testing "user agent version number"

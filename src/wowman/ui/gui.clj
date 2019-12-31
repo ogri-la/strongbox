@@ -31,6 +31,12 @@
 ;; - https://github.com/daveray/seesaw/wiki#native-look-and-feel
 (ss/native!)
 
+(defn-spec trigger-gui-restart nil?
+  "call to dispose of the current gui and let `main.clj` restart it"
+  []
+  (swap! core/state assoc :gui-restart-flag true)
+  nil)
+
 (defn select-ui
   [& path]
   (if-let [ui (get-state :gui)]
@@ -226,7 +232,8 @@
           content (into header labels)
           content (interleave content (repeat [:separator "growx, wrap"]))
 
-          dialog (ss/dialog :content (mig/mig-panel :items content)
+          dialog (ss/dialog :parent (select-ui :#root)
+                            :content (mig/mig-panel :items content)
                             :resizable? false
                             :type :warning
                             :option-type :ok-cancel
@@ -247,7 +254,8 @@
         content (remove nil? content)
         content (interleave content (repeat [:separator "growx, wrap"]))
 
-        dialog (ss/dialog :content (mig/mig-panel :items content)
+        dialog (ss/dialog :parent (select-ui :#root)
+                          :content (mig/mig-panel :items content)
                           :type :info
                           :resizable? false)]
     (-> dialog ss/pack! ss/show!)
@@ -256,7 +264,9 @@
 (defn configure-app-panel
   []
   (let [picker (fn []
-                 (when-let [dir (chooser/choose-file :type :open ;; ':open' forces a better dialog type in mac for opening directories
+                 (when-let [dir (chooser/choose-file (select-ui :#root)
+                                                     ;; ':open' forces a better dialog type in mac for opening directories
+                                                     :type :open
                                                      :selection-mode :dirs-only)]
                    (if (fs/directory? dir)
                      (do
@@ -316,14 +326,22 @@
                             ;; will save settings
                             (core/refresh))))))
 
-        update-clicker (when-not (core/latest-wowman-version?)
-                         (button (str "Update Available: " (core/latest-wowman-release))
-                                 (handler #(browse-to "https://github.com/ogri-la/wowman/releases"))))]
-    (ss/vertical-panel
-     :items [(ss/flow-panel :align :left
-                            :items (items refresh-button update-all-button wow-dir-button
-                                          wow-dir-dropdown wow-game-track
-                                          update-clicker))])))
+        items [[refresh-button]
+               [update-all-button]
+               [wow-dir-button]
+               [wow-dir-dropdown "wmax 200"]
+               [wow-game-track]]
+
+        update-clicker (button (str "Update Available: " (core/latest-wowman-release))
+                               (handler #(browse-to "https://github.com/ogri-la/wowman/releases")))
+
+        items (if-not (core/latest-wowman-version?)
+                (into items [update-clicker])
+                items)]
+
+    (mig/mig-panel
+     :constraints ["insets 0"]
+     :items items)))
 
 (defn installed-addons-panel-column-widths
   "this sucks"
@@ -424,10 +442,18 @@
                                      (.setCursor grid (cursor :hand))
                                      (.setCursor grid (cursor :default))))))
 
+        hyperlink-colour (-> :hyperlink colours name)
+        uri-template (str "<html><font color='" hyperlink-colour "'>&nbsp;↪ %s</font></html>")
         uri-renderer (fn [x]
                        (when x
-                         (let [label (if (= (subs x 12 22) "curseforge") "curseforge" "wowinterface")]
-                           (str "<html><font color='blue'>&nbsp;↪ " label "</font></html>"))))]
+                         (let [uri (java.net.URL. x)
+                               label (case (.getHost uri)
+                                       "www.curseforge.com" "curseforge"
+                                       "www.wowinterface.com" "wowinterface"
+                                       "github.com" "github"
+                                       "www.tukui.org" "tukui"
+                                       "???")]
+                           (format uri-template label))))]
 
     (ss/listen grid :mouse-motion hand-cursor-on-hover)
     (ss/listen grid :mouse-clicked go-link-clicked)
@@ -508,9 +534,9 @@
 (defn installed-panel
   []
   (mig/mig-panel
-   :constraints ["wrap 1"]
-   :items [[(configure-app-panel) "width 100%:100%"]
-           [(installed-addons-panel) "height 100%, width 99%::"]]))
+   :constraints ["flowy" "fill,grow"]
+   :items [[(configure-app-panel)]
+           [(installed-addons-panel) "height 100%"]]))
 
 (defn-spec search-input-handler nil?
   [ev ::sp/gui-event]
@@ -578,9 +604,9 @@
 (defn search-panel
   []
   (mig/mig-panel
-   :constraints ["wrap 1"]
-   :items [[(search-input-panel) "width 100%:100%"]
-           [(search-results-panel) "height 100%, width 99%::"]]))
+   :constraints ["flowy" "fill,grow"]
+   :items [[(search-input-panel)]
+           [(search-results-panel) "height 100%"]]))
 
 (defn notice-logger
   []
@@ -617,8 +643,8 @@
 
     ;; would love to know how to make these layouts and widths more consistent and deterministic
     (mig/mig-panel
-     :constraints ["wrap 1"]
-     :items [[(ss/scrollable grid) "height 100%, width 98.75%::"]])))
+     :constraints ["flowy" "fill,grow"]
+     :items [[(ss/scrollable grid) "height 100%"]])))
 
 (defn-spec switch-search-tab-handler nil?
   [_ ::sp/gui-event]
@@ -670,7 +696,8 @@
 
 (defn export-addon-list-handler
   []
-  (when-let [path (chooser/choose-file :type "Export"
+  (when-let [path (chooser/choose-file (select-ui :#root)
+                                       :type :save
                                        :selection-mode :files-only
                                        :filters [["JSON" ["json"]]]
                                        :success-fn (fn [_ file]
@@ -679,13 +706,38 @@
 
 (defn import-addon-list-handler
   []
-  (when-let [path (chooser/choose-file :type "Import"
+  (when-let [path (chooser/choose-file (select-ui :#root)
+                                       :type :open
                                        :selection-mode :files-only
                                        :filters [["JSON" ["json"]]]
                                        :success-fn (fn [_ file]
                                                      (str (.getAbsolutePath file))))]
     (core/import-exported-file path)
     (core/refresh)))
+
+(defn import-addon-handler
+  []
+  (let [addon-url (ss/input "Enter URL of addon"
+                            :title "Addon URL"
+                            :value "https://github.com/")
+
+        fail "Failed. URL must be:
+  * valid
+  * originate from github.com
+  * addon uses 'releases'
+  * latest release has a packaged 'asset'
+  * asset must be a .zip file
+  * zip file must be structured like an addon"
+
+        failure-warning #(ss/alert fail)
+
+        less-failure-warning #(ss/alert "Failed. Addon successfully added to catalogue but could not be installed.")]
+    (when addon-url
+      (if-let [result (core/add+install-user-addon! addon-url)]
+        (when-not (contains? result :download-uri)
+          (less-failure-warning))
+        (failure-warning))))
+  nil)
 
 (defn build-catalog-menu
   []
@@ -718,6 +770,26 @@
 
     catalog-menu))
 
+(defn build-theme-menu
+  "returns a menu of radio buttons that can toggle through the available themes defined in `core/themes`"
+  []
+  (let [button-grp (ss/button-group)
+
+        menu (mapv (fn [theme-key]
+                     (ss/radio-menu-item :id theme-key
+                                         :text (format "%s theme" (-> theme-key name clojure.string/capitalize))
+                                         :group button-grp
+                                         :selected? (= (core/get-state :cfg :gui-theme) theme-key)))
+                   (keys core/themes))]
+
+    (sb/bind (sb/selection button-grp)
+             (sb/b-do* (fn [val]
+                         (when val ;; sometimes we get nil values?
+                           (swap! core/state assoc-in [:cfg :gui-theme] (ss/id-of val))
+                           (core/save-settings)
+                           (trigger-gui-restart)))))
+    menu))
+
 (defn start-ui
   []
   (let [root->splitter (ss/top-bottom-split (mk-tabber) (notice-logger))
@@ -734,23 +806,31 @@
                :size [1024 :by 768]
 
                :content (mig/mig-panel
-                         :constraints ["flowy"] ;; ["debug,flowy"]
-                         :items [[root "height 100%, width 100%:100%:100%"]])
-               :on-close (if (utils/in-repl?) :dispose :exit)) ;; exit app entirely when not in repl
+                         :constraints ["flowy" "fill,grow"] ;; ["debug,flowy"]
+                         :items [[root "height 100%"]])
+
+               :on-close (if (core/get-state :in-repl?) :dispose :exit)) ;; exit app entirely when not in repl
+
 
         file-menu [(ss/action :name "Installed" :key "menu I" :mnemonic "i" :handler (switch-tab-handler INSTALLED-TAB))
                    (ss/action :name "Search" :key "menu H" :mnemonic "h" :handler (switch-tab-handler SEARCH-TAB))
                    :separator
                    (ss/action :name "Exit" :key "menu Q" :mnemonic "x" :handler (handler #(ss/dispose! newui)))]
 
-        catalog-menu (build-catalog-menu)
+        view-menu (build-theme-menu)
+
+        catalog-menu (into (build-catalog-menu)
+                           [:separator
+                            (ss/action :name "Refresh user catalog" :handler (async-handler core/refresh-user-catalog))])
 
         addon-menu [(ss/action :name "Update all" :key "menu U" :mnemonic "u" :handler (async-handler core/install-update-all))
                     (ss/action :name "Re-install all" :handler (async-handler core/re-install-all))
                     :separator
                     (ss/action :name "Remove directory" :handler (async-handler core/remove-addon-dir!))]
 
-        impexp-menu [(ss/action :name "Export addon list" :handler (async-handler export-addon-list-handler))
+        impexp-menu [(ss/action :name "Import addon from Github" :handler (handler import-addon-handler))
+                     :separator
+                     (ss/action :name "Export addon list" :handler (async-handler export-addon-list-handler))
                      (ss/action :name "Import addon list" :handler (async-handler import-addon-list-handler))]
 
         cache-menu [(ss/action :name "Clear cache" :handler (async-handler core/delete-cache!))
@@ -765,6 +845,7 @@
 
         menu (ss/menubar :id :main-menu
                          :items [(ss/menu :text "File" :mnemonic "F" :items file-menu)
+                                 (ss/menu :text "View" :mnemonic "V" :items view-menu)
                                  (ss/menu :text "Catalog" :items catalog-menu)
                                  (ss/menu :text "Addons" :mnemonic "A" :items addon-menu)
                                  (ss/menu :text "Import/Export" :mnemonic "i" :items impexp-menu)
@@ -797,5 +878,7 @@
     (ss/dispose! (:gui @core/state))
     (catch RuntimeException re
       (warn "failed to stop state:" (.getMessage re)))))
+
+;;
 
 (st/instrument)

@@ -112,3 +112,107 @@
           (is (not (utils/file-older-than path 3)))
           (finally
             (fs/delete path)))))))
+
+(deftest pad
+  (let [cases [;;[[nil 2] nil] ;; must be a collection
+               [[[] 0] []]
+               [[[] 2] [nil nil]]
+               [[[nil nil] 2] [nil nil]]
+               [[[:foo :bar] 2] [:foo :bar]]
+               [[[:foo] 2] [:foo nil]]
+               [[[:foo :bar] 1] [:foo :bar]]]]
+    (doseq [[[coll pad-amt] expected] cases]
+      (testing (str "list is padded, case:" expected)
+        (is (= expected (utils/pad coll pad-amt)))))))
+
+(deftest nilable
+  (let [cases [[nil nil]
+               [[] nil]
+               ['() nil]
+               [{} nil]
+               [false nil]
+               ["" nil]
+               ["      " nil]
+
+               [1 1]
+               [:foo :foo]
+               [[1] [1]]
+               [{:foo 1} {:foo 1}]]]
+    (doseq [[given expected] cases]
+      (testing (str "certain false-y values can be coerced to nil, case: " given)
+        (is (= expected (utils/nilable given)))))))
+
+(deftest named-regex-groups
+  (let [cases [[[#"(.*)" [] "bar"] {}]
+               [[#"(.*)" [:foo] "bar"] {:foo "bar"}]]]
+    (doseq [[args expected] cases]
+      (testing (str "pattern matches are extracted into a map correctly, case: " args)
+        (is (= expected (apply utils/named-regex-groups args)))))))
+
+(deftest replace-file-ext
+  (let [cases [[["/path/to/foo.ext" ".json"] "/path/to/foo.json"]
+               [["/path/to/foo.ext" "json"] "/path/to/foo.json"]
+               [["foo.ext" ".json"] "foo.json"]
+               [["foo.ext" "json"] "foo.json"]
+
+               [["foo" ".json"] "foo.json"]]]
+    (doseq [[[given given-ext] expected] cases]
+      (testing (format "a file can have it's extension replaced, case: (%s %s)" given given-ext)
+        (is (= expected (utils/replace-file-ext given given-ext)))))))
+
+(deftest all
+  (let [cases [[[nil] false]
+               [[nil nil nil] false]
+               [[false] false]
+               [[false false false] false]
+               [[nil false nil] false]
+               [[false nil false] false]
+
+               [[] true]
+               [[""] true]
+               [[0] true]
+               [[1 2 3] true]
+
+               [[1 2 nil] false]
+               [[1 nil 3] false]
+               [[false 2 3] false]]]
+    (doseq [[given expected] cases]
+      (testing (format "'all', case: (%s %s)" given expected)
+        (is (= expected (utils/all given)))))))
+
+(deftest any
+  (let [cases [[[nil] false]
+               [[nil nil nil] false]
+               [[false] false]
+               [[false false false] false]
+               [[nil false nil] false]
+               [[false nil false] false]
+
+               [[] false] ;; different from 'and' behaviour
+               [[""] true]
+               [[0] true]
+               [[1 2 3] true]
+
+               [[1 2 nil] true]
+               [[1 nil 3] true]
+               [[false 2 3] true]]]
+    (doseq [[given expected] cases]
+      (testing (format "'any', case: (%s %s)" given expected)
+        (is (= expected (utils/any given)))))))
+
+(deftest drop-nils
+  (let [cases [[{} [] {}]
+               [{} [:foo] {}]
+               [{} [nil] {}]
+               [{} ["foo"] {}]
+
+               [{:foo nil} [] {:foo nil}]
+               [{:foo nil} [:foo] {}]
+               [{:foo :bar} [:foo] {:foo :bar}]
+               [{:foo :bar, :bar nil} [:foo] {:foo :bar, :bar nil}]
+               [{:foo :bar, :bar nil} [:bar] {:foo :bar}]]]
+
+    (doseq [[m fields expected] cases]
+      (testing (format "'drop-nils', case: (%s %s => %s)" m fields expected)
+        (is (= expected (utils/drop-nils m fields)))))))
+

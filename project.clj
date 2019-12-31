@@ -1,4 +1,4 @@
-(defproject ogri-la/wowman "0.10.2"
+(defproject ogri-la/wowman "0.11.0"
   :description "World Of Warcraft Addon Manager"
   :url "https://github.com/ogri-la/wowman"
   :license {:name "GNU Affero General Public License (AGPL)"
@@ -12,7 +12,6 @@
                  [org.clojure/data.json "0.2.6"] ;; better json decoding
                  [orchestra "2018.12.06-2"] ;; improved clojure.spec instrumentation
                  ;; see lein deps :tree
-                 [metosin/spec-tools "0.9.2" :exclusions [com.fasterxml.jackson.core/jackson-core]] ;; more improvements to clojure.spec handling
                  [com.taoensso/timbre "4.10.0"] ;; logging
                  [enlive "1.1.6"] ;; html parsing
                  [clj-http "3.10.0"] ;; better http slurping
@@ -32,6 +31,9 @@
                  ;; remember to update pom file (`lein pom`)
 
                  ]
+
+  ;; java 11 , java-time localisation issue 
+  ;;:jvm-opts ["-Djava.locale.providers=COMPAT,CLDR"]
 
   :profiles {:uberjar {:aot :all}}
 

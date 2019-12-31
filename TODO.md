@@ -4,128 +4,91 @@ this is my own scratchpad for keeping track of things. it gets truncated frequen
 
 see CHANGELOG.md for a more formal list of changes by release
 
-## 0.10.0 release
+## 0.12.0 release
 
 ### done
 
-* investigate switching to an embedded database
-    - there is a lot of catalog-wrangling code happening and it's getting obscure
-        - there is new code now but it's less obscure
-    - searching for addons is really limited
-        - especially now that we have new dimensions
-    - db creation could happen in place of catalog generation
-        - or the database could be created from the catalog
-            - if db is smaller than catalog, this might be a consideration
-        - I think generating the database from the plaintext/json catalog is the most open and flexible
-            - open in that plain text/json is the easiest to inspect/parse/reuse
-            - flexible in that generating an in-memory database on each load avoids database migrations
-                - still need to be careful with changes going forward, but I have been with the catalog so far
-        - done
-    - update tests so we get a fresh db
-        - follow per-case/per-test fixture rules
-        - done
-    - replace :addon-summary-list usage internally with database
-        - done
-    - replace :installed-addon-list usage internally with database
-        - we'll need some way of triggering changes
-            - I've done this by updating the state with some stats 
-        - need to think a bit more about this one now that :addon-summary-list is happening
-            - should this replace .wowman.json files?
-                - no, because database isn't permanent
-            - what benefits are there to storing the list of installed addons in the database rather than in an array?
-                - we've already discovered it can be painful to re-create arrays and maps
-* user-agent needs to be updated
-    - it using a naive (subs ...) call
-    - done
-        - should handle anything I throw it from now on
-* short catalog, full catalog
-    - the catalog is getting big now and will only get larger
-        - curseforge and wowinterface keep accumulating new addons
-        - other sources will come along
-        - database loading operation is already taking a little too long for my liking
-    - a lot of addons could be removed as simply being 'too old'
-        - addons that haven't been updated for two or three releases (6 years) for example
-    - I want to preserve the entirety of the catalog if possible though
-        - perhaps a game setting to opt-in to the larger download
-        - done
-    - investigate how small we can reasonably get the catalog
-        - after removing addons not updated since before beginning of last expac (Legion):
-            - 6555 addons total
-            - 3.1MB file
-            - 1.5 second db load time
-                "Elapsed time: 1.222319 msecs" (categories)
-                "Elapsed time: 483.493881 msecs" (addons)
-                "Elapsed time: 860.562001 msecs" (category->addons)
-        - there are other tricks I could use to cut out some of the fields and just generate them at load time
-            - I think the structure of the catalog will need a more thoughtful revision though
-        - done
-    - support N catalogs
-        - full, short, curseforge, wowinterface
-            - done
-        - curseforge and wowinterface are proper catalogs
-            - they're missing 'source'
-                - hacked around for now
-            - done
-        - done
-* remove 'updating' catalogs
-    - a full weekly scrape is good enough
-    - this logic has introduced a *lot* of code that can be removed
-    - scraping curseforge api doesn't seem too onerous anymore
-    - done
-* remove html scraping of catalogs
-    - wowinterface will have some exceptions
-    - done
-* 'scrape' and 'update' are not great terms
-    - scrape means 'complete update'
-    - update means 'partial update'
-    - I may be removing the updating of catalogs in favour of full scrapes
-    - done
-        - only 'scrape' remains now
-        - 'update' reserved soley for 'updating addons' now
-* openjdk 11 (LTS) support
-    - done
-* we need locking around catalog switching
-    - the old one must have any open transactions closed and be shutdown before switching
-    - this should be easy to recreate
-    - done
-* bug, 'clear cache' didn't delete the catalog.json
-    - added option to 'Cache' menu to 'Clear catalogs'
-    - done
-* bug, curseforge.json is getting a strange duplication of results while generating the catalog
-    - this is preventing automated catalog *updates*, not the full regeneration apparently
-    - I can't replicate this anymore. It may show up later, but for now it's blocking a 0.8.0 release
-    - also,
-    - obsolete
-        - catalog generation is now done via the api
-        - intermediate file is no longer generated
-        - updates are no longer performed, full scrapes only
-* download-catalog bug
-    - I *think* something or things are trying to read the catalog before it has finished downloading
-        - this is causing malformed json errors
-    - download the catalog to a temporary name and then move into place
-        - done
-    - regression in load-catalog
-        - 0.9.2 used load-json-safely and in develop we're just using load-json
-        - on bad data, attempt to download the catalog once more
-        - done
-* bug, sql files are not being read from the .jar but from the filesystem
-    - done
-* mac, add native look+feel
-    - done
-* gui tests are bypassing the path wrangling because the envvar library is using thread-local `binding`
-    - change path access to an atom
-    - I *think* this may have something to do with a truncated catalog I've encountered now (twice)
-        - entirely possible. this should have been addressed in other todos
-
 ### todo
 
-* 0.10.2 prep
+* release 0.11.0
 
-## todo bucket
+## todo bucket (no particular order)
 
+* bug, selected directory is incorrect after restarting gui (by switching themes)
+* add custom highlighting colours
+    - I don't mind my colours but not everybody may
+    - my colours don't work very well on native lnf + dark themes:
+        - https://github.com/ogri-la/wowman/issues/105
+* windows support
+    - ~must be included in CI~
+    - tests pass
+    - readme updated
+    - release updated
+    - pushed back to next release
+* add a 'addons dir' to the test helper
+    - lots of boilerplate around this in core_test.clj
+* allow user to specify their own catalogs
+    - a url to a catalog that is downloaded and included while loading up the db
+    - different from the 'user catalog'
 * rename 'go' column to 'catalogue' 
-* it's possible for `.part` files to exist and not be cleaned up
-* add 'source' properties to curseforge and wowinterface catalogs
+* gitlab as addon host
+    - https://gitlab.com/search?search=wow+addon
+    - returned to bucket 2019-12-04, notes:
+        - gitlab doesn't handle releases like github does
+            - https://stackoverflow.com/questions/29520905/how-to-create-releases-in-gitlab
+        - there are very few gitlab addons (88)
+        - api is quite slow
+    - if somebody asks for this especially I'll consider it
+* add support for user supplied github token
+    - necessary if they want a large number of github addons without hassles
+* when curseforge api is down users get a wall of red error messages with very little useful information
+    - see issue 91: https://github.com/ogri-la/wowman/issues/91
+        - the error message has been improved but we still get a red wall of text
+        - aggregate error messages?
+* investigate state of java packaging
+    - https://www.infoq.com/news/2019/03/jep-343-jpackage/
+* github-api, also look for 'retail' in addon name to determine game track
+    - rather than just 'classic'
+* add support for reconciling addons by 'x-curse' and 'x-wowi' ids
+    - example: https://github.com/ascott18/TellMeWhen/blob/master/TellMeWhen.toc#L19-L20
+* add an option that forces installation of addon if matching game track not found
+    - enable it by default
+    - add a warning when installing an addon that doesn't match game track
+    - add a summary after each refresh about the state of installed addons
+        - "123 addons installed, 1 unmatched addon, 2 retail addons installed"
+        - "123 addons installed, 2 classic addons installed"
+    - preserve this in user settings
+    - perhaps couple this with the GUI logic for the status bar down the bottom
+* bug, clearing catalogues and clicking refresh doesn't see the database rebuilt
+    - the catalog is downloaded though
+* new tab for dedicated log
+* import/export, capture game track of exported addon dir?
+* import/export, export user catalogue
+* github, importing an exported addon list with a github addon won't see that addon installed
+    - unless that addon is present in the user catalogue
+        - which in a fresh install where a list of addons are being restored is unlikely...
+    - this is interesting actually. the exported addon list has become a mini-catalogue
+        - some addons require the larger catalogue to resolve
+        - github addons are resolved and installed by a different means...
+* github, installation from github via import menu not updating log until finished
+    - this is an async issue
+* simplify `install-addon` interface in core.clj
+    - we need to provide an installation directory which can be pulled from the application state
+* rename references of 'uri' to 'url'
+* version pinning
+    - user can opt to install a specific release of an addon
+    - automatic updates for that addon are thereafter blocked
+* alpha/beta opt-in
+    - user can opt to install alpha/beta/no-lib releases per-addon
+* rename 'reinstall all' to 'reconcile'
+    - steal from the best
+    - make the reconcile automatic
+        - if a .wowman.json file isn't found
+    - remove the 'first time instructions' from the readme
+        - it should just fucking do it
+* investigate better popularity metric than 'downloads'
+    - if we make an effort to scrape everyday, we can generate this popularity graph ourselves
+
 * gui 'wow' column is inconsistent
     - for curseforge, it's pulling it's value from :gameVersion, which may be empty
         - in which case it pulls it's value from the toc file, which may be different from the selected game track
@@ -134,8 +97,6 @@ see CHANGELOG.md for a more formal list of changes by release
         - and would this be inconsistent with the other fields that are also changing with new catalog information?
 * have the info box scroll the other direction
     - this is possible, see the seesaw examples
-* remove the 'curse-crap-redirect-strategy' in http.clj
-    - was used when curse *website* (not api) would redirect us to an unencoded path
 * add checksum checks after downloading
     - curseforge have an md5 that can be used
         - unfortunately no checksum in api results
@@ -146,28 +107,17 @@ see CHANGELOG.md for a more formal list of changes by release
 * database, compare current speed and code against loading addon category data serially
     - as opposed to in three blocks (categories, addons, category-addons). We might save some time and code
 * database, investigate prepared statements when inserting for improved speed
-* bug, if an addon directory goes missing between restarts, user configuration is lost
-    - initially it's ignored, but then the new settings are saved over the top
-* bug, we have addons in multiple identical categories. fix this in catalog.clj
-    - see 319346
-    - remove call to set in db-load-catalog
-* investigate usage of spec-tools/coerce and remove if necessary
 * wowman-data, stop publishing a 'daily' release
     - we have multiple catalogs now
+    - 0.10.0 uses the raw catalog files directly
+    - 0.9.2 was still using the daily release
+    - remove the 'daily' release after 0.11.0 is released
 * remove debugging? mode
-* bug, export addon list isn't using selected directory
 * export to markdown
     - I think I'd like a simple list like:
         * [addon name](https://source/path/to/addon)
     - of course, this would be a different type of export than the one used for import
         - although ... I could possibly parse the list ... and nah.
-* switch catalog loading to load-json-file-safely
-* when adding an addon-dir, if path ends with /_classic_/Interface/Addons, set game track to classic
-* add a sha256 sum to release file
-    - will prevent me from having to download release to generate a sumfile
-* add custom highlighting colours 
-    - I don't mind my colours but not everybody may
-* add ElvUI support. they have json that can be scraped
 * add a 'tabula rasa' option that wipes *everything* 
     - cache, catalog, config, downloaded zip files
 * coloured warnings/errors on console output
@@ -192,13 +142,11 @@ see CHANGELOG.md for a more formal list of changes by release
         - if we start doing download concurrently, we need to pass our binds to the threads
             - which I'm not sure if is possible
         - moving back into bucket until I get around to doing parallel downloads
-* allow user to specify their own catalog
-    - what can we do to support adhoc lists of addons from unsupported hosts?
-    - we have both curseforge and wowinterface supported now
 * testing, capture metrics with an eye to improving performance and speed
     - we have coverage metrics now
     - would like some timing around certain operations
         - like loading the catalog
+            - done
         - like downloading and installing the top-10, top-20, top-N addons
             - this could be a good benchmark actually
                 - how quickly can one go from 'nothing installed' to '20 addons installed' ?
@@ -211,12 +159,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * group search results?
     - group by downloads/age/category?
         - it would finally be the best use for category data
-* windows support
-    - eh. I figure I can do it with a VM. I just don't really wanna.
-    - for the 1.0.0 release
-    - I now have an old WinXP (64bit!) machine
-        - one of the first 64bit Athlons available
-        - this should force some performance optimisations as well
 * memory usage
     - we're big and fat :(
     - lets explore some ways to measure and then reduce memory usage
@@ -232,6 +174,7 @@ see CHANGELOG.md for a more formal list of changes by release
         - how to pick preferred attributes without continuous (or key else other-key) ?
             - (getattr addon :label) ;; does multiple lookups ...? seems kinda meh
     - post 1.0
+    - wait until spec2 is released for an overhaul of current specs
 * toggleable highlighers as a menuitem
     - highlight unmatched
     - highlight updates
@@ -245,7 +188,7 @@ see CHANGELOG.md for a more formal list of changes by release
         - making it available as the 'unstable' release that always gets replaced
     - project.clj "x.y.z-unreleased" would be changed to "x.y.z-unstable"
     - development would happen mainly in feature branches
-* internationalisation? 
+* internationalisation?
     - Akitools has no english description but it does have a "Notes-zhCN" in the toc file that could be used
     - wowman was mentioned on a french forum the other day ..
 * a 'stop' button to stop updates would be nice ...
@@ -265,14 +208,29 @@ see CHANGELOG.md for a more formal list of changes by release
 * gui, pagination controls in search pane
 * gui, scroll tabs with mouse
 * gui, search, order by date only orders the *current page* of results
+* add support for finding addons by url for other hosts
+    - wowinterface
+    - curseforge
+    - but these addons already exist in the main catalog ...
+        - should they be taken to a search results page?
+        - because what is presumably happening is the user can't find their addon in the search results (or can't be arsed to) and is saying "just install this please"
+            - but wowman uses catalogs as a source of data, so if it can't find the addon in the catalog, then what? 
+                - fail? but the user just gave us a URL (UNIVERSAL RESOURCE LOCATOR) ! what is the fucking problem here?
+    - the problem is expectations. wowman doesn't scrape addon host website HTML if it can avoid it
+        - and user enters addon host website URL
+    - this should be solved with more sophisticated catalogue searching
+        - parse identifiers from URL, like source and source ID, then display search results
+            - again, by encouraging the copying+pasting of URLs and then failing to find results when the URL IS RIGHT THERE AND WORKING we set ourselves up for failure and the user for disappointment/frustration
+    - parking this
+
+## wontfix
+
 * addon 'detail' tab
     - link to curseforge
     - donation url
     - other addons by author ?
     - list the hidden/sub dependencies
-
-## wontfix
-
+    - too vague, too open ended, too much effort
 * addons distributed as .rar files
     - !BeautyLoot on wowinterface is an example of this
         - https://www.wowinterface.com/downloads/info20212

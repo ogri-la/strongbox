@@ -17,26 +17,6 @@
 (def expiry-offset-hours 24) ;; hours
 (def ^:dynamic *cache* nil)
 
-(defn-spec encode-url-path uri?
-  "given a url, explodes it, encodes the path, returns a uri object"
-  [url string?]
-  (let [url (java.net.URL. url)
-        protocol (.getProtocol url)
-        host (.getHost url)
-        path (.getPath url) ;; unencoded
-        fragment nil]
-    ;; properly encoded
-    (java.net.URI. protocol host path fragment)))
-
-(def curse-crap-redirect-strategy
-  (proxy [org.apache.http.impl.client.DefaultRedirectStrategy] []
-    (createLocationURI [loc]
-      (try
-        (java.net.URI. loc)
-        (catch java.net.URISyntaxException e
-          (warn "redirected to bad URI! encoding path:" loc)
-          (encode-url-path loc))))))
-
 (defn- add-etag-or-not
   [etag-key req]
   (if-let [;; for some reason this dynamic binding of *cache* to nil results in:
@@ -87,17 +67,25 @@
   (when (and output-file (fs/exists? output-file))
     (not (utils/file-older-than output-file expiry-offset-hours))))
 
+(defn-spec uri-to-filename ::sp/file
+  "safely encode a URI to something that can live cached on the filesystem"
+  [uri ::sp/uri]
+  (let [;; strip off any nasty parameters or anchors.
+        ;; default to '.html' if there is no extension, it's just decorative
+        ext (-> uri java.net.URL. .getPath (subs 1) fs/split-ext second (or ".html"))]
+    ;; base64 has a '/' as part of it's allowed alphabet!
+    ;; replace these cases with a hyphen (which isn't part of it's alphabet)
+    (-> uri .getBytes b64/encode String. (clojure.string/replace #"/" "-") (str ext))))
+
 (defn-spec -download (s/or :file ::sp/extant-file, :raw ::sp/http-resp, :error ::sp/http-error)
   "if writing to a file is possible then the output file is returned, else the raw http response.
    writing response body to a file is possible when caching is available or `output-file` provided."
   [uri ::sp/uri, output-file (s/nilable ::sp/file), message (s/nilable ::sp/short-string), extra-params map?]
   (let [cache? (not (nil? *cache*))
-        ext (-> uri fs/split-ext second (or ".html")) ;; *probably* html, we don't particularly care
-        encoded-path (-> uri .getBytes b64/encode String. (str ext))
+        encoded-path (uri-to-filename uri)
         alt-output-file (when cache?
                           (utils/join (:cache-dir *cache*) encoded-path)) ;; "/path/to/cache/aHR0[...]cHM6=.html"
         output-file (or output-file alt-output-file) ;; `output-file` may still be nil after this!
-
         etag-key (when cache? (fs/base-name output-file))
         streaming-response? (-> extra-params :as (= :stream))]
 
@@ -119,8 +107,7 @@
         (when message (info message)) ;; always show the message that was explicitly passed in
         (debug (format "downloading %s to %s" (fs/base-name uri) output-file))
         (client/with-additional-middleware [client/wrap-lower-case-headers (etag-middleware etag-key)]
-          (let [params {:redirect-strategy curse-crap-redirect-strategy
-                        :cookie-policy :ignore} ;; completely ignore cookies. doesn't stop HttpComponents warning
+          (let [params {:cookie-policy :ignore} ;; completely ignore cookies. doesn't stop HttpComponents warning
                 use-anon-useragent? false
                 params (merge params (user-agent use-anon-useragent?) extra-params)
                 _ (debug "requesting" uri "with params" params)
@@ -144,7 +131,7 @@
 
             (cond
               ;; remote data has changed, write body to disk
-              (and output-file modified) (do
+              (and output-file modified) (try
                                            (clojure.java.io/copy (:body resp) (java.io.File. partial-output-file)) ;; doesn't .close on streams
                                            (when streaming-response?
                                              ;; stream request responses get written to a file, the stream closed and the path to the output file returned
@@ -153,7 +140,10 @@
                                            ;; much shorter than N seconds to download a file
                                            (locking output-file
                                              (fs/rename partial-output-file output-file))
-                                           output-file)
+                                           output-file
+                                           (finally
+                                             (if (fs/exists? partial-output-file)
+                                               (fs/delete partial-output-file))))
 
               ;; remote data has not changed, :body is nil, replace it with path to file
               (and output-file not-modified) (do
@@ -172,9 +162,12 @@
                       ;; "Note that the connection to the server will NOT be closed until the stream has been read"
                       ;;  - https://github.com/dakrone/clj-http
                       (some-> ex ex-data :body .close))
-                  http-error (select-keys (ex-data ex) [:reason-phrase :status])]
-              (error (format "failed to download file '%s': %s (HTTP %s)"
-                             uri (:reason-phrase http-error) (:status http-error)))
+                  request-obj (java.net.URL. uri)
+                  http-error (merge (select-keys (ex-data ex) [:reason-phrase :status])
+                                    {:host (.getHost request-obj)})]
+              (warn (format "failed to download file '%s': %s (HTTP %s)"
+                            uri (:reason-phrase http-error) (:status http-error)))
+
               http-error)
 
             ;; unhandled non-http exception
@@ -184,6 +177,32 @@
   [http-resp]
   (and (map? http-resp)
        (<= 400 (:status http-resp))))
+
+(defn-spec http-error string?
+  "returns an error specific to code and host"
+  [http-err ::sp/http-error]
+  (let [key (-> http-err (select-keys [:host :status]) vals set)]
+    (condp (comp clojure.set/intersection =) key
+      ;; github api quota exceeded OR github thinks we were making requests too quickly
+      #{"api.github.com" 403} "Github: we've exceeded our request quota and have been blocked for an hour."
+
+      ;; issue 91, CDN problems 
+      #{"addons-ecs.forgesvc.net" 502} "Curseforge: the API is having problems right now (502). Try again later."
+      #{"addons-ecs.forgesvc.net" 504} "Curseforge: the API is habing problems right now (504). Trye again later."
+
+      #{403} "Forbidden: we've been blocked from accessing that (403)"
+
+      (:reason-phrase http-err))))
+
+(defn sink-error
+  "given a http response, if response was unsuccessful, emit warning/error message and return nil,
+  else return response."
+  [http-resp]
+  (if-not (http-error? http-resp)
+    ;; no error, pass response through
+    http-resp
+    ;; otherwise, scream and yell and return nil
+    (error (http-error http-resp))))
 
 ;;(defn-spec download (s/or :ok ::sp/http-resp, :error ::sp/http-error)
 ;;  [uri ::sp/uri, message ::sp/short-string]

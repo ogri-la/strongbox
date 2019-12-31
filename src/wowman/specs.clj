@@ -19,10 +19,8 @@
 
 ;; addon data that can be scraped from the listing pages
 (s/def ::addon-summary
-  (s/keys :req-un [::uri ::name ::label ::category-list ::updated-date ::download-count]
-          :opt [::source ;; only present in catalog which messes with tests right now
-                ::source-id ;; make required when we drop html scraping
-                ::description ;; wowinterface summaries have no description
+  (s/keys :req-un [::uri ::name ::label ::category-list ::updated-date ::download-count ::source ::source-id]
+          :opt [::description ;; wowinterface summaries have no description
                 ::created-date ;; wowinterface summaries have no created date
                 ::game-track-list ;; more of a set, really
                 ]))
@@ -40,9 +38,11 @@
   (s/keys :req-un [::name ::label ::description ::dirname ::interface-version ::installed-version]
           :opt [::group-id ::primary? ::group-addons]))
 
-;; the result of merging an installed addon (toc) with an installable addon
-;; this is very much a utility-type shape for convenience over purity
-;; todo: renamed '::matched-addon' or similar
+;; the result of merging an installed addon (toc) with an installable addon from the catalogue
+(s/def ::toc-addon-summary
+  (s/merge ::toc ::addon-summary (s/keys :opt [::matched?])))
+
+;; the result of 'expanding' an ::toc-addon-summary (matched addon) with further fields from addon host
 (s/def ::toc-addon
   (s/merge ::toc ::addon (s/keys :opt [::update?])))
 
@@ -75,7 +75,7 @@
 (s/def ::label string?) ;; name of the addon without normalisation
 (s/def ::dirname string?)
 (s/def ::description (s/nilable string?))
-
+(s/def ::matched? boolean?)
 (s/def ::group-id string?)
 (s/def ::primary boolean?)
 (s/def ::group-addons ::toc-list)
@@ -98,7 +98,7 @@
 (s/def ::updated-date ::inst)
 (s/def ::catalog-created-date ::ymd-dt)
 (s/def ::catalog-updated-date ::ymd-dt)
-(def catalog-sources #{"curseforge" "wowinterface"})
+(def catalog-sources #{"curseforge" "wowinterface" "github" "tukui" "tukui-classic"})
 (s/def ::catalog-source catalog-sources)
 (s/def ::zoned-dt-obj #(instance? java.time.ZonedDateTime %))
 (s/def ::download-count (s/and int? #(>= % 0)))
@@ -120,17 +120,19 @@
 (s/def ::install-dir (s/nilable ::extant-dir))
 (s/def ::debug? boolean?)
 (s/def ::game-track #{"retail" "classic"})
-(s/def ::game-track-list ::game-track) ;; just an alias for the catalog, consistent with category-list (also a set)
+(s/def ::game-track-list (s/coll-of ::game-track :kind vector? :distinct true))
 (s/def ::addon-dir ::extant-dir)
 (s/def ::selected? boolean?)
 (s/def ::addon-dir-map (s/keys :req-un [::addon-dir ::game-track]))
 (s/def ::addon-dir-list (s/coll-of ::addon-dir-map))
 (s/def ::selected-catalog keyword?)
-(s/def ::user-config (s/keys :req-un [::addon-dir-list ::debug? ::selected-catalog]))
+(s/def ::gui-theme #{:light :dark})
+(s/def ::user-config (s/keys :req-un [::addon-dir-list ::debug? ::selected-catalog ::gui-theme]))
 
 (s/def ::reason-phrase (s/and string? #(<= (count %) 50)))
 (s/def ::status int?) ;; a little too general but ok for now
-(s/def ::http-error (s/keys :req-un [::reason-phrase ::status]))
+(s/def ::host string?)
+(s/def ::http-error (s/keys :req-un [::reason-phrase ::status ::host]))
 (s/def ::body any?) ;; even a nil body is allowed (304 Not Modified)
 (s/def ::http-resp (s/keys :req-un [::status ::body])) ;; *at least* these keys, it will definitely have others
 

@@ -15,6 +15,24 @@
    [java-time :as jt]
    [java-time.format]))
 
+(defn-spec all boolean?
+  "true if all items in `lst` are neither nil nor false"
+  [lst sequential?]
+  (every? identity lst))
+
+(defn-spec any boolean?
+  "true if any item in `lst` is neither nil nor false"
+  [lst sequential?]
+  ((complement not-any?) identity lst))
+
+(defn-spec pad coll?
+  "given a collection, ensures there are at least pad-amt items in result. pad value is nil"
+  [lst coll?, pad-amt int?]
+  (let [lst-size (count lst)]
+    (if (< lst-size pad-amt)
+      (into lst (repeat (- pad-amt lst-size) nil))
+      lst)))
+
 (defmacro static-slurp
   "just like `slurp`, but file is read at compile time.
   good for static, unchanging, files. less good during development"
@@ -66,17 +84,6 @@
 (defn dissoc-all
   [m l]
   (apply dissoc m l))
-
-;; orphaned, might be useful still?
-(defn-spec file-ext-as-kw (s/or :ok keyword?, :error nil?)
-  [path ::sp/file]
-  ;; /tmp/foo.edn => :edn
-  ;; /tmp/foo     =>  nil
-  (some-> path fs/extension (subs 1) trim lower-case keyword))
-
-(defn-spec replace-file-ext (s/or :ok string?, :error nil?)
-  [path ::sp/file, ext string?]
-  (-> path str fs/split-ext first (str ext)))
 
 (defn-spec file-older-than boolean?
   [file ::sp/extant-file, hours pos-int?]
@@ -185,6 +192,17 @@
   [x]
   (if (false? x) nil x))
 
+(defn nilable
+  [x]
+  (cond
+    (nil? x) nil
+    (false? x) nil
+    (and (coll? x)
+         (empty? x)) nil
+    (and (string? x)
+         (clojure.string/blank? x)) nil
+    :else x))
+
 (defn pprint
   [x]
   (with-out-str (clojure.pprint/pprint x)))
@@ -252,18 +270,13 @@
   [f l]
   (for [x l :let [tx (f x)] :when tx] tx))
 
-(defn nil-if-empty
-  [s]
-  (when s
-    (if (empty? (clojure.string/trim s)) nil s)))
-
 (defn-spec to-json ::sp/json
   [x ::sp/anything]
   (json/generate-string x {:pretty true}))
 
 (defn from-json
   [x]
-  (clojure.data.json/read-str x :key-fn keyword))
+  (some-> x (clojure.data.json/read-str :key-fn keyword)))
 
 (defn-spec dump-json-file ::sp/extant-file
   [path ::sp/file, data ::sp/anything]
@@ -376,7 +389,7 @@
 
 (defn-spec ltrim string?
   "strips leading chars in `m` from `s`"
-  [s string? m string?]
+  [s string?, m string?]
   (let [pattern (java.util.regex.Pattern/compile (format "^[%s]*" m))]
     (clojure.string/replace s pattern "")))
 
@@ -386,19 +399,13 @@
   (let [pattern (java.util.regex.Pattern/compile (format "[%s]*$" m))]
     (clojure.string/replace s pattern "")))
 
-;; https://stackoverflow.com/questions/26790881/clojure-file-to-byte-array
-(comment "orphaned. was once used in zip.clj to create a zip file of a directory."
-         (defn-spec file-to-lazy-byte-array ::sp/file-byte-array-pair
-           [path ::sp/extant-file root ::sp/extant-dir]
-           (let [;; /foo/bar/baz/ => foo/bar/
-                 rooted-at (ltrim (clojure.string/replace path (str (fs/parent root)) "") "/")
-        ;;f (java.io.File. path)
-                 f path
-                 ary (byte-array (.length f))
-                 is (java.io.FileInputStream. f)]
-             (.read is ary)
-             (.close is)
-             [rooted-at ary])))
+(defn-spec replace-file-ext (s/or :ok ::sp/file, :error nil?)
+  [path ::sp/file, ext string?]
+  (let [ext (ltrim ext ".")
+        ext (str "." ext)
+        ;; "foo" => nil, "foo/bar" => ["foo"], "/foo/bar" => ["/" "foo"]
+        parent (some->> (-> path fs/split butlast) (apply join))]
+    (join parent (-> path str fs/split-ext first (str ext)))))
 
 ;; repurposing
 (defn-spec file-to-lazy-byte-array bytes?
@@ -447,5 +454,108 @@
   "sort a list of semver strings with support for '1.2.3-something' suffixes."
   [semver-list (s/coll-of string?)]
   (sort semver-comp semver-list))
+
+;; https://stackoverflow.com/questions/25892277/clojure-regex-named-groups#answer-25892938
+(defn named-regex-groups
+  "returns a map of values that were matched in the given regular expression using groups
+  for example: (named-regex-groups #'(.*)' [:foo] 'bar') => {:foo 'bar'}"
+  [regex groups value]
+  (zipmap groups (rest (re-find regex value))))
+
+(defn-spec unmangle-https-url (s/or :ok ::sp/uri, :error nil?)
+  "given something that is supposed to be a valid http URL, try our hardest to return an actual URL without actually visiting anything.
+  if we fail, return nil, otherwise return a string that can be converted to a URL"
+  [uin string?]
+  (let [;; pretty strict, try this first
+        url (try
+              (java.net.URL. uin)
+              (catch java.net.MalformedURLException _
+                nil))
+
+        ;; looser, but still better than a regex
+        uri (try
+              (java.net.URI. uin)
+              (catch java.net.URISyntaxException _
+                nil))
+
+        ;; and finally, if url and uri approaches fail, try a quick and dirty regex
+        regex #"(\w*:)?(\/\/)?(www\.)?(.+\.\w{2,4})(/?.*)?"
+        groups [:protocol :lines :sub :host        :path]
+        parsed (named-regex-groups regex groups uin)]
+
+    (cond
+      ;; woo! we have something valid already, return as-is
+      (not (nil? url)) uin
+
+      ;; ...woo? we have something with a host that isn't total garbage
+      ;; try to recreate it, filling in a few blanks.
+      (and (not (nil? uri))
+           (.getHost uri)) (format "%s://%s%s"
+                                   (or (.getScheme uri) "https")
+                                   (.getHost uri)
+                                   (or (.getRawPath uri) ""))
+
+      (:host parsed) (format "%s://%s%s"
+                             (or (:protocol parsed) "https")
+                             (:host parsed)
+                             (or (:path parsed) ""))
+
+      ;; unparseable
+      :else nil)))
+
+;; https://clojure.atlassian.net/browse/CLJ-2007
+(defmacro if-let*
+  "Multiple binding version of if-let"
+  ([bindings then]
+   `(if-let ~bindings ~then nil))
+  ([bindings then else]
+   ;; assert-args is in clojure.core but private
+   ;;(assert-args
+   ;;  (vector? bindings) "a vector for its binding"
+   ;;  (even? (count bindings)) "exactly even forms in binding vector")
+   (if (== 2 (count bindings))
+     `(let [temp# ~(second bindings)]
+        (if temp#
+          (let [~(first bindings) temp#]
+            ~then)
+          ~else))
+     (let [if-let-else (keyword (name (gensym "if_let_else__")))
+           inner (fn inner [bindings]
+                   (if (seq bindings)
+                     `(if-let [~(first bindings) ~(second bindings)]
+                        ~(inner (drop 2 bindings))
+                        ~if-let-else)
+                     then))]
+       `(let [temp# ~(inner bindings)]
+          (if (= temp# ~if-let-else) ~else temp#))))))
+
+;;
+
+(defn-spec expand-path ::sp/file
+  "given a path, expands any 'user' directories, relative directories and symbolic links"
+  [path ::sp/file]
+  (-> path fs/expand-home fs/normalized fs/absolute str))
+
+(defn last-writeable-dir
+  "given a path, returns the last writable directory or nil if no writable directory available"
+  [path]
+  (when path
+    (if (and (fs/directory? path) (fs/writeable? path))
+      (str path)
+      (last-writeable-dir (fs/parent path)))))
+
+(defn-spec drop-nils (s/or :ok map?, :empty nil?)
+  "given a map `m` and a set of `fields`, if field is `nil`, `dissoc` it"
+  [m map?, fields sequential?]
+  (if (empty? fields)
+    m
+    (drop-nils
+     (if (nil? (get m (first fields)))
+       (dissoc m (first fields))
+       m)
+     (rest fields))))
+
+;;
+
 
 (st/instrument)

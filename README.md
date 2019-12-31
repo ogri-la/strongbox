@@ -3,14 +3,22 @@
 [![Build Status](https://travis-ci.org/ogri-la/wowman.svg?branch=master)](https://travis-ci.org/ogri-la/wowman)
 
 `wowman` is an **open source**, **advertisement free** and **privacy respecting** addon manager for World of Warcraft. 
-It interacts with the Twitch (Curseforge) [Addons API](https://addons-ecs.forgesvc.net) and 
-[wowinterface.com](https://wowinterface.com/addons.php) and with the addons in your `Addons` directory.
+
+It supports addons hosted by Curseforge, wowinterface, Tukui and Github.
+
+## News
+
+* **2019-12-31**: [0.11.0 has been released](https://github.com/ogri-la/wowman/releases). Happy new year.
+* **2019-12-13**: Please upgrade to *[0.10.2](https://github.com/ogri-la/wowman/releases/tag/0.10.2)*! *0.10.0* and *0.10.1* versions of wowman will crash when it reads unfamiliar addons from the catalog.
+* **2019-11-22**: 1000+ downloads! I often forget I build this for others as well and this is a stark reminder of that. If you're a user of wowman and you ever want to get in touch, please just [open an issue](https://github.com/ogri-la/wowman/issues) or [PM me on reddit](https://www.reddit.com/message/compose/?to=torkus-jr&subject=wowman).
 
 ## Audience
 
-This software targets World of Warcraft players using Linux.
+This software is for World of Warcraft players using Linux.
 
-It may work on other platforms but it is only tested and supported on Linux.
+It also works on macOS.
+
+It does not work on Windows.
 
 ## Requirements
 
@@ -18,15 +26,22 @@ It may work on other platforms but it is only tested and supported on Linux.
 
 ## Installation
 
-1. [download the jar](https://github.com/ogri-la/wowman/releases/download/0.10.2/wowman-0.10.2-standalone.jar) file
+1. [download the jar](https://github.com/ogri-la/wowman/releases/download/0.11.0/wowman-0.11.0-standalone.jar) file
 2. run with `java -jar wowman-x.x.x-standalone.jar`
 
 ### Arch Linux users
 
 A PKGBUILD exists in the AUR [here](https://aur.archlinux.org/packages/wowman/) 
-with a mirror [here](https://github.com/ogri-la/wowman-pkgbuild/). 
+with a mirror [here](https://github.com/ogri-la/wowman-pkgbuild/).
 
 Once installed it's available from the command line as `wowman`.
+
+## Screenshots
+
+[![wowman version 0.11.0](./screenshots/screenshot-0.11.0-installed-thumbnail.jpg)](./screenshots/screenshot-0.11.0-installed.png?raw=true) 
+[![wowman version 0.11.0](./screenshots/screenshot-0.11.0-search-thumbnail.jpg)](./screenshots/screenshot-0.11.0-search.png?raw=true) 
+[![wowman version 0.11.0](./screenshots/screenshot-0.11.0-dark-installed-thumbnail.jpg)](./screenshots/screenshot-0.11.0-dark-installed.png?raw=true) 
+[![wowman version 0.11.0](./screenshots/screenshot-0.11.0-dark-search-thumbnail.jpg)](./screenshots/screenshot-0.11.0-dark-search.png?raw=true) 
 
 ## Usage
 
@@ -67,7 +82,19 @@ This software also tries very hard to:
 I benefit so much from the hard work of those who write free and open source software, including addon developers, 
 that it's my privilege to offer this small piece back.
 
-[![wowman version 0.9.0](./screenshots/screenshot-0.9.0-installed-thumbnail.jpg)](./screenshots/screenshot-0.9.0-installed.png?raw=true) [![wowman version 0.9.0](./screenshots/screenshot-0.9.0-search-thumbnail.jpg)](./screenshots/screenshot-0.9.0-search.png?raw=true)
+## Features
+
+* classic and retail addon support
+* catalogue search
+* bulk update
+* addons from multiple sources:
+    - [curseforge](https://www.curseforge.com/wow/addons)
+    - [wowinterface](https://wowinterface.com/addons.php)
+    - [github](./github-addons.md) using *releases*
+    - [tukui](https://www.tukui.org)
+* import and export of lists of addons
+* safeguards against bad addons
+* warnings when addons install other bundled addons
 
 ## Notes
 
@@ -87,15 +114,19 @@ Addon `.zip` files that contain top-level files or top-level directories missing
 and the downloaded `.zip` file will be deleted immediately. This is a guard against poorly or maliciously constructed
 `.zip` files.
 
-Addon `.rar` files are not and will not be supported.
+Addon `.rar` files are not supported.
 
 This software interacts with the following remote hosts:
 
-* Twitch (Curseforge) [Addons API](https://addons-ecs.forgesvc.net/) and it's [CDN](https://edge.forgecdn.net/) to 
-download detailed addon data.
-* [wowinterface.com](https://wowinterface.com) to download detailed addon data. These hosts may redirect requests.
-* [github.com/ogri-la](https://github.com/ogri-la), to download a collated list of summary addon data
-* [api.github.com](https://developer.github.com/v3/repos/releases), to download the latest `wowman` release data
+* Twitch (Curseforge) [Addons API](https://addons-ecs.forgesvc.net/) and it's [CDN](https://edge.forgecdn.net/)
+* [wowinterface.com](https://wowinterface.com)
+* [www.tukui.org](https://www.tukui.org/api.php)
+* [api.github.com](https://developer.github.com/v3/repos/releases)
+    - to download repository and release data for addons hosted on Github
+    - to download the latest `wowman` release data
+* [github.com/ogri-la/wowman-data](https://github.com/ogri-la/wowman-data), to download addon catalogues
+
+These hosts *may* redirect requests.
 
 These interactions use a HTTP user agent header unique to `wowman` so that it may be identified easily.
 
@@ -130,11 +161,11 @@ See [comrades.csv](comrades.csv) for a complete list.
 | Name                           | URL                                                  | Maintained | Linux | Mac  | Windows | UI  | Retail | Classic | F/OSS | Source Available | Ads | EULA | Language   | 
 |--------------------------------|------------------------------------------------------|------------|-------|------|---------|-----|--------|---------|-------|------------------|-----|------|------------| 
 | antiwinter/wowa                | https://github.com/antiwinter/wowa                   | yes        | yes*  | yes* | yes*    | CLI | yes    | yes     | yes   | yes              | no  | no   | Javascript | 
-| AvidWeb/cursebreaker           | https://github.com/AcidWeb/CurseBreaker              | yes        | no    | no   | yes     | TUI | yes    | yes     | yes   | yes              | no  | no   | Python     | 
+| AcidWeb/CurseBreaker           | https://github.com/AcidWeb/CurseBreaker              | yes        | yes   | yes  | yes     | TUI | yes    | yes     | yes   | yes              | no  | no   | Python     | 
 | braier/wow-addon-updater       | https://www.braier.net/wow-addon-updater/index.html  | yes        | yes   | yes  | yes     | GUI | yes    | no      | yes   | yes              | no  | no   | Pascal     | 
 | cowdude/wowaddonmanager        | https://github.com/cowdude/wowaddonmanager           | yes        | yes*  | yes* | yes*    | CLI | yes    | no      | no    | yes              | no  | no   | Python     | 
 | dark0dave/wow-addon-updater    | https://gitlab.com/dark0dave/wow-addon-updater       | yes        | yes*  | yes* | yes*    | CLI | yes    | yes     | yes   | yes              | no  | no   | Python     | 
-| ephraim/lcurse                 | https://github.com/ephraim/lcurse                    | yes        | yes*  | yes* | yes*    | GUI | yes    | no      | no    | yes              | no  | no   | Python     | 
+| ephraim/lcurse                 | https://github.com/ephraim/lcurse                    | yes        | yes*  | yes* | yes*    | GUI | yes    | yes     | no    | yes              | no  | no   | Python     | 
 | erikabp123/ClassicAddonManager | https://github.com/erikabp123/ClassicAddonManager    | yes        | no    | no   | yes     | GUI | no     | yes     | yes   | yes              | no  | no   | Java       | 
 | Gonzih/wow-addon-manager       | https://github.com/Gonzih/wow-addon-manager          | yes        | yes*  | yes* | yes*    | CLI | yes    | no      | no    | yes              | no  | no   | Go         | 
 | grrttedwards/wow-addon-updater | https://github.com/grrttedwards/wow-addon-updater    | yes        | yes*  | yes* | yes*    | CLI | yes    | yes     | yes   | yes              | no  | no   | Python     | 

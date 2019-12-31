@@ -11,17 +11,24 @@
     ;;[core :as core]
     [utils :as utils :refer [todt utcnow]]
     [specs :as sp]
+    [tukui-api :as tukui-api]
     [curseforge-api :as curseforge-api]
-    [wowinterface-api :as wowinterface-api]]))
+    [wowinterface-api :as wowinterface-api]
+    [github-api :as github-api]]))
 
 (defn expand-summary
   [addon-summary game-track]
   (let [dispatch-map {"curseforge" curseforge-api/expand-summary
                       "wowinterface" wowinterface-api/expand-summary
+                      "github" github-api/expand-summary
+                      "tukui" tukui-api/expand-summary
+                      "tukui-classic" tukui-api/expand-summary
                       nil (fn [_ _] (error "malformed addon-summary:" (utils/pprint addon-summary)))}
-        dispatch (get dispatch-map (:source addon-summary))]
+        key (:source addon-summary)]
     (try
-      (dispatch addon-summary game-track)
+      (if-let [dispatch-fn (get dispatch-map key)]
+        (dispatch-fn addon-summary game-track)
+        (error (format "addon '%s' is from source '%s' that is unsupported" (:label addon-summary) key)))
       (catch Exception e
         (error e "unhandled exception attempting to expand addon summary")
         (error "please report this! https://github.com/ogri-la/wowman/issues")))))
@@ -39,14 +46,72 @@
      :total (count addon-list)
      :addon-summary-list addon-list}))
 
+(defn read-catalog
+  [catalog-path & {:as opts}]
+  ;; cheshire claims to be twice as fast: https://github.com/dakrone/cheshire#speed
+  ;; consolidate catalog access here
+  (apply utils/load-json-file-safely (apply concat [catalog-path] opts)))
+
 (defn-spec write-catalog ::sp/extant-file
-  "writes catalog to given `output-file` as json. returns path to the output file"
-  [catalog-data ::sp/catalog, output-file ::sp/file]  ;; addon-list at this point has been ordered and doesn't resemble a hashmap anymore
+  "write catalog to given `output-file` as JSON. returns path to output file"
+  [catalog-data ::sp/catalog, output-file ::sp/file]
   (utils/dump-json-file output-file catalog-data)
   (info "wrote" output-file)
   output-file)
 
+(defn-spec new-catalog ::sp/catalog
+  [addon-list ::sp/addon-summary-list]
+  (let [created (utils/datestamp-now-ymd)
+        updated created]
+    (format-catalog-data addon-list created updated)))
+
+(defn-spec write-empty-catalog! ::sp/extant-file
+  "writes a stub catalog to the given `output-file`"
+  [output-file ::sp/file]
+  (let [created (utils/datestamp-now-ymd)
+        updated created]
+    (write-catalog (new-catalog []) output-file)))
+
 ;;
+
+(defn-spec parse-user-string (s/or :ok ::sp/addon-summary, :error nil?)
+  "given a string, figures out the addon source (github, etc) and dispatches accordingly."
+  [uin string?]
+  (let [dispatch-map {"github.com" github-api/parse-user-string
+                      "www.github.com" github-api/parse-user-string ;; alias
+                      }]
+    (try
+      (when-let [f (some->> uin utils/unmangle-https-url java.net.URL. .getHost (get dispatch-map))]
+        (f uin))
+      (catch java.net.MalformedURLException mue
+        (debug "not a url")))))
+
+(defn-spec merge-catalogs (s/or :ok ::sp/catalog, :error nil?)
+  "merges catalog `cat-b` over catalog `cat-a`.
+  earliest creation date preserved.
+  latest updated date preserved.
+  addon-summary-list is unique by `:source` and `:source-id` with differing values replaced by those in `cat-b`"
+  [cat-a (s/nilable ::sp/catalog), cat-b (s/nilable ::sp/catalog)]
+  (let [matrix {;;[true true] ;; two non-empty catalogs, ideal case
+                [true false] cat-a ;; cat-b empty, return cat-a
+                [false true] cat-b ;; vice versa
+                [false false] nil}
+        not-empty? (complement empty?)
+        key [(not-empty? cat-a) (not-empty? cat-b)]]
+    (if (contains? matrix key)
+      (get matrix key)
+      (let [created-date (first (sort [(:datestamp cat-a) (:datestamp cat-b)])) ;; earliest
+            updated-date (last (sort [(:updated-datestamp cat-a) (:updated-datestamp cat-b)])) ;; latest
+            addons-a (:addon-summary-list cat-a)
+            addons-b (:addon-summary-list cat-b)
+            addon-summary-list (->> (concat addons-a addons-b) ;; join the two lists
+                                    (group-by (juxt :source-id :source)) ;; group by the key
+                                    vals ;; drop the map
+                                    (map (partial apply merge))) ;; merge (not replace) the groups into single maps
+            ]
+        (format-catalog-data addon-summary-list created-date updated-date)))))
+
+;; 
 
 (defn de-dupe-wowinterface
   "at time of writing, wowinterface has 5 pairs of duplicate addons with slightly different labels
@@ -65,8 +130,8 @@
 
 ;;
 
-(defn-spec -merge-catalogs ::sp/catalog
-  [aa ::sp/catalog ab ::sp/catalog]
+(defn-spec -merge-curse-wowi-catalogs ::sp/catalog
+  [aa ::sp/catalog, ab ::sp/catalog]
   (let [;; this is 80% sanity check, 20% correctness
         ab (assoc ab :addon-summary-list (de-dupe-wowinterface (:addon-summary-list ab)))
 
@@ -89,6 +154,7 @@
         addon-list (remove #(some #{(:name %)} multiple-sources-key-set) addon-list)
         ;;_ (info "addons sans multiples:" (count addon-list))
 
+        ;; todo: move this to shorten-catalog
         ;; when there is a very large gap between updated-dates, drop one addon in favour of the other
         ;; at time of writing:
         ;; - filtering for > 2 years removes  231 of the 2356 addons overlapping, leaving 2125 addons appearing in both catalogs
@@ -132,8 +198,7 @@
 
         today (utcnow)
         update-addon (fn [a]
-                       (let [source (if-not (contains? a :description) :wowinterface :curseforge)
-                             ;; an even more slugified label with hyphens and underscores removed
+                       (let [;; an even more slugified label with hyphens and underscores removed
                              alt-name (-> a :label (slugify ""))
                              dtobj (java-time/zoned-date-time (:updated-date a))
                              age-in-days (java-time/as (java-time/duration dtobj today) :days)
@@ -146,8 +211,7 @@
 
                              ;; todo: normalise categories here
                              ]
-                         (merge a {:source source ;; json serialisation will stringify this :(
-                                   :alt-name alt-name
+                         (merge a {:alt-name alt-name
                                    :age version-age})))
         addon-list (mapv update-addon addon-list)
 
@@ -175,11 +239,11 @@
     (when addon-summary-list
       (format-catalog-data (remove unmaintained? addon-summary-list) datestamp datestamp))))
 
-(defn-spec merge-catalogs ::sp/catalog
+(defn-spec merge-curse-wowi-catalogs ::sp/catalog
   [curseforge-catalog ::sp/extant-file, wowinterface-catalog ::sp/extant-file]
   (let [aa (utils/load-json-file curseforge-catalog)
         ab (utils/load-json-file wowinterface-catalog)]
-    (-merge-catalogs aa ab)))
+    (-merge-curse-wowi-catalogs aa ab)))
 
 ;;
 
