@@ -173,10 +173,13 @@ multiple assets will always require differentiation, but we can tune warnings/er
     - done
 * when adding an addon-dir, if path ends with /_classic_/Interface/Addons, set game track to classic
     - done
+* investigate usage of spec-tools/coerce and remove if unnecessary
+    - done
 
 ### todo
 
-* investigate usage of spec-tools/coerce and remove if unnecessary
+* test on mac
+* release 0.11.0
 
 ## todo bucket (no particular order)
 

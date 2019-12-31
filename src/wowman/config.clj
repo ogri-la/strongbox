@@ -5,7 +5,6 @@
    [orchestra.spec.test :as st]
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :as timbre :refer [debug info warn error spy]]
-   [spec-tools.core :as spec-tools]
    [wowman
     [specs :as sp]
     [utils :as utils]]))
@@ -40,8 +39,13 @@
 (defn strip-unspecced-keys
   "removes any keys from the given configuration that are not in the spec"
   [cfg]
-  ;; doesn't support optional :opt keysets
-  (spec-tools/coerce ::sp/user-config cfg spec-tools/strip-extra-keys-transformer))
+  ;;(spec-tools/coerce ::sp/user-config cfg spec-tools/strip-extra-keys-transformer))
+  ;; not as good as the above spec-tools/coerce approach, but:
+  ;; * saves about 1.5MB of dependencies
+  ;; * it wasn't doing validation, just stripping extra keys
+  ;; * it wasn't doing any conforming of values (like strings to integers)
+  ;; * it didn't support :opt(ional) keysets
+  (select-keys cfg [:addon-dir-list :debug? :selected-catalog :gui-theme]))
 
 (defn-spec -merge-with ::sp/user-config
   "merges `cfg-b` over `cfg-a`, returning the result if valid else `cfg-a`"
