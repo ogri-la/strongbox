@@ -156,6 +156,6 @@ This may be an AUR, DEB, RPM/DNF, Snap, Flatpak, Zypper, AppImage, etc.
 
 ## License
 
-Copyright © 2018-2019 Torkus
+Copyright © 2018-2020 Torkus
 
 Distributed under the GNU Affero General Public Licence, version 3 [with additional permissions](LICENCE.txt#L665)
