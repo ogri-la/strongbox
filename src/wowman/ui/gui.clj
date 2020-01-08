@@ -836,7 +836,7 @@
 
         cache-menu [(ss/action :name "Clear cache" :handler (async-handler core/delete-cache!))
                     (ss/action :name "Clear addon zips" :handler (async-handler core/delete-downloaded-addon-zips!))
-                    (ss/action :name "Clear catalogs" :handler (async-handler core/delete-catalog-files!))
+                    (ss/action :name "Clear catalogs" :handler (async-handler (juxt core/db-reload-catalog core/delete-catalog-files!)))
                     (ss/action :name "Clear all" :handler (async-handler core/clear-all-temp-files!))
                     :separator
                     (ss/action :name "Delete WowMatrix.dat files" :handler (async-handler core/delete-wowmatrix-dat-files!))
