@@ -16,6 +16,12 @@ see CHANGELOG.md for a more formal list of changes by release
 * bug, clearing catalogues and clicking refresh doesn't see the database rebuilt
     - the catalog is downloaded though
     - done
+* rename 'go' column to 'catalogue' 
+    - no, decided not to. 
+    - this seems like a whim or errant thought and I see no reason for change
+* remove dependency data.codec
+    - this can be done with native java
+    - done
 
 ### todo
 
@@ -27,7 +33,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * add a 'addons dir' to the test helper
     - lots of boilerplate around this in core_test.clj
         - investigate this 
-* rename 'go' column to 'catalogue' 
 * add support for reconciling addons by 'x-curse' and 'x-wowi' ids
     - example: https://github.com/ascott18/TellMeWhen/blob/master/TellMeWhen.toc#L19-L20
 * import/export, capture game track of exported addon dir?

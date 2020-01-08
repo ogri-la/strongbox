@@ -8,7 +8,6 @@
                  [org.clojure/spec.alpha "0.2.176"]
                  [org.clojure/tools.cli "0.4.2"] ;; cli arg parsing
                  [org.clojure/tools.namespace "0.2.11"] ;; reload code
-                 [org.clojure/data.codec "0.1.1"] ;; base64 encoding
                  [org.clojure/data.json "0.2.6"] ;; better json decoding
                  [orchestra "2018.12.06-2"] ;; improved clojure.spec instrumentation
                  ;; see lein deps :tree

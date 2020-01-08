@@ -671,7 +671,6 @@ If you modify this Program, or any covered work, by linking or combining it with
 * org.clojure/spec.alpha
 * org.clojure/tools.cli
 * org.clojure/tools.namespace
-* org.clojure/data.codec
 * org.clojure/data.json
 * orchestra
 * com.taoensso/timbre
