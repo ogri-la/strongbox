@@ -82,6 +82,7 @@
                       }]
     (try
       (when-let [f (some->> uin utils/unmangle-https-url java.net.URL. .getHost (get dispatch-map))]
+        (info "inspecting:" uin)
         (f uin))
       (catch java.net.MalformedURLException mue
         (debug "not a url")))))

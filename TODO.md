@@ -10,6 +10,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * bug, selected directory is incorrect after restarting gui (by switching themes)
     - done
+* bug, 'refresh user catalog' no indication it's doing anything when selected
+    - until it finally re-writes the user catalogue
+    - done
 
 ### todo
 
@@ -18,9 +21,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - tests pass
     - readme updated
     - release updated
-
-* bug, 'refresh user catalog' no indication it's doing anything when selected
-    - until it finally re-writes the user catalogue
 * bug, clearing catalogues and clicking refresh doesn't see the database rebuilt
     - the catalog is downloaded though
 * add a 'addons dir' to the test helper

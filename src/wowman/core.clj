@@ -808,6 +808,7 @@
   "re-fetch each item in user catalog using the URI and replace old entry with any updated details"
   []
   (binding [http/*cache* (cache)]
+    (info "refreshing \"user-catalog.json\", this may take a minute ...")
     (->> (get-create-user-catalog)
          :addon-summary-list
          (map :uri)
