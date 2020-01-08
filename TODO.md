@@ -8,6 +8,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### done
 
+* bug, selected directory is incorrect after restarting gui (by switching themes)
+    - done
+
 ### todo
 
 * windows support
@@ -15,7 +18,7 @@ see CHANGELOG.md for a more formal list of changes by release
     - tests pass
     - readme updated
     - release updated
-* bug, selected directory is incorrect after restarting gui (by switching themes)
+
 * bug, 'refresh user catalog' no indication it's doing anything when selected
     - until it finally re-writes the user catalogue
 * bug, clearing catalogues and clicking refresh doesn't see the database rebuilt

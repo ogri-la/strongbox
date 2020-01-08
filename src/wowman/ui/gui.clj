@@ -279,7 +279,8 @@
 
         wow-dir-button (button "WoW directory" (async-handler picker))
 
-        wow-dir-dropdown (ss/combobox :model (core/available-addon-dirs))
+        wow-dir-dropdown (ss/combobox :model (core/available-addon-dirs)
+                                      :selected-item (core/get-state :selected-addon-dir))
 
         wow-game-track (ss/combobox :model core/game-tracks
                                     :selected-item (core/get-game-track))
