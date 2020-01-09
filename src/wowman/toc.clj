@@ -126,6 +126,14 @@
         alias (when (contains? aliases label)
                 {:alias (get aliases label)})
 
+        wowi-source (when-let [x-wowi-id (-> nfo-contents :x-wow-id utils/to-int)] 
+                      {:source "wowinterface"
+                       :source-id x-wowi-id})
+
+        curse-source (when-let [x-curse-id (-> nfo-contents :x-curse-project-id utils/to-int)]
+                       {:source "curseforge"
+                        :source-id x-curse-id})
+
         addon {:name (normalise-name label)
                :dirname dirname
                :label label
@@ -141,7 +149,9 @@
                ;;:required-dependencies (:requireddeps keyvals)
                }
 
-        addon (merge alias addon)]
+        ;; yes, this prefers curseforge over wowinterface.
+        ;; I need to figure out some way of supporting multiple hosts per-addon
+        addon (merge addon alias wowi-source curse-source)]
 
     ;; if source present but is not in list of known sources, ignore the nfo-contents
     (if (and (contains? nfo-contents :source)

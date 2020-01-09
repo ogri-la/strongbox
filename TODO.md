@@ -22,6 +22,9 @@ see CHANGELOG.md for a more formal list of changes by release
 * remove dependency data.codec
     - this can be done with native java
     - done
+* remove dependency cheshire
+    - clojure.data.json does all we need
+    - done
 
 ### todo
 
