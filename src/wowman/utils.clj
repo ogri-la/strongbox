@@ -7,7 +7,6 @@
    [clojure.pprint]
    [orchestra.core :refer [defn-spec]]
    [orchestra.spec.test :as st]
-   [cheshire.core :as json]
    [clojure.data.json]
    [me.raynes.fs :as fs]
    [slugify.core :as sluglib]
@@ -272,7 +271,7 @@
 
 (defn-spec to-json ::sp/json
   [x ::sp/anything]
-  (json/generate-string x {:pretty true}))
+  (with-out-str (clojure.data.json/pprint x :escape-slash false)))
 
 (defn from-json
   [x]
@@ -280,8 +279,7 @@
 
 (defn-spec dump-json-file ::sp/extant-file
   [path ::sp/file, data ::sp/anything]
-  ;; this `{:pretty true}` is the only reason we're keeping cheshire around
-  (json/generate-stream data (clojure.java.io/writer path) {:pretty true})
+  (spit path (to-json data))
   path)
 
 (defn-spec load-json-file (s/or :ok ::sp/anything, :error nil?)
