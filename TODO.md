@@ -33,6 +33,7 @@ see CHANGELOG.md for a more formal list of changes by release
     - presence of an addon dir skitches about ~6 tests
     - I have replaced the manual app starting with the 'with-running-app' wrapper though
     - and explicit 'add-addon-dir!' isn't so bad
+    - done
 
 ### todo
 

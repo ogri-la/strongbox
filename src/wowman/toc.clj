@@ -126,11 +126,11 @@
         alias (when (contains? aliases label)
                 {:alias (get aliases label)})
 
-        wowi-source (when-let [x-wowi-id (-> nfo-contents :x-wow-id utils/to-int)]
+        wowi-source (when-let [x-wowi-id (-> keyvals :x-wowi-id utils/to-int)]
                       {:source "wowinterface"
                        :source-id x-wowi-id})
 
-        curse-source (when-let [x-curse-id (-> nfo-contents :x-curse-project-id utils/to-int)]
+        curse-source (when-let [x-curse-id (-> keyvals :x-curse-project-id utils/to-int)]
                        {:source "curseforge"
                         :source-id x-curse-id})
 

@@ -277,7 +277,7 @@
             (core/refresh) ;; re-read the installation directory
             (is (= expected (core/get-state :installed-addon-list)))))))))
 
-(deftest check-for-update
+(deftest check-for-addon-update
   (testing "the key :update? is set on an addon when there is a difference between the installed version of an addon and it's matching catalog version"
 
     (let [;; we start off with a list of these called a catalog. it's downloaded from github
