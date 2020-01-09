@@ -27,6 +27,7 @@ see CHANGELOG.md for a more formal list of changes by release
     - done
 * add support for reconciling addons by 'x-curse' and 'x-wowi' ids
     - example: https://github.com/ascott18/TellMeWhen/blob/master/TellMeWhen.toc#L19-L20
+    - done
 * add a 'addons dir' to the test helper
     - lots of boilerplate around this in core_test.clj
         - investigate this 

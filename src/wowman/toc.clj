@@ -108,6 +108,13 @@
   ;; todo, replace this with a slugify fn
   (-> label lower-case rm-trailing-version (replace ":" "") (replace " " "-") (replace "\\?" "")))
 
+;;
+
+(defn-spec merge-toc-nfo ::sp/toc
+  "merges nfo data over toc data, nothing more"
+  [toc ::sp/toc, nfo (s/nilable ::sp/nfo)]
+  (merge toc nfo))
+
 (defn-spec parse-addon-toc ::sp/toc
   [addon-dir ::sp/extant-dir, keyvals map?]
   (let [dirname (fs/base-name addon-dir) ;; /foo/bar/baz => baz
@@ -159,7 +166,7 @@
       addon
 
       ;; otherwise, merge the addon with the nfo contents
-      (merge addon nfo-contents))))
+      (merge-toc-nfo addon nfo-contents))))
 
 (defn-spec blizzard-addon? boolean?
   "returns `true` if given path looks like an official Blizzard addon"

@@ -8,6 +8,7 @@
    ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [wowman
     [main :as main]
+    [toc :as toc]
     [catalog :as catalog]
     [utils :as utils]
     [test-helper :as helper :refer [fixture-path helper-data-dir with-running-app]]
@@ -331,7 +332,7 @@
                      :source-id 0}
 
                 ;; the nfo data is simply merged over the top of the scraped toc data
-                toc (merge toc nfo) ;; todo: defer to app logic
+                toc (toc/merge-toc-nfo toc nfo)
 
                 ;; we then attempt to match this 'toc+nfo' to an addon in the catalog
                 catalog-match (core/-db-match-installed-addons-with-catalog [toc])
