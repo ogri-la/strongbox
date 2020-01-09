@@ -676,7 +676,6 @@ If you modify this Program, or any covered work, by linking or combining it with
 * com.taoensso/timbre
 * enlive
 * clj-http
-* cheshire
 * seesaw
 * clj-commons/fs
 * slugify

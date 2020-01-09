@@ -17,7 +17,7 @@
     <url>https://github.com/ogri-la/wowman</url>
     <connection>scm:git:git://github.com/ogri-la/wowman.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/ogri-la/wowman.git</developerConnection>
-    <tag>d4da3cfcf9b646b5a86c9718226f064b8dfac178</tag>
+    <tag>03453ce005f223af37c0bfa99e4fd86922c98165</tag>
   </scm>
   <build>
     <sourceDirectory>src</sourceDirectory>
@@ -106,11 +106,6 @@
       <groupId>clj-http</groupId>
       <artifactId>clj-http</artifactId>
       <version>3.10.0</version>
-    </dependency>
-    <dependency>
-      <groupId>cheshire</groupId>
-      <artifactId>cheshire</artifactId>
-      <version>5.8.1</version>
     </dependency>
     <dependency>
       <groupId>seesaw</groupId>

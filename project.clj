@@ -8,13 +8,12 @@
                  [org.clojure/spec.alpha "0.2.176"]
                  [org.clojure/tools.cli "0.4.2"] ;; cli arg parsing
                  [org.clojure/tools.namespace "0.2.11"] ;; reload code
-                 [org.clojure/data.json "0.2.6"] ;; better json decoding
+                 [org.clojure/data.json "0.2.6"] ;; json handling
                  [orchestra "2018.12.06-2"] ;; improved clojure.spec instrumentation
                  ;; see lein deps :tree
                  [com.taoensso/timbre "4.10.0"] ;; logging
                  [enlive "1.1.6"] ;; html parsing
                  [clj-http "3.10.0"] ;; better http slurping
-                 [cheshire "5.8.1"] ;; nicer json serialisation (indents)
                  [seesaw "1.5.0"] ;; swing
                  [clj-commons/fs "1.5.0"] ;; file system wrangling
                  [slugify "0.0.1"]
