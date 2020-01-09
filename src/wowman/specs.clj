@@ -36,7 +36,7 @@
 ;; minimum needed to be scraped from a toc file
 (s/def ::toc
   (s/keys :req-un [::name ::label ::description ::dirname ::interface-version ::installed-version]
-          :opt [::group-id ::primary? ::group-addons]))
+          :opt [::group-id ::primary? ::group-addons ::source ::source-id]))
 
 ;; the result of merging an installed addon (toc) with an installable addon from the catalogue
 (s/def ::toc-addon-summary
@@ -100,6 +100,8 @@
 (s/def ::catalog-updated-date ::ymd-dt)
 (def catalog-sources #{"curseforge" "wowinterface" "github" "tukui" "tukui-classic"})
 (s/def ::catalog-source catalog-sources)
+(s/def ::catalog-source-id (s/or ::integer-id? int? ;; tukui has negative ids
+                                 ::string-id? string?))
 (s/def ::zoned-dt-obj #(instance? java.time.ZonedDateTime %))
 (s/def ::download-count (s/and int? #(>= % 0)))
 (s/def ::donation-uri (s/nilable ::uri))
@@ -160,6 +162,7 @@
 
 (s/def ::export-type #{:json :edn})
 (s/def ::source ::catalog-source) ;; alias :(
+(s/def ::source-id ::catalog-source-id) ;; alias :(
 (s/def ::export-record (s/keys :req-un [::name]
                                :opt [::source]))
 (s/def ::export-record-list (s/coll-of ::export-record))

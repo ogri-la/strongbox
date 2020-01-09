@@ -108,6 +108,13 @@
   ;; todo, replace this with a slugify fn
   (-> label lower-case rm-trailing-version (replace ":" "") (replace " " "-") (replace "\\?" "")))
 
+;;
+
+(defn-spec merge-toc-nfo ::sp/toc
+  "merges nfo data over toc data, nothing more"
+  [toc ::sp/toc, nfo (s/nilable ::sp/nfo)]
+  (merge toc nfo))
+
 (defn-spec parse-addon-toc ::sp/toc
   [addon-dir ::sp/extant-dir, keyvals map?]
   (let [dirname (fs/base-name addon-dir) ;; /foo/bar/baz => baz
@@ -126,6 +133,14 @@
         alias (when (contains? aliases label)
                 {:alias (get aliases label)})
 
+        wowi-source (when-let [x-wowi-id (-> keyvals :x-wowi-id utils/to-int)]
+                      {:source "wowinterface"
+                       :source-id x-wowi-id})
+
+        curse-source (when-let [x-curse-id (-> keyvals :x-curse-project-id utils/to-int)]
+                       {:source "curseforge"
+                        :source-id x-curse-id})
+
         addon {:name (normalise-name label)
                :dirname dirname
                :label label
@@ -141,7 +156,9 @@
                ;;:required-dependencies (:requireddeps keyvals)
                }
 
-        addon (merge alias addon)]
+        ;; yes, this prefers curseforge over wowinterface.
+        ;; I need to figure out some way of supporting multiple hosts per-addon
+        addon (merge addon alias wowi-source curse-source)]
 
     ;; if source present but is not in list of known sources, ignore the nfo-contents
     (if (and (contains? nfo-contents :source)
@@ -149,7 +166,7 @@
       addon
 
       ;; otherwise, merge the addon with the nfo contents
-      (merge addon nfo-contents))))
+      (merge-toc-nfo addon nfo-contents))))
 
 (defn-spec blizzard-addon? boolean?
   "returns `true` if given path looks like an official Blizzard addon"
