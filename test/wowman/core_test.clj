@@ -85,9 +85,8 @@
         (is (= {:addon-dir dir4 :game-track "classic"} (core/addon-dir-map dir4)))))))
 
 (deftest catalog
-  (let [app-state (core/start {})
-        [short-catalog full-catalog] (->> core/-state-template :catalog-source-list (take 2))]
-    (try
+  (let [[short-catalog full-catalog] (->> core/-state-template :catalog-source-list (take 2))]
+    (with-running-app
       (testing "by default we have at least 2 (short and full composite) + N (source) catalogs available to us"
         (is (> (count (core/get-state :catalog-source-list)) 2)))
 
@@ -115,10 +114,7 @@
         (is (= (utils/join fs/*cwd* helper-data-dir "short-catalog.json") (core/find-catalog-local-path :short))))
 
       (testing "core/find-catalog-local-path returns nil if the given catalog can't be found"
-        (is (= nil (core/find-catalog-local-path :foo))))
-
-      (finally
-        (core/stop app-state)))))
+        (is (= nil (core/find-catalog-local-path :foo)))))))
 
 (deftest paths
   (with-running-app
@@ -231,8 +227,8 @@
                        "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip"
                        {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-other-addon-zip-file)})}}]
       (with-fake-routes-in-isolation fake-routes
-        (try
-          (main/start {:ui :cli, :install-dir (str fs/*cwd*)})
+        (with-running-app
+          (core/set-addon-dir! (str fs/*cwd*))
 
           (let [;; our list of addons to import
                 output-path (fixture-path "import--exports.json")
@@ -279,10 +275,7 @@
 
             (core/import-exported-file output-path)
             (core/refresh) ;; re-read the installation directory
-            (is (= expected (core/get-state :installed-addon-list))))
-
-          (finally
-            (main/stop)))))))
+            (is (= expected (core/get-state :installed-addon-list)))))))))
 
 (deftest check-for-update
   (testing "the key :update? is set on an addon when there is a difference between the installed version of an addon and it's matching catalog version"
@@ -297,7 +290,7 @@
                    :updated-date "2012-09-20T05:32:00Z",
                    :uri "https://www.curseforge.com/wow/addons/every-addon"}
 
-          ;; this is subset of the data the remote addon host (curseforge in this case) serves us
+          ;; this is subset of the data the remote addon host (like curseforge) serves us
           api-result {:latestFiles [{:downloadUrl "https://example.org/foo"
                                      :displayName "v8.10.00"
                                      :gameVersionFlavor "retail",
@@ -318,9 +311,8 @@
                        {:get (fn [req] {:status 200 :body (utils/to-json alt-api-result)})}}]
 
       (with-fake-routes-in-isolation fake-routes
-        (try
-          ;; init the app, which downloads the catalog and loads the db
-          (main/start {:ui :cli, :install-dir (str fs/*cwd*)})
+        (with-running-app
+          (core/set-addon-dir! (str fs/*cwd*))
 
           (let [;; a collection of these are scraped from the installed addons
                 toc {:name "every-addon"
@@ -339,7 +331,7 @@
                      :source-id 0}
 
                 ;; the nfo data is simply merged over the top of the scraped toc data
-                toc (merge toc nfo)
+                toc (merge toc nfo) ;; todo: defer to app logic
 
                 ;; we then attempt to match this 'toc+nfo' to an addon in the catalog
                 catalog-match (core/-db-match-installed-addons-with-catalog [toc])
@@ -359,10 +351,7 @@
                 alt-expected (merge alt-toc-addon alt-api-xform {:update? true})]
 
             (is (= expected (core/check-for-update toc-addon)))
-            (is (= alt-expected (core/check-for-update alt-toc-addon))))
-
-          (finally
-            (main/stop)))))))
+            (is (= alt-expected (core/check-for-update alt-toc-addon)))))))))
 
 ;; todo: install classic addon into retail game track
 
@@ -474,11 +463,10 @@
 
 (deftest re-download-catalog-on-bad-data
   (testing "catalog data is re-downloaded if it can't be read"
-    (let [app-state (core/start {})
-          ;; overrides the fake route in test_helper.clj
+    (let [;; overrides the fake route in test_helper.clj
           fake-routes {"https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
                        {:get (fn [req] {:status 200 :body (slurp (fixture-path "dummy-catalog--single-entry.json"))})}}]
-      (try
+      (with-running-app
         (core/refresh)
 
         ;; this is the guard to the `db-load-catalog` fn
@@ -492,18 +480,14 @@
         (with-fake-routes-in-isolation fake-routes
           (core/db-load-catalog))
 
-        (is (core/db-catalog-loaded?))
-
-        (finally
-          (core/stop app-state))))))
+        (is (core/db-catalog-loaded?))))))
 
 (deftest re-download-catalog-on-bad-data-2
   (testing "`db-load-catalog` doesn't fail catastrophically when re-downloaded json is still bad"
-    (let [app-state (core/start {})
-          ;; overrides the fake route in test_helper.clj
+    (let [;; overrides the fake route in test_helper.clj
           fake-routes {"https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
                        {:get (fn [req] {:status 200 :body "borked json"})}}]
-      (try
+      (with-running-app
         (core/refresh)
 
         ;; this is the guard to the `db-load-catalog` fn
@@ -517,10 +501,7 @@
         (with-fake-routes-in-isolation fake-routes
           (core/db-load-catalog))
 
-        (is (not (core/db-catalog-loaded?)))
-
-        (finally
-          (core/stop app-state))))))
+        (is (not (core/db-catalog-loaded?)))))))
 
 ;;
 
@@ -607,7 +588,7 @@
           (is (fs/exists? expected-addon-dir)))))))
 
 (deftest moosh-addons
-  (testing "addons are mooshed together just right when a match is found in the db"
+  (testing "addons are mooshed correctly when a match is found in the db"
     (let [toc {:name "everyaddon"
                :label "EveryAddon"
                :description "Toc Description"

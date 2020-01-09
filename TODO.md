@@ -25,6 +25,14 @@ see CHANGELOG.md for a more formal list of changes by release
 * remove dependency cheshire
     - clojure.data.json does all we need
     - done
+* add support for reconciling addons by 'x-curse' and 'x-wowi' ids
+    - example: https://github.com/ascott18/TellMeWhen/blob/master/TellMeWhen.toc#L19-L20
+* add a 'addons dir' to the test helper
+    - lots of boilerplate around this in core_test.clj
+        - investigate this 
+    - presence of an addon dir skitches about ~6 tests
+    - I have replaced the manual app starting with the 'with-running-app' wrapper though
+    - and explicit 'add-addon-dir!' isn't so bad
 
 ### todo
 
@@ -33,25 +41,27 @@ see CHANGELOG.md for a more formal list of changes by release
     - tests pass
     - readme updated
     - release updated
-* add a 'addons dir' to the test helper
-    - lots of boilerplate around this in core_test.clj
-        - investigate this 
-* add support for reconciling addons by 'x-curse' and 'x-wowi' ids
-    - example: https://github.com/ascott18/TellMeWhen/blob/master/TellMeWhen.toc#L19-L20
 * import/export, capture game track of exported addon dir?
 * import/export, export user catalogue
 * github, installation from github via import menu not updating log until finished
     - this is an async issue
-* wowman-data, stop publishing a 'daily' release
-    - we have multiple catalogs now
-    - 0.10.0 uses the raw catalog files directly
-    - 0.9.2 was still using the daily release
-    - remove the 'daily' release after 0.11.0 is released
 * remove debugging? mode
 * gui, scroll tabs with mouse
 
 ## todo bucket (no particular order)
 
+* move location of catalogs into user settings
+    - allow user to specify their own catalogs
+        - a url to a catalog that is downloaded and included while loading up the db
+        - different from the 'user catalog'
+    - wowman-data, stop publishing a 'daily' release
+        - we have multiple catalogs now
+        - 0.10.0 uses the raw catalog files directly
+        - 0.9.2 was still using the daily release
+        - remove the 'daily' release after 0.11.0 is released
+        - this will break older releases but users who prefer older versions of the software shouldn't be stranded if the catalog goes away
+            - they should just be able to plug in a new location of the catalog
+            - unfortunately *these* users will be out of luck, but future users won't be
 * greater parallelism
     - internal job queue
     - replace log at bottom of screen with a list of jobs being processed and how far along they are
@@ -94,9 +104,7 @@ see CHANGELOG.md for a more formal list of changes by release
     - I don't mind my colours but not everybody may
     - my colours don't work very well on native lnf + dark themes:
         - https://github.com/ogri-la/wowman/issues/105
-* allow user to specify their own catalogs
-    - a url to a catalog that is downloaded and included while loading up the db
-    - different from the 'user catalog'
+
 * when curseforge api is down users get a wall of red error messages with very little useful information
     - see issue 91: https://github.com/ogri-la/wowman/issues/91
         - the error message has been improved but we still get a red wall of text

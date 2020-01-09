@@ -126,7 +126,7 @@
         alias (when (contains? aliases label)
                 {:alias (get aliases label)})
 
-        wowi-source (when-let [x-wowi-id (-> nfo-contents :x-wow-id utils/to-int)] 
+        wowi-source (when-let [x-wowi-id (-> nfo-contents :x-wow-id utils/to-int)]
                       {:source "wowinterface"
                        :source-id x-wowi-id})
 
