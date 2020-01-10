@@ -297,11 +297,6 @@
     (swap! state update-in [:cleanup] conj rmwatch)
     nil))
 
-(defn-spec debugging? boolean?
-  "true, if we we're in 'debug' mode"
-  []
-  (false-if-nil (get-state :cfg :debug?)))
-
 ;; addon dirs
 
 (defn-spec addon-dir-exists? boolean?

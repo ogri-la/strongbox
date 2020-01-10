@@ -106,7 +106,7 @@
     :parse-fn #(-> % lower-case (= "true"))
     :validate [boolean?]]
 
-   ["-v" "--verbosity LEVEL" "level is one of 'debug', 'info', 'warn', 'error', 'critical'. default is 'info'"
+   ["-v" "--verbosity LEVEL" "level is one of 'debug', 'info', 'warn', 'error', 'fatal'. default is 'info'"
     :parse-fn #(-> % lower-case keyword)
     :validate [(in? [:debug :info :warn :error :fatal])]]
 

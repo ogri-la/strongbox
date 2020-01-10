@@ -11,7 +11,6 @@
 
 (def default-cfg
   {:addon-dir-list []
-   :debug? false ;; todo: remove
    :selected-catalog :short
    :gui-theme :light})
 
@@ -45,7 +44,7 @@
   ;; * it wasn't doing validation, just stripping extra keys
   ;; * it wasn't doing any conforming of values (like strings to integers)
   ;; * it didn't support :opt(ional) keysets
-  (select-keys cfg [:addon-dir-list :debug? :selected-catalog :gui-theme]))
+  (select-keys cfg [:addon-dir-list :selected-catalog :gui-theme]))
 
 (defn-spec -merge-with ::sp/user-config
   "merges `cfg-b` over `cfg-a`, returning the result if valid else `cfg-a`"

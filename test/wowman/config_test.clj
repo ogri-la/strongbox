@@ -53,21 +53,21 @@
   (testing "file overrides are preserved and unknown keys are removed"
     (let [cli-opts {}
           file-opts {:foo "bar" ;; unknown
-                     :debug? true}
-          expected (assoc config/default-cfg :debug? true)]
+                     :selected-catalog :full} ;; known
+          expected (assoc config/default-cfg :selected-catalog :full)]
       (is (= expected (config/merge-config file-opts cli-opts)))))
 
   (testing "cli overrides are preserved and unknown keys are removed"
     (let [cli-opts {:foo "bar"
-                    :debug? true}
+                    :selected-catalog :full}
           file-opts {}
-          expected (assoc config/default-cfg :debug? true)]
+          expected (assoc config/default-cfg :selected-catalog :full)]
       (is (= expected (config/merge-config file-opts cli-opts)))))
 
   (testing "cli options override file options"
-    (let [cli-opts {:debug? true}
-          file-opts {:debug? false}
-          expected (assoc config/default-cfg :debug? true)]
+    (let [cli-opts {:selected-catalog :short}
+          file-opts {:selected-catalog :full}
+          expected (assoc config/default-cfg :selected-catalog :short)]
       (is (= expected (config/merge-config file-opts cli-opts))))))
 
 (deftest invalid-addon-dirs-in-cfg
@@ -88,9 +88,9 @@
           cfg-file (fixture-path "user-config-0.9.json")
           etag-db-file (fixture-path "empty-map.json")
 
-          expected {:cfg {:gui-theme :light
-                          :selected-catalog :short
-                          :debug? true
+          expected {:cfg {:gui-theme :light ;; new in 0.11
+                          :selected-catalog :short ;; new in 0.10
+                          ;; :debug? true ;; removed in 0.12
                           ;; new
                           :addon-dir-list [{:addon-dir "/tmp/.wowman-bar", :game-track "retail"}
                                            {:addon-dir "/tmp/.wowman-foo", :game-track "classic"}]}
@@ -110,16 +110,15 @@
           cfg-file (fixture-path "user-config-0.10.json")
           etag-db-file (fixture-path "empty-map.json")
 
-          expected {:cfg {:gui-theme :light
-                          :selected-catalog :full
-                          :debug? true
+          expected {:cfg {:gui-theme :light ;; new in 0.11
+                          :selected-catalog :full ;; new in 0.10
+                          ;; :debug? true ;; removed in 0.12
                           :addon-dir-list [{:addon-dir "/tmp/.wowman-bar", :game-track "retail"}
                                            {:addon-dir "/tmp/.wowman-foo", :game-track "classic"}]}
                     :selected-addon-dir "/tmp/.wowman-bar"
 
                     :cli-opts {}
-                    :file-opts {;; new
-                                :selected-catalog :full
+                    :file-opts {:selected-catalog :full
                                 :debug? true
                                 :addon-dir-list [{:addon-dir "/tmp/.wowman-bar", :game-track "retail"}
                                                  {:addon-dir "/tmp/.wowman-foo", :game-track "classic"}]}
@@ -132,18 +131,37 @@
           cfg-file (fixture-path "user-config-0.11.json")
           etag-db-file (fixture-path "empty-map.json")
 
-          expected {:cfg {:gui-theme :dark
-                          :selected-catalog :full
-                          :debug? true
+          expected {:cfg {:gui-theme :dark ;; new in 0.11
+                          :selected-catalog :full ;; new in 0.10
+                          ;;:debug? true ;; removed in 0.12
                           :addon-dir-list [{:addon-dir "/tmp/.wowman-bar", :game-track "retail"}
                                            {:addon-dir "/tmp/.wowman-foo", :game-track "classic"}]}
                     :selected-addon-dir "/tmp/.wowman-bar"
 
                     :cli-opts {}
-                    :file-opts {;; new
-                                :gui-theme :dark
+                    :file-opts {:gui-theme :dark
                                 :selected-catalog :full
                                 :debug? true
+                                :addon-dir-list [{:addon-dir "/tmp/.wowman-bar", :game-track "retail"}
+                                                 {:addon-dir "/tmp/.wowman-foo", :game-track "classic"}]}
+                    :etag-db {}}]
+      (is (= expected (config/load-settings cli-opts cfg-file etag-db-file)))))
+
+  (testing "a standard config file circa 0.12 is loaded and parsed as expected"
+    (let [cli-opts {}
+          cfg-file (fixture-path "user-config-0.12.json")
+          etag-db-file (fixture-path "empty-map.json")
+
+          expected {:cfg {:gui-theme :dark ;; new in 0.11
+                          :selected-catalog :full ;; new in 0.10
+                          ;;:debug? true ;; removed in 0.12
+                          :addon-dir-list [{:addon-dir "/tmp/.wowman-bar", :game-track "retail"}
+                                           {:addon-dir "/tmp/.wowman-foo", :game-track "classic"}]}
+                    :selected-addon-dir "/tmp/.wowman-bar"
+
+                    :cli-opts {}
+                    :file-opts {:gui-theme :dark
+                                :selected-catalog :full
                                 :addon-dir-list [{:addon-dir "/tmp/.wowman-bar", :game-track "retail"}
                                                  {:addon-dir "/tmp/.wowman-foo", :game-track "classic"}]}
                     :etag-db {}}]

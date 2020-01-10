@@ -35,6 +35,8 @@ see CHANGELOG.md for a more formal list of changes by release
     - I have replaced the manual app starting with the 'with-running-app' wrapper though
     - and explicit 'add-addon-dir!' isn't so bad
     - done
+* remove debugging? mode
+    - done
 
 ### todo
 
@@ -47,7 +49,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * import/export, export user catalogue
 * github, installation from github via import menu not updating log until finished
     - this is an async issue
-* remove debugging? mode
 * gui, scroll tabs with mouse
 
 ## todo bucket (no particular order)
