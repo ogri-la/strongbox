@@ -120,7 +120,6 @@
 (s/def ::gui-event #(instance? java.util.EventObject %))
 
 (s/def ::install-dir (s/nilable ::extant-dir))
-(s/def ::debug? boolean?)
 (s/def ::game-track #{"retail" "classic"})
 (s/def ::game-track-list (s/coll-of ::game-track :kind vector? :distinct true))
 (s/def ::addon-dir ::extant-dir)
@@ -129,7 +128,7 @@
 (s/def ::addon-dir-list (s/coll-of ::addon-dir-map))
 (s/def ::selected-catalog keyword?)
 (s/def ::gui-theme #{:light :dark})
-(s/def ::user-config (s/keys :req-un [::addon-dir-list ::debug? ::selected-catalog ::gui-theme]))
+(s/def ::user-config (s/keys :req-un [::addon-dir-list ::selected-catalog ::gui-theme]))
 
 (s/def ::reason-phrase (s/and string? #(<= (count %) 50)))
 (s/def ::status int?) ;; a little too general but ok for now

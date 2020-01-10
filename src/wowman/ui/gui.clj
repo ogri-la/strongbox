@@ -366,9 +366,8 @@
 
 (defn hide-columns
   [grid hidden-column-list]
-  (when-not (core/debugging?)
-    (doseq [column hidden-column-list]
-      (.setVisible (.getColumnExt grid (-> column name str)) false))))
+  (doseq [column hidden-column-list]
+    (.setVisible (.getColumnExt grid (-> column name str)) false)))
 
 (defn add-highlighter
   "target a selection of rows and colour their backgrounds differently"
@@ -638,9 +637,8 @@
     (add-highlighter grid #(= (.getValue % level-col-idx) :warn) (colours :notice/warning))
     (add-highlighter grid #(= (.getValue % level-col-idx) :error) (colours :notice/error))
 
-    ;; hide header when not debugging
-    (when-not (core/debugging?)
-      (.setTableHeader grid nil))
+    ;; hide header
+    (.setTableHeader grid nil)
 
     ;; would love to know how to make these layouts and widths more consistent and deterministic
     (mig/mig-panel
