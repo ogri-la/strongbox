@@ -658,10 +658,22 @@
                 :tabs [(tab "installed" (installed-panel))
                        (tab "search" (search-panel))])]
 
-    (ss/listen tabber :selection (fn [e]
-                                   (let [tab-label (-> (ss/selection tabber) :title)]
-                                     (when (= tab-label "search")
-                                       (ss/request-focus! (select-ui :#search-input-txt))))))
+    (ss/listen tabber :selection
+               (fn [e]
+                 (let [tab-label (-> (ss/selection tabber) :title)]
+                   (when (= tab-label "search")
+                     (ss/request-focus! (select-ui :#search-input-txt))))))
+
+    (ss/listen tabber :mouse-wheel
+               (fn [e]
+                 (let [num-tabs (.getTabCount tabber)
+                       current-idx (.getSelectedIndex tabber)
+                       next-idx (inc current-idx)
+                       next-idx (if (>= next-idx num-tabs)
+                                  0 ;; start over
+                                  next-idx)]
+                   (ss/selection! tabber next-idx))))
+
     tabber))
 
 ;; todo: push this into core

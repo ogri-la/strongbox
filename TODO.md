@@ -37,6 +37,8 @@ see CHANGELOG.md for a more formal list of changes by release
     - done
 * remove debugging? mode
     - done
+* gui, scroll tabs with mouse
+    - done
 
 ### todo
 
@@ -49,7 +51,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * import/export, export user catalogue
 * github, installation from github via import menu not updating log until finished
     - this is an async issue
-* gui, scroll tabs with mouse
 
 ## todo bucket (no particular order)
 
