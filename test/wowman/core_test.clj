@@ -190,13 +190,14 @@
           export-dir (utils/join fs/*cwd* "foo" "bar" "exports")
           _ (fs/mkdirs export-dir)
           output-path (utils/join export-dir "export.json")
-          _ (core/export-installed-addon-list output-path addon-list)
-          expected [{:name "adibags" :source "curseforge"}
+          _ (core/export-installed-addon-list output-path addon-list "retail")
+          expected [{:name "adibags" :source "curseforge" :game-track "retail"}
                     {:name "noname"} ;; an addon whose name is not present in the catalog (umatched)
-                    {:name "carbonite" :source "curseforge"}]]
+                    {:name "carbonite" :source "curseforge" :game-track "retail"}]]
       (is (fs/exists? output-path))
       (is (= expected (utils/load-json-file output-path))))))
 
+;; todo: do as we did with the config and ensure previous exports can still be imported
 (deftest import-exported-addon-list-file
   (testing "an export can be imported"
     (let [;; modified curseforge addon files to generate fake links

@@ -162,8 +162,11 @@
 (s/def ::export-type #{:json :edn})
 (s/def ::source ::catalog-source) ;; alias :(
 (s/def ::source-id ::catalog-source-id) ;; alias :(
+
+;; todo: split this into 'matched' and 'unmatched' export records
+;; unmatched records are name-only, matched records must have name, source, id, game track, etc
 (s/def ::export-record (s/keys :req-un [::name]
-                               :opt [::source]))
+                               :opt [::source ::source-id ::game-track]))
 (s/def ::export-record-list (s/coll-of ::export-record))
 
 ;;

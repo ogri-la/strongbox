@@ -39,11 +39,11 @@ see CHANGELOG.md for a more formal list of changes by release
     - done
 * gui, scroll tabs with mouse
     - done
-* github, installation from github via import menu not updating log until finished
-    - this is an async issue
 
 ### todo
 
+* github, installation from github via import menu not updating log until finished
+    - this is an async issue
 * ignore addons that are under version control
     - see issue: https://github.com/ogri-la/wowman/issues/114
     - should this live in the .nfo file?
