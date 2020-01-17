@@ -233,7 +233,7 @@
           (core/set-addon-dir! (str fs/*cwd*))
 
           (let [;; our list of addons to import
-                output-path (fixture-path "import--exports.json")
+                output-path (fixture-path "import-export--export-v1.json")
 
                 expected [{:description "Does what no other addon does, slightly differently",
                            :category-list ["Bags & Inventory"],
