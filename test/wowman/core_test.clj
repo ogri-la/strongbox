@@ -252,6 +252,7 @@
                            :version "v8.2.0-v1.13.2-7135.139",
                            :dirname "EveryAddon",
                            :primary? true,
+                           :ignore? false
                            :matched? true}
 
                           {:description "Does what every addon does, just better",
@@ -272,6 +273,7 @@
                            :version "v8.2.0-v1.13.2-7135.139",
                            :dirname "EveryOtherAddon",
                            :primary? true,
+                           :ignore? false
                            :matched? true}]]
 
             (core/import-exported-file output-path)
@@ -333,6 +335,7 @@
                            :version "v8.2.0-v1.13.2-7135.139",
                            :dirname "EveryAddon",
                            :primary? true,
+                           :ignore? false,
                            :matched? true}
 
                           {:description "Does what every addon does, just better",
@@ -353,6 +356,7 @@
                            :version "v8.2.0-v1.13.2-7135.139",
                            :dirname "EveryOtherAddon",
                            :primary? true,
+                           :ignore? false
                            :matched? true}]]
 
             (core/import-exported-file output-path)
