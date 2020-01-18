@@ -942,7 +942,7 @@
     matching-addon-list))
 
 ;; v1 takes 13.7 seconds to build an index using the 'short' catalog
-;; this can still be improved
+;; this function can still be improved
 (defn import-addon-list-v1
   "deprecated. handles exports with partial information (name, or name and source) from <=0.10.0 versions of wowman.
   caveats: imports the *latest* version of the addon, if addon found."
@@ -959,14 +959,27 @@
   this style of export allows us to make fast and unambiguous matches against the database.
   caveats: imports the *latest* version of the addon, if addon found."
   [addon-list]
-  (let [match-results (-db-match-installed-addons-with-catalog addon-list)
+  (let [;; in order to get these bare maps playing nicely with the rest of the system we need to gussy it up a bit so it looks like an installed addon
+        padding {:label ""
+                 :description ""
+                 :dirname ""
+                 :interface-version 0
+                 :installed-version "0"}
+
+        addon-list (map #(merge padding %) addon-list)
+
+        match-results (-db-match-installed-addons-with-catalog addon-list)
         [matched unmatched] (utils/split-filter #(contains? % :final) match-results)
-        addon-dir (get-state :selected-addon-dir)]
+        addon-dir (get-state :selected-addon-dir)
+
+        ;; this is what v1 does, but it's hidden away in expand-summary-wrapper
+        default-game-track (get-game-track)]
+
     (doseq [db-match match-results
             :let [addon (:installed-addon db-match) ;; ignore 'installed' bit
                   db-entry (:final db-match)]]
-      (install-addon (catalog/expand-summary db-entry (:game-track addon))
-                     addon-dir))))
+      (when-let [expanded-addon (spy :info (catalog/expand-summary db-entry (:game-track addon default-game-track)))]
+        (install-addon expanded-addon addon-dir)))))
 
 (defn-spec import-exported-file nil?
   [path ::sp/extant-file]
@@ -975,9 +988,14 @@
         addon-list (utils/load-json-file-safely path
                                                 :bad-data? nil-me
                                                 :data-spec ::sp/export-record-list
-                                                :invalid-data? nil-me)]
-    (when-not (empty? addon-list)
-      (import-addon-list-v1 addon-list))))
+                                                :invalid-data? nil-me)
+        full-data? (fn [addon]
+                     (utils/all (mapv #(contains? addon %) [:source :source-id :name])))
+        [full-data, partial-data] (utils/split-filter full-data? addon-list)]
+    (when-not (empty? partial-data)
+      (import-addon-list-v1 partial-data))
+    (when-not (empty? full-data)
+      (import-addon-list-v2 full-data))))
 
 ;; 
 
