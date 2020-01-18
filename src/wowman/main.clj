@@ -67,14 +67,18 @@
   (restart {:ui :cli}))
 
 (defn test
-  [& [path]]
+  [& [ns-kw fn-kw]]
   (clojure.tools.namespace.repl/refresh) ;; reloads all namespaces, including wowman.whatever-test ones
   (try
     (logging/change-log-level :debug)
-    (if path
-      (if (some #{path} [:core :http :main :toc :utils :curseforge-api :zip :catalog :cli :gui :wowinterface :wowinterface-api :github-api :tukui-api :config])
-        (clojure.test/run-all-tests (re-pattern (str "wowman." (name path) "-test")))
-        (error "unknown test file:" path))
+    (if ns-kw
+      (if (some #{ns-kw} [:core :http :main :toc :utils :curseforge-api :zip :catalog :cli :gui :wowinterface :wowinterface-api :github-api :tukui-api :config])
+        (if fn-kw
+          ;; test-vars will run the test but won't give you any feedback about it passing or not
+          ;; slightly better than nothing
+          (clojure.test/test-vars [(resolve (symbol (str "wowman." (name ns-kw) "-test") (name fn-kw)))])
+          (clojure.test/run-all-tests (re-pattern (str "wowman." (name ns-kw) "-test"))))
+        (error "unknown test file:" ns-kw))
       (clojure.test/run-all-tests #"wowman\..*-test"))
     (finally
       (logging/change-log-level (:level logging/default-logging-config)))))
