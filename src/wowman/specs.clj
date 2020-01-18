@@ -163,10 +163,14 @@
 (s/def ::source ::catalog-source) ;; alias :(
 (s/def ::source-id ::catalog-source-id) ;; alias :(
 
-;; todo: split this into 'matched' and 'unmatched' export records
-;; unmatched records are name-only, matched records must have name, source, id, game track, etc
-(s/def ::export-record (s/keys :req-un [::name]
-                               :opt [::source ::source-id ::game-track]))
+(s/def ::export-record-partial (s/keys :req-un [::name]
+                                       :opt [::source ::source-id]))
+
+(s/def ::export-record-full (s/keys :req-un [::name ::source ::source-id]
+                                    :opt [::game-track]))
+
+(s/def ::export-record (s/or :partial ::export-record-partial, :full ::export-record-full))
+
 (s/def ::export-record-list (s/coll-of ::export-record))
 
 ;;

@@ -614,6 +614,8 @@
 ;;
 
 (defn find-in-db
+  "looks for `installed-addon` in the database, matching `toc-key` to a `catalog-key`.
+  if a `toc-key` and `catalog-key` are actually lists, then all the `toc-keys` must match the `catalog-keys`"
   [installed-addon toc-keys catalog-keys]
   (let [catalog-keys (if (vector? catalog-keys) catalog-keys [catalog-keys]) ;; ["source" "source_id"] => ["source" "source_id"], "name" => ["name"]
         sql-arg-template (clojure.string/join " AND " (mapv #(format "%s = ?" %) catalog-keys)) ;; "source = ? AND source_id = ?", "name = ?"
@@ -907,6 +909,7 @@
 ;; import/export
 
 (defn-spec export-installed-addon-list ::sp/extant-file
+  "writes the name, source, source-id and current game track to a json file for each installed addon in the currently selected addon directory"
   [output-file ::sp/file, addon-list ::sp/toc-list, game-track ::sp/game-track]
   (let [derive-export (fn [addon]
                         (let [stub (select-keys addon [:name :source :source-id])
@@ -944,10 +947,9 @@
 ;; v1 takes 13.7 seconds to build an index using the 'short' catalog
 ;; this function can still be improved
 (defn import-addon-list-v1
-  "deprecated. handles exports with partial information (name, or name and source) from <=0.10.0 versions of wowman.
-  caveats: imports the *latest* version of the addon, if addon found."
+  "handles exports with partial information (name, or name and source) from <=0.10.0 versions of wowman."
   [addon-list] ;; todo: spec
-  (info "attempting to import" addon-list) ;; todo: this message sucks
+  (info (format "attempting to import %s addons. this may take a minute" (count addon-list)))
   (let [matching-addon-list (-mk-import-idx addon-list)
         addon-dir (get-state :selected-addon-dir)]
     (doseq [addon matching-addon-list]
@@ -956,10 +958,10 @@
 ;; v2 uses the same mechanism to match addons as the rest of the app does
 (defn import-addon-list-v2
   "handles exports with full information (name and source and source-id) from wowman >=0.10.1.
-  this style of export allows us to make fast and unambiguous matches against the database.
-  caveats: imports the *latest* version of the addon, if addon found."
+  this style of export allows us to make fast and unambiguous matches against the database."
   [addon-list]
-  (let [;; in order to get these bare maps playing nicely with the rest of the system we need to gussy it up a bit so it looks like an installed addon
+  (let [;; in order to get these bare maps playing nicely with the rest of the system we need to
+        ;; gussy them up a bit so it looks like an `::sp/installed-addon-summary`
         padding {:label ""
                  :description ""
                  :dirname ""
@@ -972,13 +974,14 @@
         [matched unmatched] (utils/split-filter #(contains? % :final) match-results)
         addon-dir (get-state :selected-addon-dir)
 
-        ;; this is what v1 does, but it's hidden away in expand-summary-wrapper
+        ;; this is what v1 does, but it's hidden away in `expand-summary-wrapper`
         default-game-track (get-game-track)]
 
     (doseq [db-match match-results
             :let [addon (:installed-addon db-match) ;; ignore 'installed' bit
-                  db-entry (:final db-match)]]
-      (when-let [expanded-addon (spy :info (catalog/expand-summary db-entry (:game-track addon default-game-track)))]
+                  db-entry (:final db-match)
+                  game-track (get addon :game-track default-game-track)]]
+      (when-let [expanded-addon (catalog/expand-summary db-entry game-track)]
         (install-addon expanded-addon addon-dir)))))
 
 (defn-spec import-exported-file nil?

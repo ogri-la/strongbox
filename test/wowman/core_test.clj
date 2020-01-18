@@ -197,7 +197,6 @@
       (is (fs/exists? output-path))
       (is (= expected (utils/load-json-file output-path))))))
 
-;; todo: do as we did with the config and ensure previous exports can still be imported
 (deftest import-exported-addon-list-file-v1
   (testing "an export can be imported"
     (let [;; modified curseforge addon files to generate fake links
@@ -207,7 +206,7 @@
           every-addon-api (slurp (fixture-path "curseforge-api-addon--everyaddon.json"))
           every-other-addon-api (slurp (fixture-path "curseforge-api-addon--everyotheraddon.json"))
 
-          addon-summary-list (utils/load-json-file (fixture-path "import--dummy-catalog.json"))
+          addon-summary-list (utils/load-json-file (fixture-path "import-export--dummy-catalog.json"))
 
           fake-routes {;; catalog
                        "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
@@ -288,7 +287,7 @@
           every-addon-api (slurp (fixture-path "curseforge-api-addon--everyaddon.json"))
           every-other-addon-api (slurp (fixture-path "curseforge-api-addon--everyotheraddon-classic.json"))
 
-          addon-summary-list (utils/load-json-file (fixture-path "import--dummy-catalog.json"))
+          addon-summary-list (utils/load-json-file (fixture-path "import-export--dummy-catalog.json"))
 
           fake-routes {;; catalog
                        "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"

@@ -74,7 +74,7 @@
     (if ns-kw
       (if (some #{ns-kw} [:core :http :main :toc :utils :curseforge-api :zip :catalog :cli :gui :wowinterface :wowinterface-api :github-api :tukui-api :config])
         (if fn-kw
-          ;; test-vars will run the test but won't give you any feedback about it passing or not
+          ;; `test-vars` will run the test but not give feedback if test passes OR test not found
           ;; slightly better than nothing
           (clojure.test/test-vars [(resolve (symbol (str "wowman." (name ns-kw) "-test") (name fn-kw)))])
           (clojure.test/run-all-tests (re-pattern (str "wowman." (name ns-kw) "-test"))))
