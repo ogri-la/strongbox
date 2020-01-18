@@ -1,0 +1,126 @@
+{
+  "id": 1,
+  "name": "Every Other Addon",
+  "authors": [
+    {
+      "name": "torkus",
+      "url": "https://www.curseforge.com/members/1-torkus?username=torkus",
+      "projectId": 1,
+      "id": 1,
+      "projectTitleId": null,
+      "projectTitleTitle": null,
+      "userId": 1,
+      "twitchId": 1
+    }
+  ],
+  "attachments": [],
+  "websiteUrl": "https://www.curseforge.com/wow/addons/every-other-addon",
+  "gameId": 1,
+  "summary": "Does what every addon does, just better",
+  "defaultFileId": 2,
+  "downloadCount": 1,
+  "latestFiles": [
+    {
+      "id": 2,
+      "displayName": "v8.2.0-v1.13.2-7135.139",
+      "fileName": "EveryOtherAddon-v8.2.0-v1.13.2-7135.139.zip",
+      "fileDate": "2019-07-11T11:13:39.763Z",
+      "fileLength": 1,
+      "releaseType": 1,
+      "fileStatus": 4,
+      "downloadUrl": "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip",
+      "isAlternate": false,
+      "alternateFileId": 0,
+      "dependencies": [],
+      "isAvailable": true,
+      "modules": [
+        {
+          "foldername": "EveryOtherAddon",
+          "fingerprint": 1,
+          "type": 3
+        }
+      ],
+      "packageFingerprint": 1,
+      "gameVersion": [
+        "1.13.2"
+      ],
+      "sortableGameVersion": [
+        {
+          "gameVersionPadded": "0000000008.0000000000.0000000001",
+          "gameVersion": "1.13.2",
+          "gameVersionReleaseDate": "2018-07-17T00:00:00Z",
+          "gameVersionName": "1.13.2"
+        }
+      ],
+      "installMetadata": null,
+      "changelog": null,
+      "hasInstallScript": false,
+      "isCompatibleWithClient": true,
+      "categorySectionPackageType": 1,
+      "restrictProjectFileAccess": 1,
+      "projectStatus": 4,
+      "renderCacheId": 1,
+      "fileLegacyMappingId": null,
+      "projectId": 1,
+      "parentProjectFileId": null,
+      "parentFileLegacyMappingId": null,
+      "fileTypeId": null,
+      "exposeAsAlternative": null,
+      "packageFingerprintId": 1,
+      "gameVersionDateReleased": "2001-01-01T00:00:00Z",
+      "gameVersionMappingId": 1,
+      "gameVersionId": 7350,
+      "gameId": 1,
+      "isServerPack": false,
+      "serverPackFileId": null,
+      "gameVersionFlavor": "wow_classic"
+    }
+  ],
+  "categories": [
+    {
+      "categoryId": 1013,
+      "name": "Quests & Leveling",
+      "url": "https://www.curseforge.com/wow/addons/quests-leveling",
+      "avatarUrl": "https://media.forgecdn.net/avatars/54/449/123.png",
+      "parentId": 1,
+      "rootId": 1,
+      "projectId": 1,
+      "avatarId": 1,
+      "gameId": 1
+    }
+  ],
+  "status": 4,
+  "primaryCategoryId": 1013,
+  "categorySection": {
+    "id": 1,
+    "gameId": 1,
+    "name": "Addons",
+    "packageType": 1,
+    "path": "Interface\\Addons",
+    "initialInclusionPattern": "(?i)^([^/]+)[\\\\/]\\1\\.toc$",
+    "extraIncludePattern": "(?i)^[^/\\\\]+[/\\\\]Bindings\\.xml$",
+    "gameCategoryId": 1
+  },
+  "slug": "every-other-addon",
+  "gameVersionLatestFiles": [
+    {
+      "gameVersion": "1.13.2",
+      "projectFileId": 1,
+      "projectFileName": "EveryOtherAddon.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_classic"
+    }
+  ],
+  "isFeatured": false,
+  "popularityScore": 52.70240020751953,
+  "gamePopularityRank": 2913,
+  "primaryLanguage": "enUS",
+  "gameSlug": "wow",
+  "gameName": "World of Warcraft",
+  "portalName": "www.curseforge.com",
+  "dateModified": "2019-07-11T11:14:30.43Z",
+  "dateCreated": "2019-07-11T03:23:24.1Z",
+  "dateReleased": "2019-07-11T11:13:39.763Z",
+  "isAvailable": true,
+  "isExperiemental": false
+}

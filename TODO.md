@@ -39,6 +39,8 @@ see CHANGELOG.md for a more formal list of changes by release
     - done
 * gui, scroll tabs with mouse
     - done
+* import/export, capture game track of exported addon dir?
+    - done
 
 ### todo
 
@@ -57,7 +59,7 @@ see CHANGELOG.md for a more formal list of changes by release
     - tests pass
     - readme updated
     - release updated
-* import/export, capture game track of exported addon dir?
+
 * import/export, export user catalogue
 
 ## todo bucket (no particular order)
