@@ -190,14 +190,14 @@
           export-dir (utils/join fs/*cwd* "foo" "bar" "exports")
           _ (fs/mkdirs export-dir)
           output-path (utils/join export-dir "export.json")
-          _ (core/export-installed-addon-list output-path addon-list)
-          expected [{:name "adibags" :source "curseforge"}
+          _ (core/export-installed-addon-list output-path addon-list "retail")
+          expected [{:name "adibags" :source "curseforge" :game-track "retail"}
                     {:name "noname"} ;; an addon whose name is not present in the catalog (umatched)
-                    {:name "carbonite" :source "curseforge"}]]
+                    {:name "carbonite" :source "curseforge" :game-track "retail"}]]
       (is (fs/exists? output-path))
       (is (= expected (utils/load-json-file output-path))))))
 
-(deftest import-exported-addon-list-file
+(deftest import-exported-addon-list-file-v1
   (testing "an export can be imported"
     (let [;; modified curseforge addon files to generate fake links
           every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
@@ -206,7 +206,7 @@
           every-addon-api (slurp (fixture-path "curseforge-api-addon--everyaddon.json"))
           every-other-addon-api (slurp (fixture-path "curseforge-api-addon--everyotheraddon.json"))
 
-          addon-summary-list (utils/load-json-file (fixture-path "import--dummy-catalog.json"))
+          addon-summary-list (utils/load-json-file (fixture-path "import-export--dummy-catalog.json"))
 
           fake-routes {;; catalog
                        "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
@@ -232,7 +232,7 @@
           (core/set-addon-dir! (str fs/*cwd*))
 
           (let [;; our list of addons to import
-                output-path (fixture-path "import--exports.json")
+                output-path (fixture-path "import-export--export-v1.json")
 
                 expected [{:description "Does what no other addon does, slightly differently",
                            :category-list ["Bags & Inventory"],
@@ -277,6 +277,95 @@
             (core/import-exported-file output-path)
             (core/refresh) ;; re-read the installation directory
             (is (= expected (core/get-state :installed-addon-list)))))))))
+
+(deftest import-exported-addon-list-file-v2
+  (testing "an export can be imported AND per-addon game track preferences are preserved"
+    (let [;; modified curseforge addon files to generate fake links
+          every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
+          every-other-addon-zip-file (fixture-path "everyotheraddon--4-5-6.zip")
+
+          every-addon-api (slurp (fixture-path "curseforge-api-addon--everyaddon.json"))
+          every-other-addon-api (slurp (fixture-path "curseforge-api-addon--everyotheraddon-classic.json"))
+
+          addon-summary-list (utils/load-json-file (fixture-path "import-export--dummy-catalog.json"))
+
+          fake-routes {;; catalog
+                       "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
+                       {:get (fn [req] {:status 200 :body (utils/to-json (catalog/new-catalog addon-summary-list))})}
+
+                       ;; every-addon
+                       "https://addons-ecs.forgesvc.net/api/v2/addon/1"
+                       {:get (fn [req] {:status 200 :body every-addon-api})}
+
+                       ;; ... it's zip file
+                       "https://edge.forgecdn.net/files/1/1/EveryAddon.zip"
+                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-addon-zip-file)})}
+
+                       ;; every-other-addon
+                       "https://addons-ecs.forgesvc.net/api/v2/addon/2"
+                       {:get (fn [req] {:status 200 :body every-other-addon-api})}
+
+                       ;; ... it's zip file
+                       "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip"
+                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-other-addon-zip-file)})}}]
+      (with-fake-routes-in-isolation fake-routes
+        (with-running-app
+          (core/set-addon-dir! (str fs/*cwd*))
+
+          (let [;; our list of addons to import
+                output-path (fixture-path "import-export--export-v2.json")
+
+                expected [{:description "Does what no other addon does, slightly differently",
+                           :category-list ["Bags & Inventory"],
+                           :update? false,
+                           :updated-date "2019-06-26T01:21:39Z",
+                           :group-id "https://www.curseforge.com/wow/addons/everyaddon",
+                           :installed-version "v8.2.0-v1.13.2-7135.139",
+                           :name "everyaddon",
+                           :source "curseforge",
+                           :interface-version 80000,
+                           :download-uri "https://edge.forgecdn.net/files/1/1/EveryAddon.zip",
+                           :alt-name "everyaddon",
+                           :label "EveryAddon",
+                           :download-count 3000000,
+                           :source-id 1,
+                           :uri "https://www.curseforge.com/wow/addons/everyaddon",
+                           :version "v8.2.0-v1.13.2-7135.139",
+                           :dirname "EveryAddon",
+                           :primary? true,
+                           :matched? true}
+
+                          {:description "Does what every addon does, just better",
+                           :category-list ["Professions" "Map & Minimap"],
+                           :update? false,
+                           :updated-date "2019-07-03T07:11:47Z",
+                           :group-id "https://www.curseforge.com/wow/addons/everyotheraddon",
+                           :installed-version "v8.2.0-v1.13.2-7135.139",
+                           :name "everyotheraddon",
+                           :source "curseforge",
+                           :interface-version 11300, ;; changed
+                           :download-uri "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip",
+                           :alt-name "everyotheraddon",
+                           :label "Every Other Addon",
+                           :download-count 5400000,
+                           :source-id 2,
+                           :uri "https://www.curseforge.com/wow/addons/everyotheraddon",
+                           :version "v8.2.0-v1.13.2-7135.139",
+                           :dirname "EveryOtherAddon",
+                           :primary? true,
+                           :matched? true}]]
+
+            (core/import-exported-file output-path)
+            (core/set-game-track! "retail") ;; unnecessary, 'retail' is default, explicitness
+            (core/refresh) ;; re-read the installation directory
+            (is (= (first expected) (first (core/get-state :installed-addon-list))))
+
+            ;; bit of a hack. the second expected addon won't be expanded properly after the refresh
+            ;; because it's a classic addon and the addon dir is 'retail'. so we change the addon dir
+            ;; and then test the second one matches.
+            (core/set-game-track! "classic")
+            (core/refresh)
+            (is (= (second expected) (second (core/get-state :installed-addon-list))))))))))
 
 (deftest check-for-addon-update
   (testing "the key :update? is set on an addon when there is a difference between the installed version of an addon and it's matching catalog version"

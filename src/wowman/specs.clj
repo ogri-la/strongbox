@@ -162,8 +162,15 @@
 (s/def ::export-type #{:json :edn})
 (s/def ::source ::catalog-source) ;; alias :(
 (s/def ::source-id ::catalog-source-id) ;; alias :(
-(s/def ::export-record (s/keys :req-un [::name]
-                               :opt [::source]))
+
+(s/def ::export-record-partial (s/keys :req-un [::name]
+                                       :opt [::source ::source-id]))
+
+(s/def ::export-record-full (s/keys :req-un [::name ::source ::source-id]
+                                    :opt [::game-track]))
+
+(s/def ::export-record (s/or :partial ::export-record-partial, :full ::export-record-full))
+
 (s/def ::export-record-list (s/coll-of ::export-record))
 
 ;;

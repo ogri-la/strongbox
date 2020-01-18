@@ -727,6 +727,7 @@
     (core/refresh)))
 
 (defn import-addon-handler
+  "imports an addon by parsing a URL"
   []
   (let [addon-url (ss/input "Enter URL of addon"
                             :title "Addon URL"

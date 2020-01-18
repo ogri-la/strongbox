@@ -216,7 +216,7 @@
 (defn db-preserve-integer-source-id-if-possible
   "source-id for 99.9999% of addons is an integer.
   this doesn't hold true for addons on Github or for other hosts in the future, so the database
-  needs to store the value as a string. When coming out of the database, it's also string - it's type has been lost.
+  needs to store the value as a string. When coming out of the database, it's also a string - it's type has been lost.
   for no good reason, try to preserve it here"
   [source-id]
   (try
@@ -613,7 +613,10 @@
 
 ;;
 
-(defn find-in-db [installed-addon toc-keys catalog-keys]
+(defn find-in-db
+  "looks for `installed-addon` in the database, matching `toc-key` to a `catalog-key`.
+  if a `toc-key` and `catalog-key` are actually lists, then all the `toc-keys` must match the `catalog-keys`"
+  [installed-addon toc-keys catalog-keys]
   (let [catalog-keys (if (vector? catalog-keys) catalog-keys [catalog-keys]) ;; ["source" "source_id"] => ["source" "source_id"], "name" => ["name"]
         sql-arg-template (clojure.string/join " AND " (mapv #(format "%s = ?" %) catalog-keys)) ;; "source = ? AND source_id = ?", "name = ?"
 
@@ -906,8 +909,14 @@
 ;; import/export
 
 (defn-spec export-installed-addon-list ::sp/extant-file
-  [output-file ::sp/file, addon-list ::sp/toc-list]
-  (let [addon-list (map #(select-keys % [:name :source :source-id]) addon-list)]
+  "writes the name, source, source-id and current game track to a json file for each installed addon in the currently selected addon directory"
+  [output-file ::sp/file, addon-list ::sp/toc-list, game-track ::sp/game-track]
+  (let [derive-export (fn [addon]
+                        (let [stub (select-keys addon [:name :source :source-id])
+                              ;; when there is a catalog match, attach the game track as well
+                              game-track (when (:source stub) {:game-track game-track})]
+                          (merge stub game-track)))
+        addon-list (map derive-export addon-list)]
     (utils/dump-json-file output-file addon-list)
     (info "wrote:" output-file)
     output-file))
@@ -920,7 +929,7 @@
         unmatched-addon-list (remove :source addon-list)]
     (doseq [addon unmatched-addon-list]
       (warn (format "Addon '%s' has no match in the catalog and will be skipped during import. Ensure all addons match before doing an export." (:name addon))))
-    (export-installed-addon-list output-file addon-list)))
+    (export-installed-addon-list output-file addon-list (get-game-track))))
 
 ;; created to investigate some performance issues, seems sensible to keep it separate
 (defn -mk-import-idx
@@ -935,14 +944,45 @@
         matching-addon-list (->> addon-list (map find-expand) (remove nil?) vec)]
     matching-addon-list))
 
-(defn import-addon-list
-  "caveats: imports the *latest* version of the addon, if addon found"
+;; v1 takes 13.7 seconds to build an index using the 'short' catalog
+;; this function can still be improved
+(defn import-addon-list-v1
+  "handles exports with partial information (name, or name and source) from <=0.10.0 versions of wowman."
   [addon-list] ;; todo: spec
-  (info "attempting to import" addon-list)
+  (info (format "attempting to import %s addons. this may take a minute" (count addon-list)))
   (let [matching-addon-list (-mk-import-idx addon-list)
         addon-dir (get-state :selected-addon-dir)]
     (doseq [addon matching-addon-list]
       (install-addon addon addon-dir))))
+
+;; v2 uses the same mechanism to match addons as the rest of the app does
+(defn import-addon-list-v2
+  "handles exports with full information (name and source and source-id) from wowman >=0.10.1.
+  this style of export allows us to make fast and unambiguous matches against the database."
+  [addon-list]
+  (let [;; in order to get these bare maps playing nicely with the rest of the system we need to
+        ;; gussy them up a bit so it looks like an `::sp/installed-addon-summary`
+        padding {:label ""
+                 :description ""
+                 :dirname ""
+                 :interface-version 0
+                 :installed-version "0"}
+
+        addon-list (map #(merge padding %) addon-list)
+
+        match-results (-db-match-installed-addons-with-catalog addon-list)
+        [matched unmatched] (utils/split-filter #(contains? % :final) match-results)
+        addon-dir (get-state :selected-addon-dir)
+
+        ;; this is what v1 does, but it's hidden away in `expand-summary-wrapper`
+        default-game-track (get-game-track)]
+
+    (doseq [db-match match-results
+            :let [addon (:installed-addon db-match) ;; ignore 'installed' bit
+                  db-entry (:final db-match)
+                  game-track (get addon :game-track default-game-track)]]
+      (when-let [expanded-addon (catalog/expand-summary db-entry game-track)]
+        (install-addon expanded-addon addon-dir)))))
 
 (defn-spec import-exported-file nil?
   [path ::sp/extant-file]
@@ -951,9 +991,14 @@
         addon-list (utils/load-json-file-safely path
                                                 :bad-data? nil-me
                                                 :data-spec ::sp/export-record-list
-                                                :invalid-data? nil-me)]
-    (when-not (empty? addon-list)
-      (import-addon-list addon-list))))
+                                                :invalid-data? nil-me)
+        full-data? (fn [addon]
+                     (utils/all (mapv #(contains? addon %) [:source :source-id :name])))
+        [full-data, partial-data] (utils/split-filter full-data? addon-list)]
+    (when-not (empty? partial-data)
+      (import-addon-list-v1 partial-data))
+    (when-not (empty? full-data)
+      (import-addon-list-v2 full-data))))
 
 ;; 
 
@@ -1064,11 +1109,14 @@
   [addon-url string?]
   (binding [http/*cache* (cache)]
     (if-let* [addon-summary (catalog/parse-user-string addon-url)
+              ;; game track doesn't matter when adding it to the user catalogue ...
               addon (or
                      (catalog/expand-summary addon-summary "retail")
                      (catalog/expand-summary addon-summary "classic"))
               test-only? true
               _ (install-addon-guard addon (get-state :selected-addon-dir) test-only?)]
+
+             ;; ... but does matter when installing it in to the current addon directory
              (let [addon (expand-summary-wrapper addon-summary)]
 
                (add-user-addon! addon-summary)
@@ -1078,12 +1126,12 @@
                  (db-reload-catalog)
                  addon)
 
-               ;; failed to expand summary, probably because of selected game track
+               ;; failed to expand summary, probably because of selected game track.
                ;; gui depends on difference between an addon and addon summary to know
-               ;; what error message to display
+               ;; what error message to display.
                (or addon addon-summary))
 
-             ;; failed to parse url, or expand summary, or trial install
+             ;; failed to parse url, or expand summary, or trial installation
              nil)))
 
 ;; init
