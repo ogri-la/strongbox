@@ -123,7 +123,7 @@
 
         ;; https://github.com/ogri-la/wowman/issues/47 - user encountered addon sans 'Title' attribute
         ;; if a match in the catalog is found even after munging the title, it will overwrite this one
-        no-label-label (str dirname) ;; "EveryAddon"
+        no-label-label (str dirname " *") ;; "EveryAddon *"
         label (:title keyvals)
         label (if-not (empty? label) label no-label-label)
         _ (when (= label no-label-label)
@@ -144,8 +144,9 @@
         tukui-source (when-let [x-tukui-id (-> keyvals :x-tukui-projectid utils/to-int)]
                        {:source "tukui"
                         :source-id x-tukui-id})
-        
+
         ignore-flag (when (some->> keyvals :version (clojure.string/includes? "@project-version@"))
+                      (warn (format "ignoring addon '%s': 'Version' field in .toc file is unrendered" dirname))
                       {:ignore? true})
 
         addon {:name (normalise-name label)

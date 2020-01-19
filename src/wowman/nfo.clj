@@ -66,8 +66,9 @@
   ""
   [install-dir ::sp/extant-dir, dirname string?]
   (let [nfo-file-contents (read-nfo-file install-dir dirname)
-        ;; `ignore?` is never written to file, although the user can put it there manually if they like
+        ;; `ignore?` is never written to file, although the user can put it there manually if they like.
         ;; this value may also be introduced in `toc.clj`
         ignore-flag (when (ignore? (join install-dir dirname))
+                      (warn (format "ignoring addon '%s': addon directory contains a SVC sub-directory (.git/.hg/.svn etc)" dirname))
                       {:ignore? true})]
     (merge nfo-file-contents ignore-flag)))
