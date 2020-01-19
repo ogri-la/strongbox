@@ -30,6 +30,7 @@
    :installed-version (:version addon)
    :name (:name addon) ;; normalised name. once used to match to online addon, we now use source+source-id
    :group-id (:uri addon) ;; groups all of an addon's directories together. this is a verbose but natural way of specifying source+source-id
+   :primary? primary? ;; if addon is one of multiple addons, is this addon considered the primary one?
    :source (:source addon)
    :source-id (:source-id addon)})
 
@@ -41,12 +42,8 @@
 (defn-spec write-nfo ::sp/extant-file
   "given an installation directory and an addon, extract the neccessary bits and write them to a nfo file"
   [install-dir ::sp/extant-dir, addon ::sp/addon-or-toc-addon, addon-dirname string?, primary? boolean?]
-  (let [path (nfo-path install-dir addon-dirname)
-        ;; further data that isn't derived from the addon data that we'll write to the .wowman.json file
-        further {:primary? primary? ;; if addon is one of multiple addons, is this addon considered the primary one?
-                 :ignore? (ignore? (join install-dir addon-dirname)) ;; if addon has a svc-type subdir inside it
-                 }]
-    (utils/dump-json-file path (merge (derive addon primary?) further))
+  (let [path (nfo-path install-dir addon-dirname)]
+    (utils/dump-json-file path (derive addon primary?))
     path))
 
 (defn-spec rm-nfo nil?
@@ -55,7 +52,7 @@
     (fs/delete path)
     nil))
 
-(defn-spec read-nfo (s/or :ok ::sp/nfo, :error nil?)
+(defn-spec read-nfo-file (s/or :ok ::sp/nfo, :error nil?)
   "reads the .wowman.json file. 
   failure to load the json results in the file being deleted. 
   failure to validate the json data results in the file being deleted."
@@ -64,3 +61,13 @@
         bad-data (fn [] (warn "bad data, deleting file:" path) (rm-nfo path))
         invalid-data (fn [] (warn "invalid data, deleting file:" path) (rm-nfo path))]
     (utils/load-json-file-safely path :bad-data? bad-data, :invalid-data? invalid-data, :data-spec ::sp/nfo)))
+
+(defn-spec read-nfo (s/or :ok ::sp/nfo, :error nil?)
+  ""
+  [install-dir ::sp/extant-dir, dirname string?]
+  (let [nfo-file-contents (read-nfo-file install-dir dirname)
+        ;; `ignore?` is never written to file, although the user can put it there manually if they like
+        ;; this value may also be introduced in `toc.clj`
+        ignore-flag (when (ignore? (join install-dir dirname))
+                      {:ignore? true})]
+    (merge nfo-file-contents ignore-flag)))

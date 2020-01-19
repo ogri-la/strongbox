@@ -123,7 +123,7 @@
 
         ;; https://github.com/ogri-la/wowman/issues/47 - user encountered addon sans 'Title' attribute
         ;; if a match in the catalog is found even after munging the title, it will overwrite this one
-        no-label-label (str dirname " *") ;; "EveryAddon *"
+        no-label-label (str dirname) ;; "EveryAddon"
         label (:title keyvals)
         label (if-not (empty? label) label no-label-label)
         _ (when (= label no-label-label)
@@ -141,6 +141,13 @@
                        {:source "curseforge"
                         :source-id x-curse-id})
 
+        tukui-source (when-let [x-tukui-id (-> keyvals :x-tukui-projectid utils/to-int)]
+                       {:source "tukui"
+                        :source-id x-tukui-id})
+        
+        ignore-flag (when (some->> keyvals :version (clojure.string/includes? "@project-version@"))
+                      {:ignore? true})
+
         addon {:name (normalise-name label)
                :dirname dirname
                :label label
@@ -156,9 +163,9 @@
                ;;:required-dependencies (:requireddeps keyvals)
                }
 
-        ;; yes, this prefers curseforge over wowinterface.
+        ;; yes, this prefers curseforge over wowinterface. and tukui over all others.
         ;; I need to figure out some way of supporting multiple hosts per-addon
-        addon (merge addon alias wowi-source curse-source)]
+        addon (merge addon alias wowi-source curse-source tukui-source ignore-flag)]
 
     ;; if source present but is not in list of known sources, ignore the nfo-contents
     (if (and (contains? nfo-contents :source)

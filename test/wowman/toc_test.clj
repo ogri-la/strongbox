@@ -94,24 +94,23 @@ SomeAddon.lua")
       (is (= expected (toc/parse-addon-toc-guard addon-path)))))
 
   (testing "parsing scraped keyvals in .toc value yields expected values"
-    (let [cases [[{"title" ""} {:name "everyaddon-*",
-                                :dirname "EveryAddon",
-                                :label "EveryAddon *",
-                                :description nil,
-                                :interface-version 80200,
-                                :installed-version nil}]
-                 [{"Title" ""} {:name "everyaddon-*",
-                                :dirname "EveryAddon",
-                                :label "EveryAddon *",
-                                :description nil,
-                                :interface-version 80200,
-                                :installed-version nil}]
-                 [{"Title" nil} {:name "everyaddon-*",
-                                 :dirname "EveryAddon",
-                                 :label "EveryAddon *",
-                                 :description nil,
-                                 :interface-version 80200,
-                                 :installed-version nil}]]
+    (let [;; all of this can be derived from the directory name and sensible defaults
+          base-case {:name "everyaddon"
+                     :dirname "EveryAddon"
+                     :label "EveryAddon"
+                     :description nil
+                     :interface-version 80200
+                     :installed-version nil}
+          
+          cases [;; empty/no title
+                 [{:title ""} base-case]
+                 [{:title nil} base-case]
+
+                 ;; addon is in development
+                 [{:version "@project-version@"} (merge base-case
+                                                        {:installed-version "@project-version@" 
+                                                         :ignore? true})]
+                 ]
           install-dir fs/*cwd*
           addon-dir (utils/join install-dir "EveryAddon")]
       (fs/mkdir addon-dir)
