@@ -113,8 +113,11 @@
 
 ;;
 
-(s/def ::nfo (s/keys :req-un [::installed-version ::name ::group-id ::primary? ::source ::source-id]
-                     :opt [::ignore?]))
+(s/def ::ignore-flag (s/keys :req-un [::ignore?]))
+
+(s/def ::nfo (s/or :dev-addon-missing-nfo ::ignore-flag
+                   :ok (s/keys :req-un [::installed-version ::name ::group-id ::primary? ::source ::source-id]
+                               :opt [::ignore?])))
 
 ;; orphaned
 (s/def ::file-byte-array-pair (s/cat :file ::file

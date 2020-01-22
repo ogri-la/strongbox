@@ -15,12 +15,13 @@
   The file can be safely deleted but some addons may fail to find a match 
   in the catalogue again and will need to be found and re-installed.")
 
+(def ignorable-dir-set #{".git" ".hg" ".svn"})
+
 (defn-spec ignore? boolean?
   "return true if addon looks like it's under version control"
   [path ::sp/extant-dir]
-  (let [sub-dirs (->> path fs/list-dir (filter fs/directory?) (map fs/base-name) (mapv str))
-        ignorable-dirs #{".git" ".hg" ".svn"}]
-    (not (nil? (some ignorable-dirs sub-dirs)))))
+  (let [sub-dirs (->> path fs/list-dir (filter fs/directory?) (map fs/base-name) (mapv str))]
+    (not (nil? (some ignorable-dir-set sub-dirs)))))
 
 (defn-spec derive ::sp/nfo
   "extract fields from the addon data that will be written to the `.wowman.json` file"
@@ -61,12 +62,12 @@
         bad-data (fn [] (warn "bad data, deleting file:" path) (rm-nfo path))
         invalid-data (fn [] (warn "invalid data, deleting file:" path) (rm-nfo path))]
     (utils/load-json-file-safely path
+                                 :no-file? nil
                                  :bad-data? bad-data
                                  :invalid-data? invalid-data,
                                  :data-spec ::sp/nfo)))
 
 (defn-spec read-nfo (s/or :ok ::sp/nfo, :error nil?)
-  ""
   [install-dir ::sp/extant-dir, dirname string?]
   (let [nfo-file-contents (read-nfo-file install-dir dirname)
         ;; `ignore?` is never written to file, although the user can put it there manually if they like.
@@ -77,7 +78,7 @@
                      (:ignore? nfo-file-contents))
             (warn (format "addon '%s' is being manually ignored" dirname)))
 
-        ;; ignore because of svc dir, but only check if :ignore not found in .wowman.json file
+        ;; ignore addon because of SVC dir, but only check if :ignore not found in nfo file
         ignore-flag (when (and (not user-ignored)
                                (ignore? (join install-dir dirname)))
                       (warn (format "ignoring addon '%s': addon directory contains a SVC sub-directory (.git/.hg/.svn etc)" dirname))
