@@ -41,11 +41,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - done
 * import/export, capture game track of exported addon dir?
     - done
-
-### todo
-
-* github, installation from github via import menu not updating log until finished
-    - this is an async issue
 * ignore addons that are under version control
     - see issue: https://github.com/ogri-la/wowman/issues/114
     - should this live in the .nfo file?
@@ -54,13 +49,18 @@ see CHANGELOG.md for a more formal list of changes by release
         - we read nfo data when loading the toc data
             - perhaps rename nfo/read-nfo to nfo/read-data 
                 - and that includes a read from file plus an inspection for svn dirs
+    - done
+
+### todo
+
+* import/export, export user catalogue
+* github, installation from github via import menu not updating log until finished
+    - this is an async issue
 * windows support
     - ~must be included in CI~
     - tests pass
     - readme updated
     - release updated
-
-* import/export, export user catalogue
 
 ## todo bucket (no particular order)
 
