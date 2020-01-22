@@ -60,15 +60,26 @@
   (let [path (nfo-path install-dir dirname)
         bad-data (fn [] (warn "bad data, deleting file:" path) (rm-nfo path))
         invalid-data (fn [] (warn "invalid data, deleting file:" path) (rm-nfo path))]
-    (utils/load-json-file-safely path :bad-data? bad-data, :invalid-data? invalid-data, :data-spec ::sp/nfo)))
+    (utils/load-json-file-safely path
+                                 :bad-data? bad-data
+                                 :invalid-data? invalid-data,
+                                 :data-spec ::sp/nfo)))
 
 (defn-spec read-nfo (s/or :ok ::sp/nfo, :error nil?)
   ""
   [install-dir ::sp/extant-dir, dirname string?]
   (let [nfo-file-contents (read-nfo-file install-dir dirname)
         ;; `ignore?` is never written to file, although the user can put it there manually if they like.
+        ;; if `ignore?` is present in the nfo file it overrides our nfo and toc file checks
         ;; this value may also be introduced in `toc.clj`
-        ignore-flag (when (ignore? (join install-dir dirname))
+        user-ignored (contains? nfo-file-contents :ignore?)
+        _ (when (and user-ignored
+                     (:ignore? nfo-file-contents))
+            (warn (format "addon '%s' is being manually ignored" dirname)))
+
+        ;; ignore because of svc dir, but only check if :ignore not found in .wowman.json file
+        ignore-flag (when (and (not user-ignored)
+                               (ignore? (join install-dir dirname)))
                       (warn (format "ignoring addon '%s': addon directory contains a SVC sub-directory (.git/.hg/.svn etc)" dirname))
                       {:ignore? true})]
     (merge nfo-file-contents ignore-flag)))

@@ -491,7 +491,7 @@
                            (nil? (.getValue adapter (find-column-by-label grid "matched?"))))
 
         addon-ignored? (fn [adapter]
-                         (->> (find-column-by-label grid "ignore?") (.getValue adapter) nil? not))
+                         (->> (find-column-by-label grid "ignore?") (.getValue adapter) (= true)))
 
         addon-needs-update? #(true? (.getValue % (find-column-by-label grid "update?")))
         date-renderer #(when % (-> % clojure.instant/read-instant-date (utils/fmt-date "yyyy-MM-dd")))

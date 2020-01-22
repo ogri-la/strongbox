@@ -145,7 +145,9 @@
                        {:source "tukui"
                         :source-id x-tukui-id})
 
-        ignore-flag (when (some->> keyvals :version (clojure.string/includes? "@project-version@"))
+        user-ignored (contains? nfo-contents :ignore?)
+        ignore-flag (when (and (not user-ignored)
+                               (some->> keyvals :version (clojure.string/includes? "@project-version@")))
                       (warn (format "ignoring addon '%s': 'Version' field in .toc file is unrendered" dirname))
                       {:ignore? true})
 
