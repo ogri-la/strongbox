@@ -77,7 +77,7 @@
 (s/def ::description (s/nilable string?))
 (s/def ::matched? boolean?)
 (s/def ::group-id string?)
-(s/def ::primary boolean?)
+(s/def ::primary? boolean?)
 (s/def ::group-addons ::toc-list)
 (s/def ::version string?)
 (s/def ::installed-version (s/nilable ::version))
@@ -111,7 +111,13 @@
 (s/def ::string-pair (s/and (s/coll-of string?) #(= (count %) 2)))
 (s/def ::list-of-string-pairs (s/coll-of ::string-pair))
 
-(s/def ::nfo map?) ;; todo: not cool
+;;
+
+(s/def ::ignore-flag (s/keys :req-un [::ignore?]))
+
+(s/def ::nfo (s/or :dev-addon-missing-nfo ::ignore-flag
+                   :ok (s/keys :req-un [::installed-version ::name ::group-id ::primary? ::source ::source-id]
+                               :opt [::ignore?])))
 
 ;; orphaned
 (s/def ::file-byte-array-pair (s/cat :file ::file
@@ -129,6 +135,7 @@
 (s/def ::selected-catalog keyword?)
 (s/def ::gui-theme #{:light :dark})
 (s/def ::user-config (s/keys :req-un [::addon-dir-list ::selected-catalog ::gui-theme]))
+(s/def ::ignore? boolean?)
 
 (s/def ::reason-phrase (s/and string? #(<= (count %) 50)))
 (s/def ::status int?) ;; a little too general but ok for now

@@ -371,15 +371,15 @@
 
 (defn add-highlighter
   "target a selection of rows and colour their backgrounds differently"
-  [grid pred-fn colour]
+  [grid pred-fn bg-colour & [fg-colour]]
   (let [predicate (proxy [org.jdesktop.swingx.decorator.HighlightPredicate] []
                     (isHighlighted [renderer adapter]
                       (pred-fn adapter)))
 
         highlighter (org.jdesktop.swingx.decorator.ColorHighlighter.
                      predicate
-                     (seesaw.color/color colour)
-                     nil)] ;; no change in foreground colours
+                     (when bg-colour (seesaw.color/color bg-colour))
+                     (when fg-colour (seesaw.color/color fg-colour)))]
     (.addHighlighter grid highlighter)
     nil))
 
@@ -464,21 +464,22 @@
 (defn installed-addons-panel
   []
   (let [;; always visible when debugging and always available from the column menu
-        hidden-by-default-cols [:addon-id :group-id :primary? :update? :matched? :categories :downloads :updated]
-        tblmdl (sstbl/table-model :columns [{:key :name :text "addon-id"}
+        hidden-by-default-cols [:addon-id :group-id :primary? :update? :matched? :ignore? :categories :downloads :updated]
+        tblmdl (sstbl/table-model :columns [{:key :name, :text "addon-id"}
                                             :group-id
                                             :primary?
                                             :update?
                                             :matched?
-                                            {:key :uri :text "go"}
-                                            {:key :label :text "name"}
+                                            :ignore?
+                                            {:key :uri, :text "go"}
+                                            {:key :label, :text "name"}
                                             :description
-                                            {:key :installed-version :text "installed"}
-                                            {:key :version :text "available"}
-                                            {:key :download-count :text "downloads" :class Integer}
-                                            {:key :updated-date :text "updated"}
-                                            {:key :interface-version :text "WoW"}
-                                            {:key :category-list :text "categories"}]
+                                            {:key :installed-version, :text "installed"}
+                                            {:key :version, :text "available"}
+                                            {:key :download-count, :text "downloads" :class Integer}
+                                            {:key :updated-date, :text "updated"}
+                                            {:key :interface-version, :text "WoW"}
+                                            {:key :category-list, :text "categories"}]
                                   :rows [])
 
         grid (x/table-x :id :tbl-installed-addons
@@ -489,7 +490,14 @@
         addon-unmatched? (fn [adapter]
                            (nil? (.getValue adapter (find-column-by-label grid "matched?"))))
 
-        addon-needs-update? #(true? (.getValue % (find-column-by-label grid "update?")))
+        addon-ignored? (fn [adapter]
+                         (->> (find-column-by-label grid "ignore?") (.getValue adapter) true?))
+
+        addon-needs-update? (fn [adapter]
+                              (if (addon-ignored? adapter)
+                                false
+                                (->> (find-column-by-label grid "update?") (.getValue adapter) true?)))
+
         date-renderer #(when % (-> % clojure.instant/read-instant-date (utils/fmt-date "yyyy-MM-dd")))
         iface-version-renderer #(when % (-> % str utils/interface-version-to-game-version))
 
@@ -517,6 +525,8 @@
 
     (when (colours :installed/unmatched)
       (add-highlighter grid addon-unmatched? (colours :installed/unmatched)))
+
+    (add-highlighter grid addon-ignored? (colours :installed/ignored-bg) (colours :installed/ignored-fg))
     (add-highlighter grid addon-needs-update? (colours :installed/needs-updating))
     (add-cell-renderer grid "updated" date-renderer)
     (add-cell-renderer grid "WoW" iface-version-renderer)

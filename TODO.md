@@ -91,6 +91,7 @@ see CHANGELOG.md for a more formal list of changes by release
     - our 'theme' solution is too naive
         - we should be deferring to the current theme for highlighted colours
         - how?
+            - https://pirlwww.lpl.arizona.edu/resources/guide/software/SwingX/org/jdesktop/swingx/plaf/UIColorHighlighterAddon.html
 * bug, changing sort order during refresh doesn't reflect which addon is being updated
     - I think changing column ordering and moving columns should be disabled while updates happen
         - just freeze or disable them or something.

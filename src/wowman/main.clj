@@ -72,7 +72,10 @@
   (try
     (logging/change-log-level :debug)
     (if ns-kw
-      (if (some #{ns-kw} [:core :http :main :toc :utils :curseforge-api :zip :catalog :cli :gui :wowinterface :wowinterface-api :github-api :tukui-api :config])
+      (if (some #{ns-kw} [:main :utils :http
+                          :core :toc :nfo :zip :config :catalog
+                          :cli :gui
+                          :curseforge-api :wowinterface :wowinterface-api :github-api :tukui-api])
         (if fn-kw
           ;; `test-vars` will run the test but not give feedback if test passes OR test not found
           ;; slightly better than nothing

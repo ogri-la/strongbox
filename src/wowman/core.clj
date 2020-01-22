@@ -34,6 +34,8 @@
   {:notice/error :tomato
    :notice/warning :lemonchiffon
    ;;:installed/unmatched :tomato
+   :installed/ignored-bg nil
+   :installed/ignored-fg :darkgray
    :installed/needs-updating :lemonchiffon
    :installed/hovering "#e6e6e6" ;; light grey
    :search/already-installed "#99bc6b" ;; greenish
@@ -44,6 +46,8 @@
   {:notice/error "#009CB8"
    :notice/warning "#000532"
    ;;:installed/unmatched :tomato
+   :installed/ignored-bg nil
+   :installed/ignored-fg "#666666"
    :installed/needs-updating "#000532"
    :installed/hovering "#191919"
    :search/already-installed "#664394"
@@ -497,8 +501,13 @@
   ([addon ::sp/addon-or-toc-addon, install-dir ::sp/extant-dir]
    (install-addon-guard addon install-dir false))
   ([addon ::sp/addon-or-toc-addon, install-dir ::sp/extant-dir, test-only? boolean?]
-   (if (not (fs/writeable? install-dir)) ;; todo: is this checked on startup?
-     (error "failed to install addon, directory not writeable" install-dir)
+   (cond
+     ;; do some pre-installation checks
+     (:ignore? addon) (warn "failing to install addon, addon is being ignored:" install-dir)
+     (not (fs/writeable? install-dir)) (error "failing to install addon, directory not writeable:" install-dir)
+
+     :else ;; attempt downloading and installing addon
+
      (let [downloaded-file (download-addon addon install-dir)
            bad-zipfile-msg (format "failed to read zip file '%s', could not install %s" downloaded-file (:name addon))
            bad-addon-msg (format "refusing to install '%s'. It contains top-level files or top-level directories missing .toc files."  (:name addon))]
