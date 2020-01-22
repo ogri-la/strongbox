@@ -93,7 +93,7 @@ SomeAddon.lua")
       (spit toc-file-path toc-file-contents)
       (is (= expected (toc/parse-addon-toc-guard addon-path)))))
 
-  (testing "parsing scraped keyvals in .toc value yields expected values"
+  (testing "parsing scraped keyvals in .toc yields expected values"
     (let [;; all of this can be derived from the directory name and sensible defaults
           base-case {:name "everyaddon-*"
                      :dirname "EveryAddon"
@@ -113,8 +113,31 @@ SomeAddon.lua")
           install-dir fs/*cwd*
           addon-dir (utils/join install-dir "EveryAddon")]
       (fs/mkdir addon-dir)
-      (doseq [[given expected] cases]
-        (is (= expected (toc/parse-addon-toc addon-dir given)))))))
+      (doseq [[toc-data expected] cases]
+        (is (= expected (toc/parse-addon-toc addon-dir toc-data))))))
+
+  (testing "parsing scraped keyvals in .toc with an explicitly set ignore flag in nfo file"
+    (let [base-case {:name "everyaddon-*"
+                     :dirname "EveryAddon"
+                     :label "EveryAddon *"
+                     :description nil
+                     :interface-version 80200}
+
+          ;; addon is in development
+          toc-data {:version "@project-version@"}
+
+          nfo-data {;; update me! destroy any changes to my work!
+                    ;; this is only ever set by the user, not by the app.
+                    :ignore? false}
+
+          expected (merge base-case nfo-data {:installed-version "@project-version@"})
+
+          install-dir fs/*cwd*
+          addon-dir (utils/join install-dir "EveryAddon")]
+
+      (fs/mkdir addon-dir)
+      (spit (utils/join addon-dir ".wowman.json") (utils/to-json nfo-data))
+      (is (= expected (toc/parse-addon-toc addon-dir toc-data))))))
 
 (deftest rm-trailing-version
   (testing "parsing of 'Title' attribute in toc file"
