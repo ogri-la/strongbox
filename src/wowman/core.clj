@@ -34,7 +34,7 @@
   {:notice/error :tomato
    :notice/warning :lemonchiffon
    ;;:installed/unmatched :tomato
-   :installed/ignored-bg :lightgray
+   :installed/ignored-bg nil
    :installed/ignored-fg :darkgray
    :installed/needs-updating :lemonchiffon
    :installed/hovering "#e6e6e6" ;; light grey
@@ -46,8 +46,8 @@
   {:notice/error "#009CB8"
    :notice/warning "#000532"
    ;;:installed/unmatched :tomato
-   :installed/ignored-bg :darkgray
-   :installed/ignored-fg :lightgray
+   :installed/ignored-bg nil
+   :installed/ignored-fg "#666666"
    :installed/needs-updating "#000532"
    :installed/hovering "#191919"
    :search/already-installed "#664394"

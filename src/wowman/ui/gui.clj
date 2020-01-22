@@ -378,7 +378,7 @@
 
         highlighter (org.jdesktop.swingx.decorator.ColorHighlighter.
                      predicate
-                     (seesaw.color/color bg-colour)
+                     (when bg-colour (seesaw.color/color bg-colour))
                      (when fg-colour (seesaw.color/color fg-colour)))]
     (.addHighlighter grid highlighter)
     nil))
@@ -491,9 +491,13 @@
                            (nil? (.getValue adapter (find-column-by-label grid "matched?"))))
 
         addon-ignored? (fn [adapter]
-                         (->> (find-column-by-label grid "ignore?") (.getValue adapter) (= true)))
+                         (->> (find-column-by-label grid "ignore?") (.getValue adapter) true?))
 
-        addon-needs-update? #(true? (.getValue % (find-column-by-label grid "update?")))
+        addon-needs-update? (fn [adapter]
+                              (if (addon-ignored? adapter)
+                                false
+                                (->> (find-column-by-label grid "update?") (.getValue adapter) true?)))
+
         date-renderer #(when % (-> % clojure.instant/read-instant-date (utils/fmt-date "yyyy-MM-dd")))
         iface-version-renderer #(when % (-> % str utils/interface-version-to-game-version))
 
@@ -523,7 +527,6 @@
       (add-highlighter grid addon-unmatched? (colours :installed/unmatched)))
 
     (add-highlighter grid addon-ignored? (colours :installed/ignored-bg) (colours :installed/ignored-fg))
-
     (add-highlighter grid addon-needs-update? (colours :installed/needs-updating))
     (add-cell-renderer grid "updated" date-renderer)
     (add-cell-renderer grid "WoW" iface-version-renderer)

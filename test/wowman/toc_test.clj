@@ -2,6 +2,7 @@
   (:require
    [clojure.test :refer [deftest testing is use-fixtures]]
    [wowman
+    [nfo :as nfo]
     [utils :as utils]
     [toc :as toc]
     [test-helper :as helper]]
@@ -136,7 +137,7 @@ SomeAddon.lua")
           addon-dir (utils/join install-dir "EveryAddon")]
 
       (fs/mkdir addon-dir)
-      (spit (utils/join addon-dir ".wowman.json") (utils/to-json nfo-data))
+      (spit (utils/join addon-dir nfo/nfo-filename) (utils/to-json nfo-data))
       (is (= expected (toc/parse-addon-toc addon-dir toc-data))))))
 
 (deftest rm-trailing-version

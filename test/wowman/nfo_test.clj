@@ -47,12 +47,12 @@
 
 (deftest nfo-path
   (testing "path to the nfo file is generated correctly"
-    (let [expected (utils/join (addon-path) ".wowman.json")]
+    (let [expected (utils/join (addon-path) nfo/nfo-filename)]
       (is (= expected (nfo/nfo-path (install-dir) addon-dir))))))
 
 (deftest rm-nfo
   (testing "a nfo file is deleted"
-    (let [path (utils/join (addon-path) ".wowman.json")]
+    (let [path (utils/join (addon-path) nfo/nfo-filename)]
       (fs/touch path)
       (is (fs/exists? path))
       (nfo/rm-nfo path)
@@ -82,7 +82,7 @@
                     :source "wowinterface"
                     :source-id 123}
           expected nfo-data]
-      (spit (utils/join (addon-path) ".wowman.json") (utils/to-json nfo-data))
+      (spit (utils/join (addon-path) nfo/nfo-filename) (utils/to-json nfo-data))
       (is (= expected (nfo/read-nfo (install-dir) addon-dir)))))
 
   (testing "an addon with nfo data AND an ignorable sub-directory is parsed correctly"
@@ -93,7 +93,7 @@
                     :source "wowinterface"
                     :source-id 123}
           expected (assoc nfo-data :ignore? true)]
-      (spit (utils/join (ignorable-addon-path) ".wowman.json") (utils/to-json nfo-data))
+      (spit (utils/join (ignorable-addon-path) nfo/nfo-filename) (utils/to-json nfo-data))
       (is (= expected (nfo/read-nfo (install-dir) ignorable-addon-dir)))))
 
   (testing "an addon with nfo data, an ignorable sub-directory AND an ignore flag, is parsed correctly"
@@ -108,6 +108,6 @@
                     ;; this is only ever set by the user, not by the app.
                     :ignore? false}
           expected (assoc nfo-data :ignore? false)]
-      (spit (utils/join (ignorable-addon-path) ".wowman.json") (utils/to-json nfo-data))
+      (spit (utils/join (ignorable-addon-path) nfo/nfo-filename) (utils/to-json nfo-data))
       (is (= expected (nfo/read-nfo (install-dir) ignorable-addon-dir))))))
 
