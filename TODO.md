@@ -56,11 +56,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * import/export, export user catalogue
 * github, installation from github via import menu not updating log until finished
     - this is an async issue
-* windows support
-    - ~must be included in CI~
-    - tests pass
-    - readme updated
-    - release updated
 
 ## todo bucket (no particular order)
 
@@ -255,6 +250,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## wontfix
 
+* windows support
+    - windows is just the worst, most awful dystopian software I've ever seen and it hurts my soul every time I try to use it
+    - I just plain hate it, it epitomises the very opposite of what I stand for and I refuse to work on it ever again
 * gitlab as addon host
     - https://gitlab.com/search?search=wow+addon
     - returned to bucket 2019-12-04, notes:

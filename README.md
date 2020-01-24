@@ -18,7 +18,7 @@ This software is for World of Warcraft players using Linux.
 
 It also works on macOS.
 
-It does not work on Windows.
+It does not work on Windows. Windows will never be supported.
 
 ## Requirements
 
