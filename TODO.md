@@ -53,11 +53,16 @@ see CHANGELOG.md for a more formal list of changes by release
 * import/export, export user catalogue
     - the good thing about the current exports is that they are minimal and can be 'inflated' into whatever catalog spec supported in the future
     - done
+* github, installation from github via import menu not updating log until finished
+    - this is an async issue
+        - actually, I think it's a problem with the v1 import index being generated
+            - and this isn't a problem for v2 imports
+    - done
 
 ### todo
 
-* github, installation from github via import menu not updating log until finished
-    - this is an async issue
+* import/export, importing addons should disregard game track
+    - app should feel free to ignore it, once the addon is installed
 
 ## todo bucket (no particular order)
 
