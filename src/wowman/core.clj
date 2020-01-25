@@ -954,7 +954,12 @@
 
 (defn-spec export-user-catalog-addon-list-safely ::sp/extant-file
   [output-file ::sp/file]
-  (export-catalog-addon-list (get-create-user-catalog)))
+  (let [output-file (-> output-file fs/absolute str (utils/replace-file-ext ".json"))
+        catalog (get-create-user-catalog)
+        export (export-catalog-addon-list catalog)]
+    (utils/dump-json-file output-file export)
+    (info "wrote:" output-file)
+    output-file))
 
 ;; created to investigate some performance issues, seems sensible to keep it separate
 (defn -mk-import-idx

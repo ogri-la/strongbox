@@ -727,8 +727,13 @@
 
 (defn export-user-catalog-handler
   []
-  (prn "hit")
-  nil)
+  (when-let [path (chooser/choose-file (select-ui :#root)
+                                       :type :open
+                                       :selection-mode :files-only
+                                       :filters [["JSON" ["json"]]]
+                                       :success-fn (fn [_ file]
+                                                     (str (.getAbsolutePath file))))]
+    (core/export-user-catalog-addon-list-safely path)))
 
 (defn import-addon-list-handler
   []
