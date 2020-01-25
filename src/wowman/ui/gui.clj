@@ -715,7 +715,8 @@
     (state-bind [:installed-addon-list] update-label)
     status))
 
-(defn export-addon-list-handler
+(defn-spec export-addon-list-handler nil?
+  "prompts user with a file selection dialogue then writes the current directory of addons to the selected file"
   []
   (when-let [path (chooser/choose-file (select-ui :#root)
                                        :type :save
@@ -723,9 +724,11 @@
                                        :filters [["JSON" ["json"]]]
                                        :success-fn (fn [_ file]
                                                      (str (.getAbsolutePath file))))]
-    (core/export-installed-addon-list-safely path)))
+    (core/export-installed-addon-list-safely path)
+    nil))
 
-(defn export-user-catalog-handler
+(defn-spec export-user-catalog-handler nil?
+  "prompts user with a file selection dialogue then writes the user catalogue to selected file"
   []
   (when-let [path (chooser/choose-file (select-ui :#root)
                                        :type :open
@@ -733,9 +736,11 @@
                                        :filters [["JSON" ["json"]]]
                                        :success-fn (fn [_ file]
                                                      (str (.getAbsolutePath file))))]
-    (core/export-user-catalog-addon-list-safely path)))
+    (core/export-user-catalog-addon-list-safely path)
+    nil))
 
-(defn import-addon-list-handler
+(defn-spec import-addon-list-handler nil?
+  "prompts user with a file selection dialogue then imports a list of addons from the selected file"
   []
   (when-let [path (chooser/choose-file (select-ui :#root)
                                        :type :open
@@ -744,7 +749,8 @@
                                        :success-fn (fn [_ file]
                                                      (str (.getAbsolutePath file))))]
     (core/import-exported-file path)
-    (core/refresh)))
+    (core/refresh)
+    nil))
 
 (defn import-addon-handler
   "imports an addon by parsing a URL"

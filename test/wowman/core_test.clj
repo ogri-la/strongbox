@@ -195,9 +195,6 @@
 
 (deftest export-catalog-addon-list
   (testing "exported addon list data is correct"
-    ;; what are we doing here?
-    ;; we are taking the user catalogue, deriving export records from it and writing the result to a custom destination
-    ;; deriving code should exist -- see `core/export-installed-addon-list`
     (let [catalog (slurp-fixture "import-export--user-catalog.json")
           expected (slurp-fixture "import-export--user-catalog-export.json")]
       (is (= expected (core/export-catalog-addon-list catalog))))))

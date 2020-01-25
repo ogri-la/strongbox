@@ -19,6 +19,7 @@
   (utils/join fixture-dir filename))
 
 (defn slurp-fixture
+  "reads the contents of the given fixture and deserialises the contents according the file extension"
   [filename]
   (let [path (fixture-path filename)
         contents (slurp path)]

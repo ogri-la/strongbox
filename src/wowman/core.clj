@@ -918,6 +918,7 @@
 ;; import/export
 
 (defn-spec export-installed-addon ::sp/export-record
+  "given an addon summary from a catalogue or .toc file data, derive an 'export-record' that can be used to import addon later"
   [addon (s/or :catalog ::sp/addon-summary, :installed ::sp/toc), game-track (s/nilable ::sp/game-track)]
   (let [stub (select-keys addon [:name :source :source-id])
         ;; when there is a catalog match, attach the game track as well
@@ -925,6 +926,7 @@
     (merge stub game-track)))
 
 (defn-spec export-installed-addon-list ::sp/export-record-list
+  "derives an 'export-record' from a list of either addon summaries from a catalog or .toc file data from installed addons"
   [addon-list (s/or :catalog ::sp/addon-summary-list, :installed ::sp/toc-list), game-track (s/nilable ::sp/game-track)]
   (mapv #(export-installed-addon % game-track) addon-list))
 
@@ -936,7 +938,7 @@
         addon-list (get-state :installed-addon-list)
         export (export-installed-addon-list addon-list (get-game-track))]
 
-    ;; target any unmatched addons with no source from the addon list and emit a warning
+    ;; target any unmatched addons with no `:source` from the addon list and emit a warning
     (doseq [addon (remove :source addon-list)]
       (warn (format "Addon '%s' has no match in the catalog and may be skipped during import. It's best all addons match before doing an export." (:name addon))))
 
@@ -945,14 +947,16 @@
     output-file))
 
 (defn-spec export-catalog-addon-list ::sp/export-record-list
+  "given a catalogue of addons, generates a list of 'export-records' from the list of addon summaries"
   [catalog ::sp/catalog]
-  (let [;; exporting installed addons feels like it's for personal use whereas exporting the user catalogue feels like it's for sharing with others
-        ;; for that reason alone I'm skipping the game track in this export. I'm open to change.
+  (let [;; exporting installed addons feels like it's for personal use whereas exporting the user catalogue feels like
+        ;; it's for sharing with others for that reason alone I'm skipping the game track in this export.
         game-track nil
         addon-list (:addon-summary-list catalog)]
     (export-installed-addon-list addon-list game-track)))
 
 (defn-spec export-user-catalog-addon-list-safely ::sp/extant-file
+  "generates a list of 'export-records' from the addon summaries in the user catalogue and writes them to the given `output-file`"
   [output-file ::sp/file]
   (let [output-file (-> output-file fs/absolute str (utils/replace-file-ext ".json"))
         catalog (get-create-user-catalog)
