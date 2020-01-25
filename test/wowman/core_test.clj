@@ -242,6 +242,7 @@
                            :updated-date "2019-06-26T01:21:39Z",
                            :group-id "https://www.curseforge.com/wow/addons/everyaddon",
                            :installed-version "v8.2.0-v1.13.2-7135.139",
+                           :installed-game-track "retail"
                            :name "everyaddon",
                            :source "curseforge",
                            :interface-version 80000,
@@ -262,6 +263,7 @@
                            :updated-date "2019-07-03T07:11:47Z",
                            :group-id "https://www.curseforge.com/wow/addons/everyotheraddon",
                            :installed-version "v8.2.0-v1.13.2-7135.139",
+                           :installed-game-track "retail"
                            :name "everyotheraddon",
                            :source "curseforge",
                            :interface-version 80200,
@@ -323,6 +325,7 @@
                            :updated-date "2019-06-26T01:21:39Z",
                            :group-id "https://www.curseforge.com/wow/addons/everyaddon",
                            :installed-version "v8.2.0-v1.13.2-7135.139",
+                           :installed-game-track "retail"
                            :name "everyaddon",
                            :source "curseforge",
                            :interface-version 80000,
@@ -343,6 +346,7 @@
                            :updated-date "2019-07-03T07:11:47Z",
                            :group-id "https://www.curseforge.com/wow/addons/everyotheraddon",
                            :installed-version "v8.2.0-v1.13.2-7135.139",
+                           :installed-game-track "classic"
                            :name "everyotheraddon",
                            :source "curseforge",
                            :interface-version 11300, ;; changed

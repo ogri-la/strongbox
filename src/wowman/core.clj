@@ -484,12 +484,13 @@
         _ (zip/unzip-file downloaded-file install-dir)
         toplevel-dirs (filter (every-pred :dir? :toplevel?) zipfile-entries)
         primary-dirname (determine-primary-subdir toplevel-dirs)
+        game-track (or (:game-track addon) (get-game-track install-dir) "retail") ;; very last default here is only for testing
 
         ;; an addon may unzip to many directories, each directory needs the nfo file
         update-nfo-fn (fn [zipentry]
                         (let [addon-dirname (:path zipentry)
                               primary? (= addon-dirname (:path primary-dirname))]
-                          (nfo/write-nfo install-dir addon addon-dirname primary?)))
+                          (nfo/write-nfo install-dir addon addon-dirname primary? game-track)))
 
         ;; write the nfo files, return a list of all nfo files written
         retval (mapv update-nfo-fn toplevel-dirs)]
@@ -951,6 +952,10 @@
   [catalog ::sp/catalog]
   (let [;; exporting installed addons feels like it's for personal use whereas exporting the user catalogue feels like
         ;; it's for sharing with others for that reason alone I'm skipping the game track in this export.
+        ;; update: the above is true, but an addon was successfully installed under a particular game track and a
+        ;; default game track will be picked if one isn't present, which means the addon may fail to install during import.
+        ;; update2: we don't currently capture the game track an addon was installed under! we have no way of knowing the
+        ;; 'preferred' game track then.
         game-track nil
         addon-list (:addon-summary-list catalog)]
     (export-installed-addon-list addon-list game-track)))
@@ -1012,7 +1017,7 @@
         default-game-track (get-game-track)]
 
     (doseq [db-match match-results
-            :let [addon (:installed-addon db-match) ;; ignore 'installed' bit
+            :let [addon (:installed-addon db-match) ;; ignore 'installed' bit, this is the addon that was matched on
                   db-entry (:final db-match)
                   game-track (get addon :game-track default-game-track)]]
       (when-let [expanded-addon (catalog/expand-summary db-entry game-track)]

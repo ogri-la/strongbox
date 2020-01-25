@@ -119,6 +119,8 @@
                    :ok (s/keys :req-un [::installed-version ::name ::group-id ::primary? ::source ::source-id]
                                :opt [::ignore?])))
 
+(s/def ::nfo-v2 (s/merge ::nfo (s/keys :req-un [::installed-game-track]))) ;; 0.12.0
+
 ;; orphaned
 (s/def ::file-byte-array-pair (s/cat :file ::file
                                      :file-contents bytes?))
@@ -127,6 +129,7 @@
 
 (s/def ::install-dir (s/nilable ::extant-dir))
 (s/def ::game-track #{"retail" "classic"})
+(s/def ::installed-game-track ::game-track) ;; alias
 (s/def ::game-track-list (s/coll-of ::game-track :kind vector? :distinct true))
 (s/def ::addon-dir ::extant-dir)
 (s/def ::selected? boolean?)
