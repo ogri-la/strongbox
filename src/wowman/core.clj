@@ -917,28 +917,53 @@
 
 ;; import/export
 
-(defn-spec export-installed-addon-list ::sp/extant-file
-  "writes the name, source, source-id and current game track to a json file for each installed addon in the currently selected addon directory"
-  [output-file ::sp/file, addon-list ::sp/toc-list, game-track ::sp/game-track]
-  (let [derive-export (fn [addon]
-                        (let [stub (select-keys addon [:name :source :source-id])
-                              ;; when there is a catalog match, attach the game track as well
-                              game-track (when (:source stub) {:game-track game-track})]
-                          (merge stub game-track)))
-        addon-list (map derive-export addon-list)]
-    (utils/dump-json-file output-file addon-list)
-    (info "wrote:" output-file)
-    output-file))
+(defn-spec export-installed-addon ::sp/export-record
+  "given an addon summary from a catalogue or .toc file data, derive an 'export-record' that can be used to import addon later"
+  [addon (s/or :catalog ::sp/addon-summary, :installed ::sp/toc), game-track (s/nilable ::sp/game-track)]
+  (let [stub (select-keys addon [:name :source :source-id])
+        ;; when there is a catalog match, attach the game track as well
+        game-track (when (and (:source stub) game-track) {:game-track game-track})]
+    (merge stub game-track)))
+
+(defn-spec export-installed-addon-list ::sp/export-record-list
+  "derives an 'export-record' from a list of either addon summaries from a catalog or .toc file data from installed addons"
+  [addon-list (s/or :catalog ::sp/addon-summary-list, :installed ::sp/toc-list), game-track (s/nilable ::sp/game-track)]
+  (mapv #(export-installed-addon % game-track) addon-list))
 
 (defn-spec export-installed-addon-list-safely ::sp/extant-file
+  "writes the name, source, source-id and current game track to a json file for each installed addon in the currently selected addon directory"
   [output-file ::sp/file]
   (let [output-file (-> output-file fs/absolute str)
         output-file (utils/replace-file-ext output-file ".json")
         addon-list (get-state :installed-addon-list)
-        unmatched-addon-list (remove :source addon-list)]
-    (doseq [addon unmatched-addon-list]
-      (warn (format "Addon '%s' has no match in the catalog and will be skipped during import. Ensure all addons match before doing an export." (:name addon))))
-    (export-installed-addon-list output-file addon-list (get-game-track))))
+        export (export-installed-addon-list addon-list (get-game-track))]
+
+    ;; target any unmatched addons with no `:source` from the addon list and emit a warning
+    (doseq [addon (remove :source addon-list)]
+      (warn (format "Addon '%s' has no match in the catalog and may be skipped during import. It's best all addons match before doing an export." (:name addon))))
+
+    (utils/dump-json-file output-file export)
+    (info "wrote:" output-file)
+    output-file))
+
+(defn-spec export-catalog-addon-list ::sp/export-record-list
+  "given a catalogue of addons, generates a list of 'export-records' from the list of addon summaries"
+  [catalog ::sp/catalog]
+  (let [;; exporting installed addons feels like it's for personal use whereas exporting the user catalogue feels like
+        ;; it's for sharing with others for that reason alone I'm skipping the game track in this export.
+        game-track nil
+        addon-list (:addon-summary-list catalog)]
+    (export-installed-addon-list addon-list game-track)))
+
+(defn-spec export-user-catalog-addon-list-safely ::sp/extant-file
+  "generates a list of 'export-records' from the addon summaries in the user catalogue and writes them to the given `output-file`"
+  [output-file ::sp/file]
+  (let [output-file (-> output-file fs/absolute str (utils/replace-file-ext ".json"))
+        catalog (get-create-user-catalog)
+        export (export-catalog-addon-list catalog)]
+    (utils/dump-json-file output-file export)
+    (info "wrote:" output-file)
+    output-file))
 
 ;; created to investigate some performance issues, seems sensible to keep it separate
 (defn -mk-import-idx

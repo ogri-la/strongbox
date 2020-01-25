@@ -11,7 +11,7 @@
     [toc :as toc]
     [catalog :as catalog]
     [utils :as utils]
-    [test-helper :as helper :refer [fixture-path helper-data-dir with-running-app]]
+    [test-helper :as helper :refer [fixture-path slurp-fixture helper-data-dir with-running-app]]
     [core :as core]]))
 
 (use-fixtures :each helper/fixture-tempcwd)
@@ -185,17 +185,19 @@
     (is (= {:path "Foo"} (core/determine-primary-subdir [{:path "Foo"}])))))
 
 (deftest export-installed-addon-list
-  (testing "exported data looks as expected"
-    (let [addon-list (read-string (slurp "test/fixtures/export--installed-addons-list.edn"))
-          export-dir (utils/join fs/*cwd* "foo" "bar" "exports")
-          _ (fs/mkdirs export-dir)
-          output-path (utils/join export-dir "export.json")
-          _ (core/export-installed-addon-list output-path addon-list "retail")
+  (testing "exported addon data is correct"
+    (let [addon-list (slurp-fixture "export--installed-addons-list.edn")
+          game-track "retail"
           expected [{:name "adibags" :source "curseforge" :game-track "retail"}
                     {:name "noname"} ;; an addon whose name is not present in the catalog (umatched)
                     {:name "carbonite" :source "curseforge" :game-track "retail"}]]
-      (is (fs/exists? output-path))
-      (is (= expected (utils/load-json-file output-path))))))
+      (is (= expected (core/export-installed-addon-list addon-list game-track))))))
+
+(deftest export-catalog-addon-list
+  (testing "exported addon list data is correct"
+    (let [catalog (slurp-fixture "import-export--user-catalog.json")
+          expected (slurp-fixture "import-export--user-catalog-export.json")]
+      (is (= expected (core/export-catalog-addon-list catalog))))))
 
 (deftest import-exported-addon-list-file-v1
   (testing "an export can be imported"
