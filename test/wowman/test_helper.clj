@@ -18,6 +18,16 @@
   [filename]
   (utils/join fixture-dir filename))
 
+(defn slurp-fixture
+  [filename]
+  (let [path (fixture-path filename)
+        contents (slurp path)]
+    (case (fs/extension filename)
+      ".edn" (read-string contents)
+      ".json" (utils/from-json contents)
+
+      contents)))
+
 (defn fixture-tempcwd
   "each test is executed in a new and self-contained location, accessible as fs/*cwd*
   if the app is started:

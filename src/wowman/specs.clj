@@ -17,7 +17,7 @@
   [path string?, ext-list ::list-of-strings]
   (some #{(fs/extension path)} ext-list))
 
-;; addon data that can be scraped from the listing pages
+;; addon data that comes from the catalogue
 (s/def ::addon-summary
   (s/keys :req-un [::uri ::name ::label ::category-list ::updated-date ::download-count ::source ::source-id]
           :opt [::description ;; wowinterface summaries have no description

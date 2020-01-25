@@ -54,6 +54,8 @@ see CHANGELOG.md for a more formal list of changes by release
 ### todo
 
 * import/export, export user catalogue
+    - the good thing about the current exports is that they are minimal and can be 'inflated' into whatever catalog spec supported in the future
+
 * github, installation from github via import menu not updating log until finished
     - this is an async issue
 

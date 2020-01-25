@@ -725,6 +725,11 @@
                                                      (str (.getAbsolutePath file))))]
     (core/export-installed-addon-list-safely path)))
 
+(defn export-user-catalog-handler
+  []
+  (prn "hit")
+  nil)
+
 (defn import-addon-list-handler
   []
   (when-let [path (chooser/choose-file (select-ui :#root)
@@ -852,8 +857,9 @@
 
         impexp-menu [(ss/action :name "Import addon from Github" :handler (handler import-addon-handler))
                      :separator
+                     (ss/action :name "Import addon list" :handler (async-handler import-addon-list-handler))
                      (ss/action :name "Export addon list" :handler (async-handler export-addon-list-handler))
-                     (ss/action :name "Import addon list" :handler (async-handler import-addon-list-handler))]
+                     (ss/action :name "Export Github addon list" :handler (async-handler export-user-catalog-handler))]
 
         cache-menu [(ss/action :name "Clear cache" :handler (async-handler core/delete-cache!))
                     (ss/action :name "Clear addon zips" :handler (async-handler core/delete-downloaded-addon-zips!))
