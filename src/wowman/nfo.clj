@@ -67,21 +67,47 @@
     (fs/delete path)
     nil))
 
-(defn-spec read-nfo-file (s/or :ok-v1 ::sp/nfo, :ok-v2 ::sp/nfo-v2, :error nil?)
+(defn-spec has-nfo? boolean?
+  "returns true if certain keys detected in addon data."
+  [addon any?]
+  (spy :info (-> addon (select-keys [:primary? :group-id :installed-game-track]) empty? not)))
+
+(defn-spec read-nfo-file (s/or :ok ::sp/nfo-v2, :error nil?)
   "reads the nfo file.
   failure to load the json results in the file being deleted.
   failure to validate the json data results in the file being deleted."
   [install-dir ::sp/extant-dir, dirname string?]
   (let [path (nfo-path install-dir dirname)
-        bad-data (fn [] (warn "bad data, deleting file:" path) (rm-nfo path))
-        invalid-data (fn [] (warn "invalid data, deleting file:" path) (rm-nfo path))]
-    (utils/load-json-file-safely path
-                                 :no-file? nil
-                                 :bad-data? bad-data
-                                 :invalid-data? invalid-data,
-                                 :data-spec ::sp/nfo)))
+        bad-data (fn [] (warn "bad nfo data, deleting file:" path) (rm-nfo path))
+        invalid-data (fn [] (warn "invalid nfo data, deleting file:" path) (rm-nfo path))
 
-(defn-spec read-nfo (s/or :ok-v1 ::sp/nfo, :ok-v2 ::sp/nfo-v2, :error nil?)
+        nfo-data (utils/load-json-file-safely
+                  path
+                  :no-file? nil
+                  :bad-data? bad-data
+                  :invalid-data? invalid-data,
+                  :data-spec ::sp/nfo) ;; either v1 or v2
+
+        ;; defaults for missing data
+        v1-filler {:installed-game-track "retail"}
+        legacy-nfo (merge nfo-data v1-filler)]
+    (cond
+      ;; failed to read nfo file. it may not exist. if it did exist but was malformed, it definitely doesn't exist anymore.
+      (not nfo-data) nil
+
+      ;; valid v2 nfo data, perfect case
+      (s/valid? ::sp/nfo-v2 nfo-data) nfo-data
+
+      ;; we had to fill in some gaps, should be ok
+      (s/valid? ::sp/nfo-v2 legacy-nfo) legacy-nfo
+
+      ;; data was a map of some sort, but we're not going to dwell on what it's contents were
+      :else (do
+              (warn (format "failed to coerce nfo data to v2 specification, deleting file: %s" path))
+              (s/explain ::sp/nfo-v2 legacy-nfo) ;; prints directly to stdout. remove
+              (rm-nfo path)))))
+
+(defn-spec read-nfo (s/or :ok ::sp/nfo-v2, :error nil?)
   "reads and parses the contents of the .nfo file and checks if addon should be ignored or not"
   [install-dir ::sp/extant-dir, dirname string?]
   (let [nfo-file-contents (read-nfo-file install-dir dirname)

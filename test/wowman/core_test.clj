@@ -186,12 +186,18 @@
 
 (deftest export-installed-addon-list
   (testing "exported addon data is correct"
-    (let [addon-list (slurp-fixture "export--installed-addons-list.edn")
-          game-track "retail"
+    (let [addon-list (slurp-fixture "import-export--installed-addons-list.edn")
           expected [{:name "adibags" :source "curseforge" :game-track "retail"}
                     {:name "noname"} ;; an addon whose name is not present in the catalog (umatched)
                     {:name "carbonite" :source "curseforge" :game-track "retail"}]]
-      (is (= expected (core/export-installed-addon-list addon-list game-track))))))
+      (is (= expected (core/export-installed-addon-list addon-list)))))
+
+  (testing "export ignores ignored addons"
+    (let [addon-list (vec (slurp-fixture "import-export--installed-addons-list.edn"))
+          addon-list (assoc-in addon-list [0 :ignore?] true)
+          expected [{:name "noname"} ;; an addon whose name is not present in the catalog (umatched)
+                    {:name "carbonite" :source "curseforge" :game-track "retail"}]]
+      (is (= expected (core/export-installed-addon-list addon-list))))))
 
 (deftest export-catalog-addon-list
   (testing "exported addon list data is correct"
@@ -420,6 +426,7 @@
 
                 ;; and optionally these from .wowman.json if we installed the addon
                 nfo {:installed-version "v8.10.00",
+                     :installed-game-track "retail"
                      :name "every-addon",
                      :group-id "doesntmatter"
                      :primary? true,

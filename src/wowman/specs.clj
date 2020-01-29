@@ -115,11 +115,17 @@
 
 (s/def ::ignore-flag (s/keys :req-un [::ignore?]))
 
-(s/def ::nfo (s/or :dev-addon-missing-nfo ::ignore-flag
-                   :ok (s/keys :req-un [::installed-version ::name ::group-id ::primary? ::source ::source-id]
-                               :opt [::ignore?])))
+(s/def ::nfo-v1 map?)
 
-(s/def ::nfo-v2 (s/merge ::nfo (s/keys :req-un [::installed-game-track]))) ;; 0.12.0
+;; ignored nfo file may simply be the json '{"ignore?": true}'
+(s/def ::nfo-v2 (s/or :ignored-addon ::ignore-flag
+                      :ok (s/keys :req-un [::installed-version ::name ::group-id ::primary? ::source
+                                           ::installed-game-track ::source-id]
+                                  :opt [::ignore?])))
+
+;; use this for inputs only.
+;; be generous in what you accept, strict in what you return
+(s/def ::nfo (s/or :ok-v1 ::nfo-v1, :ok-v2 ::nfo-v2))
 
 ;; orphaned
 (s/def ::file-byte-array-pair (s/cat :file ::file
@@ -177,7 +183,7 @@
                                        :opt [::source ::source-id]))
 
 (s/def ::export-record-full (s/keys :req-un [::name ::source ::source-id]
-                                    :opt [::game-track]))
+                                    :opt [::game-track])) ;; todo: can we version this?
 
 (s/def ::export-record (s/or :partial ::export-record-partial, :full ::export-record-full))
 

@@ -74,24 +74,32 @@
     (let [expected {:ignore? true}]
       (is (= expected (nfo/read-nfo (install-dir) ignorable-addon-dir)))))
 
-  (testing "an addon with nfo data is parsed correctly"
+  (testing "an addon with v1 nfo data is parsed correctly"
     (let [nfo-data {:installed-version "1.0"
                     :name "someaddon"
                     :group-id "blah"
                     :primary? true
                     :source "wowinterface"
-                    :source-id 123}
+                    :source-id 123
+
+                    ;; may not have actually been installed from the retail track, we had to guess
+                    ;; this will be updated as the addon is updated
+                    :installed-game-track "retail"}
           expected nfo-data]
       (spit (utils/join (addon-path) nfo/nfo-filename) (utils/to-json nfo-data))
       (is (= expected (nfo/read-nfo (install-dir) addon-dir)))))
 
-  (testing "an addon with nfo data AND an ignorable sub-directory is parsed correctly"
+  (testing "an addon with v1 nfo data AND an ignorable sub-directory is parsed correctly"
     (let [nfo-data {:installed-version "1.0"
                     :name "someaddon"
                     :group-id "blah"
                     :primary? true
                     :source "wowinterface"
-                    :source-id 123}
+                    :source-id 123
+
+                    ;; may not have actually been installed from the retail track, we had to guess
+                    ;; this will be updated as the addon is updated
+                    :installed-game-track "retail"}
           expected (assoc nfo-data :ignore? true)]
       (spit (utils/join (ignorable-addon-path) nfo/nfo-filename) (utils/to-json nfo-data))
       (is (= expected (nfo/read-nfo (install-dir) ignorable-addon-dir)))))
@@ -104,10 +112,14 @@
                     :source "wowinterface"
                     :source-id 123
 
-                    ;; update me! destroy any changes to my work!
-                    ;; this is only ever set by the user, not by the app.
-                    :ignore? false}
-          expected (assoc nfo-data :ignore? false)]
+                    ;; user has manually marked this development addon for updates
+                    ;; this is only set by the user, not by the app (for now)
+                    :ignore? false
+
+                    ;; may not have actually been installed from the retail track, we had to guess
+                    ;; this will be updated as the addon is updated
+                    :installed-game-track "retail"}
+          expected nfo-data]
       (spit (utils/join (ignorable-addon-path) nfo/nfo-filename) (utils/to-json nfo-data))
       (is (= expected (nfo/read-nfo (install-dir) ignorable-addon-dir))))))
 

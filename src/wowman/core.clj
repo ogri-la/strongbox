@@ -484,7 +484,11 @@
         _ (zip/unzip-file downloaded-file install-dir)
         toplevel-dirs (filter (every-pred :dir? :toplevel?) zipfile-entries)
         primary-dirname (determine-primary-subdir toplevel-dirs)
-        game-track (or (:game-track addon) (get-game-track install-dir) "retail") ;; very last default here is only for testing
+        game-track (or (:game-track addon) ;; from reading an export record. most of the time this value won't be here
+                       (:installed-game-track addon) ;; from this operation. re-use the value we have if updating an existing addon
+                       (get-game-track install-dir) ;; the currently selected game track for new addons
+                       ;; very last here is for testing only
+                       "retail")
 
         ;; an addon may unzip to many directories, each directory needs the nfo file
         update-nfo-fn (fn [zipentry]
@@ -920,16 +924,18 @@
 
 (defn-spec export-installed-addon ::sp/export-record
   "given an addon summary from a catalogue or .toc file data, derive an 'export-record' that can be used to import addon later"
-  [addon (s/or :catalog ::sp/addon-summary, :installed ::sp/toc), game-track (s/nilable ::sp/game-track)]
-  (let [stub (select-keys addon [:name :source :source-id])
+  [addon (s/or :catalog ::sp/addon-summary, :installed ::sp/toc)]
+  (let [game-track (:installed-game-track addon) ;; from toc file when addon installed/updated
+        stub (select-keys addon [:name :source :source-id])
         ;; when there is a catalog match, attach the game track as well
-        game-track (when (and (:source stub) game-track) {:game-track game-track})]
+        game-track (when (and (:source stub) game-track)
+                     {:game-track game-track})]
     (merge stub game-track)))
 
 (defn-spec export-installed-addon-list ::sp/export-record-list
   "derives an 'export-record' from a list of either addon summaries from a catalog or .toc file data from installed addons"
-  [addon-list (s/or :catalog ::sp/addon-summary-list, :installed ::sp/toc-list), game-track (s/nilable ::sp/game-track)]
-  (mapv #(export-installed-addon % game-track) addon-list))
+  [addon-list (s/or :catalog ::sp/addon-summary-list, :installed ::sp/toc-list)]
+  (->> addon-list (remove :ignore?) (map export-installed-addon) vec))
 
 (defn-spec export-installed-addon-list-safely ::sp/extant-file
   "writes the name, source, source-id and current game track to a json file for each installed addon in the currently selected addon directory"
@@ -937,7 +943,7 @@
   (let [output-file (-> output-file fs/absolute str)
         output-file (utils/replace-file-ext output-file ".json")
         addon-list (get-state :installed-addon-list)
-        export (export-installed-addon-list addon-list (get-game-track))]
+        export (export-installed-addon-list addon-list)]
 
     ;; target any unmatched addons with no `:source` from the addon list and emit a warning
     (doseq [addon (remove :source addon-list)]
@@ -958,7 +964,7 @@
         ;; 'preferred' game track then.
         game-track nil
         addon-list (:addon-summary-list catalog)]
-    (export-installed-addon-list addon-list game-track)))
+    (export-installed-addon-list addon-list)))
 
 (defn-spec export-user-catalog-addon-list-safely ::sp/extant-file
   "generates a list of 'export-records' from the addon summaries in the user catalogue and writes them to the given `output-file`"
