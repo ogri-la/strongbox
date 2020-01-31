@@ -34,6 +34,7 @@
 
 ;; .toc files live in the root of an addon and include the author's metadata about the addon
 ;; minimum needed to be scraped from a toc file
+;; this seems to have a bit of nfo stuff in it ...
 (s/def ::toc
   (s/keys :req-un [::name ::label ::description ::dirname ::interface-version ::installed-version]
           :opt [::group-id ::primary? ::group-addons ::source ::source-id]))
@@ -122,6 +123,9 @@
                       :ok (s/keys :req-un [::installed-version ::name ::group-id ::primary? ::source
                                            ::installed-game-track ::source-id]
                                   :opt [::ignore?])))
+
+;; this is what is needed to be passed in, at a minium, to generate a nfo file
+(s/def ::nfo-input-minimum (s/keys :req-un [::version ::name ::uri ::source ::source-id]))
 
 ;; use this for inputs only.
 ;; be generous in what you accept, strict in what you return

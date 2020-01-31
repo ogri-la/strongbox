@@ -469,6 +469,30 @@
       ;; couldn't reasonably determine the primary directory
       :else nil)))
 
+(defn divine-game-track
+  [install-dir addon]
+  (let [sensible-guess (cond
+                         ;; addon has been successfully expanded, current game track is being used
+                         (contains? addon :download-uri?) (get-game-track install-dir)
+
+                         ;; the interface version is set in the .toc file but is also part of 'expanding' an addon.
+                         ;; that's why we prefer the currently set game track over this as the real value may be overridden.
+                         ;; todo: see item about namespacing these attributes.
+                         (some? (:interface-version addon)) (utils/interface-version-to-game-track (:interface-version addon))
+
+                         :else
+
+                         ;; addon has not been expanded, no interface version available in .toc or from online, so
+                         ;; use the 'other' game track
+                         (first (clojure.set/difference (set game-tracks) #{(get-game-track)})))
+
+        game-track (or (:game-track addon) ;; from reading an export record. most of the time this value won't be here
+                       (:installed-game-track addon) ;; from this operation. re-use the value we have if updating an existing addon
+                       sensible-guess ;; the currently selected game track for new addons
+                       ;; very last here is for testing only
+                       "retail")]
+    game-track))
+
 (defn-spec -install-addon (s/or :ok (s/coll-of ::sp/extant-file), :error ::sp/empty-coll)
   "installs an addon given an addon description, a place to install the addon and the addon zip file itself"
   [addon ::sp/addon-or-toc-addon, install-dir ::sp/writeable-dir, downloaded-file ::sp/archive-file]
@@ -484,11 +508,7 @@
         _ (zip/unzip-file downloaded-file install-dir)
         toplevel-dirs (filter (every-pred :dir? :toplevel?) zipfile-entries)
         primary-dirname (determine-primary-subdir toplevel-dirs)
-        game-track (or (:game-track addon) ;; from reading an export record. most of the time this value won't be here
-                       (:installed-game-track addon) ;; from this operation. re-use the value we have if updating an existing addon
-                       (get-game-track install-dir) ;; the currently selected game track for new addons
-                       ;; very last here is for testing only
-                       "retail")
+        game-track (divine-game-track install-dir addon)
 
         ;; an addon may unzip to many directories, each directory needs the nfo file
         update-nfo-fn (fn [zipentry]
@@ -928,7 +948,7 @@
   (let [game-track (:installed-game-track addon) ;; from toc file when addon installed/updated
         stub (select-keys addon [:name :source :source-id])
         ;; when there is a catalog match, attach the game track as well
-        game-track (when (and (:source stub) game-track)
+        game-track (when (and (:source stub) game-track) ;; todo: this is too adhoc
                      {:game-track game-track})]
     (merge stub game-track)))
 
@@ -1045,6 +1065,31 @@
     (when-not (empty? full-data)
       (import-addon-list-v2 full-data))))
 
+;;
+
+(defn -upgrade-nfo
+  [addon]
+  (info "upgrading nfo file of addon" (:dirname addon))
+  (let [install-dir (get-state :selected-addon-dir)
+        ;; TODO: remove this in 0.14.0. it's reasonable to assume nfo files will consistently have a :game-track by then
+        game-track (divine-game-track install-dir addon)
+
+        addon (merge addon {;; double handling of :version here, but the new spec for nfo input
+                            ;; requires a :version key and it's not being picked up from the api response during testing ... investigate before merging
+                            :version (:installed-version addon)
+
+                            ;; our best guess of what the installed game track is
+                            :game-track game-track})]
+    (nfo/update-nfo install-dir addon)))
+
+(defn-spec upgrade-nfo-files nil?
+  "re-write the nfo files for all addons in the selected addon-dir.
+  new data may have been introduced since addon was installed"
+  []
+  (let [has-nfo? (partial nfo/has-nfo? (get-state :selected-addon-dir))]
+    (->> (get-state) :installed-addon-list (filter has-nfo?) (map -upgrade-nfo) vec))
+  nil)
+
 ;; 
 
 (defn refresh
@@ -1062,6 +1107,8 @@
   (check-for-updates)     ;; for those addons that have matches, download their details
 
   ;;(latest-wowman-release) ;; check for updates after everything else is done ;; 2019-06-30, travis is failing with 403: Forbidden. Moved to gui init
+
+  (upgrade-nfo-files)     ;; their content is only updated when an addon is installed
 
   (save-settings)         ;; seems like a good place to preserve the etag-db
   nil)

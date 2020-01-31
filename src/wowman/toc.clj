@@ -36,7 +36,6 @@
    "|cffffe00a<|r|cffff7d0aDBM|r|cffffe00a>|r |cff69ccf0Firelands|r" "deadly-boss-mods-cataclysm-mods"
    "X-Perl UnitFrames by |cFFFF8080Zek|r" "xperl"})
 
-;; todo: rename
 (defn-spec -parse-toc-file map?
   [toc-contents string?]
   (let [comment? #(= (utils/safe-subs % 2) "##")
@@ -101,7 +100,6 @@
   [str string? matching string? replacement string?]
   (clojure.string/replace str (re-pattern matching) replacement))
 
-;; TODO: slugify?
 (defn-spec normalise-name string?
   "convert the 'Title' attribute in toc file to a curseforge-style slug. this value is used to match against curseforge results"
   [label string?]
@@ -199,7 +197,6 @@
       (error "please report this! https://github.com/ogri-la/wowman/issues")
       (error e (format "unhandled error parsing addon in directory '%s': %s" addon-dir (.getMessage e))))))
 
-;; TODO: test this nil? error
 (defn-spec installed-addons (s/or :ok ::sp/toc-list, :error nil?)
   [addons-dir ::sp/extant-dir]
   (let [addon-dir-list (filter fs/directory? (fs/list-dir addons-dir))

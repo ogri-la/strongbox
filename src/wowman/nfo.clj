@@ -27,7 +27,7 @@
 
 (defn-spec derive ::sp/nfo-v2
   "extract fields from the addon data that will be written to the nfo file"
-  [addon ::sp/addon-or-toc-addon, primary? boolean?, game-track ::sp/game-track]
+  [addon ::sp/nfo-input-minimum, primary? boolean?, game-track ::sp/game-track]
   {;; important! as an addon is updated or installed, the `:installed-version` from the .toc file is overridden by the `:version` online
    ;; later, when comparing installed addons against the catalogue, the comparisons will be more consistent
    :installed-version (:version addon)
@@ -38,7 +38,7 @@
    ;; normalised name. once used to match to online addon, we now use source+source-id
    :name (:name addon)
 
-   ;; groups all of an addon's directories together. this is a verbose but natural way of specifying source+source-id
+   ;; groups all of an addon's directories together. it's a little verbose but existed before we were capturing source+source-id
    :group-id (:uri addon)
 
    ;; if addon is one of multiple addons, is this addon considered the 'primary' one?
@@ -55,10 +55,18 @@
 
 (defn-spec write-nfo ::sp/extant-file
   "given an installation directory and an addon, extract the neccessary bits and write them to a nfo file"
-  [install-dir ::sp/extant-dir, addon ::sp/addon-or-toc-addon, addon-dirname string?, primary? boolean?, game-track ::sp/game-track]
+  [install-dir ::sp/extant-dir, addon ::sp/nfo-input-minimum, addon-dirname string?, primary? boolean?, game-track ::sp/game-track]
   (let [path (nfo-path install-dir addon-dirname)]
     (utils/dump-json-file path (derive addon primary? game-track))
     path))
+
+(defn-spec update-nfo ::sp/extant-file
+  "refreshes the nfo data for the given addon."
+  [install-dir ::sp/extant-dir, addon (s/merge ::sp/nfo-input-minimum (s/keys :opt [::sp/version]))]
+  (let [;; important! as an addon is updated or installed, the `:installed-version` is overridden by the `:version`
+        ;; we don't want to alter the version it thinks is installed here
+        addon (merge addon {:version (:installed-version addon)})]
+    (write-nfo install-dir addon (:dirname addon) (:primary? addon) (:game-track addon))))
 
 (defn-spec rm-nfo nil?
   "deletes a nfo file and only a nfo file"
@@ -68,11 +76,14 @@
     nil))
 
 (defn-spec has-nfo? boolean?
-  "returns true if certain keys detected in addon data."
-  [addon any?]
-  (spy :info (-> addon (select-keys [:primary? :group-id :installed-game-track]) empty? not)))
+  "returns true if certain keys are detected in addon data."
+  [install-dir ::sp/extant-dir, addon any?]
+  (if-let [dirname (:dirname addon)]
+    (fs/exists? (nfo-path install-dir dirname))
+    false))
 
-(defn-spec read-nfo-file (s/or :ok ::sp/nfo-v2, :error nil?)
+;; TODO: remove :less-ok in 0.14.0 (0.12.0 + 2)
+(defn-spec read-nfo-file (s/or :ok ::sp/nfo-v2, :less-ok ::sp/nfo-v1, :error nil?)
   "reads the nfo file.
   failure to load the json results in the file being deleted.
   failure to validate the json data results in the file being deleted."
@@ -105,7 +116,8 @@
       :else (do
               (warn (format "failed to coerce nfo data to v2 specification, deleting file: %s" path))
               (s/explain ::sp/nfo-v2 legacy-nfo) ;; prints directly to stdout. remove
-              (rm-nfo path)))))
+              ;;(rm-nfo path) ;; this is what we should do. tough love.
+              legacy-nfo)))) ;; instead, lets write more code to update the nfo files
 
 (defn-spec read-nfo (s/or :ok ::sp/nfo-v2, :error nil?)
   "reads and parses the contents of the .nfo file and checks if addon should be ignored or not"
