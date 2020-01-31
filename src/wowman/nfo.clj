@@ -119,7 +119,7 @@
               ;;(rm-nfo path) ;; this is what we should do. tough love.
               legacy-nfo)))) ;; instead, lets write more code to update the nfo files
 
-(defn-spec read-nfo (s/or :ok ::sp/nfo-v2, :error nil?)
+(defn-spec read-nfo (s/or :ok ::sp/nfo-v2, :less-ok ::sp/nfo-v1, :error nil?)
   "reads and parses the contents of the .nfo file and checks if addon should be ignored or not"
   [install-dir ::sp/extant-dir, dirname string?]
   (let [nfo-file-contents (read-nfo-file install-dir dirname)

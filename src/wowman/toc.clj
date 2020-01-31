@@ -110,7 +110,7 @@
 
 (defn-spec merge-toc-nfo ::sp/toc
   "merges nfo data over toc data, nothing more"
-  [toc ::sp/toc, nfo (s/nilable ::sp/nfo-v2)]
+  [toc ::sp/toc, nfo (s/nilable ::sp/nfo)]
   (merge toc nfo))
 
 (defn-spec parse-addon-toc ::sp/toc
