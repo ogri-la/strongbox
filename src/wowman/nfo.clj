@@ -114,7 +114,7 @@
 
       ;; data was a map of some sort, but we're not going to dwell on what it's contents were
       :else (do
-              (warn (format "failed to coerce nfo data to v2 specification, deleting file: %s" path))
+              (debug (format "failed to coerce nfo data to v2 specification, file needs upgrading: %s" path))
               (s/explain ::sp/nfo-v2 legacy-nfo) ;; prints directly to stdout. remove
               ;;(rm-nfo path) ;; this is what we should do. tough love.
               legacy-nfo)))) ;; instead, lets write more code to update the nfo files
