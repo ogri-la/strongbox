@@ -327,7 +327,7 @@
   nil)
 
 (defn-spec remove-addon-dir! nil?
-  "removes the directory from configuration, does not alter the directory or it's contents at all"
+  "removes the directory from user configuration, does not alter the directory or it's contents at all"
   ([]
    (when-let [addon-dir (get-state :selected-addon-dir)]
      (remove-addon-dir! addon-dir)))
@@ -397,6 +397,10 @@
 ;;
 
 
+(defn-spec expanded? boolean?
+  [addon map?]
+  (some? (:download-uri addon)))
+
 (defn start-affecting-addon
   [addon]
   (swap! state update-in [:unsteady-addons] clojure.set/union #{(:name addon)}))
@@ -425,11 +429,11 @@
 (defn-spec download-addon (s/or :ok ::sp/archive-file, :http-error ::sp/http-error, :error nil?)
   [addon ::sp/addon-or-toc-addon, download-dir ::sp/writeable-dir]
   (info "downloading" (:label addon) "...")
-  (when-let [download-uri (:download-uri addon)]
+  (when (expanded? addon)
     (let [output-fname (downloaded-addon-fname (:name addon) (:version addon)) ;; addonname--1-2-3.zip
           output-path (join (fs/absolute download-dir) output-fname)] ;; /path/to/installed/addons/addonname--1.2.3.zip
       (binding [http/*cache* (cache)]
-        (http/download-file download-uri output-path)))))
+        (http/download-file (:download-uri addon) output-path)))))
 
 ;; don't do this. `download-addon` is wrapped by `install-addon` that is already affecting the addon
 ;;(def download-addon
@@ -470,22 +474,21 @@
       ;; couldn't reasonably determine the primary directory
       :else nil)))
 
-(defn divine-game-track
-  [install-dir addon]
-  (let [game-track (or (:game-track addon) ;; from reading an export record. most of the time this value won't be here
-                       (:installed-game-track addon) ;; re-use the value we have if updating an existing addon
-                       (cond
-                         ;; addon has been successfully expanded, current game track is being used
-                         (contains? addon :download-uri) (get-game-track install-dir)
+(defn-spec guess-game-track ::sp/game-track
+  "give a map of addon data, attempts to guess the most likely game track it belongs to"
+  [install-dir ::sp/extant-dir, addon map?]
+  (or (:game-track addon) ;; from reading an export record. most of the time this value won't be here
+      (:installed-game-track addon) ;; re-use the value we have if updating an existing addon
+      (cond
+        ;; addon has been successfully expanded, current game track is being used.
+        (expanded? addon) (get-game-track install-dir)
 
-                         ;; the interface version is set in the .toc file but is also part of 'expanding' an addon.
-                         ;; that's why we prefer the currently set game track over this as the real value may be overridden.
-                         ;; todo: see item about namespacing these attributes.
-                         (some? (:interface-version addon)) (utils/interface-version-to-game-track (:interface-version addon)))
+        ;; the interface version is set in the .toc file but is also part of 'expanding' an addon.
+        ;; prefer current game track over this as the real value may be overridden.
+        (some? (:interface-version addon)) (utils/interface-version-to-game-track (:interface-version addon)))
 
-                       ;; very last here is for testing only
-                       "retail")]
-    game-track))
+      ;; very last here is for testing only
+      "retail"))
 
 (defn-spec -install-addon (s/or :ok (s/coll-of ::sp/extant-file), :error ::sp/empty-coll)
   "installs an addon given an addon description, a place to install the addon and the addon zip file itself"
@@ -502,9 +505,17 @@
         _ (zip/unzip-file downloaded-file install-dir)
         toplevel-dirs (filter (every-pred :dir? :toplevel?) zipfile-entries)
         primary-dirname (determine-primary-subdir toplevel-dirs)
-        game-track (divine-game-track install-dir addon)
+        ;;game-track (guess-game-track install-dir addon)
+        game-track (or (:game-track addon) ;; from reading an export record. most of the time this value won't be here
+                       (get-game-track install-dir)
+
+                       ;; very last here is for testing only
+                       "retail")
+
 
         ;; an addon may unzip to many directories, each directory needs the nfo file
+
+
         update-nfo-fn (fn [zipentry]
                         (let [addon-dirname (:path zipentry)
                               primary? (= addon-dirname (:path primary-dirname))]
@@ -687,10 +698,10 @@
         ;; most -> least desirable match
         ;; nest to search across multiple parameters
         match-on-list [[[:source :source-id]  ["source" "source_id"]] ;; source+source-id, perfect case
-                       [:alias "name"] ;; alias = name, we've hardcoded a popular addon's crazy name to a catalogue item
+                       [:alias "name"] ;; alias = name, popular addon's hardcoded name to a catalogue item
                        [[:source :name] ["source" "name"]] ;; source+name, we have a source but no source-id (nfo-v1 files)
                        [:name "name"]
-                       [:name "alt_name"] ;; name = alt_name
+                       [:name "alt_name"]
                        [:label "label"]
                        [:dirname "label"]]] ;; dirname = label, eg ./AdiBags = AdiBags
     (for [installed-addon installed-addon-list]
@@ -944,7 +955,7 @@
 (defn-spec export-installed-addon ::sp/export-record
   "given an addon summary from a catalogue or .toc file data, derive an 'export-record' that can be used to import addon later"
   [addon (s/or :catalog ::sp/addon-summary, :installed ::sp/toc)]
-  (let [game-track (:installed-game-track addon) ;; from toc file when addon installed/updated
+  (let [game-track (:installed-game-track addon)
         stub (select-keys addon [:name :source :source-id])
         ;; when there is a catalog match, attach the game track as well
         game-track (when (and (:source stub) game-track) ;; todo: this is too adhoc
@@ -952,7 +963,7 @@
     (merge stub game-track)))
 
 (defn-spec export-installed-addon-list ::sp/export-record-list
-  "derives an 'export-record' from a list of either addon summaries from a catalog or .toc file data from installed addons"
+  "derives an 'export-record' from a list of either addon summaries from a catalogue or .toc file data from installed addons"
   [addon-list (s/or :catalog ::sp/addon-summary-list, :installed ::sp/toc-list)]
   (->> addon-list (remove :ignore?) (map export-installed-addon) vec))
 
@@ -1066,28 +1077,35 @@
 
 ;;
 
-(defn -upgrade-nfo
-  [addon]
-  ;; todo: this only needs to be done once. it's a data migration
-  (info "upgrading nfo file of addon" (:dirname addon))
+(defn-spec -upgrade-nfo nil?
+  "given an addon, upgrades it's nfo file to the current nfo spec."
+  [addon map?]
+  (debug "upgrading nfo file:" (:dirname addon))
   (let [install-dir (get-state :selected-addon-dir)
-        ;; TODO: remove this in 0.14.0. it's reasonable to assume nfo files will consistently have a :game-track by then
-        game-track (divine-game-track install-dir addon)
-
-        addon (merge addon {;; double handling of :version here, but the new spec for nfo input
-                            ;; requires a :version key and it's not being picked up from the api response during testing ... investigate before merging
+        ;; best guess of what the installed game track is
+        ;; TODO: remove this in 0.14.0 and delete invalid nfo-v2 files
+        ;; it's reasonable to assume nfo files will consistently have a :game-track by then
+        game-track (guess-game-track install-dir addon)
+        addon (merge addon {;; double handling of `:version` here with `nfo/update-nfo`
+                            ;; the new spec for nfo input requires a `:version` key and it's not being picked
+                            ;; up from the api response during testing
+                            ;; TODO: investigate this before merging
                             :version (:installed-version addon)
-
-                            ;; our best guess of what the installed game track is
                             :game-track game-track})]
-    (nfo/update-nfo install-dir addon)))
+    (nfo/update-nfo install-dir addon))
+  nil)
 
 (defn-spec upgrade-nfo-files nil?
-  "re-write the nfo files for all addons in the selected addon-dir.
+  "upgrade the nfo files for all addons in the selected addon-dir.
   new data may have been introduced since addon was installed"
   []
-  (let [has-nfo? (partial nfo/has-nfo? (get-state :selected-addon-dir))]
-    (->> (get-state) :installed-addon-list (filter has-nfo?) (map -upgrade-nfo) vec))
+  (let [install-dir (get-state :selected-addon-dir)
+        has-valid-nfo-file? (partial nfo/has-valid-nfo-file? install-dir)]
+    (->> (get-state)
+         :installed-addon-list
+         (filter has-valid-nfo-file?)
+         (map -upgrade-nfo)
+         vec))
   nil)
 
 ;; 
@@ -1108,7 +1126,7 @@
 
   ;;(latest-wowman-release) ;; check for updates after everything else is done ;; 2019-06-30, travis is failing with 403: Forbidden. Moved to gui init
 
-  (upgrade-nfo-files)     ;; their content is only updated when an addon is installed
+  (upgrade-nfo-files)     ;; otherwise nfo data is only updated when an addon is installed/upgraded
 
   (save-settings)         ;; seems like a good place to preserve the etag-db
   nil)
@@ -1123,14 +1141,9 @@
   (filterv :update? rows))
 
 (defn -re-installable?
-  "an addon can only be re-installed if it's been matched to an addon in the catalog"
+  "an addon can only be re-installed if it's been matched to an addon in the catalog and a release available to download"
   [rows]
-  ;; no longer true in 0.9.0. an addon may be found in the catalog but may not match the selected game track
-  ;;(filterv :uri rows)) ;; :uri is only present in addons that have a match
-
-  ;; todo: this indirect logic smells. something like this should be done instead:
-  ;; (filterv (comp :release-available? :matched?) rows)
-  (filterv :download-uri rows))
+  (filterv expanded? rows))
 
 (defn re-install-selected
   []

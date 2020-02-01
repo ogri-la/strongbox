@@ -349,12 +349,12 @@
   [grid]
   (let [default-min-width 80 ;; solid default for all columns
         min-width-map {"WoW" 45
-                       "go" 120} ;; these can be a little smaller
+                       "source" 120} ;; these can be a little smaller
         max-width-map {"installed" 200
                        "available" 200
                        "updated" 100
                        "downloads" 100
-                       "go" 140}
+                       "source" 140}
         pre-width-map {"WoW" 50
                        "updated" 100}] ;; we would like these a little larger, if possible
     (doseq [column (.getColumns grid)]
@@ -395,7 +395,7 @@
     (.setCellRenderer (.getColumn (.getColumnModel grid) column-idx) cell-renderer)
 
     ;; lawdy dawdy this is awful. 
-    (when (= column-name "go")
+    (when (= column-name "source")
       (.setHorizontalAlignment cell-renderer javax.swing.SwingConstants/LEFT))
 
     nil))
@@ -421,7 +421,7 @@
 
 (defn installed-addons-go-links
   [grid]
-  (let [gocol? #(= (.getColumnName grid %) "go")
+  (let [gocol? #(= (.getColumnName grid %) "source")
 
         cell-val-for-event (fn [e]
                              (let [row (.rowAtPoint grid (.getPoint e))
@@ -457,21 +457,23 @@
 
     (ss/listen grid :mouse-motion hand-cursor-on-hover)
     (ss/listen grid :mouse-clicked go-link-clicked)
-    (add-cell-renderer grid "go" uri-renderer)
+    (add-cell-renderer grid "source" uri-renderer)
 
     nil))
 
 (defn installed-addons-panel
   []
   (let [;; always visible when debugging and always available from the column menu
-        hidden-by-default-cols [:addon-id :group-id :primary? :update? :matched? :ignore? :categories :downloads :updated]
+        hidden-by-default-cols [:addon-id :group-id :primary? :update? :matched? :ignore? :categories :downloads :updated :source-id]
         tblmdl (sstbl/table-model :columns [{:key :name, :text "addon-id"}
                                             :group-id
                                             :primary?
                                             :update?
                                             :matched?
                                             :ignore?
-                                            {:key :uri, :text "go"}
+                                            {:key :installed-game-track, :text "track"}
+                                            {:key :uri, :text "source"}
+                                            :source-id
                                             {:key :label, :text "name"}
                                             :description
                                             {:key :installed-version, :text "installed"}
@@ -565,7 +567,9 @@
 
 (defn search-results-panel
   []
-  (let [tblmdl (sstbl/table-model :columns [{:key :uri :text "go"}
+  (let [hidden-by-default-cols [:source-id]
+        tblmdl (sstbl/table-model :columns [{:key :uri :text "source"}
+                                            :source-id
                                             {:key :label :text "name"}
                                             :description
                                             {:key :category-list :text "categories"}
@@ -609,6 +613,9 @@
     (ss/listen grid :selection (selected-rows-handler search-results-selection-handler))
     (state-bind [:catalog-size] update-rows-fn)
     (state-bind [:search-field-input] update-rows-fn)
+
+    (hide-columns grid hidden-by-default-cols)
+
     (ss/scrollable grid)))
 
 (defn search-panel

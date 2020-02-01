@@ -124,12 +124,11 @@
                                            ::installed-game-track ::source-id]
                                   :opt [::ignore?])))
 
+;; TODO: remove :less-ok in 0.14.0 (0.12.0 + 2)
+(s/def ::nfo (s/or :ok-v1 ::nfo-v1, :ok-v2 ::nfo-v2))
+
 ;; this is what is needed to be passed in, at a minium, to generate a nfo file
 (s/def ::nfo-input-minimum (s/keys :req-un [::version ::name ::uri ::source ::source-id]))
-
-;; use this for inputs only.
-;; be generous in what you accept, strict in what you return
-(s/def ::nfo (s/or :ok-v1 ::nfo-v1, :ok-v2 ::nfo-v2))
 
 ;; orphaned
 (s/def ::file-byte-array-pair (s/cat :file ::file

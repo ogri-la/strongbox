@@ -32,13 +32,13 @@
    ;; later, when comparing installed addons against the catalogue, the comparisons will be more consistent
    :installed-version (:version addon)
 
-   ;; knowing the game track at time of installation lets us include that in any exports and later re-import the correct version 
+   ;; knowing the regime the addon was installed under allows us to export and later re-import the correct version
    :installed-game-track game-track
 
    ;; normalised name. once used to match to online addon, we now use source+source-id
    :name (:name addon)
 
-   ;; groups all of an addon's directories together. it's a little verbose but existed before we were capturing source+source-id
+   ;; groups all of an addon's directories together.
    :group-id (:uri addon)
 
    ;; if addon is one of multiple addons, is this addon considered the 'primary' one?
@@ -75,15 +75,7 @@
     (fs/delete path)
     nil))
 
-(defn-spec has-nfo? boolean?
-  "returns true if certain keys are detected in addon data."
-  [install-dir ::sp/extant-dir, addon any?]
-  (if-let [dirname (:dirname addon)]
-    (fs/exists? (nfo-path install-dir dirname))
-    false))
-
-;; TODO: remove :less-ok in 0.14.0 (0.12.0 + 2)
-(defn-spec read-nfo-file (s/or :ok ::sp/nfo-v2, :less-ok ::sp/nfo-v1, :error nil?)
+(defn-spec read-nfo-file (s/or :ok ::sp/nfo, :error nil?)
   "reads the nfo file.
   failure to load the json results in the file being deleted.
   failure to validate the json data results in the file being deleted."
@@ -100,16 +92,19 @@
                   :data-spec ::sp/nfo) ;; either v1 or v2
         ]
     (cond
-      ;; failed to read nfo file. it may not exist. if it did exist but was malformed, it definitely doesn't exist anymore.
+      ;; failed to read nfo file. it may not exist. if it did exist but was malformed, then
+      ;; it was removed and definitely doesn't exist anymore.
       (not nfo-data) nil
 
       ;; valid v2 nfo data, perfect case
       (s/valid? ::sp/nfo-v2 nfo-data) nfo-data
 
       ;; data was a map of some sort, but we're not going to dwell on what it's contents were
+      ;; TODO: remove this in 0.14.0 and delete invalid nfo-v2 files
+      ;; it's reasonable to assume nfo files will consistently have a :game-track by then
       :else nfo-data)))
 
-(defn-spec read-nfo (s/or :ok ::sp/nfo-v2, :less-ok ::sp/nfo-v1, :error nil?)
+(defn-spec read-nfo (s/or :ok ::sp/nfo, :error nil?)
   "reads and parses the contents of the .nfo file and checks if addon should be ignored or not"
   [install-dir ::sp/extant-dir, dirname string?]
   (let [nfo-file-contents (read-nfo-file install-dir dirname)
@@ -125,3 +120,16 @@
                       (warn (format "ignoring addon '%s': addon directory contains a SVC sub-directory (.git/.hg/.svn etc)" dirname))
                       {:ignore? true})]
     (merge nfo-file-contents ignore-flag)))
+
+(defn-spec has-nfo-file? boolean?
+  "returns true if a nfo (.wowman.json) file exists in addon directory"
+  [install-dir ::sp/extant-dir, addon any?]
+  (if-let [dirname (:dirname addon)]
+    (fs/exists? (nfo-path install-dir dirname))
+    false))
+
+(defn-spec has-valid-nfo-file? boolean?
+  "returns true if a nfo file exists and contains valid nfo-v2 data"
+  [install-dir ::sp/extant-dir, addon any?]
+  (and (has-nfo-file? install-dir addon)
+       (s/valid? ::sp/nfo-v2 (read-nfo-file install-dir (:dirname addon)))))
