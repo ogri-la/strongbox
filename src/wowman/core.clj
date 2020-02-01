@@ -327,6 +327,7 @@
   nil)
 
 (defn-spec remove-addon-dir! nil?
+  "removes the directory from configuration, does not alter the directory or it's contents at all"
   ([]
    (when-let [addon-dir (get-state :selected-addon-dir)]
      (remove-addon-dir! addon-dir)))
@@ -691,9 +692,14 @@
   [installed-addon-list]
   (let [;; toc-key -> catalog-key
         ;; most -> least desirable match
-        match-on-list [[[:source :source-id]  ["source" "source_id"]] ;; nest to search across multiple parameters
-                       [:alias "name"]
-                       [:name "name"] [:name "alt_name"] [:label "label"] [:dirname "label"]]]
+        ;; nest to search across multiple parameters
+        match-on-list [[[:source :source-id]  ["source" "source_id"]] ;; source+source-id, perfect case
+                       [:alias "name"] ;; alias = name, we've hardcoded a popular addon's crazy name to a catalogue item
+                       [[:source :name] ["source" "name"]] ;; source+name, we have a source but no source-id (nfo-v1 files)
+                       [:name "name"]
+                       [:name "alt_name"] ;; name = alt_name
+                       [:label "label"]
+                       [:dirname "label"]]] ;; dirname = label, eg ./AdiBags = AdiBags
     (for [installed-addon installed-addon-list]
       (find-first-in-db installed-addon match-on-list))))
 
@@ -1069,6 +1075,7 @@
 
 (defn -upgrade-nfo
   [addon]
+  ;; todo: this only needs to be done once. it's a data migration
   (info "upgrading nfo file of addon" (:dirname addon))
   (let [install-dir (get-state :selected-addon-dir)
         ;; TODO: remove this in 0.14.0. it's reasonable to assume nfo files will consistently have a :game-track by then
