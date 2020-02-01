@@ -98,10 +98,7 @@
                   :bad-data? bad-data
                   :invalid-data? invalid-data,
                   :data-spec ::sp/nfo) ;; either v1 or v2
-
-        ;; defaults for missing data
-        v1-filler {:installed-game-track "retail"}
-        legacy-nfo (merge nfo-data v1-filler)]
+        ]
     (cond
       ;; failed to read nfo file. it may not exist. if it did exist but was malformed, it definitely doesn't exist anymore.
       (not nfo-data) nil
@@ -109,15 +106,8 @@
       ;; valid v2 nfo data, perfect case
       (s/valid? ::sp/nfo-v2 nfo-data) nfo-data
 
-      ;; we had to fill in some gaps, should be ok
-      (s/valid? ::sp/nfo-v2 legacy-nfo) legacy-nfo
-
       ;; data was a map of some sort, but we're not going to dwell on what it's contents were
-      :else (do
-              (debug (format "failed to coerce nfo data to v2 specification, file needs upgrading: %s" path))
-              (s/explain ::sp/nfo-v2 legacy-nfo) ;; prints directly to stdout. remove
-              ;;(rm-nfo path) ;; this is what we should do. tough love.
-              legacy-nfo)))) ;; instead, lets write more code to update the nfo files
+      :else nfo-data)))
 
 (defn-spec read-nfo (s/or :ok ::sp/nfo-v2, :less-ok ::sp/nfo-v1, :error nil?)
   "reads and parses the contents of the .nfo file and checks if addon should be ignored or not"

@@ -472,24 +472,17 @@
 
 (defn divine-game-track
   [install-dir addon]
-  (let [sensible-guess (cond
+  (let [game-track (or (:game-track addon) ;; from reading an export record. most of the time this value won't be here
+                       (:installed-game-track addon) ;; re-use the value we have if updating an existing addon
+                       (cond
                          ;; addon has been successfully expanded, current game track is being used
-                         (contains? addon :download-uri?) (get-game-track install-dir)
+                         (contains? addon :download-uri) (get-game-track install-dir)
 
                          ;; the interface version is set in the .toc file but is also part of 'expanding' an addon.
                          ;; that's why we prefer the currently set game track over this as the real value may be overridden.
                          ;; todo: see item about namespacing these attributes.
-                         (some? (:interface-version addon)) (utils/interface-version-to-game-track (:interface-version addon))
+                         (some? (:interface-version addon)) (utils/interface-version-to-game-track (:interface-version addon)))
 
-                         :else
-
-                         ;; addon has not been expanded, no interface version available in .toc or from online, so
-                         ;; use the 'other' game track
-                         (first (clojure.set/difference (set game-tracks) #{(get-game-track)})))
-
-        game-track (or (:game-track addon) ;; from reading an export record. most of the time this value won't be here
-                       (:installed-game-track addon) ;; from this operation. re-use the value we have if updating an existing addon
-                       sensible-guess ;; the currently selected game track for new addons
                        ;; very last here is for testing only
                        "retail")]
     game-track))
