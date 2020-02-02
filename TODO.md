@@ -66,15 +66,15 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### todo
 
-
-## todo bucket (no particular order)
-
 * tukui and elvui can't be switched to classic
     - on classic track they show updates
         - elvui 1.82 => 1.211
         - tukui 4.42 => 1.321
     - but updating them doesn't alter their reported versions
         - the 'source' for these two are 'tukui-classic', the others are just 'tukui'
+
+## todo bucket (no particular order)
+
 * revisit aliases
     - use source and source-id now
     - maybe externalise the list 
