@@ -1075,9 +1075,9 @@
         ;; it's reasonable to assume nfo files will consistently have a :game-track by then
         game-track (guess-game-track install-dir addon)
         addon (merge addon {;; double handling of `:version` here with `nfo/update-nfo`
-                            ;; the new spec for nfo input requires a `:version` key and it's not being picked
-                            ;; up from the api response during testing
-                            ;; TODO: investigate this before merging
+                            ;; the new minimum spec to derive nfo data requires a `:version` key.
+                            ;; addons that are not expanded yet do not have this key.
+                            ;; which is beside the point, because we don't want to use the `:version` key anyway
                             :version (:installed-version addon)
                             :game-track game-track})]
     (nfo/update-nfo install-dir addon))

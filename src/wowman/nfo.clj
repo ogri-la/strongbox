@@ -62,7 +62,7 @@
 
 (defn-spec update-nfo ::sp/extant-file
   "refreshes the nfo data for the given addon."
-  [install-dir ::sp/extant-dir, addon (s/merge ::sp/nfo-input-minimum (s/keys :opt [::sp/version]))]
+  [install-dir ::sp/extant-dir, addon ::sp/nfo-input-minimum]
   (let [;; important! as an addon is updated or installed, the `:installed-version` is overridden by the `:version`
         ;; we don't want to alter the version it thinks is installed here
         addon (merge addon {:version (:installed-version addon)})]
