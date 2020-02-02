@@ -72,9 +72,27 @@ see CHANGELOG.md for a more formal list of changes by release
         - tukui 4.42 => 1.321
     - but updating them doesn't alter their reported versions
         - the 'source' for these two are 'tukui-classic', the others are just 'tukui'
+    - problem seems to be in the :version and :installed-version attributes
+        - after refresh, the :version attribute is correct but :installed-version is still incorrect
+    - I have addons masking other addons!
+        - ElvUI_MerathilisUI/ was masking Tukui
+        - ElvUI_CodeNameBlaze/ was masking Elvui
+    - the addons were being updated, but were being mis-matched during the database search because of shared IDs ...?
+        - ids are 1 and 2
+        - I thought these were negative? or I made them negative?
+        - anyway
 
 ## todo bucket (no particular order)
 
+* wowinterface, multiple game tracks 
+    - investigate just what is being downloaded when a classic version of a wowi addon is downloaded
+    - see 'LagBar'
+* rename wowman
+    - rename repository
+    - update readme
+        - mention name change prominently
+    - update package
+        - add new shell script 'strongbox'
 * revisit aliases
     - use source and source-id now
     - maybe externalise the list 

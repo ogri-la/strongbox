@@ -1091,9 +1091,8 @@
         has-valid-nfo-file? (partial nfo/has-valid-nfo-file? install-dir)]
     (->> (get-state)
          :installed-addon-list
-         (filter has-valid-nfo-file?)
-         (map -upgrade-nfo)
-         vec))
+         (remove has-valid-nfo-file?) ;; skip good nfo files
+         (mapv -upgrade-nfo)))
   nil)
 
 ;; 
