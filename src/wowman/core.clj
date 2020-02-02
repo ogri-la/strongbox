@@ -398,6 +398,7 @@
 
 
 (defn-spec expanded? boolean?
+  "returns true if an addon has found further details online"
   [addon map?]
   (some? (:download-uri addon)))
 
@@ -505,17 +506,13 @@
         _ (zip/unzip-file downloaded-file install-dir)
         toplevel-dirs (filter (every-pred :dir? :toplevel?) zipfile-entries)
         primary-dirname (determine-primary-subdir toplevel-dirs)
-        ;;game-track (guess-game-track install-dir addon)
         game-track (or (:game-track addon) ;; from reading an export record. most of the time this value won't be here
                        (get-game-track install-dir)
 
                        ;; very last here is for testing only
                        "retail")
 
-
         ;; an addon may unzip to many directories, each directory needs the nfo file
-
-
         update-nfo-fn (fn [zipentry]
                         (let [addon-dirname (:path zipentry)
                               primary? (= addon-dirname (:path primary-dirname))]
@@ -953,12 +950,10 @@
 ;; import/export
 
 (defn-spec export-installed-addon ::sp/export-record
-  "given an addon summary from a catalogue or .toc file data, derive an 'export-record' that can be used to import addon later"
+  "given an addon summary from a catalogue or .toc file data, derive an 'export-record' that can be used to import an addon later"
   [addon (s/or :catalog ::sp/addon-summary, :installed ::sp/toc)]
-  (let [game-track (:installed-game-track addon)
-        stub (select-keys addon [:name :source :source-id])
-        ;; when there is a catalog match, attach the game track as well
-        game-track (when (and (:source stub) game-track) ;; todo: this is too adhoc
+  (let [stub (select-keys addon [:name :source :source-id])
+        game-track (when-let [game-track (:installed-game-track addon)]
                      {:game-track game-track})]
     (merge stub game-track)))
 
@@ -986,14 +981,7 @@
 (defn-spec export-catalog-addon-list ::sp/export-record-list
   "given a catalogue of addons, generates a list of 'export-records' from the list of addon summaries"
   [catalog ::sp/catalog]
-  (let [;; exporting installed addons feels like it's for personal use whereas exporting the user catalogue feels like
-        ;; it's for sharing with others for that reason alone I'm skipping the game track in this export.
-        ;; update: the above is true, but an addon was successfully installed under a particular game track and a
-        ;; default game track will be picked if one isn't present, which means the addon may fail to install during import.
-        ;; update2: we don't currently capture the game track an addon was installed under! we have no way of knowing the
-        ;; 'preferred' game track then.
-        game-track nil
-        addon-list (:addon-summary-list catalog)]
+  (let [addon-list (:addon-summary-list catalog)]
     (export-installed-addon-list addon-list)))
 
 (defn-spec export-user-catalog-addon-list-safely ::sp/extant-file

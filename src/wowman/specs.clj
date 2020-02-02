@@ -182,13 +182,14 @@
 (s/def ::source ::catalog-source) ;; alias :(
 (s/def ::source-id ::catalog-source-id) ;; alias :(
 
-(s/def ::export-record-partial (s/keys :req-un [::name]
-                                       :opt [::source ::source-id]))
+(s/def ::export-record-v1 (s/keys :req-un [::name]
+                                  :opt [::source ::source-id]))
 
-(s/def ::export-record-full (s/keys :req-un [::name ::source ::source-id]
-                                    :opt [::game-track])) ;; todo: can we version this?
+(s/def ::export-record-v2 (s/keys :req-un [::name ::source ::source-id]
+                                  :opt [::game-track ;; optional because we also support exporting catalogue items that have no game track
+                                        ]))
 
-(s/def ::export-record (s/or :partial ::export-record-partial, :full ::export-record-full))
+(s/def ::export-record (s/or :v1 ::export-record-v1, :v2 ::export-record-v2))
 
 (s/def ::export-record-list (s/coll-of ::export-record))
 
