@@ -34,6 +34,7 @@
 
 ;; .toc files live in the root of an addon and include the author's metadata about the addon
 ;; minimum needed to be scraped from a toc file
+;; this seems to have a bit of nfo stuff in it ...
 (s/def ::toc
   (s/keys :req-un [::name ::label ::description ::dirname ::interface-version ::installed-version]
           :opt [::group-id ::primary? ::group-addons ::source ::source-id]))
@@ -115,9 +116,19 @@
 
 (s/def ::ignore-flag (s/keys :req-un [::ignore?]))
 
-(s/def ::nfo (s/or :dev-addon-missing-nfo ::ignore-flag
-                   :ok (s/keys :req-un [::installed-version ::name ::group-id ::primary? ::source ::source-id]
-                               :opt [::ignore?])))
+(s/def ::nfo-v1 map?)
+
+;; ignored nfo file may simply be the json '{"ignore?": true}'
+(s/def ::nfo-v2 (s/or :ignored-addon ::ignore-flag
+                      :ok (s/keys :req-un [::installed-version ::name ::group-id ::primary? ::source
+                                           ::installed-game-track ::source-id]
+                                  :opt [::ignore?])))
+
+;; TODO: remove :less-ok in 0.14.0 (0.12.0 + 2)
+(s/def ::nfo (s/or :ok-v1 ::nfo-v1, :ok-v2 ::nfo-v2))
+
+;; this is what is needed to be passed in, at a minium, to generate a nfo file
+(s/def ::nfo-input-minimum (s/keys :req-un [::version ::name ::uri ::source ::source-id]))
 
 ;; orphaned
 (s/def ::file-byte-array-pair (s/cat :file ::file
@@ -127,6 +138,7 @@
 
 (s/def ::install-dir (s/nilable ::extant-dir))
 (s/def ::game-track #{"retail" "classic"})
+(s/def ::installed-game-track ::game-track) ;; alias
 (s/def ::game-track-list (s/coll-of ::game-track :kind vector? :distinct true))
 (s/def ::addon-dir ::extant-dir)
 (s/def ::selected? boolean?)
@@ -170,13 +182,14 @@
 (s/def ::source ::catalog-source) ;; alias :(
 (s/def ::source-id ::catalog-source-id) ;; alias :(
 
-(s/def ::export-record-partial (s/keys :req-un [::name]
-                                       :opt [::source ::source-id]))
+(s/def ::export-record-v1 (s/keys :req-un [::name]
+                                  :opt [::source ::source-id]))
 
-(s/def ::export-record-full (s/keys :req-un [::name ::source ::source-id]
-                                    :opt [::game-track]))
+(s/def ::export-record-v2 (s/keys :req-un [::name ::source ::source-id]
+                                  :opt [::game-track ;; optional because we also support exporting catalogue items that have no game track
+                                        ]))
 
-(s/def ::export-record (s/or :partial ::export-record-partial, :full ::export-record-full))
+(s/def ::export-record (s/or :v1 ::export-record-v1, :v2 ::export-record-v2))
 
 (s/def ::export-record-list (s/coll-of ::export-record))
 

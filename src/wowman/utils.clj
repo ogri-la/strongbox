@@ -338,14 +338,14 @@
   (sluglib/slugify string))
 
 (defn-spec interface-version-to-game-version (s/or :ok string?, :no-match nil?)
-  [iface-version string?]
+  [iface-version string?] ;; this should be ::sp/interface-version
   ;; warning! there is no way to convert *unambiguously* between the 'patch level' and the 'interface version'
   ;; for example, patch "1.2.0" => "10200", but so does "1.20.0" => "10200"
   ;; there haven't been any minor versions >4 since MOP
   ;; we'll hit 10.0 soon enough (we're at 8.x at time of writing) so what then? "10.0.1" => "10000" is another collision
   ;; the below code should only be considered unambigous for versions of WoW between 2.x and 8.x
   ;; (and 9.x if that series follows the behaviour of all other patch levels since 2.x)
-  ;; -- https://wow.gamepedia.com/Patches
+  ;; see: https://wow.gamepedia.com/Patches
   (let [iface-regex #"(?<major>\d{1})\d(?<minor>\d{1})\d(?<patch>\d{1}\w?)"
         matcher (re-matcher iface-regex iface-version)
         major-minor-patch (rest (re-find matcher))]
@@ -361,13 +361,21 @@
     (when (and major minor)
       (+ (* 10000 major) (* 100 minor)))))
 
-(defn game-version-to-game-track
+(defn-spec game-version-to-game-track ::sp/game-track
   "'1.13.2' => 'classic', '8.2.0' => 'retail'"
-  [game-version]
+  [game-version string?]
   (if (= "1." (subs game-version 0 2))
     ;; 1.x.x == classic (for now)
     "classic"
     "retail"))
+
+(defn-spec interface-version-to-game-track (s/or :ok ::sp/game-track, :err nil?)
+  "converts an interface version like '80000' to a game track like 'retail'"
+  [interface-version ::sp/interface-version]
+  (-> interface-version
+      str ;; aru?
+      interface-version-to-game-version
+      game-version-to-game-track))
 
 ;; https://stackoverflow.com/questions/13789092/length-of-the-first-line-in-an-utf-8-file-with-bom
 (defn debomify

@@ -18,7 +18,9 @@ see CHANGELOG.md for a more formal list of changes by release
     - done
 * rename 'go' column to 'catalogue' 
     - no, decided not to. 
-    - this seems like a whim or errant thought and I see no reason for change
+        - this seems like a whim or errant thought and I see no reason for change
+    - actually, yeah, I changed it but to 'source' not 'catalogue'
+    - added 'source-id' and 'game-track' columns as well
 * remove dependency data.codec
     - this can be done with native java
     - done
@@ -53,14 +55,30 @@ see CHANGELOG.md for a more formal list of changes by release
 * import/export, export user catalogue
     - the good thing about the current exports is that they are minimal and can be 'inflated' into whatever catalog spec supported in the future
     - done
+* github, installation from github via import menu not updating log until finished
+    - this is an async issue
+        - actually, I think it's a problem with the v1 import index being generated
+            - and this isn't a problem for v2 imports
+    - done
+* import/export, importing addons should disregard game track
+    - app should feel free to ignore it, once the addon is installed
+    - done
 
 ### todo
 
-* github, installation from github via import menu not updating log until finished
-    - this is an async issue
 
 ## todo bucket (no particular order)
 
+* tukui and elvui can't be switched to classic
+    - on classic track they show updates
+        - elvui 1.82 => 1.211
+        - tukui 4.42 => 1.321
+    - but updating them doesn't alter their reported versions
+        - the 'source' for these two are 'tukui-classic', the others are just 'tukui'
+* revisit aliases
+    - use source and source-id now
+    - maybe externalise the list 
+* can addon-id be removed as a gui column?
 * move location of catalogs into user settings
     - allow user to specify their own catalogs
         - a url to a catalog that is downloaded and included while loading up the db

@@ -186,12 +186,18 @@
 
 (deftest export-installed-addon-list
   (testing "exported addon data is correct"
-    (let [addon-list (slurp-fixture "export--installed-addons-list.edn")
-          game-track "retail"
+    (let [addon-list (slurp-fixture "import-export--installed-addons-list.edn")
           expected [{:name "adibags" :source "curseforge" :game-track "retail"}
                     {:name "noname"} ;; an addon whose name is not present in the catalog (umatched)
                     {:name "carbonite" :source "curseforge" :game-track "retail"}]]
-      (is (= expected (core/export-installed-addon-list addon-list game-track))))))
+      (is (= expected (core/export-installed-addon-list addon-list)))))
+
+  (testing "export ignores ignored addons"
+    (let [addon-list (vec (slurp-fixture "import-export--installed-addons-list.edn"))
+          addon-list (assoc-in addon-list [0 :ignore?] true)
+          expected [{:name "noname"} ;; an addon whose name is not present in the catalog (umatched)
+                    {:name "carbonite" :source "curseforge" :game-track "retail"}]]
+      (is (= expected (core/export-installed-addon-list addon-list))))))
 
 (deftest export-catalog-addon-list
   (testing "exported addon list data is correct"
@@ -242,6 +248,7 @@
                            :updated-date "2019-06-26T01:21:39Z",
                            :group-id "https://www.curseforge.com/wow/addons/everyaddon",
                            :installed-version "v8.2.0-v1.13.2-7135.139",
+                           :installed-game-track "retail"
                            :name "everyaddon",
                            :source "curseforge",
                            :interface-version 80000,
@@ -262,6 +269,7 @@
                            :updated-date "2019-07-03T07:11:47Z",
                            :group-id "https://www.curseforge.com/wow/addons/everyotheraddon",
                            :installed-version "v8.2.0-v1.13.2-7135.139",
+                           :installed-game-track "retail"
                            :name "everyotheraddon",
                            :source "curseforge",
                            :interface-version 80200,
@@ -323,6 +331,7 @@
                            :updated-date "2019-06-26T01:21:39Z",
                            :group-id "https://www.curseforge.com/wow/addons/everyaddon",
                            :installed-version "v8.2.0-v1.13.2-7135.139",
+                           :installed-game-track "retail"
                            :name "everyaddon",
                            :source "curseforge",
                            :interface-version 80000,
@@ -343,6 +352,7 @@
                            :updated-date "2019-07-03T07:11:47Z",
                            :group-id "https://www.curseforge.com/wow/addons/everyotheraddon",
                            :installed-version "v8.2.0-v1.13.2-7135.139",
+                           :installed-game-track "classic"
                            :name "everyotheraddon",
                            :source "curseforge",
                            :interface-version 11300, ;; changed
@@ -416,6 +426,7 @@
 
                 ;; and optionally these from .wowman.json if we installed the addon
                 nfo {:installed-version "v8.10.00",
+                     :installed-game-track "retail"
                      :name "every-addon",
                      :group-id "doesntmatter"
                      :primary? true,
