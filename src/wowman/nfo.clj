@@ -28,25 +28,32 @@
 (defn-spec derive ::sp/nfo-v2
   "extract fields from the addon data that will be written to the nfo file"
   [addon ::sp/nfo-input-minimum, primary? boolean?, game-track ::sp/game-track]
-  {;; important! as an addon is updated or installed, the `:installed-version` from the .toc file is overridden by the `:version` online
-   ;; later, when comparing installed addons against the catalogue, the comparisons will be more consistent
-   :installed-version (:version addon)
+  (let [nfo {;; important! as an addon is updated or installed, the `:installed-version` from the .toc file is overridden by the `:version` online
+             ;; later, when comparing installed addons against the catalogue, the comparisons will be more consistent
+             :installed-version (:version addon)
 
-   ;; knowing the regime the addon was installed under allows us to export and later re-import the correct version
-   :installed-game-track game-track
+             ;; knowing the regime the addon was installed under allows us to export and later re-import the correct version
+             :installed-game-track game-track
 
-   ;; normalised name. once used to match to online addon, we now use source+source-id
-   :name (:name addon)
+             ;; normalised name. once used to match to online addon, we now use source+source-id
+             :name (:name addon)
 
-   ;; groups all of an addon's directories together.
-   :group-id (:uri addon)
+             ;; groups all of an addon's directories together.
+             :group-id (:uri addon)
 
-   ;; if addon is one of multiple addons, is this addon considered the 'primary' one?
-   :primary? primary?
+             ;; if addon is one of multiple addons, is this addon considered the 'primary' one?
+             :primary? primary?
 
-   ;; where the addon came from and how they identified it
-   :source (:source addon)
-   :source-id (:source-id addon)})
+             ;; where the addon came from and how they identified it
+             :source (:source addon)
+             :source-id (:source-id addon)}
+
+        ;; users can set this in the nfo file manually or
+        ;; it can be drived later in the process by examining the addon's toc file or subdirs, or
+        ;; it may be present when upgrading an existing nfo file and should be preserved
+        ignore-flag (when-some [ignore? (:ignore? addon)]
+                      {:ignore? ignore?})]
+    (merge nfo ignore-flag)))
 
 (defn-spec nfo-path ::sp/file
   "given an installation directory and the directory name of an addon, return the absolute path to the nfo file"
@@ -60,8 +67,8 @@
     (utils/dump-json-file path (derive addon primary? game-track))
     path))
 
-(defn-spec update-nfo ::sp/extant-file
-  "refreshes the nfo data for the given addon."
+(defn-spec upgrade-nfo ::sp/extant-file
+  "refreshes the nfo data for the given addon. does NOT bump installed version"
   [install-dir ::sp/extant-dir, addon ::sp/nfo-input-minimum]
   (let [;; important! as an addon is updated or installed, the `:installed-version` is overridden by the `:version`
         ;; we don't want to alter the version it thinks is installed here

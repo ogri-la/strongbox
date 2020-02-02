@@ -104,7 +104,7 @@
       (spit (utils/join (ignorable-addon-path) nfo/nfo-filename) (utils/to-json nfo-data))
       (is (= expected (nfo/read-nfo (install-dir) ignorable-addon-dir)))))
 
-  (testing "an addon with nfo data, an ignorable sub-directory AND an ignore flag, is parsed correctly"
+  (testing "an addon with nfo v2 data, an ignorable sub-directory AND an ignore flag, is parsed correctly"
     (let [nfo-data {:installed-version "1.0"
                     :name "someaddon"
                     :group-id "blah"
@@ -112,7 +112,7 @@
                     :source "wowinterface"
                     :source-id 123
 
-                    ;; user has manually marked this development addon for updates
+                    ;; user has manually marked this development addon for updates.
                     ;; this is only set by the user, not by the app (for now)
                     :ignore? false
 
@@ -122,4 +122,51 @@
           expected nfo-data]
       (spit (utils/join (ignorable-addon-path) nfo/nfo-filename) (utils/to-json nfo-data))
       (is (= expected (nfo/read-nfo (install-dir) ignorable-addon-dir))))))
+
+(deftest upgrade-nfo-data
+  (testing "a nfo file can be 'upgraded' (vs updated)"
+    (let [given {:version "1.2.3" ;; value is ignored in favour of :installed-version
+                 :installed-version "1.2.1"
+                 :dirname addon-dir
+                 :game-track "classic"
+                 :name "EveryAddon"
+                 :uri "https://foo.bar"
+                 :primary? true
+                 :source "curseforge"
+                 :source-id 321}
+
+          expected {:installed-version "1.2.1"
+                    :installed-game-track "classic"
+                    :name "EveryAddon"
+                    :group-id "https://foo.bar"
+                    :primary? true
+                    :source "curseforge"
+                    :source-id 321}
+          nfo-file (utils/join (addon-path) nfo/nfo-filename)]
+      (nfo/upgrade-nfo (install-dir) given)
+      (is (= expected (nfo/read-nfo-file (install-dir) addon-dir)))))
+
+  (testing "a nfo file can be 'upgraded' (vs updated), preserving any ignore flags"
+    (let [given {:version "1.2.3" ;; value is ignored in favour of :installed-version
+                 :installed-version "1.2.1"
+                 :dirname addon-dir
+                 :game-track "classic"
+                 :name "EveryAddon"
+                 :uri "https://foo.bar"
+                 :primary? true
+                 :source "curseforge"
+                 :source-id 321
+                 :ignore? false}
+
+          expected {:installed-version "1.2.1"
+                    :installed-game-track "classic"
+                    :name "EveryAddon"
+                    :group-id "https://foo.bar"
+                    :primary? true
+                    :source "curseforge"
+                    :source-id 321
+                    :ignore? false}
+          nfo-file (utils/join (addon-path) nfo/nfo-filename)]
+      (nfo/upgrade-nfo (install-dir) given)
+      (is (= expected (nfo/read-nfo-file (install-dir) addon-dir))))))
 

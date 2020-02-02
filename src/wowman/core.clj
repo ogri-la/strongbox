@@ -1080,7 +1080,7 @@
                             ;; which is beside the point, because we don't want to use the `:version` key anyway
                             :version (:installed-version addon)
                             :game-track game-track})]
-    (nfo/update-nfo install-dir addon))
+    (nfo/upgrade-nfo install-dir addon))
   nil)
 
 (defn-spec upgrade-nfo-files nil?
