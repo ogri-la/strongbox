@@ -1,6 +1,6 @@
-(defproject ogri-la/wowman "0.13.0-unreleased"
+(defproject ogri-la/strongbox "0.13.0-unreleased"
   :description "World Of Warcraft Addon Manager"
-  :url "https://github.com/ogri-la/wowman"
+  :url "https://github.com/ogri-la/strongbox"
   :license {:name "GNU Affero General Public License (AGPL)"
             :url "https://www.gnu.org/licenses/agpl-3.0.en.html"}
 
@@ -35,7 +35,7 @@
 
   :profiles {:uberjar {:aot :all}}
 
-  :main wowman.main
+  :main strongbox.main
 
   :plugins [[lein-cljfmt "0.6.4"]
             [jonase/eastwood "0.3.5"]
