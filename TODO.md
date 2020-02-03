@@ -66,6 +66,10 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### todo
 
+release 0.12.0
+
+## todo bucket (no particular order)
+
 * tukui and elvui can't be switched to classic
     - on classic track they show updates
         - elvui 1.82 => 1.211
@@ -81,9 +85,6 @@ see CHANGELOG.md for a more formal list of changes by release
         - ids are 1 and 2
         - I thought these were negative? or I made them negative?
         - anyway
-
-## todo bucket (no particular order)
-
 * wowinterface, multiple game tracks 
     - investigate just what is being downloaded when a classic version of a wowi addon is downloaded
     - see 'LagBar'

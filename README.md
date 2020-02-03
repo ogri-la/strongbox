@@ -6,11 +6,7 @@
 
 It supports addons hosted by Curseforge, wowinterface, Tukui and Github.
 
-## News
-
-* **2019-12-31**: [0.11.0 has been released](https://github.com/ogri-la/wowman/releases). Happy new year.
-* **2019-12-13**: Please upgrade to *[0.10.2](https://github.com/ogri-la/wowman/releases/tag/0.10.2)*! *0.10.0* and *0.10.1* versions of wowman will crash when it reads unfamiliar addons from the catalog.
-* **2019-11-22**: 1000+ downloads! I often forget I build this for others as well and this is a stark reminder of that. If you're a user of wowman and you ever want to get in touch, please just [open an issue](https://github.com/ogri-la/wowman/issues) or [PM me on reddit](https://www.reddit.com/message/compose/?to=torkus-jr&subject=wowman).
+If you are a user of wowman and you ever want to get in touch, please just [open an issue](https://github.com/ogri-la/wowman/issues) or [PM me on reddit](https://www.reddit.com/message/compose/?to=torkus-jr&subject=wowman)
 
 ## Audience
 
@@ -26,7 +22,7 @@ It does not work on Windows. Windows will never be supported.
 
 ## Installation
 
-1. [download the jar](https://github.com/ogri-la/wowman/releases/download/0.11.0/wowman-0.11.0-standalone.jar) file
+1. [download the jar](https://github.com/ogri-la/wowman/releases/download/0.12.0/wowman-0.12.0-standalone.jar) file
 2. run with `java -jar wowman-x.x.x-standalone.jar`
 
 ### Arch Linux users
