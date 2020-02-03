@@ -4,69 +4,11 @@ this is my own scratchpad for keeping track of things. it gets truncated frequen
 
 see CHANGELOG.md for a more formal list of changes by release
 
-## 0.12.0 release
+## 0.13.0 release
 
 ### done
 
-* bug, selected directory is incorrect after restarting gui (by switching themes)
-    - done
-* bug, 'refresh user catalog' no indication it's doing anything when selected
-    - until it finally re-writes the user catalogue
-    - done
-* bug, clearing catalogues and clicking refresh doesn't see the database rebuilt
-    - the catalog is downloaded though
-    - done
-* rename 'go' column to 'catalogue' 
-    - no, decided not to. 
-        - this seems like a whim or errant thought and I see no reason for change
-    - actually, yeah, I changed it but to 'source' not 'catalogue'
-    - added 'source-id' and 'game-track' columns as well
-* remove dependency data.codec
-    - this can be done with native java
-    - done
-* remove dependency cheshire
-    - clojure.data.json does all we need
-    - done
-* add support for reconciling addons by 'x-curse' and 'x-wowi' ids
-    - example: https://github.com/ascott18/TellMeWhen/blob/master/TellMeWhen.toc#L19-L20
-    - done
-* add a 'addons dir' to the test helper
-    - lots of boilerplate around this in core_test.clj
-        - investigate this 
-    - presence of an addon dir skitches about ~6 tests
-    - I have replaced the manual app starting with the 'with-running-app' wrapper though
-    - and explicit 'add-addon-dir!' isn't so bad
-    - done
-* remove debugging? mode
-    - done
-* gui, scroll tabs with mouse
-    - done
-* import/export, capture game track of exported addon dir?
-    - done
-* ignore addons that are under version control
-    - see issue: https://github.com/ogri-la/wowman/issues/114
-    - should this live in the .nfo file?
-        - if svn detected, ignore=true
-        - the only place we write the nfo is on addon installation
-        - we read nfo data when loading the toc data
-            - perhaps rename nfo/read-nfo to nfo/read-data 
-                - and that includes a read from file plus an inspection for svn dirs
-    - done
-* import/export, export user catalogue
-    - the good thing about the current exports is that they are minimal and can be 'inflated' into whatever catalog spec supported in the future
-    - done
-* github, installation from github via import menu not updating log until finished
-    - this is an async issue
-        - actually, I think it's a problem with the v1 import index being generated
-            - and this isn't a problem for v2 imports
-    - done
-* import/export, importing addons should disregard game track
-    - app should feel free to ignore it, once the addon is installed
-    - done
-
 ### todo
-
-release 0.12.0
 
 ## todo bucket (no particular order)
 
