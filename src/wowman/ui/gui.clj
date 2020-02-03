@@ -279,7 +279,8 @@
 
         wow-dir-button (button "WoW directory" (async-handler picker))
 
-        wow-dir-dropdown (ss/combobox :model (core/available-addon-dirs))
+        wow-dir-dropdown (ss/combobox :model (core/available-addon-dirs)
+                                      :selected-item (core/get-state :selected-addon-dir))
 
         wow-game-track (ss/combobox :model core/game-tracks
                                     :selected-item (core/get-game-track))
@@ -348,12 +349,12 @@
   [grid]
   (let [default-min-width 80 ;; solid default for all columns
         min-width-map {"WoW" 45
-                       "go" 120} ;; these can be a little smaller
+                       "source" 120} ;; these can be a little smaller
         max-width-map {"installed" 200
                        "available" 200
                        "updated" 100
                        "downloads" 100
-                       "go" 140}
+                       "source" 140}
         pre-width-map {"WoW" 50
                        "updated" 100}] ;; we would like these a little larger, if possible
     (doseq [column (.getColumns grid)]
@@ -365,21 +366,20 @@
 
 (defn hide-columns
   [grid hidden-column-list]
-  (when-not (core/debugging?)
-    (doseq [column hidden-column-list]
-      (.setVisible (.getColumnExt grid (-> column name str)) false))))
+  (doseq [column hidden-column-list]
+    (.setVisible (.getColumnExt grid (-> column name str)) false)))
 
 (defn add-highlighter
   "target a selection of rows and colour their backgrounds differently"
-  [grid pred-fn colour]
+  [grid pred-fn bg-colour & [fg-colour]]
   (let [predicate (proxy [org.jdesktop.swingx.decorator.HighlightPredicate] []
                     (isHighlighted [renderer adapter]
                       (pred-fn adapter)))
 
         highlighter (org.jdesktop.swingx.decorator.ColorHighlighter.
                      predicate
-                     (seesaw.color/color colour)
-                     nil)] ;; no change in foreground colours
+                     (when bg-colour (seesaw.color/color bg-colour))
+                     (when fg-colour (seesaw.color/color fg-colour)))]
     (.addHighlighter grid highlighter)
     nil))
 
@@ -395,7 +395,7 @@
     (.setCellRenderer (.getColumn (.getColumnModel grid) column-idx) cell-renderer)
 
     ;; lawdy dawdy this is awful. 
-    (when (= column-name "go")
+    (when (= column-name "source")
       (.setHorizontalAlignment cell-renderer javax.swing.SwingConstants/LEFT))
 
     nil))
@@ -421,7 +421,7 @@
 
 (defn installed-addons-go-links
   [grid]
-  (let [gocol? #(= (.getColumnName grid %) "go")
+  (let [gocol? #(= (.getColumnName grid %) "source")
 
         cell-val-for-event (fn [e]
                              (let [row (.rowAtPoint grid (.getPoint e))
@@ -457,28 +457,31 @@
 
     (ss/listen grid :mouse-motion hand-cursor-on-hover)
     (ss/listen grid :mouse-clicked go-link-clicked)
-    (add-cell-renderer grid "go" uri-renderer)
+    (add-cell-renderer grid "source" uri-renderer)
 
     nil))
 
 (defn installed-addons-panel
   []
   (let [;; always visible when debugging and always available from the column menu
-        hidden-by-default-cols [:addon-id :group-id :primary? :update? :matched? :categories :downloads :updated]
-        tblmdl (sstbl/table-model :columns [{:key :name :text "addon-id"}
+        hidden-by-default-cols [:addon-id :group-id :primary? :update? :matched? :ignore? :categories :downloads :updated :source-id :track]
+        tblmdl (sstbl/table-model :columns [{:key :name, :text "addon-id"}
                                             :group-id
                                             :primary?
                                             :update?
                                             :matched?
-                                            {:key :uri :text "go"}
-                                            {:key :label :text "name"}
+                                            :ignore?
+                                            {:key :installed-game-track, :text "track"}
+                                            {:key :uri, :text "source"}
+                                            :source-id
+                                            {:key :label, :text "name"}
                                             :description
-                                            {:key :installed-version :text "installed"}
-                                            {:key :version :text "available"}
-                                            {:key :download-count :text "downloads" :class Integer}
-                                            {:key :updated-date :text "updated"}
-                                            {:key :interface-version :text "WoW"}
-                                            {:key :category-list :text "categories"}]
+                                            {:key :installed-version, :text "installed"}
+                                            {:key :version, :text "available"}
+                                            {:key :download-count, :text "downloads" :class Integer}
+                                            {:key :updated-date, :text "updated"}
+                                            {:key :interface-version, :text "WoW"}
+                                            {:key :category-list, :text "categories"}]
                                   :rows [])
 
         grid (x/table-x :id :tbl-installed-addons
@@ -489,7 +492,14 @@
         addon-unmatched? (fn [adapter]
                            (nil? (.getValue adapter (find-column-by-label grid "matched?"))))
 
-        addon-needs-update? #(true? (.getValue % (find-column-by-label grid "update?")))
+        addon-ignored? (fn [adapter]
+                         (->> (find-column-by-label grid "ignore?") (.getValue adapter) true?))
+
+        addon-needs-update? (fn [adapter]
+                              (if (addon-ignored? adapter)
+                                false
+                                (->> (find-column-by-label grid "update?") (.getValue adapter) true?)))
+
         date-renderer #(when % (-> % clojure.instant/read-instant-date (utils/fmt-date "yyyy-MM-dd")))
         iface-version-renderer #(when % (-> % str utils/interface-version-to-game-version))
 
@@ -517,6 +527,8 @@
 
     (when (colours :installed/unmatched)
       (add-highlighter grid addon-unmatched? (colours :installed/unmatched)))
+
+    (add-highlighter grid addon-ignored? (colours :installed/ignored-bg) (colours :installed/ignored-fg))
     (add-highlighter grid addon-needs-update? (colours :installed/needs-updating))
     (add-cell-renderer grid "updated" date-renderer)
     (add-cell-renderer grid "WoW" iface-version-renderer)
@@ -555,7 +567,9 @@
 
 (defn search-results-panel
   []
-  (let [tblmdl (sstbl/table-model :columns [{:key :uri :text "go"}
+  (let [hidden-by-default-cols [:source-id]
+        tblmdl (sstbl/table-model :columns [{:key :uri :text "source"}
+                                            :source-id
                                             {:key :label :text "name"}
                                             :description
                                             {:key :category-list :text "categories"}
@@ -599,6 +613,9 @@
     (ss/listen grid :selection (selected-rows-handler search-results-selection-handler))
     (state-bind [:catalog-size] update-rows-fn)
     (state-bind [:search-field-input] update-rows-fn)
+
+    (hide-columns grid hidden-by-default-cols)
+
     (ss/scrollable grid)))
 
 (defn search-panel
@@ -637,9 +654,8 @@
     (add-highlighter grid #(= (.getValue % level-col-idx) :warn) (colours :notice/warning))
     (add-highlighter grid #(= (.getValue % level-col-idx) :error) (colours :notice/error))
 
-    ;; hide header when not debugging
-    (when-not (core/debugging?)
-      (.setTableHeader grid nil))
+    ;; hide header
+    (.setTableHeader grid nil)
 
     ;; would love to know how to make these layouts and widths more consistent and deterministic
     (mig/mig-panel
@@ -659,10 +675,22 @@
                 :tabs [(tab "installed" (installed-panel))
                        (tab "search" (search-panel))])]
 
-    (ss/listen tabber :selection (fn [e]
-                                   (let [tab-label (-> (ss/selection tabber) :title)]
-                                     (when (= tab-label "search")
-                                       (ss/request-focus! (select-ui :#search-input-txt))))))
+    (ss/listen tabber :selection
+               (fn [e]
+                 (let [tab-label (-> (ss/selection tabber) :title)]
+                   (when (= tab-label "search")
+                     (ss/request-focus! (select-ui :#search-input-txt))))))
+
+    (ss/listen tabber :mouse-wheel
+               (fn [e]
+                 (let [num-tabs (.getTabCount tabber)
+                       current-idx (.getSelectedIndex tabber)
+                       next-idx (inc current-idx)
+                       next-idx (if (>= next-idx num-tabs)
+                                  0 ;; start over
+                                  next-idx)]
+                   (ss/selection! tabber next-idx))))
+
     tabber))
 
 ;; todo: push this into core
@@ -694,7 +722,8 @@
     (state-bind [:installed-addon-list] update-label)
     status))
 
-(defn export-addon-list-handler
+(defn-spec export-addon-list-handler nil?
+  "prompts user with a file selection dialogue then writes the current directory of addons to the selected file"
   []
   (when-let [path (chooser/choose-file (select-ui :#root)
                                        :type :save
@@ -702,9 +731,23 @@
                                        :filters [["JSON" ["json"]]]
                                        :success-fn (fn [_ file]
                                                      (str (.getAbsolutePath file))))]
-    (core/export-installed-addon-list-safely path)))
+    (core/export-installed-addon-list-safely path)
+    nil))
 
-(defn import-addon-list-handler
+(defn-spec export-user-catalog-handler nil?
+  "prompts user with a file selection dialogue then writes the user catalogue to selected file"
+  []
+  (when-let [path (chooser/choose-file (select-ui :#root)
+                                       :type :open
+                                       :selection-mode :files-only
+                                       :filters [["JSON" ["json"]]]
+                                       :success-fn (fn [_ file]
+                                                     (str (.getAbsolutePath file))))]
+    (core/export-user-catalog-addon-list-safely path)
+    nil))
+
+(defn-spec import-addon-list-handler nil?
+  "prompts user with a file selection dialogue then imports a list of addons from the selected file"
   []
   (when-let [path (chooser/choose-file (select-ui :#root)
                                        :type :open
@@ -713,9 +756,11 @@
                                        :success-fn (fn [_ file]
                                                      (str (.getAbsolutePath file))))]
     (core/import-exported-file path)
-    (core/refresh)))
+    (core/refresh)
+    nil))
 
 (defn import-addon-handler
+  "imports an addon by parsing a URL"
   []
   (let [addon-url (ss/input "Enter URL of addon"
                             :title "Addon URL"
@@ -830,12 +875,13 @@
 
         impexp-menu [(ss/action :name "Import addon from Github" :handler (handler import-addon-handler))
                      :separator
+                     (ss/action :name "Import addon list" :handler (async-handler import-addon-list-handler))
                      (ss/action :name "Export addon list" :handler (async-handler export-addon-list-handler))
-                     (ss/action :name "Import addon list" :handler (async-handler import-addon-list-handler))]
+                     (ss/action :name "Export Github addon list" :handler (async-handler export-user-catalog-handler))]
 
         cache-menu [(ss/action :name "Clear cache" :handler (async-handler core/delete-cache!))
                     (ss/action :name "Clear addon zips" :handler (async-handler core/delete-downloaded-addon-zips!))
-                    (ss/action :name "Clear catalogs" :handler (async-handler core/delete-catalog-files!))
+                    (ss/action :name "Clear catalogs" :handler (async-handler (juxt core/db-reload-catalog core/delete-catalog-files!)))
                     (ss/action :name "Clear all" :handler (async-handler core/clear-all-temp-files!))
                     :separator
                     (ss/action :name "Delete WowMatrix.dat files" :handler (async-handler core/delete-wowmatrix-dat-files!))

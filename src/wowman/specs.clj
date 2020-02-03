@@ -17,7 +17,7 @@
   [path string?, ext-list ::list-of-strings]
   (some #{(fs/extension path)} ext-list))
 
-;; addon data that can be scraped from the listing pages
+;; addon data that comes from the catalogue
 (s/def ::addon-summary
   (s/keys :req-un [::uri ::name ::label ::category-list ::updated-date ::download-count ::source ::source-id]
           :opt [::description ;; wowinterface summaries have no description
@@ -34,9 +34,10 @@
 
 ;; .toc files live in the root of an addon and include the author's metadata about the addon
 ;; minimum needed to be scraped from a toc file
+;; this seems to have a bit of nfo stuff in it ...
 (s/def ::toc
   (s/keys :req-un [::name ::label ::description ::dirname ::interface-version ::installed-version]
-          :opt [::group-id ::primary? ::group-addons]))
+          :opt [::group-id ::primary? ::group-addons ::source ::source-id]))
 
 ;; the result of merging an installed addon (toc) with an installable addon from the catalogue
 (s/def ::toc-addon-summary
@@ -77,7 +78,7 @@
 (s/def ::description (s/nilable string?))
 (s/def ::matched? boolean?)
 (s/def ::group-id string?)
-(s/def ::primary boolean?)
+(s/def ::primary? boolean?)
 (s/def ::group-addons ::toc-list)
 (s/def ::version string?)
 (s/def ::installed-version (s/nilable ::version))
@@ -100,6 +101,8 @@
 (s/def ::catalog-updated-date ::ymd-dt)
 (def catalog-sources #{"curseforge" "wowinterface" "github" "tukui" "tukui-classic"})
 (s/def ::catalog-source catalog-sources)
+(s/def ::catalog-source-id (s/or ::integer-id? int? ;; tukui has negative ids
+                                 ::string-id? string?))
 (s/def ::zoned-dt-obj #(instance? java.time.ZonedDateTime %))
 (s/def ::download-count (s/and int? #(>= % 0)))
 (s/def ::donation-uri (s/nilable ::uri))
@@ -109,7 +112,23 @@
 (s/def ::string-pair (s/and (s/coll-of string?) #(= (count %) 2)))
 (s/def ::list-of-string-pairs (s/coll-of ::string-pair))
 
-(s/def ::nfo map?) ;; todo: not cool
+;;
+
+(s/def ::ignore-flag (s/keys :req-un [::ignore?]))
+
+(s/def ::nfo-v1 map?)
+
+;; ignored nfo file may simply be the json '{"ignore?": true}'
+(s/def ::nfo-v2 (s/or :ignored-addon ::ignore-flag
+                      :ok (s/keys :req-un [::installed-version ::name ::group-id ::primary? ::source
+                                           ::installed-game-track ::source-id]
+                                  :opt [::ignore?])))
+
+;; TODO: remove :less-ok in 0.14.0 (0.12.0 + 2)
+(s/def ::nfo (s/or :ok-v1 ::nfo-v1, :ok-v2 ::nfo-v2))
+
+;; this is what is needed to be passed in, at a minium, to generate a nfo file
+(s/def ::nfo-input-minimum (s/keys :req-un [::version ::name ::uri ::source ::source-id]))
 
 ;; orphaned
 (s/def ::file-byte-array-pair (s/cat :file ::file
@@ -118,8 +137,8 @@
 (s/def ::gui-event #(instance? java.util.EventObject %))
 
 (s/def ::install-dir (s/nilable ::extant-dir))
-(s/def ::debug? boolean?)
 (s/def ::game-track #{"retail" "classic"})
+(s/def ::installed-game-track ::game-track) ;; alias
 (s/def ::game-track-list (s/coll-of ::game-track :kind vector? :distinct true))
 (s/def ::addon-dir ::extant-dir)
 (s/def ::selected? boolean?)
@@ -127,7 +146,8 @@
 (s/def ::addon-dir-list (s/coll-of ::addon-dir-map))
 (s/def ::selected-catalog keyword?)
 (s/def ::gui-theme #{:light :dark})
-(s/def ::user-config (s/keys :req-un [::addon-dir-list ::debug? ::selected-catalog ::gui-theme]))
+(s/def ::user-config (s/keys :req-un [::addon-dir-list ::selected-catalog ::gui-theme]))
+(s/def ::ignore? boolean?)
 
 (s/def ::reason-phrase (s/and string? #(<= (count %) 50)))
 (s/def ::status int?) ;; a little too general but ok for now
@@ -160,8 +180,17 @@
 
 (s/def ::export-type #{:json :edn})
 (s/def ::source ::catalog-source) ;; alias :(
-(s/def ::export-record (s/keys :req-un [::name]
-                               :opt [::source]))
+(s/def ::source-id ::catalog-source-id) ;; alias :(
+
+(s/def ::export-record-v1 (s/keys :req-un [::name]
+                                  :opt [::source ::source-id]))
+
+(s/def ::export-record-v2 (s/keys :req-un [::name ::source ::source-id]
+                                  :opt [::game-track ;; optional because we also support exporting catalogue items that have no game track
+                                        ]))
+
+(s/def ::export-record (s/or :v1 ::export-record-v1, :v2 ::export-record-v2))
+
 (s/def ::export-record-list (s/coll-of ::export-record))
 
 ;;

@@ -24,9 +24,9 @@
     (let [cases [["https://user:name@example.org/foo#anchor?bar=baz&baz=bar"
                   "aHR0cHM6Ly91c2VyOm5hbWVAZXhhbXBsZS5vcmcvZm9vI2FuY2hvcj9iYXI9YmF6JmJhej1iYXI=.html"]
 
-                 ;; forward slashes are replaced with hyphens
+                 ;; forward slashes are replaced with underscores
                  ["https://example.org/?"
-                  "aHR0cHM6Ly9leGFtcGxlLm9yZy8-.html"]
+                  "aHR0cHM6Ly9leGFtcGxlLm9yZy8_.html"]
 
                  ;; extensions are preserved if possible
                  ["https://example.org/foo.asdf"

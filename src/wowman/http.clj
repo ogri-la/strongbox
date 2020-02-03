@@ -10,7 +10,6 @@
    [taoensso.timbre :as log :refer [debug info warn error spy]]
    [me.raynes.fs :as fs]
    [orchestra.core :refer [defn-spec]]
-   [clojure.data.codec.base64 :as b64]
    [trptcolin.versioneer.core :as versioneer]
    [clj-http.client :as client]))
 
@@ -72,10 +71,10 @@
   [uri ::sp/uri]
   (let [;; strip off any nasty parameters or anchors.
         ;; default to '.html' if there is no extension, it's just decorative
-        ext (-> uri java.net.URL. .getPath (subs 1) fs/split-ext second (or ".html"))]
-    ;; base64 has a '/' as part of it's allowed alphabet!
-    ;; replace these cases with a hyphen (which isn't part of it's alphabet)
-    (-> uri .getBytes b64/encode String. (clojure.string/replace #"/" "-") (str ext))))
+        ext (-> uri java.net.URL. .getPath (subs 1) fs/split-ext second (or ".html"))
+        enc (java.util.Base64/getUrlEncoder)]
+    (as-> uri x
+      (str x) (.getBytes x) (.encodeToString enc x) (str x ext))))
 
 (defn-spec -download (s/or :file ::sp/extant-file, :raw ::sp/http-resp, :error ::sp/http-error)
   "if writing to a file is possible then the output file is returned, else the raw http response.

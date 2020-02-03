@@ -36,7 +36,6 @@
    "|cffffe00a<|r|cffff7d0aDBM|r|cffffe00a>|r |cff69ccf0Firelands|r" "deadly-boss-mods-cataclysm-mods"
    "X-Perl UnitFrames by |cFFFF8080Zek|r" "xperl"})
 
-;; todo: rename
 (defn-spec -parse-toc-file map?
   [toc-contents string?]
   (let [comment? #(= (utils/safe-subs % 2) "##")
@@ -101,12 +100,18 @@
   [str string? matching string? replacement string?]
   (clojure.string/replace str (re-pattern matching) replacement))
 
-;; TODO: slugify?
 (defn-spec normalise-name string?
   "convert the 'Title' attribute in toc file to a curseforge-style slug. this value is used to match against curseforge results"
   [label string?]
   ;; todo, replace this with a slugify fn
   (-> label lower-case rm-trailing-version (replace ":" "") (replace " " "-") (replace "\\?" "")))
+
+;;
+
+(defn-spec merge-toc-nfo ::sp/toc
+  "merges nfo data over toc data, nothing more"
+  [toc ::sp/toc, nfo (s/nilable ::sp/nfo)]
+  (merge toc nfo))
 
 (defn-spec parse-addon-toc ::sp/toc
   [addon-dir ::sp/extant-dir, keyvals map?]
@@ -126,6 +131,24 @@
         alias (when (contains? aliases label)
                 {:alias (get aliases label)})
 
+        wowi-source (when-let [x-wowi-id (-> keyvals :x-wowi-id utils/to-int)]
+                      {:source "wowinterface"
+                       :source-id x-wowi-id})
+
+        curse-source (when-let [x-curse-id (-> keyvals :x-curse-project-id utils/to-int)]
+                       {:source "curseforge"
+                        :source-id x-curse-id})
+
+        tukui-source (when-let [x-tukui-id (-> keyvals :x-tukui-projectid utils/to-int)]
+                       {:source "tukui"
+                        :source-id x-tukui-id})
+
+        user-ignored (contains? nfo-contents :ignore?)
+        ignore-flag (when (and (not user-ignored)
+                               (some->> keyvals :version (clojure.string/includes? "@project-version@")))
+                      (warn (format "ignoring addon '%s': 'Version' field in .toc file is unrendered" dirname))
+                      {:ignore? true})
+
         addon {:name (normalise-name label)
                :dirname dirname
                :label label
@@ -141,7 +164,9 @@
                ;;:required-dependencies (:requireddeps keyvals)
                }
 
-        addon (merge alias addon)]
+        ;; yes, this prefers curseforge over wowinterface. and tukui over all others.
+        ;; I need to figure out some way of supporting multiple hosts per-addon
+        addon (merge addon alias wowi-source curse-source tukui-source ignore-flag)]
 
     ;; if source present but is not in list of known sources, ignore the nfo-contents
     (if (and (contains? nfo-contents :source)
@@ -149,7 +174,7 @@
       addon
 
       ;; otherwise, merge the addon with the nfo contents
-      (merge addon nfo-contents))))
+      (merge-toc-nfo addon nfo-contents))))
 
 (defn-spec blizzard-addon? boolean?
   "returns `true` if given path looks like an official Blizzard addon"
@@ -172,7 +197,6 @@
       (error "please report this! https://github.com/ogri-la/wowman/issues")
       (error e (format "unhandled error parsing addon in directory '%s': %s" addon-dir (.getMessage e))))))
 
-;; TODO: test this nil? error
 (defn-spec installed-addons (s/or :ok ::sp/toc-list, :error nil?)
   [addons-dir ::sp/extant-dir]
   (let [addon-dir-list (filter fs/directory? (fs/list-dir addons-dir))

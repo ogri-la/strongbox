@@ -6,11 +6,7 @@
 
 It supports addons hosted by Curseforge, wowinterface, Tukui and Github.
 
-## News
-
-* **2019-12-31**: [0.11.0 has been released](https://github.com/ogri-la/wowman/releases). Happy new year.
-* **2019-12-13**: Please upgrade to *[0.10.2](https://github.com/ogri-la/wowman/releases/tag/0.10.2)*! *0.10.0* and *0.10.1* versions of wowman will crash when it reads unfamiliar addons from the catalog.
-* **2019-11-22**: 1000+ downloads! I often forget I build this for others as well and this is a stark reminder of that. If you're a user of wowman and you ever want to get in touch, please just [open an issue](https://github.com/ogri-la/wowman/issues) or [PM me on reddit](https://www.reddit.com/message/compose/?to=torkus-jr&subject=wowman).
+If you are a user of wowman and you ever want to get in touch, please just [open an issue](https://github.com/ogri-la/wowman/issues) or [PM me on reddit](https://www.reddit.com/message/compose/?to=torkus-jr&subject=wowman)
 
 ## Audience
 
@@ -18,7 +14,7 @@ This software is for World of Warcraft players using Linux.
 
 It also works on macOS.
 
-It does not work on Windows.
+It does not work on Windows. Windows will never be supported.
 
 ## Requirements
 
@@ -26,7 +22,7 @@ It does not work on Windows.
 
 ## Installation
 
-1. [download the jar](https://github.com/ogri-la/wowman/releases/download/0.11.0/wowman-0.11.0-standalone.jar) file
+1. [download the jar](https://github.com/ogri-la/wowman/releases/download/0.12.0/wowman-0.12.0-standalone.jar) file
 2. run with `java -jar wowman-x.x.x-standalone.jar`
 
 ### Arch Linux users
@@ -144,7 +140,7 @@ See [CONTRIBUTING](CONTRIBUTING.md) for more detail.
 
 ## Other addon managers
 
-**A more interactive version here: https://ogri-la.github.io/wow-addon-managers/**
+**Moved here: https://ogri-la.github.io/wow-addon-managers/**
 
 An addon manager is 'maintained' if it has seen an update in 12 months.
 
@@ -154,64 +150,8 @@ or requires compilation or similar, then it gets the big fat caveat asterisk '**
 If a packaged version of the addon manager exists for *at least one* distribution of Linux, I drop the caveat asterisk.
 This may be an AUR, DEB, RPM/DNF, Snap, Flatpak, Zypper, AppImage, etc.
 
-See [comrades.csv](comrades.csv) for a complete list.
-
-### Maintained 
-
-| Name                           | URL                                                  | Maintained | Linux | Mac  | Windows | UI  | Retail | Classic | F/OSS | Source Available | Ads | EULA | Language   | 
-|--------------------------------|------------------------------------------------------|------------|-------|------|---------|-----|--------|---------|-------|------------------|-----|------|------------| 
-| antiwinter/wowa                | https://github.com/antiwinter/wowa                   | yes        | yes*  | yes* | yes*    | CLI | yes    | yes     | yes   | yes              | no  | no   | Javascript | 
-| AcidWeb/CurseBreaker           | https://github.com/AcidWeb/CurseBreaker              | yes        | yes   | yes  | yes     | TUI | yes    | yes     | yes   | yes              | no  | no   | Python     | 
-| braier/wow-addon-updater       | https://www.braier.net/wow-addon-updater/index.html  | yes        | yes   | yes  | yes     | GUI | yes    | no      | yes   | yes              | no  | no   | Pascal     | 
-| cowdude/wowaddonmanager        | https://github.com/cowdude/wowaddonmanager           | yes        | yes*  | yes* | yes*    | CLI | yes    | no      | no    | yes              | no  | no   | Python     | 
-| dark0dave/wow-addon-updater    | https://gitlab.com/dark0dave/wow-addon-updater       | yes        | yes*  | yes* | yes*    | CLI | yes    | yes     | yes   | yes              | no  | no   | Python     | 
-| ephraim/lcurse                 | https://github.com/ephraim/lcurse                    | yes        | yes*  | yes* | yes*    | GUI | yes    | yes     | no    | yes              | no  | no   | Python     | 
-| erikabp123/ClassicAddonManager | https://github.com/erikabp123/ClassicAddonManager    | yes        | no    | no   | yes     | GUI | no     | yes     | yes   | yes              | no  | no   | Java       | 
-| Gonzih/wow-addon-manager       | https://github.com/Gonzih/wow-addon-manager          | yes        | yes*  | yes* | yes*    | CLI | yes    | no      | no    | yes              | no  | no   | Go         | 
-| grrttedwards/wow-addon-updater | https://github.com/grrttedwards/wow-addon-updater    | yes        | yes*  | yes* | yes*    | CLI | yes    | yes     | yes   | yes              | no  | no   | Python     | 
-| Jerry-Ma/wowplug               | https://github.com/Jerry-Ma/wowplug                  | yes        | yes*  | yes* | yes*    | CLI | yes    | no      | yes   | yes              | no  | no   | Python     | 
-| karolswdev/wow                 | https://github.com/karolswdev/wow                    | yes        | no    | no   | yes*    | CLI | no     | yes     | no    | yes              | no  | no   | C#         | 
-| layday/instawow                | https://github.com/layday/instawow                   | yes        | yes*  | yes* | yes*    | CLI | yes    | yes     | yes   | yes              | no  | no   | Python     | 
-| Lund259/WoW-Addon-Manager      | https://github.com/Lund259/WoW-Addon-Manager         | yes        | no    | no   | yes     | GUI | yes    | no      | yes   | yes              | no  | no   | C#         | 
-| Mangmasta/MangManager          | https://github.com/Mangmasta/MangManager             | yes        | yes*  | yes* | yes*    | CLI | yes    | no      | no    | yes              | no  | no   | C++        | 
-| MBODM/WADM                     | https://github.com/MBODM/WADM                        | yes        | no    | no   | yes     | GUI | yes    | no      | yes   | yes              | no  | no   | C#         | 
-| Minion                         | https://minion.mmoui.com/                            | yes        | yes*  | yes  | yes     | GUI | yes    | yes     | no    | no               | yes | yes  | Java       | 
-| nazarov-tech/wowa              | https://github.com/nazarov-tech/wowa                 | yes        | yes*  | yes* | yes*    | CLI | yes    | no      | yes   | yes              | no  | no   | Python     | 
-| ogri-la/wowman                 | https://github.com/ogri-la/wowman                    | yes        | yes   | no   | no      | GUI | yes    | yes     | yes   | yes              | no  | no   | Clojure    | 
-| OpenAddOnManager               | https://github.com/OpenAddOnManager/OpenAddOnManager | yes        | no    | no   | yes     | GUI | yes    | no      | yes   | yes              | no  | no   | C#         | 
-| qwezarty/wow-addon-manager     | https://github.com/qwezarty/wow-addon-manager        | yes        | yes*  | no   | no      | CLI | yes    | no      | yes   | yes              | no  | no   | Python     | 
-| Saionaro/wow-addons-updater    | https://github.com/Saionaro/wow-addons-updater       | yes        | yes*  | yes* | yes*    | GUI | yes    | no      | yes   | yes              | no  | no   | Javascript | 
-| salindersidhu/wam              | https://github.com/salindersidhu/wam                 | yes        | yes*  | yes* | yes*    | CLI | yes    | no      | yes   | yes              | no  | no   | Go         | 
-| Tukui Client                   | https://www.tukui.org/download.php?client=win        | yes        | no    | no   | yes     | GUI | yes    | no      | no    | no               | ?   | ?    | ?          | 
-| Twitch App                     | https://www.twitch.tv/downloads                      | yes        | no    | yes  | yes     | GUI | yes    | yes     | no    | no               | yes | yes  | ?          | 
-| vargen2/Addon                  | https://github.com/vargen2/Addon                     | yes        | no    | no   | yes*    | GUI | yes    | yes     | yes   | yes              | no  | no   | C#         | 
-| woblight/GitAddonsManager      | https://gitlab.com/woblight/GitAddonsManager         | yes        | yes*  | no   | yes*    | GUI | yes    | no      | yes   | yes              | no  | no   | C++        | 
-| WorldOfAddons                  | https://github.com/WorldofAddons/worldofaddons       | yes        | yes*  | yes* | yes     | GUI | yes    | no      | yes   | yes              | no  | no   | Javascript | 
-| wowmatrix                      | https://www.wowmatrix.com/                           | yes        | yes   | yes  | yes     | GUI | yes    | no      | no    | no               | yes | yes  | ?          | 
-
-\* installation on this platform is more involved than downloading and running an executable
-
-### Unmaintained 
-
-| Name                        | URL                                             | Maintained | Linux | Mac  | Windows | UI  | Retail | Classic | F/OSS | Source Available | Ads | EULA | Language     | 
-|-----------------------------|-------------------------------------------------|------------|-------|------|---------|-----|--------|---------|-------|------------------|-----|------|--------------| 
-| coline-carle/zhevra         | https://github.com/coline-carle/zhevra          | no         | yes*  | yes* | yes*    | CLI | yes    | no      | yes   | yes              | no  | no   | Go           | 
-| DayBr3ak/wow-better-cli     | https://github.com/DayBr3ak/wow-better-cli      | no         | yes*  | yes* | yes*    | CLI | yes    | no      | yes   | yes              | no  | no   | Javascript   | 
-| JonasKnarbakk/GWAM          | https://github.com/JonasKnarbakk/GWAM           | no         | yes*  | yes* | yes*    | GUI | yes    | no      | yes   | yes              | no  | no   | C++          | 
-| kuhnertdm/wow-addon-updater | https://github.com/kuhnertdm/wow-addon-updater  | no         | yes*  | yes* | yes*    | CLI | yes    | no      | yes   | yes              | no  | no   | Python       | 
-| Morganstern/AddonManager    | https://github.com/Morganstern/AddonManager     | no         | no    | no   | yes*    | GUI | yes    | no      | yes   | yes              | no  | no   | C#           | 
-| SeriousBug/WoWutils         | https://github.com/SeriousBug/WoWutils          | no         | yes*  | no   | no      | CLI | yes    | no      | yes   | yes              | no  | no   | Bash         | 
-| Sumolari/WAM                | https://github.com/Sumolari/WAM                 | no         | no    | yes* | no      | CLI | yes    | no      | yes   | yes              | no  | no   | Coffeescript | 
-| sysworx/wowam               | https://github.com/sysworx/wowam                | no         | no    | yes  | yes     | GUI | yes    | no      | no    | yes              | no  | yes* | XOJO         | 
-| Tharre/pywamgr              | https://github.com/Tharre/pywamgr               | no         | yes*  | yes* | yes*    | CLI | yes    | no      | yes   | yes              | no  | no   | Python       | 
-| vargen2/addon-manager       | https://github.com/vargen2/addonmanager         | no         | no    | no   | yes*    | GUI | yes    | no      | yes   | yes              | no  | no   | Java         | 
-| WoWAceUpdater               | https://sourceforge.net/projects/wowaceupdater/ | no         | no    | no   | yes     | GUI | yes    | no      | yes   | yes              | ?   | ?    | ?            | 
-| wttw/wowaddon               | https://github.com/wttw/wowaddon                | no         | yes   | yes  | yes     | CLI | yes    | no      | yes   | yes              | no  | no   | Go           | 
-
-\* installation on this platform is more involved than downloading and running an executable
-
 ## License
 
-Copyright © 2018-2019 Torkus
+Copyright © 2018-2020 Torkus
 
 Distributed under the GNU Affero General Public Licence, version 3 [with additional permissions](LICENCE.txt#L665)

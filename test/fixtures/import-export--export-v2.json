@@ -1,0 +1,12 @@
+[ {
+  "source" : "curseforge",
+  "source-id" : 1,
+  "name" : "everyaddon"
+}, {
+  "name" : "noname"
+}, {
+  "source" : "curseforge",
+  "source-id": 2,
+  "name" : "everyotheraddon",
+  "game-track" : "classic"
+} ]

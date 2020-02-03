@@ -14,6 +14,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## 0.12.0 - 2020-02-03
+
+### Added
+
+* 'source-id' column to gui (hidden by default)
+* 'game-track' column to gui (hidden by default) that is either 'retail' or 'classic'
+* support for reconciling addons by 'x-curse', 'x-wowi' and 'x-tukui' ids found in the .toc file
+* gui tabs can now be switched using mouse scroll
+* basic support to ignore addons that appear to be under version control
+    - this can be manually disabled on a per-addon basis by adding the key `ignore?` and the value `false` to that addon's `.wowman.json` file
+* user catalogue (github addons) can now be exported just like a directory full of addons can.
+
+### Changed
+
+* renamed the 'go' column in the gui to 'source'
+* export now captures game track so the correct game track is re-installed
+* importing addons exported using this version of wowman should be much quicker
+    - unfortunately old exports will still have an inexplicable long pause while importing. re-export your addons!
+* nfo files (`.wowman.json`) are now specced out and will receive an upgrade on first start of 0.12.0
+    - previously the file was only ever updated when an addon was installed or upgraded, and some bundled addons were still using very old formatted nfo files
+
+### Fixed
+
+* selected directory was incorrect after restarting gui by switching themes
+* 'refresh user catalog' gave no indication it was doing anything until it finally re-wrote the user catalogue
+* clearing catalogues and clicking refresh didn't see the database rebuilt
+* importing addons that don't match the currently selected game track are still imported correctly
+    - if a game track (retail or classic) could not be found, a sensible guess is made
+
+### Removed
+
+* dependency `data.codec`. My usage could be done with plain old java
+* dependency `cheshire`. Functionality satisfied by `clojure.data.json`
+* 'debugging' mode. I never used it and it wasn't doing any special
+
 ## 0.11.0 - 2019-12-31
 
 ### Added

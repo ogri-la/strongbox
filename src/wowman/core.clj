@@ -34,6 +34,8 @@
   {:notice/error :tomato
    :notice/warning :lemonchiffon
    ;;:installed/unmatched :tomato
+   :installed/ignored-bg nil
+   :installed/ignored-fg :darkgray
    :installed/needs-updating :lemonchiffon
    :installed/hovering "#e6e6e6" ;; light grey
    :search/already-installed "#99bc6b" ;; greenish
@@ -44,6 +46,8 @@
   {:notice/error "#009CB8"
    :notice/warning "#000532"
    ;;:installed/unmatched :tomato
+   :installed/ignored-bg nil
+   :installed/ignored-fg "#666666"
    :installed/needs-updating "#000532"
    :installed/hovering "#191919"
    :search/already-installed "#664394"
@@ -216,7 +220,7 @@
 (defn db-preserve-integer-source-id-if-possible
   "source-id for 99.9999% of addons is an integer.
   this doesn't hold true for addons on Github or for other hosts in the future, so the database
-  needs to store the value as a string. When coming out of the database, it's also string - it's type has been lost.
+  needs to store the value as a string. When coming out of the database, it's also a string - it's type has been lost.
   for no good reason, try to preserve it here"
   [source-id]
   (try
@@ -297,11 +301,6 @@
     (swap! state update-in [:cleanup] conj rmwatch)
     nil))
 
-(defn-spec debugging? boolean?
-  "true, if we we're in 'debug' mode"
-  []
-  (false-if-nil (get-state :cfg :debug?)))
-
 ;; addon dirs
 
 (defn-spec addon-dir-exists? boolean?
@@ -328,6 +327,7 @@
   nil)
 
 (defn-spec remove-addon-dir! nil?
+  "removes the directory from user configuration, does not alter the directory or it's contents at all"
   ([]
    (when-let [addon-dir (get-state :selected-addon-dir)]
      (remove-addon-dir! addon-dir)))
@@ -397,6 +397,11 @@
 ;;
 
 
+(defn-spec expanded? boolean?
+  "returns true if an addon has found further details online"
+  [addon map?]
+  (some? (:download-uri addon)))
+
 (defn start-affecting-addon
   [addon]
   (swap! state update-in [:unsteady-addons] clojure.set/union #{(:name addon)}))
@@ -425,11 +430,11 @@
 (defn-spec download-addon (s/or :ok ::sp/archive-file, :http-error ::sp/http-error, :error nil?)
   [addon ::sp/addon-or-toc-addon, download-dir ::sp/writeable-dir]
   (info "downloading" (:label addon) "...")
-  (when-let [download-uri (:download-uri addon)]
+  (when (expanded? addon)
     (let [output-fname (downloaded-addon-fname (:name addon) (:version addon)) ;; addonname--1-2-3.zip
           output-path (join (fs/absolute download-dir) output-fname)] ;; /path/to/installed/addons/addonname--1.2.3.zip
       (binding [http/*cache* (cache)]
-        (http/download-file download-uri output-path)))))
+        (http/download-file (:download-uri addon) output-path)))))
 
 ;; don't do this. `download-addon` is wrapped by `install-addon` that is already affecting the addon
 ;;(def download-addon
@@ -470,6 +475,22 @@
       ;; couldn't reasonably determine the primary directory
       :else nil)))
 
+(defn-spec guess-game-track ::sp/game-track
+  "give a map of addon data, attempts to guess the most likely game track it belongs to"
+  [install-dir ::sp/extant-dir, addon map?]
+  (or (:game-track addon) ;; from reading an export record. most of the time this value won't be here
+      (:installed-game-track addon) ;; re-use the value we have if updating an existing addon
+      (cond
+        ;; addon has been successfully expanded, current game track is being used.
+        (expanded? addon) (get-game-track install-dir)
+
+        ;; the interface version is set in the .toc file but is also part of 'expanding' an addon.
+        ;; prefer current game track over this as the real value may be overridden.
+        (some? (:interface-version addon)) (utils/interface-version-to-game-track (:interface-version addon)))
+
+      ;; very last here is for testing only
+      "retail"))
+
 (defn-spec -install-addon (s/or :ok (s/coll-of ::sp/extant-file), :error ::sp/empty-coll)
   "installs an addon given an addon description, a place to install the addon and the addon zip file itself"
   [addon ::sp/addon-or-toc-addon, install-dir ::sp/writeable-dir, downloaded-file ::sp/archive-file]
@@ -485,12 +506,17 @@
         _ (zip/unzip-file downloaded-file install-dir)
         toplevel-dirs (filter (every-pred :dir? :toplevel?) zipfile-entries)
         primary-dirname (determine-primary-subdir toplevel-dirs)
+        game-track (or (:game-track addon) ;; from reading an export record. most of the time this value won't be here
+                       (get-game-track install-dir)
+
+                       ;; very last here is for testing only
+                       "retail")
 
         ;; an addon may unzip to many directories, each directory needs the nfo file
         update-nfo-fn (fn [zipentry]
                         (let [addon-dirname (:path zipentry)
                               primary? (= addon-dirname (:path primary-dirname))]
-                          (nfo/write-nfo install-dir addon addon-dirname primary?)))
+                          (nfo/write-nfo install-dir addon addon-dirname primary? game-track)))
 
         ;; write the nfo files, return a list of all nfo files written
         retval (mapv update-nfo-fn toplevel-dirs)]
@@ -502,8 +528,13 @@
   ([addon ::sp/addon-or-toc-addon, install-dir ::sp/extant-dir]
    (install-addon-guard addon install-dir false))
   ([addon ::sp/addon-or-toc-addon, install-dir ::sp/extant-dir, test-only? boolean?]
-   (if (not (fs/writeable? install-dir)) ;; todo: is this checked on startup?
-     (error "failed to install addon, directory not writeable" install-dir)
+   (cond
+     ;; do some pre-installation checks
+     (:ignore? addon) (warn "failing to install addon, addon is being ignored:" install-dir)
+     (not (fs/writeable? install-dir)) (error "failing to install addon, directory not writeable:" install-dir)
+
+     :else ;; attempt downloading and installing addon
+
      (let [downloaded-file (download-addon addon install-dir)
            bad-zipfile-msg (format "failed to read zip file '%s', could not install %s" downloaded-file (:name addon))
            bad-addon-msg (format "refusing to install '%s'. It contains top-level files or top-level directories missing .toc files."  (:name addon))]
@@ -618,7 +649,10 @@
 
 ;;
 
-(defn find-in-db [installed-addon toc-keys catalog-keys]
+(defn find-in-db
+  "looks for `installed-addon` in the database, matching `toc-key` to a `catalog-key`.
+  if a `toc-key` and `catalog-key` are actually lists, then all the `toc-keys` must match the `catalog-keys`"
+  [installed-addon toc-keys catalog-keys]
   (let [catalog-keys (if (vector? catalog-keys) catalog-keys [catalog-keys]) ;; ["source" "source_id"] => ["source" "source_id"], "name" => ["name"]
         sql-arg-template (clojure.string/join " AND " (mapv #(format "%s = ?" %) catalog-keys)) ;; "source = ? AND source_id = ?", "name = ?"
 
@@ -659,9 +693,14 @@
   [installed-addon-list]
   (let [;; toc-key -> catalog-key
         ;; most -> least desirable match
-        match-on-list [[[:source :source-id]  ["source" "source_id"]] ;; nest to search across multiple parameters
-                       [:alias "name"]
-                       [:name "name"] [:name "alt_name"] [:label "label"] [:dirname "label"]]]
+        ;; nest to search across multiple parameters
+        match-on-list [[[:source :source-id]  ["source" "source_id"]] ;; source+source-id, perfect case
+                       [:alias "name"] ;; alias = name, popular addon's hardcoded name to a catalogue item
+                       [[:source :name] ["source" "name"]] ;; source+name, we have a source but no source-id (nfo-v1 files)
+                       [:name "name"]
+                       [:name "alt_name"]
+                       [:label "label"]
+                       [:dirname "label"]]] ;; dirname = label, eg ./AdiBags = AdiBags
     (for [installed-addon installed-addon-list]
       (find-first-in-db installed-addon match-on-list))))
 
@@ -808,6 +847,7 @@
   "re-fetch each item in user catalog using the URI and replace old entry with any updated details"
   []
   (binding [http/*cache* (cache)]
+    (info "refreshing \"user-catalog.json\", this may take a minute ...")
     (->> (get-create-user-catalog)
          :addon-summary-list
          (map :uri)
@@ -909,22 +949,50 @@
 
 ;; import/export
 
-(defn-spec export-installed-addon-list ::sp/extant-file
-  [output-file ::sp/file, addon-list ::sp/toc-list]
-  (let [addon-list (map #(select-keys % [:name :source :source-id]) addon-list)]
-    (utils/dump-json-file output-file addon-list)
-    (info "wrote:" output-file)
-    output-file))
+(defn-spec export-installed-addon ::sp/export-record
+  "given an addon summary from a catalogue or .toc file data, derive an 'export-record' that can be used to import an addon later"
+  [addon (s/or :catalog ::sp/addon-summary, :installed ::sp/toc)]
+  (let [stub (select-keys addon [:name :source :source-id])
+        game-track (when-let [game-track (:installed-game-track addon)]
+                     {:game-track game-track})]
+    (merge stub game-track)))
+
+(defn-spec export-installed-addon-list ::sp/export-record-list
+  "derives an 'export-record' from a list of either addon summaries from a catalogue or .toc file data from installed addons"
+  [addon-list (s/or :catalog ::sp/addon-summary-list, :installed ::sp/toc-list)]
+  (->> addon-list (remove :ignore?) (map export-installed-addon) vec))
 
 (defn-spec export-installed-addon-list-safely ::sp/extant-file
+  "writes the name, source, source-id and current game track to a json file for each installed addon in the currently selected addon directory"
   [output-file ::sp/file]
   (let [output-file (-> output-file fs/absolute str)
         output-file (utils/replace-file-ext output-file ".json")
         addon-list (get-state :installed-addon-list)
-        unmatched-addon-list (remove :source addon-list)]
-    (doseq [addon unmatched-addon-list]
-      (warn (format "Addon '%s' has no match in the catalog and will be skipped during import. Ensure all addons match before doing an export." (:name addon))))
-    (export-installed-addon-list output-file addon-list)))
+        export (export-installed-addon-list addon-list)]
+
+    ;; target any unmatched addons with no `:source` from the addon list and emit a warning
+    (doseq [addon (remove :source addon-list)]
+      (warn (format "Addon '%s' has no match in the catalog and may be skipped during import. It's best all addons match before doing an export." (:name addon))))
+
+    (utils/dump-json-file output-file export)
+    (info "wrote:" output-file)
+    output-file))
+
+(defn-spec export-catalog-addon-list ::sp/export-record-list
+  "given a catalogue of addons, generates a list of 'export-records' from the list of addon summaries"
+  [catalog ::sp/catalog]
+  (let [addon-list (:addon-summary-list catalog)]
+    (export-installed-addon-list addon-list)))
+
+(defn-spec export-user-catalog-addon-list-safely ::sp/extant-file
+  "generates a list of 'export-records' from the addon summaries in the user catalogue and writes them to the given `output-file`"
+  [output-file ::sp/file]
+  (let [output-file (-> output-file fs/absolute str (utils/replace-file-ext ".json"))
+        catalog (get-create-user-catalog)
+        export (export-catalog-addon-list catalog)]
+    (utils/dump-json-file output-file export)
+    (info "wrote:" output-file)
+    output-file))
 
 ;; created to investigate some performance issues, seems sensible to keep it separate
 (defn -mk-import-idx
@@ -939,14 +1007,45 @@
         matching-addon-list (->> addon-list (map find-expand) (remove nil?) vec)]
     matching-addon-list))
 
-(defn import-addon-list
-  "caveats: imports the *latest* version of the addon, if addon found"
+;; v1 takes 13.7 seconds to build an index using the 'short' catalog
+;; this function can still be improved
+(defn import-addon-list-v1
+  "handles exports with partial information (name, or name and source) from <=0.10.0 versions of wowman."
   [addon-list] ;; todo: spec
-  (info "attempting to import" addon-list)
+  (info (format "attempting to import %s addons. this may take a minute" (count addon-list)))
   (let [matching-addon-list (-mk-import-idx addon-list)
         addon-dir (get-state :selected-addon-dir)]
     (doseq [addon matching-addon-list]
       (install-addon addon addon-dir))))
+
+;; v2 uses the same mechanism to match addons as the rest of the app does
+(defn import-addon-list-v2
+  "handles exports with full information (name and source and source-id) from wowman >=0.10.1.
+  this style of export allows us to make fast and unambiguous matches against the database."
+  [addon-list]
+  (let [;; in order to get these bare maps playing nicely with the rest of the system we need to
+        ;; gussy them up a bit so it looks like an `::sp/installed-addon-summary`
+        padding {:label ""
+                 :description ""
+                 :dirname ""
+                 :interface-version 0
+                 :installed-version "0"}
+
+        addon-list (map #(merge padding %) addon-list)
+
+        match-results (-db-match-installed-addons-with-catalog addon-list)
+        [matched unmatched] (utils/split-filter #(contains? % :final) match-results)
+        addon-dir (get-state :selected-addon-dir)
+
+        ;; this is what v1 does, but it's hidden away in `expand-summary-wrapper`
+        default-game-track (get-game-track)]
+
+    (doseq [db-match match-results
+            :let [addon (:installed-addon db-match) ;; ignore 'installed' bit, this is the addon that was matched on
+                  db-entry (:final db-match)
+                  game-track (get addon :game-track default-game-track)]]
+      (when-let [expanded-addon (catalog/expand-summary db-entry game-track)]
+        (install-addon expanded-addon addon-dir)))))
 
 (defn-spec import-exported-file nil?
   [path ::sp/extant-file]
@@ -955,9 +1054,46 @@
         addon-list (utils/load-json-file-safely path
                                                 :bad-data? nil-me
                                                 :data-spec ::sp/export-record-list
-                                                :invalid-data? nil-me)]
-    (when-not (empty? addon-list)
-      (import-addon-list addon-list))))
+                                                :invalid-data? nil-me)
+        full-data? (fn [addon]
+                     (utils/all (mapv #(contains? addon %) [:source :source-id :name])))
+        [full-data, partial-data] (utils/split-filter full-data? addon-list)]
+    (when-not (empty? partial-data)
+      (import-addon-list-v1 partial-data))
+    (when-not (empty? full-data)
+      (import-addon-list-v2 full-data))))
+
+;;
+
+(defn-spec -upgrade-nfo nil?
+  "given an addon, upgrades it's nfo file to the current nfo spec."
+  [addon map?]
+  (debug "upgrading nfo file:" (:dirname addon))
+  (let [install-dir (get-state :selected-addon-dir)
+        ;; best guess of what the installed game track is
+        ;; TODO: remove this in 0.14.0 and delete invalid nfo-v2 files
+        ;; it's reasonable to assume nfo files will consistently have a :game-track by then
+        game-track (guess-game-track install-dir addon)
+        addon (merge addon {;; double handling of `:version` here with `nfo/update-nfo`
+                            ;; the new minimum spec to derive nfo data requires a `:version` key.
+                            ;; addons that are not expanded yet do not have this key.
+                            ;; which is beside the point, because we don't want to use the `:version` key anyway
+                            :version (:installed-version addon)
+                            :game-track game-track})]
+    (nfo/upgrade-nfo install-dir addon))
+  nil)
+
+(defn-spec upgrade-nfo-files nil?
+  "upgrade the nfo files for all addons in the selected addon-dir.
+  new data may have been introduced since addon was installed"
+  []
+  (let [install-dir (get-state :selected-addon-dir)
+        has-valid-nfo-file? (partial nfo/has-valid-nfo-file? install-dir)]
+    (->> (get-state)
+         :installed-addon-list
+         (remove has-valid-nfo-file?) ;; skip good nfo files
+         (mapv -upgrade-nfo)))
+  nil)
 
 ;; 
 
@@ -977,6 +1113,8 @@
 
   ;;(latest-wowman-release) ;; check for updates after everything else is done ;; 2019-06-30, travis is failing with 403: Forbidden. Moved to gui init
 
+  (upgrade-nfo-files)     ;; otherwise nfo data is only updated when an addon is installed/upgraded
+
   (save-settings)         ;; seems like a good place to preserve the etag-db
   nil)
 
@@ -990,14 +1128,9 @@
   (filterv :update? rows))
 
 (defn -re-installable?
-  "an addon can only be re-installed if it's been matched to an addon in the catalog"
+  "an addon can only be re-installed if it's been matched to an addon in the catalog and a release available to download"
   [rows]
-  ;; no longer true in 0.9.0. an addon may be found in the catalog but may not match the selected game track
-  ;;(filterv :uri rows)) ;; :uri is only present in addons that have a match
-
-  ;; todo: this indirect logic smells. something like this should be done instead:
-  ;; (filterv (comp :release-available? :matched?) rows)
-  (filterv :download-uri rows))
+  (filterv expanded? rows))
 
 (defn re-install-selected
   []
@@ -1068,11 +1201,14 @@
   [addon-url string?]
   (binding [http/*cache* (cache)]
     (if-let* [addon-summary (catalog/parse-user-string addon-url)
+              ;; game track doesn't matter when adding it to the user catalogue ...
               addon (or
                      (catalog/expand-summary addon-summary "retail")
                      (catalog/expand-summary addon-summary "classic"))
               test-only? true
               _ (install-addon-guard addon (get-state :selected-addon-dir) test-only?)]
+
+             ;; ... but does matter when installing it in to the current addon directory
              (let [addon (expand-summary-wrapper addon-summary)]
 
                (add-user-addon! addon-summary)
@@ -1082,12 +1218,12 @@
                  (db-reload-catalog)
                  addon)
 
-               ;; failed to expand summary, probably because of selected game track
+               ;; failed to expand summary, probably because of selected game track.
                ;; gui depends on difference between an addon and addon summary to know
-               ;; what error message to display
+               ;; what error message to display.
                (or addon addon-summary))
 
-             ;; failed to parse url, or expand summary, or trial install
+             ;; failed to parse url, or expand summary, or trial installation
              nil)))
 
 ;; init

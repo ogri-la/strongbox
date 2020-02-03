@@ -3,7 +3,7 @@
   <groupId>ogri-la</groupId>
   <artifactId>wowman</artifactId>
   <packaging>jar</packaging>
-  <version>0.11.0</version>
+  <version>0.12.0</version>
   <name>wowman</name>
   <description>World Of Warcraft Addon Manager</description>
   <url>https://github.com/ogri-la/wowman</url>
@@ -17,7 +17,7 @@
     <url>https://github.com/ogri-la/wowman</url>
     <connection>scm:git:git://github.com/ogri-la/wowman.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/ogri-la/wowman.git</developerConnection>
-    <tag>9a8368e7c9615641df59e33a8edf991c80d999e9</tag>
+    <tag>964a98b219a75be17985168e28b95fe5e6abea79</tag>
   </scm>
   <build>
     <sourceDirectory>src</sourceDirectory>
@@ -84,11 +84,6 @@
     </dependency>
     <dependency>
       <groupId>org.clojure</groupId>
-      <artifactId>data.codec</artifactId>
-      <version>0.1.1</version>
-    </dependency>
-    <dependency>
-      <groupId>org.clojure</groupId>
       <artifactId>data.json</artifactId>
       <version>0.2.6</version>
     </dependency>
@@ -111,11 +106,6 @@
       <groupId>clj-http</groupId>
       <artifactId>clj-http</artifactId>
       <version>3.10.0</version>
-    </dependency>
-    <dependency>
-      <groupId>cheshire</groupId>
-      <artifactId>cheshire</artifactId>
-      <version>5.8.1</version>
     </dependency>
     <dependency>
       <groupId>seesaw</groupId>

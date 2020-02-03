@@ -8,49 +8,133 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### done
 
+* bug, selected directory is incorrect after restarting gui (by switching themes)
+    - done
+* bug, 'refresh user catalog' no indication it's doing anything when selected
+    - until it finally re-writes the user catalogue
+    - done
+* bug, clearing catalogues and clicking refresh doesn't see the database rebuilt
+    - the catalog is downloaded though
+    - done
+* rename 'go' column to 'catalogue' 
+    - no, decided not to. 
+        - this seems like a whim or errant thought and I see no reason for change
+    - actually, yeah, I changed it but to 'source' not 'catalogue'
+    - added 'source-id' and 'game-track' columns as well
+* remove dependency data.codec
+    - this can be done with native java
+    - done
+* remove dependency cheshire
+    - clojure.data.json does all we need
+    - done
+* add support for reconciling addons by 'x-curse' and 'x-wowi' ids
+    - example: https://github.com/ascott18/TellMeWhen/blob/master/TellMeWhen.toc#L19-L20
+    - done
+* add a 'addons dir' to the test helper
+    - lots of boilerplate around this in core_test.clj
+        - investigate this 
+    - presence of an addon dir skitches about ~6 tests
+    - I have replaced the manual app starting with the 'with-running-app' wrapper though
+    - and explicit 'add-addon-dir!' isn't so bad
+    - done
+* remove debugging? mode
+    - done
+* gui, scroll tabs with mouse
+    - done
+* import/export, capture game track of exported addon dir?
+    - done
+* ignore addons that are under version control
+    - see issue: https://github.com/ogri-la/wowman/issues/114
+    - should this live in the .nfo file?
+        - if svn detected, ignore=true
+        - the only place we write the nfo is on addon installation
+        - we read nfo data when loading the toc data
+            - perhaps rename nfo/read-nfo to nfo/read-data 
+                - and that includes a read from file plus an inspection for svn dirs
+    - done
+* import/export, export user catalogue
+    - the good thing about the current exports is that they are minimal and can be 'inflated' into whatever catalog spec supported in the future
+    - done
+* github, installation from github via import menu not updating log until finished
+    - this is an async issue
+        - actually, I think it's a problem with the v1 import index being generated
+            - and this isn't a problem for v2 imports
+    - done
+* import/export, importing addons should disregard game track
+    - app should feel free to ignore it, once the addon is installed
+    - done
+
 ### todo
 
-* release 0.11.0
+release 0.12.0
 
 ## todo bucket (no particular order)
 
-* bug, selected directory is incorrect after restarting gui (by switching themes)
-* add custom highlighting colours
-    - I don't mind my colours but not everybody may
-    - my colours don't work very well on native lnf + dark themes:
-        - https://github.com/ogri-la/wowman/issues/105
-* windows support
-    - ~must be included in CI~
-    - tests pass
-    - readme updated
-    - release updated
-    - pushed back to next release
-* add a 'addons dir' to the test helper
-    - lots of boilerplate around this in core_test.clj
-* allow user to specify their own catalogs
-    - a url to a catalog that is downloaded and included while loading up the db
-    - different from the 'user catalog'
-* rename 'go' column to 'catalogue' 
-* gitlab as addon host
-    - https://gitlab.com/search?search=wow+addon
-    - returned to bucket 2019-12-04, notes:
-        - gitlab doesn't handle releases like github does
-            - https://stackoverflow.com/questions/29520905/how-to-create-releases-in-gitlab
-        - there are very few gitlab addons (88)
-        - api is quite slow
-    - if somebody asks for this especially I'll consider it
+* tukui and elvui can't be switched to classic
+    - on classic track they show updates
+        - elvui 1.82 => 1.211
+        - tukui 4.42 => 1.321
+    - but updating them doesn't alter their reported versions
+        - the 'source' for these two are 'tukui-classic', the others are just 'tukui'
+    - problem seems to be in the :version and :installed-version attributes
+        - after refresh, the :version attribute is correct but :installed-version is still incorrect
+    - I have addons masking other addons!
+        - ElvUI_MerathilisUI/ was masking Tukui
+        - ElvUI_CodeNameBlaze/ was masking Elvui
+    - the addons were being updated, but were being mis-matched during the database search because of shared IDs ...?
+        - ids are 1 and 2
+        - I thought these were negative? or I made them negative?
+        - anyway
+* wowinterface, multiple game tracks 
+    - investigate just what is being downloaded when a classic version of a wowi addon is downloaded
+    - see 'LagBar'
+* rename wowman
+    - rename repository
+    - update readme
+        - mention name change prominently
+    - update package
+        - add new shell script 'strongbox'
+* revisit aliases
+    - use source and source-id now
+    - maybe externalise the list 
+* can addon-id be removed as a gui column?
+* move location of catalogs into user settings
+    - allow user to specify their own catalogs
+        - a url to a catalog that is downloaded and included while loading up the db
+        - different from the 'user catalog'
+    - wowman-data, stop publishing a 'daily' release
+        - we have multiple catalogs now
+        - 0.10.0 uses the raw catalog files directly
+        - 0.9.2 was still using the daily release
+        - remove the 'daily' release after 0.11.0 is released
+        - this will break older releases but users who prefer older versions of the software shouldn't be stranded if the catalog goes away
+            - they should just be able to plug in a new location of the catalog
+            - unfortunately *these* users will be out of luck, but future users won't be
+* greater parallelism
+    - internal job queue
+    - replace log at bottom of screen with a list of jobs being processed and how far along they are
+        - each job can be cancelled/stopped/discarded
+    - separate tab for log
+        - that scrolls the other way
+* version pinning
+    - user can opt to install a specific release of an addon
+    - automatic updates for that addon are thereafter blocked
+* alpha/beta opt-in
+    - user can opt to install alpha/beta/no-lib releases per-addon
+* gui, java look and feel
+    - our 'theme' solution is too naive
+        - we should be deferring to the current theme for highlighted colours
+        - how?
+            - https://pirlwww.lpl.arizona.edu/resources/guide/software/SwingX/org/jdesktop/swingx/plaf/UIColorHighlighterAddon.html
+* bug, changing sort order during refresh doesn't reflect which addon is being updated
+    - I think changing column ordering and moving columns should be disabled while updates happen
+        - just freeze or disable them or something.
+* download progress bar *inside* the grid ...?
+    - pure fantasy?
 * add support for user supplied github token
     - necessary if they want a large number of github addons without hassles
-* when curseforge api is down users get a wall of red error messages with very little useful information
-    - see issue 91: https://github.com/ogri-la/wowman/issues/91
-        - the error message has been improved but we still get a red wall of text
-        - aggregate error messages?
 * investigate state of java packaging
     - https://www.infoq.com/news/2019/03/jep-343-jpackage/
-* github-api, also look for 'retail' in addon name to determine game track
-    - rather than just 'classic'
-* add support for reconciling addons by 'x-curse' and 'x-wowi' ids
-    - example: https://github.com/ascott18/TellMeWhen/blob/master/TellMeWhen.toc#L19-L20
 * add an option that forces installation of addon if matching game track not found
     - enable it by default
     - add a warning when installing an addon that doesn't match game track
@@ -59,27 +143,26 @@ see CHANGELOG.md for a more formal list of changes by release
         - "123 addons installed, 2 classic addons installed"
     - preserve this in user settings
     - perhaps couple this with the GUI logic for the status bar down the bottom
-* bug, clearing catalogues and clicking refresh doesn't see the database rebuilt
-    - the catalog is downloaded though
-* new tab for dedicated log
-* import/export, capture game track of exported addon dir?
-* import/export, export user catalogue
 * github, importing an exported addon list with a github addon won't see that addon installed
     - unless that addon is present in the user catalogue
         - which in a fresh install where a list of addons are being restored is unlikely...
     - this is interesting actually. the exported addon list has become a mini-catalogue
         - some addons require the larger catalogue to resolve
         - github addons are resolved and installed by a different means...
-* github, installation from github via import menu not updating log until finished
-    - this is an async issue
+* add custom highlighting colours
+    - I don't mind my colours but not everybody may
+    - my colours don't work very well on native lnf + dark themes:
+        - https://github.com/ogri-la/wowman/issues/105
+
+* when curseforge api is down users get a wall of red error messages with very little useful information
+    - see issue 91: https://github.com/ogri-la/wowman/issues/91
+        - the error message has been improved but we still get a red wall of text
+        - aggregate error messages?
+* new tab for dedicated log
 * simplify `install-addon` interface in core.clj
     - we need to provide an installation directory which can be pulled from the application state
 * rename references of 'uri' to 'url'
-* version pinning
-    - user can opt to install a specific release of an addon
-    - automatic updates for that addon are thereafter blocked
-* alpha/beta opt-in
-    - user can opt to install alpha/beta/no-lib releases per-addon
+    - these are all through the catalog, so will have to wait
 * rename 'reinstall all' to 'reconcile'
     - steal from the best
     - make the reconcile automatic
@@ -88,7 +171,6 @@ see CHANGELOG.md for a more formal list of changes by release
         - it should just fucking do it
 * investigate better popularity metric than 'downloads'
     - if we make an effort to scrape everyday, we can generate this popularity graph ourselves
-
 * gui 'wow' column is inconsistent
     - for curseforge, it's pulling it's value from :gameVersion, which may be empty
         - in which case it pulls it's value from the toc file, which may be different from the selected game track
@@ -107,17 +189,16 @@ see CHANGELOG.md for a more formal list of changes by release
 * database, compare current speed and code against loading addon category data serially
     - as opposed to in three blocks (categories, addons, category-addons). We might save some time and code
 * database, investigate prepared statements when inserting for improved speed
-* wowman-data, stop publishing a 'daily' release
-    - we have multiple catalogs now
-    - 0.10.0 uses the raw catalog files directly
-    - 0.9.2 was still using the daily release
-    - remove the 'daily' release after 0.11.0 is released
-* remove debugging? mode
+* database, investigate a datalog backed datastore
+    - https://clojure.github.io/clojure-contrib/doc/datalog.html
+    - https://github.com/tonsky/datascript
 * export to markdown
     - I think I'd like a simple list like:
         * [addon name](https://source/path/to/addon)
     - of course, this would be a different type of export than the one used for import
         - although ... I could possibly parse the list ... and nah.
+    - clostache?
+        - https://github.com/fhd/clostache
 * add a 'tabula rasa' option that wipes *everything* 
     - cache, catalog, config, downloaded zip files
 * coloured warnings/errors on console output
@@ -153,17 +234,47 @@ see CHANGELOG.md for a more formal list of changes by release
                 - could be tied in with backups/exports
                     - got to have backups+imports happening first
         - identify slow things and measure their improvement
-* automatically exclude 'ancient' addons from search results
-    - these are addons that haven't been updated in ~18 months
-        - wowinterface has a lot of them
-* group search results?
-    - group by downloads/age/category?
-        - it would finally be the best use for category data
+
 * memory usage
     - we're big and fat :(
     - lets explore some ways to measure and then reduce memory usage
     - measuring:
         - https://github.com/clojure-goes-fast/clj-memory-meter
+        - https://visualvm.github.io/
+* toggleable highlighers as a menuitem
+    - highlight unmatched
+    - highlight updates
+    - touch of colour against each menuitem would serve as a legend
+* toggleable columns as a menuitem
+    - they're available from the column menu, but it's a little hidden and contains other fairly useless options like 'horizontal scroll'
+* nightly unstable builds
+    - building the 'develop' branch once a day
+        - making it available as the 'unstable' release that always gets replaced
+    - project.clj "x.y.z-unreleased" would be changed to "x.y.z-unstable"
+    - development would happen mainly in feature branches
+* a 'stop' button to stop updates would be nice
+* download addon details in parallel
+    - speed benefits, mostly
+    - share a pool of connections between threads
+        - N connections serving M threads
+* search, indicate results are paginated
+* search, order by date only orders the *current page* of results
+* search, pagination controls in search pane
+* search, group results
+    - group by downloads/age/category?
+        - it would finally be the best use for category data
+* cli, update specific addon
+* cli, install specific addon
+* cli, colours!
+* gui, both panes, filter by categories
+
+
+## post 1.0
+
+* internationalisation?
+    - Akitools has no english description but it does have a "Notes-zhCN" in the toc file that could be used
+    - wowman was mentioned on a french forum the other day ..
+    - post 1.0
 * move away from this merging toc/addon/expanded addon data strategy
     - it's confusing to debug!
     - namespaced keys might be a good alternative:
@@ -175,39 +286,20 @@ see CHANGELOG.md for a more formal list of changes by release
             - (getattr addon :label) ;; does multiple lookups ...? seems kinda meh
     - post 1.0
     - wait until spec2 is released for an overhaul of current specs
-* toggleable highlighers as a menuitem
-    - highlight unmatched
-    - highlight updates
-    - touch of colour against each menuitem would serve as a legend
-* toggleable columns as a menuitem
-    - they're available from the column menu, but it's a little hidden and contains other fairly useless options like 'horizontal scroll'
-* download progress bar *inside* the grid ...?
-    - pure fantasy?
-* nightly unstable builds
-    - building the 'develop' branch once a day
-        - making it available as the 'unstable' release that always gets replaced
-    - project.clj "x.y.z-unreleased" would be changed to "x.y.z-unstable"
-    - development would happen mainly in feature branches
-* internationalisation?
-    - Akitools has no english description but it does have a "Notes-zhCN" in the toc file that could be used
-    - wowman was mentioned on a french forum the other day ..
-* a 'stop' button to stop updates would be nice ...
-    - closing gui would stop ongoing updates
-* bug, changing sort order during refresh doesn't reflect which addon is being updated
-    - I think changing column ordering and moving columns should be disabled while updates happen
-        - just freeze or disable them or something.
-* download addon details in parallel
-    - speed benefits, mostly
-    - share a pool of connections between threads
-        - N connections serving M threads
-* gui, search pane, indicate results are paginated
-* cli, update specific addon
-* cli, install specific addon
-* cli, colours!
-* gui, both panes, filter by categories
-* gui, pagination controls in search pane
-* gui, scroll tabs with mouse
-* gui, search, order by date only orders the *current page* of results
+
+## wontfix
+
+* windows support
+    - windows is just the worst, most awful dystopian software I've ever seen and it hurts my soul every time I try to use it
+    - I just plain hate it, it epitomises the very opposite of what I stand for and I refuse to work on it ever again
+* gitlab as addon host
+    - https://gitlab.com/search?search=wow+addon
+    - returned to bucket 2019-12-04, notes:
+        - gitlab doesn't handle releases like github does
+            - https://stackoverflow.com/questions/29520905/how-to-create-releases-in-gitlab
+        - there are very few gitlab addons (88)
+        - api is quite slow
+    - if somebody asks for this especially I'll consider it
 * add support for finding addons by url for other hosts
     - wowinterface
     - curseforge
@@ -222,9 +314,6 @@ see CHANGELOG.md for a more formal list of changes by release
         - parse identifiers from URL, like source and source ID, then display search results
             - again, by encouraging the copying+pasting of URLs and then failing to find results when the URL IS RIGHT THERE AND WORKING we set ourselves up for failure and the user for disappointment/frustration
     - parking this
-
-## wontfix
-
 * addon 'detail' tab
     - link to curseforge
     - donation url
@@ -283,6 +372,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * gui, stateful buttons
     - don't allow enabled 'delete selected' buttons if nothing is selected
     - not going to coddle the user. deleting nothing will see nothing deleted.
-* cli, interactive interface when no specific action specified
+* cli, interactive interface when no specific action specified 
     - you have N addons installed. what do you want to do? (list, update, update-all, delete) etc
     - this is a huge amount of hassle
