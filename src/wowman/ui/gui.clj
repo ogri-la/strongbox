@@ -464,7 +464,7 @@
 (defn installed-addons-panel
   []
   (let [;; always visible when debugging and always available from the column menu
-        hidden-by-default-cols [:addon-id :group-id :primary? :update? :matched? :ignore? :categories :downloads :updated :source-id]
+        hidden-by-default-cols [:addon-id :group-id :primary? :update? :matched? :ignore? :categories :downloads :updated :source-id :track]
         tblmdl (sstbl/table-model :columns [{:key :name, :text "addon-id"}
                                             :group-id
                                             :primary?
