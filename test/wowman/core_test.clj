@@ -7,8 +7,10 @@
    [me.raynes.fs :as fs]
    ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [wowman
+    [zip :as zip]
     [main :as main]
     [toc :as toc]
+    [nfo :as nfo]
     [catalog :as catalog]
     [utils :as utils]
     [test-helper :as helper :refer [fixture-path slurp-fixture helper-data-dir with-running-app]]
@@ -730,3 +732,41 @@
                     ;; optional, lets the GUI know we have a match that can be checked for updates
                     :matched? true}]
       (is (= expected (core/moosh-addons toc addon-summary))))))
+
+(deftest upgrade-nfo-files
+  (testing "addons without a .toc file are not upgraded"
+    (let [every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
+          install-dir (utils/join fs/*cwd* "addons")
+
+          _ (fs/mkdir install-dir)
+          _ (zip/unzip-file every-addon-zip-file install-dir)
+
+          expected-dirname "EveryAddon"
+          addon-path (utils/join install-dir expected-dirname)
+          expected-nfo-file (utils/join addon-path nfo/nfo-filename)]
+
+      (with-running-app
+        (core/set-addon-dir! install-dir)
+        (is (not (fs/exists? expected-nfo-file))) ;; no nfo file to upgrade
+        (core/upgrade-nfo-files)
+        (is (not (fs/exists? expected-nfo-file)))))) ;; no nfo written
+
+  (testing "addons with malformed .toc files even after upgrading are deleted"
+    (let [every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
+          install-dir (utils/join fs/*cwd* "addons")
+
+          _ (fs/mkdir install-dir)
+          _ (zip/unzip-file every-addon-zip-file install-dir)
+
+          expected-dirname "EveryAddon"
+          addon-path (utils/join install-dir expected-dirname)
+          expected-nfo-file (utils/join addon-path nfo/nfo-filename)]
+      (with-running-app
+        (core/set-addon-dir! install-dir)
+        ;; create a nfo file whose contents ensure that even after an upgrade attempt
+        ;; it is still invalid
+        (spit expected-nfo-file (utils/to-json {}))
+        (is (fs/exists? expected-nfo-file)) ;; bad nfo exists
+        (core/upgrade-nfo-files)
+        (is (not (fs/exists? expected-nfo-file))))))) ;; bad nfo removed
+
