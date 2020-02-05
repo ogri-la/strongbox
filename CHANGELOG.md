@@ -14,6 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## 0.12.1 - 2020-02-06
+
+### Fixed
+
+* addons with no nfo file were attempting to upgrade it and failing
+    - these addons are now skipped
+* fixed a bug where addons with a nfo file that is *still* invalid even after upgrading have the nfo file deleted
+
 ## 0.12.0 - 2020-02-03
 
 ### Added

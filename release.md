@@ -42,8 +42,8 @@ Just for my own reference
     - change version to next version 
     - add "-unreleased" after it
 * commit+push
-* download release file to /tmp
-* run sha256sum wowman-x.x.x-standalone.jar
+* download release sum file to /tmp
+    - cat sumfile
 * update wowman-pkgbuild/PKGBUILD
     - change 'pkgver'
     - change 'sha256sums'
