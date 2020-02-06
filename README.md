@@ -8,6 +8,12 @@ It supports addons hosted by Curseforge, wowinterface, Tukui and Github.
 
 If you are a user of wowman and you ever want to get in touch, please just [open an issue](https://github.com/ogri-la/wowman/issues) or [PM me on reddit](https://www.reddit.com/message/compose/?to=torkus-jr&subject=wowman)
 
+## Notice!
+
+`wowman` will be renamed `strongbox` in the next release (`1.0.0`)!
+
+Arch users will need to install a new package as updates to the `wowman` package will end with the `0.12.x` line.
+
 ## Audience
 
 This software is for World of Warcraft players using Linux.
@@ -22,7 +28,7 @@ It does not work on Windows. Windows will never be supported.
 
 ## Installation
 
-1. [download the jar](https://github.com/ogri-la/wowman/releases/download/0.12.0/wowman-0.12.0-standalone.jar) file
+1. [download the jar](https://github.com/ogri-la/wowman/releases/download/0.12.1/wowman-0.12.1-standalone.jar) file
 2. run with `java -jar wowman-x.x.x-standalone.jar`
 
 ### Arch Linux users

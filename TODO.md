@@ -4,11 +4,64 @@ this is my own scratchpad for keeping track of things. it gets truncated frequen
 
 see CHANGELOG.md for a more formal list of changes by release
 
-## 0.13.0 release
+## 1.0.0 release
 
 ### done
 
 ### todo
+
+* rename wowman
+    - rename repository
+    - update readme
+        - mention name change prominently
+    - update package
+        - add new shell script 'strongbox'
+
+* can addon-id be removed as a gui column?
+
+* move location of catalogs into user settings
+    - allow user to specify their own catalogs
+        - a url to a catalog that is downloaded and included while loading up the db
+        - different from the 'user catalog'
+    - wowman-data, stop publishing a 'daily' release
+        - we have multiple catalogs now
+        - 0.10.0 uses the raw catalog files directly
+        - 0.9.2 was still using the daily release
+        - remove the 'daily' release after 0.11.0 is released
+        - this will break older releases but users who prefer older versions of the software shouldn't be stranded if the catalog goes away
+            - they should just be able to plug in a new location of the catalog
+            - unfortunately *these* users will be out of luck, but future users won't be
+
+* remove backwards compatibility kludges
+    - there will be a migration of wowman data to strongbox data
+
+* spec clean up
+    * it's never been particularly clear in my head what some of those specs are
+    * I have a better understanding of their nature now
+        - as part of the diagramming, sketch out the fields to be captured
+
+* database, investigate a datalog backed datastore
+    - https://clojure.github.io/clojure-contrib/doc/datalog.html
+    - https://github.com/tonsky/datascript
+    - I want addons loaded *quickly*
+    - I want to *query* addons *quickly*
+
+* code refactor
+    * simplify `install-addon` interface in core.clj
+        - we need to provide an installation directory which can be pulled from the application state
+    * core.clj is getting too large
+        - it's difficult to navigate and debug
+        - many tests are accumulating in core_test.clj
+    * diagram state transitions
+        - my mental model has become fuzzy
+
+* catalog updates
+    * rename references of 'uri' to 'url'
+        - these are all through the catalog
+    * normalise categories between addon hosts
+        - perhaps expand them into 'tags'? 
+        - a lot of these categories are composite
+            - break each composite one down into a singular, normalise, have a unique set of tags
 
 ## todo bucket (no particular order)
 
@@ -30,28 +83,9 @@ see CHANGELOG.md for a more formal list of changes by release
 * wowinterface, multiple game tracks 
     - investigate just what is being downloaded when a classic version of a wowi addon is downloaded
     - see 'LagBar'
-* rename wowman
-    - rename repository
-    - update readme
-        - mention name change prominently
-    - update package
-        - add new shell script 'strongbox'
 * revisit aliases
     - use source and source-id now
     - maybe externalise the list 
-* can addon-id be removed as a gui column?
-* move location of catalogs into user settings
-    - allow user to specify their own catalogs
-        - a url to a catalog that is downloaded and included while loading up the db
-        - different from the 'user catalog'
-    - wowman-data, stop publishing a 'daily' release
-        - we have multiple catalogs now
-        - 0.10.0 uses the raw catalog files directly
-        - 0.9.2 was still using the daily release
-        - remove the 'daily' release after 0.11.0 is released
-        - this will break older releases but users who prefer older versions of the software shouldn't be stranded if the catalog goes away
-            - they should just be able to plug in a new location of the catalog
-            - unfortunately *these* users will be out of luck, but future users won't be
 * greater parallelism
     - internal job queue
     - replace log at bottom of screen with a list of jobs being processed and how far along they are
@@ -95,16 +129,11 @@ see CHANGELOG.md for a more formal list of changes by release
     - I don't mind my colours but not everybody may
     - my colours don't work very well on native lnf + dark themes:
         - https://github.com/ogri-la/wowman/issues/105
-
 * when curseforge api is down users get a wall of red error messages with very little useful information
     - see issue 91: https://github.com/ogri-la/wowman/issues/91
         - the error message has been improved but we still get a red wall of text
         - aggregate error messages?
 * new tab for dedicated log
-* simplify `install-addon` interface in core.clj
-    - we need to provide an installation directory which can be pulled from the application state
-* rename references of 'uri' to 'url'
-    - these are all through the catalog, so will have to wait
 * rename 'reinstall all' to 'reconcile'
     - steal from the best
     - make the reconcile automatic
@@ -131,9 +160,7 @@ see CHANGELOG.md for a more formal list of changes by release
 * database, compare current speed and code against loading addon category data serially
     - as opposed to in three blocks (categories, addons, category-addons). We might save some time and code
 * database, investigate prepared statements when inserting for improved speed
-* database, investigate a datalog backed datastore
-    - https://clojure.github.io/clojure-contrib/doc/datalog.html
-    - https://github.com/tonsky/datascript
+
 * export to markdown
     - I think I'd like a simple list like:
         * [addon name](https://source/path/to/addon)
@@ -149,10 +176,7 @@ see CHANGELOG.md for a more formal list of changes by release
         - he's not addressing tickets
         - it may have been simpler to use in 3.x.x but in 4.x.x it's gotten a bit archaic
         - I can't drop hostname without leaving pretty-printed stacktraces behind
-* catalog, normalise catagories between addons that overlap
-    - perhaps expand them into 'tags'? 
-    - a lot of these categories are composite
-        - break each composite one down into a singular, normalise, have a unique set of tags
+
 * investigate `.csv` as a human-readable but more compact representation
     - might be able to save a MB on extraneous syntax
     - might be able to speed up parsing and loading
