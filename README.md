@@ -8,6 +8,12 @@ It supports addons hosted by Curseforge, wowinterface, Tukui and Github.
 
 If you are a user of wowman and you ever want to get in touch, please just [open an issue](https://github.com/ogri-la/wowman/issues) or [PM me on reddit](https://www.reddit.com/message/compose/?to=torkus-jr&subject=wowman)
 
+## Notice!
+
+`wowman` will be renamed `strongbox` in the next major release!
+
+You can follow my progress on the [strongbox branch](https://github.com/ogri-la/wowman/tree/strongbox).
+
 ## Audience
 
 This software is for World of Warcraft players using Linux.
