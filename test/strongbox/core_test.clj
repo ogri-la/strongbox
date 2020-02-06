@@ -219,7 +219,7 @@
           addon-summary-list (utils/load-json-file (fixture-path "import-export--dummy-catalog.json"))
 
           fake-routes {;; catalog
-                       "https://raw.githubusercontent.com/ogri-la/strongbox-data/master/short-catalog.json"
+                       "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
                        {:get (fn [req] {:status 200 :body (utils/to-json (catalog/new-catalog addon-summary-list))})}
 
                        ;; every-addon
@@ -302,7 +302,7 @@
           addon-summary-list (utils/load-json-file (fixture-path "import-export--dummy-catalog.json"))
 
           fake-routes {;; catalog
-                       "https://raw.githubusercontent.com/ogri-la/strongbox-data/master/short-catalog.json"
+                       "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
                        {:get (fn [req] {:status 200 :body (utils/to-json (catalog/new-catalog addon-summary-list))})}
 
                        ;; every-addon
@@ -404,7 +404,7 @@
           alt-api-result (assoc-in api-result [:latestFiles 0 :displayName] "v8.20.00")
 
           fake-routes {;; catalog
-                       "https://raw.githubusercontent.com/ogri-la/strongbox-data/master/short-catalog.json"
+                       "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
                        {:get (fn [req] {:status 200 :body (utils/to-json (catalog/new-catalog [catalog]))})}
 
                        ;; every-addon
@@ -569,7 +569,7 @@
 (deftest re-download-catalog-on-bad-data
   (testing "catalog data is re-downloaded if it can't be read"
     (let [;; overrides the fake route in test_helper.clj
-          fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-data/master/short-catalog.json"
+          fake-routes {"https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
                        {:get (fn [req] {:status 200 :body (slurp (fixture-path "dummy-catalog--single-entry.json"))})}}]
       (with-running-app
         (core/refresh)
@@ -590,7 +590,7 @@
 (deftest re-download-catalog-on-bad-data-2
   (testing "`db-load-catalog` doesn't fail catastrophically when re-downloaded json is still bad"
     (let [;; overrides the fake route in test_helper.clj
-          fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-data/master/short-catalog.json"
+          fake-routes {"https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
                        {:get (fn [req] {:status 200 :body "borked json"})}}]
       (with-running-app
         (core/refresh)

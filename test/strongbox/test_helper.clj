@@ -40,14 +40,14 @@
         fake-routes {;; catalog
                      ;; return dummy data. we can do this because the catalog isn't loaded/parsed/validated
                      ;; until the UI (gui or cli) tells it to via a later call to `refresh`
-                     "https://raw.githubusercontent.com/ogri-la/strongbox-data/master/short-catalog.json"
+                     "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
                      {:get (fn [req] {:status 200 :body "{}"})}
 
-                     "https://raw.githubusercontent.com/ogri-la/strongbox-data/master/full-catalog.json"
+                     "https://raw.githubusercontent.com/ogri-la/wowman-data/master/full-catalog.json"
                      {:get (fn [req] {:status 200 :body "{}"})}
 
                      ;; latest strongbox version
-                     "https://api.github.com/repos/ogri-la/strongbox/releases/latest"
+                     "https://api.github.com/repos/ogri-la/wowman/releases/latest"
                      {:get (fn [req] {:status 200 :body "{\"tag_name\": \"0.0.0\"}"})}}]
     (try
       (debug "stopping application if it hasn't already been stopped")
