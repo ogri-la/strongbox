@@ -9,7 +9,6 @@
    [strongbox
     [zip :as zip]
     [main :as main]
-    [toc :as toc]
     [nfo :as nfo]
     [catalog :as catalog]
     [utils :as utils]
@@ -436,7 +435,7 @@
                      :source-id 0}
 
                 ;; the nfo data is simply merged over the top of the scraped toc data
-                toc (toc/merge-toc-nfo toc nfo)
+                toc (merge toc nfo)
 
                 ;; we then attempt to match this 'toc+nfo' to an addon in the catalog
                 catalog-match (core/-db-match-installed-addons-with-catalog [toc])

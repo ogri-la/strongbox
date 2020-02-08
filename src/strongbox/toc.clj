@@ -2,7 +2,6 @@
   (:refer-clojure :rename {replace clj-replace})
   (:require
    [strongbox
-    [nfo :as nfo]
     [specs :as sp]
     [utils :as utils]]
    [clojure.spec.alpha :as s]
@@ -108,16 +107,9 @@
 
 ;;
 
-(defn-spec merge-toc-nfo ::sp/toc
-  "merges nfo data over toc data, nothing more"
-  [toc ::sp/toc, nfo (s/nilable ::sp/nfo)]
-  (merge toc nfo))
-
 (defn-spec parse-addon-toc ::sp/toc
   [addon-dir ::sp/extant-dir, keyvals map?]
   (let [dirname (fs/base-name addon-dir) ;; /foo/bar/baz => baz
-        install-dir (str (fs/parent addon-dir)) ;; /foo/bar/baz => /foo/bar
-        nfo-contents (nfo/read-nfo install-dir dirname)
 
         ;; https://github.com/ogri-la/strongbox/issues/47 - user encountered addon sans 'Title' attribute
         ;; if a match in the catalog is found even after munging the title, it will overwrite this one
@@ -143,9 +135,7 @@
                        {:source "tukui"
                         :source-id x-tukui-id})
 
-        user-ignored (contains? nfo-contents :ignore?)
-        ignore-flag (when (and (not user-ignored)
-                               (some->> keyvals :version (clojure.string/includes? "@project-version@")))
+        ignore-flag (when (some->> keyvals :version (clojure.string/includes? "@project-version@"))
                       (warn (format "ignoring addon '%s': 'Version' field in .toc file is unrendered" dirname))
                       {:ignore? true})
 
@@ -168,13 +158,7 @@
         ;; I need to figure out some way of supporting multiple hosts per-addon
         addon (merge addon alias wowi-source curse-source tukui-source ignore-flag)]
 
-    ;; if source present but is not in list of known sources, ignore the nfo-contents
-    (if (and (contains? nfo-contents :source)
-             (not (utils/in? (:source nfo-contents) sp/catalog-sources)))
-      addon
-
-      ;; otherwise, merge the addon with the nfo contents
-      (merge-toc-nfo addon nfo-contents))))
+    addon))
 
 (defn-spec blizzard-addon? boolean?
   "returns `true` if given path looks like an official Blizzard addon"
@@ -212,7 +196,7 @@
 
         expand (fn [[group-id addons]]
                  (if (= 1 (count addons))
-                   ;; don't attempt to group lone addons, it's unnecessary
+                   ;; perfect case, no grouping.
                    (first addons)
 
                    ;; multiple addons in group
@@ -231,7 +215,7 @@
                                                   :description (format "group record for the %s addon" next-best-label)})))))
 
         ;; expand the grouped addons and join with the unknowns
-        addon-groups (apply conj (mapv expand addon-groups) unknown-grouping)]
-    addon-groups))
+        addon-list (apply conj (mapv expand addon-groups) unknown-grouping)]
+    addon-list))
 
 (st/instrument)

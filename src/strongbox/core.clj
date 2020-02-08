@@ -66,9 +66,9 @@
   ensure the correct environment variables and cwd are set prior to init for proper isolation during tests"
   []
   (let [strongbox-suffix (fn [path]
-                        (if-not (ends-with? path "/strongbox")
-                          (join path "strongbox")
-                          path))
+                           (if-not (ends-with? path "/strongbox")
+                             (join path "strongbox")
+                             path))
 
         ;; https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
         ;; ignoring XDG_CONFIG_DIRS and XDG_DATA_DIRS for now
@@ -568,10 +568,37 @@
 (defn-spec load-installed-addons nil?
   []
   (if-let [addon-dir (get-state :selected-addon-dir)]
-    (do
-      (info "(re)loading installed addons:" addon-dir)
-      (update-installed-addon-list! (strongbox.toc/installed-addons addon-dir)))
-    ;; ensure the previous list of addon dirs are cleared if :selected-addon-dir is unset
+    (let [_ (info "(re)loading installed addons:" addon-dir)
+          addon-list (strongbox.toc/installed-addons addon-dir)
+
+          ;; at this point we have a list of the 'top level' addons, with
+          ;; any bundled addons grouped within each one.
+
+          ;; each addon now needs to be merged with the 'nfo' data, the additional
+          ;; data we store alongside each addon when it is installed/updated
+
+          ;; merge toc and nfo data together
+          merge-nfo-data (fn [addon]
+                           (let [nfo-data (nfo/read-nfo addon-dir (:dirname addon))]
+
+                             ;; if `source` present, but is not in list of known sources, ignore the nfo-contents.
+                             ;; it's possible this nfo data was written by a newer version of strongbox.
+
+
+                             (if (and (contains? nfo-data :source)
+                                      (not (utils/in? (:source nfo-data) sp/catalog-sources)))
+
+                               addon
+
+                               ;; otherwise, merge the addon with the nfo contents.
+                               ;; if 'ignore' in addon is true, but false in nfo-data, nfo-data will take precedence.
+                               (merge addon nfo-data))))
+
+          addon-list (mapv merge-nfo-data addon-list)]
+
+      (update-installed-addon-list! addon-list))
+
+    ;; otherwise, ensure list of installed addons is cleared
     (update-installed-addon-list! [])))
 
 ;;
