@@ -4,11 +4,13 @@ this is my own scratchpad for keeping track of things. it gets truncated frequen
 
 see CHANGELOG.md for a more formal list of changes by release
 
-## 0.13.0 release
+---
 
-### done
+No more features are planned for the `0.x.x` line.
 
-### todo
+Work continues on the [strongbox branch](https://github.com/ogri-la/wowman/tree/strongbox)
+
+---
 
 ## todo bucket (no particular order)
 

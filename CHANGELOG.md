@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## 0.12.2 - 2020-02-08
+
+* release 0.12.1 was badly formed and missing the commit with the actual fix.
+
 ## 0.12.1 - 2020-02-06
 
 ### Fixed

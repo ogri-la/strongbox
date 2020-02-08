@@ -1067,10 +1067,9 @@
 
 (defn-spec -upgrade-nfo nil?
   "given an addon, upgrades it's nfo file to the current nfo spec."
-  [addon map?]
+  [install-dir ::sp/extant-dir, addon (s/keys :req-un [::sp/dirname])]
   (debug "upgrading nfo file:" (:dirname addon))
-  (let [install-dir (get-state :selected-addon-dir)
-        ;; best guess of what the installed game track is
+  (let [;; best guess of what the installed game track is
         ;; TODO: remove this in 0.14.0 and delete invalid nfo-v2 files
         ;; it's reasonable to assume nfo files will consistently have a :game-track by then
         game-track (guess-game-track install-dir addon)
@@ -1079,8 +1078,13 @@
                             ;; addons that are not expanded yet do not have this key.
                             ;; which is beside the point, because we don't want to use the `:version` key anyway
                             :version (:installed-version addon)
-                            :game-track game-track})]
-    (nfo/upgrade-nfo install-dir addon))
+                            :game-track game-track})
+        nfo-file (nfo/nfo-path install-dir (:dirname addon))]
+    (if (s/valid? ::sp/nfo-input-minimum addon)
+      (nfo/upgrade-nfo install-dir addon)
+      (do
+        (warn (format "failed to upgrade file, removing: %s" nfo-file))
+        (nfo/rm-nfo nfo-file))))
   nil)
 
 (defn-spec upgrade-nfo-files nil?
@@ -1088,11 +1092,14 @@
   new data may have been introduced since addon was installed"
   []
   (let [install-dir (get-state :selected-addon-dir)
-        has-valid-nfo-file? (partial nfo/has-valid-nfo-file? install-dir)]
+        has-nfo-file? (partial nfo/has-nfo-file? install-dir)
+        has-valid-nfo-file? (partial nfo/has-valid-nfo-file? install-dir)
+        upgrade-nfo (partial -upgrade-nfo install-dir)]
     (->> (get-state)
          :installed-addon-list
+         (filter has-nfo-file?) ;; only upgrade addons that nfo files
          (remove has-valid-nfo-file?) ;; skip good nfo files
-         (mapv -upgrade-nfo)))
+         (mapv upgrade-nfo)))
   nil)
 
 ;; 

@@ -4,7 +4,10 @@ Just for my own reference
 
 * exit emacs
 * make sure nothing is left uncommitted
-* run lein clean
+    - git reset --hard
+    - git pull
+* run
+    - lein clean
 * new branch '0.x.0-prep'
 * ensure all non-gpl dependencies have an exclusion in LICENCE
 * update version in project.clj to the new version
@@ -18,6 +21,8 @@ Just for my own reference
 * run lein pom
 * commit + push
 * open a pr for master
+* review the changes to be merged in to master!
+    - release 0.12.1 was completely missing the intended fix
 * wait for build to successfully complete
     - if build fails
         - fix fail
