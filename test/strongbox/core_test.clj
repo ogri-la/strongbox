@@ -571,13 +571,6 @@
 
 (deftest load-installed-addons
   (testing "regular .toc file can be loaded"
-
-    ;; test0: toc data and missing nfo data are handled
-    ;; test1: toc data and nfo data are mooshed together as expected
-    ;; test2: ignore-flag in nfo data overrides toc data ignore flag correctly
-    ;; test3: invalid nfo data is not merged
-
-    ;; test0
     (let [addon-dir (str fs/*cwd*)
           some-addon-path (utils/join addon-dir "SomeAddon")
           _ (fs/mkdirs some-addon-path)
@@ -609,7 +602,6 @@
           _ (fs/mkdirs some-addon-path)
 
           some-addon-toc (utils/join some-addon-path "SomeAddon.toc")
-
           _ (spit some-addon-toc "## Title: SomeAddon\n## Description: asdf\n## Interface: 80300\n## Version: 1.2.3")
 
           some-addon-nfo (utils/join some-addon-path nfo/nfo-filename)
@@ -638,13 +630,10 @@
       (is (= expected (core/-load-installed-addons addon-dir))))))
 
 (deftest group-addons
-  ;; 4. synthetic records
-
   (testing "addons with nothing to group on are not modified"
     (let [addon-list [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"}
                       {:name "a2", :dirname "A2", :label "A2", :description "" :interface-version 80300 :installed-version "4.5.6"}
                       {:name "a3", :dirname "A3", :label "A2", :description "" :interface-version 80300 :installed-version "7.8.9"}]
-          ;; 
           expected addon-list]
       (is (= expected (core/group-addons addon-list)))))
 
@@ -655,7 +644,6 @@
                        :group-id "bar" :primary? true}
                       {:name "a3", :dirname "A3", :label "A2", :description "" :interface-version 80300 :installed-version "7.8.9"
                        :group-id "baz" :primary? true}]
-          ;; 
           expected addon-list]
       (is (= expected (core/group-addons addon-list)))))
 
