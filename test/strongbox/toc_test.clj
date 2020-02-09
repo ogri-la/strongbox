@@ -2,7 +2,6 @@
   (:require
    [clojure.test :refer [deftest testing is use-fixtures]]
    [strongbox
-    [nfo :as nfo]
     [utils :as utils]
     [toc :as toc]
     [test-helper :as helper]]
@@ -115,30 +114,7 @@ SomeAddon.lua")
           addon-dir (utils/join install-dir "EveryAddon")]
       (fs/mkdir addon-dir)
       (doseq [[toc-data expected] cases]
-        (is (= expected (toc/parse-addon-toc addon-dir toc-data))))))
-
-  (testing "parsing scraped keyvals in .toc with an explicitly set ignore flag in nfo file"
-    (let [base-case {:name "everyaddon-*"
-                     :dirname "EveryAddon"
-                     :label "EveryAddon *"
-                     :description nil
-                     :interface-version 80200}
-
-          ;; addon is in development
-          toc-data {:version "@project-version@"}
-
-          nfo-data {;; update me! destroy any changes to my work!
-                    ;; this is only ever set by the user, not by the app.
-                    :ignore? false}
-
-          expected (merge base-case nfo-data {:installed-version "@project-version@"})
-
-          install-dir fs/*cwd*
-          addon-dir (utils/join install-dir "EveryAddon")]
-
-      (fs/mkdir addon-dir)
-      (spit (utils/join addon-dir nfo/nfo-filename) (utils/to-json nfo-data))
-      (is (= expected (toc/parse-addon-toc addon-dir toc-data))))))
+        (is (= expected (toc/parse-addon-toc addon-dir toc-data)))))))
 
 (deftest rm-trailing-version
   (testing "parsing of 'Title' attribute in toc file"

@@ -66,9 +66,9 @@
   ensure the correct environment variables and cwd are set prior to init for proper isolation during tests"
   []
   (let [strongbox-suffix (fn [path]
-                        (if-not (ends-with? path "/strongbox")
-                          (join path "strongbox")
-                          path))
+                           (if-not (ends-with? path "/strongbox")
+                             (join path "strongbox")
+                             path))
 
         ;; https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
         ;; ignoring XDG_CONFIG_DIRS and XDG_DATA_DIRS for now
@@ -565,13 +565,83 @@
     (swap! state assoc :installed-addon-list installed-addon-list)
     nil))
 
+(defn-spec group-addons ::sp/toc-list
+  "an addon may actually be many addons bundled together in a single download.
+  strongbox tags the bundled addons as they are unzipped and tries to determine the primary one.
+  after we've loaded the addons and merged their nfo data, we can then group them"
+  [addon-list ::sp/toc-list]
+  (let [;; group-id comes from the nfo file
+        addon-groups (group-by :group-id addon-list)
+
+        ;; remove those addons without a group, we'll conj them in later
+        unknown-grouping (get addon-groups nil)
+        addon-groups (dissoc addon-groups nil)
+
+        expand (fn [[group-id addons]]
+                 (if (= 1 (count addons))
+                   ;; perfect case, no grouping.
+                   (first addons)
+
+                   ;; multiple addons in group
+                   (let [_ (debug (format "grouping '%s', %s addons in group" group-id (count addons)))
+                         primary (first (filter :primary? addons))
+                         next-best (first addons)
+                         new-data {:group-addons addons
+                                   :group-addon-count (count addons)}
+                         next-best-label (-> next-best :group-id fs/base-name)]
+                     (if primary
+                       ;; best, easiest case
+                       (merge primary new-data)
+                       ;; when we can't determine the primary addon, add a shitty synthetic one
+                       ;; TODO: should I dissoc :dirname? it could be misleading..
+                       (merge next-best new-data {:label (format "%s (group)" next-best-label)
+                                                  :description (format "group record for the %s addon" next-best-label)})))))
+
+        ;; this flattens the newly grouped addons from a map into a list and joins the unknowns
+        addon-list (apply conj (mapv expand addon-groups) unknown-grouping)]
+    addon-list))
+
+(defn-spec -load-installed-addons ::sp/toc-list
+  "reads the .toc files from the given addon dir, reads any nfo data for 
+  these addons, groups them, returns the mooshed data"
+  [addon-dir ::sp/addon-dir]
+  (let [addon-list (strongbox.toc/installed-addons addon-dir)
+
+        ;; at this point we have a list of the 'top level' addons, with
+        ;; any bundled addons grouped within each one.
+
+        ;; each addon now needs to be merged with the 'nfo' data, the additional
+        ;; data we store alongside each addon when it is installed/updated
+
+        merge-nfo-data (fn [addon]
+                         (let [nfo-data (nfo/read-nfo addon-dir (:dirname addon))]
+
+                           ;; todo: nfo data shouldn't be returning anything if it's invalid.
+                           ;; ah, but we have nfo v1 data to contend with (map?) ... dump nfo v1 support?
+
+                           ;; if `source` present, but is not in list of known sources, ignore the nfo-contents.
+                           ;; it is possible this nfo data was written by a newer version of strongbox.
+                           (if (and (contains? nfo-data :source)
+                                    (not (utils/in? (:source nfo-data) sp/catalog-sources)))
+                             addon
+
+                             ;; otherwise, merge the addon with the nfo data.
+                             ;; when `ignore?` flag in addon is `true` but `false` in nfo-data, nfo-data will take precedence.
+                             (merge addon nfo-data))))
+
+        addon-list (mapv merge-nfo-data addon-list)]
+
+    (group-addons addon-list)))
+
 (defn-spec load-installed-addons nil?
+  "guard function. offloads the hard work to `-load-installed-addons` then updates application state"
   []
   (if-let [addon-dir (get-state :selected-addon-dir)]
-    (do
+    (let [addon-list (-load-installed-addons addon-dir)]
       (info "(re)loading installed addons:" addon-dir)
-      (update-installed-addon-list! (strongbox.toc/installed-addons addon-dir)))
-    ;; ensure the previous list of addon dirs are cleared if :selected-addon-dir is unset
+      (update-installed-addon-list! addon-list))
+
+    ;; otherwise, ensure list of installed addons is cleared
     (update-installed-addon-list! [])))
 
 ;;

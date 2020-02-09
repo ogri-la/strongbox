@@ -2,7 +2,6 @@
   (:refer-clojure :rename {replace clj-replace})
   (:require
    [strongbox
-    [nfo :as nfo]
     [specs :as sp]
     [utils :as utils]]
    [clojure.spec.alpha :as s]
@@ -108,16 +107,9 @@
 
 ;;
 
-(defn-spec merge-toc-nfo ::sp/toc
-  "merges nfo data over toc data, nothing more"
-  [toc ::sp/toc, nfo (s/nilable ::sp/nfo)]
-  (merge toc nfo))
-
 (defn-spec parse-addon-toc ::sp/toc
   [addon-dir ::sp/extant-dir, keyvals map?]
   (let [dirname (fs/base-name addon-dir) ;; /foo/bar/baz => baz
-        install-dir (str (fs/parent addon-dir)) ;; /foo/bar/baz => /foo/bar
-        nfo-contents (nfo/read-nfo install-dir dirname)
 
         ;; https://github.com/ogri-la/strongbox/issues/47 - user encountered addon sans 'Title' attribute
         ;; if a match in the catalog is found even after munging the title, it will overwrite this one
@@ -143,9 +135,7 @@
                        {:source "tukui"
                         :source-id x-tukui-id})
 
-        user-ignored (contains? nfo-contents :ignore?)
-        ignore-flag (when (and (not user-ignored)
-                               (some->> keyvals :version (clojure.string/includes? "@project-version@")))
+        ignore-flag (when (some->> keyvals :version (clojure.string/includes? "@project-version@"))
                       (warn (format "ignoring addon '%s': 'Version' field in .toc file is unrendered" dirname))
                       {:ignore? true})
 
@@ -168,13 +158,7 @@
         ;; I need to figure out some way of supporting multiple hosts per-addon
         addon (merge addon alias wowi-source curse-source tukui-source ignore-flag)]
 
-    ;; if source present but is not in list of known sources, ignore the nfo-contents
-    (if (and (contains? nfo-contents :source)
-             (not (utils/in? (:source nfo-contents) sp/catalog-sources)))
-      addon
-
-      ;; otherwise, merge the addon with the nfo contents
-      (merge-toc-nfo addon nfo-contents))))
+    addon))
 
 (defn-spec blizzard-addon? boolean?
   "returns `true` if given path looks like an official Blizzard addon"
@@ -198,40 +182,10 @@
       (error e (format "unhandled error parsing addon in directory '%s': %s" addon-dir (.getMessage e))))))
 
 (defn-spec installed-addons (s/or :ok ::sp/toc-list, :error nil?)
-  [addons-dir ::sp/extant-dir]
-  (let [addon-dir-list (filter fs/directory? (fs/list-dir addons-dir))
-        addon-list (remove nil? (mapv (comp parse-addon-toc-guard str) addon-dir-list))
-
-        ;; an addon may actually be many addons bundled together in a single download
-        ;; strongbox tags the bundled addons as they are unzipped and tries to determine the primary one
-        addon-groups (group-by :group-id addon-list)
-
-        ;; remove those addons without a group, we'll conj them in later
-        unknown-grouping (get addon-groups nil)
-        addon-groups (dissoc addon-groups nil)
-
-        expand (fn [[group-id addons]]
-                 (if (= 1 (count addons))
-                   ;; don't attempt to group lone addons, it's unnecessary
-                   (first addons)
-
-                   ;; multiple addons in group
-                   (let [_ (debug (format "grouping '%s', %s addons in group" group-id (count addons)))
-                         primary (first (filter :primary? addons))
-                         next-best (first addons)
-                         new-data {:group-addons addons
-                                   :group-addon-count (count addons)}
-                         next-best-label (-> next-best :group-id fs/base-name)]
-                     (if primary
-                       ;; best, easiest case
-                       (merge primary new-data)
-                       ;; when we can't determine the primary addon, add a shitty synthetic one
-                       ;; TODO: should I dissoc :dirname? it could be misleading..
-                       (merge next-best new-data {:label (format "%s (group)" next-best-label)
-                                                  :description (format "group record for the %s addon" next-best-label)})))))
-
-        ;; expand the grouped addons and join with the unknowns
-        addon-groups (apply conj (mapv expand addon-groups) unknown-grouping)]
-    addon-groups))
+  "returns a list of addon data scraped from the .toc files of all addons in given `addon-dir`"
+  [addon-dir ::sp/addon-dir]
+  (let [addon-dir-list (->> addon-dir fs/list-dir (filter fs/directory?) (map str))
+        addon-list (->> addon-dir-list (map parse-addon-toc-guard) (remove nil?) vec)]
+    addon-list))
 
 (st/instrument)
