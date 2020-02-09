@@ -565,7 +565,6 @@
     (swap! state assoc :installed-addon-list installed-addon-list)
     nil))
 
-;; TODO: test, now that it is it's own thing.
 (defn-spec group-addons ::sp/toc-list
   "an addon may actually be many addons bundled together in a single download.
   strongbox tags the bundled addons as they are unzipped and tries to determine the primary one.
@@ -604,7 +603,7 @@
 
 (defn-spec -load-installed-addons ::sp/toc-list
   "reads the .toc files from the given addon dir, reads any nfo data for 
-  these addons and returns the mooshed data"
+  these addons, groups them, returns the mooshed data"
   [addon-dir ::sp/addon-dir]
   (let [addon-list (strongbox.toc/installed-addons addon-dir)
 
@@ -635,8 +634,7 @@
     (group-addons addon-list)))
 
 (defn-spec load-installed-addons nil?
-  "reads the .toc files from the currently selected addon dir, reads any nfo data for 
-  these addons, mooshes them together and updates application state"
+  "guard function. offloads the hard work to `-load-installed-addons` then updates application state"
   []
   (if-let [addon-dir (get-state :selected-addon-dir)]
     (let [addon-list (-load-installed-addons addon-dir)]
