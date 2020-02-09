@@ -565,37 +565,43 @@
     (swap! state assoc :installed-addon-list installed-addon-list)
     nil))
 
+(defn-spec -load-installed-addons ::sp/toc-list
+  "reads the .toc files from the given addon dir, reads any nfo data for 
+  these addons and returns the mooshed data"
+  [addon-dir ::sp/addon-dir]
+  (let [addon-list (strongbox.toc/installed-addons addon-dir)
+
+        ;; at this point we have a list of the 'top level' addons, with
+        ;; any bundled addons grouped within each one.
+
+        ;; each addon now needs to be merged with the 'nfo' data, the additional
+        ;; data we store alongside each addon when it is installed/updated
+
+        merge-nfo-data (fn [addon]
+                         (let [nfo-data (nfo/read-nfo addon-dir (:dirname addon))]
+
+                           ;; todo: nfo data shouldn't be returning anything if it's invalid.
+                           ;; ah, but we have nfo v1 data to contend with (map?) ... dump nfo v1 support?
+
+                           ;; if `source` present, but is not in list of known sources, ignore the nfo-contents.
+                           ;; it is possible this nfo data was written by a newer version of strongbox.
+                           (if (and (contains? nfo-data :source)
+                                    (not (utils/in? (:source nfo-data) sp/catalog-sources)))
+                             addon
+
+                             ;; otherwise, merge the addon with the nfo data.
+                             ;; when `ignore?` flag in addon is `true` but `false` in nfo-data, nfo-data will take precedence.
+                             (merge addon nfo-data))))]
+
+    (mapv merge-nfo-data addon-list)))
+
 (defn-spec load-installed-addons nil?
+  "reads the .toc files from the currently selected addon dir, reads any nfo data for 
+  these addons, mooshes them together and updates application state"
   []
   (if-let [addon-dir (get-state :selected-addon-dir)]
-    (let [_ (info "(re)loading installed addons:" addon-dir)
-          addon-list (strongbox.toc/installed-addons addon-dir)
-
-          ;; at this point we have a list of the 'top level' addons, with
-          ;; any bundled addons grouped within each one.
-
-          ;; each addon now needs to be merged with the 'nfo' data, the additional
-          ;; data we store alongside each addon when it is installed/updated
-
-          ;; merge toc and nfo data together
-          merge-nfo-data (fn [addon]
-                           (let [nfo-data (nfo/read-nfo addon-dir (:dirname addon))]
-
-                             ;; if `source` present, but is not in list of known sources, ignore the nfo-contents.
-                             ;; it's possible this nfo data was written by a newer version of strongbox.
-
-
-                             (if (and (contains? nfo-data :source)
-                                      (not (utils/in? (:source nfo-data) sp/catalog-sources)))
-
-                               addon
-
-                               ;; otherwise, merge the addon with the nfo contents.
-                               ;; if 'ignore' in addon is true, but false in nfo-data, nfo-data will take precedence.
-                               (merge addon nfo-data))))
-
-          addon-list (mapv merge-nfo-data addon-list)]
-
+    (let [addon-list (-load-installed-addons addon-dir)]
+      (info "(re)loading installed addons:" addon-dir)
       (update-installed-addon-list! addon-list))
 
     ;; otherwise, ensure list of installed addons is cleared

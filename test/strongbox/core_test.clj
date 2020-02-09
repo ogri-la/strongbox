@@ -483,7 +483,6 @@
       (doseq [[given expected] cases]
         (is (= expected (core/db-gen-game-track-list given)))))))
 
-;; legacy
 
 ;; local addon .toc file
 (def toc
@@ -564,6 +563,78 @@
       (fs/copy (fixture-path "bad-truncated.zip") (utils/join install-dir fname)) ;; hoho, so evil
       (is (= (core/install-addon addon install-dir) nil))
       (is (= (count (fs/list-dir install-dir)) 0))))) ;; bad zip file deleted
+
+;;
+
+(deftest load-installed-addons
+  (testing "regular .toc file can be loaded"
+
+    ;; test0: toc data and missing nfo data are handled
+    ;; test1: toc data and nfo data are mooshed together as expected
+    ;; test2: ignore-flag in nfo data overrides toc data ignore flag correctly
+    ;; test3: invalid nfo data is not merged
+
+    ;; test0
+    (let [addon-dir (str fs/*cwd*)
+          some-addon-path (utils/join addon-dir "SomeAddon")
+          _ (fs/mkdirs some-addon-path)
+
+          some-addon-toc (utils/join some-addon-path "SomeAddon.toc")
+          _ (spit some-addon-toc "## Title: SomeAddon\n## Description: asdf\n## Interface: 80300\n## Version: 1.2.3")
+
+          expected [{:name "someaddon", :dirname "SomeAddon", :label "SomeAddon", :description "asdf", :interface-version 80300, :installed-version "1.2.3"}]]
+      (is (= expected (core/-load-installed-addons addon-dir)))))
+
+  (testing "toc data and nfo data are mooshed together as expected"
+    (let [addon-dir (str fs/*cwd*)
+          some-addon-path (utils/join addon-dir "SomeAddon")
+          _ (fs/mkdirs some-addon-path)
+
+          some-addon-toc (utils/join some-addon-path "SomeAddon.toc")
+          _ (spit some-addon-toc "## Title: SomeAddon\n## Description: asdf\n## Interface: 80300\n## Version: 1.2.3")
+
+          some-addon-nfo (utils/join some-addon-path nfo/nfo-filename)
+          _ (spit some-addon-nfo (utils/to-json {:source "curseforge" :source-id 123}))
+
+          expected [{:name "someaddon", :dirname "SomeAddon", :label "SomeAddon", :description "asdf", :interface-version 80300, :installed-version "1.2.3"
+                     :source "curseforge" :source-id 123}]]
+      (is (= expected (core/-load-installed-addons addon-dir)))))
+
+  (testing "invalid nfo data is not loaded"
+    (let [addon-dir (str fs/*cwd*)
+          some-addon-path (utils/join addon-dir "SomeAddon")
+          _ (fs/mkdirs some-addon-path)
+
+          some-addon-toc (utils/join some-addon-path "SomeAddon.toc")
+
+          _ (spit some-addon-toc "## Title: SomeAddon\n## Description: asdf\n## Interface: 80300\n## Version: 1.2.3")
+
+          some-addon-nfo (utils/join some-addon-path nfo/nfo-filename)
+          ;; `source` here is invalid
+          _ (spit some-addon-nfo (utils/to-json {:source "vault-111" :source-id 123 :ignore? false}))
+
+          expected [{:name "someaddon", :dirname "SomeAddon", :label "SomeAddon", :description "asdf", :interface-version 80300, :installed-version "1.2.3"}]]
+      (is (= expected (core/-load-installed-addons addon-dir)))))
+
+  (testing "ignore flag in nfo data overrides any ignore flag in toc data"
+    (let [addon-dir (str fs/*cwd*)
+          some-addon-path (utils/join addon-dir "SomeAddon")
+          _ (fs/mkdirs some-addon-path)
+
+          some-addon-toc (utils/join some-addon-path "SomeAddon.toc")
+          _ (spit some-addon-toc "## Title: SomeAddon\n## Description: asdf\n## Interface: 80300\n## Version: @project-version@")
+
+          some-addon-nfo (utils/join some-addon-path nfo/nfo-filename)
+          _ (spit some-addon-nfo (utils/to-json {:source "curseforge" :source-id 123
+                                                 :ignore? false})) ;; expressly un-ignoring this otherwise-ignored addon
+
+          expected [{:name "someaddon", :dirname "SomeAddon", :label "SomeAddon", :description "asdf", :interface-version 80300
+                     :installed-version "@project-version@"
+                     :source "curseforge" :source-id 123
+                     :ignore? false}]]
+      (is (= expected (core/-load-installed-addons addon-dir))))))
+
+;;
 
 (deftest re-download-catalog-on-bad-data
   (testing "catalog data is re-downloaded if it can't be read"

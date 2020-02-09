@@ -8,6 +8,14 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### done
 
+* code refactor
+    - diagram state transitions
+        - my mental model has become fuzzy
+        - done, see strongbox-docs
+    - untable nfo and toc files
+        - result of diagramming modules
+        - done
+
 ### todo
 
 * rename wowman
@@ -52,8 +60,6 @@ see CHANGELOG.md for a more formal list of changes by release
     * core.clj is getting too large
         - it's difficult to navigate and debug
         - many tests are accumulating in core_test.clj
-    * diagram state transitions
-        - my mental model has become fuzzy
 
 * catalog updates
     * rename references of 'uri' to 'url'
