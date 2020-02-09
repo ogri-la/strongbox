@@ -44,7 +44,7 @@
                        {:get (fn [_] {:status 200 :body fixture})}}
           page 1
           num-addons 25
-          first-addon {:uri "https://www.wowinterface.com/downloads/info25079",
+          first-addon {:url "https://www.wowinterface.com/downloads/info25079",
                        :name "rotation-master",
                        :label "Rotation Master",
                        :updated-date "2019-07-29T21:37:00Z",
@@ -52,7 +52,7 @@
                        :category-list #{"dummy"}
                        :source "wowinterface"
                        :source-id 25079}
-          last-addon  {:uri "https://www.wowinterface.com/downloads/info24805",
+          last-addon  {:url "https://www.wowinterface.com/downloads/info24805",
                        :name "mattbars-mattui",
                        :label "MattBars (MattUI)",
                        :updated-date "2018-10-30T17:56:00Z",

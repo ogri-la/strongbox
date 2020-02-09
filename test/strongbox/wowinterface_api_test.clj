@@ -10,7 +10,7 @@
 
 (deftest expand-summary
   (testing "expand-summary correctly extracts and adds additional properties"
-    (let [given {:uri "https://www.wowinterface.com/downloads/info25079",
+    (let [given {:url "https://www.wowinterface.com/downloads/info25079",
                  :name "rotation-master",
                  :label "Rotation Master",
                  :updated-date "2019-07-29T21:37:00Z",
@@ -22,7 +22,7 @@
 
           game-track "retail"
 
-          expected {:uri "https://www.wowinterface.com/downloads/info25079"
+          expected {:url "https://www.wowinterface.com/downloads/info25079"
                     :name "rotation-master"
                     :label "Rotation Master"
                     :updated-date "2019-07-29T21:37:00Z"
@@ -32,7 +32,7 @@
                     :source-id 25079
                     :game-track-list [game-track]
 
-                    :download-uri "https://cdn.wowinterface.com/downloads/getfile.php?id=25079"
+                    :download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=25079"
                     :version "1.2.3"}
 
           fixture (slurp (fixture-path "wowinterface-api--addon-details.json"))

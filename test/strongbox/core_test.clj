@@ -122,7 +122,7 @@
   (with-running-app
     (testing "all path keys are using a known suffix"
       (doseq [key (keys (core/paths))]
-        (is (some #{"dir" "file" "uri"} (clojure.string/split (name key) #"\-")))))
+        (is (some #{"dir" "file" "url"} (clojure.string/split (name key) #"\-")))))
 
     (testing "all paths to files and directories are absolute"
       (let [files+dirs (filter (fn [[k v]] (or (ends-with? k "-dir")
@@ -132,7 +132,7 @@
           (is (-> path (starts-with? "/")) (format "path %s is not absolute: %s" key path)))))
 
     (testing "all remote paths are using https"
-      (let [remote-paths (filter (fn [[k v]] (ends-with? k "-uri")) (core/paths))]
+      (let [remote-paths (filter (fn [[k v]] (ends-with? k "-url")) (core/paths))]
         (doseq [[key path] remote-paths]
           (is (-> path (starts-with? "https://")) (format "remote path %s is not using HTTPS: %s" key path))))))
 
@@ -253,12 +253,12 @@
                            :name "everyaddon",
                            :source "curseforge",
                            :interface-version 80000,
-                           :download-uri "https://edge.forgecdn.net/files/1/1/EveryAddon.zip",
+                           :download-url "https://edge.forgecdn.net/files/1/1/EveryAddon.zip",
                            :alt-name "everyaddon",
                            :label "EveryAddon",
                            :download-count 3000000,
                            :source-id 1,
-                           :uri "https://www.curseforge.com/wow/addons/everyaddon",
+                           :url "https://www.curseforge.com/wow/addons/everyaddon",
                            :version "v8.2.0-v1.13.2-7135.139",
                            :dirname "EveryAddon",
                            :primary? true,
@@ -274,12 +274,12 @@
                            :name "everyotheraddon",
                            :source "curseforge",
                            :interface-version 80200,
-                           :download-uri "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip",
+                           :download-url "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip",
                            :alt-name "everyotheraddon",
                            :label "Every Other Addon",
                            :download-count 5400000,
                            :source-id 2,
-                           :uri "https://www.curseforge.com/wow/addons/everyotheraddon",
+                           :url "https://www.curseforge.com/wow/addons/everyotheraddon",
                            :version "v8.2.0-v1.13.2-7135.139",
                            :dirname "EveryOtherAddon",
                            :primary? true,
@@ -336,12 +336,12 @@
                            :name "everyaddon",
                            :source "curseforge",
                            :interface-version 80000,
-                           :download-uri "https://edge.forgecdn.net/files/1/1/EveryAddon.zip",
+                           :download-url "https://edge.forgecdn.net/files/1/1/EveryAddon.zip",
                            :alt-name "everyaddon",
                            :label "EveryAddon",
                            :download-count 3000000,
                            :source-id 1,
-                           :uri "https://www.curseforge.com/wow/addons/everyaddon",
+                           :url "https://www.curseforge.com/wow/addons/everyaddon",
                            :version "v8.2.0-v1.13.2-7135.139",
                            :dirname "EveryAddon",
                            :primary? true,
@@ -357,12 +357,12 @@
                            :name "everyotheraddon",
                            :source "curseforge",
                            :interface-version 11300, ;; changed
-                           :download-uri "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip",
+                           :download-url "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip",
                            :alt-name "everyotheraddon",
                            :label "Every Other Addon",
                            :download-count 5400000,
                            :source-id 2,
-                           :uri "https://www.curseforge.com/wow/addons/everyotheraddon",
+                           :url "https://www.curseforge.com/wow/addons/everyotheraddon",
                            :version "v8.2.0-v1.13.2-7135.139",
                            :dirname "EveryOtherAddon",
                            :primary? true,
@@ -391,7 +391,7 @@
                    :source "curseforge",
                    :source-id 0
                    :updated-date "2012-09-20T05:32:00Z",
-                   :uri "https://www.curseforge.com/wow/addons/every-addon"}
+                   :url "https://www.curseforge.com/wow/addons/every-addon"}
 
           ;; this is subset of the data the remote addon host (like curseforge) serves us
           api-result {:latestFiles [{:downloadUrl "https://example.org/foo"
@@ -446,7 +446,7 @@
                 alt-toc-addon (assoc toc-addon :source-id 1) ;; :update? will be true
 
                 ;; and what we 'expand' that data into
-                api-xform {:download-uri "https://example.org/foo",
+                api-xform {:download-url "https://example.org/foo",
                            :version "v8.10.00"}
                 alt-api-xform (assoc api-xform :version "v8.20.00")
 
@@ -507,15 +507,15 @@
    :source-id 1
    :created-date  "2009-02-08T13:30:30Z",
    :updated-date  "2016-09-08T14:18:33Z",
-   :uri "https://www.example.org/wow/addons/everyaddon"})
+   :url "https://www.example.org/wow/addons/everyaddon"})
 
 (def addon
   "remote addon detail"
   (merge addon-summary
          {:download-count 1
           :interface-version  70000,
-          :download-uri  "https://www.example.org/wow/addons/everyaddon/download/123456/file",
-          :donation-uri nil,
+          :download-url  "https://www.example.org/wow/addons/everyaddon/download/123456/file",
+          :donation-url nil,
           :version  "1.2.3"}))
 
 (deftest install-addon
@@ -735,7 +735,7 @@
 
 (deftest add-user-addon-to-user-catalog
   (testing "user addon is successfully added to the user catalog, creating it if it doesn't exist"
-    (let [user-addon {:uri "https://github.com/Aviana/HealComm"
+    (let [user-addon {:url "https://github.com/Aviana/HealComm"
                       :updated-date "2019-10-09T17:40:01Z"
                       :source "github"
                       :source-id "Aviana/HealComm"
@@ -754,7 +754,7 @@
         (is (= expected (catalog/read-catalog (core/paths :user-catalog-file)))))))
 
   (testing "adding addons to the user catalogue is idempotent"
-    (let [user-addon {:uri "https://github.com/Aviana/HealComm"
+    (let [user-addon {:url "https://github.com/Aviana/HealComm"
                       :updated-date "2019-10-09T17:40:01Z"
                       :source "github"
                       :source-id "Aviana/HealComm"
@@ -802,7 +802,7 @@
                                   :label "HealComm",
                                   :download-count 30946,
                                   :source-id "Aviana/HealComm",
-                                  :uri "https://github.com/Aviana/HealComm"}]]
+                                  :url "https://github.com/Aviana/HealComm"}]]
       (with-running-app
         (core/set-addon-dir! install-dir)
         (with-fake-routes-in-isolation fake-routes
@@ -831,7 +831,7 @@
                          :download-count 123
                          :source "wowinterface"
                          :source-id 1
-                         :uri "https://www.wowinterface.com/downloads/info1"
+                         :url "https://www.wowinterface.com/downloads/info1"
 
                          ;; wowinterface and tukui don't have descriptions in their api
                          ;; the database will return a field with `nil` if the addon-summary
@@ -850,7 +850,7 @@
                     :download-count 123
                     :source "wowinterface"
                     :source-id 1
-                    :uri "https://www.wowinterface.com/downloads/info1"
+                    :url "https://www.wowinterface.com/downloads/info1"
 
                     ;; optional, lets the GUI know we have a match that can be checked for updates
                     :matched? true}]

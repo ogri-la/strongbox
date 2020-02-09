@@ -24,7 +24,7 @@
                      :label "[rp:tags]",
                      :download-count 2838,
                      :source-id 98,
-                     :uri "https://www.tukui.org/addons.php?id=98"}]]
+                     :url "https://www.tukui.org/addons.php?id=98"}]]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (tukui-api/download-retail-summaries))))))
 
@@ -43,7 +43,7 @@
                      :label "BenikUI Classic",
                      :download-count 24490,
                      :source-id 13,
-                     :uri "https://www.tukui.org/classic-addons.php?id=13"}]]
+                     :url "https://www.tukui.org/classic-addons.php?id=13"}]]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (tukui-api/download-classic-summaries))))))
 
@@ -62,7 +62,7 @@
                     :label "ElvUI",
                     :download-count 2147483000, ;; 2 kajillion
                     :source-id -2,
-                    :uri "https://www.tukui.org/download.php?ui=elvui"}]
+                    :url "https://www.tukui.org/download.php?ui=elvui"}]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (tukui-api/download-elvui-summary)))))))
 
@@ -85,10 +85,10 @@
                          :label "[rp:tags]",
                          :download-count 2838,
                          :source-id 98,
-                         :uri "https://www.tukui.org/addons.php?id=98"}
+                         :url "https://www.tukui.org/addons.php?id=98"}
 
           expected (merge addon-summary
-                          {:download-uri "https://www.tukui.org/addons.php?download=98"
+                          {:download-url "https://www.tukui.org/addons.php?download=98"
                            :version "0.960"
                            :interface-version 80200})
 
@@ -113,10 +113,10 @@
                          :label "ElvUI",
                          :download-count 2147483000,
                          :source-id -2,
-                         :uri "https://www.tukui.org/download.php?ui=elvui"}
+                         :url "https://www.tukui.org/download.php?ui=elvui"}
 
           expected (merge addon-summary
-                          {:download-uri "https://www.tukui.org/downloads/elvui-11.26.zip"
+                          {:download-url "https://www.tukui.org/downloads/elvui-11.26.zip"
                            :version "11.26"
                            :interface-version 80200})
 

@@ -6,7 +6,7 @@ create table if not exists catalog (
     name varchar(150), -- longest in catalog at time of writing is 49
     alt_name varchar(150),
     description varchar(255),
-    uri varchar(255),
+    url varchar(255),
     download_count int,
     -- created_date timestamp with time zone, -- curseforge only and unused
     updated_date varchar(24), -- we have dates with micro second precision 

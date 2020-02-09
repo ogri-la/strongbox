@@ -25,10 +25,10 @@
                          :label "EveryAddon",
                          :download-count 3000000,
                          :source-id 1,
-                         :uri "https://www.curseforge.com/wow/addons/everyaddon"}
+                         :url "https://www.curseforge.com/wow/addons/everyaddon"}
 
           ;; what is added to figure out how to download file
-          expected (merge addon-summary {:download-uri "https://edge.forgecdn.net/files/1/1/EveryAddon.zip"
+          expected (merge addon-summary {:download-url "https://edge.forgecdn.net/files/1/1/EveryAddon.zip"
                                          :version "v8.2.0-v1.13.2-7135.139"
                                          :interface-version 80000 ;; "8.0.1" => 80000
                                          })
@@ -51,7 +51,7 @@
                          :label "EveryAddon",
                          :download-count 3000000,
                          :source-id 1,
-                         :uri "https://www.curseforge.com/wow/addons/everyaddon"}
+                         :url "https://www.curseforge.com/wow/addons/everyaddon"}
           game-track "classic"
           expected nil]
       (with-fake-routes-in-isolation fake-routes
@@ -174,7 +174,7 @@
                      :download-count 2923589,
                      :source "curseforge"
                      :source-id 99982,
-                     :uri "https://www.curseforge.com/wow/addons/advancedinterfaceoptions"}]]
+                     :url "https://www.curseforge.com/wow/addons/advancedinterfaceoptions"}]]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (curseforge-api/download-all-summaries-alphabetically)))))))
 

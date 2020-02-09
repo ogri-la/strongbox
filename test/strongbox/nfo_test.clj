@@ -130,7 +130,7 @@
                  :dirname addon-dir
                  :game-track "classic"
                  :name "EveryAddon"
-                 :uri "https://foo.bar"
+                 :url "https://foo.bar"
                  :primary? true
                  :source "curseforge"
                  :source-id 321}
@@ -152,7 +152,7 @@
                  :dirname addon-dir
                  :game-track "classic"
                  :name "EveryAddon"
-                 :uri "https://foo.bar"
+                 :url "https://foo.bar"
                  :primary? true
                  :source "curseforge"
                  :source-id 321

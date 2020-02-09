@@ -15,6 +15,9 @@ see CHANGELOG.md for a more formal list of changes by release
     - untangle nfo and toc files
         - result of diagramming modules
         - done
+    - rename references of 'uri' to 'url'
+        - these are all through the catalog
+        - done
 
 * can addon-id be removed as a gui column?
     - no.
@@ -32,7 +35,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - update package
         - add new shell script 'strongbox'
 
-
 * catalog updates
     - rename references of 'uri' to 'url'
         - these are all through the catalog
@@ -49,6 +51,8 @@ see CHANGELOG.md for a more formal list of changes by release
     - publish a 'strongbox-catalogue' repo
         - just like wowman-data, but for strongbox
         - 
+
+    - remove all mentions of a donation url, author name
 
     - move location of catalogs into user settings
         - allow user to specify their own catalogs

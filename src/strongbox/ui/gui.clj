@@ -99,8 +99,8 @@
 
 (defn-spec browse-to nil?
   "given a URI, open a browser window with it"
-  [uri ::sp/uri]
-  (.browse (java.awt.Desktop/getDesktop) (java.net.URI. uri)))
+  [url ::sp/url]
+  (.browse (java.awt.Desktop/getDesktop) (java.net.URI. url)))
 
 (defn handler
   "returns a function that calls each given argument function sequentially, discards result, returns nil"
@@ -249,7 +249,7 @@
                  ["" ""]
                  (when-not (core/latest-strongbox-version?)
                    [(format "version %s is now available to download!" (core/latest-strongbox-release)) "center"])
-                 [(x/hyperlink :text "github" :uri "https://github.com/ogri-la/strongbox") "center"]
+                 [(x/hyperlink :text "github" :url "https://github.com/ogri-la/strongbox") "center"]
                  ["AGPL v3", "center"]]
         content (remove nil? content)
         content (interleave content (repeat [:separator "growx, wrap"]))
@@ -443,21 +443,21 @@
                                      (.setCursor grid (cursor :default))))))
 
         hyperlink-colour (-> :hyperlink colours name)
-        uri-template (str "<html><font color='" hyperlink-colour "'>&nbsp;↪ %s</font></html>")
-        uri-renderer (fn [x]
+        url-template (str "<html><font color='" hyperlink-colour "'>&nbsp;↪ %s</font></html>")
+        url-renderer (fn [x]
                        (when x
-                         (let [uri (java.net.URL. x)
-                               label (case (.getHost uri)
+                         (let [url (java.net.URL. x)
+                               label (case (.getHost url)
                                        "www.curseforge.com" "curseforge"
                                        "www.wowinterface.com" "wowinterface"
                                        "github.com" "github"
                                        "www.tukui.org" "tukui"
                                        "???")]
-                           (format uri-template label))))]
+                           (format url-template label))))]
 
     (ss/listen grid :mouse-motion hand-cursor-on-hover)
     (ss/listen grid :mouse-clicked go-link-clicked)
-    (add-cell-renderer grid "source" uri-renderer)
+    (add-cell-renderer grid "source" url-renderer)
 
     nil))
 
@@ -472,7 +472,7 @@
                                             :matched?
                                             :ignore?
                                             {:key :installed-game-track, :text "track"}
-                                            {:key :uri, :text "source"}
+                                            {:key :url, :text "source"}
                                             :source-id
                                             {:key :label, :text "name"}
                                             :description
@@ -568,7 +568,7 @@
 (defn search-results-panel
   []
   (let [hidden-by-default-cols [:source-id]
-        tblmdl (sstbl/table-model :columns [{:key :uri :text "source"}
+        tblmdl (sstbl/table-model :columns [{:key :url :text "source"}
                                             :source-id
                                             {:key :label :text "name"}
                                             :description
@@ -779,7 +779,7 @@
         less-failure-warning #(ss/alert "Failed. Addon successfully added to catalogue but could not be installed.")]
     (when addon-url
       (if-let [result (core/add+install-user-addon! addon-url)]
-        (when-not (contains? result :download-uri)
+        (when-not (contains? result :download-url)
           (less-failure-warning))
         (failure-warning))))
   nil)

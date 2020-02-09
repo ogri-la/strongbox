@@ -82,7 +82,7 @@
 
         user-catalog (join data-dir "user-catalog.json")
 
-        ;; ensure path ends with `-file` or `-dir` or `-uri`
+        ;; ensure path ends with `-file` or `-dir` or `-url`
         path-map {:config-dir config-dir
                   :data-dir data-dir
                   :cache-dir cache-dir
@@ -400,7 +400,7 @@
 (defn-spec expanded? boolean?
   "returns true if an addon has found further details online"
   [addon map?]
-  (some? (:download-uri addon)))
+  (some? (:download-url addon)))
 
 (defn start-affecting-addon
   [addon]
@@ -434,7 +434,7 @@
     (let [output-fname (downloaded-addon-fname (:name addon) (:version addon)) ;; addonname--1-2-3.zip
           output-path (join (fs/absolute download-dir) output-fname)] ;; /path/to/installed/addons/addonname--1.2.3.zip
       (binding [http/*cache* (cache)]
-        (http/download-file (:download-uri addon) output-path)))))
+        (http/download-file (:download-url addon) output-path)))))
 
 ;; don't do this. `download-addon` is wrapped by `install-addon` that is already affecting the addon
 ;;(def download-addon
@@ -920,7 +920,7 @@
     (info "refreshing \"user-catalog.json\", this may take a minute ...")
     (->> (get-create-user-catalog)
          :addon-summary-list
-         (map :uri)
+         (map :url)
          (map catalog/parse-user-string)
          add-user-addon!)))
 
@@ -1042,7 +1042,7 @@
 
     ;; target any unmatched addons with no `:source` from the addon list and emit a warning
     (doseq [addon (remove :source addon-list)]
-      (warn (format "Addon '%s' has no match in the catalog and may be skipped during import. It's best all addons match before doing an export." (:name addon))))
+      (warn (format "Addon '%s' has no match in the catalog and may be skipped durlng import. It's best all addons match before doing an export." (:name addon))))
 
     (utils/dump-json-file output-file export)
     (info "wrote:" output-file)

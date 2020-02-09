@@ -21,7 +21,7 @@
                        "https://api.github.com/repos/Aviana/HealComm/contents"
                        {:get (fn [req] {:status 200 :body "[]"})}}
 
-          expected {:uri "https://github.com/Aviana/HealComm"
+          expected {:url "https://github.com/Aviana/HealComm"
                     :updated-date "2019-10-09T17:40:04Z"
                     :source "github"
                     :source-id "Aviana/HealComm"
@@ -87,7 +87,7 @@
 
 (deftest expand-addon-summary
   (testing "expand-summary correctly extracts and adds additional properties"
-    (let [given {:uri "https://github.com/Aviana/HealComm"
+    (let [given {:url "https://github.com/Aviana/HealComm"
                  :updated-date "2019-10-09T17:40:04Z"
                  :source "github"
                  :source-id "Aviana/HealComm"
@@ -98,7 +98,7 @@
 
           game-track "retail"
 
-          expected {:uri "https://github.com/Aviana/HealComm"
+          expected {:url "https://github.com/Aviana/HealComm"
                     :updated-date "2019-10-09T17:40:04Z"
                     :source "github"
                     :source-id "Aviana/HealComm"
@@ -107,7 +107,7 @@
                     :download-count 30946
                     :category-list []
 
-                    :download-uri "https://github.com/Aviana/HealComm/releases/download/2.04/HealComm.zip"
+                    :download-url "https://github.com/Aviana/HealComm/releases/download/2.04/HealComm.zip"
                     :version "2.04 Beta"}
 
           fixture (slurp (fixture-path "github-repo-releases--aviana-healcomm.json"))
@@ -118,7 +118,7 @@
         (is (= expected (github-api/expand-summary given game-track))))))
 
   (testing "classic addons are correctly detected"
-    (let [given {:uri "https://github.com/Ravendwyr/Chinchilla"
+    (let [given {:url "https://github.com/Ravendwyr/Chinchilla"
                  :updated-date "2019-10-09T17:40:04Z"
                  :source "github"
                  :source-id "Ravendwyr/Chinchilla"
@@ -136,9 +136,9 @@
                     :label "Chinchilla"
                     :download-count 30946
                     :source-id "Ravendwyr/Chinchilla"
-                    :uri "https://github.com/Ravendwyr/Chinchilla"
+                    :url "https://github.com/Ravendwyr/Chinchilla"
 
-                    :download-uri "https://github.com/Ravendwyr/Chinchilla/releases/download/v2.10.0/Chinchilla-v2.10.0-classic.zip"
+                    :download-url "https://github.com/Ravendwyr/Chinchilla/releases/download/v2.10.0/Chinchilla-v2.10.0-classic.zip"
                     :version "v2.10.0-classic"}
 
           fixture (slurp (fixture-path "github-repo-releases--many-assets-many-gametracks.json"))
@@ -149,7 +149,7 @@
         (is (= expected (github-api/expand-summary given game-track))))))
 
   (testing "addons that have no assets (and no right to be in the catalogue) are not downloaded and no errors occur"
-    (let [given {:uri "https://github.com/Robert388/Necrosis-classic"
+    (let [given {:url "https://github.com/Robert388/Necrosis-classic"
                  :updated-date "2019-10-09T17:40:04Z"
                  :source "github"
                  :source-id "Robert388/Necrosis-classic"
@@ -169,7 +169,7 @@
         (is (= expected (github-api/expand-summary given "retail"))))))
 
   (testing "releases whose assets are only partially uploaded, due to an upload failure, are ignored"
-    (let [given {:uri "https://github.com/jsb/RingMenu"
+    (let [given {:url "https://github.com/jsb/RingMenu"
                  :updated-date "2019-10-09T17:40:04Z"
                  :source "github"
                  :source-id "jsb/RingMenu"
@@ -208,7 +208,7 @@
 (deftest gametrack-detection
   (testing "detecting github addon game track, single asset cases"
     (let [addon-summary
-          {:uri "https://github.com/Aviana/HealComm"
+          {:url "https://github.com/Aviana/HealComm"
            :updated-date "2019-10-09T17:40:04Z"
            :source "github"
            :source-id "Aviana/HealComm"
@@ -253,7 +253,7 @@
 
   (testing "detecting github addon game track, multiple asset cases"
     (let [addon-summary
-          {:uri "https://github.com/Aviana/HealComm"
+          {:url "https://github.com/Aviana/HealComm"
            :updated-date "2019-10-09T17:40:04Z"
            :source "github"
            :source-id "Aviana/HealComm"
@@ -327,7 +327,7 @@
                        {:get (fn [req] {:status 403 :host "api.github.com" :reason-phrase "Forbidden"})}}
 
           addon-summary
-          {:uri "https://github.com/Aviana/HealComm"
+          {:url "https://github.com/Aviana/HealComm"
            :updated-date "2019-10-09T17:40:04Z"
            :source "github"
            :source-id "Aviana/HealComm"

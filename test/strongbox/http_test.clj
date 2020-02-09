@@ -10,7 +10,7 @@
   (testing "regular (non-streaming) download that yields a 404 returns an error map"
     (let [;; listed in the curseforge catalog but returns a 404 when fetched
           zombie-addon {:name "Brewmaster Tools"
-                        :uri "https://www.curseforge.com/wow/addons/brewmastertools"
+                        :url "https://www.curseforge.com/wow/addons/brewmastertools"
                         :label ""
                         :category-list []
                         :updated-date "2019-01-01T00:00:00Z" :download-count 0}
@@ -19,7 +19,7 @@
       (with-fake-routes-in-isolation fake-routes
         (is (nil? (catalog/expand-summary zombie-addon "retail")))))))
 
-(deftest uri-to-filename
+(deftest url-to-filename
   (testing "urls can be converted to filenames safe for a filesystem"
     (let [cases [["https://user:name@example.org/foo#anchor?bar=baz&baz=bar"
                   "aHR0cHM6Ly91c2VyOm5hbWVAZXhhbXBsZS5vcmcvZm9vI2FuY2hvcj9iYXI9YmF6JmJhej1iYXI=.html"]
@@ -32,7 +32,7 @@
                  ["https://example.org/foo.asdf"
                   "aHR0cHM6Ly9leGFtcGxlLm9yZy9mb28uYXNkZg==.asdf"]]]
       (doseq [[given expected] cases]
-        (is (= expected (http/uri-to-filename given)))))))
+        (is (= expected (http/url-to-filename given)))))))
 
 (deftest user-agent
   (testing "user agent version number"

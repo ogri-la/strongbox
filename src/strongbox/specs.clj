@@ -19,7 +19,7 @@
 
 ;; addon data that comes from the catalogue
 (s/def ::addon-summary
-  (s/keys :req-un [::uri ::name ::label ::category-list ::updated-date ::download-count ::source ::source-id]
+  (s/keys :req-un [::url ::name ::label ::category-list ::updated-date ::download-count ::source ::source-id]
           :opt [::description ;; wowinterface summaries have no description
                 ::created-date ;; wowinterface summaries have no created date
                 ::game-track-list ;; more of a set, really
@@ -29,8 +29,8 @@
 ;; see catalog/expand-addon-summary
 ;; todo: rename '::expanded-addon' or similar
 (s/def ::addon
-  (s/merge ::addon-summary (s/keys :req-un [::version ::download-uri]
-                                   :opt [::donation-uri ::interface-version])))
+  (s/merge ::addon-summary (s/keys :req-un [::version ::download-url]
+                                   :opt [::donation-url ::interface-version])))
 
 ;; .toc files live in the root of an addon and include the author's metadata about the addon
 ;; minimum needed to be scraped from a toc file
@@ -54,7 +54,7 @@
 (s/def ::addon-list (s/coll-of ::addon))
 (s/def ::addon-summary-list (s/coll-of ::addon-summary))
 
-(s/def ::uri (s/and string?
+(s/def ::url (s/and string?
                     #(try (instance? java.net.URL (java.net.URL. %))
                           (catch java.net.MalformedURLException e
                             false))))
@@ -71,7 +71,7 @@
 (s/def ::dir ::file) ;; directory must also be a string and a valid File object, but not necessarily exist (yet)
 (s/def ::extant-dir (s/and ::dir fs/directory?))
 (s/def ::writeable-dir (s/and ::extant-dir fs/writeable?))
-(s/def ::download-uri ::uri)
+(s/def ::download-url ::url)
 (s/def ::name string?) ;; normalised name of the addon, shared between toc file and curseforge
 (s/def ::label string?) ;; name of the addon without normalisation
 (s/def ::dirname string?)
@@ -105,7 +105,7 @@
                                  ::string-id? string?))
 (s/def ::zoned-dt-obj #(instance? java.time.ZonedDateTime %))
 (s/def ::download-count (s/and int? #(>= % 0)))
-(s/def ::donation-uri (s/nilable ::uri))
+(s/def ::donation-url (s/nilable ::url))
 (s/def ::json string?)
 (s/def ::html string?)
 
@@ -128,7 +128,7 @@
 (s/def ::nfo (s/or :ok-v1 ::nfo-v1, :ok-v2 ::nfo-v2))
 
 ;; this is what is needed to be passed in, at a minium, to generate a nfo file
-(s/def ::nfo-input-minimum (s/keys :req-un [::version ::name ::uri ::source ::source-id]))
+(s/def ::nfo-input-minimum (s/keys :req-un [::version ::name ::url ::source ::source-id]))
 
 ;; orphaned
 (s/def ::file-byte-array-pair (s/cat :file ::file

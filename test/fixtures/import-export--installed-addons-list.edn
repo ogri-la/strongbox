@@ -28,13 +28,13 @@
   :name "adibags",
   :source "curseforge",
   :interface-version 80200,
-  :download-uri
+  :download-url
   "https://www.curseforge.com/wow/addons/adibags/download/2738272/file",
   :alt-name "adibags",
   :label "AdiBags",
-  :donation-uri nil,
+  :donation-url nil,
   :download-count 3000000,
-  :uri "https://www.curseforge.com/wow/addons/adibags",
+  :url "https://www.curseforge.com/wow/addons/adibags",
   :version "v1.9.17",
   :dirname "AdiBags",
   :primary? true,
@@ -58,14 +58,14 @@
   :name "carbonite",
   :source "curseforge",
   :interface-version 80200,
-  :download-uri
+  :download-url
   "https://www.curseforge.com/wow/addons/carbonite/download/2732714/file",
   :alt-name "carbonitemaps",
   :label "Carbonite Maps",
-  :donation-uri
+  :donation-url
   "https://www.paypal.com/cgi-bin/webscr?return=https://www.curseforge.com/projects/28460&cn=Add+special+instructions+to+the+addon+author()&business=illustriousdreamer%40gmail.com&bn=PP-DonationsBF:btn_donateCC_LG.gif:NonHosted&cancel_return=https://www.curseforge.com/projects/28460&lc=US&item_name=Carbonite+Maps+(from+curseforge.com)&cmd=_donations&rm=1&no_shipping=1&currency_code=USD",
   :download-count 5400000,
-  :uri "https://www.curseforge.com/wow/addons/carbonite",
+  :url "https://www.curseforge.com/wow/addons/carbonite",
   :version "v8.2.0",
   :dirname "Carbonite",
   :primary? true,

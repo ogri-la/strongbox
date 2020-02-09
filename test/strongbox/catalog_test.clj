@@ -44,7 +44,7 @@
       (is (= (catalog/-merge-curse-wowi-catalogs aa ab) expected)))))
 
 (deftest merge-catalogs
-  (let [addon1 {:uri "https://github.com/Aviana/HealComm"
+  (let [addon1 {:url "https://github.com/Aviana/HealComm"
                 :updated-date "2019-10-09T17:40:04Z"
                 :source "github"
                 :source-id "Aviana/HealComm"
@@ -53,7 +53,7 @@
                 :download-count 30946
                 :category-list []}
 
-        addon2 {:uri "https://github.com/Ravendwyr/Chinchilla"
+        addon2 {:url "https://github.com/Ravendwyr/Chinchilla"
                 :updated-date "2019-10-09T17:40:04Z"
                 :source "github"
                 :source-id "Ravendwyr/Chinchilla"
@@ -76,7 +76,7 @@
       (testing (format "merging of two catalogs, case '%s'" [a b])
         (is (= expected (catalog/merge-catalogs a b))))))
 
-  (let [addon1 {:uri "https://github.com/Aviana/HealComm"
+  (let [addon1 {:url "https://github.com/Aviana/HealComm"
                 :updated-date "2001-01-01T00:00:00Z" ;; <=
                 :description "???" ;; <=
                 :source "github"
@@ -86,7 +86,7 @@
                 :download-count 30946
                 :category-list []}
 
-        addon2 {:uri "https://github.com/Aviana/HealComm"
+        addon2 {:url "https://github.com/Aviana/HealComm"
                 :updated-date "2019-10-09T17:40:04Z" ;; <=
                 :source "github"
                 :source-id "Aviana/HealComm"
@@ -112,7 +112,7 @@
                      "https://api.github.com/repos/Aviana/HealComm/contents"
                      {:get (fn [req] {:status 200 :body "[]"})}}]
     (with-fake-routes-in-isolation fake-routes
-      (let [github-api {:uri "https://github.com/Aviana/HealComm"
+      (let [github-api {:url "https://github.com/Aviana/HealComm"
                         :updated-date "2019-10-09T17:40:04Z"
                         :source "github"
                         :source-id "Aviana/HealComm"

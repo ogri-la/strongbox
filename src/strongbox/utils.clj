@@ -178,7 +178,7 @@
   (fn [& path]
     (nav-map m path)))
 
-(defn to-uri
+(defn to-url
   [v]
   (when-not (empty? v)
     (-> v java.net.URI. str)))
@@ -468,7 +468,7 @@
   [regex groups value]
   (zipmap groups (rest (re-find regex value))))
 
-(defn-spec unmangle-https-url (s/or :ok ::sp/uri, :error nil?)
+(defn-spec unmangle-https-url (s/or :ok ::sp/url, :error nil?)
   "given something that is supposed to be a valid http URL, try our hardest to return an actual URL without actually visiting anything.
   if we fail, return nil, otherwise return a string that can be converted to a URL"
   [uin string?]
