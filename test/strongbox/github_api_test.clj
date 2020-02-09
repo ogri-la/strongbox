@@ -9,7 +9,7 @@
    [clj-http.fake :refer [with-fake-routes-in-isolation]]))
 
 (deftest parse-user-string
-  (testing "user input can be parsed and turned into a catalog item."
+  (testing "user input can be parsed and turned into a catalogue item."
     (let [fixture (slurp (fixture-path "github-repo-releases--aviana-healcomm.json"))
 
           fake-routes {"https://api.github.com/repos/Aviana/HealComm/releases"

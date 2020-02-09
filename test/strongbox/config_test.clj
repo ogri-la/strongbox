@@ -53,21 +53,21 @@
   (testing "file overrides are preserved and unknown keys are removed"
     (let [cli-opts {}
           file-opts {:foo "bar" ;; unknown
-                     :selected-catalog :full} ;; known
-          expected (assoc config/default-cfg :selected-catalog :full)]
+                     :selected-catalogue :full} ;; known
+          expected (assoc config/default-cfg :selected-catalogue :full)]
       (is (= expected (config/merge-config file-opts cli-opts)))))
 
   (testing "cli overrides are preserved and unknown keys are removed"
     (let [cli-opts {:foo "bar"
-                    :selected-catalog :full}
+                    :selected-catalogue :full}
           file-opts {}
-          expected (assoc config/default-cfg :selected-catalog :full)]
+          expected (assoc config/default-cfg :selected-catalogue :full)]
       (is (= expected (config/merge-config file-opts cli-opts)))))
 
   (testing "cli options override file options"
-    (let [cli-opts {:selected-catalog :short}
-          file-opts {:selected-catalog :full}
-          expected (assoc config/default-cfg :selected-catalog :short)]
+    (let [cli-opts {:selected-catalogue :short}
+          file-opts {:selected-catalogue :full}
+          expected (assoc config/default-cfg :selected-catalogue :short)]
       (is (= expected (config/merge-config file-opts cli-opts))))))
 
 (deftest invalid-addon-dirs-in-cfg
@@ -89,7 +89,7 @@
           etag-db-file (fixture-path "empty-map.json")
 
           expected {:cfg {:gui-theme :light ;; new in 0.11
-                          :selected-catalog :short ;; new in 0.10
+                          :selected-catalogue :short ;; new in 0.10
                           ;; :debug? true ;; removed in 0.12
                           ;; new
                           :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track "retail"}
@@ -111,14 +111,14 @@
           etag-db-file (fixture-path "empty-map.json")
 
           expected {:cfg {:gui-theme :light ;; new in 0.11
-                          :selected-catalog :full ;; new in 0.10
+                          :selected-catalogue :full ;; new in 0.10
                           ;; :debug? true ;; removed in 0.12
                           :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track "retail"}
                                            {:addon-dir "/tmp/.strongbox-foo", :game-track "classic"}]}
                     :selected-addon-dir "/tmp/.strongbox-bar"
 
                     :cli-opts {}
-                    :file-opts {:selected-catalog :full
+                    :file-opts {:selected-catalogue :full
                                 :debug? true
                                 :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track "retail"}
                                                  {:addon-dir "/tmp/.strongbox-foo", :game-track "classic"}]}
@@ -132,7 +132,7 @@
           etag-db-file (fixture-path "empty-map.json")
 
           expected {:cfg {:gui-theme :dark ;; new in 0.11
-                          :selected-catalog :full ;; new in 0.10
+                          :selected-catalogue :full ;; new in 0.10
                           ;;:debug? true ;; removed in 0.12
                           :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track "retail"}
                                            {:addon-dir "/tmp/.strongbox-foo", :game-track "classic"}]}
@@ -140,7 +140,7 @@
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark
-                                :selected-catalog :full
+                                :selected-catalogue :full
                                 :debug? true
                                 :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track "retail"}
                                                  {:addon-dir "/tmp/.strongbox-foo", :game-track "classic"}]}
@@ -153,7 +153,7 @@
           etag-db-file (fixture-path "empty-map.json")
 
           expected {:cfg {:gui-theme :dark ;; new in 0.11
-                          :selected-catalog :full ;; new in 0.10
+                          :selected-catalogue :full ;; new in 0.10
                           ;;:debug? true ;; removed in 0.12
                           :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track "retail"}
                                            {:addon-dir "/tmp/.strongbox-foo", :game-track "classic"}]}
@@ -161,7 +161,7 @@
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark
-                                :selected-catalog :full
+                                :selected-catalogue :full
                                 :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track "retail"}
                                                  {:addon-dir "/tmp/.strongbox-foo", :game-track "classic"}]}
                     :etag-db {}}]

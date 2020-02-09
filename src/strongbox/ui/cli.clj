@@ -3,18 +3,18 @@
    [taoensso.timbre :as timbre :refer [spy info]]
    [strongbox
     [tukui-api :as tukui-api]
-    [catalog :as catalog]
+    [catalogue :as catalogue]
     [http :as http]
     [utils :as utils]
     [curseforge-api :as curseforge-api]
     [wowinterface :as wowinterface]
-    [core :as core :refer [get-state paths find-catalog-local-path]]]))
+    [core :as core :refer [get-state paths find-catalogue-local-path]]]))
 
 (defmulti action
   "handles the following actions:
-    :scrape-wowinterface-catalog - scrapes wowinterface host and creates a wowinterface catalog
-    :scrape-curseforge-catalog - scrapes curseforge host and creates a curseforge catalog
-    :scrape-catalog - scrapes all available sources and creates a full and short catalog
+    :scrape-wowinterface-catalogue - scrapes wowinterface host and creates a wowinterface catalogue
+    :scrape-curseforge-catalogue - scrapes curseforge host and creates a curseforge catalogue
+    :scrape-catalogue - scrapes all available sources and creates a full and short catalogue
     :list - lists all installed addons
     :list-updates - lists all installed addons with updates available
     :update-all - updates all installed addons with updates available"
@@ -23,53 +23,53 @@
       (map? x) (:action x)
       (keyword? x) x)))
 
-(defmethod action :scrape-wowinterface-catalog
+(defmethod action :scrape-wowinterface-catalogue
   [_]
   (binding [http/*cache* (core/cache)]
-    (wowinterface/scrape (find-catalog-local-path :wowinterface))))
+    (wowinterface/scrape (find-catalogue-local-path :wowinterface))))
 
-(defmethod action :scrape-curseforge-catalog
+(defmethod action :scrape-curseforge-catalogue
   [_]
   (binding [http/*cache* (core/cache)]
-    (let [output-file (find-catalog-local-path :curseforge)
-          catalog-data (curseforge-api/download-all-summaries-alphabetically)
+    (let [output-file (find-catalogue-local-path :curseforge)
+          catalogue-data (curseforge-api/download-all-summaries-alphabetically)
           created (utils/datestamp-now-ymd)
           updated created
-          formatted-catalog-data (catalog/format-catalog-data catalog-data created updated)]
-      (catalog/write-catalog formatted-catalog-data output-file))))
+          formatted-catalogue-data (catalogue/format-catalogue-data catalogue-data created updated)]
+      (catalogue/write-catalogue formatted-catalogue-data output-file))))
 
-(defmethod action :scrape-tukui-catalog
+(defmethod action :scrape-tukui-catalogue
   [_]
   (binding [http/*cache* (core/cache)]
-    (let [output-file (find-catalog-local-path :tukui)
-          catalog-data (tukui-api/download-all-summaries)
+    (let [output-file (find-catalogue-local-path :tukui)
+          catalogue-data (tukui-api/download-all-summaries)
           created (utils/datestamp-now-ymd)
           updated created
-          formatted-catalog-data (catalog/format-catalog-data catalog-data created updated)]
-      (catalog/write-catalog formatted-catalog-data output-file))))
+          formatted-catalogue-data (catalogue/format-catalogue-data catalogue-data created updated)]
+      (catalogue/write-catalogue formatted-catalogue-data output-file))))
 
-(defmethod action :write-catalog
+(defmethod action :write-catalogue
   [_]
-  (let [curseforge-catalog (find-catalog-local-path :curseforge)
-        wowinterface-catalog (find-catalog-local-path :wowinterface)
-        tukui-catalog (find-catalog-local-path :tukui)
+  (let [curseforge-catalogue (find-catalogue-local-path :curseforge)
+        wowinterface-catalogue (find-catalogue-local-path :wowinterface)
+        tukui-catalogue (find-catalogue-local-path :tukui)
 
-        catalog-path-list [curseforge-catalog wowinterface-catalog tukui-catalog]
-        catalog (map utils/load-json-file catalog-path-list)
-        catalog (reduce catalog/merge-catalogs catalog)]
-    (-> catalog
-        (catalog/write-catalog (find-catalog-local-path :full))
+        catalogue-path-list [curseforge-catalogue wowinterface-catalogue tukui-catalogue]
+        catalogue (map utils/load-json-file catalogue-path-list)
+        catalogue (reduce catalogue/merge-catalogs catalogue)]
+    (-> catalogue
+        (catalogue/write-catalogue (find-catalogue-local-path :full))
 
-        ;; 'short' catalog is derived from the full catalog
-        catalog/shorten-catalog
-        (catalog/write-catalog (find-catalog-local-path :short)))))
+        ;; 'short' catalogue is derived from the full catalogue
+        catalogue/shorten-catalogue
+        (catalogue/write-catalogue (find-catalogue-local-path :short)))))
 
-(defmethod action :scrape-catalog
+(defmethod action :scrape-catalogue
   [_]
-  (action :scrape-curseforge-catalog)
-  (action :scrape-wowinterface-catalog)
-  (action :scrape-tukui-catalog)
-  (action :write-catalog))
+  (action :scrape-curseforge-catalogue)
+  (action :scrape-wowinterface-catalogue)
+  (action :scrape-tukui-catalogue)
+  (action :write-catalogue))
 
 (defmethod action :list
   [_]

@@ -40,7 +40,7 @@
   :group-addon-count 2}
  {:name "noname"
   :label "No Name"
-  :description "An addon with no match in the catalog"
+  :description "An addon with no match in the catalogue"
   :dirname "noname"
   :interface-version 80200
   :installed-version "7.8.9"}

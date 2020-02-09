@@ -116,7 +116,7 @@
   "returns a map of wowinterface addons, keyed by their :source-id (as a string).
   wowinterface.com has a single large file with all/most of their addon data in it called 'filelist.json'.
   the addon details endpoint is missing supported versions of wow it in.
-  Instead that data is in this list and must be incorporated in the catalog."
+  Instead that data is in this list and must be incorporated in the catalogue."
   []
   (let [url "https://api.mmoui.com/v3/game/WOW/filelist.json"
         resp (http/download url)

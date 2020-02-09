@@ -20,7 +20,7 @@
     [logging :as logging]
     [nfo :as nfo]
     [utils :as utils :refer [join not-empty? false-if-nil nav-map nav-map-fn delete-many-files! static-slurp expand-path if-let*]]
-    [catalog :as catalog]
+    [catalogue :as catalogue]
     [toc]
     [specs :as sp]]))
 
@@ -80,7 +80,7 @@
         cfg-file (join config-dir "config.json") ;; /home/$you/.config/strongbox/config.json
         etag-db-file (join data-dir "etag-db.json") ;; /home/$you/.local/share/strongbox/etag-db.json
 
-        user-catalog (join data-dir "user-catalog.json")
+        user-catalogue (join data-dir "user-catalogue.json")
 
         ;; ensure path ends with `-file` or `-dir` or `-url`
         path-map {:config-dir config-dir
@@ -89,8 +89,8 @@
                   :cfg-file cfg-file
                   :etag-db-file etag-db-file
 
-                  :user-catalog-file user-catalog
-                  :catalog-dir data-dir}]
+                  :user-catalogue-file user-catalogue
+                  :catalogue-dir data-dir}]
     path-map))
 
 (def -state-template
@@ -104,18 +104,18 @@
 
    ;; final config, result of merging :file-opts and :cli-opts
    ;;:cfg {:addon-dir-list []
-   ;;      :selected-catalog :short}
+   ;;      :selected-catalogue :short}
    :cfg nil ;; see config.clj
-   :catalog-source-list [{:name :short :label "Short (default)" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"}
-                         {:name :full :label "Full" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/full-catalog.json"}
+   :catalogue-source-list [{:name :short :label "Short (default)" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalogue.json"}
+                         {:name :full :label "Full" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/full-catalogue.json"}
 
-                         {:name :tukui :label "Tukui" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/tukui-catalog.json"}
-                         {:name :curseforge :label "Curseforge" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/curseforge-catalog.json"}
-                         {:name :wowinterface :label "WoWInterface" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/wowinterface-catalog.json"}]
+                         {:name :tukui :label "Tukui" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/tukui-catalogue.json"}
+                         {:name :curseforge :label "Curseforge" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/curseforge-catalogue.json"}
+                         {:name :wowinterface :label "WoWInterface" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/wowinterface-catalogue.json"}]
 
    ;; subset of possible data about all INSTALLED addons
    ;; starts as parsed .toc file data
-   ;; ... then updated with data from catalog
+   ;; ... then updated with data from catalogue
    ;; ... then updated again with live data from curseforge
    ;; see specs/toc-addon
 
@@ -125,7 +125,7 @@
    :etag-db {}
 
    :db nil ;; see get-db
-   :catalog-size nil ;; used to trigger those waiting for the catalog to become available
+   :catalogue-size nil ;; used to trigger those waiting for the catalogue to become available
 
    ;; a map of paths whose location may vary according to the cwd and envvars.
    :paths nil
@@ -197,7 +197,7 @@
   (jdbc/execute! (get-db) (into [query] arg-list)
                  (merge {:builder-fn as-unqualified-hyphenated-maps} opts)))
 
-(def select-*-catalog (str (static-slurp "resources/query--all-catalog.sql") " ")) ;; trailing space is important
+(def select-*-catalogue (str (static-slurp "resources/query--all-catalogue.sql") " ")) ;; trailing space is important
 
 (defn-spec db-split-category-list vector?
   "converts a pipe-separated list of categories into a vector"
@@ -227,8 +227,8 @@
     (catch Exception e
       source-id)))
 
-(defn db-coerce-catalog-values
-  "further per-row processing of catalog data after retrieving it from the database"
+(defn db-coerce-catalogue-values
+  "further per-row processing of catalogue data after retrieving it from the database"
   [row]
   (when row
     (->> row
@@ -241,13 +241,13 @@
   if no user input, returns a list of randomly ordered results"
   ([]
    ;; random list of addons, no preference
-   (mapv db-coerce-catalog-values
-         (db-query (str select-*-catalog "order by RAND() limit ?") :arg-list [(get-state :search-results-cap)])))
+   (mapv db-coerce-catalogue-values
+         (db-query (str select-*-catalogue "order by RAND() limit ?") :arg-list [(get-state :search-results-cap)])))
   ([uin]
    (let [uin% (str uin "%")
          %uin% (str "%" uin "%")]
-     (mapv db-coerce-catalog-values
-           (db-query (str select-*-catalog "where label ilike ? or description ilike ?")
+     (mapv db-coerce-catalogue-values
+           (db-query (str select-*-catalogue "where label ilike ? or description ilike ?")
                      :arg-list [uin% %uin%]
                      :opts {:max-rows (get-state :search-results-cap)})))))
 
@@ -255,8 +255,8 @@
   "like `get-state`, uses 'paths' (keywords) to do predefined queries"
   [kw]
   (case kw
-    :addon-summary-list (->> (db-query select-*-catalog) (mapv db-coerce-catalog-values))
-    :catalog-size (-> "select count(*) as num from catalog" db-query first :num)
+    :addon-summary-list (->> (db-query select-*-catalogue) (mapv db-coerce-catalogue-values))
+    :catalogue-size (-> "select count(*) as num from catalogue" db-query first :num)
 
     nil))
 
@@ -621,7 +621,7 @@
                            ;; if `source` present, but is not in list of known sources, ignore the nfo-contents.
                            ;; it is possible this nfo data was written by a newer version of strongbox.
                            (if (and (contains? nfo-data :source)
-                                    (not (utils/in? (:source nfo-data) sp/catalog-sources)))
+                                    (not (utils/in? (:source nfo-data) sp/catalogue-sources)))
                              addon
 
                              ;; otherwise, merge the addon with the nfo data.
@@ -644,86 +644,86 @@
     (update-installed-addon-list! [])))
 
 ;;
-;; catalog handling
+;; catalogue handling
 ;;
 
-(defn-spec get-catalog-source (s/or :ok ::sp/catalog-source-map, :not-found nil?)
+(defn-spec get-catalogue-source (s/or :ok ::sp/catalogue-source-map, :not-found nil?)
   ([]
-   (get-catalog-source (get-state :cfg :selected-catalog)))
-  ([catalog-name keyword?]
-   (->> (get-state :catalog-source-list) (filter #(= catalog-name (:name %))) first)))
+   (get-catalogue-source (get-state :cfg :selected-catalogue)))
+  ([catalogue-name keyword?]
+   (->> (get-state :catalogue-source-list) (filter #(= catalogue-name (:name %))) first)))
 
-(defn-spec set-catalog-source! nil?
-  [catalog-name keyword?]
-  (if-let [catalog (get-catalog-source catalog-name)]
-    (swap! state assoc-in [:cfg :selected-catalog] (:name catalog))
-    (warn "catalog not found" catalog-name))
+(defn-spec set-catalogue-source! nil?
+  [catalogue-name keyword?]
+  (if-let [catalogue (get-catalogue-source catalogue-name)]
+    (swap! state assoc-in [:cfg :selected-catalogue] (:name catalogue))
+    (warn "catalogue not found" catalogue-name))
   nil)
 
-(defn-spec catalog-local-path ::sp/file
-  "given a catalog-source map, returns the local path to the catalog."
-  [catalog-source ::sp/catalog-source-map]
-  ;; {:name :full ...} => "/path/to/catalog/dir/full-catalog.json"
-  (utils/join (paths :catalog-dir) (-> catalog-source :name name (str "-catalog.json"))))
+(defn-spec catalogue-local-path ::sp/file
+  "given a catalogue-source map, returns the local path to the catalogue."
+  [catalogue-source ::sp/catalogue-source-map]
+  ;; {:name :full ...} => "/path/to/catalogue/dir/full-catalogue.json"
+  (utils/join (paths :catalogue-dir) (-> catalogue-source :name name (str "-catalogue.json"))))
 
-(defn-spec find-catalog-local-path (s/or :ok ::sp/file, :not-found nil?)
-  "convenience wrapper around `catalog-local-path`"
-  [catalog-name keyword?]
-  (some-> catalog-name get-catalog-source catalog-local-path))
+(defn-spec find-catalogue-local-path (s/or :ok ::sp/file, :not-found nil?)
+  "convenience wrapper around `catalogue-local-path`"
+  [catalogue-name keyword?]
+  (some-> catalogue-name get-catalogue-source catalogue-local-path))
 
-(defn-spec download-catalog (s/or :ok ::sp/extant-file, :error nil?)
-  "downloads catalog to expected location, nothing more"
-  [& [catalog] (s/* keyword?)]
+(defn-spec download-catalogue (s/or :ok ::sp/extant-file, :error nil?)
+  "downloads catalogue to expected location, nothing more"
+  [& [catalogue] (s/* keyword?)]
   (binding [http/*cache* (cache)]
-    (if-let [current-catalog (get-state :cfg :selected-catalog)]
-      (let [catalog-source (get-catalog-source (or catalog current-catalog)) ;; {:name :full :label "Full" :source "https://..."}
-            remote-catalog (:source catalog-source)
-            local-catalog (catalog-local-path catalog-source)]
-        (http/download-file remote-catalog local-catalog :message (format "downloading catalog '%s'" (:label catalog-source))))
-      (error "failed to find catalog:" catalog))))
+    (if-let [current-catalogue (get-state :cfg :selected-catalogue)]
+      (let [catalogue-source (get-catalogue-source (or catalogue current-catalogue)) ;; {:name :full :label "Full" :source "https://..."}
+            remote-catalogue (:source catalogue-source)
+            local-catalogue (catalogue-local-path catalogue-source)]
+        (http/download-file remote-catalogue local-catalogue :message (format "downloading catalogue '%s'" (:label catalogue-source))))
+      (error "failed to find catalogue:" catalogue))))
 
 (defn-spec moosh-addons ::sp/toc-addon-summary
-  "merges the data from an installed addon with it's match in the catalog"
-  [installed-addon ::sp/toc, db-catalog-addon ::sp/addon-summary]
-  (let [;; nil fields are removed from the catalog item because they might override good values in the .toc or .nfo
-        db-catalog-addon (utils/drop-nils db-catalog-addon [:description])]
-    ;; merges left->right. catalog-addon overwrites installed-addon, ':matched' overwrites catalog-addon, etc
-    (merge installed-addon db-catalog-addon {:matched? true})))
+  "merges the data from an installed addon with it's match in the catalogue"
+  [installed-addon ::sp/toc, db-catalogue-addon ::sp/addon-summary]
+  (let [;; nil fields are removed from the catalogue item because they might override good values in the .toc or .nfo
+        db-catalogue-addon (utils/drop-nils db-catalogue-addon [:description])]
+    ;; merges left->right. catalogue-addon overwrites installed-addon, ':matched' overwrites catalogue-addon, etc
+    (merge installed-addon db-catalogue-addon {:matched? true})))
 
 
 ;;
 
 
-(defn-spec get-create-user-catalog ::sp/catalog
-  "returns the contents of the user catalog, creating one if necessary"
+(defn-spec get-create-user-catalogue ::sp/catalogue
+  "returns the contents of the user catalogue, creating one if necessary"
   []
-  (let [user-catalog-path (paths :user-catalog-file)]
-    (catalog/read-catalog
-     (if (fs/exists? user-catalog-path)
-       user-catalog-path
-       (catalog/write-empty-catalog! user-catalog-path)))))
+  (let [user-catalogue-path (paths :user-catalogue-file)]
+    (catalogue/read-catalogue
+     (if (fs/exists? user-catalogue-path)
+       user-catalogue-path
+       (catalogue/write-empty-catalogue! user-catalogue-path)))))
 
 (defn-spec add-user-addon! nil?
-  "adds one or many addons to the user catalog"
+  "adds one or many addons to the user catalogue"
   [addon-summary (s/or :single ::sp/addon-summary, :many ::sp/addon-summary-list)]
   (let [addon-summary-list (if (sequential? addon-summary)
                              addon-summary
                              [addon-summary])
-        user-catalog-path (paths :user-catalog-file)
-        user-catalog (get-create-user-catalog)
-        tmp-catalog (catalog/new-catalog addon-summary-list)
-        new-user-catalog (catalog/merge-catalogs user-catalog tmp-catalog)]
-    (catalog/write-catalog new-user-catalog user-catalog-path))
+        user-catalogue-path (paths :user-catalogue-file)
+        user-catalogue (get-create-user-catalogue)
+        tmp-catalogue (catalogue/new-catalogue addon-summary-list)
+        new-user-catalogue (catalogue/merge-catalogs user-catalogue tmp-catalogue)]
+    (catalogue/write-catalogue new-user-catalogue user-catalogue-path))
   nil)
 
 ;;
 
 (defn find-in-db
-  "looks for `installed-addon` in the database, matching `toc-key` to a `catalog-key`.
-  if a `toc-key` and `catalog-key` are actually lists, then all the `toc-keys` must match the `catalog-keys`"
-  [installed-addon toc-keys catalog-keys]
-  (let [catalog-keys (if (vector? catalog-keys) catalog-keys [catalog-keys]) ;; ["source" "source_id"] => ["source" "source_id"], "name" => ["name"]
-        sql-arg-template (clojure.string/join " AND " (mapv #(format "%s = ?" %) catalog-keys)) ;; "source = ? AND source_id = ?", "name = ?"
+  "looks for `installed-addon` in the database, matching `toc-key` to a `catalogue-key`.
+  if a `toc-key` and `catalogue-key` are actually lists, then all the `toc-keys` must match the `catalogue-keys`"
+  [installed-addon toc-keys catalogue-keys]
+  (let [catalogue-keys (if (vector? catalogue-keys) catalogue-keys [catalogue-keys]) ;; ["source" "source_id"] => ["source" "source_id"], "name" => ["name"]
+        sql-arg-template (clojure.string/join " AND " (mapv #(format "%s = ?" %) catalogue-keys)) ;; "source = ? AND source_id = ?", "name = ?"
 
         toc-keys (if (vector? toc-keys) toc-keys [toc-keys])
         sql-arg-vals (mapv #(get installed-addon %) toc-keys) ;; [:source :source-id] => ["curseforge" 12345], [:name] => ["foo"]
@@ -734,14 +734,14 @@
         _ (when missing-args?
             (debug "(debug) failed to find all values for sql query, refusing to match on nil. keys:" toc-keys "vals:" sql-arg-vals))
 
-        sql (str select-*-catalog "where " sql-arg-template)
+        sql (str select-*-catalogue "where " sql-arg-template)
         results (if missing-args?
                   [] ;; don't look for 'nil', just skip with no results
                   (db-query sql :arg-list sql-arg-vals))
-        match (-> results first db-coerce-catalog-values)]
+        match (-> results first db-coerce-catalogue-values)]
     (when match
       ;; {:idx [[:source :source-id] [:source :source_id]], :key "deadly-boss-mods", :match {...}, ...}
-      {:idx [toc-keys catalog-keys]
+      {:idx [toc-keys catalogue-keys]
        :key sql-arg-vals
        :installed-addon installed-addon
        :match match
@@ -751,16 +751,16 @@
   [installed-addon match-on-list]
   (if (empty? match-on-list) ;; we may have exhausted all possibilities. not finding a match is ok
     installed-addon
-    (let [[toc-keys catalog-keys] (first match-on-list)
-          match (find-in-db installed-addon toc-keys catalog-keys)]
+    (let [[toc-keys catalogue-keys] (first match-on-list)
+          match (find-in-db installed-addon toc-keys catalogue-keys)]
       (if-not match ;; recur
         (find-first-in-db installed-addon (rest match-on-list))
         match))))
 
-(defn -db-match-installed-addons-with-catalog
-  "for each installed addon, search the catalog across multiple joins until a match is found. returns immediately when first match is found"
+(defn -db-match-installed-addons-with-catalogue
+  "for each installed addon, search the catalogue across multiple joins until a match is found. returns immediately when first match is found"
   [installed-addon-list]
-  (let [;; toc-key -> catalog-key
+  (let [;; toc-key -> catalogue-key
         ;; most -> least desirable match
         ;; nest to search across multiple parameters
         match-on-list [[[:source :source-id]  ["source" "source_id"]] ;; source+source-id, perfect case
@@ -774,17 +774,17 @@
 
 ;;
 
-(defn-spec match-installed-addons-with-catalog nil?
+(defn-spec match-installed-addons-with-catalogue nil?
   "when we have a list of installed addons as well as the addon list,
    merge what we can into ::specs/addon-toc records and update state.
    any installed addon not found in :addon-idx has a mapping problem"
   []
   (when (get-state :selected-addon-dir) ;; don't even bother if we have nothing to match it to
-    (info "matching installed addons to catalog")
+    (info "matching installed addons to catalogue")
     (let [inst-addons (get-state :installed-addon-list)
-          catalog (query-db :addon-summary-list)
+          catalogue (query-db :addon-summary-list)
 
-          match-results (-db-match-installed-addons-with-catalog inst-addons)
+          match-results (-db-match-installed-addons-with-catalogue inst-addons)
           [matched unmatched] (utils/split-filter #(contains? % :final) match-results)
 
           matched (mapv :final matched)
@@ -800,14 +800,14 @@
 
       (when-not (empty? unmatched)
         (warn "you need to manually search for them and then re-install them")
-        (warn (format "failed to find %s installed addons in the '%s' catalog: %s"
+        (warn (format "failed to find %s installed addons in the '%s' catalogue: %s"
                       (count unmatched)
-                      (name (get-state :cfg :selected-catalog))
+                      (name (get-state :cfg :selected-catalogue))
                       (clojure.string/join ", " unmatched-names))))
 
       (update-installed-addon-list! expanded-installed-addon-list))))
 
-;; catalog db handling
+;; catalogue db handling
 
 (defn db-shutdown
   []
@@ -819,24 +819,24 @@
 
 (defn-spec db-init nil?
   []
-  (debug "creating 'catalog' table")
-  (jdbc/execute! (get-db) [(static-slurp "resources/table--catalog.sql")])
+  (debug "creating 'catalogue' table")
+  (jdbc/execute! (get-db) [(static-slurp "resources/table--catalogue.sql")])
   (debug "creating category tables")
   (jdbc/execute! (get-db) [(static-slurp "resources/table--category.sql")])
   (swap! state update-in [:cleanup] conj db-shutdown)
   nil)
 
-(defn db-catalog-loaded?
+(defn db-catalogue-loaded?
   []
-  (> (query-db :catalog-size) 0))
+  (> (query-db :catalogue-size) 0))
 
-(defn-spec -db-load-catalog nil?
-  [catalog-data ::sp/catalog]
+(defn-spec -db-load-catalogue nil?
+  [catalogue-data ::sp/catalogue]
   (let [ds (get-db)
-        {:keys [addon-summary-list]} catalog-data
+        {:keys [addon-summary-list]} catalogue-data
 
         ;; filter out items from unsupported sources
-        addon-summary-list (filterv #(utils/in? (:source %) sp/catalog-sources) addon-summary-list)
+        addon-summary-list (filterv #(utils/in? (:source %) sp/catalogue-sources) addon-summary-list)
 
         addon-categories (mapv (fn [{:keys [source-id source category-list]}]
                                  (mapv (fn [category]
@@ -867,7 +867,7 @@
       ;;  871.427154 msec
       ;; ~10k items
       (time (doseq [row addon-summary-list]
-              (sql/insert! ds :catalog (xform-row row))))
+              (sql/insert! ds :catalogue (xform-row row))))
 
       ;; 1337.340542 msec
       ;; ~20k items (avg 2 categories per addon)
@@ -880,45 +880,45 @@
                                                  :addon_source_id source-id
                                                  :category_id (get category-map category)})))))
 
-    (swap! state assoc :catalog-size (query-db :catalog-size)))
+    (swap! state assoc :catalogue-size (query-db :catalogue-size)))
   nil)
 
-(defn-spec db-load-catalog nil?
+(defn-spec db-load-catalogue nil?
   []
-  (when-not (db-catalog-loaded?)
-    (let [catalog-source (get-catalog-source)
-          catalog-path (catalog-local-path catalog-source)
-          _ (info (format "loading catalog '%s'" (name (get-state :cfg :selected-catalog))))
-          _ (debug "loading addon summaries from catalog into database:" catalog-path)
+  (when-not (db-catalogue-loaded?)
+    (let [catalogue-source (get-catalogue-source)
+          catalogue-path (catalogue-local-path catalogue-source)
+          _ (info (format "loading catalogue '%s'" (name (get-state :cfg :selected-catalogue))))
+          _ (debug "loading addon summaries from catalogue into database:" catalogue-path)
 
           ;; download from remote and try again when json can't be read
           bad-json-file-handler (fn []
-                                  (warn "catalog corrupted. re-downloading and trying again.")
-                                  (fs/delete catalog-path)
-                                  (download-catalog)
-                                  (catalog/read-catalog
-                                   catalog-path
+                                  (warn "catalogue corrupted. re-downloading and trying again.")
+                                  (fs/delete catalogue-path)
+                                  (download-catalogue)
+                                  (catalogue/read-catalogue
+                                   catalogue-path
                                    :bad-data? (fn []
                                                 (error "please report this! https://github.com/ogri-la/strongbox/issues")
-                                                (error "catalog *still* corrupted and cannot be loaded. try another catalog from the 'catalog' menu"))))
+                                                (error "catalogue *still* corrupted and cannot be loaded. try another catalogue from the 'catalogue' menu"))))
 
-          catalog-data (utils/nilable
-                        (catalog/read-catalog catalog-path :bad-data? bad-json-file-handler))
-          user-catalog-data (utils/nilable
-                             (catalog/read-catalog (paths :user-catalog-file) :bad-data? nil))
-          final-catalog (catalog/merge-catalogs catalog-data user-catalog-data)]
-      (when-not (empty? final-catalog)
-        (-db-load-catalog final-catalog)))))
+          catalogue-data (utils/nilable
+                        (catalogue/read-catalogue catalogue-path :bad-data? bad-json-file-handler))
+          user-catalogue-data (utils/nilable
+                             (catalogue/read-catalogue (paths :user-catalogue-file) :bad-data? nil))
+          final-catalogue (catalogue/merge-catalogs catalogue-data user-catalogue-data)]
+      (when-not (empty? final-catalogue)
+        (-db-load-catalogue final-catalogue)))))
 
-(defn-spec refresh-user-catalog nil?
-  "re-fetch each item in user catalog using the URI and replace old entry with any updated details"
+(defn-spec refresh-user-catalogue nil?
+  "re-fetch each item in user catalogue using the URI and replace old entry with any updated details"
   []
   (binding [http/*cache* (cache)]
-    (info "refreshing \"user-catalog.json\", this may take a minute ...")
-    (->> (get-create-user-catalog)
+    (info "refreshing \"user-catalogue.json\", this may take a minute ...")
+    (->> (get-create-user-catalogue)
          :addon-summary-list
          (map :url)
-         (map catalog/parse-user-string)
+         (map catalogue/parse-user-string)
          add-user-addon!)))
 
 ;;
@@ -929,7 +929,7 @@
   [addon-summary]
   (binding [http/*cache* (cache)]
     (let [game-track (get-game-track) ;; scope creep, but it fits so nicely
-          wrapper (affects-addon-wrapper catalog/expand-summary)]
+          wrapper (affects-addon-wrapper catalogue/expand-summary)]
       (wrapper addon-summary game-track))))
 
 (defn-spec check-for-update ::sp/toc
@@ -943,7 +943,7 @@
           update? (and version (not= installed-version version))]
       (assoc toc-addon :update? update?))
 
-    ;; failed to match against catalog or expand-summary returned nil (couldn't expand for whatever reason)
+    ;; failed to match against catalogue or expand-summary returned nil (couldn't expand for whatever reason)
     ;; in this case, we set a flag saying this addon shouldn't be updated
     (assoc toc :update? false)))
 
@@ -980,14 +980,14 @@
   []
   (delete-many-files! (get-state :selected-addon-dir) #"(?i)WowMatrix.dat$" "WowMatrix.dat"))
 
-(defn-spec delete-catalog-files! nil?
+(defn-spec delete-catalogue-files! nil?
   []
-  (delete-many-files! (paths :data-dir) #".+\-catalog\.json$" "catalog"))
+  (delete-many-files! (paths :data-dir) #".+\-catalogue\.json$" "catalogue"))
 
 (defn-spec clear-all-temp-files! nil?
   []
   (delete-downloaded-addon-zips!)
-  (delete-catalog-files!)
+  (delete-catalogue-files!)
   (delete-cache!))
 
 ;; version checking
@@ -1018,7 +1018,7 @@
 
 (defn-spec export-installed-addon ::sp/export-record
   "given an addon summary from a catalogue or .toc file data, derive an 'export-record' that can be used to import an addon later"
-  [addon (s/or :catalog ::sp/addon-summary, :installed ::sp/toc)]
+  [addon (s/or :catalogue ::sp/addon-summary, :installed ::sp/toc)]
   (let [stub (select-keys addon [:name :source :source-id])
         game-track (when-let [game-track (:installed-game-track addon)]
                      {:game-track game-track})]
@@ -1026,7 +1026,7 @@
 
 (defn-spec export-installed-addon-list ::sp/export-record-list
   "derives an 'export-record' from a list of either addon summaries from a catalogue or .toc file data from installed addons"
-  [addon-list (s/or :catalog ::sp/addon-summary-list, :installed ::sp/toc-list)]
+  [addon-list (s/or :catalogue ::sp/addon-summary-list, :installed ::sp/toc-list)]
   (->> addon-list (remove :ignore?) (map export-installed-addon) vec))
 
 (defn-spec export-installed-addon-list-safely ::sp/extant-file
@@ -1039,24 +1039,24 @@
 
     ;; target any unmatched addons with no `:source` from the addon list and emit a warning
     (doseq [addon (remove :source addon-list)]
-      (warn (format "Addon '%s' has no match in the catalog and may be skipped durlng import. It's best all addons match before doing an export." (:name addon))))
+      (warn (format "Addon '%s' has no match in the catalogue and may be skipped durlng import. It's best all addons match before doing an export." (:name addon))))
 
     (utils/dump-json-file output-file export)
     (info "wrote:" output-file)
     output-file))
 
-(defn-spec export-catalog-addon-list ::sp/export-record-list
+(defn-spec export-catalogue-addon-list ::sp/export-record-list
   "given a catalogue of addons, generates a list of 'export-records' from the list of addon summaries"
-  [catalog ::sp/catalog]
-  (let [addon-list (:addon-summary-list catalog)]
+  [catalogue ::sp/catalogue]
+  (let [addon-list (:addon-summary-list catalogue)]
     (export-installed-addon-list addon-list)))
 
-(defn-spec export-user-catalog-addon-list-safely ::sp/extant-file
+(defn-spec export-user-catalogue-addon-list-safely ::sp/extant-file
   "generates a list of 'export-records' from the addon summaries in the user catalogue and writes them to the given `output-file`"
   [output-file ::sp/file]
   (let [output-file (-> output-file fs/absolute str (utils/replace-file-ext ".json"))
-        catalog (get-create-user-catalog)
-        export (export-catalog-addon-list catalog)]
+        catalogue (get-create-user-catalogue)
+        export (export-catalogue-addon-list catalogue)]
     (utils/dump-json-file output-file export)
     (info "wrote:" output-file)
     output-file))
@@ -1067,14 +1067,14 @@
   (let [key-fn #(select-keys % [:source :name])
         addon-summary-list (query-db :addon-summary-list)
         ;; todo: this sucks. use a database
-        catalog-idx (group-by key-fn addon-summary-list)
+        catalogue-idx (group-by key-fn addon-summary-list)
         find-expand (fn [addon]
-                      (when-let [matching-addon (first (get catalog-idx (key-fn addon)))]
+                      (when-let [matching-addon (first (get catalogue-idx (key-fn addon)))]
                         (expand-summary-wrapper matching-addon)))
         matching-addon-list (->> addon-list (map find-expand) (remove nil?) vec)]
     matching-addon-list))
 
-;; v1 takes 13.7 seconds to build an index using the 'short' catalog
+;; v1 takes 13.7 seconds to build an index using the 'short' catalogue
 ;; this function can still be improved
 (defn import-addon-list-v1
   "handles exports with partial information (name, or name and source) from <=0.10.0 versions of strongbox."
@@ -1100,7 +1100,7 @@
 
         addon-list (map #(merge padding %) addon-list)
 
-        match-results (-db-match-installed-addons-with-catalog addon-list)
+        match-results (-db-match-installed-addons-with-catalogue addon-list)
         [matched unmatched] (utils/split-filter #(contains? % :final) match-results)
         addon-dir (get-state :selected-addon-dir)
 
@@ -1111,7 +1111,7 @@
             :let [addon (:installed-addon db-match) ;; ignore 'installed' bit, this is the addon that was matched on
                   db-entry (:final db-match)
                   game-track (get addon :game-track default-game-track)]]
-      (when-let [expanded-addon (catalog/expand-summary db-entry game-track)]
+      (when-let [expanded-addon (catalogue/expand-summary db-entry game-track)]
         (install-addon expanded-addon addon-dir)))))
 
 (defn-spec import-exported-file nil?
@@ -1173,15 +1173,15 @@
 
 (defn refresh
   [& _]
-  (download-catalog)      ;; downloads the big long list of addon information stored on github
+  (download-catalogue)      ;; downloads the big long list of addon information stored on github
 
   (db-init)               ;; creates an in-memory database and some empty tables
 
-  (load-installed-addons) ;; parse toc files in install-dir. do this first so we see *something* while catalog downloads (next)
+  (load-installed-addons) ;; parse toc files in install-dir. do this first so we see *something* while catalogue downloads (next)
 
-  (db-load-catalog)       ;; load the contents of the catalog into the database
+  (db-load-catalogue)       ;; load the contents of the catalogue into the database
 
-  (match-installed-addons-with-catalog) ;; match installed addons to those in catalog
+  (match-installed-addons-with-catalogue) ;; match installed addons to those in catalogue
 
   (check-for-updates)     ;; for those addons that have matches, download their details
 
@@ -1202,7 +1202,7 @@
   (filterv :update? rows))
 
 (defn -re-installable?
-  "an addon can only be re-installed if it's been matched to an addon in the catalog and a release available to download"
+  "an addon can only be re-installed if it's been matched to an addon in the catalogue and a release available to download"
   [rows]
   (filterv expanded? rows))
 
@@ -1261,7 +1261,7 @@
   (-> (get-state) :selected-installed vec remove-many-addons)
   nil)
 
-(defn-spec db-reload-catalog nil?
+(defn-spec db-reload-catalogue nil?
   []
   (locking db-lock
     (db-shutdown)
@@ -1270,15 +1270,15 @@
 ;; installing addons from strings
 
 (defn-spec add+install-user-addon! (s/or :ok ::sp/addon, :less-ok ::sp/addon-summary, :failed nil?)
-  "convenience. parses string, adds to user catalog, installs addon then reloads database.
+  "convenience. parses string, adds to user catalogue, installs addon then reloads database.
   relies on UI to call refresh (or not)"
   [addon-url string?]
   (binding [http/*cache* (cache)]
-    (if-let* [addon-summary (catalog/parse-user-string addon-url)
+    (if-let* [addon-summary (catalogue/parse-user-string addon-url)
               ;; game track doesn't matter when adding it to the user catalogue ...
               addon (or
-                     (catalog/expand-summary addon-summary "retail")
-                     (catalog/expand-summary addon-summary "classic"))
+                     (catalogue/expand-summary addon-summary "retail")
+                     (catalogue/expand-summary addon-summary "classic"))
               test-only? true
               _ (install-addon-guard addon (get-state :selected-addon-dir) test-only?)]
 
@@ -1289,7 +1289,7 @@
 
                (when addon
                  (install-addon addon (get-state :selected-addon-dir))
-                 (db-reload-catalog)
+                 (db-reload-catalogue)
                  addon)
 
                ;; failed to expand summary, probably because of selected game track.
@@ -1314,10 +1314,10 @@
                            (refresh)))]
     (state-bind [:selected-addon-dir] reset-state-fn)))
 
-(defn watch-for-catalog-change
-  "when the catalog changes, the list of available addons should be re-read"
+(defn watch-for-catalogue-change
+  "when the catalogue changes, the list of available addons should be re-read"
   []
-  (state-bind [:cfg :selected-catalog] (fn [_] (db-reload-catalog))))
+  (state-bind [:cfg :selected-catalogue] (fn [_] (db-reload-catalogue))))
 
 (defn-spec init-dirs nil?
   []
@@ -1325,7 +1325,7 @@
   ;; this validation depends on paths that are not generated until application init
 
   ;; data directory doesn't exist and parent directory isn't writable
-  ;; nowhere to create data dir, nowhere to store download catalog. non-starter
+  ;; nowhere to create data dir, nowhere to store download catalogue. non-starter
 
   (when (and
          (not (fs/exists? (paths :data-dir))) ;; doesn't exist and ..
@@ -1370,7 +1370,7 @@
   (init-dirs)
   (load-settings! cli-opts)
   (watch-for-addon-dir-change)
-  (watch-for-catalog-change)
+  (watch-for-catalogue-change)
 
   state)
 

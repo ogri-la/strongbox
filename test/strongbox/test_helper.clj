@@ -32,18 +32,18 @@
 (defn fixture-tempcwd
   "each test is executed in a new and self-contained location, accessible as fs/*cwd*
   if the app is started:
-  * an empty catalog is downloaded
+  * an empty catalogue is downloaded
   * fake strongbox version data is downloaded"
   [f]
   (let [;; for some reason, Macs symlink /var to /private/var and this needs to be resolved before comparison
         temp-dir-path (utils/expand-path (str (fs/temp-dir "strongbox-test.")))
-        fake-routes {;; catalog
-                     ;; return dummy data. we can do this because the catalog isn't loaded/parsed/validated
+        fake-routes {;; catalogue
+                     ;; return dummy data. we can do this because the catalogue isn't loaded/parsed/validated
                      ;; until the UI (gui or cli) tells it to via a later call to `refresh`
-                     "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
+                     "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalogue.json"
                      {:get (fn [req] {:status 200 :body "{}"})}
 
-                     "https://raw.githubusercontent.com/ogri-la/wowman-data/master/full-catalog.json"
+                     "https://raw.githubusercontent.com/ogri-la/wowman-data/master/full-catalogue.json"
                      {:get (fn [req] {:status 200 :body "{}"})}
 
                      ;; latest strongbox version

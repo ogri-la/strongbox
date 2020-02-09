@@ -11,7 +11,7 @@
 
 (def default-cfg
   {:addon-dir-list []
-   :selected-catalog :short
+   :selected-catalogue :short
    :gui-theme :light})
 
 (defn handle-install-dir
@@ -44,7 +44,7 @@
   ;; * it wasn't doing validation, just stripping extra keys
   ;; * it wasn't doing any conforming of values (like strings to integers)
   ;; * it didn't support :opt(ional) keysets
-  (select-keys cfg [:addon-dir-list :selected-catalog :gui-theme]))
+  (select-keys cfg [:addon-dir-list :selected-catalogue :gui-theme]))
 
 (defn-spec -merge-with ::sp/user-config
   "merges `cfg-b` over `cfg-a`, returning the result if valid else `cfg-a`"
@@ -89,7 +89,7 @@
   (utils/load-json-file-safely cfg-file
                                :no-file? {}
                                :bad-data? {}
-                               :transform-map {:selected-catalog keyword
+                               :transform-map {:selected-catalogue keyword
                                                :gui-theme keyword}))
 
 (defn-spec load-etag-db-file map?

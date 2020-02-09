@@ -118,7 +118,7 @@
 
                 ;; streaming responses are not buffered entirely in memory as their full length cannot be anticipated.
                 ;; instead we open a file handle and pour the response bytes into it as we receive them.
-                ;; if the output file already exists (like a catalog file) it may be possible another thread is reading
+                ;; if the output file already exists (like a catalogue file) it may be possible another thread is reading
                 ;; this file leading to malformed/invalid data.
                 ;; so we write the incoming bytes to a unique temporary file and then move that file into place, using 
                 ;; the intended output file as a lock.
@@ -240,7 +240,7 @@
 
 (defn-spec prune-cache-dir nil?
   [cache-dir ::sp/extant-dir]
-  ;;(prune-old-curseforge-files cache-dir) ;; this is problematic when generating the curseforge catalog
+  ;;(prune-old-curseforge-files cache-dir) ;; this is problematic when generating the curseforge catalogue
   (doseq [cache-file (fs/list-dir cache-dir)
           :when (and (fs/file? cache-file)
                      (utils/file-older-than (str cache-file) (* 2 expiry-offset-hours)))]

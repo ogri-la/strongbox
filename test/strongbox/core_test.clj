@@ -10,7 +10,7 @@
     [zip :as zip]
     [main :as main]
     [nfo :as nfo]
-    [catalog :as catalog]
+    [catalogue :as catalogue]
     [utils :as utils]
     [test-helper :as helper :refer [fixture-path slurp-fixture helper-data-dir with-running-app]]
     [core :as core]]))
@@ -86,37 +86,37 @@
         (core/set-addon-dir! dir4)
         (is (= {:addon-dir dir4 :game-track "classic"} (core/addon-dir-map dir4)))))))
 
-(deftest catalog
-  (let [[short-catalog full-catalog] (->> core/-state-template :catalog-source-list (take 2))]
+(deftest catalogue
+  (let [[short-catalogue full-catalogue] (->> core/-state-template :catalogue-source-list (take 2))]
     (with-running-app
       (testing "by default we have at least 2 (short and full composite) + N (source) catalogs available to us"
-        (is (> (count (core/get-state :catalog-source-list)) 2)))
+        (is (> (count (core/get-state :catalogue-source-list)) 2)))
 
-      (testing "core/get-catalog-source returns the requested catalog if found"
-        (is (= short-catalog (core/get-catalog-source :short))))
+      (testing "core/get-catalogue-source returns the requested catalogue if found"
+        (is (= short-catalogue (core/get-catalogue-source :short))))
 
-      (testing "core/get-catalog-source, without args, returns the currently selected catalog"
-        (is (= short-catalog (core/get-catalog-source))))
+      (testing "core/get-catalogue-source, without args, returns the currently selected catalogue"
+        (is (= short-catalogue (core/get-catalogue-source))))
 
-      (testing "core/get-catalog-source returns nil if it can't find the requested catalog"
-        (is (= nil (core/get-catalog-source :foo))))
+      (testing "core/get-catalogue-source returns nil if it can't find the requested catalogue"
+        (is (= nil (core/get-catalogue-source :foo))))
 
-      (testing "core/set-catalog-source! always returns nil, even when it successfully completes"
-        (is (= nil (core/set-catalog-source! :foo)))
-        (is (= short-catalog (core/get-catalog-source)))
+      (testing "core/set-catalogue-source! always returns nil, even when it successfully completes"
+        (is (= nil (core/set-catalogue-source! :foo)))
+        (is (= short-catalogue (core/get-catalogue-source)))
 
-        (is (= nil (core/set-catalog-source! :full)))
-        (is (= full-catalog (core/get-catalog-source))))
+        (is (= nil (core/set-catalogue-source! :full)))
+        (is (= full-catalogue (core/get-catalogue-source))))
 
-      (testing "core/catalog-local-path returns the expected path to the catalog file on the filesystem"
-        (is (= (utils/join fs/*cwd* helper-data-dir "short-catalog.json") (core/catalog-local-path short-catalog)))
-        (is (= (utils/join fs/*cwd* helper-data-dir "full-catalog.json") (core/catalog-local-path full-catalog))))
+      (testing "core/catalogue-local-path returns the expected path to the catalogue file on the filesystem"
+        (is (= (utils/join fs/*cwd* helper-data-dir "short-catalogue.json") (core/catalogue-local-path short-catalogue)))
+        (is (= (utils/join fs/*cwd* helper-data-dir "full-catalogue.json") (core/catalogue-local-path full-catalogue))))
 
-      (testing "core/find-catalog-local-path just needs a catalog :name"
-        (is (= (utils/join fs/*cwd* helper-data-dir "short-catalog.json") (core/find-catalog-local-path :short))))
+      (testing "core/find-catalogue-local-path just needs a catalogue :name"
+        (is (= (utils/join fs/*cwd* helper-data-dir "short-catalogue.json") (core/find-catalogue-local-path :short))))
 
-      (testing "core/find-catalog-local-path returns nil if the given catalog can't be found"
-        (is (= nil (core/find-catalog-local-path :foo)))))))
+      (testing "core/find-catalogue-local-path returns nil if the given catalogue can't be found"
+        (is (= nil (core/find-catalogue-local-path :foo)))))))
 
 (deftest paths
   (with-running-app
@@ -189,22 +189,22 @@
   (testing "exported addon data is correct"
     (let [addon-list (slurp-fixture "import-export--installed-addons-list.edn")
           expected [{:name "adibags" :source "curseforge" :game-track "retail"}
-                    {:name "noname"} ;; an addon whose name is not present in the catalog (umatched)
+                    {:name "noname"} ;; an addon whose name is not present in the catalogue (umatched)
                     {:name "carbonite" :source "curseforge" :game-track "retail"}]]
       (is (= expected (core/export-installed-addon-list addon-list)))))
 
   (testing "export ignores ignored addons"
     (let [addon-list (vec (slurp-fixture "import-export--installed-addons-list.edn"))
           addon-list (assoc-in addon-list [0 :ignore?] true)
-          expected [{:name "noname"} ;; an addon whose name is not present in the catalog (umatched)
+          expected [{:name "noname"} ;; an addon whose name is not present in the catalogue (umatched)
                     {:name "carbonite" :source "curseforge" :game-track "retail"}]]
       (is (= expected (core/export-installed-addon-list addon-list))))))
 
-(deftest export-catalog-addon-list
+(deftest export-catalogue-addon-list
   (testing "exported addon list data is correct"
-    (let [catalog (slurp-fixture "import-export--user-catalog.json")
-          expected (slurp-fixture "import-export--user-catalog-export.json")]
-      (is (= expected (core/export-catalog-addon-list catalog))))))
+    (let [catalogue (slurp-fixture "import-export--user-catalogue.json")
+          expected (slurp-fixture "import-export--user-catalogue-export.json")]
+      (is (= expected (core/export-catalogue-addon-list catalogue))))))
 
 (deftest import-exported-addon-list-file-v1
   (testing "an export can be imported"
@@ -215,11 +215,11 @@
           every-addon-api (slurp (fixture-path "curseforge-api-addon--everyaddon.json"))
           every-other-addon-api (slurp (fixture-path "curseforge-api-addon--everyotheraddon.json"))
 
-          addon-summary-list (utils/load-json-file (fixture-path "import-export--dummy-catalog.json"))
+          addon-summary-list (utils/load-json-file (fixture-path "import-export--dummy-catalogue.json"))
 
-          fake-routes {;; catalog
-                       "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
-                       {:get (fn [req] {:status 200 :body (utils/to-json (catalog/new-catalog addon-summary-list))})}
+          fake-routes {;; catalogue
+                       "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalogue.json"
+                       {:get (fn [req] {:status 200 :body (utils/to-json (catalogue/new-catalogue addon-summary-list))})}
 
                        ;; every-addon
                        "https://addons-ecs.forgesvc.net/api/v2/addon/1"
@@ -296,11 +296,11 @@
           every-addon-api (slurp (fixture-path "curseforge-api-addon--everyaddon.json"))
           every-other-addon-api (slurp (fixture-path "curseforge-api-addon--everyotheraddon-classic.json"))
 
-          addon-summary-list (utils/load-json-file (fixture-path "import-export--dummy-catalog.json"))
+          addon-summary-list (utils/load-json-file (fixture-path "import-export--dummy-catalogue.json"))
 
-          fake-routes {;; catalog
-                       "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
-                       {:get (fn [req] {:status 200 :body (utils/to-json (catalog/new-catalog addon-summary-list))})}
+          fake-routes {;; catalogue
+                       "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalogue.json"
+                       {:get (fn [req] {:status 200 :body (utils/to-json (catalogue/new-catalogue addon-summary-list))})}
 
                        ;; every-addon
                        "https://addons-ecs.forgesvc.net/api/v2/addon/1"
@@ -377,10 +377,10 @@
             (is (= (second expected) (second (core/get-state :installed-addon-list))))))))))
 
 (deftest check-for-addon-update
-  (testing "the key :update? is set on an addon when there is a difference between the installed version of an addon and it's matching catalog version"
+  (testing "the key :update? is set on an addon when there is a difference between the installed version of an addon and it's matching catalogue version"
 
-    (let [;; we start off with a list of these called a catalog. it's downloaded from github
-          catalog {:category-list ["Auction House & Vendors"],
+    (let [;; we start off with a list of these called a catalogue. it's downloaded from github
+          catalogue {:category-list ["Auction House & Vendors"],
                    :download-count 1
                    :label "Every Addon"
                    :name "every-addon",
@@ -398,9 +398,9 @@
                                      :exposeAsAlternative nil}]}
           alt-api-result (assoc-in api-result [:latestFiles 0 :displayName] "v8.20.00")
 
-          fake-routes {;; catalog
-                       "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
-                       {:get (fn [req] {:status 200 :body (utils/to-json (catalog/new-catalog [catalog]))})}
+          fake-routes {;; catalogue
+                       "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalogue.json"
+                       {:get (fn [req] {:status 200 :body (utils/to-json (catalogue/new-catalogue [catalogue]))})}
 
                        ;; every-addon
                        "https://addons-ecs.forgesvc.net/api/v2/addon/0"
@@ -433,12 +433,12 @@
                 ;; the nfo data is simply merged over the top of the scraped toc data
                 toc (merge toc nfo)
 
-                ;; we then attempt to match this 'toc+nfo' to an addon in the catalog
-                catalog-match (core/-db-match-installed-addons-with-catalog [toc])
+                ;; we then attempt to match this 'toc+nfo' to an addon in the catalogue
+                catalogue-match (core/-db-match-installed-addons-with-catalogue [toc])
 
                 ;; this is a m:n match and we typically get back heaps of results
-                ;; in this case we have a catalog of 1 and are not interested in how the addon was matched (:final)
-                toc-addon (-> catalog-match first :final) ;; :update? will be false
+                ;; in this case we have a catalogue of 1 and are not interested in how the addon was matched (:final)
+                toc-addon (-> catalogue-match first :final) ;; :update? will be false
                 alt-toc-addon (assoc toc-addon :source-id 1) ;; :update? will be true
 
                 ;; and what we 'expand' that data into
@@ -493,7 +493,7 @@
    :installed-version "1.2.3"})
 
 (def addon-summary
-  "catalog of summaries"
+  "catalogue of summaries"
   {:label "EveryAddon",
    :name  "everyaddon",
    :description  "Does what no other addon does, slightly differently"
@@ -683,52 +683,52 @@
 ;;
 
 
-(deftest re-download-catalog-on-bad-data
-  (testing "catalog data is re-downloaded if it can't be read"
+(deftest re-download-catalogue-on-bad-data
+  (testing "catalogue data is re-downloaded if it can't be read"
     (let [;; overrides the fake route in test_helper.clj
-          fake-routes {"https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
-                       {:get (fn [req] {:status 200 :body (slurp (fixture-path "dummy-catalog--single-entry.json"))})}}]
+          fake-routes {"https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalogue.json"
+                       {:get (fn [req] {:status 200 :body (slurp (fixture-path "dummy-catalogue--single-entry.json"))})}}]
       (with-running-app
         (core/refresh)
 
-        ;; this is the guard to the `db-load-catalog` fn
-        ;; catalog fixture in test-helper is an empty map, this should always return false
-        (is (not (core/db-catalog-loaded?)))
+        ;; this is the guard to the `db-load-catalogue` fn
+        ;; catalogue fixture in test-helper is an empty map, this should always return false
+        (is (not (core/db-catalogue-loaded?)))
 
         ;; empty the file. quickest way to bad json
-        (-> (core/get-catalog-source) core/catalog-local-path (spit ""))
+        (-> (core/get-catalogue-source) core/catalogue-local-path (spit ""))
 
-        ;; the catalog will be re-requested, this time we've swapped out the fixture with one with a single entry
+        ;; the catalogue will be re-requested, this time we've swapped out the fixture with one with a single entry
         (with-fake-routes-in-isolation fake-routes
-          (core/db-load-catalog))
+          (core/db-load-catalogue))
 
-        (is (core/db-catalog-loaded?))))))
+        (is (core/db-catalogue-loaded?))))))
 
-(deftest re-download-catalog-on-bad-data-2
-  (testing "`db-load-catalog` doesn't fail catastrophically when re-downloaded json is still bad"
+(deftest re-download-catalogue-on-bad-data-2
+  (testing "`db-load-catalogue` doesn't fail catastrophically when re-downloaded json is still bad"
     (let [;; overrides the fake route in test_helper.clj
-          fake-routes {"https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
+          fake-routes {"https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalogue.json"
                        {:get (fn [req] {:status 200 :body "borked json"})}}]
       (with-running-app
         (core/refresh)
 
-        ;; this is the guard to the `db-load-catalog` fn
-        ;; catalog fixture in test-helper is an empty map, this should always return false
-        (is (not (core/db-catalog-loaded?)))
+        ;; this is the guard to the `db-load-catalogue` fn
+        ;; catalogue fixture in test-helper is an empty map, this should always return false
+        (is (not (core/db-catalogue-loaded?)))
 
         ;; empty the file. quickest way to bad json
-        (-> (core/get-catalog-source) core/catalog-local-path (spit ""))
+        (-> (core/get-catalogue-source) core/catalogue-local-path (spit ""))
 
-        ;; the catalog will be re-requested, this time the remote file is also corrupt
+        ;; the catalogue will be re-requested, this time the remote file is also corrupt
         (with-fake-routes-in-isolation fake-routes
-          (core/db-load-catalog))
+          (core/db-load-catalogue))
 
-        (is (not (core/db-catalog-loaded?)))))))
+        (is (not (core/db-catalogue-loaded?)))))))
 
 ;;
 
-(deftest add-user-addon-to-user-catalog
-  (testing "user addon is successfully added to the user catalog, creating it if it doesn't exist"
+(deftest add-user-addon-to-user-catalogue
+  (testing "user addon is successfully added to the user catalogue, creating it if it doesn't exist"
     (let [user-addon {:url "https://github.com/Aviana/HealComm"
                       :updated-date "2019-10-09T17:40:01Z"
                       :source "github"
@@ -738,14 +738,14 @@
                       :download-count 30946
                       :category-list []}
 
-          expected (merge (catalog/new-catalog [])
-                          {;; hack, catalog/format-catalog-data orders the addon summary make them uncomparable
+          expected (merge (catalogue/new-catalogue [])
+                          {;; hack, catalogue/format-catalogue-data orders the addon summary make them uncomparable
                            :total 1
                            :addon-summary-list [user-addon]})]
 
       (with-running-app
         (core/add-user-addon! user-addon)
-        (is (= expected (catalog/read-catalog (core/paths :user-catalog-file)))))))
+        (is (= expected (catalogue/read-catalogue (core/paths :user-catalogue-file)))))))
 
   (testing "adding addons to the user catalogue is idempotent"
     (let [user-addon {:url "https://github.com/Aviana/HealComm"
@@ -757,8 +757,8 @@
                       :download-count 30946
                       :category-list []}
 
-          expected (merge (catalog/new-catalog [])
-                          {;; hack, catalog/format-catalog-data orders the addon summary make them uncomparable
+          expected (merge (catalogue/new-catalogue [])
+                          {;; hack, catalogue/format-catalogue-data orders the addon summary make them uncomparable
                            :total 1
                            :addon-summary-list [user-addon]})]
 
@@ -766,10 +766,10 @@
         (core/add-user-addon! user-addon)
         (core/add-user-addon! user-addon)
         (core/add-user-addon! user-addon)
-        (is (= expected (catalog/read-catalog (core/paths :user-catalog-file))))))))
+        (is (= expected (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))
 
 (deftest add+install-user-addon!
-  (testing "user addon is successfully addon to the user catalog from just a github url"
+  (testing "user addon is successfully addon to the user catalogue from just a github url"
     (let [every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
 
           fake-routes {"https://api.github.com/repos/Aviana/HealComm/releases"
@@ -788,7 +788,7 @@
 
           expected-addon-dir (utils/join install-dir "EveryAddon")
 
-          expected-user-catalog [{:category-list [],
+          expected-user-catalogue [{:category-list [],
                                   :game-track-list [],
                                   :updated-date "2019-10-09T17:40:04Z",
                                   :name "healcomm",
@@ -802,9 +802,9 @@
         (with-fake-routes-in-isolation fake-routes
           (core/add+install-user-addon! user-url)
 
-          ;; addon was found and added to user catalog
-          (is (= expected-user-catalog
-                 (:addon-summary-list (catalog/read-catalog (core/paths :user-catalog-file)))))
+          ;; addon was found and added to user catalogue
+          (is (= expected-user-catalogue
+                 (:addon-summary-list (catalogue/read-catalogue (core/paths :user-catalogue-file)))))
 
           ;; addon was successfully download and installed
           (is (fs/exists? expected-addon-dir)))))))

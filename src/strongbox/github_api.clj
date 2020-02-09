@@ -168,7 +168,7 @@
 
 (defn-spec parse-user-string (s/or :ok ::sp/addon-summary, :error nil?)
   [uin string?]
-  (if-let* [;; if *all* of these conditions succeed (non-nil), return a catalog entry
+  (if-let* [;; if *all* of these conditions succeed (non-nil), return a catalogue entry
             obj (some-> uin utils/unmangle-https-url java.net.URL.)
             path (when-not (empty? (.getPath obj)) (.getPath obj))
 

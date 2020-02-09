@@ -1,4 +1,4 @@
-(ns strongbox.catalog
+(ns strongbox.catalogue
   (:require
    [flatland.ordered.map :as omap]
    [slugify.core :refer [slugify]]
@@ -35,9 +35,9 @@
 
 ;;
 
-(defn-spec format-catalog-data ::sp/catalog
-  "formats given catalog data"
-  [addon-list ::sp/addon-summary-list, created-date ::sp/catalog-created-date, updated-date ::sp/catalog-updated-date]
+(defn-spec format-catalogue-data ::sp/catalogue
+  "formats given catalogue data"
+  [addon-list ::sp/addon-summary-list, created-date ::sp/catalogue-created-date, updated-date ::sp/catalogue-updated-date]
   (let [addon-list (mapv #(into (omap/ordered-map) (sort %))
                          (sort-by :name addon-list))]
     {:spec {:version 1}
@@ -46,31 +46,31 @@
      :total (count addon-list)
      :addon-summary-list addon-list}))
 
-(defn read-catalog
-  [catalog-path & {:as opts}]
+(defn read-catalogue
+  [catalogue-path & {:as opts}]
   ;; cheshire claims to be twice as fast: https://github.com/dakrone/cheshire#speed
-  ;; consolidate catalog access here
-  (apply utils/load-json-file-safely (apply concat [catalog-path] opts)))
+  ;; consolidate catalogue access here
+  (apply utils/load-json-file-safely (apply concat [catalogue-path] opts)))
 
-(defn-spec write-catalog ::sp/extant-file
-  "write catalog to given `output-file` as JSON. returns path to output file"
-  [catalog-data ::sp/catalog, output-file ::sp/file]
-  (utils/dump-json-file output-file catalog-data)
+(defn-spec write-catalogue ::sp/extant-file
+  "write catalogue to given `output-file` as JSON. returns path to output file"
+  [catalogue-data ::sp/catalogue, output-file ::sp/file]
+  (utils/dump-json-file output-file catalogue-data)
   (info "wrote" output-file)
   output-file)
 
-(defn-spec new-catalog ::sp/catalog
+(defn-spec new-catalogue ::sp/catalogue
   [addon-list ::sp/addon-summary-list]
   (let [created (utils/datestamp-now-ymd)
         updated created]
-    (format-catalog-data addon-list created updated)))
+    (format-catalogue-data addon-list created updated)))
 
-(defn-spec write-empty-catalog! ::sp/extant-file
-  "writes a stub catalog to the given `output-file`"
+(defn-spec write-empty-catalogue! ::sp/extant-file
+  "writes a stub catalogue to the given `output-file`"
   [output-file ::sp/file]
   (let [created (utils/datestamp-now-ymd)
         updated created]
-    (write-catalog (new-catalog []) output-file)))
+    (write-catalogue (new-catalogue []) output-file)))
 
 ;;
 
@@ -87,12 +87,12 @@
       (catch java.net.MalformedURLException mue
         (debug "not a url")))))
 
-(defn-spec merge-catalogs (s/or :ok ::sp/catalog, :error nil?)
-  "merges catalog `cat-b` over catalog `cat-a`.
+(defn-spec merge-catalogs (s/or :ok ::sp/catalogue, :error nil?)
+  "merges catalogue `cat-b` over catalogue `cat-a`.
   earliest creation date preserved.
   latest updated date preserved.
   addon-summary-list is unique by `:source` and `:source-id` with differing values replaced by those in `cat-b`"
-  [cat-a (s/nilable ::sp/catalog), cat-b (s/nilable ::sp/catalog)]
+  [cat-a (s/nilable ::sp/catalogue), cat-b (s/nilable ::sp/catalogue)]
   (let [matrix {;;[true true] ;; two non-empty catalogs, ideal case
                 [true false] cat-a ;; cat-b empty, return cat-a
                 [false true] cat-b ;; vice versa
@@ -110,7 +110,7 @@
                                     vals ;; drop the map
                                     (map (partial apply merge))) ;; merge (not replace) the groups into single maps
             ]
-        (format-catalog-data addon-summary-list created-date updated-date)))))
+        (format-catalogue-data addon-summary-list created-date updated-date)))))
 
 ;; 
 
@@ -131,8 +131,8 @@
 
 ;;
 
-(defn-spec -merge-curse-wowi-catalogs ::sp/catalog
-  [aa ::sp/catalog, ab ::sp/catalog]
+(defn-spec -merge-curse-wowi-catalogs ::sp/catalogue
+  [aa ::sp/catalogue, ab ::sp/catalogue]
   (let [;; this is 80% sanity check, 20% correctness
         ab (assoc ab :addon-summary-list (de-dupe-wowinterface (:addon-summary-list ab)))
 
@@ -155,7 +155,7 @@
         addon-list (remove #(some #{(:name %)} multiple-sources-key-set) addon-list)
         ;;_ (info "addons sans multiples:" (count addon-list))
 
-        ;; todo: move this to shorten-catalog
+        ;; todo: move this to shorten-catalogue
         ;; when there is a very large gap between updated-dates, drop one addon in favour of the other
         ;; at time of writing:
         ;; - filtering for > 2 years removes  231 of the 2356 addons overlapping, leaving 2125 addons appearing in both catalogs
@@ -213,34 +213,34 @@
                          (merge a {:age version-age})))
         addon-list (mapv update-addon addon-list)
 
-        ;; should these two dates belong to the catalog proper or derived from the component catalogs?
+        ;; should these two dates belong to the catalogue proper or derived from the component catalogs?
         ;; lets go with derived for now
         created-date (first (sort [(:datestamp aa) (:datestamp ab)])) ;; earliest of the two catalogs
         updated-date (last (sort [(:updated-datestamp aa) (:updated-datestamp ab)]))] ;; most recent of the two catalogs
 
-    (format-catalog-data addon-list created-date updated-date)))
+    (format-catalogue-data addon-list created-date updated-date)))
 
-(defn-spec shorten-catalog (s/or :ok ::sp/catalog, :problem nil?)
-  [full-catalog-path ::sp/extant-file]
+(defn-spec shorten-catalogue (s/or :ok ::sp/catalogue, :problem nil?)
+  [full-catalogue-path ::sp/extant-file]
   (let [{:keys [addon-summary-list datestamp]}
         (utils/load-json-file-safely
-         full-catalog-path
-         :no-file? #(error (format "catalog '%s' could not be found" full-catalog-path))
-         :bad-data? #(error (format "catalog '%s' is malformed and cannot be parsed" full-catalog-path))
-         :invalid-data? #(error (format "catalog '%s' is incorrectly structured and will not be parsed" full-catalog-path))
-         :data-spec ::sp/catalog)
+         full-catalogue-path
+         :no-file? #(error (format "catalogue '%s' could not be found" full-catalogue-path))
+         :bad-data? #(error (format "catalogue '%s' is malformed and cannot be parsed" full-catalogue-path))
+         :invalid-data? #(error (format "catalogue '%s' is incorrectly structured and will not be parsed" full-catalogue-path))
+         :data-spec ::sp/catalogue)
 
         unmaintained? (fn [addon]
                         (let [dtobj (java-time/zoned-date-time (:updated-date addon))
                               release-of-previous-expansion (utils/todt "2016-08-30T00:00:00Z")]
                           (java-time/before? dtobj release-of-previous-expansion)))]
     (when addon-summary-list
-      (format-catalog-data (remove unmaintained? addon-summary-list) datestamp datestamp))))
+      (format-catalogue-data (remove unmaintained? addon-summary-list) datestamp datestamp))))
 
-(defn-spec merge-curse-wowi-catalogs ::sp/catalog
-  [curseforge-catalog ::sp/extant-file, wowinterface-catalog ::sp/extant-file]
-  (let [aa (utils/load-json-file curseforge-catalog)
-        ab (utils/load-json-file wowinterface-catalog)]
+(defn-spec merge-curse-wowi-catalogs ::sp/catalogue
+  [curseforge-catalogue ::sp/extant-file, wowinterface-catalogue ::sp/extant-file]
+  (let [aa (utils/load-json-file curseforge-catalogue)
+        ab (utils/load-json-file wowinterface-catalogue)]
     (-merge-curse-wowi-catalogs aa ab)))
 
 ;;

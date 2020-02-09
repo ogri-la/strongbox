@@ -13,7 +13,7 @@
           fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/1"
                        {:get (fn [req] {:status 200 :body api-results})}}
 
-          ;; what would be seen in the catalog
+          ;; what would be seen in the catalogue
           addon-summary {:created-date "2010-05-07T18:48:16Z",
                          :description "Does what no other addon does, slightly differently",
                          :category-list ["Bags & Inventory"],

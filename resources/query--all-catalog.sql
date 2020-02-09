@@ -1,5 +1,5 @@
 SELECT
-  catalog.*,
+  catalogue.*,
   (
     SELECT
       group_concat(name separator '|') 
@@ -9,8 +9,8 @@ SELECT
         addon_category ac 
         ON category.id = ac.category_id 
     WHERE
-      ac.addon_source_id = catalog.source_id 
+      ac.addon_source_id = catalogue.source_id 
   )
   AS category_list 
 FROM
-  catalog
+  catalogue

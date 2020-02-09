@@ -73,7 +73,7 @@
     (logging/change-log-level :debug)
     (if ns-kw
       (if (some #{ns-kw} [:main :utils :http
-                          :core :toc :nfo :zip :config :catalog
+                          :core :toc :nfo :zip :config :catalogue
                           :cli :gui
                           :curseforge-api :wowinterface :wowinterface-api :github-api :tukui-api])
         (if fn-kw
@@ -94,11 +94,11 @@
 
 ;;
 
-(def catalog-actions
-  #{:scrape-catalog :write-catalog
-    :scrape-curseforge-catalog :scrape-wowinterface-catalog :scrape-tukui-catalog})
+(def catalogue-actions
+  #{:scrape-catalogue :write-catalogue
+    :scrape-curseforge-catalogue :scrape-wowinterface-catalogue :scrape-tukui-catalogue})
 
-(def catalog-action-str (clojure.string/join ", " (mapv #(format "'%s'" (name %)) (sort catalog-actions))))
+(def catalogue-action-str (clojure.string/join ", " (mapv #(format "'%s'" (name %)) (sort catalogue-actions))))
 
 (def cli-options
   [["-h" "--help"]
@@ -122,10 +122,10 @@
     :parse-fn #(-> % lower-case keyword)
     :validate [(in? [:cli :gui])]]
 
-   ["-a" "--action ACTION" (str "perform action and exit. action is one of: 'list', 'list-updates', 'update-all'," catalog-action-str)
+   ["-a" "--action ACTION" (str "perform action and exit. action is one of: 'list', 'list-updates', 'update-all'," catalogue-action-str)
     :id :action
     :parse-fn #(-> % lower-case keyword)
-    :validate [(in? (concat [:list :list-updates :update-all] catalog-actions))]]])
+    :validate [(in? (concat [:list :list-updates :update-all] catalogue-actions))]]])
 
 (defn validate
   [parsed]
@@ -157,7 +157,7 @@
                    args)
 
             ;; force :cli for certain actions
-            args (if (contains? catalog-actions (:action options))
+            args (if (contains? catalogue-actions (:action options))
                    (assoc-in args [:options :ui] :cli)
                    args)]
         args))))

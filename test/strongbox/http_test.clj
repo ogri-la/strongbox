@@ -3,12 +3,12 @@
    [clojure.test :refer [deftest testing is use-fixtures]]
    [clj-http.fake :refer [with-fake-routes-in-isolation]]
    [strongbox
-    [catalog :as catalog]
+    [catalogue :as catalogue]
     [http :as http]]))
 
 (deftest download-404
   (testing "regular (non-streaming) download that yields a 404 returns an error map"
-    (let [;; listed in the curseforge catalog but returns a 404 when fetched
+    (let [;; listed in the curseforge catalogue but returns a 404 when fetched
           zombie-addon {:name "Brewmaster Tools"
                         :url "https://www.curseforge.com/wow/addons/brewmastertools"
                         :label ""
@@ -17,7 +17,7 @@
           fake-routes {"https://www.curseforge.com/wow/addons/brewmastertools/files"
                        {:get (fn [req] {:status 404 :reason-phrase "Not Found" :body "<h1>Not Found</h1>"})}}]
       (with-fake-routes-in-isolation fake-routes
-        (is (nil? (catalog/expand-summary zombie-addon "retail")))))))
+        (is (nil? (catalogue/expand-summary zombie-addon "retail")))))))
 
 (deftest url-to-filename
   (testing "urls can be converted to filenames safe for a filesystem"

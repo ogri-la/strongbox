@@ -26,7 +26,7 @@
                 ]))
 
 ;; 'expanded' addon summary, everything we need in order to download an addon
-;; see catalog/expand-addon-summary
+;; see catalogue/expand-addon-summary
 ;; todo: rename '::expanded-addon' or similar
 (s/def ::addon
   (s/merge ::addon-summary (s/keys :req-un [::version ::download-url]
@@ -97,11 +97,11 @@
                                     false))))
 (s/def ::created-date ::inst)
 (s/def ::updated-date ::inst)
-(s/def ::catalog-created-date ::ymd-dt)
-(s/def ::catalog-updated-date ::ymd-dt)
-(def catalog-sources #{"curseforge" "wowinterface" "github" "tukui" "tukui-classic"})
-(s/def ::catalog-source catalog-sources)
-(s/def ::catalog-source-id (s/or ::integer-id? int? ;; tukui has negative ids
+(s/def ::catalogue-created-date ::ymd-dt)
+(s/def ::catalogue-updated-date ::ymd-dt)
+(def catalogue-sources #{"curseforge" "wowinterface" "github" "tukui" "tukui-classic"})
+(s/def ::catalogue-source catalogue-sources)
+(s/def ::catalogue-source-id (s/or ::integer-id? int? ;; tukui has negative ids
                                  ::string-id? string?))
 (s/def ::zoned-dt-obj #(instance? java.time.ZonedDateTime %))
 (s/def ::download-count (s/and int? #(>= % 0)))
@@ -143,9 +143,9 @@
 (s/def ::selected? boolean?)
 (s/def ::addon-dir-map (s/keys :req-un [::addon-dir ::game-track]))
 (s/def ::addon-dir-list (s/coll-of ::addon-dir-map))
-(s/def ::selected-catalog keyword?)
+(s/def ::selected-catalogue keyword?)
 (s/def ::gui-theme #{:light :dark})
-(s/def ::user-config (s/keys :req-un [::addon-dir-list ::selected-catalog ::gui-theme]))
+(s/def ::user-config (s/keys :req-un [::addon-dir-list ::selected-catalogue ::gui-theme]))
 (s/def ::ignore? boolean?)
 
 (s/def ::reason-phrase (s/and string? #(<= (count %) 50)))
@@ -173,13 +173,13 @@
 (s/def ::datestamp ::inst)
 (s/def ::updated-datestamp ::inst)
 (s/def ::total int?)
-(s/def ::catalog (s/keys :req-un [::spec ::datestamp ::updated-datestamp ::total ::addon-summary-list]))
+(s/def ::catalogue (s/keys :req-un [::spec ::datestamp ::updated-datestamp ::total ::addon-summary-list]))
 
 ;;
 
 (s/def ::export-type #{:json :edn})
-(s/def ::source ::catalog-source) ;; alias :(
-(s/def ::source-id ::catalog-source-id) ;; alias :(
+(s/def ::source ::catalogue-source) ;; alias :(
+(s/def ::source-id ::catalogue-source-id) ;; alias :(
 
 (s/def ::export-record-v1 (s/keys :req-un [::name]
                                   :opt [::source ::source-id]))
@@ -194,4 +194,4 @@
 
 ;;
 
-(s/def ::catalog-source-map map?)
+(s/def ::catalogue-source-map map?)

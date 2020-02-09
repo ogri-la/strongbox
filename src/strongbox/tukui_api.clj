@@ -71,7 +71,7 @@
 
          ;; both of these are available in the main download
          ;; however the catalogue is updated weekly and strongbox uses a mechanism of
-         ;; checking each for updates rather than relying on the catalog.
+         ;; checking each for updates rather than relying on the catalogue.
          ;; perhaps in the future when we scrape daily
          ;;:version (:version ti)
          ;;:download-url (:url ti)
