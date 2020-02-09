@@ -515,7 +515,6 @@
          {:download-count 1
           :interface-version  70000,
           :download-url  "https://www.example.org/wow/addons/everyaddon/download/123456/file",
-          :donation-url nil,
           :version  "1.2.3"}))
 
 (deftest install-addon

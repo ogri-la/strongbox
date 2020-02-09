@@ -30,7 +30,7 @@
 ;; todo: rename '::expanded-addon' or similar
 (s/def ::addon
   (s/merge ::addon-summary (s/keys :req-un [::version ::download-url]
-                                   :opt [::donation-url ::interface-version])))
+                                   :opt [::interface-version])))
 
 ;; .toc files live in the root of an addon and include the author's metadata about the addon
 ;; minimum needed to be scraped from a toc file
@@ -105,7 +105,6 @@
                                  ::string-id? string?))
 (s/def ::zoned-dt-obj #(instance? java.time.ZonedDateTime %))
 (s/def ::download-count (s/and int? #(>= % 0)))
-(s/def ::donation-url (s/nilable ::url))
 (s/def ::json string?)
 (s/def ::html string?)
 
