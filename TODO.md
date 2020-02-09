@@ -12,9 +12,16 @@ see CHANGELOG.md for a more formal list of changes by release
     - diagram state transitions
         - my mental model has become fuzzy
         - done, see strongbox-docs
-    - untable nfo and toc files
+    - untangle nfo and toc files
         - result of diagramming modules
         - done
+
+* can addon-id be removed as a gui column?
+    - no.
+    - addon-id is actually "name"
+    - "name" is the value core.clj uses to update the 'unsteady addon' list that the gui watches to highlight rows
+    - "label" is actually masquerading as "name"
+    - won't 'fix'
 
 ### todo
 
@@ -25,20 +32,37 @@ see CHANGELOG.md for a more formal list of changes by release
     - update package
         - add new shell script 'strongbox'
 
-* can addon-id be removed as a gui column?
 
-* move location of catalogs into user settings
-    - allow user to specify their own catalogs
-        - a url to a catalog that is downloaded and included while loading up the db
-        - different from the 'user catalog'
-    - wowman-data, stop publishing a 'daily' release
-        - we have multiple catalogs now
-        - 0.10.0 uses the raw catalog files directly
-        - 0.9.2 was still using the daily release
-        - remove the 'daily' release after 0.11.0 is released
-        - this will break older releases but users who prefer older versions of the software shouldn't be stranded if the catalog goes away
-            - they should just be able to plug in a new location of the catalog
-            - unfortunately *these* users will be out of luck, but future users won't be
+* catalog updates
+    - rename references of 'uri' to 'url'
+        - these are all through the catalog
+    - remove 'alt-name'
+
+    - normalise categories between addon hosts
+        - perhaps expand them into 'tags'?
+        - a lot of these categories are composite
+            - break each composite one down into a singular, normalise, have a unique set of tags
+
+    - can game-track-list be included from all other hosts?
+        - not just wowi?
+    
+    - publish a 'strongbox-catalogue' repo
+        - just like wowman-data, but for strongbox
+        - 
+
+    - move location of catalogs into user settings
+        - allow user to specify their own catalogs
+            - a url to a catalog that is downloaded and included while loading up the db
+            - different from the 'user catalog'
+        - wowman-data, stop publishing a 'daily' release
+            - we have multiple catalogs now
+            - 0.10.0 uses the raw catalog files directly
+            - 0.9.2 was still using the daily release
+            - remove the 'daily' release after 0.11.0 is released
+            - this will break older releases but users who prefer older versions of the software shouldn't be stranded if the catalog goes away
+                - they should just be able to plug in a new location of the catalog
+                - unfortunately *these* users will be out of luck, but future users won't be
+            - I'll stop updating wowman-data when wowman is no longer being used
 
 * remove backwards compatibility kludges
     - there will be a migration of wowman data to strongbox data
@@ -60,14 +84,6 @@ see CHANGELOG.md for a more formal list of changes by release
     * core.clj is getting too large
         - it's difficult to navigate and debug
         - many tests are accumulating in core_test.clj
-
-* catalog updates
-    * rename references of 'uri' to 'url'
-        - these are all through the catalog
-    * normalise categories between addon hosts
-        - perhaps expand them into 'tags'? 
-        - a lot of these categories are composite
-            - break each composite one down into a singular, normalise, have a unique set of tags
 
 ## todo bucket (no particular order)
 
