@@ -182,40 +182,10 @@
       (error e (format "unhandled error parsing addon in directory '%s': %s" addon-dir (.getMessage e))))))
 
 (defn-spec installed-addons (s/or :ok ::sp/toc-list, :error nil?)
-  [addons-dir ::sp/extant-dir]
-  (let [addon-dir-list (filter fs/directory? (fs/list-dir addons-dir))
-        addon-list (remove nil? (mapv (comp parse-addon-toc-guard str) addon-dir-list))
-
-        ;; an addon may actually be many addons bundled together in a single download
-        ;; strongbox tags the bundled addons as they are unzipped and tries to determine the primary one
-        addon-groups (group-by :group-id addon-list)
-
-        ;; remove those addons without a group, we'll conj them in later
-        unknown-grouping (get addon-groups nil)
-        addon-groups (dissoc addon-groups nil)
-
-        expand (fn [[group-id addons]]
-                 (if (= 1 (count addons))
-                   ;; perfect case, no grouping.
-                   (first addons)
-
-                   ;; multiple addons in group
-                   (let [_ (debug (format "grouping '%s', %s addons in group" group-id (count addons)))
-                         primary (first (filter :primary? addons))
-                         next-best (first addons)
-                         new-data {:group-addons addons
-                                   :group-addon-count (count addons)}
-                         next-best-label (-> next-best :group-id fs/base-name)]
-                     (if primary
-                       ;; best, easiest case
-                       (merge primary new-data)
-                       ;; when we can't determine the primary addon, add a shitty synthetic one
-                       ;; TODO: should I dissoc :dirname? it could be misleading..
-                       (merge next-best new-data {:label (format "%s (group)" next-best-label)
-                                                  :description (format "group record for the %s addon" next-best-label)})))))
-
-        ;; expand the grouped addons and join with the unknowns
-        addon-list (apply conj (mapv expand addon-groups) unknown-grouping)]
+  "returns a list of addon data scraped from the .toc files of all addons in given `addon-dir`"
+  [addon-dir ::sp/addon-dir]
+  (let [addon-dir-list (->> addon-dir fs/list-dir (filter fs/directory?) (map str))
+        addon-list (->> addon-dir-list (map parse-addon-toc-guard) (remove nil?) vec)]
     addon-list))
 
 (st/instrument)

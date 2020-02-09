@@ -565,6 +565,43 @@
     (swap! state assoc :installed-addon-list installed-addon-list)
     nil))
 
+;; TODO: test, now that it is it's own thing.
+(defn-spec group-addons ::sp/toc-list
+  "an addon may actually be many addons bundled together in a single download.
+  strongbox tags the bundled addons as they are unzipped and tries to determine the primary one.
+  after we've loaded the addons and merged their nfo data, we can then group them"
+  [addon-list ::sp/toc-list]
+  (let [;; group-id comes from the nfo file
+        addon-groups (group-by :group-id addon-list)
+
+        ;; remove those addons without a group, we'll conj them in later
+        unknown-grouping (get addon-groups nil)
+        addon-groups (dissoc addon-groups nil)
+
+        expand (fn [[group-id addons]]
+                 (if (= 1 (count addons))
+                   ;; perfect case, no grouping.
+                   (first addons)
+
+                   ;; multiple addons in group
+                   (let [_ (debug (format "grouping '%s', %s addons in group" group-id (count addons)))
+                         primary (first (filter :primary? addons))
+                         next-best (first addons)
+                         new-data {:group-addons addons
+                                   :group-addon-count (count addons)}
+                         next-best-label (-> next-best :group-id fs/base-name)]
+                     (if primary
+                       ;; best, easiest case
+                       (merge primary new-data)
+                       ;; when we can't determine the primary addon, add a shitty synthetic one
+                       ;; TODO: should I dissoc :dirname? it could be misleading..
+                       (merge next-best new-data {:label (format "%s (group)" next-best-label)
+                                                  :description (format "group record for the %s addon" next-best-label)})))))
+
+        ;; this flattens the newly grouped addons from a map into a list and joins the unknowns
+        addon-list (apply conj (mapv expand addon-groups) unknown-grouping)]
+    addon-list))
+
 (defn-spec -load-installed-addons ::sp/toc-list
   "reads the .toc files from the given addon dir, reads any nfo data for 
   these addons and returns the mooshed data"
@@ -591,9 +628,11 @@
 
                              ;; otherwise, merge the addon with the nfo data.
                              ;; when `ignore?` flag in addon is `true` but `false` in nfo-data, nfo-data will take precedence.
-                             (merge addon nfo-data))))]
+                             (merge addon nfo-data))))
 
-    (mapv merge-nfo-data addon-list)))
+        addon-list (mapv merge-nfo-data addon-list)]
+
+    (group-addons addon-list)))
 
 (defn-spec load-installed-addons nil?
   "reads the .toc files from the currently selected addon dir, reads any nfo data for 
