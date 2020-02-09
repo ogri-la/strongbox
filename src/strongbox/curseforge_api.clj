@@ -4,7 +4,6 @@
     [http :as http]
     [specs :as sp]
     [utils :as utils :refer [to-int to-json fmap join from-epoch to-url]]]
-   [slugify.core :refer [slugify]]
    [clojure.spec.alpha :as s]
    [orchestra.spec.test :as st]
    [orchestra.core :refer [defn-spec]]

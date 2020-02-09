@@ -787,16 +787,16 @@
 (defn build-catalogue-menu
   []
   (let [catalogue-to-id (fn [catalogue]
-                        (-> catalogue :name name (str "catalogue-menu-") keyword))
+                          (-> catalogue :name name (str "catalogue-menu-") keyword))
 
         catalogue-button-grp (ss/button-group)
         catalogue-menu (mapv (fn [catalogue-source]
-                             (ss/radio-menu-item :id (catalogue-to-id catalogue-source)
-                                                 :text (:label catalogue-source)
-                                                 :user-data catalogue-source
-                                                 :group catalogue-button-grp
-                                                 :selected? (= (core/get-state :cfg :selected-catalogue) (:name catalogue-source))))
-                           (core/get-state :catalogue-source-list))]
+                               (ss/radio-menu-item :id (catalogue-to-id catalogue-source)
+                                                   :text (:label catalogue-source)
+                                                   :user-data catalogue-source
+                                                   :group catalogue-button-grp
+                                                   :selected? (= (core/get-state :cfg :selected-catalogue) (:name catalogue-source))))
+                             (core/get-state :catalogue-source-list))]
 
     ;; user selection updates application state
     (sb/bind (sb/selection catalogue-button-grp)
@@ -865,8 +865,8 @@
         view-menu (build-theme-menu)
 
         catalogue-menu (into (build-catalogue-menu)
-                           [:separator
-                            (ss/action :name "Refresh user catalogue" :handler (async-handler core/refresh-user-catalogue))])
+                             [:separator
+                              (ss/action :name "Refresh user catalogue" :handler (async-handler core/refresh-user-catalogue))])
 
         addon-menu [(ss/action :name "Update all" :key "menu U" :mnemonic "u" :handler (async-handler core/install-update-all))
                     (ss/action :name "Re-install all" :handler (async-handler core/re-install-all))

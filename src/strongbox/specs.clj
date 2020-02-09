@@ -102,7 +102,7 @@
 (def catalogue-sources #{"curseforge" "wowinterface" "github" "tukui" "tukui-classic"})
 (s/def ::catalogue-source catalogue-sources)
 (s/def ::catalogue-source-id (s/or ::integer-id? int? ;; tukui has negative ids
-                                 ::string-id? string?))
+                                   ::string-id? string?))
 (s/def ::zoned-dt-obj #(instance? java.time.ZonedDateTime %))
 (s/def ::download-count (s/and int? #(>= % 0)))
 (s/def ::json string?)

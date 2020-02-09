@@ -40,10 +40,10 @@
         fake-routes {;; catalogue
                      ;; return dummy data. we can do this because the catalogue isn't loaded/parsed/validated
                      ;; until the UI (gui or cli) tells it to via a later call to `refresh`
-                     "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalogue.json"
+                     "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
                      {:get (fn [req] {:status 200 :body "{}"})}
 
-                     "https://raw.githubusercontent.com/ogri-la/wowman-data/master/full-catalogue.json"
+                     "https://raw.githubusercontent.com/ogri-la/wowman-data/master/full-catalog.json"
                      {:get (fn [req] {:status 200 :body "{}"})}
 
                      ;; latest strongbox version

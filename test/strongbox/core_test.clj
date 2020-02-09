@@ -218,7 +218,7 @@
           addon-summary-list (utils/load-json-file (fixture-path "import-export--dummy-catalogue.json"))
 
           fake-routes {;; catalogue
-                       "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalogue.json"
+                       "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
                        {:get (fn [req] {:status 200 :body (utils/to-json (catalogue/new-catalogue addon-summary-list))})}
 
                        ;; every-addon
@@ -299,7 +299,7 @@
           addon-summary-list (utils/load-json-file (fixture-path "import-export--dummy-catalogue.json"))
 
           fake-routes {;; catalogue
-                       "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalogue.json"
+                       "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
                        {:get (fn [req] {:status 200 :body (utils/to-json (catalogue/new-catalogue addon-summary-list))})}
 
                        ;; every-addon
@@ -381,13 +381,13 @@
 
     (let [;; we start off with a list of these called a catalogue. it's downloaded from github
           catalogue {:category-list ["Auction House & Vendors"],
-                   :download-count 1
-                   :label "Every Addon"
-                   :name "every-addon",
-                   :source "curseforge",
-                   :source-id 0
-                   :updated-date "2012-09-20T05:32:00Z",
-                   :url "https://www.curseforge.com/wow/addons/every-addon"}
+                     :download-count 1
+                     :label "Every Addon"
+                     :name "every-addon",
+                     :source "curseforge",
+                     :source-id 0
+                     :updated-date "2012-09-20T05:32:00Z",
+                     :url "https://www.curseforge.com/wow/addons/every-addon"}
 
           ;; this is subset of the data the remote addon host (like curseforge) serves us
           api-result {:latestFiles [{:downloadUrl "https://example.org/foo"
@@ -399,7 +399,7 @@
           alt-api-result (assoc-in api-result [:latestFiles 0 :displayName] "v8.20.00")
 
           fake-routes {;; catalogue
-                       "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalogue.json"
+                       "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
                        {:get (fn [req] {:status 200 :body (utils/to-json (catalogue/new-catalogue [catalogue]))})}
 
                        ;; every-addon
@@ -686,7 +686,7 @@
 (deftest re-download-catalogue-on-bad-data
   (testing "catalogue data is re-downloaded if it can't be read"
     (let [;; overrides the fake route in test_helper.clj
-          fake-routes {"https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalogue.json"
+          fake-routes {"https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
                        {:get (fn [req] {:status 200 :body (slurp (fixture-path "dummy-catalogue--single-entry.json"))})}}]
       (with-running-app
         (core/refresh)
@@ -707,7 +707,7 @@
 (deftest re-download-catalogue-on-bad-data-2
   (testing "`db-load-catalogue` doesn't fail catastrophically when re-downloaded json is still bad"
     (let [;; overrides the fake route in test_helper.clj
-          fake-routes {"https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalogue.json"
+          fake-routes {"https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
                        {:get (fn [req] {:status 200 :body "borked json"})}}]
       (with-running-app
         (core/refresh)
@@ -789,14 +789,14 @@
           expected-addon-dir (utils/join install-dir "EveryAddon")
 
           expected-user-catalogue [{:category-list [],
-                                  :game-track-list [],
-                                  :updated-date "2019-10-09T17:40:04Z",
-                                  :name "healcomm",
-                                  :source "github",
-                                  :label "HealComm",
-                                  :download-count 30946,
-                                  :source-id "Aviana/HealComm",
-                                  :url "https://github.com/Aviana/HealComm"}]]
+                                    :game-track-list [],
+                                    :updated-date "2019-10-09T17:40:04Z",
+                                    :name "healcomm",
+                                    :source "github",
+                                    :label "HealComm",
+                                    :download-count 30946,
+                                    :source-id "Aviana/HealComm",
+                                    :url "https://github.com/Aviana/HealComm"}]]
       (with-running-app
         (core/set-addon-dir! install-dir)
         (with-fake-routes-in-isolation fake-routes

@@ -1,7 +1,6 @@
 (ns strongbox.catalogue
   (:require
    [flatland.ordered.map :as omap]
-   [slugify.core :refer [slugify]]
    [clojure.spec.alpha :as s]
    [orchestra.spec.test :as st]
    [orchestra.core :refer [defn-spec]]

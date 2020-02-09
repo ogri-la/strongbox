@@ -106,12 +106,12 @@
    ;;:cfg {:addon-dir-list []
    ;;      :selected-catalogue :short}
    :cfg nil ;; see config.clj
-   :catalogue-source-list [{:name :short :label "Short (default)" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalogue.json"}
-                         {:name :full :label "Full" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/full-catalogue.json"}
+   :catalogue-source-list [{:name :short :label "Short (default)" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"}
+                           {:name :full :label "Full" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/full-catalog.json"}
 
-                         {:name :tukui :label "Tukui" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/tukui-catalogue.json"}
-                         {:name :curseforge :label "Curseforge" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/curseforge-catalogue.json"}
-                         {:name :wowinterface :label "WoWInterface" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/wowinterface-catalogue.json"}]
+                           {:name :tukui :label "Tukui" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/tukui-catalog.json"}
+                           {:name :curseforge :label "Curseforge" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/curseforge-catalog.json"}
+                           {:name :wowinterface :label "WoWInterface" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/wowinterface-catalog.json"}]
 
    ;; subset of possible data about all INSTALLED addons
    ;; starts as parsed .toc file data
@@ -903,9 +903,9 @@
                                                 (error "catalogue *still* corrupted and cannot be loaded. try another catalogue from the 'catalogue' menu"))))
 
           catalogue-data (utils/nilable
-                        (catalogue/read-catalogue catalogue-path :bad-data? bad-json-file-handler))
+                          (catalogue/read-catalogue catalogue-path :bad-data? bad-json-file-handler))
           user-catalogue-data (utils/nilable
-                             (catalogue/read-catalogue (paths :user-catalogue-file) :bad-data? nil))
+                               (catalogue/read-catalogue (paths :user-catalogue-file) :bad-data? nil))
           final-catalogue (catalogue/merge-catalogs catalogue-data user-catalogue-data)]
       (when-not (empty? final-catalogue)
         (-db-load-catalogue final-catalogue)))))
