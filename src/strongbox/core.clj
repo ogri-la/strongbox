@@ -104,7 +104,6 @@
 
    ;; final config, result of merging :file-opts and :cli-opts
    ;;:cfg {:addon-dir-list []
-   ;;      :debug? false ;; todo, remove
    ;;      :selected-catalog :short}
    :cfg nil ;; see config.clj
    :catalog-source-list [{:name :short :label "Short (default)" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"}

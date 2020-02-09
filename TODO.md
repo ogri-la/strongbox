@@ -20,6 +20,8 @@ see CHANGELOG.md for a more formal list of changes by release
         - done
     - remove all mentions of a donation url, author name
         - done
+    - remove 'alt-name'
+        - done
 
 * can addon-id be removed as a gui column?
     - no.
@@ -30,29 +32,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### todo
 
-* rename wowman
-    - rename repository
-    - update readme
-        - mention name change prominently
-    - update package
-        - add new shell script 'strongbox'
-    - remove 'alt-name'
-        - done
-
 * catalog updates
-    - rename references of 'uri' to 'url'
-        - these are all through the catalog
-
-    - normalise categories between addon hosts
-        - perhaps expand them into 'tags'?
-        - a lot of these categories are composite
-            - break each composite one down into a singular, normalise, have a unique set of tags
-
-    - can game-track-list be included from all other hosts?
-        - not just wowi?
-    
-    - publish a 'strongbox-catalogue' repo
-        - just like wowman-data, but for strongbox
+    - rename any mentions of 'catalog' to 'catalogue'
+        - purely for consistency
 
     - move location of catalogs into user settings
         - allow user to specify their own catalogs
@@ -67,9 +49,29 @@ see CHANGELOG.md for a more formal list of changes by release
                 - they should just be able to plug in a new location of the catalog
                 - unfortunately *these* users will be out of luck, but future users won't be
             - I'll stop updating wowman-data when wowman is no longer being used
+        - 
+
+    - publish a 'strongbox-catalogue' repo
+        - just like wowman-data, but for strongbox
+
+    - normalise categories between addon hosts
+        - perhaps expand them into 'tags'?
+        - a lot of these categories are composite
+            - break each composite one down into a singular, normalise, have a unique set of tags
+
+    - can game-track-list be included from all other hosts?
+        - not just wowi?
+
+* rename wowman
+    - rename repository
+    - update readme
+        - mention name change prominently
+    - update package
+        - add new shell script 'strongbox'
 
 * remove backwards compatibility kludges
     - there will be a migration of wowman data to strongbox data
+        - rename `test/fixtures/user-config-0.11.json` to `wowman--user-config ...`
 
 * spec clean up
     * it's never been particularly clear in my head what some of those specs are
