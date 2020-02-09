@@ -7,7 +7,6 @@
   "name" : "everyaddon",
   "source" : "curseforge",
   "source-id": 1,
-  "alt-name" : "everyaddon",
   "label" : "EveryAddon",
   "download-count" : 3000000,
   "url" : "https://www.curseforge.com/wow/addons/everyaddon"
@@ -20,7 +19,6 @@
   "name" : "everyotheraddon",
   "source" : "curseforge",
   "source-id": 2,
-  "alt-name" : "everyotheraddon",
   "label" : "Every Other Addon",
   "download-count" : 5400000,
   "url" : "https://www.curseforge.com/wow/addons/everyotheraddon"

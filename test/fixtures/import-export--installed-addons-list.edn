@@ -30,7 +30,6 @@
   :interface-version 80200,
   :download-url
   "https://www.curseforge.com/wow/addons/adibags/download/2738272/file",
-  :alt-name "adibags",
   :label "AdiBags",
   :download-count 3000000,
   :url "https://www.curseforge.com/wow/addons/adibags",
@@ -59,7 +58,6 @@
   :interface-version 80200,
   :download-url
   "https://www.curseforge.com/wow/addons/carbonite/download/2732714/file",
-  :alt-name "carbonitemaps",
   :label "Carbonite Maps",
   :download-count 5400000,
   :url "https://www.curseforge.com/wow/addons/carbonite",

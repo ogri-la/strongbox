@@ -18,6 +18,8 @@ see CHANGELOG.md for a more formal list of changes by release
     - rename references of 'uri' to 'url'
         - these are all through the catalog
         - done
+    - remove all mentions of a donation url, author name
+        - done
 
 * can addon-id be removed as a gui column?
     - no.
@@ -34,11 +36,12 @@ see CHANGELOG.md for a more formal list of changes by release
         - mention name change prominently
     - update package
         - add new shell script 'strongbox'
+    - remove 'alt-name'
+        - done
 
 * catalog updates
     - rename references of 'uri' to 'url'
         - these are all through the catalog
-    - remove 'alt-name'
 
     - normalise categories between addon hosts
         - perhaps expand them into 'tags'?
@@ -50,9 +53,6 @@ see CHANGELOG.md for a more formal list of changes by release
     
     - publish a 'strongbox-catalogue' repo
         - just like wowman-data, but for strongbox
-        - 
-
-    - remove all mentions of a donation url, author name
 
     - move location of catalogs into user settings
         - allow user to specify their own catalogs
@@ -91,6 +91,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* add dirname support to reconcilation and catalogue
+    - not sure which hosts support these
 * tukui and elvui can't be switched to classic
     - on classic track they show updates
         - elvui 1.82 => 1.211

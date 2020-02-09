@@ -199,9 +199,7 @@
 
         today (utcnow)
         update-addon (fn [a]
-                       (let [;; an even more slugified label with hyphens and underscores removed
-                             alt-name (-> a :label (slugify ""))
-                             dtobj (java-time/zoned-date-time (:updated-date a))
+                       (let [dtobj (java-time/zoned-date-time (:updated-date a))
                              age-in-days (java-time/as (java-time/duration dtobj today) :days)
                              version-age (condp #(< %2 %1) age-in-days
                                            7 :brand-new ;; < 1 week old
@@ -212,8 +210,7 @@
 
                              ;; todo: normalise categories here
                              ]
-                         (merge a {:alt-name alt-name
-                                   :age version-age})))
+                         (merge a {:age version-age})))
         addon-list (mapv update-addon addon-list)
 
         ;; should these two dates belong to the catalog proper or derived from the component catalogs?

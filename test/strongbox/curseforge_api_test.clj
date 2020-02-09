@@ -21,7 +21,6 @@
                          :age "new",
                          :name "everyaddon",
                          :source "curseforge",
-                         :alt-name "everyaddon",
                          :label "EveryAddon",
                          :download-count 3000000,
                          :source-id 1,
@@ -47,7 +46,6 @@
                          :age "new",
                          :name "everyaddon",
                          :source "curseforge",
-                         :alt-name "everyaddon",
                          :label "EveryAddon",
                          :download-count 3000000,
                          :source-id 1,
@@ -169,7 +167,6 @@
                      :category-list ["Miscellaneous"],
                      :updated-date "2019-08-30T14:39:44.943Z",
                      :name "advancedinterfaceoptions",
-                     :alt-name "advancedinterfaceoptions",
                      :label "AdvancedInterfaceOptions",
                      :download-count 2923589,
                      :source "curseforge"

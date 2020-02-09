@@ -741,7 +741,7 @@
                   (db-query sql :arg-list sql-arg-vals))
         match (-> results first db-coerce-catalog-values)]
     (when match
-      ;; {:idx [:name :alt-name], :key "deadly-boss-mods", :match {...}, ...}
+      ;; {:idx [[:source :source-id] [:source :source_id]], :key "deadly-boss-mods", :match {...}, ...}
       {:idx [toc-keys catalog-keys]
        :key sql-arg-vals
        :installed-addon installed-addon
@@ -768,7 +768,6 @@
                        [:alias "name"] ;; alias = name, popular addon's hardcoded name to a catalogue item
                        [[:source :name] ["source" "name"]] ;; source+name, we have a source but no source-id (nfo-v1 files)
                        [:name "name"]
-                       [:name "alt_name"]
                        [:label "label"]
                        [:dirname "label"]]] ;; dirname = label, eg ./AdiBags = AdiBags
     (for [installed-addon installed-addon-list]
@@ -854,7 +853,6 @@
         xform-row (fn [row]
                     (let [ignored [:category-list :age :game-track-list :created-date]
                           mapping {:source-id :source_id
-                                   :alt-name :alt_name
                                    :download-count :download_count
                                    ;;:created-date :created_date ;; curseforge only and unused
                                    :updated-date :updated_date}

@@ -4,7 +4,6 @@ create table if not exists catalog (
 
     label varchar(255),
     name varchar(150), -- longest in catalog at time of writing is 49
-    alt_name varchar(150),
     description varchar(255),
     url varchar(255),
     download_count int,

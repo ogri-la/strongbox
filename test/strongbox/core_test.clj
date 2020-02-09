@@ -254,7 +254,6 @@
                            :source "curseforge",
                            :interface-version 80000,
                            :download-url "https://edge.forgecdn.net/files/1/1/EveryAddon.zip",
-                           :alt-name "everyaddon",
                            :label "EveryAddon",
                            :download-count 3000000,
                            :source-id 1,
@@ -275,7 +274,6 @@
                            :source "curseforge",
                            :interface-version 80200,
                            :download-url "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip",
-                           :alt-name "everyotheraddon",
                            :label "Every Other Addon",
                            :download-count 5400000,
                            :source-id 2,
@@ -337,7 +335,6 @@
                            :source "curseforge",
                            :interface-version 80000,
                            :download-url "https://edge.forgecdn.net/files/1/1/EveryAddon.zip",
-                           :alt-name "everyaddon",
                            :label "EveryAddon",
                            :download-count 3000000,
                            :source-id 1,
@@ -358,7 +355,6 @@
                            :source "curseforge",
                            :interface-version 11300, ;; changed
                            :download-url "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip",
-                           :alt-name "everyotheraddon",
                            :label "Every Other Addon",
                            :download-count 5400000,
                            :source-id 2,
@@ -500,7 +496,6 @@
   "catalog of summaries"
   {:label "EveryAddon",
    :name  "everyaddon",
-   :alt-name "everyaddon"
    :description  "Does what no other addon does, slightly differently"
    :category-list  ["Auction & Economy", "Data Broker"],
    :source "curseforge"

@@ -65,7 +65,6 @@
          :game-track-list [(if classic? "classic" "retail")]
          :label (:name ti)
          :name (slugify (:name ti))
-         :alt-name (slugify (:name ti) "")
          :description (:small_desc ti)
          :updated-date (-> ti :lastupdate tukui-date-to-rfc3339)
          :url (:web_url ti)
