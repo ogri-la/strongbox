@@ -99,8 +99,8 @@
 
 (defn-spec browse-to nil?
   "given a URI, open a browser window with it"
-  [uri ::sp/uri]
-  (.browse (java.awt.Desktop/getDesktop) (java.net.URI. uri)))
+  [url ::sp/url]
+  (.browse (java.awt.Desktop/getDesktop) (java.net.URI. url)))
 
 (defn handler
   "returns a function that calls each given argument function sequentially, discards result, returns nil"
@@ -249,7 +249,7 @@
                  ["" ""]
                  (when-not (core/latest-strongbox-version?)
                    [(format "version %s is now available to download!" (core/latest-strongbox-release)) "center"])
-                 [(x/hyperlink :text "github" :uri "https://github.com/ogri-la/strongbox") "center"]
+                 [(x/hyperlink :text "github" :url "https://github.com/ogri-la/strongbox") "center"]
                  ["AGPL v3", "center"]]
         content (remove nil? content)
         content (interleave content (repeat [:separator "growx, wrap"]))
@@ -443,21 +443,21 @@
                                      (.setCursor grid (cursor :default))))))
 
         hyperlink-colour (-> :hyperlink colours name)
-        uri-template (str "<html><font color='" hyperlink-colour "'>&nbsp;↪ %s</font></html>")
-        uri-renderer (fn [x]
+        url-template (str "<html><font color='" hyperlink-colour "'>&nbsp;↪ %s</font></html>")
+        url-renderer (fn [x]
                        (when x
-                         (let [uri (java.net.URL. x)
-                               label (case (.getHost uri)
+                         (let [url (java.net.URL. x)
+                               label (case (.getHost url)
                                        "www.curseforge.com" "curseforge"
                                        "www.wowinterface.com" "wowinterface"
                                        "github.com" "github"
                                        "www.tukui.org" "tukui"
                                        "???")]
-                           (format uri-template label))))]
+                           (format url-template label))))]
 
     (ss/listen grid :mouse-motion hand-cursor-on-hover)
     (ss/listen grid :mouse-clicked go-link-clicked)
-    (add-cell-renderer grid "source" uri-renderer)
+    (add-cell-renderer grid "source" url-renderer)
 
     nil))
 
@@ -472,7 +472,7 @@
                                             :matched?
                                             :ignore?
                                             {:key :installed-game-track, :text "track"}
-                                            {:key :uri, :text "source"}
+                                            {:key :url, :text "source"}
                                             :source-id
                                             {:key :label, :text "name"}
                                             :description
@@ -568,7 +568,7 @@
 (defn search-results-panel
   []
   (let [hidden-by-default-cols [:source-id]
-        tblmdl (sstbl/table-model :columns [{:key :uri :text "source"}
+        tblmdl (sstbl/table-model :columns [{:key :url :text "source"}
                                             :source-id
                                             {:key :label :text "name"}
                                             :description
@@ -611,7 +611,7 @@
     (add-highlighter grid addon-installed? (colours :search/already-installed))
 
     (ss/listen grid :selection (selected-rows-handler search-results-selection-handler))
-    (state-bind [:catalog-size] update-rows-fn)
+    (state-bind [:catalogue-size] update-rows-fn)
     (state-bind [:search-field-input] update-rows-fn)
 
     (hide-columns grid hidden-by-default-cols)
@@ -697,9 +697,9 @@
 (defn status-bar
   "this is the litle strip of text at the bottom of the application."
   []
-  (let [num-matching-template "%s of %s installed addons found in catalog."
-        all-matching-template "all installed addons found in catalog."
-        catalog-count-template "%s addons in catalog."
+  (let [num-matching-template "%s of %s installed addons found in catalogue."
+        all-matching-template "all installed addons found in catalogue."
+        catalogue-count-template "%s addons in catalogue."
 
         status (ss/label :text ""
                          :font (font :size 11))
@@ -708,11 +708,11 @@
                        (let [ia (:installed-addon-list state)
                              uia (filter :matched? ia)
 
-                             a-count (:catalog-size state)
+                             a-count (:catalogue-size state)
                              ia-count (count ia)
                              uia-count (count uia)
 
-                             strings [(format catalog-count-template a-count)
+                             strings [(format catalogue-count-template a-count)
 
                                       (if (= ia-count uia-count)
                                         all-matching-template
@@ -734,7 +734,7 @@
     (core/export-installed-addon-list-safely path)
     nil))
 
-(defn-spec export-user-catalog-handler nil?
+(defn-spec export-user-catalogue-handler nil?
   "prompts user with a file selection dialogue then writes the user catalogue to selected file"
   []
   (when-let [path (chooser/choose-file (select-ui :#root)
@@ -743,7 +743,7 @@
                                        :filters [["JSON" ["json"]]]
                                        :success-fn (fn [_ file]
                                                      (str (.getAbsolutePath file))))]
-    (core/export-user-catalog-addon-list-safely path)
+    (core/export-user-catalogue-addon-list-safely path)
     nil))
 
 (defn-spec import-addon-list-handler nil?
@@ -779,41 +779,41 @@
         less-failure-warning #(ss/alert "Failed. Addon successfully added to catalogue but could not be installed.")]
     (when addon-url
       (if-let [result (core/add+install-user-addon! addon-url)]
-        (when-not (contains? result :download-uri)
+        (when-not (contains? result :download-url)
           (less-failure-warning))
         (failure-warning))))
   nil)
 
-(defn build-catalog-menu
+(defn build-catalogue-menu
   []
-  (let [catalog-to-id (fn [catalog]
-                        (-> catalog :name name (str "catalog-menu-") keyword))
+  (let [catalogue-to-id (fn [catalogue]
+                          (-> catalogue :name name (str "catalogue-menu-") keyword))
 
-        catalog-button-grp (ss/button-group)
-        catalog-menu (mapv (fn [catalog-source]
-                             (ss/radio-menu-item :id (catalog-to-id catalog-source)
-                                                 :text (:label catalog-source)
-                                                 :user-data catalog-source
-                                                 :group catalog-button-grp
-                                                 :selected? (= (core/get-state :cfg :selected-catalog) (:name catalog-source))))
-                           (core/get-state :catalog-source-list))]
+        catalogue-button-grp (ss/button-group)
+        catalogue-menu (mapv (fn [catalogue-source]
+                               (ss/radio-menu-item :id (catalogue-to-id catalogue-source)
+                                                   :text (:label catalogue-source)
+                                                   :user-data catalogue-source
+                                                   :group catalogue-button-grp
+                                                   :selected? (= (core/get-state :cfg :selected-catalogue) (:name catalogue-source))))
+                             (core/get-state :catalogue-source-list))]
 
     ;; user selection updates application state
-    (sb/bind (sb/selection catalog-button-grp)
+    (sb/bind (sb/selection catalogue-button-grp)
              (sb/b-do* (fn [val]
                          (when val ;; hrm, we're getting two events here, one where the value is nil ...
                            (async (fn []
-                                    (core/set-catalog-source! (-> val ss/user-data :name))
+                                    (core/set-catalogue-source! (-> val ss/user-data :name))
                                     (core/save-settings)))))))
 
     ;; application state updates menu selection
-    (core/state-bind [:cfg :selected-catalog]
+    (core/state-bind [:cfg :selected-catalogue]
                      (fn [state]
-                       (let [catalog-source (core/get-catalog-source (-> state :cfg :selected-catalog))
-                             button (-> catalog-source catalog-to-id as-selector select-ui)]
-                         (ss/selection! catalog-button-grp button))))
+                       (let [catalogue-source (core/get-catalogue-source (-> state :cfg :selected-catalogue))
+                             button (-> catalogue-source catalogue-to-id as-selector select-ui)]
+                         (ss/selection! catalogue-button-grp button))))
 
-    catalog-menu))
+    catalogue-menu))
 
 (defn build-theme-menu
   "returns a menu of radio buttons that can toggle through the available themes defined in `core/themes`"
@@ -864,9 +864,9 @@
 
         view-menu (build-theme-menu)
 
-        catalog-menu (into (build-catalog-menu)
-                           [:separator
-                            (ss/action :name "Refresh user catalog" :handler (async-handler core/refresh-user-catalog))])
+        catalogue-menu (into (build-catalogue-menu)
+                             [:separator
+                              (ss/action :name "Refresh user catalogue" :handler (async-handler core/refresh-user-catalogue))])
 
         addon-menu [(ss/action :name "Update all" :key "menu U" :mnemonic "u" :handler (async-handler core/install-update-all))
                     (ss/action :name "Re-install all" :handler (async-handler core/re-install-all))
@@ -877,11 +877,11 @@
                      :separator
                      (ss/action :name "Import addon list" :handler (async-handler import-addon-list-handler))
                      (ss/action :name "Export addon list" :handler (async-handler export-addon-list-handler))
-                     (ss/action :name "Export Github addon list" :handler (async-handler export-user-catalog-handler))]
+                     (ss/action :name "Export Github addon list" :handler (async-handler export-user-catalogue-handler))]
 
         cache-menu [(ss/action :name "Clear cache" :handler (async-handler core/delete-cache!))
                     (ss/action :name "Clear addon zips" :handler (async-handler core/delete-downloaded-addon-zips!))
-                    (ss/action :name "Clear catalogs" :handler (async-handler (juxt core/db-reload-catalog core/delete-catalog-files!)))
+                    (ss/action :name "Clear catalogs" :handler (async-handler (juxt core/db-reload-catalogue core/delete-catalogue-files!)))
                     (ss/action :name "Clear all" :handler (async-handler core/clear-all-temp-files!))
                     :separator
                     (ss/action :name "Delete WowMatrix.dat files" :handler (async-handler core/delete-wowmatrix-dat-files!))
@@ -892,7 +892,7 @@
         menu (ss/menubar :id :main-menu
                          :items [(ss/menu :text "File" :mnemonic "F" :items file-menu)
                                  (ss/menu :text "View" :mnemonic "V" :items view-menu)
-                                 (ss/menu :text "Catalog" :items catalog-menu)
+                                 (ss/menu :text "Catalog" :items catalogue-menu)
                                  (ss/menu :text "Addons" :mnemonic "A" :items addon-menu)
                                  (ss/menu :text "Import/Export" :mnemonic "i" :items impexp-menu)
                                  (ss/menu :text "Cache" :items cache-menu)

@@ -5,7 +5,7 @@
    [slugify.core :refer [slugify]]
    [orchestra.spec.test :as st]
    [strongbox
-    [utils :as utils :refer [to-uri]]
+    [utils :as utils :refer [to-url]]
     [http :as http]]
    [flatland.ordered.map :as omap]
    [net.cgrand.enlive-html :as html :refer [html-snippet select]]
@@ -57,7 +57,7 @@
   ;; fileinfo.php?s=c33edd26881a6a6509fd43e9a871809c&amp;id=23145 => 23145
   (-> a :attrs :href (clojure.string/split #"&.+=") last Integer.))
 
-(defn extract-addon-uri
+(defn extract-addon-url
   [a]
   (str host "info" (extract-source-id a)))
 
@@ -68,7 +68,7 @@
                                  (-> % (subs 8) trim)) ;; "Updated 09-07-18 01:27 PM " => "09-07-18 01:27 PM"
           anchor (-> snippet (select [[:a (html/attr-contains :href "fileinfo")]]) first)
           label (-> anchor :content first trim)]
-      {:uri (extract-addon-uri anchor)
+      {:url (extract-addon-url anchor)
        :name (-> label slugify)
        :label label
        :source "wowinterface"
@@ -116,7 +116,7 @@
   "returns a map of wowinterface addons, keyed by their :source-id (as a string).
   wowinterface.com has a single large file with all/most of their addon data in it called 'filelist.json'.
   the addon details endpoint is missing supported versions of wow it in.
-  Instead that data is in this list and must be incorporated in the catalog."
+  Instead that data is in this list and must be incorporated in the catalogue."
   []
   (let [url "https://api.mmoui.com/v3/game/WOW/filelist.json"
         resp (http/download url)

@@ -39,7 +39,7 @@
              :name (:name addon)
 
              ;; groups all of an addon's directories together.
-             :group-id (:uri addon)
+             :group-id (:url addon)
 
              ;; if addon is one of multiple addons, is this addon considered the 'primary' one?
              :primary? primary?

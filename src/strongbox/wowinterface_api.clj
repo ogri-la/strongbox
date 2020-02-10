@@ -21,7 +21,7 @@
           result (first result-list)]
       (when (> (count result-list) 1)
         (warn "wowinterface api returned more than one result for addon with :source-id" (:source-id addon-summary)))
-      (merge addon-summary {:download-uri (str "https://cdn.wowinterface.com/downloads/getfile.php?id=" (:source-id addon-summary))
+      (merge addon-summary {:download-url (str "https://cdn.wowinterface.com/downloads/getfile.php?id=" (:source-id addon-summary))
                             :version (:UIVersion result)}))))
 
 ;;

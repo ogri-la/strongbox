@@ -20,11 +20,10 @@
                      :updated-date "2019-07-29T20:48:25Z",
                      :name "-rp-tags",
                      :source "tukui",
-                     :alt-name "rptags",
                      :label "[rp:tags]",
                      :download-count 2838,
                      :source-id 98,
-                     :uri "https://www.tukui.org/addons.php?id=98"}]]
+                     :url "https://www.tukui.org/addons.php?id=98"}]]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (tukui-api/download-retail-summaries))))))
 
@@ -39,11 +38,10 @@
                      :updated-date "2019-10-27T23:32:28Z",
                      :name "benikui-classic",
                      :source "tukui-classic",
-                     :alt-name "benikuiclassic",
                      :label "BenikUI Classic",
                      :download-count 24490,
                      :source-id 13,
-                     :uri "https://www.tukui.org/classic-addons.php?id=13"}]]
+                     :url "https://www.tukui.org/classic-addons.php?id=13"}]]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (tukui-api/download-classic-summaries))))))
 
@@ -58,11 +56,10 @@
                     :updated-date "2019-12-05T00:00:00Z",
                     :name "elvui",
                     :source "tukui",
-                    :alt-name "elvui",
                     :label "ElvUI",
                     :download-count 2147483000, ;; 2 kajillion
                     :source-id -2,
-                    :uri "https://www.tukui.org/download.php?ui=elvui"}]
+                    :url "https://www.tukui.org/download.php?ui=elvui"}]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (tukui-api/download-elvui-summary)))))))
 
@@ -81,14 +78,13 @@
                          :updated-date "2019-07-29T20:48:25Z",
                          :name "-rp-tags",
                          :source "tukui",
-                         :alt-name "rptags",
                          :label "[rp:tags]",
                          :download-count 2838,
                          :source-id 98,
-                         :uri "https://www.tukui.org/addons.php?id=98"}
+                         :url "https://www.tukui.org/addons.php?id=98"}
 
           expected (merge addon-summary
-                          {:download-uri "https://www.tukui.org/addons.php?download=98"
+                          {:download-url "https://www.tukui.org/addons.php?download=98"
                            :version "0.960"
                            :interface-version 80200})
 
@@ -109,14 +105,13 @@
                          :updated-date "2019-12-05T00:00:00Z",
                          :name "elvui",
                          :source "tukui",
-                         :alt-name "elvui",
                          :label "ElvUI",
                          :download-count 2147483000,
                          :source-id -2,
-                         :uri "https://www.tukui.org/download.php?ui=elvui"}
+                         :url "https://www.tukui.org/download.php?ui=elvui"}
 
           expected (merge addon-summary
-                          {:download-uri "https://www.tukui.org/downloads/elvui-11.26.zip"
+                          {:download-url "https://www.tukui.org/downloads/elvui-11.26.zip"
                            :version "11.26"
                            :interface-version 80200})
 

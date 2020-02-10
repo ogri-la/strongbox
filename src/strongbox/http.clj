@@ -66,22 +66,22 @@
   (when (and output-file (fs/exists? output-file))
     (not (utils/file-older-than output-file expiry-offset-hours))))
 
-(defn-spec uri-to-filename ::sp/file
+(defn-spec url-to-filename ::sp/file
   "safely encode a URI to something that can live cached on the filesystem"
-  [uri ::sp/uri]
+  [url ::sp/url]
   (let [;; strip off any nasty parameters or anchors.
         ;; default to '.html' if there is no extension, it's just decorative
-        ext (-> uri java.net.URL. .getPath (subs 1) fs/split-ext second (or ".html"))
+        ext (-> url java.net.URL. .getPath (subs 1) fs/split-ext second (or ".html"))
         enc (java.util.Base64/getUrlEncoder)]
-    (as-> uri x
+    (as-> url x
       (str x) (.getBytes x) (.encodeToString enc x) (str x ext))))
 
 (defn-spec -download (s/or :file ::sp/extant-file, :raw ::sp/http-resp, :error ::sp/http-error)
   "if writing to a file is possible then the output file is returned, else the raw http response.
    writing response body to a file is possible when caching is available or `output-file` provided."
-  [uri ::sp/uri, output-file (s/nilable ::sp/file), message (s/nilable ::sp/short-string), extra-params map?]
+  [url ::sp/url, output-file (s/nilable ::sp/file), message (s/nilable ::sp/short-string), extra-params map?]
   (let [cache? (not (nil? *cache*))
-        encoded-path (uri-to-filename uri)
+        encoded-path (url-to-filename url)
         alt-output-file (when cache?
                           (utils/join (:cache-dir *cache*) encoded-path)) ;; "/path/to/cache/aHR0[...]cHM6=.html"
         output-file (or output-file alt-output-file) ;; `output-file` may still be nil after this!
@@ -98,19 +98,19 @@
     ;; use the file on disk if it's not too old ...
     (if (fresh-cache-file-exists? output-file)
       (do
-        (debug "cache hit for:" uri "(" output-file ")")
+        (debug "cache hit for:" url "(" output-file ")")
         output-file)
 
       ;; ... otherwise, we must sing and dance
       (try
         (when message (info message)) ;; always show the message that was explicitly passed in
-        (debug (format "downloading %s to %s" (fs/base-name uri) output-file))
+        (debug (format "downloading %s to %s" (fs/base-name url) output-file))
         (client/with-additional-middleware [client/wrap-lower-case-headers (etag-middleware etag-key)]
           (let [params {:cookie-policy :ignore} ;; completely ignore cookies. doesn't stop HttpComponents warning
                 use-anon-useragent? false
                 params (merge params (user-agent use-anon-useragent?) extra-params)
-                _ (debug "requesting" uri "with params" params)
-                resp (client/get uri params)
+                _ (debug "requesting" url "with params" params)
+                resp (client/get url params)
                 _ (debug "response status" (:status resp))
 
                 not-modified (= 304 (:status resp)) ;; 304 is "not modified" (local file is still fresh). only happens when caching
@@ -118,7 +118,7 @@
 
                 ;; streaming responses are not buffered entirely in memory as their full length cannot be anticipated.
                 ;; instead we open a file handle and pour the response bytes into it as we receive them.
-                ;; if the output file already exists (like a catalog file) it may be possible another thread is reading
+                ;; if the output file already exists (like a catalogue file) it may be possible another thread is reading
                 ;; this file leading to malformed/invalid data.
                 ;; so we write the incoming bytes to a unique temporary file and then move that file into place, using 
                 ;; the intended output file as a lock.
@@ -161,11 +161,11 @@
                       ;; "Note that the connection to the server will NOT be closed until the stream has been read"
                       ;;  - https://github.com/dakrone/clj-http
                       (some-> ex ex-data :body .close))
-                  request-obj (java.net.URL. uri)
+                  request-obj (java.net.URL. url)
                   http-error (merge (select-keys (ex-data ex) [:reason-phrase :status])
                                     {:host (.getHost request-obj)})]
               (warn (format "failed to download file '%s': %s (HTTP %s)"
-                            uri (:reason-phrase http-error) (:status http-error)))
+                            url (:reason-phrase http-error) (:status http-error)))
 
               http-error)
 
@@ -204,21 +204,21 @@
     (error (http-error http-resp))))
 
 ;;(defn-spec download (s/or :ok ::sp/http-resp, :error ::sp/http-error)
-;;  [uri ::sp/uri, message ::sp/short-string]
+;;  [url ::sp/url, message ::sp/short-string]
 (defn download
-  [uri & {:keys [message]}]
+  [url & {:keys [message]}]
   (let [output-file nil
-        resp (-download uri output-file message {})]
+        resp (-download url output-file message {})]
     (cond
       (http-error? resp) resp ;; error http response
       (map? resp) (:body resp) ;; regular http response + caching disabled
       (fs/file? resp) (slurp resp)))) ;; file on disk + caching enabled
 
 ;;(defn-spec download-file (s/or :file ::sp/extant-file, :error ::sp/http-error)
-;;  [uri ::sp/uri, output-file ::sp/file, & {:keys [message]}]
+;;  [url ::sp/url, output-file ::sp/file, & {:keys [message]}]
 (defn download-file
-  [uri, output-file, & {:keys [message]}]
-  (let [resp (-download uri output-file message {:as :stream})]
+  [url, output-file, & {:keys [message]}]
+  (let [resp (-download url output-file message {:as :stream})]
     (if-not (http-error? resp)
       output-file
       resp)))
@@ -240,7 +240,7 @@
 
 (defn-spec prune-cache-dir nil?
   [cache-dir ::sp/extant-dir]
-  ;;(prune-old-curseforge-files cache-dir) ;; this is problematic when generating the curseforge catalog
+  ;;(prune-old-curseforge-files cache-dir) ;; this is problematic when generating the curseforge catalogue
   (doseq [cache-file (fs/list-dir cache-dir)
           :when (and (fs/file? cache-file)
                      (utils/file-older-than (str cache-file) (* 2 expiry-offset-hours)))]

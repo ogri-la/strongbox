@@ -15,7 +15,7 @@
 ;; assume addon is compatible with the most recent version
 (def default-interface-version 80200)
 
-;; matches a tocfile's 'Title' (label) to a catalog's name
+;; matches a tocfile's 'Title' (label) to a catalogue's name
 ;; aliases are maintained for the top-50 downloaded addons (ever) only, and only for those that need it
 ;; best and nicest way to avoid needing an alias is to have your .toc 'Title' attribute match your curseforge addon name
 (def aliases
@@ -112,7 +112,7 @@
   (let [dirname (fs/base-name addon-dir) ;; /foo/bar/baz => baz
 
         ;; https://github.com/ogri-la/strongbox/issues/47 - user encountered addon sans 'Title' attribute
-        ;; if a match in the catalog is found even after munging the title, it will overwrite this one
+        ;; if a match in the catalogue is found even after munging the title, it will overwrite this one
         no-label-label (str dirname " *") ;; "EveryAddon *"
         label (:title keyvals)
         label (if-not (empty? label) label no-label-label)

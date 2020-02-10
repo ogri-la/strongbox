@@ -7,7 +7,6 @@
   "total" : 1,
   "addon-summary-list" : [ {
     "age" : "ancient",
-    "alt-name" : "everyaddon",
     "category-list" : [ "Graphic UI Mods" ],
     "download-count" : 73560,
     "game-track-list" : [ "retail" ],
@@ -16,5 +15,5 @@
     "source" : "wowinterface",
     "source-id" : 666,
     "updated-date" : "2016-12-13T08:35:00Z",
-    "uri" : "https://www.wowinterface.com/downloads/info666"
+    "url" : "https://www.wowinterface.com/downloads/info666"
   }]}

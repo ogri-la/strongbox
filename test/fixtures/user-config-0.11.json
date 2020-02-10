@@ -1,5 +1,5 @@
 {
-  "selected-catalog" : "full",
+  "selected-catalogue" : "full",
   "debug?" : true,
   "gui-theme" : "dark",
   "addon-dir-list" : [ {

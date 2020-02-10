@@ -36,7 +36,7 @@
         ti (some-> url http/download utils/nilable utils/from-json)]
     (when ti
       (merge addon-summary
-             {:download-uri (:url ti)
+             {:download-url (:url ti)
               :version (:version ti)
               :interface-version (-> ti :patch utils/game-version-to-interface-version)}))))
 
@@ -65,24 +65,23 @@
          :game-track-list [(if classic? "classic" "retail")]
          :label (:name ti)
          :name (slugify (:name ti))
-         :alt-name (slugify (:name ti) "")
          :description (:small_desc ti)
          :updated-date (-> ti :lastupdate tukui-date-to-rfc3339)
-         :uri (:web_url ti)
+         :url (:web_url ti)
 
          ;; both of these are available in the main download
          ;; however the catalogue is updated weekly and strongbox uses a mechanism of
-         ;; checking each for updates rather than relying on the catalog.
+         ;; checking each for updates rather than relying on the catalogue.
          ;; perhaps in the future when we scrape daily
          ;;:version (:version ti)
-         ;;:download-uri (:url ti)
+         ;;:download-url (:url ti)
          }]
 
     addon-summary))
 
 (defn-spec -download-proper-summary ::sp/addon-summary
   "downloads either the elvui or tukui addon that exists separately and outside of the catalogue"
-  [url ::sp/uri]
+  [url ::sp/url]
   (let [classic? false ;; retail catalogue
         addon-summary (-> url http/download utils/from-json (process-tukui-item classic?))]
     (assoc addon-summary :game-track-list ["classic" "retail"])))

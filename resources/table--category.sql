@@ -17,5 +17,5 @@ create table if not exists addon_category (
 
     primary key(addon_source, addon_source_id, category_id),
     foreign key(category_id) references category(id),
-    foreign key(addon_source_id, addon_source) references catalog(source_id, source)
+    foreign key(addon_source_id, addon_source) references catalogue(source_id, source)
 );

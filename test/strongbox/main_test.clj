@@ -25,15 +25,15 @@
     (is (= :gui (-> (main/parse ["--ui" "gui" "--headless"]) :options :ui))))
 
   (testing "certain actions force the 'cli' ui"
-    (is (= :cli (-> (main/parse ["--action" "scrape-catalog"]) :options :ui)))
-    (is (= :cli (-> (main/parse ["--action" "scrape-curseforge-catalog"]) :options :ui)))
-    (is (= :cli (-> (main/parse ["--action" "scrape-curseforge-catalog"]) :options :ui))))
+    (is (= :cli (-> (main/parse ["--action" "scrape-catalogue"]) :options :ui)))
+    (is (= :cli (-> (main/parse ["--action" "scrape-curseforge-catalogue"]) :options :ui)))
+    (is (= :cli (-> (main/parse ["--action" "scrape-curseforge-catalogue"]) :options :ui))))
 
   (testing "certain actions force the 'cli' ui, even when 'gui' is explicitly passed"
-    (is (= :cli (-> (main/parse ["--action" "scrape-catalog" "--ui" "gui"]) :options :ui)))))
+    (is (= :cli (-> (main/parse ["--action" "scrape-catalogue" "--ui" "gui"]) :options :ui)))))
 
 (deftest start-app
-  (testing "starting app from a clean state, no dirs, no catalog, nothing"
+  (testing "starting app from a clean state, no dirs, no catalogue, nothing"
     (try
       (main/-main "--ui" "cli")
       (finally

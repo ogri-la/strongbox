@@ -14,8 +14,8 @@
   "each test is executed in a new location (accessible as fs/*cwd*)"
   [f]
   (let [temp-dir-path (fs/temp-dir "strongbox.main-test.")
-        fake-routes {;; catalog
-                     ;; return dummy data. we can do this because the catalog isn't loaded/parsed/validated
+        fake-routes {;; catalogue
+                     ;; return dummy data. we can do this because the catalogue isn't loaded/parsed/validated
                      ;; until the UI (gui or cli) tells it to via a later call to `refresh`
                      "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
                      {:get (fn [req] {:status 200 :body "{}"})}

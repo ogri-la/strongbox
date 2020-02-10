@@ -13,7 +13,7 @@
     [utils :as utils :refer [pad if-let* nilable]]
     [specs :as sp]]))
 
-(defn-spec releases-url ::sp/uri
+(defn-spec releases-url ::sp/url
   [source-id string?]
   (format "https://api.github.com/repos/%s/releases" source-id))
 
@@ -21,7 +21,7 @@
   [source-id string?]
   (some-> source-id releases-url http/download http/sink-error utils/from-json))
 
-(defn-spec contents-url ::sp/uri
+(defn-spec contents-url ::sp/url
   [source-id string?]
   (format "https://api.github.com/repos/%s/contents" source-id))
 
@@ -157,18 +157,18 @@
     (if-not asset
       (warn (format "no '%s' release available for '%s' on github" game-track (:name addon-summary)))
       (merge addon-summary
-             {:download-uri (:browser_download_url asset)
+             {:download-url (:browser_download_url asset)
               :version (:version asset)}))))
 
 ;;
 
 (defn-spec extract-source-id (s/or :ok string?, :error nil?)
-  [url ::sp/uri]
+  [url ::sp/url]
   (->> url java.net.URL. .getPath (re-matches #"^/([^/]+/[^/]+)[/]?.*") rest first))
 
 (defn-spec parse-user-string (s/or :ok ::sp/addon-summary, :error nil?)
   [uin string?]
-  (if-let* [;; if *all* of these conditions succeed (non-nil), return a catalog entry
+  (if-let* [;; if *all* of these conditions succeed (non-nil), return a catalogue entry
             obj (some-> uin utils/unmangle-https-url java.net.URL.)
             path (when-not (empty? (.getPath obj)) (.getPath obj))
 
@@ -186,7 +186,7 @@
 
             download-count (->> release-list (map :assets) flatten (map :download_count) (apply +))]
 
-           {:uri (str "https://github.com/" source-id)
+           {:url (str "https://github.com/" source-id)
             :updated-date (-> latest-release :published_at)
             :source "github"
             :source-id source-id
