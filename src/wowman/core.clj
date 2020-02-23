@@ -1113,7 +1113,7 @@
 
   (load-installed-addons) ;; parse toc files in install-dir. do this first so we see *something* while catalog downloads (next)
 
-  (spy :info (db-load-catalog))       ;; load the contents of the catalog into the database
+  (db-load-catalog)       ;; load the contents of the catalog into the database
 
   (match-installed-addons-with-catalog) ;; match installed addons to those in catalog
 

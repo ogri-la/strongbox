@@ -47,6 +47,7 @@
      :addon-summary-list addon-list}))
 
 (defn read-catalog
+  "reads catalog at given `catalog-path`. accepts the same further options as `load-json-file-safely`"
   [catalog-path & {:as opts}]
   (apply utils/load-json-file-safely (apply concat [catalog-path] opts)))
 
