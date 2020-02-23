@@ -48,8 +48,6 @@
 
 (defn read-catalog
   [catalog-path & {:as opts}]
-  ;; cheshire claims to be twice as fast: https://github.com/dakrone/cheshire#speed
-  ;; consolidate catalog access here
   (apply utils/load-json-file-safely (apply concat [catalog-path] opts)))
 
 (defn-spec write-catalog ::sp/extant-file
