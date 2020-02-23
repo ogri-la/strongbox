@@ -212,9 +212,11 @@
 
 (def not-empty? (comp not empty?))
 
-(defn-spec safe-subs string?
-  [x string?, max int?]
-  (subs x 0 (min (count x) max)))
+(defn-spec safe-subs (s/or :ok string?, :empty nil?)
+  "similar to `subs` but can handle `nil` input and a `max` value larger than (or less than) length of given string."
+  [str (s/nilable string?), max int?]
+  (when str
+    (subs str 0 (min (count str) (if (neg? max) 0 max)))))
 
 (defn in?
   ([needle haystack]

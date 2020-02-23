@@ -484,9 +484,41 @@
       (doseq [[given expected] cases]
         (is (= expected (core/db-gen-game-track-list given)))))))
 
+(deftest db-load-catalog
+  (testing "very long descriptions are truncated"
+    (let [addon-with-long-description
+          {:label "EveryAddon",
+           :name  "everyaddon",
+           :alt-name "everyaddon"
+
+           ;; 256 characters, 1 more than is supported
+           :description  "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur dapibus, ligula at auctor facilisis, arcu metus tempor neque, a aliquam sem magna in augue. Cras vel justo augue. Suspendisse ex leo, pellentesque ut congue vel, lobortis eu nisl. Sed amet."
+
+           :category-list  ["Auction & Economy", "Data Broker"],
+           :source "curseforge"
+           :source-id 1
+           :created-date  "2009-02-08T13:30:30Z",
+           :updated-date  "2016-09-08T14:18:33Z",
+           :uri "https://www.example.org/wow/addons/everyaddon"
+           :download-count 1}
+
+          expected (subs (:description addon-with-long-description) 0 255)
+
+          dummy-catalog (catalog/new-catalog [addon-with-long-description])
+          fake-routes {"https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
+                       {:get (fn [req] {:status 200 :body (utils/to-json dummy-catalog)})}}]
+
+      (with-fake-routes-in-isolation fake-routes
+        (with-running-app
+          (is (= expected
+                 (:description (first (core/db-query "select * from catalog"))))))))))
+
+
 ;; legacy
 
 ;; local addon .toc file
+
+
 (def toc
   {:name "everyaddon",
    :description "Does what no other addon does, slightly differently"

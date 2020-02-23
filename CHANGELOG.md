@@ -14,6 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## 0.12.3 - 2020-02-23
+
+### Fixed
+
+* fixes a bug where catalog entries whose 'description' is greater than 255 characters causes a crash while loading the database
+    - thanks to https://github.com/rainecheck for reporting this bug
+
 ## 0.12.2 - 2020-02-08
 
 * release 0.12.1 was badly formed and missing the commit with the actual fix.

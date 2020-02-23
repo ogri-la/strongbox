@@ -788,7 +788,8 @@
                                    :download-count :download_count
                                    ;;:created-date :created_date ;; curseforge only and unused
                                    :updated-date :updated_date}
-                          new {:retail_track (utils/in? "retail" (:game-track-list row))
+                          new {:description (utils/safe-subs (:description row) 255)
+                               :retail_track (utils/in? "retail" (:game-track-list row))
                                :classic_track (utils/in? "classic" (:game-track-list row))}]
 
                       (-> row (utils/dissoc-all ignored) (rename-keys mapping) (merge new))))]
