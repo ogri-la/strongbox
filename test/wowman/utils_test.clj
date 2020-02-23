@@ -216,3 +216,11 @@
       (testing (format "'drop-nils', case: (%s %s => %s)" m fields expected)
         (is (= expected (utils/drop-nils m fields)))))))
 
+(deftest safe-subs
+  (let [cases [[[nil 1] nil]
+               [["" 1] ""]
+               [["foo" 1] "f"]
+               [["foo" 100] "foo"]
+               [["foo" -100] ""]]]
+    (doseq [[[str max] expected] cases]
+      (is (= expected (utils/safe-subs str max))))))
