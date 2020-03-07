@@ -194,4 +194,7 @@
 
 ;;
 
-(s/def ::catalogue-source-map map?)
+(s/def :catalogue/label ::label)
+(s/def :catalogue/name keyword?)
+(s/def :catalogue/source ::url)
+(s/def ::catalogue-source-map (s/keys :req-un [:catalogue/name ::label :catalogue/source]))
