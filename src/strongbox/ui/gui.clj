@@ -796,7 +796,7 @@
                                                    :user-data catalogue-source
                                                    :group catalogue-button-grp
                                                    :selected? (= (core/get-state :cfg :selected-catalogue) (:name catalogue-source))))
-                             (core/get-state :catalogue-source-list))]
+                             (core/get-state :cfg :catalogue-source-list))]
 
     ;; user selection updates application state
     (sb/bind (sb/selection catalogue-button-grp)

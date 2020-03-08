@@ -106,7 +106,7 @@
    ;;:cfg {:addon-dir-list []
    ;;      :selected-catalogue :short}
    :cfg nil ;; see config.clj
-   :catalogue-source-list []
+   ;;:catalogue-source-list [] ;; moved to :cfg :catalogue-source-list
 
    ;; subset of possible data about all INSTALLED addons
    ;; starts as parsed .toc file data
@@ -609,19 +609,9 @@
 
         merge-nfo-data (fn [addon]
                          (let [nfo-data (nfo/read-nfo addon-dir (:dirname addon))]
-
-                           ;; todo: nfo data shouldn't be returning anything if it's invalid.
-                           ;; ah, but we have nfo v1 data to contend with (map?) ... dump nfo v1 support?
-
-                           ;; if `source` present, but is not in list of known sources, ignore the nfo-contents.
-                           ;; it is possible this nfo data was written by a newer version of strongbox.
-                           (if (and (contains? nfo-data :source)
-                                    (not (utils/in? (:source nfo-data) sp/catalogue-sources)))
-                             addon
-
-                             ;; otherwise, merge the addon with the nfo data.
-                             ;; when `ignore?` flag in addon is `true` but `false` in nfo-data, nfo-data will take precedence.
-                             (merge addon nfo-data))))
+                           ;; merge the addon with the nfo data.
+                           ;; when `ignore?` flag in addon is `true` but `false` in nfo-data, nfo-data will take precedence.
+                           (merge addon nfo-data)))
 
         addon-list (mapv merge-nfo-data addon-list)]
 
@@ -646,7 +636,18 @@
   ([]
    (get-catalogue-source (get-state :cfg :selected-catalogue)))
   ([catalogue-name keyword?]
-   (->> (get-state :catalogue-source-list) (filter #(= catalogue-name (:name %))) first)))
+   (->> (get-state :cfg :catalogue-source-list) (filter #(= catalogue-name (:name %))) first)))
+
+(defn-spec current-catalogue (s/or :ok ::sp/catalogue-source-map, :no-catalogues nil?)
+  "returns the currently selected catalogue or the first catalogue it can find.
+  returns `nil` if no catalogues available to choose from."
+  []
+  (if-let* [;; there may be nothing selected
+            catalogue (get-catalogue-source (get-state :cfg :selected-catalogue))
+            ;; there may be no default catalogue available
+            default-catalogue (get-catalogue-source (-> (get-state :cfg :catalogue-source-list) first :name))]
+           (or catalogue default-catalogue)
+           nil))
 
 (defn-spec set-catalogue-source! nil?
   [catalogue-name keyword?]
@@ -668,14 +669,19 @@
 
 (defn-spec download-catalogue (s/or :ok ::sp/extant-file, :error nil?)
   "downloads catalogue to expected location, nothing more"
-  [& [catalogue] (s/* keyword?)]
+  [catalogue-source ::sp/catalogue-source-map]
   (binding [http/*cache* (cache)]
-    (if-let [current-catalogue (get-state :cfg :selected-catalogue)]
-      (let [catalogue-source (get-catalogue-source (or catalogue current-catalogue)) ;; {:name :full :label "Full" :source "https://..."}
-            remote-catalogue (:source catalogue-source)
-            local-catalogue (catalogue-local-path catalogue-source)]
-        (http/download-file remote-catalogue local-catalogue :message (format "downloading catalogue '%s'" (:label catalogue-source))))
-      (error "failed to find catalogue:" catalogue))))
+    (let [remote-catalogue (:source catalogue-source)
+          local-catalogue (catalogue-local-path catalogue-source)]
+      (http/download-file remote-catalogue local-catalogue :message (format "downloading catalogue '%s'" (:label catalogue-source))))))
+
+(defn-spec download-current-catalogue (s/or :ok ::sp/extant-file, :error nil?)
+  "downloads the currently selected (or default) catalogue. 
+  issues a warning if no catalogue can be downloaded"
+  []
+  (if-let [catalogue (current-catalogue)]
+    (download-catalogue catalogue)
+    (warn "failed to find a downloadable catalogue")))
 
 (defn-spec moosh-addons ::sp/toc-addon-summary
   "merges the data from an installed addon with it's match in the catalogue"
@@ -684,7 +690,6 @@
         db-catalogue-addon (utils/drop-nils db-catalogue-addon [:description])]
     ;; merges left->right. catalogue-addon overwrites installed-addon, ':matched' overwrites catalogue-addon, etc
     (merge installed-addon db-catalogue-addon {:matched? true})))
-
 
 ;;
 
@@ -831,7 +836,8 @@
         {:keys [addon-summary-list]} catalogue-data
 
         ;; filter out items from unsupported sources
-        addon-summary-list (filterv #(utils/in? (:source %) sp/catalogue-sources) addon-summary-list)
+        ;; disabled: enum in sql has been dropped
+        ;;addon-summary-list (filterv #(utils/in? (:source %) sp/catalogue-sources) addon-summary-list)
 
         addon-categories (mapv (fn [{:keys [source-id source category-list]}]
                                  (mapv (fn [category]
@@ -880,8 +886,9 @@
 
 (defn-spec db-load-catalogue nil?
   []
-  (when-not (db-catalogue-loaded?)
-    (let [catalogue-source (get-catalogue-source)
+  (when (and (not (db-catalogue-loaded?))
+             (current-catalogue))
+    (let [catalogue-source (current-catalogue)
           catalogue-path (catalogue-local-path catalogue-source)
           _ (info (format "loading catalogue '%s'" (name (get-state :cfg :selected-catalogue))))
           _ (debug "loading addon summaries from catalogue into database:" catalogue-path)
@@ -890,7 +897,7 @@
           bad-json-file-handler (fn []
                                   (warn "catalogue corrupted. re-downloading and trying again.")
                                   (fs/delete catalogue-path)
-                                  (download-catalogue)
+                                  (download-current-catalogue)
                                   (catalogue/read-catalogue
                                    catalogue-path
                                    :bad-data? (fn []
@@ -1130,7 +1137,7 @@
 (defn-spec -upgrade-nfo nil?
   "given an addon, upgrades it's nfo file to the current nfo spec."
   [install-dir ::sp/extant-dir, addon (s/keys :req-un [::sp/dirname])]
-  (debug "upgrading nfo file:" (:dirname addon))
+  (info "upgrading nfo file:" (:dirname addon))
   (let [;; best guess of what the installed game track is
         ;; TODO: remove this in 0.14.0 and delete invalid nfo-v2 files
         ;; it's reasonable to assume nfo files will consistently have a :game-track by then
@@ -1168,7 +1175,7 @@
 
 (defn refresh
   [& _]
-  (download-catalogue)      ;; downloads the big long list of addon information stored on github
+  (download-current-catalogue)      ;; downloads the big long list of addon information stored on github
 
   (db-init)               ;; creates an in-memory database and some empty tables
 

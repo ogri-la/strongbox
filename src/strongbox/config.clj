@@ -59,7 +59,7 @@
 
     ;; key not present, return config as-is
     cfg))
-    
+
 (defn remove-non-existant-dirs
   "removes any `addon-dir-map` items from the given configuration whose directories do not exist"
   [cfg]

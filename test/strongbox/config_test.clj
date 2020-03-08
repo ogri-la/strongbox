@@ -13,8 +13,9 @@
 (defn temp-addon-dirs-fixture
   "creates a set of addon directories that match those in the `user-config-x.x.json` fixtures"
   [f]
-  (let [abs-path-list (mapv #(utils/join (fs/tmpdir) (str ".strongbox-" %)) ["foo" "bar"])]
-    (mapv fs/mkdir abs-path-list)
+  (let [abs-path-list (mapv #(utils/join (fs/tmpdir) (str ".strongbox-" %)) ["foo" "bar"])
+        ;; linting complains if results are unused
+        _(mapv fs/mkdir abs-path-list)]
     (try
       (f)
       (finally
@@ -126,7 +127,7 @@
                                            {:addon-dir "/tmp/.strongbox-foo", :game-track "classic"}]
                           ;; new in 1.0
                           :catalogue-source-list (:catalogue-source-list config/default-cfg)}
-                    
+
                     ;; new in 0.12
                     :selected-addon-dir "/tmp/.strongbox-bar" ;; defaults to first entry
 

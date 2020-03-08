@@ -12,6 +12,7 @@
     [nfo :as nfo]
     [catalogue :as catalogue]
     [utils :as utils]
+    [config :as config]
     [test-helper :as helper :refer [fixture-path slurp-fixture helper-data-dir with-running-app]]
     [core :as core]]))
 
@@ -87,10 +88,10 @@
         (is (= {:addon-dir dir4 :game-track "classic"} (core/addon-dir-map dir4)))))))
 
 (deftest catalogue
-  (let [[short-catalogue full-catalogue] (->> core/-state-template :catalogue-source-list (take 2))]
+  (let [[short-catalogue full-catalogue] (take 2 config/-default-catalogue-list)]
     (with-running-app
-      (testing "by default we have at least 2 (short and full composite) + N (source) catalogs available to us"
-        (is (> (count (core/get-state :catalogue-source-list)) 2)))
+      (testing "under regular circumstances we have at least two catalogues available to us (short and full)"
+        (is (> (count (core/get-state :cfg :catalogue-source-list)) 2)))
 
       (testing "core/get-catalogue-source returns the requested catalogue if found"
         (is (= short-catalogue (core/get-catalogue-source :short))))
@@ -563,7 +564,7 @@
 
 ;;
 
-(deftest load-installed-addons
+(deftest load-installed-addons-1
   (testing "regular .toc file can be loaded"
     (let [addon-dir (str fs/*cwd*)
           some-addon-path (utils/join addon-dir "SomeAddon")
@@ -573,8 +574,9 @@
           _ (spit some-addon-toc "## Title: SomeAddon\n## Description: asdf\n## Interface: 80300\n## Version: 1.2.3")
 
           expected [{:name "someaddon", :dirname "SomeAddon", :label "SomeAddon", :description "asdf", :interface-version 80300, :installed-version "1.2.3"}]]
-      (is (= expected (core/-load-installed-addons addon-dir)))))
+      (is (= expected (core/-load-installed-addons addon-dir))))))
 
+(deftest load-installed-addons-2
   (testing "toc data and nfo data are mooshed together as expected"
     (let [addon-dir (str fs/*cwd*)
           some-addon-path (utils/join addon-dir "SomeAddon")
@@ -584,12 +586,34 @@
           _ (spit some-addon-toc "## Title: SomeAddon\n## Description: asdf\n## Interface: 80300\n## Version: 1.2.3")
 
           some-addon-nfo (utils/join some-addon-path nfo/nfo-filename)
-          _ (spit some-addon-nfo (utils/to-json {:source "curseforge" :source-id 123}))
+          nfo-data {:source "curseforge"
+                    :source-id 123
+                    :installed-version "1.2.3"
+                    :name "someaddon"
+                    :group-id "fdsa"
+                    :primary? true
+                    :installed-game-track "retail"}
+          _ (spit some-addon-nfo (utils/to-json nfo-data))
 
-          expected [{:name "someaddon", :dirname "SomeAddon", :label "SomeAddon", :description "asdf", :interface-version 80300, :installed-version "1.2.3"
-                     :source "curseforge" :source-id 123}]]
-      (is (= expected (core/-load-installed-addons addon-dir)))))
+          expected [{;; toc data
+                     :name "someaddon",
+                     :dirname "SomeAddon",
+                     :label "SomeAddon",
+                     :description "asdf",
+                     :interface-version 80300,
 
+                     ;; shared between toc and nfo, nfo wins out
+                     :installed-version "1.2.3"
+
+                     ;; unique items from nfo data
+                     :source "curseforge"
+                     :source-id 123
+                     :group-id "fdsa"
+                     :installed-game-track "retail"
+                     :primary? true}]]
+      (is (= expected (core/-load-installed-addons addon-dir))))))
+
+(deftest load-installed-addons-3
   (testing "invalid nfo data is not loaded"
     (let [addon-dir (str fs/*cwd*)
           some-addon-path (utils/join addon-dir "SomeAddon")
@@ -599,12 +623,21 @@
           _ (spit some-addon-toc "## Title: SomeAddon\n## Description: asdf\n## Interface: 80300\n## Version: 1.2.3")
 
           some-addon-nfo (utils/join some-addon-path nfo/nfo-filename)
-          ;; `source` here is invalid
-          _ (spit some-addon-nfo (utils/to-json {:source "vault-111" :source-id 123 :ignore? false}))
+          nfo-data {:source nil ;; invalid
+                    :source-id 123
+                    :installed-version "1.2.3"
+                    :name "someaddon"
+                    ;; also invalid. all of these are required
+                    ;;:group-id "asdf"
+                    ;;:primary? true
+                    ;;:installed-game-track "retail"
+                    }
+          _ (spit some-addon-nfo (utils/to-json nfo-data))
 
           expected [{:name "someaddon", :dirname "SomeAddon", :label "SomeAddon", :description "asdf", :interface-version 80300, :installed-version "1.2.3"}]]
-      (is (= expected (core/-load-installed-addons addon-dir)))))
+      (is (= expected (core/-load-installed-addons addon-dir))))))
 
+(deftest load-installed-addons-4
   (testing "ignore flag in nfo data overrides any ignore flag in toc data"
     (let [addon-dir (str fs/*cwd*)
           some-addon-path (utils/join addon-dir "SomeAddon")
@@ -850,7 +883,7 @@
                     :matched? true}]
       (is (= expected (core/moosh-addons toc addon-summary))))))
 
-(deftest upgrade-nfo-files
+(deftest upgrade-nfo-files-1
   (testing "addons without a .toc file are not upgraded"
     (let [every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
           install-dir (utils/join fs/*cwd* "addons")
@@ -866,8 +899,9 @@
         (core/set-addon-dir! install-dir)
         (is (not (fs/exists? expected-nfo-file))) ;; no nfo file to upgrade
         (core/upgrade-nfo-files)
-        (is (not (fs/exists? expected-nfo-file)))))) ;; no nfo written
+        (is (not (fs/exists? expected-nfo-file))))))) ;; no nfo written
 
+(deftest upgrade-nfo-files-2
   (testing "addons with malformed .toc files even after upgrading are deleted"
     (let [every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
           install-dir (utils/join fs/*cwd* "addons")
