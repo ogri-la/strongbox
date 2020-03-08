@@ -8,7 +8,7 @@ jdk:
 services:
   - xvfb
 
-script: ./test.sh
+script: ./run-tests.sh
 
 # https://github.com/travis-ci/travis-ci/issues/3897
 #branches:
