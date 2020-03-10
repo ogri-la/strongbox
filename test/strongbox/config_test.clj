@@ -15,7 +15,7 @@
   [f]
   (let [abs-path-list (mapv #(utils/join (fs/tmpdir) (str ".strongbox-" %)) ["foo" "bar"])
         ;; linting complains if results are unused
-        _(mapv fs/mkdir abs-path-list)]
+        _ (mapv fs/mkdir abs-path-list)]
     (try
       (f)
       (finally

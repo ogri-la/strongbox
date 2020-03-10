@@ -44,7 +44,11 @@
 (defn-spec valid-catalogue-source? boolean?
   "returns true if given `catalogue-source` is a valid `::sp/catalogue-source-map`"
   [catalogue-source any?]
-  (s/valid? ::sp/catalogue-source-map catalogue-source))
+  (let [v (s/valid? ::sp/catalogue-source-map catalogue-source)]
+    (when-not v
+      (warn "discarding catalogue source:" catalogue-source)
+      (s/explain ::sp/catalogue-source-map catalogue-source))
+    v))
 
 (defn remove-invalid-catalogue-source-entries
   "invalid `:catalogue-source-list` entries are stripped"
@@ -117,11 +121,15 @@
   "reads application settings from the given file.
   returns an empty map if file is missing or malformed."
   [cfg-file ::sp/file]
-  (utils/load-json-file-safely cfg-file
-                               :no-file? #(do (warn "configuration file not found: " cfg-file) {})
-                               :bad-data? {}
-                               :transform-map {:selected-catalogue keyword
-                                               :gui-theme keyword}))
+  (let [catalogue-source-list-transformer
+        (fn [lst]
+          (mapv #(update-in % [:name] keyword) lst))]
+    (utils/load-json-file-safely cfg-file
+                                 :no-file? #(do (warn "configuration file not found: " cfg-file) {})
+                                 :bad-data? {}
+                                 :transform-map {:selected-catalogue keyword
+                                                 :gui-theme keyword
+                                                 :catalogue-source-list catalogue-source-list-transformer})))
 
 (defn-spec load-etag-db-file map?
   "reads etag database from given file.

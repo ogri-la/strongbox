@@ -1,6 +1,7 @@
 (ns strongbox.catalogue
   (:require
    [flatland.ordered.map :as omap]
+   [clojure.set]
    [clojure.spec.alpha :as s]
    [orchestra.spec.test :as st]
    [orchestra.core :refer [defn-spec]]
@@ -45,6 +46,17 @@
      :total (count addon-list)
      :addon-summary-list addon-list}))
 
+;; temporary, until strongbox gets it's own catalogue
+(defn wowman-coercer
+  [catalogue-data]
+  (when-not (empty? catalogue-data)
+    (let [row-coerce (fn [row]
+                       (-> row
+                           (clojure.set/rename-keys {:uri :url})
+                           (dissoc :alt-name)
+                           (update-in [:description] utils/safe-subs 255)))]
+      (update-in catalogue-data [:addon-summary-list] (partial mapv row-coerce)))))
+
 (defn read-catalogue
   [catalogue-path & {:as opts}]
   ;; cheshire claims to be twice as fast: https://github.com/dakrone/cheshire#speed
@@ -86,13 +98,13 @@
       (catch java.net.MalformedURLException mue
         (debug "not a url")))))
 
-(defn-spec merge-catalogs (s/or :ok ::sp/catalogue, :error nil?)
+(defn-spec merge-catalogues (s/or :ok ::sp/catalogue, :error nil?)
   "merges catalogue `cat-b` over catalogue `cat-a`.
   earliest creation date preserved.
   latest updated date preserved.
   addon-summary-list is unique by `:source` and `:source-id` with differing values replaced by those in `cat-b`"
   [cat-a (s/nilable ::sp/catalogue), cat-b (s/nilable ::sp/catalogue)]
-  (let [matrix {;;[true true] ;; two non-empty catalogs, ideal case
+  (let [matrix {;;[true true] ;; two non-empty catalogues, ideal case
                 [true false] cat-a ;; cat-b empty, return cat-a
                 [false true] cat-b ;; vice versa
                 [false false] nil}
@@ -116,7 +128,7 @@
 (defn de-dupe-wowinterface
   "at time of writing, wowinterface has 5 pairs of duplicate addons with slightly different labels
   for each pair we'll pick the most recently updated.
-  these pairs *may* get picked up and filtered out further down when comparing merged catalogs,
+  these pairs *may* get picked up and filtered out further down when comparing merged catalogues,
   depending on the time difference between the two updated dates"
   [addon-list]
   (let [de-duper (fn [[_ group-list]]
@@ -130,7 +142,7 @@
 
 ;;
 
-(defn-spec -merge-curse-wowi-catalogs ::sp/catalogue
+(defn-spec -merge-curse-wowi-catalogues ::sp/catalogue
   [aa ::sp/catalogue, ab ::sp/catalogue]
   (let [;; this is 80% sanity check, 20% correctness
         ab (assoc ab :addon-summary-list (de-dupe-wowinterface (:addon-summary-list ab)))
@@ -142,12 +154,12 @@
         addon-groups (group-by :name addon-list)
         _ (info "total unique addons:" (count addon-groups))
 
-        ;; addons that appear in both catalogs
+        ;; addons that appear in both catalogues
         multiple-sources (filter (fn [[_ group-list]]
                                    (> (count group-list) 1)) addon-groups)
         _ (info "total overlap:" (count multiple-sources) "(addons)" (count (flatten (vals multiple-sources))) "(entries)")
 
-        ;; drop those addons that appear in multiple catalogs
+        ;; drop those addons that appear in multiple catalogues
         ;; they get some additional filtering
         multiple-sources-key-set (set (keys multiple-sources))
         ;; (this takes ages, there must be a faster way to remove ~1k rows from ~10k results)
@@ -157,10 +169,10 @@
         ;; todo: move this to shorten-catalogue
         ;; when there is a very large gap between updated-dates, drop one addon in favour of the other
         ;; at time of writing:
-        ;; - filtering for > 2 years removes  231 of the 2356 addons overlapping, leaving 2125 addons appearing in both catalogs
-        ;; - filtering for > 1 year removes   338 of the 2356 addons overlapping, leaving 2018 addons appearing in both catalogs
-        ;; - filtering for > 6 months removes 389 of the 2356 addons overlapping, leaving 1967 addons appearing in both catalogs
-        ;; - filtering for > 1 month removes  471 of the 2356 addons overlapping, leaving 1885 addons appearing in both catalogs
+        ;; - filtering for > 2 years removes  231 of the 2356 addons overlapping, leaving 2125 addons appearing in both catalogues
+        ;; - filtering for > 1 year removes   338 of the 2356 addons overlapping, leaving 2018 addons appearing in both catalogues
+        ;; - filtering for > 6 months removes 389 of the 2356 addons overlapping, leaving 1967 addons appearing in both catalogues
+        ;; - filtering for > 1 month removes  471 of the 2356 addons overlapping, leaving 1885 addons appearing in both catalogues
         drop-some-addons (mapv (fn [[_ group-list]]
 
                                  ;; sanity check. it's definitely possible for an addon to appear more than twice
@@ -212,10 +224,10 @@
                          (merge a {:age version-age})))
         addon-list (mapv update-addon addon-list)
 
-        ;; should these two dates belong to the catalogue proper or derived from the component catalogs?
+        ;; should these two dates belong to the catalogue proper or derived from the component catalogues?
         ;; lets go with derived for now
-        created-date (first (sort [(:datestamp aa) (:datestamp ab)])) ;; earliest of the two catalogs
-        updated-date (last (sort [(:updated-datestamp aa) (:updated-datestamp ab)]))] ;; most recent of the two catalogs
+        created-date (first (sort [(:datestamp aa) (:datestamp ab)])) ;; earliest of the two catalogues
+        updated-date (last (sort [(:updated-datestamp aa) (:updated-datestamp ab)]))] ;; most recent of the two catalogues
 
     (format-catalogue-data addon-list created-date updated-date)))
 
@@ -236,11 +248,11 @@
     (when addon-summary-list
       (format-catalogue-data (remove unmaintained? addon-summary-list) datestamp datestamp))))
 
-(defn-spec merge-curse-wowi-catalogs ::sp/catalogue
+(defn-spec merge-curse-wowi-catalogues ::sp/catalogue
   [curseforge-catalogue ::sp/extant-file, wowinterface-catalogue ::sp/extant-file]
   (let [aa (utils/load-json-file curseforge-catalogue)
         ab (utils/load-json-file wowinterface-catalogue)]
-    (-merge-curse-wowi-catalogs aa ab)))
+    (-merge-curse-wowi-catalogues aa ab)))
 
 ;;
 

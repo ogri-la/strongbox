@@ -24,7 +24,7 @@
     [toc]
     [specs :as sp]]))
 
-;; acquired when switching between catalogs so the old database is shutdown
+;; acquired when switching between catalogues so the old database is shutdown
 ;; properly in one thread before being recreated in another
 (def db-lock (Object.))
 
@@ -712,7 +712,7 @@
         user-catalogue-path (paths :user-catalogue-file)
         user-catalogue (get-create-user-catalogue)
         tmp-catalogue (catalogue/new-catalogue addon-summary-list)
-        new-user-catalogue (catalogue/merge-catalogs user-catalogue tmp-catalogue)]
+        new-user-catalogue (catalogue/merge-catalogues user-catalogue tmp-catalogue)]
     (catalogue/write-catalogue new-user-catalogue user-catalogue-path))
   nil)
 
@@ -904,11 +904,17 @@
                                                 (error "please report this! https://github.com/ogri-la/strongbox/issues")
                                                 (error "catalogue *still* corrupted and cannot be loaded. try another catalogue from the 'catalogue' menu"))))
 
-          catalogue-data (utils/nilable
-                          (catalogue/read-catalogue catalogue-path :bad-data? bad-json-file-handler))
-          user-catalogue-data (utils/nilable
-                               (catalogue/read-catalogue (paths :user-catalogue-file) :bad-data? nil))
-          final-catalogue (catalogue/merge-catalogs catalogue-data user-catalogue-data)]
+          catalogue-data (-> catalogue-path
+                             (catalogue/read-catalogue :bad-data? bad-json-file-handler)
+                             catalogue/wowman-coercer
+                             utils/nilable)
+
+          user-catalogue-data (-> (paths :user-catalogue-file)
+                                  (catalogue/read-catalogue :bad-data? nil)
+                                  catalogue/wowman-coercer
+                                  utils/nilable)
+
+          final-catalogue (catalogue/merge-catalogues catalogue-data user-catalogue-data)]
       (when-not (empty? final-catalogue)
         (-db-load-catalogue final-catalogue)))))
 
