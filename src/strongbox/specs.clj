@@ -5,11 +5,11 @@
    [orchestra.core :refer [defn-spec]]
    [me.raynes.fs :as fs]))
 
-(defn between
+(defn-spec between fn?
   "returns a function that will return true if it's `count` is between (not inclusive) `n` and `m`"
-  [min max]
+  [min int?, max int?]
   (fn [x]
-    (let [c (count x)]
+    (let [c (if (int? x) x (count x))]
       (and (< c max)
            (> c min)))))
 
@@ -24,10 +24,16 @@
 (s/def ::short-string #(<= (count %) 80))
 
 (defn-spec has-ext boolean?
+  "returns true if given `path` is suffixed with one of the extensions in `ext-list`"
   [path string?, ext-list ::list-of-strings]
   (some #{(fs/extension path)} ext-list))
 
+
+;;
+
 ;; addon data that comes from the catalogue
+
+
 (s/def ::addon-summary
   (s/keys :req-un [::url ::name ::label ::category-list ::updated-date ::download-count ::source ::source-id]
           :opt [::description ;; wowinterface summaries have no description
@@ -111,7 +117,8 @@
 (s/def ::catalogue-updated-date ::ymd-dt)
 ;;(def catalogue-sources #{"curseforge" "wowinterface" "github" "tukui" "tukui-classic"})
 ;;(s/def ::catalogue-source catalogue-sources)
-(s/def ::catalogue-source string?) ;; ::string255)
+;;(s/def ::catalogue-source string?) ;; ::string255)
+(s/def ::catalogue-source ::string255)
 (s/def ::catalogue-source-id (s/or ::integer-id? int? ;; tukui has negative ids
                                    ::string-id? string?))
 (s/def ::zoned-dt-obj #(instance? java.time.ZonedDateTime %))
@@ -133,6 +140,8 @@
 
 
 ;; ignored nfo file may simply be the json '{"ignore?": true}'
+
+
 (s/def ::nfo-v2 (s/or :ignored-addon ::ignore-flag
                       :ok (s/keys :req-un [::installed-version ::name ::group-id ::primary? ::source
                                            ::installed-game-track ::source-id]

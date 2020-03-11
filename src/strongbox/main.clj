@@ -73,7 +73,7 @@
   (try
     (logging/change-log-level :debug)
     (if ns-kw
-      (if (some #{ns-kw} [:main :utils :http
+      (if (some #{ns-kw} [:main :utils :http :specs
                           :core :toc :nfo :zip :config :catalogue
                           :cli :gui
                           :curseforge-api :wowinterface :wowinterface-api :github-api :tukui-api])

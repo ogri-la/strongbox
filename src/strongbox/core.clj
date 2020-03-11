@@ -106,7 +106,7 @@
    ;;:cfg {:addon-dir-list []
    ;;      :selected-catalogue :short}
    :cfg nil ;; see config.clj
-   ;;:catalogue-source-list [] ;; moved to :cfg :catalogue-source-list
+   ;;:catalogue-source-list [] ;; moved to config.clj and [:cfg :catalogue-source-list]
 
    ;; subset of possible data about all INSTALLED addons
    ;; starts as parsed .toc file data
@@ -831,13 +831,10 @@
   (> (query-db :catalogue-size) 0))
 
 (defn-spec -db-load-catalogue nil?
+  "loads the given `catalogue-data` into the database, creating categories and associations as necessary"
   [catalogue-data ::sp/catalogue]
   (let [ds (get-db)
         {:keys [addon-summary-list]} catalogue-data
-
-        ;; filter out items from unsupported sources
-        ;; disabled: enum in sql has been dropped
-        ;;addon-summary-list (filterv #(utils/in? (:source %) sp/catalogue-sources) addon-summary-list)
 
         addon-categories (mapv (fn [{:keys [source-id source category-list]}]
                                  (mapv (fn [category]
@@ -885,6 +882,8 @@
   nil)
 
 (defn-spec db-load-catalogue nil?
+  "loads the currently selected catalgoue into the database if hasn't already been loaded.
+  handles bad/invalid catalgoues and merging the user catalogue"
   []
   (when (and (not (db-catalogue-loaded?))
              (current-catalogue))
@@ -904,15 +903,8 @@
                                                 (error "please report this! https://github.com/ogri-la/strongbox/issues")
                                                 (error "catalogue *still* corrupted and cannot be loaded. try another catalogue from the 'catalogue' menu"))))
 
-          catalogue-data (-> catalogue-path
-                             (catalogue/read-catalogue :bad-data? bad-json-file-handler)
-                             catalogue/wowman-coercer
-                             utils/nilable)
-
-          user-catalogue-data (-> (paths :user-catalogue-file)
-                                  (catalogue/read-catalogue :bad-data? nil)
-                                  catalogue/wowman-coercer
-                                  utils/nilable)
+          catalogue-data (catalogue/read-catalogue catalogue-path :bad-data? bad-json-file-handler)
+          user-catalogue-data (catalogue/read-catalogue (paths :user-catalogue-file) :bad-data? nil)
 
           final-catalogue (catalogue/merge-catalogues catalogue-data user-catalogue-data)]
       (when-not (empty? final-catalogue)

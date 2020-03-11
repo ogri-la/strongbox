@@ -99,7 +99,19 @@
       (doseq [bad-catalogue-source-list cases]
         (is (= expected (config/merge-config
                          {:catalogue-source-list bad-catalogue-source-list}
-                         cli-opts)))))))
+                         cli-opts))))))
+
+  (testing "valid catalogue-source entries are preserved"
+    (let [cli-opts {}
+          valid-source-map {:name :short :label "Short" :source "https://example.org/foo/bar"}
+          expected (assoc config/default-cfg :catalogue-source-list [valid-source-map])
+          mixed-catalogue-source-list [{}
+                                       :foo
+                                       valid-source-map
+                                       :bar]]
+      (is (= expected (config/merge-config
+                       {:catalogue-source-list mixed-catalogue-source-list}
+                       cli-opts))))))
 
 (deftest invalid-addon-dirs-in-cfg
   (testing "missing directories don't nuke entire config"

@@ -115,7 +115,7 @@
 
         ignore-flag (when (and (not user-ignored)
                                (ignore? (join install-dir dirname)))
-                      (warn (format "implicitly ignoring addon: %s; addon directory contains a .git/.hg/.svn/etc folder" dirname))
+                      (warn (format "implicitly ignoring addon: %s; addon directory contains a .git/.hg/.svn folder" dirname))
                       {:ignore? true})]
     (merge nfo-file-contents ignore-flag)))
 
@@ -130,5 +130,5 @@
   "returns true if a nfo file exists and contains valid nfo-v2 data"
   [install-dir ::sp/extant-dir, addon any?]
   (and (has-nfo-file? install-dir addon)
-       ;; don't use read-nfo-file here, it delete invalid nfo files
+       ;; don't use read-nfo-file here, it deletes invalid nfo files
        (s/valid? ::sp/nfo-v2 (utils/load-json-file-safely (nfo-path install-dir (:dirname addon))))))

@@ -44,14 +44,14 @@
 (defn-spec valid-catalogue-source? boolean?
   "returns true if given `catalogue-source` is a valid `::sp/catalogue-source-map`"
   [catalogue-source any?]
-  (let [v (s/valid? ::sp/catalogue-source-map catalogue-source)]
-    (when-not v
-      (warn "discarding catalogue source:" catalogue-source)
-      (s/explain ::sp/catalogue-source-map catalogue-source))
-    v))
+  (let [valid (s/valid? ::sp/catalogue-source-map catalogue-source)]
+    (when-not valid
+      (warn "invalid catalogue source, discarding:" catalogue-source)
+      (debug (s/explain-str ::sp/catalogue-source-map catalogue-source)))
+    valid))
 
 (defn remove-invalid-catalogue-source-entries
-  "invalid `:catalogue-source-list` entries are stripped"
+  "removes invalid `:catalogue-source-map` entries in `:catalogue-source-list`"
   [cfg]
   (if-let [csl (:catalogue-source-list cfg)]
     (if (not (vector? csl))
@@ -121,6 +121,7 @@
   "reads application settings from the given file.
   returns an empty map if file is missing or malformed."
   [cfg-file ::sp/file]
+  ;; todo: incorporate into :transform-map if we have another case involving nested structures
   (let [catalogue-source-list-transformer
         (fn [lst]
           (mapv #(update-in % [:name] keyword) lst))]

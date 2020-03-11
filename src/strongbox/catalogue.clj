@@ -46,22 +46,25 @@
      :total (count addon-list)
      :addon-summary-list addon-list}))
 
-;; temporary, until strongbox gets it's own catalogue
-(defn wowman-coercer
-  [catalogue-data]
+(defn-spec wowman-coercer (s/or :ok ::sp/catalogue, :empty nil?)
+  "temporary pre-processor of wowman catalgoues until strongbox gets it's own"
+  [catalogue-data (s/nilable map?)]
   (when-not (empty? catalogue-data)
     (let [row-coerce (fn [row]
-                       (-> row
-                           (clojure.set/rename-keys {:uri :url})
-                           (dissoc :alt-name)
-                           (update-in [:description] utils/safe-subs 255)))]
+                       (let [new-row (-> row
+                                         (clojure.set/rename-keys {:uri :url})
+                                         (dissoc :alt-name))]
+                         (if (contains? new-row :description)
+                           (update-in new-row [:description] utils/safe-subs 255)
+                           new-row)))]
       (update-in catalogue-data [:addon-summary-list] (partial mapv row-coerce)))))
 
 (defn read-catalogue
   [catalogue-path & {:as opts}]
   ;; cheshire claims to be twice as fast: https://github.com/dakrone/cheshire#speed
   ;; consolidate catalogue access here
-  (apply utils/load-json-file-safely (apply concat [catalogue-path] opts)))
+  (let [catalogue-data (apply utils/load-json-file-safely (apply concat [catalogue-path] opts))]
+    (utils/nilable (wowman-coercer catalogue-data))))
 
 (defn-spec write-catalogue ::sp/extant-file
   "write catalogue to given `output-file` as JSON. returns path to output file"
