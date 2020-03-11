@@ -82,36 +82,26 @@
     (fs/delete path)
     nil))
 
-(defn-spec read-nfo-file (s/or :ok ::sp/nfo, :error nil?)
+(defn-spec read-nfo-file (s/or :ok ::sp/nfo-v2, :error nil?)
   "reads the nfo file.
   failure to load the json results in the file being deleted.
   failure to validate the json data results in the file being deleted."
   [install-dir ::sp/extant-dir, dirname string?]
   (let [path (nfo-path install-dir dirname)
-        bad-data (fn [] (warn "bad nfo data, deleting file:" path) (rm-nfo path))
-        invalid-data (fn [] (warn "invalid nfo data, deleting file:" path) (rm-nfo path))
+        bad-data (fn []
+                   (warn "bad nfo data, deleting file:" path)
+                   (rm-nfo path))
+        invalid-data (fn []
+                       (warn "invalid nfo data, deleting file:" path)
+                       (rm-nfo path))]
+    (utils/load-json-file-safely
+     path
+     :no-file? nil
+     :bad-data? bad-data
+     :invalid-data? invalid-data,
+     :data-spec ::sp/nfo-v2)))
 
-        nfo-data (utils/load-json-file-safely
-                  path
-                  :no-file? nil
-                  :bad-data? bad-data
-                  :invalid-data? invalid-data,
-                  :data-spec ::sp/nfo) ;; either v1 or v2
-        ]
-    (cond
-      ;; failed to read nfo file. it may not exist. if it did exist but was malformed, then
-      ;; it was removed and definitely doesn't exist anymore.
-      (not nfo-data) nil
-
-      ;; valid v2 nfo data, perfect case
-      (s/valid? ::sp/nfo-v2 nfo-data) nfo-data
-
-      ;; data was a map of some sort, but we're not going to dwell on what it's contents were
-      ;; TODO: remove this in 0.14.0 and delete invalid nfo-v2 files
-      ;; it's reasonable to assume nfo files will consistently have a :game-track by then
-      :else nfo-data)))
-
-(defn-spec read-nfo (s/or :ok ::sp/nfo, :error nil?)
+(defn-spec read-nfo (s/or :ok ::sp/nfo-v2, :error nil?)
   "reads and parses the contents of the .nfo file and checks if addon should be ignored or not"
   [install-dir ::sp/extant-dir, dirname string?]
   (let [nfo-file-contents (read-nfo-file install-dir dirname)
@@ -119,12 +109,13 @@
         ;; if `ignore?` is present in the nfo file it overrides the nfo and toc file checks.
         ;; this value may also be introduced in `toc.clj`
         user-ignored (contains? nfo-file-contents :ignore?)
-        _ (when (and user-ignored (:ignore? nfo-file-contents))
-            (warn (format "addon '%s' is being manually ignored" dirname)))
+        _ (when (and user-ignored
+                     (:ignore? nfo-file-contents))
+            (warn (format "explicitly ignoring addon: %s" dirname)))
 
         ignore-flag (when (and (not user-ignored)
                                (ignore? (join install-dir dirname)))
-                      (warn (format "ignoring addon '%s': addon directory contains a SVC sub-directory (.git/.hg/.svn etc)" dirname))
+                      (warn (format "implicitly ignoring addon: %s; addon directory contains a .git/.hg/.svn folder" dirname))
                       {:ignore? true})]
     (merge nfo-file-contents ignore-flag)))
 
@@ -139,4 +130,5 @@
   "returns true if a nfo file exists and contains valid nfo-v2 data"
   [install-dir ::sp/extant-dir, addon any?]
   (and (has-nfo-file? install-dir addon)
-       (s/valid? ::sp/nfo-v2 (read-nfo-file install-dir (:dirname addon)))))
+       ;; don't use read-nfo-file here, it deletes invalid nfo files
+       (s/valid? ::sp/nfo-v2 (utils/load-json-file-safely (nfo-path install-dir (:dirname addon))))))

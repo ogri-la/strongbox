@@ -45,15 +45,17 @@ see CHANGELOG.md for a more formal list of changes by release
         - allow user to specify their own catalogs
             - a url to a catalog that is downloaded and included while loading up the db
             - different from the 'user catalog'
-        - wowman-data, stop publishing a 'daily' release
-            - we have multiple catalogs now
-            - 0.10.0 uses the raw catalog files directly
-            - 0.9.2 was still using the daily release
-            - remove the 'daily' release after 0.11.0 is released
-            - this will break older releases but users who prefer older versions of the software shouldn't be stranded if the catalog goes away
-                - they should just be able to plug in a new location of the catalog
-                - unfortunately *these* users will be out of luck, but future users won't be
-            - I'll stop updating wowman-data when wowman is no longer being used
+    
+    - support catalog-less strongbox
+        - application should be able to work with no catalogues specified
+            - can't search for or install addons
+            - can't update an addon without a .nfo file
+            - we have a user-catalogue for github ... could it do double duty?
+                - expand the 'add github addon' so user can select source and add an id or just use an url
+                    - and then strongbox scrapes the data at given url? urg, back to webscraping
+
+    - game track becomes a set of keywords
+        - not strings
 
     - publish a 'strongbox-catalogue' repo
         - just like wowman-data, but for strongbox
@@ -65,6 +67,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
     - can game-track-list be included from all other hosts?
         - not just wowi?
+
+* remember selected addon dir
 
 * spec clean up
     * it's never been particularly clear in my head what some of those specs are
@@ -99,6 +103,15 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* wowman-data, stop publishing a 'daily' release
+    - we have multiple catalogs now
+    - 0.10.0 uses the raw catalog files directly
+    - 0.9.2 was still using the daily release
+    - remove the 'daily' release after 0.11.0 is released
+    - this will break older releases but users who prefer older versions of the software shouldn't be stranded if the catalog goes away
+        - they should just be able to plug in a new location of the catalog
+        - unfortunately *these* users will be out of luck, but future users won't be
+    - I'll stop updating wowman-data when wowman is no longer being used
 * add dirname support to reconcilation and catalogue
     - not sure which hosts support these
 * tukui and elvui can't be switched to classic

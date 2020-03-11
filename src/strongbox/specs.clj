@@ -5,6 +5,16 @@
    [orchestra.core :refer [defn-spec]]
    [me.raynes.fs :as fs]))
 
+(defn-spec between fn?
+  "returns a function that will return true if it's `count` is between (not inclusive) `n` and `m`"
+  [min int?, max int?]
+  (fn [x]
+    (let [c (if (int? x) x (count x))]
+      (and (< c max)
+           (> c min)))))
+
+(s/def ::string255 (s/and string? (between 0 256)))
+
 (s/def ::list-of-strings (s/coll-of string?))
 (s/def ::list-of-maps (s/coll-of map?))
 (s/def ::list-of-keywords (s/coll-of keyword?))
@@ -14,10 +24,16 @@
 (s/def ::short-string #(<= (count %) 80))
 
 (defn-spec has-ext boolean?
+  "returns true if given `path` is suffixed with one of the extensions in `ext-list`"
   [path string?, ext-list ::list-of-strings]
   (some #{(fs/extension path)} ext-list))
 
+
+;;
+
 ;; addon data that comes from the catalogue
+
+
 (s/def ::addon-summary
   (s/keys :req-un [::url ::name ::label ::category-list ::updated-date ::download-count ::source ::source-id]
           :opt [::description ;; wowinterface summaries have no description
@@ -99,8 +115,10 @@
 (s/def ::updated-date ::inst)
 (s/def ::catalogue-created-date ::ymd-dt)
 (s/def ::catalogue-updated-date ::ymd-dt)
-(def catalogue-sources #{"curseforge" "wowinterface" "github" "tukui" "tukui-classic"})
-(s/def ::catalogue-source catalogue-sources)
+;;(def catalogue-sources #{"curseforge" "wowinterface" "github" "tukui" "tukui-classic"})
+;;(s/def ::catalogue-source catalogue-sources)
+;;(s/def ::catalogue-source string?) ;; ::string255)
+(s/def ::catalogue-source ::string255)
 (s/def ::catalogue-source-id (s/or ::integer-id? int? ;; tukui has negative ids
                                    ::string-id? string?))
 (s/def ::zoned-dt-obj #(instance? java.time.ZonedDateTime %))
@@ -115,19 +133,19 @@
 
 (s/def ::ignore-flag (s/keys :req-un [::ignore?]))
 
-(s/def ::nfo-v1 map?)
+;;(s/def ::nfo-v1 map?)
+
+;; this is what is needed to be passed in, at a minium, to generate a nfo file
+(s/def ::nfo-input-minimum (s/keys :req-un [::version ::name ::url ::source ::source-id]))
+
 
 ;; ignored nfo file may simply be the json '{"ignore?": true}'
+
+
 (s/def ::nfo-v2 (s/or :ignored-addon ::ignore-flag
                       :ok (s/keys :req-un [::installed-version ::name ::group-id ::primary? ::source
                                            ::installed-game-track ::source-id]
                                   :opt [::ignore?])))
-
-;; TODO: remove :less-ok in 0.14.0 (0.12.0 + 2)
-(s/def ::nfo (s/or :ok-v1 ::nfo-v1, :ok-v2 ::nfo-v2))
-
-;; this is what is needed to be passed in, at a minium, to generate a nfo file
-(s/def ::nfo-input-minimum (s/keys :req-un [::version ::name ::url ::source ::source-id]))
 
 ;; orphaned
 (s/def ::file-byte-array-pair (s/cat :file ::file
@@ -194,4 +212,7 @@
 
 ;;
 
-(s/def ::catalogue-source-map map?)
+(s/def :catalogue/label ::label)
+(s/def :catalogue/name keyword?)
+(s/def :catalogue/source ::url)
+(s/def ::catalogue-source-map (s/keys :req-un [:catalogue/name ::label :catalogue/source]))

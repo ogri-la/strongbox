@@ -32,7 +32,7 @@
                     :addon-summary-list addon-list}]
       (is (= (catalogue/format-catalogue-data addon-list created updated) expected)))))
 
-(deftest merge-curse-wowi-catalogs
+(deftest merge-curse-wowi-catalogues
   (testing "dates are correct after a merge"
     (let [aa {:datestamp "2001-01-01" :updated-datestamp "2001-01-02" :spec {:version 1} :addon-summary-list [] :total 0}
           ab {:datestamp "2001-01-03" :updated-datestamp "2001-01-04" :spec {:version 1} :addon-summary-list [] :total 0}
@@ -41,9 +41,9 @@
                     :updated-datestamp "2001-01-04"
                     :total 0
                     :addon-summary-list []}]
-      (is (= (catalogue/-merge-curse-wowi-catalogs aa ab) expected)))))
+      (is (= (catalogue/-merge-curse-wowi-catalogues aa ab) expected)))))
 
-(deftest merge-catalogs
+(deftest merge-catalogues
   (let [addon1 {:url "https://github.com/Aviana/HealComm"
                 :updated-date "2019-10-09T17:40:04Z"
                 :source "github"
@@ -73,8 +73,8 @@
                [[cat-a cat-b] merged]]]
 
     (doseq [[[a b] expected] cases]
-      (testing (format "merging of two catalogs, case '%s'" [a b])
-        (is (= expected (catalogue/merge-catalogs a b))))))
+      (testing (format "merging of two catalogues, case '%s'" [a b])
+        (is (= expected (catalogue/merge-catalogues a b))))))
 
   (let [addon1 {:url "https://github.com/Aviana/HealComm"
                 :updated-date "2001-01-01T00:00:00Z" ;; <=
@@ -103,7 +103,7 @@
         merged (catalogue/new-catalogue [(assoc addon2 :description "???")])]
 
     (testing "old catalogue data is replaced by newer catalogue data"
-      (is (= merged (catalogue/merge-catalogs cat-a cat-b))))))
+      (is (= merged (catalogue/merge-catalogues cat-a cat-b))))))
 
 (deftest parse-user-string-router
   (let [fake-routes {"https://api.github.com/repos/Aviana/HealComm/releases"

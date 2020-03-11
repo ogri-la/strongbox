@@ -25,6 +25,9 @@
                  [com.h2database/h2 "1.4.199"]
                  [seancorfield/next.jdbc "1.0.6"]
 
+
+                 [gui-diff "0.6.7"]
+
                  ;; remember to update the LICENCE.txt
                  ;; remember to update pom file (`lein pom`)
 

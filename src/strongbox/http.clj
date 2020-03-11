@@ -224,7 +224,7 @@
       resp)))
 
 ;; deprecated, to be removed in 0.10.0
-;; both curseforge and wowinterface catalogs are needed to scrape their respective updates
+;; both curseforge and wowinterface catalogues are needed to scrape their respective updates
 ;; settle for some cache misses as we delete these files on startup then download them again for a scrape?
 ;; becomes less relevant as scrapes become automated
 (defn-spec prune-old-curseforge-files nil?

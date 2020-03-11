@@ -25,7 +25,7 @@
       (finally
         (main/stop))))
 
-  (testing "gui debug tools don't require an initialised anything in order to be accessed"
+  (testing "gui debug tools don't require an initialised app in order to be accessed"
     (with-out-str ;; hide the debug output
       (is (nil? (gui/inspect (seesaw.core/vertical-panel)))))))
 

@@ -11,6 +11,7 @@
     [logging :as logging]
     [core :as core]
     [utils :as utils :refer [in?]]]
+   [gui.diff :refer [with-gui-diff]]
    [strongbox.ui
     [cli :as cli]
     [gui :as gui]])
@@ -72,15 +73,16 @@
   (try
     (logging/change-log-level :debug)
     (if ns-kw
-      (if (some #{ns-kw} [:main :utils :http
+      (if (some #{ns-kw} [:main :utils :http :specs
                           :core :toc :nfo :zip :config :catalogue
                           :cli :gui
                           :curseforge-api :wowinterface :wowinterface-api :github-api :tukui-api])
-        (if fn-kw
-          ;; `test-vars` will run the test but not give feedback if test passes OR test not found
-          ;; slightly better than nothing
-          (clojure.test/test-vars [(resolve (symbol (str "strongbox." (name ns-kw) "-test") (name fn-kw)))])
-          (clojure.test/run-all-tests (re-pattern (str "strongbox." (name ns-kw) "-test"))))
+        (with-gui-diff
+          (if fn-kw
+            ;; `test-vars` will run the test but not give feedback if test passes OR test not found
+            ;; slightly better than nothing
+            (clojure.test/test-vars [(resolve (symbol (str "strongbox." (name ns-kw) "-test") (name fn-kw)))])
+            (clojure.test/run-all-tests (re-pattern (str "strongbox." (name ns-kw) "-test")))))
         (error "unknown test file:" ns-kw))
       (clojure.test/run-all-tests #"strongbox\..*-test"))
     (finally

@@ -1,9 +1,9 @@
 create table if not exists catalogue (
-    source enum('wowinterface', 'curseforge', 'github', 'tukui', 'tukui-classic'),
+    source varchar(255),
     source_id varchar(50),
 
     label varchar(255),
-    name varchar(150), -- longest in catalogue at time of writing is 49
+    name varchar(255), -- longest in catalogue at time of writing is 49
     description varchar(255),
     url varchar(255),
     download_count int,

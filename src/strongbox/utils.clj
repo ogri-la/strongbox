@@ -212,9 +212,11 @@
 
 (def not-empty? (comp not empty?))
 
-(defn-spec safe-subs string?
-  [x string?, max int?]
-  (subs x 0 (min (count x) max)))
+(defn-spec safe-subs (s/nilable string?)
+  "like subs, but throws fewer exceptions and only has a max"
+  [x (s/nilable string?), max int?]
+  (when x
+    (subs x 0 (min (count x) max))))
 
 (defn in?
   ([needle haystack]
