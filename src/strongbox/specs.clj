@@ -154,7 +154,7 @@
 (s/def ::gui-event #(instance? java.util.EventObject %))
 
 (s/def ::install-dir (s/nilable ::extant-dir))
-(s/def ::game-track #{"retail" "classic"})
+(s/def ::game-track #{:retail :classic})
 (s/def ::installed-game-track ::game-track) ;; alias
 (s/def ::game-track-list (s/coll-of ::game-track :kind vector? :distinct true))
 (s/def ::addon-dir ::extant-dir)
