@@ -790,21 +790,27 @@
                           (-> catalogue :name name (str "catalogue-menu-") keyword))
 
         catalogue-button-grp (ss/button-group)
+        cat-list (core/get-state :cfg :catalogue-source-list)
+        cat-list (if (empty? cat-list) [{:label "No catalogues available" :name :dummy}] cat-list)
         catalogue-menu (mapv (fn [catalogue-source]
                                (ss/radio-menu-item :id (catalogue-to-id catalogue-source)
                                                    :text (:label catalogue-source)
                                                    :user-data catalogue-source
                                                    :group catalogue-button-grp
+                                                   :enabled? (-> catalogue-source :name (= :dummy) not)
                                                    :selected? (= (core/get-state :cfg :selected-catalogue) (:name catalogue-source))))
-                             (core/get-state :cfg :catalogue-source-list))]
+                             cat-list)]
 
     ;; user selection updates application state
-    (sb/bind (sb/selection catalogue-button-grp)
-             (sb/b-do* (fn [val]
-                         (when val ;; hrm, we're getting two events here, one where the value is nil ...
-                           (async (fn []
-                                    (core/set-catalogue-source! (-> val ss/user-data :name))
-                                    (core/save-settings)))))))
+    ;; obtuse bug here if category list is empty: "ArityException Wrong number of args (0) passed to: core/juxt"
+    ;; so I've added a dummy catalogue entry that is then disabled
+    (sb/bind
+     (sb/selection catalogue-button-grp)
+     (sb/b-do [val]
+              (when val ;; hrm, we're getting two events here, one where the value is nil ...
+                (async (fn []
+                         (core/set-catalogue-source! (-> val ss/user-data :name))
+                         (core/save-settings))))))
 
     ;; application state updates menu selection
     (core/state-bind [:cfg :selected-catalogue]
