@@ -5,7 +5,7 @@
    [clj-http.fake :refer [with-fake-routes-in-isolation]]
    [envvar.core :refer [with-env]]
    [me.raynes.fs :as fs]
-   ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
+   [taoensso.timbre :as log :refer [debug info warn error spy]]
    [strongbox
     [zip :as zip]
     [main :as main]
@@ -33,19 +33,19 @@
       ;; big long stateful test
 
       (testing "add-addon-dir! adds an addon dir with a default game track of 'retail'"
-        (core/add-addon-dir! dir1 "retail")
-        (is (= [{:addon-dir dir1 :game-track "retail"}] (core/get-state :cfg :addon-dir-list))))
+        (core/add-addon-dir! dir1 :retail)
+        (is (= [{:addon-dir dir1 :game-track :retail}] (core/get-state :cfg :addon-dir-list))))
 
       (testing "add-addon-dir! idempotence"
-        (core/add-addon-dir! dir1 "retail")
-        (is (= [{:addon-dir dir1 :game-track "retail"}] (core/get-state :cfg :addon-dir-list))))
+        (core/add-addon-dir! dir1 :retail)
+        (is (= [{:addon-dir dir1 :game-track :retail}] (core/get-state :cfg :addon-dir-list))))
 
       (testing "add-addon-dir! just adds the dir, doesn't set it as selected"
         (is (= nil (core/get-state :selected-addon-dir))))
 
       (testing "set-addon-dir! sets the addon directory as selected and is also idempotent"
         (core/set-addon-dir! dir1)
-        (is (= [{:addon-dir dir1 :game-track "retail"}] (core/get-state :cfg :addon-dir-list)))
+        (is (= [{:addon-dir dir1 :game-track :retail}] (core/get-state :cfg :addon-dir-list)))
         (is (= dir1 (core/get-state :selected-addon-dir))))
 
       (testing "remove-addon-dir! without args removes the currently selected addon-dir and ensures it's no longer selected"
@@ -62,30 +62,30 @@
         (core/remove-addon-dir! dir2)
         (core/remove-addon-dir! dir2) ;; repeat
         (is (= dir1 (core/get-state :selected-addon-dir)))
-        (is (= [{:addon-dir dir1 :game-track "retail"}] (core/get-state :cfg :addon-dir-list))))
+        (is (= [{:addon-dir dir1 :game-track :retail}] (core/get-state :cfg :addon-dir-list))))
 
       (testing "addon-dir-map, without args, returns the currently selected addon-dir"
-        (is (= {:addon-dir dir1 :game-track "retail"} (core/addon-dir-map)))
+        (is (= {:addon-dir dir1 :game-track :retail} (core/addon-dir-map)))
         (core/set-addon-dir! dir2)
-        (is (= {:addon-dir dir2 :game-track "retail"} (core/addon-dir-map)))
-        (is (= {:addon-dir dir1 :game-track "retail"} (core/addon-dir-map dir1))))
+        (is (= {:addon-dir dir2 :game-track :retail} (core/addon-dir-map)))
+        (is (= {:addon-dir dir1 :game-track :retail} (core/addon-dir-map dir1))))
 
       (testing "addon-dir-map returns nil if map cannot be found"
         (is (= nil (core/addon-dir-map dir3))))
 
       (testing "set-game-track! changes the game track of the given addon dir"
-        (core/set-game-track! "classic" dir1)
-        (is (= {:addon-dir dir1 :game-track "classic"} (core/addon-dir-map dir1))))
+        (core/set-game-track! :classic dir1)
+        (is (= {:addon-dir dir1 :game-track :classic} (core/addon-dir-map dir1))))
 
       (testing "set-game-track! without addon-dir, changes the game track of the currently selected addon dir"
-        (core/set-game-track! "classic")
-        (is (= {:addon-dir dir2 :game-track "classic"} (core/addon-dir-map dir2))))
+        (core/set-game-track! :classic)
+        (is (= {:addon-dir dir2 :game-track :classic} (core/addon-dir-map dir2))))
 
       ;;
 
       (testing "set-game-track! changes default path to 'classic' if detected in addon-dir"
         (core/set-addon-dir! dir4)
-        (is (= {:addon-dir dir4 :game-track "classic"} (core/addon-dir-map dir4)))))))
+        (is (= {:addon-dir dir4 :game-track :classic} (core/addon-dir-map dir4)))))))
 
 (deftest catalogue
   (let [[short-catalogue full-catalogue] (take 2 config/-default-catalogue-list)]
@@ -189,16 +189,16 @@
 (deftest export-installed-addon-list
   (testing "exported addon data is correct"
     (let [addon-list (slurp-fixture "import-export--installed-addons-list.edn")
-          expected [{:name "adibags" :source "curseforge" :game-track "retail"}
+          expected [{:name "adibags" :source "curseforge" :game-track :retail}
                     {:name "noname"} ;; an addon whose name is not present in the catalogue (umatched)
-                    {:name "carbonite" :source "curseforge" :game-track "retail"}]]
+                    {:name "carbonite" :source "curseforge" :game-track :retail}]]
       (is (= expected (core/export-installed-addon-list addon-list)))))
 
   (testing "export ignores ignored addons"
     (let [addon-list (vec (slurp-fixture "import-export--installed-addons-list.edn"))
           addon-list (assoc-in addon-list [0 :ignore?] true)
           expected [{:name "noname"} ;; an addon whose name is not present in the catalogue (umatched)
-                    {:name "carbonite" :source "curseforge" :game-track "retail"}]]
+                    {:name "carbonite" :source "curseforge" :game-track :retail}]]
       (is (= expected (core/export-installed-addon-list addon-list))))))
 
 (deftest export-catalogue-addon-list
@@ -250,7 +250,7 @@
                            :updated-date "2019-06-26T01:21:39Z",
                            :group-id "https://www.curseforge.com/wow/addons/everyaddon",
                            :installed-version "v8.2.0-v1.13.2-7135.139",
-                           :installed-game-track "retail"
+                           :installed-game-track :retail
                            :name "everyaddon",
                            :source "curseforge",
                            :interface-version 80000,
@@ -270,7 +270,7 @@
                            :updated-date "2019-07-03T07:11:47Z",
                            :group-id "https://www.curseforge.com/wow/addons/everyotheraddon",
                            :installed-version "v8.2.0-v1.13.2-7135.139",
-                           :installed-game-track "retail"
+                           :installed-game-track :retail
                            :name "everyotheraddon",
                            :source "curseforge",
                            :interface-version 80200,
@@ -331,7 +331,7 @@
                            :updated-date "2019-06-26T01:21:39Z",
                            :group-id "https://www.curseforge.com/wow/addons/everyaddon",
                            :installed-version "v8.2.0-v1.13.2-7135.139",
-                           :installed-game-track "retail"
+                           :installed-game-track :retail
                            :name "everyaddon",
                            :source "curseforge",
                            :interface-version 80000,
@@ -351,7 +351,7 @@
                            :updated-date "2019-07-03T07:11:47Z",
                            :group-id "https://www.curseforge.com/wow/addons/everyotheraddon",
                            :installed-version "v8.2.0-v1.13.2-7135.139",
-                           :installed-game-track "classic"
+                           :installed-game-track :classic
                            :name "everyotheraddon",
                            :source "curseforge",
                            :interface-version 11300, ;; changed
@@ -366,14 +366,14 @@
                            :matched? true}]]
 
             (core/import-exported-file output-path)
-            (core/set-game-track! "retail") ;; unnecessary, 'retail' is default, explicitness
+            (core/set-game-track! :retail) ;; unnecessary, 'retail' is default, explicitness
             (core/refresh) ;; re-read the installation directory
             (is (= (first expected) (first (core/get-state :installed-addon-list))))
 
             ;; bit of a hack. the second expected addon won't be expanded properly after the refresh
             ;; because it's a classic addon and the addon dir is 'retail'. so we change the addon dir
             ;; and then test the second one matches.
-            (core/set-game-track! "classic")
+            (core/set-game-track! :classic)
             (core/refresh)
             (is (= (second expected) (second (core/get-state :installed-addon-list))))))))))
 
@@ -393,7 +393,7 @@
           ;; this is subset of the data the remote addon host (like curseforge) serves us
           api-result {:latestFiles [{:downloadUrl "https://example.org/foo"
                                      :displayName "v8.10.00"
-                                     :gameVersionFlavor "retail",
+                                     :gameVersionFlavor :retail,
                                      :fileDate "2001-01-03T00:00:00.000Z",
                                      :releaseType 1,
                                      :exposeAsAlternative nil}]}
@@ -424,7 +424,7 @@
 
                 ;; and optionally these from .strongbox.json if we installed the addon
                 nfo {:installed-version "v8.10.00",
-                     :installed-game-track "retail"
+                     :installed-game-track :retail
                      :name "every-addon",
                      :group-id "doesntmatter"
                      :primary? true,
@@ -469,14 +469,14 @@
 
   (testing "game track fields are turned back into a list"
     (let [cases [[{} {}]
-                 [{:retail-track true} {:game-track-list ["retail"]}]
-                 [{:classic-track true} {:game-track-list ["classic"]}]
-                 [{:retail-track true, :classic-track true} {:game-track-list ["retail" "classic"]}]
-                 [{:retail-track false, :classic-track true} {:game-track-list ["classic"]}]
+                 [{:retail-track true} {:game-track-list [:retail]}]
+                 [{:classic-track true} {:game-track-list [:classic]}]
+                 [{:retail-track true, :classic-track true} {:game-track-list [:retail :classic]}]
+                 [{:retail-track false, :classic-track true} {:game-track-list [:classic]}]
                  [{:retail-track false, :classic-track false} {}]
 
                  ;; order is deterministic
-                 [{:classic-track true, :retail-track true} {:game-track-list ["retail" "classic"]}]]]
+                 [{:classic-track true, :retail-track true} {:game-track-list [:retail :classic]}]]]
       (doseq [[given expected] cases]
         (is (= expected (core/db-gen-game-track-list given)))))))
 
@@ -592,7 +592,7 @@
                     :name "someaddon"
                     :group-id "fdsa"
                     :primary? true
-                    :installed-game-track "retail"}
+                    :installed-game-track :retail}
           _ (spit some-addon-nfo (utils/to-json nfo-data))
 
           expected [{;; toc data
@@ -609,7 +609,7 @@
                      :source "curseforge"
                      :source-id 123
                      :group-id "fdsa"
-                     :installed-game-track "retail"
+                     :installed-game-track :retail
                      :primary? true}]]
       (is (= expected (core/-load-installed-addons addon-dir))))))
 
@@ -630,7 +630,7 @@
                     ;; also invalid. all of these are required
                     ;;:group-id "asdf"
                     ;;:primary? true
-                    ;;:installed-game-track "retail"
+                    ;;:installed-game-track :retail
                     }
           _ (spit some-addon-nfo (utils/to-json nfo-data))
 
@@ -837,7 +837,7 @@
 
           ;; addon was found and added to user catalogue
           (is (= expected-user-catalogue
-                 (:addon-summary-list (catalogue/read-catalogue (core/paths :user-catalogue-file)))))
+                 (:addon-summary-list (spy :info (catalogue/read-catalogue (spy :info (core/paths :user-catalogue-file)))))))
 
           ;; addon was successfully download and installed
           (is (fs/exists? expected-addon-dir)))))))

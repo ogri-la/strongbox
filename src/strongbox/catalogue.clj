@@ -63,7 +63,7 @@
   [catalogue-path & {:as opts}]
   ;; cheshire claims to be twice as fast: https://github.com/dakrone/cheshire#speed
   ;; consolidate catalogue access here
-  (let [catalogue-data (apply utils/load-json-file-safely (apply concat [catalogue-path] opts))]
+  (let [catalogue-data (spy :info (apply utils/load-json-file-safely (apply concat [catalogue-path] opts)))]
     (utils/nilable (wowman-coercer catalogue-data))))
 
 (defn-spec write-catalogue ::sp/extant-file

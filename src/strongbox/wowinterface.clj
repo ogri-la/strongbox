@@ -136,10 +136,10 @@
         many-results? (> (count compatibility) 1)
         wowi-classic "WoW Classic"
 
-        mapping {[wowi-classic true]  #{"classic" "retail"}
-                 [wowi-classic false] #{"classic"}
-                 [nil true] #{"retail"}
-                 [nil false] #{"retail"}}
+        mapping {[wowi-classic true]  #{:classic :retail}
+                 [wowi-classic false] #{:classic}
+                 [nil true] #{:retail}
+                 [nil false] #{:retail}}
 
         key [(some #{wowi-classic} compatibility) many-results?]]
     (assoc addon :game-track-list (get mapping key))))

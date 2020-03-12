@@ -99,7 +99,8 @@
      :no-file? nil
      :bad-data? bad-data
      :invalid-data? invalid-data,
-     :data-spec ::sp/nfo-v2)))
+     :data-spec ::sp/nfo-v2
+     :transform-map {:installed-game-track keyword})))
 
 (defn-spec read-nfo (s/or :ok ::sp/nfo-v2, :error nil?)
   "reads and parses the contents of the .nfo file and checks if addon should be ignored or not"

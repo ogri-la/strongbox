@@ -96,7 +96,7 @@
                  :download-count 30946
                  :category-list []}
 
-          game-track "retail"
+          game-track :retail
 
           expected {:url "https://github.com/Aviana/HealComm"
                     :updated-date "2019-10-09T17:40:04Z"
@@ -127,7 +127,7 @@
                  :download-count 30946
                  :category-list []}
 
-          game-track "classic"
+          game-track :classic
 
           expected {:category-list []
                     :updated-date "2019-10-09T17:40:04Z"
@@ -165,8 +165,8 @@
                        {:get (fn [_] {:status 200 :body fixture})}}]
 
       (with-fake-routes-in-isolation fake-routes
-        (is (= expected (github-api/expand-summary given "classic")))
-        (is (= expected (github-api/expand-summary given "retail"))))))
+        (is (= expected (github-api/expand-summary given :classic)))
+        (is (= expected (github-api/expand-summary given :retail))))))
 
   (testing "releases whose assets are only partially uploaded, due to an upload failure, are ignored"
     (let [given {:url "https://github.com/jsb/RingMenu"
@@ -178,7 +178,7 @@
                  :download-count 30946
                  :category-list []}
 
-          game-track "retail"
+          game-track :retail
 
           expected nil
 
@@ -227,22 +227,22 @@
 
                  ;; case: asset has 'classic' in it's name
                  [{} [[:assets 0 :name] "1.2.3-Classic"]
-                  {"classic" [{:content_type "application/zip", :state "uploaded", :name "1.2.3-Classic", :game-track "classic", :version "Release 1.2.3-classic" :-mo :classic-in-name}]}]
+                  {:classic [{:content_type "application/zip", :state "uploaded", :name "1.2.3-Classic", :game-track :classic, :version "Release 1.2.3-classic" :-mo :classic-in-name}]}]
 
                  ;; case: single asset, no game track present in file name, no known game tracks. default to :retail
                  [{} {}
-                  {"retail" [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track "retail", :version "Release 1.2.3" :-mo :sa--ngt}]}]
+                  {:retail [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track :retail, :version "Release 1.2.3" :-mo :sa--ngt}]}]
 
                  ;; case: single asset, no game track present in file name, single known game track. use that
-                 [{:game-track-list ["retail"]} {}
-                  {"retail" [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track "retail", :version "Release 1.2.3" :-mo :sa--1gt}]}]
-                 [{:game-track-list ["classic"]} {}
-                  {"classic" [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track "classic", :version "Release 1.2.3-classic" :-mo :sa--1gt}]}]
+                 [{:game-track-list [:retail]} {}
+                  {:retail [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track :retail, :version "Release 1.2.3" :-mo :sa--1gt}]}]
+                 [{:game-track-list [:classic]} {}
+                  {:classic [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track :classic, :version "Release 1.2.3-classic" :-mo :sa--1gt}]}]
 
                  ;; case: single asset, no game track present in file name, multiple known game tracks. assume all game tracks supported
-                 [{:game-track-list ["classic" "retail"]} {}
-                  {"retail" [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track "retail", :version "Release 1.2.3" :-mo :sa--Ngt}]
-                   "classic" [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track "classic", :version "Release 1.2.3-classic" :-mo :sa--Ngt}]}]]]
+                 [{:game-track-list [:classic :retail]} {}
+                  {:retail [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track :retail, :version "Release 1.2.3" :-mo :sa--Ngt}]
+                   :classic [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track :classic, :version "Release 1.2.3-classic" :-mo :sa--Ngt}]}]]]
 
       (doseq [[addon-summary-updates, release-updates, expected] cases
               :let [summary (merge addon-summary addon-summary-updates)
@@ -276,21 +276,21 @@
 
                  ;; case: multiple assets, no game track present in file name, no known game tracks. default to :retail
                  [{} {}
-                  {"retail" [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track "retail", :version "Release 1.2.3" :-mo :ma--ngt}
-                             {:content_type "application/zip", :state "uploaded", :name "1.2.3-nolib", :game-track "retail", :version "Release 1.2.3" :-mo :ma--ngt}]}]
+                  {:retail [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track :retail, :version "Release 1.2.3" :-mo :ma--ngt}
+                            {:content_type "application/zip", :state "uploaded", :name "1.2.3-nolib", :game-track :retail, :version "Release 1.2.3" :-mo :ma--ngt}]}]
 
                  ;; case: multiple assets, no game track present in file name, single known game track. use that.
-                 [{:game-track-list ["retail"]} {}
-                  {"retail" [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track "retail", :version "Release 1.2.3" :-mo :ma--1gt}
-                             {:content_type "application/zip", :state "uploaded", :name "1.2.3-nolib", :game-track "retail", :version "Release 1.2.3" :-mo :ma--1gt}]}]
-                 [{:game-track-list ["classic"]} {}
-                  {"classic" [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track "classic", :version "Release 1.2.3-classic" :-mo :ma--1gt}
-                              {:content_type "application/zip", :state "uploaded", :name "1.2.3-nolib", :game-track "classic", :version "Release 1.2.3-classic" :-mo :ma--1gt}]}]
+                 [{:game-track-list [:retail]} {}
+                  {:retail [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track :retail, :version "Release 1.2.3" :-mo :ma--1gt}
+                            {:content_type "application/zip", :state "uploaded", :name "1.2.3-nolib", :game-track :retail, :version "Release 1.2.3" :-mo :ma--1gt}]}]
+                 [{:game-track-list [:classic]} {}
+                  {:classic [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track :classic, :version "Release 1.2.3-classic" :-mo :ma--1gt}
+                             {:content_type "application/zip", :state "uploaded", :name "1.2.3-nolib", :game-track :classic, :version "Release 1.2.3-classic" :-mo :ma--1gt}]}]
 
                  ;; case: multiple assets, no game track present in file name, multiple known game tracks. default to :retail
-                 [{:game-track-list ["classic" "retail"]} {}
-                  ;;{"retail" [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track "retail", :version "Release 1.2.3" :-mo :ma--Ngt}
-                  ;;           {:content_type "application/zip", :state "uploaded", :name "1.2.3-nolib", :game-track "retail", :version "Release 1.2.3" :-mo :ma--Ngt}]}]]]
+                 [{:game-track-list [:classic :retail]} {}
+                  ;;{:retail [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track :retail, :version "Release 1.2.3" :-mo :ma--Ngt}
+                  ;;           {:content_type "application/zip", :state "uploaded", :name "1.2.3-nolib", :game-track :retail, :version "Release 1.2.3" :-mo :ma--Ngt}]}]]]
                   ;; 2019-11-21: changed my mind, refusing to install in very ambiguous caseses
                   nil]]]
 
@@ -337,7 +337,7 @@
            :game-track-list [] ;; 'no game tracks'
            :category-list []}
 
-          game-track "retail"
+          game-track :retail
 
           ;; I don't like testing for log messages, but in this case it's the only indication the error has been handled properly
           expected ["failed to download file 'https://api.github.com/repos/Aviana/HealComm/releases': Forbidden (HTTP 403)"

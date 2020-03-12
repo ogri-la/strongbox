@@ -368,8 +368,8 @@
   [game-version string?]
   (if (= "1." (subs game-version 0 2))
     ;; 1.x.x == classic (for now)
-    "classic"
-    "retail"))
+    :classic
+    :retail))
 
 (defn-spec interface-version-to-game-track (s/or :ok ::sp/game-track, :err nil?)
   "converts an interface version like '80000' to a game track like 'retail'"

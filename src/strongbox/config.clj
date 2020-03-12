@@ -32,7 +32,7 @@
   [cfg]
   (let [install-dir (:install-dir cfg)
         addon-dir-list (->> cfg :addon-dir-list (mapv :addon-dir))
-        stub {:addon-dir install-dir :game-track "retail"}
+        stub {:addon-dir install-dir :game-track :retail}
         ;; add stub to addon-dir-list if install-dir isn't nil and doesn't match anything already present
         cfg (if (and install-dir
                      (not (utils/in? install-dir addon-dir-list)))
@@ -121,16 +121,14 @@
   "reads application settings from the given file.
   returns an empty map if file is missing or malformed."
   [cfg-file ::sp/file]
-  ;; todo: incorporate into :transform-map if we have another case involving nested structures
-  (let [catalogue-source-list-transformer
-        (fn [lst]
-          (mapv #(update-in % [:name] keyword) lst))]
-    (utils/load-json-file-safely cfg-file
-                                 :no-file? #(do (warn "configuration file not found: " cfg-file) {})
-                                 :bad-data? {}
-                                 :transform-map {:selected-catalogue keyword
-                                                 :gui-theme keyword
-                                                 :catalogue-source-list catalogue-source-list-transformer})))
+  (utils/load-json-file-safely cfg-file
+                               :no-file? #(do (warn "configuration file not found: " cfg-file) {})
+                               :bad-data? #(do (error "configuration file malformed: " cfg-file) {})
+                               :transform-map {:selected-catalogue keyword
+                                               :gui-theme keyword
+                                               :game-track keyword
+                                               ;; too general, not great :(
+                                               :name keyword}))
 
 (defn-spec load-etag-db-file map?
   "reads etag database from given file.
