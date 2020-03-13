@@ -5,7 +5,7 @@
    [clj-http.fake :refer [with-fake-routes-in-isolation]]
    [envvar.core :refer [with-env]]
    [me.raynes.fs :as fs]
-   [taoensso.timbre :as log :refer [debug info warn error spy]]
+   ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [strongbox
     [zip :as zip]
     [main :as main]
@@ -837,7 +837,7 @@
 
           ;; addon was found and added to user catalogue
           (is (= expected-user-catalogue
-                 (:addon-summary-list (spy :info (catalogue/read-catalogue (spy :info (core/paths :user-catalogue-file)))))))
+                 (:addon-summary-list (catalogue/read-catalogue (core/paths :user-catalogue-file)))))
 
           ;; addon was successfully download and installed
           (is (fs/exists? expected-addon-dir)))))))

@@ -1281,7 +1281,7 @@
                      (catalogue/expand-summary addon-summary :retail)
                      (catalogue/expand-summary addon-summary :classic))
               test-only? true
-              _ (spy :info (install-addon-guard addon (get-state :selected-addon-dir) test-only?))]
+              _ (install-addon-guard addon (get-state :selected-addon-dir) test-only?)]
 
              ;; ... but does matter when installing it in to the current addon directory
              (let [addon (expand-summary-wrapper addon-summary)]
