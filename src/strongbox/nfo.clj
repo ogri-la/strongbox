@@ -132,4 +132,5 @@
   [install-dir ::sp/extant-dir, addon any?]
   (and (has-nfo-file? install-dir addon)
        ;; don't use read-nfo-file here, it deletes invalid nfo files
-       (s/valid? ::sp/nfo-v2 (utils/load-json-file-safely (nfo-path install-dir (:dirname addon))))))
+       (s/valid? ::sp/nfo-v2 (utils/load-json-file-safely (nfo-path install-dir (:dirname addon))
+                                                          :transform-map {:installed-game-track keyword}))))
