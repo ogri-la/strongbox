@@ -5,7 +5,7 @@
     [core :as core :refer [get-state state-bind colours]]
     [logging :as logging]
     [specs :as sp]
-    [utils :as utils :refer [items]]]
+    [utils :as utils :refer [items kw2str]]]
    [clojure.instant]
    [clojure.string :refer [lower-case starts-with? trim]]
    [slugify.core :refer [slugify]]
@@ -282,8 +282,8 @@
         wow-dir-dropdown (ss/combobox :model (core/available-addon-dirs)
                                       :selected-item (core/get-state :selected-addon-dir))
 
-        wow-game-track (ss/combobox :model (mapv name core/game-tracks)
-                                    :selected-item (name (core/get-game-track)))
+        wow-game-track (ss/combobox :model (mapv kw2str core/game-tracks)
+                                    :selected-item (kw2str (core/get-game-track)))
 
         _ (ss/listen wow-dir-dropdown :selection
                      (async-handler ;; execute elsewhere

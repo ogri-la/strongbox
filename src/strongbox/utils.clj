@@ -32,6 +32,11 @@
       (into lst (repeat (- pad-amt lst-size) nil))
       lst)))
 
+(defn-spec kw2str (s/or :ok? string? :nil nil?)
+  [kw (s/nilable keyword?)]
+  (when kw
+    (name kw)))
+
 (defmacro static-slurp
   "just like `slurp`, but file is read at compile time.
   good for static, unchanging, files. less good during development"
