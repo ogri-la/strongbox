@@ -295,16 +295,16 @@
                             (debug "addon-dir selection changed to" new-addon-dir)
                             ;; positioned here so the dropdown change is shown immediately
                             (ss/invoke-later
-                             (ss/selection! wow-game-track (-> new-addon-dir core/addon-dir-map :game-track name))))
+                             (ss/selection! wow-game-track (-> new-addon-dir core/addon-dir-map :game-track kw2str))))
 
-                            (core/set-addon-dir! new-addon-dir)
-                            (core/save-settings)))))
+                          (core/set-addon-dir! new-addon-dir)
+                          (core/save-settings)))))
 
         _ (state-bind [:selected-addon-dir]
                       (fn [state]
                         ;; called when the :selected-addon-dir changes (like via `core.set-addon-dir!`)
                         (let [new-addon-dir (:selected-addon-dir state)
-                              game-track (-> new-addon-dir core/addon-dir-map :game-track name)
+                              game-track (-> new-addon-dir core/addon-dir-map :game-track kw2str)
                               selected-addon-dir (ss/selection wow-dir-dropdown)]
                           (when-not (= selected-addon-dir new-addon-dir)
                             (debug ":selected-addon-dir changed to:" new-addon-dir)
@@ -319,11 +319,11 @@
                      (fn [ev]
                        ;; called when a different game track is selected
                        (let [new-game-track (ss/selection wow-game-track)
-                             old-game-track (-> (core/addon-dir-map) :game-track name)]
+                             old-game-track (-> (core/addon-dir-map) :game-track kw2str)]
                          (when-not (= new-game-track old-game-track)
                            (debug (format "selected game track changed from %s to %s" old-game-track new-game-track))
                            (ss/invoke-later
-                            (core/set-game-track! (keyword new-game-track)) ;; this will affect [:cfg :addon-dir-list]
+                            (core/set-game-track! (keyword new-game-track)) ;; this affects [:cfg :addon-dir-list]
                             ;; will save settings
                             (core/refresh))))))
 

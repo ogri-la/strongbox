@@ -33,6 +33,7 @@
       lst)))
 
 (defn-spec kw2str (s/or :ok? string? :nil nil?)
+  "returns the string version of the given keyword, if keyword is not nil"
   [kw (s/nilable keyword?)]
   (when kw
     (name kw)))

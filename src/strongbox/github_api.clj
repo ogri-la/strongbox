@@ -155,7 +155,7 @@
         -group-assets (partial group-assets addon-summary)
         asset (-> latest-release -group-assets (get game-track) first (dissoc :-mo))]
     (if-not asset
-      (warn (format "no '%s' release available for '%s' on github" (name game-track) (:name addon-summary)))
+      (warn (format "no '%s' release available for '%s' on github" (utils/kw2str game-track) (:name addon-summary)))
       (merge addon-summary
              {:download-url (:browser_download_url asset)
               :version (:version asset)}))))

@@ -366,7 +366,7 @@
                            :matched? true}]]
 
             (core/import-exported-file output-path)
-            (core/set-game-track! :retail) ;; unnecessary, 'retail' is default, explicitness
+            (core/set-game-track! :retail) ;; unnecessary, :retail is default. explicitness
             (core/refresh) ;; re-read the installation directory
             (is (= (first expected) (first (core/get-state :installed-addon-list))))
 
