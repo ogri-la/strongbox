@@ -38,14 +38,15 @@ see CHANGELOG.md for a more formal list of changes by release
     - "label" is actually masquerading as "name"
     - won't 'fix'
 
-### todo
-
-* catalog updates
+* catalogue updates
     - move location of catalogs into user settings
         - allow user to specify their own catalogs
             - a url to a catalog that is downloaded and included while loading up the db
             - different from the 'user catalog'
-    
+        - done
+            - they can specify their own catalogs using the :source attribute
+            - their addon entries must still specify a supported :source
+                - it can be :curseforge, :wowinterface, :github, :tukui, :tukui-classic
     - support catalog-less strongbox
         - application should be able to work with no catalogues specified
             - can't search for or install addons
@@ -53,7 +54,17 @@ see CHANGELOG.md for a more formal list of changes by release
             - we have a user-catalogue for github ... could it do double duty?
                 - expand the 'add github addon' so user can select source and add an id or just use an url
                     - and then strongbox scrapes the data at given url? urg, back to webscraping
+        - done
+            - tacitly. it no longer falls over dead when there are no catalogues to choose from
 
+* remove backwards compatibility
+    - remove nfo-v1
+        - 'map?' just isn't good enough
+        - done
+
+### todo
+
+* catalog updates
     - game track becomes a set of keywords
         - not strings
 
@@ -78,9 +89,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * remove backwards compatibility
     - there will be a migration of wowman data to strongbox data, or the data is discarded
         - rename `test/fixtures/user-config-0.11.json` to `wowman--user-config ...`
-    - remove nfo-v1
-        - 'map?' just isn't good enough
-        - depends on spec-cleanup
 
 * rename wowman
     - rename repository

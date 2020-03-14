@@ -29,15 +29,15 @@
   (testing "`:install-dir` in user config is converted to an `:addon-dir`"
     (let [install-dir (str fs/*cwd*)
           cfg {:install-dir install-dir :addon-dir-list []}
-          expected {:addon-dir-list [{:addon-dir install-dir :game-track "retail"}]}]
+          expected {:addon-dir-list [{:addon-dir install-dir :game-track :retail}]}]
       (is (= expected (config/handle-install-dir cfg)))))
 
   (testing "if both `:install-dir` and `:addon-dir-list` exist, `:install-dir` is appended to `:addon-dir-list` and then dropped"
     (let [install-dir1 "/foo"
           install-dir2 "/bar"
 
-          addon-dir1 {:addon-dir install-dir1 :game-track "retail"}
-          addon-dir2 {:addon-dir install-dir2 :game-track "retail"}
+          addon-dir1 {:addon-dir install-dir1 :game-track :retail}
+          addon-dir2 {:addon-dir install-dir2 :game-track :retail}
 
           cfg {:install-dir install-dir2
                :addon-dir-list [addon-dir1]}
@@ -117,15 +117,15 @@
   (testing "missing directories don't nuke entire config"
     (let [cli-opts {}
           file-opts {:addon-dir-list [{:addon-dir (str fs/*cwd*) ;; exists
-                                       :game-track "classic"}
+                                       :game-track :classic}
                                       {:addon-dir "/does/not/exist"
-                                       :game-track "retail"}]}
+                                       :game-track :retail}]}
           expected (assoc config/default-cfg
                           :addon-dir-list [{:addon-dir (str fs/*cwd*)
-                                            :game-track "classic"}])]
+                                            :game-track :classic}])]
       (is (= expected (config/merge-config file-opts cli-opts))))))
 
-(deftest load-settings-from-file
+(deftest load-settings
   (testing "a standard config file circa 0.9 is loaded and parsed as expected"
     (let [cli-opts {}
           cfg-file (fixture-path "user-config-0.9.json")
@@ -135,8 +135,8 @@
                           :selected-catalogue :short ;; new in 0.10
                           ;; :debug? true ;; removed in 0.12
                           ;; new in 0.12
-                          :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track "retail"}
-                                           {:addon-dir "/tmp/.strongbox-foo", :game-track "classic"}]
+                          :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail}
+                                           {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]
                           ;; new in 1.0
                           :catalogue-source-list (:catalogue-source-list config/default-cfg)}
 
@@ -145,8 +145,8 @@
 
                     :cli-opts {}
                     :file-opts {:debug? true
-                                :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track "retail"}
-                                                 {:addon-dir "/tmp/.strongbox-foo", :game-track "classic"}]}
+                                :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail}
+                                                 {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]}
                     :etag-db {}}]
 
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file)))))
@@ -159,8 +159,8 @@
           expected {:cfg {:gui-theme :light ;; new in 0.11
                           :selected-catalogue :full ;; new in 0.10
                           ;; :debug? true ;; removed in 0.12
-                          :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track "retail"}
-                                           {:addon-dir "/tmp/.strongbox-foo", :game-track "classic"}]
+                          :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail}
+                                           {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]
                           ;; new in 1.0
                           :catalogue-source-list (:catalogue-source-list config/default-cfg)}
 
@@ -169,8 +169,8 @@
                     :cli-opts {}
                     :file-opts {:selected-catalogue :full
                                 :debug? true
-                                :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track "retail"}
-                                                 {:addon-dir "/tmp/.strongbox-foo", :game-track "classic"}]}
+                                :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail}
+                                                 {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]}
                     :etag-db {}}]
 
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file)))))
@@ -183,8 +183,8 @@
           expected {:cfg {:gui-theme :dark ;; new in 0.11
                           :selected-catalogue :full ;; new in 0.10
                           ;;:debug? true ;; removed in 0.12
-                          :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track "retail"}
-                                           {:addon-dir "/tmp/.strongbox-foo", :game-track "classic"}]
+                          :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail}
+                                           {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]
                           ;; new in 1.0
                           :catalogue-source-list (:catalogue-source-list config/default-cfg)}
 
@@ -194,8 +194,8 @@
                     :file-opts {:gui-theme :dark
                                 :selected-catalogue :full
                                 :debug? true
-                                :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track "retail"}
-                                                 {:addon-dir "/tmp/.strongbox-foo", :game-track "classic"}]}
+                                :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail}
+                                                 {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]}
                     :etag-db {}}]
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file)))))
 
@@ -207,8 +207,8 @@
           expected {:cfg {:gui-theme :dark ;; new in 0.11
                           :selected-catalogue :full ;; new in 0.10
                           ;;:debug? true ;; removed in 0.12
-                          :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track "retail"}
-                                           {:addon-dir "/tmp/.strongbox-foo", :game-track "classic"}]
+                          :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail}
+                                           {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]
                           ;; new in 1.0
                           :catalogue-source-list (:catalogue-source-list config/default-cfg)}
 
@@ -217,7 +217,7 @@
                     :cli-opts {}
                     :file-opts {:gui-theme :dark
                                 :selected-catalogue :full
-                                :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track "retail"}
-                                                 {:addon-dir "/tmp/.strongbox-foo", :game-track "classic"}]}
+                                :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail}
+                                                 {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]}
                     :etag-db {}}]
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))

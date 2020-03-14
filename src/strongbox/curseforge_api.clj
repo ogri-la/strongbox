@@ -43,10 +43,10 @@
         ;; no alternative versions, for now
         stable-releases (remove :exposeAsAlternative stable-releases)
 
-        ;; replace usage of "wow_retail" and "wow_classic" with "retail" and "classic"
+        ;; replace usage of "wow_retail" and "wow_classic" with :retail and :classic
         stable-releases (mapv (fn [release]
                                 (let [new-flavor (if (= "wow_classic" (:gameVersionFlavor release))
-                                                   "classic" "retail")]
+                                                   :classic :retail)]
                                   (assoc release :gameVersionFlavor new-flavor)))
                               stable-releases)]
 

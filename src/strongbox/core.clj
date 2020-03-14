@@ -28,7 +28,7 @@
 ;; properly in one thread before being recreated in another
 (def db-lock (Object.))
 
-(def game-tracks ["retail" "classic"])
+(def game-tracks [:retail :classic])
 
 (def -colour-map
   {:notice/error :tomato
@@ -204,8 +204,8 @@
 (defn db-gen-game-track-list
   "converts the 'retail_track' and 'classic_track' boolean values in db into a list of strings"
   [row]
-  (let [track-list (vec (remove nil? [(when (:retail-track row) "retail")
-                                      (when (:classic-track row) "classic")]))
+  (let [track-list (vec (remove nil? [(when (:retail-track row) :retail)
+                                      (when (:classic-track row) :classic)]))
         row (dissoc row :retail-track :classic-track)]
     (if (empty? track-list)
       row
@@ -315,7 +315,7 @@
   [addon-dir ::sp/addon-dir]
   (let [addon-dir (-> addon-dir fs/absolute fs/normalized str)
         ;; if '_classic_' is in given path, use the classic game track
-        default-game-track (if (clojure.string/index-of addon-dir "_classic_") "classic" "retail")]
+        default-game-track (if (clojure.string/index-of addon-dir "_classic_") :classic :retail)]
     (add-addon-dir! addon-dir default-game-track)
     (swap! state assoc :selected-addon-dir addon-dir))
   nil)
@@ -483,7 +483,7 @@
         (some? (:interface-version addon)) (utils/interface-version-to-game-track (:interface-version addon)))
 
       ;; very last here is for testing only
-      "retail"))
+      :retail))
 
 (defn-spec -install-addon (s/or :ok (s/coll-of ::sp/extant-file), :error ::sp/empty-coll)
   "installs an addon given an addon description, a place to install the addon and the addon zip file itself"
@@ -504,7 +504,7 @@
                        (get-game-track install-dir)
 
                        ;; very last here is for testing only
-                       "retail")
+                       :retail)
 
         ;; an addon may unzip to many directories, each directory needs the nfo file
         update-nfo-fn (fn [zipentry]
@@ -853,8 +853,8 @@
                                    :download-count :download_count
                                    ;;:created-date :created_date ;; curseforge only and unused
                                    :updated-date :updated_date}
-                          new {:retail_track (utils/in? "retail" (:game-track-list row))
-                               :classic_track (utils/in? "classic" (:game-track-list row))}]
+                          new {:retail_track (utils/in? :retail (:game-track-list row))
+                               :classic_track (utils/in? :classic (:game-track-list row))}]
 
                       (-> row (utils/dissoc-all ignored) (rename-keys mapping) (merge new))))]
 
@@ -1121,7 +1121,8 @@
         addon-list (utils/load-json-file-safely path
                                                 :bad-data? nil-me
                                                 :data-spec ::sp/export-record-list
-                                                :invalid-data? nil-me)
+                                                :invalid-data? nil-me
+                                                :transform-map {:game-track keyword})
         full-data? (fn [addon]
                      (utils/all (mapv #(contains? addon %) [:source :source-id :name])))
         [full-data, partial-data] (utils/split-filter full-data? addon-list)]
@@ -1277,8 +1278,8 @@
     (if-let* [addon-summary (catalogue/parse-user-string addon-url)
               ;; game track doesn't matter when adding it to the user catalogue ...
               addon (or
-                     (catalogue/expand-summary addon-summary "retail")
-                     (catalogue/expand-summary addon-summary "classic"))
+                     (catalogue/expand-summary addon-summary :retail)
+                     (catalogue/expand-summary addon-summary :classic))
               test-only? true
               _ (install-addon-guard addon (get-state :selected-addon-dir) test-only?)]
 

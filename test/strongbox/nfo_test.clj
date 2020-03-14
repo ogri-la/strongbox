@@ -84,7 +84,7 @@
 
                     ;; may not have actually been installed from the retail track, we had to guess
                     ;; this will be updated as the addon is updated
-                    :installed-game-track "retail"}
+                    :installed-game-track :retail}
           expected nfo-data]
       (spit (utils/join (addon-path) nfo/nfo-filename) (utils/to-json nfo-data))
       (is (= expected (nfo/read-nfo (install-dir) addon-dir)))))
@@ -99,7 +99,7 @@
 
                     ;; may not have actually been installed from the retail track, we had to guess
                     ;; this will be updated as the addon is updated
-                    :installed-game-track "retail"}
+                    :installed-game-track :retail}
           expected (assoc nfo-data :ignore? true)]
       (spit (utils/join (ignorable-addon-path) nfo/nfo-filename) (utils/to-json nfo-data))
       (is (= expected (nfo/read-nfo (install-dir) ignorable-addon-dir)))))
@@ -118,7 +118,7 @@
 
                     ;; may not have actually been installed from the retail track, we had to guess
                     ;; this will be updated as the addon is updated
-                    :installed-game-track "retail"}
+                    :installed-game-track :retail}
           expected nfo-data]
       (spit (utils/join (ignorable-addon-path) nfo/nfo-filename) (utils/to-json nfo-data))
       (is (= expected (nfo/read-nfo (install-dir) ignorable-addon-dir))))))
@@ -128,7 +128,7 @@
     (let [given {:version "1.2.3" ;; value is ignored in favour of :installed-version
                  :installed-version "1.2.1"
                  :dirname addon-dir
-                 :game-track "classic"
+                 :game-track :classic
                  :name "EveryAddon"
                  :url "https://foo.bar"
                  :primary? true
@@ -136,7 +136,7 @@
                  :source-id 321}
 
           expected {:installed-version "1.2.1"
-                    :installed-game-track "classic"
+                    :installed-game-track :classic
                     :name "EveryAddon"
                     :group-id "https://foo.bar"
                     :primary? true
@@ -150,7 +150,7 @@
     (let [given {:version "1.2.3" ;; value is ignored in favour of :installed-version
                  :installed-version "1.2.1"
                  :dirname addon-dir
-                 :game-track "classic"
+                 :game-track :classic
                  :name "EveryAddon"
                  :url "https://foo.bar"
                  :primary? true
@@ -159,7 +159,7 @@
                  :ignore? false}
 
           expected {:installed-version "1.2.1"
-                    :installed-game-track "classic"
+                    :installed-game-track :classic
                     :name "EveryAddon"
                     :group-id "https://foo.bar"
                     :primary? true

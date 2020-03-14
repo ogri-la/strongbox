@@ -18,9 +18,9 @@
                  :category-list #{"dummy"}
                  :source "wowinterface"
                  :source-id 25079
-                 :game-track-list ["retail"]}
+                 :game-track-list [:retail]}
 
-          game-track "retail"
+          game-track :retail
 
           expected {:url "https://www.wowinterface.com/downloads/info25079"
                     :name "rotation-master"

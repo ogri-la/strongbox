@@ -17,7 +17,7 @@
           fake-routes {"https://www.curseforge.com/wow/addons/brewmastertools/files"
                        {:get (fn [req] {:status 404 :reason-phrase "Not Found" :body "<h1>Not Found</h1>"})}}]
       (with-fake-routes-in-isolation fake-routes
-        (is (nil? (catalogue/expand-summary zombie-addon "retail")))))))
+        (is (nil? (catalogue/expand-summary zombie-addon :retail)))))))
 
 (deftest url-to-filename
   (testing "urls can be converted to filenames safe for a filesystem"

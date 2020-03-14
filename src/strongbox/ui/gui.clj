@@ -5,7 +5,7 @@
     [core :as core :refer [get-state state-bind colours]]
     [logging :as logging]
     [specs :as sp]
-    [utils :as utils :refer [items]]]
+    [utils :as utils :refer [items kw2str]]]
    [clojure.instant]
    [clojure.string :refer [lower-case starts-with? trim]]
    [slugify.core :refer [slugify]]
@@ -282,8 +282,8 @@
         wow-dir-dropdown (ss/combobox :model (core/available-addon-dirs)
                                       :selected-item (core/get-state :selected-addon-dir))
 
-        wow-game-track (ss/combobox :model core/game-tracks
-                                    :selected-item (core/get-game-track))
+        wow-game-track (ss/combobox :model (mapv kw2str core/game-tracks)
+                                    :selected-item (kw2str (core/get-game-track)))
 
         _ (ss/listen wow-dir-dropdown :selection
                      (async-handler ;; execute elsewhere
@@ -295,16 +295,16 @@
                             (debug "addon-dir selection changed to" new-addon-dir)
                             ;; positioned here so the dropdown change is shown immediately
                             (ss/invoke-later
-                             (ss/selection! wow-game-track (:game-track (core/addon-dir-map new-addon-dir))))
+                             (ss/selection! wow-game-track (-> new-addon-dir core/addon-dir-map :game-track kw2str))))
 
-                            (core/set-addon-dir! new-addon-dir)
-                            (core/save-settings))))))
+                          (core/set-addon-dir! new-addon-dir)
+                          (core/save-settings)))))
 
         _ (state-bind [:selected-addon-dir]
                       (fn [state]
                         ;; called when the :selected-addon-dir changes (like via `core.set-addon-dir!`)
                         (let [new-addon-dir (:selected-addon-dir state)
-                              game-track (-> new-addon-dir core/addon-dir-map :game-track)
+                              game-track (-> new-addon-dir core/addon-dir-map :game-track kw2str)
                               selected-addon-dir (ss/selection wow-dir-dropdown)]
                           (when-not (= selected-addon-dir new-addon-dir)
                             (debug ":selected-addon-dir changed to:" new-addon-dir)
@@ -319,11 +319,11 @@
                      (fn [ev]
                        ;; called when a different game track is selected
                        (let [new-game-track (ss/selection wow-game-track)
-                             old-game-track (:game-track (core/addon-dir-map))]
+                             old-game-track (-> (core/addon-dir-map) :game-track kw2str)]
                          (when-not (= new-game-track old-game-track)
                            (debug (format "selected game track changed from %s to %s" old-game-track new-game-track))
                            (ss/invoke-later
-                            (core/set-game-track! new-game-track) ;; this will affect [:cfg :addon-dir-list]
+                            (core/set-game-track! (keyword new-game-track)) ;; this affects [:cfg :addon-dir-list]
                             ;; will save settings
                             (core/refresh))))))
 

@@ -32,6 +32,12 @@
       (into lst (repeat (- pad-amt lst-size) nil))
       lst)))
 
+(defn-spec kw2str (s/or :ok? string? :nil nil?)
+  "returns the string version of the given keyword, if keyword is not nil"
+  [kw (s/nilable keyword?)]
+  (when kw
+    (name kw)))
+
 (defmacro static-slurp
   "just like `slurp`, but file is read at compile time.
   good for static, unchanging, files. less good during development"
@@ -368,8 +374,8 @@
   [game-version string?]
   (if (= "1." (subs game-version 0 2))
     ;; 1.x.x == classic (for now)
-    "classic"
-    "retail"))
+    :classic
+    :retail))
 
 (defn-spec interface-version-to-game-track (s/or :ok ::sp/game-track, :err nil?)
   "converts an interface version like '80000' to a game track like 'retail'"

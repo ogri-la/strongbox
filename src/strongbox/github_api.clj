@@ -89,7 +89,7 @@
                            (not classic-in-any-asset?))
 
         track-version (fn [version gametrack]
-                        (if (= gametrack "classic")
+                        (if (= gametrack :classic)
                           (str version "-classic")
                           version))
 
@@ -105,22 +105,22 @@
                 update-list ;; is either a map or a list of maps
                 (cond
                   ;; game track present in file name, prefer that over known-game-tracks
-                  classic? {:game-track "classic" :version (track-version version "classic") :-mo :classic-in-name}
+                  classic? {:game-track :classic :version (track-version version :classic) :-mo :classic-in-name}
 
                   ;; single asset, no game track present in file name, no known game tracks. default to :retail
-                  (and single-asset? no-known-game-tracks?) {:game-track "retail" :version version :-mo :sa--ngt}
+                  (and single-asset? no-known-game-tracks?) {:game-track :retail :version version :-mo :sa--ngt}
 
                   ;; single asset, no game track present in file name, single known game track. use that
                   (and single-asset? single-game-track?) {:game-track (first known-game-tracks)
                                                           :version (track-version version (first known-game-tracks))  :-mo :sa--1gt}
 
                   ;; single asset, no game track present in file name, multiple known game tracks. assume all game tracks supported
-                  (and single-asset? many-game-tracks?) [{:game-track "classic" :version (track-version version "classic") :-mo :sa--Ngt}
-                                                         {:game-track "retail" :version version :-mo :sa--Ngt}]
+                  (and single-asset? many-game-tracks?) [{:game-track :classic :version (track-version version :classic) :-mo :sa--Ngt}
+                                                         {:game-track :retail :version version :-mo :sa--Ngt}]
 
                   ;; multiple assets, no game track present in file name, no known game tracks. default to :retail
                   ;; ambiguous case, other assets may have game track in their file name
-                  (and many-assets? no-known-game-tracks?) {:game-track "retail" :version version :-mo :ma--ngt}
+                  (and many-assets? no-known-game-tracks?) {:game-track :retail :version version :-mo :ma--ngt}
 
                   ;; multiple assets, no game track present in file name, single known game track. use that.
                   ;; ambiguous case, other assets may have game track in their file name
@@ -130,7 +130,7 @@
 
                   ;; multiple assets, no game track present in file name, multiple known game tracks. default to :retail
                   ;; ambiguous case, other assets may have game track in their file name.
-                  (and many-assets? many-game-tracks?) {:game-track "retail" :version version :-mo :ma--Ngt}
+                  (and many-assets? many-game-tracks?) {:game-track :retail :version version :-mo :ma--Ngt}
 
                   :else (error (format "unhandled state attempting to determine game track(s) for asset '%s' in latest release of '%s'"
                                        asset addon-summary)))
@@ -155,7 +155,7 @@
         -group-assets (partial group-assets addon-summary)
         asset (-> latest-release -group-assets (get game-track) first (dissoc :-mo))]
     (if-not asset
-      (warn (format "no '%s' release available for '%s' on github" game-track (:name addon-summary)))
+      (warn (format "no '%s' release available for '%s' on github" (utils/kw2str game-track) (:name addon-summary)))
       (merge addon-summary
              {:download-url (:browser_download_url asset)
               :version (:version asset)}))))

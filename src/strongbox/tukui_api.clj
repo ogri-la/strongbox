@@ -26,8 +26,8 @@
   (let [source-id (:source-id addon-summary)
         url (cond
               (neg? source-id) [proper-url (:name addon-summary)]
-              (= game-track "classic") [classic-summary-url source-id]
-              (= game-track "retail") [summary-url source-id])
+              (= game-track :classic) [classic-summary-url source-id]
+              (= game-track :retail) [summary-url source-id])
         url (apply format url)
 
         ;; tukui addons do not share IDs across game tracks like curseforge does.
@@ -62,7 +62,7 @@
          ;; 'SkullFlower UI', source-id 143
          :category-list (if-let [cat (:category ti)] [cat] [])
          :download-count (-> ti :downloads Integer.)
-         :game-track-list [(if classic? "classic" "retail")]
+         :game-track-list [(if classic? :classic :retail)]
          :label (:name ti)
          :name (slugify (:name ti))
          :description (:small_desc ti)
@@ -84,7 +84,7 @@
   [url ::sp/url]
   (let [classic? false ;; retail catalogue
         addon-summary (-> url http/download utils/from-json (process-tukui-item classic?))]
-    (assoc addon-summary :game-track-list ["classic" "retail"])))
+    (assoc addon-summary :game-track-list [:classic :retail])))
 
 (defn-spec download-elvui-summary ::sp/addon-summary
   "downloads the elvui addon that exists separately and outside of the catalogue"
