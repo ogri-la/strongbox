@@ -126,6 +126,40 @@
                           :selected-addon-dir (str fs/*cwd*))]
       (is (= expected (config/merge-config file-opts cli-opts))))))
 
+(deftest handle-selected-addon-dir
+  (testing "all cases are invalid and return nil unless there is an `:addon-dir-list` to test membership"
+    (let [invalid-cases
+          [[nil nil]
+           ["" nil]
+           [:foo nil]
+           [{} nil]
+           [[] nil]
+           ;; valid ::addon-dir, but no addon-dir-list to check membership
+           [(str fs/*cwd*) nil]]]
+      (doseq [[given expected] invalid-cases]
+        (is (= {:selected-addon-dir expected} (config/handle-selected-addon-dir {:selected-addon-dir given}))))))
+
+  (testing "`:selected-addon-dir` should be `nil` if `addon-dir-list` is present but empty"
+    (let [given {:addon-dir-list []
+                 :selected-addon-dir (str fs/*cwd*)}
+          expected {:addon-dir-list []
+                    :selected-addon-dir nil}]
+      (is (= expected (config/handle-selected-addon-dir given)))))
+
+  (testing "`:selected-addon-dir` must still be valid, even if the addon dir in the `:addon-dir-list` exists"
+    (let [given {:addon-dir-list [{:addon-dir "/does/not/exist"
+                                   :game-track :retail}
+                                  {:addon-dir (str fs/*cwd*) ;; exists
+                                   :game-track :classic}]
+                 :selected-addon-dir "/does/not/exist"}
+
+          expected {:addon-dir-list [{:addon-dir "/does/not/exist"
+                                      :game-track :retail}
+                                     {:addon-dir (str fs/*cwd*) ;; exists
+                                      :game-track :classic}]
+                    :selected-addon-dir nil}]
+      (is (= expected (config/handle-selected-addon-dir given))))))
+
 (deftest load-settings
   (testing "a standard config file circa 0.9 is loaded and parsed as expected"
     (let [cli-opts {}

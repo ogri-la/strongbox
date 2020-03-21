@@ -1,6 +1,5 @@
 (ns strongbox.config
   (:require
-   [me.raynes.fs :as fs]
    [clojure.spec.alpha :as s]
    [orchestra.spec.test :as st]
    [orchestra.core :refer [defn-spec]]
@@ -73,15 +72,15 @@
 (defn handle-selected-addon-dir
   "ensures the `:selected-addon-dir` value is valid and present in the list addon directories"
   [cfg]
-  (let [default-selected-addon-dir (-> cfg :addon-dir-list first :addon-dir)
+  (let [;; it shouldn't happen but ensure the default addon dir is valid or nil
+        default-selected-addon-dir (->> cfg :addon-dir-list first :addon-dir (sp/conform-or-nil ::sp/addon-dir))
         selected-addon-dir (:selected-addon-dir cfg)
-        selected-addon-dir (or (and
-                                ;; dir exists
-                                (sp/conform-or-nil ::sp/addon-dir selected-addon-dir)
-                                ;; dir is present in available addon dirs
-                                (some #{selected-addon-dir} (map :addon-dir (:addon-dir-list cfg))))
-                               default-selected-addon-dir)]
-    (assoc cfg :selected-addon-dir selected-addon-dir)))
+        selected-addon-dir (and
+                            ;; dir exists
+                            (sp/conform-or-nil ::sp/addon-dir selected-addon-dir)
+                            ;; dir is present in available addon dirs
+                            (some #{selected-addon-dir} (map :addon-dir (:addon-dir-list cfg))))]
+    (assoc cfg :selected-addon-dir (or selected-addon-dir default-selected-addon-dir))))
 
 (defn strip-unspecced-keys
   "removes any keys from the given configuration that are not in the spec"
