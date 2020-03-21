@@ -57,6 +57,10 @@ see CHANGELOG.md for a more formal list of changes by release
         - done
             - tacitly. it no longer falls over dead when there are no catalogues to choose from
 
+    - game track becomes a set of keywords
+        - not strings
+        - done
+
 * remove backwards compatibility
     - remove nfo-v1
         - 'map?' just isn't good enough
@@ -65,19 +69,20 @@ see CHANGELOG.md for a more formal list of changes by release
 ### todo
 
 * catalog updates
-    - game track becomes a set of keywords
-        - not strings
-
-    - publish a 'strongbox-catalogue' repo
-        - just like wowman-data, but for strongbox
-
     - normalise categories between addon hosts
         - perhaps expand them into 'tags'?
         - a lot of these categories are composite
             - break each composite one down into a singular, normalise, have a unique set of tags
 
+    - publish a 'strongbox-catalogue' repo
+        - just like wowman-data, but for strongbox
+
     - can game-track-list be included from all other hosts?
         - not just wowi?
+            - even wowi is broken though
+            - I've seen a reference to a v4 of their 'api' that should be investigated
+                - naming changes mostly so far
+            - I've also noticed switches in game tracks for some of their addons this week (2020-03)
 
 * remember selected addon dir
 
