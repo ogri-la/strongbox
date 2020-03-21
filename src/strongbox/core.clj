@@ -321,6 +321,7 @@
   nil)
 
 (defn-spec selected-addon-dir (s/or :ok ::sp/addon-dir, :no-selection nil?)
+  "returns the currently selected addon or nil if no directories exist to select from"
   []
   (get-state :cfg :selected-addon-dir))
 
@@ -386,8 +387,7 @@
   (let [final-config (config/load-settings cli-opts (paths :cfg-file) (paths :etag-db-file))]
     (when (:verbosity cli-opts)
       (logging/change-log-level (:verbosity cli-opts)))
-    (swap! state merge final-config)
-    (info "addon dir set to:" (selected-addon-dir)))
+    (swap! state merge final-config))
   nil)
 
 

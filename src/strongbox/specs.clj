@@ -5,7 +5,8 @@
    [orchestra.core :refer [defn-spec]]
    [me.raynes.fs :as fs]))
 
-(defn conform-or-die
+(defn conform-or-nil
+  "returns `nil` instead of `:clojure.spec.alpha/invalid` when given data `x` is invalid"
   [spec x]
   (let [result (s/conform spec x)]
     (when-not (= result :clojure.spec.alpha/invalid)

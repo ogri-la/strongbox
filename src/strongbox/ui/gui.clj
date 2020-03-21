@@ -302,12 +302,12 @@
 
         _ (state-bind [:cfg :selected-addon-dir]
                       (fn [state]
-                        ;; called when the [:cfg :selected-addon-dir] changes (like via `core.set-addon-dir!`)
+                        ;; called when the selected addon directory changes (like via `core/set-addon-dir!`)
                         (let [new-addon-dir (get-in state [:cfg :selected-addon-dir]) ;; use the given `state`
                               game-track (-> new-addon-dir core/addon-dir-map :game-track kw2str)
                               selected-addon-dir (ss/selection wow-dir-dropdown)]
                           (when-not (= selected-addon-dir new-addon-dir)
-                            (error (format ":selected-addon-dir changed from %s to %s" (core/selected-addon-dir) new-addon-dir))
+                            (debug (format ":selected-addon-dir changed from '%s' to '%s'" (core/selected-addon-dir) new-addon-dir))
                             (ss/invoke-later
                              ;; it's possible the addon-dir-list data has changed as well, so update the dropdown model
                              ;; adding a second listener for :addon-dir-list risks two updates being performed

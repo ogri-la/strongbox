@@ -68,15 +68,18 @@
 (defn remove-invalid-addon-dirs
   "removes any `addon-dir-map` items from the given configuration whose directories do not exist"
   [cfg]
-  ;; todo: the spec for an addon-map may change in future, just remove invalid entries
-  (assoc cfg :addon-dir-list
-         (filterv (comp fs/directory? :addon-dir) (:addon-dir-list cfg))))
+  (assoc cfg :addon-dir-list (filterv #(s/valid? ::sp/addon-dir-map %) (:addon-dir-list cfg []))))
 
 (defn handle-selected-addon-dir
-  ""
+  "ensures the `:selected-addon-dir` value is valid and present in the list addon directories"
   [cfg]
-  (let [default-selected-addon-dir (->> cfg :addon-dir-list first :addon-dir)
-        selected-addon-dir (or (sp/conform-or-die ::sp/addon-dir (:selected-addon-dir cfg))
+  (let [default-selected-addon-dir (-> cfg :addon-dir-list first :addon-dir)
+        selected-addon-dir (:selected-addon-dir cfg)
+        selected-addon-dir (or (and
+                                ;; dir exists
+                                (sp/conform-or-nil ::sp/addon-dir selected-addon-dir)
+                                ;; dir is present in available addon dirs
+                                (some #{selected-addon-dir} (map :addon-dir (:addon-dir-list cfg))))
                                default-selected-addon-dir)]
     (assoc cfg :selected-addon-dir selected-addon-dir)))
 
