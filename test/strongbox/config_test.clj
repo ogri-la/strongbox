@@ -116,13 +116,14 @@
 (deftest invalid-addon-dirs-in-cfg
   (testing "missing directories don't nuke entire config"
     (let [cli-opts {}
-          file-opts {:addon-dir-list [{:addon-dir (str fs/*cwd*) ;; exists
-                                       :game-track :classic}
-                                      {:addon-dir "/does/not/exist"
-                                       :game-track :retail}]}
+          file-opts {:addon-dir-list [{:addon-dir "/does/not/exist"
+                                       :game-track :retail}
+                                      {:addon-dir (str fs/*cwd*) ;; exists
+                                       :game-track :classic}]}
           expected (assoc config/default-cfg
                           :addon-dir-list [{:addon-dir (str fs/*cwd*)
-                                            :game-track :classic}])]
+                                            :game-track :classic}]
+                          :selected-addon-dir (str fs/*cwd*))]
       (is (= expected (config/merge-config file-opts cli-opts))))))
 
 (deftest load-settings
@@ -138,10 +139,11 @@
                           :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail}
                                            {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]
                           ;; new in 1.0
-                          :catalogue-source-list (:catalogue-source-list config/default-cfg)}
+                          :catalogue-source-list (:catalogue-source-list config/default-cfg)
 
-                    ;; new in 0.12
-                    :selected-addon-dir "/tmp/.strongbox-bar" ;; defaults to first entry
+                          ;; new in 0.12
+                          ;; moved to :cfg in 1.0
+                          :selected-addon-dir "/tmp/.strongbox-bar"} ;; defaults to first entry
 
                     :cli-opts {}
                     :file-opts {:debug? true
@@ -162,9 +164,11 @@
                           :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail}
                                            {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]
                           ;; new in 1.0
-                          :catalogue-source-list (:catalogue-source-list config/default-cfg)}
+                          :catalogue-source-list (:catalogue-source-list config/default-cfg)
 
-                    :selected-addon-dir "/tmp/.strongbox-bar"
+                          ;; new in 0.12
+                          ;; moved to :cfg in 1.0
+                          :selected-addon-dir "/tmp/.strongbox-bar"}
 
                     :cli-opts {}
                     :file-opts {:selected-catalogue :full
@@ -186,9 +190,11 @@
                           :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail}
                                            {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]
                           ;; new in 1.0
-                          :catalogue-source-list (:catalogue-source-list config/default-cfg)}
+                          :catalogue-source-list (:catalogue-source-list config/default-cfg)
 
-                    :selected-addon-dir "/tmp/.strongbox-bar"
+                          ;; new in 0.12
+                          ;; moved to :cfg in 1.0
+                          :selected-addon-dir "/tmp/.strongbox-bar"}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark
@@ -210,9 +216,11 @@
                           :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail}
                                            {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]
                           ;; new in 1.0
-                          :catalogue-source-list (:catalogue-source-list config/default-cfg)}
+                          :catalogue-source-list (:catalogue-source-list config/default-cfg)
 
-                    :selected-addon-dir "/tmp/.strongbox-bar"
+                          ;; new in 0.12
+                          ;; moved to :cfg in 1.0
+                          :selected-addon-dir "/tmp/.strongbox-bar"}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark

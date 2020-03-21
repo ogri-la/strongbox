@@ -22,13 +22,14 @@
 
 (def default-cfg
   {:addon-dir-list []
-   :selected-catalogue :short
+   :selected-addon-dir nil
    :catalogue-source-list -default-catalogue-list
+   :selected-catalogue :short
    :gui-theme :light})
 
 (defn handle-install-dir
   "`:install-dir` was once supported in the user configuration but is now only supported in the command line options.
-  this function will expand `:install-dir` to an 'addon-dir-map' if present and drop the `:install-dir` key"
+  this function expands `:install-dir` to an `::sp/addon-dir-map`, if present, and drop the `:install-dir` key"
   [cfg]
   (let [install-dir (:install-dir cfg)
         addon-dir-list (->> cfg :addon-dir-list (mapv :addon-dir))
@@ -64,22 +65,33 @@
     ;; key not present, return config as-is
     cfg))
 
-(defn remove-non-existant-dirs
+(defn remove-invalid-addon-dirs
   "removes any `addon-dir-map` items from the given configuration whose directories do not exist"
   [cfg]
+  ;; todo: the spec for an addon-map may change in future, just remove invalid entries
   (assoc cfg :addon-dir-list
          (filterv (comp fs/directory? :addon-dir) (:addon-dir-list cfg))))
+
+(defn handle-selected-addon-dir
+  ""
+  [cfg]
+  (let [default-selected-addon-dir (->> cfg :addon-dir-list first :addon-dir)
+        selected-addon-dir (or (sp/conform-or-die ::sp/addon-dir (:selected-addon-dir cfg))
+                               default-selected-addon-dir)]
+    (assoc cfg :selected-addon-dir selected-addon-dir)))
 
 (defn strip-unspecced-keys
   "removes any keys from the given configuration that are not in the spec"
   [cfg]
   ;;(spec-tools/coerce ::sp/user-config cfg spec-tools/strip-extra-keys-transformer))
-  ;; not as good as the above spec-tools/coerce approach, but:
+  ;; `select-keys` is not as good as the above `spec-tools/coerce` approach, but:
   ;; * saves about 1.5MB of dependencies
   ;; * it wasn't doing validation, just stripping extra keys
-  ;; * it wasn't doing any conforming of values (like strings to integers)
+  ;; * it wasn't doing any conforming of values (like strings to integers or keywords)
   ;; * it didn't support :opt(ional) keysets
-  (select-keys cfg [:addon-dir-list :selected-catalogue :gui-theme :catalogue-source-list]))
+  (select-keys cfg [:addon-dir-list :selected-addon-dir
+                    :gui-theme
+                    :catalogue-source-list :selected-catalogue]))
 
 (defn-spec -merge-with ::sp/user-config
   "merges `cfg-b` over `cfg-a`, returning the result if valid else `cfg-a`"
@@ -88,8 +100,9 @@
   (let [cfg (-> cfg-a
                 (merge cfg-b)
                 handle-install-dir
+                remove-invalid-addon-dirs
+                handle-selected-addon-dir
                 remove-invalid-catalogue-source-entries
-                remove-non-existant-dirs
                 strip-unspecced-keys)
         message (format "configuration from %s is invalid and will be ignored: %s"
                         msg (s/explain-str ::sp/user-config cfg))]
@@ -109,13 +122,11 @@
 (defn -load-settings
   "returns a map of user configuration settings that can be merged over `core/state`"
   [cli-opts file-opts etag-db]
-  (let [cfg (merge-config file-opts cli-opts)
-        default-selected-addon-dir (->> cfg :addon-dir-list (map :addon-dir) first)]
+  (let [cfg (merge-config file-opts cli-opts)]
     {:cfg cfg
      :cli-opts cli-opts
      :file-opts file-opts
-     :etag-db etag-db
-     :selected-addon-dir default-selected-addon-dir}))
+     :etag-db etag-db}))
 
 (defn-spec load-settings-file map?
   "reads application settings from the given file.

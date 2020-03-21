@@ -134,7 +134,7 @@
    :gui-restart-flag nil
 
    ;; which of the addon directories is currently selected
-   :selected-addon-dir nil
+   ;;:selected-addon-dir nil ;; moved to [:cfg :selected-addon-dir]
 
    ;; addons in an unsteady state (data being updated, addon being installed, etc)
    ;; allows a UI to watch and update with progress
@@ -317,20 +317,24 @@
         ;; if '_classic_' is in given path, use the classic game track
         default-game-track (if (clojure.string/index-of addon-dir "_classic_") :classic :retail)]
     (add-addon-dir! addon-dir default-game-track)
-    (swap! state assoc :selected-addon-dir addon-dir))
+    (swap! state assoc-in [:cfg :selected-addon-dir] addon-dir))
   nil)
+
+(defn-spec selected-addon-dir (s/or :ok ::sp/addon-dir, :no-selection nil?)
+  []
+  (get-state :cfg :selected-addon-dir))
 
 (defn-spec remove-addon-dir! nil?
   "removes the directory from user configuration, does not alter the directory or it's contents at all"
   ([]
-   (when-let [addon-dir (get-state :selected-addon-dir)]
+   (when-let [addon-dir (selected-addon-dir)]
      (remove-addon-dir! addon-dir)))
   ([addon-dir ::sp/addon-dir]
    (let [matching #(= addon-dir (:addon-dir %))
          new-addon-dir-list (->> (get-state :cfg :addon-dir-list) (remove matching) vec)]
      (swap! state assoc-in [:cfg :addon-dir-list] new-addon-dir-list)
      ;; this may be nil if the new addon-dir-list is empty
-     (swap! state assoc :selected-addon-dir (-> new-addon-dir-list first :addon-dir)))
+     (swap! state assoc-in [:cfg :selected-addon-dir] (-> new-addon-dir-list first :addon-dir)))
    nil))
 
 (defn available-addon-dirs
@@ -339,7 +343,7 @@
 
 (defn-spec addon-dir-map (s/or :ok ::sp/addon-dir-map, :missing nil?)
   ([]
-   (addon-dir-map (get-state :selected-addon-dir)))
+   (addon-dir-map (selected-addon-dir)))
   ([addon-dir ::sp/addon-dir]
    (let [addon-dir-list (get-state :cfg :addon-dir-list)]
      (when-not (empty? addon-dir-list)
@@ -347,7 +351,7 @@
 
 (defn-spec set-game-track! nil?
   ([game-track ::sp/game-track]
-   (set-game-track! game-track (get-state :selected-addon-dir)))
+   (set-game-track! game-track (selected-addon-dir)))
   ([game-track ::sp/game-track, addon-dir ::sp/addon-dir]
    (let [tform (fn [addon-dir-map]
                  (if (= addon-dir (:addon-dir addon-dir-map))
@@ -359,7 +363,7 @@
 
 (defn-spec get-game-track (s/or :ok ::sp/game-track, :missing nil?)
   ([]
-   (when-let [addon-dir (get-state :selected-addon-dir)]
+   (when-let [addon-dir (selected-addon-dir)]
      (get-game-track addon-dir)))
   ([addon-dir ::sp/addon-dir]
    (-> addon-dir addon-dir-map :game-track)))
@@ -382,7 +386,8 @@
   (let [final-config (config/load-settings cli-opts (paths :cfg-file) (paths :etag-db-file))]
     (when (:verbosity cli-opts)
       (logging/change-log-level (:verbosity cli-opts)))
-    (swap! state merge final-config))
+    (swap! state merge final-config)
+    (info "addon dir set to:" (selected-addon-dir)))
   nil)
 
 
@@ -620,7 +625,7 @@
 (defn-spec load-installed-addons nil?
   "guard function. offloads the hard work to `-load-installed-addons` then updates application state"
   []
-  (if-let [addon-dir (get-state :selected-addon-dir)]
+  (if-let [addon-dir (selected-addon-dir)]
     (let [addon-list (-load-installed-addons addon-dir)]
       (info "(re)loading installed addons:" addon-dir)
       (update-installed-addon-list! addon-list))
@@ -779,7 +784,7 @@
    merge what we can into ::specs/addon-toc records and update state.
    any installed addon not found in :addon-idx has a mapping problem"
   []
-  (when (get-state :selected-addon-dir) ;; don't even bother if we have nothing to match it to
+  (when (selected-addon-dir) ;; don't even bother if we have nothing to match it to
     (info "matching installed addons to catalogue")
     (let [inst-addons (get-state :installed-addon-list)
           catalogue (query-db :addon-summary-list)
@@ -950,7 +955,7 @@
 (defn-spec check-for-updates nil?
   "downloads full details for all installed addons that can be found in summary list"
   []
-  (when (get-state :selected-addon-dir)
+  (when (selected-addon-dir)
     (info "checking for updates")
     (update-installed-addon-list! (mapv check-for-update (get-state :installed-addon-list)))
     (info "done checking for updates")))
@@ -970,15 +975,15 @@
 
 (defn-spec delete-downloaded-addon-zips! nil?
   []
-  (delete-many-files! (get-state :selected-addon-dir) #".+\-\-.+\.zip$" "downloaded addon zip"))
+  (delete-many-files! (selected-addon-dir) #".+\-\-.+\.zip$" "downloaded addon zip"))
 
 (defn-spec delete-strongbox-json-files! nil?
   []
-  (delete-many-files! (get-state :selected-addon-dir) #"\.strongbox\.json$" ".strongbox.json"))
+  (delete-many-files! (selected-addon-dir) #"\.strongbox\.json$" ".strongbox.json"))
 
 (defn-spec delete-wowmatrix-dat-files! nil?
   []
-  (delete-many-files! (get-state :selected-addon-dir) #"(?i)WowMatrix.dat$" "WowMatrix.dat"))
+  (delete-many-files! (selected-addon-dir) #"(?i)WowMatrix.dat$" "WowMatrix.dat"))
 
 (defn-spec delete-catalogue-files! nil?
   []
@@ -1081,7 +1086,7 @@
   [addon-list] ;; todo: spec
   (info (format "attempting to import %s addons. this may take a minute" (count addon-list)))
   (let [matching-addon-list (-mk-import-idx addon-list)
-        addon-dir (get-state :selected-addon-dir)]
+        addon-dir (selected-addon-dir)]
     (doseq [addon matching-addon-list]
       (install-addon addon addon-dir))))
 
@@ -1102,7 +1107,7 @@
 
         match-results (-db-match-installed-addons-with-catalogue addon-list)
         [matched unmatched] (utils/split-filter #(contains? % :final) match-results)
-        addon-dir (get-state :selected-addon-dir)
+        addon-dir (selected-addon-dir)
 
         ;; this is what v1 does, but it's hidden away in `expand-summary-wrapper`
         default-game-track (get-game-track)]
@@ -1159,7 +1164,7 @@
   "upgrade the nfo files for all addons in the selected addon-dir.
   new data may have been introduced since addon was installed"
   []
-  (let [install-dir (get-state :selected-addon-dir)
+  (let [install-dir (selected-addon-dir)
         has-nfo-file? (partial nfo/has-nfo-file? install-dir)
         has-valid-nfo-file? (partial nfo/has-valid-nfo-file? install-dir)
         upgrade-nfo (partial -upgrade-nfo install-dir)]
@@ -1186,7 +1191,8 @@
 
   (check-for-updates)     ;; for those addons that have matches, download their details
 
-  ;;(latest-strongbox-release) ;; check for updates after everything else is done ;; 2019-06-30, travis is failing with 403: Forbidden. Moved to gui init
+  ;; 2019-06-30, travis is failing with 403: Forbidden. Moved to gui init
+  ;;(latest-strongbox-release) ;; check for updates after everything else is done 
 
   (upgrade-nfo-files)     ;; otherwise nfo data is only updated when an addon is installed/upgraded
 
@@ -1196,7 +1202,7 @@
 (defn-spec -install-update-these nil?
   [updateable-toc-addons (s/coll-of ::sp/addon-or-toc-addon)]
   (doseq [toc-addon updateable-toc-addons]
-    (install-addon toc-addon (get-state :selected-addon-dir))))
+    (install-addon toc-addon (selected-addon-dir))))
 
 (defn -updateable?
   [rows]
@@ -1229,7 +1235,7 @@
 
 (defn -remove-addon
   [addon-dirname]
-  (let [addon-dir (get-state :selected-addon-dir)
+  (let [addon-dir (selected-addon-dir)
         addon-path (fs/file addon-dir addon-dirname) ;; todo: perhaps this (addon-dir (base-name addon-dirname)) is safer
         addon-path (-> addon-path fs/absolute fs/normalized)]
     ;; if after resolving the given addon dir it's still within the install-dir, remove it
@@ -1281,7 +1287,7 @@
                      (catalogue/expand-summary addon-summary :retail)
                      (catalogue/expand-summary addon-summary :classic))
               test-only? true
-              _ (install-addon-guard addon (get-state :selected-addon-dir) test-only?)]
+              _ (install-addon-guard addon (selected-addon-dir) test-only?)]
 
              ;; ... but does matter when installing it in to the current addon directory
              (let [addon (expand-summary-wrapper addon-summary)]
@@ -1289,7 +1295,7 @@
                (add-user-addon! addon-summary)
 
                (when addon
-                 (install-addon addon (get-state :selected-addon-dir))
+                 (install-addon addon (selected-addon-dir))
                  (db-reload-catalogue)
                  addon)
 
@@ -1313,7 +1319,7 @@
                          (let [default-state (dissoc state :cfg)]
                            (swap! state-atm merge default-state)
                            (refresh)))]
-    (state-bind [:selected-addon-dir] reset-state-fn)))
+    (state-bind [:cfg :selected-addon-dir] reset-state-fn)))
 
 (defn watch-for-catalogue-change
   "when the catalogue changes, the list of available addons should be re-read"

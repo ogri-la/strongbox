@@ -280,7 +280,7 @@
         wow-dir-button (button "WoW directory" (async-handler picker))
 
         wow-dir-dropdown (ss/combobox :model (core/available-addon-dirs)
-                                      :selected-item (core/get-state :selected-addon-dir))
+                                      :selected-item (core/selected-addon-dir))
 
         wow-game-track (ss/combobox :model (mapv kw2str core/game-tracks)
                                     :selected-item (kw2str (core/get-game-track)))
@@ -289,7 +289,7 @@
                      (async-handler ;; execute elsewhere
                       (fn []
                         ;; called when a different addon dir is selected
-                        (let [old-addon-dir (get-state :selected-addon-dir)
+                        (let [old-addon-dir (core/selected-addon-dir)
                               new-addon-dir (ss/selection wow-dir-dropdown)]
                           (when-not (= new-addon-dir old-addon-dir)
                             (debug "addon-dir selection changed to" new-addon-dir)
@@ -300,14 +300,14 @@
                           (core/set-addon-dir! new-addon-dir)
                           (core/save-settings)))))
 
-        _ (state-bind [:selected-addon-dir]
+        _ (state-bind [:cfg :selected-addon-dir]
                       (fn [state]
-                        ;; called when the :selected-addon-dir changes (like via `core.set-addon-dir!`)
-                        (let [new-addon-dir (:selected-addon-dir state)
+                        ;; called when the [:cfg :selected-addon-dir] changes (like via `core.set-addon-dir!`)
+                        (let [new-addon-dir (get-in state [:cfg :selected-addon-dir]) ;; use the given `state`
                               game-track (-> new-addon-dir core/addon-dir-map :game-track kw2str)
                               selected-addon-dir (ss/selection wow-dir-dropdown)]
                           (when-not (= selected-addon-dir new-addon-dir)
-                            (debug ":selected-addon-dir changed to:" new-addon-dir)
+                            (error (format ":selected-addon-dir changed from %s to %s" (core/selected-addon-dir) new-addon-dir))
                             (ss/invoke-later
                              ;; it's possible the addon-dir-list data has changed as well, so update the dropdown model
                              ;; adding a second listener for :addon-dir-list risks two updates being performed

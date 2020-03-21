@@ -5,6 +5,12 @@
    [orchestra.core :refer [defn-spec]]
    [me.raynes.fs :as fs]))
 
+(defn conform-or-die
+  [spec x]
+  (let [result (s/conform spec x)]
+    (when-not (= result :clojure.spec.alpha/invalid)
+      result)))
+
 (defn-spec between fn?
   "returns a function that will return true if it's `count` is between (not inclusive) `n` and `m`"
   [min int?, max int?]
@@ -163,7 +169,9 @@
 (s/def ::addon-dir-list (s/coll-of ::addon-dir-map))
 (s/def ::selected-catalogue keyword?)
 (s/def ::gui-theme #{:light :dark})
-(s/def ::user-config (s/keys :req-un [::addon-dir-list ::selected-catalogue ::gui-theme]))
+(s/def ::user-config (s/keys :req-un [::addon-dir-list ::selected-addon-dir
+                                      ::catalogue-source-list ::selected-catalogue
+                                      ::gui-theme]))
 (s/def ::ignore? boolean?)
 
 (s/def ::reason-phrase (s/and string? #(<= (count %) 50)))
@@ -216,3 +224,5 @@
 (s/def :catalogue/name keyword?)
 (s/def :catalogue/source ::url)
 (s/def ::catalogue-source-map (s/keys :req-un [:catalogue/name ::label :catalogue/source]))
+(s/def ::catalogue-source-list (s/or :ok (s/coll-of ::catalogue-source-map)
+                                     :empty ::empty-coll))
