@@ -28,7 +28,7 @@
 
 (defn handle-install-dir
   "`:install-dir` was once supported in the user configuration but is now only supported in the command line options.
-  this function expands `:install-dir` to an `::sp/addon-dir-map`, if present, and drop the `:install-dir` key"
+  this function expands `:install-dir` to an `::sp/addon-dir-map`, if present, and drops the `:install-dir` key"
   [cfg]
   (let [install-dir (:install-dir cfg)
         addon-dir-list (->> cfg :addon-dir-list (mapv :addon-dir))

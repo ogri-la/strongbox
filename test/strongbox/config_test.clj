@@ -262,4 +262,35 @@
                                 :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail}
                                                  {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]}
                     :etag-db {}}]
+      (is (= expected (config/load-settings cli-opts cfg-file etag-db-file)))))
+
+  (testing "a standard config file circa 1.0 is loaded and parsed as expected"
+    (let [cli-opts {}
+          cfg-file (fixture-path "user-config-1.0.json")
+          etag-db-file (fixture-path "empty-map.json")
+
+          expected {:cfg {:gui-theme :dark ;; new in 0.11
+                          :selected-catalogue :full ;; new in 0.10
+                          ;;:debug? true ;; removed in 0.12
+                          :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail}
+                                           {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]
+
+                          ;; new in 1.0
+                          :catalogue-source-list (:catalogue-source-list config/default-cfg)
+
+                          ;; new in 0.12
+                          ;; moved to :cfg in 1.0
+                          :selected-addon-dir "/tmp/.strongbox-foo"}
+
+                    :cli-opts {}
+                    :file-opts {:gui-theme :dark
+                                :selected-catalogue :full
+                                :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail}
+                                                 {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]
+                                :selected-addon-dir "/tmp/.strongbox-foo"
+
+                                ;; new in 1.0
+                                :catalogue-source-list (:catalogue-source-list config/default-cfg)}
+
+                    :etag-db {}}]
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))
