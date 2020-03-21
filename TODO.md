@@ -68,7 +68,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### todo
 
-* catalog updates
+* catalogue updates
     - normalise categories between addon hosts
         - perhaps expand them into 'tags'?
         - a lot of these categories are composite
@@ -91,21 +91,10 @@ see CHANGELOG.md for a more formal list of changes by release
     * I have a better understanding of their nature now
         - as part of the diagramming, sketch out the fields to be captured
 
-* remove backwards compatibility
-    - there will be a migration of wowman data to strongbox data, or the data is discarded
-        - rename `test/fixtures/user-config-0.11.json` to `wowman--user-config ...`
-
 * rename wowman
     - rename repository
     - arch package
         - add new shell script 'strongbox'
-
-* code refactor
-    * simplify `install-addon` interface in core.clj
-        - we need to provide an installation directory which can be pulled from the application state
-    * core.clj is getting too large
-        - it's difficult to navigate and debug
-        - many tests are accumulating in core_test.clj
 
 * database, investigate a datalog backed datastore
     - https://clojure.github.io/clojure-contrib/doc/datalog.html
@@ -113,9 +102,23 @@ see CHANGELOG.md for a more formal list of changes by release
     - I want addons loaded *quickly*
     - I want to *query* addons *quickly*
 
-
 ## todo bucket (no particular order)
 
+* EOL planning
+    - I'm not going away and neither is strongbox, but! *should* I or my free time disappear will strongbox continue being useful?
+        - what can I do to ensure it is the most useful if I just give up on it tomorrow?
+            - catalogues have been pushed into user config, so they can be swapped out if necessary
+                - more can be done around this to make catalogue generation more accessible and safe
+        - what can't I control?
+            - addon hosts
+                - our interface with them is their API or, in wowi's case, their API and website
+        
+* code refactor
+    * simplify `install-addon` interface in core.clj
+        - we need to provide an installation directory which can be pulled from the application state
+    * core.clj is getting too large
+        - it's difficult to navigate and debug
+        - many tests are accumulating in core_test.clj
 * wowman-data, stop publishing a 'daily' release
     - we have multiple catalogs now
     - 0.10.0 uses the raw catalog files directly
@@ -317,6 +320,16 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## wontfix
 
+* remove backwards compatibility, wowman to strongbox
+    - there will be a migration of wowman data to strongbox data, or the data is discarded
+        - rename `test/fixtures/user-config-0.11.json` to `wowman--user-config ...`
+    - decided against this
+        - providing backward compatibility and testing against previous versions of data shapes gives us:
+            - robustness
+            - a reminder of what the state was like and what we've done previously to handle it
+            - seamless upgrades between versions for users
+                - they (including myself) shouldn't have to deal with bs 'technical' reasons why it used to work but not longer does
+                    - we're just not *that* special
 * windows support
     - windows is just the worst, most awful dystopian software I've ever seen and it hurts my soul every time I try to use it
     - I just plain hate it, it epitomises the very opposite of what I stand for and I refuse to work on it ever again
