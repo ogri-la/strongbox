@@ -217,11 +217,14 @@
         (is (= expected (utils/drop-nils m fields)))))))
 
 (deftest safe-subs
-  (let [cases [[nil 0 nil]
-               [nil 99 nil]
-               ["" 0 ""]
-               ["foo" 0 ""]
-               ["foo" 1 "f"]
-               ["foo" 4 "foo"]]]
-    (doseq [[string max expected] cases]
+  (let [cases [[[nil 0] nil]
+               [[nil 1] nil]
+               [[nil 99] nil]
+               [["" 0] ""]
+               [["" 1] ""]
+               [["foo" 0] ""]
+               [["foo" 1] "f"]
+               [["foo" 100] "foo"]
+               [["foo" -100] ""]]]
+    (doseq [[[string max] expected] cases]
       (is (= expected (utils/safe-subs string max))))))
