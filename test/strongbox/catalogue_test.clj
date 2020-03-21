@@ -32,17 +32,6 @@
                     :addon-summary-list addon-list}]
       (is (= (catalogue/format-catalogue-data addon-list created updated) expected)))))
 
-(deftest merge-curse-wowi-catalogues
-  (testing "dates are correct after a merge"
-    (let [aa {:datestamp "2001-01-01" :updated-datestamp "2001-01-02" :spec {:version 1} :addon-summary-list [] :total 0}
-          ab {:datestamp "2001-01-03" :updated-datestamp "2001-01-04" :spec {:version 1} :addon-summary-list [] :total 0}
-          expected {:spec {:version 1}
-                    :datestamp "2001-01-01"
-                    :updated-datestamp "2001-01-04"
-                    :total 0
-                    :addon-summary-list []}]
-      (is (= (catalogue/-merge-curse-wowi-catalogues aa ab) expected)))))
-
 (deftest merge-catalogues
   (let [addon1 {:url "https://github.com/Aviana/HealComm"
                 :updated-date "2019-10-09T17:40:04Z"
