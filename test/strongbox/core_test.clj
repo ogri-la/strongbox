@@ -41,17 +41,17 @@
         (is (= [{:addon-dir dir1 :game-track :retail}] (core/get-state :cfg :addon-dir-list))))
 
       (testing "add-addon-dir! just adds the dir, doesn't set it as selected"
-        (is (= nil (core/get-state :selected-addon-dir))))
+        (is (= nil (core/selected-addon-dir))))
 
       (testing "set-addon-dir! sets the addon directory as selected and is also idempotent"
         (core/set-addon-dir! dir1)
         (is (= [{:addon-dir dir1 :game-track :retail}] (core/get-state :cfg :addon-dir-list)))
-        (is (= dir1 (core/get-state :selected-addon-dir))))
+        (is (= dir1 (core/selected-addon-dir))))
 
       (testing "remove-addon-dir! without args removes the currently selected addon-dir and ensures it's no longer selected"
         (core/remove-addon-dir!)
         (is (= [] (core/get-state :cfg :addon-dir-list)))
-        (is (= nil (core/get-state :selected-addon-dir))))
+        (is (= nil (core/selected-addon-dir))))
 
       (testing "remove-addon-dir! without args won't do anything stupid when there is nothing to remove"
         (core/remove-addon-dir!))
@@ -61,7 +61,7 @@
         (core/set-addon-dir! dir2)
         (core/remove-addon-dir! dir2)
         (core/remove-addon-dir! dir2) ;; repeat
-        (is (= dir1 (core/get-state :selected-addon-dir)))
+        (is (= dir1 (core/selected-addon-dir)))
         (is (= [{:addon-dir dir1 :game-track :retail}] (core/get-state :cfg :addon-dir-list))))
 
       (testing "addon-dir-map, without args, returns the currently selected addon-dir"

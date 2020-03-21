@@ -66,6 +66,9 @@ see CHANGELOG.md for a more formal list of changes by release
         - 'map?' just isn't good enough
         - done
 
+* remember selected addon dir
+    - done
+
 ### todo
 
 * catalogue updates
@@ -84,7 +87,9 @@ see CHANGELOG.md for a more formal list of changes by release
                 - naming changes mostly so far
             - I've also noticed switches in game tracks for some of their addons this week (2020-03)
 
-* remember selected addon dir
+* bug, test fixtures for user-config had their :catalog value renamed to :catalogue
+        - revert those changes
+        - add a step in the parsing that renames those values to 'catalogue'
 
 * spec clean up
     * it's never been particularly clear in my head what some of those specs are
