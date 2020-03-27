@@ -162,9 +162,11 @@
         ;; group addons by their :source-id and then merge together, preserving the categories
         addon-groups (group-by :source-id addon-list)
         addon-list (for [[_ group-list] addon-groups
-                         :let [addon (first group-list)]]
-                     (assoc addon :category-list
-                            (reduce clojure.set/union (map :category-list group-list))))
+                         :let [addon (first group-list)
+                               category-list (reduce clojure.set/union (map :category-list group-list))]]
+                     (merge addon
+                            {:category-list category-list
+                             :tag-list (utils/category-list-to-tag-list category-list)}))
 
         filelist (download-parse-filelist-file)
 

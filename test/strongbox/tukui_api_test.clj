@@ -16,6 +16,7 @@
 
           expected [{:description "Add roleplaying fields to ElvUI to create RP UIs.",
                      :category-list ["Roleplay"],
+                     :tag-list [:roleplay]
                      :game-track-list [:retail],
                      :updated-date "2019-07-29T20:48:25Z",
                      :name "-rp-tags",
@@ -34,6 +35,7 @@
 
           expected [{:description "BenikUI is an external ElvUI Classic mod, adding different frame style and new features like detatched portraits and dashboards.",
                      :category-list ["Plugins: ElvUI"],
+                     :tag-list [:elvui :plugins]
                      :game-track-list [:classic],
                      :updated-date "2019-10-27T23:32:28Z",
                      :name "benikui-classic",
@@ -52,6 +54,7 @@
 
           expected {:description "A user interface designed around user-friendliness with extra features that are not included in the standard ui",
                     :category-list ["Full UI Replacements"],
+                    :tag-list [:full-ui-replacements]
                     :game-track-list [:classic :retail],
                     :updated-date "2019-12-05T00:00:00Z",
                     :name "elvui",

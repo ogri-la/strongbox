@@ -35,7 +35,7 @@
 ;;
 
 (defn-spec format-catalogue-data ::sp/catalogue
-  "formats given catalogue data"
+  "formats given catalogue data" ;; todo: this is a bad docstr
   [addon-list ::sp/addon-summary-list, created-date ::sp/catalogue-created-date, updated-date ::sp/catalogue-updated-date]
   (let [addon-list (mapv #(into (omap/ordered-map) (sort %))
                          (sort-by :name addon-list))]

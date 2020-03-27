@@ -38,6 +38,10 @@
 
 ;;
 
+
+(s/def ::tag keyword?)
+(s/def ::tag-list (s/coll-of ::tag))
+
 ;; addon data that comes from the catalogue
 
 

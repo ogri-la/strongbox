@@ -165,6 +165,7 @@
           expected [{:created-date "2016-05-09T17:21:30.1Z",
                      :description "Restores access to removed interface options in Legion",
                      :category-list ["Miscellaneous"],
+                     :tag-list [:misc],
                      :updated-date "2019-08-30T14:39:44.943Z",
                      :name "advancedinterfaceoptions",
                      :label "AdvancedInterfaceOptions",
