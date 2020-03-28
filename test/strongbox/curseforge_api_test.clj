@@ -16,7 +16,7 @@
           ;; what would be seen in the catalogue
           addon-summary {:created-date "2010-05-07T18:48:16Z",
                          :description "Does what no other addon does, slightly differently",
-                         :category-list ["Bags & Inventory"],
+                         :tag-list [:bags :inventory]
                          :updated-date "2019-06-26T01:21:39Z",
                          :age "new",
                          :name "everyaddon",
@@ -41,7 +41,7 @@
                        {:get (fn [req] {:status 200 :body api-results})}}
           addon-summary {:created-date "2010-05-07T18:48:16Z",
                          :description "Does what no other addon does, slightly differently",
-                         :category-list ["Bags & Inventory"],
+                         :tag-list [:bags :inventory]
                          :updated-date "2019-06-26T01:21:39Z",
                          :age "new",
                          :name "everyaddon",
@@ -164,7 +164,6 @@
                        {:get (fn [req] {:status 200 :body fixture})}}
           expected [{:created-date "2016-05-09T17:21:30.1Z",
                      :description "Restores access to removed interface options in Legion",
-                     :category-list ["Miscellaneous"],
                      :tag-list [:misc],
                      :updated-date "2019-08-30T14:39:44.943Z",
                      :name "advancedinterfaceoptions",

@@ -40,7 +40,7 @@
                 :label "HealComm"
                 :name "healcomm"
                 :download-count 30946
-                :category-list []}
+                :tag-list []}
 
         addon2 {:url "https://github.com/Ravendwyr/Chinchilla"
                 :updated-date "2019-10-09T17:40:04Z"
@@ -49,7 +49,7 @@
                 :label "Chinchilla"
                 :name "chinchilla"
                 :download-count 30946
-                :category-list []}
+                :tag-list []}
 
         cat-a (catalogue/new-catalogue [addon1])
         cat-b (catalogue/new-catalogue [addon2])
@@ -73,7 +73,7 @@
                 :label "HealComm"
                 :name "healcomm"
                 :download-count 30946
-                :category-list []}
+                :tag-list []}
 
         addon2 {:url "https://github.com/Aviana/HealComm"
                 :updated-date "2019-10-09T17:40:04Z" ;; <=
@@ -82,7 +82,7 @@
                 :label "HealComm"
                 :name "healcomm"
                 :download-count 30946
-                :category-list []}
+                :tag-list []}
 
         cat-a (catalogue/new-catalogue [addon1])
         cat-b (catalogue/new-catalogue [addon2])
@@ -109,7 +109,7 @@
                         :name "healcomm"
                         :download-count 30946
                         :game-track-list []
-                        :category-list []}
+                        :tag-list []}
 
             cases [["https://github.com/Aviana/HealComm" github-api]]]
         (doseq [[given expected] cases]

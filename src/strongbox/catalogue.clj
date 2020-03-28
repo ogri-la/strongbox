@@ -52,10 +52,20 @@
     (let [row-coerce (fn [row]
                        (let [new-row (-> row
                                          (clojure.set/rename-keys {:uri :url})
-                                         (dissoc :alt-name))]
-                         (if (contains? new-row :description)
-                           (update-in new-row [:description] utils/safe-subs 255)
-                           new-row)))]
+                                         (dissoc :alt-name))
+
+                             new-row (if (contains? new-row :description)
+                                       (update-in new-row [:description] utils/safe-subs 255)
+                                       new-row)
+
+                             new-row (if (contains? new-row :category-list)
+                                       (-> new-row
+                                           (clojure.set/rename-keys {:category-list :tag-list})
+                                           (update-in [:tag-list] utils/category-list-to-tag-list))
+                                       new-row)]
+
+                         new-row))]
+
       (update-in catalogue-data [:addon-summary-list] (partial mapv row-coerce)))))
 
 (defn read-catalogue

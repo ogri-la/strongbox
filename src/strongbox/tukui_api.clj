@@ -54,14 +54,15 @@
   "process an item from a tukui catalogue into an addon-summary. slightly different values by game-track."
   [tukui-item map?, classic? boolean?]
   (let [ti tukui-item
+        ;; single case of an addon with no category :(
+        ;; 'SkullFlower UI', source-id 143
         category-list (if-let [cat (:category ti)] [cat] [])
         addon-summary
         {:source (if classic? "tukui-classic" "tukui")
          :source-id (-> ti :id Integer.)
 
-         ;; single case of an addon with no category :(
-         ;; 'SkullFlower UI', source-id 143
-         :category-list category-list
+         ;; 2020-03: disabled in favour of :tag-list
+         ;;:category-list category-list
          :tag-list (utils/category-list-to-tag-list category-list)
          :download-count (-> ti :downloads Integer.)
          :game-track-list [(if classic? :classic :retail)]

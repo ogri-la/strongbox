@@ -123,7 +123,8 @@
    :description (:summary snippet)
    ;; sorting cuts down on noise in diffs.
    ;; `set` because of curseforge duplicate categories
-   :category-list (->> snippet :categories (map :name) set sort vec)
+   ;; 2020-03: disabled in favour of :tag-list
+   ;;:category-list (->> snippet :categories (map :name) set sort vec)
    :tag-list (->> snippet :categories (map :name) utils/category-list-to-tag-list)
    :created-date (:dateCreated snippet) ;; omg *yes*. perfectly formed dates
    ;; we now have :dateModified and :dateReleased to pick from

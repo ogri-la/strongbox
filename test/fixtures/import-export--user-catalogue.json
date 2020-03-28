@@ -6,7 +6,7 @@
   "updated-datestamp" : "2019-11-21",
   "total" : 16,
   "addon-summary-list" : [ {
-    "category-list" : [ ],
+    "tag-list" : [ ],
     "download-count" : 62,
     "game-track-list" : [ "retail", "classic" ],
     "label" : "AdvancedInterfaceOptions",
@@ -16,7 +16,7 @@
     "updated-date" : "2019-09-24T22:50:31Z",
     "url" : "https://github.com/Stanzilla/AdvancedInterfaceOptions"
   }, {
-    "category-list" : [ ],
+    "tag-list" : [ ],
     "download-count" : 3,
     "game-track-list" : [ "retail" ],
     "label" : "AzeritePowerWeights",
@@ -26,7 +26,7 @@
     "updated-date" : "2019-11-03T15:46:40Z",
     "url" : "https://github.com/ahakola/AzeritePowerWeights"
   }, {
-    "category-list" : [ ],
+    "tag-list" : [ ],
     "download-count" : 9,
     "game-track-list" : [ "retail", "classic" ],
     "label" : "Chinchilla",
@@ -36,7 +36,7 @@
     "updated-date" : "2019-10-19T15:07:07Z",
     "url" : "https://github.com/Ravendwyr/Chinchilla"
   }, {
-    "category-list" : [ ],
+    "tag-list" : [ ],
     "download-count" : 95367,
     "game-track-list" : [ ],
     "label" : "ClassicCastbars",
@@ -46,7 +46,7 @@
     "updated-date" : "2019-11-19T21:00:54Z",
     "url" : "https://github.com/wardz/ClassicCastbars"
   }, {
-    "category-list" : [ ],
+    "tag-list" : [ ],
     "download-count" : 3448,
     "game-track-list" : [ ],
     "label" : "DBM-Classic",
@@ -56,7 +56,7 @@
     "updated-date" : "2019-11-19T15:40:24Z",
     "url" : "https://github.com/DeadlyBossMods/DBM-Classic"
   }, {
-    "category-list" : [ ],
+    "tag-list" : [ ],
     "download-count" : 9,
     "game-track-list" : [ "classic" ],
     "label" : "faction-friend",
@@ -66,7 +66,7 @@
     "updated-date" : "2019-10-16T00:42:45Z",
     "url" : "https://github.com/Dreamwalker-Collective/faction-friend"
   }, {
-    "category-list" : [ ],
+    "tag-list" : [ ],
     "download-count" : 3,
     "game-track-list" : [ "classic" ],
     "label" : "ipop-bar",
@@ -76,7 +76,7 @@
     "updated-date" : "2019-09-09T14:07:30Z",
     "url" : "https://github.com/sylvanaar/ipop-bar"
   }, {
-    "category-list" : [ ],
+    "tag-list" : [ ],
     "download-count" : 1,
     "game-track-list" : [ "classic" ],
     "label" : "LevelUpSpells",
@@ -86,7 +86,7 @@
     "updated-date" : "2019-10-21T09:27:08Z",
     "url" : "https://github.com/coolmodi/LevelUpSpells"
   }, {
-    "category-list" : [ ],
+    "tag-list" : [ ],
     "download-count" : 78082,
     "game-track-list" : [ "classic" ],
     "label" : "LunaUnitFrames",
@@ -96,7 +96,7 @@
     "updated-date" : "2019-10-31T14:53:01Z",
     "url" : "https://github.com/Aviana/LunaUnitFrames"
   }, {
-    "category-list" : [ ],
+    "tag-list" : [ ],
     "download-count" : 56,
     "game-track-list" : [ "retail", "classic" ],
     "label" : "prat-3-0",
@@ -106,7 +106,7 @@
     "updated-date" : "2019-09-13T17:30:38Z",
     "url" : "https://github.com/sylvanaar/prat-3-0"
   }, {
-    "category-list" : [ ],
+    "tag-list" : [ ],
     "download-count" : 110,
     "game-track-list" : [ ],
     "label" : "RaidBrowser",
@@ -116,7 +116,7 @@
     "updated-date" : "2018-08-01T18:16:23Z",
     "url" : "https://github.com/Ostoic/RaidBrowser"
   }, {
-    "category-list" : [ ],
+    "tag-list" : [ ],
     "download-count" : 269,
     "game-track-list" : [ ],
     "label" : "RealUI",
@@ -126,7 +126,7 @@
     "updated-date" : "2019-10-04T21:57:00Z",
     "url" : "https://github.com/RealUI/RealUI"
   }, {
-    "category-list" : [ ],
+    "tag-list" : [ ],
     "download-count" : 17726,
     "game-track-list" : [ "classic" ],
     "label" : "RingMenu",
@@ -136,7 +136,7 @@
     "updated-date" : "2019-10-06T12:18:47Z",
     "url" : "https://github.com/jsb/RingMenu"
   }, {
-    "category-list" : [ ],
+    "tag-list" : [ ],
     "download-count" : 133,
     "game-track-list" : [ "retail" ],
     "label" : "TellMeWhen",
@@ -146,7 +146,7 @@
     "updated-date" : "2019-09-30T04:18:47Z",
     "url" : "https://github.com/ascott18/TellMeWhen"
   }, {
-    "category-list" : [ ],
+    "tag-list" : [ ],
     "download-count" : 5,
     "game-track-list" : [ "retail", "classic" ],
     "label" : "who-lib",
@@ -156,7 +156,7 @@
     "updated-date" : "2019-08-27T23:23:36Z",
     "url" : "https://github.com/sylvanaar/who-lib"
   }, {
-    "category-list" : [ ],
+    "tag-list" : [ ],
     "download-count" : 19,
     "game-track-list" : [ "retail", "classic" ],
     "label" : "wow-instant-messenger",

@@ -464,7 +464,7 @@
 (defn installed-addons-panel
   []
   (let [;; always visible when debugging and always available from the column menu
-        hidden-by-default-cols [:addon-id :group-id :primary? :update? :matched? :ignore? :categories :downloads :updated :source-id :track]
+        hidden-by-default-cols [:addon-id :group-id :primary? :update? :matched? :ignore? :tags :downloads :updated :source-id :track]
         tblmdl (sstbl/table-model :columns [{:key :name, :text "addon-id"}
                                             :group-id
                                             :primary?
@@ -481,7 +481,7 @@
                                             {:key :download-count, :text "downloads" :class Integer}
                                             {:key :updated-date, :text "updated"}
                                             {:key :interface-version, :text "WoW"}
-                                            {:key :category-list, :text "categories"}]
+                                            {:key :tag-list, :text "tags"}]
                                   :rows [])
 
         grid (x/table-x :id :tbl-installed-addons
@@ -572,7 +572,7 @@
                                             :source-id
                                             {:key :label :text "name"}
                                             :description
-                                            {:key :category-list :text "categories"}
+                                            {:key :tag-list :text "tags"}
                                             {:key :updated-date :text "updated"}
                                             {:key :download-count :text "downloads" :class Integer}]
                                   :rows [])

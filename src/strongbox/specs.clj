@@ -40,13 +40,14 @@
 
 
 (s/def ::tag keyword?)
-(s/def ::tag-list (s/coll-of ::tag))
+(s/def ::tag-list (s/or :ok (s/coll-of ::tag)
+                        :empty ::empty-coll))
 
 ;; addon data that comes from the catalogue
 
 
 (s/def ::addon-summary
-  (s/keys :req-un [::url ::name ::label ::category-list ::updated-date ::download-count ::source ::source-id]
+  (s/keys :req-un [::url ::name ::label ::tag-list ::updated-date ::download-count ::source ::source-id]
           :opt [::description ;; wowinterface summaries have no description
                 ::created-date ;; wowinterface summaries have no created date
                 ::game-track-list ;; more of a set, really
