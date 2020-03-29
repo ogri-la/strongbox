@@ -1079,14 +1079,14 @@
     (info "wrote:" output-file)
     output-file))
 
-;; created to investigate some performance issues, seems sensible to keep it separate
-(defn -mk-import-idx
+(defn -import-addon-list-v1
+  "finds matches in the database for the given list of partial addon data (name, name+source) and then expands them."
   [addon-list]
   (let [find-expand (fn [addon]
                       (let [{:keys [source name]} addon
                             matching-addon
                             (cond
-                              ;; first by given name and source. hopefully 0 or 1 results
+                              ;; first addon by given name and source. hopefully 0 or 1 results
                               (and source name) (first (query-db :addon-by-source-and-name [source name]))
 
                               ;; first addon by given name. potentially multiple results
@@ -1096,18 +1096,14 @@
                               :else nil)]
                         (when matching-addon
                           (expand-summary-wrapper matching-addon))))
-
-                      ;;(when-let [matching-addon (first (get catalogue-idx (key-fn addon)))]
         matching-addon-list (->> addon-list (map find-expand) (remove nil?) vec)]
     matching-addon-list))
 
-;; v1 takes 13.7 seconds to build an index using the 'short' catalogue
-;; this function can still be improved
 (defn import-addon-list-v1
   "handles exports with partial information (name, or name and source) from <=0.10.0 versions of strongbox."
   [addon-list] ;; todo: spec
   (info (format "attempting to import %s addons. this may take a minute" (count addon-list)))
-  (let [matching-addon-list (-mk-import-idx addon-list)
+  (let [matching-addon-list (-import-addon-list-v1 addon-list)
         addon-dir (selected-addon-dir)]
     (doseq [addon matching-addon-list]
       (install-addon addon addon-dir))))

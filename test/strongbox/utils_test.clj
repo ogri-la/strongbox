@@ -228,3 +228,26 @@
                [["foo" -100] ""]]]
     (doseq [[[string max] expected] cases]
       (is (= expected (utils/safe-subs string max))))))
+
+(deftest category-to-tag-list
+  (let [cases [["" []]
+               ["foo" :foo]
+               ["foo bar" :foo-bar]
+               ["foo & bar" [:foo :bar]]
+               ["foo, bar" [:foo :bar]]
+               ["foo: bar" [:foo :bar]]]]
+
+    (doseq [[given expected] cases]
+      (is (= expected (utils/category-to-tag-list given))))))
+
+(deftest category-list-to-tag-list
+  (let [cases [[[""] []]
+               [["" "" ""] []]
+
+               [["foo" "foo bar" "bar & baz" "bup, bap"] [:bap :bar :baz :bup :foo :foo-bar]]
+
+               [["Miscellaneous" "Miscellaneous"] [:misc]]]]
+
+    (doseq [[given expected] cases]
+      (is (= expected (utils/category-list-to-tag-list given))))))
+

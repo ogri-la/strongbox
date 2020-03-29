@@ -35,7 +35,7 @@
 ;;
 
 (defn-spec format-catalogue-data ::sp/catalogue
-  "formats given catalogue data" ;; todo: this is a bad docstr
+  "returns a correctly formatted catalogue given a list of addons and a created and updated date"
   [addon-list ::sp/addon-summary-list, created-date ::sp/catalogue-created-date, updated-date ::sp/catalogue-updated-date]
   (let [addon-list (mapv #(into (omap/ordered-map) (sort %))
                          (sort-by :name addon-list))]

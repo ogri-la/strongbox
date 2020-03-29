@@ -386,6 +386,7 @@
       game-version-to-game-track))
 
 (defn-spec category-to-tag-list (s/or :singluar ::sp/tag, :composite ::sp/tag-list)
+  "given a `category` string, converts it into one or many tags."
   [category ::sp/category]
   (let [replacements {"Character Advancement" [:leveling :achievements]
                       "Unit Frames" :unit-mods
@@ -404,6 +405,8 @@
       ;; replacements
       (not (string? category)) category
 
+      (empty? category) []
+
       ;; category was split
       (> (count bits) 1) (mapv category-to-tag-list bits)
 
@@ -416,6 +419,7 @@
                 keyword))))
 
 (defn-spec category-list-to-tag-list ::sp/tag-list
+  "given a list of category strings, converts them into a distinct list of tags by calling `category-to-tag-list`."
   [category-list ::sp/category-list]
   ;; sorting cuts down on noise in diffs.
   ;; `set` because curseforge has duplicate categories
