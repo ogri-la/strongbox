@@ -22,10 +22,16 @@
                  ["foo" [:foo]]
                  ["foo bar" [:foo-bar]]
                  ["foo & bar" [:foo :bar]]
+                 ["foo & bar & baz" [:foo :bar :baz]]
                  ["foo, bar" [:foo :bar]]
-                 ["foo: bar" [:foo :bar]]]]
+                 ["foo, bar, baz" [:foo :bar :baz]]
+                 ["foo: bar" [:foo :bar]]
+                 ["foo: bar: baz", [:foo :bar :baz]]
+
+                 ;; nothing does this, but it's supported :)
+                 ["foo & bar: baz, bup" [:foo :bar :baz :bup]]]]
       (doseq [[given expected] cases]
-        (is (= expected (tags/category-to-tag-list "addon-host" given)))))))
+        (is (= expected (tags/category-to-tag-list "unhandled-addon-host" given)))))))
 
 (deftest category-to-tag-list-replacement
   (testing "specific categories get a better replacement"
@@ -40,7 +46,10 @@
                  ["curseforge" "Damage Dealer" [:dps]]
                  ["tukui" "Edited UIs & Compilations" [:ui :compilations]]]]
       (doseq [[addon-host given expected] cases]
-        (is (= expected (tags/category-to-tag-list addon-host given)))))))
+        (is (= expected (tags/category-to-tag-list addon-host given))))))
+
+  (testing "specific categories get a better replacement no matter which host they come from"
+    (is (= [:misc] (tags/category-to-tag-list "unhandled-addon-host" "Miscellaneous")))))
 
 (deftest category-to-tag-list-supplement
   (testing "specific categories get parsed like usual, but we tack on extra tags as well"
@@ -50,7 +59,10 @@
                  ;; composite categories are parsed into individual tags as well
                  ["tukui" "Map & Minimap" [:coords :ui :map :minimap]]]]
       (doseq [[addon-host given expected] cases]
-        (is (= expected (tags/category-to-tag-list addon-host given)))))))
+        (is (= expected (tags/category-to-tag-list addon-host given))))))
+
+  (testing "specific categories get extra tags no matter which host they come from"
+    (is (= [:class :caster :priest] (tags/category-to-tag-list "unhandled-addon-host" "Priest")))))
 
 (deftest category-list-to-tag-list
   (testing "list of categories are parsed, sorted, filtered and de-duplicated correctly"
@@ -59,4 +71,4 @@
                  [["foo" "foo bar" "bar & baz" "bup, bap"] [:bap :bar :baz :bup :foo :foo-bar]]
                  [["Miscellaneous" "Miscellaneous"] [:misc]]]]
       (doseq [[given expected] cases]
-        (is (= expected (tags/category-list-to-tag-list "addon-host" given)))))))
+        (is (= expected (tags/category-list-to-tag-list "unhandled-addon-host" given)))))))

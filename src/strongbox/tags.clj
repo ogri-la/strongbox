@@ -8,10 +8,8 @@
    ;;[taoensso.timbre :refer [debug info warn error spy]]
    ))
 
-;; wowinterface-specific categories that are replaced
-
-
 (def wowi-replacements
+  "wowinterface-specific categories that are replaced"
   {"Character Advancement" [:quests :leveling :achievements]
    "Other" [:misc]
    "Suites" [:compilations]
@@ -32,20 +30,16 @@
    "Tradeskill Mods" [:tradeskill]
    "Classic - General" [:classic]})
 
-;; wowinterface-specific categories that gain new tags
-
-
 (def wowi-supplements
+  "wowinterface-specific categories that gain new tags"
   {"Pets" [:battle-pets :companions]
    "Data Broker" [:data]
    "Titan Panel" [:plugins]
    "FuBar" [:plugins]
    "Mail" [:ui]})
 
-;; curseforge-specific categories that are replaced
-
-
 (def curse-replacements
+  "curseforge-specific categories that are replaced"
   {"HUDs" [:ui :unit-frames]
    "Minigames" [:mini-games]
    "Auction & Economy" [:action-house]
@@ -56,10 +50,8 @@
    "Boss Encounters" [:boss]
    "Twitch Integration" []})
 
-;; curseforge-specific categories that gain new tags
-
-
 (def curse-supplements
+  "curseforge-specific categories that gain new tags"
   {"Quests & Leveling" [:achievements]
    "Arena" [:pvp]
    "Battleground" [:pvp]
@@ -71,6 +63,7 @@
    "Titan Panel" [:plugins]})
 
 (def tukui-replacements
+  "tukui-specific categories that are replaced"
   {"Edited UIs & Compilations" [:ui :compilations]
    "Full UI Replacements" [:ui]
    "Skins" [:ui]
@@ -78,18 +71,15 @@
    "Plugins: Other" [:plugins :misc]})
 
 (def tukui-supplements
+  "tukui-specific categories that gain new tags"
   {"Map & Minimap" [:coords :ui]})
 
-;; categories shared by all addon hosts already that are replaced
-
-
 (def general-replacements
+  "categories shared by all addon hosts already that are replaced"
   {"Miscellaneous" [:misc]})
 
-;; categories shared by all addon hosts that gain new tags
-
-
 (def general-supplements
+  "categories shared by all addon hosts that gain new tags"
   {"Druid" [:class]
    "Warlock" [:class]
    "Warrior" [:class]
@@ -137,9 +127,7 @@
     (-> category
         lower-case
         trim
-
-        ;; hyphenate white space
-        (clojure.string/replace #" +" "-")
+        (clojure.string/replace #" +" "-") ;; hyphenate white space
         keyword)))
 
 (defn-spec category-to-tag-list (s/or :singluar ::sp/tag, :composite ::sp/tag-list)
@@ -148,17 +136,15 @@
   (let [replacements (merge general-replacements (get replacement-map addon-host))
         supplements (merge general-supplements (get supplement-map addon-host))
 
-        ;; if there is a replacement set of tags, we don't continue searching for supplementary tags
         replacement-tags (get replacements category [])
         supplementary-tags (get supplements category [])
 
         tag-list (into replacement-tags supplementary-tags)]
-
     (if-not (empty? replacement-tags)
       ;; we found a set of replacement tags so we're done
       tag-list
 
-      ;; couldn't find a replacement set of tags so parse the category
+      ;; couldn't find a replacement set of tags so parse the category string
       (let [bits (clojure.string/split category #"( & |, |: )+")]
         (->> bits (map category-to-tag) (into tag-list) (remove nil?) vec)))))
 
@@ -166,7 +152,7 @@
   "given a list of category strings, converts them into a distinct list of tags by calling `category-to-tag-list`."
   [addon-host ::sp/catalogue-source, category-list ::sp/category-list]
   ;; sorting cuts down on noise in diffs.
-  ;; `set` because curseforge has duplicate categories
+  ;; `set` because curseforge has duplicate categories and supplemental tags may introduce duplicates
   (->> category-list (map (partial category-to-tag-list addon-host)) flatten set sort vec))
 
 ;;

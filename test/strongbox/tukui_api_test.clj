@@ -100,7 +100,7 @@
                        {:get (fn [req] {:status 200 :body fixture})}}
 
           addon-summary {:description "A user interface designed around user-friendliness with extra features that are not included in the standard ui",
-                         :tag-list [:full-ui-replacements]
+                         :tag-list [:ui]
                          :game-track-list [:classic :retail],
                          :updated-date "2019-12-05T00:00:00Z",
                          :name "elvui",
