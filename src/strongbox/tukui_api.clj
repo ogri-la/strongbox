@@ -6,6 +6,7 @@
    [orchestra.core :refer [defn-spec]]
    ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [strongbox
+    [tags :as tags]
     [http :as http]
     [utils :as utils]
     [specs :as sp]]))
@@ -54,13 +55,16 @@
   "process an item from a tukui catalogue into an addon-summary. slightly different values by game-track."
   [tukui-item map?, classic? boolean?]
   (let [ti tukui-item
+        ;; single case of an addon with no category :(
+        ;; 'SkullFlower UI', source-id 143
+        category-list (if-let [cat (:category ti)] [cat] [])
         addon-summary
         {:source (if classic? "tukui-classic" "tukui")
          :source-id (-> ti :id Integer.)
 
-         ;; single case of an addon with no category :(
-         ;; 'SkullFlower UI', source-id 143
-         :category-list (if-let [cat (:category ti)] [cat] [])
+         ;; 2020-03: disabled in favour of :tag-list
+         ;;:category-list category-list
+         :tag-list (tags/category-list-to-tag-list "tukui" category-list)
          :download-count (-> ti :downloads Integer.)
          :game-track-list [(if classic? :classic :retail)]
          :label (:name ti)

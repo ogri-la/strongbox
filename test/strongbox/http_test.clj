@@ -12,7 +12,7 @@
           zombie-addon {:name "Brewmaster Tools"
                         :url "https://www.curseforge.com/wow/addons/brewmastertools"
                         :label ""
-                        :category-list []
+                        :tag-list []
                         :updated-date "2019-01-01T00:00:00Z" :download-count 0}
           fake-routes {"https://www.curseforge.com/wow/addons/brewmastertools/files"
                        {:get (fn [req] {:status 404 :reason-phrase "Not Found" :body "<h1>Not Found</h1>"})}}]

@@ -194,12 +194,16 @@
 
 (def select-*-catalogue (str (static-slurp "resources/query--all-catalogue.sql") " ")) ;; trailing space is important
 
-(defn-spec db-split-category-list vector?
+(defn-spec db-split-tag-list vector?
   "converts a pipe-separated list of categories into a vector"
-  [category-list-str (s/nilable string?)]
-  (if (empty? category-list-str)
+  [tag-list-str (s/nilable string?)]
+  (if (empty? tag-list-str)
     []
-    (clojure.string/split category-list-str #"\|")))
+    (as-> tag-list-str $
+      (clojure.string/split $ #"\|")
+      (map keyword $)
+      (sort $)
+      (vec $))))
 
 (defn db-gen-game-track-list
   "converts the 'retail_track' and 'classic_track' boolean values in db into a list of strings"
@@ -223,13 +227,14 @@
       source-id)))
 
 (defn db-coerce-catalogue-values
-  "further per-row processing of catalogue data after retrieving it from the database"
+  "further per-row processing of catalogue data *after* retrieving it from the database"
   [row]
   (when row
-    (->> row
-         (utils/coerce-map-values {:source-id db-preserve-integer-source-id-if-possible
-                                   :category-list db-split-category-list})
-         (db-gen-game-track-list))))
+    (as-> row $
+      (utils/coerce-map-values {:source-id db-preserve-integer-source-id-if-possible
+                                :category-list db-split-tag-list} $)
+      (clojure.set/rename-keys $ {:category-list :tag-list})
+      (db-gen-game-track-list $))))
 
 (defn db-search
   "searches database for addons whose name or description contains given user input.
@@ -248,10 +253,18 @@
 
 (defn query-db
   "like `get-state`, uses 'paths' (keywords) to do predefined queries"
-  [kw]
+  [kw & [arg-list]]
   (case kw
     :addon-summary-list (->> (db-query select-*-catalogue) (mapv db-coerce-catalogue-values))
     :catalogue-size (-> "select count(*) as num from catalogue" db-query first :num)
+    :addon-by-source-and-name (as-> select-*-catalogue q,
+                                (str q "WHERE source = ? AND name = ?")
+                                (db-query q :arg-list arg-list)
+                                (mapv db-coerce-catalogue-values q))
+    :addon-by-name (as-> select-*-catalogue $,
+                     (str $ "WHERE name = ?")
+                     (db-query $ :arg-list arg-list)
+                     (mapv db-coerce-catalogue-values $))
 
     nil))
 
@@ -841,9 +854,9 @@
   (let [ds (get-db)
         {:keys [addon-summary-list]} catalogue-data
 
-        addon-categories (mapv (fn [{:keys [source-id source category-list]}]
-                                 (mapv (fn [category]
-                                         [source-id source category]) category-list)) addon-summary-list)
+        addon-categories (mapv (fn [{:keys [source-id source tag-list]}]
+                                 (mapv (fn [tag]
+                                         [source-id source (name tag)]) tag-list)) addon-summary-list)
 
         ;; using `set` was a symptom of a problem with duplicate categories affecting curseforge
         ;; I think it's safest to leave it in for now
@@ -853,7 +866,7 @@
         category-list (->> addon-categories (mapv rest) set vec)
 
         xform-row (fn [row]
-                    (let [ignored [:category-list :age :game-track-list :created-date]
+                    (let [ignored [:tag-list :age :game-track-list :created-date]
                           mapping {:source-id :source_id
                                    :download-count :download_count
                                    ;;:created-date :created_date ;; curseforge only and unused
@@ -1066,26 +1079,31 @@
     (info "wrote:" output-file)
     output-file))
 
-;; created to investigate some performance issues, seems sensible to keep it separate
-(defn -mk-import-idx
+(defn -import-addon-list-v1
+  "finds matches in the database for the given list of partial addon data (name, name+source) and then expands them."
   [addon-list]
-  (let [key-fn #(select-keys % [:source :name])
-        addon-summary-list (query-db :addon-summary-list)
-        ;; todo: this sucks. use a database
-        catalogue-idx (group-by key-fn addon-summary-list)
-        find-expand (fn [addon]
-                      (when-let [matching-addon (first (get catalogue-idx (key-fn addon)))]
-                        (expand-summary-wrapper matching-addon)))
+  (let [find-expand (fn [addon]
+                      (let [{:keys [source name]} addon
+                            matching-addon
+                            (cond
+                              ;; first addon by given name and source. hopefully 0 or 1 results
+                              (and source name) (first (query-db :addon-by-source-and-name [source name]))
+
+                              ;; first addon by given name. potentially multiple results
+                              name (first (query-db :addon-by-name [name]))
+
+                              ;; we have nothing to query on :(                          
+                              :else nil)]
+                        (when matching-addon
+                          (expand-summary-wrapper matching-addon))))
         matching-addon-list (->> addon-list (map find-expand) (remove nil?) vec)]
     matching-addon-list))
 
-;; v1 takes 13.7 seconds to build an index using the 'short' catalogue
-;; this function can still be improved
 (defn import-addon-list-v1
   "handles exports with partial information (name, or name and source) from <=0.10.0 versions of strongbox."
   [addon-list] ;; todo: spec
   (info (format "attempting to import %s addons. this may take a minute" (count addon-list)))
-  (let [matching-addon-list (-mk-import-idx addon-list)
+  (let [matching-addon-list (-import-addon-list-v1 addon-list)
         addon-dir (selected-addon-dir)]
     (doseq [addon matching-addon-list]
       (install-addon addon addon-dir))))

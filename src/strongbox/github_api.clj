@@ -194,7 +194,9 @@
             :name (slugify repo "")
             :download-count download-count
             :game-track-list (or (find-gametracks-toc-data source-id) [])
-            :category-list []}
+            ;; 2020-03: disabled in favour of :tag-list
+            ;;:category-list []
+            :tag-list []}
 
            ;; 'something' failed to parse :(
            ;; would love a way to pass back a more specific error

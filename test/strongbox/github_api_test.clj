@@ -29,7 +29,7 @@
                     :name "healcomm"
                     :download-count 30946
                     :game-track-list []
-                    :category-list []}
+                    :tag-list []}
 
           ;; all of these should yield the above
           cases ["https://github.com/Aviana/HealComm" ;; perfect case
@@ -94,7 +94,7 @@
                  :label "HealComm"
                  :name "healcomm"
                  :download-count 30946
-                 :category-list []}
+                 :tag-list []}
 
           game-track :retail
 
@@ -105,7 +105,7 @@
                     :label "HealComm"
                     :name "healcomm"
                     :download-count 30946
-                    :category-list []
+                    :tag-list []
 
                     :download-url "https://github.com/Aviana/HealComm/releases/download/2.04/HealComm.zip"
                     :version "2.04 Beta"}
@@ -125,11 +125,11 @@
                  :label "Chinchilla"
                  :name "chinchilla"
                  :download-count 30946
-                 :category-list []}
+                 :tag-list []}
 
           game-track :classic
 
-          expected {:category-list []
+          expected {:tag-list []
                     :updated-date "2019-10-09T17:40:04Z"
                     :name "chinchilla"
                     :source "github"
@@ -156,7 +156,7 @@
                  :label "Necrosis-classic"
                  :name "necrosis-classic"
                  :download-count 30946
-                 :category-list []}
+                 :tag-list []}
 
           expected nil
 
@@ -176,7 +176,7 @@
                  :label "RingMenu"
                  :name "ringmenu"
                  :download-count 30946
-                 :category-list []}
+                 :tag-list []}
 
           game-track :retail
 
@@ -216,7 +216,7 @@
            :name "healcomm"
            :download-count 30946
            :game-track-list [] ;; 'no game tracks'
-           :category-list []}
+           :tag-list []}
 
           latest-release {:name "Release 1.2.3"
                           :assets [{:content_type "application/zip"
@@ -261,7 +261,7 @@
            :name "healcomm"
            :download-count 30946
            :game-track-list [] ;; 'no game tracks'
-           :category-list []}
+           :tag-list []}
 
           latest-release {:name "Release 1.2.3"
                           :assets [{:content_type "application/zip"
@@ -335,7 +335,7 @@
            :name "healcomm"
            :download-count 30946
            :game-track-list [] ;; 'no game tracks'
-           :category-list []}
+           :tag-list []}
 
           game-track :retail
 

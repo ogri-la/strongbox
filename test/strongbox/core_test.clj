@@ -217,10 +217,12 @@
           every-other-addon-api (slurp (fixture-path "curseforge-api-addon--everyotheraddon.json"))
 
           addon-summary-list (utils/load-json-file (fixture-path "import-export--dummy-catalogue.json"))
+          dummy-catalogue (assoc (catalogue/new-catalogue [])
+                                 :addon-summary-list addon-summary-list)
 
           fake-routes {;; catalogue
                        "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
-                       {:get (fn [req] {:status 200 :body (utils/to-json (catalogue/new-catalogue addon-summary-list))})}
+                       {:get (fn [req] {:status 200 :body (utils/to-json dummy-catalogue)})}
 
                        ;; every-addon
                        "https://addons-ecs.forgesvc.net/api/v2/addon/1"
@@ -245,7 +247,7 @@
                 output-path (fixture-path "import-export--export-v1.json")
 
                 expected [{:description "Does what no other addon does, slightly differently",
-                           :category-list ["Bags & Inventory"],
+                           :tag-list [:bags :inventory]
                            :update? false,
                            :updated-date "2019-06-26T01:21:39Z",
                            :group-id "https://www.curseforge.com/wow/addons/everyaddon",
@@ -265,7 +267,7 @@
                            :matched? true}
 
                           {:description "Does what every addon does, just better",
-                           :category-list ["Professions" "Map & Minimap"],
+                           :tag-list [:coords :map :minimap :professions :ui]
                            :update? false,
                            :updated-date "2019-07-03T07:11:47Z",
                            :group-id "https://www.curseforge.com/wow/addons/everyotheraddon",
@@ -299,9 +301,12 @@
 
           addon-summary-list (utils/load-json-file (fixture-path "import-export--dummy-catalogue.json"))
 
+          dummy-catalogue (assoc (catalogue/new-catalogue [])
+                                 :addon-summary-list addon-summary-list)
+
           fake-routes {;; catalogue
                        "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
-                       {:get (fn [req] {:status 200 :body (utils/to-json (catalogue/new-catalogue addon-summary-list))})}
+                       {:get (fn [req] {:status 200 :body (utils/to-json dummy-catalogue)})}
 
                        ;; every-addon
                        "https://addons-ecs.forgesvc.net/api/v2/addon/1"
@@ -326,7 +331,7 @@
                 output-path (fixture-path "import-export--export-v2.json")
 
                 expected [{:description "Does what no other addon does, slightly differently",
-                           :category-list ["Bags & Inventory"],
+                           :tag-list [:bags :inventory]
                            :update? false,
                            :updated-date "2019-06-26T01:21:39Z",
                            :group-id "https://www.curseforge.com/wow/addons/everyaddon",
@@ -346,7 +351,7 @@
                            :matched? true}
 
                           {:description "Does what every addon does, just better",
-                           :category-list ["Professions" "Map & Minimap"],
+                           :tag-list [:coords :map :minimap :professions :ui]
                            :update? false,
                            :updated-date "2019-07-03T07:11:47Z",
                            :group-id "https://www.curseforge.com/wow/addons/everyotheraddon",
@@ -399,9 +404,12 @@
                                      :exposeAsAlternative nil}]}
           alt-api-result (assoc-in api-result [:latestFiles 0 :displayName] "v8.20.00")
 
+          dummy-catalogue (assoc (catalogue/new-catalogue [])
+                                 :addon-summary-list [catalogue])
+
           fake-routes {;; catalogue
                        "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
-                       {:get (fn [req] {:status 200 :body (utils/to-json (catalogue/new-catalogue [catalogue]))})}
+                       {:get (fn [req] {:status 200 :body (utils/to-json dummy-catalogue)})}
 
                        ;; every-addon
                        "https://addons-ecs.forgesvc.net/api/v2/addon/0"
@@ -456,17 +464,18 @@
 
 ;; todo: install classic addon into retail game track
 
-(deftest db-row-wrangling
+(deftest db-split-tag-list
   (testing "converting a tab separated list back into an actual list works as expected"
     (let [cases [[nil []]
                  ["" []]
                  ["|" []]
-                 ["foo" ["foo"]]
-                 ["bar|baz" ["bar" "baz"]]]]
+                 ["foo" [:foo]]
+                 ["bar|baz" [:bar :baz]]]]
 
       (doseq [[given expected] cases]
-        (is (= expected (core/db-split-category-list given))))))
+        (is (= expected (core/db-split-tag-list given)))))))
 
+(deftest db-gen-game-track-list
   (testing "game track fields are turned back into a list"
     (let [cases [[{} {}]
                  [{:retail-track true} {:game-track-list [:retail]}]
@@ -499,7 +508,8 @@
 
           expected (subs (:description addon-with-long-description) 0 255)
 
-          dummy-catalogue (catalogue/new-catalogue [addon-with-long-description])
+          dummy-catalogue (assoc (catalogue/new-catalogue [])
+                                 :addon-summary-list [addon-with-long-description])
           fake-routes {"https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
                        {:get (fn [req] {:status 200 :body (utils/to-json dummy-catalogue)})}}]
 
@@ -526,7 +536,7 @@
   {:label "EveryAddon",
    :name  "everyaddon",
    :description  "Does what no other addon does, slightly differently"
-   :category-list  ["Auction & Economy", "Data Broker"],
+   :tag-list [:auction :data-broker :economy]
    :source "curseforge"
    :source-id 1
    :created-date  "2009-02-08T13:30:30Z",
@@ -797,7 +807,7 @@
                       :label "HealComm"
                       :name "healcomm"
                       :download-count 30946
-                      :category-list []}
+                      :tag-list []}
 
           expected (merge (catalogue/new-catalogue [])
                           {;; hack, catalogue/format-catalogue-data orders the addon summary make them uncomparable
@@ -816,7 +826,7 @@
                       :label "HealComm"
                       :name "healcomm"
                       :download-count 30946
-                      :category-list []}
+                      :tag-list []}
 
           expected (merge (catalogue/new-catalogue [])
                           {;; hack, catalogue/format-catalogue-data orders the addon summary make them uncomparable
@@ -849,7 +859,7 @@
 
           expected-addon-dir (utils/join install-dir "EveryAddon")
 
-          expected-user-catalogue [{:category-list [],
+          expected-user-catalogue [{:tag-list [],
                                     :game-track-list [],
                                     :updated-date "2019-10-09T17:40:04Z",
                                     :name "healcomm",
@@ -881,7 +891,7 @@
 
           addon-summary {:name "everyaddon"
                          :label "EveryAddon"
-                         :category-list []
+                         :tag-list []
                          :updated-date "2001-01-01"
                          :download-count 123
                          :source "wowinterface"
@@ -900,7 +910,7 @@
                     :interface-version 70000
                     :installed-version "1.2.3"
 
-                    :category-list []
+                    :tag-list []
                     :updated-date "2001-01-01"
                     :download-count 123
                     :source "wowinterface"

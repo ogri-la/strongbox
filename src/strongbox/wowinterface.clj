@@ -5,6 +5,7 @@
    [slugify.core :refer [slugify]]
    [orchestra.spec.test :as st]
    [strongbox
+    [tags :as tags]
     [utils :as utils :refer [to-url]]
     [http :as http]]
    [flatland.ordered.map :as omap]
@@ -162,9 +163,11 @@
         ;; group addons by their :source-id and then merge together, preserving the categories
         addon-groups (group-by :source-id addon-list)
         addon-list (for [[_ group-list] addon-groups
-                         :let [addon (first group-list)]]
-                     (assoc addon :category-list
-                            (reduce clojure.set/union (map :category-list group-list))))
+                         :let [addon (first group-list)
+                               category-list (reduce clojure.set/union (map :category-list group-list))]]
+                     (merge addon
+                            {;;:category-list category-list ;; 2020-03: disabled in favour of :tag-list
+                             :tag-list (tags/category-list-to-tag-list "wowinterface" category-list)}))
 
         filelist (download-parse-filelist-file)
 

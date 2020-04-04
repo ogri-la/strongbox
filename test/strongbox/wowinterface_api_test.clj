@@ -15,7 +15,7 @@
                  :label "Rotation Master",
                  :updated-date "2019-07-29T21:37:00Z",
                  :download-count 80,
-                 :category-list #{"dummy"}
+                 :tag-list [:dummy]
                  :source "wowinterface"
                  :source-id 25079
                  :game-track-list [:retail]}
@@ -27,7 +27,7 @@
                     :label "Rotation Master"
                     :updated-date "2019-07-29T21:37:00Z"
                     :download-count 80
-                    :category-list #{"dummy"}
+                    :tag-list [:dummy]
                     :source "wowinterface"
                     :source-id 25079
                     :game-track-list [game-track]
