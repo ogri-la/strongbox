@@ -8,6 +8,7 @@
    [taoensso.timbre :as log :refer [debug info warn error spy]]
    [java-time]
    [strongbox
+    [tags :as tags]
     [utils :as utils :refer [todt utcnow]]
     [specs :as sp]
     [tukui-api :as tukui-api]
@@ -61,7 +62,7 @@
                              new-row (if (contains? new-row :category-list)
                                        (-> new-row
                                            (clojure.set/rename-keys {:category-list :tag-list})
-                                           (update-in [:tag-list] utils/category-list-to-tag-list))
+                                           (update-in [:tag-list] (partial tags/category-list-to-tag-list (:source new-row))))
                                        new-row)]
 
                          new-row))]

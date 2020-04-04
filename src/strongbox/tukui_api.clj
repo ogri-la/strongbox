@@ -6,6 +6,7 @@
    [orchestra.core :refer [defn-spec]]
    ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [strongbox
+    [tags :as tags]
     [http :as http]
     [utils :as utils]
     [specs :as sp]]))
@@ -63,7 +64,7 @@
 
          ;; 2020-03: disabled in favour of :tag-list
          ;;:category-list category-list
-         :tag-list (utils/category-list-to-tag-list category-list)
+         :tag-list (tags/category-list-to-tag-list "tukui" category-list)
          :download-count (-> ti :downloads Integer.)
          :game-track-list [(if classic? :classic :retail)]
          :label (:name ti)

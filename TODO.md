@@ -80,12 +80,11 @@ see CHANGELOG.md for a more formal list of changes by release
     - publish a 'strongbox-catalogue' repo
         - just like wowman-data, but for strongbox
 
-    - can game-track-list be included from all other hosts?
-        - not just wowi?
-            - even wowi is broken though
-            - I've seen a reference to a v4 of their 'api' that should be investigated
-                - naming changes mostly so far
-            - I've also noticed switches in game tracks for some of their addons this week (2020-03)
+    - remove 'updated' date
+        - should have been removed when updating catalogues was removed
+    
+    - bumps spec version of catalogue to 2
+        - keep wowman-coercer but dispatch based off of spec version
 
 * bug, test fixtures for user-config had their :catalog value renamed to :catalogue
         - revert those changes
@@ -104,10 +103,19 @@ see CHANGELOG.md for a more formal list of changes by release
 * database, investigate a datalog backed datastore
     - https://clojure.github.io/clojure-contrib/doc/datalog.html
     - https://github.com/tonsky/datascript
+    - crux is working out elsewhere
     - I want addons loaded *quickly*
     - I want to *query* addons *quickly*
 
 ## todo bucket (no particular order)
+
+* game track list in catalogue
+    - can game-track-list be included from all other hosts?
+        - not just wowi?
+            - even wowi is broken though
+            - I've seen a reference to a v4 of their 'api' that should be investigated
+                - naming changes mostly so far
+            - I've also noticed switches in game tracks for some of their addons this week (2020-03)
 
 * EOL planning
     - I'm not going away and neither is strongbox, but! *should* I or my free time disappear will strongbox continue being useful?
@@ -116,7 +124,7 @@ see CHANGELOG.md for a more formal list of changes by release
                 - more can be done around this to make catalogue generation more accessible and safe
         - what can't I control?
             - addon hosts
-                - our interface with them is their API or, in wowi's case, their API and website
+                - our interface with them is their API or in wowi's case, their API and website
         
 * code refactor
     * simplify `install-addon` interface in core.clj

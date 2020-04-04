@@ -385,46 +385,6 @@
       interface-version-to-game-version
       game-version-to-game-track))
 
-(defn-spec category-to-tag-list (s/or :singluar ::sp/tag, :composite ::sp/tag-list)
-  "given a `category` string, converts it into one or many tags."
-  [category ::sp/category]
-  (let [replacements {"Character Advancement" [:leveling :achievements]
-                      "Unit Frames" :unit-mods
-                      "Utility Mods" :utilities
-                      "Classic - General" :classic
-                      "Audio & Video" :audio-video
-                      "Battle Pets" [:pets :battle-bets]
-                      "ROFL" :misc
-                      "Other" :misc
-                      "Miscellaneous" :misc}
-        category (get replacements category category)
-
-        bits (when (string? category)
-               (clojure.string/split category #"( & |, |: )+"))]
-    (cond
-      ;; replacements
-      (not (string? category)) category
-
-      (empty? category) []
-
-      ;; category was split
-      (> (count bits) 1) (mapv category-to-tag-list bits)
-
-      :else (-> category
-                clojure.string/lower-case
-                clojure.string/trim
-
-                ;; hyphenate white space
-                (clojure.string/replace #" +" "-")
-                keyword))))
-
-(defn-spec category-list-to-tag-list ::sp/tag-list
-  "given a list of category strings, converts them into a distinct list of tags by calling `category-to-tag-list`."
-  [category-list ::sp/category-list]
-  ;; sorting cuts down on noise in diffs.
-  ;; `set` because curseforge has duplicate categories
-  (->> category-list (map category-to-tag-list) flatten set sort vec))
-
 ;; https://stackoverflow.com/questions/13789092/length-of-the-first-line-in-an-utf-8-file-with-bom
 (defn debomify
   [^String line]

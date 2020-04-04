@@ -267,7 +267,7 @@
                            :matched? true}
 
                           {:description "Does what every addon does, just better",
-                           :tag-list [:map :minimap :professions]
+                           :tag-list [:coords :map :minimap :professions :ui]
                            :update? false,
                            :updated-date "2019-07-03T07:11:47Z",
                            :group-id "https://www.curseforge.com/wow/addons/everyotheraddon",
@@ -351,7 +351,7 @@
                            :matched? true}
 
                           {:description "Does what every addon does, just better",
-                           :tag-list [:map :minimap :professions]
+                           :tag-list [:coords :map :minimap :professions :ui]
                            :update? false,
                            :updated-date "2019-07-03T07:11:47Z",
                            :group-id "https://www.curseforge.com/wow/addons/everyotheraddon",
