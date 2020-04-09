@@ -34,8 +34,7 @@
     (let [output-file (find-catalogue-local-path :curseforge)
           catalogue-data (curseforge-api/download-all-summaries-alphabetically)
           created (utils/datestamp-now-ymd)
-          updated created
-          formatted-catalogue-data (catalogue/format-catalogue-data catalogue-data created updated)]
+          formatted-catalogue-data (catalogue/format-catalogue-data catalogue-data created)]
       (catalogue/write-catalogue formatted-catalogue-data output-file))))
 
 (defmethod action :scrape-tukui-catalogue
@@ -44,8 +43,7 @@
     (let [output-file (find-catalogue-local-path :tukui)
           catalogue-data (tukui-api/download-all-summaries)
           created (utils/datestamp-now-ymd)
-          updated created
-          formatted-catalogue-data (catalogue/format-catalogue-data catalogue-data created updated)]
+          formatted-catalogue-data (catalogue/format-catalogue-data catalogue-data created)]
       (catalogue/write-catalogue formatted-catalogue-data output-file))))
 
 (defmethod action :write-catalogue

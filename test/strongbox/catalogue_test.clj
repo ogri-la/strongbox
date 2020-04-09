@@ -24,13 +24,11 @@
   (testing "catalogue data has a consistent structure"
     (let [addon-list []
           created "2001-01-01"
-          updated created
-          expected {:spec {:version 1}
+          expected {:spec {:version 2}
                     :datestamp created
-                    :updated-datestamp updated
                     :total 0
                     :addon-summary-list addon-list}]
-      (is (= (catalogue/format-catalogue-data addon-list created updated) expected)))))
+      (is (= (catalogue/format-catalogue-data addon-list created) expected)))))
 
 (deftest merge-catalogues
   (let [addon1 {:url "https://github.com/Aviana/HealComm"

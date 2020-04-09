@@ -37,16 +37,15 @@
 
 (defn-spec format-catalogue-data ::sp/catalogue
   "returns a correctly formatted catalogue given a list of addons and a created and updated date"
-  [addon-list ::sp/addon-summary-list, created-date ::sp/catalogue-created-date, updated-date ::sp/catalogue-updated-date]
+  [addon-list ::sp/addon-summary-list, created-date ::sp/catalogue-created-date]
   (let [addon-list (mapv #(into (omap/ordered-map) (sort %))
                          (sort-by :name addon-list))]
-    {:spec {:version 1}
+    {:spec {:version 2}
      :datestamp created-date
-     :updated-datestamp updated-date
      :total (count addon-list)
      :addon-summary-list addon-list}))
 
-(defn-spec wowman-coercer (s/or :ok ::sp/catalogue, :empty nil?)
+(defn-spec catalogue-v1-coercer (s/or :ok ::sp/catalogue, :empty nil?)
   "temporary pre-processor of wowman catalgoues until strongbox gets it's own"
   [catalogue-data (s/nilable map?)]
   (when-not (empty? catalogue-data)
@@ -64,17 +63,21 @@
                                            (clojure.set/rename-keys {:category-list :tag-list})
                                            (update-in [:tag-list] (partial tags/category-list-to-tag-list (:source new-row))))
                                        new-row)]
-
                          new-row))]
-
-      (update-in catalogue-data [:addon-summary-list] (partial mapv row-coerce)))))
+      (-> catalogue-data
+          (dissoc :updated-date)
+          (update-in [:addon-summary-list] (partial mapv row-coerce))
+          (assoc-in [:spec :version] 2)))))
 
 (defn read-catalogue
   [catalogue-path & {:as opts}]
   ;; cheshire claims to be twice as fast: https://github.com/dakrone/cheshire#speed
   ;; consolidate catalogue access here
   (let [catalogue-data (apply utils/load-json-file-safely (apply concat [catalogue-path] opts))]
-    (utils/nilable (wowman-coercer catalogue-data))))
+    (if (= 1 (-> catalogue-data :spec :version))
+      ;; handle wowman-era catalogues
+      (utils/nilable (catalogue-v1-coercer catalogue-data))
+      (utils/nilable catalogue-data))))
 
 (defn-spec write-catalogue ::sp/extant-file
   "write catalogue to given `output-file` as JSON. returns path to output file"
@@ -85,9 +88,7 @@
 
 (defn-spec new-catalogue ::sp/catalogue
   [addon-list ::sp/addon-summary-list]
-  (let [created (utils/datestamp-now-ymd)
-        updated created]
-    (format-catalogue-data addon-list created updated)))
+  (format-catalogue-data addon-list (utils/datestamp-now-ymd)))
 
 (defn-spec write-empty-catalogue! ::sp/extant-file
   "writes a stub catalogue to the given `output-file`"
@@ -125,8 +126,7 @@
         key [(not-empty? cat-a) (not-empty? cat-b)]]
     (if (contains? matrix key)
       (get matrix key)
-      (let [created-date (first (sort [(:datestamp cat-a) (:datestamp cat-b)])) ;; earliest
-            updated-date (last (sort [(:updated-datestamp cat-a) (:updated-datestamp cat-b)])) ;; latest
+      (let [created-date (first (sort [(:datestamp cat-a) (:datestamp cat-b)])) ;; earliest wins
             addons-a (:addon-summary-list cat-a)
             addons-b (:addon-summary-list cat-b)
             addon-summary-list (->> (concat addons-a addons-b) ;; join the two lists
@@ -134,7 +134,7 @@
                                     vals ;; drop the map
                                     (map (partial apply merge))) ;; merge (not replace) the groups into single maps
             ]
-        (format-catalogue-data addon-summary-list created-date updated-date)))))
+        (format-catalogue-data addon-summary-list created-date)))))
 
 ;; 
 
@@ -170,7 +170,7 @@
                               release-of-previous-expansion (utils/todt "2016-08-30T00:00:00Z")]
                           (java-time/before? dtobj release-of-previous-expansion)))]
     (when addon-summary-list
-      (format-catalogue-data (remove unmaintained? addon-summary-list) datestamp datestamp))))
+      (format-catalogue-data (remove unmaintained? addon-summary-list) datestamp))))
 
 ;;
 

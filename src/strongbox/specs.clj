@@ -126,7 +126,6 @@
 (s/def ::created-date ::inst)
 (s/def ::updated-date ::inst)
 (s/def ::catalogue-created-date ::ymd-dt)
-(s/def ::catalogue-updated-date ::ymd-dt)
 ;;(def catalogue-sources #{"curseforge" "wowinterface" "github" "tukui" "tukui-classic"})
 ;;(s/def ::catalogue-source catalogue-sources)
 ;;(s/def ::catalogue-source string?) ;; ::string255)
@@ -203,9 +202,8 @@
 
 (s/def ::spec map?) ;; grr. ::version conflicts with above
 (s/def ::datestamp ::inst)
-(s/def ::updated-datestamp ::inst)
 (s/def ::total int?)
-(s/def ::catalogue (s/keys :req-un [::spec ::datestamp ::updated-datestamp ::total ::addon-summary-list]))
+(s/def ::catalogue (s/keys :req-un [::spec ::datestamp ::total ::addon-summary-list]))
 
 ;;
 
