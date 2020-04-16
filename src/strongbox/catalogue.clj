@@ -46,7 +46,7 @@
      :addon-summary-list addon-list}))
 
 (defn-spec catalogue-v1-coercer (s/or :ok ::sp/catalogue, :empty nil?)
-  "temporary pre-processor of wowman catalgoues until strongbox gets it's own"
+  "converts wowman-era specification 1 catalogues, coercing them to specification version 2 catalogues"
   [catalogue-data (s/nilable map?)]
   (when-not (empty? catalogue-data)
     (let [row-coerce (fn [row]
@@ -65,17 +65,20 @@
                                        new-row)]
                          new-row))]
       (-> catalogue-data
-          (dissoc :updated-date)
+          (dissoc :updated-datestamp)
           (update-in [:addon-summary-list] (partial mapv row-coerce))
           (assoc-in [:spec :version] 2)))))
 
 (defn read-catalogue
+  "reads the catalogue of addon data at the given `catalogue-path`.
+  supports reading legacy catalogues by dispatching on the `[:spec :version]` number."
   [catalogue-path & {:as opts}]
   ;; cheshire claims to be twice as fast: https://github.com/dakrone/cheshire#speed
-  ;; consolidate catalogue access here
-  (let [catalogue-data (apply utils/load-json-file-safely (apply concat [catalogue-path] opts))]
+  (let [opts (merge opts {:transform-map {;; tag list is only present from v2+ and won't affect v1
+                                          :tag-list #(mapv keyword %)}})
+        catalogue-data (apply utils/load-json-file-safely (apply concat [catalogue-path] opts))]
     (if (= 1 (-> catalogue-data :spec :version))
-      ;; handle wowman-era catalogues
+      ;; wowman-era catalogues
       (utils/nilable (catalogue-v1-coercer catalogue-data))
       (utils/nilable catalogue-data))))
 
