@@ -70,7 +70,7 @@
   (assoc cfg :addon-dir-list (filterv #(s/valid? ::sp/addon-dir-map %) (:addon-dir-list cfg []))))
 
 (defn handle-selected-addon-dir
-  "ensures the `:selected-addon-dir` value is valid and present in the list addon directories"
+  "ensures the `:selected-addon-dir` value is valid and present in the list of addon directories"
   [cfg]
   (let [;; it shouldn't happen but ensure the default addon dir is valid or nil
         default-selected-addon-dir (->> cfg :addon-dir-list first :addon-dir (sp/conform-or-nil ::sp/addon-dir))
@@ -134,14 +134,17 @@
   "reads application settings from the given file.
   returns an empty map if file is missing or malformed."
   [cfg-file ::sp/file]
-  (utils/load-json-file-safely cfg-file
-                               {:no-file? #(do (warn "configuration file not found: " cfg-file) {})
-                                :bad-data? #(do (error "configuration file malformed: " cfg-file) {})
-                                :transform-map {:selected-catalogue keyword
-                                                :gui-theme keyword
-                                                :game-track keyword
-                                               ;; too general, not great :(
-                                                :name keyword}}))
+  (let [opts {:no-file? #(do (warn "configuration file not found: " cfg-file) {})
+              :bad-data? #(do (error "configuration file malformed: " cfg-file) {})
+              :transform-map {:selected-catalog keyword ;; becomes `:selected-catalogue`, if present
+                              :selected-catalogue keyword
+                              :gui-theme keyword
+                              :game-track keyword
+                              ;; too general, not great :(
+                              :name keyword}}
+        config (utils/load-json-file-safely cfg-file opts)]
+    ;; legacy, 0.10 to 0.12 included a key that needs renaming in 1.0
+    (clojure.set/rename-keys config {:selected-catalog :selected-catalogue})))
 
 (defn-spec load-etag-db-file map?
   "reads etag database from given file.

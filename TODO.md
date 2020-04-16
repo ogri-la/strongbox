@@ -81,17 +81,15 @@ see CHANGELOG.md for a more formal list of changes by release
 * remember selected addon dir
     - done
 
-### todo
-
-* catalogue updates
-
-    - publish a 'strongbox-catalogue' repo
-        - just like wowman-data, but for strongbox
-
-
 * bug, test fixtures for user-config had their :catalog value renamed to :catalogue
         - revert those changes
         - add a step in the parsing that renames those values to 'catalogue'
+
+### todo
+
+* catalogue updates
+    - publish a 'strongbox-catalogue' repo
+        - just like wowman-data, but for strongbox
 
 * spec clean up
     * it's never been particularly clear in my head what some of those specs are
