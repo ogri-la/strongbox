@@ -78,7 +78,7 @@
    ;; cheshire claims to be twice as fast: https://github.com/dakrone/cheshire#speed
    (let [opts (merge opts {:transform-map {;; tag list is only present from v2+ and won't affect v1
                                            :tag-list #(mapv keyword %)}})
-         catalogue-data (apply utils/load-json-file-safely (apply concat [catalogue-path] opts))]
+         catalogue-data (utils/load-json-file-safely catalogue-path opts)]
      (if (= 1 (-> catalogue-data :spec :version))
        ;; wowman-era catalogues
        (utils/nilable (catalogue-v1-coercer catalogue-data))
@@ -165,10 +165,10 @@
   (let [{:keys [addon-summary-list datestamp]}
         (utils/load-json-file-safely
          full-catalogue-path
-         :no-file? #(error (format "catalogue '%s' could not be found" full-catalogue-path))
-         :bad-data? #(error (format "catalogue '%s' is malformed and cannot be parsed" full-catalogue-path))
-         :invalid-data? #(error (format "catalogue '%s' is incorrectly structured and will not be parsed" full-catalogue-path))
-         :data-spec ::sp/catalogue)
+         {:no-file? #(error (format "catalogue '%s' could not be found" full-catalogue-path))
+          :bad-data? #(error (format "catalogue '%s' is malformed and cannot be parsed" full-catalogue-path))
+          :invalid-data? #(error (format "catalogue '%s' is incorrectly structured and will not be parsed" full-catalogue-path))
+          :data-spec ::sp/catalogue})
 
         unmaintained? (fn [addon]
                         (let [dtobj (java-time/zoned-date-time (:updated-date addon))

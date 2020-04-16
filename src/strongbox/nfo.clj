@@ -96,11 +96,11 @@
                        (rm-nfo path))]
     (utils/load-json-file-safely
      path
-     :no-file? nil
-     :bad-data? bad-data
-     :invalid-data? invalid-data,
-     :data-spec ::sp/nfo-v2
-     :transform-map {:installed-game-track keyword})))
+     {:no-file? nil
+      :bad-data? bad-data
+      :invalid-data? invalid-data,
+      :data-spec ::sp/nfo-v2
+      :transform-map {:installed-game-track keyword}})))
 
 (defn-spec read-nfo (s/or :ok ::sp/nfo-v2, :error nil?)
   "reads and parses the contents of the .nfo file and checks if addon should be ignored or not"
@@ -133,4 +133,4 @@
   (and (has-nfo-file? install-dir addon)
        ;; don't use read-nfo-file here, it deletes invalid nfo files
        (s/valid? ::sp/nfo-v2 (utils/load-json-file-safely (nfo-path install-dir (:dirname addon))
-                                                          :transform-map {:installed-game-track keyword}))))
+                                                          {:transform-map {:installed-game-track keyword}}))))

@@ -1142,10 +1142,10 @@
   (info "importing exports file:" path)
   (let [nil-me (constantly nil)
         addon-list (utils/load-json-file-safely path
-                                                :bad-data? nil-me
-                                                :data-spec ::sp/export-record-list
-                                                :invalid-data? nil-me
-                                                :transform-map {:game-track keyword})
+                                                {:bad-data? nil-me
+                                                 :data-spec ::sp/export-record-list
+                                                 :invalid-data? nil-me
+                                                 :transform-map {:game-track keyword}})
         full-data? (fn [addon]
                      (utils/all (mapv #(contains? addon %) [:source :source-id :name])))
         [full-data, partial-data] (utils/split-filter full-data? addon-list)]
