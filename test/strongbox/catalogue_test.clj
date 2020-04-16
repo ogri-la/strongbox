@@ -24,13 +24,11 @@
   (testing "catalogue data has a consistent structure"
     (let [addon-list []
           created "2001-01-01"
-          updated created
-          expected {:spec {:version 1}
+          expected {:spec {:version 2}
                     :datestamp created
-                    :updated-datestamp updated
                     :total 0
                     :addon-summary-list addon-list}]
-      (is (= (catalogue/format-catalogue-data addon-list created updated) expected)))))
+      (is (= (catalogue/format-catalogue-data addon-list created) expected)))))
 
 (deftest merge-catalogues
   (let [addon1 {:url "https://github.com/Aviana/HealComm"
@@ -128,4 +126,58 @@
     (doseq [given cases]
       (testing (format "parsing bad user string input, case: '%s'" given)
         (is (= expected (catalogue/parse-user-string given)))))))
+
+(deftest read-catalogue-v1
+  (let [v1-catalogue-path (fixture-path "catalogue--v1.json")
+        v2-catalogue-path (fixture-path "catalogue--v2.json")
+
+        expected-addon-list
+        [{:download-count 1077,
+          :game-track-list ["retail"],
+          :label "$old!it",
+          :name "$old-it",
+          :source "wowinterface",
+          :source-id 21651,
+          :tag-list [:auction-house :vendors],
+          :updated-date "2012-09-20T05:32:00Z",
+          :url "https://www.wowinterface.com/downloads/info21651"}
+         {:created-date "2019-04-13T15:23:09.397Z",
+          :description "A New Simple Percent",
+          :download-count 1034,
+          :label "A New Simple Percent",
+          :name "a-new-simple-percent",
+          :source "curseforge",
+          :source-id 319346,
+          :tag-list [:unit-frames],
+          :updated-date "2019-10-29T22:47:42.463Z",
+          :url "https://www.curseforge.com/wow/addons/a-new-simple-percent"}
+         {:description "Skins for AddOns",
+          :download-count 1112033,
+          :game-track-list ["retail"],
+          :label "AddOnSkins",
+          :name "addonskins",
+          :source "tukui",
+          :source-id 3,
+          :tag-list [:ui],
+          :updated-date "2019-11-17T23:02:23Z",
+          :url "https://www.tukui.org/addons.php?id=3"}
+         {:download-count 9,
+          :game-track-list ["retail" "classic"],
+          :label "Chinchilla",
+          :name "chinchilla",
+          :source "github",
+          :source-id "Ravendwyr/Chinchilla",
+          :tag-list [],
+          :updated-date "2019-10-19T15:07:07Z",
+          :url "https://github.com/Ravendwyr/Chinchilla"}]
+        expected {:spec {:version 2}
+                  :datestamp "2020-02-20"
+                  :total 4
+                  :addon-summary-list expected-addon-list}]
+
+    (testing "a v1 (wowman-era) catalogue spec can be processed and coerced to a valid v2 spec"
+      (is (= expected (catalogue/read-catalogue v1-catalogue-path))))
+
+    (testing "a v2 (strongbox-era) catalogue spec can be read and validated as a v2 spec"
+      (is (= expected (catalogue/read-catalogue v2-catalogue-path))))))
 

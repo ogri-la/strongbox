@@ -47,6 +47,7 @@ see CHANGELOG.md for a more formal list of changes by release
             - they can specify their own catalogs using the :source attribute
             - their addon entries must still specify a supported :source
                 - it can be :curseforge, :wowinterface, :github, :tukui, :tukui-classic
+
     - support catalog-less strongbox
         - application should be able to work with no catalogues specified
             - can't search for or install addons
@@ -61,6 +62,17 @@ see CHANGELOG.md for a more formal list of changes by release
         - not strings
         - done
 
+    - normalise categories between addon hosts
+        - perhaps expand them into 'tags'?
+        - a lot of these categories are composite
+            - break each composite one down into a singular, normalise, have a unique set of tags
+
+    - remove 'updated' date
+        - should have been removed when updating catalogues was removed
+
+    - bumps spec version of catalogue to 2
+        - keep wowman-coercer but dispatch based off of spec version
+
 * remove backwards compatibility
     - remove nfo-v1
         - 'map?' just isn't good enough
@@ -72,19 +84,10 @@ see CHANGELOG.md for a more formal list of changes by release
 ### todo
 
 * catalogue updates
-    - normalise categories between addon hosts
-        - perhaps expand them into 'tags'?
-        - a lot of these categories are composite
-            - break each composite one down into a singular, normalise, have a unique set of tags
 
     - publish a 'strongbox-catalogue' repo
         - just like wowman-data, but for strongbox
 
-    - remove 'updated' date
-        - should have been removed when updating catalogues was removed
-    
-    - bumps spec version of catalogue to 2
-        - keep wowman-coercer but dispatch based off of spec version
 
 * bug, test fixtures for user-config had their :catalog value renamed to :catalogue
         - revert those changes
@@ -95,17 +98,18 @@ see CHANGELOG.md for a more formal list of changes by release
     * I have a better understanding of their nature now
         - as part of the diagramming, sketch out the fields to be captured
 
-* rename wowman
-    - rename repository
-    - arch package
-        - add new shell script 'strongbox'
-
 * database, investigate a datalog backed datastore
     - https://clojure.github.io/clojure-contrib/doc/datalog.html
     - https://github.com/tonsky/datascript
     - crux is working out elsewhere
     - I want addons loaded *quickly*
     - I want to *query* addons *quickly*
+
+* rename wowman
+    - rename repository
+    - arch package
+        - add new shell script 'strongbox'
+
 
 ## todo bucket (no particular order)
 

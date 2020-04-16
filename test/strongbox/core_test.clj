@@ -216,13 +216,11 @@
           every-addon-api (slurp (fixture-path "curseforge-api-addon--everyaddon.json"))
           every-other-addon-api (slurp (fixture-path "curseforge-api-addon--everyotheraddon.json"))
 
-          addon-summary-list (utils/load-json-file (fixture-path "import-export--dummy-catalogue.json"))
-          dummy-catalogue (assoc (catalogue/new-catalogue [])
-                                 :addon-summary-list addon-summary-list)
+          dummy-catalogue (slurp (fixture-path "import-export--dummy-catalogue.json"))
 
           fake-routes {;; catalogue
                        "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
-                       {:get (fn [req] {:status 200 :body (utils/to-json dummy-catalogue)})}
+                       {:get (fn [req] {:status 200 :body dummy-catalogue})}
 
                        ;; every-addon
                        "https://addons-ecs.forgesvc.net/api/v2/addon/1"
@@ -299,14 +297,11 @@
           every-addon-api (slurp (fixture-path "curseforge-api-addon--everyaddon.json"))
           every-other-addon-api (slurp (fixture-path "curseforge-api-addon--everyotheraddon-classic.json"))
 
-          addon-summary-list (utils/load-json-file (fixture-path "import-export--dummy-catalogue.json"))
-
-          dummy-catalogue (assoc (catalogue/new-catalogue [])
-                                 :addon-summary-list addon-summary-list)
+          dummy-catalogue (slurp (fixture-path "import-export--dummy-catalogue.json"))
 
           fake-routes {;; catalogue
                        "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
-                       {:get (fn [req] {:status 200 :body (utils/to-json dummy-catalogue)})}
+                       {:get (fn [req] {:status 200 :body dummy-catalogue})}
 
                        ;; every-addon
                        "https://addons-ecs.forgesvc.net/api/v2/addon/1"
@@ -404,8 +399,9 @@
                                      :exposeAsAlternative nil}]}
           alt-api-result (assoc-in api-result [:latestFiles 0 :displayName] "v8.20.00")
 
-          dummy-catalogue (assoc (catalogue/new-catalogue [])
-                                 :addon-summary-list [catalogue])
+          dummy-catalogue (merge (catalogue/new-catalogue [])
+                                 {:addon-summary-list [catalogue]
+                                  :spec {:version 1}})
 
           fake-routes {;; catalogue
                        "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
@@ -508,8 +504,10 @@
 
           expected (subs (:description addon-with-long-description) 0 255)
 
-          dummy-catalogue (assoc (catalogue/new-catalogue [])
-                                 :addon-summary-list [addon-with-long-description])
+          dummy-catalogue (merge (catalogue/new-catalogue [])
+                                 {:addon-summary-list [addon-with-long-description]
+                                  :spec {:version 1}})
+
           fake-routes {"https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
                        {:get (fn [req] {:status 200 :body (utils/to-json dummy-catalogue)})}}]
 

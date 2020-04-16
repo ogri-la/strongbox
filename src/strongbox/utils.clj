@@ -305,19 +305,22 @@
   [x]
   (if (fn? x) (x) x))
 
-(defn load-json-file-safely
+(defn-spec load-json-file-safely (s/or :ok ::sp/anything, :error nil?)
   "loads json file at given path with handling for common error cases (no file, bad data, invalid data)
   if :invalid-data? given, then a :data-spec must also be given else nothing happens and you get nil back"
-  [path & {:keys [no-file? bad-data? invalid-data? data-spec transform-map]}]
-  (if-not (fs/file? path)
-    (call-if-fn no-file?)
-    (let [data (load-json-file path transform-map)]
-      (cond
-        (not data) (call-if-fn bad-data?)
-        (and ;; both are present AND data is invalid
-         (and invalid-data? data-spec)
-         (not (s/valid? data-spec data))) (call-if-fn invalid-data?)
-        :else data))))
+  ([path ::sp/file]
+   (load-json-file-safely {}))
+  ([path ::sp/file, opts map?]
+   (let [{:keys [no-file? bad-data? invalid-data? data-spec transform-map]} opts]
+     (if-not (fs/file? path)
+       (call-if-fn no-file?)
+       (let [data (load-json-file path transform-map)]
+         (cond
+           (not data) (call-if-fn bad-data?)
+           (and ;; both are present AND data is invalid
+            (and invalid-data? data-spec)
+            (not (s/valid? data-spec data))) (call-if-fn invalid-data?)
+           :else data))))))
 
 (defn-spec load-edn-file any?
   [path ::sp/extant-file]

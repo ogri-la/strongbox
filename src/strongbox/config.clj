@@ -135,19 +135,19 @@
   returns an empty map if file is missing or malformed."
   [cfg-file ::sp/file]
   (utils/load-json-file-safely cfg-file
-                               :no-file? #(do (warn "configuration file not found: " cfg-file) {})
-                               :bad-data? #(do (error "configuration file malformed: " cfg-file) {})
-                               :transform-map {:selected-catalogue keyword
-                                               :gui-theme keyword
-                                               :game-track keyword
+                               {:no-file? #(do (warn "configuration file not found: " cfg-file) {})
+                                :bad-data? #(do (error "configuration file malformed: " cfg-file) {})
+                                :transform-map {:selected-catalogue keyword
+                                                :gui-theme keyword
+                                                :game-track keyword
                                                ;; too general, not great :(
-                                               :name keyword}))
+                                                :name keyword}}))
 
 (defn-spec load-etag-db-file map?
   "reads etag database from given file.
   if file is missing or malformed, returns an empty map"
   [etag-db-file ::sp/file]
-  (utils/load-json-file-safely etag-db-file :no-file? {} :bad-data? {}))
+  (utils/load-json-file-safely etag-db-file {:no-file? {} :bad-data? {}}))
 
 (defn load-settings
   "reads config files and returns a map of configuration settings that can be merged over `core/state`"
