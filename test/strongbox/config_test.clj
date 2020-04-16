@@ -160,7 +160,7 @@
                     :selected-addon-dir nil}]
       (is (= expected (config/handle-selected-addon-dir given))))))
 
-(deftest load-settings
+(deftest load-settings-0.9
   (testing "a standard config file circa 0.9 is loaded and parsed as expected"
     (let [cli-opts {}
           cfg-file (fixture-path "user-config-0.9.json")
@@ -185,8 +185,9 @@
                                                  {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]}
                     :etag-db {}}]
 
-      (is (= expected (config/load-settings cli-opts cfg-file etag-db-file)))))
+      (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))
 
+(deftest load-settings-0.10
   (testing "a standard config file circa 0.10 is loaded and parsed as expected"
     (let [cli-opts {}
           cfg-file (fixture-path "user-config-0.10.json")
@@ -211,8 +212,9 @@
                                                  {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]}
                     :etag-db {}}]
 
-      (is (= expected (config/load-settings cli-opts cfg-file etag-db-file)))))
+      (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))
 
+(deftest load-settings-0.11
   (testing "a standard config file circa 0.11 is loaded and parsed as expected"
     (let [cli-opts {}
           cfg-file (fixture-path "user-config-0.11.json")
@@ -237,8 +239,9 @@
                                 :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail}
                                                  {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]}
                     :etag-db {}}]
-      (is (= expected (config/load-settings cli-opts cfg-file etag-db-file)))))
+      (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))
 
+(deftest load-settings-0.12
   (testing "a standard config file circa 0.12 is loaded and parsed as expected"
     (let [cli-opts {}
           cfg-file (fixture-path "user-config-0.12.json")
@@ -262,8 +265,9 @@
                                 :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail}
                                                  {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]}
                     :etag-db {}}]
-      (is (= expected (config/load-settings cli-opts cfg-file etag-db-file)))))
+      (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))
 
+(deftest load-settings-1.0
   (testing "a standard config file circa 1.0 is loaded and parsed as expected"
     (let [cli-opts {}
           cfg-file (fixture-path "user-config-1.0.json")
