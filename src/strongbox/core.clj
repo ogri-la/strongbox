@@ -917,12 +917,12 @@
                                   (download-current-catalogue)
                                   (catalogue/read-catalogue
                                    catalogue-path
-                                   :bad-data? (fn []
-                                                (error "please report this! https://github.com/ogri-la/strongbox/issues")
-                                                (error "catalogue *still* corrupted and cannot be loaded. try another catalogue from the 'catalogue' menu"))))
+                                   {:bad-data? (fn []
+                                                 (error "please report this! https://github.com/ogri-la/strongbox/issues")
+                                                 (error "catalogue *still* corrupted and cannot be loaded. try another catalogue from the 'catalogue' menu"))}))
 
-          catalogue-data (catalogue/read-catalogue catalogue-path :bad-data? bad-json-file-handler)
-          user-catalogue-data (catalogue/read-catalogue (paths :user-catalogue-file) :bad-data? nil)
+          catalogue-data (catalogue/read-catalogue catalogue-path {:bad-data? bad-json-file-handler})
+          user-catalogue-data (catalogue/read-catalogue (paths :user-catalogue-file) {:bad-data? nil})
 
           final-catalogue (catalogue/merge-catalogues catalogue-data user-catalogue-data)]
       (when-not (empty? final-catalogue)

@@ -69,18 +69,20 @@
           (update-in [:addon-summary-list] (partial mapv row-coerce))
           (assoc-in [:spec :version] 2)))))
 
-(defn read-catalogue
+(defn-spec read-catalogue (s/or :ok ::sp/catalogue, :error nil?)
   "reads the catalogue of addon data at the given `catalogue-path`.
   supports reading legacy catalogues by dispatching on the `[:spec :version]` number."
-  [catalogue-path & {:as opts}]
-  ;; cheshire claims to be twice as fast: https://github.com/dakrone/cheshire#speed
-  (let [opts (merge opts {:transform-map {;; tag list is only present from v2+ and won't affect v1
-                                          :tag-list #(mapv keyword %)}})
-        catalogue-data (apply utils/load-json-file-safely (apply concat [catalogue-path] opts))]
-    (if (= 1 (-> catalogue-data :spec :version))
-      ;; wowman-era catalogues
-      (utils/nilable (catalogue-v1-coercer catalogue-data))
-      (utils/nilable catalogue-data))))
+  ([catalogue-path ::sp/file]
+   (read-catalogue catalogue-path {}))
+  ([catalogue-path ::sp/file, opts map?]
+   ;; cheshire claims to be twice as fast: https://github.com/dakrone/cheshire#speed
+   (let [opts (merge opts {:transform-map {;; tag list is only present from v2+ and won't affect v1
+                                           :tag-list #(mapv keyword %)}})
+         catalogue-data (apply utils/load-json-file-safely (apply concat [catalogue-path] opts))]
+     (if (= 1 (-> catalogue-data :spec :version))
+       ;; wowman-era catalogues
+       (utils/nilable (catalogue-v1-coercer catalogue-data))
+       (utils/nilable catalogue-data)))))
 
 (defn-spec write-catalogue ::sp/extant-file
   "write catalogue to given `output-file` as JSON. returns path to output file"
