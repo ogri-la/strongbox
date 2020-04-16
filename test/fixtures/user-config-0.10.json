@@ -1,5 +1,5 @@
 {
-  "selected-catalogue" : "full",
+  "selected-catalog" : "full",
   "debug?" : true,
   "addon-dir-list" : [ {
     "addon-dir" : "/tmp/.strongbox-bar",
