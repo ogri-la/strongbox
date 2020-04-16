@@ -216,15 +216,11 @@
           every-addon-api (slurp (fixture-path "curseforge-api-addon--everyaddon.json"))
           every-other-addon-api (slurp (fixture-path "curseforge-api-addon--everyotheraddon.json"))
 
-          ;; todo: this dummy catalogue munging is getting out of hand
-          addon-summary-list (utils/load-json-file (fixture-path "import-export--dummy-catalogue.json"))
-          dummy-catalogue (merge (catalogue/new-catalogue [])
-                                 {:addon-summary-list addon-summary-list
-                                  :spec {:version 1}})
+          dummy-catalogue (slurp (fixture-path "import-export--dummy-catalogue.json"))
 
           fake-routes {;; catalogue
                        "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
-                       {:get (fn [req] {:status 200 :body (utils/to-json dummy-catalogue)})}
+                       {:get (fn [req] {:status 200 :body dummy-catalogue})}
 
                        ;; every-addon
                        "https://addons-ecs.forgesvc.net/api/v2/addon/1"
@@ -301,15 +297,11 @@
           every-addon-api (slurp (fixture-path "curseforge-api-addon--everyaddon.json"))
           every-other-addon-api (slurp (fixture-path "curseforge-api-addon--everyotheraddon-classic.json"))
 
-          addon-summary-list (utils/load-json-file (fixture-path "import-export--dummy-catalogue.json"))
-
-          dummy-catalogue (merge (catalogue/new-catalogue [])
-                                 {:addon-summary-list addon-summary-list
-                                  :spec {:version 1}})
+          dummy-catalogue (slurp (fixture-path "import-export--dummy-catalogue.json"))
 
           fake-routes {;; catalogue
                        "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
-                       {:get (fn [req] {:status 200 :body (utils/to-json dummy-catalogue)})}
+                       {:get (fn [req] {:status 200 :body dummy-catalogue})}
 
                        ;; every-addon
                        "https://addons-ecs.forgesvc.net/api/v2/addon/1"
