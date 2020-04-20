@@ -148,7 +148,7 @@
   (let [xdg-open #(browser "xdg-open")
         gnome-open #(browser "gnome-open")
         kde-open #(browser "kde-open")
-        fail (constantly #(error "failed to find anything to open URL with:" (str %)))]
+        fail (constantly #(error "failed to find a program to open URL:" (str %)))]
     (loop [lst [java-browser xdg-open gnome-open kde-open fail]]
       (if-let [browser-fn ((first lst))]
         browser-fn
