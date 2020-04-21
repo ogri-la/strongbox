@@ -20,9 +20,9 @@ Just for my own reference
     - update README with link to new screenshot
 * run lein pom
 * commit + push
-* open a pr for master
+* open a pr for MASTER branch
 * review the changes to be merged in to master!
-    - release 0.12.1 was completely missing the intended fix
+    - release 0.12.1 was completely missing the intended fix!
 * wait for build to successfully complete
     - if build fails
         - fix fail
@@ -39,6 +39,7 @@ Just for my own reference
     - https://travis-ci.org/ogri-la/wowman
 * update github release information with that from changelog
 
+
 * checkout develop
 * merge changes from master
     - resolve conflicts etc
@@ -47,6 +48,8 @@ Just for my own reference
     - change version to next version 
     - add "-unreleased" after it
 * commit+push
+
+
 * download release sum file to /tmp
     - cat sumfile
 * update wowman-pkgbuild/PKGBUILD

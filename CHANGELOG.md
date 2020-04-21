@@ -14,6 +14,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## 0.12.4 - 2020-04-22
+
+### Changed
+
+* clicking a link will now try the Java way of opening a URL, then look for `xdg-open`, `gnome-open` and `kde-open` to open URL
+    - if nothing is found at all you will get an error in the console
+
+### Fixed
+
+* fixes an exception that is raised by clicking a link when Java cannot detect your 'desktop' or a means to open URLs
+
+### Removed
+
 ## 0.12.3 - 2020-02-23
 
 ### Fixed
