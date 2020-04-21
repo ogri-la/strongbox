@@ -488,7 +488,7 @@
       :else nil)))
 
 (defn-spec guess-game-track ::sp/game-track
-  "give a map of addon data, attempts to guess the most likely game track it belongs to"
+  "given a map of addon data, attempts to guess the most likely game track it belongs to"
   [install-dir ::sp/extant-dir, addon map?]
   (or (:game-track addon) ;; from reading an export record. most of the time this value won't be here
       (:installed-game-track addon) ;; re-use the value we have if updating an existing addon
@@ -905,8 +905,7 @@
   []
   (when (and (not (db-catalogue-loaded?))
              (current-catalogue))
-    (let [catalogue-source (current-catalogue)
-          catalogue-path (catalogue-local-path catalogue-source)
+    (let [catalogue-path (catalogue-local-path (current-catalogue))
           _ (info (format "loading catalogue '%s'" (name (get-state :cfg :selected-catalogue))))
           _ (debug "loading addon summaries from catalogue into database:" catalogue-path)
 
@@ -1188,7 +1187,7 @@
         upgrade-nfo (partial -upgrade-nfo install-dir)]
     (->> (get-state)
          :installed-addon-list
-         (filter has-nfo-file?) ;; only upgrade addons that nfo files
+         (filter has-nfo-file?) ;; only upgrade addons that have nfo files
          (remove has-valid-nfo-file?) ;; skip good nfo files
          (mapv upgrade-nfo)))
   nil)
@@ -1212,7 +1211,7 @@
   ;; 2019-06-30, travis is failing with 403: Forbidden. Moved to gui init
   ;;(latest-strongbox-release) ;; check for updates after everything else is done 
 
-  (upgrade-nfo-files)     ;; otherwise nfo data is only updated when an addon is installed/upgraded
+  (upgrade-nfo-files)     ;; otherwise nfo data is only updated when an addon is installed or updated
 
   (save-settings)         ;; seems like a good place to preserve the etag-db
   nil)
