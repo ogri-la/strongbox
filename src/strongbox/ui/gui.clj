@@ -97,11 +97,6 @@
   [_]
   nil)
 
-(defn-spec browse-to nil?
-  "given a URI, open a browser window with it"
-  [url ::sp/url]
-  (.browse (java.awt.Desktop/getDesktop) (java.net.URI. url)))
-
 (defn handler
   "returns a function that calls each given argument function sequentially, discards result, returns nil"
   [& fn-list]
@@ -123,6 +118,47 @@
   (fn [_]
     (doseq [f fl]
       (async f))))
+
+(defn-spec browser (s/or :ok fn? :error nil?)
+  "given the name of a binary, returns a function that will open a given URL in a browser or nil if 
+  the binary cannot be found."
+  [bin string?]
+  (try
+    (when (->> bin (clojure.java.shell/sh "which") :exit (= 0))
+      (fn [url]
+        (info (format "opening URL with %s: %s" bin url))
+        (clojure.java.shell/sh bin url)))
+    (catch Exception uncaught-exception
+      (error uncaught-exception "failed to call `which`"))))
+
+(defn-spec java-browser (s/or :ok fn? :error nil?)
+  "returns a function that will open a given URL in a browser, or nil if 
+  current Desktop is not supported"
+  []
+  (when (and (java.awt.Desktop/isDesktopSupported)
+             (.isSupported (java.awt.Desktop/getDesktop) java.awt.Desktop$Action/BROWSE))
+    (fn [url]
+      (info "opening URL:" url)
+      (.browse (java.awt.Desktop/getDesktop) (java.net.URL. uri)))))
+
+(defn-spec find-browser fn?
+  "returns a function that attempts to open a given URL in a browser.
+  Prints an error message to console if URL cannot be opened."
+  []
+  (let [xdg-open #(browser "xdg-open")
+        gnome-open #(browser "gnome-open")
+        kde-open #(browser "kde-open")
+        fail (constantly #(error "failed to find a program to open URL:" (str %)))]
+    (loop [lst [java-browser xdg-open gnome-open kde-open fail]]
+      (if-let [browser-fn ((first lst))]
+        browser-fn
+        (recur (rest lst))))))
+
+(defn-spec browse-to nil?
+  "given a URL, open a browser window with it"
+  [url ::sp/url]
+  (future-call #((find-browser) url))
+  nil)
 
 (defn selected-rows-handler
   "calls given `f` with last event when selection has stopped adjusting"
