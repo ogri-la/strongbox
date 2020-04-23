@@ -4,7 +4,7 @@
   :license {:name "GNU Affero General Public License (AGPL)"
             :url "https://www.gnu.org/licenses/agpl-3.0.en.html"}
 
-  :dependencies [[org.clojure/clojure "1.9.0"]
+  :dependencies [[org.clojure/clojure "1.10.1"]
                  [org.clojure/spec.alpha "0.2.176"]
                  [org.clojure/tools.cli "0.4.2"] ;; cli arg parsing
                  [org.clojure/tools.namespace "0.2.11"] ;; reload code
@@ -30,6 +30,8 @@
 
                  ;; remember to update the LICENCE.txt
                  ;; remember to update pom file (`lein pom`)
+
+                 [juxt/crux-core "20.04-1.8.2-alpha"]
 
                  ]
 
