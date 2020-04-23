@@ -183,6 +183,8 @@
   [http-err ::sp/http-error]
   (let [key (-> http-err (select-keys [:host :status]) vals set)]
     (condp (comp clojure.set/intersection =) key
+      #{"raw.github.com" 500} "Github: service is down. Check www.githubstatus.com and try again later."
+
       ;; github api quota exceeded OR github thinks we were making requests too quickly
       #{"api.github.com" 403} "Github: we've exceeded our request quota and have been blocked for an hour."
 
@@ -204,25 +206,25 @@
     ;; otherwise, scream and yell and return nil
     (error (http-error http-resp))))
 
-;;(defn-spec download (s/or :ok ::sp/http-resp, :error ::sp/http-error)
-;;  [url ::sp/url, message ::sp/short-string]
-(defn download
-  [url & {:keys [message]}]
-  (let [output-file nil
-        resp (-download url output-file message {})]
-    (cond
-      (http-error? resp) resp ;; error http response
-      (map? resp) (:body resp) ;; regular http response + caching disabled
-      (fs/file? resp) (slurp resp)))) ;; file on disk + caching enabled
+(defn-spec download (s/or :ok-file ::sp/extant-file, :ok-body string?, :error ::sp/http-error)
+  ([url ::sp/url]
+   (download url nil))
+  ([url ::sp/url, message (s/nilable ::sp/short-string)]
+   (let [output-file nil
+         resp (-download url output-file message {})]
+     (cond
+       (http-error? resp) resp ;; error http response
+       (map? resp) (:body resp) ;; regular http response + caching disabled
+       (fs/file? resp) (slurp resp))))) ;; file on disk + caching enabled
 
-;;(defn-spec download-file (s/or :file ::sp/extant-file, :error ::sp/http-error)
-;;  [url ::sp/url, output-file ::sp/file, & {:keys [message]}]
-(defn download-file
-  [url, output-file, & {:keys [message]}]
-  (let [resp (-download url output-file message {:as :stream})]
-    (if-not (http-error? resp)
-      output-file
-      resp)))
+(defn-spec download-file (s/or :file ::sp/extant-file, :error ::sp/http-error)
+  ([url ::sp/url, output-file ::sp/file]
+   (download-file url output-file nil))
+  ([url ::sp/url, output-file ::sp/file, message (s/nilable ::sp/short-string)]
+   (let [resp (-download url output-file message {:as :stream})]
+     (if-not (http-error? resp)
+       output-file
+       resp))))
 
 (defn-spec prune-cache-dir nil?
   "deletes files in the given `cache-dir` that are older than the `expiry-offset-hours`"

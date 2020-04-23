@@ -7,6 +7,7 @@
    [clojure.tools.namespace.repl :as tn :refer [refresh]]
    [clojure.string :refer [lower-case]]
    [me.raynes.fs :as fs]
+   [taoensso.tufte :as tufte :refer [p profile]]
    [strongbox
     [logging :as logging]
     [core :as core]
@@ -21,6 +22,8 @@
  (reify Thread$UncaughtExceptionHandler
    (uncaughtException [_ thread ex]
      (error ex "Uncaught exception on" (.getName thread)))))
+
+(tufte/add-basic-println-handler! {})
 
 (defn watch-for-gui-restart
   "monitors application state for requests to restart the gui.
@@ -47,10 +50,11 @@
 
 (defn start
   [& [cli-opts]]
-  (core/start (or cli-opts {}))
-  (if (= :cli (:ui cli-opts))
-    (cli/start cli-opts)
-    (gui/start))
+  (profile {}
+           (p :core-start (core/start (or cli-opts {})))
+           (if (= :cli (:ui cli-opts))
+             (p :ui-start (cli/start cli-opts))
+             (p :gui-start (gui/start))))
 
   (watch-for-gui-restart)
 

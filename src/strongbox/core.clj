@@ -6,6 +6,7 @@
    [clojure.spec.alpha :as s]
    [orchestra.spec.test :as st]
    [orchestra.core :refer [defn-spec]]
+   [taoensso.tufte :as tufte :refer [p profile]]
    [me.raynes.fs :as fs]
    [trptcolin.versioneer.core :as versioneer]
    [envvar.core :refer [env]]
@@ -690,8 +691,9 @@
   [catalogue-source ::sp/catalogue-source-map]
   (binding [http/*cache* (cache)]
     (let [remote-catalogue (:source catalogue-source)
-          local-catalogue (catalogue-local-path catalogue-source)]
-      (http/download-file remote-catalogue local-catalogue :message (format "downloading catalogue '%s'" (:label catalogue-source))))))
+          local-catalogue (catalogue-local-path catalogue-source)
+          message (format "downloading catalogue '%s'" (:label catalogue-source))]
+      (http/download-file remote-catalogue local-catalogue message))))
 
 (defn-spec download-current-catalogue (s/or :ok ::sp/extant-file, :error nil?)
   "downloads the currently selected (or default) catalogue. 
@@ -1020,7 +1022,7 @@
   (binding [http/*cache* (cache)]
     (let [message "downloading strongbox version data"
           url "https://api.github.com/repos/ogri-la/wowman/releases/latest"
-          resp (utils/from-json (http/download url :message message))]
+          resp (utils/from-json (http/download url message))]
       (-> resp :tag_name))))
 
 (defn-spec latest-strongbox-version? boolean?
@@ -1196,25 +1198,26 @@
 
 (defn refresh
   [& _]
-  (download-current-catalogue)      ;; downloads the big long list of addon information stored on github
+  (profile {}
+           (p :p2/download-catalogue (download-current-catalogue))      ;; downloads the big long list of addon information stored on github
 
-  (db-init)               ;; creates an in-memory database and some empty tables
+           (p :p2/db-init (db-init))               ;; creates an in-memory database and some empty tables
 
-  (load-installed-addons) ;; parse toc files in install-dir. do this first so we see *something* while catalogue downloads (next)
+           (p :p2/load-addons (load-installed-addons)) ;; parse toc files in install-dir. do this first so we see *something* while catalogue downloads (next)
 
-  (db-load-catalogue)       ;; load the contents of the catalogue into the database
+           (p :p2/load-catalogue (db-load-catalogue))       ;; load the contents of the catalogue into the database
 
-  (match-installed-addons-with-catalogue) ;; match installed addons to those in catalogue
+           (p :p2/match-addons (match-installed-addons-with-catalogue)) ;; match installed addons to those in catalogue
 
-  (check-for-updates)     ;; for those addons that have matches, download their details
+           (p :p2/check-addons (check-for-updates))     ;; for those addons that have matches, download their details
 
   ;; 2019-06-30, travis is failing with 403: Forbidden. Moved to gui init
   ;;(latest-strongbox-release) ;; check for updates after everything else is done 
 
-  (upgrade-nfo-files)     ;; otherwise nfo data is only updated when an addon is installed or updated
+           (p :p2/upgrade-nfo (upgrade-nfo-files))     ;; otherwise nfo data is only updated when an addon is installed or updated
 
-  (save-settings)         ;; seems like a good place to preserve the etag-db
-  nil)
+           (p :p2/save-settings (save-settings))         ;; seems like a good place to preserve the etag-db
+           nil))
 
 (defn-spec -install-update-these nil?
   [updateable-toc-addons (s/coll-of ::sp/addon-or-toc-addon)]
@@ -1367,7 +1370,7 @@
     (when (-> path name (clojure.string/ends-with? "-dir"))
       (debug (format "creating '%s' directory: %s" path val))
       (fs/mkdirs val)))
-  (http/prune-cache-dir (paths :cache-dir))
+  (p :prune-cache-dir (http/prune-cache-dir (paths :cache-dir)))
   nil)
 
 (defn-spec set-paths! nil?
@@ -1387,14 +1390,14 @@
 
 (defn start
   [& [cli-opts]]
-  (-start)
+  (p :p1/atom-wrangle (-start))
   (info "starting app")
-  (set-paths!)
-  (detect-repl!)
-  (init-dirs)
-  (load-settings! cli-opts)
-  (watch-for-addon-dir-change)
-  (watch-for-catalogue-change)
+  (p :p1/set-paths (set-paths!))
+  (p :p1/detect-repl (detect-repl!))
+  (p :p1/init-dirs (init-dirs))
+  (p :p1/load-settings (load-settings! cli-opts))
+  (p :p1/set-watch-1 (watch-for-addon-dir-change))
+  (p :p1/set-watch-2 (watch-for-catalogue-change))
 
   state)
 

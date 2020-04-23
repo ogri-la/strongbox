@@ -26,11 +26,11 @@
                  [seancorfield/next.jdbc "1.0.6"]
 
 
-                 [gui-diff "0.6.7"]
-
                  ;; remember to update the LICENCE.txt
                  ;; remember to update pom file (`lein pom`)
 
+                 [gui-diff "0.6.7"]
+                 [com.taoensso/tufte "2.1.0"]
                  ]
 
   ;; java 11 , java-time localisation issue 
