@@ -111,6 +111,16 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* robustness, only download/update the catalogue *after* an existing catalogue has been confirmed
+    - github is down, wowman is erroring with a 500
+    - failure to download a catalogue shouldn't prevent addons from being displayed
+    - bundle a catalogue with the installation?
+        - load it as a resource with static-slurp, like we do with the sql?
+            - also compressed so it's tiny?
+        - behind the scenes we download and load the full-catalogue
+            - would this block reconciliation?
+                - perhaps if there are unmatched addons after reconciliation we then wait and try again ...?
+
 * game track list in catalogue
     - can game-track-list be included from all other hosts?
         - not just wowi?
