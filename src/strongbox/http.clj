@@ -13,6 +13,7 @@
    [trptcolin.versioneer.core :as versioneer]
    [clj-http.client :as client]))
 
+;; todo: revisit this value
 (def expiry-offset-hours 24) ;; hours
 (def ^:dynamic *cache* nil)
 
@@ -223,28 +224,14 @@
       output-file
       resp)))
 
-;; deprecated, to be removed in 0.10.0
-;; both curseforge and wowinterface catalogues are needed to scrape their respective updates
-;; settle for some cache misses as we delete these files on startup then download them again for a scrape?
-;; becomes less relevant as scrapes become automated
-(defn-spec prune-old-curseforge-files nil?
-  "curseforge.json may be hanging around in the cache-dir or in the parent (:data-dir)"
-  [cache-dir ::sp/extant-dir]
-  (let [cache-cf-file (join cache-dir "curseforge.json")
-        data-cf-file (join (fs/parent cache-dir) "curseforge.json")]
-    (when (fs/exists? cache-cf-file)
-      (fs/delete cache-cf-file))
-    (when (fs/exists? data-cf-file)
-      (fs/delete data-cf-file)))
-  nil)
-
 (defn-spec prune-cache-dir nil?
+  "deletes files in the given `cache-dir` that are older than the `expiry-offset-hours`"
   [cache-dir ::sp/extant-dir]
-  ;;(prune-old-curseforge-files cache-dir) ;; this is problematic when generating the curseforge catalogue
-  (doseq [cache-file (fs/list-dir cache-dir)
-          :when (and (fs/file? cache-file)
-                     (utils/file-older-than (str cache-file) (* 2 expiry-offset-hours)))]
-    (warn "deleting cached file (expired):" cache-file)
-    (fs/delete cache-file)))
+  (let [expiry-date (* 2 expiry-offset-hours)]
+    (doseq [cache-file (fs/list-dir cache-dir)
+            :when (and (fs/file? cache-file)
+                       (utils/file-older-than (str cache-file) expiry-date))]
+      (fs/delete cache-file)
+      (debug "deleted expired cache file:" cache-file))))
 
 (st/instrument)
