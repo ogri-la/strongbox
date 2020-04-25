@@ -42,20 +42,15 @@
 
 (defmacro buffered-log
   "macro. returns a list of log entries made while executing the given form"
-  [level form]
+  [level & form]
   `(let [stateful-buffer# (atom [])
          appender# (fn [data#]
                      (swap! stateful-buffer# into [(force (:msg_ data#))]))]
-     ;; doesn't work. I suspect it has something to do with compile vs dynamic
-     ;; https://github.com/ptaoussanis/timbre#log-levels-and-ns-filters
-     ;; (add-appender :-temp appender# {:level ~level})
-     (add-appender :-temp appender#)
-     (try
-       (logging/with-level ~level
-         (do ~form))
-       (deref stateful-buffer#)
-       (finally
-         (rm-appender! :-temp)))))
+     (logging/with-merged-config {:level ~level,
+                                  :appenders {:-temp {:fn appender#
+                                                      :enabled? true}}}
+       ~@form)
+     (deref stateful-buffer#)))
 
 (defn-spec change-log-level nil?
   [new-level keyword?]

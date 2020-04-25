@@ -25,6 +25,9 @@
     [toc]
     [specs :as sp]]))
 
+;; print profiling to stdout
+(tufte/add-basic-println-handler! {})
+
 ;; acquired when switching between catalogues so the old database is shutdown
 ;; properly in one thread before being recreated in another
 (def db-lock (Object.))
@@ -1199,26 +1202,38 @@
 
 (defn refresh
   [& _]
-  (profile {}
-           (p :p2/download-catalogue (download-current-catalogue))      ;; downloads the big long list of addon information stored on github
+  (profile
+   ;; enable profiling when log level is 'debug' and we're not testing
+   {:when (and (-> timbre/*config* :level (= :debug))
+               (not (-> timbre/*config* :testing?)))}
 
-           (p :p2/db-init (db-init))               ;; creates an in-memory database and some empty tables
+   ;; downloads the big long list of addon information stored on github
+   (p :p2/download-catalogue (download-current-catalogue))
 
-           (p :p2/installed-addons (load-installed-addons)) ;; parse toc files in install-dir. do this first so we see *something* while catalogue downloads (next)
+   ;; creates an in-memory database and some empty tables
+   (p :p2/db-init (db-init))
 
-           (p :p2/db (db-load-catalogue))       ;; load the contents of the catalogue into the database
+   ;; parse toc files in install-dir. do this first so we see *something* while catalogue downloads (next)
+   (p :p2/installed-addons (load-installed-addons))
 
-           (p :p2/match-addons (match-installed-addons-with-catalogue)) ;; match installed addons to those in catalogue
+   ;; load the contents of the catalogue into the database
+   (p :p2/db (db-load-catalogue))
 
-           (p :p2/check-addons (check-for-updates))     ;; for those addons that have matches, download their details
+   ;; match installed addons to those in catalogue
+   (p :p2/match-addons (match-installed-addons-with-catalogue))
 
-  ;; 2019-06-30, travis is failing with 403: Forbidden. Moved to gui init
-  ;;(latest-strongbox-release) ;; check for updates after everything else is done 
+   ;; for those addons that have matches, download their details
+   (p :p2/check-addons (check-for-updates))
 
-           (p :p2/upgrade-nfo (upgrade-nfo-files))     ;; otherwise nfo data is only updated when an addon is installed or updated
+   ;; 2019-06-30, travis is failing with 403: Forbidden. Moved to gui init
+   ;;(latest-strongbox-release) ;; check for updates after everything else is done 
 
-           (p :p2/save-settings (save-settings))         ;; seems like a good place to preserve the etag-db
-           nil))
+   ;; otherwise nfo data is only updated when an addon is installed or updated
+   (p :p2/upgrade-nfo (upgrade-nfo-files))
+
+   ;; seems like a good place to preserve the etag-db
+   (p :p2/save-settings (save-settings))
+   nil))
 
 (defn-spec -install-update-these nil?
   [updateable-toc-addons (s/coll-of ::sp/addon-or-toc-addon)]

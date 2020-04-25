@@ -183,6 +183,7 @@
   [http-err ::sp/http-error]
   (let [key (-> http-err (select-keys [:host :status]) vals set)]
     (condp (comp clojure.set/intersection =) key
+      ;; todo: test this
       #{"raw.github.com" 500} "Github: service is down. Check www.githubstatus.com and try again later."
 
       ;; github api quota exceeded OR github thinks we were making requests too quickly

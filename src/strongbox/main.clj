@@ -7,9 +7,7 @@
    [clojure.tools.namespace.repl :as tn :refer [refresh]]
    [clojure.string :refer [lower-case]]
    [me.raynes.fs :as fs]
-   [taoensso.tufte :as tufte :refer [p profile]]
    [strongbox
-    [logging :as logging]
     [core :as core]
     [utils :as utils :refer [in?]]]
    [gui.diff :refer [with-gui-diff]]
@@ -22,8 +20,6 @@
  (reify Thread$UncaughtExceptionHandler
    (uncaughtException [_ thread ex]
      (error ex "Uncaught exception on" (.getName thread)))))
-
-(tufte/add-basic-println-handler! {})
 
 (defn watch-for-gui-restart
   "monitors application state for requests to restart the gui.
@@ -50,12 +46,10 @@
 
 (defn start
   [& [cli-opts]]
-  (profile
-   {}
-   (p :core-start (core/start (or cli-opts {})))
-   (if (= :cli (:ui cli-opts))
-     (p :ui-start (cli/start cli-opts))
-     (p :gui-start (gui/start))))
+  (core/start (or cli-opts {}))
+  (if (= :cli (:ui cli-opts))
+    (cli/start cli-opts)
+    (gui/start))
 
   (watch-for-gui-restart)
 
@@ -75,8 +69,7 @@
 (defn test
   [& [ns-kw fn-kw]]
   (clojure.tools.namespace.repl/refresh) ;; reloads all namespaces, including strongbox.whatever-test ones
-  (try
-    (logging/change-log-level :debug)
+  (timbre/with-merged-config {:level :debug, :testing? true}
     (if ns-kw
       (if (some #{ns-kw} [:main :utils :http :specs :tags
                           :core :toc :nfo :zip :config :catalogue
@@ -89,9 +82,7 @@
             (clojure.test/test-vars [(resolve (symbol (str "strongbox." (name ns-kw) "-test") (name fn-kw)))])
             (clojure.test/run-all-tests (re-pattern (str "strongbox." (name ns-kw) "-test")))))
         (error "unknown test file:" ns-kw))
-      (clojure.test/run-all-tests #"strongbox\..*-test"))
-    (finally
-      (logging/change-log-level (:level logging/default-logging-config)))))
+      (clojure.test/run-all-tests #"strongbox\..*-test"))))
 
 ;;
 
