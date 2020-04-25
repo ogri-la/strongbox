@@ -853,19 +853,22 @@
 (defn-spec -db-load-catalogue nil?
   "loads the given `catalogue-data` into the database, creating categories and associations as necessary"
   [catalogue-data ::sp/catalogue]
-  (let [ds (get-db)
+  (let [ds (p :p2/db:load:get-db (get-db))
         {:keys [addon-summary-list]} catalogue-data
 
-        addon-categories (mapv (fn [{:keys [source-id source tag-list]}]
-                                 (mapv (fn [tag]
-                                         [source-id source (name tag)]) tag-list)) addon-summary-list)
+        addon-categories (p :p2/db:load:extract-category-data
+                            (mapv (fn [{:keys [source-id source tag-list]}]
+                                    (mapv (fn [tag]
+                                            [source-id source (name tag)]) tag-list)) addon-summary-list))
 
         ;; using `set` was a symptom of a problem with duplicate categories affecting curseforge
         ;; I think it's safest to leave it in for now
-        addon-categories (->> addon-categories utils/shallow-flatten set vec)
+        addon-categories (p :p2/db:load:normalise-category-data
+                            (->> addon-categories utils/shallow-flatten set vec))
 
         ;; distinct list of :categories
-        category-list (->> addon-categories (mapv rest) set vec)
+        category-list (p :p2/db:load:distinct-categories
+                         (->> addon-categories (mapv rest) set vec))
 
         xform-row (fn [row]
                     (let [ignored [:tag-list :age :game-track-list :created-date]
@@ -879,24 +882,22 @@
                       (-> row (utils/dissoc-all ignored) (rename-keys mapping) (merge new))))]
 
     (jdbc/with-transaction [tx ds]
-      ;;    1.703391 msec
-      ;; ~100 items
-      (time (sql/insert-multi! ds :category [:source :name] category-list))
-      ;;  871.427154 msec
-      ;; ~10k items
-      (time (doseq [row addon-summary-list]
-              (sql/insert! ds :catalogue (xform-row row))))
+      (p :p2/db:load:insert-category-data
+         (sql/insert-multi! ds :category [:source :name] category-list))
 
-      ;; 1337.340542 msec
-      ;; ~20k items (avg 2 categories per addon)
-      (time (let [category-map (db-query "select name, id from category")
-                  category-map (into {} (mapv (fn [{:keys [name id]}]
-                                                {name id}) category-map))]
+      (p :p2/db:load:insert-addon-category-relations
+         (doseq [row addon-summary-list]
+           (sql/insert! ds :catalogue (xform-row row))))
 
-              (doseq [[source-id source category] addon-categories]
-                (sql/insert! ds :addon_category {:addon_source source
-                                                 :addon_source_id source-id
-                                                 :category_id (get category-map category)})))))
+      (p :p2/db:load:insert-addons
+         (let [category-map (db-query "select name, id from category")
+               category-map (into {} (mapv (fn [{:keys [name id]}]
+                                             {name id}) category-map))]
+
+           (doseq [[source-id source category] addon-categories]
+             (sql/insert! ds :addon_category {:addon_source source
+                                              :addon_source_id source-id
+                                              :category_id (get category-map category)})))))
 
     (swap! state assoc :catalogue-size (query-db :catalogue-size)))
   nil)
@@ -922,12 +923,12 @@
                                                  (error "please report this! https://github.com/ogri-la/strongbox/issues")
                                                  (error "catalogue *still* corrupted and cannot be loaded. try another catalogue from the 'catalogue' menu"))}))
 
-          catalogue-data (catalogue/read-catalogue catalogue-path {:bad-data? bad-json-file-handler})
-          user-catalogue-data (catalogue/read-catalogue (paths :user-catalogue-file) {:bad-data? nil})
+          catalogue-data (p :p2/db:read-catalogue (catalogue/read-catalogue catalogue-path {:bad-data? bad-json-file-handler}))
+          user-catalogue-data (p :p2/db:read-user-catalogue (catalogue/read-catalogue (paths :user-catalogue-file) {:bad-data? nil}))
 
-          final-catalogue (catalogue/merge-catalogues catalogue-data user-catalogue-data)]
+          final-catalogue (p :p2/db:merge-catalogues (catalogue/merge-catalogues catalogue-data user-catalogue-data))]
       (when-not (empty? final-catalogue)
-        (-db-load-catalogue final-catalogue)))))
+        (p :p2/db:load (-db-load-catalogue final-catalogue))))))
 
 (defn-spec refresh-user-catalogue nil?
   "re-fetch each item in user catalogue using the URI and replace old entry with any updated details"
@@ -1203,9 +1204,9 @@
 
            (p :p2/db-init (db-init))               ;; creates an in-memory database and some empty tables
 
-           (p :p2/load-addons (load-installed-addons)) ;; parse toc files in install-dir. do this first so we see *something* while catalogue downloads (next)
+           (p :p2/installed-addons (load-installed-addons)) ;; parse toc files in install-dir. do this first so we see *something* while catalogue downloads (next)
 
-           (p :p2/load-catalogue (db-load-catalogue))       ;; load the contents of the catalogue into the database
+           (p :p2/db (db-load-catalogue))       ;; load the contents of the catalogue into the database
 
            (p :p2/match-addons (match-installed-addons-with-catalogue)) ;; match installed addons to those in catalogue
 
@@ -1390,14 +1391,14 @@
 
 (defn start
   [& [cli-opts]]
-  (p :p1/atom-wrangle (-start))
+  (-start)
   (info "starting app")
-  (p :p1/set-paths (set-paths!))
-  (p :p1/detect-repl (detect-repl!))
-  (p :p1/init-dirs (init-dirs))
-  (p :p1/load-settings (load-settings! cli-opts))
-  (p :p1/set-watch-1 (watch-for-addon-dir-change))
-  (p :p1/set-watch-2 (watch-for-catalogue-change))
+  (set-paths!)
+  (detect-repl!)
+  (init-dirs)
+  (load-settings! cli-opts)
+  (watch-for-addon-dir-change)
+  (watch-for-catalogue-change)
 
   state)
 

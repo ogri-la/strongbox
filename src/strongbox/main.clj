@@ -50,11 +50,12 @@
 
 (defn start
   [& [cli-opts]]
-  (profile {}
-           (p :core-start (core/start (or cli-opts {})))
-           (if (= :cli (:ui cli-opts))
-             (p :ui-start (cli/start cli-opts))
-             (p :gui-start (gui/start))))
+  (profile
+   {}
+   (p :core-start (core/start (or cli-opts {})))
+   (if (= :cli (:ui cli-opts))
+     (p :ui-start (cli/start cli-opts))
+     (p :gui-start (gui/start))))
 
   (watch-for-gui-restart)
 

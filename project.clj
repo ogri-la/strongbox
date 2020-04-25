@@ -41,7 +41,7 @@
   :main strongbox.main
 
   :plugins [[lein-cljfmt "0.6.4"]
-            [jonase/eastwood "0.3.5"]
+            [jonase/eastwood "0.3.10"]
             [lein-cloverage "1.1.1"]]
   :eastwood {:exclude-linters [:constant-test]
              :add-linters [:unused-namespaces
