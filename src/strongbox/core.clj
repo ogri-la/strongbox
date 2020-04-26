@@ -66,35 +66,43 @@
 
 (defn generate-path-map
   "generates filesystem paths whose location may vary based on the current working directory and environment variables.
-  this map of paths is generated during init and is then fixed in application state.
-  ensure the correct environment variables and cwd are set prior to init for proper isolation during tests"
+  this map of paths is generated during `init-dirs` and is then fixed in application state.
+  ensure the correct environment variables and cwd are set prior to init for proper isolation during tests."
   []
   (let [strongbox-suffix (fn [path]
                            (if-not (ends-with? path "/strongbox")
                              (join path "strongbox")
                              path))
 
+        ;; XDG_DATA_HOME=/foo/bar => /foo/bar/strongbox
+        ;; XDG_CONFIG_HOME=/baz/bup => /baz/bup/strongbox
+
         ;; https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
         ;; ignoring XDG_CONFIG_DIRS and XDG_DATA_DIRS for now
         config-dir (-> @env :xdg-config-home utils/nilable (or default-config-dir) expand-path strongbox-suffix)
         data-dir (-> @env :xdg-data-home utils/nilable (or default-data-dir) expand-path strongbox-suffix)
 
-        cache-dir (join data-dir "cache") ;; /home/you/.local/share/strongbox/cache
-
-        cfg-file (join config-dir "config.json") ;; /home/$you/.config/strongbox/config.json
-        etag-db-file (join data-dir "etag-db.json") ;; /home/$you/.local/share/strongbox/etag-db.json
-
-        user-catalogue (join data-dir "user-catalogue.json")
-
-        ;; ensure path ends with `-file` or `-dir` or `-url`
+        ;; ensure path ends with `-file` or `-dir` or `-url`.
+        ;; see `init-dirs`.
         path-map {:config-dir config-dir
                   :data-dir data-dir
-                  :cache-dir cache-dir
-                  :cfg-file cfg-file
-                  :etag-db-file etag-db-file
+                  :catalogue-dir data-dir
 
-                  :user-catalogue-file user-catalogue
-                  :catalogue-dir data-dir}]
+                  ;; todo: add to cache cleaning
+                  ;; /home/$you/.local/share/strongbox/profile-data
+                  :profile-data-dir (join data-dir "profile-data")
+
+                  ;; /home/$you/.local/share/strongbox/cache
+                  :cache-dir (join data-dir "cache")
+
+                  ;; /home/$you/.config/strongbox/config.json
+                  :cfg-file (join config-dir "config.json")
+
+                  ;; /home/$you/.local/share/strongbox/etag-db.json
+                  :etag-db-file (join data-dir "etag-db.json")
+
+                  ;; /home/$you/.local/share/strongbox/user-catalogue.json
+                  :user-catalogue-file (join data-dir "user-catalogue.json")}]
     path-map))
 
 (def -state-template
@@ -404,6 +412,7 @@
   (let [final-config (config/load-settings cli-opts (paths :cfg-file) (paths :etag-db-file))]
     (when (:verbosity cli-opts)
       (logging/change-log-level (:verbosity cli-opts)))
+    (logging/add-profiling-handler! (paths :profile-data-dir))
     (swap! state merge final-config))
   nil)
 

@@ -1,8 +1,12 @@
 (ns strongbox.logging
   (:require
    [taoensso.timbre :as logging :refer [spy]]
+   [taoensso.tufte :as tufte :refer [p profile]]
    [orchestra.core :refer [defn-spec]]
-   [orchestra.spec.test :as st]))
+   [orchestra.spec.test :as st]
+   [strongbox
+    [specs :as sp]
+    [utils :refer [join]]]))
 
 (defn anon-println-appender
   "removes the hostname from the output format string"
@@ -57,5 +61,22 @@
   (when new-level
     (logging/merge-config! {:level new-level}))
   nil)
+
+;;
+
+(defn-spec add-profiling-handler! nil?
+  "writes profiling data to a timestamped file in the given `output-dir`"
+  [output-dir ::sp/extant-dir]
+  (let [output-file (logging/spy :info (join output-dir (str (java-time/instant) ".pstats")))]
+    (tufte/add-handler!
+     :data-dir-logger "*"
+     (fn [data-map]
+       (try
+         (spit output-file (tufte/format-pstats (:pstats data-map) nil))
+         (catch Exception uncaught-exception
+           (logging/error uncaught-exception "uncaught exception attempting to write pstats file"))))))
+  nil)
+
+;;
 
 (st/instrument)
