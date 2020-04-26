@@ -112,6 +112,7 @@ see CHANGELOG.md for a more formal list of changes by release
 ## todo bucket (no particular order)
 
 * http, revisit the http/expiry-offset-hours value
+    - also, revisit prune-http-cache
 
 * performance, check addons for updates immediately after loading
     - if after we've read the nfo data and we have everything we need, check the addon for updates immediately

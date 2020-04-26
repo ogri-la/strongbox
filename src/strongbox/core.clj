@@ -181,6 +181,8 @@
   [& path]
   (nav-map (get themes (get-state :cfg :gui-theme)) path))
 
+;; db
+
 (defn as-unqualified-hyphenated-maps
   "used to coerce keys in each row of resultset
   adapted from https://github.com/seancorfield/next-jdbc/blob/master/doc/result-set-builders.md#rowbuilder-and-resultsetbuilder"
@@ -280,6 +282,8 @@
                      (mapv db-coerce-catalogue-values $))
 
     nil))
+
+;;
 
 (defn set-etag
   "convenient wrapper around adding and removing etag values from state map"
@@ -1000,16 +1004,55 @@
 
 ;; ui interface
 
-(defn-spec delete-cache! nil?
-  "deletes the 'cache' directory that contains scraped html files and the etag db file.
-  these are regenerated when missing"
+(defn-spec init-dirs nil?
   []
-  (warn "deleting cache")
+  ;; 2019-10-13: transplanted from `main/validate`
+  ;; this validation depends on paths that are not generated until application init
+
+  ;; data directory doesn't exist and parent directory isn't writable
+  ;; nowhere to create data dir, nowhere to store download catalogue. non-starter
+
+  (when (and
+         (not (fs/exists? (paths :data-dir))) ;; doesn't exist and ..
+         (not (utils/last-writeable-dir (paths :data-dir)))) ;; .. no writeable parent
+    (throw (RuntimeException. (str "Data directory doesn't exist and it cannot be created: " (paths :data-dir)))))
+
+  ;; state directory *does* exist but isn't writeable
+  ;; another non-starter
+  (when (and (fs/exists? (paths :data-dir))
+             (not (fs/writeable? (paths :data-dir))))
+    (throw (RuntimeException. (str "Data directory isn't writeable:" (paths :data-dir)))))
+
+  ;; ensure all '-dir' suffixed paths exist, creating them if necessary
+  (doseq [[path val] (paths)]
+    (when (-> path name (clojure.string/ends-with? "-dir"))
+      (debug (format "creating '%s' directory: %s" path val))
+      (fs/mkdirs val)))
+
+  nil)
+
+(defn-spec delete-log-files! nil?
+  "Deletes the 'logs' and 'profile-data' directories.
+  Files are written here when the log level is :debug (and we're not testing)."
+  []
+  (warn "deleting logs")
+  (fs/delete-dir (paths :log-data-dir))
+  (fs/delete-dir (paths :profile-data-dir))
+  (init-dirs))
+
+(defn-spec prune-http-cache! nil?
+  "deletes html/json files from the 'cache' directory that are older than a certain age."
+  []
+  (info "pruning http cache")
+  (http/prune-cache-dir (paths :cache-dir)))
+
+(defn-spec delete-http-cache! nil?
+  "Deletes the 'cache' directory that contains html/json files and the etag db file."
+  []
+  (warn "deleting http cache")
   (fs/delete-dir (paths :cache-dir))
   (fs/delete (paths :etag-db-file))
-
-  (fs/mkdirs (paths :cache-dir)) ;; todo: this and `init-dirs` needs revisiting
-  nil)
+  (init-dirs))
 
 (defn-spec delete-downloaded-addon-zips! nil?
   []
@@ -1029,9 +1072,10 @@
 
 (defn-spec clear-all-temp-files! nil?
   []
+  (delete-log-files!)
   (delete-downloaded-addon-zips!)
   (delete-catalogue-files!)
-  (delete-cache!))
+  (delete-http-cache!))
 
 ;; version checking
 
@@ -1381,33 +1425,6 @@
   []
   (state-bind [:cfg :selected-catalogue] (fn [_] (db-reload-catalogue))))
 
-(defn-spec init-dirs nil?
-  []
-  ;; 2019-10-13: transplanted from `main/validate`
-  ;; this validation depends on paths that are not generated until application init
-
-  ;; data directory doesn't exist and parent directory isn't writable
-  ;; nowhere to create data dir, nowhere to store download catalogue. non-starter
-
-  (when (and
-         (not (fs/exists? (paths :data-dir))) ;; doesn't exist and ..
-         (not (utils/last-writeable-dir (paths :data-dir)))) ;; .. no writeable parent
-    (throw (RuntimeException. (str "Data directory doesn't exist and it cannot be created: " (paths :data-dir)))))
-
-  ;; state directory *does* exist but isn't writeable
-  ;; another non-starter
-  (when (and (fs/exists? (paths :data-dir))
-             (not (fs/writeable? (paths :data-dir))))
-    (throw (RuntimeException. (str "Data directory isn't writeable:" (paths :data-dir)))))
-
-  ;; ensure all '-dir' suffixed paths exist, creating them if necessary
-  (doseq [[path val] (paths)]
-    (when (-> path name (clojure.string/ends-with? "-dir"))
-      (debug (format "creating '%s' directory: %s" path val))
-      (fs/mkdirs val)))
-  (p :prune-cache-dir (http/prune-cache-dir (paths :cache-dir)))
-  nil)
-
 (defn-spec set-paths! nil?
   []
   (swap! state assoc :paths (generate-path-map))
@@ -1430,6 +1447,7 @@
   (set-paths!)
   (detect-repl!)
   (init-dirs)
+  (prune-http-cache!) ;; 2020-04: used to be part of init-dirs
   (load-settings! cli-opts)
   (watch-for-addon-dir-change)
   (watch-for-catalogue-change)
