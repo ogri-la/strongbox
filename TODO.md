@@ -113,6 +113,12 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * http, revisit the http/expiry-offset-hours value
 
+* performance, check addons for updates immediately after loading
+    - if after we've read the nfo data and we have everything we need, check the addon for updates immediately
+        - don't wait for db loading and addon matching
+            - we already have a match!
+        - this might fit in with the greater-parallelism/queue based infrastructure
+
 * robustness, only download/update the catalogue *after* an existing catalogue has been confirmed
     - github is down, wowman is erroring with a 500
     - failure to download a catalogue shouldn't prevent addons from being displayed
@@ -146,6 +152,7 @@ see CHANGELOG.md for a more formal list of changes by release
     * core.clj is getting too large
         - it's difficult to navigate and debug
         - many tests are accumulating in core_test.clj
+
 * wowman-data, stop publishing a 'daily' release
     - we have multiple catalogs now
     - 0.10.0 uses the raw catalog files directly

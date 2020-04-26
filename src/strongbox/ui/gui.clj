@@ -649,7 +649,7 @@
       (.setPreferredWidth (* level-width 1.5))
       (.setCellRenderer cell-renderer))
 
-    (logging/add-appender :gui gui-logger {:timestamp-opts {:pattern "HH:mm:ss"}})
+    (logging/add-appender! :gui gui-logger {:timestamp-opts {:pattern "HH:mm:ss"}})
 
     (add-highlighter grid #(= (.getValue % level-col-idx) :warn) (colours :notice/warning))
     (add-highlighter grid #(= (.getValue % level-col-idx) :error) (colours :notice/error))

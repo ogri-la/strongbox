@@ -25,9 +25,6 @@
     [toc]
     [specs :as sp]]))
 
-;; print profiling to stdout
-(tufte/add-basic-println-handler! {})
-
 ;; acquired when switching between catalogues so the old database is shutdown
 ;; properly in one thread before being recreated in another
 (def db-lock (Object.))
@@ -88,9 +85,13 @@
                   :data-dir data-dir
                   :catalogue-dir data-dir
 
-                  ;; todo: add to cache cleaning
+                  ;; todo: add to cleanup
                   ;; /home/$you/.local/share/strongbox/profile-data
                   :profile-data-dir (join data-dir "profile-data")
+
+                  ;; todo: add to cleanup
+                  ;; /home/$you/.local/share/strongbox/logs
+                  :log-data-dir (join data-dir "logs")
 
                   ;; /home/$you/.local/share/strongbox/cache
                   :cache-dir (join data-dir "cache")
@@ -396,6 +397,17 @@
 
 ;; settings
 
+(defn-spec change-log-level! nil?
+  [new-level keyword?]
+  (timbre/merge-config! {:level new-level})
+  (when (logging/debug-mode?) ;; debug level + not-testing
+    (if-not @state
+      (warn "application has not been started, no location to write log or profile data")
+      (do
+        (logging/add-profiling-handler! (paths :profile-data-dir))
+        (logging/add-file-appender! (paths :log-data-dir)))))
+  nil)
+
 (defn save-settings
   "writes user configuration to the filesystem"
   []
@@ -410,10 +422,9 @@
   "pulls together configuration from the fs and cli, merges it and sets application state"
   [cli-opts]
   (let [final-config (config/load-settings cli-opts (paths :cfg-file) (paths :etag-db-file))]
+    (swap! state merge final-config)
     (when (:verbosity cli-opts)
-      (logging/change-log-level (:verbosity cli-opts)))
-    (logging/add-profiling-handler! (paths :profile-data-dir))
-    (swap! state merge final-config))
+      (change-log-level! (:verbosity cli-opts))))
   nil)
 
 
@@ -1213,8 +1224,7 @@
   [& _]
   (profile
    ;; enable profiling when log level is 'debug' and we're not testing
-   {:when (and (-> timbre/*config* :level (= :debug))
-               (not (-> timbre/*config* :testing?)))}
+   {:when (logging/debug-mode?)}
 
    ;; downloads the big long list of addon information stored on github
    (p :p2/download-catalogue (download-current-catalogue))
