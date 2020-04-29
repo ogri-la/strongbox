@@ -97,7 +97,9 @@
         expiry-offset (jt/hours hours)
         expiry-date (jt/plus modtime expiry-offset)
         expired? (jt/before? expiry-date now)]
-    (debug (format "path %s; modtime %s; expiry-offset %s; expiry-date %s; now %s; expired? %s" file modtime expiry-offset expiry-date now expired?))
+    (when expired?
+      ;; too noisy even for :debug when nothing has expired
+      (debug (format "path %s; modtime %s; expiry-offset %s; expiry-date %s; now %s; expired? %s" file modtime expiry-offset expiry-date now expired?)))
     expired?))
 
 (defn-spec days-between-then-and-now int?

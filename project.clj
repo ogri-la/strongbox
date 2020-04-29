@@ -26,13 +26,12 @@
                  [seancorfield/next.jdbc "1.0.6"]
 
 
-                 [gui-diff "0.6.7"]
-
                  ;; remember to update the LICENCE.txt
                  ;; remember to update pom file (`lein pom`)
 
+                 [gui-diff "0.6.7"]
+                 [com.taoensso/tufte "2.1.0"]
                  [juxt/crux-core "20.04-1.8.2-alpha"]
-
                  ]
 
   ;; java 11 , java-time localisation issue 
@@ -43,7 +42,7 @@
   :main strongbox.main
 
   :plugins [[lein-cljfmt "0.6.4"]
-            [jonase/eastwood "0.3.5"]
+            [jonase/eastwood "0.3.10"]
             [lein-cloverage "1.1.1"]]
   :eastwood {:exclude-linters [:constant-test]
              :add-linters [:unused-namespaces
