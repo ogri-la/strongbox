@@ -42,7 +42,7 @@
   "curseforge-specific categories that are replaced"
   {"HUDs" [:ui :unit-frames]
    "Minigames" [:mini-games]
-   "Auction & Economy" [:action-house]
+   "Auction & Economy" [:auction-house]
    "Chat & Communication" [:chat]
    "Development Tools" [:dev]
    "Libraries" [:libs]
