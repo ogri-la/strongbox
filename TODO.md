@@ -107,6 +107,9 @@ see CHANGELOG.md for a more formal list of changes by release
     - rename repository
     - arch package
         - add new shell script 'strongbox'
+    - update ticket template
+        - with command to run that uses the debug flag
+        - which files to upload
 
 
 ## todo bucket (no particular order)
