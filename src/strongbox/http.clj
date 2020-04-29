@@ -13,6 +13,7 @@
    [trptcolin.versioneer.core :as versioneer]
    [clj-http.client :as client]))
 
+;; todo: revisit this value
 (def expiry-offset-hours 24) ;; hours
 (def ^:dynamic *cache* nil)
 
@@ -182,6 +183,9 @@
   [http-err ::sp/http-error]
   (let [key (-> http-err (select-keys [:host :status]) vals set)]
     (condp (comp clojure.set/intersection =) key
+      ;; todo: test this
+      #{"raw.github.com" 500} "Github: service is down. Check www.githubstatus.com and try again later."
+
       ;; github api quota exceeded OR github thinks we were making requests too quickly
       #{"api.github.com" 403} "Github: we've exceeded our request quota and have been blocked for an hour."
 
@@ -203,48 +207,41 @@
     ;; otherwise, scream and yell and return nil
     (error (http-error http-resp))))
 
-;;(defn-spec download (s/or :ok ::sp/http-resp, :error ::sp/http-error)
-;;  [url ::sp/url, message ::sp/short-string]
-(defn download
-  [url & {:keys [message]}]
-  (let [output-file nil
-        resp (-download url output-file message {})]
-    (cond
-      (http-error? resp) resp ;; error http response
-      (map? resp) (:body resp) ;; regular http response + caching disabled
-      (fs/file? resp) (slurp resp)))) ;; file on disk + caching enabled
+(defn-spec download (s/or :ok-file ::sp/extant-file, :ok-body string?, :error ::sp/http-error)
+  "downloads the given `url` assuming a textual response, returning the body as a simple string.
+  on http error, an error map with details is returned.
+  an optional `message` can be supplied as the second argument that will be displayed on a cache miss."
+  ([url ::sp/url]
+   (download url nil))
+  ([url ::sp/url, message (s/nilable ::sp/short-string)]
+   (let [output-file nil
+         resp (-download url output-file message {})]
+     (cond
+       (http-error? resp) resp ;; error http response
+       (map? resp) (:body resp) ;; regular http response + caching disabled
+       (fs/file? resp) (slurp resp))))) ;; file on disk + caching enabled
 
-;;(defn-spec download-file (s/or :file ::sp/extant-file, :error ::sp/http-error)
-;;  [url ::sp/url, output-file ::sp/file, & {:keys [message]}]
-(defn download-file
-  [url, output-file, & {:keys [message]}]
-  (let [resp (-download url output-file message {:as :stream})]
-    (if-not (http-error? resp)
-      output-file
-      resp)))
-
-;; deprecated, to be removed in 0.10.0
-;; both curseforge and wowinterface catalogues are needed to scrape their respective updates
-;; settle for some cache misses as we delete these files on startup then download them again for a scrape?
-;; becomes less relevant as scrapes become automated
-(defn-spec prune-old-curseforge-files nil?
-  "curseforge.json may be hanging around in the cache-dir or in the parent (:data-dir)"
-  [cache-dir ::sp/extant-dir]
-  (let [cache-cf-file (join cache-dir "curseforge.json")
-        data-cf-file (join (fs/parent cache-dir) "curseforge.json")]
-    (when (fs/exists? cache-cf-file)
-      (fs/delete cache-cf-file))
-    (when (fs/exists? data-cf-file)
-      (fs/delete data-cf-file)))
-  nil)
+(defn-spec download-file (s/or :file ::sp/extant-file, :error ::sp/http-error)
+  "downloads the given `url` to the given `output-file`, assuming a bytestream response.
+  returns the path to the file on success.
+  on http error, an error map with details is returned.
+  an optional `message` can be supplied as the second argument that will be displayed on a cache miss."
+  ([url ::sp/url, output-file ::sp/file]
+   (download-file url output-file nil))
+  ([url ::sp/url, output-file ::sp/file, message (s/nilable ::sp/short-string)]
+   (let [resp (-download url output-file message {:as :stream})]
+     (if-not (http-error? resp)
+       output-file
+       resp))))
 
 (defn-spec prune-cache-dir nil?
+  "deletes files in the given `cache-dir` that are older than the `expiry-offset-hours`"
   [cache-dir ::sp/extant-dir]
-  ;;(prune-old-curseforge-files cache-dir) ;; this is problematic when generating the curseforge catalogue
-  (doseq [cache-file (fs/list-dir cache-dir)
-          :when (and (fs/file? cache-file)
-                     (utils/file-older-than (str cache-file) (* 2 expiry-offset-hours)))]
-    (warn "deleting cached file (expired):" cache-file)
-    (fs/delete cache-file)))
+  (let [expiry-date (* 2 expiry-offset-hours)]
+    (doseq [cache-file (fs/list-dir cache-dir)
+            :when (and (fs/file? cache-file)
+                       (utils/file-older-than (str cache-file) expiry-date))]
+      (fs/delete cache-file)
+      (debug "deleted expired cache file:" cache-file))))
 
 (st/instrument)

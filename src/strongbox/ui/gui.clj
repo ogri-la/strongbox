@@ -685,7 +685,7 @@
       (.setPreferredWidth (* level-width 1.5))
       (.setCellRenderer cell-renderer))
 
-    (logging/add-appender :gui gui-logger {:timestamp-opts {:pattern "HH:mm:ss"}})
+    (logging/add-appender! :gui gui-logger {:timestamp-opts {:pattern "HH:mm:ss"}})
 
     (add-highlighter grid #(= (.getValue % level-col-idx) :warn) (colours :notice/warning))
     (add-highlighter grid #(= (.getValue % level-col-idx) :error) (colours :notice/error))
@@ -921,9 +921,10 @@
                      (ss/action :name "Export addon list" :handler (async-handler export-addon-list-handler))
                      (ss/action :name "Export Github addon list" :handler (async-handler export-user-catalogue-handler))]
 
-        cache-menu [(ss/action :name "Clear cache" :handler (async-handler core/delete-cache!))
+        cache-menu [(ss/action :name "Clear http cache" :handler (async-handler core/delete-http-cache!))
                     (ss/action :name "Clear addon zips" :handler (async-handler core/delete-downloaded-addon-zips!))
                     (ss/action :name "Clear catalogues" :handler (async-handler (juxt core/db-reload-catalogue core/delete-catalogue-files!)))
+                    (ss/action :name "Clear log files" :handler (async-handler core/delete-log-files!))
                     (ss/action :name "Clear all" :handler (async-handler core/clear-all-temp-files!))
                     :separator
                     (ss/action :name "Delete WowMatrix.dat files" :handler (async-handler core/delete-wowmatrix-dat-files!))

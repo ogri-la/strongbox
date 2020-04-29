@@ -8,7 +8,6 @@
    [clojure.string :refer [lower-case]]
    [me.raynes.fs :as fs]
    [strongbox
-    [logging :as logging]
     [core :as core]
     [utils :as utils :refer [in?]]]
    [gui.diff :refer [with-gui-diff]]
@@ -70,8 +69,9 @@
 (defn test
   [& [ns-kw fn-kw]]
   (clojure.tools.namespace.repl/refresh) ;; reloads all namespaces, including strongbox.whatever-test ones
-  (try
-    (logging/change-log-level :debug)
+  (timbre/with-merged-config {:level :debug, :testing? true
+                              ;; ensure we're not writing logs to files
+                              :appenders {:spit nil}}
     (if ns-kw
       (if (some #{ns-kw} [:main :utils :http :specs :tags
                           :core :toc :nfo :zip :config :catalogue
@@ -84,9 +84,7 @@
             (clojure.test/test-vars [(resolve (symbol (str "strongbox." (name ns-kw) "-test") (name fn-kw)))])
             (clojure.test/run-all-tests (re-pattern (str "strongbox." (name ns-kw) "-test")))))
         (error "unknown test file:" ns-kw))
-      (clojure.test/run-all-tests #"strongbox\..*-test"))
-    (finally
-      (logging/change-log-level (:level logging/default-logging-config)))))
+      (clojure.test/run-all-tests #"strongbox\..*-test"))))
 
 ;;
 

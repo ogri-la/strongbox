@@ -6,6 +6,7 @@
    [clojure.spec.alpha :as s]
    [orchestra.spec.test :as st]
    [orchestra.core :refer [defn-spec]]
+   [taoensso.tufte :as tufte :refer [p profile]]
    [me.raynes.fs :as fs]
    [trptcolin.versioneer.core :as versioneer]
    [envvar.core :refer [env]]
@@ -62,35 +63,45 @@
 
 (defn generate-path-map
   "generates filesystem paths whose location may vary based on the current working directory and environment variables.
-  this map of paths is generated during init and is then fixed in application state.
-  ensure the correct environment variables and cwd are set prior to init for proper isolation during tests"
+  this map of paths is generated during `init-dirs` and is then fixed in application state.
+  ensure the correct environment variables and cwd are set prior to init for proper isolation during tests."
   []
   (let [strongbox-suffix (fn [path]
                            (if-not (ends-with? path "/strongbox")
                              (join path "strongbox")
                              path))
 
+        ;; XDG_DATA_HOME=/foo/bar => /foo/bar/strongbox
+        ;; XDG_CONFIG_HOME=/baz/bup => /baz/bup/strongbox
+
         ;; https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
         ;; ignoring XDG_CONFIG_DIRS and XDG_DATA_DIRS for now
         config-dir (-> @env :xdg-config-home utils/nilable (or default-config-dir) expand-path strongbox-suffix)
         data-dir (-> @env :xdg-data-home utils/nilable (or default-data-dir) expand-path strongbox-suffix)
 
-        cache-dir (join data-dir "cache") ;; /home/you/.local/share/strongbox/cache
-
-        cfg-file (join config-dir "config.json") ;; /home/$you/.config/strongbox/config.json
-        etag-db-file (join data-dir "etag-db.json") ;; /home/$you/.local/share/strongbox/etag-db.json
-
-        user-catalogue (join data-dir "user-catalogue.json")
-
-        ;; ensure path ends with `-file` or `-dir` or `-url`
+        ;; ensure path ends with `-file` or `-dir` or `-url`.
+        ;; see `init-dirs`.
         path-map {:config-dir config-dir
                   :data-dir data-dir
-                  :cache-dir cache-dir
-                  :cfg-file cfg-file
-                  :etag-db-file etag-db-file
+                  :catalogue-dir data-dir
 
-                  :user-catalogue-file user-catalogue
-                  :catalogue-dir data-dir}]
+                  ;; /home/$you/.local/share/strongbox/profile-data
+                  :profile-data-dir (join data-dir "profile-data")
+
+                  ;; /home/$you/.local/share/strongbox/logs
+                  :log-data-dir (join data-dir "logs")
+
+                  ;; /home/$you/.local/share/strongbox/cache
+                  :cache-dir (join data-dir "cache")
+
+                  ;; /home/$you/.config/strongbox/config.json
+                  :cfg-file (join config-dir "config.json")
+
+                  ;; /home/$you/.local/share/strongbox/etag-db.json
+                  :etag-db-file (join data-dir "etag-db.json")
+
+                  ;; /home/$you/.local/share/strongbox/user-catalogue.json
+                  :user-catalogue-file (join data-dir "user-catalogue.json")}]
     path-map))
 
 (def -state-template
@@ -167,6 +178,8 @@
   "like `get-in` but for the currently selected colour theme. requires running app"
   [& path]
   (nav-map (get themes (get-state :cfg :gui-theme)) path))
+
+;; db
 
 (defn as-unqualified-hyphenated-maps
   "used to coerce keys in each row of resultset
@@ -267,6 +280,8 @@
                      (mapv db-coerce-catalogue-values $))
 
     nil))
+
+;;
 
 (defn set-etag
   "convenient wrapper around adding and removing etag values from state map"
@@ -384,6 +399,20 @@
 
 ;; settings
 
+(defn-spec change-log-level! nil?
+  "changes the effective log level from `logging/default-log-level` to `new-level`.
+  The `:debug` log level outside of unit tests will write a log file to the data directory and 
+  enables the profiling of certain sections of code."
+  [new-level keyword?]
+  (timbre/merge-config! {:level new-level})
+  (when (logging/debug-mode?) ;; debug level + not-testing
+    (if-not @state
+      (warn "application has not been started, no location to write log or profile data")
+      (do
+        (logging/add-profiling-handler! (paths :profile-data-dir))
+        (logging/add-file-appender! (paths :log-data-dir)))))
+  nil)
+
 (defn save-settings
   "writes user configuration to the filesystem"
   []
@@ -398,9 +427,8 @@
   "pulls together configuration from the fs and cli, merges it and sets application state"
   [cli-opts]
   (let [final-config (config/load-settings cli-opts (paths :cfg-file) (paths :etag-db-file))]
-    (when (:verbosity cli-opts)
-      (logging/change-log-level (:verbosity cli-opts)))
-    (swap! state merge final-config))
+    (swap! state merge final-config)
+    (change-log-level! (or (:verbosity cli-opts) logging/default-log-level)))
   nil)
 
 
@@ -488,7 +516,7 @@
       :else nil)))
 
 (defn-spec guess-game-track ::sp/game-track
-  "give a map of addon data, attempts to guess the most likely game track it belongs to"
+  "given a map of addon data, attempts to guess the most likely game track it belongs to"
   [install-dir ::sp/extant-dir, addon map?]
   (or (:game-track addon) ;; from reading an export record. most of the time this value won't be here
       (:installed-game-track addon) ;; re-use the value we have if updating an existing addon
@@ -690,8 +718,11 @@
   [catalogue-source ::sp/catalogue-source-map]
   (binding [http/*cache* (cache)]
     (let [remote-catalogue (:source catalogue-source)
-          local-catalogue (catalogue-local-path catalogue-source)]
-      (http/download-file remote-catalogue local-catalogue :message (format "downloading catalogue '%s'" (:label catalogue-source))))))
+          local-catalogue (catalogue-local-path catalogue-source)
+          message (format "downloading catalogue '%s'" (:label catalogue-source))
+          resp (http/download-file remote-catalogue local-catalogue message)]
+      (when-not (http/http-error? resp)
+        resp))))
 
 (defn-spec download-current-catalogue (s/or :ok ::sp/extant-file, :error nil?)
   "downloads the currently selected (or default) catalogue. 
@@ -851,19 +882,22 @@
 (defn-spec -db-load-catalogue nil?
   "loads the given `catalogue-data` into the database, creating categories and associations as necessary"
   [catalogue-data ::sp/catalogue]
-  (let [ds (get-db)
+  (let [ds (p :p2/db:load:get-db (get-db))
         {:keys [addon-summary-list]} catalogue-data
 
-        addon-categories (mapv (fn [{:keys [source-id source tag-list]}]
-                                 (mapv (fn [tag]
-                                         [source-id source (name tag)]) tag-list)) addon-summary-list)
+        addon-categories (p :p2/db:load:extract-category-data
+                            (mapv (fn [{:keys [source-id source tag-list]}]
+                                    (mapv (fn [tag]
+                                            [source-id source (name tag)]) tag-list)) addon-summary-list))
 
         ;; using `set` was a symptom of a problem with duplicate categories affecting curseforge
         ;; I think it's safest to leave it in for now
-        addon-categories (->> addon-categories utils/shallow-flatten set vec)
+        addon-categories (p :p2/db:load:normalise-category-data
+                            (->> addon-categories utils/shallow-flatten set vec))
 
         ;; distinct list of :categories
-        category-list (->> addon-categories (mapv rest) set vec)
+        category-list (p :p2/db:load:distinct-categories
+                         (->> addon-categories (mapv rest) set vec))
 
         xform-row (fn [row]
                     (let [ignored [:tag-list :age :game-track-list :created-date]
@@ -877,24 +911,23 @@
                       (-> row (utils/dissoc-all ignored) (rename-keys mapping) (merge new))))]
 
     (jdbc/with-transaction [tx ds]
-      ;;    1.703391 msec
-      ;; ~100 items
-      (time (sql/insert-multi! ds :category [:source :name] category-list))
-      ;;  871.427154 msec
-      ;; ~10k items
-      (time (doseq [row addon-summary-list]
-              (sql/insert! ds :catalogue (xform-row row))))
+      (p :p2/db:load:insert-category-data
+         (sql/insert-multi! ds :category [:source :name] category-list))
 
-      ;; 1337.340542 msec
-      ;; ~20k items (avg 2 categories per addon)
-      (time (let [category-map (db-query "select name, id from category")
-                  category-map (into {} (mapv (fn [{:keys [name id]}]
-                                                {name id}) category-map))]
+      (p :p2/db:load:insert-addon-list
+         (doseq [row addon-summary-list]
+           (sql/insert! ds :catalogue (xform-row row))))
 
-              (doseq [[source-id source category] addon-categories]
+      (p :p2/db:load:insert-addon-category-list
+         (let [category-map (db-query "select name, id from category")
+               category-map (into {} (mapv (fn [{:keys [name id]}]
+                                             {name id}) category-map))]
+
+           (doseq [[source-id source category] addon-categories]
+             (p :p2/db:load:insert-addon-category
                 (sql/insert! ds :addon_category {:addon_source source
                                                  :addon_source_id source-id
-                                                 :category_id (get category-map category)})))))
+                                                 :category_id (get category-map category)}))))))
 
     (swap! state assoc :catalogue-size (query-db :catalogue-size)))
   nil)
@@ -905,8 +938,7 @@
   []
   (when (and (not (db-catalogue-loaded?))
              (current-catalogue))
-    (let [catalogue-source (current-catalogue)
-          catalogue-path (catalogue-local-path catalogue-source)
+    (let [catalogue-path (catalogue-local-path (current-catalogue))
           _ (info (format "loading catalogue '%s'" (name (get-state :cfg :selected-catalogue))))
           _ (debug "loading addon summaries from catalogue into database:" catalogue-path)
 
@@ -921,12 +953,12 @@
                                                  (error "please report this! https://github.com/ogri-la/strongbox/issues")
                                                  (error "catalogue *still* corrupted and cannot be loaded. try another catalogue from the 'catalogue' menu"))}))
 
-          catalogue-data (catalogue/read-catalogue catalogue-path {:bad-data? bad-json-file-handler})
-          user-catalogue-data (catalogue/read-catalogue (paths :user-catalogue-file) {:bad-data? nil})
+          catalogue-data (p :p2/db:read-catalogue (catalogue/read-catalogue catalogue-path {:bad-data? bad-json-file-handler}))
+          user-catalogue-data (p :p2/db:read-user-catalogue (catalogue/read-catalogue (paths :user-catalogue-file) {:bad-data? nil}))
 
-          final-catalogue (catalogue/merge-catalogues catalogue-data user-catalogue-data)]
+          final-catalogue (p :p2/db:merge-catalogues (catalogue/merge-catalogues catalogue-data user-catalogue-data))]
       (when-not (empty? final-catalogue)
-        (-db-load-catalogue final-catalogue)))))
+        (p :p2/db:load (-db-load-catalogue final-catalogue))))))
 
 (defn-spec refresh-user-catalogue nil?
   "re-fetch each item in user catalogue using the URI and replace old entry with any updated details"
@@ -975,16 +1007,53 @@
 
 ;; ui interface
 
-(defn-spec delete-cache! nil?
-  "deletes the 'cache' directory that contains scraped html files and the etag db file.
-  these are regenerated when missing"
+(defn-spec init-dirs nil?
+  "ensures all directories in `generate-path-map` exist and are writable, creating them if necessary.
+  this logic depends on paths that are not generated until the application has been started."
   []
-  (warn "deleting cache")
+  ;; data directory doesn't exist and parent directory isn't writable
+  ;; nowhere to create data dir, nowhere to store download catalogue. non-starter
+  (when (and
+         (not (fs/exists? (paths :data-dir))) ;; doesn't exist and ..
+         (not (utils/last-writeable-dir (paths :data-dir)))) ;; .. no writeable parent
+    (throw (RuntimeException. (str "Data directory doesn't exist and it cannot be created: " (paths :data-dir)))))
+
+  ;; state directory *does* exist but isn't writeable
+  ;; another non-starter
+  (when (and (fs/exists? (paths :data-dir))
+             (not (fs/writeable? (paths :data-dir))))
+    (throw (RuntimeException. (str "Data directory isn't writeable:" (paths :data-dir)))))
+
+  ;; ensure all '-dir' suffixed paths exist, creating them if necessary
+  (doseq [[path val] (paths)]
+    (when (-> path name (clojure.string/ends-with? "-dir"))
+      (debug (format "creating '%s' directory: %s" path val))
+      (fs/mkdirs val)))
+
+  nil)
+
+(defn-spec delete-log-files! nil?
+  "Deletes the 'logs' and 'profile-data' directories.
+  Files are written here when the log level is :debug (and we're not testing)."
+  []
+  (warn "deleting logs")
+  (fs/delete-dir (paths :log-data-dir))
+  (fs/delete-dir (paths :profile-data-dir))
+  (init-dirs))
+
+(defn-spec prune-http-cache! nil?
+  "deletes html/json files from the 'cache' directory that are older than a certain age."
+  []
+  (info "pruning http cache")
+  (http/prune-cache-dir (paths :cache-dir)))
+
+(defn-spec delete-http-cache! nil?
+  "Deletes the 'cache' directory that contains html/json files and the etag db file."
+  []
+  (warn "deleting http cache")
   (fs/delete-dir (paths :cache-dir))
   (fs/delete (paths :etag-db-file))
-
-  (fs/mkdirs (paths :cache-dir)) ;; todo: this and `init-dirs` needs revisiting
-  nil)
+  (init-dirs))
 
 (defn-spec delete-downloaded-addon-zips! nil?
   []
@@ -1003,10 +1072,12 @@
   (delete-many-files! (paths :data-dir) #".+\-catalogue\.json$" "catalogue"))
 
 (defn-spec clear-all-temp-files! nil?
+  "deletes all log files, downloaded addon zip files, catalogues and the http cache, including the etag db"
   []
+  (delete-log-files!)
   (delete-downloaded-addon-zips!)
   (delete-catalogue-files!)
-  (delete-cache!))
+  (delete-http-cache!))
 
 ;; version checking
 
@@ -1021,7 +1092,7 @@
   (binding [http/*cache* (cache)]
     (let [message "downloading strongbox version data"
           url "https://api.github.com/repos/ogri-la/wowman/releases/latest"
-          resp (utils/from-json (http/download url :message message))]
+          resp (utils/from-json (http/download url message))]
       (-> resp :tag_name))))
 
 (defn-spec latest-strongbox-version? boolean?
@@ -1188,7 +1259,7 @@
         upgrade-nfo (partial -upgrade-nfo install-dir)]
     (->> (get-state)
          :installed-addon-list
-         (filter has-nfo-file?) ;; only upgrade addons that nfo files
+         (filter has-nfo-file?) ;; only upgrade addons that have nfo files
          (remove has-valid-nfo-file?) ;; skip good nfo files
          (mapv upgrade-nfo)))
   nil)
@@ -1197,25 +1268,37 @@
 
 (defn refresh
   [& _]
-  (download-current-catalogue)      ;; downloads the big long list of addon information stored on github
+  (profile
+   ;; enable profiling when log level is 'debug' and we're not testing
+   {:when (logging/debug-mode?)}
 
-  (db-init)               ;; creates an in-memory database and some empty tables
+   ;; downloads the big long list of addon information stored on github
+   (p :p2/download-catalogue (download-current-catalogue))
 
-  (load-installed-addons) ;; parse toc files in install-dir. do this first so we see *something* while catalogue downloads (next)
+   ;; creates an in-memory database and some empty tables
+   (p :p2/db-init (db-init))
 
-  (db-load-catalogue)       ;; load the contents of the catalogue into the database
+   ;; parse toc files in install-dir. do this first so we see *something* while catalogue downloads (next)
+   (p :p2/installed-addons (load-installed-addons))
 
-  (match-installed-addons-with-catalogue) ;; match installed addons to those in catalogue
+   ;; load the contents of the catalogue into the database
+   (p :p2/db (db-load-catalogue))
 
-  (check-for-updates)     ;; for those addons that have matches, download their details
+   ;; match installed addons to those in catalogue
+   (p :p2/match-addons (match-installed-addons-with-catalogue))
 
-  ;; 2019-06-30, travis is failing with 403: Forbidden. Moved to gui init
-  ;;(latest-strongbox-release) ;; check for updates after everything else is done 
+   ;; for those addons that have matches, download their details
+   (p :p2/check-addons (check-for-updates))
 
-  (upgrade-nfo-files)     ;; otherwise nfo data is only updated when an addon is installed/upgraded
+   ;; 2019-06-30, travis is failing with 403: Forbidden. Moved to gui init
+   ;;(latest-strongbox-release) ;; check for updates after everything else is done 
 
-  (save-settings)         ;; seems like a good place to preserve the etag-db
-  nil)
+   ;; otherwise nfo data is only updated when an addon is installed or updated
+   (p :p2/upgrade-nfo (upgrade-nfo-files))
+
+   ;; seems like a good place to preserve the etag-db
+   (p :p2/save-settings (save-settings))
+   nil))
 
 (defn-spec -install-update-these nil?
   [updateable-toc-addons (s/coll-of ::sp/addon-or-toc-addon)]
@@ -1344,33 +1427,6 @@
   []
   (state-bind [:cfg :selected-catalogue] (fn [_] (db-reload-catalogue))))
 
-(defn-spec init-dirs nil?
-  []
-  ;; 2019-10-13: transplanted from `main/validate`
-  ;; this validation depends on paths that are not generated until application init
-
-  ;; data directory doesn't exist and parent directory isn't writable
-  ;; nowhere to create data dir, nowhere to store download catalogue. non-starter
-
-  (when (and
-         (not (fs/exists? (paths :data-dir))) ;; doesn't exist and ..
-         (not (utils/last-writeable-dir (paths :data-dir)))) ;; .. no writeable parent
-    (throw (RuntimeException. (str "Data directory doesn't exist and it cannot be created: " (paths :data-dir)))))
-
-  ;; state directory *does* exist but isn't writeable
-  ;; another non-starter
-  (when (and (fs/exists? (paths :data-dir))
-             (not (fs/writeable? (paths :data-dir))))
-    (throw (RuntimeException. (str "Data directory isn't writeable:" (paths :data-dir)))))
-
-  ;; ensure all '-dir' suffixed paths exist, creating them if necessary
-  (doseq [[path val] (paths)]
-    (when (-> path name (clojure.string/ends-with? "-dir"))
-      (debug (format "creating '%s' directory: %s" path val))
-      (fs/mkdirs val)))
-  (http/prune-cache-dir (paths :cache-dir))
-  nil)
-
 (defn-spec set-paths! nil?
   []
   (swap! state assoc :paths (generate-path-map))
@@ -1393,6 +1449,7 @@
   (set-paths!)
   (detect-repl!)
   (init-dirs)
+  (prune-http-cache!) ;; 2020-04: used to be part of init-dirs
   (load-settings! cli-opts)
   (watch-for-addon-dir-change)
   (watch-for-catalogue-change)
