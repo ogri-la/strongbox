@@ -7,6 +7,7 @@
    [me.raynes.fs :as fs]
    ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [strongbox
+    [logging :as logging]
     [zip :as zip]
     [main :as main]
     [nfo :as nfo]
@@ -751,6 +752,19 @@
 
 ;;
 
+
+(deftest http-500-downloading-catalogue
+  (testing "HTTP 500 while fetching catalogue from github"
+    (let [;; overrides fake route in `./test_helper.clj`
+          fake-routes {"https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
+                       {:get (fn [req] {:status 500 :host "raw.githubusercontent.com" :reason-phrase "500 Server Error"})}}
+
+          expected ["downloading catalogue 'Short (default)'"
+                    "failed to download file 'https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json': 500 Server Error (HTTP 500)"]]
+      (with-fake-routes-in-isolation fake-routes
+        (with-running-app
+          (is (= expected (logging/buffered-log
+                           :info (core/download-catalogue (core/get-catalogue-source :short))))))))))
 
 (deftest re-download-catalogue-on-bad-data
   (testing "catalogue data is re-downloaded if it can't be read"

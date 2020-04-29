@@ -1,6 +1,6 @@
 (ns strongbox.logging
   (:require
-   [taoensso.timbre :as logging :refer [spy]]
+   [taoensso.timbre :as logging]
    [taoensso.timbre.appenders.core :refer [spit-appender]]
    [taoensso.tufte :as tufte :refer [p profile]]
    [orchestra.core :refer [defn-spec]]
@@ -11,30 +11,28 @@
 
 ;; profiling
 
-;; print any profiling to stdout
 (tufte/add-basic-println-handler! {})
 
 (defn-spec add-profiling-handler! nil?
   "writes profiling data to a timestamped file in the given `output-dir`"
   [output-dir ::sp/extant-dir]
-  (let [output-file (logging/spy :info (join output-dir (str (java-time/instant) ".pstats")))]
+  (let [output-file (join output-dir (str (java-time/instant) ".pstats"))]
     (tufte/add-handler!
      :data-dir-logger "*"
      (fn [data-map]
-       (try
-         (spit output-file (tufte/format-pstats (:pstats data-map) nil))
-         (catch Exception uncaught-exception
-           (logging/error uncaught-exception "uncaught exception attempting to write pstats file"))))))
+       (spit output-file (tufte/format-pstats (:pstats data-map) nil)))))
   nil)
 
 ;; logging
 
+(def default-log-level :info)
+
 (defn-spec debug-mode? boolean?
-  "debug mode is when the log level has been set to 'debug' and we're *not* running tests.
+  "debug mode is when the log level has been set to `:debug` and we're *not* running tests.
   the intent is to collect as much information around a problem as possible.
   the log level may change during REPL usage. 
-  the log level may change by passing in a 'verbosity' flag.
-  `main.clj` adds an adhoc 'testing?' flag to the logging configuration and removes it afterwards."
+  the log level may change by using a `--verbosity` flag at runtime.
+  `main.clj` adds an adhoc `testing?` flag to the logging configuration and removes it afterwards."
   []
   (and (-> logging/*config* :level (= :debug))
        (not (-> logging/*config* :testing?))))
@@ -48,7 +46,7 @@
                      (force timestamp_) level (force ?ns-str) (force ?line) (force msg_)))))
 
 (def default-logging-config
-  {:level :info
+  {:level default-log-level
    :timestamp-opts {:pattern "yyyy-MM-dd HH:mm:ss.SSS"}
    ;;:output-fn (anon-println-appender)
    :appenders {:println {:enabled? true

@@ -85,11 +85,9 @@
                   :data-dir data-dir
                   :catalogue-dir data-dir
 
-                  ;; todo: add to cleanup
                   ;; /home/$you/.local/share/strongbox/profile-data
                   :profile-data-dir (join data-dir "profile-data")
 
-                  ;; todo: add to cleanup
                   ;; /home/$you/.local/share/strongbox/logs
                   :log-data-dir (join data-dir "logs")
 
@@ -402,6 +400,9 @@
 ;; settings
 
 (defn-spec change-log-level! nil?
+  "changes the effective log level from `logging/default-log-level` to `new-level`.
+  The `:debug` log level outside of unit tests will write a log file to the data directory and 
+  enables the profiling of certain sections of code."
   [new-level keyword?]
   (timbre/merge-config! {:level new-level})
   (when (logging/debug-mode?) ;; debug level + not-testing
@@ -427,8 +428,7 @@
   [cli-opts]
   (let [final-config (config/load-settings cli-opts (paths :cfg-file) (paths :etag-db-file))]
     (swap! state merge final-config)
-    (when (:verbosity cli-opts)
-      (change-log-level! (:verbosity cli-opts))))
+    (change-log-level! (or (:verbosity cli-opts) logging/default-log-level)))
   nil)
 
 
@@ -719,8 +719,10 @@
   (binding [http/*cache* (cache)]
     (let [remote-catalogue (:source catalogue-source)
           local-catalogue (catalogue-local-path catalogue-source)
-          message (format "downloading catalogue '%s'" (:label catalogue-source))]
-      (http/download-file remote-catalogue local-catalogue message))))
+          message (format "downloading catalogue '%s'" (:label catalogue-source))
+          resp (http/download-file remote-catalogue local-catalogue message)]
+      (when-not (http/http-error? resp)
+        resp))))
 
 (defn-spec download-current-catalogue (s/or :ok ::sp/extant-file, :error nil?)
   "downloads the currently selected (or default) catalogue. 
@@ -912,19 +914,20 @@
       (p :p2/db:load:insert-category-data
          (sql/insert-multi! ds :category [:source :name] category-list))
 
-      (p :p2/db:load:insert-addon-category-relations
+      (p :p2/db:load:insert-addon-list
          (doseq [row addon-summary-list]
            (sql/insert! ds :catalogue (xform-row row))))
 
-      (p :p2/db:load:insert-addons
+      (p :p2/db:load:insert-addon-category-list
          (let [category-map (db-query "select name, id from category")
                category-map (into {} (mapv (fn [{:keys [name id]}]
                                              {name id}) category-map))]
 
            (doseq [[source-id source category] addon-categories]
-             (sql/insert! ds :addon_category {:addon_source source
-                                              :addon_source_id source-id
-                                              :category_id (get category-map category)})))))
+             (p :p2/db:load:insert-addon-category
+                (sql/insert! ds :addon_category {:addon_source source
+                                                 :addon_source_id source-id
+                                                 :category_id (get category-map category)}))))))
 
     (swap! state assoc :catalogue-size (query-db :catalogue-size)))
   nil)
@@ -1005,13 +1008,11 @@
 ;; ui interface
 
 (defn-spec init-dirs nil?
+  "ensures all directories in `generate-path-map` exist and are writable, creating them if necessary.
+  this logic depends on paths that are not generated until the application has been started."
   []
-  ;; 2019-10-13: transplanted from `main/validate`
-  ;; this validation depends on paths that are not generated until application init
-
   ;; data directory doesn't exist and parent directory isn't writable
   ;; nowhere to create data dir, nowhere to store download catalogue. non-starter
-
   (when (and
          (not (fs/exists? (paths :data-dir))) ;; doesn't exist and ..
          (not (utils/last-writeable-dir (paths :data-dir)))) ;; .. no writeable parent
@@ -1071,6 +1072,7 @@
   (delete-many-files! (paths :data-dir) #".+\-catalogue\.json$" "catalogue"))
 
 (defn-spec clear-all-temp-files! nil?
+  "deletes all log files, downloaded addon zip files, catalogues and the http cache, including the etag db"
   []
   (delete-log-files!)
   (delete-downloaded-addon-zips!)

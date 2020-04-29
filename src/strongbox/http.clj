@@ -208,6 +208,9 @@
     (error (http-error http-resp))))
 
 (defn-spec download (s/or :ok-file ::sp/extant-file, :ok-body string?, :error ::sp/http-error)
+  "downloads the given `url` assuming a textual response, returning the body as a simple string.
+  on http error, an error map with details is returned.
+  an optional `message` can be supplied as the second argument that will be displayed on a cache miss."
   ([url ::sp/url]
    (download url nil))
   ([url ::sp/url, message (s/nilable ::sp/short-string)]
@@ -219,6 +222,10 @@
        (fs/file? resp) (slurp resp))))) ;; file on disk + caching enabled
 
 (defn-spec download-file (s/or :file ::sp/extant-file, :error ::sp/http-error)
+  "downloads the given `url` to the given `output-file`, assuming a bytestream response.
+  returns the path to the file on success.
+  on http error, an error map with details is returned.
+  an optional `message` can be supplied as the second argument that will be displayed on a cache miss."
   ([url ::sp/url, output-file ::sp/file]
    (download-file url output-file nil))
   ([url ::sp/url, output-file ::sp/file, message (s/nilable ::sp/short-string)]
