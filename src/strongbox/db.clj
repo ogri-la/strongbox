@@ -1,9 +1,13 @@
 (ns strongbox.db
   (:require
    [taoensso.timbre :refer [log debug info warn error spy]]
-   [strongbox.utils :as utils :refer [uuid]]
+   ;;[strongbox.utils :as utils :refer [uuid]]
    [crux.api :as crux]
    [clojure.java.io :as io]))
+
+(defn uuid
+  []
+  (java.util.UUID/randomUUID))
 
 (defn to-crux-doc
   [blob]
@@ -35,9 +39,17 @@
         (warn (str "got unknown type attempting to coerce result from crux db:" (type result)))
         result))))
 
+(defn -to-put
+  [blob]
+  [:crux.tx/put (to-crux-doc blob)])
+
 (defn put
   [node blob]
   (crux/submit-tx node [[:crux.tx/put (to-crux-doc blob)]]))
+
+(defn put-many
+  [node doc-list]
+  (crux/submit-tx node (mapv -to-put doc-list)))
 
 (defn put+wait
   [node blob]
@@ -56,6 +68,15 @@
   (crux/q (crux/db node)
           '{:find [e]
             :where [[e :type type-kw]]}))
+
+(defn stored-query
+  "common queries we can call by keyword"
+  [node query-kw]
+  (let [query-map {;; todo, obviously.
+                   :catalogue-size (constantly 0)}]
+    (if-let [query-fn (query-kw query-map)]
+      (query-fn node)
+      (error "query not found:" (name query-kw)))))
 
 (defn start-node
   "returns a node that is needed for accessing the db"

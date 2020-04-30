@@ -15,6 +15,7 @@
     [sql :as sql]
     [result-set :as rs]]
    [strongbox
+    [db :as db]
     [config :as config]
     [zip :as zip]
     [http :as http]
@@ -866,6 +867,18 @@
       ;; "Database is already closed" (it's not)
       (debug (str e)))))
 
+(defn-spec crux-init nil?
+  "loads any previous database instance"
+  []
+  (let [node (db/start-node)
+        rm-node #(try
+                   (.close node)
+                   (catch Exception uncaught-exc
+                     (error uncaught-exc "uncaught exception attempting to close crux node")))]
+    (swap! state assoc :crux node)
+    (swap! state update-in [:cleanup] conj rm-node)
+    nil))
+
 (defn-spec db-init nil?
   []
   (debug "creating 'catalogue' table")
@@ -878,6 +891,10 @@
 (defn db-catalogue-loaded?
   []
   (> (query-db :catalogue-size) 0))
+
+(defn crux-catalogue-loaded?
+  []
+  (> (db/stored-query (get-state :crux) :catalogue-size) 0))
 
 (defn-spec -db-load-catalogue nil?
   "loads the given `catalogue-data` into the database, creating categories and associations as necessary"
@@ -932,33 +949,70 @@
     (swap! state assoc :catalogue-size (query-db :catalogue-size)))
   nil)
 
+
+(defn-spec -crux-load-catalogue nil?
+  [catalogue-data ::sp/catalogue]
+  (let [node (p :p2/crux:load:get-db (get-state :crux))
+        {:keys [addon-summary-list]} catalogue-data
+
+
+        ]
+
+    ;; slower than sql by ~160ms
+    ;; but! we don't have to handle 3nf, so db:load is at 2.7s and crux:load is at 1.19s
+    (p :p2/crux:load:insert-addon-list
+       (db/put-many node addon-summary-list))
+
+       ;; slower than sql by ~1second
+       ;;(doseq [addon-summary addon-summary-list]
+         ;;(debug (:source-id addon-summary))
+         ;;(debug addon-summary)
+       ;;  (db/put node addon-summary)))
+
+    (swap! state assoc :catalogue-size (db/stored-query node :catalogue-size)))
+  nil)
+
+(defn-spec load-current-catalogue (s/or :ok ::sp/catalogue, :error nil?)
+  []
+  (when-let [catalogue-source (current-catalogue)]
+    (let [catalogue-path (catalogue-local-path catalogue-source)
+          _ (info (format "loading catalogue '%s'" (name (:name catalogue-source))))
+
+          ;; download from remote and try again when json can't be read
+          bad-json-file-handler
+          (fn []
+            (warn "catalogue corrupted. re-downloading and trying again.")
+            (fs/delete catalogue-path)
+            (download-current-catalogue)
+            (catalogue/read-catalogue
+             catalogue-path
+             {:bad-data? (fn []
+                           (error "please report this! https://github.com/ogri-la/strongbox/issues")
+                           (error "catalogue *still* corrupted and cannot be loaded. try another catalogue from the 'catalogue' menu"))}))
+
+          catalogue-data (p :p2/catalogue:read-catalogue (catalogue/read-catalogue catalogue-path {:bad-data? bad-json-file-handler}))
+          user-catalogue-data (p :p2/catalogue:read-user-catalogue (catalogue/read-catalogue (paths :user-catalogue-file) {:bad-data? nil}))
+          final-catalogue (p :p2/catalogue:merge-catalogues (catalogue/merge-catalogues catalogue-data user-catalogue-data))]
+      final-catalogue)))
+
 (defn-spec db-load-catalogue nil?
   "loads the currently selected catalgoue into the database if hasn't already been loaded.
   handles bad/invalid catalgoues and merging the user catalogue"
   []
   (when (and (not (db-catalogue-loaded?))
              (current-catalogue))
-    (let [catalogue-path (catalogue-local-path (current-catalogue))
-          _ (info (format "loading catalogue '%s'" (name (get-state :cfg :selected-catalogue))))
-          _ (debug "loading addon summaries from catalogue into database:" catalogue-path)
-
-          ;; download from remote and try again when json can't be read
-          bad-json-file-handler (fn []
-                                  (warn "catalogue corrupted. re-downloading and trying again.")
-                                  (fs/delete catalogue-path)
-                                  (download-current-catalogue)
-                                  (catalogue/read-catalogue
-                                   catalogue-path
-                                   {:bad-data? (fn []
-                                                 (error "please report this! https://github.com/ogri-la/strongbox/issues")
-                                                 (error "catalogue *still* corrupted and cannot be loaded. try another catalogue from the 'catalogue' menu"))}))
-
-          catalogue-data (p :p2/db:read-catalogue (catalogue/read-catalogue catalogue-path {:bad-data? bad-json-file-handler}))
-          user-catalogue-data (p :p2/db:read-user-catalogue (catalogue/read-catalogue (paths :user-catalogue-file) {:bad-data? nil}))
-
-          final-catalogue (p :p2/db:merge-catalogues (catalogue/merge-catalogues catalogue-data user-catalogue-data))]
+    (let [final-catalogue (load-current-catalogue)]
       (when-not (empty? final-catalogue)
         (p :p2/db:load (-db-load-catalogue final-catalogue))))))
+
+(defn crux-load-catalogue
+  []
+  (when (and (not (crux-catalogue-loaded?))
+             (current-catalogue))
+    (let [final-catalogue (load-current-catalogue)]
+      (when-not (empty? final-catalogue)
+        (p :p2/crux:load (-crux-load-catalogue final-catalogue))))))
+
 
 (defn-spec refresh-user-catalogue nil?
   "re-fetch each item in user catalogue using the URI and replace old entry with any updated details"
@@ -1278,11 +1332,15 @@
    ;; creates an in-memory database and some empty tables
    (p :p2/db-init (db-init))
 
+   (p :p2/crux-init (crux-init))
+
    ;; parse toc files in install-dir. do this first so we see *something* while catalogue downloads (next)
    (p :p2/installed-addons (load-installed-addons))
 
    ;; load the contents of the catalogue into the database
    (p :p2/db (db-load-catalogue))
+
+   (p :p2/crux (spy (crux-load-catalogue)))
 
    ;; match installed addons to those in catalogue
    (p :p2/match-addons (match-installed-addons-with-catalogue))
