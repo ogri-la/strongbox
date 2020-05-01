@@ -82,7 +82,4 @@
   "returns a node that is needed for accessing the db"
   []
   ;; in-memory only
-  (crux/start-node {:crux.node/topology '[crux.standalone/topology]
-                    ;;:crux.standalone/event-log-kv-store 'crux.kv.memdb/kv ;; necessary?
-
-                    }))
+  (crux/start-node {:crux.node/topology '[crux.standalone/topology]}))

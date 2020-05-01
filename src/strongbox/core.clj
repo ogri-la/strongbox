@@ -950,26 +950,19 @@
   nil)
 
 
-(defn-spec -crux-load-catalogue nil?
-  [catalogue-data ::sp/catalogue]
-  (let [node (p :p2/crux:load:get-db (get-state :crux))
-        {:keys [addon-summary-list]} catalogue-data
+;; 100ms penalty for spec checking, disabling for now.
+;; catalogue data check should be shifted to load-catalogue
+;;(defn-spec -crux-load-catalogue nil?
+;;  [catalogue-data ::sp/catalogue]
+(defn -crux-load-catalogue
+  [catalogue-data]
+  (let [node (p :p2/crux:load:get-db (get-state :crux))]
 
-
-        ]
-
-    ;; slower than sql by ~160ms
-    ;; but! we don't have to handle 3nf, so db:load is at 2.7s and crux:load is at 1.19s
     (p :p2/crux:load:insert-addon-list
-       (db/put-many node addon-summary-list))
+       (db/put-many node (:addon-summary-list catalogue-data)))
 
-       ;; slower than sql by ~1second
-       ;;(doseq [addon-summary addon-summary-list]
-         ;;(debug (:source-id addon-summary))
-         ;;(debug addon-summary)
-       ;;  (db/put node addon-summary)))
-
-    (swap! state assoc :catalogue-size (db/stored-query node :catalogue-size)))
+    (p :p2/crux:load:update-state
+       (swap! state assoc :catalogue-size (db/stored-query node :catalogue-size))))
   nil)
 
 (defn-spec load-current-catalogue (s/or :ok ::sp/catalogue, :error nil?)
@@ -1327,7 +1320,7 @@
    {:when (logging/debug-mode?)}
 
    ;; downloads the big long list of addon information stored on github
-   (p :p2/download-catalogue (download-current-catalogue))
+   (download-current-catalogue)
 
    ;; creates an in-memory database and some empty tables
    (p :p2/db-init (db-init))
@@ -1335,7 +1328,7 @@
    (p :p2/crux-init (crux-init))
 
    ;; parse toc files in install-dir. do this first so we see *something* while catalogue downloads (next)
-   (p :p2/installed-addons (load-installed-addons))
+   (load-installed-addons)
 
    ;; load the contents of the catalogue into the database
    (p :p2/db (db-load-catalogue))
@@ -1343,19 +1336,19 @@
    (p :p2/crux (spy (crux-load-catalogue)))
 
    ;; match installed addons to those in catalogue
-   (p :p2/match-addons (match-installed-addons-with-catalogue))
+   (match-installed-addons-with-catalogue)
 
    ;; for those addons that have matches, download their details
-   (p :p2/check-addons (check-for-updates))
+   (check-for-updates)
 
    ;; 2019-06-30, travis is failing with 403: Forbidden. Moved to gui init
    ;;(latest-strongbox-release) ;; check for updates after everything else is done 
 
    ;; otherwise nfo data is only updated when an addon is installed or updated
-   (p :p2/upgrade-nfo (upgrade-nfo-files))
+   (upgrade-nfo-files)
 
    ;; seems like a good place to preserve the etag-db
-   (p :p2/save-settings (save-settings))
+   (save-settings)
    nil))
 
 (defn-spec -install-update-these nil?
