@@ -896,9 +896,12 @@
   []
   (> (db/stored-query (get-state :crux) :catalogue-size) 0))
 
-(defn-spec -db-load-catalogue nil?
+;;(defn-spec -db-load-catalogue nil?
+;;  "loads the given `catalogue-data` into the database, creating categories and associations as necessary"
+;;  [catalogue-data ::sp/catalogue]
+(defn -db-load-catalogue
   "loads the given `catalogue-data` into the database, creating categories and associations as necessary"
-  [catalogue-data ::sp/catalogue]
+  [catalogue-data]
   (let [ds (p :p2/db:load:get-db (get-db))
         {:keys [addon-summary-list]} catalogue-data
 
