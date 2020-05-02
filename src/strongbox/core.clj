@@ -131,7 +131,7 @@
 
    :etag-db {}
 
-   :db nil ;; see get-db
+   :sqldb nil ;; see get-db
    :catalogue-size nil ;; used to trigger those waiting for the catalogue to become available
 
    ;; a map of paths whose location may vary according to the cwd and envvars.
@@ -193,13 +193,13 @@
 (defn get-db
   "returns the database connection if it exists, else creates and sets a new one"
   []
-  (if-let [sqldb-conn (get-state :db)]
+  (if-let [sqldb-conn (get-state :sqldb)]
     ;; connection already exists, return that
     sqldb-conn
     (do
       ;; else, create one, then return that.
-      (swap! state merge {:db (jdbc/get-datasource {:dbtype "h2:mem" :dbname (utils/uuid)})})
-      (get-state :db))))
+      (swap! state merge {:sqldb (jdbc/get-datasource {:dbtype "h2:mem" :dbname (utils/uuid)})})
+      (get-state :sqldb))))
 
 (defn sqldb-query
   [query & {:keys [arg-list opts]}]
@@ -878,7 +878,7 @@
 (defn-spec crux-init nil?
   "loads any previous database instance"
   []
-  (let [node (db/start-node)
+  (let [node (db/start)
         rm-node #(try
                    (.close node)
                    (catch Exception uncaught-exc

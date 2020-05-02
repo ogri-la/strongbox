@@ -9,6 +9,10 @@
   []
   (java.util.UUID/randomUUID))
 
+
+;;
+
+
 (defn to-crux-doc
   [blob]
   (cond
@@ -77,8 +81,7 @@
       (query-fn node)
       (error "query not found:" (name query-kw)))))
 
-(defn start-node
-  "returns a node that is needed for accessing the db"
+(defn start
+  "initialises the database, returning something that can be used to access it later"
   []
-  ;; in-memory only
   (crux/start-node {:crux.node/topology '[crux.standalone/topology]}))
