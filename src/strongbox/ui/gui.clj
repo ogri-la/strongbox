@@ -634,8 +634,8 @@
         update-rows-fn (fn [state]
                          (let [uinput (-> state :search-field-input (or "") trim)
                                search-results (if (empty? uinput)
-                                                (core/db-search)
-                                                (core/db-search uinput))]
+                                                (core/sqldb-search)
+                                                (core/sqldb-search uinput))]
                            (insert-all grid search-results)))]
 
     ;; I'm rather pleased these just work as-is :)
@@ -923,7 +923,7 @@
 
         cache-menu [(ss/action :name "Clear http cache" :handler (async-handler core/delete-http-cache!))
                     (ss/action :name "Clear addon zips" :handler (async-handler core/delete-downloaded-addon-zips!))
-                    (ss/action :name "Clear catalogues" :handler (async-handler (juxt core/db-reload-catalogue core/delete-catalogue-files!)))
+                    (ss/action :name "Clear catalogues" :handler (async-handler (juxt core/sqldb-reload-catalogue core/delete-catalogue-files!)))
                     (ss/action :name "Clear log files" :handler (async-handler core/delete-log-files!))
                     (ss/action :name "Clear all" :handler (async-handler core/clear-all-temp-files!))
                     :separator

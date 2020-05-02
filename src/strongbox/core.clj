@@ -28,7 +28,7 @@
 
 ;; acquired when switching between catalogues so the old database is shutdown
 ;; properly in one thread before being recreated in another
-(def db-lock (Object.))
+(def sqldb-lock (Object.))
 
 (def game-tracks [:retail :classic])
 
@@ -193,22 +193,22 @@
 (defn get-db
   "returns the database connection if it exists, else creates and sets a new one"
   []
-  (if-let [db-conn (get-state :db)]
+  (if-let [sqldb-conn (get-state :db)]
     ;; connection already exists, return that
-    db-conn
+    sqldb-conn
     (do
       ;; else, create one, then return that.
       (swap! state merge {:db (jdbc/get-datasource {:dbtype "h2:mem" :dbname (utils/uuid)})})
       (get-state :db))))
 
-(defn db-query
+(defn sqldb-query
   [query & {:keys [arg-list opts]}]
   (jdbc/execute! (get-db) (into [query] arg-list)
                  (merge {:builder-fn as-unqualified-hyphenated-maps} opts)))
 
 (def select-*-catalogue (str (static-slurp "resources/query--all-catalogue.sql") " ")) ;; trailing space is important
 
-(defn-spec db-split-tag-list vector?
+(defn-spec sqldb-split-tag-list vector?
   "converts a pipe-separated list of categories into a vector"
   [tag-list-str (s/nilable string?)]
   (if (empty? tag-list-str)
@@ -219,7 +219,7 @@
       (sort $)
       (vec $))))
 
-(defn db-gen-game-track-list
+(defn sqldb-gen-game-track-list
   "converts the 'retail_track' and 'classic_track' boolean values in db into a list of strings"
   [row]
   (let [track-list (vec (remove nil? [(when (:retail-track row) :retail)
@@ -229,7 +229,7 @@
       row
       (assoc row :game-track-list track-list))))
 
-(defn db-preserve-integer-source-id-if-possible
+(defn sqldb-preserve-integer-source-id-if-possible
   "source-id for 99.9999% of addons is an integer.
   this doesn't hold true for addons on Github or for other hosts in the future, so the database
   needs to store the value as a string. When coming out of the database, it's also a string - it's type has been lost.
@@ -240,28 +240,28 @@
     (catch Exception e
       source-id)))
 
-(defn db-coerce-catalogue-values
+(defn sqldb-coerce-catalogue-values
   "further per-row processing of catalogue data *after* retrieving it from the database"
   [row]
   (when row
     (as-> row $
-      (utils/coerce-map-values {:source-id db-preserve-integer-source-id-if-possible
-                                :category-list db-split-tag-list} $)
+      (utils/coerce-map-values {:source-id sqldb-preserve-integer-source-id-if-possible
+                                :category-list sqldb-split-tag-list} $)
       (clojure.set/rename-keys $ {:category-list :tag-list})
-      (db-gen-game-track-list $))))
+      (sqldb-gen-game-track-list $))))
 
-(defn db-search
+(defn sqldb-search
   "searches database for addons whose name or description contains given user input.
   if no user input, returns a list of randomly ordered results"
   ([]
    ;; random list of addons, no preference
-   (mapv db-coerce-catalogue-values
-         (db-query (str select-*-catalogue "order by RAND() limit ?") :arg-list [(get-state :search-results-cap)])))
+   (mapv sqldb-coerce-catalogue-values
+         (sqldb-query (str select-*-catalogue "order by RAND() limit ?") :arg-list [(get-state :search-results-cap)])))
   ([uin]
    (let [uin% (str uin "%")
          %uin% (str "%" uin "%")]
-     (mapv db-coerce-catalogue-values
-           (db-query (str select-*-catalogue "where label ilike ? or description ilike ?")
+     (mapv sqldb-coerce-catalogue-values
+           (sqldb-query (str select-*-catalogue "where label ilike ? or description ilike ?")
                      :arg-list [uin% %uin%]
                      :opts {:max-rows (get-state :search-results-cap)})))))
 
@@ -269,16 +269,16 @@
   "like `get-state`, uses 'paths' (keywords) to do predefined queries"
   [kw & [arg-list]]
   (case kw
-    :addon-summary-list (->> (db-query select-*-catalogue) (mapv db-coerce-catalogue-values))
-    :catalogue-size (-> "select count(*) as num from catalogue" db-query first :num)
+    :addon-summary-list (->> (sqldb-query select-*-catalogue) (mapv sqldb-coerce-catalogue-values))
+    :catalogue-size (-> "select count(*) as num from catalogue" sqldb-query first :num)
     :addon-by-source-and-name (as-> select-*-catalogue q,
                                 (str q "WHERE source = ? AND name = ?")
-                                (db-query q :arg-list arg-list)
-                                (mapv db-coerce-catalogue-values q))
+                                (sqldb-query q :arg-list arg-list)
+                                (mapv sqldb-coerce-catalogue-values q))
     :addon-by-name (as-> select-*-catalogue $,
                      (str $ "WHERE name = ?")
-                     (db-query $ :arg-list arg-list)
-                     (mapv db-coerce-catalogue-values $))
+                     (sqldb-query $ :arg-list arg-list)
+                     (mapv sqldb-coerce-catalogue-values $))
 
     nil))
 
@@ -743,11 +743,11 @@
 
 (defn-spec moosh-addons ::sp/toc-addon-summary
   "merges the data from an installed addon with it's match in the catalogue"
-  [installed-addon ::sp/toc, db-catalogue-addon ::sp/addon-summary]
+  [installed-addon ::sp/toc, sqldb-catalogue-addon ::sp/addon-summary]
   (let [;; nil fields are removed from the catalogue item because they might override good values in the .toc or .nfo
-        db-catalogue-addon (utils/drop-nils db-catalogue-addon [:description])]
+        sqldb-catalogue-addon (utils/drop-nils sqldb-catalogue-addon [:description])]
     ;; merges left->right. catalogue-addon overwrites installed-addon, ':matched' overwrites catalogue-addon, etc
-    (merge installed-addon db-catalogue-addon {:matched? true})))
+    (merge installed-addon sqldb-catalogue-addon {:matched? true})))
 
 ;;
 
@@ -795,8 +795,8 @@
         sql (str select-*-catalogue "where " sql-arg-template)
         results (if missing-args?
                   [] ;; don't look for 'nil', just skip with no results
-                  (db-query sql :arg-list sql-arg-vals))
-        match (-> results first db-coerce-catalogue-values)]
+                  (sqldb-query sql :arg-list sql-arg-vals))
+        match (-> results first sqldb-coerce-catalogue-values)]
     (when match
       ;; {:idx [[:source :source-id] [:source :source_id]], :key "deadly-boss-mods", :match {...}, ...}
       {:idx [toc-keys catalogue-keys]
@@ -815,7 +815,7 @@
         (find-first-in-db installed-addon (rest match-on-list))
         match))))
 
-(defn -db-match-installed-addons-with-catalogue
+(defn -sqldb-match-installed-addons-with-catalogue
   "for each installed addon, search the catalogue across multiple joins until a match is found. returns immediately when first match is found"
   [installed-addon-list]
   (let [;; toc-key -> catalogue-key
@@ -842,7 +842,7 @@
     (let [inst-addons (get-state :installed-addon-list)
           catalogue (query-db :addon-summary-list)
 
-          match-results (-db-match-installed-addons-with-catalogue inst-addons)
+          match-results (-sqldb-match-installed-addons-with-catalogue inst-addons)
           [matched unmatched] (utils/split-filter #(contains? % :final) match-results)
 
           matched (mapv :final matched)
@@ -867,10 +867,10 @@
 
 ;; catalogue db handling
 
-(defn db-shutdown
+(defn sqldb-shutdown
   []
   (try
-    (db-query "shutdown")
+    (sqldb-query "shutdown")
     (catch org.h2.jdbc.JdbcSQLNonTransientConnectionException e
       ;; "Database is already closed" (it's not)
       (debug (str e)))))
@@ -887,16 +887,16 @@
     (swap! state update-in [:cleanup] conj rm-node)
     nil))
 
-(defn-spec db-init nil?
+(defn-spec sqldb-init nil?
   []
   (debug "creating 'catalogue' table")
   (jdbc/execute! (get-db) [(static-slurp "resources/table--catalogue.sql")])
   (debug "creating category tables")
   (jdbc/execute! (get-db) [(static-slurp "resources/table--category.sql")])
-  (swap! state update-in [:cleanup] conj db-shutdown)
+  (swap! state update-in [:cleanup] conj sqldb-shutdown)
   nil)
 
-(defn db-catalogue-loaded?
+(defn sqldb-catalogue-loaded?
   []
   (> (query-db :catalogue-size) 0))
 
@@ -904,10 +904,10 @@
   []
   (> (query-crux-db :catalogue-size) 0))
 
-;;(defn-spec -db-load-catalogue nil?
+;;(defn-spec -sqldb-load-catalogue nil?
 ;;  "loads the given `catalogue-data` into the database, creating categories and associations as necessary"
 ;;  [catalogue-data ::sp/catalogue]
-(defn -db-load-catalogue
+(defn -sqldb-load-catalogue
   "loads the given `catalogue-data` into the database, creating categories and associations as necessary"
   [catalogue-data]
   (let [ds (p :p2/db:load:get-db (get-db))
@@ -928,7 +928,7 @@
                          (->> addon-categories (mapv rest) set vec))
 
         xform-row (fn [row]
-                    (let [ignored [:tag-list :age :game-track-list :created-date]
+                    (let [ignored [:tag-list :age :game-track-list :created-date :id]
                           mapping {:source-id :source_id
                                    :download-count :download_count
                                    ;;:created-date :created_date ;; curseforge only and unused
@@ -947,7 +947,7 @@
            (sql/insert! ds :catalogue (xform-row row))))
 
       (p :p2/db:load:insert-addon-category-list
-         (let [category-map (db-query "select name, id from category")
+         (let [category-map (sqldb-query "select name, id from category")
                category-map (into {} (mapv (fn [{:keys [name id]}]
                                              {name id}) category-map))]
 
@@ -999,15 +999,15 @@
           final-catalogue (p :p2/catalogue:merge-catalogues (catalogue/merge-catalogues catalogue-data user-catalogue-data))]
       final-catalogue)))
 
-(defn-spec db-load-catalogue nil?
+(defn-spec sqldb-load-catalogue nil?
   "loads the currently selected catalgoue into the database if hasn't already been loaded.
   handles bad/invalid catalgoues and merging the user catalogue"
   []
-  (when (and (not (db-catalogue-loaded?))
+  (when (and (not (sqldb-catalogue-loaded?))
              (current-catalogue))
     (let [final-catalogue (load-current-catalogue)]
       (when-not (empty? final-catalogue)
-        (p :p2/db:load (-db-load-catalogue final-catalogue))))))
+        (p :p2/db:load (-sqldb-load-catalogue final-catalogue))))))
 
 (defn crux-load-catalogue
   []
@@ -1252,18 +1252,18 @@
 
         addon-list (map #(merge padding %) addon-list)
 
-        match-results (-db-match-installed-addons-with-catalogue addon-list)
+        match-results (-sqldb-match-installed-addons-with-catalogue addon-list)
         [matched unmatched] (utils/split-filter #(contains? % :final) match-results)
         addon-dir (selected-addon-dir)
 
         ;; this is what v1 does, but it's hidden away in `expand-summary-wrapper`
         default-game-track (get-game-track)]
 
-    (doseq [db-match match-results
-            :let [addon (:installed-addon db-match) ;; ignore 'installed' bit, this is the addon that was matched on
-                  db-entry (:final db-match)
+    (doseq [sqldb-match match-results
+            :let [addon (:installed-addon sqldb-match) ;; ignore 'installed' bit, this is the addon that was matched on
+                  sqldb-entry (:final sqldb-match)
                   game-track (get addon :game-track default-game-track)]]
-      (when-let [expanded-addon (catalogue/expand-summary db-entry game-track)]
+      (when-let [expanded-addon (catalogue/expand-summary sqldb-entry game-track)]
         (install-addon expanded-addon addon-dir)))))
 
 (defn-spec import-exported-file nil?
@@ -1334,7 +1334,7 @@
    (download-current-catalogue)
 
    ;; creates an in-memory database and some empty tables
-   (p :p2/db-init (db-init))
+   (p :p2/sqldb-init (sqldb-init))
 
    (p :p2/crux-init (crux-init))
 
@@ -1342,7 +1342,7 @@
    (load-installed-addons)
 
    ;; load the contents of the catalogue into the database
-   (p :p2/db (db-load-catalogue))
+   (p :p2/db (sqldb-load-catalogue))
 
    (p :p2/crux (crux-load-catalogue))
 
@@ -1431,10 +1431,10 @@
   (-> (get-state) :selected-installed vec remove-many-addons)
   nil)
 
-(defn-spec db-reload-catalogue nil?
+(defn-spec sqldb-reload-catalogue nil?
   []
-  (locking db-lock
-    (db-shutdown)
+  (locking sqldb-lock
+    (sqldb-shutdown)
     (refresh)))
 
 ;; installing addons from strings
@@ -1459,7 +1459,7 @@
 
                (when addon
                  (install-addon addon (selected-addon-dir))
-                 (db-reload-catalogue)
+                 (sqldb-reload-catalogue)
                  addon)
 
                ;; failed to expand summary, probably because of selected game track.
@@ -1487,7 +1487,7 @@
 (defn watch-for-catalogue-change
   "when the catalogue changes, the list of available addons should be re-read"
   []
-  (state-bind [:cfg :selected-catalogue] (fn [_] (db-reload-catalogue))))
+  (state-bind [:cfg :selected-catalogue] (fn [_] (sqldb-reload-catalogue))))
 
 (defn-spec set-paths! nil?
   []

@@ -440,7 +440,7 @@
                 toc (merge toc nfo)
 
                 ;; we then attempt to match this 'toc+nfo' to an addon in the catalogue
-                catalogue-match (core/-db-match-installed-addons-with-catalogue [toc])
+                catalogue-match (core/-sqldb-match-installed-addons-with-catalogue [toc])
 
                 ;; this is a m:n match and we typically get back heaps of results
                 ;; in this case we have a catalogue of 1 and are not interested in how the addon was matched (:final)
@@ -461,7 +461,7 @@
 
 ;; todo: install classic addon into retail game track
 
-(deftest db-split-tag-list
+(deftest sqldb-split-tag-list
   (testing "converting a tab separated list back into an actual list works as expected"
     (let [cases [[nil []]
                  ["" []]
@@ -470,9 +470,9 @@
                  ["bar|baz" [:bar :baz]]]]
 
       (doseq [[given expected] cases]
-        (is (= expected (core/db-split-tag-list given)))))))
+        (is (= expected (core/sqldb-split-tag-list given)))))))
 
-(deftest db-gen-game-track-list
+(deftest sqldb-gen-game-track-list
   (testing "game track fields are turned back into a list"
     (let [cases [[{} {}]
                  [{:retail-track true} {:game-track-list [:retail]}]
@@ -484,9 +484,9 @@
                  ;; order is deterministic
                  [{:classic-track true, :retail-track true} {:game-track-list [:retail :classic]}]]]
       (doseq [[given expected] cases]
-        (is (= expected (core/db-gen-game-track-list given)))))))
+        (is (= expected (core/sqldb-gen-game-track-list given)))))))
 
-(deftest db-load-catalog
+(deftest sqldb-load-catalog
   (testing "very long descriptions are truncated"
     (let [addon-with-long-description
           {:label "EveryAddon",
@@ -515,7 +515,7 @@
       (with-fake-routes-in-isolation fake-routes
         (with-running-app
           (is (= expected
-                 (:description (first (core/db-query "select * from catalogue"))))))))))
+                 (:description (first (core/sqldb-query "select * from catalogue"))))))))))
 
 
 ;;
@@ -774,45 +774,46 @@
       (with-running-app
         (core/refresh)
 
-        ;; this is the guard to the `db-load-catalogue` fn
+        ;; this is the guard to the `sqldb-load-catalogue` fn
         ;; catalogue fixture in test-helper is an empty map, this should always return false
-        (is (not (core/db-catalogue-loaded?)))
+        (is (not (core/sqldb-catalogue-loaded?)))
 
         ;; empty the file. quickest way to bad json
         (-> (core/get-catalogue-source) core/catalogue-local-path (spit ""))
 
         ;; the catalogue will be re-requested, this time we've swapped out the fixture with one with a single entry
         (with-fake-routes-in-isolation fake-routes
-          (core/db-load-catalogue))
+          (core/sqldb-load-catalogue))
 
-        (is (core/db-catalogue-loaded?))))))
+        (is (core/sqldb-catalogue-loaded?))))))
 
 (deftest re-download-catalogue-on-bad-data-2
-  (testing "`db-load-catalogue` doesn't fail catastrophically when re-downloaded json is still bad"
+  (testing "`sqldb-load-catalogue` doesn't fail catastrophically when re-downloaded json is still bad"
     (let [;; overrides the fake route in test_helper.clj
           fake-routes {"https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
                        {:get (fn [req] {:status 200 :body "borked json"})}}]
       (with-running-app
         (core/refresh)
 
-        ;; this is the guard to the `db-load-catalogue` fn
+        ;; this is the guard to the `sqldb-load-catalogue` fn
         ;; catalogue fixture in test-helper is an empty map, this should always return false
-        (is (not (core/db-catalogue-loaded?)))
+        (is (not (core/sqldb-catalogue-loaded?)))
 
         ;; empty the file. quickest way to bad json
         (-> (core/get-catalogue-source) core/catalogue-local-path (spit ""))
 
         ;; the catalogue will be re-requested, this time the remote file is also corrupt
         (with-fake-routes-in-isolation fake-routes
-          (core/db-load-catalogue))
+          (core/sqldb-load-catalogue))
 
-        (is (not (core/db-catalogue-loaded?)))))))
+        (is (not (core/sqldb-catalogue-loaded?)))))))
 
 ;;
 
 (deftest add-user-addon-to-user-catalogue
   (testing "user addon is successfully added to the user catalogue, creating it if it doesn't exist"
-    (let [user-addon {:url "https://github.com/Aviana/HealComm"
+    (let [user-addon {:id :github--aviana-healcomm
+                      :url "https://github.com/Aviana/HealComm"
                       :updated-date "2019-10-09T17:40:01Z"
                       :source "github"
                       :source-id "Aviana/HealComm"
@@ -831,7 +832,8 @@
         (is (= expected (catalogue/read-catalogue (core/paths :user-catalogue-file)))))))
 
   (testing "adding addons to the user catalogue is idempotent"
-    (let [user-addon {:url "https://github.com/Aviana/HealComm"
+    (let [user-addon {:id :github--aviana-healcomm
+                      :url "https://github.com/Aviana/HealComm"
                       :updated-date "2019-10-09T17:40:01Z"
                       :source "github"
                       :source-id "Aviana/HealComm"
@@ -871,7 +873,8 @@
 
           expected-addon-dir (utils/join install-dir "EveryAddon")
 
-          expected-user-catalogue [{:tag-list [],
+          expected-user-catalogue [{:id :github--aviana-healcomm
+                                    :tag-list [],
                                     :game-track-list [],
                                     :updated-date "2019-10-09T17:40:04Z",
                                     :name "healcomm",

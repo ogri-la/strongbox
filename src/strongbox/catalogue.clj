@@ -7,6 +7,7 @@
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
    [java-time]
+   [clojure.string :refer [lower-case replace]]
    [strongbox
     [tags :as tags]
     [utils :as utils :refer [todt utcnow]]
@@ -45,6 +46,13 @@
      :total (count addon-list)
      :addon-summary-list addon-list}))
 
+(defn addon-id
+  [addon-summary]
+  (keyword
+   (if (string? (:source-id addon-summary))
+     (lower-case (str (:source addon-summary) "--" (replace (:source-id addon-summary) #"/" "-")))
+     (str (:source addon-summary) "--" (:source-id addon-summary)))))
+
 (defn-spec catalogue-v1-coercer (s/or :ok ::sp/catalogue, :empty nil?)
   "converts wowman-era specification 1 catalogues, coercing them to specification version 2 catalogues"
   [catalogue-data (s/nilable map?)]
@@ -63,13 +71,19 @@
                                            (clojure.set/rename-keys {:category-list :tag-list})
                                            (update-in [:tag-list] (partial tags/category-list-to-tag-list (:source new-row))))
                                        new-row)
-                             new-row (assoc new-row :id (keyword (str (:source row) "--" (:source-id row))))
+                             new-row (assoc new-row :id (addon-id row))
                              ]
                          new-row))]
       (-> catalogue-data
           (dissoc :updated-datestamp)
           (update-in [:addon-summary-list] (partial mapv row-coerce))
           (assoc-in [:spec :version] 2)))))
+
+(defn-spec catalogue-v2-coercer (s/or :ok ::sp/catalogue, :empty nil?)
+  [catalogue-data (s/nilable map?)]
+  (when-not (empty? catalogue-data)
+    (-> catalogue-data
+        (update-in [:addon-summary-list] (partial mapv #(assoc % :id (addon-id %)))))))
 
 (defn-spec read-catalogue (s/or :ok ::sp/catalogue, :error nil?)
   "reads the catalogue of addon data at the given `catalogue-path`.
@@ -84,7 +98,7 @@
      (if (= 1 (-> catalogue-data :spec :version))
        ;; wowman-era catalogues
        (utils/nilable (catalogue-v1-coercer catalogue-data))
-       (utils/nilable catalogue-data)))))
+       (utils/nilable (catalogue-v2-coercer catalogue-data))))))
 
 (defn-spec write-catalogue ::sp/extant-file
   "write catalogue to given `output-file` as JSON. returns path to output file"
