@@ -63,15 +63,18 @@
   [node id time]
   (from-crux-doc (crux/entity (crux/db node time) id)))
 
+(defn query
+  [node query]
+  (crux/q (crux/db node) query))
+
 (defn query-by-type
   [node type-kw]
-  (crux/q (crux/db node)
-          '{:find [e]
-            :where [[e :type type-kw]]}))
+  (query node '{:find [e]
+                :where [[e :type type-kw]]}))
 
 (defn stored-query
   "common queries we can call by keyword"
-  [node query-kw]
+  [node query-kw & [arg-list]]
   (let [query-map {;; todo, obviously.
                    :catalogue-size (constantly 0)}]
     (if-let [query-fn (query-kw query-map)]

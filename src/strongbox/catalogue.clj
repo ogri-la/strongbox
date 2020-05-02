@@ -62,7 +62,9 @@
                                        (-> new-row
                                            (clojure.set/rename-keys {:category-list :tag-list})
                                            (update-in [:tag-list] (partial tags/category-list-to-tag-list (:source new-row))))
-                                       new-row)]
+                                       new-row)
+                             new-row (assoc new-row :id (keyword (str (:source row) "--" (:source-id row))))
+                             ]
                          new-row))]
       (-> catalogue-data
           (dissoc :updated-datestamp)

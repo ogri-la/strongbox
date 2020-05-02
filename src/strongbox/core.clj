@@ -282,6 +282,14 @@
 
     nil))
 
+(defn query-crux-db
+  [query-kw & [arg-list]]
+  (db/stored-query (get-state :crux) query-kw arg-list))
+
+(defn free-query-crux
+  [query]
+  (db/query (get-state :crux) query))
+
 ;;
 
 (defn set-etag
@@ -894,7 +902,7 @@
 
 (defn crux-catalogue-loaded?
   []
-  (> (db/stored-query (get-state :crux) :catalogue-size) 0))
+  (> (query-crux-db :catalogue-size) 0))
 
 ;;(defn-spec -db-load-catalogue nil?
 ;;  "loads the given `catalogue-data` into the database, creating categories and associations as necessary"
@@ -920,7 +928,7 @@
                          (->> addon-categories (mapv rest) set vec))
 
         xform-row (fn [row]
-                    (let [ignored [:tag-list :age :game-track-list :created-date]
+                    (let [ignored [:tag-list :age :game-track-list :created-date :id]
                           mapping {:source-id :source_id
                                    :download-count :download_count
                                    ;;:created-date :created_date ;; curseforge only and unused
@@ -1336,7 +1344,7 @@
    ;; load the contents of the catalogue into the database
    (p :p2/db (db-load-catalogue))
 
-   (p :p2/crux (spy (crux-load-catalogue)))
+   (p :p2/crux (crux-load-catalogue))
 
    ;; match installed addons to those in catalogue
    (match-installed-addons-with-catalogue)
