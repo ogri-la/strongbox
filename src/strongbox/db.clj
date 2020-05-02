@@ -59,10 +59,6 @@
   [node id]
   (from-crux-doc (crux/entity (crux/db node) id)))
 
-(defn get-by-id+time
-  [node id time]
-  (from-crux-doc (crux/entity (crux/db node time) id)))
-
 (defn query
   [node query]
   (crux/q (crux/db node) query))

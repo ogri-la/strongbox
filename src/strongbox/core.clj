@@ -928,7 +928,7 @@
                          (->> addon-categories (mapv rest) set vec))
 
         xform-row (fn [row]
-                    (let [ignored [:tag-list :age :game-track-list :created-date :id]
+                    (let [ignored [:tag-list :age :game-track-list :created-date]
                           mapping {:source-id :source_id
                                    :download-count :download_count
                                    ;;:created-date :created_date ;; curseforge only and unused
