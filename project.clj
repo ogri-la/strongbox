@@ -31,7 +31,8 @@
 
                  [gui-diff "0.6.7"]
                  [com.taoensso/tufte "2.1.0"]
-                 [juxt/crux-core "20.04-1.8.2-alpha"]
+                 ;;[juxt/crux-core "20.04-1.8.2-alpha"]
+                 [datascript "0.18.11"]
                  ]
 
   ;; java 11 , java-time localisation issue 

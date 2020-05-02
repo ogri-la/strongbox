@@ -7,7 +7,7 @@
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
    [java-time]
-   [clojure.string :refer [lower-case replace]]
+   [clojure.string :refer [lower-case]]
    [strongbox
     [tags :as tags]
     [utils :as utils :refer [todt utcnow]]
@@ -50,7 +50,7 @@
   [addon-summary]
   (keyword
    (if (string? (:source-id addon-summary))
-     (lower-case (str (:source addon-summary) "--" (replace (:source-id addon-summary) #"/" "-")))
+     (lower-case (str (:source addon-summary) "--" (clojure.string/replace (:source-id addon-summary) #"/" "-")))
      (str (:source addon-summary) "--" (:source-id addon-summary)))))
 
 (defn-spec catalogue-v1-coercer (s/or :ok ::sp/catalogue, :empty nil?)

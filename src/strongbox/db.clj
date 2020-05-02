@@ -1,71 +1,61 @@
 (ns strongbox.db
   (:require
    [taoensso.timbre :refer [log debug info warn error spy]]
-   ;;[strongbox.utils :as utils :refer [uuid]]
-   [crux.api :as crux]
+   [strongbox.utils :as utils :refer [uuid]]
+   [datascript.core :as ds]
+   ;;[datascript.db :as ds]
+   
    [clojure.java.io :as io]))
 
-(defn uuid
-  []
-  (java.util.UUID/randomUUID))
-
-
-;;
-
-
-(defn to-crux-doc
+(defn to-doc
   [blob]
   (cond
-    ;; data blob already has a crux id
-    ;; prefer that over any id it may have picked up and pass it through
+    ;; data blob already has a `:db/id`
+    ;; prefer that over any :id it may have picked up and pass it through
     (and (map? blob)
-         (contains? blob :crux.db/id)) (dissoc blob :id)
+         (contains? blob :db/id)) (dissoc blob :id)
 
-    ;; data blob has an id but no crux id, rename :id to crux id
+    ;; data blob has an `:id` but no `:db/id`, rename `:id` to `:db/id`
     (and (map? blob)
-         (contains? blob :id)) (clojure.set/rename-keys blob {:id :crux.db/id})
+         (contains? blob :id)) (-> blob
+                                   (update-in [:id] name)
+                                   (clojure.set/rename-keys {:id :db/id}))
 
     ;; given something that isn't a map
-    ;; wrap in a map, give it an id and pass it through
-    (not (map? blob)) {:crux.db/id (uuid) :data blob}
+    ;; wrap in a map, give it a `:db/id` and pass it through
+    (not (map? blob)) {:db/id (uuid) :data blob}
 
-    ;; otherwise, it *is* a map but is lacking an id or a crux id
-    :else (assoc blob :crux.db/id (uuid))))
+    ;; otherwise, it *is* a map but is lacking an `:id` or a `:db/id`
+    :else (assoc blob :db/id (uuid))))
 
-(defn from-crux-doc
+(defn from-doc
   [result]
   (when result
     (if (map? result)
-      (clojure.set/rename-keys result {:crux.db/id :id})
+      (-> result 
+          (clojure.set/rename-keys {:db/id :id})
+          (update-in [:id] keyword))
 
       ;; ... ? just issue a warning and pass it through
       (do
-        (warn (str "got unknown type attempting to coerce result from crux db:" (type result)))
+        (warn (str "got unknown type attempting to coerce result from db:" (type result)))
         result))))
 
-(defn -to-put
-  [blob]
-  [:crux.tx/put (to-crux-doc blob)])
-
 (defn put
-  [node blob]
-  (crux/submit-tx node [[:crux.tx/put (to-crux-doc blob)]]))
+  [conn blob]
+  (ds/transact! conn [(to-doc blob)]))
 
 (defn put-many
-  [node doc-list]
-  (crux/submit-tx node (mapv -to-put doc-list)))
-
-(defn put+wait
-  [node blob]
-  (crux/await-tx node (put blob)))
+  [conn doc-list]
+  (ds/transact! conn (mapv to-doc doc-list)))
 
 (defn get-by-id
-  [node id]
-  (from-crux-doc (crux/entity (crux/db node) id)))
+  [conn id]
+  (from-doc (ds/entity conn id)))
 
 (defn query
-  [node query]
-  (crux/q (crux/db node) query))
+  [conn query]
+  (ds/q query conn))
 
 (defn query-by-type
   [node type-kw]
@@ -84,4 +74,4 @@
 (defn start
   "initialises the database, returning something that can be used to access it later"
   []
-  (crux/start-node {:crux.node/topology '[crux.standalone/topology]}))
+  (ds/create-conn))

@@ -285,11 +285,11 @@
 
 (defn query-crux-db
   [query-kw & [arg-list]]
-  (db/stored-query (get-state :crux) query-kw arg-list))
+  (db/stored-query (get-state :db) query-kw arg-list))
 
 (defn free-query-crux
   [query]
-  (db/query (get-state :crux) query))
+  (db/query (get-state :db) query))
 
 ;;
 
@@ -884,7 +884,7 @@
                    (.close node)
                    (catch Exception uncaught-exc
                      (error uncaught-exc "uncaught exception attempting to close crux node")))]
-    (swap! state assoc :crux node)
+    (swap! state assoc :db node)
     (swap! state update-in [:cleanup] conj rm-node)
     nil))
 
@@ -968,7 +968,7 @@
 ;;  [catalogue-data ::sp/catalogue]
 (defn -crux-load-catalogue
   [catalogue-data]
-  (let [node (p :p2/crux:load:get-db (get-state :crux))]
+  (let [node (p :p2/crux:load:get-db (get-state :db))]
 
     (p :p2/crux:load:insert-addon-list
        (db/put-many node (:addon-summary-list catalogue-data)))
