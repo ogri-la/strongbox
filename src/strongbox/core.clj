@@ -131,7 +131,8 @@
 
    :etag-db {}
 
-   :sqldb nil ;; see get-db
+   :db nil
+   :sqldb nil ;; DEPRECATED. see get-sqldb
    :catalogue-size nil ;; used to trigger those waiting for the catalogue to become available
 
    ;; a map of paths whose location may vary according to the cwd and envvars.
@@ -190,7 +191,7 @@
         unqualified (constantly nil)]
     (rs/as-modified-maps rs (assoc opts :qualifier-fn unqualified :label-fn xform))))
 
-(defn get-db
+(defn get-sqldb
   "returns the database connection if it exists, else creates and sets a new one"
   []
   (if-let [sqldb-conn (get-state :sqldb)]
@@ -203,7 +204,7 @@
 
 (defn sqldb-query
   [query & {:keys [arg-list opts]}]
-  (jdbc/execute! (get-db) (into [query] arg-list)
+  (jdbc/execute! (get-sqldb) (into [query] arg-list)
                  (merge {:builder-fn as-unqualified-hyphenated-maps} opts)))
 
 (def select-*-catalogue (str (static-slurp "resources/query--all-catalogue.sql") " ")) ;; trailing space is important
@@ -890,9 +891,9 @@
 (defn-spec sqldb-init nil?
   []
   (debug "creating 'catalogue' table")
-  (jdbc/execute! (get-db) [(static-slurp "resources/table--catalogue.sql")])
+  (jdbc/execute! (get-sqldb) [(static-slurp "resources/table--catalogue.sql")])
   (debug "creating category tables")
-  (jdbc/execute! (get-db) [(static-slurp "resources/table--category.sql")])
+  (jdbc/execute! (get-sqldb) [(static-slurp "resources/table--category.sql")])
   (swap! state update-in [:cleanup] conj sqldb-shutdown)
   nil)
 
@@ -910,7 +911,7 @@
 (defn -sqldb-load-catalogue
   "loads the given `catalogue-data` into the database, creating categories and associations as necessary"
   [catalogue-data]
-  (let [ds (p :p2/db:load:get-db (get-db))
+  (let [ds (p :p2/db:load:get-sqldb (get-sqldb))
         {:keys [addon-summary-list]} catalogue-data
 
         addon-categories (p :p2/db:load:extract-category-data
