@@ -266,7 +266,7 @@
                      :arg-list [uin% %uin%]
                      :opts {:max-rows (get-state :search-results-cap)})))))
 
-(defn query-db
+(defn query-sqldb
   "like `get-state`, uses 'paths' (keywords) to do predefined queries"
   [kw & [arg-list]]
   (case kw
@@ -283,11 +283,11 @@
 
     nil))
 
-(defn query-crux-db
+(defn query-db
   [query-kw & [arg-list]]
   (db/stored-query (get-state :db) query-kw arg-list))
 
-(defn free-query-crux
+(defn free-query-db
   [query]
   (db/query (get-state :db) query))
 
@@ -841,7 +841,7 @@
   (when (selected-addon-dir) ;; don't even bother if we have nothing to match it to
     (info "matching installed addons to catalogue")
     (let [inst-addons (get-state :installed-addon-list)
-          catalogue (query-db :addon-summary-list)
+          catalogue (query-sqldb :addon-summary-list)
 
           match-results (-sqldb-match-installed-addons-with-catalogue inst-addons)
           [matched unmatched] (utils/split-filter #(contains? % :final) match-results)
@@ -876,17 +876,12 @@
       ;; "Database is already closed" (it's not)
       (debug (str e)))))
 
-(defn-spec crux-init nil?
+(defn-spec db-init nil?
   "loads any previous database instance"
   []
-  (let [node (db/start)
-        rm-node #(try
-                   (.close node)
-                   (catch Exception uncaught-exc
-                     (error uncaught-exc "uncaught exception attempting to close crux node")))]
-    (swap! state assoc :db node)
-    (swap! state update-in [:cleanup] conj rm-node)
-    nil))
+  ;; no cleanup necessary for datascript?
+  (swap! state assoc :db (db/start))
+  nil)
 
 (defn-spec sqldb-init nil?
   []
@@ -899,11 +894,11 @@
 
 (defn sqldb-catalogue-loaded?
   []
-  (> (query-db :catalogue-size) 0))
+  (> (query-sqldb :catalogue-size) 0))
 
-(defn crux-catalogue-loaded?
+(defn db-catalogue-loaded?
   []
-  (> (query-crux-db :catalogue-size) 0))
+  (> (query-db :catalogue-size) 0))
 
 ;;(defn-spec -sqldb-load-catalogue nil?
 ;;  "loads the given `catalogue-data` into the database, creating categories and associations as necessary"
@@ -958,7 +953,7 @@
                                                  :addon_source_id source-id
                                                  :category_id (get category-map category)}))))))
 
-    (swap! state assoc :catalogue-size (query-db :catalogue-size)))
+    (swap! state assoc :catalogue-size (query-sqldb :catalogue-size)))
   nil)
 
 
@@ -966,7 +961,7 @@
 ;; catalogue data check should be shifted to load-catalogue
 ;;(defn-spec -crux-load-catalogue nil?
 ;;  [catalogue-data ::sp/catalogue]
-(defn -crux-load-catalogue
+(defn -db-load-catalogue
   [catalogue-data]
   (let [node (p :p2/crux:load:get-db (get-state :db))]
 
@@ -1010,13 +1005,13 @@
       (when-not (empty? final-catalogue)
         (p :p2/db:load (-sqldb-load-catalogue final-catalogue))))))
 
-(defn crux-load-catalogue
+(defn db-load-catalogue
   []
-  (when (and (not (crux-catalogue-loaded?))
+  (when (and (not (db-catalogue-loaded?))
              (current-catalogue))
     (let [final-catalogue (load-current-catalogue)]
       (when-not (empty? final-catalogue)
-        (p :p2/crux:load (-crux-load-catalogue final-catalogue))))))
+        (p :p2/crux:load (-db-load-catalogue final-catalogue))))))
 
 
 (defn-spec refresh-user-catalogue nil?
@@ -1217,10 +1212,10 @@
                             matching-addon
                             (cond
                               ;; first addon by given name and source. hopefully 0 or 1 results
-                              (and source name) (first (query-db :addon-by-source-and-name [source name]))
+                              (and source name) (first (query-sqldb :addon-by-source-and-name [source name]))
 
                               ;; first addon by given name. potentially multiple results
-                              name (first (query-db :addon-by-name [name]))
+                              name (first (query-sqldb :addon-by-name [name]))
 
                               ;; we have nothing to query on :(                          
                               :else nil)]
@@ -1337,7 +1332,7 @@
    ;; creates an in-memory database and some empty tables
    (p :p2/sqldb-init (sqldb-init))
 
-   (p :p2/crux-init (crux-init))
+   (p :p2/crux-init (db-init))
 
    ;; parse toc files in install-dir. do this first so we see *something* while catalogue downloads (next)
    (load-installed-addons)
@@ -1345,7 +1340,7 @@
    ;; load the contents of the catalogue into the database
    (p :p2/db (sqldb-load-catalogue))
 
-   (p :p2/crux (crux-load-catalogue))
+   (p :p2/crux (db-load-catalogue))
 
    ;; match installed addons to those in catalogue
    (match-installed-addons-with-catalogue)

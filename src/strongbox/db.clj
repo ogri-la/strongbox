@@ -51,16 +51,11 @@
 
 (defn get-by-id
   [conn id]
-  (from-doc (ds/entity conn id)))
+  (from-doc (ds/entity (ds/db conn) id)))
 
 (defn query
   [conn query]
-  (ds/q query conn))
-
-(defn query-by-type
-  [node type-kw]
-  (query node '{:find [e]
-                :where [[e :type type-kw]]}))
+  (ds/q query (ds/db conn)))
 
 (defn stored-query
   "common queries we can call by keyword"
