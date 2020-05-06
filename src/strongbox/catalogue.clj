@@ -1,11 +1,11 @@
 (ns strongbox.catalogue
   (:require
    [flatland.ordered.map :as omap]
-   [clojure.set]
    [clojure.spec.alpha :as s]
    [orchestra.spec.test :as st]
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
+   [taoensso.tufte :as tufte :refer [p profile]]
    [java-time]
    [strongbox
     [tags :as tags]
@@ -45,34 +45,35 @@
      :total (count addon-list)
      :addon-summary-list addon-list}))
 
-(defn-spec catalogue-v1-coercer (s/or :ok ::sp/catalogue, :empty nil?)
-  "converts wowman-era specification 1 catalogues, coercing them to specification version 2 catalogues"
-  [catalogue-data (s/nilable map?)]
-  (when-not (empty? catalogue-data)
-    (let [row-coerce (fn [row]
-                       (let [new-row (-> row
-                                         (clojure.set/rename-keys {:uri :url})
-                                         (dissoc :alt-name))
+(defn catalogue-v1-coercer
+  [catalogue-data]
+  (let [row-coerce (fn [row]
+                     (-> row
+                         (assoc :tag-list (tags/category-list-to-tag-list (:source row) (:category-list row)))
+                         (dissoc :category-list)))]
+    (-> catalogue-data
+        (update-in [:addon-summary-list] #(into [] (map row-coerce) %))
+        (update-in [:spec :version] inc))))
 
-                             new-row (if (contains? new-row :description)
-                                       (update-in new-row [:description] utils/safe-subs 255)
-                                       new-row)
+(defn catalogue-v2-coercer
+  [catalogue-data]
+  catalogue-data)
 
-                             new-row (if (contains? new-row :category-list)
-                                       (-> new-row
-                                           (clojure.set/rename-keys {:category-list :tag-list})
-                                           (update-in [:tag-list] (partial tags/category-list-to-tag-list (:source new-row))))
-                                       new-row)]
-                         new-row))]
-      (-> catalogue-data
-          (dissoc :updated-datestamp)
-          (update-in [:addon-summary-list] (partial mapv row-coerce))
-          (assoc-in [:spec :version] 2)))))
+(defn -value-fn
+  [key val]
+  (case key
+    :game-track (keyword val)
+    :tag-list (mapv keyword val)
+    :description (utils/safe-subs val 255) ;; no database anymore, no hard failures on value length?
 
-(defn-spec catalogue-v2-coercer (s/or :ok ::sp/catalogue, :empty nil?)
-  [catalogue-data (s/nilable map?)]
-  (when-not (empty? catalogue-data)
-    catalogue-data))
+    ;; if v1, increment to v2
+    ;;:version (if (= 1 val) (inc val) val) ;; can't do this, we need to switch on it later
+
+    ;; remove these
+    :alt-name -value-fn
+    :updated-datestamp -value-fn
+
+    val))
 
 (defn-spec read-catalogue (s/or :ok ::sp/catalogue, :error nil?)
   "reads the catalogue of addon data at the given `catalogue-path`.
@@ -80,15 +81,27 @@
   ([catalogue-path ::sp/file]
    (read-catalogue catalogue-path {}))
   ([catalogue-path ::sp/file, opts map?]
-   ;; cheshire claims to be twice as fast: https://github.com/dakrone/cheshire#speed
-   (let [opts (merge opts {:transform-map {;; tag list is only present from v2+ and won't affect v1
-                                           :game-track keyword
-                                           :tag-list #(mapv keyword %)}})
-         catalogue-data (utils/load-json-file-safely catalogue-path opts)]
-     (if (= 1 (-> catalogue-data :spec :version))
-       ;; wowman-era catalogues
-       (utils/nilable (catalogue-v1-coercer catalogue-data))
-       (utils/nilable (catalogue-v2-coercer catalogue-data))))))
+   (p :catalogue
+      (let [key-fn (fn [k]
+                     (case k
+                       "uri" :url
+                         ;;"category-list" :tag-list ;; pushed back into v1 post-processing
+                       (keyword k)))
+            value-fn -value-fn ;; defined 'outside' so it can reference itself
+            opts (merge opts {:key-fn key-fn :value-fn value-fn})
+            catalogue-data (p :catalogue:load-json-file
+                              (utils/load-json-file-safely2 catalogue-path opts))]
+
+        (when-not (empty? catalogue-data)
+          (if (= 1 (-> catalogue-data :spec :version))
+
+              ;; wowman-era catalogues
+            (p :catalogue:v1-coercer
+               (utils/nilable (catalogue-v1-coercer catalogue-data)))
+
+              ;; strongbox-era catalogues
+            (p :catalogue:v2-coercer
+               (utils/nilable (catalogue-v2-coercer catalogue-data)))))))))
 
 (defn-spec write-catalogue ::sp/extant-file
   "write catalogue to given `output-file` as JSON. returns path to output file"
