@@ -703,6 +703,8 @@
   (swap! state assoc :db (db/start))
   nil)
 
+;; todo: should I distinguish between not-set (nil) and empty ([])?
+;; it is possible to have an empty catalogue or no catalogue ...
 (defn db-catalogue-loaded?
   []
   (-> (get-state :db) empty? not))
@@ -744,9 +746,9 @@
                            (error "please report this! https://github.com/ogri-la/strongbox/issues")
                            (error "catalogue *still* corrupted and cannot be loaded. try another catalogue from the 'catalogue' menu"))}))
 
-          catalogue-data (p :p2/catalogue:read-catalogue (catalogue/read-catalogue catalogue-path {:bad-data? bad-json-file-handler}))
-          user-catalogue-data (p :p2/catalogue:read-user-catalogue (catalogue/read-catalogue (paths :user-catalogue-file) {:bad-data? nil}))
-          final-catalogue (p :p2/catalogue:merge-catalogues (catalogue/merge-catalogues catalogue-data user-catalogue-data))]
+          catalogue-data (p :p2/db:catalogue:read-catalogue (catalogue/read-catalogue catalogue-path {:bad-data? bad-json-file-handler}))
+          user-catalogue-data (p :p2/db:catalogue:read-user-catalogue (catalogue/read-catalogue (paths :user-catalogue-file) {:bad-data? nil}))
+          final-catalogue (p :p2/db:catalogue:merge-catalogues (catalogue/merge-catalogues catalogue-data user-catalogue-data))]
       final-catalogue)))
 
 (defn db-load-catalogue
@@ -755,7 +757,7 @@
   []
   (when (and (not (db-catalogue-loaded?))
              (current-catalogue))
-    (let [final-catalogue (load-current-catalogue)]
+    (let [final-catalogue (p :p2/db:catalogue (load-current-catalogue))]
       (when-not (empty? final-catalogue)
         (p :p2/db:load (-db-load-catalogue final-catalogue))))))
 
@@ -1080,7 +1082,7 @@
    (load-installed-addons)
 
    ;; creates a 'database' (empty list of addons available to install)
-   (p :p2/db-init (db-init))
+   (db-init)
 
    ;; load the contents of the catalogue into the database
    (p :p2/db (db-load-catalogue))
