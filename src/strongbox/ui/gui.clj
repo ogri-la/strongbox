@@ -634,8 +634,8 @@
         update-rows-fn (fn [state]
                          (let [uinput (-> state :search-field-input (or "") trim)
                                search-results (if (empty? uinput)
-                                                (core/sqldb-search)
-                                                (core/sqldb-search uinput))]
+                                                (core/db-search)
+                                                (core/db-search uinput))]
                            (insert-all grid search-results)))]
 
     ;; I'm rather pleased these just work as-is :)
@@ -647,7 +647,7 @@
     (add-highlighter grid addon-installed? (colours :search/already-installed))
 
     (ss/listen grid :selection (selected-rows-handler search-results-selection-handler))
-    (state-bind [:catalogue-size] update-rows-fn)
+    (state-bind [:db] update-rows-fn)
     (state-bind [:search-field-input] update-rows-fn)
 
     (hide-columns grid hidden-by-default-cols)
@@ -744,7 +744,7 @@
                        (let [ia (:installed-addon-list state)
                              uia (filter :matched? ia)
 
-                             a-count (:catalogue-size state)
+                             a-count (count (:db state))
                              ia-count (count ia)
                              uia-count (count uia)
 
@@ -923,7 +923,7 @@
 
         cache-menu [(ss/action :name "Clear http cache" :handler (async-handler core/delete-http-cache!))
                     (ss/action :name "Clear addon zips" :handler (async-handler core/delete-downloaded-addon-zips!))
-                    (ss/action :name "Clear catalogues" :handler (async-handler (juxt core/sqldb-reload-catalogue core/delete-catalogue-files!)))
+                    (ss/action :name "Clear catalogues" :handler (async-handler (juxt core/refresh core/delete-catalogue-files!)))
                     (ss/action :name "Clear log files" :handler (async-handler core/delete-log-files!))
                     (ss/action :name "Clear all" :handler (async-handler core/clear-all-temp-files!))
                     :separator

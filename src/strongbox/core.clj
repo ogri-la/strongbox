@@ -10,10 +10,6 @@
    [me.raynes.fs :as fs]
    [trptcolin.versioneer.core :as versioneer]
    [envvar.core :refer [env]]
-   [next.jdbc :as jdbc]
-   [next.jdbc
-    [sql :as sql]
-    [result-set :as rs]]
    [strongbox
     [db :as db]
     [config :as config]
@@ -25,10 +21,6 @@
     [catalogue :as catalogue]
     [toc]
     [specs :as sp]]))
-
-;; acquired when switching between catalogues so the old database is shutdown
-;; properly in one thread before being recreated in another
-(def sqldb-lock (Object.))
 
 (def game-tracks [:retail :classic])
 
@@ -132,8 +124,6 @@
    :etag-db {}
 
    :db nil
-   :sqldb nil ;; DEPRECATED. see get-sqldb
-   :catalogue-size nil ;; used to trigger those waiting for the catalogue to become available
 
    ;; a map of paths whose location may vary according to the cwd and envvars.
    :paths nil
@@ -180,116 +170,6 @@
   "like `get-in` but for the currently selected colour theme. requires running app"
   [& path]
   (nav-map (get themes (get-state :cfg :gui-theme)) path))
-
-;; db
-
-(defn as-unqualified-hyphenated-maps
-  "used to coerce keys in each row of resultset
-  adapted from https://github.com/seancorfield/next-jdbc/blob/master/doc/result-set-builders.md#rowbuilder-and-resultsetbuilder"
-  [rs opts]
-  (let [xform #(-> % name lower-case (clojure.string/replace #"_" "-"))
-        unqualified (constantly nil)]
-    (rs/as-modified-maps rs (assoc opts :qualifier-fn unqualified :label-fn xform))))
-
-(defn get-sqldb
-  "returns the database connection if it exists, else creates and sets a new one"
-  []
-  (if-let [sqldb-conn (get-state :sqldb)]
-    ;; connection already exists, return that
-    sqldb-conn
-    (do
-      ;; else, create one, then return that.
-      (swap! state merge {:sqldb (jdbc/get-datasource {:dbtype "h2:mem" :dbname (utils/uuid)})})
-      (get-state :sqldb))))
-
-(defn sqldb-query
-  [query & {:keys [arg-list opts]}]
-  (jdbc/execute! (get-sqldb) (into [query] arg-list)
-                 (merge {:builder-fn as-unqualified-hyphenated-maps} opts)))
-
-(def select-*-catalogue (str (static-slurp "resources/query--all-catalogue.sql") " ")) ;; trailing space is important
-
-(defn-spec sqldb-split-tag-list vector?
-  "converts a pipe-separated list of categories into a vector"
-  [tag-list-str (s/nilable string?)]
-  (if (empty? tag-list-str)
-    []
-    (as-> tag-list-str $
-      (clojure.string/split $ #"\|")
-      (map keyword $)
-      (sort $)
-      (vec $))))
-
-(defn sqldb-gen-game-track-list
-  "converts the 'retail_track' and 'classic_track' boolean values in db into a list of strings"
-  [row]
-  (let [track-list (vec (remove nil? [(when (:retail-track row) :retail)
-                                      (when (:classic-track row) :classic)]))
-        row (dissoc row :retail-track :classic-track)]
-    (if (empty? track-list)
-      row
-      (assoc row :game-track-list track-list))))
-
-(defn sqldb-preserve-integer-source-id-if-possible
-  "source-id for 99.9999% of addons is an integer.
-  this doesn't hold true for addons on Github or for other hosts in the future, so the database
-  needs to store the value as a string. When coming out of the database, it's also a string - it's type has been lost.
-  for no good reason, try to preserve it here"
-  [source-id]
-  (try
-    (Integer. source-id)
-    (catch Exception e
-      source-id)))
-
-(defn sqldb-coerce-catalogue-values
-  "further per-row processing of catalogue data *after* retrieving it from the database"
-  [row]
-  (when row
-    (as-> row $
-      (utils/coerce-map-values {:source-id sqldb-preserve-integer-source-id-if-possible
-                                :category-list sqldb-split-tag-list} $)
-      (clojure.set/rename-keys $ {:category-list :tag-list})
-      (sqldb-gen-game-track-list $))))
-
-(defn sqldb-search
-  "searches database for addons whose name or description contains given user input.
-  if no user input, returns a list of randomly ordered results"
-  ([]
-   ;; random list of addons, no preference
-   (mapv sqldb-coerce-catalogue-values
-         (sqldb-query (str select-*-catalogue "order by RAND() limit ?") :arg-list [(get-state :search-results-cap)])))
-  ([uin]
-   (let [uin% (str uin "%")
-         %uin% (str "%" uin "%")]
-     (mapv sqldb-coerce-catalogue-values
-           (sqldb-query (str select-*-catalogue "where label ilike ? or description ilike ?")
-                     :arg-list [uin% %uin%]
-                     :opts {:max-rows (get-state :search-results-cap)})))))
-
-(defn query-sqldb
-  "like `get-state`, uses 'paths' (keywords) to do predefined queries"
-  [kw & [arg-list]]
-  (case kw
-    :addon-summary-list (->> (sqldb-query select-*-catalogue) (mapv sqldb-coerce-catalogue-values))
-    :catalogue-size (-> "select count(*) as num from catalogue" sqldb-query first :num)
-    :addon-by-source-and-name (as-> select-*-catalogue q,
-                                (str q "WHERE source = ? AND name = ?")
-                                (sqldb-query q :arg-list arg-list)
-                                (mapv sqldb-coerce-catalogue-values q))
-    :addon-by-name (as-> select-*-catalogue $,
-                     (str $ "WHERE name = ?")
-                     (sqldb-query $ :arg-list arg-list)
-                     (mapv sqldb-coerce-catalogue-values $))
-
-    nil))
-
-(defn query-db
-  [query-kw & [arg-list]]
-  (db/stored-query (get-state :db) query-kw arg-list))
-
-(defn free-query-db
-  [query]
-  (db/query (get-state :db) query))
 
 ;;
 
@@ -744,11 +624,11 @@
 
 (defn-spec moosh-addons ::sp/toc-addon-summary
   "merges the data from an installed addon with it's match in the catalogue"
-  [installed-addon ::sp/toc, sqldb-catalogue-addon ::sp/addon-summary]
+  [installed-addon ::sp/toc, db-catalogue-addon ::sp/addon-summary]
   (let [;; nil fields are removed from the catalogue item because they might override good values in the .toc or .nfo
-        sqldb-catalogue-addon (utils/drop-nils sqldb-catalogue-addon [:description])]
+        db-catalogue-addon (utils/drop-nils db-catalogue-addon [:description])]
     ;; merges left->right. catalogue-addon overwrites installed-addon, ':matched' overwrites catalogue-addon, etc
-    (merge installed-addon sqldb-catalogue-addon {:matched? true})))
+    (merge installed-addon db-catalogue-addon {:matched? true})))
 
 ;;
 
@@ -777,199 +657,73 @@
 
 ;;
 
-(defn find-in-db
-  "looks for `installed-addon` in the database, matching `toc-key` to a `catalogue-key`.
-  if a `toc-key` and `catalogue-key` are actually lists, then all the `toc-keys` must match the `catalogue-keys`"
-  [installed-addon toc-keys catalogue-keys]
-  (let [catalogue-keys (if (vector? catalogue-keys) catalogue-keys [catalogue-keys]) ;; ["source" "source_id"] => ["source" "source_id"], "name" => ["name"]
-        sql-arg-template (clojure.string/join " AND " (mapv #(format "%s = ?" %) catalogue-keys)) ;; "source = ? AND source_id = ?", "name = ?"
-
-        toc-keys (if (vector? toc-keys) toc-keys [toc-keys])
-        sql-arg-vals (mapv #(get installed-addon %) toc-keys) ;; [:source :source-id] => ["curseforge" 12345], [:name] => ["foo"]
-
-        missing-args? (some nil? sql-arg-vals)
-
-        ;; there are cases where the installed-addon is missing an attribute to match on. typically happens on :alias
-        _ (when missing-args?
-            (debug "(debug) failed to find all values for sql query, refusing to match on nil. keys:" toc-keys "vals:" sql-arg-vals))
-
-        sql (str select-*-catalogue "where " sql-arg-template)
-        results (if missing-args?
-                  [] ;; don't look for 'nil', just skip with no results
-                  (sqldb-query sql :arg-list sql-arg-vals))
-        match (-> results first sqldb-coerce-catalogue-values)]
-    (when match
-      ;; {:idx [[:source :source-id] [:source :source_id]], :key "deadly-boss-mods", :match {...}, ...}
-      {:idx [toc-keys catalogue-keys]
-       :key sql-arg-vals
-       :installed-addon installed-addon
-       :match match
-       :final (moosh-addons installed-addon match)})))
-
-(defn find-first-in-db
-  [installed-addon match-on-list]
-  (if (empty? match-on-list) ;; we may have exhausted all possibilities. not finding a match is ok
-    installed-addon
-    (let [[toc-keys catalogue-keys] (first match-on-list)
-          match (find-in-db installed-addon toc-keys catalogue-keys)]
-      (if-not match ;; recur
-        (find-first-in-db installed-addon (rest match-on-list))
-        match))))
-
-(defn -sqldb-match-installed-addons-with-catalogue
-  "for each installed addon, search the catalogue across multiple joins until a match is found. returns immediately when first match is found"
-  [installed-addon-list]
-  (let [;; toc-key -> catalogue-key
-        ;; most -> least desirable match
-        ;; nest to search across multiple parameters
-        match-on-list [[[:source :source-id]  ["source" "source_id"]] ;; source+source-id, perfect case
-                       [:alias "name"] ;; alias = name, popular addon's hardcoded name to a catalogue item
-                       [[:source :name] ["source" "name"]] ;; source+name, we have a source but no source-id (nfo-v1 files)
-                       [:name "name"]
-                       [:label "label"]
-                       [:dirname "label"]]] ;; dirname = label, eg ./AdiBags = AdiBags
-    (for [installed-addon installed-addon-list]
-      (find-first-in-db installed-addon match-on-list))))
-
-;;
-
-(defn-spec match-installed-addons-with-catalogue nil?
+(defn match-installed-addons-with-catalogue
   "when we have a list of installed addons as well as the addon list,
    merge what we can into ::specs/addon-toc records and update state.
    any installed addon not found in :addon-idx has a mapping problem"
-  []
-  (when (selected-addon-dir) ;; don't even bother if we have nothing to match it to
-    (info "matching installed addons to catalogue")
-    (let [inst-addons (get-state :installed-addon-list)
-          catalogue (query-sqldb :addon-summary-list)
+  ([]
+   (when (selected-addon-dir) ;; don't even bother if we have nothing to match it to
+     (match-installed-addons-with-catalogue (get-state :db) (get-state :installed-addon-list))))
+  ([database installed-addon-list]
+   (info "matching installed addons to catalogue")
+   (let [match-results (db/-db-match-installed-addons-with-catalogue (get-state :db) installed-addon-list)
+         [matched unmatched] (utils/split-filter :matched? match-results)
 
-          match-results (-sqldb-match-installed-addons-with-catalogue inst-addons)
-          [matched unmatched] (utils/split-filter #(contains? % :final) match-results)
+         ;; for those that *did* match, merge the installed addon data together with the catalogue data
+         matched (mapv #(moosh-addons (:installed-addon %) (:catalogue-match %)) matched)
+         ;; and then make them a single list of addons again
+         expanded-installed-addon-list (into matched unmatched)
 
-          matched (mapv :final matched)
+         ;; todo: metrics gathering is good, but this is a little adhoc.
+         ;; some metrics we'll emit for the user
+         [num-installed num-matched] [(count installed-addon-list) (count matched)]
+         unmatched-names (set (map :name unmatched))]
 
-          unmatched-names (set (map :name unmatched))
+     (when-not (= num-installed num-matched)
+       (info "num installed" num-installed ", num matched" num-matched))
 
-          expanded-installed-addon-list (into matched unmatched)
+     (when-not (empty? unmatched)
+       (warn "you need to manually search for them and then re-install them")
+       (warn (format "failed to find %s installed addons in the '%s' catalogue: %s"
+                     (count unmatched)
+                     (name (get-state :cfg :selected-catalogue))
+                     (clojure.string/join ", " unmatched-names))))
 
-          [num-installed num-matched] [(count inst-addons) (count matched)]]
-
-      (when-not (= num-installed num-matched)
-        (info "num installed" num-installed ", num matched" num-matched))
-
-      (when-not (empty? unmatched)
-        (warn "you need to manually search for them and then re-install them")
-        (warn (format "failed to find %s installed addons in the '%s' catalogue: %s"
-                      (count unmatched)
-                      (name (get-state :cfg :selected-catalogue))
-                      (clojure.string/join ", " unmatched-names))))
-
-      (update-installed-addon-list! expanded-installed-addon-list))))
+     (update-installed-addon-list! expanded-installed-addon-list))))
 
 ;; catalogue db handling
 
-(defn sqldb-shutdown
-  []
-  (try
-    (sqldb-query "shutdown")
-    (catch org.h2.jdbc.JdbcSQLNonTransientConnectionException e
-      ;; "Database is already closed" (it's not)
-      (debug (str e)))))
+(defn query-db
+  [query-kw & [arg-list]]
+  (db/stored-query (get-state :db) query-kw arg-list))
 
-(defn-spec db-init nil?
+(defn db-init
   "loads any previous database instance"
   []
-  ;; no cleanup necessary for datascript?
   (swap! state assoc :db (db/start))
   nil)
 
-(defn-spec sqldb-init nil?
-  []
-  (debug "creating 'catalogue' table")
-  (jdbc/execute! (get-sqldb) [(static-slurp "resources/table--catalogue.sql")])
-  (debug "creating category tables")
-  (jdbc/execute! (get-sqldb) [(static-slurp "resources/table--category.sql")])
-  (swap! state update-in [:cleanup] conj sqldb-shutdown)
-  nil)
-
-(defn sqldb-catalogue-loaded?
-  []
-  (> (query-sqldb :catalogue-size) 0))
-
 (defn db-catalogue-loaded?
   []
-  (> (query-db :catalogue-size) 0))
+  (-> (get-state :db) empty? not))
 
-;;(defn-spec -sqldb-load-catalogue nil?
-;;  "loads the given `catalogue-data` into the database, creating categories and associations as necessary"
-;;  [catalogue-data ::sp/catalogue]
-(defn -sqldb-load-catalogue
-  "loads the given `catalogue-data` into the database, creating categories and associations as necessary"
-  [catalogue-data]
-  (let [ds (p :p2/db:load:get-sqldb (get-sqldb))
-        {:keys [addon-summary-list]} catalogue-data
-
-        addon-categories (p :p2/db:load:extract-category-data
-                            (mapv (fn [{:keys [source-id source tag-list]}]
-                                    (mapv (fn [tag]
-                                            [source-id source (name tag)]) tag-list)) addon-summary-list))
-
-        ;; using `set` was a symptom of a problem with duplicate categories affecting curseforge
-        ;; I think it's safest to leave it in for now
-        addon-categories (p :p2/db:load:normalise-category-data
-                            (->> addon-categories utils/shallow-flatten set vec))
-
-        ;; distinct list of :categories
-        category-list (p :p2/db:load:distinct-categories
-                         (->> addon-categories (mapv rest) set vec))
-
-        xform-row (fn [row]
-                    (let [ignored [:tag-list :age :game-track-list :created-date :id]
-                          mapping {:source-id :source_id
-                                   :download-count :download_count
-                                   ;;:created-date :created_date ;; curseforge only and unused
-                                   :updated-date :updated_date}
-                          new {:retail_track (utils/in? :retail (:game-track-list row))
-                               :classic_track (utils/in? :classic (:game-track-list row))}]
-
-                      (-> row (utils/dissoc-all ignored) (rename-keys mapping) (merge new))))]
-
-    (jdbc/with-transaction [tx ds]
-      (p :p2/db:load:insert-category-data
-         (sql/insert-multi! ds :category [:source :name] category-list))
-
-      (p :p2/db:load:insert-addon-list
-         (doseq [row addon-summary-list]
-           (sql/insert! ds :catalogue (xform-row row))))
-
-      (p :p2/db:load:insert-addon-category-list
-         (let [category-map (sqldb-query "select name, id from category")
-               category-map (into {} (mapv (fn [{:keys [name id]}]
-                                             {name id}) category-map))]
-
-           (doseq [[source-id source category] addon-categories]
-             (p :p2/db:load:insert-addon-category
-                (sql/insert! ds :addon_category {:addon_source source
-                                                 :addon_source_id source-id
-                                                 :category_id (get category-map category)}))))))
-
-    (swap! state assoc :catalogue-size (query-sqldb :catalogue-size)))
-  nil)
-
+(defn db-search
+  "searches database for addons whose name or description contains given user input.
+  if no user input, returns a list of randomly ordered results"
+  ([]
+   ;; random list of addons, no preference
+   (db-search nil))
+  ([uin]
+   (query-db :search uin)))
 
 ;; 100ms penalty for spec checking, disabling for now.
 ;; catalogue data check should be shifted to load-catalogue
-;;(defn-spec -crux-load-catalogue nil?
+;;(defn-spec -db-load-catalogue nil?
 ;;  [catalogue-data ::sp/catalogue]
 (defn -db-load-catalogue
   [catalogue-data]
-  (let [node (p :p2/crux:load:get-db (get-state :db))]
-
-    (p :p2/crux:load:insert-addon-list
-       (db/put-many node (:addon-summary-list catalogue-data)))
-
-    (p :p2/crux:load:update-state
-       (swap! state assoc :catalogue-size (db/stored-query node :catalogue-size))))
+  (p :p2/db:load:insert-addon-list
+     (swap! state assoc :db (db/put-many (get-state :db) (:addon-summary-list catalogue-data))))
   nil)
 
 (defn-spec load-current-catalogue (s/or :ok ::sp/catalogue, :error nil?)
@@ -995,24 +749,15 @@
           final-catalogue (p :p2/catalogue:merge-catalogues (catalogue/merge-catalogues catalogue-data user-catalogue-data))]
       final-catalogue)))
 
-(defn-spec sqldb-load-catalogue nil?
+(defn db-load-catalogue
   "loads the currently selected catalgoue into the database if hasn't already been loaded.
   handles bad/invalid catalgoues and merging the user catalogue"
-  []
-  (when (and (not (sqldb-catalogue-loaded?))
-             (current-catalogue))
-    (let [final-catalogue (load-current-catalogue)]
-      (when-not (empty? final-catalogue)
-        (p :p2/db:load (-sqldb-load-catalogue final-catalogue))))))
-
-(defn db-load-catalogue
   []
   (when (and (not (db-catalogue-loaded?))
              (current-catalogue))
     (let [final-catalogue (load-current-catalogue)]
       (when-not (empty? final-catalogue)
-        (p :p2/crux:load (-db-load-catalogue final-catalogue))))))
-
+        (p :p2/db:load (-db-load-catalogue final-catalogue))))))
 
 (defn-spec refresh-user-catalogue nil?
   "re-fetch each item in user catalogue using the URI and replace old entry with any updated details"
@@ -1212,10 +957,10 @@
                             matching-addon
                             (cond
                               ;; first addon by given name and source. hopefully 0 or 1 results
-                              (and source name) (first (query-sqldb :addon-by-source-and-name [source name]))
+                              (and source name) (first (query-db :addon-by-source-and-name [source name]))
 
                               ;; first addon by given name. potentially multiple results
-                              name (first (query-sqldb :addon-by-name [name]))
+                              name (first (query-db :addon-by-name [name]))
 
                               ;; we have nothing to query on :(                          
                               :else nil)]
@@ -1245,21 +990,20 @@
                  :dirname ""
                  :interface-version 0
                  :installed-version "0"}
-
         addon-list (map #(merge padding %) addon-list)
 
-        match-results (-sqldb-match-installed-addons-with-catalogue addon-list)
-        [matched unmatched] (utils/split-filter #(contains? % :final) match-results)
+        ;; match each of these padded addon maps to entries in the catalogue database
+        ;; afterwards this will call `update-installed-addon-list!` that will trigger a refresh in the gui
+        _ (match-installed-addons-with-catalogue (get-state :db) addon-list)
+
         addon-dir (selected-addon-dir)
 
         ;; this is what v1 does, but it's hidden away in `expand-summary-wrapper`
         default-game-track (get-game-track)]
 
-    (doseq [sqldb-match match-results
-            :let [addon (:installed-addon sqldb-match) ;; ignore 'installed' bit, this is the addon that was matched on
-                  sqldb-entry (:final sqldb-match)
-                  game-track (get addon :game-track default-game-track)]]
-      (when-let [expanded-addon (catalogue/expand-summary sqldb-entry game-track)]
+    (doseq [addon (get-state :installed-addon-list)
+            :let [game-track (get addon :game-track default-game-track)]]
+      (when-let [expanded-addon (catalogue/expand-summary addon game-track)]
         (install-addon expanded-addon addon-dir)))))
 
 (defn-spec import-exported-file nil?
@@ -1275,8 +1019,10 @@
                      (utils/all (mapv #(contains? addon %) [:source :source-id :name])))
         [full-data, partial-data] (utils/split-filter full-data? addon-list)]
     (when-not (empty? partial-data)
+      (debug "partial data, v1 import:" partial-data)
       (import-addon-list-v1 partial-data))
     (when-not (empty? full-data)
+      (debug "full data, v2 import:" full-data)
       (import-addon-list-v2 full-data))))
 
 ;;
@@ -1326,21 +1072,18 @@
    ;; enable profiling when log level is 'debug' and we're not testing
    {:when (logging/debug-mode?)}
 
+   ;; todo: why do we need to download and rebuild the database on each refresh?
    ;; downloads the big long list of addon information stored on github
    (download-current-catalogue)
-
-   ;; creates an in-memory database and some empty tables
-   (p :p2/sqldb-init (sqldb-init))
-
-   (p :p2/crux-init (db-init))
 
    ;; parse toc files in install-dir. do this first so we see *something* while catalogue downloads (next)
    (load-installed-addons)
 
-   ;; load the contents of the catalogue into the database
-   (p :p2/db (sqldb-load-catalogue))
+   ;; creates a 'database' (empty list of addons available to install)
+   (p :p2/db-init (db-init))
 
-   (p :p2/crux (db-load-catalogue))
+   ;; load the contents of the catalogue into the database
+   (p :p2/db (db-load-catalogue))
 
    ;; match installed addons to those in catalogue
    (match-installed-addons-with-catalogue)
@@ -1427,12 +1170,6 @@
   (-> (get-state) :selected-installed vec remove-many-addons)
   nil)
 
-(defn-spec sqldb-reload-catalogue nil?
-  []
-  (locking sqldb-lock
-    (sqldb-shutdown)
-    (refresh)))
-
 ;; installing addons from strings
 
 (defn-spec add+install-user-addon! (s/or :ok ::sp/addon, :less-ok ::sp/addon-summary, :failed nil?)
@@ -1455,7 +1192,7 @@
 
                (when addon
                  (install-addon addon (selected-addon-dir))
-                 (sqldb-reload-catalogue)
+                 (refresh)
                  addon)
 
                ;; failed to expand summary, probably because of selected game track.
@@ -1483,7 +1220,7 @@
 (defn watch-for-catalogue-change
   "when the catalogue changes, the list of available addons should be re-read"
   []
-  (state-bind [:cfg :selected-catalogue] (fn [_] (sqldb-reload-catalogue))))
+  (state-bind [:cfg :selected-catalogue] (fn [_] (refresh))))
 
 (defn-spec set-paths! nil?
   []

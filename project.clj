@@ -22,17 +22,12 @@
                  [clojure.java-time "0.3.2"] ;; date/time handling library
                  [envvar "1.1.0"] ;; environment variable wrangling
                  [clj-http-fake "1.0.3"] ;; fake http responses for testing
-                 [com.h2database/h2 "1.4.199"]
-                 [seancorfield/next.jdbc "1.0.6"]
-
-
+                 [gui-diff "0.6.7"]
+                 [com.taoensso/tufte "2.1.0"]
+                 
                  ;; remember to update the LICENCE.txt
                  ;; remember to update pom file (`lein pom`)
 
-                 [gui-diff "0.6.7"]
-                 [com.taoensso/tufte "2.1.0"]
-                 ;;[juxt/crux-core "20.04-1.8.2-alpha"]
-                 [datascript "0.18.11"]
                  ]
 
   ;; java 11 , java-time localisation issue 

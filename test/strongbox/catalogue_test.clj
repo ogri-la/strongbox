@@ -132,8 +132,7 @@
         v2-catalogue-path (fixture-path "catalogue--v2.json")
 
         expected-addon-list
-        [{:id :wowinterface--21651
-          :download-count 1077,
+        [{:download-count 1077,
           :game-track-list ["retail"],
           :label "$old!it",
           :name "$old-it",
@@ -142,8 +141,7 @@
           :tag-list [:auction-house :vendors],
           :updated-date "2012-09-20T05:32:00Z",
           :url "https://www.wowinterface.com/downloads/info21651"}
-         {:id :curseforge--319346
-          :created-date "2019-04-13T15:23:09.397Z",
+         {:created-date "2019-04-13T15:23:09.397Z",
           :description "A New Simple Percent",
           :download-count 1034,
           :label "A New Simple Percent",
@@ -153,8 +151,7 @@
           :tag-list [:unit-frames],
           :updated-date "2019-10-29T22:47:42.463Z",
           :url "https://www.curseforge.com/wow/addons/a-new-simple-percent"}
-         {:id :tukui--3
-          :description "Skins for AddOns",
+         {:description "Skins for AddOns",
           :download-count 1112033,
           :game-track-list ["retail"],
           :label "AddOnSkins",
@@ -164,8 +161,7 @@
           :tag-list [:ui],
           :updated-date "2019-11-17T23:02:23Z",
           :url "https://www.tukui.org/addons.php?id=3"}
-         {:id :github--ravendwyr-chinchilla
-          :download-count 9,
+         {:download-count 9,
           :game-track-list ["retail" "classic"],
           :label "Chinchilla",
           :name "chinchilla",
