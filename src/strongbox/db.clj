@@ -27,6 +27,18 @@
     :addon-by-name (let [[name] arg-list
                          xf (filter #(= name (:name %)))]
                      (into [] xf db))
+
+    :search (let [[uin cap] arg-list]
+              (if (nil? uin)
+                (take cap (random-sample 0.1 db))
+                (let [label-regex (re-pattern (str "(?i)^" uin ".*"))
+                      desc-regex (re-pattern (str "(?i).*" uin ".*"))
+                      ;; a little slow and naive, but ok for now
+                      xf (filter (fn [row]
+                                   (or
+                                    (re-find label-regex (:label row))
+                                    (re-find desc-regex (get row :description "")))))]
+                  (into [] (comp xf (take cap)) db))))
     nil))
 
 (defn start

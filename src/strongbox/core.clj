@@ -149,8 +149,8 @@
    :search-field-input nil
    :selected-search []
    ;; number of results to display in search results pane.
-   ;; used to be 250 but with better searching there is less scrolling
-   :search-results-cap 150})
+   ;; adjust to whatever performs the best
+   :search-results-cap 80})
 
 (def state (atom nil))
 
@@ -716,7 +716,7 @@
    ;; random list of addons, no preference
    (db-search nil))
   ([uin]
-   (query-db :search uin)))
+   (query-db :search [uin (get-state :search-results-cap)])))
 
 ;; 100ms penalty for spec checking, disabling for now.
 ;; catalogue data check should be shifted to load-catalogue
