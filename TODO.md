@@ -103,6 +103,10 @@ see CHANGELOG.md for a more formal list of changes by release
     - I want addons loaded *quickly*
     - I want to *query* addons *quickly*
 
+* migration
+    - rename .wowman.json files to .strongbox.json 
+    - move 'user-catalog.json' to 'user-catalgoue.json'
+
 * rename wowman
     - rename repository
     - arch package
