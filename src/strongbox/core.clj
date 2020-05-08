@@ -697,17 +697,24 @@
   [query-kw & [arg-list]]
   (db/stored-query (get-state :db) query-kw arg-list))
 
-(defn db-init
-  "loads any previous database instance"
-  []
-  (swap! state assoc :db (db/start))
-  nil)
-
 ;; todo: should I distinguish between not-set (nil) and empty ([])?
 ;; it is possible to have an empty catalogue or no catalogue ...
 (defn db-catalogue-loaded?
   []
   (-> (get-state :db) empty? not))
+
+(defn db-init
+  "loads any previous database instance"
+  []
+  ;; todo: this needs looking at.
+  ;; if the catalogue changes, current db should be rebuilt
+  ;; if the catalogue is deleted, db should be rebuilt
+  ;; if addon dir changes, db should NOT be rebuilt
+  ;; if game track changes, db should NOT be rebuilt
+  ;; perhaps an explicit 'empty-db' step? actions can then reset the db then call refresh to have it rebuilt
+  ;;(when-not (db-catalogue-loaded?)
+  (swap! state assoc :db (db/start)) ;;)
+  nil)
 
 (defn db-search
   "searches database for addons whose name or description contains given user input.
