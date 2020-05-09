@@ -21,6 +21,9 @@
    (uncaughtException [_ thread ex]
      (error ex "Uncaught exception on" (.getName thread)))))
 
+;; spec checking is enabled during development and testing
+(utils/instrument (utils/in-repl?))
+
 (defn watch-for-gui-restart
   "monitors application state for requests to restart the gui.
   logic lives here rather than `core.clj` because `core.clj` is a dependency of `gui.clj` and

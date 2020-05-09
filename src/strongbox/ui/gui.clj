@@ -23,8 +23,7 @@
     [bind :as sb]
     [table :as sstbl]]
    [clojure.spec.alpha :as s]
-   [orchestra.core :refer [defn-spec]]
-   [orchestra.spec.test :as st]))
+   [orchestra.core :refer [defn-spec]]))
 
 ;; "Call ... early in your program (like before any other Swing or Seesaw function is called) 
 ;; to get a more 'native' behavior"
@@ -896,8 +895,8 @@
                          :constraints ["flowy" "fill,grow"] ;; ["debug,flowy"]
                          :items [[root "height 100%"]])
 
-               :on-close (if (core/get-state :in-repl?) :dispose :exit)) ;; exit app entirely when not in repl
-
+               ;; exit app entirely when not in repl
+               :on-close (if (core/get-state :in-repl?) :dispose :exit))
 
         file-menu [(ss/action :name "Installed" :key "menu I" :mnemonic "i" :handler (switch-tab-handler INSTALLED-TAB))
                    (ss/action :name "Search" :key "menu H" :mnemonic "h" :handler (switch-tab-handler SEARCH-TAB))
@@ -967,7 +966,3 @@
     (ss/dispose! (:gui @core/state))
     (catch RuntimeException re
       (warn "failed to stop state:" (.getMessage re)))))
-
-;;
-
-(st/instrument)

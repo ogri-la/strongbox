@@ -14,6 +14,17 @@
    [java-time :as jt]
    [java-time.format]))
 
+(defn instrument
+  "if `flag` is true, enables spec checking instrumentation, otherwise disables it."
+  [flag]
+  (if flag
+    (do
+      (st/instrument)
+      (info "instrumentation is ON"))
+    (do
+      (st/unstrument)
+      (info "instrumentation is OFF"))))
+
 (defn-spec all boolean?
   "true if all items in `lst` are neither nil nor false"
   [lst sequential?]
@@ -596,8 +607,3 @@
        (dissoc m (first fields))
        m)
      (rest fields))))
-
-;;
-
-
-(st/instrument)

@@ -3,7 +3,6 @@
    [clojure.string :refer [trim]]
    [clojure.set]
    [slugify.core :refer [slugify]]
-   [orchestra.spec.test :as st]
    [strongbox
     [tags :as tags]
     [utils :as utils :refer [to-url]]
@@ -196,7 +195,3 @@
                                       :total (count addon-list)
                                       :addon-summary-list addon-list}))
     output-path))
-
-;;
-
-(st/instrument)

@@ -2,7 +2,6 @@
   (:require
    [flatland.ordered.map :as omap]
    [clojure.spec.alpha :as s]
-   [orchestra.spec.test :as st]
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
    [taoensso.tufte :as tufte :refer [p profile]]
@@ -195,7 +194,3 @@
                           (java-time/before? dtobj release-of-previous-expansion)))]
     (when addon-summary-list
       (format-catalogue-data (remove unmaintained? addon-summary-list) datestamp))))
-
-;;
-
-(st/instrument)

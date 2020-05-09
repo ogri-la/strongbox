@@ -6,7 +6,6 @@
     [specs :as sp]
     [utils :as utils :refer [to-int to-json fmap join from-epoch to-url]]]
    [clojure.spec.alpha :as s]
-   [orchestra.spec.test :as st]
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :as log :refer [debug info warn error spy]]))
 
@@ -157,5 +156,3 @@
         (into accumulator results) ;; short page, exit loop
         (recur (inc page)
                (into accumulator results))))))
-
-(st/instrument)

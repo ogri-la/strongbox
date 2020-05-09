@@ -4,7 +4,6 @@
    [clojure.string :refer [lower-case starts-with? ends-with? trim]]
    [taoensso.timbre :as timbre :refer [debug info warn error spy]]
    [clojure.spec.alpha :as s]
-   [orchestra.spec.test :as st]
    [orchestra.core :refer [defn-spec]]
    [taoensso.tufte :as tufte :refer [p profile]]
    [me.raynes.fs :as fs]
@@ -318,7 +317,9 @@
   [cli-opts]
   (let [final-config (config/load-settings cli-opts (paths :cfg-file) (paths :etag-db-file))]
     (swap! state merge final-config)
-    (change-log-level! (or (:verbosity cli-opts) logging/default-log-level)))
+    (change-log-level! (or (:verbosity cli-opts) logging/default-log-level))
+    (when (contains? cli-opts :spec-checks)
+      (utils/instrument (:spec-checks cli-opts))))
   nil)
 
 
@@ -1268,7 +1269,3 @@
     (debug "calling" f)
     (f))
   (reset! state nil))
-
-;;
-
-(st/instrument)

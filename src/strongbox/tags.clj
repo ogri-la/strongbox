@@ -4,7 +4,6 @@
    [clojure.string :refer [trim lower-case]]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
-   [orchestra.spec.test :as st]
    [taoensso.tufte :as tufte :refer [p profile]]
    ;;[taoensso.timbre :refer [debug info warn error spy]]
    ))
@@ -159,7 +158,3 @@
   ;; sorting cuts down on noise in diffs.
   ;; `set` because curseforge has duplicate categories and supplemental tags may introduce duplicates
   (->> category-list (map (partial category-to-tag-list addon-host)) flatten set sort vec))
-
-;;
-
-(st/instrument)

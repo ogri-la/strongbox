@@ -4,7 +4,6 @@
    [taoensso.timbre.appenders.core :refer [spit-appender]]
    [taoensso.tufte :as tufte :refer [p profile]]
    [orchestra.core :refer [defn-spec]]
-   [orchestra.spec.test :as st]
    [strongbox
     [specs :as sp]
     [utils :refer [join]]]))
@@ -92,9 +91,3 @@
                                                       :enabled? true}}}
        ~@form)
      (deref stateful-buffer#)))
-
-
-;;
-
-
-(st/instrument)

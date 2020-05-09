@@ -1,7 +1,6 @@
 (ns strongbox.wowinterface-api
   (:require
    [clojure.spec.alpha :as s]
-   [orchestra.spec.test :as st]
    [orchestra.core :refer [defn-spec]]
    [strongbox
     [utils :as utils]
@@ -23,7 +22,3 @@
         (warn "wowinterface api returned more than one result for addon with :source-id" (:source-id addon-summary)))
       (merge addon-summary {:download-url (str "https://cdn.wowinterface.com/downloads/getfile.php?id=" (:source-id addon-summary))
                             :version (:UIVersion result)}))))
-
-;;
-
-(st/instrument)

@@ -1,7 +1,6 @@
 (ns strongbox.db
   (:require
    ;;[clojure.spec.alpha :as s]
-   [orchestra.spec.test :as st]
    ;;[orchestra.core :refer [defn-spec]]
    [taoensso.timbre :refer [log debug info warn error spy]]
    ;;[strongbox.specs :as sp]]
@@ -159,9 +158,3 @@
              (sqldb-query (str select-*-catalogue "where label ilike ? or description ilike ?")
                           :arg-list [uin% %uin%]
                           :opts {:max-rows (get-state :search-results-cap)}))))))
-
-
-;;
-
-
-(st/instrument)
