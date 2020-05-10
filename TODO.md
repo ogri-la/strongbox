@@ -118,6 +118,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* test, can gui-diff and main/test be pushed back into the testing namespace and elided from release somehow?
+
 * http, revisit the http/expiry-offset-hours value
     - also, revisit prune-http-cache
 

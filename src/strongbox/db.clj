@@ -1,52 +1,24 @@
 (ns strongbox.db
   (:require
-   ;;[clojure.spec.alpha :as s]
-   ;;[orchestra.core :refer [defn-spec]]
+   [clojure.spec.alpha :as s]
+   [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :refer [log debug info warn error spy]]
-   ;;[strongbox.specs :as sp]]
-   ))
+   [strongbox.specs :as sp]))
 
-(defn put-many
-  [db doc-list]
+(defn-spec put-many ::sp/addon-summary-list
+  "adds all of the items from `doc-list` into the given `db`.
+  this is a leftover from when the database was using the H2 rdbms but kept because I 
+  like the separation it provides"
+  [db vector?, doc-list ::sp/addon-summary-list]
   (into db (vec doc-list)))
 
-(defn query
-  [db query]
-  nil)
-
-(defn stored-query
-  "common queries we can call by keyword"
-  [db query-kw & [arg-list]]
-  (case query-kw
-    :addon-summary-list db
-    :addon-by-source-and-name (let [[source name] arg-list
-                                    xf (filter #(and (= source (:source %))
-                                                     (= name (:name %))))]
-                                (into [] xf db))
-    :addon-by-name (let [[name] arg-list
-                         xf (filter #(= name (:name %)))]
-                     (into [] xf db))
-
-    :search (let [[uin cap] arg-list]
-              (if (nil? uin)
-                (take cap (random-sample 0.1 db))
-                (let [label-regex (re-pattern (str "(?i)^" uin ".*"))
-                      desc-regex (re-pattern (str "(?i).*" uin ".*"))
-                      ;; a little slow and naive, but ok for now
-                      xf (filter (fn [row]
-                                   (or
-                                    (re-find label-regex (:label row))
-                                    (re-find desc-regex (get row :description "")))))]
-                  (into [] (comp xf (take cap)) db))))
-    nil))
-
-(defn start
+(defn-spec start vector?
   "initialises the database, returning something that can be used to access it later"
   []
   (let [db []]
     db))
 
-;;;
+;; matching
 
 (defn find-in-db
   "looks for `installed-addon` in the given `db`, matching `toc-key` to a `catalogue-key`.
@@ -64,38 +36,40 @@
         _ (when missing-args?
             (debug "failed to find all values for db search, refusing to match against nil values. keys:" toc-keys "; vals:" arg-vals))
 
-        func (fn [row]
-               (= arg-vals (mapv #(get row %) catalogue-keys)))
+        ;; for each catalogue key, fetch the values and compare
+        match? (fn [row]
+                 (= arg-vals (mapv #(get row %) catalogue-keys)))
 
         results (if missing-args?
                   [] ;; don't look for 'nil', just skip with no results
-                  (into [] (filter func) db))
+                  (into [] (filter match?) db))
         match (-> results first)]
     (when match
-      ;; {:idx [[:source :source-id] [:source :source_id]], :key "deadly-boss-mods", :match {...}, ...}
-      {:idx [toc-keys catalogue-keys]
+      {;; the relationship the match was made on: [[:source :source-id] [:source :source_id]]
+       :idx [toc-keys catalogue-keys]
+       ;; the values of the match: ["curseforge" "deadly-boss-mods"]
        :key arg-vals
        :installed-addon installed-addon
        :matched? (not (nil? match))
-       :catalogue-match match
+       :catalogue-match match})))
 
-       ;; :final (moosh-addons installed-addon match) ;; mooshing moved back into core
-       })))
-
-(defn -find-first-in-db
-  "given an `installed-addon`, try to find a match in the catalogue using a list of attributes in `match-on-list`"
-  [db installed-addon match-on-list]
-  (if (empty? match-on-list) ;; we may have exhausted all possibilities. not finding a match is ok
-    installed-addon
+(defn-spec -find-first-in-db (s/or :match map?, :no-match nil?)
+  "find a match for the given `installed-addon` in the database using a list of attributes in `match-on-list`.
+  returns immediately when first match is found (does not check other joins in `match-on-list`)."
+  [db ::sp/addon-summary-list, installed-addon ::sp/toc, match-on-list vector?]
+  (if (empty? match-on-list)
+    nil ;; we may have exhausted all possibilities. not finding a match is ok.
     (let [[toc-keys catalogue-keys] (first match-on-list) ;; => [:name] or [:source-id :source]
           match (find-in-db db installed-addon toc-keys catalogue-keys)]
       (if-not match ;; recur
         (-find-first-in-db db installed-addon (rest match-on-list))
         match))))
 
-(defn -db-match-installed-addons-with-catalogue
-  "for each installed addon, search the catalogue across multiple joins until a match is found. returns immediately when first match is found"
-  [db installed-addon-list]
+;; todo: flesh out the 'match' and match-on-list specs.
+(defn-spec -db-match-installed-addons-with-catalogue (s/coll-of (s/or :match map? :no-match ::sp/toc))
+  "for each installed addon, search the catalogue across multiple joins until a match is found.
+  addons with no match return themselves"
+  [db ::sp/addon-summary-list, installed-addon-list ::sp/toc-list]
   (let [;; toc-key -> db-catalogue-key
         ;; most -> least desirable match
         ;; nest to search across multiple parameters
@@ -107,54 +81,47 @@
                        [:dirname :label]] ;; dirname = label, eg ./AdiBags = AdiBags
         ]
     (for [installed-addon installed-addon-list]
-      (-find-first-in-db db installed-addon match-on-list))))
+      (or (-find-first-in-db db installed-addon match-on-list)
+          installed-addon))))
 
-;;
+;; querying
 
+(defn-spec -addon-by-source-and-name ::sp/addon-summary-list
+  "returns a list of addon summaries whose source and name match (exactly) the given `source` and `name`"
+  [db ::sp/addon-summary-list source ::sp/source, name ::sp/name]
+  (let [xf (filter #(and (= source (:source %))
+                         (= name (:name %))))]
+    (into [] xf db)))
 
-(comment
-  (defn sqldb-search
-    "searches database for addons whose name or description contains given user input.
-  if no user input, returns a list of randomly ordered results"
-    ([]
-   ;; random list of addons, no preference
-     (mapv sqldb-coerce-catalogue-values
-           (sqldb-query (str select-*-catalogue "order by RAND() limit ?") :arg-list [(get-state :search-results-cap)])))
-    ([uin]
-     (let [uin% (str uin "%")
-           %uin% (str "%" uin "%")]
-       (mapv sqldb-coerce-catalogue-values
-             (sqldb-query (str select-*-catalogue "where label ilike ? or description ilike ?")
-                          :arg-list [uin% %uin%]
-                          :opts {:max-rows (get-state :search-results-cap)})))))
+(defn-spec -addon-by-name ::sp/addon-summary-list
+  "returns a list of addon summaries whose name matches (exactly) the given `name`"
+  [db ::sp/addon-summary-list, name ::sp/name]
+  (let [xf (filter #(= name (:name %)))]
+    (into [] xf db)))
 
-  (defn query-sqldb
-    "like `get-state`, uses 'paths' (keywords) to do predefined queries"
-    [kw & [arg-list]]
-    (case kw
-      :addon-summary-list (->> (sqldb-query select-*-catalogue) (mapv sqldb-coerce-catalogue-values))
-      :addon-by-source-and-name (as-> select-*-catalogue q,
-                                  (str q "WHERE source = ? AND name = ?")
-                                  (sqldb-query q :arg-list arg-list)
-                                  (mapv sqldb-coerce-catalogue-values q))
-      :addon-by-name (as-> select-*-catalogue $,
-                       (str $ "WHERE name = ?")
-                       (sqldb-query $ :arg-list arg-list)
-                       (mapv sqldb-coerce-catalogue-values $))
+(defn-spec -search ::sp/addon-summary-list
+  "returns a list of addon summaries whose label or description matches the given user input `uin`.
+  matches are case insensitive.
+  label matching matches from the beginning of the label.
+  description matching matches any substring within description"
+  [db ::sp/addon-summary-list, uin (s/nilable string?), cap int?]
+  (if (nil? uin)
+    (take cap (random-sample 0.1 db))
+    (let [label-regex (re-pattern (str "(?i)^" uin ".*"))
+          desc-regex (re-pattern (str "(?i).*" uin ".*"))
+          ;; a little slow and naive, but ok for now
+          xf (filter (fn [row]
+                       (or
+                        (re-find label-regex (:label row))
+                        (re-find desc-regex (get row :description "")))))]
+      (into [] (comp xf (take cap)) db))))
 
-      nil))
-
-  (defn db-search
-    "searches database for addons whose name or description contains given user input.
-  if no user input, returns a list of randomly ordered results"
-    ([]
-   ;; random list of addons, no preference
-     (mapv sqldb-coerce-catalogue-values
-           (sqldb-query (str select-*-catalogue "order by RAND() limit ?") :arg-list [(get-state :search-results-cap)])))
-    ([uin]
-     (let [uin% (str uin "%")
-           %uin% (str "%" uin "%")]
-       (mapv sqldb-coerce-catalogue-values
-             (sqldb-query (str select-*-catalogue "where label ilike ? or description ilike ?")
-                          :arg-list [uin% %uin%]
-                          :opts {:max-rows (get-state :search-results-cap)}))))))
+;; not specced because the results and argument lists may vary greatly
+(defn stored-query
+  "common queries we can call by keyword"
+  [db query-kw & [arg-list]]
+  (case query-kw
+    :addon-by-source-and-name (-addon-by-source-and-name db (first arg-list) (second arg-list))
+    :addon-by-name (-addon-by-name db (first arg-list))
+    :search (-search db (first arg-list) (second arg-list))
+    nil))

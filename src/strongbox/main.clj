@@ -77,7 +77,7 @@
                               :appenders {:spit nil}}
     (if ns-kw
       (if (some #{ns-kw} [:main :utils :http :specs :tags
-                          :core :toc :nfo :zip :config :catalogue
+                          :core :toc :nfo :zip :config :catalogue :db
                           :cli :gui
                           :curseforge-api :wowinterface :wowinterface-api :github-api :tukui-api])
         (with-gui-diff

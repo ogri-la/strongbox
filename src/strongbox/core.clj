@@ -658,14 +658,14 @@
 
 ;;
 
-(defn match-installed-addons-with-catalogue
+(defn-spec match-installed-addons-with-catalogue nil?
   "when we have a list of installed addons as well as the addon list,
    merge what we can into ::specs/addon-toc records and update state.
    any installed addon not found in :addon-idx has a mapping problem"
   ([]
-   (when (selected-addon-dir) ;; don't even bother if we have nothing to match it to
+   (when (selected-addon-dir) ;; skip matching if no addon dir selected
      (match-installed-addons-with-catalogue (get-state :db) (get-state :installed-addon-list))))
-  ([database installed-addon-list]
+  ([database ::sp/addon-summary-list, installed-addon-list ::sp/toc-list]
    (info "matching installed addons to catalogue")
    (let [match-results (db/-db-match-installed-addons-with-catalogue (get-state :db) installed-addon-list)
          [matched unmatched] (utils/split-filter :matched? match-results)
@@ -695,6 +695,7 @@
 ;; catalogue db handling
 
 (defn query-db
+  "uses keywords to do predefined queries. see `db/stored-query`"
   [query-kw & [arg-list]]
   (db/stored-query (get-state :db) query-kw arg-list))
 
@@ -717,26 +718,18 @@
   (swap! state assoc :db (db/start)) ;;)
   nil)
 
-(defn db-search
+(defn-spec db-search ::sp/addon-summary-list
   "searches database for addons whose name or description contains given user input.
   if no user input, returns a list of randomly ordered results"
   ([]
    ;; random list of addons, no preference
    (db-search nil))
-  ([uin]
+  ([uin (s/nilable string?)]
    (query-db :search [uin (get-state :search-results-cap)])))
 
-;; 100ms penalty for spec checking, disabling for now.
-;; catalogue data check should be shifted to load-catalogue
-;;(defn-spec -db-load-catalogue nil?
-;;  [catalogue-data ::sp/catalogue]
-(defn -db-load-catalogue
-  [catalogue-data]
-  (p :p2/db:load:insert-addon-list
-     (swap! state assoc :db (db/put-many (get-state :db) (:addon-summary-list catalogue-data))))
-  nil)
-
 (defn-spec load-current-catalogue (s/or :ok ::sp/catalogue, :error nil?)
+  "merges the currently selected catalogue with the user-catalogue and returns the definitive list of addons available to install.
+  handles malformed catalogue data by re-downloading catalogue."
   []
   (when-let [catalogue-source (current-catalogue)]
     (let [catalogue-path (catalogue-local-path catalogue-source)
@@ -759,15 +752,18 @@
           final-catalogue (p :p2/db:catalogue:merge-catalogues (catalogue/merge-catalogues catalogue-data user-catalogue-data))]
       final-catalogue)))
 
-(defn db-load-catalogue
+(defn-spec db-load-catalogue nil?
   "loads the currently selected catalgoue into the database if hasn't already been loaded.
-  handles bad/invalid catalgoues and merging the user catalogue"
+  handles bad/invalid catalogues and merging the user catalogue"
   []
   (when (and (not (db-catalogue-loaded?))
              (current-catalogue))
     (let [final-catalogue (p :p2/db:catalogue (load-current-catalogue))]
       (when-not (empty? final-catalogue)
-        (p :p2/db:load (-db-load-catalogue final-catalogue))))))
+        (p :p2/db:load
+           (swap! state assoc :db
+                  (db/put-many (get-state :db) (:addon-summary-list final-catalogue))))
+        nil))))
 
 (defn-spec refresh-user-catalogue nil?
   "re-fetch each item in user catalogue using the URI and replace old entry with any updated details"
@@ -1017,8 +1013,10 @@
         (install-addon expanded-addon addon-dir)))))
 
 (defn-spec import-exported-file nil?
+  "imports a file at given `path` created with the export function.
+  supports exports created with older versions of the app using partial data."
   [path ::sp/extant-file]
-  (info "importing exports file:" path)
+  (info "importing file:" path)
   (let [nil-me (constantly nil)
         addon-list (utils/load-json-file-safely path
                                                 {:bad-data? nil-me
@@ -1029,10 +1027,10 @@
                      (utils/all (mapv #(contains? addon %) [:source :source-id :name])))
         [full-data, partial-data] (utils/split-filter full-data? addon-list)]
     (when-not (empty? partial-data)
-      (debug "partial data, v1 import:" partial-data)
+      (debug "v1 import (only partial data available)" partial-data)
       (import-addon-list-v1 partial-data))
     (when-not (empty? full-data)
-      (debug "full data, v2 import:" full-data)
+      (debug "v2 import")
       (import-addon-list-v2 full-data))))
 
 ;;
@@ -1082,14 +1080,13 @@
    ;; enable profiling when log level is 'debug' and we're not testing
    {:when (logging/debug-mode?)}
 
-   ;; todo: why do we need to download and rebuild the database on each refresh?
    ;; downloads the big long list of addon information stored on github
    (download-current-catalogue)
 
    ;; parse toc files in install-dir. do this first so we see *something* while catalogue downloads (next)
    (load-installed-addons)
 
-   ;; creates a 'database' (empty list of addons available to install)
+   ;; creates a 'database' (simple list of addons available to install)
    (db-init)
 
    ;; load the contents of the catalogue into the database

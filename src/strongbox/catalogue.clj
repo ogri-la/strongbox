@@ -44,8 +44,9 @@
      :total (count addon-list)
      :addon-summary-list addon-list}))
 
-(defn catalogue-v1-coercer
-  [catalogue-data]
+(defn-spec catalogue-v1-coercer ::sp/catalogue
+  "converts wowman-era specification 1 catalogues, coercing them to specification version 2 catalogues"
+  [catalogue-data map?]
   (let [row-coerce (fn [row]
                      (-> row
                          (assoc :tag-list (tags/category-list-to-tag-list (:source row) (:category-list row)))
@@ -54,23 +55,17 @@
         (update-in [:addon-summary-list] #(into [] (map row-coerce) %))
         (update-in [:spec :version] inc))))
 
-(defn catalogue-v2-coercer
-  [catalogue-data]
-  catalogue-data)
-
-(defn -value-fn
+(defn -read-catalogue-value-fn
+  "used to transform catalogue values as the json is read. applies to both v1 and v2 catalogues."
   [key val]
   (case key
     :game-track (keyword val)
     :tag-list (mapv keyword val)
     :description (utils/safe-subs val 255) ;; no database anymore, no hard failures on value length?
 
-    ;; if v1, increment to v2
-    ;;:version (if (= 1 val) (inc val) val) ;; can't do this, we need to switch on it later
-
-    ;; remove these
-    :alt-name -value-fn
-    :updated-datestamp -value-fn
+    ;; returning the function itself ensures element is removed from the result entirely
+    :alt-name -read-catalogue-value-fn
+    :updated-datestamp -read-catalogue-value-fn
 
     val))
 
@@ -86,21 +81,16 @@
                        "uri" :url
                          ;;"category-list" :tag-list ;; pushed back into v1 post-processing
                        (keyword k)))
-            value-fn -value-fn ;; defined 'outside' so it can reference itself
+            value-fn -read-catalogue-value-fn ;; defined 'outside' so it can reference itself
             opts (merge opts {:key-fn key-fn :value-fn value-fn})
             catalogue-data (p :catalogue:load-json-file
                               (utils/load-json-file-safely2 catalogue-path opts))]
 
         (when-not (empty? catalogue-data)
-          (if (= 1 (-> catalogue-data :spec :version))
-
-              ;; wowman-era catalogues
+          (if (-> catalogue-data :spec :version (= 1)) ;; if v1 catalogue, coerce
             (p :catalogue:v1-coercer
                (utils/nilable (catalogue-v1-coercer catalogue-data)))
-
-              ;; strongbox-era catalogues
-            (p :catalogue:v2-coercer
-               (utils/nilable (catalogue-v2-coercer catalogue-data)))))))))
+            catalogue-data))))))
 
 (defn-spec write-catalogue ::sp/extant-file
   "write catalogue to given `output-file` as JSON. returns path to output file"
