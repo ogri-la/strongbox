@@ -111,7 +111,6 @@
    "Archaeology" [:professions]
    "Herbalism" [:professions]})
 
-;; merging here saves ~100ms when loading short-catalogue
 (def replacement-map
   {"wowinterface" (merge general-replacements wowi-replacements)
    "curseforge" (merge general-replacements curse-replacements)

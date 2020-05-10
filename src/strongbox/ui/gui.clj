@@ -896,6 +896,7 @@
                          :items [[root "height 100%"]])
 
                ;; exit app entirely when not in repl
+               ;; calling `in-repl?` from gui thread will always return `nil`
                :on-close (if (core/get-state :in-repl?) :dispose :exit))
 
         file-menu [(ss/action :name "Installed" :key "menu I" :mnemonic "i" :handler (switch-tab-handler INSTALLED-TAB))
