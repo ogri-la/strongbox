@@ -923,7 +923,7 @@
 
         cache-menu [(ss/action :name "Clear http cache" :handler (async-handler core/delete-http-cache!))
                     (ss/action :name "Clear addon zips" :handler (async-handler core/delete-downloaded-addon-zips!))
-                    (ss/action :name "Clear catalogues" :handler (async-handler (juxt core/refresh core/delete-catalogue-files!)))
+                    (ss/action :name "Clear catalogues" :handler (async-handler (juxt core/db-reload-catalogue core/delete-catalogue-files!)))
                     (ss/action :name "Clear log files" :handler (async-handler core/delete-log-files!))
                     (ss/action :name "Clear all" :handler (async-handler core/clear-all-temp-files!))
                     :separator

@@ -116,12 +116,11 @@
    ;; ... then updated with data from catalogue
    ;; ... then updated again with live data from curseforge
    ;; see specs/toc-addon
-
-
    :installed-addon-list nil
 
    :etag-db {}
 
+   ;; the list of addons from the catalogue
    :db nil
 
    ;; a map of paths whose location may vary according to the cwd and envvars.
@@ -699,26 +698,13 @@
 (defn query-db
   "uses keywords to do predefined queries. see `db/stored-query`"
   [query-kw & [arg-list]]
-  (db/stored-query (get-state :db) query-kw arg-list))
+  (when-let [db (get-state :db)]
+    (db/stored-query db query-kw arg-list)))
 
-;; todo: should I distinguish between not-set (nil) and empty ([])?
-;; it is possible to have an empty catalogue or no catalogue ...
 (defn db-catalogue-loaded?
+  "returns `true` if database if not `nil`"
   []
-  (-> (get-state :db) empty? not))
-
-(defn db-init
-  "loads any previous database instance"
-  []
-  ;; todo: this needs looking at.
-  ;; if the catalogue changes, current db should be rebuilt
-  ;; if the catalogue is deleted, db should be rebuilt
-  ;; if addon dir changes, db should NOT be rebuilt
-  ;; if game track changes, db should NOT be rebuilt
-  ;; perhaps an explicit 'empty-db' step? actions can then reset the db then call refresh to have it rebuilt
-  ;;(when-not (db-catalogue-loaded?)
-  (swap! state assoc :db (db/start)) ;;)
-  nil)
+  (-> (get-state :db) nil? not))
 
 (defn-spec db-search ::sp/addon-summary-list
   "searches database for addons whose name or description contains given user input.
@@ -727,7 +713,7 @@
    ;; random list of addons, no preference
    (db-search nil))
   ([uin (s/nilable string?)]
-   (query-db :search [uin (get-state :search-results-cap)])))
+   (or (query-db :search [uin (get-state :search-results-cap)]) [])))
 
 (defn-spec load-current-catalogue (s/or :ok ::sp/catalogue, :error nil?)
   "merges the currently selected catalogue with the user-catalogue and returns the definitive list of addons available to install.
@@ -758,14 +744,15 @@
   "loads the currently selected catalgoue into the database if hasn't already been loaded.
   handles bad/invalid catalogues and merging the user catalogue"
   []
-  (when (and (not (db-catalogue-loaded?))
-             (current-catalogue))
+  (if (and (not (db-catalogue-loaded?))
+           (current-catalogue))
     (let [final-catalogue (p :p2/db:catalogue (load-current-catalogue))]
       (when-not (empty? final-catalogue)
         (p :p2/db:load
            (swap! state assoc :db
-                  (db/put-many (get-state :db) (:addon-summary-list final-catalogue))))
-        nil))))
+                  (db/put-many [] (:addon-summary-list final-catalogue))))))
+    (debug "skipping db load. already loaded or no catalogue selected."))
+  nil)
 
 (defn-spec refresh-user-catalogue nil?
   "re-fetch each item in user catalogue using the URI and replace old entry with any updated details"
@@ -1079,7 +1066,6 @@
 (defn refresh
   [& _]
   (profile
-   ;; enable profiling when log level is 'debug' and we're not testing
    {:when (get-state :profile?)}
 
    ;; downloads the big long list of addon information stored on github
@@ -1087,9 +1073,6 @@
 
    ;; parse toc files in install-dir. do this first so we see *something* while catalogue downloads (next)
    (load-installed-addons)
-
-   ;; creates a 'database' (simple list of addons available to install)
-   (db-init)
 
    ;; load the contents of the catalogue into the database
    (p :p2/db (db-load-catalogue))
@@ -1179,6 +1162,12 @@
   (-> (get-state) :selected-installed vec remove-many-addons)
   nil)
 
+(defn-spec db-reload-catalogue nil?
+  "unloads the database from state then calls `refresh` which will trigger a rebuild"
+  []
+  (swap! state assoc :db nil)
+  (refresh))
+
 ;; installing addons from strings
 
 (defn-spec add+install-user-addon! (s/or :ok ::sp/addon, :less-ok ::sp/addon-summary, :failed nil?)
@@ -1201,7 +1190,7 @@
 
                (when addon
                  (install-addon addon (selected-addon-dir))
-                 (refresh)
+                 (db-reload-catalogue)
                  addon)
 
                ;; failed to expand summary, probably because of selected game track.
@@ -1227,9 +1216,9 @@
     (state-bind [:cfg :selected-addon-dir] reset-state-fn)))
 
 (defn watch-for-catalogue-change
-  "when the catalogue changes, the list of available addons should be re-read"
+  "when the catalogue changes, the db should be rebuilt"
   []
-  (state-bind [:cfg :selected-catalogue] (fn [_] (refresh))))
+  (state-bind [:cfg :selected-catalogue] (fn [_] (db-reload-catalogue))))
 
 (defn-spec set-paths! nil?
   []

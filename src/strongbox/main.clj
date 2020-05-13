@@ -64,7 +64,7 @@
   nil)
 
 ;; to profile without spec checking:
-;;   (restart {:verbosity :debug, :ui :cli, :profile? true, :spec? false})
+;;   (restart {:verbosity :error, :ui :cli, :profile? true, :spec? false})
 (defn restart
   [& [cli-opts]]
   (stop)
