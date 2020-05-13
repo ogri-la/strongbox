@@ -21,8 +21,7 @@
                  [org.flatland/ordered "1.5.7"] ;; better ordered map
                  [clojure.java-time "0.3.2"] ;; date/time handling library
                  [envvar "1.1.0"] ;; environment variable wrangling
-                 [clj-http-fake "1.0.3"] ;; fake http responses for testing
-                 [gui-diff "0.6.7"]
+                 [gui-diff "0.6.7"] ;; pops up a graphical diff for test results
                  [com.taoensso/tufte "2.1.0"]
                  
                  ;; remember to update the LICENCE.txt
@@ -33,7 +32,10 @@
   ;; java 11 , java-time localisation issue 
   ;;:jvm-opts ["-Djava.locale.providers=COMPAT,CLDR"]
 
-  :profiles {:uberjar {:aot :all}}
+  :profiles {:dev {:dependencies [;; fake http responses for testing
+                                  [clj-http-fake "1.0.3"]
+                                  ]}
+             :uberjar {:aot :all}}
 
   :main strongbox.main
 

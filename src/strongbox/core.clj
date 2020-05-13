@@ -318,8 +318,10 @@
   (let [final-config (config/load-settings cli-opts (paths :cfg-file) (paths :etag-db-file))]
     (swap! state merge final-config)
     (change-log-level! (or (:verbosity cli-opts) logging/default-log-level))
-    (when (contains? cli-opts :spec-checks)
-      (utils/instrument (:spec-checks cli-opts))))
+    (when (contains? cli-opts :profile?)
+      (swap! state assoc :profile? (:profile? cli-opts)))
+    (when (contains? cli-opts :spec?)
+      (utils/instrument (:spec? cli-opts))))
   nil)
 
 
@@ -1078,7 +1080,7 @@
   [& _]
   (profile
    ;; enable profiling when log level is 'debug' and we're not testing
-   {:when (logging/debug-mode?)}
+   {:when (get-state :profile?)}
 
    ;; downloads the big long list of addon information stored on github
    (download-current-catalogue)
