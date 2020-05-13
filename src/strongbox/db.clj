@@ -106,7 +106,7 @@
   description matching matches any substring within description"
   [db ::sp/addon-summary-list, uin (s/nilable string?), cap int?]
   (if (nil? uin)
-    (take cap (random-sample 0.1 db))
+    (take cap (random-sample 0.005 db))
     (let [label-regex (re-pattern (str "(?i)^" uin ".*"))
           desc-regex (re-pattern (str "(?i).*" uin ".*"))
           ;; a little slow and naive, but ok for now
