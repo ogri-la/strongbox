@@ -85,7 +85,17 @@ see CHANGELOG.md for a more formal list of changes by release
         - revert those changes
         - add a step in the parsing that renames those values to 'catalogue'
 
+* database, investigate a datalog backed datastore
+    - https://clojure.github.io/clojure-contrib/doc/datalog.html
+    - https://github.com/tonsky/datascript
+    - crux is working out elsewhere
+    - I want addons loaded *quickly*
+    - I want to *query* addons *quickly*
+
 ### todo
+
+* bug, "failed to read data "null" in file: .../etag-db.json"
+    - something I seem to have introduced unifying the load-json* fns
 
 * catalogue updates
     - publish a 'strongbox-catalogue' repo
@@ -95,13 +105,6 @@ see CHANGELOG.md for a more formal list of changes by release
     * it's never been particularly clear in my head what some of those specs are
     * I have a better understanding of their nature now
         - as part of the diagramming, sketch out the fields to be captured
-
-* database, investigate a datalog backed datastore
-    - https://clojure.github.io/clojure-contrib/doc/datalog.html
-    - https://github.com/tonsky/datascript
-    - crux is working out elsewhere
-    - I want addons loaded *quickly*
-    - I want to *query* addons *quickly*
 
 * migration
     - rename .wowman.json files to .strongbox.json 
