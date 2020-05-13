@@ -23,8 +23,7 @@
     [bind :as sb]
     [table :as sstbl]]
    [clojure.spec.alpha :as s]
-   [orchestra.core :refer [defn-spec]]
-   [orchestra.spec.test :as st]))
+   [orchestra.core :refer [defn-spec]]))
 
 ;; "Call ... early in your program (like before any other Swing or Seesaw function is called) 
 ;; to get a more 'native' behavior"
@@ -647,7 +646,7 @@
     (add-highlighter grid addon-installed? (colours :search/already-installed))
 
     (ss/listen grid :selection (selected-rows-handler search-results-selection-handler))
-    (state-bind [:catalogue-size] update-rows-fn)
+    (state-bind [:db] update-rows-fn)
     (state-bind [:search-field-input] update-rows-fn)
 
     (hide-columns grid hidden-by-default-cols)
@@ -744,7 +743,7 @@
                        (let [ia (:installed-addon-list state)
                              uia (filter :matched? ia)
 
-                             a-count (:catalogue-size state)
+                             a-count (count (:db state))
                              ia-count (count ia)
                              uia-count (count uia)
 
@@ -896,8 +895,9 @@
                          :constraints ["flowy" "fill,grow"] ;; ["debug,flowy"]
                          :items [[root "height 100%"]])
 
-               :on-close (if (core/get-state :in-repl?) :dispose :exit)) ;; exit app entirely when not in repl
-
+               ;; exit app entirely when not in repl
+               ;; calling `in-repl?` from gui thread will always return `nil`
+               :on-close (if (core/get-state :in-repl?) :dispose :exit))
 
         file-menu [(ss/action :name "Installed" :key "menu I" :mnemonic "i" :handler (switch-tab-handler INSTALLED-TAB))
                    (ss/action :name "Search" :key "menu H" :mnemonic "h" :handler (switch-tab-handler SEARCH-TAB))
@@ -967,7 +967,3 @@
     (ss/dispose! (:gui @core/state))
     (catch RuntimeException re
       (warn "failed to stop state:" (.getMessage re)))))
-
-;;
-
-(st/instrument)

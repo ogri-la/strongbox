@@ -100,6 +100,7 @@
       :bad-data? bad-data
       :invalid-data? invalid-data,
       :data-spec ::sp/nfo-v2
+      :key-fn keyword
       :transform-map {:installed-game-track keyword}})))
 
 (defn-spec read-nfo (s/or :ok ::sp/nfo-v2, :error nil?)

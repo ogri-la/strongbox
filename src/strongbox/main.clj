@@ -21,6 +21,14 @@
    (uncaughtException [_ thread ex]
      (error ex "Uncaught exception on" (.getName thread)))))
 
+;; profiling is disabled by default unless explicitly turned on.
+;; profiling is enabled during testing via Cloverage via `with-redef`, else the forms are not counted properly.
+(def profile? false)
+
+;; spec checking is enabled during repl development and *any* testing unless explicitly turned off.
+;; spec checking is disabled upon release
+(def spec? (utils/in-repl?))
+
 (defn watch-for-gui-restart
   "monitors application state for requests to restart the gui.
   logic lives here rather than `core.clj` because `core.clj` is a dependency of `gui.clj` and
@@ -46,7 +54,7 @@
 
 (defn start
   [& [cli-opts]]
-  (core/start (or cli-opts {}))
+  (core/start (merge {:profile? profile?, :spec? spec?} cli-opts))
   (if (= :cli (:ui cli-opts))
     (cli/start cli-opts)
     (gui/start))
@@ -55,16 +63,13 @@
 
   nil)
 
+;; to profile without spec checking:
+;;   (restart {:verbosity :error, :ui :cli, :profile? true, :spec? false})
 (defn restart
   [& [cli-opts]]
   (stop)
   (Thread/sleep 750) ;; gives me time to switch panes
   (start cli-opts))
-
-(defn restart-cli
-  "convenience while developing. starts app, does not start gui"
-  []
-  (restart {:ui :cli}))
 
 (defn test
   [& [ns-kw fn-kw]]
@@ -74,7 +79,7 @@
                               :appenders {:spit nil}}
     (if ns-kw
       (if (some #{ns-kw} [:main :utils :http :specs :tags
-                          :core :toc :nfo :zip :config :catalogue
+                          :core :toc :nfo :zip :config :catalogue :db
                           :cli :gui
                           :curseforge-api :wowinterface :wowinterface-api :github-api :tukui-api])
         (with-gui-diff

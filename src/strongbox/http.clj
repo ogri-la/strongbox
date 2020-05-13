@@ -6,7 +6,6 @@
    [clojure.java.io]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
-   [orchestra.spec.test :as st]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
    [me.raynes.fs :as fs]
    [orchestra.core :refer [defn-spec]]
@@ -244,4 +243,3 @@
       (fs/delete cache-file)
       (debug "deleted expired cache file:" cache-file))))
 
-(st/instrument)

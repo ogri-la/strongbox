@@ -1,7 +1,6 @@
 (ns strongbox.config
   (:require
    [clojure.spec.alpha :as s]
-   [orchestra.spec.test :as st]
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :as timbre :refer [debug info warn error spy]]
    [strongbox
@@ -158,7 +157,3 @@
   (let [file-opts (load-settings-file cfg-file)
         etag-db (load-etag-db-file etag-db-file)]
     (-load-settings cli-opts file-opts etag-db)))
-
-;;
-
-(st/instrument)

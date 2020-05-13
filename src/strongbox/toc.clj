@@ -6,7 +6,6 @@
     [utils :as utils]]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
-   [orchestra.spec.test :as st]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
    [me.raynes.fs :as fs]
    [clojure.string :refer [lower-case ends-with?]]))
@@ -187,5 +186,3 @@
   (let [addon-dir-list (->> addon-dir fs/list-dir (filter fs/directory?) (map str))
         addon-list (->> addon-dir-list (map parse-addon-toc-guard) (remove nil?) vec)]
     addon-list))
-
-(st/instrument)

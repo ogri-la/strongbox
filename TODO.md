@@ -103,13 +103,22 @@ see CHANGELOG.md for a more formal list of changes by release
     - I want addons loaded *quickly*
     - I want to *query* addons *quickly*
 
+* migration
+    - rename .wowman.json files to .strongbox.json 
+    - move 'user-catalog.json' to 'user-catalgoue.json'
+
 * rename wowman
     - rename repository
     - arch package
         - add new shell script 'strongbox'
+    - update ticket template
+        - with command to run that uses the debug flag
+        - which files to upload
 
 
 ## todo bucket (no particular order)
+
+* test, can gui-diff and main/test be pushed back into the testing namespace and elided from release somehow?
 
 * http, revisit the http/expiry-offset-hours value
     - also, revisit prune-http-cache

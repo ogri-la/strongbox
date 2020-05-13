@@ -14,6 +14,17 @@
    [java-time :as jt]
    [java-time.format]))
 
+(defn instrument
+  "if `flag` is true, enables spec checking instrumentation, otherwise disables it."
+  [flag]
+  (if flag
+    (do
+      (st/instrument)
+      (info "instrumentation is ON"))
+    (do
+      (st/unstrument)
+      (info "instrumentation is OFF"))))
+
 (defn-spec all boolean?
   "true if all items in `lst` are neither nil nor false"
   [lst sequential?]
@@ -292,17 +303,6 @@
   (spit path (to-json data))
   path)
 
-(defn-spec load-json-file (s/or :ok ::sp/anything, :error nil?)
-  ([path ::sp/extant-file]
-   (load-json-file path {}))
-  ([path ::sp/extant-file, transform-map (s/nilable map?)]
-   (try
-     (let [value-fn (fn [key val]
-                      ((get transform-map key (constantly val)) val))]
-       (clojure.data.json/read (clojure.java.io/reader path), :key-fn keyword, :value-fn value-fn))
-     (catch Exception e
-       (warn e (format "failed to read data \"%s\" in file: %s" (.getMessage e) path))))))
-
 (defn call-if-fn
   [x]
   (if (fn? x) (x) x))
@@ -313,10 +313,18 @@
   ([path ::sp/file]
    (load-json-file-safely {}))
   ([path ::sp/file, opts map?]
-   (let [{:keys [no-file? bad-data? invalid-data? data-spec transform-map]} opts]
+   (let [{:keys [no-file? bad-data? invalid-data? data-spec value-fn key-fn transform-map]} opts
+         default-key-fn keyword
+         default-value-fn (fn [key val]
+                            ((get transform-map key (constantly val)) val))
+         value-fn (if transform-map default-value-fn value-fn)
+         key-fn (or key-fn default-key-fn)]
      (if-not (fs/file? path)
        (call-if-fn no-file?)
-       (let [data (load-json-file path transform-map)]
+       (let [data (try
+                    (clojure.data.json/read (clojure.java.io/reader path), :key-fn key-fn, :value-fn value-fn)
+                    (catch Exception uncaught-exc
+                      (warn uncaught-exc (format "failed to read data \"%s\" in file: %s" (.getMessage uncaught-exc) path))))]
          (cond
            (not data) (call-if-fn bad-data?)
            (and ;; both are present AND data is invalid
@@ -573,8 +581,3 @@
        (dissoc m (first fields))
        m)
      (rest fields))))
-
-;;
-
-
-(st/instrument)

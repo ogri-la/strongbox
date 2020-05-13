@@ -4,7 +4,7 @@
   :license {:name "GNU Affero General Public License (AGPL)"
             :url "https://www.gnu.org/licenses/agpl-3.0.en.html"}
 
-  :dependencies [[org.clojure/clojure "1.9.0"]
+  :dependencies [[org.clojure/clojure "1.10.1"]
                  [org.clojure/spec.alpha "0.2.176"]
                  [org.clojure/tools.cli "0.4.2"] ;; cli arg parsing
                  [org.clojure/tools.namespace "0.2.11"] ;; reload code
@@ -21,22 +21,21 @@
                  [org.flatland/ordered "1.5.7"] ;; better ordered map
                  [clojure.java-time "0.3.2"] ;; date/time handling library
                  [envvar "1.1.0"] ;; environment variable wrangling
-                 [clj-http-fake "1.0.3"] ;; fake http responses for testing
-                 [com.h2database/h2 "1.4.199"]
-                 [seancorfield/next.jdbc "1.0.6"]
-
-
+                 [gui-diff "0.6.7"] ;; pops up a graphical diff for test results
+                 [com.taoensso/tufte "2.1.0"]
+                 
                  ;; remember to update the LICENCE.txt
                  ;; remember to update pom file (`lein pom`)
 
-                 [gui-diff "0.6.7"]
-                 [com.taoensso/tufte "2.1.0"]
                  ]
 
   ;; java 11 , java-time localisation issue 
   ;;:jvm-opts ["-Djava.locale.providers=COMPAT,CLDR"]
 
-  :profiles {:uberjar {:aot :all}}
+  :profiles {:dev {:dependencies [;; fake http responses for testing
+                                  [clj-http-fake "1.0.3"]
+                                  ]}
+             :uberjar {:aot :all}}
 
   :main strongbox.main
 

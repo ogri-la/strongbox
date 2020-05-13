@@ -7,6 +7,7 @@
    [me.raynes.fs :as fs]
    ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [strongbox
+    [db :as db]
     [logging :as logging]
     [zip :as zip]
     [main :as main]
@@ -245,7 +246,8 @@
           (let [;; our list of addons to import
                 output-path (fixture-path "import-export--export-v1.json")
 
-                expected [{:description "Does what no other addon does, slightly differently",
+                expected [{:created-date "2010-05-07T18:48:16Z",
+                           :description "Does what no other addon does, slightly differently",
                            :tag-list [:bags :inventory]
                            :update? false,
                            :updated-date "2019-06-26T01:21:39Z",
@@ -265,7 +267,8 @@
                            :primary? true,
                            :matched? true}
 
-                          {:description "Does what every addon does, just better",
+                          {:created-date "2011-01-04T05:42:23Z",
+                           :description "Does what every addon does, just better",
                            :tag-list [:coords :map :minimap :professions :ui]
                            :update? false,
                            :updated-date "2019-07-03T07:11:47Z",
@@ -326,7 +329,8 @@
           (let [;; our list of addons to import
                 output-path (fixture-path "import-export--export-v2.json")
 
-                expected [{:description "Does what no other addon does, slightly differently",
+                expected [{:created-date "2010-05-07T18:48:16Z",
+                           :description "Does what no other addon does, slightly differently",
                            :tag-list [:bags :inventory]
                            :update? false,
                            :updated-date "2019-06-26T01:21:39Z",
@@ -346,7 +350,8 @@
                            :primary? true,
                            :matched? true}
 
-                          {:description "Does what every addon does, just better",
+                          {:created-date "2011-01-04T05:42:23Z",
+                           :description "Does what every addon does, just better",
                            :tag-list [:coords :map :minimap :professions :ui]
                            :update? false,
                            :updated-date "2019-07-03T07:11:47Z",
@@ -367,7 +372,7 @@
                            :matched? true}]]
 
             (core/import-exported-file output-path)
-            (core/set-game-track! :retail) ;; unnecessary, :retail is default. explicitness
+            (core/set-game-track! :retail) ;; unnecessary as :retail is default, just for explicitness.
             (core/refresh) ;; re-read the installation directory
             (is (= (first expected) (first (core/get-state :installed-addon-list))))
 
@@ -440,12 +445,14 @@
                 toc (merge toc nfo)
 
                 ;; we then attempt to match this 'toc+nfo' to an addon in the catalogue
-                catalogue-match (core/-db-match-installed-addons-with-catalogue [toc])
+                ;; in this case we have a catalogue of 1 and only interested in the first result
+                result (first (db/-db-match-installed-addons-with-catalogue (core/get-state :db) [toc]))
 
-                ;; this is a m:n match and we typically get back heaps of results
-                ;; in this case we have a catalogue of 1 and are not interested in how the addon was matched (:final)
-                toc-addon (-> catalogue-match first :final) ;; :update? will be false
-                alt-toc-addon (assoc toc-addon :source-id 1) ;; :update? will be true
+                ;; previously done in above step, mooshing the installed addon and catalogue item together is
+                ;; now a separate step
+                toc-addon (core/moosh-addons toc (:catalogue-match result))
+
+                alt-toc-addon (assoc toc-addon :source-id 1)
 
                 ;; and what we 'expand' that data into
                 api-xform {:download-url "https://example.org/foo",
@@ -460,31 +467,6 @@
             (is (= alt-expected (core/check-for-update alt-toc-addon)))))))))
 
 ;; todo: install classic addon into retail game track
-
-(deftest db-split-tag-list
-  (testing "converting a tab separated list back into an actual list works as expected"
-    (let [cases [[nil []]
-                 ["" []]
-                 ["|" []]
-                 ["foo" [:foo]]
-                 ["bar|baz" [:bar :baz]]]]
-
-      (doseq [[given expected] cases]
-        (is (= expected (core/db-split-tag-list given)))))))
-
-(deftest db-gen-game-track-list
-  (testing "game track fields are turned back into a list"
-    (let [cases [[{} {}]
-                 [{:retail-track true} {:game-track-list [:retail]}]
-                 [{:classic-track true} {:game-track-list [:classic]}]
-                 [{:retail-track true, :classic-track true} {:game-track-list [:retail :classic]}]
-                 [{:retail-track false, :classic-track true} {:game-track-list [:classic]}]
-                 [{:retail-track false, :classic-track false} {}]
-
-                 ;; order is deterministic
-                 [{:classic-track true, :retail-track true} {:game-track-list [:retail :classic]}]]]
-      (doseq [[given expected] cases]
-        (is (= expected (core/db-gen-game-track-list given)))))))
 
 (deftest db-load-catalog
   (testing "very long descriptions are truncated"
@@ -515,7 +497,7 @@
       (with-fake-routes-in-isolation fake-routes
         (with-running-app
           (is (= expected
-                 (:description (first (core/db-query "select * from catalogue"))))))))))
+                 (:description (first (core/get-state :db))))))))))
 
 
 ;;

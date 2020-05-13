@@ -4,7 +4,7 @@
    [clojure.string :refer [trim lower-case]]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
-   [orchestra.spec.test :as st]
+   [taoensso.tufte :as tufte :refer [p profile]]
    ;;[taoensso.timbre :refer [debug info warn error spy]]
    ))
 
@@ -42,7 +42,7 @@
   "curseforge-specific categories that are replaced"
   {"HUDs" [:ui :unit-frames]
    "Minigames" [:mini-games]
-   "Auction & Economy" [:action-house]
+   "Auction & Economy" [:auction-house]
    "Chat & Communication" [:chat]
    "Development Tools" [:dev]
    "Libraries" [:libs]
@@ -112,14 +112,16 @@
    "Herbalism" [:professions]})
 
 (def replacement-map
-  {"wowinterface" wowi-replacements
-   "curseforge" curse-replacements
-   "tukui" tukui-replacements})
+  {"wowinterface" (merge general-replacements wowi-replacements)
+   "curseforge" (merge general-replacements curse-replacements)
+   "tukui" (merge general-replacements tukui-replacements)})
 
 (def supplement-map
-  {"wowinterface" wowi-supplements
-   "curseforge" curse-supplements
-   "tukui" tukui-supplements})
+  {"wowinterface" (merge general-supplements wowi-supplements)
+   "curseforge" (merge general-supplements curse-supplements)
+   "tukui" (merge general-supplements tukui-supplements)})
+
+;;
 
 (defn-spec category-to-tag (s/or :ok ::sp/tag, :bad nil?)
   [category ::sp/category]
@@ -133,20 +135,21 @@
 (defn-spec category-to-tag-list (s/or :singluar ::sp/tag, :composite ::sp/tag-list)
   "given a `category` string, converts it into one or many tags."
   [addon-host ::sp/catalogue-source, category ::sp/category]
-  (let [replacements (merge general-replacements (get replacement-map addon-host))
-        supplements (merge general-supplements (get supplement-map addon-host))
+  (p :tags/category-to-tag-list
+     (let [replacements (get replacement-map addon-host, general-replacements)
+           supplements (get supplement-map addon-host, general-supplements)
 
-        replacement-tags (get replacements category [])
-        supplementary-tags (get supplements category [])
+           replacement-tags (get replacements category [])
+           supplementary-tags (get supplements category [])
 
-        tag-list (into replacement-tags supplementary-tags)]
-    (if-not (empty? replacement-tags)
-      ;; we found a set of replacement tags so we're done
-      tag-list
+           tag-list (into replacement-tags supplementary-tags)]
+       (if-not (empty? replacement-tags)
+         ;; we found a set of replacement tags so we're done
+         tag-list
 
-      ;; couldn't find a replacement set of tags so parse the category string
-      (let [bits (clojure.string/split category #"( & |, |: )+")]
-        (->> bits (map category-to-tag) (into tag-list) (remove nil?) vec)))))
+         ;; couldn't find a replacement set of tags so parse the category string
+         (let [bits (clojure.string/split category #"( & |, |: )+")]
+           (->> bits (map category-to-tag) (into tag-list) (remove nil?) vec))))))
 
 (defn-spec category-list-to-tag-list ::sp/tag-list
   "given a list of category strings, converts them into a distinct list of tags by calling `category-to-tag-list`."
@@ -154,7 +157,3 @@
   ;; sorting cuts down on noise in diffs.
   ;; `set` because curseforge has duplicate categories and supplemental tags may introduce duplicates
   (->> category-list (map (partial category-to-tag-list addon-host)) flatten set sort vec))
-
-;;
-
-(st/instrument)

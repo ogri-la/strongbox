@@ -2,7 +2,6 @@
   (:require
    [slugify.core :refer [slugify]]
    [clojure.spec.alpha :as s]
-   [orchestra.spec.test :as st]
    [orchestra.core :refer [defn-spec]]
    ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [strongbox
@@ -117,7 +116,3 @@
                (download-classic-summaries)
                [(download-tukui-summary)]
                [(download-elvui-summary)])))
-
-;;
-
-(st/instrument)

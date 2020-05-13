@@ -5,7 +5,6 @@
    [me.raynes.fs.compression :as zip]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
-   [orchestra.spec.test :as st]
    [clojure.set]
    [clojure.string :refer [split ends-with?]]
    [strongbox
@@ -145,5 +144,3 @@
                (-top-level-non-addon-dirs? entries))))
     ;; couldn't get past the bad zip file
     false))
-
-(st/instrument)

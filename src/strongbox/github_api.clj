@@ -3,7 +3,6 @@
    [clojure.string :refer [index-of split]]
    [slugify.core :refer [slugify]]
    [clojure.spec.alpha :as s]
-   [orchestra.spec.test :as st]
    [orchestra.core :refer [defn-spec]]
    [me.raynes.fs :as fs]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
@@ -201,7 +200,3 @@
            ;; 'something' failed to parse :(
            ;; would love a way to pass back a more specific error
            nil))
-
-;;
-
-(st/instrument)
