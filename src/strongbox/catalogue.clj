@@ -84,7 +84,7 @@
             value-fn -read-catalogue-value-fn ;; defined 'outside' so it can reference itself
             opts (merge opts {:key-fn key-fn :value-fn value-fn})
             catalogue-data (p :catalogue:load-json-file
-                              (utils/load-json-file-safely2 catalogue-path opts))]
+                              (utils/load-json-file-safely catalogue-path opts))]
 
         (when-not (empty? catalogue-data)
           (if (-> catalogue-data :spec :version (= 1)) ;; if v1 catalogue, coerce

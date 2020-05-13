@@ -303,17 +303,6 @@
   (spit path (to-json data))
   path)
 
-(defn-spec load-json-file (s/or :ok ::sp/anything, :error nil?)
-  ([path ::sp/extant-file]
-   (load-json-file path {}))
-  ([path ::sp/extant-file, transform-map (s/nilable map?)]
-   (try
-     (let [value-fn (fn [key val]
-                      ((get transform-map key (constantly val)) val))]
-       (clojure.data.json/read (clojure.java.io/reader path), :key-fn keyword, :value-fn value-fn))
-     (catch Exception e
-       (warn e (format "failed to read data \"%s\" in file: %s" (.getMessage e) path))))))
-
 (defn call-if-fn
   [x]
   (if (fn? x) (x) x))
@@ -324,28 +313,13 @@
   ([path ::sp/file]
    (load-json-file-safely {}))
   ([path ::sp/file, opts map?]
-   (let [{:keys [no-file? bad-data? invalid-data? data-spec transform-map]} opts]
+   (let [{:keys [no-file? bad-data? invalid-data? data-spec value-fn key-fn transform-map]} opts
+         default-key-fn keyword
+         default-value-fn (fn [key val]
+                            ((get transform-map key (constantly val)) val))
+         value-fn (if transform-map default-value-fn value-fn)
+         key-fn (or key-fn default-key-fn)]
      (if-not (fs/file? path)
-       (call-if-fn no-file?)
-       (let [data (load-json-file path transform-map)]
-         (cond
-           (not data) (call-if-fn bad-data?)
-           (and ;; both are present AND data is invalid
-            (and invalid-data? data-spec)
-            (not (s/valid? data-spec data))) (call-if-fn invalid-data?)
-           :else data))))))
-
-;; todo: I prefer this over `load-json-file-safely`. 
-;; migrate usage to this
-(defn-spec load-json-file-safely2 any?
-  "loads json file at given path with handling for common error cases (no file, bad data, invalid data)
-  if :invalid-data? given, then a :data-spec must also be given else nothing happens and you get nil back"
-  ([path ::sp/file]
-   (load-json-file-safely {}))
-  ([path ::sp/file, opts map?]
-   (let [{:keys [no-file? bad-data? invalid-data? data-spec value-fn key-fn]} opts]
-     (if-not (and (fs/file? path)
-                  (fs/exists? path))
        (call-if-fn no-file?)
        (let [data (try
                     (clojure.data.json/read (clojure.java.io/reader path), :key-fn key-fn, :value-fn value-fn)

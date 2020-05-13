@@ -53,7 +53,7 @@
         tukui-catalogue (find-catalogue-local-path :tukui)
 
         catalogue-path-list [curseforge-catalogue wowinterface-catalogue tukui-catalogue]
-        catalogue (map utils/load-json-file catalogue-path-list)
+        catalogue (map utils/load-json-file-safely catalogue-path-list)
         catalogue (reduce catalogue/merge-catalogues catalogue)]
     (-> catalogue
         (catalogue/write-catalogue (find-catalogue-local-path :full))
