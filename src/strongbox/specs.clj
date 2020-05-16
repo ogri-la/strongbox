@@ -126,6 +126,8 @@
 (s/def ::created-date ::inst)
 (s/def ::updated-date ::inst)
 (s/def ::catalogue-created-date ::ymd-dt)
+
+;; todo, reintroduce these but as "known" and "unknown" source (or whatever)
 ;;(def catalogue-sources #{"curseforge" "wowinterface" "github" "tukui" "tukui-classic"})
 ;;(s/def ::catalogue-source catalogue-sources)
 ;;(s/def ::catalogue-source string?) ;; ::string255)
@@ -230,3 +232,60 @@
 (s/def ::catalogue-source-map (s/keys :req-un [:catalogue/name ::label :catalogue/source]))
 (s/def ::catalogue-source-list (s/or :ok (s/coll-of ::catalogue-source-map)
                                      :empty ::empty-coll))
+
+
+;; rejig
+;; -----------------------------------------
+
+(s/def :addon/toc
+  (s/keys :req-un [::name ::label ::description ::dirname ::interface-version ::installed-version]
+          :opt [::group-id ::primary? ::group-addons ::source ::source-id]))
+
+(s/def :addon/nfo (s/or :ignored ::ignore-flag
+                        :ok (s/keys :req-un [::installed-version ::name ::group-id ::primary? ::source
+                                             ::installed-game-track ::source-id]
+                                    :opt [::ignore?])))
+
+(s/def :addon/summary
+  (s/keys :req-un [::url ::name ::label ::tag-list ::updated-date ::download-count ::source ::source-id]
+          :opt [::description ;; wowinterface summaries have no description
+                ::created-date ;; wowinterface summaries have no created date
+                ::game-track-list ;; more of a set, really
+                ]))
+(s/def :addon/summary-list (s/coll-of :addon/summary))
+
+;; introduced after finding addon in the catalogue
+(s/def :addon/match (s/keys :req-un [::matched?]))
+
+(s/def :addon/source-updates
+  (s/keys :req-un [::version ::download-url]
+          :opt [::interface-version]))
+
+;;
+
+;; addon has nfo data
+(s/def :addon/toc+nfo (s/merge :addon/toc :addon/nfo))
+
+;; addon has been run against the catalogue and a match was *not* found
+(s/def :addon/toc+match (s/merge :addon/toc :addon/match))
+
+;; addon with nfo data has been run against the catalogue and a match was *not* found
+(s/def :addon/toc+nfo+match (s/merge :addon/toc+nfo :addon/match))
+
+;; addon has been run against the catalogue and a match was found
+(s/def :addon/toc+summary+match (s/merge :addon/toc :addon/summary :addon/match))
+
+;; addon with nfo data has been run against the catalogue and a match was found
+(s/def :addon/toc+nfo+summary+match (s/merge :addon/toc+nfo :addon/summary :addon/match))
+
+;; addon with *no* nfo data has been matched against the catalogue and found online at it's source
+(s/def :addon/toc+summary+match+source-updates (s/merge :addon/toc+summary+match :addon/source-updates))
+
+;; addon with nfo data has been matched against the catalogue and found online at it's source
+;; this is the ideal state, a strongbox-installed addon.
+(s/def :addon/addon (s/merge :addon/toc :addon/nfo :addon/summary :addon/match :addon/source-updates))
+
+
+(s/def :addon/addon-list (s/coll-of (s/or :ok1 :addon/addon
+                                          :ok2 :addon/toc+summary+match+source-updates)))
+

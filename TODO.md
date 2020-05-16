@@ -94,6 +94,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### todo
 
+* is catalogue being validated now that spec checking has been disabled?
+
 * bug, "failed to read data "null" in file: .../etag-db.json"
     - something I seem to have introduced unifying the load-json* fns
 
