@@ -624,9 +624,9 @@
     (download-catalogue catalogue)
     (warn "failed to find a downloadable catalogue")))
 
-(defn-spec moosh-addons ::sp/toc-addon-summary
+(defn-spec moosh-addons :addon/toc+summary+match
   "merges the data from an installed addon with it's match in the catalogue"
-  [installed-addon ::sp/toc, db-catalogue-addon ::sp/addon-summary]
+  [installed-addon :addon/toc, db-catalogue-addon :addon/summary]
   (let [;; nil fields are removed from the catalogue item because they might override good values in the .toc or .nfo
         db-catalogue-addon (utils/drop-nils db-catalogue-addon [:description])]
     ;; merges left->right. catalogue-addon overwrites installed-addon, ':matched' overwrites catalogue-addon, etc
@@ -646,7 +646,7 @@
 
 (defn-spec add-user-addon! nil?
   "adds one or many addons to the user catalogue"
-  [addon-summary (s/or :single ::sp/addon-summary, :many ::sp/addon-summary-list)]
+  [addon-summary (s/or :single :addon/summary, :many :addon/summary-list)]
   (let [addon-summary-list (if (sequential? addon-summary)
                              addon-summary
                              [addon-summary])
@@ -666,7 +666,7 @@
   ([]
    (when (selected-addon-dir) ;; skip matching if no addon dir selected
      (match-installed-addons-with-catalogue (get-state :db) (get-state :installed-addon-list))))
-  ([database ::sp/addon-summary-list, installed-addon-list ::sp/toc-list]
+  ([database :addon/summary-list, installed-addon-list :addon/toc-list]
    (info "matching installed addons to catalogue")
    (let [match-results (db/-db-match-installed-addons-with-catalogue (get-state :db) installed-addon-list)
          [matched unmatched] (utils/split-filter :matched? match-results)
@@ -706,7 +706,7 @@
   []
   (-> (get-state :db) nil? not))
 
-(defn-spec db-search ::sp/addon-summary-list
+(defn-spec db-search :addon/summary-list
   "searches database for addons whose name or description contains given user input.
   if no user input, returns a list of randomly ordered results"
   ([]
@@ -776,8 +776,10 @@
           wrapper (affects-addon-wrapper catalogue/expand-summary)]
       (wrapper addon-summary game-track))))
 
-(defn-spec check-for-update ::sp/toc
-  [toc ::sp/toc]
+
+;; todo: this fn seems problematic. why only toc data? don't we need source and source-id as well?
+(defn-spec check-for-update :addon/toc
+  [toc :addon/toc]
   (if-let [addon (when (:matched? toc)
                    (expand-summary-wrapper toc))]
     ;; we have a match and were successful in expanding the summary
@@ -789,7 +791,7 @@
 
     ;; failed to match against catalogue or expand-summary returned nil (couldn't expand for whatever reason)
     ;; in this case, we set a flag saying this addon shouldn't be updated
-    (assoc toc :update? false)))
+    (assoc toc :update? false))) ;; todo: :update? is not specced. should it be?
 
 (defn-spec check-for-updates nil?
   "downloads full details for all installed addons that can be found in summary list"
@@ -901,7 +903,7 @@
 
 (defn-spec export-installed-addon ::sp/export-record
   "given an addon summary from a catalogue or .toc file data, derive an 'export-record' that can be used to import an addon later"
-  [addon (s/or :catalogue ::sp/addon-summary, :installed ::sp/toc)]
+  [addon (s/or :catalogue :addon/summary, :installed :addon/toc)]
   (let [stub (select-keys addon [:name :source :source-id])
         game-track (when-let [game-track (:installed-game-track addon)]
                      {:game-track game-track})]
@@ -909,7 +911,7 @@
 
 (defn-spec export-installed-addon-list ::sp/export-record-list
   "derives an 'export-record' from a list of either addon summaries from a catalogue or .toc file data from installed addons"
-  [addon-list (s/or :catalogue ::sp/addon-summary-list, :installed ::sp/toc-list)]
+  [addon-list (s/or :catalogue :addon/summary-list, :installed :addon/toc-list)]
   (->> addon-list (remove :ignore?) (map export-installed-addon) vec))
 
 (defn-spec export-installed-addon-list-safely ::sp/extant-file
@@ -1145,14 +1147,14 @@
 
 (defn-spec remove-addon nil?
   "removes the given addon. if addon is part of a group, all addons in group are removed"
-  [toc ::sp/toc]
+  [toc :addon/toc]
   (if (contains? toc :group-addons)
     (doseq [subtoc (:group-addons toc)]
       (-remove-addon (:dirname subtoc))) ;; top-level toc is contained in the :group-addons list
     (-remove-addon (:dirname toc))))
 
 (defn-spec remove-many-addons nil?
-  [toc-list ::sp/toc-list]
+  [toc-list :addon/toc-list]
   (doseq [toc toc-list]
     (remove-addon toc))
   (refresh))
@@ -1170,7 +1172,7 @@
 
 ;; installing addons from strings
 
-(defn-spec add+install-user-addon! (s/or :ok ::sp/addon, :less-ok ::sp/addon-summary, :failed nil?)
+(defn-spec add+install-user-addon! (s/or :ok :addon/addon, :less-ok :addon/summary, :failed nil?)
   "convenience. parses string, adds to user catalogue, installs addon then reloads database.
   relies on UI to call refresh (or not)"
   [addon-url string?]

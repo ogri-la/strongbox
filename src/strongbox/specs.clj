@@ -240,6 +240,7 @@
 (s/def :addon/toc
   (s/keys :req-un [::name ::label ::description ::dirname ::interface-version ::installed-version]
           :opt [::group-id ::primary? ::group-addons ::source ::source-id]))
+(s/def :addon/toc-list (s/coll-of :addon/toc))
 
 (s/def :addon/nfo (s/or :ignored ::ignore-flag
                         :ok (s/keys :req-un [::installed-version ::name ::group-id ::primary? ::source
