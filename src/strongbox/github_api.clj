@@ -145,7 +145,7 @@
       (warn "multiple game tracks (classic and retail) detected with many downloadable assets and unable to differentiate between them. Refusing to pick.")
       (group-by :game-track asset-list))))
 
-(defn-spec expand-summary (s/or :ok ::sp/addon, :error nil?)
+(defn-spec expand-summary (s/or :ok :addon/source-updates, :error nil?)
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. 
   one additional look-up per ::addon required"
   [addon-summary ::sp/addon-summary, game-track ::sp/game-track]
@@ -153,11 +153,9 @@
         latest-release (first release-list)
         -group-assets (partial group-assets addon-summary)
         asset (-> latest-release -group-assets (get game-track) first (dissoc :-mo))]
-    (if-not asset
-      (warn (format "no '%s' release available for '%s' on github" (utils/kw2str game-track) (:name addon-summary)))
-      (merge addon-summary
-             {:download-url (:browser_download_url asset)
-              :version (:version asset)}))))
+    (when asset
+      {:download-url (:browser_download_url asset)
+       :version (:version asset)})))
 
 ;;
 

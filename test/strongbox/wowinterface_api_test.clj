@@ -22,18 +22,10 @@
 
           game-track :retail
 
-          expected {:url "https://www.wowinterface.com/downloads/info25079"
-                    :name "rotation-master"
-                    :label "Rotation Master"
-                    :updated-date "2019-07-29T21:37:00Z"
-                    :download-count 80
-                    :tag-list [:dummy]
-                    :source "wowinterface"
-                    :source-id 25079
-                    :game-track-list [game-track]
+          source-updates {:download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=25079"
+                          :version "1.2.3"}
 
-                    :download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=25079"
-                    :version "1.2.3"}
+          expected source-updates
 
           fixture (slurp (fixture-path "wowinterface-api--addon-details.json"))
           fake-routes {"https://api.mmoui.com/v3/game/WOW/filedetails/25079.json"

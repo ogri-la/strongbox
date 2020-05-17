@@ -5,18 +5,12 @@
    [taoensso.timbre :refer [log debug info warn error spy]]
    [strongbox.specs :as sp]))
 
-(defn-spec put-many ::sp/addon-summary-list
+(defn-spec put-many :addon/summary-list
   "adds all of the items from `doc-list` into the given `db`.
   this is a leftover from when the database was using the H2 rdbms but kept because I 
   like the separation it provides"
-  [db vector?, doc-list ::sp/addon-summary-list]
+  [db vector?, doc-list :addon/summary-list]
   (into db (vec doc-list)))
-
-(defn-spec start vector?
-  "initialises the database, returning something that can be used to access it later"
-  []
-  (let [db []]
-    db))
 
 ;; matching
 

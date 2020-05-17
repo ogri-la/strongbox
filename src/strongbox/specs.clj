@@ -237,6 +237,7 @@
 ;; rejig
 ;; -----------------------------------------
 
+
 (s/def :addon/toc
   (s/keys :req-un [::name ::label ::description ::dirname ::interface-version ::installed-version]
           :opt [::group-id ::primary? ::group-addons ::source ::source-id]))
@@ -283,10 +284,13 @@
 (s/def :addon/toc+summary+match+source-updates (s/merge :addon/toc+summary+match :addon/source-updates))
 
 ;; addon with nfo data has been matched against the catalogue and found online at it's source
-;; this is the ideal state, a strongbox-installed addon.
-(s/def :addon/addon (s/merge :addon/toc :addon/nfo :addon/summary :addon/match :addon/source-updates))
+;; this is a strongbox-installed addon!
+(s/def :addon/toc+nfo+summary+match+source-updates (s/merge :addon/toc :addon/nfo :addon/summary :addon/match :addon/source-updates))
 
+;; addon (with or without nfo data) has been matched against the catalogue and found online at it's source
+;; this is an ideal state.
+(s/def :addon/addon (s/or :installed :addon/toc+summary+match+source-updates
+                          :strongbox-installed :addon/toc+nfo+summary+match+source-updates))
 
-(s/def :addon/addon-list (s/coll-of (s/or :ok1 :addon/addon
-                                          :ok2 :addon/toc+summary+match+source-updates)))
+(s/def :addon/addon-list (s/coll-of :addon/addon))
 

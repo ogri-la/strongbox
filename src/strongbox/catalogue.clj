@@ -25,9 +25,15 @@
                       nil (fn [_ _] (error "malformed addon-summary:" (utils/pprint addon-summary)))}
         key (:source addon-summary)]
     (try
-      (if-let [dispatch-fn (get dispatch-map key)]
-        (dispatch-fn addon-summary game-track)
-        (error (format "addon '%s' is from source '%s' that is unsupported" (:label addon-summary) key)))
+      (if-not (contains? dispatch-map key)
+        (error (format "addon '%s' is from source '%s' that is unsupported" (:label addon-summary) key))
+        (if-let [source-updates ((get dispatch-map key) addon-summary game-track)]
+          (merge addon-summary source-updates)
+          ;; "no release found for 'adibags' (retail) on github"
+          (warn (format "no release found for '%s' (%s) on %s"
+                        (:name addon-summary)
+                        (utils/kw2str game-track)
+                        (:source addon-summary)))))
       (catch Exception e
         (error e "unhandled exception attempting to expand addon summary")
         (error "please report this! https://github.com/ogri-la/strongbox/issues")))))
