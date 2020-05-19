@@ -113,7 +113,7 @@
                interface-version)))))
 
 (defn-spec extract-addon-summary :addon/summary
-  "converts addon data extracted from a listing into an ::sp/addon-summary"
+  "converts addon data extracted from a listing into an :addon/summary"
   [snippet map?] ;; TODO: spec out curseforge results? eh.
   {:url (:websiteUrl snippet)
    :label (:name snippet)

@@ -533,7 +533,7 @@
         addon-list (apply conj (mapv expand addon-groups) unknown-grouping)]
     addon-list))
 
-(defn-spec -load-installed-addons ::sp/toc-list
+(defn-spec -load-installed-addons :addon/toc-list
   "reads the .toc files from the given addon dir, reads any nfo data for 
   these addons, groups them, returns the mooshed data"
   [addon-dir ::sp/addon-dir]
@@ -1041,7 +1041,7 @@
                             :version (:installed-version addon)
                             :game-track game-track})
         nfo-file (nfo/nfo-path install-dir (:dirname addon))]
-    (if (s/valid? ::sp/nfo-input-minimum addon)
+    (if (s/valid? :addon/nfo-input-minimum addon)
       (nfo/upgrade-nfo install-dir addon)
       (do
         (warn (format "failed to upgrade file, removing: %s" nfo-file))

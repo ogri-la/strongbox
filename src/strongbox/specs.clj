@@ -243,10 +243,14 @@
           :opt [::group-id ::primary? ::group-addons ::source ::source-id]))
 (s/def :addon/toc-list (s/coll-of :addon/toc))
 
+;; 'nfo' files contain extra per-addon data written to addon directories as .strongbox.json
 (s/def :addon/nfo (s/or :ignored ::ignore-flag
                         :ok (s/keys :req-un [::installed-version ::name ::group-id ::primary? ::source
                                              ::installed-game-track ::source-id]
                                     :opt [::ignore?])))
+
+;; minimum amount of data required to create a nfo file. the rest is derived.
+(s/def :addon/nfo-input-minimum (s/keys :req-un [::version ::name ::url ::source ::source-id]))
 
 (s/def :addon/summary
   (s/keys :req-un [::url ::name ::label ::tag-list ::updated-date ::download-count ::source ::source-id]

@@ -25,9 +25,9 @@
   (let [sub-dirs (->> path fs/list-dir (filter fs/directory?) (map fs/base-name) (mapv str))]
     (not (nil? (some ignorable-dir-set sub-dirs)))))
 
-(defn-spec derive ::sp/nfo-v2
+(defn-spec derive :addon/nfo
   "extract fields from the addon data that will be written to the nfo file"
-  [addon ::sp/nfo-input-minimum, primary? boolean?, game-track ::sp/game-track]
+  [addon :addon/nfo-input-minimum, primary? boolean?, game-track ::sp/game-track]
   (let [nfo {;; important! as an addon is updated or installed, the `:installed-version` from the .toc file is overridden by the `:version` online
              ;; later, when comparing installed addons against the catalogue, the comparisons will be more consistent
              :installed-version (:version addon)
@@ -62,14 +62,14 @@
 
 (defn-spec write-nfo ::sp/extant-file
   "given an installation directory and an addon, extract the neccessary bits and write them to a nfo file"
-  [install-dir ::sp/extant-dir, addon ::sp/nfo-input-minimum, addon-dirname string?, primary? boolean?, game-track ::sp/game-track]
+  [install-dir ::sp/extant-dir, addon :addon/nfo-input-minimum, addon-dirname string?, primary? boolean?, game-track ::sp/game-track]
   (let [path (nfo-path install-dir addon-dirname)]
     (utils/dump-json-file path (derive addon primary? game-track))
     path))
 
 (defn-spec upgrade-nfo ::sp/extant-file
   "refreshes the nfo data for the given addon. does NOT bump installed version"
-  [install-dir ::sp/extant-dir, addon ::sp/nfo-input-minimum]
+  [install-dir ::sp/extant-dir, addon :addon/nfo-input-minimum]
   (let [;; important! as an addon is updated or installed, the `:installed-version` is overridden by the `:version`
         ;; we don't want to alter the version it thinks is installed here
         addon (merge addon {:version (:installed-version addon)})]
@@ -82,7 +82,7 @@
     (fs/delete path)
     nil))
 
-(defn-spec read-nfo-file (s/or :ok ::sp/nfo-v2, :error nil?)
+(defn-spec read-nfo-file (s/or :ok :addon/nfo, :error nil?)
   "reads the nfo file.
   failure to load the json results in the file being deleted.
   failure to validate the json data results in the file being deleted."
@@ -99,11 +99,11 @@
      {:no-file? nil
       :bad-data? bad-data
       :invalid-data? invalid-data,
-      :data-spec ::sp/nfo-v2
+      :data-spec :addon/nfo
       :key-fn keyword
       :transform-map {:installed-game-track keyword}})))
 
-(defn-spec read-nfo (s/or :ok ::sp/nfo-v2, :error nil?)
+(defn-spec read-nfo (s/or :ok :addon/nfo, :error nil?)
   "reads and parses the contents of the .nfo file and checks if addon should be ignored or not"
   [install-dir ::sp/extant-dir, dirname string?]
   (let [nfo-file-contents (read-nfo-file install-dir dirname)
@@ -129,9 +129,9 @@
     false))
 
 (defn-spec has-valid-nfo-file? boolean?
-  "returns true if a nfo file exists and contains valid nfo-v2 data"
+  "returns true if a nfo file exists and contains valid `:addon/nfo` data"
   [install-dir ::sp/extant-dir, addon any?]
   (and (has-nfo-file? install-dir addon)
        ;; don't use read-nfo-file here, it deletes invalid nfo files
-       (s/valid? ::sp/nfo-v2 (utils/load-json-file-safely (nfo-path install-dir (:dirname addon))
-                                                          {:transform-map {:installed-game-track keyword}}))))
+       (s/valid? :addon/nfo (utils/load-json-file-safely (nfo-path install-dir (:dirname addon))
+                                                         {:transform-map {:installed-game-track keyword}}))))
