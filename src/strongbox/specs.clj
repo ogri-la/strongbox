@@ -265,6 +265,13 @@
 
 ;;
 
+;; bare minimum required to install an addon
+(s/def :addon/installable (s/merge :addon/source-updates
+                                   (s/keys :req-un [::name ::label]
+                                           :opt [::game-track])))
+
+(s/def :addon/installable-list (s/coll-of :addon/installable))
+
 ;; addon has nfo data
 (s/def :addon/toc+nfo (s/merge :addon/toc :addon/nfo))
 

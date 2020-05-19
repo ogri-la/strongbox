@@ -522,64 +522,77 @@
    :source-id 1
    :created-date  "2009-02-08T13:30:30Z",
    :updated-date  "2016-09-08T14:18:33Z",
-   :url "https://www.example.org/wow/addons/everyaddon"})
+   :url "https://www.example.org/wow/addons/everyaddon"
+   :download-count 1})
+
+(def matched?
+  "was the toc data matched to an addon in the catalogue? (yes)"
+  {:matched? true})
+
+(def source-updates
+  "updates to the addon data fetched from remote source"
+  {:interface-version  70000,
+   :download-url  "https://www.example.org/wow/addons/everyaddon/download/123456/file",
+   :version  "1.2.3"})
 
 (def addon
-  "remote addon detail"
-  (merge addon-summary
-         {:download-count 1
-          :interface-version  70000,
-          :download-url  "https://www.example.org/wow/addons/everyaddon/download/123456/file",
-          :version  "1.2.3"}))
+  "final mooshed result"
+  (merge toc addon-summary matched? source-updates))
 
-(deftest install-addon
+(deftest install-addon-1
   (testing "installing an addon"
-    (let [install-dir (str fs/*cwd*)
-          ;; move dummy addon file into place so there is no cache miss
-          fname (core/downloaded-addon-fname (:name addon) (:version addon))
-          _ (utils/cp (fixture-path fname) install-dir)
-          test-only? false
-          file-list (core/install-addon addon install-dir test-only?)]
+    (with-fake-routes-in-isolation {}
+      (let [install-dir (str fs/*cwd*)
+            ;; move dummy addon file into place so there is no cache miss
+            fname (core/downloaded-addon-fname (:name addon) (:version addon))
+            _ (utils/cp (fixture-path fname) install-dir)
+            test-only? false
+            file-list (core/install-addon addon install-dir test-only?)]
 
-      (testing "addon directory created, single file written (.strongbox.json nfo file)"
-        (is (= (count file-list) 1))
-        (is (fs/exists? (first file-list))))))
+        (testing "addon directory created, single file written (.strongbox.json nfo file)"
+          (is (= (count file-list) 1))
+          (is (fs/exists? (first file-list))))))))
 
+(deftest install-addon-2
   (testing "trial installation of a good addon"
-    (let [install-dir (utils/join (str fs/*cwd*) "addons-dir")
-          ;; move dummy addon file into place so there is no cache miss
-          fname (core/downloaded-addon-fname (:name addon) (:version addon))
-          _ (fs/mkdir install-dir)
-          _ (utils/cp (fixture-path fname) install-dir)
+    (with-fake-routes-in-isolation {}
+      (let [install-dir (utils/join (str fs/*cwd*) "addons-dir")
+            ;; move dummy addon file into place so there is no cache miss
+            fname (core/downloaded-addon-fname (:name addon) (:version addon))
+            _ (fs/mkdir install-dir)
+            _ (utils/cp (fixture-path fname) install-dir)
 
-          test-only? true
-          result (core/install-addon addon install-dir test-only?)]
-      (is result) ;; success
+            test-only? true
+            result (core/install-addon addon install-dir test-only?)]
+        (is result) ;; success
 
-      ;; ensure nothing was actually unzipped
-      (is (not (fs/exists? (utils/join install-dir "EveryAddon"))))))
+        ;; ensure nothing was actually unzipped
+        (is (not (fs/exists? (utils/join install-dir "EveryAddon"))))))))
 
+(deftest install-addon-3
   (testing "trial installation of a bad addon"
-    (let [install-dir (utils/join (str fs/*cwd*) "addons-dir")
-          ;; move dummy addon file into place so there is no cache miss
-          fname (core/downloaded-addon-fname (:name addon) (:version addon))
-          _ (fs/mkdir install-dir)
-          _ (fs/copy (fixture-path "bad-truncated.zip") (utils/join install-dir fname)) ;; hoho, so evil
+    (with-fake-routes-in-isolation {}
+      (let [install-dir (utils/join (str fs/*cwd*) "addons-dir")
+            ;; move dummy addon file into place so there is no cache miss
+            fname (core/downloaded-addon-fname (:name addon) (:version addon))
+            _ (fs/mkdir install-dir)
+            _ (fs/copy (fixture-path "bad-truncated.zip") (utils/join install-dir fname)) ;; hoho, so evil
 
-          test-only? true
-          result (core/install-addon addon install-dir test-only?)]
-      (is (not result)) ;; failure
+            test-only? true
+            result (core/install-addon addon install-dir test-only?)]
+        (is (not result)) ;; failure
 
-      ;; ensure nothing was actually unzipped
-      (is (not (fs/exists? (utils/join install-dir "EveryAddon")))))))
+        ;; ensure nothing was actually unzipped
+        (is (not (fs/exists? (utils/join install-dir "EveryAddon"))))))))
 
 (deftest install-bad-addon
   (testing "installing a bad addon"
-    (let [install-dir (str fs/*cwd*)
-          fname (core/downloaded-addon-fname (:name addon) (:version addon))]
-      (fs/copy (fixture-path "bad-truncated.zip") (utils/join install-dir fname)) ;; hoho, so evil
-      (is (= (core/install-addon addon install-dir) nil))
-      (is (= (count (fs/list-dir install-dir)) 0))))) ;; bad zip file deleted
+    (with-fake-routes-in-isolation {}
+      (let [install-dir (str fs/*cwd*)
+            fname (core/downloaded-addon-fname (:name addon) (:version addon))]
+        (fs/copy (fixture-path "bad-truncated.zip") (utils/join install-dir fname)) ;; hoho, so evil
+        (is (= (core/install-addon addon install-dir) nil))
+        (is (= (count (fs/list-dir install-dir)) 0)))))) ;; bad zip file deleted
 
 ;;
 

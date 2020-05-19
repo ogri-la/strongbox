@@ -106,7 +106,7 @@
 
 ;;
 
-(defn-spec parse-addon-toc ::sp/toc
+(defn-spec parse-addon-toc :addon/toc
   [addon-dir ::sp/extant-dir, keyvals map?]
   (let [dirname (fs/base-name addon-dir) ;; /foo/bar/baz => baz
 
@@ -164,7 +164,7 @@
   [path ::sp/file]
   (-> path fs/base-name (.startsWith "Blizzard_")))
 
-(defn-spec parse-addon-toc-guard (s/or :ok ::sp/toc, :error nil?)
+(defn-spec parse-addon-toc-guard (s/or :ok :addon/toc, :error nil?)
   "wraps the `parse-addon-toc` function and ensures no unhandled exceptions cause a cascading failure"
   [addon-dir ::sp/extant-dir]
   (try
@@ -180,7 +180,7 @@
       (error "please report this! https://github.com/ogri-la/strongbox/issues")
       (error e (format "unhandled error parsing addon in directory '%s': %s" addon-dir (.getMessage e))))))
 
-(defn-spec installed-addons (s/or :ok ::sp/toc-list, :error nil?)
+(defn-spec installed-addons (s/or :ok :addon/toc-list, :error nil?)
   "returns a list of addon data scraped from the .toc files of all addons in given `addon-dir`"
   [addon-dir ::sp/addon-dir]
   (let [addon-dir-list (->> addon-dir fs/list-dir (filter fs/directory?) (map str))

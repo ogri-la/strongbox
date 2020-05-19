@@ -360,7 +360,7 @@
   (format "%s--%s.zip" name (utils/slugify version))) ;; addonname--1-2-3.zip
 
 (defn-spec download-addon (s/or :ok ::sp/archive-file, :http-error ::sp/http-error, :error nil?)
-  [addon ::sp/addon-or-toc-addon, download-dir ::sp/writeable-dir]
+  [addon :addon/installable, download-dir ::sp/writeable-dir]
   (info "downloading" (:label addon) "...")
   (when (expanded? addon)
     (let [output-fname (downloaded-addon-fname (:name addon) (:version addon)) ;; addonname--1-2-3.zip
@@ -425,7 +425,7 @@
 
 (defn-spec -install-addon (s/or :ok (s/coll-of ::sp/extant-file), :error ::sp/empty-coll)
   "installs an addon given an addon description, a place to install the addon and the addon zip file itself"
-  [addon ::sp/addon-or-toc-addon, install-dir ::sp/writeable-dir, downloaded-file ::sp/archive-file]
+  [addon :addon/installable, install-dir ::sp/writeable-dir, downloaded-file ::sp/archive-file]
   ;; TODO: this function is becoming a mess. clean it up
   (let [zipfile-entries (zip/zipfile-normal-entries downloaded-file)
         sus-addons (zip/inconsistently-prefixed zipfile-entries)
@@ -457,9 +457,9 @@
 
 (defn-spec install-addon-guard (s/or :ok (s/coll-of ::sp/extant-file), :passed-tests true?, :error nil?)
   "downloads an addon and installs it. handles http and non-http errors, bad zip files, bad addons"
-  ([addon ::sp/addon-or-toc-addon, install-dir ::sp/extant-dir]
+  ([addon :addon/installable, install-dir ::sp/extant-dir]
    (install-addon-guard addon install-dir false))
-  ([addon ::sp/addon-or-toc-addon, install-dir ::sp/extant-dir, test-only? boolean?]
+  ([addon :addon/installable, install-dir ::sp/extant-dir, test-only? boolean?]
    (cond
      ;; do some pre-installation checks
      (:ignore? addon) (warn "failing to install addon, addon is being ignored:" install-dir)
@@ -497,11 +497,11 @@
     (swap! state assoc :installed-addon-list installed-addon-list)
     nil))
 
-(defn-spec group-addons ::sp/toc-list
+(defn-spec group-addons :addon/toc-list
   "an addon may actually be many addons bundled together in a single download.
   strongbox tags the bundled addons as they are unzipped and tries to determine the primary one.
   after we've loaded the addons and merged their nfo data, we can then group them"
-  [addon-list ::sp/toc-list]
+  [addon-list :addon/toc-list]
   (let [;; group-id comes from the nfo file
         addon-groups (group-by :group-id addon-list)
 
@@ -1096,7 +1096,7 @@
    nil))
 
 (defn-spec -install-update-these nil?
-  [updateable-toc-addons (s/coll-of ::sp/addon-or-toc-addon)]
+  [updateable-toc-addons :addon/installable-list]
   (doseq [toc-addon updateable-toc-addons]
     (install-addon toc-addon (selected-addon-dir))))
 

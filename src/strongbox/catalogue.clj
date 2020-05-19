@@ -42,7 +42,7 @@
 
 (defn-spec format-catalogue-data ::sp/catalogue
   "returns a correctly formatted catalogue given a list of addons and a created and updated date"
-  [addon-list ::sp/addon-summary-list, created-date ::sp/catalogue-created-date]
+  [addon-list :addon/summary-list, created-date ::sp/catalogue-created-date]
   (let [addon-list (mapv #(into (omap/ordered-map) (sort %))
                          (sort-by :name addon-list))]
     {:spec {:version 2}
@@ -106,7 +106,7 @@
   output-file)
 
 (defn-spec new-catalogue ::sp/catalogue
-  [addon-list ::sp/addon-summary-list]
+  [addon-list :addon/summary-list]
   (format-catalogue-data addon-list (utils/datestamp-now-ymd)))
 
 (defn-spec write-empty-catalogue! ::sp/extant-file
@@ -118,7 +118,7 @@
 
 ;;
 
-(defn-spec parse-user-string (s/or :ok ::sp/addon-summary, :error nil?)
+(defn-spec parse-user-string (s/or :ok :addon/summary, :error nil?)
   "given a string, figures out the addon source (github, etc) and dispatches accordingly."
   [uin string?]
   (let [dispatch-map {"github.com" github-api/parse-user-string

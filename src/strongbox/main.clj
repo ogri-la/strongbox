@@ -74,7 +74,7 @@
 (defn test
   [& [ns-kw fn-kw]]
   (clojure.tools.namespace.repl/refresh) ;; reloads all namespaces, including strongbox.whatever-test ones
-  (utils/instrument true) ;; just in case it wasn't
+  (utils/instrument true) ;; always test with spec checking ON
   (timbre/with-merged-config {:level :debug, :testing? true
                               ;; ensure we're not writing logs to files
                               :appenders {:spit nil}}
