@@ -43,45 +43,6 @@
 (s/def ::tag-list (s/or :ok (s/coll-of ::tag)
                         :empty ::empty-coll))
 
-;; addon data that comes from the catalogue
-
-
-(s/def ::addon-summary
-  (s/keys :req-un [::url ::name ::label ::tag-list ::updated-date ::download-count ::source ::source-id]
-          :opt [::description ;; wowinterface summaries have no description
-                ::created-date ;; wowinterface summaries have no created date
-                ::game-track-list ;; more of a set, really
-                ]))
-
-;; 'expanded' addon summary, everything we need in order to download an addon
-;; see catalogue/expand-addon-summary
-;; todo: rename '::expanded-addon' or similar
-(s/def ::addon
-  (s/merge ::addon-summary (s/keys :req-un [::version ::download-url]
-                                   :opt [::interface-version])))
-
-;; .toc files live in the root of an addon and include the author's metadata about the addon
-;; minimum needed to be scraped from a toc file
-;; this seems to have a bit of nfo stuff in it ...
-(s/def ::toc
-  (s/keys :req-un [::name ::label ::description ::dirname ::interface-version ::installed-version]
-          :opt [::group-id ::primary? ::group-addons ::source ::source-id]))
-
-;; the result of merging an installed addon (toc) with an installable addon from the catalogue
-(s/def ::toc-addon-summary
-  (s/merge ::toc ::addon-summary (s/keys :opt [::matched?])))
-
-;; the result of 'expanding' an ::toc-addon-summary (matched addon) with further fields from addon host
-(s/def ::toc-addon
-  (s/merge ::toc ::addon (s/keys :opt [::update?])))
-
-;; one or the other, it's all good
-(s/def ::addon-or-toc-addon (s/or :addon? ::addon, :toc-addon? ::toc-addon))
-
-(s/def ::toc-list (s/coll-of ::toc))
-(s/def ::addon-list (s/coll-of ::addon))
-(s/def ::addon-summary-list (s/coll-of ::addon-summary))
-
 (s/def ::url (s/and string?
                     #(try (instance? java.net.URL (java.net.URL. %))
                           (catch java.net.MalformedURLException e
@@ -107,7 +68,6 @@
 (s/def ::matched? boolean?)
 (s/def ::group-id string?)
 (s/def ::primary? boolean?)
-(s/def ::group-addons ::toc-list)
 (s/def ::version string?)
 (s/def ::installed-version (s/nilable ::version))
 (s/def ::update? boolean?)
@@ -145,24 +105,6 @@
 ;;
 
 (s/def ::ignore-flag (s/keys :req-un [::ignore?]))
-
-;;(s/def ::nfo-v1 map?)
-
-;; this is what is needed to be passed in, at a minium, to generate a nfo file
-(s/def ::nfo-input-minimum (s/keys :req-un [::version ::name ::url ::source ::source-id]))
-
-
-;; ignored nfo file may simply be the json '{"ignore?": true}'
-
-
-(s/def ::nfo-v2 (s/or :ignored-addon ::ignore-flag
-                      :ok (s/keys :req-un [::installed-version ::name ::group-id ::primary? ::source
-                                           ::installed-game-track ::source-id]
-                                  :opt [::ignore?])))
-
-;; orphaned
-(s/def ::file-byte-array-pair (s/cat :file ::file
-                                     :file-contents bytes?))
 
 (s/def ::gui-event #(instance? java.util.EventObject %))
 
@@ -205,6 +147,8 @@
 (s/def ::spec map?) ;; grr. ::version conflicts with above
 (s/def ::datestamp ::inst)
 (s/def ::total int?)
+
+;; TODO: this needs some love next
 (s/def ::catalogue (s/keys :req-un [::spec ::datestamp ::total ::addon-summary-list]))
 
 ;;
@@ -242,6 +186,9 @@
   (s/keys :req-un [::name ::label ::description ::dirname ::interface-version ::installed-version]
           :opt [::group-id ::primary? ::group-addons ::source ::source-id]))
 (s/def :addon/toc-list (s/coll-of :addon/toc))
+
+;; circular dependency? :addon/toc has an optional ::group-addons and ::group-addons is a list of :addon/toc ? oof
+(s/def ::group-addons :addon/toc-list)
 
 ;; 'nfo' files contain extra per-addon data written to addon directories as .strongbox.json
 (s/def :addon/nfo (s/or :ignored ::ignore-flag
