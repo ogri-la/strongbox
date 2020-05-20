@@ -570,13 +570,13 @@
 ;; catalogue handling
 ;;
 
-(defn-spec get-catalogue-source (s/or :ok :catalogue/source-map, :not-found nil?)
+(defn-spec get-catalogue-source (s/or :ok :catalogue/location, :not-found nil?)
   ([]
    (get-catalogue-source (get-state :cfg :selected-catalogue)))
   ([catalogue-name keyword?]
    (->> (get-state :cfg :catalogue-source-list) (filter #(= catalogue-name (:name %))) first)))
 
-(defn-spec current-catalogue (s/or :ok :catalogue/source-map, :no-catalogues nil?)
+(defn-spec current-catalogue (s/or :ok :catalogue/location, :no-catalogues nil?)
   "returns the currently selected catalogue or the first catalogue it can find.
   returns `nil` if no catalogues available to choose from."
   []
@@ -596,7 +596,7 @@
 
 (defn-spec catalogue-local-path ::sp/file
   "given a catalogue-source map, returns the local path to the catalogue."
-  [catalogue-source :catalogue/source-map]
+  [catalogue-source :catalogue/location]
   ;; {:name :full ...} => "/path/to/catalogue/dir/full-catalogue.json"
   (utils/join (paths :catalogue-dir) (-> catalogue-source :name name (str "-catalogue.json"))))
 
@@ -607,7 +607,7 @@
 
 (defn-spec download-catalogue (s/or :ok ::sp/extant-file, :error nil?)
   "downloads catalogue to expected location, nothing more"
-  [catalogue-source :catalogue/source-map]
+  [catalogue-source :catalogue/location]
   (binding [http/*cache* (cache)]
     (let [remote-catalogue (:source catalogue-source)
           local-catalogue (catalogue-local-path catalogue-source)

@@ -136,6 +136,7 @@
 
 ;;
 
+;; todo: this is the catalogue/spec key that just has a version
 (s/def ::spec map?) ;; grr. ::version conflicts with above
 (s/def ::datestamp ::inst)
 (s/def ::total int?)
@@ -251,7 +252,11 @@
 ;; a source-map is a description of a catalogue and where to find it,
 ;; not the catalogue itself.
 ;; todo: 'source-map' is a bad name. perhaps ':catalogue/location-map' and ':catalogue/location-map-list'
-(s/def :catalogue/source-map (s/keys :req-un [:catalogue/name ::label ::source]))
-(s/def :catalogue/source-map-list (s/or :ok (s/coll-of :catalogue/source-map)
+;; catalogue/loc-map and catalogue/loc-map-list ?
+;; catalogue/origin ? catalogue/address ?
+
+(s/def :catalogue/location (s/keys :req-un [:catalogue/name ::label ::source]))
+(s/def :catalogue/location-list (s/or :ok (s/coll-of :catalogue/location)
                                         :empty ::empty-coll))
-(s/def ::catalogue-source-list :catalogue/source-map-list) ;; alias :(
+
+(s/def ::catalogue-source-list :catalogue/location-list) ;; alias :(
