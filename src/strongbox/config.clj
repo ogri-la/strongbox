@@ -41,12 +41,12 @@
     (dissoc cfg :install-dir)))
 
 (defn-spec valid-catalogue-source? boolean?
-  "returns true if given `catalogue-source` is a valid `::sp/catalogue-source-map`"
+  "returns true if given `catalogue-source` is a valid `:catalogue/source-map`"
   [catalogue-source any?]
-  (let [valid (s/valid? ::sp/catalogue-source-map catalogue-source)]
+  (let [valid (s/valid? :catalogue/source-map catalogue-source)]
     (when-not valid
       (warn "invalid catalogue source, discarding:" catalogue-source)
-      (debug (s/explain-str ::sp/catalogue-source-map catalogue-source)))
+      (debug (s/explain-str :catalogue/source-map catalogue-source)))
     valid))
 
 (defn remove-invalid-catalogue-source-entries

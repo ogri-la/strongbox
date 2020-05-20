@@ -20,8 +20,6 @@
       (and (< c max)
            (> c min)))))
 
-(s/def ::string255 (s/and string? (between 0 256)))
-
 (s/def ::list-of-strings (s/coll-of string?))
 (s/def ::list-of-maps (s/coll-of map?))
 (s/def ::list-of-keywords (s/coll-of keyword?))
@@ -85,15 +83,7 @@
                                     false))))
 (s/def ::created-date ::inst)
 (s/def ::updated-date ::inst)
-(s/def ::catalogue-created-date ::ymd-dt)
 
-;; todo, reintroduce these but as "known" and "unknown" source (or whatever)
-;;(def catalogue-sources #{"curseforge" "wowinterface" "github" "tukui" "tukui-classic"})
-;;(s/def ::catalogue-source catalogue-sources)
-;;(s/def ::catalogue-source string?) ;; ::string255)
-(s/def ::catalogue-source ::string255)
-(s/def ::catalogue-source-id (s/or ::integer-id? int? ;; tukui has negative ids
-                                   ::string-id? string?))
 (s/def ::zoned-dt-obj #(instance? java.time.ZonedDateTime %))
 (s/def ::download-count (s/and int? #(>= % 0)))
 (s/def ::json string?)
@@ -118,6 +108,8 @@
 (s/def ::addon-dir-list (s/coll-of ::addon-dir-map))
 (s/def ::selected-catalogue keyword?)
 (s/def ::gui-theme #{:light :dark})
+
+;; todo: rename 'catalogue-source' to ':catalogue/location-map'
 (s/def ::user-config (s/keys :req-un [::addon-dir-list ::selected-addon-dir
                                       ::catalogue-source-list ::selected-catalogue
                                       ::gui-theme]))
@@ -148,14 +140,13 @@
 (s/def ::datestamp ::inst)
 (s/def ::total int?)
 
-;; TODO: this needs some love next
-(s/def ::catalogue (s/keys :req-un [::spec ::datestamp ::total ::addon-summary-list]))
-
 ;;
 
 (s/def ::export-type #{:json :edn})
-(s/def ::source ::catalogue-source) ;; alias :(
-(s/def ::source-id ::catalogue-source-id) ;; alias :(
+(s/def ::source (s/or :known #{"curseforge" "wowinterface" "github" "tukui" "tukui-classic"}
+                      :unknown string?))
+(s/def ::source-id (s/or ::integer-id? int? ;; tukui has negative ids
+                         ::string-id? string?))
 
 (s/def ::export-record-v1 (s/keys :req-un [::name]
                                   :opt [::source ::source-id]))
@@ -168,17 +159,9 @@
 
 (s/def ::export-record-list (s/coll-of ::export-record))
 
-;;
-
-(s/def :catalogue/label ::label)
-(s/def :catalogue/name keyword?)
-(s/def :catalogue/source ::url)
-(s/def ::catalogue-source-map (s/keys :req-un [:catalogue/name ::label :catalogue/source]))
-(s/def ::catalogue-source-list (s/or :ok (s/coll-of ::catalogue-source-map)
-                                     :empty ::empty-coll))
 
 
-;; rejig
+;; addons
 ;; -----------------------------------------
 
 
@@ -252,3 +235,23 @@
 
 (s/def :addon/addon-list (s/coll-of :addon/addon))
 
+
+;; catalogues
+;; -----------------------------------------
+
+
+(s/def :catalogue/name keyword?)
+
+(s/def :catalogue/addon-summary-list :addon/summary-list) ;; alias :(
+
+
+;; todo: rename 'addon-summary-list' to just 'summary-list' and remove the alias?
+(s/def :catalogue/catalogue (s/keys :req-un [::spec ::datestamp ::total :catalogue/addon-summary-list]))
+
+;; a source-map is a description of a catalogue and where to find it,
+;; not the catalogue itself.
+;; todo: 'source-map' is a bad name. perhaps ':catalogue/location-map' and ':catalogue/location-map-list'
+(s/def :catalogue/source-map (s/keys :req-un [:catalogue/name ::label ::source]))
+(s/def :catalogue/source-map-list (s/or :ok (s/coll-of :catalogue/source-map)
+                                        :empty ::empty-coll))
+(s/def ::catalogue-source-list :catalogue/source-map-list) ;; alias :(

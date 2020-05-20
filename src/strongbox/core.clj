@@ -570,13 +570,13 @@
 ;; catalogue handling
 ;;
 
-(defn-spec get-catalogue-source (s/or :ok ::sp/catalogue-source-map, :not-found nil?)
+(defn-spec get-catalogue-source (s/or :ok :catalogue/source-map, :not-found nil?)
   ([]
    (get-catalogue-source (get-state :cfg :selected-catalogue)))
   ([catalogue-name keyword?]
    (->> (get-state :cfg :catalogue-source-list) (filter #(= catalogue-name (:name %))) first)))
 
-(defn-spec current-catalogue (s/or :ok ::sp/catalogue-source-map, :no-catalogues nil?)
+(defn-spec current-catalogue (s/or :ok :catalogue/source-map, :no-catalogues nil?)
   "returns the currently selected catalogue or the first catalogue it can find.
   returns `nil` if no catalogues available to choose from."
   []
@@ -596,7 +596,7 @@
 
 (defn-spec catalogue-local-path ::sp/file
   "given a catalogue-source map, returns the local path to the catalogue."
-  [catalogue-source ::sp/catalogue-source-map]
+  [catalogue-source :catalogue/source-map]
   ;; {:name :full ...} => "/path/to/catalogue/dir/full-catalogue.json"
   (utils/join (paths :catalogue-dir) (-> catalogue-source :name name (str "-catalogue.json"))))
 
@@ -607,7 +607,7 @@
 
 (defn-spec download-catalogue (s/or :ok ::sp/extant-file, :error nil?)
   "downloads catalogue to expected location, nothing more"
-  [catalogue-source ::sp/catalogue-source-map]
+  [catalogue-source :catalogue/source-map]
   (binding [http/*cache* (cache)]
     (let [remote-catalogue (:source catalogue-source)
           local-catalogue (catalogue-local-path catalogue-source)
@@ -635,7 +635,7 @@
 ;;
 
 
-(defn-spec get-create-user-catalogue ::sp/catalogue
+(defn-spec get-create-user-catalogue :catalogue/catalogue
   "returns the contents of the user catalogue, creating one if necessary"
   []
   (let [user-catalogue-path (paths :user-catalogue-file)]
@@ -715,7 +715,7 @@
   ([uin (s/nilable string?)]
    (or (query-db :search [uin (get-state :search-results-cap)]) [])))
 
-(defn-spec load-current-catalogue (s/or :ok ::sp/catalogue, :error nil?)
+(defn-spec load-current-catalogue (s/or :ok :catalogue/catalogue, :error nil?)
   "merges the currently selected catalogue with the user-catalogue and returns the definitive list of addons available to install.
   handles malformed catalogue data by re-downloading catalogue."
   []
@@ -932,7 +932,7 @@
 
 (defn-spec export-catalogue-addon-list ::sp/export-record-list
   "given a catalogue of addons, generates a list of 'export-records' from the list of addon summaries"
-  [catalogue ::sp/catalogue]
+  [catalogue :catalogue/catalogue]
   (let [addon-list (:addon-summary-list catalogue)]
     (export-installed-addon-list addon-list)))
 

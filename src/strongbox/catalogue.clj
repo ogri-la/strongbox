@@ -40,9 +40,9 @@
 
 ;;
 
-(defn-spec format-catalogue-data ::sp/catalogue
+(defn-spec format-catalogue-data :catalogue/catalogue
   "returns a correctly formatted catalogue given a list of addons and a created and updated date"
-  [addon-list :addon/summary-list, created-date ::sp/catalogue-created-date]
+  [addon-list :addon/summary-list, created-date ::sp/ymd-dt]
   (let [addon-list (mapv #(into (omap/ordered-map) (sort %))
                          (sort-by :name addon-list))]
     {:spec {:version 2}
@@ -50,7 +50,7 @@
      :total (count addon-list)
      :addon-summary-list addon-list}))
 
-(defn-spec catalogue-v1-coercer ::sp/catalogue
+(defn-spec catalogue-v1-coercer :catalogue/catalogue
   "converts wowman-era specification 1 catalogues, coercing them to specification version 2 catalogues"
   [catalogue-data map?]
   (let [row-coerce (fn [row]
@@ -75,7 +75,7 @@
 
     val))
 
-(defn-spec read-catalogue (s/or :ok ::sp/catalogue, :error nil?)
+(defn-spec read-catalogue (s/or :ok :catalogue/catalogue, :error nil?)
   "reads the catalogue of addon data at the given `catalogue-path`.
   supports reading legacy catalogues by dispatching on the `[:spec :version]` number."
   ([catalogue-path ::sp/file]
@@ -100,12 +100,12 @@
 
 (defn-spec write-catalogue ::sp/extant-file
   "write catalogue to given `output-file` as JSON. returns path to output file"
-  [catalogue-data ::sp/catalogue, output-file ::sp/file]
+  [catalogue-data :catalogue/catalogue, output-file ::sp/file]
   (utils/dump-json-file output-file catalogue-data)
   (info "wrote" output-file)
   output-file)
 
-(defn-spec new-catalogue ::sp/catalogue
+(defn-spec new-catalogue :catalogue/catalogue
   [addon-list :addon/summary-list]
   (format-catalogue-data addon-list (utils/datestamp-now-ymd)))
 
@@ -131,12 +131,12 @@
       (catch java.net.MalformedURLException mue
         (debug "not a url")))))
 
-(defn-spec merge-catalogues (s/or :ok ::sp/catalogue, :error nil?)
+(defn-spec merge-catalogues (s/or :ok :catalogue/catalogue, :error nil?)
   "merges catalogue `cat-b` over catalogue `cat-a`.
   earliest creation date preserved.
   latest updated date preserved.
   addon-summary-list is unique by `:source` and `:source-id` with differing values replaced by those in `cat-b`"
-  [cat-a (s/nilable ::sp/catalogue), cat-b (s/nilable ::sp/catalogue)]
+  [cat-a (s/nilable :catalogue/catalogue), cat-b (s/nilable :catalogue/catalogue)]
   (let [matrix {;;[true true] ;; two non-empty catalogues, ideal case
                 [true false] cat-a ;; cat-b empty, return cat-a
                 [false true] cat-b ;; vice versa
@@ -174,7 +174,7 @@
 
 ;;
 
-(defn-spec shorten-catalogue (s/or :ok ::sp/catalogue, :problem nil?)
+(defn-spec shorten-catalogue (s/or :ok :catalogue/catalogue, :problem nil?)
   [full-catalogue-path ::sp/extant-file]
   (let [{:keys [addon-summary-list datestamp]}
         (utils/load-json-file-safely
@@ -182,7 +182,7 @@
          {:no-file? #(error (format "catalogue '%s' could not be found" full-catalogue-path))
           :bad-data? #(error (format "catalogue '%s' is malformed and cannot be parsed" full-catalogue-path))
           :invalid-data? #(error (format "catalogue '%s' is incorrectly structured and will not be parsed" full-catalogue-path))
-          :data-spec ::sp/catalogue})
+          :data-spec :catalogue/catalogue})
 
         unmaintained? (fn [addon]
                         (let [dtobj (java-time/zoned-date-time (:updated-date addon))
