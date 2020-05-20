@@ -8,8 +8,8 @@
     [utils :as utils]]))
 
 ;; if the user provides their own catalogue list in their config file, it will override these defaults entirely
-;; if the `:catalogue-source-list` entry is *missing* in the user config file, these will be used instead.
-;; to use strongbox with no catalogues at all, use `:catalogue-source-list []` (empty list)
+;; if the `:catalogue-location-list` entry is *missing* in the user config file, these will be used instead.
+;; to use strongbox with no catalogues at all, use `:catalogue-location-list []` (empty list)
 (def -default-catalogue-list
   [{:name :short :label "Short (default)" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"}
    {:name :full :label "Full" :source "https://raw.githubusercontent.com/ogri-la/wowman-data/master/full-catalog.json"}
@@ -21,7 +21,7 @@
 (def default-cfg
   {:addon-dir-list []
    :selected-addon-dir nil
-   :catalogue-source-list -default-catalogue-list
+   :catalogue-location-list -default-catalogue-list
    :selected-catalogue :short
    :gui-theme :light})
 
@@ -40,25 +40,25 @@
     ;; finally, ensure :install-dir is absent from whatever we return
     (dissoc cfg :install-dir)))
 
-(defn-spec valid-catalogue-source? boolean?
-  "returns true if given `catalogue-source` is a valid `:catalogue/location`"
-  [catalogue-source any?]
-  (let [valid (s/valid? :catalogue/location catalogue-source)]
+(defn-spec valid-catalogue-location? boolean?
+  "returns true if given `catalogue-location` is a valid `:catalogue/location`"
+  [catalogue-location any?]
+  (let [valid (s/valid? :catalogue/location catalogue-location)]
     (when-not valid
-      (warn "invalid catalogue source, discarding:" catalogue-source)
-      (debug (s/explain-str :catalogue/location catalogue-source)))
+      (warn "invalid catalogue source, discarding:" catalogue-location)
+      (debug (s/explain-str :catalogue/location catalogue-location)))
     valid))
 
-(defn remove-invalid-catalogue-source-entries
-  "removes invalid `:catalogue-source-map` entries in `:catalogue-source-list`"
+(defn remove-invalid-catalogue-location-entries
+  "removes invalid `:catalogue-location-map` entries in `:catalogue-location-list`"
   [cfg]
-  (if-let [csl (:catalogue-source-list cfg)]
+  (if-let [csl (:catalogue-location-list cfg)]
     (if (not (vector? csl))
       ;; we have something, but whatever we were given it wasn't a vector. non-starter
-      (assoc cfg :catalogue-source-list [])
+      (assoc cfg :catalogue-location-list [])
 
       ;; strip anything that isn't valid
-      (assoc cfg :catalogue-source-list (filterv valid-catalogue-source? csl)))
+      (assoc cfg :catalogue-location-list (filterv valid-catalogue-location? csl)))
 
     ;; key not present, return config as-is
     cfg))
@@ -92,7 +92,7 @@
   ;; * it didn't support :opt(ional) keysets
   (select-keys cfg [:addon-dir-list :selected-addon-dir
                     :gui-theme
-                    :catalogue-source-list :selected-catalogue]))
+                    :catalogue-location-list :selected-catalogue]))
 
 (defn-spec -merge-with ::sp/user-config
   "merges `cfg-b` over `cfg-a`, returning the result if valid else `cfg-a`"
@@ -103,7 +103,7 @@
                 handle-install-dir
                 remove-invalid-addon-dirs
                 handle-selected-addon-dir
-                remove-invalid-catalogue-source-entries
+                remove-invalid-catalogue-location-entries
                 strip-unspecced-keys)
         message (format "configuration from %s is invalid and will be ignored: %s"
                         msg (s/explain-str ::sp/user-config cfg))]

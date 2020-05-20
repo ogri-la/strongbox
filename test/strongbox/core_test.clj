@@ -93,23 +93,23 @@
   (let [[short-catalogue full-catalogue] (take 2 config/-default-catalogue-list)]
     (with-running-app
       (testing "under regular circumstances we have at least two catalogues available to us (short and full)"
-        (is (> (count (core/get-state :cfg :catalogue-source-list)) 2)))
+        (is (> (count (core/get-state :cfg :catalogue-location-list)) 2)))
 
-      (testing "core/get-catalogue-source returns the requested catalogue if found"
-        (is (= short-catalogue (core/get-catalogue-source :short))))
+      (testing "core/get-catalogue-location returns the requested catalogue if found"
+        (is (= short-catalogue (core/get-catalogue-location :short))))
 
-      (testing "core/get-catalogue-source, without args, returns the currently selected catalogue"
-        (is (= short-catalogue (core/get-catalogue-source))))
+      (testing "core/get-catalogue-location, without args, returns the currently selected catalogue"
+        (is (= short-catalogue (core/get-catalogue-location))))
 
-      (testing "core/get-catalogue-source returns nil if it can't find the requested catalogue"
-        (is (= nil (core/get-catalogue-source :foo))))
+      (testing "core/get-catalogue-location returns nil if it can't find the requested catalogue"
+        (is (= nil (core/get-catalogue-location :foo))))
 
-      (testing "core/set-catalogue-source! always returns nil, even when it successfully completes"
-        (is (= nil (core/set-catalogue-source! :foo)))
-        (is (= short-catalogue (core/get-catalogue-source)))
+      (testing "core/set-catalogue-location! always returns nil, even when it successfully completes"
+        (is (= nil (core/set-catalogue-location! :foo)))
+        (is (= short-catalogue (core/get-catalogue-location)))
 
-        (is (= nil (core/set-catalogue-source! :full)))
-        (is (= full-catalogue (core/get-catalogue-source))))
+        (is (= nil (core/set-catalogue-location! :full)))
+        (is (= full-catalogue (core/get-catalogue-location))))
 
       (testing "core/catalogue-local-path returns the expected path to the catalogue file on the filesystem"
         (is (= (utils/join fs/*cwd* helper-data-dir "short-catalogue.json") (core/catalogue-local-path short-catalogue)))
@@ -759,7 +759,7 @@
       (with-fake-routes-in-isolation fake-routes
         (with-running-app
           (is (= expected (logging/buffered-log
-                           :info (core/download-catalogue (core/get-catalogue-source :short))))))))))
+                           :info (core/download-catalogue (core/get-catalogue-location :short))))))))))
 
 (deftest re-download-catalogue-on-bad-data
   (testing "catalogue data is re-downloaded if it can't be read"
@@ -774,7 +774,7 @@
         (is (not (core/db-catalogue-loaded?)))
 
         ;; empty the file. quickest way to bad json
-        (-> (core/get-catalogue-source) core/catalogue-local-path (spit ""))
+        (-> (core/get-catalogue-location) core/catalogue-local-path (spit ""))
 
         ;; the catalogue will be re-requested, this time we've swapped out the fixture with one with a single entry
         (with-fake-routes-in-isolation fake-routes
@@ -795,7 +795,7 @@
         (is (not (core/db-catalogue-loaded?)))
 
         ;; empty the file. quickest way to bad json
-        (-> (core/get-catalogue-source) core/catalogue-local-path (spit ""))
+        (-> (core/get-catalogue-location) core/catalogue-local-path (spit ""))
 
         ;; the catalogue will be re-requested, this time the remote file is also corrupt
         (with-fake-routes-in-isolation fake-routes

@@ -72,7 +72,7 @@
           expected (assoc config/default-cfg :selected-catalogue :short)]
       (is (= expected (config/merge-config file-opts cli-opts))))))
 
-(deftest catalogue-source-list
+(deftest catalogue-location-list
   ;; this test is replicated all over the place but is here explicitly just for clarity
   (testing "default catalogue source list used if none defined in user config"
     (let [cli-opts {}
@@ -82,35 +82,35 @@
 
   (testing "empty catalogue source list in user config is preserved"
     (let [cli-opts {}
-          file-opts {:catalogue-source-list []}
-          expected (assoc config/default-cfg :catalogue-source-list [])]
+          file-opts {:catalogue-location-list []}
+          expected (assoc config/default-cfg :catalogue-location-list [])]
       (is (= expected (config/merge-config file-opts cli-opts)))))
 
-  (testing "invalid catalogue-source entries are removed"
+  (testing "invalid catalogue-location entries are removed"
     (let [cli-opts {}
-          ;; all invalid cases result in an empty catalogue-source-list
-          expected (assoc config/default-cfg :catalogue-source-list [])
+          ;; all invalid cases result in an empty catalogue-location-list
+          expected (assoc config/default-cfg :catalogue-location-list [])
           cases [:foo ;; non-list
                  {} ;; non-list
                  [:foo] ;; non-map in list
                  [{}] ;; empty map in list
                  [{:foo :bar}]] ;; invalid map in list
           ]
-      (doseq [bad-catalogue-source-list cases]
+      (doseq [bad-catalogue-location-list cases]
         (is (= expected (config/merge-config
-                         {:catalogue-source-list bad-catalogue-source-list}
+                         {:catalogue-location-list bad-catalogue-location-list}
                          cli-opts))))))
 
-  (testing "valid catalogue-source entries are preserved"
+  (testing "valid catalogue-location entries are preserved"
     (let [cli-opts {}
           valid-source-map {:name :short :label "Short" :source "https://example.org/foo/bar"}
-          expected (assoc config/default-cfg :catalogue-source-list [valid-source-map])
-          mixed-catalogue-source-list [{}
-                                       :foo
-                                       valid-source-map
-                                       :bar]]
+          expected (assoc config/default-cfg :catalogue-location-list [valid-source-map])
+          mixed-catalogue-location-list [{}
+                                         :foo
+                                         valid-source-map
+                                         :bar]]
       (is (= expected (config/merge-config
-                       {:catalogue-source-list mixed-catalogue-source-list}
+                       {:catalogue-location-list mixed-catalogue-location-list}
                        cli-opts))))))
 
 (deftest invalid-addon-dirs-in-cfg
@@ -173,7 +173,7 @@
                           :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail}
                                            {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]
                           ;; new in 1.0
-                          :catalogue-source-list (:catalogue-source-list config/default-cfg)
+                          :catalogue-location-list (:catalogue-location-list config/default-cfg)
 
                           ;; new in 0.12
                           ;; moved to :cfg in 1.0
@@ -199,7 +199,7 @@
                           :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail}
                                            {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]
                           ;; new in 1.0
-                          :catalogue-source-list (:catalogue-source-list config/default-cfg)
+                          :catalogue-location-list (:catalogue-location-list config/default-cfg)
 
                           ;; new in 0.12
                           ;; moved to :cfg in 1.0
@@ -226,7 +226,7 @@
                           :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail}
                                            {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]
                           ;; new in 1.0
-                          :catalogue-source-list (:catalogue-source-list config/default-cfg)
+                          :catalogue-location-list (:catalogue-location-list config/default-cfg)
 
                           ;; new in 0.12
                           ;; moved to :cfg in 1.0
@@ -253,7 +253,7 @@
                           :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail}
                                            {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]
                           ;; new in 1.0
-                          :catalogue-source-list (:catalogue-source-list config/default-cfg)
+                          :catalogue-location-list (:catalogue-location-list config/default-cfg)
 
                           ;; new in 0.12
                           ;; moved to :cfg in 1.0
@@ -280,7 +280,7 @@
                                            {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]
 
                           ;; new in 1.0
-                          :catalogue-source-list (:catalogue-source-list config/default-cfg)
+                          :catalogue-location-list (:catalogue-location-list config/default-cfg)
 
                           ;; new in 0.12
                           ;; moved to :cfg in 1.0
@@ -294,7 +294,7 @@
                                 :selected-addon-dir "/tmp/.strongbox-foo"
 
                                 ;; new in 1.0
-                                :catalogue-source-list (:catalogue-source-list config/default-cfg)}
+                                :catalogue-location-list (:catalogue-location-list config/default-cfg)}
 
                     :etag-db {}}]
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))

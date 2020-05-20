@@ -109,7 +109,7 @@
    ;;:cfg {:addon-dir-list []
    ;;      :selected-catalogue :short}
    :cfg nil ;; see config.clj
-   ;;:catalogue-source-list [] ;; moved to config.clj and [:cfg :catalogue-source-list]
+   ;;:catalogue-source-list [] ;; moved to config.clj and [:cfg :catalogue-location-list]
 
    ;; subset of possible data about all INSTALLED addons
    ;; starts as parsed .toc file data
@@ -570,48 +570,48 @@
 ;; catalogue handling
 ;;
 
-(defn-spec get-catalogue-source (s/or :ok :catalogue/location, :not-found nil?)
+(defn-spec get-catalogue-location (s/or :ok :catalogue/location, :not-found nil?)
   ([]
-   (get-catalogue-source (get-state :cfg :selected-catalogue)))
+   (get-catalogue-location (get-state :cfg :selected-catalogue)))
   ([catalogue-name keyword?]
-   (->> (get-state :cfg :catalogue-source-list) (filter #(= catalogue-name (:name %))) first)))
+   (->> (get-state :cfg :catalogue-location-list) (filter #(= catalogue-name (:name %))) first)))
 
 (defn-spec current-catalogue (s/or :ok :catalogue/location, :no-catalogues nil?)
   "returns the currently selected catalogue or the first catalogue it can find.
   returns `nil` if no catalogues available to choose from."
   []
   (if-let* [;; there may be nothing selected
-            catalogue (get-catalogue-source (get-state :cfg :selected-catalogue))
+            catalogue (get-catalogue-location (get-state :cfg :selected-catalogue))
             ;; there may be no default catalogue available
-            default-catalogue (get-catalogue-source (-> (get-state :cfg :catalogue-source-list) first :name))]
+            default-catalogue (get-catalogue-location (-> (get-state :cfg :catalogue-location-list) first :name))]
            (or catalogue default-catalogue)
            nil))
 
-(defn-spec set-catalogue-source! nil?
+(defn-spec set-catalogue-location! nil?
   [catalogue-name keyword?]
-  (if-let [catalogue (get-catalogue-source catalogue-name)]
+  (if-let [catalogue (get-catalogue-location catalogue-name)]
     (swap! state assoc-in [:cfg :selected-catalogue] (:name catalogue))
     (warn "catalogue not found" catalogue-name))
   nil)
 
 (defn-spec catalogue-local-path ::sp/file
-  "given a catalogue-source map, returns the local path to the catalogue."
-  [catalogue-source :catalogue/location]
+  "given a catalogue-location, returns the local path to the catalogue."
+  [catalogue-location :catalogue/location]
   ;; {:name :full ...} => "/path/to/catalogue/dir/full-catalogue.json"
-  (utils/join (paths :catalogue-dir) (-> catalogue-source :name name (str "-catalogue.json"))))
+  (utils/join (paths :catalogue-dir) (-> catalogue-location :name name (str "-catalogue.json"))))
 
 (defn-spec find-catalogue-local-path (s/or :ok ::sp/file, :not-found nil?)
   "convenience wrapper around `catalogue-local-path`"
   [catalogue-name keyword?]
-  (some-> catalogue-name get-catalogue-source catalogue-local-path))
+  (some-> catalogue-name get-catalogue-location catalogue-local-path))
 
 (defn-spec download-catalogue (s/or :ok ::sp/extant-file, :error nil?)
   "downloads catalogue to expected location, nothing more"
-  [catalogue-source :catalogue/location]
+  [catalogue-location :catalogue/location]
   (binding [http/*cache* (cache)]
-    (let [remote-catalogue (:source catalogue-source)
-          local-catalogue (catalogue-local-path catalogue-source)
-          message (format "downloading catalogue '%s'" (:label catalogue-source))
+    (let [remote-catalogue (:source catalogue-location)
+          local-catalogue (catalogue-local-path catalogue-location)
+          message (format "downloading catalogue '%s'" (:label catalogue-location))
           resp (http/download-file remote-catalogue local-catalogue message)]
       (when-not (http/http-error? resp)
         resp))))
@@ -719,9 +719,9 @@
   "merges the currently selected catalogue with the user-catalogue and returns the definitive list of addons available to install.
   handles malformed catalogue data by re-downloading catalogue."
   []
-  (when-let [catalogue-source (current-catalogue)]
-    (let [catalogue-path (catalogue-local-path catalogue-source)
-          _ (info (format "loading catalogue '%s'" (name (:name catalogue-source))))
+  (when-let [catalogue-location (current-catalogue)]
+    (let [catalogue-path (catalogue-local-path catalogue-location)
+          _ (info (format "loading catalogue '%s'" (name (:name catalogue-location))))
 
           ;; download from remote and try again when json can't be read
           bad-json-file-handler
@@ -778,6 +778,8 @@
 
 
 ;; todo: this fn seems problematic. why only toc data? don't we need source and source-id as well?
+
+
 (defn-spec check-for-update :addon/toc
   [toc :addon/toc]
   (if-let [addon (when (:matched? toc)

@@ -111,7 +111,7 @@
 
 ;; todo: rename 'catalogue-source' to ':catalogue/location-map'
 (s/def ::user-config (s/keys :req-un [::addon-dir-list ::selected-addon-dir
-                                      ::catalogue-source-list ::selected-catalogue
+                                      ::catalogue-location-list ::selected-catalogue
                                       ::gui-theme]))
 (s/def ::ignore? boolean?)
 
@@ -257,6 +257,6 @@
 
 (s/def :catalogue/location (s/keys :req-un [:catalogue/name ::label ::source]))
 (s/def :catalogue/location-list (s/or :ok (s/coll-of :catalogue/location)
-                                        :empty ::empty-coll))
+                                      :empty ::empty-coll))
 
-(s/def ::catalogue-source-list :catalogue/location-list) ;; alias :(
+(s/def ::catalogue-location-list :catalogue/location-list) ;; alias :(
