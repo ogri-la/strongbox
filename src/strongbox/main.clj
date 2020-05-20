@@ -79,7 +79,7 @@
                               ;; ensure we're not writing logs to files
                               :appenders {:spit nil}}
     (if ns-kw
-      (if (some #{ns-kw} [:main :utils :http :specs :tags
+      (if (some #{ns-kw} [:main :utils :http :tags
                           :core :toc :nfo :zip :config :catalogue :db
                           :cli :gui
                           :curseforge-api :wowinterface :wowinterface-api :github-api :tukui-api])

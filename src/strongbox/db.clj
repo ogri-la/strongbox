@@ -83,7 +83,7 @@
 
 (defn-spec -addon-by-source-and-name :addon/summary-list
   "returns a list of addon summaries whose source and name match (exactly) the given `source` and `name`"
-  [db :addon/summary-list source ::sp/source, name ::sp/name]
+  [db :addon/summary-list, source :addon/source, name ::sp/name]
   (let [xf (filter #(and (= source (:source %))
                          (= name (:name %))))]
     (into [] xf db)))

@@ -359,7 +359,7 @@
   [name string?, version string?]
   (format "%s--%s.zip" name (utils/slugify version))) ;; addonname--1-2-3.zip
 
-(defn-spec download-addon (s/or :ok ::sp/archive-file, :http-error ::sp/http-error, :error nil?)
+(defn-spec download-addon (s/or :ok ::sp/archive-file, :http-error :http/error, :error nil?)
   [addon :addon/installable, download-dir ::sp/writeable-dir]
   (info "downloading" (:label addon) "...")
   (when (expanded? addon)

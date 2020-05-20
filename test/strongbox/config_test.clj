@@ -103,11 +103,11 @@
 
   (testing "valid catalogue-location entries are preserved"
     (let [cli-opts {}
-          valid-source-map {:name :short :label "Short" :source "https://example.org/foo/bar"}
-          expected (assoc config/default-cfg :catalogue-location-list [valid-source-map])
+          valid-source-location {:name :short :label "Short" :source "https://example.org/foo/bar"}
+          expected (assoc config/default-cfg :catalogue-location-list [valid-source-location])
           mixed-catalogue-location-list [{}
                                          :foo
-                                         valid-source-map
+                                         valid-source-location
                                          :bar]]
       (is (= expected (config/merge-config
                        {:catalogue-location-list mixed-catalogue-location-list}

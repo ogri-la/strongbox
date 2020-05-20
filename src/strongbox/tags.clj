@@ -123,8 +123,8 @@
 
 ;;
 
-(defn-spec category-to-tag (s/or :ok ::sp/tag, :bad nil?)
-  [category ::sp/category]
+(defn-spec category-to-tag (s/or :ok :addon/tag, :bad nil?)
+  [category :addon/category]
   (when-not (empty? category)
     (-> category
         lower-case
@@ -132,9 +132,9 @@
         (clojure.string/replace #" +" "-") ;; hyphenate white space
         keyword)))
 
-(defn-spec category-to-tag-list (s/or :singluar ::sp/tag, :composite ::sp/tag-list)
+(defn-spec category-to-tag-list (s/or :singluar :addon/tag, :composite :addon/tag-list)
   "given a `category` string, converts it into one or many tags."
-  [addon-host ::sp/source, category ::sp/category]
+  [addon-host :addon/source, category :addon/category]
   (p :tags/category-to-tag-list
      (let [replacements (get replacement-map addon-host, general-replacements)
            supplements (get supplement-map addon-host, general-supplements)
@@ -151,9 +151,9 @@
          (let [bits (clojure.string/split category #"( & |, |: )+")]
            (->> bits (map category-to-tag) (into tag-list) (remove nil?) vec))))))
 
-(defn-spec category-list-to-tag-list ::sp/tag-list
+(defn-spec category-list-to-tag-list :addon/tag-list
   "given a list of category strings, converts them into a distinct list of tags by calling `category-to-tag-list`."
-  [addon-host ::sp/source, category-list ::sp/category-list]
+  [addon-host :addon/source, category-list :addon/category-list]
   ;; sorting cuts down on noise in diffs.
   ;; `set` because curseforge has duplicate categories and supplemental tags may introduce duplicates
   (->> category-list (map (partial category-to-tag-list addon-host)) flatten set sort vec))

@@ -74,7 +74,7 @@
 
 (defn-spec prefix-groups sequential?
   "groups top-level directories by their :path prefix, sorts by size of group (largest to smallest)"
-  [zipfile-entries ::sp/zipfile-entries]
+  [zipfile-entries :zipfile/entry-list]
   (let [desc #(compare %2 %1)
         group (fn [x]
                 (group-by #(utils/safe-subs (:path %) 3) x))] ;; first three characters
@@ -85,7 +85,7 @@
   "returns a list of inconsistently prefixed top-level directories sorted by most to least common (with the most common excluded).
   nil if no inconsistencies found.
   it's assumed this check is being done *after* the validity checks on the zip and addon and that the zipfile-entry list has been normalised"
-  [zipfile-entries ::sp/zipfile-entries]
+  [zipfile-entries :zipfile/entry-list]
   (let [grouped-entries (prefix-groups zipfile-entries) ;; [[{...}, {...}], [{...}]]
         magnitude 3 ;; ignore if there are no groups smaller than this
         num-groups (count grouped-entries) ;; 3

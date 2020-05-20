@@ -52,7 +52,7 @@
       (is (= (zip/unzip-file zip-file *temp-dir-path*) nil)))))
 
 (deftest suspicious-subdirs
-  (testing "`::sp/zipfile-entries` are grouped by their first three characters and sorted largest to smallest group"
+  (testing "`:zipfile/entry-list` are grouped by their first three characters and sorted largest to smallest group"
     (testing "standard case: single addon (foo), nothing suspicious at all"
       (let [zipfile-entries [{:dir? true :level 1 :toplevel? true :path "foo/"}
                              {:dir? false :level 2 :toplevel? false :path "foo/bar"}
@@ -87,7 +87,7 @@
                       [{:dir? true :level 1 :toplevel? true :path "bar/"}]]]
         (is (= (zip/prefix-groups zipfile-entries) expected)))))
 
-  (testing "`::sp/zipfile-entries` with top-level directories with inconsistent prefixes are detected (else nil)"
+  (testing "`:zipfile/entry-list` with top-level directories with inconsistent prefixes are detected (else nil)"
     (testing "standard case: single addon (foo), nothing supicious at all"
       (let [zipfile-entries [{:dir? true :level 1 :toplevel? true :path "foo/"}
                              {:dir? false :level 2 :toplevel? false :path "foo/bar"}
