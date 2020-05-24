@@ -92,9 +92,15 @@ see CHANGELOG.md for a more formal list of changes by release
     - I want addons loaded *quickly*
     - I want to *query* addons *quickly*
 
-### todo
+* spec clean up
+    * it's never been particularly clear in my head what some of those specs are
+    * I have a better understanding of their nature now
+        - as part of the diagramming, sketch out the fields to be captured
 
 * is catalogue being validated now that spec checking has been disabled?
+    - 
+
+### todo
 
 * bug, "failed to read data "null" in file: .../etag-db.json"
     - something I seem to have introduced unifying the load-json* fns
@@ -102,11 +108,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * catalogue updates
     - publish a 'strongbox-catalogue' repo
         - just like wowman-data, but for strongbox
-
-* spec clean up
-    * it's never been particularly clear in my head what some of those specs are
-    * I have a better understanding of their nature now
-        - as part of the diagramming, sketch out the fields to be captured
 
 * migration
     - rename .wowman.json files to .strongbox.json 

@@ -72,11 +72,11 @@
   "ensures the `:selected-addon-dir` value is valid and present in the list of addon directories"
   [cfg]
   (let [;; it shouldn't happen but ensure the default addon dir is valid or nil
-        default-selected-addon-dir (->> cfg :addon-dir-list first :addon-dir (sp/conform-or-nil ::sp/addon-dir))
+        default-selected-addon-dir (->> cfg :addon-dir-list first :addon-dir (sp/valid-or-nil ::sp/addon-dir))
         selected-addon-dir (:selected-addon-dir cfg)
         selected-addon-dir (and
                             ;; dir exists
-                            (sp/conform-or-nil ::sp/addon-dir selected-addon-dir)
+                            (sp/valid-or-nil ::sp/addon-dir selected-addon-dir)
                             ;; dir is present in available addon dirs
                             (some #{selected-addon-dir} (map :addon-dir (:addon-dir-list cfg))))]
     (assoc cfg :selected-addon-dir (or selected-addon-dir default-selected-addon-dir))))

@@ -6,6 +6,7 @@
    [taoensso.timbre :as log :refer [debug info warn error spy]]
    [taoensso.tufte :as tufte :refer [p profile]]
    [java-time]
+   [clojure.spec.alpha :as s]
    [strongbox
     [tags :as tags]
     [utils :as utils :refer [todt utcnow]]
@@ -75,28 +76,33 @@
 
     val))
 
-(defn-spec read-catalogue (s/or :ok :catalogue/catalogue, :error nil?)
+(defn-spec -read-catalogue (s/or :ok :catalogue/catalogue, :error nil?)
   "reads the catalogue of addon data at the given `catalogue-path`.
   supports reading legacy catalogues by dispatching on the `[:spec :version]` number."
-  ([catalogue-path ::sp/file]
-   (read-catalogue catalogue-path {}))
-  ([catalogue-path ::sp/file, opts map?]
-   (p :catalogue
-      (let [key-fn (fn [k]
-                     (case k
-                       "uri" :url
-                         ;;"category-list" :tag-list ;; pushed back into v1 post-processing
-                       (keyword k)))
-            value-fn -read-catalogue-value-fn ;; defined 'outside' so it can reference itself
-            opts (merge opts {:key-fn key-fn :value-fn value-fn})
-            catalogue-data (p :catalogue:load-json-file
-                              (utils/load-json-file-safely catalogue-path opts))]
+  [catalogue-path ::sp/file, opts map?]
+  (p :catalogue
+     (let [key-fn (fn [k]
+                    (case k
+                      "uri" :url
+                      ;;"category-list" :tag-list ;; pushed back into v1 post-processing
+                      (keyword k)))
+           value-fn -read-catalogue-value-fn ;; defined 'outside' so it can reference itself
+           opts (merge opts {:key-fn key-fn :value-fn value-fn})
+           catalogue-data (p :catalogue:load-json-file
+                             (utils/load-json-file-safely catalogue-path opts))]
 
-        (when-not (empty? catalogue-data)
-          (if (-> catalogue-data :spec :version (= 1)) ;; if v1 catalogue, coerce
-            (p :catalogue:v1-coercer
-               (utils/nilable (catalogue-v1-coercer catalogue-data)))
-            catalogue-data))))))
+       (when-not (empty? catalogue-data)
+         (if (-> catalogue-data :spec :version (= 1)) ;; if v1 catalogue, coerce
+           (p :catalogue:v1-coercer
+              (utils/nilable (catalogue-v1-coercer catalogue-data)))
+           catalogue-data)))))
+
+(defn read-catalogue
+  "we must always be able to trust a catalogue"
+  ([catalogue-path]
+   (read-catalogue catalogue-path {}))
+  ([catalogue-path opts]
+   (sp/valid-or-nil :catalogue/catalogue (-read-catalogue catalogue-path opts))))
 
 (defn-spec write-catalogue ::sp/extant-file
   "write catalogue to given `output-file` as JSON. returns path to output file"

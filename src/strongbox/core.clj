@@ -776,24 +776,17 @@
           wrapper (affects-addon-wrapper catalogue/expand-summary)]
       (wrapper addon-summary game-track))))
 
-
-;; todo: this fn seems problematic. why only toc data? don't we need source and source-id as well?
-
-
 (defn-spec check-for-update :addon/toc
-  [toc :addon/toc]
-  (if-let [addon (when (:matched? toc)
-                   (expand-summary-wrapper toc))]
-    ;; we have a match and were successful in expanding the summary
-    (let [toc-addon (merge toc addon)
-          {:keys [installed-version version]} toc-addon
-          ;; update only if we have a new version and it's different from the installed version
-          update? (and version (not= installed-version version))]
-      (assoc toc-addon :update? update?))
-
-    ;; failed to match against catalogue or expand-summary returned nil (couldn't expand for whatever reason)
-    ;; in this case, we set a flag saying this addon shouldn't be updated
-    (assoc toc :update? false))) ;; todo: :update? is not specced. should it be?
+  "Returns given `addon` with source updates, if any, and an `update?` boolean if a different version is available.
+  Accepts something as basic as toc data."
+  [addon (s/or :unmatched :addon/toc
+               :matched :addon/toc+summary+match)]
+  (let [expanded-addon (when (:matched? addon) (expand-summary-wrapper addon))
+        addon (or expanded-addon addon) ;; expanded addon may still be nil
+        {:keys [installed-version version]} addon
+        update? (and version
+                     (not= installed-version version))]
+    (assoc addon :update? update?)))
 
 (defn-spec check-for-updates nil?
   "downloads full details for all installed addons that can be found in summary list"

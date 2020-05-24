@@ -14,11 +14,11 @@
 
 ;; matching
 
-(defn find-in-db
+(defn-spec find-in-db :db/addon-catalogue-match
   "looks for `installed-addon` in the given `db`, matching `toc-key` to a `catalogue-key`.
   if a `toc-key` and `catalogue-key` are actually lists, then all the `toc-keys` must match the `catalogue-keys`"
-  [db installed-addon toc-keys catalogue-keys]
-  (let [;; ["source" "source_id"] => ["source" "source_id"], "name" => ["name"]
+  [db :addon/summary-list, installed-addon :addon/installed, toc-keys :db/toc-keys catalogue-keys :db/catalogue-keys]
+  (let [;; [:source :source-id] => [:source :source-id], :name => [:name]
         catalogue-keys (if (vector? catalogue-keys) catalogue-keys [catalogue-keys])
         toc-keys (if (vector? toc-keys) toc-keys [toc-keys])
 
@@ -51,7 +51,7 @@
 (defn-spec -find-first-in-db (s/or :match map?, :no-match nil?)
   "find a match for the given `installed-addon` in the database using a list of attributes in `match-on-list`.
   returns immediately when first match is found (does not check other joins in `match-on-list`)."
-  [db :addon/summary-list, installed-addon :addon/toc, match-on-list vector?]
+  [db :addon/summary-list, installed-addon :addon/installed, match-on-list vector?]
   (if (empty? match-on-list)
     nil ;; we may have exhausted all possibilities. not finding a match is ok.
     (let [[toc-keys catalogue-keys] (first match-on-list) ;; => [:name] or [:source-id :source]
@@ -64,7 +64,7 @@
 (defn-spec -db-match-installed-addons-with-catalogue (s/coll-of (s/or :match map? :no-match :addon/toc))
   "for each installed addon, search the catalogue across multiple joins until a match is found.
   addons with no match return themselves"
-  [db :addon/summary-list, installed-addon-list :addon/toc-list]
+  [db :addon/summary-list, installed-addon-list :addon/installed-list]
   (let [;; toc-key -> db-catalogue-key
         ;; most -> least desirable match
         ;; nest to search across multiple parameters

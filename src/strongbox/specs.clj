@@ -5,12 +5,11 @@
    [orchestra.core :refer [defn-spec]]
    [me.raynes.fs :as fs]))
 
-(defn conform-or-nil
+(defn valid-or-nil
   "returns `nil` instead of `:clojure.spec.alpha/invalid` when given data `x` is invalid"
   [spec x]
-  (let [result (s/conform spec x)]
-    (when-not (= result :clojure.spec.alpha/invalid)
-      result)))
+  (when (s/valid? spec x)
+    x))
 
 (s/def ::list-of-strings (s/coll-of string?))
 (s/def ::list-of-maps (s/coll-of map?))
@@ -45,11 +44,6 @@
 (s/def ::selected? boolean?)
 (s/def ::gui-theme #{:light :dark})
 
-(s/def ::addon-dir ::extant-dir)
-(s/def ::addon-dir-map (s/keys :req-un [::addon-dir ::game-track]))
-(s/def ::addon-dir-list (s/coll-of ::addon-dir-map))
-(s/def ::selected-catalogue keyword?)
-
 (s/def ::game-track #{:retail :classic})
 (s/def ::installed-game-track ::game-track) ;; alias
 (s/def ::game-track-list (s/coll-of ::game-track :kind vector? :distinct true))
@@ -83,6 +77,11 @@
 (s/def ::zoned-dt-obj #(instance? java.time.ZonedDateTime %))
 
 ;; user config
+
+(s/def ::addon-dir ::extant-dir)
+(s/def ::addon-dir-map (s/keys :req-un [::addon-dir ::game-track]))
+(s/def ::addon-dir-list (s/coll-of ::addon-dir-map))
+(s/def ::selected-catalogue keyword?)
 
 (s/def ::user-config (s/keys :req-un [::addon-dir-list ::selected-addon-dir
                                       ::catalogue-location-list ::selected-catalogue
@@ -167,7 +166,9 @@
 (s/def :addon/summary-list (s/coll-of :addon/summary))
 
 ;; introduced after finding addon in the catalogue
-(s/def :addon/match (s/keys :req-un [::matched?]))
+;; `update?` is set at a slightly different time, but it's convenient to slip it in here
+(s/def :addon/match (s/keys :req-un [::matched?]
+                            :opt [::update?]))
 
 ;; the set of per-addon values provided by the remote host on each check
 (s/def :addon/source-updates
@@ -184,11 +185,18 @@
 ;; addon has nfo data
 (s/def :addon/toc+nfo (s/merge :addon/toc :addon/nfo))
 
-;; addon has been run against the catalogue and a match was *not* found
-(s/def :addon/toc+match (s/merge :addon/toc :addon/match))
+;; addon is installed
+(s/def :addon/installed (s/or :installed :addon/toc
+                              :strongbox-installed :addon/toc+nfo))
+(s/def :addon/installed-list (s/coll-of :addon/installed))
 
-;; addon with nfo data has been run against the catalogue and a match was *not* found
-(s/def :addon/toc+nfo+match (s/merge :addon/toc+nfo :addon/match))
+;; addon has been run against the catalogue and a match was *not* found.
+;; unused.
+;;(s/def :addon/toc+match (s/merge :addon/toc :addon/match))
+
+;; addon with nfo data has been run against the catalogue and a match was *not* found.
+;; unused.
+;;(s/def :addon/toc+nfo+match (s/merge :addon/toc+nfo :addon/match))
 
 ;; addon has been run against the catalogue and a match was found
 (s/def :addon/toc+summary+match (s/merge :addon/toc :addon/summary :addon/match))
@@ -230,3 +238,15 @@
                                       :empty ::empty-coll))
 
 (s/def ::catalogue-location-list :catalogue/location-list) ;; alias for user config
+
+;; db
+
+(s/def :db/toc-keys (s/or :keyword keyword? :list-of-keywords ::list-of-keywords))
+(s/def :db/catalogue-keys :db/toc-keys)
+
+(s/def :db/idx (s/coll-of keyword?))
+(s/def :db/key vector?) ;; coll of any
+(s/def :db/catalogue-match :addon/summary)
+(s/def :db/installed-addon :addon/installed) ;; alias :(
+(s/def :db/addon-catalogue-match (s/or :no-match nil?
+                                       :match (s/keys :req-un [:db/idx :db/key :db/installed-addon ::matched? :db/catalogue-match])))

@@ -1,6 +1,5 @@
 (ns strongbox.tags
   (:require
-   [strongbox.specs :as sp]
    [clojure.string :refer [trim lower-case]]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
