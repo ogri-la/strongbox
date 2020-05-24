@@ -290,7 +290,7 @@
   [f l]
   (for [x l :let [tx (f x)] :when tx] tx))
 
-(defn-spec to-json ::sp/json
+(defn-spec to-json string?
   [x ::sp/anything]
   (with-out-str (clojure.data.json/pprint x :escape-slash false)))
 

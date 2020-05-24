@@ -93,23 +93,23 @@
   (let [[short-catalogue full-catalogue] (take 2 config/-default-catalogue-list)]
     (with-running-app
       (testing "under regular circumstances we have at least two catalogues available to us (short and full)"
-        (is (> (count (core/get-state :cfg :catalogue-source-list)) 2)))
+        (is (> (count (core/get-state :cfg :catalogue-location-list)) 2)))
 
-      (testing "core/get-catalogue-source returns the requested catalogue if found"
-        (is (= short-catalogue (core/get-catalogue-source :short))))
+      (testing "core/get-catalogue-location returns the requested catalogue if found"
+        (is (= short-catalogue (core/get-catalogue-location :short))))
 
-      (testing "core/get-catalogue-source, without args, returns the currently selected catalogue"
-        (is (= short-catalogue (core/get-catalogue-source))))
+      (testing "core/get-catalogue-location, without args, returns the currently selected catalogue"
+        (is (= short-catalogue (core/get-catalogue-location))))
 
-      (testing "core/get-catalogue-source returns nil if it can't find the requested catalogue"
-        (is (= nil (core/get-catalogue-source :foo))))
+      (testing "core/get-catalogue-location returns nil if it can't find the requested catalogue"
+        (is (= nil (core/get-catalogue-location :foo))))
 
-      (testing "core/set-catalogue-source! always returns nil, even when it successfully completes"
-        (is (= nil (core/set-catalogue-source! :foo)))
-        (is (= short-catalogue (core/get-catalogue-source)))
+      (testing "core/set-catalogue-location! always returns nil, even when it successfully completes"
+        (is (= nil (core/set-catalogue-location! :foo)))
+        (is (= short-catalogue (core/get-catalogue-location)))
 
-        (is (= nil (core/set-catalogue-source! :full)))
-        (is (= full-catalogue (core/get-catalogue-source))))
+        (is (= nil (core/set-catalogue-location! :full)))
+        (is (= full-catalogue (core/get-catalogue-location))))
 
       (testing "core/catalogue-local-path returns the expected path to the catalogue file on the filesystem"
         (is (= (utils/join fs/*cwd* helper-data-dir "short-catalogue.json") (core/catalogue-local-path short-catalogue)))
@@ -522,64 +522,77 @@
    :source-id 1
    :created-date  "2009-02-08T13:30:30Z",
    :updated-date  "2016-09-08T14:18:33Z",
-   :url "https://www.example.org/wow/addons/everyaddon"})
+   :url "https://www.example.org/wow/addons/everyaddon"
+   :download-count 1})
+
+(def matched?
+  "was the toc data matched to an addon in the catalogue? (yes)"
+  {:matched? true})
+
+(def source-updates
+  "updates to the addon data fetched from remote source"
+  {:interface-version  70000,
+   :download-url  "https://www.example.org/wow/addons/everyaddon/download/123456/file",
+   :version  "1.2.3"})
 
 (def addon
-  "remote addon detail"
-  (merge addon-summary
-         {:download-count 1
-          :interface-version  70000,
-          :download-url  "https://www.example.org/wow/addons/everyaddon/download/123456/file",
-          :version  "1.2.3"}))
+  "final mooshed result"
+  (merge toc addon-summary matched? source-updates))
 
-(deftest install-addon
+(deftest install-addon-1
   (testing "installing an addon"
-    (let [install-dir (str fs/*cwd*)
-          ;; move dummy addon file into place so there is no cache miss
-          fname (core/downloaded-addon-fname (:name addon) (:version addon))
-          _ (utils/cp (fixture-path fname) install-dir)
-          test-only? false
-          file-list (core/install-addon addon install-dir test-only?)]
+    (with-fake-routes-in-isolation {}
+      (let [install-dir (str fs/*cwd*)
+            ;; move dummy addon file into place so there is no cache miss
+            fname (core/downloaded-addon-fname (:name addon) (:version addon))
+            _ (utils/cp (fixture-path fname) install-dir)
+            test-only? false
+            file-list (core/install-addon addon install-dir test-only?)]
 
-      (testing "addon directory created, single file written (.strongbox.json nfo file)"
-        (is (= (count file-list) 1))
-        (is (fs/exists? (first file-list))))))
+        (testing "addon directory created, single file written (.strongbox.json nfo file)"
+          (is (= (count file-list) 1))
+          (is (fs/exists? (first file-list))))))))
 
+(deftest install-addon-2
   (testing "trial installation of a good addon"
-    (let [install-dir (utils/join (str fs/*cwd*) "addons-dir")
-          ;; move dummy addon file into place so there is no cache miss
-          fname (core/downloaded-addon-fname (:name addon) (:version addon))
-          _ (fs/mkdir install-dir)
-          _ (utils/cp (fixture-path fname) install-dir)
+    (with-fake-routes-in-isolation {}
+      (let [install-dir (utils/join (str fs/*cwd*) "addons-dir")
+            ;; move dummy addon file into place so there is no cache miss
+            fname (core/downloaded-addon-fname (:name addon) (:version addon))
+            _ (fs/mkdir install-dir)
+            _ (utils/cp (fixture-path fname) install-dir)
 
-          test-only? true
-          result (core/install-addon addon install-dir test-only?)]
-      (is result) ;; success
+            test-only? true
+            result (core/install-addon addon install-dir test-only?)]
+        (is result) ;; success
 
-      ;; ensure nothing was actually unzipped
-      (is (not (fs/exists? (utils/join install-dir "EveryAddon"))))))
+        ;; ensure nothing was actually unzipped
+        (is (not (fs/exists? (utils/join install-dir "EveryAddon"))))))))
 
+(deftest install-addon-3
   (testing "trial installation of a bad addon"
-    (let [install-dir (utils/join (str fs/*cwd*) "addons-dir")
-          ;; move dummy addon file into place so there is no cache miss
-          fname (core/downloaded-addon-fname (:name addon) (:version addon))
-          _ (fs/mkdir install-dir)
-          _ (fs/copy (fixture-path "bad-truncated.zip") (utils/join install-dir fname)) ;; hoho, so evil
+    (with-fake-routes-in-isolation {}
+      (let [install-dir (utils/join (str fs/*cwd*) "addons-dir")
+            ;; move dummy addon file into place so there is no cache miss
+            fname (core/downloaded-addon-fname (:name addon) (:version addon))
+            _ (fs/mkdir install-dir)
+            _ (fs/copy (fixture-path "bad-truncated.zip") (utils/join install-dir fname)) ;; hoho, so evil
 
-          test-only? true
-          result (core/install-addon addon install-dir test-only?)]
-      (is (not result)) ;; failure
+            test-only? true
+            result (core/install-addon addon install-dir test-only?)]
+        (is (not result)) ;; failure
 
-      ;; ensure nothing was actually unzipped
-      (is (not (fs/exists? (utils/join install-dir "EveryAddon")))))))
+        ;; ensure nothing was actually unzipped
+        (is (not (fs/exists? (utils/join install-dir "EveryAddon"))))))))
 
 (deftest install-bad-addon
   (testing "installing a bad addon"
-    (let [install-dir (str fs/*cwd*)
-          fname (core/downloaded-addon-fname (:name addon) (:version addon))]
-      (fs/copy (fixture-path "bad-truncated.zip") (utils/join install-dir fname)) ;; hoho, so evil
-      (is (= (core/install-addon addon install-dir) nil))
-      (is (= (count (fs/list-dir install-dir)) 0))))) ;; bad zip file deleted
+    (with-fake-routes-in-isolation {}
+      (let [install-dir (str fs/*cwd*)
+            fname (core/downloaded-addon-fname (:name addon) (:version addon))]
+        (fs/copy (fixture-path "bad-truncated.zip") (utils/join install-dir fname)) ;; hoho, so evil
+        (is (= (core/install-addon addon install-dir) nil))
+        (is (= (count (fs/list-dir install-dir)) 0)))))) ;; bad zip file deleted
 
 ;;
 
@@ -746,7 +759,7 @@
       (with-fake-routes-in-isolation fake-routes
         (with-running-app
           (is (= expected (logging/buffered-log
-                           :info (core/download-catalogue (core/get-catalogue-source :short))))))))))
+                           :info (core/download-catalogue (core/get-catalogue-location :short))))))))))
 
 (deftest re-download-catalogue-on-bad-data
   (testing "catalogue data is re-downloaded if it can't be read"
@@ -761,7 +774,7 @@
         (is (not (core/db-catalogue-loaded?)))
 
         ;; empty the file. quickest way to bad json
-        (-> (core/get-catalogue-source) core/catalogue-local-path (spit ""))
+        (-> (core/get-catalogue-location) core/catalogue-local-path (spit ""))
 
         ;; the catalogue will be re-requested, this time we've swapped out the fixture with one with a single entry
         (with-fake-routes-in-isolation fake-routes
@@ -782,7 +795,7 @@
         (is (not (core/db-catalogue-loaded?)))
 
         ;; empty the file. quickest way to bad json
-        (-> (core/get-catalogue-source) core/catalogue-local-path (spit ""))
+        (-> (core/get-catalogue-location) core/catalogue-local-path (spit ""))
 
         ;; the catalogue will be re-requested, this time the remote file is also corrupt
         (with-fake-routes-in-isolation fake-routes

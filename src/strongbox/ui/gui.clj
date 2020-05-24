@@ -825,15 +825,15 @@
                           (-> catalogue :name name (str "catalogue-menu-") keyword))
 
         catalogue-button-grp (ss/button-group)
-        cat-list (core/get-state :cfg :catalogue-source-list)
+        cat-list (core/get-state :cfg :catalogue-location-list)
         cat-list (if (empty? cat-list) [{:label "No catalogues available" :name :dummy}] cat-list)
-        catalogue-menu (mapv (fn [catalogue-source]
-                               (ss/radio-menu-item :id (catalogue-to-id catalogue-source)
-                                                   :text (:label catalogue-source)
-                                                   :user-data catalogue-source
+        catalogue-menu (mapv (fn [catalogue-location]
+                               (ss/radio-menu-item :id (catalogue-to-id catalogue-location)
+                                                   :text (:label catalogue-location)
+                                                   :user-data catalogue-location
                                                    :group catalogue-button-grp
-                                                   :enabled? (-> catalogue-source :name (= :dummy) not)
-                                                   :selected? (= (core/get-state :cfg :selected-catalogue) (:name catalogue-source))))
+                                                   :enabled? (-> catalogue-location :name (= :dummy) not)
+                                                   :selected? (= (core/get-state :cfg :selected-catalogue) (:name catalogue-location))))
                              cat-list)]
 
     ;; user selection updates application state
@@ -844,14 +844,14 @@
      (sb/b-do [val]
               (when val ;; hrm, we're getting two events here, one where the value is nil ...
                 (async (fn []
-                         (core/set-catalogue-source! (-> val ss/user-data :name))
+                         (core/set-catalogue-location! (-> val ss/user-data :name))
                          (core/save-settings))))))
 
     ;; application state updates menu selection
     (core/state-bind [:cfg :selected-catalogue]
                      (fn [state]
-                       (let [catalogue-source (core/get-catalogue-source (-> state :cfg :selected-catalogue))
-                             button (-> catalogue-source catalogue-to-id as-selector select-ui)]
+                       (let [catalogue-location (core/get-catalogue-location (-> state :cfg :selected-catalogue))
+                             button (-> catalogue-location catalogue-to-id as-selector select-ui)]
                          (ss/selection! catalogue-button-grp button))))
 
     catalogue-menu))

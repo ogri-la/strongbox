@@ -98,17 +98,10 @@
 
           game-track :retail
 
-          expected {:url "https://github.com/Aviana/HealComm"
-                    :updated-date "2019-10-09T17:40:04Z"
-                    :source "github"
-                    :source-id "Aviana/HealComm"
-                    :label "HealComm"
-                    :name "healcomm"
-                    :download-count 30946
-                    :tag-list []
+          source-updates {:download-url "https://github.com/Aviana/HealComm/releases/download/2.04/HealComm.zip"
+                          :version "2.04 Beta"}
 
-                    :download-url "https://github.com/Aviana/HealComm/releases/download/2.04/HealComm.zip"
-                    :version "2.04 Beta"}
+          expected source-updates
 
           fixture (slurp (fixture-path "github-repo-releases--aviana-healcomm.json"))
           fake-routes {"https://api.github.com/repos/Aviana/HealComm/releases"
@@ -129,17 +122,10 @@
 
           game-track :classic
 
-          expected {:tag-list []
-                    :updated-date "2019-10-09T17:40:04Z"
-                    :name "chinchilla"
-                    :source "github"
-                    :label "Chinchilla"
-                    :download-count 30946
-                    :source-id "Ravendwyr/Chinchilla"
-                    :url "https://github.com/Ravendwyr/Chinchilla"
+          source-updates {:download-url "https://github.com/Ravendwyr/Chinchilla/releases/download/v2.10.0/Chinchilla-v2.10.0-classic.zip"
+                          :version "v2.10.0-classic"}
 
-                    :download-url "https://github.com/Ravendwyr/Chinchilla/releases/download/v2.10.0/Chinchilla-v2.10.0-classic.zip"
-                    :version "v2.10.0-classic"}
+          expected source-updates
 
           fixture (slurp (fixture-path "github-repo-releases--many-assets-many-gametracks.json"))
           fake-routes {"https://api.github.com/repos/Ravendwyr/Chinchilla/releases"
@@ -341,8 +327,7 @@
 
           ;; I don't like testing for log messages, but in this case it's the only indication the error has been handled properly
           expected ["failed to download file 'https://api.github.com/repos/Aviana/HealComm/releases': Forbidden (HTTP 403)"
-                    "Github: we've exceeded our request quota and have been blocked for an hour."
-                    "no 'retail' release available for 'healcomm' on github"]]
+                    "Github: we've exceeded our request quota and have been blocked for an hour."]]
 
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (logging/buffered-log

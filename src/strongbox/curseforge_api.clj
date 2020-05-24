@@ -96,26 +96,24 @@
     (latest-versions-by-gameVersionFlavor api-result)
     (latest-versions-by-gameVersion api-result)))
 
-(defn-spec expand-summary (s/or :ok ::sp/addon, :error nil?)
+(defn-spec expand-summary (s/or :ok :addon/source-updates, :error nil?)
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
-  [addon-summary ::sp/addon-summary game-track ::sp/game-track]
+  [addon-summary :addon/summary game-track ::sp/game-track]
   (let [pid (-> addon-summary :source-id)
         url (api-url "/addon/%s" pid)
         result (-> url http/download utils/from-json)
         latest-release (-> result latest-versions (get game-track) first)]
-    (if-not latest-release
-      (warn (format "no '%s' release available for '%s' on curseforge" game-track (:name addon-summary)))
+    (when latest-release
       (let [;; api value is empty in some cases (carbonite, improved loot frames, skada damage meter)
             ;; this value overrides the one found in .toc files, so if it can't be scraped, use the .toc version
             interface-version (some-> latest-release :gameVersion first utils/game-version-to-interface-version)
-            interface-version (when interface-version {:interface-version interface-version})
+            interface-version (when interface-version {:interface-version interface-version})]
+        (merge {:download-url (:downloadUrl latest-release)
+                :version (:displayName latest-release)}
+               interface-version)))))
 
-            details {:download-url (:downloadUrl latest-release)
-                     :version (:displayName latest-release)}]
-        (merge addon-summary details interface-version)))))
-
-(defn-spec extract-addon-summary ::sp/addon-summary
-  "converts addon data extracted from a listing into an ::sp/addon-summary"
+(defn-spec extract-addon-summary :addon/summary
+  "converts addon data extracted from a listing into an :addon/summary"
   [snippet map?] ;; TODO: spec out curseforge results? eh.
   {:url (:websiteUrl snippet)
    :label (:name snippet)
@@ -145,7 +143,7 @@
         results (utils/from-json results)]
     (mapv extract-addon-summary results)))
 
-(defn-spec download-all-summaries-alphabetically (s/or :ok ::sp/addon-summary-list, :error nil?)
+(defn-spec download-all-summaries-alphabetically (s/or :ok :addon/summary-list, :error nil?)
   []
   (loop [page 0
          accumulator []]

@@ -145,19 +145,17 @@
       (warn "multiple game tracks (classic and retail) detected with many downloadable assets and unable to differentiate between them. Refusing to pick.")
       (group-by :game-track asset-list))))
 
-(defn-spec expand-summary (s/or :ok ::sp/addon, :error nil?)
+(defn-spec expand-summary (s/or :ok :addon/source-updates, :error nil?)
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. 
   one additional look-up per ::addon required"
-  [addon-summary ::sp/addon-summary, game-track ::sp/game-track]
+  [addon-summary :addon/summary, game-track ::sp/game-track]
   (let [release-list (download-releases (:source-id addon-summary))
         latest-release (first release-list)
         -group-assets (partial group-assets addon-summary)
         asset (-> latest-release -group-assets (get game-track) first (dissoc :-mo))]
-    (if-not asset
-      (warn (format "no '%s' release available for '%s' on github" (utils/kw2str game-track) (:name addon-summary)))
-      (merge addon-summary
-             {:download-url (:browser_download_url asset)
-              :version (:version asset)}))))
+    (when asset
+      {:download-url (:browser_download_url asset)
+       :version (:version asset)})))
 
 ;;
 
@@ -165,7 +163,7 @@
   [url ::sp/url]
   (->> url java.net.URL. .getPath (re-matches #"^/([^/]+/[^/]+)[/]?.*") rest first))
 
-(defn-spec parse-user-string (s/or :ok ::sp/addon-summary, :error nil?)
+(defn-spec parse-user-string (s/or :ok :addon/summary, :error nil?)
   [uin string?]
   (if-let* [;; if *all* of these conditions succeed (non-nil), return a catalogue entry
             obj (some-> uin utils/unmangle-https-url java.net.URL.)

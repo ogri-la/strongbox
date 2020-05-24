@@ -109,7 +109,7 @@
    ;;:cfg {:addon-dir-list []
    ;;      :selected-catalogue :short}
    :cfg nil ;; see config.clj
-   ;;:catalogue-source-list [] ;; moved to config.clj and [:cfg :catalogue-source-list]
+   ;;:catalogue-source-list [] ;; moved to config.clj and [:cfg :catalogue-location-list]
 
    ;; subset of possible data about all INSTALLED addons
    ;; starts as parsed .toc file data
@@ -359,8 +359,8 @@
   [name string?, version string?]
   (format "%s--%s.zip" name (utils/slugify version))) ;; addonname--1-2-3.zip
 
-(defn-spec download-addon (s/or :ok ::sp/archive-file, :http-error ::sp/http-error, :error nil?)
-  [addon ::sp/addon-or-toc-addon, download-dir ::sp/writeable-dir]
+(defn-spec download-addon (s/or :ok ::sp/archive-file, :http-error :http/error, :error nil?)
+  [addon :addon/installable, download-dir ::sp/writeable-dir]
   (info "downloading" (:label addon) "...")
   (when (expanded? addon)
     (let [output-fname (downloaded-addon-fname (:name addon) (:version addon)) ;; addonname--1-2-3.zip
@@ -425,7 +425,7 @@
 
 (defn-spec -install-addon (s/or :ok (s/coll-of ::sp/extant-file), :error ::sp/empty-coll)
   "installs an addon given an addon description, a place to install the addon and the addon zip file itself"
-  [addon ::sp/addon-or-toc-addon, install-dir ::sp/writeable-dir, downloaded-file ::sp/archive-file]
+  [addon :addon/installable, install-dir ::sp/writeable-dir, downloaded-file ::sp/archive-file]
   ;; TODO: this function is becoming a mess. clean it up
   (let [zipfile-entries (zip/zipfile-normal-entries downloaded-file)
         sus-addons (zip/inconsistently-prefixed zipfile-entries)
@@ -457,9 +457,9 @@
 
 (defn-spec install-addon-guard (s/or :ok (s/coll-of ::sp/extant-file), :passed-tests true?, :error nil?)
   "downloads an addon and installs it. handles http and non-http errors, bad zip files, bad addons"
-  ([addon ::sp/addon-or-toc-addon, install-dir ::sp/extant-dir]
+  ([addon :addon/installable, install-dir ::sp/extant-dir]
    (install-addon-guard addon install-dir false))
-  ([addon ::sp/addon-or-toc-addon, install-dir ::sp/extant-dir, test-only? boolean?]
+  ([addon :addon/installable, install-dir ::sp/extant-dir, test-only? boolean?]
    (cond
      ;; do some pre-installation checks
      (:ignore? addon) (warn "failing to install addon, addon is being ignored:" install-dir)
@@ -497,11 +497,11 @@
     (swap! state assoc :installed-addon-list installed-addon-list)
     nil))
 
-(defn-spec group-addons ::sp/toc-list
+(defn-spec group-addons :addon/toc-list
   "an addon may actually be many addons bundled together in a single download.
   strongbox tags the bundled addons as they are unzipped and tries to determine the primary one.
   after we've loaded the addons and merged their nfo data, we can then group them"
-  [addon-list ::sp/toc-list]
+  [addon-list :addon/toc-list]
   (let [;; group-id comes from the nfo file
         addon-groups (group-by :group-id addon-list)
 
@@ -533,7 +533,7 @@
         addon-list (apply conj (mapv expand addon-groups) unknown-grouping)]
     addon-list))
 
-(defn-spec -load-installed-addons ::sp/toc-list
+(defn-spec -load-installed-addons :addon/toc-list
   "reads the .toc files from the given addon dir, reads any nfo data for 
   these addons, groups them, returns the mooshed data"
   [addon-dir ::sp/addon-dir]
@@ -570,48 +570,48 @@
 ;; catalogue handling
 ;;
 
-(defn-spec get-catalogue-source (s/or :ok ::sp/catalogue-source-map, :not-found nil?)
+(defn-spec get-catalogue-location (s/or :ok :catalogue/location, :not-found nil?)
   ([]
-   (get-catalogue-source (get-state :cfg :selected-catalogue)))
+   (get-catalogue-location (get-state :cfg :selected-catalogue)))
   ([catalogue-name keyword?]
-   (->> (get-state :cfg :catalogue-source-list) (filter #(= catalogue-name (:name %))) first)))
+   (->> (get-state :cfg :catalogue-location-list) (filter #(= catalogue-name (:name %))) first)))
 
-(defn-spec current-catalogue (s/or :ok ::sp/catalogue-source-map, :no-catalogues nil?)
+(defn-spec current-catalogue (s/or :ok :catalogue/location, :no-catalogues nil?)
   "returns the currently selected catalogue or the first catalogue it can find.
   returns `nil` if no catalogues available to choose from."
   []
   (if-let* [;; there may be nothing selected
-            catalogue (get-catalogue-source (get-state :cfg :selected-catalogue))
+            catalogue (get-catalogue-location (get-state :cfg :selected-catalogue))
             ;; there may be no default catalogue available
-            default-catalogue (get-catalogue-source (-> (get-state :cfg :catalogue-source-list) first :name))]
+            default-catalogue (get-catalogue-location (-> (get-state :cfg :catalogue-location-list) first :name))]
            (or catalogue default-catalogue)
            nil))
 
-(defn-spec set-catalogue-source! nil?
+(defn-spec set-catalogue-location! nil?
   [catalogue-name keyword?]
-  (if-let [catalogue (get-catalogue-source catalogue-name)]
+  (if-let [catalogue (get-catalogue-location catalogue-name)]
     (swap! state assoc-in [:cfg :selected-catalogue] (:name catalogue))
     (warn "catalogue not found" catalogue-name))
   nil)
 
 (defn-spec catalogue-local-path ::sp/file
-  "given a catalogue-source map, returns the local path to the catalogue."
-  [catalogue-source ::sp/catalogue-source-map]
+  "given a catalogue-location, returns the local path to the catalogue."
+  [catalogue-location :catalogue/location]
   ;; {:name :full ...} => "/path/to/catalogue/dir/full-catalogue.json"
-  (utils/join (paths :catalogue-dir) (-> catalogue-source :name name (str "-catalogue.json"))))
+  (utils/join (paths :catalogue-dir) (-> catalogue-location :name name (str "-catalogue.json"))))
 
 (defn-spec find-catalogue-local-path (s/or :ok ::sp/file, :not-found nil?)
   "convenience wrapper around `catalogue-local-path`"
   [catalogue-name keyword?]
-  (some-> catalogue-name get-catalogue-source catalogue-local-path))
+  (some-> catalogue-name get-catalogue-location catalogue-local-path))
 
 (defn-spec download-catalogue (s/or :ok ::sp/extant-file, :error nil?)
   "downloads catalogue to expected location, nothing more"
-  [catalogue-source ::sp/catalogue-source-map]
+  [catalogue-location :catalogue/location]
   (binding [http/*cache* (cache)]
-    (let [remote-catalogue (:source catalogue-source)
-          local-catalogue (catalogue-local-path catalogue-source)
-          message (format "downloading catalogue '%s'" (:label catalogue-source))
+    (let [remote-catalogue (:source catalogue-location)
+          local-catalogue (catalogue-local-path catalogue-location)
+          message (format "downloading catalogue '%s'" (:label catalogue-location))
           resp (http/download-file remote-catalogue local-catalogue message)]
       (when-not (http/http-error? resp)
         resp))))
@@ -624,9 +624,9 @@
     (download-catalogue catalogue)
     (warn "failed to find a downloadable catalogue")))
 
-(defn-spec moosh-addons ::sp/toc-addon-summary
+(defn-spec moosh-addons :addon/toc+summary+match
   "merges the data from an installed addon with it's match in the catalogue"
-  [installed-addon ::sp/toc, db-catalogue-addon ::sp/addon-summary]
+  [installed-addon :addon/toc, db-catalogue-addon :addon/summary]
   (let [;; nil fields are removed from the catalogue item because they might override good values in the .toc or .nfo
         db-catalogue-addon (utils/drop-nils db-catalogue-addon [:description])]
     ;; merges left->right. catalogue-addon overwrites installed-addon, ':matched' overwrites catalogue-addon, etc
@@ -635,7 +635,7 @@
 ;;
 
 
-(defn-spec get-create-user-catalogue ::sp/catalogue
+(defn-spec get-create-user-catalogue :catalogue/catalogue
   "returns the contents of the user catalogue, creating one if necessary"
   []
   (let [user-catalogue-path (paths :user-catalogue-file)]
@@ -646,7 +646,7 @@
 
 (defn-spec add-user-addon! nil?
   "adds one or many addons to the user catalogue"
-  [addon-summary (s/or :single ::sp/addon-summary, :many ::sp/addon-summary-list)]
+  [addon-summary (s/or :single :addon/summary, :many :addon/summary-list)]
   (let [addon-summary-list (if (sequential? addon-summary)
                              addon-summary
                              [addon-summary])
@@ -666,7 +666,7 @@
   ([]
    (when (selected-addon-dir) ;; skip matching if no addon dir selected
      (match-installed-addons-with-catalogue (get-state :db) (get-state :installed-addon-list))))
-  ([database ::sp/addon-summary-list, installed-addon-list ::sp/toc-list]
+  ([database :addon/summary-list, installed-addon-list :addon/toc-list]
    (info "matching installed addons to catalogue")
    (let [match-results (db/-db-match-installed-addons-with-catalogue (get-state :db) installed-addon-list)
          [matched unmatched] (utils/split-filter :matched? match-results)
@@ -706,7 +706,7 @@
   []
   (-> (get-state :db) nil? not))
 
-(defn-spec db-search ::sp/addon-summary-list
+(defn-spec db-search :addon/summary-list
   "searches database for addons whose name or description contains given user input.
   if no user input, returns a list of randomly ordered results"
   ([]
@@ -715,13 +715,13 @@
   ([uin (s/nilable string?)]
    (or (query-db :search [uin (get-state :search-results-cap)]) [])))
 
-(defn-spec load-current-catalogue (s/or :ok ::sp/catalogue, :error nil?)
+(defn-spec load-current-catalogue (s/or :ok :catalogue/catalogue, :error nil?)
   "merges the currently selected catalogue with the user-catalogue and returns the definitive list of addons available to install.
   handles malformed catalogue data by re-downloading catalogue."
   []
-  (when-let [catalogue-source (current-catalogue)]
-    (let [catalogue-path (catalogue-local-path catalogue-source)
-          _ (info (format "loading catalogue '%s'" (name (:name catalogue-source))))
+  (when-let [catalogue-location (current-catalogue)]
+    (let [catalogue-path (catalogue-local-path catalogue-location)
+          _ (info (format "loading catalogue '%s'" (name (:name catalogue-location))))
 
           ;; download from remote and try again when json can't be read
           bad-json-file-handler
@@ -776,20 +776,17 @@
           wrapper (affects-addon-wrapper catalogue/expand-summary)]
       (wrapper addon-summary game-track))))
 
-(defn-spec check-for-update ::sp/toc
-  [toc ::sp/toc]
-  (if-let [addon (when (:matched? toc)
-                   (expand-summary-wrapper toc))]
-    ;; we have a match and were successful in expanding the summary
-    (let [toc-addon (merge toc addon)
-          {:keys [installed-version version]} toc-addon
-          ;; update only if we have a new version and it's different from the installed version
-          update? (and version (not= installed-version version))]
-      (assoc toc-addon :update? update?))
-
-    ;; failed to match against catalogue or expand-summary returned nil (couldn't expand for whatever reason)
-    ;; in this case, we set a flag saying this addon shouldn't be updated
-    (assoc toc :update? false)))
+(defn-spec check-for-update :addon/toc
+  "Returns given `addon` with source updates, if any, and an `update?` boolean if a different version is available.
+  Accepts something as basic as toc data."
+  [addon (s/or :unmatched :addon/toc
+               :matched :addon/toc+summary+match)]
+  (let [expanded-addon (when (:matched? addon) (expand-summary-wrapper addon))
+        addon (or expanded-addon addon) ;; expanded addon may still be nil
+        {:keys [installed-version version]} addon
+        update? (and version
+                     (not= installed-version version))]
+    (assoc addon :update? update?)))
 
 (defn-spec check-for-updates nil?
   "downloads full details for all installed addons that can be found in summary list"
@@ -901,7 +898,7 @@
 
 (defn-spec export-installed-addon ::sp/export-record
   "given an addon summary from a catalogue or .toc file data, derive an 'export-record' that can be used to import an addon later"
-  [addon (s/or :catalogue ::sp/addon-summary, :installed ::sp/toc)]
+  [addon (s/or :catalogue :addon/summary, :installed :addon/toc)]
   (let [stub (select-keys addon [:name :source :source-id])
         game-track (when-let [game-track (:installed-game-track addon)]
                      {:game-track game-track})]
@@ -909,7 +906,7 @@
 
 (defn-spec export-installed-addon-list ::sp/export-record-list
   "derives an 'export-record' from a list of either addon summaries from a catalogue or .toc file data from installed addons"
-  [addon-list (s/or :catalogue ::sp/addon-summary-list, :installed ::sp/toc-list)]
+  [addon-list (s/or :catalogue :addon/summary-list, :installed :addon/toc-list)]
   (->> addon-list (remove :ignore?) (map export-installed-addon) vec))
 
 (defn-spec export-installed-addon-list-safely ::sp/extant-file
@@ -930,7 +927,7 @@
 
 (defn-spec export-catalogue-addon-list ::sp/export-record-list
   "given a catalogue of addons, generates a list of 'export-records' from the list of addon summaries"
-  [catalogue ::sp/catalogue]
+  [catalogue :catalogue/catalogue]
   (let [addon-list (:addon-summary-list catalogue)]
     (export-installed-addon-list addon-list)))
 
@@ -1039,7 +1036,7 @@
                             :version (:installed-version addon)
                             :game-track game-track})
         nfo-file (nfo/nfo-path install-dir (:dirname addon))]
-    (if (s/valid? ::sp/nfo-input-minimum addon)
+    (if (s/valid? :addon/nfo-input-minimum addon)
       (nfo/upgrade-nfo install-dir addon)
       (do
         (warn (format "failed to upgrade file, removing: %s" nfo-file))
@@ -1094,7 +1091,7 @@
    nil))
 
 (defn-spec -install-update-these nil?
-  [updateable-toc-addons (s/coll-of ::sp/addon-or-toc-addon)]
+  [updateable-toc-addons :addon/installable-list]
   (doseq [toc-addon updateable-toc-addons]
     (install-addon toc-addon (selected-addon-dir))))
 
@@ -1145,14 +1142,14 @@
 
 (defn-spec remove-addon nil?
   "removes the given addon. if addon is part of a group, all addons in group are removed"
-  [toc ::sp/toc]
+  [toc :addon/toc]
   (if (contains? toc :group-addons)
     (doseq [subtoc (:group-addons toc)]
       (-remove-addon (:dirname subtoc))) ;; top-level toc is contained in the :group-addons list
     (-remove-addon (:dirname toc))))
 
 (defn-spec remove-many-addons nil?
-  [toc-list ::sp/toc-list]
+  [toc-list :addon/toc-list]
   (doseq [toc toc-list]
     (remove-addon toc))
   (refresh))
@@ -1170,7 +1167,7 @@
 
 ;; installing addons from strings
 
-(defn-spec add+install-user-addon! (s/or :ok ::sp/addon, :less-ok ::sp/addon-summary, :failed nil?)
+(defn-spec add+install-user-addon! (s/or :ok :addon/addon, :less-ok :addon/summary, :failed nil?)
   "convenience. parses string, adds to user catalogue, installs addon then reloads database.
   relies on UI to call refresh (or not)"
   [addon-url string?]

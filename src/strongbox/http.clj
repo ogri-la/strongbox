@@ -76,7 +76,7 @@
     (as-> url x
       (str x) (.getBytes x) (.encodeToString enc x) (str x ext))))
 
-(defn-spec -download (s/or :file ::sp/extant-file, :raw ::sp/http-resp, :error ::sp/http-error)
+(defn-spec -download (s/or :file ::sp/extant-file, :raw :http/resp, :error :http/error)
   "if writing to a file is possible then the output file is returned, else the raw http response.
    writing response body to a file is possible when caching is available or `output-file` provided."
   [url ::sp/url, output-file (s/nilable ::sp/file), message (s/nilable ::sp/short-string), extra-params map?]
@@ -179,7 +179,7 @@
 
 (defn-spec http-error string?
   "returns an error specific to code and host"
-  [http-err ::sp/http-error]
+  [http-err :http/error]
   (let [key (-> http-err (select-keys [:host :status]) vals set)]
     (condp (comp clojure.set/intersection =) key
       ;; todo: test this
@@ -206,7 +206,7 @@
     ;; otherwise, scream and yell and return nil
     (error (http-error http-resp))))
 
-(defn-spec download (s/or :ok-file ::sp/extant-file, :ok-body string?, :error ::sp/http-error)
+(defn-spec download (s/or :ok-file ::sp/extant-file, :ok-body string?, :error :http/error)
   "downloads the given `url` assuming a textual response, returning the body as a simple string.
   on http error, an error map with details is returned.
   an optional `message` can be supplied as the second argument that will be displayed on a cache miss."
@@ -220,7 +220,7 @@
        (map? resp) (:body resp) ;; regular http response + caching disabled
        (fs/file? resp) (slurp resp))))) ;; file on disk + caching enabled
 
-(defn-spec download-file (s/or :file ::sp/extant-file, :error ::sp/http-error)
+(defn-spec download-file (s/or :file ::sp/extant-file, :error :http/error)
   "downloads the given `url` to the given `output-file`, assuming a bytestream response.
   returns the path to the file on success.
   on http error, an error map with details is returned.

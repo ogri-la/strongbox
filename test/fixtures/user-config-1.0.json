@@ -11,7 +11,7 @@
     }
   ],
   "selected-addon-dir": "/tmp/.strongbox-foo",
-  "catalogue-source-list": [
+  "catalogue-location-list": [
     {
       "name": "short",
       "label": "Short (default)",

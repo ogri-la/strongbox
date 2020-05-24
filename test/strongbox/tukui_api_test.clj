@@ -83,10 +83,11 @@
                          :source-id 98,
                          :url "https://www.tukui.org/addons.php?id=98"}
 
-          expected (merge addon-summary
-                          {:download-url "https://www.tukui.org/addons.php?download=98"
-                           :version "0.960"
-                           :interface-version 80200})
+          source-updates {:download-url "https://www.tukui.org/addons.php?download=98"
+                          :version "0.960"
+                          :interface-version 80200}
+
+          expected source-updates
 
           game-track :retail]
 
@@ -110,10 +111,11 @@
                          :source-id -2,
                          :url "https://www.tukui.org/download.php?ui=elvui"}
 
-          expected (merge addon-summary
-                          {:download-url "https://www.tukui.org/downloads/elvui-11.26.zip"
-                           :version "11.26"
-                           :interface-version 80200})
+          source-updates {:download-url "https://www.tukui.org/downloads/elvui-11.26.zip"
+                          :version "11.26"
+                          :interface-version 80200}
+
+          expected source-updates
 
           game-track :retail]
 

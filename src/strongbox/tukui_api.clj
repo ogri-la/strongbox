@@ -20,9 +20,9 @@
 (def tukui-proper-url (format proper-url "tukui"))
 (def elvui-proper-url (format proper-url "elvui"))
 
-(defn-spec expand-summary (s/or :ok ::sp/addon, :error nil?)
+(defn-spec expand-summary (s/or :ok :addon/source-updates, :error nil?)
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
-  [addon-summary ::sp/addon-summary game-track ::sp/game-track]
+  [addon-summary :addon/summary game-track ::sp/game-track]
   (let [source-id (:source-id addon-summary)
         url (cond
               (neg? source-id) [proper-url (:name addon-summary)]
@@ -35,10 +35,9 @@
         ;; that don't exist in that catalogue. I'm treating empty responses as 404s
         ti (some-> url http/download utils/nilable utils/from-json)]
     (when ti
-      (merge addon-summary
-             {:download-url (:url ti)
-              :version (:version ti)
-              :interface-version (-> ti :patch utils/game-version-to-interface-version)}))))
+      {:download-url (:url ti)
+       :version (:version ti)
+       :interface-version (-> ti :patch utils/game-version-to-interface-version)})))
 
 ;;
 
@@ -50,7 +49,7 @@
       (str date "T00:00:00Z") ;; tukui and elvui addons proper have no time component
       (str date "T" time "Z"))))
 
-(defn-spec process-tukui-item ::sp/addon-summary
+(defn-spec process-tukui-item :addon/summary
   "process an item from a tukui catalogue into an addon-summary. slightly different values by game-track."
   [tukui-item map?, classic? boolean?]
   (let [ti tukui-item
@@ -82,34 +81,34 @@
 
     addon-summary))
 
-(defn-spec -download-proper-summary ::sp/addon-summary
+(defn-spec -download-proper-summary :addon/summary
   "downloads either the elvui or tukui addon that exists separately and outside of the catalogue"
   [url ::sp/url]
   (let [classic? false ;; retail catalogue
         addon-summary (-> url http/download utils/from-json (process-tukui-item classic?))]
     (assoc addon-summary :game-track-list [:classic :retail])))
 
-(defn-spec download-elvui-summary ::sp/addon-summary
+(defn-spec download-elvui-summary :addon/summary
   "downloads the elvui addon that exists separately and outside of the catalogue"
   []
   (-download-proper-summary elvui-proper-url))
 
-(defn-spec download-tukui-summary ::sp/addon-summary
+(defn-spec download-tukui-summary :addon/summary
   "downloads the tukui addon that exists separately and outside of the catalogue"
   []
   (-download-proper-summary tukui-proper-url))
 
-(defn-spec download-retail-summaries ::sp/addon-summary-list
+(defn-spec download-retail-summaries :addon/summary-list
   "downloads and processes all items in the tukui 'live' (retail) catalogue"
   []
   (mapv #(process-tukui-item % false) (-> summary-list-url http/download utils/from-json)))
 
-(defn-spec download-classic-summaries ::sp/addon-summary-list
+(defn-spec download-classic-summaries :addon/summary-list
   "downloads and processes all items in the tukui classic catalogue"
   []
   (mapv #(process-tukui-item % true) (-> classic-summary-list-url http/download utils/from-json)))
 
-(defn-spec download-all-summaries ::sp/addon-summary-list
+(defn-spec download-all-summaries :addon/summary-list
   "downloads and process all items from the tukui 'live' (retail) and classic catalogues"
   []
   (vec (concat (download-retail-summaries)
