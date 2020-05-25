@@ -5,7 +5,8 @@
    [orchestra.core :refer [defn-spec]]
    [taoensso.tufte :as tufte :refer [p profile]]
    ;;[taoensso.timbre :refer [debug info warn error spy]]
-   ))
+   ;; although apparently unused, without this import uberjar and linting stop working
+   [strongbox.specs :as sp]))
 
 (def wowi-replacements
   "wowinterface-specific categories that are replaced"
