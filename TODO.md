@@ -98,12 +98,14 @@ see CHANGELOG.md for a more formal list of changes by release
         - as part of the diagramming, sketch out the fields to be captured
 
 * is catalogue being validated now that spec checking has been disabled?
-    - 
-
-### todo
+    - done
 
 * bug, "failed to read data "null" in file: .../etag-db.json"
     - something I seem to have introduced unifying the load-json* fns
+        - it was the value-fn vs transform-map in the unified load-json-safely function
+    - done
+
+### todo
 
 * catalogue updates
     - publish a 'strongbox-catalogue' repo

@@ -317,12 +317,14 @@
          default-key-fn keyword
          default-value-fn (fn [key val]
                             ((get transform-map key (constantly val)) val))
-         value-fn (if transform-map default-value-fn value-fn)
+         ;; a given `value-fn`, if any, takes precendence over `transform-map`
+         value-fn (or value-fn default-value-fn)
          key-fn (or key-fn default-key-fn)]
      (if-not (fs/file? path)
        (call-if-fn no-file?)
        (let [data (try
-                    (clojure.data.json/read (clojure.java.io/reader path), :key-fn key-fn, :value-fn value-fn)
+                    (with-open [reader (clojure.java.io/reader path)]
+                      (clojure.data.json/read reader :key-fn key-fn, :value-fn value-fn))
                     (catch Exception uncaught-exc
                       (warn uncaught-exc (format "failed to read data \"%s\" in file: %s" (.getMessage uncaught-exc) path))))]
          (cond

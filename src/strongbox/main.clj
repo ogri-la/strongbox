@@ -63,13 +63,16 @@
 
   nil)
 
-;; to profile without spec checking:
-;;   (restart {:verbosity :error, :ui :cli, :profile? true, :spec? false})
 (defn restart
   [& [cli-opts]]
   (stop)
   (Thread/sleep 750) ;; gives me time to switch panes
   (start cli-opts))
+
+(defn profile
+  [& [cli-ops]]
+  (let [default-opts {:verbosity :error, :ui :cli, :spec? false}]
+    (restart (merge default-opts cli-ops {:profile? true}))))
 
 (defn test
   [& [ns-kw fn-kw]]
