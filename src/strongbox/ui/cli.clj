@@ -26,7 +26,11 @@
 (defmethod action :scrape-wowinterface-catalogue
   [_]
   (binding [http/*cache* (core/cache)]
-    (wowinterface/scrape (find-catalogue-local-path :wowinterface))))
+    (let [output-file (find-catalogue-local-path :wowinterface)
+          catalogue-data (wowinterface/scrape output-file)
+          created (utils/datestamp-now-ymd)
+          formatted-catalogue-data (catalogue/format-catalogue-data catalogue-data created)]
+      (catalogue/write-catalogue formatted-catalogue-data output-file))))
 
 (defmethod action :scrape-curseforge-catalogue
   [_]
