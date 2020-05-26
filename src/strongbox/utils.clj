@@ -311,7 +311,7 @@
   "loads json file at given path with handling for common error cases (no file, bad data, invalid data)
   if :invalid-data? given, then a :data-spec must also be given else nothing happens and you get nil back"
   ([path ::sp/file]
-   (load-json-file-safely {}))
+   (load-json-file-safely path {}))
   ([path ::sp/file, opts map?]
    (let [{:keys [no-file? bad-data? invalid-data? data-spec value-fn key-fn transform-map]} opts
          default-key-fn keyword
