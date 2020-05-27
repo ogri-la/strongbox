@@ -74,7 +74,7 @@
     :alt-name -read-catalogue-value-fn
 
     ;; catalogue-level in v1 catalogue, not the addon-level 'updated-date' that we should keep
-    :updated-datestamp -read-catalogue-value-fn 
+    :updated-datestamp -read-catalogue-value-fn
 
     val))
 
@@ -114,9 +114,11 @@
 (defn-spec write-catalogue ::sp/extant-file
   "write catalogue to given `output-file` as JSON. returns path to output file"
   [catalogue-data :catalogue/catalogue, output-file ::sp/file]
-  (utils/dump-json-file output-file catalogue-data)
-  (info "wrote" output-file)
-  output-file)
+  (if (some->> catalogue-data validate (utils/dump-json-file output-file))
+    (do
+      (info "wrote" output-file)
+      output-file)
+    (error "catalogue data is invalid, refusing to write:" output-file)))
 
 (defn-spec new-catalogue :catalogue/catalogue
   [addon-list :addon/summary-list]
@@ -135,8 +137,7 @@
   "given a string, figures out the addon source (github, etc) and dispatches accordingly."
   [uin string?]
   (let [dispatch-map {"github.com" github-api/parse-user-string
-                      "www.github.com" github-api/parse-user-string ;; alias
-                      }]
+                      "www.github.com" github-api/parse-user-string}] ;; alias
     (try
       (when-let [f (some->> uin utils/unmangle-https-url java.net.URL. .getHost (get dispatch-map))]
         (info "inspecting:" uin)

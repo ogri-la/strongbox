@@ -199,9 +199,8 @@
         {:spec {:version 2}
          :datestamp "2001-01-01" ;; not valid
          :total 999
-         :addon-summary-list []}
-        
-        ]
+         :addon-summary-list []}]
+
     (testing "catalogue with a bad date yields `nil`"
       (is (nil? (catalogue/validate catalogue-with-bad-date))))
 
@@ -209,7 +208,4 @@
       (is (nil? (catalogue/validate catalogue-with-bad-total))))
 
     (testing "catalogue with an incorrect total yields `nil`"
-      (is (nil? (catalogue/validate catalogue-with-incorrect-total))))
-
-
-    ))
+      (is (nil? (catalogue/validate catalogue-with-incorrect-total))))))
