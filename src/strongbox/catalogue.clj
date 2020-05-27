@@ -100,6 +100,7 @@
            catalogue-data)))))
 
 (defn validate
+  "validates the given data as a `:catalogue/catalogue`, returning nil if data is invalid"
   [catalogue]
   (sp/valid-or-nil :catalogue/catalogue catalogue))
 
@@ -121,6 +122,7 @@
     (error "catalogue data is invalid, refusing to write:" output-file)))
 
 (defn-spec new-catalogue :catalogue/catalogue
+  "convenience. returns a new catalogue with datestamp of 'now' given a list of addon summaries"
   [addon-list :addon/summary-list]
   (format-catalogue-data addon-list (utils/datestamp-now-ymd)))
 
@@ -189,11 +191,12 @@
 ;;
 
 (defn-spec shorten-catalogue (s/or :ok :catalogue/catalogue, :problem nil?)
-  [full-catalogue-path ::sp/extant-file]
+  "reads the catalogue at the given `path` and returns a truncated version where all addons unmaintained addons are removed.
+  an addon is considered unmaintained if it hasn't been updated since the beginning of the previous expansion"
+  [full-catalogue-path ::sp/extant-file, cutoff ::sp/inst]
   (let [{:keys [addon-summary-list datestamp]} (read-catalogue full-catalogue-path)
         unmaintained? (fn [addon]
-                        (let [dtobj (java-time/zoned-date-time (:updated-date addon))
-                              release-of-previous-expansion (utils/todt "2016-08-30T00:00:00Z")]
-                          (java-time/before? dtobj release-of-previous-expansion)))]
+                        (let [dtobj (java-time/zoned-date-time (:updated-date addon))]
+                          (java-time/before? dtobj (utils/todt cutoff))))]
     (when addon-summary-list
       (format-catalogue-data (remove unmaintained? addon-summary-list) datestamp))))

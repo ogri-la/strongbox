@@ -63,7 +63,7 @@
         (catalogue/write-catalogue (find-catalogue-local-path :full))
 
         ;; 'short' catalogue is derived from the full catalogue
-        catalogue/shorten-catalogue
+        (catalogue/shorten-catalogue core/release-of-previous-expansion)
         (catalogue/write-catalogue (find-catalogue-local-path :short)))))
 
 (defmethod action :scrape-catalogue
