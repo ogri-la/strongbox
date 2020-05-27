@@ -407,7 +407,8 @@
 
           dummy-catalogue (merge (catalogue/new-catalogue [])
                                  {:addon-summary-list [catalogue]
-                                  :spec {:version 1}})
+                                  :spec {:version 1}
+                                  :total 1})
 
           fake-routes {;; catalogue
                        "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
@@ -489,6 +490,7 @@
 
           dummy-catalogue (merge (catalogue/new-catalogue [])
                                  {:addon-summary-list [addon-with-long-description]
+                                  :total 1
                                   :spec {:version 1}})
 
           fake-routes {"https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"

@@ -66,13 +66,15 @@
   "used to transform catalogue values as the json is read. applies to both v1 and v2 catalogues."
   [key val]
   (case key
-    :game-track (keyword val) ;; todo: game-track-list ?
+    :game-track-list (mapv keyword val)
     :tag-list (mapv keyword val)
     :description (utils/safe-subs val 255) ;; no database anymore, no hard failures on value length?
 
     ;; returning the function itself ensures element is removed from the result entirely
     :alt-name -read-catalogue-value-fn
-    :updated-datestamp -read-catalogue-value-fn ;; todo: 'updated-date' ?
+
+    ;; catalogue-level in v1 catalogue, not the addon-level 'updated-date' that we should keep
+    :updated-datestamp -read-catalogue-value-fn 
 
     val))
 
@@ -97,13 +99,17 @@
               (utils/nilable (catalogue-v1-coercer catalogue-data)))
            catalogue-data)))))
 
+(defn validate
+  [catalogue]
+  (sp/valid-or-nil :catalogue/catalogue catalogue))
+
 (defn read-catalogue
   "reads catalogue at given `path` and validates the result, regardless of spec instrumentation.
   returns `nil` if catalogue is invalid."
   ([path]
    (read-catalogue path {}))
   ([path opts]
-   (sp/valid-or-nil :catalogue/catalogue (-read-catalogue path opts))))
+   (-> path (-read-catalogue opts) validate)))
 
 (defn-spec write-catalogue ::sp/extant-file
   "write catalogue to given `output-file` as JSON. returns path to output file"
