@@ -164,9 +164,9 @@
         addon-list (for [[_ group-list] addon-groups
                          :let [addon (first group-list)
                                category-list (reduce clojure.set/union (map :category-list group-list))]]
-                     (merge addon
-                            {;;:category-list category-list ;; 2020-03: disabled in favour of :tag-list
-                             :tag-list (tags/category-list-to-tag-list "wowinterface" category-list)}))
+                     (-> addon
+                         (merge {:tag-list (tags/category-list-to-tag-list "wowinterface" category-list)})
+                         (dissoc :category-list)))
 
         filelist (download-parse-filelist-file)
 

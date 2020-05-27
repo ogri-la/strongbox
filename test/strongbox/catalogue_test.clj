@@ -127,7 +127,7 @@
       (testing (format "parsing bad user string input, case: '%s'" given)
         (is (= expected (catalogue/parse-user-string given)))))))
 
-(deftest read-catalogue-v1
+(deftest read-catalogue
   (let [v1-catalogue-path (fixture-path "catalogue--v1.json")
         v2-catalogue-path (fixture-path "catalogue--v2.json")
 
@@ -170,6 +170,7 @@
           :tag-list [],
           :updated-date "2019-10-19T15:07:07Z",
           :url "https://github.com/Ravendwyr/Chinchilla"}]
+
         expected {:spec {:version 2}
                   :datestamp "2020-02-20"
                   :total 4

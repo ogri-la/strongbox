@@ -66,13 +66,13 @@
   "used to transform catalogue values as the json is read. applies to both v1 and v2 catalogues."
   [key val]
   (case key
-    :game-track (keyword val)
+    :game-track (keyword val) ;; todo: game-track-list ?
     :tag-list (mapv keyword val)
     :description (utils/safe-subs val 255) ;; no database anymore, no hard failures on value length?
 
     ;; returning the function itself ensures element is removed from the result entirely
     :alt-name -read-catalogue-value-fn
-    :updated-datestamp -read-catalogue-value-fn
+    :updated-datestamp -read-catalogue-value-fn ;; todo: 'updated-date' ?
 
     val))
 
@@ -98,11 +98,12 @@
            catalogue-data)))))
 
 (defn read-catalogue
-  "we must always be able to trust a catalogue"
-  ([catalogue-path]
-   (read-catalogue catalogue-path {}))
-  ([catalogue-path opts]
-   (sp/valid-or-nil :catalogue/catalogue (-read-catalogue catalogue-path opts))))
+  "reads catalogue at given `path` and validates the result, regardless of spec instrumentation.
+  returns `nil` if catalogue is invalid."
+  ([path]
+   (read-catalogue path {}))
+  ([path opts]
+   (sp/valid-or-nil :catalogue/catalogue (-read-catalogue path opts))))
 
 (defn-spec write-catalogue ::sp/extant-file
   "write catalogue to given `output-file` as JSON. returns path to output file"
@@ -182,14 +183,7 @@
 
 (defn-spec shorten-catalogue (s/or :ok :catalogue/catalogue, :problem nil?)
   [full-catalogue-path ::sp/extant-file]
-  (let [{:keys [addon-summary-list datestamp]}
-        (utils/load-json-file-safely
-         full-catalogue-path
-         {:no-file? #(error (format "catalogue '%s' could not be found" full-catalogue-path))
-          :bad-data? #(error (format "catalogue '%s' is malformed and cannot be parsed" full-catalogue-path))
-          :invalid-data? #(error (format "catalogue '%s' is incorrectly structured and will not be parsed" full-catalogue-path))
-          :data-spec :catalogue/catalogue})
-
+  (let [{:keys [addon-summary-list datestamp]} (read-catalogue full-catalogue-path)
         unmaintained? (fn [addon]
                         (let [dtobj (java-time/zoned-date-time (:updated-date addon))
                               release-of-previous-expansion (utils/todt "2016-08-30T00:00:00Z")]
