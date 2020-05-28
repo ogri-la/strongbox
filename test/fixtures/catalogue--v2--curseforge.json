@@ -1,0 +1,14 @@
+{"spec":{"version":2},
+ "datestamp":"2020-05-27",
+ "total":1,
+ "addon-summary-list":
+ [{"created-date":"2019-04-13T15:23:09.397Z",
+   "description":"A New Simple Percent",
+   "download-count":1562,
+   "label":"A New Simple Percent",
+   "name":"a-new-simple-percent",
+   "source":"curseforge",
+   "source-id":319346,
+   "tag-list":["unit-frames"],
+   "updated-date":"2015-10-29T22:47:42.463Z",
+   "url":"https://www.curseforge.com/wow/addons/a-new-simple-percent"}]}
