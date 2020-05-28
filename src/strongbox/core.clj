@@ -1232,6 +1232,18 @@
   (swap! state assoc :in-repl? (utils/in-repl?))
   nil)
 
+(defn-spec wowman->strongbox nil?
+  "migrates wowman settings and files to strongbox"
+  []
+  ;; .wowman.json files to be migrated
+  ;; user config to be migrated
+  ;; user catalogue to be migrated
+  ;; etag-db and http cache can be ignored
+  ;; each of these should be ignored if migration appears to have happened before
+  nil)
+
+;;
+
 (defn -start
   []
   (alter-var-root #'state (constantly (atom -state-template))))
@@ -1243,6 +1255,7 @@
   (set-paths!)
   (detect-repl!)
   (init-dirs)
+  (wowman->strongbox)
   (prune-http-cache!) ;; 2020-04: used to be part of init-dirs
   (load-settings! cli-opts)
   (watch-for-addon-dir-change)

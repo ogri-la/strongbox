@@ -15,7 +15,9 @@
   The file can be safely deleted but some addons may fail to find a match 
   in the catalogue and will need to be found and re-installed.")
 
-(def nfo-filename ".wowman.json")
+(def old-nfo-filename ".wowman.json")
+
+(def nfo-filename ".strongbox.json")
 
 (def ignorable-dir-set #{".git" ".hg" ".svn"})
 
