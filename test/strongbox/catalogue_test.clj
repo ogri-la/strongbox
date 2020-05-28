@@ -127,13 +127,13 @@
       (testing (format "parsing bad user string input, case: '%s'" given)
         (is (= expected (catalogue/parse-user-string given)))))))
 
-(deftest read-catalogue-v1
+(deftest read-catalogue
   (let [v1-catalogue-path (fixture-path "catalogue--v1.json")
         v2-catalogue-path (fixture-path "catalogue--v2.json")
 
         expected-addon-list
         [{:download-count 1077,
-          :game-track-list ["retail"],
+          :game-track-list [:retail],
           :label "$old!it",
           :name "$old-it",
           :source "wowinterface",
@@ -153,7 +153,7 @@
           :url "https://www.curseforge.com/wow/addons/a-new-simple-percent"}
          {:description "Skins for AddOns",
           :download-count 1112033,
-          :game-track-list ["retail"],
+          :game-track-list [:retail],
           :label "AddOnSkins",
           :name "addonskins",
           :source "tukui",
@@ -162,7 +162,7 @@
           :updated-date "2019-11-17T23:02:23Z",
           :url "https://www.tukui.org/addons.php?id=3"}
          {:download-count 9,
-          :game-track-list ["retail" "classic"],
+          :game-track-list [:retail :classic],
           :label "Chinchilla",
           :name "chinchilla",
           :source "github",
@@ -170,6 +170,7 @@
           :tag-list [],
           :updated-date "2019-10-19T15:07:07Z",
           :url "https://github.com/Ravendwyr/Chinchilla"}]
+
         expected {:spec {:version 2}
                   :datestamp "2020-02-20"
                   :total 4
@@ -181,3 +182,30 @@
     (testing "a v2 (strongbox-era) catalogue spec can be read and validated as a v2 spec"
       (is (= expected (catalogue/read-catalogue v2-catalogue-path))))))
 
+(deftest read-bad-catalogue
+  (let [catalogue-with-bad-date
+        {:spec {:version 2}
+         :datestamp "foo" ;; not valid
+         :total 0
+         :addon-summary-list []}
+
+        catalogue-with-bad-total
+        {:spec {:version 2}
+         :datestamp "2001-01-01" ;; not valid
+         :total "foo"
+         :addon-summary-list []}
+
+        catalogue-with-incorrect-total
+        {:spec {:version 2}
+         :datestamp "2001-01-01" ;; not valid
+         :total 999
+         :addon-summary-list []}]
+
+    (testing "catalogue with a bad date yields `nil`"
+      (is (nil? (catalogue/validate catalogue-with-bad-date))))
+
+    (testing "catalogue with a bad total yields `nil`"
+      (is (nil? (catalogue/validate catalogue-with-bad-total))))
+
+    (testing "catalogue with an incorrect total yields `nil`"
+      (is (nil? (catalogue/validate catalogue-with-incorrect-total))))))

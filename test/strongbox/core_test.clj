@@ -221,7 +221,7 @@
           dummy-catalogue (slurp (fixture-path "import-export--dummy-catalogue.json"))
 
           fake-routes {;; catalogue
-                       "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
+                       "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                        {:get (fn [req] {:status 200 :body dummy-catalogue})}
 
                        ;; every-addon
@@ -304,7 +304,7 @@
           dummy-catalogue (slurp (fixture-path "import-export--dummy-catalogue.json"))
 
           fake-routes {;; catalogue
-                       "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
+                       "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                        {:get (fn [req] {:status 200 :body dummy-catalogue})}
 
                        ;; every-addon
@@ -407,10 +407,11 @@
 
           dummy-catalogue (merge (catalogue/new-catalogue [])
                                  {:addon-summary-list [catalogue]
-                                  :spec {:version 1}})
+                                  :spec {:version 1}
+                                  :total 1})
 
           fake-routes {;; catalogue
-                       "https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
+                       "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                        {:get (fn [req] {:status 200 :body (utils/to-json dummy-catalogue)})}
 
                        ;; every-addon
@@ -489,9 +490,10 @@
 
           dummy-catalogue (merge (catalogue/new-catalogue [])
                                  {:addon-summary-list [addon-with-long-description]
+                                  :total 1
                                   :spec {:version 1}})
 
-          fake-routes {"https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
+          fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                        {:get (fn [req] {:status 200 :body (utils/to-json dummy-catalogue)})}}]
 
       (with-fake-routes-in-isolation fake-routes
@@ -751,11 +753,11 @@
 (deftest http-500-downloading-catalogue
   (testing "HTTP 500 while fetching catalogue from github"
     (let [;; overrides fake route in `./test_helper.clj`
-          fake-routes {"https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
+          fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                        {:get (fn [req] {:status 500 :host "raw.githubusercontent.com" :reason-phrase "500 Server Error"})}}
 
           expected ["downloading catalogue 'Short (default)'"
-                    "failed to download file 'https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json': 500 Server Error (HTTP 500)"]]
+                    "failed to download file 'https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json': 500 Server Error (HTTP 500)"]]
       (with-fake-routes-in-isolation fake-routes
         (with-running-app
           (is (= expected (logging/buffered-log
@@ -764,7 +766,7 @@
 (deftest re-download-catalogue-on-bad-data
   (testing "catalogue data is re-downloaded if it can't be read"
     (let [;; overrides the fake route in test_helper.clj
-          fake-routes {"https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
+          fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                        {:get (fn [req] {:status 200 :body (slurp (fixture-path "dummy-catalogue--single-entry.json"))})}}]
       (with-running-app
         (core/refresh)
@@ -785,7 +787,7 @@
 (deftest re-download-catalogue-on-bad-data-2
   (testing "`db-load-catalogue` doesn't fail catastrophically when re-downloaded json is still bad"
     (let [;; overrides the fake route in test_helper.clj
-          fake-routes {"https://raw.githubusercontent.com/ogri-la/wowman-data/master/short-catalog.json"
+          fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                        {:get (fn [req] {:status 200 :body "borked json"})}}]
       (with-running-app
         (core/refresh)

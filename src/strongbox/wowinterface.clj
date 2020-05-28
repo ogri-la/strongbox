@@ -151,7 +151,7 @@
   we ignore the top-level '/' list-of-groups-of-categories and scrape the individual category group pages.
   addons may live in more than one category.
   after scraping we then group and reduce the duplicates, ensuring the names of the categories are preserved."
-  [output-path]
+  []
   (let [;; create a single list of all categories to scrape
         all-categories (->> category-group-pages keys (map scrape-category-group-page) flatten)
 
@@ -164,9 +164,9 @@
         addon-list (for [[_ group-list] addon-groups
                          :let [addon (first group-list)
                                category-list (reduce clojure.set/union (map :category-list group-list))]]
-                     (merge addon
-                            {;;:category-list category-list ;; 2020-03: disabled in favour of :tag-list
-                             :tag-list (tags/category-list-to-tag-list "wowinterface" category-list)}))
+                     (-> addon
+                         (merge {:tag-list (tags/category-list-to-tag-list "wowinterface" category-list)})
+                         (dissoc :category-list)))
 
         filelist (download-parse-filelist-file)
 
@@ -189,9 +189,5 @@
 
         ;; the addons themselves should be ordered now. alphabetically I suppose
         addon-list (sort-by :label addon-list)]
-    (spit output-path (utils/to-json {:spec {:version 1}
-                                      :datestamp (utils/datestamp-now-ymd)
-                                      :updated-datestamp (utils/datestamp-now-ymd)
-                                      :total (count addon-list)
-                                      :addon-summary-list addon-list}))
-    output-path))
+
+    addon-list))

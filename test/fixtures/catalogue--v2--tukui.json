@@ -1,0 +1,15 @@
+{"spec":{"version":2},
+ "datestamp":"2020-05-10",
+ "total":1,
+ "addon-summary-list":
+ [{"tag-list":["roleplay"],
+   "description":"Add roleplaying fields to ElvUI to create RP UIs.",
+   "download-count":3028,
+   "game-track-list":["retail"],
+   "label":"[rp:tags]",
+   "name":"-rp-tags",
+   "source":"tukui",
+   "source-id":98,
+   "updated-date":"2019-07-29T20:48:25Z",
+   "uri":"https://www.tukui.org/addons.php?id=98"}]}
+

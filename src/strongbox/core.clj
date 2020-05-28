@@ -21,6 +21,10 @@
     [toc]
     [specs :as sp]]))
 
+(def release-of-previous-expansion
+  "'Legion', released August 30th 2016. Used to shorten the 'full' catalogue."
+  "2016-08-30T00:00:00Z")
+
 (def game-tracks [:retail :classic])
 
 (def -colour-map

@@ -66,12 +66,14 @@
   "used to transform catalogue values as the json is read. applies to both v1 and v2 catalogues."
   [key val]
   (case key
-    :game-track (keyword val)
+    :game-track-list (mapv keyword val)
     :tag-list (mapv keyword val)
     :description (utils/safe-subs val 255) ;; no database anymore, no hard failures on value length?
 
     ;; returning the function itself ensures element is removed from the result entirely
     :alt-name -read-catalogue-value-fn
+
+    ;; catalogue-level in v1 catalogue, not the addon-level 'updated-date' that we should keep
     :updated-datestamp -read-catalogue-value-fn
 
     val))
@@ -97,21 +99,30 @@
               (utils/nilable (catalogue-v1-coercer catalogue-data)))
            catalogue-data)))))
 
+(defn validate
+  "validates the given data as a `:catalogue/catalogue`, returning nil if data is invalid"
+  [catalogue]
+  (sp/valid-or-nil :catalogue/catalogue catalogue))
+
 (defn read-catalogue
-  "we must always be able to trust a catalogue"
-  ([catalogue-path]
-   (read-catalogue catalogue-path {}))
-  ([catalogue-path opts]
-   (sp/valid-or-nil :catalogue/catalogue (-read-catalogue catalogue-path opts))))
+  "reads catalogue at given `path` and validates the result, regardless of spec instrumentation.
+  returns `nil` if catalogue is invalid."
+  ([path]
+   (read-catalogue path {}))
+  ([path opts]
+   (-> path (-read-catalogue opts) validate)))
 
 (defn-spec write-catalogue ::sp/extant-file
   "write catalogue to given `output-file` as JSON. returns path to output file"
   [catalogue-data :catalogue/catalogue, output-file ::sp/file]
-  (utils/dump-json-file output-file catalogue-data)
-  (info "wrote" output-file)
-  output-file)
+  (if (some->> catalogue-data validate (utils/dump-json-file output-file))
+    (do
+      (info "wrote" output-file)
+      output-file)
+    (error "catalogue data is invalid, refusing to write:" output-file)))
 
 (defn-spec new-catalogue :catalogue/catalogue
+  "convenience. returns a new catalogue with datestamp of 'now' given a list of addon summaries"
   [addon-list :addon/summary-list]
   (format-catalogue-data addon-list (utils/datestamp-now-ymd)))
 
@@ -128,8 +139,7 @@
   "given a string, figures out the addon source (github, etc) and dispatches accordingly."
   [uin string?]
   (let [dispatch-map {"github.com" github-api/parse-user-string
-                      "www.github.com" github-api/parse-user-string ;; alias
-                      }]
+                      "www.github.com" github-api/parse-user-string}] ;; alias
     (try
       (when-let [f (some->> uin utils/unmangle-https-url java.net.URL. .getHost (get dispatch-map))]
         (info "inspecting:" uin)
@@ -181,18 +191,12 @@
 ;;
 
 (defn-spec shorten-catalogue (s/or :ok :catalogue/catalogue, :problem nil?)
-  [full-catalogue-path ::sp/extant-file]
-  (let [{:keys [addon-summary-list datestamp]}
-        (utils/load-json-file-safely
-         full-catalogue-path
-         {:no-file? #(error (format "catalogue '%s' could not be found" full-catalogue-path))
-          :bad-data? #(error (format "catalogue '%s' is malformed and cannot be parsed" full-catalogue-path))
-          :invalid-data? #(error (format "catalogue '%s' is incorrectly structured and will not be parsed" full-catalogue-path))
-          :data-spec :catalogue/catalogue})
-
+  "reads the catalogue at the given `path` and returns a truncated version where all addons unmaintained addons are removed.
+  an addon is considered unmaintained if it hasn't been updated since the beginning of the previous expansion"
+  [full-catalogue-path ::sp/extant-file, cutoff ::sp/inst]
+  (let [{:keys [addon-summary-list datestamp]} (read-catalogue full-catalogue-path)
         unmaintained? (fn [addon]
-                        (let [dtobj (java-time/zoned-date-time (:updated-date addon))
-                              release-of-previous-expansion (utils/todt "2016-08-30T00:00:00Z")]
-                          (java-time/before? dtobj release-of-previous-expansion)))]
+                        (let [dtobj (java-time/zoned-date-time (:updated-date addon))]
+                          (java-time/before? dtobj (utils/todt cutoff))))]
     (when addon-summary-list
       (format-catalogue-data (remove unmaintained? addon-summary-list) datestamp))))
