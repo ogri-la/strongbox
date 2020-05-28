@@ -105,11 +105,11 @@ see CHANGELOG.md for a more formal list of changes by release
         - it was the value-fn vs transform-map in the unified load-json-safely function
     - done
 
-### todo
-
 * catalogue updates
     - publish a 'strongbox-catalogue' repo
         - just like wowman-data, but for strongbox
+
+### todo
 
 * migration
     - rename .wowman.json files to .strongbox.json 
