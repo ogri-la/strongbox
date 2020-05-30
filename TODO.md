@@ -109,13 +109,14 @@ see CHANGELOG.md for a more formal list of changes by release
     - publish a 'strongbox-catalogue' repo
         - just like wowman-data, but for strongbox
 
-### todo
-
 * migration
     - rename .wowman.json files to .strongbox.json 
     - move 'user-catalog.json' to 'user-catalgoue.json'
 
+### todo
+
 * rename wowman
+    - test on mac
     - rename repository
     - arch package
         - add new shell script 'strongbox'
