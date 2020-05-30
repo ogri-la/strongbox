@@ -583,3 +583,10 @@
        (dissoc m (first fields))
        m)
      (rest fields))))
+
+(defn-spec copy-old-to-new-if-safe (s/or :copied ::sp/extant-file, :no-op nil?)
+  "copies `old-path` to `new-path` if `old-path` exists and `new-path` doesn't exist"
+  [old-path ::sp/file, new-path ::sp/file]
+  (when (and (fs/exists? old-path)
+             (not (fs/exists? new-path)))
+    (fs/copy old-path new-path)))

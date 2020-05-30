@@ -75,6 +75,9 @@
         config-dir (-> @env :xdg-config-home utils/nilable (or default-config-dir) expand-path strongbox-suffix)
         data-dir (-> @env :xdg-data-home utils/nilable (or default-data-dir) expand-path strongbox-suffix)
 
+        old-config-dir (clojure.string/replace config-dir "strongbox" "wowman")
+        old-data-dir (clojure.string/replace data-dir "strongbox" "wowman")
+
         ;; ensure path ends with `-file` or `-dir` or `-url`.
         ;; see `init-dirs`.
         path-map {:config-dir config-dir
@@ -93,11 +96,19 @@
                   ;; /home/$you/.config/strongbox/config.json
                   :cfg-file (join config-dir "config.json")
 
+                  ;; /home/$you/.config/wowman/config.json
+                  :old-cfg-file (join old-config-dir "config.json")
+
                   ;; /home/$you/.local/share/strongbox/etag-db.json
                   :etag-db-file (join data-dir "etag-db.json")
 
+                  ;; todo: move the user catalogue to config directory
+                  ;; I don't like it getting wiped out when catalogues are cleared.
                   ;; /home/$you/.local/share/strongbox/user-catalogue.json
-                  :user-catalogue-file (join data-dir "user-catalogue.json")}]
+                  :user-catalogue-file (join data-dir "user-catalogue.json")
+
+                  ;; /home/$you/.local/share/wowman/user-catalog.json
+                  :old-user-catalogue-file (join old-data-dir "user-catalog.json")}]
     path-map))
 
 (def -state-template
@@ -1062,6 +1073,11 @@
          (mapv upgrade-nfo)))
   nil)
 
+(defn migrate-nfo-files
+  []
+  (when-let [addon-dir (selected-addon-dir)]
+    (nfo/rename-wowman-nfo-files addon-dir)))
+
 ;; 
 
 (defn refresh
@@ -1071,6 +1087,9 @@
 
    ;; downloads the big long list of addon information stored on github
    (download-current-catalogue)
+
+   ;; rename any occurances of `.wowman.json` to `.strongbox.json`
+   (migrate-nfo-files)
 
    ;; parse toc files in install-dir. do this first so we see *something* while catalogue downloads (next)
    (load-installed-addons)
@@ -1232,15 +1251,20 @@
   (swap! state assoc :in-repl? (utils/in-repl?))
   nil)
 
-(defn-spec wowman->strongbox nil?
+(defn-spec migrate-user-config nil?
+  []
+  (config/copy-wowman-config (paths :old-cfg-file) (paths :cfg-file)))
+
+(defn-spec migrate-user-catalogue nil?
+  []
+  (catalogue/copy-user-catalogue (paths :old-user-catalogue-file) (paths :user-catalogue-file)))
+
+(defn-spec migrate-user nil?
   "migrates wowman settings and files to strongbox"
   []
-  ;; .wowman.json files to be migrated
-  ;; user config to be migrated
-  ;; user catalogue to be migrated
-  ;; etag-db and http cache can be ignored
-  ;; each of these should be ignored if migration appears to have happened before
-  nil)
+  ;; (migrate-nfo-files) ;; migrated during `refresh`
+  (migrate-user-config)
+  (migrate-user-catalogue))
 
 ;;
 
@@ -1255,8 +1279,8 @@
   (set-paths!)
   (detect-repl!)
   (init-dirs)
-  (wowman->strongbox)
-  (prune-http-cache!) ;; 2020-04: used to be part of init-dirs
+  (prune-http-cache!)
+  (migrate-user)
   (load-settings! cli-opts)
   (watch-for-addon-dir-change)
   (watch-for-catalogue-change)
