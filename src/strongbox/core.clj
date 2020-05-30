@@ -869,6 +869,10 @@
   []
   (delete-many-files! (selected-addon-dir) #"\.strongbox\.json$" ".strongbox.json"))
 
+(defn-spec delete-wowman-json-files! nil?
+  []
+  (delete-many-files! (selected-addon-dir) #"\.wowman\.json$" ".wowman.json"))
+
 (defn-spec delete-wowmatrix-dat-files! nil?
   []
   (delete-many-files! (selected-addon-dir) #"(?i)WowMatrix.dat$" "WowMatrix.dat"))
