@@ -157,3 +157,10 @@
   (let [file-opts (load-settings-file cfg-file)
         etag-db (load-etag-db-file etag-db-file)]
     (-load-settings cli-opts file-opts etag-db)))
+
+;;
+
+(defn-spec copy-wowman-user-config nil?
+  [old-config-path ::sp/file, new-config-path ::sp/file]
+  (when (utils/copy-old-to-new-if-safe old-config-path new-config-path)
+    (info "migrated wowman config to strongbox")))

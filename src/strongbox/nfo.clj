@@ -15,7 +15,9 @@
   The file can be safely deleted but some addons may fail to find a match 
   in the catalogue and will need to be found and re-installed.")
 
-(def nfo-filename ".wowman.json")
+(def old-nfo-filename ".wowman.json")
+
+(def nfo-filename ".strongbox.json")
 
 (def ignorable-dir-set #{".git" ".hg" ".svn"})
 
@@ -135,3 +137,15 @@
        ;; don't use read-nfo-file here, it deletes invalid nfo files
        (s/valid? :addon/nfo (utils/load-json-file-safely (nfo-path install-dir (:dirname addon))
                                                          {:transform-map {:installed-game-track keyword}}))))
+
+(defn-spec copy-wowman-nfo-files nil?
+  "makes a copy of any `.wowman.json` nfo files to `.strongbox.json` ones.
+  user can delete `.wowman.json` files through the gui afterwards."
+  [install-dir ::sp/extant-dir]
+  (let [file-regex (re-pattern old-nfo-filename)
+        path-list (mapv str (fs/find-files install-dir file-regex))
+        copy (fn [old-path]
+               (let [new-path (join (fs/parent old-path) nfo-filename)]
+                 (when-not (fs/exists? new-path)
+                   (fs/copy old-path new-path))))]
+    (run! copy path-list)))

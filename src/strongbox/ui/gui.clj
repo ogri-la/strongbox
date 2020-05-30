@@ -284,7 +284,7 @@
                  ["" ""]
                  (when-not (core/latest-strongbox-version?)
                    [(format "version %s is now available to download!" (core/latest-strongbox-release)) "center"])
-                 [(x/hyperlink :text "github" :url "https://github.com/ogri-la/strongbox") "center"]
+                 [(x/hyperlink :text "github" :uri "https://github.com/ogri-la/strongbox") "center"]
                  ["AGPL v3", "center"]]
         content (remove nil? content)
         content (interleave content (repeat [:separator "growx, wrap"]))
@@ -928,6 +928,7 @@
                     (ss/action :name "Clear all" :handler (async-handler core/clear-all-temp-files!))
                     :separator
                     (ss/action :name "Delete WowMatrix.dat files" :handler (async-handler core/delete-wowmatrix-dat-files!))
+                    (ss/action :name "Delete .wowman.json files" :handler (async-handler (comp core/refresh core/delete-wowman-json-files!)))
                     (ss/action :name "Delete .strongbox.json files" :handler (async-handler (comp core/refresh core/delete-strongbox-json-files!)))]
 
         help-menu [(ss/action :name "About strongbox" :handler (handler about-strongbox-dialog))]
