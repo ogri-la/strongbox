@@ -102,10 +102,8 @@
                   ;; /home/$you/.local/share/strongbox/etag-db.json
                   :etag-db-file (join data-dir "etag-db.json")
 
-                  ;; todo: move the user catalogue to config directory
-                  ;; I don't like it getting wiped out when catalogues are cleared.
                   ;; /home/$you/.local/share/strongbox/user-catalogue.json
-                  :user-catalogue-file (join data-dir "user-catalogue.json")
+                  :user-catalogue-file (join config-dir "user-catalogue.json")
 
                   ;; /home/$you/.local/share/wowman/user-catalog.json
                   :old-user-catalogue-file (join old-data-dir "user-catalog.json")}]
@@ -879,6 +877,7 @@
 
 (defn-spec delete-catalogue-files! nil?
   []
+  ;; the user catalogue is deliberately ignored here.
   (delete-many-files! (paths :data-dir) #".+\-catalogue\.json$" "catalogue"))
 
 (defn-spec clear-all-temp-files! nil?
