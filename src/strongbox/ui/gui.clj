@@ -284,7 +284,7 @@
                  ["" ""]
                  (when-not (core/latest-strongbox-version?)
                    [(format "version %s is now available to download!" (core/latest-strongbox-release)) "center"])
-                 [(x/hyperlink :text "github" :url "https://github.com/ogri-la/strongbox") "center"]
+                 [(x/hyperlink :text "github" :uri "https://github.com/ogri-la/strongbox") "center"]
                  ["AGPL v3", "center"]]
         content (remove nil? content)
         content (interleave content (repeat [:separator "growx, wrap"]))
