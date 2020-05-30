@@ -203,7 +203,7 @@
 
 ;;
 
-(defn-spec copy-user-catalogue nil?
+(defn-spec copy-wowman-user-catalogue nil?
   [old-path ::sp/file, new-path ::sp/file]
   (when (utils/copy-old-to-new-if-safe old-path new-path)
     (info "migrated wowman user catalogue to strongbox")))

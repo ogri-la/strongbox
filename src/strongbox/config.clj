@@ -160,7 +160,7 @@
 
 ;;
 
-(defn-spec copy-wowman-config nil?
+(defn-spec copy-wowman-user-config nil?
   [old-config-path ::sp/file, new-config-path ::sp/file]
   (when (utils/copy-old-to-new-if-safe old-config-path new-config-path)
     (info "migrated wowman config to strongbox")))

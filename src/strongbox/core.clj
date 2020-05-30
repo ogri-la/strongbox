@@ -75,6 +75,7 @@
         config-dir (-> @env :xdg-config-home utils/nilable (or default-config-dir) expand-path strongbox-suffix)
         data-dir (-> @env :xdg-data-home utils/nilable (or default-data-dir) expand-path strongbox-suffix)
 
+        ;; for migration tasks
         old-config-dir (clojure.string/replace config-dir "strongbox" "wowman")
         old-data-dir (clojure.string/replace data-dir "strongbox" "wowman")
 
@@ -102,7 +103,8 @@
                   ;; /home/$you/.local/share/strongbox/etag-db.json
                   :etag-db-file (join data-dir "etag-db.json")
 
-                  ;; /home/$you/.local/share/strongbox/user-catalogue.json
+                  ;; 2020-05: moved to config dir
+                  ;; /home/$you/.config/strongbox/user-catalogue.json
                   :user-catalogue-file (join config-dir "user-catalogue.json")
 
                   ;; /home/$you/.local/share/wowman/user-catalog.json
@@ -1079,7 +1081,7 @@
 (defn migrate-nfo-files
   []
   (when-let [addon-dir (selected-addon-dir)]
-    (nfo/rename-wowman-nfo-files addon-dir)))
+    (nfo/copy-wowman-nfo-files addon-dir)))
 
 ;; 
 
@@ -1256,14 +1258,15 @@
 
 (defn-spec migrate-user-config nil?
   []
-  (config/copy-wowman-config (paths :old-cfg-file) (paths :cfg-file)))
+  (config/copy-wowman-user-config (paths :old-cfg-file) (paths :cfg-file)))
 
 (defn-spec migrate-user-catalogue nil?
   []
-  (catalogue/copy-user-catalogue (paths :old-user-catalogue-file) (paths :user-catalogue-file)))
+  (catalogue/copy-wowman-user-catalogue (paths :old-user-catalogue-file) (paths :user-catalogue-file)))
 
 (defn-spec migrate-user nil?
-  "migrates wowman settings and files to strongbox"
+  "migrates wowman settings and files to strongbox.
+  must be called *after* `init-dirs` otherwise destination directories may not exist yet."
   []
   ;; (migrate-nfo-files) ;; migrated during `refresh`
   (migrate-user-config)

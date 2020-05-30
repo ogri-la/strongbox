@@ -138,12 +138,14 @@
        (s/valid? :addon/nfo (utils/load-json-file-safely (nfo-path install-dir (:dirname addon))
                                                          {:transform-map {:installed-game-track keyword}}))))
 
-(defn-spec rename-wowman-nfo-files nil?
+(defn-spec copy-wowman-nfo-files nil?
+  "makes a copy of any `.wowman.json` nfo files to `.strongbox.json` ones.
+  user can delete `.wowman.json` files through the gui afterwards."
   [install-dir ::sp/extant-dir]
   (let [file-regex (re-pattern old-nfo-filename)
         path-list (mapv str (fs/find-files install-dir file-regex))
-        rename (fn [old-path]
-                 (let [new-path (join (fs/parent old-path) nfo-filename)]
-                   (when-not (fs/exists? new-path)
-                     (fs/copy old-path new-path))))]
-    (run! rename path-list)))
+        copy (fn [old-path]
+               (let [new-path (join (fs/parent old-path) nfo-filename)]
+                 (when-not (fs/exists? new-path)
+                   (fs/copy old-path new-path))))]
+    (run! copy path-list)))
