@@ -12,7 +12,7 @@ If you are a user of wowman and you ever want to get in touch, please just
 
 ## Notice!
 
-`wowman` has been renamed `strongbox` and the `12.x` release line will only receive critical bug fixes for a short 
+`wowman` has been renamed `strongbox` and the `0.12.x` release line will only receive critical bug fixes for a short 
 period.
 
 Please upgrade to `strongbox`.
