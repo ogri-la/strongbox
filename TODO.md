@@ -4,128 +4,21 @@ this is my own scratchpad for keeping track of things. it gets truncated frequen
 
 see CHANGELOG.md for a more formal list of changes by release
 
-## 1.0.0 release
-
-### done
-
-* rename wowman
-    - update readme
-        - mention name change prominently
-        - done
-
-* code refactor
-    - diagram state transitions
-        - my mental model has become fuzzy
-        - done, see strongbox-docs
-    - untangle nfo and toc files
-        - result of diagramming modules
-        - done
-    - rename references of 'uri' to 'url'
-        - these are all through the catalog
-        - done
-    - remove all mentions of a donation url, author name
-        - done
-    - remove 'alt-name'
-        - done
-    - rename any mentions of 'catalog' to 'catalogue'
-        - purely for consistency
-        - done
-
-* can addon-id be removed as a gui column?
-    - no.
-    - addon-id is actually "name"
-    - "name" is the value core.clj uses to update the 'unsteady addon' list that the gui watches to highlight rows
-    - "label" is actually masquerading as "name"
-    - won't 'fix'
-
-* catalogue updates
-    - move location of catalogs into user settings
-        - allow user to specify their own catalogs
-            - a url to a catalog that is downloaded and included while loading up the db
-            - different from the 'user catalog'
-        - done
-            - they can specify their own catalogs using the :source attribute
-            - their addon entries must still specify a supported :source
-                - it can be :curseforge, :wowinterface, :github, :tukui, :tukui-classic
-
-    - support catalog-less strongbox
-        - application should be able to work with no catalogues specified
-            - can't search for or install addons
-            - can't update an addon without a .nfo file
-            - we have a user-catalogue for github ... could it do double duty?
-                - expand the 'add github addon' so user can select source and add an id or just use an url
-                    - and then strongbox scrapes the data at given url? urg, back to webscraping
-        - done
-            - tacitly. it no longer falls over dead when there are no catalogues to choose from
-
-    - game track becomes a set of keywords
-        - not strings
-        - done
-
-    - normalise categories between addon hosts
-        - perhaps expand them into 'tags'?
-        - a lot of these categories are composite
-            - break each composite one down into a singular, normalise, have a unique set of tags
-
-    - remove 'updated' date
-        - should have been removed when updating catalogues was removed
-
-    - bumps spec version of catalogue to 2
-        - keep wowman-coercer but dispatch based off of spec version
-
-* remove backwards compatibility
-    - remove nfo-v1
-        - 'map?' just isn't good enough
-        - done
-
-* remember selected addon dir
-    - done
-
-* bug, test fixtures for user-config had their :catalog value renamed to :catalogue
-        - revert those changes
-        - add a step in the parsing that renames those values to 'catalogue'
-
-* database, investigate a datalog backed datastore
-    - https://clojure.github.io/clojure-contrib/doc/datalog.html
-    - https://github.com/tonsky/datascript
-    - crux is working out elsewhere
-    - I want addons loaded *quickly*
-    - I want to *query* addons *quickly*
-
-* spec clean up
-    * it's never been particularly clear in my head what some of those specs are
-    * I have a better understanding of their nature now
-        - as part of the diagramming, sketch out the fields to be captured
-
-* is catalogue being validated now that spec checking has been disabled?
-    - done
-
-* bug, "failed to read data "null" in file: .../etag-db.json"
-    - something I seem to have introduced unifying the load-json* fns
-        - it was the value-fn vs transform-map in the unified load-json-safely function
-    - done
-
-* catalogue updates
-    - publish a 'strongbox-catalogue' repo
-        - just like wowman-data, but for strongbox
-
-* migration
-    - rename .wowman.json files to .strongbox.json 
-    - move 'user-catalog.json' to 'user-catalgoue.json'
-
 ### todo
 
 * rename wowman
-    - test on mac
-    - rename repository
-    - arch package
-        - add new shell script 'strongbox'
+    - create new arch AUR 'strongbox'
+        - identical to wowman except the usual
+        - new shell script 'strongbox'
+    - rename wowman in wowman-comrades
     - update ticket template
         - with command to run that uses the debug flag
         - which files to upload
 
-
 ## todo bucket (no particular order)
+
+* wowman, add support for reading strongbox catalogues
+* wowman, remove wowman-data repository
 
 * test, can gui-diff and main/test be pushed back into the testing namespace and elided from release somehow?
 
