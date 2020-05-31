@@ -1,0 +1,13 @@
+{"spec":{"version":2},
+ "datestamp":"2020-02-20",
+ "total":1,
+ "addon-summary-list":
+ [{"tag-list":["auction-house" "vendors"],
+   "download-count":1077,
+   "game-track-list":["retail"],
+   "label":"$old!it",
+   "name":"$old-it",
+   "source":"wowinterface",
+   "source-id":21651,
+   "updated-date":"2012-09-20T05:32:00Z",
+   "url":"https://www.wowinterface.com/downloads/info21651"}]}

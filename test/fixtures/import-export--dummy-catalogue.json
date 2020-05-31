@@ -1,0 +1,27 @@
+{"spec":{"version":2},
+ "datestamp":"2020-02-20",
+ "total":2,
+ "addon-summary-list":
+ [ {
+  "created-date" : "2010-05-07T18:48:16Z",
+  "description" : "Does what no other addon does, slightly differently",
+  "tag-list" : [ "bags", "inventory" ],
+  "updated-date" : "2019-06-26T01:21:39Z",
+  "name" : "everyaddon",
+  "source" : "curseforge",
+  "source-id": 1,
+  "label" : "EveryAddon",
+  "download-count" : 3000000,
+  "url" : "https://www.curseforge.com/wow/addons/everyaddon"
+}, {
+  "created-date" : "2011-01-04T05:42:23Z",
+  "description" : "Does what every addon does, just better",
+  "tag-list" : [ "coords", "map", "minimap", "professions", "ui" ],
+  "updated-date" : "2019-07-03T07:11:47Z",
+  "name" : "everyotheraddon",
+  "source" : "curseforge",
+  "source-id": 2,
+  "label" : "Every Other Addon",
+  "download-count" : 5400000,
+  "url" : "https://www.curseforge.com/wow/addons/everyotheraddon"
+} ]}

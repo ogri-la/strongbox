@@ -4,16 +4,185 @@ this is my own scratchpad for keeping track of things. it gets truncated frequen
 
 see CHANGELOG.md for a more formal list of changes by release
 
----
+## 1.0.0 release
 
-No more features are planned for the `0.x.x` line.
+### done
 
-Work continues on the [strongbox branch](https://github.com/ogri-la/wowman/tree/strongbox)
+* rename wowman
+    - update readme
+        - mention name change prominently
+        - done
 
----
+* code refactor
+    - diagram state transitions
+        - my mental model has become fuzzy
+        - done, see strongbox-docs
+    - untangle nfo and toc files
+        - result of diagramming modules
+        - done
+    - rename references of 'uri' to 'url'
+        - these are all through the catalog
+        - done
+    - remove all mentions of a donation url, author name
+        - done
+    - remove 'alt-name'
+        - done
+    - rename any mentions of 'catalog' to 'catalogue'
+        - purely for consistency
+        - done
+
+* can addon-id be removed as a gui column?
+    - no.
+    - addon-id is actually "name"
+    - "name" is the value core.clj uses to update the 'unsteady addon' list that the gui watches to highlight rows
+    - "label" is actually masquerading as "name"
+    - won't 'fix'
+
+* catalogue updates
+    - move location of catalogs into user settings
+        - allow user to specify their own catalogs
+            - a url to a catalog that is downloaded and included while loading up the db
+            - different from the 'user catalog'
+        - done
+            - they can specify their own catalogs using the :source attribute
+            - their addon entries must still specify a supported :source
+                - it can be :curseforge, :wowinterface, :github, :tukui, :tukui-classic
+
+    - support catalog-less strongbox
+        - application should be able to work with no catalogues specified
+            - can't search for or install addons
+            - can't update an addon without a .nfo file
+            - we have a user-catalogue for github ... could it do double duty?
+                - expand the 'add github addon' so user can select source and add an id or just use an url
+                    - and then strongbox scrapes the data at given url? urg, back to webscraping
+        - done
+            - tacitly. it no longer falls over dead when there are no catalogues to choose from
+
+    - game track becomes a set of keywords
+        - not strings
+        - done
+
+    - normalise categories between addon hosts
+        - perhaps expand them into 'tags'?
+        - a lot of these categories are composite
+            - break each composite one down into a singular, normalise, have a unique set of tags
+
+    - remove 'updated' date
+        - should have been removed when updating catalogues was removed
+
+    - bumps spec version of catalogue to 2
+        - keep wowman-coercer but dispatch based off of spec version
+
+* remove backwards compatibility
+    - remove nfo-v1
+        - 'map?' just isn't good enough
+        - done
+
+* remember selected addon dir
+    - done
+
+* bug, test fixtures for user-config had their :catalog value renamed to :catalogue
+        - revert those changes
+        - add a step in the parsing that renames those values to 'catalogue'
+
+* database, investigate a datalog backed datastore
+    - https://clojure.github.io/clojure-contrib/doc/datalog.html
+    - https://github.com/tonsky/datascript
+    - crux is working out elsewhere
+    - I want addons loaded *quickly*
+    - I want to *query* addons *quickly*
+
+* spec clean up
+    * it's never been particularly clear in my head what some of those specs are
+    * I have a better understanding of their nature now
+        - as part of the diagramming, sketch out the fields to be captured
+
+* is catalogue being validated now that spec checking has been disabled?
+    - done
+
+* bug, "failed to read data "null" in file: .../etag-db.json"
+    - something I seem to have introduced unifying the load-json* fns
+        - it was the value-fn vs transform-map in the unified load-json-safely function
+    - done
+
+* catalogue updates
+    - publish a 'strongbox-catalogue' repo
+        - just like wowman-data, but for strongbox
+
+* migration
+    - rename .wowman.json files to .strongbox.json 
+    - move 'user-catalog.json' to 'user-catalgoue.json'
+
+### todo
+
+* rename wowman
+    - test on mac
+    - rename repository
+    - arch package
+        - add new shell script 'strongbox'
+    - update ticket template
+        - with command to run that uses the debug flag
+        - which files to upload
+
 
 ## todo bucket (no particular order)
 
+* test, can gui-diff and main/test be pushed back into the testing namespace and elided from release somehow?
+
+* http, revisit the http/expiry-offset-hours value
+    - also, revisit prune-http-cache
+
+* performance, check addons for updates immediately after loading
+    - if after we've read the nfo data and we have everything we need, check the addon for updates immediately
+        - don't wait for db loading and addon matching
+            - we already have a match!
+        - this might fit in with the greater-parallelism/queue based infrastructure
+
+* robustness, only download/update the catalogue *after* an existing catalogue has been confirmed
+    - github is down, wowman is erroring with a 500
+    - failure to download a catalogue shouldn't prevent addons from being displayed
+    - bundle a catalogue with the installation?
+        - load it as a resource with static-slurp, like we do with the sql?
+            - also compressed so it's tiny?
+        - behind the scenes we download and load the full-catalogue
+            - would this block reconciliation?
+                - perhaps if there are unmatched addons after reconciliation we then wait and try again ...?
+
+* game track list in catalogue
+    - can game-track-list be included from all other hosts?
+        - not just wowi?
+            - even wowi is broken though
+            - I've seen a reference to a v4 of their 'api' that should be investigated
+                - naming changes mostly so far
+            - I've also noticed switches in game tracks for some of their addons this week (2020-03)
+
+* EOL planning
+    - I'm not going away and neither is strongbox, but! *should* I or my free time disappear will strongbox continue being useful?
+        - what can I do to ensure it is the most useful if I just give up on it tomorrow?
+            - catalogues have been pushed into user config, so they can be swapped out if necessary
+                - more can be done around this to make catalogue generation more accessible and safe
+        - what can't I control?
+            - addon hosts
+                - our interface with them is their API or in wowi's case, their API and website
+        
+* code refactor
+    * simplify `install-addon` interface in core.clj
+        - we need to provide an installation directory which can be pulled from the application state
+    * core.clj is getting too large
+        - it's difficult to navigate and debug
+        - many tests are accumulating in core_test.clj
+
+* wowman-data, stop publishing a 'daily' release
+    - we have multiple catalogs now
+    - 0.10.0 uses the raw catalog files directly
+    - 0.9.2 was still using the daily release
+    - remove the 'daily' release after 0.11.0 is released
+    - this will break older releases but users who prefer older versions of the software shouldn't be stranded if the catalog goes away
+        - they should just be able to plug in a new location of the catalog
+        - unfortunately *these* users will be out of luck, but future users won't be
+    - I'll stop updating wowman-data when wowman is no longer being used
+* add dirname support to reconcilation and catalogue
+    - not sure which hosts support these
 * tukui and elvui can't be switched to classic
     - on classic track they show updates
         - elvui 1.82 => 1.211
@@ -32,28 +201,9 @@ Work continues on the [strongbox branch](https://github.com/ogri-la/wowman/tree/
 * wowinterface, multiple game tracks 
     - investigate just what is being downloaded when a classic version of a wowi addon is downloaded
     - see 'LagBar'
-* rename wowman
-    - rename repository
-    - update readme
-        - mention name change prominently
-    - update package
-        - add new shell script 'strongbox'
 * revisit aliases
     - use source and source-id now
     - maybe externalise the list 
-* can addon-id be removed as a gui column?
-* move location of catalogs into user settings
-    - allow user to specify their own catalogs
-        - a url to a catalog that is downloaded and included while loading up the db
-        - different from the 'user catalog'
-    - wowman-data, stop publishing a 'daily' release
-        - we have multiple catalogs now
-        - 0.10.0 uses the raw catalog files directly
-        - 0.9.2 was still using the daily release
-        - remove the 'daily' release after 0.11.0 is released
-        - this will break older releases but users who prefer older versions of the software shouldn't be stranded if the catalog goes away
-            - they should just be able to plug in a new location of the catalog
-            - unfortunately *these* users will be out of luck, but future users won't be
 * greater parallelism
     - internal job queue
     - replace log at bottom of screen with a list of jobs being processed and how far along they are
@@ -97,16 +247,11 @@ Work continues on the [strongbox branch](https://github.com/ogri-la/wowman/tree/
     - I don't mind my colours but not everybody may
     - my colours don't work very well on native lnf + dark themes:
         - https://github.com/ogri-la/wowman/issues/105
-
 * when curseforge api is down users get a wall of red error messages with very little useful information
     - see issue 91: https://github.com/ogri-la/wowman/issues/91
         - the error message has been improved but we still get a red wall of text
         - aggregate error messages?
 * new tab for dedicated log
-* simplify `install-addon` interface in core.clj
-    - we need to provide an installation directory which can be pulled from the application state
-* rename references of 'uri' to 'url'
-    - these are all through the catalog, so will have to wait
 * rename 'reinstall all' to 'reconcile'
     - steal from the best
     - make the reconcile automatic
@@ -133,9 +278,7 @@ Work continues on the [strongbox branch](https://github.com/ogri-la/wowman/tree/
 * database, compare current speed and code against loading addon category data serially
     - as opposed to in three blocks (categories, addons, category-addons). We might save some time and code
 * database, investigate prepared statements when inserting for improved speed
-* database, investigate a datalog backed datastore
-    - https://clojure.github.io/clojure-contrib/doc/datalog.html
-    - https://github.com/tonsky/datascript
+
 * export to markdown
     - I think I'd like a simple list like:
         * [addon name](https://source/path/to/addon)
@@ -151,10 +294,7 @@ Work continues on the [strongbox branch](https://github.com/ogri-la/wowman/tree/
         - he's not addressing tickets
         - it may have been simpler to use in 3.x.x but in 4.x.x it's gotten a bit archaic
         - I can't drop hostname without leaving pretty-printed stacktraces behind
-* catalog, normalise catagories between addons that overlap
-    - perhaps expand them into 'tags'? 
-    - a lot of these categories are composite
-        - break each composite one down into a singular, normalise, have a unique set of tags
+
 * investigate `.csv` as a human-readable but more compact representation
     - might be able to save a MB on extraneous syntax
     - might be able to speed up parsing and loading
@@ -233,6 +373,16 @@ Work continues on the [strongbox branch](https://github.com/ogri-la/wowman/tree/
 
 ## wontfix
 
+* remove backwards compatibility, wowman to strongbox
+    - there will be a migration of wowman data to strongbox data, or the data is discarded
+        - rename `test/fixtures/user-config-0.11.json` to `wowman--user-config ...`
+    - decided against this
+        - providing backward compatibility and testing against previous versions of data shapes gives us:
+            - robustness
+            - a reminder of what the state was like and what we've done previously to handle it
+            - seamless upgrades between versions for users
+                - they (including myself) shouldn't have to deal with bs 'technical' reasons why it used to work but not longer does
+                    - we're just not *that* special
 * windows support
     - windows is just the worst, most awful dystopian software I've ever seen and it hurts my soul every time I try to use it
     - I just plain hate it, it epitomises the very opposite of what I stand for and I refuse to work on it ever again

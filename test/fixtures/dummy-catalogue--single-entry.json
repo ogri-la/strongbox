@@ -1,0 +1,19 @@
+{
+  "spec" : {
+    "version" : 1
+  },
+  "datestamp" : "2019-10-03",
+  "updated-datestamp" : "2019-10-03",
+  "total" : 1,
+  "addon-summary-list" : [ {
+    "age" : "ancient",
+    "category-list" : [ "Graphic UI Mods" ],
+    "download-count" : 73560,
+    "game-track-list" : [ "retail" ],
+    "label" : "Every Addon",
+    "name" : "every-addon",
+    "source" : "wowinterface",
+    "source-id" : 666,
+    "updated-date" : "2016-12-13T08:35:00Z",
+    "url" : "https://www.wowinterface.com/downloads/info666"
+  }]}

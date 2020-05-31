@@ -684,5 +684,5 @@ If you modify this Program, or any covered work, by linking or combining it with
 * clojure.java-time
 * envvar
 * clj-http-fake
-* com.h2database/h2
-* seancorfield/next.jdbc
+* gui-diff
+* com.taoensso/tufte

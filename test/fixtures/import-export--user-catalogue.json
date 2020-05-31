@@ -1,0 +1,169 @@
+{
+  "spec" : {
+    "version" : 1
+  },
+  "datestamp" : "2019-11-21",
+  "updated-datestamp" : "2019-11-21",
+  "total" : 16,
+  "addon-summary-list" : [ {
+    "tag-list" : [ ],
+    "download-count" : 62,
+    "game-track-list" : [ "retail", "classic" ],
+    "label" : "AdvancedInterfaceOptions",
+    "name" : "advancedinterfaceoptions",
+    "source" : "github",
+    "source-id" : "Stanzilla/AdvancedInterfaceOptions",
+    "updated-date" : "2019-09-24T22:50:31Z",
+    "url" : "https://github.com/Stanzilla/AdvancedInterfaceOptions"
+  }, {
+    "tag-list" : [ ],
+    "download-count" : 3,
+    "game-track-list" : [ "retail" ],
+    "label" : "AzeritePowerWeights",
+    "name" : "azeritepowerweights",
+    "source" : "github",
+    "source-id" : "ahakola/AzeritePowerWeights",
+    "updated-date" : "2019-11-03T15:46:40Z",
+    "url" : "https://github.com/ahakola/AzeritePowerWeights"
+  }, {
+    "tag-list" : [ ],
+    "download-count" : 9,
+    "game-track-list" : [ "retail", "classic" ],
+    "label" : "Chinchilla",
+    "name" : "chinchilla",
+    "source" : "github",
+    "source-id" : "Ravendwyr/Chinchilla",
+    "updated-date" : "2019-10-19T15:07:07Z",
+    "url" : "https://github.com/Ravendwyr/Chinchilla"
+  }, {
+    "tag-list" : [ ],
+    "download-count" : 95367,
+    "game-track-list" : [ ],
+    "label" : "ClassicCastbars",
+    "name" : "classiccastbars",
+    "source" : "github",
+    "source-id" : "wardz/ClassicCastbars",
+    "updated-date" : "2019-11-19T21:00:54Z",
+    "url" : "https://github.com/wardz/ClassicCastbars"
+  }, {
+    "tag-list" : [ ],
+    "download-count" : 3448,
+    "game-track-list" : [ ],
+    "label" : "DBM-Classic",
+    "name" : "dbmclassic",
+    "source" : "github",
+    "source-id" : "DeadlyBossMods/DBM-Classic",
+    "updated-date" : "2019-11-19T15:40:24Z",
+    "url" : "https://github.com/DeadlyBossMods/DBM-Classic"
+  }, {
+    "tag-list" : [ ],
+    "download-count" : 9,
+    "game-track-list" : [ "classic" ],
+    "label" : "faction-friend",
+    "name" : "factionfriend",
+    "source" : "github",
+    "source-id" : "Dreamwalker-Collective/faction-friend",
+    "updated-date" : "2019-10-16T00:42:45Z",
+    "url" : "https://github.com/Dreamwalker-Collective/faction-friend"
+  }, {
+    "tag-list" : [ ],
+    "download-count" : 3,
+    "game-track-list" : [ "classic" ],
+    "label" : "ipop-bar",
+    "name" : "ipopbar",
+    "source" : "github",
+    "source-id" : "sylvanaar/ipop-bar",
+    "updated-date" : "2019-09-09T14:07:30Z",
+    "url" : "https://github.com/sylvanaar/ipop-bar"
+  }, {
+    "tag-list" : [ ],
+    "download-count" : 1,
+    "game-track-list" : [ "classic" ],
+    "label" : "LevelUpSpells",
+    "name" : "levelupspells",
+    "source" : "github",
+    "source-id" : "coolmodi/LevelUpSpells",
+    "updated-date" : "2019-10-21T09:27:08Z",
+    "url" : "https://github.com/coolmodi/LevelUpSpells"
+  }, {
+    "tag-list" : [ ],
+    "download-count" : 78082,
+    "game-track-list" : [ "classic" ],
+    "label" : "LunaUnitFrames",
+    "name" : "lunaunitframes",
+    "source" : "github",
+    "source-id" : "Aviana/LunaUnitFrames",
+    "updated-date" : "2019-10-31T14:53:01Z",
+    "url" : "https://github.com/Aviana/LunaUnitFrames"
+  }, {
+    "tag-list" : [ ],
+    "download-count" : 56,
+    "game-track-list" : [ "retail", "classic" ],
+    "label" : "prat-3-0",
+    "name" : "prat30",
+    "source" : "github",
+    "source-id" : "sylvanaar/prat-3-0",
+    "updated-date" : "2019-09-13T17:30:38Z",
+    "url" : "https://github.com/sylvanaar/prat-3-0"
+  }, {
+    "tag-list" : [ ],
+    "download-count" : 110,
+    "game-track-list" : [ ],
+    "label" : "RaidBrowser",
+    "name" : "raidbrowser",
+    "source" : "github",
+    "source-id" : "Ostoic/RaidBrowser",
+    "updated-date" : "2018-08-01T18:16:23Z",
+    "url" : "https://github.com/Ostoic/RaidBrowser"
+  }, {
+    "tag-list" : [ ],
+    "download-count" : 269,
+    "game-track-list" : [ ],
+    "label" : "RealUI",
+    "name" : "realui",
+    "source" : "github",
+    "source-id" : "RealUI/RealUI",
+    "updated-date" : "2019-10-04T21:57:00Z",
+    "url" : "https://github.com/RealUI/RealUI"
+  }, {
+    "tag-list" : [ ],
+    "download-count" : 17726,
+    "game-track-list" : [ "classic" ],
+    "label" : "RingMenu",
+    "name" : "ringmenu",
+    "source" : "github",
+    "source-id" : "jsb/RingMenu",
+    "updated-date" : "2019-10-06T12:18:47Z",
+    "url" : "https://github.com/jsb/RingMenu"
+  }, {
+    "tag-list" : [ ],
+    "download-count" : 133,
+    "game-track-list" : [ "retail" ],
+    "label" : "TellMeWhen",
+    "name" : "tellmewhen",
+    "source" : "github",
+    "source-id" : "ascott18/TellMeWhen",
+    "updated-date" : "2019-09-30T04:18:47Z",
+    "url" : "https://github.com/ascott18/TellMeWhen"
+  }, {
+    "tag-list" : [ ],
+    "download-count" : 5,
+    "game-track-list" : [ "retail", "classic" ],
+    "label" : "who-lib",
+    "name" : "wholib",
+    "source" : "github",
+    "source-id" : "sylvanaar/who-lib",
+    "updated-date" : "2019-08-27T23:23:36Z",
+    "url" : "https://github.com/sylvanaar/who-lib"
+  }, {
+    "tag-list" : [ ],
+    "download-count" : 19,
+    "game-track-list" : [ "retail", "classic" ],
+    "label" : "wow-instant-messenger",
+    "name" : "wowinstantmessenger",
+    "source" : "github",
+    "source-id" : "sylvanaar/wow-instant-messenger",
+    "updated-date" : "2019-10-26T22:23:13Z",
+    "url" : "https://github.com/sylvanaar/wow-instant-messenger"
+  } ]
+}
