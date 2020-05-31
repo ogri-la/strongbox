@@ -12,7 +12,8 @@ If you are a user of strongbox and you ever want to get in touch, please just [o
 
 `wowman` has been renamed to `strongbox` for the (`1.0.0`) release.
 
-Arch users will need to install a new package as updates to the `wowman` package will end with the `0.12.x` line.
+Arch users will need to install the [strongbox AUR package](https://aur.archlinux.org/packages/strongbox) as updates to 
+the `wowman` package will end with the `0.12.x` line.
 
 ## Audience
 
