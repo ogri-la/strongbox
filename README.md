@@ -6,13 +6,16 @@
 
 It supports addons hosted by Curseforge, wowinterface, Tukui and Github.
 
-If you are a user of wowman and you ever want to get in touch, please just [open an issue](https://github.com/ogri-la/wowman/issues) or [PM me on reddit](https://www.reddit.com/message/compose/?to=torkus-jr&subject=wowman)
+If you are a user of wowman and you ever want to get in touch, please just 
+[open an issue](https://github.com/ogri-la/wowman/issues) or 
+[PM me on reddit](https://www.reddit.com/message/compose/?to=torkus-jr&subject=wowman)
 
 ## Notice!
 
-`wowman` will be renamed `strongbox` in the next major release!
+`wowman` has been renamed `strongbox` and the `12.x` release line will only receive critical bug fixes for a short 
+period.
 
-You can follow my progress on the [strongbox branch](https://github.com/ogri-la/wowman/tree/strongbox).
+Please upgrade to `strongbox`.
 
 ## Audience
 
