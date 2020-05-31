@@ -52,7 +52,7 @@ Just for my own reference
 
 * download release sum file to /tmp
     - cat sumfile
-* update wowman-pkgbuild/PKGBUILD
+* update strongbox-pkgbuild/PKGBUILD
     - change 'pkgver'
     - change 'sha256sums'
 * run `makepkg --printsrcinfo > .SRCINFO`
