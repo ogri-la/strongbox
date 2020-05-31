@@ -14,6 +14,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## 1.0.0 - 2020-05-31
+
+This has been a large clean up and code analyis/refactor exercise.
+
+### Added
+
+* users can now specify their own catalogues
+* strongbox can now operate without catalogues
+    - it won't do much, but it won't crash and burn
+* last selected addon directory is now remembered between application restarts
+* migration tasks of wowman config and catalogue and nfo files to strongbox
+    - should be seamless 
+    - wowman configuration is left untouched but .wowman.json files can be removed from the gui
+* a 'delete .strongbox.json' action in the gui
+    - behaves the same as the 'delete .wowman.json' action
+* code profiling to key sections of the application I can turn on during development
+    - used in optimising performance
+    - disabled by default
+* a log file that is written when '--debug' is used to start the application
+    - intended to help hunt down user problems
+
+### Changed
+
+* 'wowman' changed to 'strongbox'
+* all usage of 'uri' changed to 'url'
+* all usage of 'catalog' changes to 'catalogue'
+* user-catalogue moved to the 'config' directory from the 'data' directory
+    - prevents user-catalogue being deleted with the 'clear catalogues' action
+* categories are now 'tags' with common categories unified across addon hosts
+* function speccing has been greatly cleaned up and is coherent and sane now
+* catalogues are now on specification version 2 (see ogri-la/strongbox-catalogue)
+    - version 1 catalogues (ogri-la/wowman-data) are still supported
+
+### Fixed
+
+* some performance problems, especially around loading catalogues
+
+### Removed
+
+* the relational database
+    - it has been replaced with a simple (albeit large) list of addons
+* last traces of a 'donation url' and 'author name' removed
+* 'alt-name' from catalogue items
+* 'updated date' from catalogue
+* support for nfo v1
+    - invalid nfo files are now deleted.
+* speccing from final build
+    - it is enabled during development and testing but otherwise disabled
+    - key inputs like catalogues and user config are still validated against their specs
+
 ## 0.12.4 - 2020-04-22
 
 ### Changed

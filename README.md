@@ -8,8 +8,6 @@ It supports addons hosted by Curseforge, wowinterface, Tukui and Github.
 
 If you are a user of strongbox and you ever want to get in touch, please just [open an issue](https://github.com/ogri-la/strongbox/issues) or [PM me on reddit](https://www.reddit.com/message/compose/?to=torkus-jr&subject=strongbox)
 
-`strongbox` was previously named `wowman`.
-
 ## Notice!
 
 `wowman` has been renamed to `strongbox` for the (`1.0.0`) release.
@@ -30,15 +28,15 @@ It does not work on Windows. Windows will never be supported.
 
 ## Installation
 
-1. [download the jar](https://github.com/ogri-la/strongbox/releases/download/0.12.4/wowman-0.12.4-standalone.jar) file
-2. run with `java -jar wowman-x.x.x-standalone.jar`
+1. [download the jar](https://github.com/ogri-la/strongbox/releases/download/1.0.0/strongbox-1.0.0-standalone.jar) file
+2. run with `java -jar strongbox-x.x.x-standalone.jar`
 
 ### Arch Linux users
 
-A PKGBUILD exists in the AUR [here](https://aur.archlinux.org/packages/wowman/) 
-with a mirror [here](https://github.com/ogri-la/wowman-pkgbuild/).
+A PKGBUILD exists in the AUR [here](https://aur.archlinux.org/packages/strongbox/) 
+with a mirror [here](https://github.com/ogri-la/strongbox-pkgbuild/).
 
-Once installed it's available from the command line as `wowman`.
+Once installed it's available from the command line as `strongbox`.
 
 ## Screenshots
 
