@@ -6,17 +6,12 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### todo
 
-* rename wowman
-    - create new arch AUR 'strongbox'
-        - identical to wowman except the usual
-        - new shell script 'strongbox'
-    - rename wowman in wowman-comrades
-    - update ticket template
-        - with command to run that uses the debug flag
-        - which files to upload
-
 ## todo bucket (no particular order)
 
+* update ticket template
+    - with command to run that uses the debug flag
+    - which files to upload
+* wowman-comrades, rename wowman to strongbox
 * wowman, add support for reading strongbox catalogues
 * wowman, remove wowman-data repository
 
