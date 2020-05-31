@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>ogri-la</groupId>
-  <artifactId>wowman</artifactId>
+  <artifactId>strongbox</artifactId>
   <packaging>jar</packaging>
-  <version>0.12.4</version>
-  <name>wowman</name>
+  <version>1.0.0</version>
+  <name>strongbox</name>
   <description>World Of Warcraft Addon Manager</description>
-  <url>https://github.com/ogri-la/wowman</url>
+  <url>https://github.com/ogri-la/strongbox</url>
   <licenses>
     <license>
       <name>GNU Affero General Public License (AGPL)</name>
@@ -14,7 +14,10 @@
     </license>
   </licenses>
   <scm>
-    <tag>4208f6dafe58b64589e4a8292c5041a562a081a5</tag>
+    <url>https://github.com/ogri-la/strongbox</url>
+    <connection>scm:git:git://github.com/ogri-la/strongbox.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/ogri-la/strongbox.git</developerConnection>
+    <tag>99175bec56129771d5cd1d3482cd876d5bcfe30c</tag>
   </scm>
   <build>
     <sourceDirectory>src</sourceDirectory>
@@ -62,7 +65,7 @@
     <dependency>
       <groupId>org.clojure</groupId>
       <artifactId>clojure</artifactId>
-      <version>1.9.0</version>
+      <version>1.10.1</version>
     </dependency>
     <dependency>
       <groupId>org.clojure</groupId>
@@ -72,17 +75,17 @@
     <dependency>
       <groupId>org.clojure</groupId>
       <artifactId>tools.cli</artifactId>
-      <version>0.4.2</version>
+      <version>1.0.194</version>
     </dependency>
     <dependency>
       <groupId>org.clojure</groupId>
       <artifactId>tools.namespace</artifactId>
-      <version>0.2.11</version>
+      <version>1.0.0</version>
     </dependency>
     <dependency>
       <groupId>org.clojure</groupId>
       <artifactId>data.json</artifactId>
-      <version>0.2.6</version>
+      <version>1.0.0</version>
     </dependency>
     <dependency>
       <groupId>orchestra</groupId>
@@ -102,7 +105,7 @@
     <dependency>
       <groupId>clj-http</groupId>
       <artifactId>clj-http</artifactId>
-      <version>3.10.0</version>
+      <version>3.10.1</version>
     </dependency>
     <dependency>
       <groupId>seesaw</groupId>
@@ -112,7 +115,7 @@
     <dependency>
       <groupId>clj-commons</groupId>
       <artifactId>fs</artifactId>
-      <version>1.5.0</version>
+      <version>1.5.2</version>
     </dependency>
     <dependency>
       <groupId>slugify</groupId>
@@ -127,7 +130,7 @@
     <dependency>
       <groupId>org.flatland</groupId>
       <artifactId>ordered</artifactId>
-      <version>1.5.7</version>
+      <version>1.5.9</version>
     </dependency>
     <dependency>
       <groupId>clojure.java-time</groupId>
@@ -140,19 +143,20 @@
       <version>1.1.0</version>
     </dependency>
     <dependency>
+      <groupId>gui-diff</groupId>
+      <artifactId>gui-diff</artifactId>
+      <version>0.6.7</version>
+    </dependency>
+    <dependency>
+      <groupId>com.taoensso</groupId>
+      <artifactId>tufte</artifactId>
+      <version>2.1.0</version>
+    </dependency>
+    <dependency>
       <groupId>clj-http-fake</groupId>
       <artifactId>clj-http-fake</artifactId>
       <version>1.0.3</version>
-    </dependency>
-    <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2</artifactId>
-      <version>1.4.199</version>
-    </dependency>
-    <dependency>
-      <groupId>seancorfield</groupId>
-      <artifactId>next.jdbc</artifactId>
-      <version>1.0.6</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 </project>

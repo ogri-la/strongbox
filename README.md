@@ -1,18 +1,18 @@
-# wowman, a World of Warcraft Addon Manager
+# strongbox, a World of Warcraft Addon Manager
 
-[![Build Status](https://travis-ci.org/ogri-la/wowman.svg?branch=master)](https://travis-ci.org/ogri-la/wowman)
+[![Build Status](https://travis-ci.org/ogri-la/strongbox.svg?branch=master)](https://travis-ci.org/ogri-la/strongbox)
 
-`wowman` is an **open source**, **advertisement free** and **privacy respecting** addon manager for World of Warcraft. 
+`strongbox` is an **open source**, **advertisement free** and **privacy respecting** addon manager for World of Warcraft. 
 
 It supports addons hosted by Curseforge, wowinterface, Tukui and Github.
 
-If you are a user of wowman and you ever want to get in touch, please just [open an issue](https://github.com/ogri-la/wowman/issues) or [PM me on reddit](https://www.reddit.com/message/compose/?to=torkus-jr&subject=wowman)
+If you are a user of strongbox and you ever want to get in touch, please just [open an issue](https://github.com/ogri-la/strongbox/issues) or [PM me on reddit](https://www.reddit.com/message/compose/?to=torkus-jr&subject=strongbox)
 
 ## Notice!
 
-`wowman` will be renamed `strongbox` in the next major release!
+`wowman` has been renamed to `strongbox` for the (`1.0.0`) release.
 
-You can follow my progress on the [strongbox branch](https://github.com/ogri-la/wowman/tree/strongbox).
+Arch users will need to install a new package as updates to the `wowman` package will end with the `0.12.x` line.
 
 ## Audience
 
@@ -28,15 +28,15 @@ It does not work on Windows. Windows will never be supported.
 
 ## Installation
 
-1. [download the jar](https://github.com/ogri-la/wowman/releases/download/0.12.4/wowman-0.12.4-standalone.jar) file
-2. run with `java -jar wowman-x.x.x-standalone.jar`
+1. [download the jar](https://github.com/ogri-la/strongbox/releases/download/1.0.0/strongbox-1.0.0-standalone.jar) file
+2. run with `java -jar strongbox-x.x.x-standalone.jar`
 
 ### Arch Linux users
 
-A PKGBUILD exists in the AUR [here](https://aur.archlinux.org/packages/wowman/) 
-with a mirror [here](https://github.com/ogri-la/wowman-pkgbuild/).
+A PKGBUILD exists in the AUR [here](https://aur.archlinux.org/packages/strongbox/) 
+with a mirror [here](https://github.com/ogri-la/strongbox-pkgbuild/).
 
-Once installed it's available from the command line as `wowman`.
+Once installed it's available from the command line as `strongbox`.
 
 ## Screenshots
 
@@ -47,7 +47,7 @@ Once installed it's available from the command line as `wowman`.
 
 ## Usage
 
-`wowman` works by matching your installed addons to a list of addons available online.
+`strongbox` works by matching your installed addons to a list of addons available online.
 
 Some addons match directly to those online but others require you to manually search and re-install them before that 
 match can be made.
@@ -71,7 +71,7 @@ Addons with new versions available will be highlighted.
 Under no circumstances whatsoever does this software:
 
 * deal with advertising or advertisers
-* collect, monitor or report upon your usage of `wowman` or your data
+* collect, monitor or report upon your usage of `strongbox` or your data
 * attempt to monitise you, the user, in any way
 
 This software also tries very hard to:
@@ -100,17 +100,17 @@ that it's my privilege to offer this small piece back.
 
 ## Notes
 
-User configuration is stored in `~/.config/wowman` unless run with the envvar `$XDG_CONFIG_HOME` set.
+User configuration is stored in `~/.config/strongbox` unless run with the envvar `$XDG_CONFIG_HOME` set.
 
-Temporary data is stored in `~/.local/share/wowman` unless run with the envvar `$XDG_DATA_HOME` set.
+Temporary data is stored in `~/.local/share/strongbox` unless run with the envvar `$XDG_DATA_HOME` set.
 
 Addon zip files are downloaded to your WoW `Addons` directory.
 
-A file called `.wowman.json` is created within newly installed or re-installed addons. This file maps specific 
+A file called `.strongbox.json` is created within newly installed or re-installed addons. This file maps specific 
 attributes between the addon host (like curseforge.com) and the addon as well as *across* addons, as some addons unzip 
 to multiple directories. It's a simple `txt` file in a structured format called `json`.
 
-Addon zip files, `.wowman.json` files, cached data and `WowMatrix.dat` files can all be removed from the `Cache` menu.
+Addon zip files, `.strongbox.json` files, cached data and `WowMatrix.dat` files can all be removed from the `Cache` menu.
 
 Addon `.zip` files that contain top-level files or top-level directories missing a `.toc` file **will not be installed**
 and the downloaded `.zip` file will be deleted immediately. This is a guard against poorly or maliciously constructed
@@ -125,19 +125,19 @@ This software interacts with the following remote hosts:
 * [www.tukui.org](https://www.tukui.org/api.php)
 * [api.github.com](https://developer.github.com/v3/repos/releases)
     - to download repository and release data for addons hosted on Github
-    - to download the latest `wowman` release data
-* [github.com/ogri-la/wowman-data](https://github.com/ogri-la/wowman-data), to download addon catalogues
+    - to download the latest `strongbox` release data
+* [github.com/ogri-la/strongbox-catalogue](https://github.com/ogri-la/strongbox-catalogue), to download addon catalogues
 
 These hosts *may* redirect requests.
 
-These interactions use a HTTP user agent header unique to `wowman` so that it may be identified easily.
+These interactions use a HTTP user agent header unique to `strongbox` so that it may be identified easily.
 
 ## Releases, bugs, questions, feedback, contributing
 
 Changes are recorded in the [CHANGELOG.md](CHANGELOG.md) file.
 
-All bugs/questions/feedback should go in [Github Issues](https://github.com/ogri-la/wowman/issues) or 
-via a Reddit [private message](https://www.reddit.com/message/compose/?to=torkus-jr&subject=wowman).
+All bugs/questions/feedback should go in [Github Issues](https://github.com/ogri-la/strongbox/issues) or 
+via a Reddit [private message](https://www.reddit.com/message/compose/?to=torkus-jr&subject=strongbox).
 
 All code contributions should take the form of a pull request with unit tests.  
 [The licence](LICENCE.txt) is quite strict and all code contributions are subject to it.

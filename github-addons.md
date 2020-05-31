@@ -1,4 +1,4 @@
-# examples of github addons supported by wowman
+# examples of github addons supported by strongbox
 
 ## single asset, classic, no toc file, 'classic' in asset name
 * https://github.com/wardz/ClassicCastbars

@@ -3,12 +3,12 @@ set -e
 
 lein clean
 # generates a file like:
-# ./target/wowman-1.1.1-standalone.jar
+# ./target/strongbox-1.1.1-standalone.jar
 lein uberjar
 (
     cd target
-    filepath=$(realpath wowman-*-standalone.jar | head -n 1)
+    filepath=$(realpath strongbox-*-standalone.jar | head -n 1)
     filename=$(basename "$filepath")
-    sha256sum wowman-*-standalone.jar > "$filename.sha256"
+    sha256sum strongbox-*-standalone.jar > "$filename.sha256"
     echo "Created $filepath.sha256"
 )

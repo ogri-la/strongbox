@@ -8,7 +8,7 @@ jdk:
 services:
   - xvfb
 
-script: ./test.sh
+script: ./run-tests.sh
 
 # https://github.com/travis-ci/travis-ci/issues/3897
 #branches:
@@ -31,8 +31,8 @@ jobs:
                 api_key: $GITHUB_TOKEN
                 file_glob: true
                 file: 
-                    - "target/wowman-*-standalone.jar" # target/wowman-1.1.1-standalone.jar
-                    - "target/wowman-*-standalone.jar.sha256" # target/wowman-1.1.1-standalone.jar.sha256
+                    - "target/strongbox-*-standalone.jar" # target/strongbox-1.1.1-standalone.jar
+                    - "target/strongbox-*-standalone.jar.sha256" # target/strongbox-1.1.1-standalone.jar.sha256
                 skip_cleanup: true
                 # redundant if "if: tag is present" ?
                 on:
