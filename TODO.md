@@ -13,6 +13,9 @@ see CHANGELOG.md for a more formal list of changes by release
     - which files to upload
 * wowman-comrades, rename wowman to strongbox
 * wowman-comrades, shift asterisk description out of strongbox README
+* README, add caveat against screenshots
+    - those dark theme screenshots are only available on gtk2+ environments
+        - MATE and cinnamon
 * wowman, add support for reading strongbox catalogues
 * game track list in catalogue
     - can game-track-list be included from all other hosts?
