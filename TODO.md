@@ -6,14 +6,43 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ### todo
 
-## todo bucket (no particular order)
-
+* latest release gui bug
+    - add fix and tests to strongbox
 * update ticket template
     - with command to run that uses the debug flag
     - which files to upload
 * wowman-comrades, rename wowman to strongbox
+* wowman-comrades, shift asterisk description out of strongbox README
 * wowman, add support for reading strongbox catalogues
+* game track list in catalogue
+    - can game-track-list be included from all other hosts?
+        - not just wowi?
+            - even wowi is broken though
+            - I've seen a reference to a v4 of their 'api' that should be investigated
+                - naming changes mostly so far
+            - I've also noticed switches in game tracks for some of their addons this week (2020-03)
+        - tukui might benefit from this
+            - it might even be a fix for this bug: https://github.com/ogri-la/strongbox/issues/143
+* tukui and elvui can't be switched to classic
+    - on classic track they show updates
+        - elvui 1.82 => 1.211
+        - tukui 4.42 => 1.321
+    - but updating them doesn't alter their reported versions
+        - the 'source' for these two are 'tukui-classic', the others are just 'tukui'
+    - problem seems to be in the :version and :installed-version attributes
+        - after refresh, the :version attribute is correct but :installed-version is still incorrect
+    - I have addons masking other addons!
+        - ElvUI_MerathilisUI/ was masking Tukui
+        - ElvUI_CodeNameBlaze/ was masking Elvui
+    - the addons were being updated, but were being mis-matched during the database search because of shared IDs ...?
+        - ids are 1 and 2
+        - I thought these were negative? or I made them negative?
+        - anyway
+
+## todo bucket (no particular order)
+
 * wowman, remove wowman-data repository
+    - eh, this won't be happening any time soon
 
 * test, can gui-diff and main/test be pushed back into the testing namespace and elided from release somehow?
 
@@ -36,14 +65,6 @@ see CHANGELOG.md for a more formal list of changes by release
             - would this block reconciliation?
                 - perhaps if there are unmatched addons after reconciliation we then wait and try again ...?
 
-* game track list in catalogue
-    - can game-track-list be included from all other hosts?
-        - not just wowi?
-            - even wowi is broken though
-            - I've seen a reference to a v4 of their 'api' that should be investigated
-                - naming changes mostly so far
-            - I've also noticed switches in game tracks for some of their addons this week (2020-03)
-
 * EOL planning
     - I'm not going away and neither is strongbox, but! *should* I or my free time disappear will strongbox continue being useful?
         - what can I do to ensure it is the most useful if I just give up on it tomorrow?
@@ -52,7 +73,7 @@ see CHANGELOG.md for a more formal list of changes by release
         - what can't I control?
             - addon hosts
                 - our interface with them is their API or in wowi's case, their API and website
-        
+
 * code refactor
     * simplify `install-addon` interface in core.clj
         - we need to provide an installation directory which can be pulled from the application state
@@ -71,27 +92,12 @@ see CHANGELOG.md for a more formal list of changes by release
     - I'll stop updating wowman-data when wowman is no longer being used
 * add dirname support to reconcilation and catalogue
     - not sure which hosts support these
-* tukui and elvui can't be switched to classic
-    - on classic track they show updates
-        - elvui 1.82 => 1.211
-        - tukui 4.42 => 1.321
-    - but updating them doesn't alter their reported versions
-        - the 'source' for these two are 'tukui-classic', the others are just 'tukui'
-    - problem seems to be in the :version and :installed-version attributes
-        - after refresh, the :version attribute is correct but :installed-version is still incorrect
-    - I have addons masking other addons!
-        - ElvUI_MerathilisUI/ was masking Tukui
-        - ElvUI_CodeNameBlaze/ was masking Elvui
-    - the addons were being updated, but were being mis-matched during the database search because of shared IDs ...?
-        - ids are 1 and 2
-        - I thought these were negative? or I made them negative?
-        - anyway
 * wowinterface, multiple game tracks 
     - investigate just what is being downloaded when a classic version of a wowi addon is downloaded
     - see 'LagBar'
 * revisit aliases
     - use source and source-id now
-    - maybe externalise the list 
+    - maybe externalise the list
 * greater parallelism
     - internal job queue
     - replace log at bottom of screen with a list of jobs being processed and how far along they are
