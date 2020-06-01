@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## 0.12.5 - 2020-06-01
+
+### Fixed
+
+* fixed bug that crashes GUI when the next upgrade is available.
+
 ## 0.12.4 - 2020-04-22
 
 ### Changed

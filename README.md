@@ -31,7 +31,7 @@ It does not work on Windows. Windows will never be supported.
 
 ## Installation
 
-1. [download the jar](https://github.com/ogri-la/wowman/releases/download/0.12.4/wowman-0.12.4-standalone.jar) file
+1. [download the jar](https://github.com/ogri-la/wowman/releases/download/0.12.5/wowman-0.12.5-standalone.jar) file
 2. run with `java -jar wowman-x.x.x-standalone.jar`
 
 ### Arch Linux users
