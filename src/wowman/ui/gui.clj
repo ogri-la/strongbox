@@ -373,7 +373,7 @@
                                (handler #(browse-to "https://github.com/ogri-la/wowman/releases")))
 
         items (if-not (core/latest-wowman-version?)
-                (into items [update-clicker])
+                (conj items [update-clicker])
                 items)]
 
     (mig/mig-panel
