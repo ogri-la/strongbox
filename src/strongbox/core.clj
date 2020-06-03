@@ -905,7 +905,7 @@
   []
   (binding [http/*cache* (cache)]
     (let [message "downloading strongbox version data"
-          url "https://api.github.com/repos/ogri-la/wowman/releases/latest"
+          url "https://api.github.com/repos/ogri-la/strongbox/releases/latest"
           resp (utils/from-json (http/download url message))]
       (-> resp :tag_name))))
 
