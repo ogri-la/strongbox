@@ -26,7 +26,7 @@
       (is (nil? (gui/inspect (seesaw.core/vertical-panel)))))))
 
 (deftest gui-update-available-button
-  (testing "the 'new release' button is displayed when an update is available"
+  (testing "the 'update available' button is displayed when a new update is available"
     (let [fake-routes {"https://api.github.com/repos/ogri-la/strongbox/releases/latest"
                        {:get (fn [req] {:status 200 :body "{\"tag_name\": \"9.99.999\"}"})}}]
       (with-fake-routes-in-isolation fake-routes

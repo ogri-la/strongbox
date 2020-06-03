@@ -74,7 +74,3 @@
 (defmacro with-running-app
   [& form]
   `(with-running-app+opts {:ui :cli} ~@form))
-
-;; usage:
-;; (:require [strongbox.helper :as helper])
-;; (use-fixtures :each helper/fixture-tempcwd)
