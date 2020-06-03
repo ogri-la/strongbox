@@ -756,7 +756,7 @@
           fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                        {:get (fn [req] {:status 500 :host "raw.githubusercontent.com" :reason-phrase "500 Server Error"})}}
 
-          expected ["downloading catalogue 'Short (default)'"
+          expected ["downloading catalogue: short"
                     "failed to download file 'https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json': 500 Server Error (HTTP 500)"]]
       (with-fake-routes-in-isolation fake-routes
         (with-running-app

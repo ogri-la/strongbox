@@ -575,7 +575,7 @@
   []
   (if-let [addon-dir (selected-addon-dir)]
     (let [addon-list (-load-installed-addons addon-dir)]
-      (info "(re)loading installed addons:" addon-dir)
+      (info "loading installed addons:" addon-dir)
       (update-installed-addon-list! addon-list))
 
     ;; otherwise, ensure list of installed addons is cleared
@@ -626,7 +626,7 @@
   (binding [http/*cache* (cache)]
     (let [remote-catalogue (:source catalogue-location)
           local-catalogue (catalogue-local-path catalogue-location)
-          message (format "downloading catalogue '%s'" (:label catalogue-location))
+          message (format "downloading catalogue: %s" (name (:name catalogue-location)))
           resp (http/download-file remote-catalogue local-catalogue message)]
       (when-not (http/http-error? resp)
         resp))))
@@ -682,7 +682,7 @@
    (when (selected-addon-dir) ;; skip matching if no addon dir selected
      (match-installed-addons-with-catalogue (get-state :db) (get-state :installed-addon-list))))
   ([database :addon/summary-list, installed-addon-list :addon/toc-list]
-   (info "matching installed addons to catalogue")
+   (info (format "matching %s addons to catalogue" (count installed-addon-list)))
    (let [match-results (db/-db-match-installed-addons-with-catalogue (get-state :db) installed-addon-list)
          [matched unmatched] (utils/split-filter :matched? match-results)
 
@@ -701,7 +701,7 @@
 
      (when-not (empty? unmatched)
        (warn "you need to manually search for them and then re-install them")
-       (warn (format "failed to find %s installed addons in the '%s' catalogue: %s"
+       (warn (format "failed to find %s addons in the '%s' catalogue: %s"
                      (count unmatched)
                      (name (get-state :cfg :selected-catalogue))
                      (clojure.string/join ", " unmatched-names))))
@@ -736,7 +736,7 @@
   []
   (when-let [catalogue-location (current-catalogue)]
     (let [catalogue-path (catalogue-local-path catalogue-location)
-          _ (info (format "loading catalogue '%s'" (name (:name catalogue-location))))
+          _ (info "loading catalogue:" (name (:name catalogue-location)))
 
           ;; download from remote and try again when json can't be read
           bad-json-file-handler
@@ -808,8 +808,11 @@
   []
   (when (selected-addon-dir)
     (info "checking for updates")
-    (update-installed-addon-list! (mapv check-for-update (get-state :installed-addon-list)))
-    (info "done checking for updates")))
+    (let [improved-addon-list (mapv check-for-update (get-state :installed-addon-list))
+          num-matched (->> improved-addon-list (filterv :matched?) count)
+          num-updates (->> improved-addon-list (filterv :update?) count)]
+      (update-installed-addon-list! improved-addon-list)
+      (info (format "%s addons checked, %s updates available" num-matched num-updates)))))
 
 ;; ui interface
 
@@ -1070,11 +1073,16 @@
   (let [install-dir (selected-addon-dir)
         has-nfo-file? (partial nfo/has-nfo-file? install-dir)
         has-valid-nfo-file? (partial nfo/has-valid-nfo-file? install-dir)
-        upgrade-nfo (partial -upgrade-nfo install-dir)]
+        upgrade-nfo (partial -upgrade-nfo install-dir)
+        upgrade-msg (fn [addon-list]
+                      (when-not (empty? addon-list)
+                        (info "upgrading nfo files"))
+                      addon-list)]
     (->> (get-state)
          :installed-addon-list
          (filter has-nfo-file?) ;; only upgrade addons that have nfo files
          (remove has-valid-nfo-file?) ;; skip good nfo files
+         upgrade-msg
          (mapv upgrade-nfo)))
   nil)
 
@@ -1090,14 +1098,14 @@
   (profile
    {:when (get-state :profile?)}
 
-   ;; downloads the big long list of addon information stored on github
-   (download-current-catalogue)
-
    ;; rename any occurances of `.wowman.json` to `.strongbox.json`
    (migrate-nfo-files)
 
    ;; parse toc files in install-dir. do this first so we see *something* while catalogue downloads (next)
    (load-installed-addons)
+
+   ;; downloads the big long list of addon information stored on github
+   (download-current-catalogue)
 
    ;; load the contents of the catalogue into the database
    (p :p2/db (db-load-catalogue))
@@ -1116,6 +1124,7 @@
 
    ;; seems like a good place to preserve the etag-db
    (save-settings)
+
    nil))
 
 (defn-spec -install-update-these nil?
