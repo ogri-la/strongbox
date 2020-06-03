@@ -4,18 +4,22 @@ this is my own scratchpad for keeping track of things. it gets truncated frequen
 
 see CHANGELOG.md for a more formal list of changes by release
 
-### todo
+## done
+
+* wowman-comrades, rename wowman to strongbox
+    - done
+* README, add caveat against screenshots
+    - those dark theme screenshots are only available on gtk2+ environments
+        - MATE and cinnamon
+
+## todo
 
 * latest release gui bug
     - add fix and tests to strongbox
 * update ticket template
     - with command to run that uses the debug flag
     - which files to upload
-* wowman-comrades, rename wowman to strongbox
 * wowman-comrades, shift asterisk description out of strongbox README
-* README, add caveat against screenshots
-    - those dark theme screenshots are only available on gtk2+ environments
-        - MATE and cinnamon
 * wowman, add support for reading strongbox catalogues
 * game track list in catalogue
     - can game-track-list be included from all other hosts?
