@@ -46,6 +46,9 @@ Once installed it's available from the command line as `strongbox`.
 [![wowman version 0.11.0](./screenshots/screenshot-0.11.0-dark-installed-thumbnail.jpg)](./screenshots/screenshot-0.11.0-dark-installed.png?raw=true) 
 [![wowman version 0.11.0](./screenshots/screenshot-0.11.0-dark-search-thumbnail.jpg)](./screenshots/screenshot-0.11.0-dark-search.png?raw=true) 
 
+*(dark mode only available in GTK+ 2 environments like [MATE](https://mate-desktop.org/) and 
+[Cinnamon](https://en.wikipedia.org/wiki/Cinnamon_(desktop_environment)))*
+
 ## Usage
 
 `strongbox` works by matching your installed addons to a list of addons available online.
