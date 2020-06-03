@@ -1,10 +1,12 @@
 (ns strongbox.gui-test
   (:require
+   [clj-http.fake :refer [with-fake-routes-in-isolation]]
    [clojure.test :refer [deftest testing is use-fixtures]]
+   [seesaw.core :as ss]
    [strongbox.ui.gui :as gui]
    [strongbox
     [main :as main]
-    [test-helper :as helper :refer [fixture-path]]]
+    [test-helper :as helper :refer [fixture-path with-running-app with-running-app+opts]]]
   ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    ))
 
@@ -12,25 +14,28 @@
 
 (deftest gui-init
   (testing "the gui can be started and stopped"
-    (try
-      (main/start {:ui :gui})
-      (is (gui/select-ui :#root))
-      (finally
-        (main/stop))))
+    (with-running-app+opts {:ui :gui}
+      (is (gui/select-ui :#root))))
 
-  (testing "attempting to select bits of the gui when not the app is started but the gui isn't causes a runtime error"
-    (try
-      (main/start {:ui :cli})
-      (is (thrown? RuntimeException (gui/select-ui :#root)))
-      (finally
-        (main/stop))))
+  (testing "attempting to select components of the gui when the app is started but the gui isn't causes a runtime error"
+    (with-running-app
+      (is (thrown? RuntimeException (gui/select-ui :#root)))))
 
-  (testing "gui debug tools don't require an initialised app in order to be accessed"
+  (testing "coverage bump. gui debug tools don't require an initialised app in order to be accessed"
     (with-out-str ;; hide the debug output
       (is (nil? (gui/inspect (seesaw.core/vertical-panel)))))))
 
+(deftest gui-update-available-button
+  (testing "the 'update available' button is displayed when a new update is available"
+    (let [fake-routes {"https://api.github.com/repos/ogri-la/strongbox/releases/latest"
+                       {:get (fn [req] {:status 200 :body "{\"tag_name\": \"9.99.999\"}"})}}]
+      (with-fake-routes-in-isolation fake-routes
+        (with-running-app+opts {:ui :gui}
+          (let [btn (gui/select-ui :#update-available-btn)]
+            (is (= (ss/text btn) "Update Available: 9.99.999"))))))))
+
 (deftest gui-stateless-calls
-  (testing "shameless coverage bump for all the stateless parts in gui"
+  (testing "coverage bump for all the stateless parts in gui"
     (is (= nil (gui/donothing "event object")))
     (is (= nil ((gui/handler (constantly :foo) (constantly :bar)) "event object")))))
 

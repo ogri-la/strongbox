@@ -11,11 +11,11 @@ see CHANGELOG.md for a more formal list of changes by release
 * README, add caveat against screenshots
     - those dark theme screenshots are only available on gtk2+ environments
         - MATE and cinnamon
+* latest release gui bug
+    - add fix and tests to strongbox
 
 ## todo
 
-* latest release gui bug
-    - add fix and tests to strongbox
 * update ticket template
     - with command to run that uses the debug flag
     - which files to upload

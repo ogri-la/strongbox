@@ -61,8 +61,9 @@
    :content body})
 
 (defn button
-  [label onclick]
-  (ss/button :id (-> label slugify (str "-btn") keyword) ;; ":refresh-btn", ":update-all-btn"
+  [label onclick & [button-id]]
+  (ss/button :id (or button-id
+                     (-> label slugify (str "-btn") keyword)) ;; ":refresh-btn", ":update-all-btn"
              :text label
              :listen [:action onclick]))
 
@@ -369,10 +370,11 @@
                [wow-game-track]]
 
         update-clicker (button (str "Update Available: " (core/latest-strongbox-release))
-                               (handler #(browse-to "https://github.com/ogri-la/strongbox/releases")))
+                               (handler #(browse-to "https://github.com/ogri-la/strongbox/releases"))
+                               :update-available-btn)
 
         items (if-not (core/latest-strongbox-version?)
-                (into items [update-clicker])
+                (conj items [update-clicker])
                 items)]
 
     (mig/mig-panel

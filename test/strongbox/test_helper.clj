@@ -47,7 +47,7 @@
                      {:get (fn [req] {:status 200 :body "{}"})}
 
                      ;; latest strongbox version
-                     "https://api.github.com/repos/ogri-la/wowman/releases/latest"
+                     "https://api.github.com/repos/ogri-la/strongbox/releases/latest"
                      {:get (fn [req] {:status 200 :body "{\"tag_name\": \"0.0.0\"}"})}}]
     (try
       (debug "stopping application if it hasn't already been stopped")
@@ -63,14 +63,14 @@
         (debug "destroying temp working directory" temp-dir-path) ;; "with contents" (vec (file-seq fs/*cwd*)))
         (fs/delete-dir temp-dir-path)))))
 
-(defmacro with-running-app
-  [& form]
+(defmacro with-running-app+opts
+  [opts & form]
   `(try
-     (main/start {:ui :cli})
+     (main/start (merge {:ui :cli} ~opts))
      ~@form
      (finally
        (main/stop))))
 
-;; usage:
-;; (:require [strongbox.helper :as helper])
-;; (use-fixtures :each helper/fixture-tempcwd)
+(defmacro with-running-app
+  [& form]
+  `(with-running-app+opts {:ui :cli} ~@form))
