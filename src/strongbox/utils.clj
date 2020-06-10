@@ -233,9 +233,9 @@
 
 (defn-spec safe-subs (s/nilable string?)
   "similar to `subs` but can handle `nil` input and a `max` value larger than (or less than) length of given string `x`."
-  [x (s/nilable string?), max int?]
+  [x (s/nilable string?), maxval int?]
   (when x
-    (subs x 0 (min (count x) (if (neg? max) 0 max)))))
+    (subs x 0 (min (count x) (if (neg? maxval) 0 maxval)))))
 
 (defn in?
   ([needle haystack]
@@ -352,7 +352,7 @@
 
 (defn-spec to-int (s/or :ok int? :error nil?)
   [x any?]
-  (try (Integer. x)
+  (try (Integer/valueOf x)
        (catch NumberFormatException nfe
          nil)))
 
@@ -458,14 +458,12 @@
 
 (defn -semver-comp
   [a-bits b-bits]
-  (let [to-int (fn [x]
-                 (try
-                   (some-> x first Integer.)
-                   (catch NumberFormatException nfe
-                     ;; try again, this time ignore everything after any hyphen.
-                     ;; if it's genuine bollocks we'll raise another exception
-                     (some-> x first (clojure.string/split #"-") first Integer.))))
-        result (compare (to-int a-bits) (to-int b-bits))
+  (let [find-int (fn [x]
+                   (or (some-> x first to-int)
+                      ;; try again, this time ignore everything after any hyphen.
+                      ;; if it's genuine bollocks we'll raise another exception
+                       (some-> x first (clojure.string/split #"-") first to-int)))
+        result (compare (find-int a-bits) (find-int b-bits))
         more? (not (empty? (rest b-bits)))]
     (if (= result 0)
       (if more?

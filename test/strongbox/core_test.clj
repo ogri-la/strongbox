@@ -128,14 +128,14 @@
         (is (some #{"dir" "file" "url"} (clojure.string/split (name key) #"\-")))))
 
     (testing "all paths to files and directories are absolute"
-      (let [files+dirs (filter (fn [[k v]] (or (ends-with? k "-dir")
+      (let [files+dirs (filter (fn [[k _]] (or (ends-with? k "-dir")
                                                (ends-with? k "-file")))
                                (core/paths))]
         (doseq [[key path] files+dirs]
           (is (-> path (starts-with? "/")) (format "path %s is not absolute: %s" key path)))))
 
     (testing "all remote paths are using https"
-      (let [remote-paths (filter (fn [[k v]] (ends-with? k "-url")) (core/paths))]
+      (let [remote-paths (filter (fn [[k _]] (ends-with? k "-url")) (core/paths))]
         (doseq [[key path] remote-paths]
           (is (-> path (starts-with? "https://")) (format "remote path %s is not using HTTPS: %s" key path))))))
 

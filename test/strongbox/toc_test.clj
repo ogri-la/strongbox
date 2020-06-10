@@ -2,10 +2,9 @@
   (:require
    [clojure.test :refer [deftest testing is use-fixtures]]
    [strongbox
-    [utils :as utils]
+    [utils :as utils :refer [join]]
     [toc :as toc]
     [test-helper :as helper]]
-   [strongbox.utils :refer [join]]
    [me.raynes.fs :as fs]))
 
 (use-fixtures :each helper/fixture-tempcwd)

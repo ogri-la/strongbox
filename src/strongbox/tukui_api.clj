@@ -58,12 +58,12 @@
         category-list (if-let [cat (:category ti)] [cat] [])
         addon-summary
         {:source (if classic? "tukui-classic" "tukui")
-         :source-id (-> ti :id Integer.)
+         :source-id (-> ti :id Integer/valueOf)
 
          ;; 2020-03: disabled in favour of :tag-list
          ;;:category-list category-list
          :tag-list (tags/category-list-to-tag-list "tukui" category-list)
-         :download-count (-> ti :downloads Integer.)
+         :download-count (-> ti :downloads Integer/valueOf)
          :game-track-list [(if classic? :classic :retail)]
          :label (:name ti)
          :name (slugify (:name ti))
