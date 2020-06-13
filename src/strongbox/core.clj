@@ -672,42 +672,6 @@
     (catalogue/write-catalogue new-user-catalogue user-catalogue-path))
   nil)
 
-;;
-
-(defn-spec match-installed-addons-with-catalogue nil?
-  "when we have a list of installed addons as well as the addon list,
-   merge what we can into ::specs/addon-toc records and update state.
-   any installed addon not found in :addon-idx has a mapping problem"
-  ([]
-   (when (selected-addon-dir) ;; skip matching if no addon dir selected
-     (match-installed-addons-with-catalogue (get-state :db) (get-state :installed-addon-list))))
-  ([database :addon/summary-list, installed-addon-list :addon/toc-list]
-   (info (format "matching %s addons to catalogue" (count installed-addon-list)))
-   (let [match-results (db/-db-match-installed-addons-with-catalogue (get-state :db) installed-addon-list)
-         [matched unmatched] (utils/split-filter :matched? match-results)
-
-         ;; for those that *did* match, merge the installed addon data together with the catalogue data
-         matched (mapv #(moosh-addons (:installed-addon %) (:catalogue-match %)) matched)
-         ;; and then make them a single list of addons again
-         expanded-installed-addon-list (into matched unmatched)
-
-         ;; todo: metrics gathering is good, but this is a little adhoc.
-         ;; some metrics we'll emit for the user
-         [num-installed num-matched] [(count installed-addon-list) (count matched)]
-         unmatched-names (set (map :name unmatched))]
-
-     (when-not (= num-installed num-matched)
-       (info "num installed" num-installed ", num matched" num-matched))
-
-     (when-not (empty? unmatched)
-       (warn "you need to manually search for them and then re-install them")
-       (warn (format "failed to find %s addons in the '%s' catalogue: %s"
-                     (count unmatched)
-                     (name (get-state :cfg :selected-catalogue))
-                     (clojure.string/join ", " unmatched-names))))
-
-     (update-installed-addon-list! expanded-installed-addon-list))))
-
 ;; catalogue db handling
 
 (defn query-db
@@ -717,7 +681,7 @@
     (db/stored-query db query-kw arg-list)))
 
 (defn db-catalogue-loaded?
-  "returns `true` if database if not `nil`"
+  "returns `true` if database is not `nil`"
   []
   (-> (get-state :db) nil? not))
 
@@ -756,7 +720,7 @@
       final-catalogue)))
 
 (defn-spec db-load-catalogue nil?
-  "loads the currently selected catalgoue into the database if hasn't already been loaded.
+  "loads the currently selected catalogue into the database, but only if we have a catalogue and it hasn't already been loaded.
   handles bad/invalid catalogues and merging the user catalogue"
   []
   (if (and (not (db-catalogue-loaded?))
@@ -768,6 +732,44 @@
                   (db/put-many [] (:addon-summary-list final-catalogue))))))
     (debug "skipping db load. already loaded or no catalogue selected."))
   nil)
+
+(defn-spec match-installed-addons-with-catalogue nil?
+  "when we have a list of installed addons as well as the addon list,
+   merge what we can into ::specs/addon-toc records and update state.
+   any installed addon not found in :addon-idx has a mapping problem"
+  ([]
+   ;; skip matching if no addon dir selected or db not loaded (no db or invalid db)
+   (when (and (db-catalogue-loaded?)
+              (selected-addon-dir))
+     (match-installed-addons-with-catalogue (get-state :db) (get-state :installed-addon-list))))
+  ([database :addon/summary-list, installed-addon-list :addon/toc-list]
+   (info (format "matching %s addons to catalogue" (count installed-addon-list)))
+   (let [match-results (db/-db-match-installed-addons-with-catalogue (get-state :db) installed-addon-list)
+         [matched unmatched] (utils/split-filter :matched? match-results)
+
+         ;; for those that *did* match, merge the installed addon data together with the catalogue data
+         matched (mapv #(moosh-addons (:installed-addon %) (:catalogue-match %)) matched)
+         ;; and then make them a single list of addons again
+         expanded-installed-addon-list (into matched unmatched)
+
+         ;; todo: metrics gathering is good, but this is a little adhoc.
+         ;; some metrics we'll emit for the user
+         [num-installed num-matched] [(count installed-addon-list) (count matched)]
+         unmatched-names (set (map :name unmatched))]
+
+     (when-not (= num-installed num-matched)
+       (info "num installed" num-installed ", num matched" num-matched))
+
+     (when-not (empty? unmatched)
+       (warn "you need to manually search for them and then re-install them")
+       (warn (format "failed to find %s addons in the '%s' catalogue: %s"
+                     (count unmatched)
+                     (name (get-state :cfg :selected-catalogue))
+                     (clojure.string/join ", " unmatched-names))))
+
+     (update-installed-addon-list! expanded-installed-addon-list))))
+
+;;
 
 (defn-spec refresh-user-catalogue nil?
   "re-fetch each item in user catalogue using the URI and replace old entry with any updated details"
@@ -1238,15 +1240,15 @@
 ;; init
 
 (defn watch-for-addon-dir-change
-  "when the addon directory changes, the list of installed addons should be re-read"
+  "when the current addon directory changes, the list of installed addons should be re-read"
   []
-  (let [state-atm state
-        reset-state-fn (fn [state]
-                         ;; TODO: revisit this
-                         ;; remove :cfg because it's controlled by user
-                         (let [default-state (dissoc state :cfg)]
-                           (swap! state-atm merge default-state)
-                           (refresh)))]
+  (let [reset-state-fn (fn [new-state]
+                         (refresh)
+                         ;; 2020-06: I can't figure out why I was doing this
+                         ;;(let [default-state (dissoc new-state :cfg)]
+                         ;;  (swap! state merge default-state)
+                         ;;  (refresh)))
+                         )]
     (state-bind [:cfg :selected-addon-dir] reset-state-fn)))
 
 (defn watch-for-catalogue-change

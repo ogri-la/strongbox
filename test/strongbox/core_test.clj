@@ -469,7 +469,7 @@
 
 ;; todo: install classic addon into retail game track
 
-(deftest db-load-catalog
+(deftest db-load-catalogue
   (testing "very long descriptions are truncated"
     (let [addon-with-long-description
           {:label "EveryAddon",
@@ -849,7 +849,7 @@
         (is (= expected (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))
 
 (deftest add+install-user-addon!
-  (testing "user addon is successfully addon to the user catalogue from just a github url"
+  (testing "user addon is successfully added to the user catalogue from just a github url"
     (let [every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
 
           fake-routes {"https://api.github.com/repos/Aviana/HealComm/releases"
