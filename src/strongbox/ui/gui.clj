@@ -6,6 +6,7 @@
     [logging :as logging]
     [specs :as sp]
     [utils :as utils :refer [items kw2str]]]
+   [clojure.java.shell]
    [clojure.instant]
    [clojure.string :refer [lower-case starts-with? trim]]
    [slugify.core :refer [slugify]]
@@ -468,13 +469,13 @@
 
         go-link-clicked (fn [e]
                           (when-let [triple (cell-val-for-event e)]
-                            (let [[row col val] triple]
+                            (let [[_ col val] triple] ;; [row col val] triple
                               (if (and (gocol? col) val)
                                 (browse-to val)))))
 
         hand-cursor-on-hover (fn [e]
                                (when-let [triple (cell-val-for-event e)]
-                                 (let [[row col val] triple]
+                                 (let [[_ col val] triple] ;; [row col val] triple
                                    (if (and (gocol? col) val)
                                      (.setCursor grid (cursor :hand))
                                      (.setCursor grid (cursor :default))))))

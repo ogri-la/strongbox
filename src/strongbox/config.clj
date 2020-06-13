@@ -1,6 +1,7 @@
 (ns strongbox.config
   (:require
    [clojure.spec.alpha :as s]
+   [clojure.set]
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :as timbre :refer [debug info warn error spy]]
    [strongbox
@@ -133,8 +134,8 @@
   "reads application settings from the given file.
   returns an empty map if file is missing or malformed."
   [cfg-file ::sp/file]
-  (let [opts {:no-file? #(do (warn "configuration file not found: " cfg-file) {})
-              :bad-data? #(do (error "configuration file malformed: " cfg-file) {})
+  (let [opts {:no-file? (fn [] (warn "configuration file not found: " cfg-file) {})
+              :bad-data? (fn [] (error "configuration file malformed: " cfg-file) {})
               :transform-map {:selected-catalog keyword ;; becomes `:selected-catalogue`, if present
                               :selected-catalogue keyword
                               :gui-theme keyword

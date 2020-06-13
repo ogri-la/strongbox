@@ -2,10 +2,9 @@
   (:require
    [clojure.test :refer [deftest testing is use-fixtures]]
    [strongbox
-    [utils :as utils]
+    [utils :as utils :refer [join]]
     [nfo :as nfo]
     [test-helper :as helper]]
-   [strongbox.utils :refer [join]]
    [me.raynes.fs :as fs]))
 
 (def addon-dir "SomeAddon")
@@ -141,8 +140,7 @@
                     :group-id "https://foo.bar"
                     :primary? true
                     :source "curseforge"
-                    :source-id 321}
-          nfo-file (utils/join (addon-path) nfo/nfo-filename)]
+                    :source-id 321}]
       (nfo/upgrade-nfo (install-dir) given)
       (is (= expected (nfo/read-nfo-file (install-dir) addon-dir)))))
 
@@ -165,8 +163,7 @@
                     :primary? true
                     :source "curseforge"
                     :source-id 321
-                    :ignore? false}
-          nfo-file (utils/join (addon-path) nfo/nfo-filename)]
+                    :ignore? false}]
       (nfo/upgrade-nfo (install-dir) given)
       (is (= expected (nfo/read-nfo-file (install-dir) addon-dir))))))
 

@@ -672,14 +672,79 @@
     (catalogue/write-catalogue new-user-catalogue user-catalogue-path))
   nil)
 
-;;
+;; catalogue db handling
+
+(defn query-db
+  "uses keywords to do predefined queries. see `db/stored-query`"
+  [query-kw & [arg-list]]
+  (when-let [db (get-state :db)]
+    (db/stored-query db query-kw arg-list)))
+
+(defn db-catalogue-loaded?
+  "returns `true` if the database has a catalogue loaded.
+  An empty database `[]` is distinct from an unloaded database (`nil`).
+  A database may be empty only if the `addon-summary-list` key of a catalogue is empty.
+  A database may be `nil` if it simply hasn't been loaded yet or we attempted to load it and it failed to load.
+  A database may fail to load if it simply isn't there, can't be downloaded or, once downloaded, the data is invalid."
+  []
+  (-> (get-state :db) nil? not))
+
+(defn-spec db-search :addon/summary-list
+  "searches database for addons whose name or description contains given user input.
+  if no user input, returns a list of randomly ordered results"
+  ([]
+   ;; random list of addons, no preference
+   (db-search nil))
+  ([uin (s/nilable string?)]
+   (or (query-db :search [uin (get-state :search-results-cap)]) [])))
+
+(defn-spec load-current-catalogue (s/or :ok :catalogue/catalogue, :error nil?)
+  "merges the currently selected catalogue with the user-catalogue and returns the definitive list of addons 
+  available to install. Handles malformed catalogue data by re-downloading catalogue."
+  []
+  (when-let [catalogue-location (current-catalogue)]
+    (let [catalogue-path (catalogue-local-path catalogue-location)
+          _ (info "loading catalogue:" (name (:name catalogue-location)))
+
+          ;; download from remote and try again when json can't be read
+          bad-json-file-handler
+          (fn []
+            (warn "catalogue corrupted. re-downloading and trying again.")
+            (fs/delete catalogue-path)
+            (download-current-catalogue)
+            (catalogue/read-catalogue
+             catalogue-path
+             {:bad-data? (fn []
+                           (error "please report this! https://github.com/ogri-la/strongbox/issues")
+                           (error "catalogue *still* corrupted and cannot be loaded. try another catalogue from the 'catalogue' menu"))}))
+
+          catalogue-data (p :p2/db:catalogue:read-catalogue (catalogue/read-catalogue catalogue-path {:bad-data? bad-json-file-handler}))
+          user-catalogue-data (p :p2/db:catalogue:read-user-catalogue (catalogue/read-catalogue (paths :user-catalogue-file) {:bad-data? nil}))
+          final-catalogue (p :p2/db:catalogue:merge-catalogues (catalogue/merge-catalogues catalogue-data user-catalogue-data))]
+      final-catalogue)))
+
+(defn-spec db-load-catalogue nil?
+  "loads the currently selected catalogue into the database, but only if we have a catalogue and it hasn't already 
+  been loaded. Handles bad/invalid catalogues and merging the user catalogue"
+  []
+  (if (and (not (db-catalogue-loaded?))
+           (current-catalogue))
+    (let [final-catalogue (p :p2/db:catalogue (load-current-catalogue))]
+      (when-not (empty? final-catalogue)
+        (p :p2/db:load
+           (swap! state assoc :db
+                  (db/put-many [] (:addon-summary-list final-catalogue))))))
+    (debug "skipping db load. already loaded or no catalogue selected."))
+  nil)
 
 (defn-spec match-installed-addons-with-catalogue nil?
   "when we have a list of installed addons as well as the addon list,
    merge what we can into ::specs/addon-toc records and update state.
    any installed addon not found in :addon-idx has a mapping problem"
   ([]
-   (when (selected-addon-dir) ;; skip matching if no addon dir selected
+   ;; skip matching if no addon dir selected or db not loaded (no db or invalid db)
+   (when (and (db-catalogue-loaded?)
+              (selected-addon-dir))
      (match-installed-addons-with-catalogue (get-state :db) (get-state :installed-addon-list))))
   ([database :addon/summary-list, installed-addon-list :addon/toc-list]
    (info (format "matching %s addons to catalogue" (count installed-addon-list)))
@@ -708,66 +773,7 @@
 
      (update-installed-addon-list! expanded-installed-addon-list))))
 
-;; catalogue db handling
-
-(defn query-db
-  "uses keywords to do predefined queries. see `db/stored-query`"
-  [query-kw & [arg-list]]
-  (when-let [db (get-state :db)]
-    (db/stored-query db query-kw arg-list)))
-
-(defn db-catalogue-loaded?
-  "returns `true` if database if not `nil`"
-  []
-  (-> (get-state :db) nil? not))
-
-(defn-spec db-search :addon/summary-list
-  "searches database for addons whose name or description contains given user input.
-  if no user input, returns a list of randomly ordered results"
-  ([]
-   ;; random list of addons, no preference
-   (db-search nil))
-  ([uin (s/nilable string?)]
-   (or (query-db :search [uin (get-state :search-results-cap)]) [])))
-
-(defn-spec load-current-catalogue (s/or :ok :catalogue/catalogue, :error nil?)
-  "merges the currently selected catalogue with the user-catalogue and returns the definitive list of addons available to install.
-  handles malformed catalogue data by re-downloading catalogue."
-  []
-  (when-let [catalogue-location (current-catalogue)]
-    (let [catalogue-path (catalogue-local-path catalogue-location)
-          _ (info "loading catalogue:" (name (:name catalogue-location)))
-
-          ;; download from remote and try again when json can't be read
-          bad-json-file-handler
-          (fn []
-            (warn "catalogue corrupted. re-downloading and trying again.")
-            (fs/delete catalogue-path)
-            (download-current-catalogue)
-            (catalogue/read-catalogue
-             catalogue-path
-             {:bad-data? (fn []
-                           (error "please report this! https://github.com/ogri-la/strongbox/issues")
-                           (error "catalogue *still* corrupted and cannot be loaded. try another catalogue from the 'catalogue' menu"))}))
-
-          catalogue-data (p :p2/db:catalogue:read-catalogue (catalogue/read-catalogue catalogue-path {:bad-data? bad-json-file-handler}))
-          user-catalogue-data (p :p2/db:catalogue:read-user-catalogue (catalogue/read-catalogue (paths :user-catalogue-file) {:bad-data? nil}))
-          final-catalogue (p :p2/db:catalogue:merge-catalogues (catalogue/merge-catalogues catalogue-data user-catalogue-data))]
-      final-catalogue)))
-
-(defn-spec db-load-catalogue nil?
-  "loads the currently selected catalgoue into the database if hasn't already been loaded.
-  handles bad/invalid catalogues and merging the user catalogue"
-  []
-  (if (and (not (db-catalogue-loaded?))
-           (current-catalogue))
-    (let [final-catalogue (p :p2/db:catalogue (load-current-catalogue))]
-      (when-not (empty? final-catalogue)
-        (p :p2/db:load
-           (swap! state assoc :db
-                  (db/put-many [] (:addon-summary-list final-catalogue))))))
-    (debug "skipping db load. already loaded or no catalogue selected."))
-  nil)
+;;
 
 (defn-spec refresh-user-catalogue nil?
   "re-fetch each item in user catalogue using the URI and replace old entry with any updated details"
@@ -1238,15 +1244,15 @@
 ;; init
 
 (defn watch-for-addon-dir-change
-  "when the addon directory changes, the list of installed addons should be re-read"
+  "when the current addon directory changes, the list of installed addons should be re-read"
   []
-  (let [state-atm state
-        reset-state-fn (fn [state]
-                         ;; TODO: revisit this
-                         ;; remove :cfg because it's controlled by user
-                         (let [default-state (dissoc state :cfg)]
-                           (swap! state-atm merge default-state)
-                           (refresh)))]
+  (let [reset-state-fn (fn [new-state]
+                         (refresh)
+                         ;; 2020-06: I can't figure out why I was doing this
+                         ;;(let [default-state (dissoc new-state :cfg)]
+                         ;;  (swap! state merge default-state)
+                         ;;  (refresh)))
+                         )]
     (state-bind [:cfg :selected-addon-dir] reset-state-fn)))
 
 (defn watch-for-catalogue-change

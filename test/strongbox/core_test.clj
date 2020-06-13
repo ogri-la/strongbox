@@ -128,14 +128,14 @@
         (is (some #{"dir" "file" "url"} (clojure.string/split (name key) #"\-")))))
 
     (testing "all paths to files and directories are absolute"
-      (let [files+dirs (filter (fn [[k v]] (or (ends-with? k "-dir")
+      (let [files+dirs (filter (fn [[k _]] (or (ends-with? k "-dir")
                                                (ends-with? k "-file")))
                                (core/paths))]
         (doseq [[key path] files+dirs]
           (is (-> path (starts-with? "/")) (format "path %s is not absolute: %s" key path)))))
 
     (testing "all remote paths are using https"
-      (let [remote-paths (filter (fn [[k v]] (ends-with? k "-url")) (core/paths))]
+      (let [remote-paths (filter (fn [[k _]] (ends-with? k "-url")) (core/paths))]
         (doseq [[key path] remote-paths]
           (is (-> path (starts-with? "https://")) (format "remote path %s is not using HTTPS: %s" key path))))))
 
@@ -469,7 +469,7 @@
 
 ;; todo: install classic addon into retail game track
 
-(deftest db-load-catalog
+(deftest db-load-catalogue
   (testing "very long descriptions are truncated"
     (let [addon-with-long-description
           {:label "EveryAddon",
@@ -849,7 +849,7 @@
         (is (= expected (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))
 
 (deftest add+install-user-addon!
-  (testing "user addon is successfully addon to the user catalogue from just a github url"
+  (testing "user addon is successfully added to the user catalogue from just a github url"
     (let [every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
 
           fake-routes {"https://api.github.com/repos/Aviana/HealComm/releases"
