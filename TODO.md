@@ -13,14 +13,28 @@ see CHANGELOG.md for a more formal list of changes by release
         - MATE and cinnamon
 * latest release gui bug
     - add fix and tests to strongbox
+* joker linting
+    - does some stuff that eastwood can't do, or eastwood has disabled or something
+        - anyway, it's fast
+    - done
 
 ## todo
 
+* search is painfully slow because I made no effort porting it
+    - fix
+* support for openjdk 11
+    - there is a localisation issue with formatting wowinterface objects in openjdk11 and java.time/clj-time
+        - it isn't present for Travis so it's passing tests
+        - it can be fixed if run with ":jvm-opts ["-Djava.locale.providers=COMPAT,CLDR"]"
+            - which fucking sucks
+    - it's the next LTS however java 8 isn't going away anytime soon
+    - java 8 makes it difficult to work with openjfx though, so time to upgrade
+    - can a openjdk 11 compiled uberjar work on java 8?
 * update ticket template
     - with command to run that uses the debug flag
+        - do I even have a --debug flag?
     - which files to upload
 * wowman-comrades, shift asterisk description out of strongbox README
-* wowman, add support for reading strongbox catalogues
 * game track list in catalogue
     - can game-track-list be included from all other hosts?
         - not just wowi?
@@ -48,19 +62,10 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
-* wowman, remove wowman-data repository
-    - eh, this won't be happening any time soon
-
 * test, can gui-diff and main/test be pushed back into the testing namespace and elided from release somehow?
 
 * http, revisit the http/expiry-offset-hours value
     - also, revisit prune-http-cache
-
-* performance, check addons for updates immediately after loading
-    - if after we've read the nfo data and we have everything we need, check the addon for updates immediately
-        - don't wait for db loading and addon matching
-            - we already have a match!
-        - this might fit in with the greater-parallelism/queue based infrastructure
 
 * robustness, only download/update the catalogue *after* an existing catalogue has been confirmed
     - github is down, wowman is erroring with a 500
@@ -105,27 +110,14 @@ see CHANGELOG.md for a more formal list of changes by release
 * revisit aliases
     - use source and source-id now
     - maybe externalise the list
-* greater parallelism
-    - internal job queue
-    - replace log at bottom of screen with a list of jobs being processed and how far along they are
-        - each job can be cancelled/stopped/discarded
-    - separate tab for log
-        - that scrolls the other way
 * version pinning
     - user can opt to install a specific release of an addon
     - automatic updates for that addon are thereafter blocked
 * alpha/beta opt-in
     - user can opt to install alpha/beta/no-lib releases per-addon
-* gui, java look and feel
-    - our 'theme' solution is too naive
-        - we should be deferring to the current theme for highlighted colours
-        - how?
-            - https://pirlwww.lpl.arizona.edu/resources/guide/software/SwingX/org/jdesktop/swingx/plaf/UIColorHighlighterAddon.html
 * bug, changing sort order during refresh doesn't reflect which addon is being updated
     - I think changing column ordering and moving columns should be disabled while updates happen
         - just freeze or disable them or something.
-* download progress bar *inside* the grid ...?
-    - pure fantasy?
 * add support for user supplied github token
     - necessary if they want a large number of github addons without hassles
 * investigate state of java packaging
@@ -144,15 +136,10 @@ see CHANGELOG.md for a more formal list of changes by release
     - this is interesting actually. the exported addon list has become a mini-catalogue
         - some addons require the larger catalogue to resolve
         - github addons are resolved and installed by a different means...
-* add custom highlighting colours
-    - I don't mind my colours but not everybody may
-    - my colours don't work very well on native lnf + dark themes:
-        - https://github.com/ogri-la/wowman/issues/105
 * when curseforge api is down users get a wall of red error messages with very little useful information
     - see issue 91: https://github.com/ogri-la/wowman/issues/91
         - the error message has been improved but we still get a red wall of text
         - aggregate error messages?
-* new tab for dedicated log
 * rename 'reinstall all' to 'reconcile'
     - steal from the best
     - make the reconcile automatic
@@ -167,8 +154,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - since this is the 'installed addons pane', should the value reflect the value of the installed addon?
         - (and not the value of the addon to be installed)
         - and would this be inconsistent with the other fields that are also changing with new catalog information?
-* have the info box scroll the other direction
-    - this is possible, see the seesaw examples
 * add checksum checks after downloading
     - curseforge have an md5 that can be used
         - unfortunately no checksum in api results
@@ -176,17 +161,6 @@ see CHANGELOG.md for a more formal list of changes by release
             - fingerprint is 9 digits and all decimal, so not a hex digest
     - wowinterface checksum is hidden behind a javascript tabber but still available
         - wowinterface do have a md5sum in results! score
-* database, compare current speed and code against loading addon category data serially
-    - as opposed to in three blocks (categories, addons, category-addons). We might save some time and code
-* database, investigate prepared statements when inserting for improved speed
-
-* export to markdown
-    - I think I'd like a simple list like:
-        * [addon name](https://source/path/to/addon)
-    - of course, this would be a different type of export than the one used for import
-        - although ... I could possibly parse the list ... and nah.
-    - clostache?
-        - https://github.com/fhd/clostache
 * add a 'tabula rasa' option that wipes *everything* 
     - cache, catalog, config, downloaded zip files
 * coloured warnings/errors on console output
@@ -195,12 +169,6 @@ see CHANGELOG.md for a more formal list of changes by release
         - he's not addressing tickets
         - it may have been simpler to use in 3.x.x but in 4.x.x it's gotten a bit archaic
         - I can't drop hostname without leaving pretty-printed stacktraces behind
-
-* investigate `.csv` as a human-readable but more compact representation
-    - might be able to save a MB on extraneous syntax
-    - might be able to speed up parsing and loading
-    - might be able to drop the two json libraries in favour of just one extra lib
-    - depends on profile task
 * cache, make caching opt-out and remove all those ugly binding calls
     - bind the value at core app start
     - this may not be possible. 
@@ -220,60 +188,114 @@ see CHANGELOG.md for a more formal list of changes by release
                     - got to have backups+imports happening first
         - identify slow things and measure their improvement
 
-* memory usage
-    - we're big and fat :(
-    - lets explore some ways to measure and then reduce memory usage
-    - measuring:
-        - https://github.com/clojure-goes-fast/clj-memory-meter
-        - https://visualvm.github.io/
-* toggleable highlighers as a menuitem
-    - highlight unmatched
-    - highlight updates
-    - touch of colour against each menuitem would serve as a legend
 * toggleable columns as a menuitem
     - they're available from the column menu, but it's a little hidden and contains other fairly useless options like 'horizontal scroll'
-* nightly unstable builds
-    - building the 'develop' branch once a day
-        - making it available as the 'unstable' release that always gets replaced
-    - project.clj "x.y.z-unreleased" would be changed to "x.y.z-unstable"
-    - development would happen mainly in feature branches
-* a 'stop' button to stop updates would be nice
-* download addon details in parallel
-    - speed benefits, mostly
-    - share a pool of connections between threads
-        - N connections serving M threads
+* gui, both panes, filter by categories
+* internationalisation?
+    - Akitools has no english description but it does have a "Notes-zhCN" in the toc file that could be used
+    - wowman was mentioned on a french forum the other day ..
+
+## import/export
+
+* export to markdown
+    - I think I'd like a simple list like:
+        * [addon name](https://source/path/to/addon)
+    - of course, this would be a different type of export than the one used for import
+        - although ... I could possibly parse the list ... and nah.
+    - clostache?
+        - https://github.com/fhd/clostache
+
+## search
+
 * search, indicate results are paginated
 * search, order by date only orders the *current page* of results
 * search, pagination controls in search pane
 * search, group results
     - group by downloads/age/category?
         - it would finally be the best use for category data
+
+## cli
+
 * cli, update specific addon
 * cli, install specific addon
 * cli, colours!
-* gui, both panes, filter by categories
+* cli, replace with a repl
+    - lein --cli gives you access to the code directly
 
+## job queue
 
-## post 1.0
+* greater parallelism
+    - internal job queue
+    - replace log at bottom of screen with a list of jobs being processed and how far along they are
+        - each job can be cancelled/stopped/discarded
+    - separate tab for log
+        - that scrolls the other way
+* a 'stop' button to stop updates would be nice
+* download addon details in parallel
+    - speed benefits, mostly
+    - share a pool of connections between threads
+        - N connections serving M threads
+* performance, check addons for updates immediately after loading
+    - if after we've read the nfo data and we have everything we need, check the addon for updates immediately
+        - don't wait for db loading and addon matching
+            - we already have a match!
+        - this might fit in with the greater-parallelism/queue based infrastructure
 
-* internationalisation?
-    - Akitools has no english description but it does have a "Notes-zhCN" in the toc file that could be used
-    - wowman was mentioned on a french forum the other day ..
-    - post 1.0
-* move away from this merging toc/addon/expanded addon data strategy
-    - it's confusing to debug!
-    - namespaced keys might be a good alternative:
-        - :toc/label and :catalog/label
-        - :toc/version and :catalog/version
-        - with derived/synthetic attributes having no ns
-            - :group-id, :group-count
-        - how to pick preferred attributes without continuous (or key else other-key) ?
-            - (getattr addon :label) ;; does multiple lookups ...? seems kinda meh
-    - post 1.0
-    - wait until spec2 is released for an overhaul of current specs
+## gui/gui2
+
+* gui2
+    - an OpenJFX gui
+    - how large is bundle after uberjar?
+    - can an openjfx-11/openjdk-11 uberjar be run with openjdk 8?
+        - if not, then that is a hard upgrade for users :(
+            - unless we do a completely standalone version?
+                - this would depend on the modularisation introduced in java 9
+                - min JRE is 29MB, about ~9MB more than what we already have.
+                    - is filesize a problem for users?
+* gui, java look and feel
+    - our 'theme' solution is too naive
+        - we should be deferring to the current theme for highlighted colours
+        - how?
+            - https://pirlwww.lpl.arizona.edu/resources/guide/software/SwingX/org/jdesktop/swingx/plaf/UIColorHighlighterAddon.html
+    - defer until after gui2
+* download progress bar *inside* the grid ...?
+    - pure fantasy?
+    - defer until after gui2
+    - defer until after job queue
+* add custom highlighting colours
+    - I don't mind my colours but not everybody may
+    - my colours don't work very well on native lnf + dark themes:
+        - https://github.com/ogri-la/wowman/issues/105
+    - defer until after gui2
+* toggleable highlighers as a menuitem
+    - highlight unmatched
+    - highlight updates
+    - touch of colour against each menuitem would serve as a legend
+* have the info box scroll the other direction
+    - this is possible, see the seesaw examples
+* new tab for dedicated log
 
 ## wontfix
 
+* nightly unstable builds
+    - building the 'develop' branch once a day
+        - making it available as the 'unstable' release that always gets replaced
+    - project.clj "x.y.z-unreleased" would be changed to "x.y.z-unstable"
+    - development would happen mainly in feature branches
+    - too much effort for what? more user reports? I don't have that sort of time
+* wowman, add support for reading strongbox catalogues
+    - I have the strongbox-catalogue update.sh script building wowman catalogues
+    - there is no extra work involved
+* wowman, remove wowman-data repository
+    - eh, this won't be happening any time soon
+    - it's no extra work to maintain it
+* investigate `.csv` as a human-readable but more compact representation
+    - might be able to save a MB on extraneous syntax
+    - might be able to speed up parsing and loading
+    - depends on profile task
+        - update: profiling happened, it's not the json loading that is slow it was many other things. 
+        - reading the file and parsing the json is actually very quick, validation is slower but necessary
+        - json is just more flexible all around than csv.
 * remove backwards compatibility, wowman to strongbox
     - there will be a migration of wowman data to strongbox data, or the data is discarded
         - rename `test/fixtures/user-config-0.11.json` to `wowman--user-config ...`
