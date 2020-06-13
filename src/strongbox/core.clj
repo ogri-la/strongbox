@@ -681,7 +681,11 @@
     (db/stored-query db query-kw arg-list)))
 
 (defn db-catalogue-loaded?
-  "returns `true` if database is not `nil`"
+  "returns `true` if the database has a catalogue loaded.
+  An empty database `[]` is distinct from an unloaded database (`nil`).
+  A database may be empty only if the `addon-summary-list` key of a catalogue is empty.
+  A database may be `nil` if it simply hasn't been loaded yet or we attempted to load it and it failed to load.
+  A database may fail to load if it simply isn't there, can't be downloaded or, once downloaded, the data is invalid."
   []
   (-> (get-state :db) nil? not))
 
@@ -695,8 +699,8 @@
    (or (query-db :search [uin (get-state :search-results-cap)]) [])))
 
 (defn-spec load-current-catalogue (s/or :ok :catalogue/catalogue, :error nil?)
-  "merges the currently selected catalogue with the user-catalogue and returns the definitive list of addons available to install.
-  handles malformed catalogue data by re-downloading catalogue."
+  "merges the currently selected catalogue with the user-catalogue and returns the definitive list of addons 
+  available to install. Handles malformed catalogue data by re-downloading catalogue."
   []
   (when-let [catalogue-location (current-catalogue)]
     (let [catalogue-path (catalogue-local-path catalogue-location)
@@ -720,8 +724,8 @@
       final-catalogue)))
 
 (defn-spec db-load-catalogue nil?
-  "loads the currently selected catalogue into the database, but only if we have a catalogue and it hasn't already been loaded.
-  handles bad/invalid catalogues and merging the user catalogue"
+  "loads the currently selected catalogue into the database, but only if we have a catalogue and it hasn't already 
+  been loaded. Handles bad/invalid catalogues and merging the user catalogue"
   []
   (if (and (not (db-catalogue-loaded?))
            (current-catalogue))

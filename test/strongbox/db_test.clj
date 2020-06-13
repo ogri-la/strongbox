@@ -4,5 +4,6 @@
    [strongbox.db :as db]))
 
 (deftest put-many
-  (let [expected []]
-    (is (= expected (db/put-many [] [])))))
+  (testing "putting nothing into an empty database returns an empty database"
+    (let [expected []]
+      (is (= expected (db/put-many [] []))))))

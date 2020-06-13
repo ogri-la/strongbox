@@ -351,6 +351,7 @@
         :else data))))
 
 (defn-spec to-int (s/or :ok int? :error nil?)
+  "given any value `x`, converts it to an integer or returns `nil` if it can't be converted."
   [x any?]
   (try (Integer/valueOf x)
        (catch NumberFormatException nfe
@@ -460,8 +461,8 @@
   [a-bits b-bits]
   (let [find-int (fn [x]
                    (or (some-> x first to-int)
-                      ;; try again, this time ignore everything after any hyphen.
-                      ;; if it's genuine bollocks we'll raise another exception
+                       ;; try again, this time ignore everything after any hyphen.
+                       ;; if it's genuine bollocks we'll raise another exception
                        (some-> x first (clojure.string/split #"-") first to-int)))
         result (compare (find-int a-bits) (find-int b-bits))
         more? (not (empty? (rest b-bits)))]

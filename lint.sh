@@ -8,7 +8,6 @@ if which joker > /dev/null; then
 fi
 
 echo "eastwood lint"
-#git diff-index --quiet HEAD -- || { echo "commit your changes first"; exit 1; }
 lein cljfmt fix
 lein eastwood
 echo "eastwood lint done"
