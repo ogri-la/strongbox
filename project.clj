@@ -19,7 +19,7 @@
                  [slugify "0.0.1"]
                  [trptcolin/versioneer "0.2.0"] ;; version number wrangling. it's more involved than you might suspect
                  [org.flatland/ordered "1.5.9"] ;; better ordered map
-                 [clojure.java-time "0.3.2"] ;; date/time handling library
+                 [clojure.java-time "0.3.2"] ;; date/time handling library, https://github.com/dm3/clojure.java-time
                  [envvar "1.1.0"] ;; environment variable wrangling
                  [gui-diff "0.6.7"] ;; pops up a graphical diff for test results
                  [com.taoensso/tufte "2.1.0"]
