@@ -169,7 +169,7 @@
             obj (some-> uin utils/unmangle-https-url java.net.URL.)
             path (when-not (empty? (.getPath obj)) (.getPath obj))
 
-            ;; values here are tentative because user URL may resolve to a different URL
+            ;; values here are tentative because given URL may resolve to a different URL
             [-owner -repo] (-> path (subs 1) (split #"/") (pad 2))
             -source-id (when (and -owner -repo)
                          (format "%s/%s" -owner -repo))

@@ -29,11 +29,14 @@ see CHANGELOG.md for a more formal list of changes by release
         - no, apparently. I got one of these:
             - java.lang.ClassNotFoundException: java.awt.event.FocusEvent$Cause
         - it could be a lone error or the first of dozens, not going to spend much time on it until gui2
+* search is painfully slow because I made no effort porting it
+    - have made the input vs output asynchronous
+        - this means the typing happens normally and results appear as they become available
+    - it could still be improved, definitely
+    - done
 
 ## todo
 
-* search is painfully slow because I made no effort porting it
-    - fix
 * update ticket template
     - with command to run that uses the debug flag
         - do I even have a --debug flag?

@@ -97,8 +97,8 @@
 (defn-spec -search :addon/summary-list
   "returns a list of addon summaries whose label or description matches the given user input `uin`.
   matches are case insensitive.
-  label matching matches from the beginning of the label.
-  description matching matches any substring within description"
+  label-matching matches from the beginning of the label.
+  description-matching matches any substring within description"
   [db :addon/summary-list, uin (s/nilable string?), cap int?]
   (if (nil? uin)
     (take cap (random-sample 0.005 db))

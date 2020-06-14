@@ -40,12 +40,14 @@
   :main strongbox.main
 
   :plugins [[lein-cljfmt "0.6.4"]
-            [jonase/eastwood "0.3.10"]
+            [jonase/eastwood "0.3.11"]
             [lein-cloverage "1.1.1"]]
   :eastwood {:exclude-linters [:constant-test]
+             ;; linters that are otherwise disabled
              :add-linters [:unused-namespaces
-                           ;;:unused-locals :unused-fn-args ;; too many false positives to always be enabled
-                           ;; :non-clojure-file  ;; just noise
-                           ;; :keyword-typos ;; bugged with spec?
+                           :unused-private-vars
+                           ;;:unused-locals ;; prefer to keep for readability
+                           ;;:unused-fn-args ;; prefer to keep for readability
+                           ;;:keyword-typos ;; bugged with spec?
                            ]}
   )

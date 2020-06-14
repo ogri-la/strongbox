@@ -696,7 +696,9 @@
    ;; random list of addons, no preference
    (db-search nil))
   ([uin (s/nilable string?)]
-   (or (query-db :search [uin (get-state :search-results-cap)]) [])))
+   (let [empty-results []
+         args [(utils/nilable uin) (get-state :search-results-cap)]]
+     (or (query-db :search args) empty-results))))
 
 (defn-spec load-current-catalogue (s/or :ok :catalogue/catalogue, :error nil?)
   "merges the currently selected catalogue with the user-catalogue and returns the definitive list of addons 
@@ -748,7 +750,7 @@
      (match-installed-addons-with-catalogue (get-state :db) (get-state :installed-addon-list))))
   ([database :addon/summary-list, installed-addon-list :addon/toc-list]
    (info (format "matching %s addons to catalogue" (count installed-addon-list)))
-   (let [match-results (db/-db-match-installed-addons-with-catalogue (get-state :db) installed-addon-list)
+   (let [match-results (db/-db-match-installed-addons-with-catalogue database installed-addon-list)
          [matched unmatched] (utils/split-filter :matched? match-results)
 
          ;; for those that *did* match, merge the installed addon data together with the catalogue data
@@ -1246,14 +1248,7 @@
 (defn watch-for-addon-dir-change
   "when the current addon directory changes, the list of installed addons should be re-read"
   []
-  (let [reset-state-fn (fn [new-state]
-                         (refresh)
-                         ;; 2020-06: I can't figure out why I was doing this
-                         ;;(let [default-state (dissoc new-state :cfg)]
-                         ;;  (swap! state merge default-state)
-                         ;;  (refresh)))
-                         )]
-    (state-bind [:cfg :selected-addon-dir] reset-state-fn)))
+  (state-bind [:cfg :selected-addon-dir] (fn [_] (refresh))))
 
 (defn watch-for-catalogue-change
   "when the catalogue changes, the db should be rebuilt"
