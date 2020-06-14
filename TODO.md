@@ -17,19 +17,23 @@ see CHANGELOG.md for a more formal list of changes by release
     - does some stuff that eastwood can't do, or eastwood has disabled or something
         - anyway, it's fast
     - done
-
-## todo
-
-* search is painfully slow because I made no effort porting it
-    - fix
 * support for openjdk 11
     - there is a localisation issue with formatting wowinterface objects in openjdk11 and java.time/clj-time
         - it isn't present for Travis so it's passing tests
         - it can be fixed if run with ":jvm-opts ["-Djava.locale.providers=COMPAT,CLDR"]"
             - which fucking sucks
+        - done
     - it's the next LTS however java 8 isn't going away anytime soon
     - java 8 makes it difficult to work with openjfx though, so time to upgrade
     - can a openjdk 11 compiled uberjar work on java 8?
+        - no, apparently. I got one of these:
+            - java.lang.ClassNotFoundException: java.awt.event.FocusEvent$Cause
+        - it could be a lone error or the first of dozens, not going to spend much time on it until gui2
+
+## todo
+
+* search is painfully slow because I made no effort porting it
+    - fix
 * update ticket template
     - with command to run that uses the debug flag
         - do I even have a --debug flag?
