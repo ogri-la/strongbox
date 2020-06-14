@@ -5,7 +5,7 @@
    [clj-http.fake :refer [with-fake-routes-in-isolation]]
    [envvar.core :refer [with-env]]
    [me.raynes.fs :as fs]
-   ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
+   [taoensso.timbre :as log :refer [debug info warn error spy]]
    [strongbox
     [db :as db]
     [logging :as logging]
@@ -772,7 +772,7 @@
         (core/refresh)
 
         ;; this is the guard to the `db-load-catalogue` fn
-        ;; catalogue fixture in test-helper is an empty map, this should always return false
+        ;; catalogue fixture in `test-helper.clj` is an empty map so this should always return false
         (is (not (core/db-catalogue-loaded?)))
 
         ;; empty the file. quickest way to bad json
@@ -780,7 +780,10 @@
 
         ;; the catalogue will be re-requested, this time we've swapped out the fixture with one with a single entry
         (with-fake-routes-in-isolation fake-routes
-          (core/db-load-catalogue))
+          ;; this will print a warning with a stacktrace.
+          ;; it's being hidden so actual stacktraces don't get overlooked
+          (log/with-level :error
+            (core/db-load-catalogue)))
 
         (is (core/db-catalogue-loaded?))))))
 
@@ -801,7 +804,10 @@
 
         ;; the catalogue will be re-requested, this time the remote file is also corrupt
         (with-fake-routes-in-isolation fake-routes
-          (core/db-load-catalogue))
+          ;; this will print a warning with a stacktrace.
+          ;; it's being hidden so actual stacktraces don't get overlooked
+          (log/with-level :error
+            (core/db-load-catalogue)))
 
         (is (not (core/db-catalogue-loaded?)))))))
 

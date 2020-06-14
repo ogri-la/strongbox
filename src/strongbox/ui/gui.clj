@@ -634,11 +634,10 @@
         date-renderer #(when % (-> % clojure.instant/read-instant-date (utils/fmt-date "yyyy-MM-dd")))
 
         update-rows-fn (fn [state]
-                         (let [uinput (-> state :search-field-input (or "") trim)
-                               search-results (if (empty? uinput)
-                                                (core/db-search)
-                                                (core/db-search uinput))]
-                           (insert-all grid search-results)))]
+                         (future
+                           (let [uinput (some-> state :search-field-input trim)
+                                 search-results (core/db-search uinput)]
+                             (insert-all grid search-results))))]
 
     ;; I'm rather pleased these just work as-is :)
     ;; todo: rename these to something a bit more general
