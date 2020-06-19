@@ -140,7 +140,7 @@
              (.isSupported (java.awt.Desktop/getDesktop) java.awt.Desktop$Action/BROWSE))
     (fn [url]
       (info "opening URL:" url)
-      (.browse (java.awt.Desktop/getDesktop) (java.net.URL. url)))))
+      (.browse (java.awt.Desktop/getDesktop) (java.net.URI. url)))))
 
 (defn-spec find-browser fn?
   "returns a function that attempts to open a given URL in a browser.
