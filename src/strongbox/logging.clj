@@ -29,7 +29,7 @@
 (defn-spec debug-mode? boolean?
   "debug mode is when the log level has been set to `:debug` and we're *not* running tests.
   the intent is to collect as much information around a problem as possible.
-  the log level may change during REPL usage. 
+  the log level may change during REPL usage.
   the log level may change by using a `--verbosity` flag at runtime.
   `main.clj` adds an adhoc `testing?` flag to the logging configuration and removes it afterwards."
   []

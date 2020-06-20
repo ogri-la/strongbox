@@ -126,6 +126,10 @@
     :parse-fn #(-> % lower-case keyword)
     :validate [(in? [:debug :info :warn :error :fatal])]]
 
+   [nil "--debug" "debug mode. verbosity level is highest, profiling is enabled and log output is written to a file"
+    :id :debug-mode?
+    :default false]
+
    ["-u" "--ui UI" "ui is either 'gui' (graphical user interface, default) or 'cli' (command line interface)"
     ;;:default :gui ;; set after determining if --headless also set
     :parse-fn #(-> % lower-case keyword)
@@ -159,6 +163,12 @@
 
       ;; post-processing
       (let [{:keys [options]} args
+
+            ;; force verbosity to :debug when `--debug` is given
+            ;; `--debug` is a shortcut right now but has potential beyond just throttling output
+            args (if (:debug-mode? options)
+                   (-> args (assoc-in [:options :verbosity] :debug) (update-in [:options] dissoc :debug-mode?))
+                   args)
 
             ;; switch default ui to :cli if --headless given without explicit --ui
             args (if (not (contains? options :ui))
