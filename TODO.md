@@ -35,6 +35,7 @@ see CHANGELOG.md for a more formal list of changes by release
     - it could still be improved, definitely
     - done
 * fixed a bug where using 'Quit' from the gui would leave app running
+* fixed useragent, it was still stuck on 'wowman'
 
 ## todo
 

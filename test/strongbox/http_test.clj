@@ -36,19 +36,19 @@
 
 (deftest user-agent
   (testing "user agent version number"
-    (let [cases [["0.1.0" "Wowman/0.1 (https://github.com/ogri-la/strongbox)"]
-                 ["0.1.0-unreleased" "Wowman/0.1-unreleased (https://github.com/ogri-la/strongbox)"]
+    (let [cases [["0.1.0" "strongbox/0.1 (https://github.com/ogri-la/strongbox)"]
+                 ["0.1.0-unreleased" "strongbox/0.1-unreleased (https://github.com/ogri-la/strongbox)"]
 
-                 ["0.10.0" "Wowman/0.10 (https://github.com/ogri-la/strongbox)"]
-                 ["0.10.0-unreleased" "Wowman/0.10-unreleased (https://github.com/ogri-la/strongbox)"]
+                 ["0.10.0" "strongbox/0.10 (https://github.com/ogri-la/strongbox)"]
+                 ["0.10.0-unreleased" "strongbox/0.10-unreleased (https://github.com/ogri-la/strongbox)"]
 
-                 ["0.10.10" "Wowman/0.10 (https://github.com/ogri-la/strongbox)"]
-                 ["0.10.10-unreleased" "Wowman/0.10-unreleased (https://github.com/ogri-la/strongbox)"]
+                 ["0.10.10" "strongbox/0.10 (https://github.com/ogri-la/strongbox)"]
+                 ["0.10.10-unreleased" "strongbox/0.10-unreleased (https://github.com/ogri-la/strongbox)"]
 
-                 ["10.10.10" "Wowman/10.10 (https://github.com/ogri-la/strongbox)"]
-                 ["10.10.10-unreleased" "Wowman/10.10-unreleased (https://github.com/ogri-la/strongbox)"]
+                 ["10.10.10" "strongbox/10.10 (https://github.com/ogri-la/strongbox)"]
+                 ["10.10.10-unreleased" "strongbox/10.10-unreleased (https://github.com/ogri-la/strongbox)"]
 
-                 ["991.992.993-unreleased" "Wowman/991.992-unreleased (https://github.com/ogri-la/strongbox)"]]]
+                 ["991.992.993-unreleased" "strongbox/991.992-unreleased (https://github.com/ogri-la/strongbox)"]]]
 
       (doseq [[given expected] cases]
         (is (= expected (http/strongbox-user-agent given)))))))
