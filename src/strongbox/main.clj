@@ -52,6 +52,12 @@
       (gui/stop))
     (core/stop core/state)))
 
+(defn shutdown-hook
+  []
+  (.addShutdownHook
+   (Runtime/getRuntime)
+   (Thread. ^Runnable stop)))
+
 (defn start
   [& [cli-opts]]
   (core/start (merge {:profile? profile?, :spec? spec?} cli-opts))
@@ -60,6 +66,7 @@
     (gui/start))
 
   (watch-for-gui-restart)
+  (shutdown-hook)
 
   nil)
 
@@ -183,6 +190,7 @@
 
 (defn exit
   [status msg]
+  (stop)
   (println msg)
   (System/exit status))
 

@@ -34,13 +34,18 @@ see CHANGELOG.md for a more formal list of changes by release
         - this means the typing happens normally and results appear as they become available
     - it could still be improved, definitely
     - done
+* fixed a bug where using 'Quit' from the gui would leave app running
 
 ## todo
 
 * update ticket template
     - with command to run that uses the debug flag
         - do I even have a --debug flag?
+            - I do now
+        - does the arch script allow further commands?
+            - yup
     - which files to upload
+        - ...
 * wowman-comrades, shift asterisk description out of strongbox README
 * game track list in catalogue
     - can game-track-list be included from all other hosts?

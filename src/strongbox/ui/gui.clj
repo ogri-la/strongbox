@@ -12,7 +12,6 @@
    [slugify.core :refer [slugify]]
    [taoensso.timbre :as timbre :refer [debug info warn error spy]]
    [seesaw
-    [invoke :as ssi]
     [chooser :as chooser]
     [mig :as mig]
     [dev :refer [show-options show-events]]
@@ -951,14 +950,8 @@
                                  (ss/menu :text "Help" :items help-menu)])
         _ (.setJMenuBar newui menu)
 
-        add-shutdown-hook (fn []
-                            (.addShutdownHook
-                             (Runtime/getRuntime)
-                             (Thread. ^Runnable #(core/stop core/state))))
-
         init (fn [newui]
                (future
-                 (add-shutdown-hook)
                  (core/refresh)
                  (core/latest-strongbox-release))
                newui)]
@@ -973,12 +966,19 @@
   (info "starting gui")
   (swap! core/state assoc :gui (start-ui)))
 
-(defn stop
+(defn -stop
   []
-  (info "stopping gui")
   (try
     ;; don't do this. state may not be started yet for it to be stopped!
     ;;(ss/dispose! (get-state :gui))
     (ss/dispose! (:gui @core/state))
     (catch RuntimeException re
       (warn "failed to stop state:" (.getMessage re)))))
+
+(defn stop
+  []
+  (info "stopping gui")
+  (if (:in-repl? @core/state)
+    (-stop)
+    (ss/invoke-later
+     (-stop))))
