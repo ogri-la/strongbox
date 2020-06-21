@@ -79,6 +79,8 @@
         old-config-dir (clojure.string/replace config-dir "strongbox" "wowman")
         old-data-dir (clojure.string/replace data-dir "strongbox" "wowman")
 
+        log-dir (join data-dir "logs")
+
         ;; ensure path ends with `-file` or `-dir` or `-url`.
         ;; see `init-dirs`.
         path-map {:config-dir config-dir
@@ -89,7 +91,8 @@
                   :profile-data-dir (join data-dir "profile-data")
 
                   ;; /home/$you/.local/share/strongbox/logs
-                  :log-data-dir (join data-dir "logs")
+                  :log-data-dir log-dir
+                  :log-file (join log-dir "debug.log")
 
                   ;; /home/$you/.local/share/strongbox/cache
                   :cache-dir (join data-dir "cache")
@@ -313,7 +316,8 @@
       (warn "application has not been started, no location to write log or profile data")
       (do
         (logging/add-profiling-handler! (paths :profile-data-dir))
-        (logging/add-file-appender! (paths :log-data-dir)))))
+        (logging/add-file-appender! (paths :log-file))
+        (info "writing logs to:" (paths :log-file)))))
   nil)
 
 (defn save-settings
@@ -1310,4 +1314,7 @@
   (doseq [f (:cleanup @state)]
     (debug "calling" f)
     (f))
+  (when (and @state
+             (logging/debug-mode?))
+    (info "wrote logs to:" (paths :log-file)))
   (reset! state nil))

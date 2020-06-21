@@ -67,9 +67,8 @@
      nil)))
 
 (defn-spec add-file-appender! nil?
-  [output-dir ::sp/extant-dir]
-  (let [output-file (join output-dir "debug.log")
-        ;; urgh. a little too clever.
+  [output-file ::sp/file]
+  (let [;; timbre being a little too clever...
         func (:fn (spit-appender {:fname output-file}))]
     (add-appender! :spit func))
   nil)

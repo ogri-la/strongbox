@@ -904,6 +904,7 @@
         file-menu [(ss/action :name "Installed" :key "menu I" :mnemonic "i" :handler (switch-tab-handler INSTALLED-TAB))
                    (ss/action :name "Search" :key "menu H" :mnemonic "h" :handler (switch-tab-handler SEARCH-TAB))
                    :separator
+                   ;;(ss/action :name "Exit" :key "menu Q" :mnemonic "x" :handler (handler #(ss/dispose! newui)))
                    (ss/action :name "Exit" :key "menu Q" :mnemonic "x" :handler
                               (fn [ev]
                                 ;; https://stackoverflow.com/questions/1234912/how-to-programmatically-close-a-jframe
@@ -950,8 +951,14 @@
                                  (ss/menu :text "Help" :items help-menu)])
         _ (.setJMenuBar newui menu)
 
+        add-shutdown-hook (fn []
+                            (.addShutdownHook
+                             (Runtime/getRuntime)
+                             (Thread. ^Runnable #(core/stop core/state))))
+
         init (fn [newui]
                (future
+                 (add-shutdown-hook)
                  (core/refresh)
                  (core/latest-strongbox-release))
                newui)]

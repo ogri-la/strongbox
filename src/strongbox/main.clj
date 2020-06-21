@@ -35,9 +35,9 @@
   having the gui restart *itself* requires `declare` statements"
   []
   (let [callback (fn [{:keys [cli-opts gui gui-restart-flag]}]
-                   (when (and (not= :cli (:ui cli-opts))    ;; using a gui
-                              (not (nil? gui-restart-flag)) ;; and the restart flag is set
-                              (not (nil? gui)))             ;; and we actually have a gui to restart
+                   (when (and (not= :cli (:ui cli-opts)) ;; using a gui
+                              (some? gui-restart-flag) ;; and the restart flag is set
+                              (some? gui)) ;; and we actually have a gui to restart
                      (gui/stop)
                      (gui/start)
                      ;; reset flag. will trigger watch again but the checks will prevent infinite recursion
