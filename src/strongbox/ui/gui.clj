@@ -12,7 +12,6 @@
    [slugify.core :refer [slugify]]
    [taoensso.timbre :as timbre :refer [debug info warn error spy]]
    [seesaw
-    [invoke :as ssi]
     [chooser :as chooser]
     [mig :as mig]
     [dev :refer [show-options show-events]]
@@ -904,7 +903,12 @@
         file-menu [(ss/action :name "Installed" :key "menu I" :mnemonic "i" :handler (switch-tab-handler INSTALLED-TAB))
                    (ss/action :name "Search" :key "menu H" :mnemonic "h" :handler (switch-tab-handler SEARCH-TAB))
                    :separator
-                   (ss/action :name "Exit" :key "menu Q" :mnemonic "x" :handler (handler #(ss/dispose! newui)))]
+                   (ss/action :name "Exit" :key "menu Q" :mnemonic "x" :handler
+                              (fn [ev]
+                                ;; https://stackoverflow.com/questions/1234912/how-to-programmatically-close-a-jframe
+                                ;; frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
+                                (let [exit-ev (java.awt.event.WindowEvent. newui java.awt.event.WindowEvent/WINDOW_CLOSING)]
+                                  (.dispatchEvent newui exit-ev))))]
 
         view-menu (build-theme-menu)
 
@@ -961,12 +965,20 @@
   (info "starting gui")
   (swap! core/state assoc :gui (start-ui)))
 
-(defn stop
+(defn -stop
   []
-  (info "stopping gui")
   (try
     ;; don't do this. state may not be started yet for it to be stopped!
     ;;(ss/dispose! (get-state :gui))
     (ss/dispose! (:gui @core/state))
     (catch RuntimeException re
       (warn "failed to stop state:" (.getMessage re)))))
+
+(defn stop
+  []
+  (info "stopping gui")
+  (cond
+    (:in-repl? @core/state) (-stop)
+    (-> timbre/*config* :testing?) (-stop)
+    :else (ss/invoke-later
+           (-stop))))

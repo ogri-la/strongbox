@@ -1,5 +1,6 @@
 (ns strongbox.cloverage
   (:require
+   [taoensso.timbre :as timbre]
    [strongbox.main :as main]
    [clojure.test :as test]
    [cloverage.coverage :as c]))
@@ -13,6 +14,9 @@
   (fn [ns-list]
     (with-redefs [main/profile? true
                   main/spec? true]
-      (apply require (map symbol ns-list))
-      {:errors (reduce + ((juxt :error :fail)
-                          (apply test/run-tests ns-list)))})))
+      (timbre/with-merged-config {:level :debug, :testing? true
+                                  ;; ensure we're not writing logs to files
+                                  :appenders {:spit nil}}
+        (apply require (map symbol ns-list))
+        {:errors (reduce + ((juxt :error :fail)
+                            (apply test/run-tests ns-list)))}))))

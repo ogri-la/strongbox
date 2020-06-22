@@ -50,7 +50,7 @@
   (let [regex #"(\d{1,3})\.(\d{1,3})\.(\d{1,3})(.*)?"
         ;; => {:major "0" :minor "10" :patch "0" :qualifier "-unreleased"}
         v (zipmap [:major :minor :patch :qualifier] (rest (re-find regex strongbox-version)))]
-    (format "Wowman/%s.%s%s (https://github.com/ogri-la/strongbox)" (:major v) (:minor v) (:qualifier v))))
+    (format "strongbox/%s.%s%s (https://github.com/ogri-la/strongbox)" (:major v) (:minor v) (:qualifier v))))
 
 (defn-spec user-agent map?
   [use-anon-useragent? boolean?]
