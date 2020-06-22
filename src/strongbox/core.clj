@@ -1316,5 +1316,6 @@
     (f))
   (when (and @state
              (logging/debug-mode?))
+    (info "strongbox" (strongbox-version))
     (info "wrote logs to:" (paths :log-file)))
   (reset! state nil))
