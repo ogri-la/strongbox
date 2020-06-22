@@ -22,23 +22,30 @@
    "cat109.html" "Info, Plug-in Bars"
    "cat158.html" "Classic - General"})
 
-(defn-spec format-wowinterface-dt string?
+(defn-spec -format-wowinterface-dt string?
   "formats a shitty US-style m/d/y date with a shitty 12 hour time component and no timezone
   into a glorious RFC3399 formatted UTC string."
   [dt string?]
-  (let [;; because of some locale bs, datetime formatting is case sensitive in java 11 but not java 8
-        ;; and only in non-US locales. solution? an elaborate DateTimeFormatterBuilder or just making the
-        ;; whole value lowercase? yeah. OO types are sick.
-        ;; -- https://stackoverflow.com/questions/38250379/java8-datetimeformatter-am-pm
-        dt (lower-case dt)
-
-        ;; https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html
+  (let [;; https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html
         dt (java-time/local-date-time "MM-dd-yy hh:mm a" dt) ;; "09-07-18 01:27 PM" => obj with no tz
 
         ;; no tz info available on site, assume utc
         dt-utc (java-time/zoned-date-time dt "UTC") ;; obj with no tz => utc obj
         fmt (get java-time.format/predefined-formatters "iso-offset-date-time")]
     (java-time/format fmt dt-utc)))
+
+(defn-spec format-wowinterface-dt string?
+  "formats a shitty US-style m/d/y date with a shitty 12 hour time component and no timezone
+  into a glorious RFC3399 formatted UTC string."
+  [dt string?]
+  (try
+    (-format-wowinterface-dt dt)
+    (catch java.time.format.DateTimeParseException e
+      ;; because of some locale bs, datetime formatting is case sensitive in java 11 but not java 8
+      ;; and only in non-US locales. solution? an elaborate DateTimeFormatterBuilder or just making the
+      ;; whole value lowercase? yeah. OO types are sick.
+      ;; -- https://stackoverflow.com/questions/38250379/java8-datetimeformatter-am-pm
+      (-format-wowinterface-dt (lower-case dt)))))
 
 (defn scrape-category-group-page
   [category-page] ;; => "cat23.html"
