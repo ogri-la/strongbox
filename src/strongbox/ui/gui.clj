@@ -903,7 +903,6 @@
         file-menu [(ss/action :name "Installed" :key "menu I" :mnemonic "i" :handler (switch-tab-handler INSTALLED-TAB))
                    (ss/action :name "Search" :key "menu H" :mnemonic "h" :handler (switch-tab-handler SEARCH-TAB))
                    :separator
-                   ;;(ss/action :name "Exit" :key "menu Q" :mnemonic "x" :handler (handler #(ss/dispose! newui)))
                    (ss/action :name "Exit" :key "menu Q" :mnemonic "x" :handler
                               (fn [ev]
                                 ;; https://stackoverflow.com/questions/1234912/how-to-programmatically-close-a-jframe
@@ -978,7 +977,8 @@
 (defn stop
   []
   (info "stopping gui")
-  (if (:in-repl? @core/state)
-    (-stop)
-    (ss/invoke-later
-     (-stop))))
+  (cond
+    (:in-repl? @core/state) (-stop)
+    (-> timbre/*config* :testing?) (-stop)
+    :else (ss/invoke-later
+           (-stop))))

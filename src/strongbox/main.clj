@@ -66,7 +66,6 @@
     (gui/start))
 
   (watch-for-gui-restart)
-  (shutdown-hook)
 
   nil)
 
@@ -197,6 +196,7 @@
 (defn -main
   [& args]
   (let [{:keys [options exit-message ok?]} (-> args parse validate)]
+    (shutdown-hook)
     (if exit-message
       (exit (if ok? 0 1) exit-message)
       (start options))))
