@@ -313,7 +313,7 @@
         refresh-button (button "Refresh" (async-handler core/refresh))
         update-all-button (button "Update all" (async-handler core/install-update-all))
 
-        wow-dir-button (button "WoW directory" (async-handler picker))
+        wow-dir-button (button "Addon directory" (async-handler picker))
 
         wow-dir-dropdown (ss/combobox :model (core/available-addon-dirs)
                                       :selected-item (core/selected-addon-dir))
@@ -365,9 +365,9 @@
 
         items [[refresh-button]
                [update-all-button]
-               [wow-dir-button]
                [wow-dir-dropdown "wmax 200"]
-               [wow-game-track]]
+               [wow-game-track]
+               [wow-dir-button]]
 
         update-clicker (button (str "Update Available: " (core/latest-strongbox-release))
                                (handler #(browse-to "https://github.com/ogri-la/strongbox/releases"))
