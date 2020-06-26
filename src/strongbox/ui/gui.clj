@@ -488,7 +488,9 @@
                                        "www.curseforge.com" "curseforge"
                                        "www.wowinterface.com" "wowinterface"
                                        "github.com" "github"
-                                       "www.tukui.org" "tukui"
+                                       "www.tukui.org" (if (= (.getPath url) "/classic-addons.php")
+                                                         "tukui-classic"
+                                                         "tukui")
                                        "???")]
                            (format url-template label))))]
 
@@ -604,8 +606,9 @@
 
 (defn search-results-panel
   []
-  (let [hidden-by-default-cols [:source-id]
+  (let [hidden-by-default-cols [:source-id "-source"]
         tblmdl (sstbl/table-model :columns [{:key :url :text "source"}
+                                            {:key :source :text "-source"}
                                             :source-id
                                             {:key :label :text "name"}
                                             :description
@@ -622,12 +625,17 @@
         label-idx (atom (set []))
         update-label-idx (fn [_]
                            (reset! label-idx
-                                   (->> (get-state :installed-addon-list) (map :label) (remove nil?) set)))
+                                   (->> (get-state :installed-addon-list)
+                                        (map (fn [{:keys [source source-id]}]
+                                               [(name (or source "")) source-id]))
+                                        (remove nil?)
+                                        set)))
         _ (state-bind [:installed-addon-list] update-label-idx)
 
         addon-installed? (fn [adapter]
-                           (let [label-column (find-column-by-label grid "name")
-                                 value (.getValue adapter label-column)]
+                           (let [source (.getValue adapter (find-column-by-label grid "-source"))
+                                 source-id (.getValue adapter (find-column-by-label grid "source-id"))
+                                 value [source source-id]]
                              (contains? @label-idx value)))
 
         date-renderer #(when % (-> % clojure.instant/read-instant-date (utils/fmt-date "yyyy-MM-dd")))
