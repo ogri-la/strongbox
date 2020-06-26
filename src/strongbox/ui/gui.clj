@@ -488,7 +488,9 @@
                                        "www.curseforge.com" "curseforge"
                                        "www.wowinterface.com" "wowinterface"
                                        "github.com" "github"
-                                       "www.tukui.org" "tukui"
+                                       "www.tukui.org" (if (= (.getPath url) "/classic-addons.php")
+                                                         "tukui-classic"
+                                                         "tukui")
                                        "???")]
                            (format url-template label))))]
 
