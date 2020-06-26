@@ -36,27 +36,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - done
 * fixed a bug where using 'Quit' from the gui would leave app running
 * fixed useragent, it was still stuck on 'wowman'
-
-## todo
-
-* update ticket template
-    - with command to run that uses the debug flag
-        - do I even have a --debug flag?
-            - I do now
-        - does the arch script allow further commands?
-            - yup
-    - which files to upload
-        - ...
-* wowman-comrades, shift asterisk description out of strongbox README
-* game track list in catalogue
-    - can game-track-list be included from all other hosts?
-        - not just wowi?
-            - even wowi is broken though
-            - I've seen a reference to a v4 of their 'api' that should be investigated
-                - naming changes mostly so far
-            - I've also noticed switches in game tracks for some of their addons this week (2020-03)
-        - tukui might benefit from this
-            - it might even be a fix for this bug: https://github.com/ogri-la/strongbox/issues/143
 * tukui and elvui can't be switched to classic
     - on classic track they show updates
         - elvui 1.82 => 1.211
@@ -72,8 +51,48 @@ see CHANGELOG.md for a more formal list of changes by release
         - ids are 1 and 2
         - I thought these were negative? or I made them negative?
         - anyway
+* game track list in catalogue
+    - can game-track-list be included from all other hosts?
+        - not just wowi?
+            - even wowi is broken though
+            - I've seen a reference to a v4 of their 'api' that should be investigated
+                - naming changes mostly so far
+            - I've also noticed switches in game tracks for some of their addons this week (2020-03)
+        - tukui might benefit from this
+            - it might even be a fix for this bug: https://github.com/ogri-la/strongbox/issues/143
+    - not fixing
+        - game track for tukui would be redundant information as game track is already encoded into the catalogue name
+        - curseforge as of a few days ago has been acquired by Overwolf and catalogue may be disappearing or changing
+* search tweaks
+    - adjust the number of addons displayed in the search results according to number of addons in catalogue
+    - it's clear which tukui addons are classic and which are retail
+    - tukui search results shouldn't both be highlighted if only one is installed
+    - done
+
+
+## todo
+
+* update ticket template
+    - with command to run that uses the debug flag
+        - do I even have a --debug flag?
+            - I do now
+        - does the arch script allow further commands?
+            - yup
+    - which files to upload
+        - ...
+* wowman-comrades, shift asterisk description out of strongbox README
+
 
 ## todo bucket (no particular order)
+
+* change installation from 'overwrite' to 'uninstall+install'
+
+* just encountered a case where the classic version overwrote one of the retail directories but not the other
+    - (tukui classic and retail?)
+    - so there was a broken retail installation but a working classic installation
+        - I was able to 'uninstall' the broken retail installation without a problem
+
+* add ability to explicitly unignore addon from context menu
 
 * test, can gui-diff and main/test be pushed back into the testing namespace and elided from release somehow?
 
