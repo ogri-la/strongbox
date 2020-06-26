@@ -21,7 +21,7 @@
                       "wowinterface" wowinterface-api/expand-summary
                       "github" github-api/expand-summary
                       "tukui" tukui-api/expand-summary
-                      "tukui-classic" tukui-api/expand-summary
+                      "tukui-classic" tukui-api/expand-summary-classic
                       nil (fn [_ _] (error "malformed addon-summary:" (utils/pprint addon-summary)))}
         key (:source addon-summary)]
     (try
