@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+* browser not opening addon URL
 * very slow searches. Typing has now been decoupled from showing search results so it feels faster.
 * added a caveat against the screenshots in the README. The dark-mode version only works on particular desktops.
 * fixed bug that crashes GUI when the next upgrade is available.
