@@ -1,6 +1,7 @@
 (ns strongbox.wowinterface
   (:require
-   [clojure.string :refer [trim]]
+   [orchestra.core :refer [defn-spec]]
+   [clojure.string :refer [trim lower-case]]
    [clojure.set]
    [slugify.core :refer [slugify]]
    [strongbox
@@ -21,16 +22,30 @@
    "cat109.html" "Info, Plug-in Bars"
    "cat158.html" "Classic - General"})
 
-(defn format-wowinterface-dt
+(defn-spec -format-wowinterface-dt string?
   "formats a shitty US-style m/d/y date with a shitty 12 hour time component and no timezone
   into a glorious RFC3399 formatted UTC string."
-  [dt]
+  [dt string?]
   (let [;; https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html
         dt (java-time/local-date-time "MM-dd-yy hh:mm a" dt) ;; "09-07-18 01:27 PM" => obj with no tz
+
         ;; no tz info available on site, assume utc
         dt-utc (java-time/zoned-date-time dt "UTC") ;; obj with no tz => utc obj
         fmt (get java-time.format/predefined-formatters "iso-offset-date-time")]
     (java-time/format fmt dt-utc)))
+
+(defn-spec format-wowinterface-dt string?
+  "formats a shitty US-style m/d/y date with a shitty 12 hour time component and no timezone
+  into a glorious RFC3399 formatted UTC string."
+  [dt string?]
+  (try
+    (-format-wowinterface-dt dt)
+    (catch java.time.format.DateTimeParseException e
+      ;; because of some locale bs, datetime formatting is case sensitive in java 11 but not java 8
+      ;; and only in non-US locales. solution? an elaborate DateTimeFormatterBuilder or just making the
+      ;; whole value lowercase? yeah. OO types are sick.
+      ;; -- https://stackoverflow.com/questions/38250379/java8-datetimeformatter-am-pm
+      (-format-wowinterface-dt (lower-case dt)))))
 
 (defn scrape-category-group-page
   [category-page] ;; => "cat23.html"
@@ -55,7 +70,7 @@
 (defn extract-source-id
   [a]
   ;; fileinfo.php?s=c33edd26881a6a6509fd43e9a871809c&amp;id=23145 => 23145
-  (-> a :attrs :href (clojure.string/split #"&.+=") last Integer.))
+  (-> a :attrs :href (clojure.string/split #"&.+=") last Integer/valueOf))
 
 (defn extract-addon-url
   [a]
@@ -77,7 +92,7 @@
        ;;:category-list [] ;; not available in summary, added by caller
        ;;:created-date nil ;; not available in summary
        :updated-date (-> snippet (select [:div.updated html/content]) first extract-updated-date)
-       :download-count (-> snippet (select [:div.downloads html/content]) first (clojure.string/replace #"\D*" "") Integer.)})
+       :download-count (-> snippet (select [:div.downloads html/content]) first (clojure.string/replace #"\D*" "") Integer/valueOf)})
     (catch RuntimeException re
       (error re (format "failed to scrape snippet with '%s', excluding from results: %s" (.getMessage re) (utils/pprint snippet)))
       nil)))
@@ -98,7 +113,7 @@
         page-nav (-> page-content (select [:.pagenav [:td.alt1 html/last-of-type] :a]))
         ;; just scrape first page when page-nav is empty
         page-count (if (empty? page-nav) 1 (-> page-nav first :attrs :href
-                                               (clojure.string/split #"=") last Integer.))
+                                               (clojure.string/split #"=") last Integer/valueOf))
         page-range (range 1 (inc page-count))]
     page-range))
 

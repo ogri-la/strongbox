@@ -4,139 +4,103 @@ this is my own scratchpad for keeping track of things. it gets truncated frequen
 
 see CHANGELOG.md for a more formal list of changes by release
 
-## 1.0.0 release
+## done
 
-### done
-
-* rename wowman
-    - update readme
-        - mention name change prominently
+* wowman-comrades, rename wowman to strongbox
+    - done
+* README, add caveat against screenshots
+    - those dark theme screenshots are only available on gtk2+ environments
+        - MATE and cinnamon
+* latest release gui bug
+    - add fix and tests to strongbox
+* joker linting
+    - does some stuff that eastwood can't do, or eastwood has disabled or something
+        - anyway, it's fast
+    - done
+* support for openjdk 11
+    - there is a localisation issue with formatting wowinterface objects in openjdk11 and java.time/clj-time
+        - it isn't present for Travis so it's passing tests
+        - it can be fixed if run with ":jvm-opts ["-Djava.locale.providers=COMPAT,CLDR"]"
+            - which fucking sucks
         - done
+    - it's the next LTS however java 8 isn't going away anytime soon
+    - java 8 makes it difficult to work with openjfx though, so time to upgrade
+    - can a openjdk 11 compiled uberjar work on java 8?
+        - no, apparently. I got one of these:
+            - java.lang.ClassNotFoundException: java.awt.event.FocusEvent$Cause
+        - it could be a lone error or the first of dozens, not going to spend much time on it until gui2
+* search is painfully slow because I made no effort porting it
+    - have made the input vs output asynchronous
+        - this means the typing happens normally and results appear as they become available
+    - it could still be improved, definitely
+    - done
+* fixed a bug where using 'Quit' from the gui would leave app running
+* fixed useragent, it was still stuck on 'wowman'
+* tukui and elvui can't be switched to classic
+    - on classic track they show updates
+        - elvui 1.82 => 1.211
+        - tukui 4.42 => 1.321
+    - but updating them doesn't alter their reported versions
+        - the 'source' for these two are 'tukui-classic', the others are just 'tukui'
+    - problem seems to be in the :version and :installed-version attributes
+        - after refresh, the :version attribute is correct but :installed-version is still incorrect
+    - I have addons masking other addons!
+        - ElvUI_MerathilisUI/ was masking Tukui
+        - ElvUI_CodeNameBlaze/ was masking Elvui
+    - the addons were being updated, but were being mis-matched during the database search because of shared IDs ...?
+        - ids are 1 and 2
+        - I thought these were negative? or I made them negative?
+        - anyway
+* game track list in catalogue
+    - can game-track-list be included from all other hosts?
+        - not just wowi?
+            - even wowi is broken though
+            - I've seen a reference to a v4 of their 'api' that should be investigated
+                - naming changes mostly so far
+            - I've also noticed switches in game tracks for some of their addons this week (2020-03)
+        - tukui might benefit from this
+            - it might even be a fix for this bug: https://github.com/ogri-la/strongbox/issues/143
+    - not fixing
+        - game track for tukui would be redundant information as game track is already encoded into the catalogue name
+        - curseforge as of a few days ago has been acquired by Overwolf and catalogue may be disappearing or changing
+* search tweaks
+    - adjust the number of addons displayed in the search results according to number of addons in catalogue
+    - it's clear which tukui addons are classic and which are retail
+    - tukui search results shouldn't both be highlighted if only one is installed
+    - done
+* update ticket template
+    - with command to run that uses the debug flag
+        - do I even have a --debug flag?
+            - I do now
+        - does the arch script allow further commands?
+            - yup
+    - which files to upload
+        - ...
+    - done
+        - we now have custom bug and feature templates
 
-* code refactor
-    - diagram state transitions
-        - my mental model has become fuzzy
-        - done, see strongbox-docs
-    - untangle nfo and toc files
-        - result of diagramming modules
-        - done
-    - rename references of 'uri' to 'url'
-        - these are all through the catalog
-        - done
-    - remove all mentions of a donation url, author name
-        - done
-    - remove 'alt-name'
-        - done
-    - rename any mentions of 'catalog' to 'catalogue'
-        - purely for consistency
-        - done
-
-* can addon-id be removed as a gui column?
-    - no.
-    - addon-id is actually "name"
-    - "name" is the value core.clj uses to update the 'unsteady addon' list that the gui watches to highlight rows
-    - "label" is actually masquerading as "name"
-    - won't 'fix'
-
-* catalogue updates
-    - move location of catalogs into user settings
-        - allow user to specify their own catalogs
-            - a url to a catalog that is downloaded and included while loading up the db
-            - different from the 'user catalog'
-        - done
-            - they can specify their own catalogs using the :source attribute
-            - their addon entries must still specify a supported :source
-                - it can be :curseforge, :wowinterface, :github, :tukui, :tukui-classic
-
-    - support catalog-less strongbox
-        - application should be able to work with no catalogues specified
-            - can't search for or install addons
-            - can't update an addon without a .nfo file
-            - we have a user-catalogue for github ... could it do double duty?
-                - expand the 'add github addon' so user can select source and add an id or just use an url
-                    - and then strongbox scrapes the data at given url? urg, back to webscraping
-        - done
-            - tacitly. it no longer falls over dead when there are no catalogues to choose from
-
-    - game track becomes a set of keywords
-        - not strings
-        - done
-
-    - normalise categories between addon hosts
-        - perhaps expand them into 'tags'?
-        - a lot of these categories are composite
-            - break each composite one down into a singular, normalise, have a unique set of tags
-
-    - remove 'updated' date
-        - should have been removed when updating catalogues was removed
-
-    - bumps spec version of catalogue to 2
-        - keep wowman-coercer but dispatch based off of spec version
-
-* remove backwards compatibility
-    - remove nfo-v1
-        - 'map?' just isn't good enough
-        - done
-
-* remember selected addon dir
+* wowman-comrades, shift asterisk description out of strongbox README
     - done
 
-* bug, test fixtures for user-config had their :catalog value renamed to :catalogue
-        - revert those changes
-        - add a step in the parsing that renames those values to 'catalogue'
-
-* database, investigate a datalog backed datastore
-    - https://clojure.github.io/clojure-contrib/doc/datalog.html
-    - https://github.com/tonsky/datascript
-    - crux is working out elsewhere
-    - I want addons loaded *quickly*
-    - I want to *query* addons *quickly*
-
-* spec clean up
-    * it's never been particularly clear in my head what some of those specs are
-    * I have a better understanding of their nature now
-        - as part of the diagramming, sketch out the fields to be captured
-
-* is catalogue being validated now that spec checking has been disabled?
-    - done
-
-* bug, "failed to read data "null" in file: .../etag-db.json"
-    - something I seem to have introduced unifying the load-json* fns
-        - it was the value-fn vs transform-map in the unified load-json-safely function
-    - done
-
-* catalogue updates
-    - publish a 'strongbox-catalogue' repo
-        - just like wowman-data, but for strongbox
-
-* migration
-    - rename .wowman.json files to .strongbox.json 
-    - move 'user-catalog.json' to 'user-catalgoue.json'
-
-### todo
-
-* rename wowman
-    - test on mac
-    - rename repository
-    - arch package
-        - add new shell script 'strongbox'
-    - update ticket template
-        - with command to run that uses the debug flag
-        - which files to upload
-
+## todo
 
 ## todo bucket (no particular order)
+
+* rename 'wowman-comrades' to 'strongbox-comrades'
+
+* change installation from 'overwrite' to 'uninstall+install'
+
+* just encountered a case where the classic version overwrote one of the retail directories but not the other
+    - (tukui classic and retail?)
+    - so there was a broken retail installation but a working classic installation
+        - I was able to 'uninstall' the broken retail installation without a problem
+
+* add ability to explicitly unignore addon from context menu
 
 * test, can gui-diff and main/test be pushed back into the testing namespace and elided from release somehow?
 
 * http, revisit the http/expiry-offset-hours value
     - also, revisit prune-http-cache
-
-* performance, check addons for updates immediately after loading
-    - if after we've read the nfo data and we have everything we need, check the addon for updates immediately
-        - don't wait for db loading and addon matching
-            - we already have a match!
-        - this might fit in with the greater-parallelism/queue based infrastructure
 
 * robustness, only download/update the catalogue *after* an existing catalogue has been confirmed
     - github is down, wowman is erroring with a 500
@@ -148,14 +112,6 @@ see CHANGELOG.md for a more formal list of changes by release
             - would this block reconciliation?
                 - perhaps if there are unmatched addons after reconciliation we then wait and try again ...?
 
-* game track list in catalogue
-    - can game-track-list be included from all other hosts?
-        - not just wowi?
-            - even wowi is broken though
-            - I've seen a reference to a v4 of their 'api' that should be investigated
-                - naming changes mostly so far
-            - I've also noticed switches in game tracks for some of their addons this week (2020-03)
-
 * EOL planning
     - I'm not going away and neither is strongbox, but! *should* I or my free time disappear will strongbox continue being useful?
         - what can I do to ensure it is the most useful if I just give up on it tomorrow?
@@ -164,7 +120,7 @@ see CHANGELOG.md for a more formal list of changes by release
         - what can't I control?
             - addon hosts
                 - our interface with them is their API or in wowi's case, their API and website
-        
+
 * code refactor
     * simplify `install-addon` interface in core.clj
         - we need to provide an installation directory which can be pulled from the application state
@@ -183,48 +139,20 @@ see CHANGELOG.md for a more formal list of changes by release
     - I'll stop updating wowman-data when wowman is no longer being used
 * add dirname support to reconcilation and catalogue
     - not sure which hosts support these
-* tukui and elvui can't be switched to classic
-    - on classic track they show updates
-        - elvui 1.82 => 1.211
-        - tukui 4.42 => 1.321
-    - but updating them doesn't alter their reported versions
-        - the 'source' for these two are 'tukui-classic', the others are just 'tukui'
-    - problem seems to be in the :version and :installed-version attributes
-        - after refresh, the :version attribute is correct but :installed-version is still incorrect
-    - I have addons masking other addons!
-        - ElvUI_MerathilisUI/ was masking Tukui
-        - ElvUI_CodeNameBlaze/ was masking Elvui
-    - the addons were being updated, but were being mis-matched during the database search because of shared IDs ...?
-        - ids are 1 and 2
-        - I thought these were negative? or I made them negative?
-        - anyway
 * wowinterface, multiple game tracks 
     - investigate just what is being downloaded when a classic version of a wowi addon is downloaded
     - see 'LagBar'
 * revisit aliases
     - use source and source-id now
-    - maybe externalise the list 
-* greater parallelism
-    - internal job queue
-    - replace log at bottom of screen with a list of jobs being processed and how far along they are
-        - each job can be cancelled/stopped/discarded
-    - separate tab for log
-        - that scrolls the other way
+    - maybe externalise the list
 * version pinning
     - user can opt to install a specific release of an addon
     - automatic updates for that addon are thereafter blocked
 * alpha/beta opt-in
     - user can opt to install alpha/beta/no-lib releases per-addon
-* gui, java look and feel
-    - our 'theme' solution is too naive
-        - we should be deferring to the current theme for highlighted colours
-        - how?
-            - https://pirlwww.lpl.arizona.edu/resources/guide/software/SwingX/org/jdesktop/swingx/plaf/UIColorHighlighterAddon.html
 * bug, changing sort order during refresh doesn't reflect which addon is being updated
     - I think changing column ordering and moving columns should be disabled while updates happen
         - just freeze or disable them or something.
-* download progress bar *inside* the grid ...?
-    - pure fantasy?
 * add support for user supplied github token
     - necessary if they want a large number of github addons without hassles
 * investigate state of java packaging
@@ -243,15 +171,10 @@ see CHANGELOG.md for a more formal list of changes by release
     - this is interesting actually. the exported addon list has become a mini-catalogue
         - some addons require the larger catalogue to resolve
         - github addons are resolved and installed by a different means...
-* add custom highlighting colours
-    - I don't mind my colours but not everybody may
-    - my colours don't work very well on native lnf + dark themes:
-        - https://github.com/ogri-la/wowman/issues/105
 * when curseforge api is down users get a wall of red error messages with very little useful information
     - see issue 91: https://github.com/ogri-la/wowman/issues/91
         - the error message has been improved but we still get a red wall of text
         - aggregate error messages?
-* new tab for dedicated log
 * rename 'reinstall all' to 'reconcile'
     - steal from the best
     - make the reconcile automatic
@@ -266,8 +189,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - since this is the 'installed addons pane', should the value reflect the value of the installed addon?
         - (and not the value of the addon to be installed)
         - and would this be inconsistent with the other fields that are also changing with new catalog information?
-* have the info box scroll the other direction
-    - this is possible, see the seesaw examples
 * add checksum checks after downloading
     - curseforge have an md5 that can be used
         - unfortunately no checksum in api results
@@ -275,17 +196,6 @@ see CHANGELOG.md for a more formal list of changes by release
             - fingerprint is 9 digits and all decimal, so not a hex digest
     - wowinterface checksum is hidden behind a javascript tabber but still available
         - wowinterface do have a md5sum in results! score
-* database, compare current speed and code against loading addon category data serially
-    - as opposed to in three blocks (categories, addons, category-addons). We might save some time and code
-* database, investigate prepared statements when inserting for improved speed
-
-* export to markdown
-    - I think I'd like a simple list like:
-        * [addon name](https://source/path/to/addon)
-    - of course, this would be a different type of export than the one used for import
-        - although ... I could possibly parse the list ... and nah.
-    - clostache?
-        - https://github.com/fhd/clostache
 * add a 'tabula rasa' option that wipes *everything* 
     - cache, catalog, config, downloaded zip files
 * coloured warnings/errors on console output
@@ -294,12 +204,6 @@ see CHANGELOG.md for a more formal list of changes by release
         - he's not addressing tickets
         - it may have been simpler to use in 3.x.x but in 4.x.x it's gotten a bit archaic
         - I can't drop hostname without leaving pretty-printed stacktraces behind
-
-* investigate `.csv` as a human-readable but more compact representation
-    - might be able to save a MB on extraneous syntax
-    - might be able to speed up parsing and loading
-    - might be able to drop the two json libraries in favour of just one extra lib
-    - depends on profile task
 * cache, make caching opt-out and remove all those ugly binding calls
     - bind the value at core app start
     - this may not be possible. 
@@ -319,60 +223,114 @@ see CHANGELOG.md for a more formal list of changes by release
                     - got to have backups+imports happening first
         - identify slow things and measure their improvement
 
-* memory usage
-    - we're big and fat :(
-    - lets explore some ways to measure and then reduce memory usage
-    - measuring:
-        - https://github.com/clojure-goes-fast/clj-memory-meter
-        - https://visualvm.github.io/
-* toggleable highlighers as a menuitem
-    - highlight unmatched
-    - highlight updates
-    - touch of colour against each menuitem would serve as a legend
 * toggleable columns as a menuitem
     - they're available from the column menu, but it's a little hidden and contains other fairly useless options like 'horizontal scroll'
-* nightly unstable builds
-    - building the 'develop' branch once a day
-        - making it available as the 'unstable' release that always gets replaced
-    - project.clj "x.y.z-unreleased" would be changed to "x.y.z-unstable"
-    - development would happen mainly in feature branches
-* a 'stop' button to stop updates would be nice
-* download addon details in parallel
-    - speed benefits, mostly
-    - share a pool of connections between threads
-        - N connections serving M threads
+* gui, both panes, filter by categories
+* internationalisation?
+    - Akitools has no english description but it does have a "Notes-zhCN" in the toc file that could be used
+    - wowman was mentioned on a french forum the other day ..
+
+## import/export
+
+* export to markdown
+    - I think I'd like a simple list like:
+        * [addon name](https://source/path/to/addon)
+    - of course, this would be a different type of export than the one used for import
+        - although ... I could possibly parse the list ... and nah.
+    - clostache?
+        - https://github.com/fhd/clostache
+
+## search
+
 * search, indicate results are paginated
 * search, order by date only orders the *current page* of results
 * search, pagination controls in search pane
 * search, group results
     - group by downloads/age/category?
         - it would finally be the best use for category data
+
+## cli
+
 * cli, update specific addon
 * cli, install specific addon
 * cli, colours!
-* gui, both panes, filter by categories
+* cli, replace with a repl
+    - lein --cli gives you access to the code directly
 
+## job queue
 
-## post 1.0
+* greater parallelism
+    - internal job queue
+    - replace log at bottom of screen with a list of jobs being processed and how far along they are
+        - each job can be cancelled/stopped/discarded
+    - separate tab for log
+        - that scrolls the other way
+* a 'stop' button to stop updates would be nice
+* download addon details in parallel
+    - speed benefits, mostly
+    - share a pool of connections between threads
+        - N connections serving M threads
+* performance, check addons for updates immediately after loading
+    - if after we've read the nfo data and we have everything we need, check the addon for updates immediately
+        - don't wait for db loading and addon matching
+            - we already have a match!
+        - this might fit in with the greater-parallelism/queue based infrastructure
 
-* internationalisation?
-    - Akitools has no english description but it does have a "Notes-zhCN" in the toc file that could be used
-    - wowman was mentioned on a french forum the other day ..
-    - post 1.0
-* move away from this merging toc/addon/expanded addon data strategy
-    - it's confusing to debug!
-    - namespaced keys might be a good alternative:
-        - :toc/label and :catalog/label
-        - :toc/version and :catalog/version
-        - with derived/synthetic attributes having no ns
-            - :group-id, :group-count
-        - how to pick preferred attributes without continuous (or key else other-key) ?
-            - (getattr addon :label) ;; does multiple lookups ...? seems kinda meh
-    - post 1.0
-    - wait until spec2 is released for an overhaul of current specs
+## gui/gui2
+
+* gui2
+    - an OpenJFX gui
+    - how large is bundle after uberjar?
+    - can an openjfx-11/openjdk-11 uberjar be run with openjdk 8?
+        - if not, then that is a hard upgrade for users :(
+            - unless we do a completely standalone version?
+                - this would depend on the modularisation introduced in java 9
+                - min JRE is 29MB, about ~9MB more than what we already have.
+                    - is filesize a problem for users?
+* gui, java look and feel
+    - our 'theme' solution is too naive
+        - we should be deferring to the current theme for highlighted colours
+        - how?
+            - https://pirlwww.lpl.arizona.edu/resources/guide/software/SwingX/org/jdesktop/swingx/plaf/UIColorHighlighterAddon.html
+    - defer until after gui2
+* download progress bar *inside* the grid ...?
+    - pure fantasy?
+    - defer until after gui2
+    - defer until after job queue
+* add custom highlighting colours
+    - I don't mind my colours but not everybody may
+    - my colours don't work very well on native lnf + dark themes:
+        - https://github.com/ogri-la/wowman/issues/105
+    - defer until after gui2
+* toggleable highlighers as a menuitem
+    - highlight unmatched
+    - highlight updates
+    - touch of colour against each menuitem would serve as a legend
+* have the info box scroll the other direction
+    - this is possible, see the seesaw examples
+* new tab for dedicated log
 
 ## wontfix
 
+* nightly unstable builds
+    - building the 'develop' branch once a day
+        - making it available as the 'unstable' release that always gets replaced
+    - project.clj "x.y.z-unreleased" would be changed to "x.y.z-unstable"
+    - development would happen mainly in feature branches
+    - too much effort for what? more user reports? I don't have that sort of time
+* wowman, add support for reading strongbox catalogues
+    - I have the strongbox-catalogue update.sh script building wowman catalogues
+    - there is no extra work involved
+* wowman, remove wowman-data repository
+    - eh, this won't be happening any time soon
+    - it's no extra work to maintain it
+* investigate `.csv` as a human-readable but more compact representation
+    - might be able to save a MB on extraneous syntax
+    - might be able to speed up parsing and loading
+    - depends on profile task
+        - update: profiling happened, it's not the json loading that is slow it was many other things. 
+        - reading the file and parsing the json is actually very quick, validation is slower but necessary
+        - json is just more flexible all around than csv.
 * remove backwards compatibility, wowman to strongbox
     - there will be a migration of wowman data to strongbox data, or the data is discarded
         - rename `test/fixtures/user-config-0.11.json` to `wowman--user-config ...`

@@ -5,7 +5,7 @@
    [clj-http.fake :refer [with-fake-routes-in-isolation]]
    [envvar.core :refer [with-env]]
    [me.raynes.fs :as fs]
-   ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
+   [taoensso.timbre :as log :refer [debug info warn error spy]]
    [strongbox
     [db :as db]
     [logging :as logging]
@@ -128,14 +128,14 @@
         (is (some #{"dir" "file" "url"} (clojure.string/split (name key) #"\-")))))
 
     (testing "all paths to files and directories are absolute"
-      (let [files+dirs (filter (fn [[k v]] (or (ends-with? k "-dir")
+      (let [files+dirs (filter (fn [[k _]] (or (ends-with? k "-dir")
                                                (ends-with? k "-file")))
                                (core/paths))]
         (doseq [[key path] files+dirs]
           (is (-> path (starts-with? "/")) (format "path %s is not absolute: %s" key path)))))
 
     (testing "all remote paths are using https"
-      (let [remote-paths (filter (fn [[k v]] (ends-with? k "-url")) (core/paths))]
+      (let [remote-paths (filter (fn [[k _]] (ends-with? k "-url")) (core/paths))]
         (doseq [[key path] remote-paths]
           (is (-> path (starts-with? "https://")) (format "remote path %s is not using HTTPS: %s" key path))))))
 
@@ -469,7 +469,7 @@
 
 ;; todo: install classic addon into retail game track
 
-(deftest db-load-catalog
+(deftest db-load-catalogue
   (testing "very long descriptions are truncated"
     (let [addon-with-long-description
           {:label "EveryAddon",
@@ -756,7 +756,7 @@
           fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                        {:get (fn [req] {:status 500 :host "raw.githubusercontent.com" :reason-phrase "500 Server Error"})}}
 
-          expected ["downloading catalogue 'Short (default)'"
+          expected ["downloading catalogue: short"
                     "failed to download file 'https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json': 500 Server Error (HTTP 500)"]]
       (with-fake-routes-in-isolation fake-routes
         (with-running-app
@@ -772,7 +772,7 @@
         (core/refresh)
 
         ;; this is the guard to the `db-load-catalogue` fn
-        ;; catalogue fixture in test-helper is an empty map, this should always return false
+        ;; catalogue fixture in `test-helper.clj` is an empty map so this should always return false
         (is (not (core/db-catalogue-loaded?)))
 
         ;; empty the file. quickest way to bad json
@@ -780,7 +780,10 @@
 
         ;; the catalogue will be re-requested, this time we've swapped out the fixture with one with a single entry
         (with-fake-routes-in-isolation fake-routes
-          (core/db-load-catalogue))
+          ;; this will print a warning with a stacktrace.
+          ;; it's being hidden so actual stacktraces don't get overlooked
+          (log/with-level :error
+            (core/db-load-catalogue)))
 
         (is (core/db-catalogue-loaded?))))))
 
@@ -801,7 +804,10 @@
 
         ;; the catalogue will be re-requested, this time the remote file is also corrupt
         (with-fake-routes-in-isolation fake-routes
-          (core/db-load-catalogue))
+          ;; this will print a warning with a stacktrace.
+          ;; it's being hidden so actual stacktraces don't get overlooked
+          (log/with-level :error
+            (core/db-load-catalogue)))
 
         (is (not (core/db-catalogue-loaded?)))))))
 
@@ -849,7 +855,7 @@
         (is (= expected (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))
 
 (deftest add+install-user-addon!
-  (testing "user addon is successfully addon to the user catalogue from just a github url"
+  (testing "user addon is successfully added to the user catalogue from just a github url"
     (let [every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
 
           fake-routes {"https://api.github.com/repos/Aviana/HealComm/releases"

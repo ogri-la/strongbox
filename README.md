@@ -12,7 +12,8 @@ If you are a user of strongbox and you ever want to get in touch, please just [o
 
 `wowman` has been renamed to `strongbox` for the (`1.0.0`) release.
 
-Arch users will need to install a new package as updates to the `wowman` package will end with the `0.12.x` line.
+Arch users will need to install the [strongbox AUR package](https://aur.archlinux.org/packages/strongbox) as updates to 
+the `wowman` package will end with the `0.12.x` line.
 
 ## Audience
 
@@ -28,7 +29,7 @@ It does not work on Windows. Windows will never be supported.
 
 ## Installation
 
-1. [download the jar](https://github.com/ogri-la/strongbox/releases/download/1.0.0/strongbox-1.0.0-standalone.jar) file
+1. [download the jar](https://github.com/ogri-la/strongbox/releases/download/1.1.0/strongbox-1.1.0-standalone.jar) file
 2. run with `java -jar strongbox-x.x.x-standalone.jar`
 
 ### Arch Linux users
@@ -44,6 +45,9 @@ Once installed it's available from the command line as `strongbox`.
 [![wowman version 0.11.0](./screenshots/screenshot-0.11.0-search-thumbnail.jpg)](./screenshots/screenshot-0.11.0-search.png?raw=true) 
 [![wowman version 0.11.0](./screenshots/screenshot-0.11.0-dark-installed-thumbnail.jpg)](./screenshots/screenshot-0.11.0-dark-installed.png?raw=true) 
 [![wowman version 0.11.0](./screenshots/screenshot-0.11.0-dark-search-thumbnail.jpg)](./screenshots/screenshot-0.11.0-dark-search.png?raw=true) 
+
+*(dark mode only available in GTK+ 2 environments like [MATE](https://mate-desktop.org/) and 
+[Cinnamon](https://en.wikipedia.org/wiki/Cinnamon_(desktop_environment)))*
 
 ## Usage
 
@@ -148,13 +152,7 @@ See [CONTRIBUTING](CONTRIBUTING.md) for more detail.
 
 **Moved here: https://ogri-la.github.io/wow-addon-managers/**
 
-An addon manager is 'maintained' if it has seen an update in 12 months.
-
-When an addon manager requires the *separate* installation of other software like Python or Java or NPM or GTK/QT etc, 
-or requires compilation or similar, then it gets the big fat caveat asterisk '**\***'.
-
-If a packaged version of the addon manager exists for *at least one* distribution of Linux, I drop the caveat asterisk.
-This may be an AUR, DEB, RPM/DNF, Snap, Flatpak, Zypper, AppImage, etc.
+[Request a change](https://github.com/ogri-la/wowman-comrades/issues). 
 
 ## License
 

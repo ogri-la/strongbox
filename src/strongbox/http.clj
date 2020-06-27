@@ -5,7 +5,6 @@
     [utils :as utils :refer [join]]]
    [clojure.java.io]
    [clojure.spec.alpha :as s]
-   [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
    [me.raynes.fs :as fs]
    [orchestra.core :refer [defn-spec]]
@@ -51,7 +50,7 @@
   (let [regex #"(\d{1,3})\.(\d{1,3})\.(\d{1,3})(.*)?"
         ;; => {:major "0" :minor "10" :patch "0" :qualifier "-unreleased"}
         v (zipmap [:major :minor :patch :qualifier] (rest (re-find regex strongbox-version)))]
-    (format "Wowman/%s.%s%s (https://github.com/ogri-la/strongbox)" (:major v) (:minor v) (:qualifier v))))
+    (format "strongbox/%s.%s%s (https://github.com/ogri-la/strongbox)" (:major v) (:minor v) (:qualifier v))))
 
 (defn-spec user-agent map?
   [use-anon-useragent? boolean?]

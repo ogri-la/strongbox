@@ -176,23 +176,23 @@
                              {:dir? true, :level 1, :toplevel? true, :path "Altoholic_Summary/"}]
 
             ;; detecting this somehow would be nice ...
-            expected ["DataStore_Stats"
-                      "DataStore_Talents"
-                      "DataStore"
-                      "DataStore_Achievements"
-                      "DataStore_Agenda"
-                      "DataStore_Auctions"
-                      "DataStore_Characters"
-                      "DataStore_Containers"
-                      "DataStore_Crafts"
-                      "DataStore_Currencies"
-                      "DataStore_Garrisons"
-                      "DataStore_Inventory"
-                      "DataStore_Mails"
-                      "DataStore_Pets"
-                      "DataStore_Quests"
-                      "DataStore_Reputations"
-                      "DataStore_Spells"]
+            ;; expected ["DataStore_Stats"
+            ;;           "DataStore_Talents"
+            ;;           "DataStore"
+            ;;           "DataStore_Achievements"
+            ;;           "DataStore_Agenda"
+            ;;           "DataStore_Auctions"
+            ;;           "DataStore_Characters"
+            ;;           "DataStore_Containers"
+            ;;           "DataStore_Crafts"
+            ;;           "DataStore_Currencies"
+            ;;           "DataStore_Garrisons"
+            ;;           "DataStore_Inventory"
+            ;;           "DataStore_Mails"
+            ;;           "DataStore_Pets"
+            ;;           "DataStore_Quests"
+            ;;           "DataStore_Reputations"
+            ;;           "DataStore_Spells"]
 
             ;; but in reality there were too many false positives when the size
             ;; of the groups exceeded the magnitude (3)

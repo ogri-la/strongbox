@@ -97,19 +97,20 @@
 (defn-spec -search :addon/summary-list
   "returns a list of addon summaries whose label or description matches the given user input `uin`.
   matches are case insensitive.
-  label matching matches from the beginning of the label.
-  description matching matches any substring within description"
+  label-matching matches from the beginning of the label.
+  description-matching matches any substring within description"
   [db :addon/summary-list, uin (s/nilable string?), cap int?]
-  (if (nil? uin)
-    (take cap (random-sample 0.005 db))
-    (let [label-regex (re-pattern (str "(?i)^" uin ".*"))
-          desc-regex (re-pattern (str "(?i).*" uin ".*"))
-          ;; a little slow and naive, but ok for now
-          xf (filter (fn [row]
-                       (or
-                        (re-find label-regex (:label row))
-                        (re-find desc-regex (get row :description "")))))]
-      (into [] (comp xf (take cap)) db))))
+  (let [pct (->> db count (max 1) (/ 100) (* 0.6))]
+    (if (nil? uin)
+      (take cap (random-sample pct db))
+      (let [label-regex (re-pattern (str "(?i)^" uin ".*"))
+            desc-regex (re-pattern (str "(?i).*" uin ".*"))
+            ;; a little slow and naive, but ok for now
+            xf (filter (fn [row]
+                         (or
+                          (re-find label-regex (:label row))
+                          (re-find desc-regex (get row :description "")))))]
+        (into [] (comp xf (take cap)) db)))))
 
 ;; not specced because the results and argument lists may vary greatly
 (defn stored-query

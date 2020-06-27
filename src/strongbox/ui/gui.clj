@@ -6,12 +6,12 @@
     [logging :as logging]
     [specs :as sp]
     [utils :as utils :refer [items kw2str]]]
+   [clojure.java.shell]
    [clojure.instant]
    [clojure.string :refer [lower-case starts-with? trim]]
    [slugify.core :refer [slugify]]
    [taoensso.timbre :as timbre :refer [debug info warn error spy]]
    [seesaw
-    [invoke :as ssi]
     [chooser :as chooser]
     [mig :as mig]
     [dev :refer [show-options show-events]]
@@ -61,8 +61,9 @@
    :content body})
 
 (defn button
-  [label onclick]
-  (ss/button :id (-> label slugify (str "-btn") keyword) ;; ":refresh-btn", ":update-all-btn"
+  [label onclick & [button-id]]
+  (ss/button :id (or button-id
+                     (-> label slugify (str "-btn") keyword)) ;; ":refresh-btn", ":update-all-btn"
              :text label
              :listen [:action onclick]))
 
@@ -138,7 +139,7 @@
              (.isSupported (java.awt.Desktop/getDesktop) java.awt.Desktop$Action/BROWSE))
     (fn [url]
       (info "opening URL:" url)
-      (.browse (java.awt.Desktop/getDesktop) (java.net.URL. url)))))
+      (.browse (java.awt.Desktop/getDesktop) (java.net.URI. url)))))
 
 (defn-spec find-browser fn?
   "returns a function that attempts to open a given URL in a browser.
@@ -312,7 +313,7 @@
         refresh-button (button "Refresh" (async-handler core/refresh))
         update-all-button (button "Update all" (async-handler core/install-update-all))
 
-        wow-dir-button (button "WoW directory" (async-handler picker))
+        wow-dir-button (button "Addon directory" (async-handler picker))
 
         wow-dir-dropdown (ss/combobox :model (core/available-addon-dirs)
                                       :selected-item (core/selected-addon-dir))
@@ -364,15 +365,16 @@
 
         items [[refresh-button]
                [update-all-button]
-               [wow-dir-button]
                [wow-dir-dropdown "wmax 200"]
-               [wow-game-track]]
+               [wow-game-track]
+               [wow-dir-button]]
 
         update-clicker (button (str "Update Available: " (core/latest-strongbox-release))
-                               (handler #(browse-to "https://github.com/ogri-la/strongbox/releases")))
+                               (handler #(browse-to "https://github.com/ogri-la/strongbox/releases"))
+                               :update-available-btn)
 
         items (if-not (core/latest-strongbox-version?)
-                (into items [update-clicker])
+                (conj items [update-clicker])
                 items)]
 
     (mig/mig-panel
@@ -466,13 +468,13 @@
 
         go-link-clicked (fn [e]
                           (when-let [triple (cell-val-for-event e)]
-                            (let [[row col val] triple]
+                            (let [[_ col val] triple] ;; [row col val] triple
                               (if (and (gocol? col) val)
                                 (browse-to val)))))
 
         hand-cursor-on-hover (fn [e]
                                (when-let [triple (cell-val-for-event e)]
-                                 (let [[row col val] triple]
+                                 (let [[_ col val] triple] ;; [row col val] triple
                                    (if (and (gocol? col) val)
                                      (.setCursor grid (cursor :hand))
                                      (.setCursor grid (cursor :default))))))
@@ -486,7 +488,9 @@
                                        "www.curseforge.com" "curseforge"
                                        "www.wowinterface.com" "wowinterface"
                                        "github.com" "github"
-                                       "www.tukui.org" "tukui"
+                                       "www.tukui.org" (if (= (.getPath url) "/classic-addons.php")
+                                                         "tukui-classic"
+                                                         "tukui")
                                        "???")]
                            (format url-template label))))]
 
@@ -602,8 +606,9 @@
 
 (defn search-results-panel
   []
-  (let [hidden-by-default-cols [:source-id]
+  (let [hidden-by-default-cols [:source-id "-source"]
         tblmdl (sstbl/table-model :columns [{:key :url :text "source"}
+                                            {:key :source :text "-source"}
                                             :source-id
                                             {:key :label :text "name"}
                                             :description
@@ -620,22 +625,26 @@
         label-idx (atom (set []))
         update-label-idx (fn [_]
                            (reset! label-idx
-                                   (->> (get-state :installed-addon-list) (map :label) (remove nil?) set)))
+                                   (->> (get-state :installed-addon-list)
+                                        (map (fn [{:keys [source source-id]}]
+                                               [(name (or source "")) source-id]))
+                                        (remove nil?)
+                                        set)))
         _ (state-bind [:installed-addon-list] update-label-idx)
 
         addon-installed? (fn [adapter]
-                           (let [label-column (find-column-by-label grid "name")
-                                 value (.getValue adapter label-column)]
+                           (let [source (.getValue adapter (find-column-by-label grid "-source"))
+                                 source-id (.getValue adapter (find-column-by-label grid "source-id"))
+                                 value [source source-id]]
                              (contains? @label-idx value)))
 
         date-renderer #(when % (-> % clojure.instant/read-instant-date (utils/fmt-date "yyyy-MM-dd")))
 
         update-rows-fn (fn [state]
-                         (let [uinput (-> state :search-field-input (or "") trim)
-                               search-results (if (empty? uinput)
-                                                (core/db-search)
-                                                (core/db-search uinput))]
-                           (insert-all grid search-results)))]
+                         (future
+                           (let [uinput (some-> state :search-field-input trim)
+                                 search-results (core/db-search uinput)]
+                             (insert-all grid search-results))))]
 
     ;; I'm rather pleased these just work as-is :)
     ;; todo: rename these to something a bit more general
@@ -902,7 +911,12 @@
         file-menu [(ss/action :name "Installed" :key "menu I" :mnemonic "i" :handler (switch-tab-handler INSTALLED-TAB))
                    (ss/action :name "Search" :key "menu H" :mnemonic "h" :handler (switch-tab-handler SEARCH-TAB))
                    :separator
-                   (ss/action :name "Exit" :key "menu Q" :mnemonic "x" :handler (handler #(ss/dispose! newui)))]
+                   (ss/action :name "Exit" :key "menu Q" :mnemonic "x" :handler
+                              (fn [ev]
+                                ;; https://stackoverflow.com/questions/1234912/how-to-programmatically-close-a-jframe
+                                ;; frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
+                                (let [exit-ev (java.awt.event.WindowEvent. newui java.awt.event.WindowEvent/WINDOW_CLOSING)]
+                                  (.dispatchEvent newui exit-ev))))]
 
         view-menu (build-theme-menu)
 
@@ -959,12 +973,20 @@
   (info "starting gui")
   (swap! core/state assoc :gui (start-ui)))
 
-(defn stop
+(defn -stop
   []
-  (info "stopping gui")
   (try
     ;; don't do this. state may not be started yet for it to be stopped!
     ;;(ss/dispose! (get-state :gui))
     (ss/dispose! (:gui @core/state))
     (catch RuntimeException re
       (warn "failed to stop state:" (.getMessage re)))))
+
+(defn stop
+  []
+  (info "stopping gui")
+  (cond
+    (:in-repl? @core/state) (-stop)
+    (-> timbre/*config* :testing?) (-stop)
+    :else (ss/invoke-later
+           (-stop))))

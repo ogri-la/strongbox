@@ -35,9 +35,9 @@
   having the gui restart *itself* requires `declare` statements"
   []
   (let [callback (fn [{:keys [cli-opts gui gui-restart-flag]}]
-                   (when (and (not= :cli (:ui cli-opts))    ;; using a gui
-                              (not (nil? gui-restart-flag)) ;; and the restart flag is set
-                              (not (nil? gui)))             ;; and we actually have a gui to restart
+                   (when (and (not= :cli (:ui cli-opts)) ;; using a gui
+                              (some? gui-restart-flag) ;; and the restart flag is set
+                              (some? gui)) ;; and we actually have a gui to restart
                      (gui/stop)
                      (gui/start)
                      ;; reset flag. will trigger watch again but the checks will prevent infinite recursion
@@ -51,6 +51,12 @@
       (cli/stop)
       (gui/stop))
     (core/stop core/state)))
+
+(defn shutdown-hook
+  []
+  (.addShutdownHook
+   (Runtime/getRuntime)
+   (Thread. ^Runnable stop)))
 
 (defn start
   [& [cli-opts]]
@@ -126,6 +132,10 @@
     :parse-fn #(-> % lower-case keyword)
     :validate [(in? [:debug :info :warn :error :fatal])]]
 
+   [nil "--debug" "debug mode. verbosity level is highest, profiling is enabled and log output is written to a file"
+    :id :debug-mode?
+    :default false]
+
    ["-u" "--ui UI" "ui is either 'gui' (graphical user interface, default) or 'cli' (command line interface)"
     ;;:default :gui ;; set after determining if --headless also set
     :parse-fn #(-> % lower-case keyword)
@@ -160,6 +170,12 @@
       ;; post-processing
       (let [{:keys [options]} args
 
+            ;; force verbosity to :debug when `--debug` is given
+            ;; `--debug` is a shortcut right now but has potential beyond just throttling output
+            args (if (:debug-mode? options)
+                   (-> args (assoc-in [:options :verbosity] :debug) (update-in [:options] dissoc :debug-mode?))
+                   args)
+
             ;; switch default ui to :cli if --headless given without explicit --ui
             args (if (not (contains? options :ui))
                    (assoc-in args [:options :ui] (if (:headless? options) :cli :gui))
@@ -173,12 +189,14 @@
 
 (defn exit
   [status msg]
+  (stop)
   (println msg)
   (System/exit status))
 
 (defn -main
   [& args]
   (let [{:keys [options exit-message ok?]} (-> args parse validate)]
+    (shutdown-hook)
     (if exit-message
       (exit (if ok? 0 1) exit-message)
       (start options))))

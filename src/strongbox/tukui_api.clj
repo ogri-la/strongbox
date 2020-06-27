@@ -20,7 +20,7 @@
 (def tukui-proper-url (format proper-url "tukui"))
 (def elvui-proper-url (format proper-url "elvui"))
 
-(defn-spec expand-summary (s/or :ok :addon/source-updates, :error nil?)
+(defn-spec -expand-summary (s/or :ok :addon/source-updates, :error nil?)
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
   [addon-summary :addon/summary game-track ::sp/game-track]
   (let [source-id (:source-id addon-summary)
@@ -38,6 +38,18 @@
       {:download-url (:url ti)
        :version (:version ti)
        :interface-version (-> ti :patch utils/game-version-to-interface-version)})))
+
+(defn-spec expand-summary (s/or :ok :addon/source-updates, :error nil?)
+  "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
+  [addon-summary :addon/summary game-track ::sp/game-track]
+  (when (= game-track :retail)
+    (-expand-summary addon-summary game-track)))
+
+(defn-spec expand-summary-classic (s/or :ok :addon/source-updates, :error nil?)
+  "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
+  [addon-summary :addon/summary game-track ::sp/game-track]
+  (when (= game-track :classic)
+    (-expand-summary addon-summary game-track)))
 
 ;;
 
@@ -58,12 +70,12 @@
         category-list (if-let [cat (:category ti)] [cat] [])
         addon-summary
         {:source (if classic? "tukui-classic" "tukui")
-         :source-id (-> ti :id Integer.)
+         :source-id (-> ti :id Integer/valueOf)
 
          ;; 2020-03: disabled in favour of :tag-list
          ;;:category-list category-list
          :tag-list (tags/category-list-to-tag-list "tukui" category-list)
-         :download-count (-> ti :downloads Integer.)
+         :download-count (-> ti :downloads Integer/valueOf)
          :game-track-list [(if classic? :classic :retail)]
          :label (:name ti)
          :name (slugify (:name ti))

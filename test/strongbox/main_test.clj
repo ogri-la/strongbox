@@ -30,7 +30,10 @@
     (is (= :cli (-> (main/parse ["--action" "scrape-curseforge-catalogue"]) :options :ui))))
 
   (testing "certain actions force the 'cli' ui, even when 'gui' is explicitly passed"
-    (is (= :cli (-> (main/parse ["--action" "scrape-catalogue" "--ui" "gui"]) :options :ui)))))
+    (is (= :cli (-> (main/parse ["--action" "scrape-catalogue" "--ui" "gui"]) :options :ui))))
+
+  (testing "verbosity is forced to :debug when --debug is passed in"
+    (is (= :debug (-> (main/parse ["--verbosity" "info" "--debug"]) :options :verbosity)))))
 
 (deftest start-app
   (testing "starting app from a clean state, no dirs, no catalogue, nothing"

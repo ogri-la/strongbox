@@ -1,5 +1,13 @@
 #!/bin/bash
 set -e
-#git diff-index --quiet HEAD -- || { echo "commit your changes first"; exit 1; }
+
+if which joker > /dev/null; then
+    echo "joker lint"
+    joker --lint --working-dir ./
+    echo "joker lint done"
+fi
+
+echo "eastwood lint"
 lein cljfmt fix
 lein eastwood
+echo "eastwood lint done"

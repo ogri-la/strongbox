@@ -79,6 +79,8 @@
         old-config-dir (clojure.string/replace config-dir "strongbox" "wowman")
         old-data-dir (clojure.string/replace data-dir "strongbox" "wowman")
 
+        log-dir (join data-dir "logs")
+
         ;; ensure path ends with `-file` or `-dir` or `-url`.
         ;; see `init-dirs`.
         path-map {:config-dir config-dir
@@ -89,7 +91,8 @@
                   :profile-data-dir (join data-dir "profile-data")
 
                   ;; /home/$you/.local/share/strongbox/logs
-                  :log-data-dir (join data-dir "logs")
+                  :log-data-dir log-dir
+                  :log-file (join log-dir "debug.log")
 
                   ;; /home/$you/.local/share/strongbox/cache
                   :cache-dir (join data-dir "cache")
@@ -313,7 +316,8 @@
       (warn "application has not been started, no location to write log or profile data")
       (do
         (logging/add-profiling-handler! (paths :profile-data-dir))
-        (logging/add-file-appender! (paths :log-data-dir)))))
+        (logging/add-file-appender! (paths :log-file))
+        (info "writing logs to:" (paths :log-file)))))
   nil)
 
 (defn save-settings
@@ -575,7 +579,7 @@
   []
   (if-let [addon-dir (selected-addon-dir)]
     (let [addon-list (-load-installed-addons addon-dir)]
-      (info "(re)loading installed addons:" addon-dir)
+      (info "loading installed addons:" addon-dir)
       (update-installed-addon-list! addon-list))
 
     ;; otherwise, ensure list of installed addons is cleared
@@ -626,7 +630,7 @@
   (binding [http/*cache* (cache)]
     (let [remote-catalogue (:source catalogue-location)
           local-catalogue (catalogue-local-path catalogue-location)
-          message (format "downloading catalogue '%s'" (:label catalogue-location))
+          message (format "downloading catalogue: %s" (name (:name catalogue-location)))
           resp (http/download-file remote-catalogue local-catalogue message)]
       (when-not (http/http-error? resp)
         resp))))
@@ -672,42 +676,6 @@
     (catalogue/write-catalogue new-user-catalogue user-catalogue-path))
   nil)
 
-;;
-
-(defn-spec match-installed-addons-with-catalogue nil?
-  "when we have a list of installed addons as well as the addon list,
-   merge what we can into ::specs/addon-toc records and update state.
-   any installed addon not found in :addon-idx has a mapping problem"
-  ([]
-   (when (selected-addon-dir) ;; skip matching if no addon dir selected
-     (match-installed-addons-with-catalogue (get-state :db) (get-state :installed-addon-list))))
-  ([database :addon/summary-list, installed-addon-list :addon/toc-list]
-   (info "matching installed addons to catalogue")
-   (let [match-results (db/-db-match-installed-addons-with-catalogue (get-state :db) installed-addon-list)
-         [matched unmatched] (utils/split-filter :matched? match-results)
-
-         ;; for those that *did* match, merge the installed addon data together with the catalogue data
-         matched (mapv #(moosh-addons (:installed-addon %) (:catalogue-match %)) matched)
-         ;; and then make them a single list of addons again
-         expanded-installed-addon-list (into matched unmatched)
-
-         ;; todo: metrics gathering is good, but this is a little adhoc.
-         ;; some metrics we'll emit for the user
-         [num-installed num-matched] [(count installed-addon-list) (count matched)]
-         unmatched-names (set (map :name unmatched))]
-
-     (when-not (= num-installed num-matched)
-       (info "num installed" num-installed ", num matched" num-matched))
-
-     (when-not (empty? unmatched)
-       (warn "you need to manually search for them and then re-install them")
-       (warn (format "failed to find %s installed addons in the '%s' catalogue: %s"
-                     (count unmatched)
-                     (name (get-state :cfg :selected-catalogue))
-                     (clojure.string/join ", " unmatched-names))))
-
-     (update-installed-addon-list! expanded-installed-addon-list))))
-
 ;; catalogue db handling
 
 (defn query-db
@@ -717,7 +685,11 @@
     (db/stored-query db query-kw arg-list)))
 
 (defn db-catalogue-loaded?
-  "returns `true` if database if not `nil`"
+  "returns `true` if the database has a catalogue loaded.
+  An empty database `[]` is distinct from an unloaded database (`nil`).
+  A database may be empty only if the `addon-summary-list` key of a catalogue is empty.
+  A database may be `nil` if it simply hasn't been loaded yet or we attempted to load it and it failed to load.
+  A database may fail to load if it simply isn't there, can't be downloaded or, once downloaded, the data is invalid."
   []
   (-> (get-state :db) nil? not))
 
@@ -728,15 +700,17 @@
    ;; random list of addons, no preference
    (db-search nil))
   ([uin (s/nilable string?)]
-   (or (query-db :search [uin (get-state :search-results-cap)]) [])))
+   (let [empty-results []
+         args [(utils/nilable uin) (get-state :search-results-cap)]]
+     (or (query-db :search args) empty-results))))
 
 (defn-spec load-current-catalogue (s/or :ok :catalogue/catalogue, :error nil?)
-  "merges the currently selected catalogue with the user-catalogue and returns the definitive list of addons available to install.
-  handles malformed catalogue data by re-downloading catalogue."
+  "merges the currently selected catalogue with the user-catalogue and returns the definitive list of addons 
+  available to install. Handles malformed catalogue data by re-downloading catalogue."
   []
   (when-let [catalogue-location (current-catalogue)]
     (let [catalogue-path (catalogue-local-path catalogue-location)
-          _ (info (format "loading catalogue '%s'" (name (:name catalogue-location))))
+          _ (info "loading catalogue:" (name (:name catalogue-location)))
 
           ;; download from remote and try again when json can't be read
           bad-json-file-handler
@@ -756,8 +730,8 @@
       final-catalogue)))
 
 (defn-spec db-load-catalogue nil?
-  "loads the currently selected catalgoue into the database if hasn't already been loaded.
-  handles bad/invalid catalogues and merging the user catalogue"
+  "loads the currently selected catalogue into the database, but only if we have a catalogue and it hasn't already 
+  been loaded. Handles bad/invalid catalogues and merging the user catalogue"
   []
   (if (and (not (db-catalogue-loaded?))
            (current-catalogue))
@@ -768,6 +742,44 @@
                   (db/put-many [] (:addon-summary-list final-catalogue))))))
     (debug "skipping db load. already loaded or no catalogue selected."))
   nil)
+
+(defn-spec match-installed-addons-with-catalogue nil?
+  "when we have a list of installed addons as well as the addon list,
+   merge what we can into ::specs/addon-toc records and update state.
+   any installed addon not found in :addon-idx has a mapping problem"
+  ([]
+   ;; skip matching if no addon dir selected or db not loaded (no db or invalid db)
+   (when (and (db-catalogue-loaded?)
+              (selected-addon-dir))
+     (match-installed-addons-with-catalogue (get-state :db) (get-state :installed-addon-list))))
+  ([database :addon/summary-list, installed-addon-list :addon/toc-list]
+   (info (format "matching %s addons to catalogue" (count installed-addon-list)))
+   (let [match-results (db/-db-match-installed-addons-with-catalogue database installed-addon-list)
+         [matched unmatched] (utils/split-filter :matched? match-results)
+
+         ;; for those that *did* match, merge the installed addon data together with the catalogue data
+         matched (mapv #(moosh-addons (:installed-addon %) (:catalogue-match %)) matched)
+         ;; and then make them a single list of addons again
+         expanded-installed-addon-list (into matched unmatched)
+
+         ;; todo: metrics gathering is good, but this is a little adhoc.
+         ;; some metrics we'll emit for the user
+         [num-installed num-matched] [(count installed-addon-list) (count matched)]
+         unmatched-names (set (map :name unmatched))]
+
+     (when-not (= num-installed num-matched)
+       (info "num installed" num-installed ", num matched" num-matched))
+
+     (when-not (empty? unmatched)
+       (warn "you need to manually search for them and then re-install them")
+       (warn (format "failed to find %s addons in the '%s' catalogue: %s"
+                     (count unmatched)
+                     (name (get-state :cfg :selected-catalogue))
+                     (clojure.string/join ", " unmatched-names))))
+
+     (update-installed-addon-list! expanded-installed-addon-list))))
+
+;;
 
 (defn-spec refresh-user-catalogue nil?
   "re-fetch each item in user catalogue using the URI and replace old entry with any updated details"
@@ -808,8 +820,11 @@
   []
   (when (selected-addon-dir)
     (info "checking for updates")
-    (update-installed-addon-list! (mapv check-for-update (get-state :installed-addon-list)))
-    (info "done checking for updates")))
+    (let [improved-addon-list (mapv check-for-update (get-state :installed-addon-list))
+          num-matched (->> improved-addon-list (filterv :matched?) count)
+          num-updates (->> improved-addon-list (filterv :update?) count)]
+      (update-installed-addon-list! improved-addon-list)
+      (info (format "%s addons checked, %s updates available" num-matched num-updates)))))
 
 ;; ui interface
 
@@ -902,7 +917,7 @@
   []
   (binding [http/*cache* (cache)]
     (let [message "downloading strongbox version data"
-          url "https://api.github.com/repos/ogri-la/wowman/releases/latest"
+          url "https://api.github.com/repos/ogri-la/strongbox/releases/latest"
           resp (utils/from-json (http/download url message))]
       (-> resp :tag_name))))
 
@@ -1070,11 +1085,16 @@
   (let [install-dir (selected-addon-dir)
         has-nfo-file? (partial nfo/has-nfo-file? install-dir)
         has-valid-nfo-file? (partial nfo/has-valid-nfo-file? install-dir)
-        upgrade-nfo (partial -upgrade-nfo install-dir)]
+        upgrade-nfo (partial -upgrade-nfo install-dir)
+        upgrade-msg (fn [addon-list]
+                      (when-not (empty? addon-list)
+                        (info "upgrading nfo files"))
+                      addon-list)]
     (->> (get-state)
          :installed-addon-list
          (filter has-nfo-file?) ;; only upgrade addons that have nfo files
          (remove has-valid-nfo-file?) ;; skip good nfo files
+         upgrade-msg
          (mapv upgrade-nfo)))
   nil)
 
@@ -1090,14 +1110,14 @@
   (profile
    {:when (get-state :profile?)}
 
-   ;; downloads the big long list of addon information stored on github
-   (download-current-catalogue)
-
    ;; rename any occurances of `.wowman.json` to `.strongbox.json`
    (migrate-nfo-files)
 
    ;; parse toc files in install-dir. do this first so we see *something* while catalogue downloads (next)
    (load-installed-addons)
+
+   ;; downloads the big long list of addon information stored on github
+   (download-current-catalogue)
 
    ;; load the contents of the catalogue into the database
    (p :p2/db (db-load-catalogue))
@@ -1116,6 +1136,7 @@
 
    ;; seems like a good place to preserve the etag-db
    (save-settings)
+
    nil))
 
 (defn-spec -install-update-these nil?
@@ -1229,16 +1250,9 @@
 ;; init
 
 (defn watch-for-addon-dir-change
-  "when the addon directory changes, the list of installed addons should be re-read"
+  "when the current addon directory changes, the list of installed addons should be re-read"
   []
-  (let [state-atm state
-        reset-state-fn (fn [state]
-                         ;; TODO: revisit this
-                         ;; remove :cfg because it's controlled by user
-                         (let [default-state (dissoc state :cfg)]
-                           (swap! state-atm merge default-state)
-                           (refresh)))]
-    (state-bind [:cfg :selected-addon-dir] reset-state-fn)))
+  (state-bind [:cfg :selected-addon-dir] (fn [_] (refresh))))
 
 (defn watch-for-catalogue-change
   "when the catalogue changes, the db should be rebuilt"
@@ -1300,4 +1314,8 @@
   (doseq [f (:cleanup @state)]
     (debug "calling" f)
     (f))
+  (when (and @state
+             (logging/debug-mode?))
+    (info "strongbox" (strongbox-version))
+    (info "wrote logs to:" (paths :log-file)))
   (reset! state nil))

@@ -6,7 +6,6 @@
    [taoensso.timbre :as log :refer [debug info warn error spy]]
    [taoensso.tufte :as tufte :refer [p profile]]
    [java-time]
-   [clojure.spec.alpha :as s]
    [strongbox
     [tags :as tags]
     [utils :as utils :refer [todt utcnow]]
@@ -22,7 +21,7 @@
                       "wowinterface" wowinterface-api/expand-summary
                       "github" github-api/expand-summary
                       "tukui" tukui-api/expand-summary
-                      "tukui-classic" tukui-api/expand-summary
+                      "tukui-classic" tukui-api/expand-summary-classic
                       nil (fn [_ _] (error "malformed addon-summary:" (utils/pprint addon-summary)))}
         key (:source addon-summary)]
     (try
@@ -129,9 +128,7 @@
 (defn-spec write-empty-catalogue! ::sp/extant-file
   "writes a stub catalogue to the given `output-file`"
   [output-file ::sp/file]
-  (let [created (utils/datestamp-now-ymd)
-        updated created]
-    (write-catalogue (new-catalogue []) output-file)))
+  (write-catalogue (new-catalogue []) output-file))
 
 ;;
 
