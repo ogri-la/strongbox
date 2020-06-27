@@ -152,13 +152,7 @@ See [CONTRIBUTING](CONTRIBUTING.md) for more detail.
 
 **Moved here: https://ogri-la.github.io/wow-addon-managers/**
 
-An addon manager is 'maintained' if it has seen an update in 12 months.
-
-When an addon manager requires the *separate* installation of other software like Python or Java or NPM or GTK/QT etc, 
-or requires compilation or similar, then it gets the big fat caveat asterisk '**\***'.
-
-If a packaged version of the addon manager exists for *at least one* distribution of Linux, I drop the caveat asterisk.
-This may be an AUR, DEB, RPM/DNF, Snap, Flatpak, Zypper, AppImage, etc.
+[Request a change](https://github.com/ogri-la/wowman-comrades/issues). 
 
 ## License
 

@@ -68,10 +68,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - it's clear which tukui addons are classic and which are retail
     - tukui search results shouldn't both be highlighted if only one is installed
     - done
-
-
-## todo
-
 * update ticket template
     - with command to run that uses the debug flag
         - do I even have a --debug flag?
@@ -80,10 +76,17 @@ see CHANGELOG.md for a more formal list of changes by release
             - yup
     - which files to upload
         - ...
-* wowman-comrades, shift asterisk description out of strongbox README
+    - done
+        - we now have custom bug and feature templates
 
+* wowman-comrades, shift asterisk description out of strongbox README
+    - done
+
+## todo
 
 ## todo bucket (no particular order)
+
+* rename 'wowman-comrades' to 'strongbox-comrades'
 
 * change installation from 'overwrite' to 'uninstall+install'
 
