@@ -14,6 +14,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## 1.1.0 - 2020-06-27
+
+### Added
+
+* another type of code linting, provided by [Joker](https://joker-lang.org/)
+* a `--debug` flag that will run strongbox with lots of output and write a log file.
+    - the name of the log file is shown after the application has exited
+* ticket templates with instructions on using the new `--debug` flag
+
+### Changed
+
+* 'wowman' was renamed 'strongbox' in [the list](https://ogri-la.github.io/wow-addon-managers/)
+* split 'tukui' into 'tukui' and 'tukui-classic' in the 'source' column
+    - this should make it clearer which game track a tukui addon can be installed to
+* the number of addons displayed in the search results is now tuned according to number of addons in catalogue
+* 'WoW Directory' has moved to the other side of the addon directory drop down and has been renamed 'Addon directory'
+
+### Fixed
+
+* very slow searches. Typing has now been decoupled from showing search results so it feels faster.
+* added a caveat against the screenshots in the README. The dark-mode version only works on particular desktops.
+* fixed bug that crashes GUI when the next upgrade is available.
+* support for Java 11 (the next Java LTS)
+    - some date time parsing was behaving strangely between versions 8 and 11
+* a very old bug where the app would continue to run when 'Quit' was selected from the menu
+    - rather than closing the window or doing ctrl-c
+* useragent was still stuck on 'wowman'
+* tukui/elvui support was not properly distinguishing the game track leading some tukui addons to not install
+* search results would highlight anything matching an installed addon's 'label'
+    - this explains why the same addon from different hosts would both be highlighted despite only being installed once
+
 ## 1.0.0 - 2020-05-31
 
 This has been a large clean up and code analyis/refactor exercise.
