@@ -8,9 +8,26 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+* change installation from 'overwrite' to 'uninstall+install'
+    - preserve existing uninstallation method
+        - 'overwrite'
+            - the in-place overwrite of existing files
+        - this is a simple and hassle free approach
+            - it may lead to some odd cases though
+                - a newer (or alternate) release drops the inclusion of a top-level folder and it is left orphaned
+                - same again, but for files within folders. you'll get this slow accretion of orphaned files
+    - `remove-addon` already exists that will do what we want
+        - just need to call it before installation
+    - good opportunity to revisit some code in zip.clj and core.clj:
+        - simplify `install-addon` interface in core.clj
+            - we need to provide an installation directory which can be pulled from the application state
+* just encountered a case where the classic version overwrote one of the retail directories but not the other
+    - (tukui classic and retail?)
+    - so there was a broken retail installation but a working classic installation
+        - I was able to 'uninstall' the broken retail installation without a problem
+
 * rename 'wowman-comrades' to 'strongbox-comrades'
 * add ability to explicitly unignore addon from context menu
-
 * EOL planning, robustness, only download/update the catalogue *after* an existing catalogue has been confirmed
     - github is down, wowman is erroring with a 500
     - failure to download a catalogue shouldn't prevent addons from being displayed
@@ -38,11 +55,6 @@ see CHANGELOG.md for a more formal list of changes by release
             - fingerprint is 9 digits and all decimal, so not a hex digest
     - wowinterface checksum is hidden behind a javascript tabber but still available
         - wowinterface do have a md5sum in results! score
-* change installation from 'overwrite' to 'uninstall+install'
-* just encountered a case where the classic version overwrote one of the retail directories but not the other
-    - (tukui classic and retail?)
-    - so there was a broken retail installation but a working classic installation
-        - I was able to 'uninstall' the broken retail installation without a problem
 
 ## todo bucket (no particular order)
 
@@ -61,8 +73,6 @@ see CHANGELOG.md for a more formal list of changes by release
                 - our interface with them is their API or in wowi's case, their API and website
 
 * code refactor
-    * simplify `install-addon` interface in core.clj
-        - we need to provide an installation directory which can be pulled from the application state
     * core.clj is getting too large
         - it's difficult to navigate and debug
         - many tests are accumulating in core_test.clj

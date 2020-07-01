@@ -446,6 +446,7 @@
   "installs an addon given an addon description, a place to install the addon and the addon zip file itself"
   [addon :addon/installable, install-dir ::sp/writeable-dir, downloaded-file ::sp/archive-file]
   ;; TODO: this function is becoming a mess. clean it up
+  ;; TODO: we're relying on ::sp/writable-dir instrumentation at runtime here
   (let [zipfile-entries (zip/zipfile-normal-entries downloaded-file)
         sus-addons (zip/inconsistently-prefixed zipfile-entries)
 
