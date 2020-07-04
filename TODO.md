@@ -21,6 +21,30 @@ see CHANGELOG.md for a more formal list of changes by release
     - good opportunity to revisit some code in zip.clj and core.clj:
         - simplify `install-addon` interface in core.clj
             - we need to provide an installation directory which can be pulled from the application state
+    - what to do about mutual dependencies? 
+        - i.e., two addons both include some addon, one overwrites the other, that one is uninstalled leaving the other in a broken state. 
+        - Mutual dependencies aren't tracked ... 
+        - I could:
+            - detect if an addon were to be replaced by another addon in a different group
+            - if so, attach the details of the addon with the replaced group
+            - if the addon gets uninstalled, the other addon is re-installed
+            - caveats:
+                - what about three or more addons all relying on the same sub-addon?
+                    - the list accumulates
+                    - as each one is uninstalled, it gets removed from the list and the top-most is re-installed
+                - what if an ignored addon is relying on a sub-addon?
+                    - ignored addons shouldn't be automatically uninstalled or reinstalled
+                    - ignored addons may block the installation/uninstallation of others
+        - I could also:
+            - not remove a mutual dependency
+                - if A and B depend on C
+                - and B installed C last
+                - and then B is removed
+                - A is left depending on C that it didn't install
+                    - it could be of a different version ...
+                    - this is no different to the current situation
+            - the mutual dependency has it's group identity updated
+                - or we keep a list of group membership
 * just encountered a case where the classic version overwrote one of the retail directories but not the other
     - (tukui classic and retail?)
     - so there was a broken retail installation but a working classic installation

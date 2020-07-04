@@ -10,6 +10,7 @@
    [trptcolin.versioneer.core :as versioneer]
    [envvar.core :refer [env]]
    [strongbox
+    [addon :as addon]
     [db :as db]
     [config :as config]
     [zip :as zip]
@@ -391,40 +392,6 @@
 ;;(def download-addon
 ;;  (affects-addon-wrapper download-addon))
 
-(defn-spec determine-primary-subdir (s/or :found map?, :not-found nil?)
-  "if an addon unpacks to multiple directories, which is the 'main' addon?
-   a common convention looks like 'Addon[seperator]Subname', for example:
-       'Healbot' and 'Healbot_de' or 
-       'MogIt' and 'MogIt_Artifact'
-   DBM is one exception to this as the 'main' addon is 'DBM-Core' (I think, it's definitely the largest)
-   'MasterPlan' and 'MasterPlanA' is another exception
-   these exceptions to the rule are easily handled. the rule is:
-       1. if multiple directories,
-       2. assume dir with shortest name is the main addon
-       3. but only if it's a prefix of all other directories
-       4. if case doesn't hold, do nothing and accept we have no 'main' addon"
-  [toplevel-dirs ::sp/list-of-maps]
-  (let [path-val #(-> % :path (utils/rtrim "\\/")) ;; strips trailing line endings, they mess with comparison
-        path-len (comp count :path)
-        toplevel-dirs (remove #(empty? (:path %)) toplevel-dirs) ;; remove anything we can't compare
-        toplevel-dirs (vec (vals (utils/idx toplevel-dirs :path))) ;; remove duplicate paths
-        toplevel-dirs (sort-by path-len toplevel-dirs)
-        dirname-lengths (mapv path-len toplevel-dirs)
-        first-toplevel-dir (first toplevel-dirs)]
-
-    (cond
-      (= 1 (count toplevel-dirs)) ;; single dir, perfect case
-      first-toplevel-dir
-
-      (and
-       ;; multiple dirs, one shorter than all others
-       (not= (first dirname-lengths) (second dirname-lengths))
-       ;; all dirs are prefixed with the name of the first toplevel dir
-       (every? #(clojure.string/starts-with? (path-val %) (path-val first-toplevel-dir)) toplevel-dirs))
-      first-toplevel-dir
-
-      ;; couldn't reasonably determine the primary directory
-      :else nil)))
 
 (defn-spec guess-game-track ::sp/game-track
   "given a map of addon data, attempts to guess the most likely game track it belongs to"
@@ -442,39 +409,6 @@
       ;; very last here is for testing only
       :retail))
 
-(defn-spec -install-addon (s/or :ok (s/coll-of ::sp/extant-file), :error ::sp/empty-coll)
-  "installs an addon given an addon description, a place to install the addon and the addon zip file itself"
-  [addon :addon/installable, install-dir ::sp/writeable-dir, downloaded-file ::sp/archive-file]
-  ;; TODO: this function is becoming a mess. clean it up
-  ;; TODO: we're relying on ::sp/writable-dir instrumentation at runtime here
-  (let [zipfile-entries (zip/zipfile-normal-entries downloaded-file)
-        sus-addons (zip/inconsistently-prefixed zipfile-entries)
-
-        ;; one single line message or multi-line?
-        msg "%s will install inconsistently prefixed addons: %s"
-        _ (when sus-addons
-            (warn (format msg (:label addon) (clojure.string/join ", " sus-addons))))
-
-        _ (zip/unzip-file downloaded-file install-dir)
-        toplevel-dirs (filter (every-pred :dir? :toplevel?) zipfile-entries)
-        primary-dirname (determine-primary-subdir toplevel-dirs)
-        game-track (or (:game-track addon) ;; from reading an export record. most of the time this value won't be here
-                       (get-game-track install-dir)
-
-                       ;; very last here is for testing only
-                       :retail)
-
-        ;; an addon may unzip to many directories, each directory needs the nfo file
-        update-nfo-fn (fn [zipentry]
-                        (let [addon-dirname (:path zipentry)
-                              primary? (= addon-dirname (:path primary-dirname))]
-                          (nfo/write-nfo install-dir addon addon-dirname primary? game-track)))
-
-        ;; write the nfo files, return a list of all nfo files written
-        retval (mapv update-nfo-fn toplevel-dirs)]
-    (info (:label addon) "installed.")
-    retval))
-
 (defn-spec install-addon-guard (s/or :ok (s/coll-of ::sp/extant-file), :passed-tests true?, :error nil?)
   "downloads an addon and installs it. handles http and non-http errors, bad zip files, bad addons"
   ([addon :addon/installable, install-dir ::sp/extant-dir]
@@ -489,7 +423,15 @@
 
      (let [downloaded-file (download-addon addon install-dir)
            bad-zipfile-msg (format "failed to read zip file '%s', could not install %s" downloaded-file (:name addon))
-           bad-addon-msg (format "refusing to install '%s'. It contains top-level files or top-level directories missing .toc files."  (:name addon))]
+           bad-addon-msg (format "refusing to install '%s'. It contains top-level files or top-level directories missing .toc files."  (:name addon))
+           game-track (or
+                       ;; installing addon from an export record.
+                       ;; `addon` won't typically have a `game-track` (it will have an `:installed-game-track` though)
+                       (:game-track addon)
+
+                       ;; what we probably want
+                       (get-game-track install-dir))]
+
        (info "installing" (:label addon) "...")
        (cond
          (map? downloaded-file) (error "failed to download addon, could not install" (:name addon))
@@ -505,7 +447,7 @@
 
          test-only? true ;; addon was successfully downloaded and verified as being sound
 
-         :else (-install-addon addon install-dir downloaded-file))))))
+         :else (addon/install-addon addon install-dir downloaded-file game-track))))))
 
 (def install-addon
   (affects-addon-wrapper install-addon-guard))
@@ -1174,35 +1116,13 @@
   (-> (get-state) :installed-addon-list -updateable? -install-update-these)
   (refresh))
 
-(defn -remove-addon
-  [addon-dirname]
-  (let [addon-dir (selected-addon-dir)
-        addon-path (fs/file addon-dir addon-dirname) ;; todo: perhaps this (addon-dir (base-name addon-dirname)) is safer
-        addon-path (-> addon-path fs/absolute fs/normalized)]
-    ;; if after resolving the given addon dir it's still within the install-dir, remove it
-    (if (and
-         (fs/directory? addon-path)
-         (clojure.string/starts-with? addon-path addon-dir)) ;; don't delete anything outside of install dir!
-      (do
-        (fs/delete-dir addon-path)
-        (warn (format "removed '%s'" addon-path))
-        nil)
-
-      (error (format "directory '%s' is outside the current installation dir of '%s', not removing" addon-path addon-dir)))))
-
-(defn-spec remove-addon nil?
-  "removes the given addon. if addon is part of a group, all addons in group are removed"
-  [toc :addon/toc]
-  (if (contains? toc :group-addons)
-    (doseq [subtoc (:group-addons toc)]
-      (-remove-addon (:dirname subtoc))) ;; top-level toc is contained in the :group-addons list
-    (-remove-addon (:dirname toc))))
-
 (defn-spec remove-many-addons nil?
+  "deletes each of the addons in the given `toc-list` and then calls `refresh`"
   [toc-list :addon/toc-list]
-  (doseq [toc toc-list]
-    (remove-addon toc))
-  (refresh))
+  (let [addon-dir (selected-addon-dir)]
+    (doseq [toc toc-list]
+      (addon/remove-addon addon-dir toc))
+    (refresh)))
 
 (defn-spec remove-selected nil?
   []

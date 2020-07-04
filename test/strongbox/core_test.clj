@@ -160,34 +160,6 @@
         (is (= expected-data-dir (:data-dir paths)))
         (is (= expected-config-dir (:config-dir paths)))))))
 
-(deftest determine-primary-subdir
-  (testing "basic failure cases"
-    (is (= nil (core/determine-primary-subdir [])))
-    (is (= nil (core/determine-primary-subdir [{}])))
-    (is (= nil (core/determine-primary-subdir [{:path nil}])))
-    (is (= nil (core/determine-primary-subdir [{:path ""}])))
-    (is (= nil (core/determine-primary-subdir [{:path "Foo/"} {:path "Bar/"}]))))
-
-  (testing "multiple paths, different lengths, shortest is not a common prefix"
-    (is (= nil (core/determine-primary-subdir [{:path "z"} {:path "az"}]))))
-
-  (testing "basic success cases"
-    (is (= {:path "Foo/"} (core/determine-primary-subdir [{:path "Foo/"}])))
-    (is (= {:path "Foo/"} (core/determine-primary-subdir [{:path "Foo-Bar/"} {:path "Foo/"}]))))
-
-  (testing "actual case with HealBot"
-    (let [fixture [{:path "HealBot/"} {:path "HealBot_br/"} {:path "HealBot_cn/"} {:path "HealBot_de/"}
-                   {:path "HealBot_es/"} {:path "HealBot_fr/"} {:path "HealBot_gr/"} {:path "HealBot_hu/"}
-                   {:path "HealBot_it/"} {:path "HealBot_kr/"} {:path "HealBot_ru/"} {:path "HealBot_Tips/"} {:path "HealBot_tw/"}]
-          expected {:path "HealBot/"}]
-      (is (= expected (core/determine-primary-subdir fixture)))))
-
-  (testing "only unique values are compared"
-    (is (= {:path "Foo/"} (core/determine-primary-subdir [{:path "Foo/"} {:path "Foo/"} {:path "Foo/"} {:path "Foo-Bar/"}]))))
-
-  (testing "original value is preserved despite modification for comparison"
-    (is (= {:path "Foo"} (core/determine-primary-subdir [{:path "Foo"}])))))
-
 (deftest export-installed-addon-list
   (testing "exported addon data is correct"
     (let [addon-list (slurp-fixture "import-export--installed-addons-list.edn")
@@ -549,6 +521,9 @@
             fname (core/downloaded-addon-fname (:name addon) (:version addon))
             _ (utils/cp (fixture-path fname) install-dir)
             test-only? false
+            ;; without a running app we have no `selected-addon-dir`.
+            ;; pretend to be an export record with a `:game-track` instead
+            addon (assoc addon :game-track :retail)
             file-list (core/install-addon addon install-dir test-only?)]
 
         (testing "addon directory created, single file written (.strongbox.json nfo file)"
