@@ -432,7 +432,7 @@
                        ;; what we probably want
                        (get-game-track install-dir))]
 
-       (info "installing" (:label addon) "...")
+       (info (format "installing %s version %s ..." (:label addon) (:version addon)))
        (cond
          (map? downloaded-file) (error "failed to download addon, could not install" (:name addon))
          (nil? downloaded-file) (error "non-http error downloading addon, could not install" (:name addon)) ;; I dunno. /shrug

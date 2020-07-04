@@ -89,6 +89,7 @@
                                       (warn (format msg (:label addon) (clojure.string/join ", " sus-addons))))))
 
         uninstall-addons (fn []
+                           (warn (format "uninstalling %s version %s" (:label addon) (:installed-version addon)))
                            (->> toplevel-dirs
                                 (map #(utils/join install-dir (:path %))) ;; absolute paths
                                 (filter fs/exists?) ;; remove any that don't exist
