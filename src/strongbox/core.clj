@@ -444,6 +444,10 @@
                                                              (error bad-addon-msg)
                                                              (fs/delete downloaded-file) ;; I could be more lenient
                                                              (warn "removed bad addon" downloaded-file))
+         (not (s/valid? ::sp/writeable-dir install-dir)) (error
+                                                          (format
+                                                           "addon directory is not writable: %s"
+                                                           install-dir))
 
          test-only? true ;; addon was successfully downloaded and verified as being sound
 

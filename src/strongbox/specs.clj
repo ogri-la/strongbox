@@ -8,7 +8,7 @@
 (def placeholder "even qualified specs still require `specs.clj` to be included for linting and uberjar")
 
 (defn valid-or-nil
-  "returns `nil` instead of `:clojure.spec.alpha/invalid` when given data `x` is invalid"
+  "returns `nil` instead of `false` when given data `x` is invalid"
   [spec x]
   (when (s/valid? spec x)
     x))
