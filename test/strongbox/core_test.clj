@@ -530,13 +530,12 @@
           (is (= (count file-list) 1))
           (is (fs/exists? (first file-list))))))))
 
-(deftest install-addon-2
+(deftest install-addon-trial-2
   (testing "trial installation of a good addon"
     (with-fake-routes-in-isolation {}
-      (let [install-dir (utils/join (str fs/*cwd*) "addons-dir")
+      (let [install-dir (helper/addons-path)
             ;; move dummy addon file into place so there is no cache miss
             fname (core/downloaded-addon-fname (:name addon) (:version addon))
-            _ (fs/mkdir install-dir)
             _ (utils/cp (fixture-path fname) install-dir)
 
             test-only? true
@@ -546,13 +545,12 @@
         ;; ensure nothing was actually unzipped
         (is (not (fs/exists? (utils/join install-dir "EveryAddon"))))))))
 
-(deftest install-addon-3
+(deftest install-addon-trial-3
   (testing "trial installation of a bad addon"
     (with-fake-routes-in-isolation {}
-      (let [install-dir (utils/join (str fs/*cwd*) "addons-dir")
+      (let [install-dir (helper/addons-path)
             ;; move dummy addon file into place so there is no cache miss
             fname (core/downloaded-addon-fname (:name addon) (:version addon))
-            _ (fs/mkdir install-dir)
             _ (fs/copy (fixture-path "bad-truncated.zip") (utils/join install-dir fname)) ;; hoho, so evil
 
             test-only? true
@@ -571,155 +569,32 @@
         (is (= (core/install-addon addon install-dir) nil))
         (is (= (count (fs/list-dir install-dir)) 0)))))) ;; bad zip file deleted
 
-;;
+(deftest install-bundled-addon
+  (testing "installing a bundled addon"
+    (with-fake-routes-in-isolation {}
+      (let [install-dir (helper/addons-path)
+            ;; without a running app we have no `selected-addon-dir`.
+            ;; pretend to be an export record with a `:game-track` instead
+            addon (merge addon {:version "0.1.2" :game-track :retail})
 
-(deftest load-installed-addons-1
-  (testing "regular .toc file can be loaded"
-    (let [addon-dir (str fs/*cwd*)
-          some-addon-path (utils/join addon-dir "SomeAddon")
-          _ (fs/mkdirs some-addon-path)
+            ;; move dummy addon file into place so there is no cache miss
+            fname (core/downloaded-addon-fname (:name addon) (:version addon))
 
-          some-addon-toc (utils/join some-addon-path "SomeAddon.toc")
-          _ (spit some-addon-toc "## Title: SomeAddon\n## Description: asdf\n## Interface: 80300\n## Version: 1.2.3")
-
-          expected [{:name "someaddon", :dirname "SomeAddon", :label "SomeAddon", :description "asdf", :interface-version 80300, :installed-version "1.2.3"}]]
-      (is (= expected (core/-load-installed-addons addon-dir))))))
-
-(deftest load-installed-addons-2
-  (testing "toc data and nfo data are mooshed together as expected"
-    (let [addon-dir (str fs/*cwd*)
-          some-addon-path (utils/join addon-dir "SomeAddon")
-          _ (fs/mkdirs some-addon-path)
-
-          some-addon-toc (utils/join some-addon-path "SomeAddon.toc")
-          _ (spit some-addon-toc "## Title: SomeAddon\n## Description: asdf\n## Interface: 80300\n## Version: 1.2.3")
-
-          some-addon-nfo (utils/join some-addon-path nfo/nfo-filename)
-          nfo-data {:source "curseforge"
-                    :source-id 123
-                    :installed-version "1.2.3"
-                    :name "someaddon"
-                    :group-id "fdsa"
-                    :primary? true
-                    :installed-game-track :retail}
-          _ (spit some-addon-nfo (utils/to-json nfo-data))
-
-          expected [{;; toc data
-                     :name "someaddon",
-                     :dirname "SomeAddon",
-                     :label "SomeAddon",
-                     :description "asdf",
-                     :interface-version 80300,
-
-                     ;; shared between toc and nfo, nfo wins out
-                     :installed-version "1.2.3"
-
-                     ;; unique items from nfo data
-                     :source "curseforge"
-                     :source-id 123
-                     :group-id "fdsa"
-                     :installed-game-track :retail
-                     :primary? true}]]
-      (is (= expected (core/-load-installed-addons addon-dir))))))
-
-(deftest load-installed-addons-3
-  (testing "invalid nfo data is not loaded"
-    (let [addon-dir (str fs/*cwd*)
-          some-addon-path (utils/join addon-dir "SomeAddon")
-          _ (fs/mkdirs some-addon-path)
-
-          some-addon-toc (utils/join some-addon-path "SomeAddon.toc")
-          _ (spit some-addon-toc "## Title: SomeAddon\n## Description: asdf\n## Interface: 80300\n## Version: 1.2.3")
-
-          some-addon-nfo (utils/join some-addon-path nfo/nfo-filename)
-          nfo-data {:source nil ;; invalid
-                    :source-id 123
-                    :installed-version "1.2.3"
-                    :name "someaddon"
-                    ;; also invalid. all of these are required
-                    ;;:group-id "asdf"
-                    ;;:primary? true
-                    ;;:installed-game-track :retail
-                    }
-          _ (spit some-addon-nfo (utils/to-json nfo-data))
-
-          expected [{:name "someaddon", :dirname "SomeAddon", :label "SomeAddon", :description "asdf", :interface-version 80300, :installed-version "1.2.3"}]]
-      (is (= expected (core/-load-installed-addons addon-dir))))))
-
-(deftest load-installed-addons-4
-  (testing "ignore flag in nfo data overrides any ignore flag in toc data"
-    (let [addon-dir (str fs/*cwd*)
-          some-addon-path (utils/join addon-dir "SomeAddon")
-          _ (fs/mkdirs some-addon-path)
-
-          some-addon-toc (utils/join some-addon-path "SomeAddon.toc")
-          _ (spit some-addon-toc "## Title: SomeAddon\n## Description: asdf\n## Interface: 80300\n## Version: @project-version@")
-
-          some-addon-nfo (utils/join some-addon-path nfo/nfo-filename)
-          _ (spit some-addon-nfo (utils/to-json {:source "curseforge" :source-id 123
-                                                 :ignore? false})) ;; expressly un-ignoring this otherwise-ignored addon
-
-          expected [{:name "someaddon", :dirname "SomeAddon", :label "SomeAddon", :description "asdf", :interface-version 80300
-                     :installed-version "@project-version@"
-                     :source "curseforge" :source-id 123
-                     :ignore? false}]]
-      (is (= expected (core/-load-installed-addons addon-dir))))))
-
-(deftest group-addons
-  (testing "addons with nothing to group on are not modified"
-    (let [addon-list [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"}
-                      {:name "a2", :dirname "A2", :label "A2", :description "" :interface-version 80300 :installed-version "4.5.6"}
-                      {:name "a3", :dirname "A3", :label "A2", :description "" :interface-version 80300 :installed-version "7.8.9"}]
-          expected addon-list]
-      (is (= expected (core/group-addons addon-list)))))
-
-  (testing "addons with groupable data but no groupings are not modified"
-    (let [addon-list [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"
-                       :group-id "foo" :primary? true}
-                      {:name "a2", :dirname "A2", :label "A2", :description "" :interface-version 80300 :installed-version "4.5.6"
-                       :group-id "bar" :primary? true}
-                      {:name "a3", :dirname "A3", :label "A2", :description "" :interface-version 80300 :installed-version "7.8.9"
-                       :group-id "baz" :primary? true}]
-          expected addon-list]
-      (is (= expected (core/group-addons addon-list)))))
-
-  (testing "addons with groupable data with one marked as the `primary`, group as expected"
-    (let [addon-list [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"
-                       :group-id "foo" :primary? true}
-                      {:name "a2", :dirname "A2", :label "A2", :description "" :interface-version 80300 :installed-version "4.5.6"
-                       :group-id "foo" :primary? false}
-                      {:name "a3", :dirname "A3", :label "A2", :description "" :interface-version 80300 :installed-version "7.8.9"
-                       :group-id "bar" :primary? true}]
-
-          expected [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"
-                     :group-id "foo" :primary? true :group-addon-count 2 :group-addons
-                     [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"
-                       :group-id "foo" :primary? true}
-                      {:name "a2", :dirname "A2", :label "A2", :description "" :interface-version 80300 :installed-version "4.5.6"
-                       :group-id "foo" :primary? false}]}
-
-                    {:name "a3", :dirname "A3", :label "A2", :description "" :interface-version 80300 :installed-version "7.8.9"
-                     :group-id "bar" :primary? true}]]
-      (is (= expected (core/group-addons addon-list)))))
-
-  (testing "synthetic records are created for groupable addons with no primary addon"
-    (let [addon-list [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"
-                       :group-id "foo" :primary? false}
-                      {:name "a2", :dirname "A2", :label "A2", :description "" :interface-version 80300 :installed-version "4.5.6"
-                       :group-id "foo" :primary? false}
-                      {:name "a3", :dirname "A3", :label "A2", :description "" :interface-version 80300 :installed-version "7.8.9"
-                       :group-id "bar" :primary? true}]
-
-          expected [{:name "a1", :dirname "A1", :label "foo (group)", :description "group record for the foo addon" :interface-version 80300 :installed-version "1.2.3"
-                     :group-id "foo" :primary? false :group-addon-count 2 :group-addons
-                     [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"
-                       :group-id "foo" :primary? false}
-                      {:name "a2", :dirname "A2", :label "A2", :description "" :interface-version 80300 :installed-version "4.5.6"
-                       :group-id "foo" :primary? false}]}
-
-                    {:name "a3", :dirname "A3", :label "A2", :description "" :interface-version 80300 :installed-version "7.8.9"
-                     :group-id "bar" :primary? true}]]
-      (is (= expected (core/group-addons addon-list))))))
+            _ (fs/copy (fixture-path "everyaddon--0-1-2.zip") (utils/join install-dir fname))
+            result (core/install-addon addon install-dir)
+            directory-list (->> install-dir fs/list-dir (filter fs/directory?) (map fs/base-name) sort)
+            expected-nfo {;; bundled addon is simply a part of the 'everyaddon' addon.
+                          ;; without a distinct name or version for itself.
+                          :name "everyaddon"
+                          :installed-version "0.1.2"
+                          :group-id "https://www.example.org/wow/addons/everyaddon",
+                          :installed-game-track :retail,
+                          :primary? false,
+                          :source "curseforge",
+                          :source-id 1}]
+        (is result) ;; success
+        (is (= ["BundledAddon" "EveryAddon"] directory-list))
+        (is (= expected-nfo (nfo/read-nfo-file install-dir "BundledAddon")))))))
 
 
 ;;

@@ -80,6 +80,8 @@ see CHANGELOG.md for a more formal list of changes by release
     - wowinterface checksum is hidden behind a javascript tabber but still available
         - wowinterface do have a md5sum in results! score
 
+* bug, new gui instance is spawned when switching themes outside of the REPL
+
 ## todo bucket (no particular order)
 
 * test, can gui-diff and main/test be pushed back into the testing namespace and elided from release somehow?

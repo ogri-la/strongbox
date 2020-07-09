@@ -19,7 +19,6 @@
     [nfo :as nfo]
     [utils :as utils :refer [join not-empty? false-if-nil nav-map nav-map-fn delete-many-files! static-slurp expand-path if-let*]]
     [catalogue :as catalogue]
-    [toc]
     [specs :as sp]]))
 
 (def release-of-previous-expansion
@@ -256,7 +255,7 @@
   nil)
 
 (defn-spec selected-addon-dir (s/or :ok ::sp/addon-dir, :no-selection nil?)
-  "returns the currently selected addon or nil if no directories exist to select from"
+  "returns the currently selected addon directory or nil if no directories exist to select from"
   []
   (get-state :cfg :selected-addon-dir))
 
@@ -463,69 +462,11 @@
     (swap! state assoc :installed-addon-list installed-addon-list)
     nil))
 
-(defn-spec group-addons :addon/toc-list
-  "an addon may actually be many addons bundled together in a single download.
-  strongbox tags the bundled addons as they are unzipped and tries to determine the primary one.
-  after we've loaded the addons and merged their nfo data, we can then group them"
-  [addon-list :addon/toc-list]
-  (let [;; group-id comes from the nfo file
-        addon-groups (group-by :group-id addon-list)
-
-        ;; remove those addons without a group, we'll conj them in later
-        unknown-grouping (get addon-groups nil)
-        addon-groups (dissoc addon-groups nil)
-
-        expand (fn [[group-id addons]]
-                 (if (= 1 (count addons))
-                   ;; perfect case, no grouping.
-                   (first addons)
-
-                   ;; multiple addons in group
-                   (let [_ (debug (format "grouping '%s', %s addons in group" group-id (count addons)))
-                         primary (first (filter :primary? addons))
-                         next-best (first addons)
-                         new-data {:group-addons addons
-                                   :group-addon-count (count addons)}
-                         next-best-label (-> next-best :group-id fs/base-name)]
-                     (if primary
-                       ;; best, easiest case
-                       (merge primary new-data)
-                       ;; when we can't determine the primary addon, add a shitty synthetic one
-                       ;; TODO: should I dissoc :dirname? it could be misleading..
-                       (merge next-best new-data {:label (format "%s (group)" next-best-label)
-                                                  :description (format "group record for the %s addon" next-best-label)})))))
-
-        ;; this flattens the newly grouped addons from a map into a list and joins the unknowns
-        addon-list (apply conj (mapv expand addon-groups) unknown-grouping)]
-    addon-list))
-
-(defn-spec -load-installed-addons :addon/toc-list
-  "reads the .toc files from the given addon dir, reads any nfo data for 
-  these addons, groups them, returns the mooshed data"
-  [addon-dir ::sp/addon-dir]
-  (let [addon-list (strongbox.toc/installed-addons addon-dir)
-
-        ;; at this point we have a list of the 'top level' addons, with
-        ;; any bundled addons grouped within each one.
-
-        ;; each addon now needs to be merged with the 'nfo' data, the additional
-        ;; data we store alongside each addon when it is installed/updated
-
-        merge-nfo-data (fn [addon]
-                         (let [nfo-data (nfo/read-nfo addon-dir (:dirname addon))]
-                           ;; merge the addon with the nfo data.
-                           ;; when `ignore?` flag in addon is `true` but `false` in nfo-data, nfo-data will take precedence.
-                           (merge addon nfo-data)))
-
-        addon-list (mapv merge-nfo-data addon-list)]
-
-    (group-addons addon-list)))
-
 (defn-spec load-installed-addons nil?
   "guard function. offloads the hard work to `-load-installed-addons` then updates application state"
   []
   (if-let [addon-dir (selected-addon-dir)]
-    (let [addon-list (-load-installed-addons addon-dir)]
+    (let [addon-list (addon/load-installed-addons addon-dir)]
       (info "loading installed addons:" addon-dir)
       (update-installed-addon-list! addon-list))
 
