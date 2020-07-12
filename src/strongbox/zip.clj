@@ -84,11 +84,10 @@
 (defn-spec inconsistently-prefixed (s/or :ok nil?, :inconsistencies sequential?)
   "returns a list of inconsistently prefixed top-level directories sorted by most to least common (with the most common excluded).
   nil if no inconsistencies found.
-
-  ;; todo: revisit this comment
-  it's assumed this check is being done *after* the validity checks on the zip and addon and that the zipfile-entry list has been normalised"
+  Call *after* the validity checks on the zip file and addon. 
+  Ensure the zipfile-entry list has been normalised"
   [zipfile-entries :zipfile/entry-list]
-  (let [grouped-entries (prefix-groups zipfile-entries) ;; [[{...}, {...}], [{...}]] ;; todo: improve this comment
+  (let [grouped-entries (prefix-groups zipfile-entries) ;; [[{...}, {...}], [{...}]]
         magnitude 3 ;; ignore if there are no groups smaller than this
         num-groups (count grouped-entries) ;; 3
         num-group-members (mapv count grouped-entries) ;; [2 1]

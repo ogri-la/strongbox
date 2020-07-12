@@ -12,34 +12,31 @@
     [zip :as zip]
     [specs :as sp]]))
 
-;;(defn-spec -remove-addon nil?
-;;  [addon-dir ::sp/addon-dir, addon-dirname ::sp/dirname]
-(defn -remove-addon
-  [addon-dir addon-dirname]
-  (info (format "addon dir '%s' addon dirname '%s'" addon-dir addon-dirname))
-  (let [addon-path (fs/file addon-dir addon-dirname) ;; todo: perhaps this (addon-dir (base-name addon-dirname)) is safer
+(defn-spec -remove-addon nil?
+  "safely removes the given `addon-dirname` from within `addon-dir`"
+  [addon-dir ::sp/addon-dir, addon-dirname ::sp/dirname]
+  (let [addon-path (fs/file addon-dir (fs/base-name addon-dirname)) ;; `fs/base-name` strips any parents
         addon-path (-> addon-path fs/absolute fs/normalized)]
     ;; if after resolving the given addon dir it's still within the install-dir, remove it
     (if (and
          (fs/directory? addon-path)
-         (starts-with? addon-path addon-dir) ;; don't delete anything outside of install dir!
-         (not (= addon-path addon-dir)))
+         (starts-with? addon-path addon-dir)) ;; don't delete anything outside of install dir!
       (do
         (fs/delete-dir addon-path)
-        (warn (format "removed '%s'" addon-path)))
+        (warn (format "removed '%s'" addon-path))) ;; todo: demote to 'debug'?
 
       (error (format "directory '%s' is outside the current installation dir of '%s', not removing" addon-path addon-dir)))))
 
-;; todo: don't remove addons that have a mutual dependency outside of the group
 (defn-spec remove-addon nil?
   "removes the given addon. if addon is part of a group, all addons in group are removed"
   [addon-dir ::sp/addon-dir, toc :addon/toc]
   (if (contains? toc :group-addons)
+    ;; top-level toc is contained in the :group-addons list
     (doseq [subtoc (:group-addons toc)]
-      (-remove-addon addon-dir (:dirname subtoc))) ;; top-level toc is contained in the :group-addons list
+      (-remove-addon addon-dir (:dirname subtoc)))
     (-remove-addon addon-dir (:dirname toc))))
 
-;; ---
+;;
 
 (defn-spec group-addons :addon/toc-list
   "an addon may actually be many addons bundled together in a single download.
@@ -69,7 +66,6 @@
                        ;; best, easiest case
                        (merge primary new-data)
                        ;; when we can't determine the primary addon, add a shitty synthetic one
-                       ;; TODO: should I dissoc :dirname? it could be misleading..
                        (merge next-best new-data {:label (format "%s (group)" next-best-label)
                                                   :description (format "group record for the %s addon" next-best-label)})))))
 
@@ -144,7 +140,7 @@
         toplevel-dirs (filter (every-pred :dir? :toplevel?) zipfile-entries)
         primary-dirname (determine-primary-subdir toplevel-dirs)
 
-        ;; "not a show stopper, but if there are bundled addons and they don't share a common prefix, let the user know"
+        ;; not a show stopper, but if there are bundled addons and they don't share a common prefix, let the user know
         suspicious-bundle-check (fn []
                                   (let [sus-addons (zip/inconsistently-prefixed zipfile-entries)
                                         msg "%s will install inconsistently prefixed addons: %s"]
@@ -165,6 +161,8 @@
                            (mapv update-nfo-fn toplevel-dirs))]
 
     (suspicious-bundle-check)
+
+    ;; when is it not valid? when importing v1 addons. v2 addons need 'padding' as well :(
     (when (s/valid? :addon/toc addon)
       (remove-addon install-dir addon))
     (install-addon)

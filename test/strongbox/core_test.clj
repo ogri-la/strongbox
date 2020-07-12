@@ -597,8 +597,14 @@
         (is (= expected-nfo (nfo/read-nfo-file install-dir "BundledAddon")))))))
 
 (deftest uninstall-addon
-  (testing "uninstalling an addon that hasn't been 'installed' (by strongbox) works"
-    nil))
+  (testing "uninstalling an addon without a nfo file is supported"
+    (with-running-app
+      (let [install-dir (helper/addons-path)
+            install-dir-contents #(->> install-dir fs/list-dir (map fs/base-name) sort)]
+        (core/set-addon-dir! install-dir)
+        (zip/unzip-file (fixture-path "everyaddon--1-2-3.zip") install-dir)
+        (core/remove-many-addons [toc])
+        (is (= [] (install-dir-contents)))))))
 
 (deftest uninstall-installed-addon
   (testing "uninstalling an addon installed with strongbox also removes bundled addons"
@@ -621,10 +627,12 @@
             _ (fs/copy fixture-v0 (utils/join install-dir fname-v0))
             _ (fs/copy fixture-v1 (utils/join install-dir fname-v1))
 
-            install-path-dirs #(->> install-dir fs/list-dir (map fs/base-name) sort)]
+            install-path-dirs #(->> install-dir fs/list-dir
+                                    (filter fs/directory?) ;; exclude any .zip files
+                                    (map fs/base-name) sort)]
 
         (core/install-addon addon-v0 install-dir)
-        (is (= ["BundledAddon" "EveryAddon"                fname-v0 fname-v1] (install-path-dirs)))
+        (is (= ["BundledAddon" "EveryAddon"] (install-path-dirs)))
 
         ;; reload the list of addons. this groups the addons up by :group-id
         (core/load-installed-addons)
@@ -636,7 +644,7 @@
               ]
           ;; install the upgrade that gets rid of a directory
           (core/install-addon addon-v1 install-dir)
-          (is (= ["EveryAddon"         fname-v0 fname-v1] (install-path-dirs))))))))
+          (is (= ["EveryAddon"] (install-path-dirs))))))))
 
 
 ;;
