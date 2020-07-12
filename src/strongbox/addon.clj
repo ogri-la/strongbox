@@ -12,19 +12,21 @@
     [zip :as zip]
     [specs :as sp]]))
 
+;;(defn-spec -remove-addon nil?
+;;  [addon-dir ::sp/addon-dir, addon-dirname ::sp/dirname]
 (defn -remove-addon
   [addon-dir addon-dirname]
-  (let [;;addon-dir (selected-addon-dir)
-        addon-path (fs/file addon-dir addon-dirname) ;; todo: perhaps this (addon-dir (base-name addon-dirname)) is safer
+  (info (format "addon dir '%s' addon dirname '%s'" addon-dir addon-dirname))
+  (let [addon-path (fs/file addon-dir addon-dirname) ;; todo: perhaps this (addon-dir (base-name addon-dirname)) is safer
         addon-path (-> addon-path fs/absolute fs/normalized)]
     ;; if after resolving the given addon dir it's still within the install-dir, remove it
     (if (and
          (fs/directory? addon-path)
-         (starts-with? addon-path addon-dir)) ;; don't delete anything outside of install dir!
+         (starts-with? addon-path addon-dir) ;; don't delete anything outside of install dir!
+         (not (= addon-path addon-dir)))
       (do
         (fs/delete-dir addon-path)
-        (warn (format "removed '%s'" addon-path))
-        nil)
+        (warn (format "removed '%s'" addon-path)))
 
       (error (format "directory '%s' is outside the current installation dir of '%s', not removing" addon-path addon-dir)))))
 
@@ -149,16 +151,6 @@
                                     (when sus-addons
                                       (warn (format msg (:label addon) (clojure.string/join ", " sus-addons))))))
 
-        uninstall-addons (fn []
-                           (warn (format "uninstalling %s version %s" (:label addon) (:installed-version addon)))
-                           (->> toplevel-dirs
-                                (map #(utils/join install-dir (:path %))) ;; absolute paths
-                                (filter fs/exists?) ;; remove any paths that don't exist
-                                (mapv toc/parse-addon-toc-guard)
-                                spy
-                                (map (partial remove-addon install-dir))
-                                vec))
-
         install-addon (fn []
                         (zip/unzip-file downloaded-file install-dir))
 
@@ -173,7 +165,8 @@
                            (mapv update-nfo-fn toplevel-dirs))]
 
     (suspicious-bundle-check)
-    (uninstall-addons)
+    (when (s/valid? :addon/toc addon)
+      (remove-addon install-dir addon))
     (install-addon)
     (let [retval (update-nfo-files)]
       (info (:label addon) "installed.")

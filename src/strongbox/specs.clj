@@ -53,7 +53,7 @@
 (s/def ::ignore? boolean?)
 (s/def ::ignore-flag (s/keys :req-un [::ignore?]))
 (s/def ::download-url ::url)
-(s/def ::dirname string?)
+(s/def ::dirname (s/and string? #(not (empty? %))))
 (s/def ::description (s/nilable string?))
 (s/def ::matched? boolean?)
 (s/def ::group-id string?)

@@ -296,7 +296,7 @@
                        {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-other-addon-zip-file)})}}]
       (with-fake-routes-in-isolation fake-routes
         (with-running-app
-          (core/set-addon-dir! (str fs/*cwd*))
+          (core/set-addon-dir! (helper/addons-path))
 
           (let [;; our list of addons to import
                 output-path (fixture-path "import-export--export-v2.json")
@@ -595,6 +595,48 @@
         (is result) ;; success
         (is (= ["BundledAddon" "EveryAddon"] directory-list))
         (is (= expected-nfo (nfo/read-nfo-file install-dir "BundledAddon")))))))
+
+(deftest uninstall-addon
+  (testing "uninstalling an addon that hasn't been 'installed' (by strongbox) works"
+    nil))
+
+(deftest uninstall-installed-addon
+  (testing "uninstalling an addon installed with strongbox also removes bundled addons"
+    (with-running-app
+      (let [install-dir (helper/addons-path)
+            _ (core/set-addon-dir! install-dir)
+
+            addon-v0 (merge addon {:version "0.1.2"})
+            addon-v1 addon
+
+            ;; move dummy addon files into place so there is no cache miss
+            fname-v0 (core/downloaded-addon-fname (:name addon-v0) (:version addon-v0))
+            fname-v1 (core/downloaded-addon-fname (:name addon-v1) (:version addon-v1))
+
+            _ (info "fname0" fname-v0 "fname1" fname-v1)
+
+            fixture-v0 (fixture-path "everyaddon--0-1-2.zip") ;; v0.1 unzips to two directories
+            fixture-v1 (fixture-path "everyaddon--1-2-3.zip") ;; v1.2 has just the one directory
+
+            _ (fs/copy fixture-v0 (utils/join install-dir fname-v0))
+            _ (fs/copy fixture-v1 (utils/join install-dir fname-v1))
+
+            install-path-dirs #(->> install-dir fs/list-dir (map fs/base-name) sort)]
+
+        (core/install-addon addon-v0 install-dir)
+        (is (= ["BundledAddon" "EveryAddon"                fname-v0 fname-v1] (install-path-dirs)))
+
+        ;; reload the list of addons. this groups the addons up by :group-id
+        (core/load-installed-addons)
+        (is (= 1 (count (core/get-state :installed-addon-list))))
+
+        (let [;; our v0 addon should now have group information
+              addon-v0 (first (core/get-state :installed-addon-list))
+              addon-v1 (merge addon-v0 source-updates {:url "https://example.org/"}) ;; there is no catalogue so there is no download-url. the version has changed also
+              ]
+          ;; install the upgrade that gets rid of a directory
+          (core/install-addon addon-v1 install-dir)
+          (is (= ["EveryAddon"         fname-v0 fname-v1] (install-path-dirs))))))))
 
 
 ;;

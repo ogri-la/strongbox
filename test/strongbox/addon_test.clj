@@ -189,39 +189,3 @@
                      :ignore? false}]]
       (is (= expected (addon/load-installed-addons addon-dir))))))
 
-
-
-;;
-
-
-(comment
-  (deftest install-addon
-    (let [fixture-v0 (fixture-path "everyaddon--0-1-2.zip") ;; v0.1 unzips to two directories
-          fixture-v1 (fixture-path "everyaddon--1-2-3.zip") ;; v1.2 has just the one directory
-
-          ;; [::version ::download-url]
-          ;; [::name ::label]
-          addon-v0 {:name "EveryAddon" :label "Every Addon"
-                    :version "0.1.2" :download-url "https://example.org"
-
-                    ;; todo: addon/installable needs to be expanded to include these:
-                    :url "https://example.org/foo/bar"
-                    :source "curseforge" :source-id 1}
-
-          addon-v1 (assoc addon-v0 :version "1.2.3")
-
-          game-track :retail]
-
-      (testing "installing an addon uninstalls the previous addon first"
-        (with-running-app
-          (let [addon-path (helper/addons-path)
-                _ (addon/install-addon addon-v0 addon-path fixture-v0 game-track)
-                addon-path-dirs #(->> addon-path fs/list-dir (map fs/base-name) sort)]
-
-            (is (= ["BundledAddon" "EveryAddon"] (addon-path-dirs)))
-            (is (= {} (slurp (fs/file addon-path "EveryAddon" ".strongbox.json"))))
-            (is (= {} (slurp (fs/file addon-path "BundledAddon" ".strongbox.json"))))
-
-            ;;(addon/install-addon addon-v1 addon-path fixture-v1 game-track)
-            ;;(is (= ["EveryAddon"] (addon-path-dirs))))))
-            ))))))

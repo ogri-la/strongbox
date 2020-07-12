@@ -902,7 +902,8 @@
         ;; gussy them up a bit so it looks like an `::sp/installed-addon-summary`
         padding {:label ""
                  :description ""
-                 :dirname ""
+                 ;; 2020-06: dirname must be a non-empty string
+                 :dirname "not-the-addon-dir-you-are-looking-for"
                  :interface-version 0
                  :installed-version "0"}
         addon-list (map #(merge padding %) addon-list)
