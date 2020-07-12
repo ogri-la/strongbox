@@ -6,18 +6,13 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
+* change installation from 'overwrite' to 'uninstall+install'
+    - addons are uninstalled before they are installed
+        - done
+
 ## todo
 
 * change installation from 'overwrite' to 'uninstall+install'
-    - preserve existing uninstallation method
-        - 'overwrite'
-            - the in-place overwrite of existing files
-        - this is a simple and hassle free approach
-            - it may lead to some odd cases though
-                - a newer (or alternate) release drops the inclusion of a top-level folder and it is left orphaned
-                - same again, but for files within folders. you'll get this slow accretion of orphaned files
-    - `remove-addon` already exists that will do what we want
-        - just need to call it before installation
     - good opportunity to revisit some code in zip.clj and core.clj:
         - simplify `install-addon` interface in core.clj
             - we need to provide an installation directory which can be pulled from the application state
