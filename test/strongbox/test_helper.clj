@@ -14,6 +14,16 @@
 
 (def helper-config-dir "config/strongbox")
 
+(def helper-addon-dir "addons")
+
+(defn addons-path
+  "convenience. return path to an addon directory called 'addons', creating it if it doesn't exist."
+  []
+  (let [path (utils/join fs/*cwd* helper-addon-dir)]
+    (when-not (fs/exists? path)
+      (fs/mkdir path))
+    path))
+
 (defn fixture-path
   [filename]
   (utils/join fixture-dir filename))

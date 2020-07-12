@@ -8,9 +8,50 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+* change installation from 'overwrite' to 'uninstall+install'
+    - preserve existing uninstallation method
+        - 'overwrite'
+            - the in-place overwrite of existing files
+        - this is a simple and hassle free approach
+            - it may lead to some odd cases though
+                - a newer (or alternate) release drops the inclusion of a top-level folder and it is left orphaned
+                - same again, but for files within folders. you'll get this slow accretion of orphaned files
+    - `remove-addon` already exists that will do what we want
+        - just need to call it before installation
+    - good opportunity to revisit some code in zip.clj and core.clj:
+        - simplify `install-addon` interface in core.clj
+            - we need to provide an installation directory which can be pulled from the application state
+    - what to do about mutual dependencies? 
+        - i.e., two addons both include some addon, one overwrites the other, that one is uninstalled leaving the other in a broken state. 
+        - Mutual dependencies aren't tracked ... 
+        - I could:
+            - detect if an addon were to be replaced by another addon in a different group
+            - if so, attach the details of the addon with the replaced group
+            - if the addon gets uninstalled, the other addon is re-installed
+            - caveats:
+                - what about three or more addons all relying on the same sub-addon?
+                    - the list accumulates
+                    - as each one is uninstalled, it gets removed from the list and the top-most is re-installed
+                - what if an ignored addon is relying on a sub-addon?
+                    - ignored addons shouldn't be automatically uninstalled or reinstalled
+                    - ignored addons may block the installation/uninstallation of others
+        - I could also:
+            - not remove a mutual dependency
+                - if A and B depend on C
+                - and B installed C last
+                - and then B is removed
+                - A is left depending on C that it didn't install
+                    - it could be of a different version ...
+                    - this is no different to the current situation
+            - the mutual dependency has it's group identity updated
+                - or we keep a list of group membership
+* just encountered a case where the classic version overwrote one of the retail directories but not the other
+    - (tukui classic and retail?)
+    - so there was a broken retail installation but a working classic installation
+        - I was able to 'uninstall' the broken retail installation without a problem
+
 * rename 'wowman-comrades' to 'strongbox-comrades'
 * add ability to explicitly unignore addon from context menu
-
 * EOL planning, robustness, only download/update the catalogue *after* an existing catalogue has been confirmed
     - github is down, wowman is erroring with a 500
     - failure to download a catalogue shouldn't prevent addons from being displayed
@@ -38,13 +79,13 @@ see CHANGELOG.md for a more formal list of changes by release
             - fingerprint is 9 digits and all decimal, so not a hex digest
     - wowinterface checksum is hidden behind a javascript tabber but still available
         - wowinterface do have a md5sum in results! score
-* change installation from 'overwrite' to 'uninstall+install'
-* just encountered a case where the classic version overwrote one of the retail directories but not the other
-    - (tukui classic and retail?)
-    - so there was a broken retail installation but a working classic installation
-        - I was able to 'uninstall' the broken retail installation without a problem
+
+* bug, new gui instance is spawned when switching themes outside of the REPL
 
 ## todo bucket (no particular order)
+
+* github, if multiple releases available and first fails criteria, check the next and so on
+    - see altoholic: https://github.com/teelolws/Altoholic-Classic
 
 * test, can gui-diff and main/test be pushed back into the testing namespace and elided from release somehow?
 
@@ -61,8 +102,6 @@ see CHANGELOG.md for a more formal list of changes by release
                 - our interface with them is their API or in wowi's case, their API and website
 
 * code refactor
-    * simplify `install-addon` interface in core.clj
-        - we need to provide an installation directory which can be pulled from the application state
     * core.clj is getting too large
         - it's difficult to navigate and debug
         - many tests are accumulating in core_test.clj

@@ -8,7 +8,7 @@
 (def placeholder "even qualified specs still require `specs.clj` to be included for linting and uberjar")
 
 (defn valid-or-nil
-  "returns `nil` instead of `:clojure.spec.alpha/invalid` when given data `x` is invalid"
+  "returns `nil` instead of `false` when given data `x` is invalid"
   [spec x]
   (when (s/valid? spec x)
     x))
@@ -53,7 +53,7 @@
 (s/def ::ignore? boolean?)
 (s/def ::ignore-flag (s/keys :req-un [::ignore?]))
 (s/def ::download-url ::url)
-(s/def ::dirname string?)
+(s/def ::dirname (s/and string? #(not (empty? %))))
 (s/def ::description (s/nilable string?))
 (s/def ::matched? boolean?)
 (s/def ::group-id string?)
