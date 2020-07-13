@@ -170,13 +170,14 @@
           expected [{:name "someaddon", :dirname "SomeAddon", :label "SomeAddon", :description "asdf", :interface-version 80300, :installed-version "1.2.3"}]]
       (is (= expected (addon/load-installed-addons addon-dir))))))
 
-(deftest load-installed-addons-4
+(deftest load-installed-addons-4--explicit-nfo-ignore
   (testing "ignore flag in nfo data overrides any ignore flag in toc data"
     (let [addon-dir (str fs/*cwd*)
           some-addon-path (utils/join addon-dir "SomeAddon")
           _ (fs/mkdirs some-addon-path)
 
           some-addon-toc (utils/join some-addon-path "SomeAddon.toc")
+          ;; the `@project-version@` will make the .toc file add the `:ignore? true` flag.
           _ (spit some-addon-toc "## Title: SomeAddon\n## Description: asdf\n## Interface: 80300\n## Version: @project-version@")
 
           some-addon-nfo (utils/join some-addon-path nfo/nfo-filename)

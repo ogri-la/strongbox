@@ -593,8 +593,8 @@
                           :source "curseforge",
                           :source-id 1}]
         (is result) ;; success
-        (is (= ["BundledAddon" "EveryAddon"] directory-list))
-        (is (= expected-nfo (nfo/read-nfo-file install-dir "BundledAddon")))))))
+        (is (= ["EveryAddon" "EveryAddon-BundledAddon"] directory-list))
+        (is (= expected-nfo (nfo/read-nfo-file install-dir "EveryAddon-BundledAddon")))))))
 
 (deftest uninstall-addon
   (testing "uninstalling an addon without a nfo file is supported"
@@ -619,8 +619,6 @@
             fname-v0 (core/downloaded-addon-fname (:name addon-v0) (:version addon-v0))
             fname-v1 (core/downloaded-addon-fname (:name addon-v1) (:version addon-v1))
 
-            _ (info "fname0" fname-v0 "fname1" fname-v1)
-
             fixture-v0 (fixture-path "everyaddon--0-1-2.zip") ;; v0.1 unzips to two directories
             fixture-v1 (fixture-path "everyaddon--1-2-3.zip") ;; v1.2 has just the one directory
 
@@ -632,7 +630,7 @@
                                     (map fs/base-name) sort)]
 
         (core/install-addon addon-v0 install-dir)
-        (is (= ["BundledAddon" "EveryAddon"] (install-path-dirs)))
+        (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (install-path-dirs)))
 
         ;; reload the list of addons. this groups the addons up by :group-id
         (core/load-installed-addons)
@@ -645,6 +643,38 @@
           ;; install the upgrade that gets rid of a directory
           (core/install-addon addon-v1 install-dir)
           (is (= ["EveryAddon"] (install-path-dirs))))))))
+
+(deftest uninstall-ignored-addon
+  (testing "uninstalling an addon we're ignoring isn't possible."
+    (with-running-app
+      (let [install-dir (helper/addons-path)
+            install-dir-contents #(->> install-dir fs/list-dir (map fs/base-name) sort)
+            _ (core/set-addon-dir! install-dir)
+            _ (zip/unzip-file (fixture-path "everyaddon--1-2-3.zip") install-dir)
+            _ (fs/mkdir (utils/join install-dir "EveryAddon" ".git"))
+            _ (core/load-installed-addons)
+            addon (first (core/get-state :installed-addon-list))]
+        (core/remove-many-addons [addon])
+        (is (= ["EveryAddon"] (install-dir-contents)))))))
+
+(deftest uninstall-ignored-bundled-addon
+  (testing "uninstalling an addon with a bundled addon that is being ignored isn't possible."
+    (with-running-app
+      (let [install-dir (helper/addons-path)
+            install-dir-contents #(->> install-dir fs/list-dir (filter fs/directory?) (map fs/base-name) sort)
+            _ (core/set-addon-dir! install-dir)
+
+            ;; trick here: copying 0.1.2 fixture to 1.2.3 filename. this fixture unpacks two directories
+            fname (core/downloaded-addon-fname (:name addon) (:version addon))
+            _ (fs/copy (fixture-path "everyaddon--0-1-2.zip") (utils/join install-dir fname))
+            _ (core/install-addon addon install-dir)
+
+            ;; ensure bundled addon gets ignored
+            _ (fs/mkdir (utils/join install-dir "EveryAddon-BundledAddon" ".git"))
+            _ (core/load-installed-addons)
+            addon (first (core/get-state :installed-addon-list))]
+        (core/remove-many-addons [addon])
+        (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (install-dir-contents)))))))
 
 
 ;;

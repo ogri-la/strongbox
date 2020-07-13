@@ -29,15 +29,30 @@
 
 (defn-spec remove-addon nil?
   "removes the given addon. if addon is part of a group, all addons in group are removed"
-  [addon-dir ::sp/addon-dir, toc :addon/toc]
-  (if (contains? toc :group-addons)
-    ;; top-level toc is contained in the :group-addons list
-    (doseq [subtoc (:group-addons toc)]
-      (-remove-addon addon-dir (:dirname subtoc)))
-    (-remove-addon addon-dir (:dirname toc))))
+  [addon-dir ::sp/addon-dir, addon :addon/installed]
+  (cond
+    ;; if addon is being ignored, refuse to remove addon
+    (:ignore? addon) (error "refusing to remove ignored addon:" addon-dir)
+
+    ;; if any part of the addon bundle is being ignored, refuse to remove addon
+    (utils/any (map :ignore? (:group-addons addon)))
+    (let [ignored-addon (->> addon :group-addons (filter :ignore?) first)
+          ;; 'refusing to remove addon 'HealBot' whose bundled addon 'HealBot_Options' is being ignored'
+          msg "refusing to remove addon '%s' whose bundled addon '%s' is being ignored"
+          msg (format msg (:dirname addon) (:dirname ignored-addon))]
+      (error msg))
+
+    ;; normal case. addon is part of a bundle.
+    ;; because the addon is also contained in `:group-addons` we just remove all in list
+    (contains? addon :group-addons) (doseq [grouped-addon (:group-addons addon)]
+                                      (-remove-addon addon-dir (:dirname grouped-addon)))
+
+    ;; normal case. addon is a single directory
+    :else (-remove-addon addon-dir (:dirname addon))))
 
 ;;
 
+;; todo: toc-list to installed-list
 (defn-spec group-addons :addon/toc-list
   "an addon may actually be many addons bundled together in a single download.
   strongbox tags the bundled addons as they are unzipped and tries to determine the primary one.
