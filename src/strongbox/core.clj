@@ -415,8 +415,8 @@
   ([addon :addon/installable, install-dir ::sp/extant-dir, test-only? boolean?]
    (cond
      ;; do some pre-installation checks
-     (:ignore? addon) (warn "failing to install addon, addon is being ignored:" install-dir)
-     (not (fs/writeable? install-dir)) (error "failing to install addon, directory not writeable:" install-dir)
+     (:ignore? addon) (error "refusing to install addon, addon is being ignored:" (:dirname addon))
+     (not (fs/writeable? install-dir)) (error "refusing to install addon, directory not writeable:" install-dir)
 
      :else ;; attempt downloading and installing addon
 

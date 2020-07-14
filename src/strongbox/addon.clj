@@ -31,18 +31,11 @@
   "removes the given addon. if addon is part of a group, all addons in group are removed"
   [addon-dir ::sp/addon-dir, addon :addon/installed]
   (cond
-    ;; if addon is being ignored, refuse to remove addon
+    ;; if addon is being ignored, refuse to remove addon.
+    ;; note: `group-addons` will add a top level `:ignore?` flag if any addon in a bundle is being ignored.
     (:ignore? addon) (error "refusing to remove ignored addon:" addon-dir)
 
-    ;; if any part of the addon bundle is being ignored, refuse to remove addon
-    (utils/any (map :ignore? (:group-addons addon)))
-    (let [ignored-addon (->> addon :group-addons (filter :ignore?) first)
-          ;; 'refusing to remove addon 'HealBot' whose bundled addon 'HealBot_Options' is being ignored'
-          msg "refusing to remove addon '%s' whose bundled addon '%s' is being ignored"
-          msg (format msg (:dirname addon) (:dirname ignored-addon))]
-      (error msg))
-
-    ;; normal case. addon is part of a bundle.
+    ;; addon is part of a bundle.
     ;; because the addon is also contained in `:group-addons` we just remove all in list
     (contains? addon :group-addons) (doseq [grouped-addon (:group-addons addon)]
                                       (-remove-addon addon-dir (:dirname grouped-addon)))
@@ -76,13 +69,18 @@
                          next-best (first addons)
                          new-data {:group-addons addons
                                    :group-addon-count (count addons)}
-                         next-best-label (-> next-best :group-id fs/base-name)]
+                         next-best-label (-> next-best :group-id fs/base-name)
+                         ;; add a group-level ignore flag if any bundled addon is being ignored
+                         ;; todo: test for this
+                         ignore-group? (when (utils/any (map :ignore? addons))
+                                         {:ignore? true})]
                      (if primary
                        ;; best, easiest case
-                       (merge primary new-data)
+                       (merge primary new-data ignore-group?)
                        ;; when we can't determine the primary addon, add a shitty synthetic one
-                       (merge next-best new-data {:label (format "%s (group)" next-best-label)
-                                                  :description (format "group record for the %s addon" next-best-label)})))))
+                       (merge next-best new-data ignore-group?
+                              {:label (format "%s (group)" next-best-label)
+                               :description (format "group record for the %s addon" next-best-label)})))))
 
         ;; this flattens the newly grouped addons from a map into a list and joins the unknowns
         addon-list (apply conj (mapv expand addon-groups) unknown-grouping)]

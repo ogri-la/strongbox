@@ -120,7 +120,7 @@
 
         ignore-flag (when (and (not user-ignored)
                                (ignore? (join install-dir dirname)))
-                      (warn (format "implicitly ignoring addon: %s; addon directory contains a .git/.hg/.svn folder" dirname))
+                      (warn (format "ignoring addon: %s; addon directory contains a .git/.hg/.svn folder" dirname))
                       {:ignore? true})]
     (merge nfo-file-contents ignore-flag)))
 
