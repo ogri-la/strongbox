@@ -262,21 +262,27 @@
 (defn-spec remove-selected-handler nil?
   []
   (when-let [selected (get-state :selected-installed)]
-    (let [header [[(format "Deleting %s:" (count selected)) ""]]
-          labels (mapv (fn [row] [(str " - " (-> row :name)) ""]) selected)
+    (if (utils/any (mapv :ignore? selected))
+      (-> (ss/dialog :parent (select-ui :#root)
+                     :content "Selection contains ignored addons. Unlock them first, then delete."
+                     :type :error)
+          ss/pack! ss/show!)
 
-          content (into header labels)
-          content (interleave content (repeat [:separator "growx, wrap"]))
+      (let [header [[(format "Deleting %s:" (count selected)) ""]]
+            labels (mapv (fn [row] [(->> row :name (str " - ")) ""]) selected)
 
-          dialog (ss/dialog :parent (select-ui :#root)
-                            :content (mig/mig-panel :items content)
-                            :resizable? false
-                            :type :warning
-                            :option-type :ok-cancel
-                            :default-option :no
-                            :success-fn (async-handler core/remove-selected))]
-      (-> dialog ss/pack! ss/show!)
-      nil)))
+            content (into header labels)
+            content (interleave content (repeat [:separator "growx, wrap"]))
+
+            dialog (ss/dialog :parent (select-ui :#root)
+                              :content (mig/mig-panel :items content)
+                              :resizable? false
+                              :type :warning
+                              :option-type :ok-cancel
+                              :default-option :no
+                              :success-fn (async-handler core/remove-selected))]
+        (-> dialog ss/pack! ss/show!)))
+    nil))
 
 (defn about-strongbox-dialog
   []

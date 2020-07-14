@@ -33,7 +33,7 @@
   (cond
     ;; if addon is being ignored, refuse to remove addon.
     ;; note: `group-addons` will add a top level `:ignore?` flag if any addon in a bundle is being ignored.
-    (:ignore? addon) (error "refusing to remove ignored addon:" addon-dir)
+    (:ignore? addon) (error "refusing to delete ignored addon:" addon-dir)
 
     ;; addon is part of a bundle.
     ;; because the addon is also contained in `:group-addons` we just remove all in list

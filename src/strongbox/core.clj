@@ -700,7 +700,8 @@
         addon (or expanded-addon addon) ;; expanded addon may still be nil
         {:keys [installed-version version]} addon
         update? (and version
-                     (not= installed-version version))]
+                     (not= installed-version version)
+                     (not (:ignore? addon)))]
     (assoc addon :update? update?)))
 
 (defn-spec check-for-updates nil?
