@@ -596,15 +596,42 @@
         (is (= ["EveryAddon" "EveryAddon-BundledAddon"] directory-list))
         (is (= expected-nfo (nfo/read-nfo-file install-dir "EveryAddon-BundledAddon")))))))
 
-(deftest uninstall-addon
-  (testing "uninstalling an addon without a nfo file is supported"
+(deftest install-bundled-addon-overwriting-ignored-addon
+  (testing "installing/unzipping an addon with a shared mutual dependency of an addon that is ignored isn't possible"
     (with-running-app
       (let [install-dir (helper/addons-path)
-            install-dir-contents #(->> install-dir fs/list-dir (map fs/base-name) sort)]
+            _ (core/set-addon-dir! install-dir)
+            install-dir-contents #(->> install-dir fs/list-dir (map fs/base-name) sort)
+            addon {:name "everyaddon" :label "EveryAddon" :version "0.1.2" :url "https://group.id/never/fetched"
+                   :source "curseforge" :source-id 1
+                   :-testing-zipfile (fixture-path "everyaddon--0-1-2.zip")}]
+
+        (core/install-addon addon)
+        (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (install-dir-contents)))
+
+        (fs/mkdir (utils/join install-dir "EveryAddon" ".git"))
+        (core/load-installed-addons) ;; refresh our knowledge of what is installed essentially
+
+        (let [addon2 {:name "everyotheraddon" :label "EveryOtherAddon" :version "5.6.7" :url "https://group.id/also/never/fetched"
+                      :source "curseforge" :source-id 2
+                      :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}]
+          (core/install-addon addon2)
+          (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (install-dir-contents))))))))
+
+;;
+
+(deftest uninstall-addon
+  (testing "uninstalling an addon without a nfo file is supported, but limited"
+    (with-running-app
+      (let [install-dir (helper/addons-path)
+            install-dir-contents #(->> install-dir fs/list-dir (map fs/base-name) sort)
+            ;; even though they're part of the same addon strongbox didn't install it
+            ;; and doesn't know about the connection. expect the bundled addon to remain
+            expected ["EveryAddon-BundledAddon"]]
         (core/set-addon-dir! install-dir)
-        (zip/unzip-file (fixture-path "everyaddon--1-2-3.zip") install-dir)
+        (zip/unzip-file (fixture-path "everyaddon--0-1-2.zip") install-dir)
         (core/remove-many-addons [toc])
-        (is (= [] (install-dir-contents)))))))
+        (is (= expected (install-dir-contents)))))))
 
 (deftest uninstall-installed-addon
   (testing "uninstalling an addon installed with strongbox also removes bundled addons"

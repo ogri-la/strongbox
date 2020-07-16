@@ -1,23 +1,20 @@
 (ns strongbox.http-test
   (:require
    [clojure.test :refer [deftest testing is use-fixtures]]
+   [clojure.spec.alpha :as s]
    [clj-http.fake :refer [with-fake-routes-in-isolation]]
    [strongbox
-    [catalogue :as catalogue]
     [http :as http]]))
 
 (deftest download-404
   (testing "regular (non-streaming) download that yields a 404 returns an error map"
-    (let [;; listed in the curseforge catalogue but returns a 404 when fetched
-          zombie-addon {:name "Brewmaster Tools"
-                        :url "https://www.curseforge.com/wow/addons/brewmastertools"
-                        :label ""
-                        :tag-list []
-                        :updated-date "2019-01-01T00:00:00Z" :download-count 0}
-          fake-routes {"https://www.curseforge.com/wow/addons/brewmastertools/files"
-                       {:get (fn [req] {:status 404 :reason-phrase "Not Found" :body "<h1>Not Found</h1>"})}}]
+    (let [url "https://www.curseforge.com/wow/addons/brewmastertools/files"
+          fake-routes {url {:get (fn [req] {:status 404 :reason-phrase "Not Found" :body "<h1>Not Found</h1>"})}}]
       (with-fake-routes-in-isolation fake-routes
-        (is (nil? (catalogue/expand-summary zombie-addon :retail)))))))
+        (let [result (http/download url)
+              expected {:status 404 :reason-phrase "Not Found" :host "www.curseforge.com"}]
+          (is (s/valid? :http/error result))
+          (is (= expected result)))))))
 
 (deftest url-to-filename
   (testing "urls can be converted to filenames safe for a filesystem"

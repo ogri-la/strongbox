@@ -11,8 +11,8 @@
 (def wowinterface-api "https://api.mmoui.com/v3/game/WOW")
 
 (defn-spec expand-summary (s/or :ok :addon/source-updates, :error nil?)
-  "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
-  [addon-summary :addon/summary game-track ::sp/game-track]
+  "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per addon required"
+  [addon-summary :addon/expandable, game-track ::sp/game-track]
   ;; this check is a little different to the others.
   ;; the `game-track-list` is stored in the catalogue for wowinterface because it's available at creation time.
   ;; however! we know this information isn't good and doesn't always match what we see on the website.

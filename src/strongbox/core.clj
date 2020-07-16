@@ -409,44 +409,51 @@
       :retail))
 
 (defn-spec install-addon-guard (s/or :ok (s/coll-of ::sp/extant-file), :passed-tests true?, :error nil?)
-  "downloads an addon and installs it. handles http and non-http errors, bad zip files, bad addons"
+  "downloads an addon and installs it. 
+  handles http and non-http errors, bad zip files, bad addons, bad directories."
+  ([addon :addon/installable]
+   (install-addon-guard addon (selected-addon-dir)))
   ([addon :addon/installable, install-dir ::sp/extant-dir]
    (install-addon-guard addon install-dir false))
   ([addon :addon/installable, install-dir ::sp/extant-dir, test-only? boolean?]
    (cond
      ;; do some pre-installation checks
-     (:ignore? addon) (error "refusing to install addon, addon is being ignored:" (:dirname addon))
+     (:ignore? addon) (error "refusing to install addon, addon is being ignored:" (:name addon))
      (not (fs/writeable? install-dir)) (error "refusing to install addon, directory not writeable:" install-dir)
 
      :else ;; attempt downloading and installing addon
 
-     (let [downloaded-file (download-addon addon install-dir)
+     (let [downloaded-file (or (:-testing-zipfile addon) ;; don't download, install from this file (testing only right now)
+                               (download-addon addon install-dir))
            bad-zipfile-msg (format "failed to read zip file '%s', could not install %s" downloaded-file (:name addon))
            bad-addon-msg (format "refusing to install '%s'. It contains top-level files or top-level directories missing .toc files."  (:name addon))
-           game-track (or
-                       ;; installing addon from an export record.
-                       ;; `addon` won't typically have a `game-track` (it will have an `:installed-game-track` though)
-                       (:game-track addon)
-
-                       ;; what we probably want
-                       (get-game-track install-dir))]
+           ;; installing addon from an export record.
+           ;; a regular `addon` won't have a `game-track` (it has an `:installed-game-track`).
+           game-track (or (:game-track addon) (get-game-track install-dir))]
 
        (info (format "installing %s version %s ..." (:label addon) (:version addon)))
        (cond
          (map? downloaded-file) (error "failed to download addon, could not install" (:name addon))
+
          (nil? downloaded-file) (error "non-http error downloading addon, could not install" (:name addon)) ;; I dunno. /shrug
-         (not (zip/valid-zip-file? downloaded-file)) (do
-                                                       (error bad-zipfile-msg)
-                                                       (fs/delete downloaded-file)
-                                                       (warn "removed bad zip file" downloaded-file))
-         (not (zip/valid-addon-zip-file? downloaded-file)) (do
-                                                             (error bad-addon-msg)
-                                                             (fs/delete downloaded-file) ;; I could be more lenient
-                                                             (warn "removed bad addon" downloaded-file))
-         (not (s/valid? ::sp/writeable-dir install-dir)) (error
-                                                          (format
-                                                           "addon directory is not writable: %s"
-                                                           install-dir))
+
+         (not (zip/valid-zip-file? downloaded-file))
+         (do
+           (error bad-zipfile-msg)
+           (fs/delete downloaded-file)
+           (warn "removed bad zip file" downloaded-file))
+
+         (not (zip/valid-addon-zip-file? downloaded-file))
+         (do
+           (error bad-addon-msg)
+           (fs/delete downloaded-file) ;; I could be more lenient
+           (warn "removed bad addon" downloaded-file))
+
+         (not (s/valid? ::sp/writeable-dir install-dir))
+         (error (format "addon directory is not writable: %s" install-dir))
+
+         (addon/overwrites-ignored? downloaded-file (get-state :installed-addon-list))
+         (error "refusing to install addon that will overwrite an ignored addon")
 
          test-only? true ;; addon was successfully downloaded and verified as being sound
 

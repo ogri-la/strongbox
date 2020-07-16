@@ -98,9 +98,8 @@
 
 (defn-spec expand-summary (s/or :ok :addon/source-updates, :error nil?)
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
-  [addon-summary :addon/summary game-track ::sp/game-track]
-  (let [pid (-> addon-summary :source-id)
-        url (api-url "/addon/%s" pid)
+  [addon-summary :addon/expandable, game-track ::sp/game-track]
+  (let [url (api-url "/addon/%s" (:source-id addon-summary))
         result (-> url http/download utils/from-json)
         latest-release (-> result latest-versions (get game-track) first)]
     (when latest-release
@@ -111,6 +110,8 @@
         (merge {:download-url (:downloadUrl latest-release)
                 :version (:displayName latest-release)}
                interface-version)))))
+
+;; catalogue building
 
 (defn-spec extract-addon-summary :addon/summary
   "converts addon data extracted from a listing into an :addon/summary"

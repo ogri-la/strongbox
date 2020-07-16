@@ -115,11 +115,18 @@
 ;;
 ;;
 
+(defn top-level-directories
+  [zipfile-entries]
+  (filter (every-pred :dir? :toplevel?) zipfile-entries))
+
+(defn top-level-files
+  [zipfile-entries]
+  (->> zipfile-entries (filter :toplevel?) (remove :dir?)))
+
 (defn -top-level-files?
   "returns true if there are top-level files"
   [zipfile-entries]
-  (let [targets (->> zipfile-entries (filter :toplevel?) (remove :dir?))]
-    (> (count targets) 0)))
+  (-> zipfile-entries top-level-files count (> 0)))
 
 (defn -top-level-non-addon-dirs?
   "returns true if there are top-level directories missing a toc file"
@@ -127,7 +134,7 @@
   (let [;; what is happening here?
         ;; we create a set of all top-level directories, and a set of the parents of second-level toc files
         ;; if there are any directories left after we diff them
-        toplevel-dirs (set (map :path (filter (every-pred :dir? :toplevel?) zipfile-entries)))
+        toplevel-dirs (->> zipfile-entries top-level-directories (map :path) set)
         toplevel-tocfiles (filter #(and (-> % :level (= 2))
                                         (-> % :path (ends-with? ".toc"))) zipfile-entries)
         toplevel-tocfile-dirs (set (map #(-> % :path (split #"/") first (str "/")) toplevel-tocfiles))

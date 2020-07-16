@@ -156,7 +156,9 @@
                                     :opt [::ignore?])))
 
 ;; minimum amount of data required to create a nfo file. the rest is derived.
-(s/def :addon/nfo-input-minimum (s/keys :req-un [::version ::name ::url :addon/source :addon/source-id]))
+(s/def :addon/nfo-input-minimum (s/keys :req-un [::version ::name
+                                                 ::url ;; becomes the `group-id`
+                                                 :addon/source :addon/source-id]))
 
 ;; a catalogue entry, essentially
 (s/def :addon/summary
@@ -172,17 +174,30 @@
 (s/def :addon/match (s/keys :req-un [::matched?]
                             :opt [::update?]))
 
+;; bare minimum required to find and 'expand' an addon
+(s/def :addon/expandable
+  (s/keys :req-un [::name ::label
+                   :addon/source ;; for host resolver dispatch
+                   :addon/source-id ;; unique identifier for host resolver
+                   ]
+          :opt [::game-track-list ;; wowinterface only
+                ]))
+
+;; bare minimum required to install an addon
+(s/def :addon/installable (s/merge
+                           :addon/expandable
+                           :addon/nfo-input-minimum
+                           (s/keys :opt [;; present only on imported addons
+                                         ::game-track
+                                         ;; used if present
+                                         ::ignore?])))
+
+(s/def :addon/installable-list (s/coll-of :addon/installable))
+
 ;; the set of per-addon values provided by the remote host on each check
 (s/def :addon/source-updates
   (s/keys :req-un [::version ::download-url]
           :opt [::interface-version]))
-
-;; bare minimum required to install an addon
-(s/def :addon/installable (s/merge :addon/source-updates
-                                   (s/keys :req-un [::name ::label]
-                                           :opt [::game-track])))
-
-(s/def :addon/installable-list (s/coll-of :addon/installable))
 
 ;; addon has nfo data
 (s/def :addon/toc+nfo (s/merge :addon/toc :addon/nfo))

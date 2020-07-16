@@ -146,11 +146,14 @@
       ;; couldn't reasonably determine the primary directory
       :else nil)))
 
+;;
+
 (defn-spec install-addon (s/or :ok (s/coll-of ::sp/extant-file), :error ::sp/empty-coll)
-  "installs an addon given an addon description, a place to install the addon and the addon zip file itself"
+  "installs an addon given an addon description, a place to install the addon and the addon zip file itself.
+  handles suspicious looking bundles, conflicts with other addons, uninstalling previous addon version and updating nfo files."
   [addon :addon/installable, install-dir ::sp/writeable-dir, downloaded-file ::sp/archive-file, game-track ::sp/game-track]
   (let [zipfile-entries (zip/zipfile-normal-entries downloaded-file)
-        toplevel-dirs (filter (every-pred :dir? :toplevel?) zipfile-entries)
+        toplevel-dirs (zip/top-level-directories zipfile-entries)
         primary-dirname (determine-primary-subdir toplevel-dirs)
 
         ;; not a show stopper, but if there are bundled addons and they don't share a common prefix, let the user know
@@ -182,3 +185,23 @@
     (let [retval (update-nfo-files)]
       (info (:label addon) "installed.")
       retval)))
+
+;;
+
+(defn-spec ignored-dir-list (s/coll-of string?)
+  [addon-list (s/nilable :addon/installed-list)]
+  (->> addon-list (filterv :ignore?) (map :group-addons) flatten (map :dirname) set spy))
+
+(defn-spec overwrites-ignored? boolean?
+  "returns true if given archive file would unpack over *any* ignored addon.
+  this includes already installed versions of itself and is another check against modifying ignored addons."
+  [downloaded-file ::sp/archive-file, addon-list (s/nilable :addon/installed-list)]
+  (info "addon-list" addon-list)
+  (let [ignore-list (ignored-dir-list addon-list)
+        zip-dir-list (->> downloaded-file
+                          zip/zipfile-normal-entries
+                          zip/top-level-directories
+                          (map :path)
+                          (mapv #(utils/rtrim % "/")))
+        zip-dir-in-ignore-dir-list? (fn [zip-dir] (some #{zip-dir} ignore-list))]
+    (utils/any (map zip-dir-in-ignore-dir-list? zip-dir-list))))

@@ -22,10 +22,10 @@
 
 (defn-spec -expand-summary (s/or :ok :addon/source-updates, :error nil?)
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
-  [addon-summary :addon/summary game-track ::sp/game-track]
-  (let [source-id (:source-id addon-summary)
+  [addon :addon/expandable, game-track ::sp/game-track]
+  (let [source-id (:source-id addon)
         url (cond
-              (neg? source-id) [proper-url (:name addon-summary)]
+              (neg? source-id) [proper-url (:name addon)]
               (= game-track :classic) [classic-summary-url source-id]
               (= game-track :retail) [summary-url source-id])
         url (apply format url)
@@ -41,15 +41,15 @@
 
 (defn-spec expand-summary (s/or :ok :addon/source-updates, :error nil?)
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
-  [addon-summary :addon/summary game-track ::sp/game-track]
+  [addon :addon/expandable, game-track ::sp/game-track]
   (when (= game-track :retail)
-    (-expand-summary addon-summary game-track)))
+    (-expand-summary addon game-track)))
 
 (defn-spec expand-summary-classic (s/or :ok :addon/source-updates, :error nil?)
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
-  [addon-summary :addon/summary game-track ::sp/game-track]
+  [addon :addon/expandable, game-track ::sp/game-track]
   (when (= game-track :classic)
-    (-expand-summary addon-summary game-track)))
+    (-expand-summary addon game-track)))
 
 ;;
 
