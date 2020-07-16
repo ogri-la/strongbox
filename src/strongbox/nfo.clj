@@ -116,11 +116,11 @@
         user-ignored (contains? nfo-file-contents :ignore?)
         _ (when (and user-ignored
                      (:ignore? nfo-file-contents))
-            (warn (format "explicitly ignoring addon: %s" dirname)))
+            (warn (format "ignoring '%s': you told me to" dirname)))
 
         ignore-flag (when (and (not user-ignored)
                                (ignore? (join install-dir dirname)))
-                      (warn (format "ignoring addon: %s; addon directory contains a .git/.hg/.svn folder" dirname))
+                      (warn (format "ignoring '%s': addon directory contains a .git/.hg/.svn folder" dirname))
                       {:ignore? true})]
     (merge nfo-file-contents ignore-flag)))
 

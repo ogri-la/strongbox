@@ -23,13 +23,14 @@
          (starts-with? addon-path addon-dir)) ;; don't delete anything outside of install dir!
       (do
         (fs/delete-dir addon-path)
-        (warn (format "removed '%s'" addon-path))) ;; todo: demote to 'debug'?
+        (debug (format "removed '%s'" addon-path)))
 
       (error (format "directory '%s' is outside the current installation dir of '%s', not removing" addon-path addon-dir)))))
 
 (defn-spec remove-addon nil?
   "removes the given addon. if addon is part of a group, all addons in group are removed"
   [addon-dir ::sp/addon-dir, addon :addon/installed]
+  (info (format "removing '%s' version '%s'" (:label addon) (:installed-version addon)))
   (cond
     ;; if addon is being ignored, refuse to remove addon.
     ;; note: `group-addons` will add a top level `:ignore?` flag if any addon in a bundle is being ignored.
@@ -181,22 +182,21 @@
     ;; when is it not valid? when importing v1 addons. v2 addons need 'padding' as well :(
     (when (s/valid? :addon/toc addon)
       (remove-addon install-dir addon))
+
+    (info (format "installing '%s' version '%s'" (:label addon) (:version addon)))
     (install-addon)
-    (let [retval (update-nfo-files)]
-      (info (:label addon) "installed.")
-      retval)))
+    (update-nfo-files)))
 
 ;;
 
 (defn-spec ignored-dir-list (s/coll-of string?)
   [addon-list (s/nilable :addon/installed-list)]
-  (->> addon-list (filterv :ignore?) (map :group-addons) flatten (map :dirname) set spy))
+  (->> addon-list (filterv :ignore?) (map :group-addons) flatten (map :dirname) (remove nil?) set))
 
 (defn-spec overwrites-ignored? boolean?
   "returns true if given archive file would unpack over *any* ignored addon.
   this includes already installed versions of itself and is another check against modifying ignored addons."
   [downloaded-file ::sp/archive-file, addon-list (s/nilable :addon/installed-list)]
-  (info "addon-list" addon-list)
   (let [ignore-list (ignored-dir-list addon-list)
         zip-dir-list (->> downloaded-file
                           zip/zipfile-normal-entries

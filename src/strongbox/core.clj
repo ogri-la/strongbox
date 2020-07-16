@@ -380,7 +380,7 @@
 
 (defn-spec download-addon (s/or :ok ::sp/archive-file, :http-error :http/error, :error nil?)
   [addon :addon/installable, download-dir ::sp/writeable-dir]
-  (info "downloading" (:label addon) "...")
+  (info (format "downloading '%s' version '%s'" (:label addon) (:version addon)))
   (when (expanded? addon)
     (let [output-fname (downloaded-addon-fname (:name addon) (:version addon)) ;; addonname--1-2-3.zip
           output-path (join (fs/absolute download-dir) output-fname)] ;; /path/to/installed/addons/addonname--1.2.3.zip
@@ -416,6 +416,7 @@
   ([addon :addon/installable, install-dir ::sp/extant-dir]
    (install-addon-guard addon install-dir false))
   ([addon :addon/installable, install-dir ::sp/extant-dir, test-only? boolean?]
+   ;;(info (format "preparing '%s' version '%s'" (:label addon) (:version addon)))
    (cond
      ;; do some pre-installation checks
      (:ignore? addon) (error "refusing to install addon, addon is being ignored:" (:name addon))
@@ -423,15 +424,15 @@
 
      :else ;; attempt downloading and installing addon
 
-     (let [downloaded-file (or (:-testing-zipfile addon) ;; don't download, install from this file (testing only right now)
+     (let [
+           downloaded-file (or (:-testing-zipfile addon) ;; don't download, install from this file (testing only right now)
                                (download-addon addon install-dir))
            bad-zipfile-msg (format "failed to read zip file '%s', could not install %s" downloaded-file (:name addon))
            bad-addon-msg (format "refusing to install '%s'. It contains top-level files or top-level directories missing .toc files."  (:name addon))
            ;; installing addon from an export record.
            ;; a regular `addon` won't have a `game-track` (it has an `:installed-game-track`).
            game-track (or (:game-track addon) (get-game-track install-dir))]
-
-       (info (format "installing %s version %s ..." (:label addon) (:version addon)))
+       
        (cond
          (map? downloaded-file) (error "failed to download addon, could not install" (:name addon))
 
