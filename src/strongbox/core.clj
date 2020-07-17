@@ -954,8 +954,10 @@
 
 ;;
 
-(defn-spec -upgrade-nfo nil?
-  "given an addon, upgrades it's nfo file to the current nfo spec."
+(defn-spec -upgrade-nfo-files-to-v2 nil?
+  "upgrade the nfo file for the given `addon` in the given `install-dir`.
+  new data may have been introduced since addon was installed.
+  if nfo file cannot be upgraded, it is deleted."
   [install-dir ::sp/extant-dir, addon (s/keys :req-un [::sp/dirname])]
   (info "upgrading nfo file:" (:dirname addon))
   (let [;; best guess of what the installed game track is
@@ -970,23 +972,23 @@
                             :game-track game-track})
         nfo-file (nfo/nfo-path install-dir (:dirname addon))]
     (if (s/valid? :addon/nfo-input-minimum addon)
-      (nfo/upgrade-nfo install-dir addon)
+      (nfo/upgrade-nfo-to-v2 install-dir addon)
       (do
         (warn (format "failed to upgrade file, removing: %s" nfo-file))
         (nfo/rm-nfo nfo-file))))
   nil)
 
 (defn-spec upgrade-nfo-files nil?
-  "upgrade the nfo files for all addons in the selected addon-dir.
+  "upgrade the nfo files for *all* addons in the selected addon-dir.
   new data may have been introduced since addon was installed"
   []
   (let [install-dir (selected-addon-dir)
         has-nfo-file? (partial nfo/has-nfo-file? install-dir)
         has-valid-nfo-file? (partial nfo/has-valid-nfo-file? install-dir)
-        upgrade-nfo (partial -upgrade-nfo install-dir)
+        upgrade-nfo (partial -upgrade-nfo-files-to-v2 install-dir)
         upgrade-msg (fn [addon-list]
                       (when-not (empty? addon-list)
-                        (info "upgrading nfo files"))
+                        (info (format "upgrading %s nfo files" (count addon-list))))
                       addon-list)]
     (->> (get-state)
          :installed-addon-list
@@ -995,6 +997,8 @@
          upgrade-msg
          (mapv upgrade-nfo)))
   nil)
+
+;;
 
 (defn migrate-nfo-files
   []
@@ -1083,6 +1087,18 @@
   []
   (-> (get-state) :selected-installed vec remove-many-addons)
   nil)
+
+(defn-spec ignore-selected nil?
+  []
+  (->> (get-state) :selected-installed :dirname (mapv (partial nfo/ignore (selected-addon-dir))))
+  (refresh))
+
+(defn-spec clear-ignore-selected nil?
+  []
+  (->> (get-state) :selected-installed :dirname (mapv (partial nfo/clear-ignore (selected-addon-dir))))
+  (refresh))
+
+;;
 
 (defn-spec db-reload-catalogue nil?
   "unloads the database from state then calls `refresh` which will trigger a rebuild"

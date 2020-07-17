@@ -459,6 +459,9 @@
                           (menu-item "Update" (async-handler core/install-update-selected))
                           (menu-item "Re-install" (async-handler core/re-install-selected))
                           (ss/separator)
+                          (menu-item "Ignore" (async-handler core/ignore-selected))
+                          (menu-item "Stop ignoring" (async-handler core/clear-ignore-selected))
+                          (ss/separator)
                           (menu-item "Delete" (async-handler remove-selected-handler))]]
     (ss/popup :items popup-menu-items)))
 
@@ -924,7 +927,11 @@
                                 (let [exit-ev (java.awt.event.WindowEvent. newui java.awt.event.WindowEvent/WINDOW_CLOSING)]
                                   (.dispatchEvent newui exit-ev))))]
 
-        view-menu (build-theme-menu)
+        view-menu (into [(ss/action :name "Refresh" :key "F5" :handler (async-handler core/refresh))
+                         :separator
+                         ]
+                        
+                        (build-theme-menu))
 
         catalogue-menu (into (build-catalogue-menu)
                              [:separator

@@ -141,9 +141,10 @@
                     :primary? true
                     :source "curseforge"
                     :source-id 321}]
-      (nfo/upgrade-nfo (install-dir) given)
-      (is (= expected (nfo/read-nfo-file (install-dir) addon-dir)))))
+      (nfo/upgrade-nfo-to-v2 (install-dir) given)
+      (is (= expected (nfo/read-nfo-file (install-dir) addon-dir))))))
 
+(deftest upgrade-nfo-data-preserve-ignore-flag
   (testing "a nfo file can be 'upgraded' (vs updated), preserving any ignore flags"
     (let [given {:version "1.2.3" ;; value is ignored in favour of :installed-version
                  :installed-version "1.2.1"
@@ -164,6 +165,6 @@
                     :source "curseforge"
                     :source-id 321
                     :ignore? false}]
-      (nfo/upgrade-nfo (install-dir) given)
+      (nfo/upgrade-nfo-to-v2 (install-dir) given)
       (is (= expected (nfo/read-nfo-file (install-dir) addon-dir))))))
 

@@ -79,6 +79,14 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* gui, 're-install' for an addon that has an update available will update the addon
+    - it implies the same version would be installed
+    - strongbox doesn't support version pinning yet either
+
+* gui, context menu has 'n selected, m updatable'
+    - this is cute but not useful
+    - selecting this doesn't perform any action
+
 * github, if multiple releases available and first fails criteria, check the next and so on
     - see altoholic: https://github.com/teelolws/Altoholic-Classic
 
