@@ -72,7 +72,7 @@
 (defn-spec upgrade-nfo-to-v2 (s/or :ok ::sp/extant-file, :invalid-updates nil?)
   "upgrades the nfo data from v1 nfo ('anything') to v2, if possible. 
   requires an addon directory and an addon version as an absolute minimum.
-  returns nil if insufficient/invalid data."
+  returns `nil` if insufficient/invalid data."
   [install-dir ::sp/extant-dir, addon :addon/nfo-input-minimum]
   (debug "upgrading nfo file:" (nfo-path install-dir (:dirname addon)))
   (let [;; important! as an addon is updated or installed, the `:installed-version` is overridden by the `:version`
@@ -97,6 +97,7 @@
                    (warn "bad nfo data, deleting file:" path)
                    (rm-nfo path))
         invalid-data (fn []
+                       (info "slurp" path (slurp path))
                        (warn "invalid nfo data, deleting file:" path)
                        (rm-nfo path))]
     (utils/load-json-file-safely
@@ -142,40 +143,41 @@
                                                          {:transform-map {:installed-game-track keyword}}))))
 
 (defn-spec update-nfo nil?
-  "updates *existing* nfo data with new values.
-  content is only written if valid."
+  "updates *existing* nfo data with new values. content is only written if valid.
+  differs from `upgrade-nfo` in that existing nfo data is not being manipulated to make 
+  it valid for the current nfo spec."
   [install-dir ::sp/extant-dir, dirname ::sp/dirname, updates map?]
   (let [path (nfo-path install-dir dirname)
         nfo (read-nfo install-dir dirname)
         new-nfo (merge nfo updates)
         ;; convenience for implicitly ignored addons.
-        ;; if the nfo file was missing and the new request is to remove the flag, set it to false instead
+        ;; if the nfo file was missing (implicitly ignored) and the update is to clear the flag, set the flag to false instead
+        ;; this will create a new nfo file explicitly *not* ignoring the addon.
+        ;; if the flag is cleared again, it will encounter a nfo file and delete the nfo (see below)
         new-nfo (if (and (not (fs/exists? path))
                          (= {:ignore? nil} new-nfo))
                   {:ignore? false}
-                  new-nfo)
-        ]
+                  new-nfo)]
     (if (= {:ignore? nil} new-nfo)
-      ;; edge case. a valid nfo file is also simply a `ignore: True`
-      ;; when this is true, just delete the nfo file
+      ;; edge case. a valid nfo file is also simply a `ignore: [True|False]`
+      ;; when this condition is true, just delete the nfo file.
       (rm-nfo path)
-      (when (s/valid? :addon/nfo new-nfo)
-        (utils/dump-json-file path new-nfo))))
+      (if (s/valid? :addon/nfo new-nfo)
+        (utils/dump-json-file path new-nfo)
+        (error "new nfo data is invalid and won't be written to file"))))
   nil)
 
 (defn-spec ignore nil?
-  "explicitly ignores this addon by setting the `ignore?` flag to `true`.
-  Prevents any changes made by strongbox to that addon."
+  "Prevent any changes made by strongbox to this addon. 
+  Explicitly ignores this addon by setting the `ignore?` flag to `true`."
   [install-dir ::sp/extant-dir, dirname ::sp/dirname]
-  (update-nfo install-dir dirname {:ignore? true})
-  nil)
+  (update-nfo install-dir dirname {:ignore? true}))
 
 (defn-spec clear-ignore nil?
   "removes the `ignore?` flag on an addon. This is what you want most of the time.
   The addon may still be implicitly ignored afterwards."
   [install-dir ::sp/extant-dir, dirname ::sp/dirname]
-  (update-nfo install-dir dirname {:ignore? nil})
-  nil)
+  (update-nfo install-dir dirname {:ignore? nil}))
 
 ;;
 

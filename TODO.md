@@ -79,6 +79,10 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* spec, revisit usage of 'addon/toc'
+    - it was used too broadly before the recent spec shakeup
+    - it has optional keys which shouldn't be in there
+
 * gui, 're-install' for an addon that has an update available will update the addon
     - it implies the same version would be installed
     - strongbox doesn't support version pinning yet either

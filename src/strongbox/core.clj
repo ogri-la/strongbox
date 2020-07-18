@@ -416,7 +416,6 @@
   ([addon :addon/installable, install-dir ::sp/extant-dir]
    (install-addon-guard addon install-dir false))
   ([addon :addon/installable, install-dir ::sp/extant-dir, test-only? boolean?]
-   ;;(info (format "preparing '%s' version '%s'" (:label addon) (:version addon)))
    (cond
      ;; do some pre-installation checks
      (:ignore? addon) (error "refusing to install addon, addon is being ignored:" (:name addon))
@@ -424,15 +423,14 @@
 
      :else ;; attempt downloading and installing addon
 
-     (let [
-           downloaded-file (or (:-testing-zipfile addon) ;; don't download, install from this file (testing only right now)
+     (let [downloaded-file (or (:-testing-zipfile addon) ;; don't download, install from this file (testing only right now)
                                (download-addon addon install-dir))
            bad-zipfile-msg (format "failed to read zip file '%s', could not install %s" downloaded-file (:name addon))
            bad-addon-msg (format "refusing to install '%s'. It contains top-level files or top-level directories missing .toc files."  (:name addon))
            ;; installing addon from an export record.
            ;; a regular `addon` won't have a `game-track` (it has an `:installed-game-track`).
            game-track (or (:game-track addon) (get-game-track install-dir))]
-       
+
        (cond
          (map? downloaded-file) (error "failed to download addon, could not install" (:name addon))
 
@@ -954,7 +952,7 @@
 
 ;;
 
-(defn-spec -upgrade-nfo-files-to-v2 nil?
+(defn-spec -upgrade-nfo-file-to-v2 nil?
   "upgrade the nfo file for the given `addon` in the given `install-dir`.
   new data may have been introduced since addon was installed.
   if nfo file cannot be upgraded, it is deleted."
@@ -985,13 +983,13 @@
   (let [install-dir (selected-addon-dir)
         has-nfo-file? (partial nfo/has-nfo-file? install-dir)
         has-valid-nfo-file? (partial nfo/has-valid-nfo-file? install-dir)
-        upgrade-nfo (partial -upgrade-nfo-files-to-v2 install-dir)
+        upgrade-nfo (partial -upgrade-nfo-file-to-v2 install-dir)
         upgrade-msg (fn [addon-list]
                       (when-not (empty? addon-list)
                         (info (format "upgrading %s nfo files" (count addon-list))))
                       addon-list)]
-    (->> (get-state)
-         :installed-addon-list
+    (->> (get-state :installed-addon-list)
+         (remove :ignore?) ;; ignore ignored addons
          (filter has-nfo-file?) ;; only upgrade addons that have nfo files
          (remove has-valid-nfo-file?) ;; skip good nfo files
          upgrade-msg
@@ -1013,6 +1011,9 @@
    {:when (get-state :profile?)}
 
    ;; rename any occurances of `.wowman.json` to `.strongbox.json`
+   ;; todo: bug here. files are migrated across, but the data may be invalid for nfo v2.
+   ;; `load-installed-addons` calls `addon/load-installed-addons` that will delete invalid nfo files
+   ;; `upgrade-nfo-files` will skip any addons with missing nfo files!
    (migrate-nfo-files)
 
    ;; parse toc files in install-dir. do this first so we see *something* while catalogue downloads (next)
@@ -1089,13 +1090,15 @@
   nil)
 
 (defn-spec ignore-selected nil?
+  "marks each of the selected addons as being 'ignored'"
   []
-  (->> (get-state) :selected-installed :dirname (mapv (partial nfo/ignore (selected-addon-dir))))
+  (->> (get-state) :selected-installed :dirname (run! (partial nfo/ignore (selected-addon-dir))))
   (refresh))
 
 (defn-spec clear-ignore-selected nil?
+  "removes the 'ignore' flag from each of the selected addons."
   []
-  (->> (get-state) :selected-installed :dirname (mapv (partial nfo/clear-ignore (selected-addon-dir))))
+  (->> (get-state) :selected-installed :dirname (run! (partial nfo/clear-ignore (selected-addon-dir))))
   (refresh))
 
 ;;

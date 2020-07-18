@@ -143,6 +143,7 @@
 
 (s/def :addon/toc
   (s/keys :req-un [::name ::label ::description ::dirname ::interface-version ::installed-version]
+          ;; todo: revisit all of these
           :opt [::group-id ::primary? ::group-addons :addon/source :addon/source-id]))
 (s/def :addon/toc-list (s/coll-of :addon/toc))
 
@@ -155,7 +156,7 @@
                                              ::installed-game-track :addon/source-id]
                                     :opt [::ignore?])))
 
-;; minimum amount of data required to create a nfo file. the rest is derived.
+;; intermediate spec. minimum amount of data required to create a nfo file. the rest is derived.
 (s/def :addon/nfo-input-minimum (s/keys :req-un [::version ::name
                                                  ::url ;; becomes the `group-id`
                                                  :addon/source :addon/source-id]))

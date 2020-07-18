@@ -16,6 +16,8 @@
     [github-api :as github-api]]))
 
 (defn-spec expand-summary (s/or :ok (s/merge :addon/expandable :addon/source-updates), :error nil?)
+  "fetches updates from the addon host for the given `addon`.
+  hosts handle the game track in different ways."
   [addon :addon/expandable, game-track ::sp/game-track]
   (let [dispatch-map {"curseforge" curseforge-api/expand-summary
                       "wowinterface" wowinterface-api/expand-summary

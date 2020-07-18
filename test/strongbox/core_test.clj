@@ -610,7 +610,7 @@
         (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (install-dir-contents)))
 
         (fs/mkdir (utils/join install-dir "EveryAddon" ".git"))
-        (core/load-installed-addons) ;; refresh our knowledge of what is installed essentially
+        (core/load-installed-addons) ;; refresh our knowledge of what is installed
 
         (let [addon2 {:name "everyotheraddon" :label "EveryOtherAddon" :version "5.6.7" :url "https://group.id/also/never/fetched"
                       :source "curseforge" :source-id 2

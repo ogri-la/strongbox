@@ -264,7 +264,7 @@
   (when-let [selected (get-state :selected-installed)]
     (if (utils/any (mapv :ignore? selected))
       (-> (ss/dialog :parent (select-ui :#root)
-                     :content "Selection contains ignored addons. Unlock them first, then delete."
+                     :content "Selection contains ignored addons. Stop ignoring them and then delete."
                      :type :error)
           ss/pack! ss/show!)
 
@@ -928,9 +928,7 @@
                                   (.dispatchEvent newui exit-ev))))]
 
         view-menu (into [(ss/action :name "Refresh" :key "F5" :handler (async-handler core/refresh))
-                         :separator
-                         ]
-                        
+                         :separator]
                         (build-theme-menu))
 
         catalogue-menu (into (build-catalogue-menu)

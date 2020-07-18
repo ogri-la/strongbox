@@ -115,17 +115,19 @@
 ;;
 ;;
 
-(defn top-level-directories
-  [zipfile-entries]
+(defn-spec top-level-directories :zipfile/entry-list
+  "returns a list of all zipfile entries that are directories and exist at the top level"
+  [zipfile-entries :zipfile/entry-list]
   (filter (every-pred :dir? :toplevel?) zipfile-entries))
 
-(defn top-level-files
-  [zipfile-entries]
+(defn-spec top-level-files :zipfile/entry-list
+  "returns a list of all zipfile entries that are files and exist at the top level"
+  [zipfile-entries :zipfile/entry-list]
   (->> zipfile-entries (filter :toplevel?) (remove :dir?)))
 
-(defn -top-level-files?
+(defn-spec -top-level-files? boolean?
   "returns true if there are top-level files"
-  [zipfile-entries]
+  [zipfile-entries :zipfile/entry-list]
   (-> zipfile-entries top-level-files count (> 0)))
 
 (defn -top-level-non-addon-dirs?

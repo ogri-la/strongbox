@@ -41,7 +41,7 @@
     (contains? addon :group-addons) (doseq [grouped-addon (:group-addons addon)]
                                       (-remove-addon addon-dir (:dirname grouped-addon)))
 
-    ;; normal case. addon is a single directory
+    ;; addon is a single directory
     :else (-remove-addon addon-dir (:dirname addon))))
 
 ;;
@@ -189,9 +189,10 @@
 
 ;;
 
-(defn-spec ignored-dir-list (s/coll-of string?)
+(defn-spec ignored-dir-list (s/coll-of ::sp/dirname)
+  "returns a list of unique addon directory names (including grouped addons) that are not being ignored"
   [addon-list (s/nilable :addon/installed-list)]
-  (->> addon-list (filterv :ignore?) (map :group-addons) flatten (map :dirname) (remove nil?) set))
+  (->> addon-list (filter :ignore?) (map :group-addons) flatten (map :dirname) (remove nil?) set))
 
 (defn-spec overwrites-ignored? boolean?
   "returns true if given archive file would unpack over *any* ignored addon.
