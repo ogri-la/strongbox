@@ -339,6 +339,7 @@
                             (ss/invoke-later
                              (ss/selection! wow-game-track (-> new-addon-dir core/addon-dir-map :game-track kw2str))))
 
+                          (.setTitleAt (select-ui :#tabber) 0 new-addon-dir)
                           (core/set-addon-dir! new-addon-dir)
                           (core/save-settings)))))
 
