@@ -1,4 +1,5 @@
 #!/bin/bash
+# called by Travis CI via the .travis.yml file
 set -e
 
 lein clean

@@ -9,6 +9,18 @@ see CHANGELOG.md for a more formal list of changes by release
 * change installation from 'overwrite' to 'uninstall+install'
     - addons are uninstalled before they are installed
         - done
+* strengthened 'ignore' rules
+    - ignored addons and any bundled addons cannot be overwritten by strongbox
+    - ignored addons cannot be uninstalled
+    - ignored addons can be unignored from the gui
+    - addons can be ignored from the gui
+* rename 'wowman-comrades' to 'strongbox-comrades'
+* add ability to explicitly unignore addon from context menu
+* wowman-data, stop publishing a 'daily' release
+    - we have multiple catalogs now
+    - 0.10.0 uses the raw catalog files directly
+    - 0.9.2 was still using the daily release
+    - done
 
 ## todo
 
@@ -45,8 +57,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - so there was a broken retail installation but a working classic installation
         - I was able to 'uninstall' the broken retail installation without a problem
 
-* rename 'wowman-comrades' to 'strongbox-comrades'
-* add ability to explicitly unignore addon from context menu
 * EOL planning, robustness, only download/update the catalogue *after* an existing catalogue has been confirmed
     - github is down, wowman is erroring with a 500
     - failure to download a catalogue shouldn't prevent addons from being displayed
@@ -58,15 +68,7 @@ see CHANGELOG.md for a more formal list of changes by release
     - behind the scenes we download and load the full-catalogue
         - would this block reconciliation?
             - perhaps if there are unmatched addons after reconciliation we then wait and try again ...?
-* wowman-data, stop publishing a 'daily' release
-    - we have multiple catalogs now
-    - 0.10.0 uses the raw catalog files directly
-    - 0.9.2 was still using the daily release
-    - remove the 'daily' release after 0.11.0 is released
-    - this will break older releases but users who prefer older versions of the software shouldn't be stranded if the catalog goes away
-        - they should just be able to plug in a new location of the catalog
-        - unfortunately *these* users will be out of luck, but future users won't be
-    - I'll stop updating wowman-data when wowman is no longer being used
+
 * add checksum checks after downloading
     - curseforge have an md5 that can be used
         - unfortunately no checksum in api results

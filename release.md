@@ -37,7 +37,7 @@ Just for my own reference
 * push
     git push --tags
 * wait for release to appear
-    - https://travis-ci.org/ogri-la/wowman
+    - https://travis-ci.org/ogri-la/strongbox
 * update github release information with that from changelog
 
 

@@ -152,7 +152,7 @@ See [CONTRIBUTING](CONTRIBUTING.md) for more detail.
 
 **Moved here: https://ogri-la.github.io/wow-addon-managers/**
 
-[Request a change](https://github.com/ogri-la/wowman-comrades/issues). 
+[Request a change](https://github.com/ogri-la/strongbox-comrades/issues). 
 
 ## License
 
