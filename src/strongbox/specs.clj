@@ -116,11 +116,11 @@
 (s/def ::export-type #{:json :edn})
 
 (s/def ::export-record-v1 (s/keys :req-un [::name]
-                                  :opt [:addon/source :addon/source-id]))
+                                  :opt-un [:addon/source :addon/source-id]))
 
 (s/def ::export-record-v2 (s/keys :req-un [::name :addon/source :addon/source-id]
-                                  :opt [::game-track ;; optional because we also support exporting catalogue items that have no game track
-                                        ]))
+                                  :opt-un [::game-track ;; optional because we also support exporting catalogue items that have no game track
+                                           ]))
 
 (s/def ::export-record (s/or :v1 ::export-record-v1, :v2 ::export-record-v2))
 
@@ -144,7 +144,7 @@
 (s/def :addon/toc
   (s/keys :req-un [::name ::label ::description ::dirname ::interface-version ::installed-version]
           ;; todo: revisit all of these
-          :opt [::group-id ::primary? ::group-addons :addon/source :addon/source-id]))
+          :opt-un [::group-id ::primary? ::group-addons :addon/source :addon/source-id]))
 (s/def :addon/toc-list (s/coll-of :addon/toc))
 
 ;; circular dependency? :addon/toc has an optional ::group-addons and ::group-addons is a list of :addon/toc ? oof
@@ -154,7 +154,7 @@
 (s/def :addon/nfo (s/or :ignored ::ignore-flag
                         :ok (s/keys :req-un [::installed-version ::name ::group-id ::primary? :addon/source
                                              ::installed-game-track :addon/source-id]
-                                    :opt [::ignore?])))
+                                    :opt-un [::ignore?])))
 
 ;; intermediate spec. minimum amount of data required to create a nfo file. the rest is derived.
 (s/def :addon/nfo-input-minimum (s/keys :req-un [::version ::name
@@ -164,6 +164,7 @@
 ;; a catalogue entry, essentially
 (s/def :addon/summary
   (s/keys :req-un [::url ::name ::label :addon/tag-list :addon/updated-date ::download-count :addon/source :addon/source-id]
+          ;; todo: bug here, `:opt` should be `:opt-un`
           :opt [::description ;; wowinterface summaries have no description
                 :addon/created-date ;; wowinterface summaries have no created date
                 ::game-track-list ;; more of a set, really
@@ -173,7 +174,7 @@
 ;; introduced after finding addon in the catalogue
 ;; `update?` is set at a slightly different time, but it's convenient to slip it in here
 (s/def :addon/match (s/keys :req-un [::matched?]
-                            :opt [::update?]))
+                            :opt-un [::update?]))
 
 ;; bare minimum required to find and 'expand' an addon
 (s/def :addon/expandable
@@ -181,24 +182,24 @@
                    :addon/source ;; for host resolver dispatch
                    :addon/source-id ;; unique identifier for host resolver
                    ]
-          :opt [::game-track-list ;; wowinterface only
-                ]))
+          :opt-un [::game-track-list ;; wowinterface only
+                   ]))
 
 ;; bare minimum required to install an addon
 (s/def :addon/installable (s/merge
                            :addon/expandable
                            :addon/nfo-input-minimum
-                           (s/keys :opt [;; present only on imported addons
-                                         ::game-track
+                           (s/keys :opt-un [;; present only on imported addons
+                                            ::game-track
                                          ;; used if present
-                                         ::ignore?])))
+                                            ::ignore?])))
 
 (s/def :addon/installable-list (s/coll-of :addon/installable))
 
 ;; the set of per-addon values provided by the remote host on each check
 (s/def :addon/source-updates
   (s/keys :req-un [::version ::download-url]
-          :opt [::interface-version]))
+          :opt-un [::interface-version]))
 
 ;; addon has nfo data
 (s/def :addon/toc+nfo (s/merge :addon/toc :addon/nfo))

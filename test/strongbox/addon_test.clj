@@ -93,6 +93,51 @@
 
                     {:name "a3", :dirname "A3", :label "A2", :description "" :interface-version 80300 :installed-version "7.8.9"
                      :group-id "bar" :primary? true}]]
+      (is (= expected (addon/group-addons addon-list)))))
+
+  (testing "if any one addon in a group is ignored, the top-level addon ('all') is also ignored"
+    (let [addon-list [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"
+                       :group-id "foo" :primary? true}
+                      {:name "a2", :dirname "A2", :label "A2", :description "" :interface-version 80300 :installed-version "4.5.6"
+                       :group-id "foo" :primary? false}
+                      {:name "a3", :dirname "A3", :label "A2", :description "" :interface-version 80300 :installed-version "7.8.9"
+                       :group-id "foo" :primary? false :ignore? true}]
+
+          expected [{:name "a1"
+                     :dirname "A1"
+                     :label "A1"
+                     :description ""
+                     :interface-version 80300
+                     :installed-version "1.2.3"
+                     :group-id "foo"
+                     :primary? true
+                     :ignore? true
+                     :group-addon-count 3
+                     :group-addons [{:name "a1",
+                                     :dirname "A1",
+                                     :label "A1",
+                                     :description ""
+                                     :interface-version 80300
+                                     :installed-version "1.2.3"
+                                     :group-id "foo"
+                                     :primary? true}
+                                    {:name "a2",
+                                     :dirname "A2",
+                                     :label "A2",
+                                     :description ""
+                                     :interface-version 80300
+                                     :installed-version "4.5.6"
+                                     :group-id "foo"
+                                     :primary? false}
+                                    {:name "a3",
+                                     :dirname "A3",
+                                     :label "A2",
+                                     :description ""
+                                     :interface-version 80300
+                                     :installed-version "7.8.9"
+                                     :group-id "foo"
+                                     :primary? false
+                                     :ignore? true}]}]]
       (is (= expected (addon/group-addons addon-list))))))
 
 ;;

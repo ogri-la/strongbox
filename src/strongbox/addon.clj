@@ -171,7 +171,7 @@
         update-nfo-fn (fn [zipentry]
                         (let [addon-dirname (:path zipentry)
                               primary? (= addon-dirname (:path primary-dirname))]
-                          (nfo/write-nfo install-dir addon addon-dirname primary? game-track)))
+                          (nfo/derive+write-nfo install-dir addon-dirname addon primary? game-track)))
 
         update-nfo-files (fn []
                            ;; write the nfo files, return a list of all nfo files written
