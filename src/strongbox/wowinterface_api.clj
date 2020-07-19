@@ -19,10 +19,11 @@
   ;; until wowinterface improve, and short of doing more scraping of html, this is the best we can do.
   (if (some #{game-track} (:game-track-list addon-summary))
     (let [url (str wowinterface-api "/filedetails/" (:source-id addon-summary) ".json")
-          result-list (-> url http/download utils/from-json)
+          result-list (some-> url http/download http/sink-error utils/from-json)
           result (first result-list)]
-      ;; has this happened before? can we find an example?
-      (when (> (count result-list) 1)
-        (warn "wowinterface api returned more than one result for addon with :source-id" (:source-id addon-summary)))
-      {:download-url (str "https://cdn.wowinterface.com/downloads/getfile.php?id=" (:source-id addon-summary))
-       :version (:UIVersion result)})))
+      (when result
+        (when (> (count result-list) 1)
+          ;; has this happened before? can we find an example?
+          (warn "wowinterface api returned more than one result for addon with id:" (:source-id addon-summary)))
+        {:download-url (str "https://cdn.wowinterface.com/downloads/getfile.php?id=" (:source-id addon-summary))
+         :version (:UIVersion result)}))))

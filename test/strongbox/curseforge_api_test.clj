@@ -177,3 +177,20 @@
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (curseforge-api/download-all-summaries-alphabetically)))))))
 
+;;
+
+(deftest download-addon-404
+  (testing "regular addon fetch that yields a 404 returns nil"
+    (let [;; listed in the curseforge catalogue but returns (returned) a 404 when fetched
+          zombie-addon {:name "Brewmaster Tools"
+                        :url "https://www.curseforge.com/wow/addons/brewmastertools"
+                        :label ""
+                        :tag-list []
+                        :updated-date "2019-01-01T00:00:00Z"
+                        :download-count 0
+                        :source-id 1
+                        :source "curseforge"}
+          fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/1"
+                       {:get (fn [req] {:status 404 :reason-phrase "Not Found" :body "<h1>Not Found</h1>"})}}]
+      (with-fake-routes-in-isolation fake-routes
+        (is (nil? (curseforge-api/expand-summary zombie-addon :retail)))))))

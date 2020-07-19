@@ -47,7 +47,7 @@
          (map utils/interface-version-to-game-version)
          (map utils/game-version-to-game-track)
          set
-         vec
+         vec ;; do I need this ..?
          utils/nilable)))
 
 (defn-spec find-gametracks-toc-data (s/or :ok ::sp/game-track-list, :error nil?)

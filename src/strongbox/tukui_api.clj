@@ -32,8 +32,8 @@
 
         ;; tukui addons do not share IDs across game tracks like curseforge does.
         ;; tukui will also return a successful-but-empty response (200) for addons
-        ;; that don't exist in that catalogue. I'm treating empty responses as 404s
-        ti (some-> url http/download utils/nilable utils/from-json)]
+        ;; that don't exist in that catalogue. I'm treating empty responses as 404s.
+        ti (some-> url http/download utils/nilable http/sink-error utils/from-json)]
     (when ti
       {:download-url (:url ti)
        :version (:version ti)
@@ -51,7 +51,7 @@
   (when (= game-track :classic)
     (-expand-summary addon game-track)))
 
-;;
+;; catalogue building
 
 (defn-spec tukui-date-to-rfc3339 ::sp/inst
   "convert a tukui-style datestamp into a mighty RFC3339 formatted one. assumes UTC."
