@@ -262,21 +262,27 @@
 (defn-spec remove-selected-handler nil?
   []
   (when-let [selected (get-state :selected-installed)]
-    (let [header [[(format "Deleting %s:" (count selected)) ""]]
-          labels (mapv (fn [row] [(str " - " (-> row :name)) ""]) selected)
+    (if (utils/any (mapv :ignore? selected))
+      (-> (ss/dialog :parent (select-ui :#root)
+                     :content "Selection contains ignored addons. Stop ignoring them and then delete."
+                     :type :error)
+          ss/pack! ss/show!)
 
-          content (into header labels)
-          content (interleave content (repeat [:separator "growx, wrap"]))
+      (let [header [[(format "Deleting %s:" (count selected)) ""]]
+            labels (mapv (fn [row] [(->> row :name (str " - ")) ""]) selected)
 
-          dialog (ss/dialog :parent (select-ui :#root)
-                            :content (mig/mig-panel :items content)
-                            :resizable? false
-                            :type :warning
-                            :option-type :ok-cancel
-                            :default-option :no
-                            :success-fn (async-handler core/remove-selected))]
-      (-> dialog ss/pack! ss/show!)
-      nil)))
+            content (into header labels)
+            content (interleave content (repeat [:separator "growx, wrap"]))
+
+            dialog (ss/dialog :parent (select-ui :#root)
+                              :content (mig/mig-panel :items content)
+                              :resizable? false
+                              :type :warning
+                              :option-type :ok-cancel
+                              :default-option :no
+                              :success-fn (async-handler core/remove-selected))]
+        (-> dialog ss/pack! ss/show!)))
+    nil))
 
 (defn about-strongbox-dialog
   []
@@ -452,6 +458,9 @@
                           (ss/separator)
                           (menu-item "Update" (async-handler core/install-update-selected))
                           (menu-item "Re-install" (async-handler core/re-install-selected))
+                          (ss/separator)
+                          (menu-item "Ignore" (async-handler core/ignore-selected))
+                          (menu-item "Stop ignoring" (async-handler core/clear-ignore-selected))
                           (ss/separator)
                           (menu-item "Delete" (async-handler remove-selected-handler))]]
     (ss/popup :items popup-menu-items)))
@@ -918,7 +927,9 @@
                                 (let [exit-ev (java.awt.event.WindowEvent. newui java.awt.event.WindowEvent/WINDOW_CLOSING)]
                                   (.dispatchEvent newui exit-ev))))]
 
-        view-menu (build-theme-menu)
+        view-menu (into [(ss/action :name "Refresh" :key "F5" :handler (async-handler core/refresh))
+                         :separator]
+                        (build-theme-menu))
 
         catalogue-menu (into (build-catalogue-menu)
                              [:separator

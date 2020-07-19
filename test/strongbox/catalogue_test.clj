@@ -209,3 +209,4 @@
 
     (testing "catalogue with an incorrect total yields `nil`"
       (is (nil? (catalogue/validate catalogue-with-incorrect-total))))))
+

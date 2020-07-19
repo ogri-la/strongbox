@@ -380,7 +380,7 @@
 
 (defn-spec download-addon (s/or :ok ::sp/archive-file, :http-error :http/error, :error nil?)
   [addon :addon/installable, download-dir ::sp/writeable-dir]
-  (info "downloading" (:label addon) "...")
+  (info (format "downloading '%s' version '%s'" (:label addon) (:version addon)))
   (when (expanded? addon)
     (let [output-fname (downloaded-addon-fname (:name addon) (:version addon)) ;; addonname--1-2-3.zip
           output-path (join (fs/absolute download-dir) output-fname)] ;; /path/to/installed/addons/addonname--1.2.3.zip
@@ -409,44 +409,50 @@
       :retail))
 
 (defn-spec install-addon-guard (s/or :ok (s/coll-of ::sp/extant-file), :passed-tests true?, :error nil?)
-  "downloads an addon and installs it. handles http and non-http errors, bad zip files, bad addons"
+  "downloads an addon and installs it. 
+  handles http and non-http errors, bad zip files, bad addons, bad directories."
+  ([addon :addon/installable]
+   (install-addon-guard addon (selected-addon-dir)))
   ([addon :addon/installable, install-dir ::sp/extant-dir]
    (install-addon-guard addon install-dir false))
   ([addon :addon/installable, install-dir ::sp/extant-dir, test-only? boolean?]
    (cond
      ;; do some pre-installation checks
-     (:ignore? addon) (warn "failing to install addon, addon is being ignored:" install-dir)
-     (not (fs/writeable? install-dir)) (error "failing to install addon, directory not writeable:" install-dir)
+     (:ignore? addon) (error "refusing to install addon, addon is being ignored:" (:name addon))
+     (not (fs/writeable? install-dir)) (error "refusing to install addon, directory not writeable:" install-dir)
 
      :else ;; attempt downloading and installing addon
 
-     (let [downloaded-file (download-addon addon install-dir)
+     (let [downloaded-file (or (:-testing-zipfile addon) ;; don't download, install from this file (testing only right now)
+                               (download-addon addon install-dir))
            bad-zipfile-msg (format "failed to read zip file '%s', could not install %s" downloaded-file (:name addon))
            bad-addon-msg (format "refusing to install '%s'. It contains top-level files or top-level directories missing .toc files."  (:name addon))
-           game-track (or
-                       ;; installing addon from an export record.
-                       ;; `addon` won't typically have a `game-track` (it will have an `:installed-game-track` though)
-                       (:game-track addon)
+           ;; installing addon from an export record.
+           ;; a regular `addon` won't have a `game-track` (it has an `:installed-game-track`).
+           game-track (or (:game-track addon) (get-game-track install-dir))]
 
-                       ;; what we probably want
-                       (get-game-track install-dir))]
-
-       (info (format "installing %s version %s ..." (:label addon) (:version addon)))
        (cond
          (map? downloaded-file) (error "failed to download addon, could not install" (:name addon))
+
          (nil? downloaded-file) (error "non-http error downloading addon, could not install" (:name addon)) ;; I dunno. /shrug
-         (not (zip/valid-zip-file? downloaded-file)) (do
-                                                       (error bad-zipfile-msg)
-                                                       (fs/delete downloaded-file)
-                                                       (warn "removed bad zip file" downloaded-file))
-         (not (zip/valid-addon-zip-file? downloaded-file)) (do
-                                                             (error bad-addon-msg)
-                                                             (fs/delete downloaded-file) ;; I could be more lenient
-                                                             (warn "removed bad addon" downloaded-file))
-         (not (s/valid? ::sp/writeable-dir install-dir)) (error
-                                                          (format
-                                                           "addon directory is not writable: %s"
-                                                           install-dir))
+
+         (not (zip/valid-zip-file? downloaded-file))
+         (do
+           (error bad-zipfile-msg)
+           (fs/delete downloaded-file)
+           (warn "removed bad zip file" downloaded-file))
+
+         (not (zip/valid-addon-zip-file? downloaded-file))
+         (do
+           (error bad-addon-msg)
+           (fs/delete downloaded-file) ;; I could be more lenient
+           (warn "removed bad addon" downloaded-file))
+
+         (not (s/valid? ::sp/writeable-dir install-dir))
+         (error (format "addon directory is not writable: %s" install-dir))
+
+         (addon/overwrites-ignored? downloaded-file (get-state :installed-addon-list))
+         (error "refusing to install addon that will overwrite an ignored addon")
 
          test-only? true ;; addon was successfully downloaded and verified as being sound
 
@@ -700,7 +706,8 @@
         addon (or expanded-addon addon) ;; expanded addon may still be nil
         {:keys [installed-version version]} addon
         update? (and version
-                     (not= installed-version version))]
+                     (not= installed-version version)
+                     (not (:ignore? addon)))]
     (assoc addon :update? update?)))
 
 (defn-spec check-for-updates nil?
@@ -945,8 +952,10 @@
 
 ;;
 
-(defn-spec -upgrade-nfo nil?
-  "given an addon, upgrades it's nfo file to the current nfo spec."
+(defn-spec -upgrade-nfo-file-to-v2 nil?
+  "upgrade the nfo file for the given `addon` in the given `install-dir`.
+  new data may have been introduced since addon was installed.
+  if nfo file cannot be upgraded, it is deleted."
   [install-dir ::sp/extant-dir, addon (s/keys :req-un [::sp/dirname])]
   (info "upgrading nfo file:" (:dirname addon))
   (let [;; best guess of what the installed game track is
@@ -961,31 +970,33 @@
                             :game-track game-track})
         nfo-file (nfo/nfo-path install-dir (:dirname addon))]
     (if (s/valid? :addon/nfo-input-minimum addon)
-      (nfo/upgrade-nfo install-dir addon)
+      (nfo/upgrade-nfo-to-v2 install-dir addon)
       (do
         (warn (format "failed to upgrade file, removing: %s" nfo-file))
         (nfo/rm-nfo nfo-file))))
   nil)
 
 (defn-spec upgrade-nfo-files nil?
-  "upgrade the nfo files for all addons in the selected addon-dir.
+  "upgrade the nfo files for *all* addons in the selected addon-dir.
   new data may have been introduced since addon was installed"
   []
   (let [install-dir (selected-addon-dir)
         has-nfo-file? (partial nfo/has-nfo-file? install-dir)
         has-valid-nfo-file? (partial nfo/has-valid-nfo-file? install-dir)
-        upgrade-nfo (partial -upgrade-nfo install-dir)
+        upgrade-nfo (partial -upgrade-nfo-file-to-v2 install-dir)
         upgrade-msg (fn [addon-list]
                       (when-not (empty? addon-list)
-                        (info "upgrading nfo files"))
+                        (info (format "upgrading %s nfo files" (count addon-list))))
                       addon-list)]
-    (->> (get-state)
-         :installed-addon-list
+    (->> (get-state :installed-addon-list)
+         (remove :ignore?) ;; ignore ignored addons
          (filter has-nfo-file?) ;; only upgrade addons that have nfo files
          (remove has-valid-nfo-file?) ;; skip good nfo files
          upgrade-msg
          (mapv upgrade-nfo)))
   nil)
+
+;;
 
 (defn migrate-nfo-files
   []
@@ -1000,6 +1011,9 @@
    {:when (get-state :profile?)}
 
    ;; rename any occurances of `.wowman.json` to `.strongbox.json`
+   ;; todo: bug here. files are migrated across, but the data may be invalid for nfo v2.
+   ;; `load-installed-addons` calls `addon/load-installed-addons` that will delete invalid nfo files
+   ;; `upgrade-nfo-files` will skip any addons with missing nfo files!
    (migrate-nfo-files)
 
    ;; parse toc files in install-dir. do this first so we see *something* while catalogue downloads (next)
@@ -1074,6 +1088,20 @@
   []
   (-> (get-state) :selected-installed vec remove-many-addons)
   nil)
+
+(defn-spec ignore-selected nil?
+  "marks each of the selected addons as being 'ignored'"
+  []
+  (->> (get-state) :selected-installed :dirname (run! (partial nfo/ignore (selected-addon-dir))))
+  (refresh))
+
+(defn-spec clear-ignore-selected nil?
+  "removes the 'ignore' flag from each of the selected addons."
+  []
+  (->> (get-state) :selected-installed :dirname (run! (partial nfo/clear-ignore (selected-addon-dir))))
+  (refresh))
+
+;;
 
 (defn-spec db-reload-catalogue nil?
   "unloads the database from state then calls `refresh` which will trigger a rebuild"

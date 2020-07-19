@@ -22,18 +22,18 @@
 
 (defn-spec -expand-summary (s/or :ok :addon/source-updates, :error nil?)
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
-  [addon-summary :addon/summary game-track ::sp/game-track]
-  (let [source-id (:source-id addon-summary)
+  [addon :addon/expandable, game-track ::sp/game-track]
+  (let [source-id (:source-id addon)
         url (cond
-              (neg? source-id) [proper-url (:name addon-summary)]
+              (neg? source-id) [proper-url (:name addon)]
               (= game-track :classic) [classic-summary-url source-id]
               (= game-track :retail) [summary-url source-id])
         url (apply format url)
 
         ;; tukui addons do not share IDs across game tracks like curseforge does.
         ;; tukui will also return a successful-but-empty response (200) for addons
-        ;; that don't exist in that catalogue. I'm treating empty responses as 404s
-        ti (some-> url http/download utils/nilable utils/from-json)]
+        ;; that don't exist in that catalogue. I'm treating empty responses as 404s.
+        ti (some-> url http/download utils/nilable http/sink-error utils/from-json)]
     (when ti
       {:download-url (:url ti)
        :version (:version ti)
@@ -41,17 +41,17 @@
 
 (defn-spec expand-summary (s/or :ok :addon/source-updates, :error nil?)
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
-  [addon-summary :addon/summary game-track ::sp/game-track]
+  [addon :addon/expandable, game-track ::sp/game-track]
   (when (= game-track :retail)
-    (-expand-summary addon-summary game-track)))
+    (-expand-summary addon game-track)))
 
 (defn-spec expand-summary-classic (s/or :ok :addon/source-updates, :error nil?)
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
-  [addon-summary :addon/summary game-track ::sp/game-track]
+  [addon :addon/expandable, game-track ::sp/game-track]
   (when (= game-track :classic)
-    (-expand-summary addon-summary game-track)))
+    (-expand-summary addon game-track)))
 
-;;
+;; catalogue building
 
 (defn-spec tukui-date-to-rfc3339 ::sp/inst
   "convert a tukui-style datestamp into a mighty RFC3339 formatted one. assumes UTC."

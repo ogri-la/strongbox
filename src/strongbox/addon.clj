@@ -23,21 +23,30 @@
          (starts-with? addon-path addon-dir)) ;; don't delete anything outside of install dir!
       (do
         (fs/delete-dir addon-path)
-        (warn (format "removed '%s'" addon-path))) ;; todo: demote to 'debug'?
+        (debug (format "removed '%s'" addon-path)))
 
       (error (format "directory '%s' is outside the current installation dir of '%s', not removing" addon-path addon-dir)))))
 
 (defn-spec remove-addon nil?
   "removes the given addon. if addon is part of a group, all addons in group are removed"
-  [addon-dir ::sp/addon-dir, toc :addon/toc]
-  (if (contains? toc :group-addons)
-    ;; top-level toc is contained in the :group-addons list
-    (doseq [subtoc (:group-addons toc)]
-      (-remove-addon addon-dir (:dirname subtoc)))
-    (-remove-addon addon-dir (:dirname toc))))
+  [addon-dir ::sp/addon-dir, addon :addon/installed]
+  (info (format "removing '%s' version '%s'" (:label addon) (:installed-version addon)))
+  (cond
+    ;; if addon is being ignored, refuse to remove addon.
+    ;; note: `group-addons` will add a top level `:ignore?` flag if any addon in a bundle is being ignored.
+    (:ignore? addon) (error "refusing to delete ignored addon:" addon-dir)
+
+    ;; addon is part of a bundle.
+    ;; because the addon is also contained in `:group-addons` we just remove all in list
+    (contains? addon :group-addons) (doseq [grouped-addon (:group-addons addon)]
+                                      (-remove-addon addon-dir (:dirname grouped-addon)))
+
+    ;; addon is a single directory
+    :else (-remove-addon addon-dir (:dirname addon))))
 
 ;;
 
+;; todo: toc-list to installed-list
 (defn-spec group-addons :addon/toc-list
   "an addon may actually be many addons bundled together in a single download.
   strongbox tags the bundled addons as they are unzipped and tries to determine the primary one.
@@ -61,13 +70,18 @@
                          next-best (first addons)
                          new-data {:group-addons addons
                                    :group-addon-count (count addons)}
-                         next-best-label (-> next-best :group-id fs/base-name)]
+                         next-best-label (-> next-best :group-id fs/base-name)
+                         ;; add a group-level ignore flag if any bundled addon is being ignored
+                         ;; todo: test for this
+                         ignore-group? (when (utils/any (map :ignore? addons))
+                                         {:ignore? true})]
                      (if primary
                        ;; best, easiest case
-                       (merge primary new-data)
+                       (merge primary new-data ignore-group?)
                        ;; when we can't determine the primary addon, add a shitty synthetic one
-                       (merge next-best new-data {:label (format "%s (group)" next-best-label)
-                                                  :description (format "group record for the %s addon" next-best-label)})))))
+                       (merge next-best new-data ignore-group?
+                              {:label (format "%s (group)" next-best-label)
+                               :description (format "group record for the %s addon" next-best-label)})))))
 
         ;; this flattens the newly grouped addons from a map into a list and joins the unknowns
         addon-list (apply conj (mapv expand addon-groups) unknown-grouping)]
@@ -133,11 +147,14 @@
       ;; couldn't reasonably determine the primary directory
       :else nil)))
 
+;;
+
 (defn-spec install-addon (s/or :ok (s/coll-of ::sp/extant-file), :error ::sp/empty-coll)
-  "installs an addon given an addon description, a place to install the addon and the addon zip file itself"
+  "installs an addon given an addon description, a place to install the addon and the addon zip file itself.
+  handles suspicious looking bundles, conflicts with other addons, uninstalling previous addon version and updating nfo files."
   [addon :addon/installable, install-dir ::sp/writeable-dir, downloaded-file ::sp/archive-file, game-track ::sp/game-track]
   (let [zipfile-entries (zip/zipfile-normal-entries downloaded-file)
-        toplevel-dirs (filter (every-pred :dir? :toplevel?) zipfile-entries)
+        toplevel-dirs (zip/top-level-directories zipfile-entries)
         primary-dirname (determine-primary-subdir toplevel-dirs)
 
         ;; not a show stopper, but if there are bundled addons and they don't share a common prefix, let the user know
@@ -154,7 +171,7 @@
         update-nfo-fn (fn [zipentry]
                         (let [addon-dirname (:path zipentry)
                               primary? (= addon-dirname (:path primary-dirname))]
-                          (nfo/write-nfo install-dir addon addon-dirname primary? game-track)))
+                          (nfo/derive+write-nfo install-dir addon-dirname addon primary? game-track)))
 
         update-nfo-files (fn []
                            ;; write the nfo files, return a list of all nfo files written
@@ -165,7 +182,27 @@
     ;; when is it not valid? when importing v1 addons. v2 addons need 'padding' as well :(
     (when (s/valid? :addon/toc addon)
       (remove-addon install-dir addon))
+
+    (info (format "installing '%s' version '%s'" (:label addon) (:version addon)))
     (install-addon)
-    (let [retval (update-nfo-files)]
-      (info (:label addon) "installed.")
-      retval)))
+    (update-nfo-files)))
+
+;;
+
+(defn-spec ignored-dir-list (s/coll-of ::sp/dirname)
+  "returns a list of unique addon directory names (including grouped addons) that are not being ignored"
+  [addon-list (s/nilable :addon/installed-list)]
+  (->> addon-list (filter :ignore?) (map :group-addons) flatten (map :dirname) (remove nil?) set))
+
+(defn-spec overwrites-ignored? boolean?
+  "returns true if given archive file would unpack over *any* ignored addon.
+  this includes already installed versions of itself and is another check against modifying ignored addons."
+  [downloaded-file ::sp/archive-file, addon-list (s/nilable :addon/installed-list)]
+  (let [ignore-list (ignored-dir-list addon-list)
+        zip-dir-list (->> downloaded-file
+                          zip/zipfile-normal-entries
+                          zip/top-level-directories
+                          (map :path)
+                          (mapv #(utils/rtrim % "/")))
+        zip-dir-in-ignore-dir-list? (fn [zip-dir] (some #{zip-dir} ignore-list))]
+    (utils/any (map zip-dir-in-ignore-dir-list? zip-dir-list))))

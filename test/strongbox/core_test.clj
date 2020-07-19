@@ -296,7 +296,7 @@
                        {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-other-addon-zip-file)})}}]
       (with-fake-routes-in-isolation fake-routes
         (with-running-app
-          (core/set-addon-dir! (helper/addons-path))
+          (helper/install-dir)
 
           (let [;; our list of addons to import
                 output-path (fixture-path "import-export--export-v2.json")
@@ -533,7 +533,7 @@
 (deftest install-addon-trial-2
   (testing "trial installation of a good addon"
     (with-fake-routes-in-isolation {}
-      (let [install-dir (helper/addons-path)
+      (let [install-dir (helper/install-dir)
             ;; move dummy addon file into place so there is no cache miss
             fname (core/downloaded-addon-fname (:name addon) (:version addon))
             _ (utils/cp (fixture-path fname) install-dir)
@@ -548,7 +548,7 @@
 (deftest install-addon-trial-3
   (testing "trial installation of a bad addon"
     (with-fake-routes-in-isolation {}
-      (let [install-dir (helper/addons-path)
+      (let [install-dir (helper/install-dir)
             ;; move dummy addon file into place so there is no cache miss
             fname (core/downloaded-addon-fname (:name addon) (:version addon))
             _ (fs/copy (fixture-path "bad-truncated.zip") (utils/join install-dir fname)) ;; hoho, so evil
@@ -572,7 +572,7 @@
 (deftest install-bundled-addon
   (testing "installing a bundled addon"
     (with-fake-routes-in-isolation {}
-      (let [install-dir (helper/addons-path)
+      (let [install-dir (helper/install-dir)
             ;; without a running app we have no `selected-addon-dir`.
             ;; pretend to be an export record with a `:game-track` instead
             addon (merge addon {:version "0.1.2" :game-track :retail})
@@ -593,24 +593,46 @@
                           :source "curseforge",
                           :source-id 1}]
         (is result) ;; success
-        (is (= ["BundledAddon" "EveryAddon"] directory-list))
-        (is (= expected-nfo (nfo/read-nfo-file install-dir "BundledAddon")))))))
+        (is (= ["EveryAddon" "EveryAddon-BundledAddon"] directory-list))
+        (is (= expected-nfo (nfo/read-nfo-file install-dir "EveryAddon-BundledAddon")))))))
+
+(deftest install-bundled-addon-overwriting-ignored-addon
+  (testing "installing/unzipping an addon with a shared mutual dependency of an addon that is ignored isn't possible"
+    (with-running-app
+      (let [install-dir (helper/install-dir)
+            addon {:name "everyaddon" :label "EveryAddon" :version "0.1.2" :url "https://group.id/never/fetched"
+                   :source "curseforge" :source-id 1
+                   :-testing-zipfile (fixture-path "everyaddon--0-1-2.zip")}]
+
+        (core/install-addon addon)
+        (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
+
+        (fs/mkdir (utils/join install-dir "EveryAddon" ".git"))
+        (core/load-installed-addons) ;; refresh our knowledge of what is installed
+
+        (let [addon2 {:name "everyotheraddon" :label "EveryOtherAddon" :version "5.6.7" :url "https://group.id/also/never/fetched"
+                      :source "curseforge" :source-id 2
+                      :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}]
+          (core/install-addon addon2)
+          (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents))))))))
+
+;;
 
 (deftest uninstall-addon
-  (testing "uninstalling an addon without a nfo file is supported"
+  (testing "uninstalling an addon without a nfo file is supported, but limited"
     (with-running-app
-      (let [install-dir (helper/addons-path)
-            install-dir-contents #(->> install-dir fs/list-dir (map fs/base-name) sort)]
-        (core/set-addon-dir! install-dir)
-        (zip/unzip-file (fixture-path "everyaddon--1-2-3.zip") install-dir)
+      (let [install-dir (helper/install-dir)
+            ;; even though they're part of the same addon strongbox didn't install it
+            ;; and doesn't know about the connection. expect the bundled addon to remain
+            expected ["EveryAddon-BundledAddon"]]
+        (zip/unzip-file (fixture-path "everyaddon--0-1-2.zip") install-dir)
         (core/remove-many-addons [toc])
-        (is (= [] (install-dir-contents)))))))
+        (is (= expected (helper/install-dir-contents)))))))
 
 (deftest uninstall-installed-addon
   (testing "uninstalling an addon installed with strongbox also removes bundled addons"
     (with-running-app
-      (let [install-dir (helper/addons-path)
-            _ (core/set-addon-dir! install-dir)
+      (let [install-dir (helper/install-dir)
 
             addon-v0 (merge addon {:version "0.1.2"})
             addon-v1 addon
@@ -618,8 +640,6 @@
             ;; move dummy addon files into place so there is no cache miss
             fname-v0 (core/downloaded-addon-fname (:name addon-v0) (:version addon-v0))
             fname-v1 (core/downloaded-addon-fname (:name addon-v1) (:version addon-v1))
-
-            _ (info "fname0" fname-v0 "fname1" fname-v1)
 
             fixture-v0 (fixture-path "everyaddon--0-1-2.zip") ;; v0.1 unzips to two directories
             fixture-v1 (fixture-path "everyaddon--1-2-3.zip") ;; v1.2 has just the one directory
@@ -632,7 +652,7 @@
                                     (map fs/base-name) sort)]
 
         (core/install-addon addon-v0 install-dir)
-        (is (= ["BundledAddon" "EveryAddon"] (install-path-dirs)))
+        (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (install-path-dirs)))
 
         ;; reload the list of addons. this groups the addons up by :group-id
         (core/load-installed-addons)
@@ -645,6 +665,35 @@
           ;; install the upgrade that gets rid of a directory
           (core/install-addon addon-v1 install-dir)
           (is (= ["EveryAddon"] (install-path-dirs))))))))
+
+(deftest uninstall-ignored-addon
+  (testing "uninstalling an addon we're ignoring isn't possible."
+    (with-running-app
+      (let [install-dir (helper/install-dir)
+            _ (zip/unzip-file (fixture-path "everyaddon--1-2-3.zip") install-dir)
+            _ (fs/mkdir (utils/join install-dir "EveryAddon" ".git"))
+            _ (core/load-installed-addons)
+            addon (first (core/get-state :installed-addon-list))]
+        (core/remove-many-addons [addon])
+        (is (= ["EveryAddon"] (helper/install-dir-contents)))))))
+
+(deftest uninstall-ignored-bundled-addon
+  (testing "uninstalling an addon with a bundled addon that is being ignored isn't possible."
+    (with-running-app
+      (let [install-dir (helper/install-dir)
+            install-dir-contents #(->> install-dir fs/list-dir (filter fs/directory?) (map fs/base-name) sort)
+
+            ;; trick here: copying 0.1.2 fixture to 1.2.3 filename. this fixture unpacks two directories
+            fname (core/downloaded-addon-fname (:name addon) (:version addon))
+            _ (fs/copy (fixture-path "everyaddon--0-1-2.zip") (utils/join install-dir fname))
+            _ (core/install-addon addon install-dir)
+
+            ;; ensure bundled addon gets ignored
+            _ (fs/mkdir (utils/join install-dir "EveryAddon-BundledAddon" ".git"))
+            _ (core/load-installed-addons)
+            addon (first (core/get-state :installed-addon-list))]
+        (core/remove-many-addons [addon])
+        (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (install-dir-contents)))))))
 
 
 ;;
@@ -769,8 +818,7 @@
 
           user-url "https://github.com/Aviana/HealComm"
 
-          install-dir (utils/join fs/*cwd* "addon-dir")
-          _ (fs/mkdir install-dir)
+          install-dir (helper/install-dir)
 
           expected-addon-dir (utils/join install-dir "EveryAddon")
 
@@ -839,9 +887,8 @@
 (deftest upgrade-nfo-files-1
   (testing "addons without a .toc file are not upgraded"
     (let [every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
-          install-dir (utils/join fs/*cwd* "addons")
+          install-dir (helper/install-dir)
 
-          _ (fs/mkdir install-dir)
           _ (zip/unzip-file every-addon-zip-file install-dir)
 
           expected-dirname "EveryAddon"
@@ -857,9 +904,8 @@
 (deftest upgrade-nfo-files-2
   (testing "addons with malformed .toc files even after upgrading are deleted"
     (let [every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
-          install-dir (utils/join fs/*cwd* "addons")
+          install-dir (helper/install-dir)
 
-          _ (fs/mkdir install-dir)
           _ (zip/unzip-file every-addon-zip-file install-dir)
 
           expected-dirname "EveryAddon"

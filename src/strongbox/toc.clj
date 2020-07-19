@@ -135,7 +135,7 @@
                         :source-id x-tukui-id})
 
         ignore-flag (when (some->> keyvals :version (clojure.string/includes? "@project-version@"))
-                      (warn (format "ignoring addon '%s': 'Version' field in .toc file is unrendered" dirname))
+                      (warn (format "ignoring '%s': 'Version' field in .toc file is unrendered" dirname))
                       {:ignore? true})
 
         addon {:name (normalise-name label)

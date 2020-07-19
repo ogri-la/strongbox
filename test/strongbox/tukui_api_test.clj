@@ -121,3 +121,23 @@
 
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (tukui-api/expand-summary addon-summary game-track)))))))
+
+(deftest download-addon-404
+  (testing "regular addon fetch that yields a 404 returns nil"
+    (let [addon-summary {:description "A user interface designed around user-friendliness with extra features that are not included in the standard ui",
+                         :tag-list [:ui]
+                         :game-track-list [:classic :retail],
+                         :updated-date "2019-12-05T00:00:00Z",
+                         :name "elvui",
+                         :source "tukui",
+                         :label "ElvUI",
+                         :download-count 2147483000,
+                         :source-id -2,
+                         :url "https://www.tukui.org/download.php?ui=elvui"}
+
+          game-track :retail
+
+          fake-routes {tukui-api/elvui-proper-url
+                       {:get (fn [req] {:status 404 :reason-phrase "Not Found" :body "<h1>Not Found</h1>"})}}]
+      (with-fake-routes-in-isolation fake-routes
+        (is (nil? (tukui-api/expand-summary addon-summary game-track)))))))

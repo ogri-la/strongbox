@@ -2,6 +2,7 @@
   (:require
    [clojure.test :refer [deftest testing is use-fixtures]]
    [strongbox
+    [logging :as logging]
     [utils :as utils :refer [join]]
     [nfo :as nfo]
     [test-helper :as helper]]
@@ -34,35 +35,36 @@
 
 ;;
 
-(deftest ignore-dir
-  (testing "an addon directory is ignored if it contains an svc-type sub directory"
-    (doseq [ignorable-dir nfo/ignorable-dir-set
-            :let [path (utils/join (addon-path) ignorable-dir)]]
-      (try
-        (fs/mkdirs path)
-        (is (nfo/ignore? (addon-path)))
-        (finally
-          (fs/delete-dir (addon-path)))))))
-
 (deftest nfo-path
   (testing "path to the nfo file is generated correctly"
     (let [expected (utils/join (addon-path) nfo/nfo-filename)]
       (is (= expected (nfo/nfo-path (install-dir) addon-dir))))))
 
-(deftest rm-nfo
-  (testing "a nfo file is deleted"
-    (let [path (utils/join (addon-path) nfo/nfo-filename)]
-      (fs/touch path)
-      (is (fs/exists? path))
-      (nfo/rm-nfo path)
-      (is (not (fs/exists? path)))))
+(deftest write-nfo-data
+  (testing "valid nfo data is written to a file"
+    (let [nfo-data {:installed-version "1.2.1"
+                    :installed-game-track :classic
+                    :name "EveryAddon"
+                    :group-id "https://foo.bar"
+                    :primary? true
+                    :source "curseforge"
+                    :source-id 321}]
+      (nfo/write-nfo (install-dir) addon-dir nfo-data)
+      (is (fs/exists? (nfo/nfo-path (install-dir) addon-dir)))))
 
-  (testing "a non-nfo file is preserved"
-    (let [path (utils/join (addon-path) "SomeAddon.toc")]
-      (fs/touch path)
-      (is (fs/exists? path))
-      (nfo/rm-nfo path)
-      (is (fs/exists? path)))))
+  (testing "valid nfo data has extraneous keys pruned before being written to a file"
+    (let [nfo-data {:installed-version "1.2.1"
+                    :installed-game-track :classic
+                    :name "EveryAddon"
+                    :group-id "https://foo.bar"
+                    :primary? true
+                    :source "curseforge"
+                    :source-id 321
+
+                    :foo "bar!"}
+          expected (dissoc nfo-data :foo)]
+      (nfo/write-nfo (install-dir) addon-dir nfo-data)
+      (is (= expected (nfo/read-nfo (install-dir) addon-dir))))))
 
 (deftest read-nfo
   (testing "an addon with no nfo data returns nothing"
@@ -122,6 +124,126 @@
       (spit (utils/join (ignorable-addon-path) nfo/nfo-filename) (utils/to-json nfo-data))
       (is (= expected (nfo/read-nfo (install-dir) ignorable-addon-dir))))))
 
+(deftest rm-nfo
+  (testing "a nfo file is deleted"
+    (let [path (utils/join (addon-path) nfo/nfo-filename)]
+      (fs/touch path)
+      (is (fs/exists? path))
+      (nfo/rm-nfo path)
+      (is (not (fs/exists? path)))))
+
+  (testing "a non-nfo file is preserved"
+    (let [path (utils/join (addon-path) "SomeAddon.toc")]
+      (fs/touch path)
+      (is (fs/exists? path))
+      (nfo/rm-nfo path)
+      (is (fs/exists? path)))))
+
+(deftest ignore-dir
+  (testing "an addon directory is ignored if it contains an svc-type sub directory"
+    (doseq [ignorable-dir nfo/ignorable-dir-set
+            :let [path (utils/join (addon-path) ignorable-dir)]]
+      (try
+        (fs/mkdirs path)
+        (is (nfo/ignore? (addon-path)))
+        (finally
+          (fs/delete-dir (addon-path)))))))
+
+(deftest update-nfo-data
+  (testing "nfo data can be updated"
+    (let [nfo-data {:installed-version "1.2.1"
+                    :installed-game-track :classic
+                    :name "EveryAddon"
+                    :group-id "https://foo.bar"
+                    :primary? true
+                    :source "curseforge"
+                    :source-id 321}
+
+          updates {:source "wowinterface"}
+
+          expected (merge nfo-data updates)]
+
+      (nfo/write-nfo (install-dir) addon-dir nfo-data)
+      (nfo/update-nfo (install-dir) addon-dir updates)
+      (is (= expected (nfo/read-nfo (install-dir) addon-dir)))))
+
+  (testing "invalid data is not updated"
+    (let [nfo-data {:installed-version "1.2.1"
+                    :installed-game-track :classic
+                    :name "EveryAddon"
+                    :group-id "https://foo.bar"
+                    :primary? true
+                    :source "curseforge"
+                    :source-id 321}
+
+          updates {:installed-game-track :foo}
+
+          expected nfo-data
+          expected-log ["new nfo data is invalid and won't be written to file"]]
+
+      (nfo/write-nfo (install-dir) addon-dir nfo-data)
+      (is (= expected-log
+             (logging/buffered-log :error
+                                   (nfo/update-nfo (install-dir) addon-dir updates))))
+      (is (= expected (nfo/read-nfo (install-dir) addon-dir))))))
+
+(deftest update-nfo-data-with-ignore-flags
+  (testing ""
+    (let [expected {:ignore? true}]
+      (nfo/ignore (install-dir) addon-dir)
+      (is (= expected (nfo/read-nfo (install-dir) addon-dir)))))
+
+  (testing "nfo data that is *just* an `ignore?` flag is deleted when set to `nil`"
+    (let [nfo-data {:ignore? true}]
+      (nfo/write-nfo (install-dir) addon-dir nfo-data)
+      (nfo/clear-ignore (install-dir) addon-dir)
+      (is (not (fs/exists? (nfo/nfo-path (install-dir) addon-dir))))))
+
+  (testing "implicitly ignored addons with no other nfo data have the `ignore?` flag set to `false` rather than cleared."
+    (let [expected {:ignore? false}]
+      (nfo/clear-ignore (install-dir) ignorable-addon-dir)
+      (is (fs/exists? (nfo/nfo-path (install-dir) ignorable-addon-dir)))
+      (is (= expected (nfo/read-nfo (install-dir) ignorable-addon-dir)))))
+
+  (testing "implicitly ignored addons with an explicit `ignore?` flag set to `false` will clear the flag as expected"
+    (let [nfo-data {:ignore? false}]
+      (nfo/write-nfo (install-dir) ignorable-addon-dir nfo-data)
+      (nfo/clear-ignore (install-dir) ignorable-addon-dir)
+      (is (not (fs/exists? (nfo/nfo-path (install-dir) ignorable-addon-dir))))))
+
+  ;; note: should this behave like an ignore-flag-only nfo file and have it's ignore? flag set to false ?
+  ;; we have no way of knowing if the addon is being ignored via toc data at this point in the program
+  (testing "implicitly ignored addons with regular nfo data without an explicit `ignore?` flag are treated the same"
+    (let [nfo-data {:installed-version "1.2.1"
+                    :installed-game-track :classic
+                    :name "EveryAddon"
+                    :group-id "https://foo.bar"
+                    :primary? true
+                    :source "curseforge"
+                    :source-id 321}
+          expected-raw nfo-data ;; no change in file
+          expected (assoc nfo-data :ignore? true)] ;; back to being implicitly ignored
+      (nfo/write-nfo (install-dir) ignorable-addon-dir nfo-data)
+      (nfo/clear-ignore (install-dir) ignorable-addon-dir)
+      (is (= expected-raw (nfo/read-nfo-file (install-dir) ignorable-addon-dir)))
+      (is (= expected (nfo/read-nfo (install-dir) ignorable-addon-dir)))))
+
+  (testing "implicitly ignored addons with regular nfo data and an explicit `ignore?` flag are treated the same"
+    (let [nfo-data {:installed-version "1.2.1"
+                    :installed-game-track :classic
+                    :name "EveryAddon"
+                    :group-id "https://foo.bar"
+                    :primary? true
+                    :source "curseforge"
+                    :source-id 321
+                    :ignore? false} ;; explicit ignore flag
+          expected-raw (dissoc nfo-data :ignore?)
+          expected (assoc nfo-data :ignore? true)] ;; back to being implicitly ignored
+      (nfo/write-nfo (install-dir) ignorable-addon-dir nfo-data)
+      (nfo/clear-ignore (install-dir) ignorable-addon-dir)
+      (is (= expected-raw (nfo/read-nfo-file (install-dir) ignorable-addon-dir)))
+      (is (= expected (nfo/read-nfo (install-dir) ignorable-addon-dir))))))
+
 (deftest upgrade-nfo-data
   (testing "a nfo file can be 'upgraded' (vs updated)"
     (let [given {:version "1.2.3" ;; value is ignored in favour of :installed-version
@@ -141,9 +263,10 @@
                     :primary? true
                     :source "curseforge"
                     :source-id 321}]
-      (nfo/upgrade-nfo (install-dir) given)
-      (is (= expected (nfo/read-nfo-file (install-dir) addon-dir)))))
+      (nfo/upgrade-nfo-to-v2 (install-dir) given)
+      (is (= expected (nfo/read-nfo-file (install-dir) addon-dir))))))
 
+(deftest upgrade-nfo-data-preserve-ignore-flag
   (testing "a nfo file can be 'upgraded' (vs updated), preserving any ignore flags"
     (let [given {:version "1.2.3" ;; value is ignored in favour of :installed-version
                  :installed-version "1.2.1"
@@ -164,6 +287,6 @@
                     :source "curseforge"
                     :source-id 321
                     :ignore? false}]
-      (nfo/upgrade-nfo (install-dir) given)
+      (nfo/upgrade-nfo-to-v2 (install-dir) given)
       (is (= expected (nfo/read-nfo-file (install-dir) addon-dir))))))
 

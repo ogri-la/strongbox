@@ -47,7 +47,7 @@
          (map utils/interface-version-to-game-version)
          (map utils/game-version-to-game-track)
          set
-         vec
+         vec ;; do I need this ..?
          utils/nilable)))
 
 (defn-spec find-gametracks-toc-data (s/or :ok ::sp/game-track-list, :error nil?)
@@ -63,7 +63,7 @@
   (-> string .toLowerCase (index-of "classic") nil? not))
 
 (defn group-assets
-  [addon-summary latest-release]
+  [addon latest-release]
   (let [;; ignore assets whose :content_type is *not* a known zip type
         supported-zips #(-> % :content_type vector set (some supported-zip-mimes))
 
@@ -75,7 +75,7 @@
         single-asset? (-> asset-list count (= 1))
         many-assets? (-> asset-list count (> 1))
 
-        known-game-tracks (-> addon-summary :game-track-list (or []))
+        known-game-tracks (-> addon :game-track-list (or []))
         no-known-game-tracks? (-> known-game-tracks count (= 0))
         single-game-track? (-> known-game-tracks count (= 1))
         many-game-tracks? (-> known-game-tracks count (> 1))
@@ -132,7 +132,7 @@
                   (and many-assets? many-game-tracks?) {:game-track :retail :version version :-mo :ma--Ngt}
 
                   :else (error (format "unhandled state attempting to determine game track(s) for asset '%s' in latest release of '%s'"
-                                       asset addon-summary)))
+                                       asset addon)))
 
                 update-list (if (sequential? update-list) update-list [update-list])]
 
@@ -148,10 +148,10 @@
 (defn-spec expand-summary (s/or :ok :addon/source-updates, :error nil?)
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. 
   one additional look-up per ::addon required"
-  [addon-summary :addon/summary, game-track ::sp/game-track]
-  (let [release-list (download-releases (:source-id addon-summary))
+  [addon :addon/expandable, game-track ::sp/game-track]
+  (let [release-list (download-releases (:source-id addon))
         latest-release (first release-list)
-        -group-assets (partial group-assets addon-summary)
+        -group-assets (partial group-assets addon)
         asset (-> latest-release -group-assets (get game-track) first (dissoc :-mo))]
     (when asset
       {:download-url (:browser_download_url asset)
