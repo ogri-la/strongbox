@@ -6,6 +6,7 @@
    [clj-http.fake :refer [with-fake-routes-in-isolation]]
    [strongbox
     [main :as main]
+    [core :as core]
     [utils :as utils]]))
 
 (def fixture-dir (-> "test/fixtures" fs/absolute fs/normalized str))
@@ -16,13 +17,21 @@
 
 (def helper-addon-dir "addons")
 
-(defn addons-path
+(defn install-dir
   "convenience. return path to an addon directory called 'addons', creating it if it doesn't exist."
   []
   (let [path (utils/join fs/*cwd* helper-addon-dir)]
     (when-not (fs/exists? path)
       (fs/mkdir path))
+    (when @core/state
+      ;; state is non-nil, assume app is running
+      (core/set-addon-dir! path))
     path))
+
+(defn install-dir-contents
+  "convenience. returns the contents of the install-dir/addons-dir"
+  []
+  (->> (install-dir) fs/list-dir (map fs/base-name) sort))
 
 (defn fixture-path
   [filename]

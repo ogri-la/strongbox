@@ -192,7 +192,7 @@
     (let [expected {:ignore? true}]
       (nfo/ignore (install-dir) addon-dir)
       (is (= expected (nfo/read-nfo (install-dir) addon-dir)))))
-  
+
   (testing "nfo data that is *just* an `ignore?` flag is deleted when set to `nil`"
     (let [nfo-data {:ignore? true}]
       (nfo/write-nfo (install-dir) addon-dir nfo-data)

@@ -134,7 +134,7 @@
                          :download-count 2147483000,
                          :source-id -2,
                          :url "https://www.tukui.org/download.php?ui=elvui"}
-          
+
           game-track :retail
 
           fake-routes {tukui-api/elvui-proper-url
