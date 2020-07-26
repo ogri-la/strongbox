@@ -154,7 +154,11 @@
 (s/def :addon/nfo (s/or :ignored ::ignore-flag
                         :ok (s/keys :req-un [::installed-version ::name ::group-id ::primary? :addon/source
                                              ::installed-game-track :addon/source-id]
-                                    :opt-un [::ignore?])))
+                                    :opt-un [::ignore?
+                                             :addon/replaced])))
+
+;; todo: can I remove the nested :replaced somehow?
+(s/def :addon/replaced (s/coll-of :addon/nfo :kind vector?)) ;; order is semi-important
 
 ;; intermediate spec. minimum amount of data required to create a nfo file. the rest is derived.
 (s/def :addon/nfo-input-minimum (s/keys :req-un [::version ::name

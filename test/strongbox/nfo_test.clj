@@ -211,7 +211,7 @@
       (nfo/clear-ignore (install-dir) ignorable-addon-dir)
       (is (not (fs/exists? (nfo/nfo-path (install-dir) ignorable-addon-dir))))))
 
-  ;; note: should this behave like an ignore-flag-only nfo file and have it's ignore? flag set to false ?
+  ;; note: should this behave like an ignore-flag-only nfo file and have it's `ignore?` flag set to `false` ?
   ;; we have no way of knowing if the addon is being ignored via toc data at this point in the program
   (testing "implicitly ignored addons with regular nfo data without an explicit `ignore?` flag are treated the same"
     (let [nfo-data {:installed-version "1.2.1"

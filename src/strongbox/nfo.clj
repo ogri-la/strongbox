@@ -27,7 +27,7 @@
 
 (defn-spec prune :addon/nfo
   [addon :addon/nfo]
-  (select-keys addon [:installed-version :installed-game-track :name :group-id :primary? :ignore? :source :source-id]))
+  (select-keys addon [:installed-version :installed-game-track :name :group-id :primary? :ignore? :source :source-id :replaced]))
 
 (defn-spec derive :addon/nfo
   "extract fields from the addon data that will be written to the nfo file"
@@ -56,26 +56,17 @@
         ;; it can be drived later in the process by examining the addon's toc file or subdirs, or
         ;; it may be present when upgrading an existing nfo file and should be preserved
         ignore-flag (when-some [ignore? (:ignore? addon)]
-                      {:ignore? ignore?})]
-    (merge nfo ignore-flag)))
+                      {:ignore? ignore?})
+
+        ;; if present in the addon data, ensure it gets preserved
+        replaced-list (when-some [replaced (:replaced addon)]
+                        {:replaced replaced})]
+    (merge nfo ignore-flag replaced-list)))
 
 (defn-spec nfo-path ::sp/file
   "given an installation directory and the directory name of an addon, return the absolute path to the nfo file"
   [install-dir ::sp/extant-dir, dirname string?]
   (join install-dir dirname nfo-filename)) ;; /path/to/addons/AddonName/.strongbox.json
-
-(defn-spec write-nfo (s/or :ok ::sp/extant-file, :error nil?)
-  "given an installation directory and an addon, select the neccessary bits (`prune`) and write them to a nfo file"
-  [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, addon map?] ;; addon data is validated before being written
-  (let [path (nfo-path install-dir addon-dirname)]
-    (if (s/valid? :addon/nfo addon)
-      (utils/dump-json-file path (prune addon))
-      (error "new nfo data is invalid and won't be written to file"))))
-
-(defn-spec derive+write-nfo (s/or :ok ::sp/extant-file, :error nil?)
-  "convenience. generates nfo data from given `addon` and then writes it to a file."
-  [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, addon :addon/nfo-input-minimum, primary? boolean?, game-track ::sp/game-track]
-  (write-nfo install-dir addon-dirname (derive addon primary? game-track)))
 
 (defn-spec rm-nfo nil?
   "deletes a nfo file and only a nfo file"
@@ -130,6 +121,52 @@
                       (warn (format "ignoring '%s': addon directory contains a .git/.hg/.svn folder" dirname))
                       {:ignore? true})]
     (merge nfo-file-contents ignore-flag)))
+
+;;
+
+(defn-spec push-nfo :addon/nfo
+  "given a map of new nfo data, replace existing nfo data (if it exists) while preserving it for later operations."
+  [new-nfo-data :addon/nfo, old-nfo-data (s/nilable :addon/nfo)]
+  ;; if no previous nfo data or the previous nfo data belongs to the same addon as the one given, skip.
+  (if (or (not old-nfo-data)
+          (= (:group-id old-nfo-data) (:group-id new-nfo-data)))
+    new-nfo-data
+
+    (let [;; we may be replacing nfo data that replaced something else.
+          replaced-list (or (:replaced old-nfo-data) [])
+          old-nfo-data (dissoc old-nfo-data :replaced)
+
+          ;; tack the old nfo data on to the list of replaced
+          replaced-list (conj replaced-list old-nfo-data)
+
+          ;; addon the new nfo data refers to may exist in the list of replaced.
+          ;; these should be removed now that it's back on top again.
+          replaced-list (remove (fn [replaced]
+                                  (= (:group-id replaced) (:group-id new-nfo-data))) replaced-list)
+
+          new-nfo-data (if-not (empty? replaced-list)
+                         (assoc new-nfo-data :replaced (vec replaced-list))
+                         new-nfo-data)]
+      new-nfo-data)))
+
+;; (defn pop-nfo ...
+
+;;
+
+(defn-spec write-nfo (s/or :ok ::sp/extant-file, :error nil?)
+  "given an installation directory and an addon, select the neccessary bits (`prune`) and write them to a nfo file"
+  [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, addon map?] ;; addon data is validated before being written
+  (let [path (nfo-path install-dir addon-dirname)]
+    (if (s/valid? :addon/nfo addon)
+      (let [new-nfo-data (prune addon)
+            old-nfo-data (read-nfo-file install-dir addon-dirname)]
+        (utils/dump-json-file path (push-nfo new-nfo-data old-nfo-data)))
+      (error "new nfo data is invalid and won't be written to file"))))
+
+(defn-spec derive+write-nfo (s/or :ok ::sp/extant-file, :error nil?)
+  "convenience. generates nfo data from given `addon` and then writes it to a file."
+  [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, addon :addon/nfo-input-minimum, primary? boolean?, game-track ::sp/game-track]
+  (write-nfo install-dir addon-dirname (derive addon primary? game-track)))
 
 ;; this function could definitely do with a second pass, but not right now.
 ;; it's doing two things: updating the nfo and writing/removing a file, but conditionally,

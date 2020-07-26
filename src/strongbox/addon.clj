@@ -111,7 +111,6 @@
 
 ;;
 
-
 (defn-spec determine-primary-subdir (s/or :found map?, :not-found nil?)
   "if an addon unpacks to multiple directories, which is the 'main' addon?
    a common convention looks like 'Addon[seperator]Subname', for example:
@@ -179,6 +178,7 @@
 
     (suspicious-bundle-check)
 
+    ;; todo: remove support for v1 addons in 2.0.0
     ;; when is it not valid? when importing v1 addons. v2 addons need 'padding' as well :(
     (when (s/valid? :addon/toc addon)
       (remove-addon install-dir addon))
