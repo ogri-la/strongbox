@@ -479,6 +479,14 @@
     ;; otherwise, ensure list of installed addons is cleared
     (update-installed-addon-list! [])))
 
+(defn-spec select-addon (s/nilable :addon/installed)
+  "returns the first installed addon matching the given `group-id`"
+  [group-id ::sp/group-id]
+  (->> (get-state)
+       :installed-addon-list
+       (filter (fn [addon] (= (:group-id addon) group-id)))
+       first))
+
 ;;
 ;; catalogue handling
 ;;
@@ -546,7 +554,6 @@
     (merge installed-addon db-catalogue-addon {:matched? true})))
 
 ;;
-
 
 (defn-spec get-create-user-catalogue :catalogue/catalogue
   "returns the contents of the user catalogue, creating one if necessary"
@@ -1020,6 +1027,12 @@
   (let [addon-dir (selected-addon-dir)]
     (doseq [toc toc-list]
       (addon/remove-addon addon-dir toc))
+    (refresh)))
+
+(defn-spec remove-addon nil?
+  [toc :addon/installed]
+  (let [addon-dir (selected-addon-dir)]
+    (addon/remove-addon addon-dir toc)
     (refresh)))
 
 (defn-spec remove-selected nil?

@@ -13,36 +13,41 @@
     [specs :as sp]]))
 
 (defn-spec -remove-addon nil?
-  "safely removes the given `addon-dirname` from within `addon-dir`"
-  [addon-dir ::sp/addon-dir, addon-dirname ::sp/dirname]
-  (let [addon-path (fs/file addon-dir (fs/base-name addon-dirname)) ;; `fs/base-name` strips any parents
+  "safely removes the given `addon-dirname` from `install-dir`"
+  [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname]
+  (let [addon-path (fs/file install-dir (fs/base-name addon-dirname)) ;; `fs/base-name` strips any parents
         addon-path (-> addon-path fs/absolute fs/normalized)]
     ;; if after resolving the given addon dir it's still within the install-dir, remove it
     (if (and
          (fs/directory? addon-path)
-         (starts-with? addon-path addon-dir)) ;; don't delete anything outside of install dir!
-      (do
-        (fs/delete-dir addon-path)
-        (debug (format "removed '%s'" addon-path)))
+         (starts-with? addon-path install-dir)) ;; don't delete anything outside of install dir!
+      (if-not (nfo/mutual-dependency? install-dir addon-dirname)
+        (do
+          (fs/delete-dir addon-path)
+          (debug (format "removed '%s'" addon-path)))
 
-      (error (format "directory '%s' is outside the current installation dir of '%s', not removing" addon-path addon-dir)))))
+        (let [updated-nfo-data (nfo/pop-nfo install-dir addon-dirname)]
+          (nfo/write-nfo install-dir addon-dirname updated-nfo-data)
+          (debug (format "removed '%s' as mutual dependency" addon-dirname))))
+
+      (error (format "directory '%s' is outside the current installation dir of '%s', not removing" addon-path install-dir)))))
 
 (defn-spec remove-addon nil?
   "removes the given addon. if addon is part of a group, all addons in group are removed"
-  [addon-dir ::sp/addon-dir, addon :addon/installed]
+  [install-dir ::sp/extant-dir, addon :addon/installed]
   (info (format "removing '%s' version '%s'" (:label addon) (:installed-version addon)))
   (cond
     ;; if addon is being ignored, refuse to remove addon.
     ;; note: `group-addons` will add a top level `:ignore?` flag if any addon in a bundle is being ignored.
-    (:ignore? addon) (error "refusing to delete ignored addon:" addon-dir)
+    (:ignore? addon) (error "refusing to delete ignored addon:" install-dir)
 
     ;; addon is part of a bundle.
     ;; because the addon is also contained in `:group-addons` we just remove all in list
     (contains? addon :group-addons) (doseq [grouped-addon (:group-addons addon)]
-                                      (-remove-addon addon-dir (:dirname grouped-addon)))
+                                      (-remove-addon install-dir (:dirname grouped-addon)))
 
     ;; addon is a single directory
-    :else (-remove-addon addon-dir (:dirname addon))))
+    :else (-remove-addon install-dir (:dirname addon))))
 
 ;;
 
@@ -90,8 +95,8 @@
 (defn-spec load-installed-addons :addon/toc-list
   "reads the .toc files from the given addon dir, reads any nfo data for 
   these addons, groups them, returns the mooshed data"
-  [addon-dir ::sp/addon-dir]
-  (let [addon-list (strongbox.toc/installed-addons addon-dir)
+  [install-dir ::sp/extant-dir]
+  (let [addon-list (strongbox.toc/installed-addons install-dir)
 
         ;; at this point we have a list of the 'top level' addons, with
         ;; any bundled addons grouped within each one.
@@ -100,7 +105,7 @@
         ;; data we store alongside each addon when it is installed/updated
 
         merge-nfo-data (fn [addon]
-                         (let [nfo-data (nfo/read-nfo addon-dir (:dirname addon))]
+                         (let [nfo-data (nfo/read-nfo install-dir (:dirname addon))]
                            ;; merge the addon with the nfo data.
                            ;; when `ignore?` flag in addon is `true` but `false` in nfo-data, nfo-data will take precedence.
                            (merge addon nfo-data)))
@@ -169,8 +174,13 @@
         ;; an addon may unzip to many directories, each directory needs the nfo file
         update-nfo-fn (fn [zipentry]
                         (let [addon-dirname (:path zipentry)
-                              primary? (= addon-dirname (:path primary-dirname))]
-                          (nfo/derive+write-nfo install-dir addon-dirname addon primary? game-track)))
+                              primary? (= addon-dirname (:path primary-dirname))
+                              new-nfo-data (nfo/derive addon primary? game-track)
+
+                              ;; handle overwriting existing nfo data
+                              old-nfo-data (nfo/read-nfo-file install-dir addon-dirname)
+                              new-nfo-data (nfo/push-nfo new-nfo-data old-nfo-data)]
+                          (nfo/write-nfo install-dir addon-dirname new-nfo-data)))
 
         update-nfo-files (fn []
                            ;; write the nfo files, return a list of all nfo files written

@@ -741,9 +741,41 @@
         (core/load-installed-addons) ;; refresh our knowledge of what is installed
         (is (= expected (nfo/read-nfo install-dir bundled-dirname)))))))
 
+(deftest uninstall-addons-with-mutual-dependencies
+  (testing "uninstalling an addon whose mutual dependency overwrote another will see the original one restored"
+    (with-running-app
+      (let [install-dir (helper/install-dir)
+            addon-1 {:name "everyaddon" :label "EveryAddon" :version "0.1.2" :url "https://group.id/never/fetched"
+                     :source "curseforge" :source-id 1
+                     :-testing-zipfile (fixture-path "everyaddon--0-1-2.zip")}
+
+            addon-2 {:name "everyotheraddon" :label "EveryOtherAddon" :version "5.6.7" :url "https://group.id/also/never/fetched"
+                     :source "curseforge" :source-id 2
+                     :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}
+
+            bundled-dirname "EveryAddon-BundledAddon"
+
+            expected {:group-id "https://group.id/never/fetched"
+                      :installed-game-track :retail
+                      :installed-version "0.1.2"
+                      :name "everyaddon"
+                      :primary? false
+                      :source "curseforge"
+                      :source-id 1}]
+
+        (core/install-addon addon-1)
+        (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
+        (core/load-installed-addons) ;; refresh our knowledge of what is installed
+
+        (core/install-addon addon-2)
+        (is (= ["EveryAddon" "EveryAddon-BundledAddon" "EveryOtherAddon"] (helper/install-dir-contents)))
+        (core/load-installed-addons) ;; refresh our knowledge of what is installed
+
+        (core/remove-addon (core/select-addon (:url addon-2)))
+        (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
+        (is (= expected (nfo/read-nfo install-dir bundled-dirname)))))))
 
 ;;
-
 
 (deftest http-500-downloading-catalogue
   (testing "HTTP 500 while fetching catalogue from github"
