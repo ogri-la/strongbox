@@ -124,19 +124,19 @@
       (spit (utils/join (ignorable-addon-path) nfo/nfo-filename) (utils/to-json nfo-data))
       (is (= expected (nfo/read-nfo (install-dir) ignorable-addon-dir))))))
 
-(deftest rm-nfo
+(deftest rm-nfo-file
   (testing "a nfo file is deleted"
     (let [path (utils/join (addon-path) nfo/nfo-filename)]
       (fs/touch path)
       (is (fs/exists? path))
-      (nfo/rm-nfo path)
+      (nfo/rm-nfo-file path)
       (is (not (fs/exists? path)))))
 
   (testing "a non-nfo file is preserved"
     (let [path (utils/join (addon-path) "SomeAddon.toc")]
       (fs/touch path)
       (is (fs/exists? path))
-      (nfo/rm-nfo path)
+      (nfo/rm-nfo-file path)
       (is (fs/exists? path)))))
 
 (deftest ignore-dir

@@ -18,6 +18,8 @@
 (s/def ::list-of-keywords (s/coll-of keyword?))
 (s/def ::list-of-list-of-keywords (s/coll-of ::list-of-keywords))
 
+(s/def ::map-or-list-of-maps (s/or :map map? :list (s/coll-of map?)))
+
 (s/def ::regex #(instance? java.util.regex.Pattern %))
 (s/def ::short-string #(<= (count %) 80))
 
@@ -151,14 +153,13 @@
 (s/def ::group-addons :addon/toc-list)
 
 ;; 'nfo' files contain extra per-addon data written to addon directories as .strongbox.json
-(s/def :addon/nfo (s/or :ignored ::ignore-flag
-                        :ok (s/keys :req-un [::installed-version ::name ::group-id ::primary? :addon/source
-                                             ::installed-game-track :addon/source-id]
-                                    :opt-un [::ignore?
-                                             :addon/replaced])))
+(s/def :addon/-nfo (s/keys :req-un [::installed-version ::name ::group-id ::primary? :addon/source
+                                    ::installed-game-track :addon/source-id]
+                           :opt-un [::ignore?]))
 
-;; todo: can I remove the nested :replaced somehow?
-(s/def :addon/replaced (s/coll-of :addon/nfo :kind vector?)) ;; order is semi-important
+(s/def :addon/nfo (s/or :ignored ::ignore-flag
+                        :ok :addon/-nfo
+                        :mutual-depedency (s/coll-of :addon/-nfo :kind vector?)))
 
 ;; intermediate spec. minimum amount of data required to create a nfo file. the rest is derived.
 (s/def :addon/nfo-input-minimum (s/keys :req-un [::version ::name

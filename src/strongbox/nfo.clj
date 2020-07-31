@@ -27,7 +27,9 @@
 
 (defn-spec prune :addon/nfo
   [addon :addon/nfo]
-  (select-keys addon [:installed-version :installed-game-track :name :group-id :primary? :ignore? :source :source-id :replaced]))
+  (if (sequential? addon)
+    (mapv prune addon)
+    (select-keys addon [:installed-version :installed-game-track :name :group-id :primary? :ignore? :source :source-id])))
 
 (defn-spec derive :addon/nfo
   "extract fields from the addon data that will be written to the nfo file"
@@ -68,14 +70,14 @@
   [install-dir ::sp/extant-dir, dirname string?]
   (join install-dir dirname nfo-filename)) ;; /path/to/addons/AddonName/.strongbox.json
 
-(defn-spec rm-nfo nil?
+(defn-spec rm-nfo-file nil?
   "deletes a nfo file and only a nfo file"
   [path ::sp/extant-file]
   (when (= nfo-filename (fs/base-name path))
     (fs/delete path)
     nil))
 
-(defn-spec read-nfo-file* (s/or :ok map?, :error nil?)
+(defn-spec read-nfo-file* (s/or :ok ::sp/map-or-list-of-maps, :error nil?)
   "safely reads a nfo file with basic transformations.
   old nfo data had no spec and it's shape changed several times.
   this function returns whatever we can find or nil.
@@ -95,11 +97,11 @@
   (let [path (nfo-path install-dir dirname)
         bad-data (fn []
                    (warn "bad nfo data, deleting file:" path)
-                   (rm-nfo path))
+                   (rm-nfo-file path))
         invalid-data (fn []
                        (info "slurp" path (slurp path))
                        (warn "invalid nfo data, deleting file:" path)
-                       (rm-nfo path))
+                       (rm-nfo-file path))
         opts {:bad-data? bad-data
               :invalid-data? invalid-data,
               :data-spec :addon/nfo}]
@@ -109,6 +111,9 @@
   "parses the contents of the .nfo file and checks if addon should be ignored or not"
   [install-dir ::sp/extant-dir, dirname string?]
   (let [nfo-file-contents (read-nfo-file install-dir dirname)
+        nfo-file-contents (if (vector? nfo-file-contents)
+                            (last nfo-file-contents)
+                            nfo-file-contents)
         ;; if `ignore?` is present in the nfo file it overrides the nfo and toc file checks.
         ;; this value may also be introduced in `toc.clj`
         user-ignored (contains? nfo-file-contents :ignore?)
@@ -124,61 +129,39 @@
 
 ;;
 
-(defn-spec push-nfo :addon/nfo
-  "given a map of new nfo data, replace existing nfo data (if it exists) while preserving it for later operations.
-  replaced nfo data is ordered from oldest to newest."
-  [new-nfo-data :addon/nfo, old-nfo-data (s/nilable :addon/nfo)]
-  ;; if no previous nfo data or the previous nfo data belongs to the same addon as the one given, skip.
-  (if (or (not old-nfo-data)
-          (= (:group-id old-nfo-data) (:group-id new-nfo-data)))
-    new-nfo-data
+(defn -flatten
+  [nfo-data]
+  (if (and (sequential? nfo-data)
+           (-> nfo-data count (= 1)))
+    (first nfo-data)
+    nfo-data))
 
-    (let [;; we may be replacing nfo data that replaced something else.
-          replaced-list (or (:replaced old-nfo-data) [])
-          old-nfo-data (dissoc old-nfo-data :replaced)
+(defn-spec rm-nfo* (s/or :ok :addon/nfo, :error nil?)
+  [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, group-id (s/nilable ::sp/group-id)]
+  (when-let [old-nfo-data (read-nfo-file install-dir addon-dirname)]
+    (let [old-nfo-data (if (sequential? old-nfo-data) old-nfo-data [old-nfo-data])]
+      (->> old-nfo-data (remove #(= group-id (:group-id %))) vec spy))))
 
-          ;; tack the old nfo data on to the list of replaced
-          replaced-list (conj replaced-list old-nfo-data)
+(defn-spec rm-nfo (s/or :ok :addon/nfo, :error nil?)
+  "removes nfo data "
+  [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, group-id ::sp/group-id]
+  (-> (rm-nfo* install-dir addon-dirname group-id) -flatten))
 
-          ;; addon the new nfo data refers to may exist in the list of replaced.
-          ;; these should be removed now that it's back on top again.
-          replaced-list (remove (fn [replaced]
-                                  (= (:group-id replaced) (:group-id new-nfo-data))) replaced-list)
-
-          new-nfo-data (if-not (empty? replaced-list)
-                         (assoc new-nfo-data :replaced (vec replaced-list))
-                         new-nfo-data)]
-      new-nfo-data)))
+(defn-spec add-nfo :addon/nfo
+  "adds the given nfo data to the end of the list (most recent), removing it from any other position in the list"
+  [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, new-nfo-data :addon/nfo]
+  (-> (rm-nfo* install-dir addon-dirname (:group-id new-nfo-data)) (conj new-nfo-data) -flatten))
 
 (defn mutual-dependency?
+  "returns true if multiple sets of nfo data exist in file"
   [install-dir addon-dirname]
-  (contains? (read-nfo-file install-dir addon-dirname) :replaced))
-
-(defn-spec pop-nfo (s/or :ok :addon/nfo, :error nil?)
-  [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname]
-  (let [nfo-data (read-nfo install-dir addon-dirname)
-        replaced-list (:replaced nfo-data)
-        prune-replaced-list (fn [nfo]
-                              (if (-> nfo :replaced empty?)
-                                (dissoc nfo :replaced)
-                                nfo))]
-    (prune-replaced-list
-     (cond
-       ;; error reading nfo data
-       (nil? nfo-data) nil
-
-       ;; no `:replaced-list` or list is empty, nothing to pop
-       (empty? replaced-list) nfo-data
-
-       :else (merge nfo-data
-                    (last replaced-list)
-                    {:replaced (-> replaced-list butlast vec)})))))
+  (vector? (read-nfo-file install-dir addon-dirname)))
 
 ;;
 
 (defn-spec write-nfo (s/or :ok ::sp/extant-file, :error nil?)
   "given an installation directory and an addon, select the neccessary bits (`prune`) and write them to a nfo file"
-  [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, addon map?] ;; addon data is validated before being written
+  [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, addon ::sp/map-or-list-of-maps]
   (let [path (nfo-path install-dir addon-dirname)]
     (if-not (s/valid? :addon/nfo addon)
       (error "new nfo data is invalid and won't be written to file")
@@ -210,7 +193,7 @@
     (if (empty? new-nfo)
       ;; edge case. a valid nfo file is also simply a `ignore: [True|False]`
       ;; when this condition is true, just delete the nfo file.
-      (rm-nfo path)
+      (rm-nfo-file path)
       (write-nfo install-dir dirname new-nfo)))
   nil)
 

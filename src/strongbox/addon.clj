@@ -14,7 +14,7 @@
 
 (defn-spec -remove-addon nil?
   "safely removes the given `addon-dirname` from `install-dir`"
-  [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname]
+  [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, group-id (s/nilable ::sp/group-id)]
   (let [addon-path (fs/file install-dir (fs/base-name addon-dirname)) ;; `fs/base-name` strips any parents
         addon-path (-> addon-path fs/absolute fs/normalized)]
     ;; if after resolving the given addon dir it's still within the install-dir, remove it
@@ -26,7 +26,7 @@
           (fs/delete-dir addon-path)
           (debug (format "removed '%s'" addon-path)))
 
-        (let [updated-nfo-data (nfo/pop-nfo install-dir addon-dirname)]
+        (let [updated-nfo-data (nfo/rm-nfo install-dir addon-dirname group-id)]
           (nfo/write-nfo install-dir addon-dirname updated-nfo-data)
           (debug (format "removed '%s' as mutual dependency" addon-dirname))))
 
@@ -44,10 +44,10 @@
     ;; addon is part of a bundle.
     ;; because the addon is also contained in `:group-addons` we just remove all in list
     (contains? addon :group-addons) (doseq [grouped-addon (:group-addons addon)]
-                                      (-remove-addon install-dir (:dirname grouped-addon)))
+                                      (-remove-addon install-dir (:dirname grouped-addon) (:group-id addon)))
 
     ;; addon is a single directory
-    :else (-remove-addon install-dir (:dirname addon))))
+    :else (-remove-addon install-dir (:dirname addon) (:group-id addon))))
 
 ;;
 
@@ -176,10 +176,7 @@
                         (let [addon-dirname (:path zipentry)
                               primary? (= addon-dirname (:path primary-dirname))
                               new-nfo-data (nfo/derive addon primary? game-track)
-
-                              ;; handle overwriting existing nfo data
-                              old-nfo-data (nfo/read-nfo-file install-dir addon-dirname)
-                              new-nfo-data (nfo/push-nfo new-nfo-data old-nfo-data)]
+                              new-nfo-data (nfo/add-nfo install-dir addon-dirname new-nfo-data)]
                           (nfo/write-nfo install-dir addon-dirname new-nfo-data)))
 
         update-nfo-files (fn []
