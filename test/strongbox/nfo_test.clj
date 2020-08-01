@@ -71,6 +71,14 @@
     (let [expected nil]
       (is (= expected (nfo/read-nfo (install-dir) addon-dir)))))
 
+  (testing "invalid nfo data returns nothing and the nfo file is deleted"
+    (let [invalid-nfo-data [{} [] 1 {:foo "bar"} "null"]
+          expected nil]
+      (doseq [nfo-data invalid-nfo-data]
+        (spit (utils/join (addon-path) nfo/nfo-filename) (utils/to-json nfo-data))
+        (is (= expected (nfo/read-nfo (install-dir) addon-dir)))
+        (is (not (fs/exists? (nfo/read-nfo (install-dir) addon-dir)))))))
+
   (testing "an addon with no nfo data but an ignorable sub-directory returns the 'ignore flag'"
     (let [expected {:ignore? true}]
       (is (= expected (nfo/read-nfo (install-dir) ignorable-addon-dir)))))
