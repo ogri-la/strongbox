@@ -24,6 +24,10 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+* 'stop ignoring' has stopped working
+    - 'ignore' has stopped working entirely too.
+    - 'reinstall' has stopped working with stacktrace
+
 * remove support for v1 addon imports
 * change installation from 'overwrite' to 'uninstall+install'
     - what to do about mutual dependencies?
