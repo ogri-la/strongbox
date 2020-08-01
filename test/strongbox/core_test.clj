@@ -739,9 +739,7 @@
                        :name "bundledaddon",
                        :primary? true,
                        :source "curseforge",
-                       :source-id 3}
-                      ]
-            ]
+                       :source-id 3}]]
 
         (core/install-addon addon-1)
         (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
@@ -807,7 +805,7 @@
                      :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}
 
             bundled-dirname "EveryAddon-BundledAddon"
-            
+
             expected {:group-id "https://group.id/also/never/fetched"
                       :installed-game-track :retail
                       :installed-version "5.6.7"
