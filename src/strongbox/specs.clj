@@ -146,7 +146,8 @@
 (s/def :addon/toc
   (s/keys :req-un [::name ::label ::description ::dirname ::interface-version ::installed-version]
           ;; todo: revisit all of these
-          :opt-un [::group-id ::primary? ::group-addons :addon/source :addon/source-id]))
+          ;;:opt-un [::group-id ::primary? ::group-addons :addon/source :addon/source-id]
+          ))
 (s/def :addon/toc-list (s/coll-of :addon/toc))
 
 ;; circular dependency? :addon/toc has an optional ::group-addons and ::group-addons is a list of :addon/toc ? oof
@@ -196,7 +197,7 @@
                            :addon/nfo-input-minimum
                            (s/keys :opt-un [;; present only on imported addons
                                             ::game-track
-                                         ;; used if present
+                                            ;; used if present
                                             ::ignore?])))
 
 (s/def :addon/installable-list (s/coll-of :addon/installable))
