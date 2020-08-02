@@ -147,6 +147,27 @@
       (nfo/rm-nfo-file path)
       (is (fs/exists? path)))))
 
+(deftest rm-nfo*
+  (let [nfo-data {:installed-version "1.2.1"
+                  :installed-game-track :classic
+                  :name "EveryAddon"
+                  :group-id "https://foo.bar"
+                  :primary? true
+                  :source "curseforge"
+                  :source-id 321}]
+
+    (testing "handles nil nfo data (for when nfo data doesn't exist)"
+      (let [expected nil]
+        (is (= expected (nfo/rm-nfo* nil "https://foo.bar")))))
+
+    (testing "returning an empty list ain't a prob, bob"
+      (let [expected []]
+        (is (= expected (nfo/rm-nfo* nfo-data "https://foo.bar")))))
+
+    (testing "removing a nfo entry that isn't present"
+      (let [expected [nfo-data]]
+        (is (= expected (nfo/rm-nfo* nfo-data "https://bar.baz")))))))
+
 (deftest ignore-dir
   (testing "an addon directory is ignored if it contains an svc-type sub directory"
     (doseq [ignorable-dir nfo/ignorable-dir-set

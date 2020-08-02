@@ -143,25 +143,26 @@
     nfo-data))
 
 (defn-spec rm-nfo* (s/or :ok :addon/nfo, :error nil?)
-  "removes any nfo data matching `group-id`. returns a list of nfo data"
-  [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, group-id (s/nilable ::sp/group-id)]
-  (when-let [nfo-data (read-nfo-file install-dir addon-dirname)]
+  "removes any nfo data items matching `group-id`. returns a list of nfo data"
+  [nfo-data (s/nilable :addon/nfo), group-id (s/nilable ::sp/group-id)]
+  (when nfo-data
     (let [nfo-data (if (sequential? nfo-data) nfo-data [nfo-data])]
       (->> nfo-data (remove #(= group-id (:group-id %))) vec))))
 
 (defn-spec rm-nfo (s/or :ok :addon/nfo, :error nil?)
   "removes any nfo data matching `group-id`. returns a nfo map or a list of nfo maps."
   [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, group-id ::sp/group-id]
-  (-> (rm-nfo* install-dir addon-dirname group-id) flatten-nfo))
+  (-> (read-nfo-file install-dir addon-dirname) (rm-nfo* group-id) flatten-nfo))
 
 (defn-spec add-nfo :addon/nfo
   "adds the given nfo data to the end of the list (most recent) and removes it from any other position in the list"
   [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, new-nfo-data :addon/nfo]
   (let [user-warning (fn [nfo-data-list]
-                       (when (> (count nfo-data-list) 1)
+                       (when-not (empty? nfo-data-list)
                          (warn (format "addon '%s' is overwriting '%s'" (:name new-nfo-data) (:name (last nfo-data-list)))))
                        nfo-data-list)]
-    (-> (rm-nfo* install-dir addon-dirname (:group-id new-nfo-data))
+    (-> (read-nfo-file install-dir addon-dirname)
+        (rm-nfo* (:group-id new-nfo-data))
         user-warning
         (conj new-nfo-data)
         flatten-nfo)))

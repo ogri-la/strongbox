@@ -760,6 +760,21 @@
         (is (= (last expected) (nfo/read-nfo install-dir bundled-dirname)))
         (is (= expected (nfo/read-nfo-file install-dir bundled-dirname)))))))
 
+(deftest install-addons-with-mutual-dependencies-user-warning
+  (testing "installing addons with mutual dependencies warns the user"
+    (with-running-app
+      (let [addon-1 {:name "everyaddon" :label "EveryAddon" :version "0.1.2" :url "https://group.id/never/fetched"
+                     :source "curseforge" :source-id 1
+                     :-testing-zipfile (fixture-path "everyaddon--0-1-2.zip")}
+            addon-2 {:name "everyotheraddon" :label "EveryOtherAddon" :version "5.6.7" :url "https://group.id/also/never/fetched"
+                     :source "curseforge" :source-id 2
+                     :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}
+            expected ["addon 'everyotheraddon' is overwriting 'everyaddon'"]]
+        (helper/install-dir)
+        (core/install-addon addon-1)
+        (core/load-installed-addons) ;; refresh our knowledge of what is installed
+        (is (= expected (logging/buffered-log :warn (core/install-addon addon-2))))))))
+
 (deftest uninstall-addons-with-mutual-dependencies--overwrote
   (testing "uninstalling an addon whose mutual dependency *overwrote another* will see the original one restored"
     (with-running-app
