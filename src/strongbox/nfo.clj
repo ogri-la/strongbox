@@ -20,12 +20,13 @@
 (def ignorable-dir-set #{".git" ".hg" ".svn"})
 
 (defn-spec ignore? boolean?
-  "returns true if addon looks like it's under version control"
+  "returns `true` if addon looks like it's under version control"
   [path ::sp/extant-dir]
   (let [sub-dirs (->> path fs/list-dir (filter fs/directory?) (map fs/base-name) (mapv str))]
     (not (nil? (some ignorable-dir-set sub-dirs)))))
 
 (defn-spec prune :addon/nfo
+  "prevents writing unwanted data to nfo files by removing keys not present in the `addon/nfo` spec."
   [addon :addon/nfo]
   (if (sequential? addon)
     (mapv prune addon)
@@ -58,20 +59,17 @@
         ;; it can be drived later in the process by examining the addon's toc file or subdirs, or
         ;; it may be present when upgrading an existing nfo file and should be preserved
         ignore-flag (when-some [ignore? (:ignore? addon)]
-                      {:ignore? ignore?})
+                      {:ignore? ignore?})]
 
-        ;; if present in the addon data, ensure it gets preserved
-        replaced-list (when-some [replaced (:replaced addon)]
-                        {:replaced replaced})]
-    (merge nfo ignore-flag replaced-list)))
+    (merge nfo ignore-flag)))
 
 (defn-spec nfo-path ::sp/file
   "given an installation directory and the directory name of an addon, return the absolute path to the nfo file"
-  [install-dir ::sp/extant-dir, dirname string?]
+  [install-dir ::sp/extant-dir, dirname ::sp/dirname]
   (join install-dir dirname nfo-filename)) ;; /path/to/addons/AddonName/.strongbox.json
 
 (defn-spec rm-nfo-file nil?
-  "deletes a nfo file and only a nfo file"
+  "deletes a nfo file and *only* a nfo file"
   [path ::sp/extant-file]
   (when (= nfo-filename (fs/base-name path))
     (fs/delete path)
@@ -93,7 +91,7 @@
   "reads the nfo file with basic transformations.
   failure to load the json results in the file being deleted.
   failure to validate the json data results in the file being deleted."
-  [install-dir ::sp/extant-dir, dirname string?]
+  [install-dir ::sp/extant-dir, dirname ::sp/dirname]
   (let [path (nfo-path install-dir dirname)
         bad-data (fn []
                    (warn "bad nfo data, deleting file:" path)
@@ -107,11 +105,18 @@
               :data-spec :addon/nfo}]
     (read-nfo-file* path opts)))
 
+(defn-spec mutual-dependency? boolean?
+  "returns `true` if multiple sets of nfo data exist in file"
+  ([nfo-data (s/nilable ::sp/map-or-list-of-maps)]
+   (vector? nfo-data))
+  ([install-dir ::sp/extant-dir, addon-dirname ::sp/dirname]
+   (mutual-dependency? (read-nfo-file install-dir addon-dirname))))
+
 (defn-spec read-nfo (s/or :ok :addon/nfo, :error nil?)
   "parses the contents of the .nfo file and checks if addon should be ignored or not"
-  [install-dir ::sp/extant-dir, dirname string?]
+  [install-dir ::sp/extant-dir, dirname ::sp/dirname]
   (let [nfo-file-contents (read-nfo-file install-dir dirname)
-        nfo-file-contents (if (vector? nfo-file-contents)
+        nfo-file-contents (if (mutual-dependency? nfo-file-contents)
                             (last nfo-file-contents)
                             nfo-file-contents)
         ;; if `ignore?` is present in the nfo file it overrides the nfo and toc file checks.
@@ -129,26 +134,28 @@
 
 ;;
 
-(defn -flatten
-  [nfo-data]
+(defn-spec flatten-nfo ::sp/map-or-list-of-maps
+  "ensures given `nfo-data` is either a map or a list of multiple maps."
+  [nfo-data ::sp/map-or-list-of-maps]
   (if (and (sequential? nfo-data)
            (-> nfo-data count (= 1)))
     (first nfo-data)
     nfo-data))
 
 (defn-spec rm-nfo* (s/or :ok :addon/nfo, :error nil?)
+  "removes any nfo data matching `group-id`. returns a list of nfo data"
   [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, group-id (s/nilable ::sp/group-id)]
-  (when-let [old-nfo-data (read-nfo-file install-dir addon-dirname)]
-    (let [old-nfo-data (if (sequential? old-nfo-data) old-nfo-data [old-nfo-data])]
-      (->> old-nfo-data (remove #(= group-id (:group-id %))) vec))))
+  (when-let [nfo-data (read-nfo-file install-dir addon-dirname)]
+    (let [nfo-data (if (sequential? nfo-data) nfo-data [nfo-data])]
+      (->> nfo-data (remove #(= group-id (:group-id %))) vec))))
 
 (defn-spec rm-nfo (s/or :ok :addon/nfo, :error nil?)
-  "removes nfo data "
+  "removes any nfo data matching `group-id`. returns a nfo map or a list of nfo maps."
   [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, group-id ::sp/group-id]
-  (-> (rm-nfo* install-dir addon-dirname group-id) -flatten))
+  (-> (rm-nfo* install-dir addon-dirname group-id) flatten-nfo))
 
 (defn-spec add-nfo :addon/nfo
-  "adds the given nfo data to the end of the list (most recent), removing it from any other position in the list"
+  "adds the given nfo data to the end of the list (most recent) and removes it from any other position in the list"
   [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, new-nfo-data :addon/nfo]
   (let [user-warning (fn [nfo-data-list]
                        (when (> (count nfo-data-list) 1)
@@ -157,12 +164,7 @@
     (-> (rm-nfo* install-dir addon-dirname (:group-id new-nfo-data))
         user-warning
         (conj new-nfo-data)
-        -flatten)))
-
-(defn mutual-dependency?
-  "returns true if multiple sets of nfo data exist in file"
-  [install-dir addon-dirname]
-  (vector? (read-nfo-file install-dir addon-dirname)))
+        flatten-nfo)))
 
 ;;
 

@@ -479,14 +479,6 @@
     ;; otherwise, ensure list of installed addons is cleared
     (update-installed-addon-list! [])))
 
-(defn-spec select-addon (s/nilable :addon/installed)
-  "returns the first installed addon matching the given `group-id`"
-  [group-id ::sp/group-id]
-  (->> (get-state)
-       :installed-addon-list
-       (filter (fn [addon] (= (:group-id addon) group-id)))
-       first))
-
 ;;
 ;; catalogue handling
 ;;
@@ -988,9 +980,8 @@
    nil))
 
 (defn-spec -install-update-these nil?
-  [updateable-toc-addons :addon/installable-list]
-  (doseq [toc-addon updateable-toc-addons]
-    (install-addon toc-addon (selected-addon-dir))))
+  [updateable-addon-list :addon/installable-list]
+  (run! install-addon updateable-addon-list))
 
 (defn -updateable?
   [rows]
@@ -1023,17 +1014,17 @@
 
 (defn-spec remove-many-addons nil?
   "deletes each of the addons in the given `toc-list` and then calls `refresh`"
-  [toc-list :addon/toc-list]
+  [installed-addon-list :addon/toc-list]
   (let [addon-dir (selected-addon-dir)]
-    (doseq [toc toc-list]
-      (addon/remove-addon addon-dir toc))
+    (doseq [installed-addon installed-addon-list]
+      (addon/remove-addon addon-dir installed-addon))
     (refresh)))
 
 (defn-spec remove-addon nil?
-  [toc :addon/installed]
-  (let [addon-dir (selected-addon-dir)]
-    (addon/remove-addon addon-dir toc)
-    (refresh)))
+  "removes given installed addon"
+  [installed-addon :addon/installed]
+  (addon/remove-addon (selected-addon-dir) installed-addon)
+  (refresh))
 
 (defn-spec remove-selected nil?
   []

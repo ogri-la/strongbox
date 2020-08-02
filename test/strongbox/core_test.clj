@@ -719,6 +719,7 @@
             bundled-dirname "EveryAddon-BundledAddon"
 
             ;; addon-2 overwrites the bundled nfo data but preserves previous
+            ;; addon-3 overwrites the bundled nfo data *again* but preserves previous two
             expected [{:group-id "https://group.id/never/fetched"
                        :installed-game-track :retail ;; ignore the implications for now?
                        :installed-version "0.1.2"
@@ -754,6 +755,7 @@
         (is (= (subvec expected 0 2) (nfo/read-nfo-file install-dir bundled-dirname)))
 
         (core/load-installed-addons) ;; refresh our knowledge of what is installed
+
         (core/install-addon addon-3)
         (is (= (last expected) (nfo/read-nfo install-dir bundled-dirname)))
         (is (= expected (nfo/read-nfo-file install-dir bundled-dirname)))))))
@@ -788,7 +790,7 @@
         (is (= ["EveryAddon" "EveryAddon-BundledAddon" "EveryOtherAddon"] (helper/install-dir-contents)))
         (core/load-installed-addons) ;; refresh our knowledge of what is installed
 
-        (core/remove-addon (core/select-addon (:url addon-2)))
+        (core/remove-addon (helper/select-addon (:url addon-2)))
         (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
         (is (= expected (nfo/read-nfo install-dir bundled-dirname)))))))
 
@@ -822,7 +824,7 @@
         (is (= ["EveryAddon" "EveryAddon-BundledAddon" "EveryOtherAddon"] (helper/install-dir-contents)))
         (core/load-installed-addons) ;; refresh our knowledge of what is installed
 
-        (core/remove-addon (core/select-addon (:url addon-1)))
+        (core/remove-addon (helper/select-addon (:url addon-1)))
         (is (= ["EveryAddon-BundledAddon" "EveryOtherAddon"] (helper/install-dir-contents)))
         (is (= expected (nfo/read-nfo install-dir bundled-dirname)))))))
 

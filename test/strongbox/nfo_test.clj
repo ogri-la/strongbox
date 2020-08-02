@@ -71,7 +71,7 @@
     (let [expected nil]
       (is (= expected (nfo/read-nfo (install-dir) addon-dir)))))
 
-  (testing "invalid nfo data returns nothing and the nfo file is deleted"
+  (testing "invalid nfo data returns `nil` and the nfo file is deleted"
     (let [invalid-nfo-data [{} [] 1 {:foo "bar"} "null"]
           expected nil]
       (doseq [nfo-data invalid-nfo-data]

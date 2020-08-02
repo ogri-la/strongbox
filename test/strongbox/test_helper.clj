@@ -1,10 +1,13 @@
 (ns strongbox.test-helper
   (:require
+   [orchestra.core :refer [defn-spec]]
+   [clojure.spec.alpha :as s]
    [envvar.core :refer [env with-env]]
    [taoensso.timbre :as timbre :refer [debug info warn error spy]]
    [me.raynes.fs :as fs :refer [with-cwd]]
    [clj-http.fake :refer [with-fake-routes-in-isolation]]
    [strongbox
+    [specs :as sp]
     [main :as main]
     [core :as core]
     [utils :as utils]]))
@@ -93,3 +96,10 @@
 (defmacro with-running-app
   [& form]
   `(with-running-app+opts {:ui :cli} ~@form))
+
+(defn-spec select-addon (s/nilable :addon/installed)
+  "returns the first installed addon matching the given `group-id`"
+  [group-id ::sp/group-id]
+  (->> (core/get-state :installed-addon-list)
+       (filter (fn [addon] (= (:group-id addon) group-id)))
+       first))
