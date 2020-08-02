@@ -71,6 +71,14 @@
     (let [expected nil]
       (is (= expected (nfo/read-nfo (install-dir) addon-dir)))))
 
+  (testing "invalid nfo data returns `nil` and the nfo file is deleted"
+    (let [invalid-nfo-data [{} [] 1 {:foo "bar"} "null"]
+          expected nil]
+      (doseq [nfo-data invalid-nfo-data]
+        (spit (utils/join (addon-path) nfo/nfo-filename) (utils/to-json nfo-data))
+        (is (= expected (nfo/read-nfo (install-dir) addon-dir)))
+        (is (not (fs/exists? (nfo/read-nfo (install-dir) addon-dir)))))))
+
   (testing "an addon with no nfo data but an ignorable sub-directory returns the 'ignore flag'"
     (let [expected {:ignore? true}]
       (is (= expected (nfo/read-nfo (install-dir) ignorable-addon-dir)))))
@@ -124,20 +132,41 @@
       (spit (utils/join (ignorable-addon-path) nfo/nfo-filename) (utils/to-json nfo-data))
       (is (= expected (nfo/read-nfo (install-dir) ignorable-addon-dir))))))
 
-(deftest rm-nfo
+(deftest rm-nfo-file
   (testing "a nfo file is deleted"
     (let [path (utils/join (addon-path) nfo/nfo-filename)]
       (fs/touch path)
       (is (fs/exists? path))
-      (nfo/rm-nfo path)
+      (nfo/rm-nfo-file path)
       (is (not (fs/exists? path)))))
 
   (testing "a non-nfo file is preserved"
     (let [path (utils/join (addon-path) "SomeAddon.toc")]
       (fs/touch path)
       (is (fs/exists? path))
-      (nfo/rm-nfo path)
+      (nfo/rm-nfo-file path)
       (is (fs/exists? path)))))
+
+(deftest rm-nfo*
+  (let [nfo-data {:installed-version "1.2.1"
+                  :installed-game-track :classic
+                  :name "EveryAddon"
+                  :group-id "https://foo.bar"
+                  :primary? true
+                  :source "curseforge"
+                  :source-id 321}]
+
+    (testing "handles nil nfo data (for when nfo data doesn't exist)"
+      (let [expected nil]
+        (is (= expected (nfo/rm-nfo* nil "https://foo.bar")))))
+
+    (testing "returning an empty list ain't a prob, bob"
+      (let [expected []]
+        (is (= expected (nfo/rm-nfo* nfo-data "https://foo.bar")))))
+
+    (testing "removing a nfo entry that isn't present"
+      (let [expected [nfo-data]]
+        (is (= expected (nfo/rm-nfo* nfo-data "https://bar.baz")))))))
 
 (deftest ignore-dir
   (testing "an addon directory is ignored if it contains an svc-type sub directory"
@@ -211,7 +240,7 @@
       (nfo/clear-ignore (install-dir) ignorable-addon-dir)
       (is (not (fs/exists? (nfo/nfo-path (install-dir) ignorable-addon-dir))))))
 
-  ;; note: should this behave like an ignore-flag-only nfo file and have it's ignore? flag set to false ?
+  ;; note: should this behave like an ignore-flag-only nfo file and have it's `ignore?` flag set to `false` ?
   ;; we have no way of knowing if the addon is being ignored via toc data at this point in the program
   (testing "implicitly ignored addons with regular nfo data without an explicit `ignore?` flag are treated the same"
     (let [nfo-data {:installed-version "1.2.1"

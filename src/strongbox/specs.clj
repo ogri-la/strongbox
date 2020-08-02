@@ -18,6 +18,8 @@
 (s/def ::list-of-keywords (s/coll-of keyword?))
 (s/def ::list-of-list-of-keywords (s/coll-of ::list-of-keywords))
 
+(s/def ::map-or-list-of-maps (s/or :map map? :list (s/coll-of map?)))
+
 (s/def ::regex #(instance? java.util.regex.Pattern %))
 (s/def ::short-string #(<= (count %) 80))
 
@@ -144,17 +146,21 @@
 (s/def :addon/toc
   (s/keys :req-un [::name ::label ::description ::dirname ::interface-version ::installed-version]
           ;; todo: revisit all of these
-          :opt-un [::group-id ::primary? ::group-addons :addon/source :addon/source-id]))
+          ;;:opt-un [::group-id ::primary? ::group-addons :addon/source :addon/source-id]
+          ))
 (s/def :addon/toc-list (s/coll-of :addon/toc))
 
 ;; circular dependency? :addon/toc has an optional ::group-addons and ::group-addons is a list of :addon/toc ? oof
 (s/def ::group-addons :addon/toc-list)
 
 ;; 'nfo' files contain extra per-addon data written to addon directories as .strongbox.json
+(s/def :addon/-nfo (s/keys :req-un [::installed-version ::name ::group-id ::primary? :addon/source
+                                    ::installed-game-track :addon/source-id]
+                           :opt-un [::ignore?]))
+
 (s/def :addon/nfo (s/or :ignored ::ignore-flag
-                        :ok (s/keys :req-un [::installed-version ::name ::group-id ::primary? :addon/source
-                                             ::installed-game-track :addon/source-id]
-                                    :opt-un [::ignore?])))
+                        :ok :addon/-nfo
+                        :mutual-depedency (s/coll-of :addon/-nfo :kind vector?)))
 
 ;; intermediate spec. minimum amount of data required to create a nfo file. the rest is derived.
 (s/def :addon/nfo-input-minimum (s/keys :req-un [::version ::name
@@ -191,7 +197,7 @@
                            :addon/nfo-input-minimum
                            (s/keys :opt-un [;; present only on imported addons
                                             ::game-track
-                                         ;; used if present
+                                            ;; used if present
                                             ::ignore?])))
 
 (s/def :addon/installable-list (s/coll-of :addon/installable))

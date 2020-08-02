@@ -619,7 +619,7 @@
 ;;
 
 (deftest uninstall-addon
-  (testing "uninstalling an addon without a nfo file is supported, but limited"
+  (testing "uninstalling an addon without a nfo file is supported, but won't remove addons that came bundled"
     (with-running-app
       (let [install-dir (helper/install-dir)
             ;; even though they're part of the same addon strongbox didn't install it
@@ -695,9 +695,155 @@
         (core/remove-many-addons [addon])
         (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (install-dir-contents)))))))
 
+;; mutual dependencies
+
+(deftest install-addons-with-mutual-dependencies
+  (testing "installing addons with mutual dependencies captures the dependency"
+    (with-running-app
+      (let [install-dir (helper/install-dir)
+
+            ;; all these addons install the 'EveryAddon-BundledAddon' addon
+            addon-1 {:name "everyaddon" :label "EveryAddon" :version "0.1.2" :url "https://group.id/never/fetched"
+                     :source "curseforge" :source-id 1
+                     :-testing-zipfile (fixture-path "everyaddon--0-1-2.zip")}
+
+            addon-2 {:name "everyotheraddon" :label "EveryOtherAddon" :version "5.6.7" :url "https://group.id/also/never/fetched"
+                     :source "curseforge" :source-id 2
+                     :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}
+
+            ;; 'bundled is misleading here', standalone is more like it
+            addon-3 {:name "bundledaddon" :label "BundledAddon" :version "a.b.c" :url "https://group.id/still/not/fetched"
+                     :source "curseforge" :source-id 3
+                     :-testing-zipfile (fixture-path "everyaddon-bundledaddon--a-b-c.zip")}
+
+            bundled-dirname "EveryAddon-BundledAddon"
+
+            ;; addon-2 overwrites the bundled nfo data but preserves previous
+            ;; addon-3 overwrites the bundled nfo data *again* but preserves previous two
+            expected [{:group-id "https://group.id/never/fetched"
+                       :installed-game-track :retail ;; ignore the implications for now?
+                       :installed-version "0.1.2"
+                       :name "everyaddon"
+                       :primary? false
+                       :source "curseforge"
+                       :source-id 1}
+                      {:group-id "https://group.id/also/never/fetched",
+                       :installed-game-track :retail,
+                       :installed-version "5.6.7",
+                       :name "everyotheraddon",
+                       :primary? false,
+                       :source "curseforge",
+                       :source-id 2}
+                      {:group-id "https://group.id/still/not/fetched",
+                       :installed-game-track :retail,
+                       :installed-version "a.b.c",
+                       :name "bundledaddon",
+                       :primary? true,
+                       :source "curseforge",
+                       :source-id 3}]]
+
+        (core/install-addon addon-1)
+        (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
+        (is (= (first expected) (nfo/read-nfo install-dir bundled-dirname)))
+        (is (= (first expected) (nfo/read-nfo-file install-dir bundled-dirname)))
+
+        (core/load-installed-addons) ;; refresh our knowledge of what is installed
+
+        (core/install-addon addon-2)
+        (is (= ["EveryAddon" "EveryAddon-BundledAddon" "EveryOtherAddon"] (helper/install-dir-contents)))
+        (is (= (second expected) (nfo/read-nfo install-dir bundled-dirname)))
+        (is (= (subvec expected 0 2) (nfo/read-nfo-file install-dir bundled-dirname)))
+
+        (core/load-installed-addons) ;; refresh our knowledge of what is installed
+
+        (core/install-addon addon-3)
+        (is (= (last expected) (nfo/read-nfo install-dir bundled-dirname)))
+        (is (= expected (nfo/read-nfo-file install-dir bundled-dirname)))))))
+
+(deftest install-addons-with-mutual-dependencies-user-warning
+  (testing "installing addons with mutual dependencies warns the user"
+    (with-running-app
+      (let [addon-1 {:name "everyaddon" :label "EveryAddon" :version "0.1.2" :url "https://group.id/never/fetched"
+                     :source "curseforge" :source-id 1
+                     :-testing-zipfile (fixture-path "everyaddon--0-1-2.zip")}
+            addon-2 {:name "everyotheraddon" :label "EveryOtherAddon" :version "5.6.7" :url "https://group.id/also/never/fetched"
+                     :source "curseforge" :source-id 2
+                     :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}
+            expected ["addon 'everyotheraddon' is overwriting 'everyaddon'"]]
+        (helper/install-dir)
+        (core/install-addon addon-1)
+        (core/load-installed-addons) ;; refresh our knowledge of what is installed
+        (is (= expected (logging/buffered-log :warn (core/install-addon addon-2))))))))
+
+(deftest uninstall-addons-with-mutual-dependencies--overwrote
+  (testing "uninstalling an addon whose mutual dependency *overwrote another* will see the original one restored"
+    (with-running-app
+      (let [install-dir (helper/install-dir)
+            addon-1 {:name "everyaddon" :label "EveryAddon" :version "0.1.2" :url "https://group.id/never/fetched"
+                     :source "curseforge" :source-id 1
+                     :-testing-zipfile (fixture-path "everyaddon--0-1-2.zip")}
+
+            addon-2 {:name "everyotheraddon" :label "EveryOtherAddon" :version "5.6.7" :url "https://group.id/also/never/fetched"
+                     :source "curseforge" :source-id 2
+                     :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}
+
+            bundled-dirname "EveryAddon-BundledAddon"
+
+            expected {:group-id "https://group.id/never/fetched"
+                      :installed-game-track :retail
+                      :installed-version "0.1.2"
+                      :name "everyaddon"
+                      :primary? false
+                      :source "curseforge"
+                      :source-id 1}]
+
+        (core/install-addon addon-1)
+        (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
+        (core/load-installed-addons) ;; refresh our knowledge of what is installed
+
+        (core/install-addon addon-2)
+        (is (= ["EveryAddon" "EveryAddon-BundledAddon" "EveryOtherAddon"] (helper/install-dir-contents)))
+        (core/load-installed-addons) ;; refresh our knowledge of what is installed
+
+        (core/remove-addon (helper/select-addon (:url addon-2)))
+        (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
+        (is (= expected (nfo/read-nfo install-dir bundled-dirname)))))))
+
+(deftest uninstall-addons-with-mutual-dependencies--overwritten
+  (testing "uninstalling an addon whose mutual dependency *was overwritten* by another will see it removed from the list"
+    (with-running-app
+      (let [install-dir (helper/install-dir)
+            addon-1 {:name "everyaddon" :label "EveryAddon" :version "0.1.2" :url "https://group.id/never/fetched"
+                     :source "curseforge" :source-id 1
+                     :-testing-zipfile (fixture-path "everyaddon--0-1-2.zip")}
+
+            addon-2 {:name "everyotheraddon" :label "EveryOtherAddon" :version "5.6.7" :url "https://group.id/also/never/fetched"
+                     :source "curseforge" :source-id 2
+                     :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}
+
+            bundled-dirname "EveryAddon-BundledAddon"
+
+            expected {:group-id "https://group.id/also/never/fetched"
+                      :installed-game-track :retail
+                      :installed-version "5.6.7"
+                      :name "everyotheraddon"
+                      :primary? false
+                      :source "curseforge"
+                      :source-id 2}]
+
+        (core/install-addon addon-1)
+        (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
+        (core/load-installed-addons) ;; refresh our knowledge of what is installed
+
+        (core/install-addon addon-2)
+        (is (= ["EveryAddon" "EveryAddon-BundledAddon" "EveryOtherAddon"] (helper/install-dir-contents)))
+        (core/load-installed-addons) ;; refresh our knowledge of what is installed
+
+        (core/remove-addon (helper/select-addon (:url addon-1)))
+        (is (= ["EveryAddon-BundledAddon" "EveryOtherAddon"] (helper/install-dir-contents)))
+        (is (= expected (nfo/read-nfo install-dir bundled-dirname)))))))
 
 ;;
-
 
 (deftest http-500-downloading-catalogue
   (testing "HTTP 500 while fetching catalogue from github"

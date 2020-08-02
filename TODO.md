@@ -24,11 +24,13 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+* 'stop ignoring' has stopped working
+    - 'ignore' has stopped working entirely too.
+    - 'reinstall' has stopped working with stacktrace
+
+* remove support for v1 addon imports
 * change installation from 'overwrite' to 'uninstall+install'
-    - good opportunity to revisit some code in zip.clj and core.clj:
-        - simplify `install-addon` interface in core.clj
-            - we need to provide an installation directory which can be pulled from the application state
-    - what to do about mutual dependencies? 
+    - what to do about mutual dependencies?
         - i.e., two addons both include some addon, one overwrites the other, that one is uninstalled leaving the other in a broken state. 
         - Mutual dependencies aren't tracked ... 
         - I could:

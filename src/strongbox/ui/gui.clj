@@ -237,6 +237,8 @@
   [_ ::sp/gui-event]
   (let [selected-rows (tbl-selected-rows :#tbl-installed-addons)]
     (debug (count selected-rows) "selected, " (count (filter :update? selected-rows)) "updatable")
+    ;; todo: bug here. this data is suspect, we need to convert these rows to actual installed addons
+    ;;(info "selected rows" (vec selected-rows))
     (swap! core/state assoc :selected-installed selected-rows))
   nil)
 
