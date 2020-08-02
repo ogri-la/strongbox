@@ -217,6 +217,8 @@
 ;;
 
 (defn-spec implicitly-ignored? boolean?
+  "returns `true` if the addon in the given `install-dir`+`addon-dirname` directory is being implicitly ignored.
+  an implicit 'ignore' is when the addon is under version control or the .toc file looks like an unrendered template."
   [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname]
   (let [path (utils/join install-dir addon-dirname)
         toc-data (toc/parse-addon-toc-guard path)]

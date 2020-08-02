@@ -1035,8 +1035,8 @@
 (deftest ignore-addon
   (testing "a regular installed addon can be marked as 'ignored'"
     (with-running-app
-      (let [install-dir (helper/install-dir)
-            addon {:name "everyaddon" :label "EveryAddon" :version "1.2.3" :url "https://group.id/never/fetched"
+      (helper/install-dir)
+      (let [addon {:name "everyaddon" :label "EveryAddon" :version "1.2.3" :url "https://group.id/never/fetched"
                    :source "curseforge" :source-id 1
                    :-testing-zipfile (fixture-path "everyaddon--1-2-3.zip")}
 
@@ -1063,8 +1063,8 @@
 (deftest clear-addon-ignore-flag
   (testing "an ignored addon can be 'unignored'"
     (with-running-app
-      (let [install-dir (helper/install-dir)
-            addon {:name "everyaddon" :label "EveryAddon" :version "1.2.3" :url "https://group.id/never/fetched"
+      (helper/install-dir)
+      (let [addon {:name "everyaddon" :label "EveryAddon" :version "1.2.3" :url "https://group.id/never/fetched"
                    :source "curseforge" :source-id 1
                    :-testing-zipfile (fixture-path "everyaddon--1-2-3.zip")}
 

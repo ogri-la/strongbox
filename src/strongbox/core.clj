@@ -369,6 +369,7 @@
 ;; selecting addons
 
 (defn-spec select-addons nil?
+  "creates a sub-selection of installed addons for bulk operations like 'update', 'delete', 'ignore', etc"
   [selected-rows ::sp/list-of-maps]
   (swap! state assoc :selected-installed selected-rows)
   nil)
