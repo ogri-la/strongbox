@@ -49,6 +49,11 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+* bug, reinstall is busted
+    - looks like I've been relying on the selected table rows to be returning correct data
+        - it's not. it's been mangled and padded to suit the gui
+        - and now the ignore flag value isn't consistent with the proper data
+
 * remove support for v1 addon imports
 
 * just encountered a case where the classic version overwrote one of the retail directories but not the other
