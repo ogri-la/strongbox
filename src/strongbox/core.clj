@@ -1034,13 +1034,13 @@
 (defn-spec ignore-selected nil?
   "marks each of the selected addons as being 'ignored'"
   []
-  (->> (get-state) :selected-installed :dirname (run! (partial nfo/ignore (selected-addon-dir))))
+  (->> (get-state) :selected-installed (map :dirname) (run! (partial nfo/ignore (selected-addon-dir))))
   (refresh))
 
 (defn-spec clear-ignore-selected nil?
   "removes the 'ignore' flag from each of the selected addons."
   []
-  (->> (get-state) :selected-installed :dirname (run! (partial nfo/clear-ignore (selected-addon-dir))))
+  (->> (get-state) :selected-installed (map :dirname) (run! (partial nfo/clear-ignore (selected-addon-dir))))
   (refresh))
 
 ;;
