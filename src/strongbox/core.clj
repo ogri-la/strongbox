@@ -342,11 +342,7 @@
       (utils/instrument (:spec? cli-opts))))
   nil)
 
-
-;;
 ;; utils
-;;
-
 
 (defn-spec expanded? boolean?
   "returns true if an addon has found further details online"
@@ -370,9 +366,14 @@
       (finally
         (stop-affecting-addon addon)))))
 
-;;
+;; selecting addons
+
+(defn-spec select-addons nil?
+  [selected-rows ::sp/list-of-maps]
+  (swap! state assoc :selected-installed selected-rows)
+  nil)
+
 ;; downloading and installing and updating
-;;
 
 (defn-spec downloaded-addon-fname string?
   [name string?, version string?]
@@ -701,12 +702,14 @@
   Accepts something as basic as toc data."
   [addon (s/or :unmatched :addon/toc
                :matched :addon/toc+summary+match)]
-  (let [expanded-addon (when (:matched? addon) (expand-summary-wrapper addon))
+  (let [expanded-addon (when (:matched? addon)
+                         (expand-summary-wrapper addon))
         addon (or expanded-addon addon) ;; expanded addon may still be nil
         {:keys [installed-version version]} addon
-        update? (and version
-                     (not= installed-version version)
-                     (not (:ignore? addon)))]
+        update? (boolean
+                 (and version
+                      (not= installed-version version)
+                      (not (:ignore? addon))))]
     (assoc addon :update? update?)))
 
 (defn-spec check-for-updates nil?
@@ -1040,7 +1043,7 @@
 (defn-spec clear-ignore-selected nil?
   "removes the 'ignore' flag from each of the selected addons."
   []
-  (->> (get-state) :selected-installed (map :dirname) (run! (partial nfo/clear-ignore (selected-addon-dir))))
+  (->> (get-state) :selected-installed (map :dirname) (run! (partial addon/clear-ignore (selected-addon-dir))))
   (refresh))
 
 ;;

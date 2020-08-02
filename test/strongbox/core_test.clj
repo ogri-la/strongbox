@@ -1029,3 +1029,92 @@
                     ;; optional, lets the GUI know we have a match that can be checked for updates
                     :matched? true}]
       (is (= expected (core/moosh-addons toc addon-summary))))))
+
+;;
+
+(deftest ignore-addon
+  (testing "a regular installed addon can be marked as 'ignored'"
+    (with-running-app
+      (let [install-dir (helper/install-dir)
+            addon {:name "everyaddon" :label "EveryAddon" :version "1.2.3" :url "https://group.id/never/fetched"
+                   :source "curseforge" :source-id 1
+                   :-testing-zipfile (fixture-path "everyaddon--1-2-3.zip")}
+
+            expected {:ignore? true,
+                      :description "Does what no other addon does, slightly differently",
+                      :dirname "EveryAddon",
+                      :group-id "https://group.id/never/fetched",
+                      :installed-game-track :retail,
+                      :installed-version "1.2.3",
+                      :interface-version 70000,
+                      :label "EveryAddon 1.2.3",
+                      :name "everyaddon",
+                      :primary? true,
+                      :source "curseforge",
+                      :source-id 1,
+                      :update? false}]
+        (core/install-addon addon)
+        (is (= ["EveryAddon"] (helper/install-dir-contents)))
+        (core/load-installed-addons)
+        (core/select-addons (core/get-state :installed-addon-list))
+        (core/ignore-selected) ;; calls `core/refresh`
+        (is (= expected (first (core/get-state :installed-addon-list))))))))
+
+(deftest clear-addon-ignore-flag
+  (testing "an ignored addon can be 'unignored'"
+    (with-running-app
+      (let [install-dir (helper/install-dir)
+            addon {:name "everyaddon" :label "EveryAddon" :version "1.2.3" :url "https://group.id/never/fetched"
+                   :source "curseforge" :source-id 1
+                   :-testing-zipfile (fixture-path "everyaddon--1-2-3.zip")}
+
+            expected {;;:ignore? false, ;; removed rather than set to false.
+                      :description "Does what no other addon does, slightly differently",
+                      :dirname "EveryAddon",
+                      :group-id "https://group.id/never/fetched",
+                      :installed-game-track :retail,
+                      :installed-version "1.2.3",
+                      :interface-version 70000,
+                      :label "EveryAddon 1.2.3",
+                      :name "everyaddon",
+                      :primary? true,
+                      :source "curseforge",
+                      :source-id 1,
+                      :update? false}]
+        (core/install-addon addon)
+        (core/load-installed-addons)
+        (core/select-addons (core/get-state :installed-addon-list))
+        (core/ignore-selected) ;; calls `core/refresh`
+        (is (:ignore? (first (core/get-state :installed-addon-list))))
+
+        (core/clear-ignore-selected)
+        (is (= expected (first (core/get-state :installed-addon-list)))))))
+
+  (testing "an implicitly ignored (vcs) addon can be 'unignored' as well"
+    (with-running-app
+      (let [install-dir (helper/install-dir)
+            addon {:name "everyaddon" :label "EveryAddon" :version "1.2.3" :url "https://group.id/never/fetched"
+                   :source "curseforge" :source-id 1
+                   :-testing-zipfile (fixture-path "everyaddon--1-2-3.zip")}
+
+            expected {:ignore? false, ;; explicit `false` rather than removed
+                      :description "Does what no other addon does, slightly differently",
+                      :dirname "EveryAddon",
+                      :group-id "https://group.id/never/fetched",
+                      :installed-game-track :retail,
+                      :installed-version "1.2.3",
+                      :interface-version 70000,
+                      :label "EveryAddon 1.2.3",
+                      :name "everyaddon",
+                      :primary? true,
+                      :source "curseforge",
+                      :source-id 1,
+                      :update? false}]
+        (core/install-addon addon)
+        (fs/mkdir (utils/join install-dir "EveryAddon" ".git"))
+        (core/load-installed-addons)
+        (is (:ignore? (first (core/get-state :installed-addon-list)))) ;; implicitly ignored
+
+        (core/select-addons (core/get-state :installed-addon-list))
+        (core/clear-ignore-selected)
+        (is (= expected (first (core/get-state :installed-addon-list))))))))

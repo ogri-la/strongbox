@@ -174,7 +174,7 @@
             :let [path (utils/join (addon-path) ignorable-dir)]]
       (try
         (fs/mkdirs path)
-        (is (nfo/ignore? (addon-path)))
+        (is (nfo/version-controlled? (addon-path)))
         (finally
           (fs/delete-dir (addon-path)))))))
 

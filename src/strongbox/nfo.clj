@@ -19,7 +19,7 @@
 
 (def ignorable-dir-set #{".git" ".hg" ".svn"})
 
-(defn-spec ignore? boolean?
+(defn-spec version-controlled? boolean?
   "returns `true` if addon looks like it's under version control"
   [path ::sp/extant-dir]
   (let [sub-dirs (->> path fs/list-dir (filter fs/directory?) (map fs/base-name) (mapv str))]
@@ -127,7 +127,7 @@
             (warn (format "ignoring '%s'" dirname)))
 
         ignore-flag (when (and (not user-ignored)
-                               (ignore? (join install-dir dirname)))
+                               (version-controlled? (join install-dir dirname)))
                       (warn (format "ignoring '%s': addon directory contains a .git/.hg/.svn folder" dirname))
                       {:ignore? true})]
     (merge nfo-file-contents ignore-flag)))
@@ -212,6 +212,10 @@
   Explicitly ignores this addon by setting the `ignore?` flag to `true`."
   [install-dir ::sp/extant-dir, dirname ::sp/dirname]
   (update-nfo install-dir dirname {:ignore? true}))
+
+(defn-spec stop-ignoring nil?
+  [install-dir ::sp/extant-dir, dirname ::sp/dirname]
+  (update-nfo install-dir dirname {:ignore? false}))
 
 (defn-spec clear-ignore nil?
   "removes the `ignore?` flag on an addon.

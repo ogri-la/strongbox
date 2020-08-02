@@ -239,7 +239,7 @@
     (debug (count selected-rows) "selected, " (count (filter :update? selected-rows)) "updatable")
     ;; todo: bug here. this data is suspect, we need to convert these rows to actual installed addons
     ;;(info "selected rows" (vec selected-rows))
-    (swap! core/state assoc :selected-installed selected-rows))
+    (core/select-addons (or selected-rows [])))
   nil)
 
 (defn-spec search-results-selection-handler nil?
