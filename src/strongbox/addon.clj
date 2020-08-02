@@ -213,3 +213,22 @@
                           (mapv #(utils/rtrim % "/")))
         zip-dir-in-ignore-dir-list? (fn [zip-dir] (some #{zip-dir} ignore-list))]
     (utils/any (map zip-dir-in-ignore-dir-list? zip-dir-list))))
+
+;;
+
+(defn-spec implicitly-ignored? boolean?
+  "returns `true` if the addon in the given `install-dir`+`addon-dirname` directory is being implicitly ignored.
+  an implicit 'ignore' is when the addon is under version control or the .toc file looks like an unrendered template."
+  [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname]
+  (let [path (utils/join install-dir addon-dirname)
+        toc-data (toc/parse-addon-toc-guard path)]
+    (or (contains? toc-data :ignore?)
+        (nfo/version-controlled? path))))
+
+(defn-spec clear-ignore nil?
+  "clears the `ignore?` flag on an addon, either by remove it from the nfo or setting it in the nfo to `false`.
+  Has to happen here so we can distinguish between toc-ignores and nfo-ignores."
+  [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname]
+  (if (implicitly-ignored? install-dir addon-dirname)
+    (nfo/stop-ignoring install-dir addon-dirname)
+    (nfo/clear-ignore install-dir addon-dirname)))

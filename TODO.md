@@ -49,10 +49,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
-* 'stop ignoring' has stopped working
-    - 'ignore' has stopped working entirely too.
-    - 'reinstall' has stopped working with stacktrace
-
 * remove support for v1 addon imports
 
 * just encountered a case where the classic version overwrote one of the retail directories but not the other
