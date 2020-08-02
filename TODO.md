@@ -21,14 +21,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - 0.10.0 uses the raw catalog files directly
     - 0.9.2 was still using the daily release
     - done
-
-## todo
-
-* 'stop ignoring' has stopped working
-    - 'ignore' has stopped working entirely too.
-    - 'reinstall' has stopped working with stacktrace
-
-* remove support for v1 addon imports
 * change installation from 'overwrite' to 'uninstall+install'
     - what to do about mutual dependencies?
         - i.e., two addons both include some addon, one overwrites the other, that one is uninstalled leaving the other in a broken state. 
@@ -54,10 +46,23 @@ see CHANGELOG.md for a more formal list of changes by release
                     - this is no different to the current situation
             - the mutual dependency has it's group identity updated
                 - or we keep a list of group membership
+
+## todo
+
+* 'stop ignoring' has stopped working
+    - 'ignore' has stopped working entirely too.
+    - 'reinstall' has stopped working with stacktrace
+
+* remove support for v1 addon imports
+
 * just encountered a case where the classic version overwrote one of the retail directories but not the other
     - (tukui classic and retail?)
     - so there was a broken retail installation but a working classic installation
         - I was able to 'uninstall' the broken retail installation without a problem
+
+* bug, new gui instance is spawned when switching themes outside of the REPL
+
+## todo bucket (no particular order)
 
 * EOL planning, robustness, only download/update the catalogue *after* an existing catalogue has been confirmed
     - github is down, wowman is erroring with a 500
@@ -78,10 +83,6 @@ see CHANGELOG.md for a more formal list of changes by release
             - fingerprint is 9 digits and all decimal, so not a hex digest
     - wowinterface checksum is hidden behind a javascript tabber but still available
         - wowinterface do have a md5sum in results! score
-
-* bug, new gui instance is spawned when switching themes outside of the REPL
-
-## todo bucket (no particular order)
 
 * spec, revisit usage of 'addon/toc'
     - it was used too broadly before the recent spec shakeup
