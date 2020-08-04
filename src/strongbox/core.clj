@@ -374,6 +374,10 @@
   (swap! state assoc :selected-installed selected-rows)
   nil)
 
+(defn-spec select-addons-by nil?
+  [f fn?]
+  (select-addons (filter f (get-state :installed-addon-list))))
+
 ;; downloading and installing and updating
 
 (defn-spec downloaded-addon-fname string?

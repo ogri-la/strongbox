@@ -235,11 +235,10 @@
 
 (defn-spec installed-addons-selection-handler nil?
   [_ ::sp/gui-event]
-  (let [selected-rows (tbl-selected-rows :#tbl-installed-addons)]
+  (let [selected-rows (tbl-selected-rows :#tbl-installed-addons)
+        dirname-list (mapv :dirname selected-rows)]
     (debug (count selected-rows) "selected, " (count (filter :update? selected-rows)) "updatable")
-    ;; todo: bug here. this data is suspect, we need to convert these rows to actual installed addons
-    ;;(info "selected rows" (vec selected-rows))
-    (core/select-addons (or selected-rows [])))
+    (core/select-addons-by (fn [addon] (some #{(:dirname addon)} dirname-list))))
   nil)
 
 (defn-spec search-results-selection-handler nil?
