@@ -52,15 +52,23 @@ see CHANGELOG.md for a more formal list of changes by release
         - it's not. it's been mangled and padded to suit the gui
         - and now the ignore flag value isn't consistent with the proper data
 
-
-## todo
-
 * just encountered a case where the classic version overwrote one of the retail directories but not the other
     - (tukui classic and retail?)
     - so there was a broken retail installation but a working classic installation
         - I was able to 'uninstall' the broken retail installation without a problem
+    - this is still a muddy state of affairs, but it's handled cleanly and predictably now
+        - the user is warned that an addon is overwriting another
+        - removing one will reveal the other
+            - this is a 'masking' effect I hadn't anticipated
+            - it could still be confusing but I suspect it's pretty rare
+
+## todo
 
 * bug, new gui instance is spawned when switching themes outside of the REPL
+
+* issue 169, handle 5xx errors from curseforge and others predictably
+
+* issue 166, lengthen the addon directory dropdown
 
 ## todo bucket (no particular order)
 
