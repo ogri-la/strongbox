@@ -369,7 +369,7 @@
 ;; selecting addons
 
 (defn-spec select-addons* nil?
-  "sets the selected list of addons to the given `selected-rows` for bulk operations like 'update', 'delete', 'ignore', etc"
+  "sets the selected list of addons to the given `selected-addons` for bulk operations like 'update', 'delete', 'ignore', etc"
   [selected-addons :addon/installed-list]
   (swap! state assoc :selected-installed selected-addons)
   nil)

@@ -46,11 +46,10 @@
         (is (= expected (gui/as-selector given)))))))
 
 (deftest gui-select-installed-addons
-  (testing "selecting installed addons using the gui selects the corresponding installed addons"
+  (testing "selecting addons using the gui selects the corresponding installed addons in the application state"
     (let [addon {:name "everyaddon" :label "EveryAddon" :version "1.2.3" :url "https://group.id/never/fetched"
                  :source "curseforge" :source-id 1
                  :-testing-zipfile (fixture-path "everyaddon--1-2-3.zip")}
-
           expected [{:description "Does what no other addon does, slightly differently",
                      :dirname "EveryAddon",
                      :group-id "https://group.id/never/fetched",
