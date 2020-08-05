@@ -47,12 +47,13 @@ see CHANGELOG.md for a more formal list of changes by release
             - the mutual dependency has it's group identity updated
                 - or we keep a list of group membership
 
-## todo
-
 * bug, reinstall is busted
     - looks like I've been relying on the selected table rows to be returning correct data
         - it's not. it's been mangled and padded to suit the gui
         - and now the ignore flag value isn't consistent with the proper data
+
+
+## todo
 
 * remove support for v1 addon imports
 
