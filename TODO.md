@@ -55,8 +55,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
-* remove support for v1 addon imports
-
 * just encountered a case where the classic version overwrote one of the retail directories but not the other
     - (tukui classic and retail?)
     - so there was a broken retail installation but a working classic installation
