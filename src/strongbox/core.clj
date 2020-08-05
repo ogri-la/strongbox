@@ -368,15 +368,20 @@
 
 ;; selecting addons
 
-(defn-spec select-addons nil?
-  "creates a sub-selection of installed addons for bulk operations like 'update', 'delete', 'ignore', etc"
-  [selected-rows ::sp/list-of-maps]
-  (swap! state assoc :selected-installed selected-rows)
+(defn-spec select-addons* nil?
+  "sets the selected list of addons to the given `selected-rows` for bulk operations like 'update', 'delete', 'ignore', etc"
+  [selected-addons :addon/installed-list]
+  (swap! state assoc :selected-installed selected-addons)
   nil)
 
-(defn-spec select-addons-by nil?
-  [f fn?]
-  (select-addons (filter f (get-state :installed-addon-list))))
+(defn-spec select-addons nil?
+  "creates a sub-selection of installed addons for bulk operations like 'update', 'delete', 'ignore', etc.
+  called with no args, selects *all* installed addons.
+  called with a function, selects just those where `(f addon)` is `true`"
+  ([]
+   (select-addons identity))
+  ([f fn?]
+   (->> (get-state :installed-addon-list) (filter f) (remove nil?) vec select-addons*)))
 
 ;; downloading and installing and updating
 

@@ -4,11 +4,11 @@
    [clojure.test :refer [deftest testing is use-fixtures]]
    [seesaw.core :as ss]
    [strongbox.ui.gui :as gui]
+   ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [strongbox
     [main :as main]
-    [test-helper :as helper :refer [fixture-path with-running-app with-running-app+opts]]]
-  ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
-   ))
+    [core :as core]
+    [test-helper :as helper :refer [fixture-path with-running-app with-running-app+opts]]]))
 
 (use-fixtures :each helper/fixture-tempcwd)
 
@@ -44,3 +44,27 @@
     (let [cases [[:foo :#foo]]]
       (doseq [[given expected] cases]
         (is (= expected (gui/as-selector given)))))))
+
+(deftest gui-select-installed-addons
+  (testing "selecting installed addons using the gui selects the corresponding installed addons"
+    (let [addon {:name "everyaddon" :label "EveryAddon" :version "1.2.3" :url "https://group.id/never/fetched"
+                 :source "curseforge" :source-id 1
+                 :-testing-zipfile (fixture-path "everyaddon--1-2-3.zip")}
+
+          expected [{:description "Does what no other addon does, slightly differently",
+                     :dirname "EveryAddon",
+                     :group-id "https://group.id/never/fetched",
+                     :installed-game-track :retail,
+                     :installed-version "1.2.3",
+                     :interface-version 70000,
+                     :label "EveryAddon 1.2.3",
+                     :name "everyaddon",
+                     :primary? true,
+                     :source "curseforge",
+                     :source-id 1}]]
+      (with-running-app+opts {:ui :gui}
+        (helper/install-dir)
+        (core/install-addon addon)
+        (core/load-installed-addons) ;; refresh our knowledge of what is installed
+        (gui/select-one (gui/select-ui :#tbl-installed-addons) 0) ;; row at index 0
+        (is (= expected (core/get-state :selected-installed)))))))
