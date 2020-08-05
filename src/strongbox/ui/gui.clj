@@ -234,12 +234,15 @@
     (sstbl/value-at tbl (ss/selection tbl {:multi? true}))))
 
 (defn-spec installed-addons-selection-handler nil?
+  "matches the selected addons to the list of installed addons in application state.
+  because the gui forces every row to have a certain set of keys, even if it's value is `nil`,
+  then this skewed data can't be allowed 'back in' to the application state.
+  instead, we match what was selected against the list of installed addons using `:dirname`"
   [_ ::sp/gui-event]
-  (let [selected-rows (tbl-selected-rows :#tbl-installed-addons)]
-    (debug (count selected-rows) "selected, " (count (filter :update? selected-rows)) "updatable")
-    ;; todo: bug here. this data is suspect, we need to convert these rows to actual installed addons
-    ;;(info "selected rows" (vec selected-rows))
-    (core/select-addons (or selected-rows [])))
+  (let [selected-rows (tbl-selected-rows :#tbl-installed-addons)
+        dirname-list (mapv :dirname selected-rows)]
+    (debug (count selected-rows) "selected")
+    (core/select-addons (fn [addon] (some #{(:dirname addon)} dirname-list))))
   nil)
 
 (defn-spec search-results-selection-handler nil?

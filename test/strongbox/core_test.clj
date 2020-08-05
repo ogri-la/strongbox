@@ -1056,7 +1056,7 @@
         (core/install-addon addon)
         (is (= ["EveryAddon"] (helper/install-dir-contents)))
         (core/load-installed-addons)
-        (core/select-addons (core/get-state :installed-addon-list))
+        (core/select-addons)
         (core/ignore-selected) ;; calls `core/refresh`
         (is (= expected (first (core/get-state :installed-addon-list))))))))
 
@@ -1083,7 +1083,7 @@
                       :update? false}]
         (core/install-addon addon)
         (core/load-installed-addons)
-        (core/select-addons (core/get-state :installed-addon-list))
+        (core/select-addons)
         (core/ignore-selected) ;; calls `core/refresh`
         (is (:ignore? (first (core/get-state :installed-addon-list))))
 
@@ -1115,6 +1115,6 @@
         (core/load-installed-addons)
         (is (:ignore? (first (core/get-state :installed-addon-list)))) ;; implicitly ignored
 
-        (core/select-addons (core/get-state :installed-addon-list))
+        (core/select-addons)
         (core/clear-ignore-selected)
         (is (= expected (first (core/get-state :installed-addon-list))))))))
