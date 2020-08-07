@@ -62,11 +62,13 @@ see CHANGELOG.md for a more formal list of changes by release
             - this is a 'masking' effect I hadn't anticipated
             - it could still be confusing but I suspect it's pretty rare
 
+* removed support for migrating wowman-era config and data
+
+* issue 169, handle 5xx errors from curseforge and others predictably
+
 ## todo
 
 * bug, new gui instance is spawned when switching themes outside of the REPL
-
-* issue 169, handle 5xx errors from curseforge and others predictably
 
 * issue 166, lengthen the addon directory dropdown
 
