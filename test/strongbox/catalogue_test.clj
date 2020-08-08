@@ -212,7 +212,7 @@
       (is (nil? (catalogue/validate catalogue-with-incorrect-total))))))
 
 (deftest github-500-error
-  (testing "a 500 (internal server error) response gets a custom message"
+  (testing "a github 500 (internal server error) response gets a custom message"
     (let [addon {:name "foo" :label "Foo" :source "github" :source-id "1"}
           game-track :retail
           fake-routes {"https://api.github.com/repos/1/releases"
@@ -224,7 +224,7 @@
         (is (= expected (logging/buffered-log :info (catalogue/expand-summary addon game-track))))))))
 
 (deftest github-api-500-error
-  (testing "a 502 (bad gateway) response gets a custom message"
+  (testing "a github api 500 (internal server error) response gets a custom message"
     (let [addon {:name "foo" :label "Foo" :source "github" :source-id "1"}
           game-track :retail
           fake-routes {"https://api.github.com/repos/1/releases"
@@ -235,26 +235,26 @@
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (logging/buffered-log :info (catalogue/expand-summary addon game-track))))))))
 
-(deftest curseforge-502-error
-  (testing "a 502 (bad gateway) response gets a custom message"
+(deftest curseforge-502-bad-gateway
+  (testing "a curseforge 502 (bad gateway) response gets a custom message"
     (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "281321"}
           game-track :retail
           fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/281321"
                        {:get (fn [req] {:status 502 :reason-phrase "Gateway Time-out (HTTP 502)"})}}
           expected ["failed to download file 'https://addons-ecs.forgesvc.net/api/v2/addon/281321': Gateway Time-out (HTTP 502) (HTTP 502)"
-                    "Curseforge: the API is having problems right now (502). Try again later."
+                    "Curseforge: the API is having problems right now. Try again later."
                     "no release found for 'foo' (retail) on curseforge"]]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (logging/buffered-log :info (catalogue/expand-summary addon game-track))))))))
 
-(deftest curseforge-504-bad-gateway
+(deftest curseforge-504-gateway-timeout
   (testing "a 504 (gateway timeout) response gets a custom message"
     (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "281321"}
           game-track :retail
           fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/281321"
                        {:get (fn [req] {:status 504 :reason-phrase "Gateway Time-out (HTTP 504)"})}}
           expected ["failed to download file 'https://addons-ecs.forgesvc.net/api/v2/addon/281321': Gateway Time-out (HTTP 504) (HTTP 504)"
-                    "Curseforge: the API is having problems right now (504). Try again later."
+                    "Curseforge: the API is having problems right now. Try again later."
                     "no release found for 'foo' (retail) on curseforge"]]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (logging/buffered-log :info (catalogue/expand-summary addon game-track))))))))
