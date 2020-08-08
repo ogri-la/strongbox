@@ -342,11 +342,7 @@
       (utils/instrument (:spec? cli-opts))))
   nil)
 
-
-;;
 ;; utils
-;;
-
 
 (defn-spec expanded? boolean?
   "returns true if an addon has found further details online"
@@ -370,9 +366,24 @@
       (finally
         (stop-affecting-addon addon)))))
 
-;;
+;; selecting addons
+
+(defn-spec select-addons* nil?
+  "sets the selected list of addons to the given `selected-addons` for bulk operations like 'update', 'delete', 'ignore', etc"
+  [selected-addons :addon/installed-list]
+  (swap! state assoc :selected-installed selected-addons)
+  nil)
+
+(defn-spec select-addons nil?
+  "creates a sub-selection of installed addons for bulk operations like 'update', 'delete', 'ignore', etc.
+  called with no args, selects *all* installed addons.
+  called with a function, selects just those where `(f addon)` is `true`"
+  ([]
+   (select-addons identity))
+  ([f fn?]
+   (->> (get-state :installed-addon-list) (filter f) (remove nil?) vec select-addons*)))
+
 ;; downloading and installing and updating
-;;
 
 (defn-spec downloaded-addon-fname string?
   [name string?, version string?]
@@ -547,7 +558,6 @@
 
 ;;
 
-
 (defn-spec get-create-user-catalogue :catalogue/catalogue
   "returns the contents of the user catalogue, creating one if necessary"
   []
@@ -702,12 +712,14 @@
   Accepts something as basic as toc data."
   [addon (s/or :unmatched :addon/toc
                :matched :addon/toc+summary+match)]
-  (let [expanded-addon (when (:matched? addon) (expand-summary-wrapper addon))
+  (let [expanded-addon (when (:matched? addon)
+                         (expand-summary-wrapper addon))
         addon (or expanded-addon addon) ;; expanded addon may still be nil
         {:keys [installed-version version]} addon
-        update? (and version
-                     (not= installed-version version)
-                     (not (:ignore? addon)))]
+        update? (boolean
+                 (and version
+                      (not= installed-version version)
+                      (not (:ignore? addon))))]
     (assoc addon :update? update?)))
 
 (defn-spec check-for-updates nil?
@@ -952,69 +964,10 @@
 
 ;;
 
-(defn-spec -upgrade-nfo-file-to-v2 nil?
-  "upgrade the nfo file for the given `addon` in the given `install-dir`.
-  new data may have been introduced since addon was installed.
-  if nfo file cannot be upgraded, it is deleted."
-  [install-dir ::sp/extant-dir, addon (s/keys :req-un [::sp/dirname])]
-  (info "upgrading nfo file:" (:dirname addon))
-  (let [;; best guess of what the installed game track is
-        ;; TODO: remove this in 0.14.0 and delete invalid nfo-v2 files
-        ;; it's reasonable to assume nfo files will consistently have a :game-track by then
-        game-track (guess-game-track install-dir addon)
-        addon (merge addon {;; double handling of `:version` here with `nfo/update-nfo`
-                            ;; the new minimum spec to derive nfo data requires a `:version` key.
-                            ;; addons that are not expanded yet do not have this key.
-                            ;; which is beside the point, because we don't want to use the `:version` key anyway
-                            :version (:installed-version addon)
-                            :game-track game-track})
-        nfo-file (nfo/nfo-path install-dir (:dirname addon))]
-    (if (s/valid? :addon/nfo-input-minimum addon)
-      (nfo/upgrade-nfo-to-v2 install-dir addon)
-      (do
-        (warn (format "failed to upgrade file, removing: %s" nfo-file))
-        (nfo/rm-nfo nfo-file))))
-  nil)
-
-(defn-spec upgrade-nfo-files nil?
-  "upgrade the nfo files for *all* addons in the selected addon-dir.
-  new data may have been introduced since addon was installed"
-  []
-  (let [install-dir (selected-addon-dir)
-        has-nfo-file? (partial nfo/has-nfo-file? install-dir)
-        has-valid-nfo-file? (partial nfo/has-valid-nfo-file? install-dir)
-        upgrade-nfo (partial -upgrade-nfo-file-to-v2 install-dir)
-        upgrade-msg (fn [addon-list]
-                      (when-not (empty? addon-list)
-                        (info (format "upgrading %s nfo files" (count addon-list))))
-                      addon-list)]
-    (->> (get-state :installed-addon-list)
-         (remove :ignore?) ;; ignore ignored addons
-         (filter has-nfo-file?) ;; only upgrade addons that have nfo files
-         (remove has-valid-nfo-file?) ;; skip good nfo files
-         upgrade-msg
-         (mapv upgrade-nfo)))
-  nil)
-
-;;
-
-(defn migrate-nfo-files
-  []
-  (when-let [addon-dir (selected-addon-dir)]
-    (nfo/copy-wowman-nfo-files addon-dir)))
-
-;; 
-
 (defn refresh
   [& _]
   (profile
    {:when (get-state :profile?)}
-
-   ;; rename any occurances of `.wowman.json` to `.strongbox.json`
-   ;; todo: bug here. files are migrated across, but the data may be invalid for nfo v2.
-   ;; `load-installed-addons` calls `addon/load-installed-addons` that will delete invalid nfo files
-   ;; `upgrade-nfo-files` will skip any addons with missing nfo files!
-   (migrate-nfo-files)
 
    ;; parse toc files in install-dir. do this first so we see *something* while catalogue downloads (next)
    (load-installed-addons)
@@ -1034,18 +987,14 @@
    ;; 2019-06-30, travis is failing with 403: Forbidden. Moved to gui init
    ;;(latest-strongbox-release) ;; check for updates after everything else is done 
 
-   ;; otherwise nfo data is only updated when an addon is installed or updated
-   (upgrade-nfo-files)
-
    ;; seems like a good place to preserve the etag-db
    (save-settings)
 
    nil))
 
 (defn-spec -install-update-these nil?
-  [updateable-toc-addons :addon/installable-list]
-  (doseq [toc-addon updateable-toc-addons]
-    (install-addon toc-addon (selected-addon-dir))))
+  [updateable-addon-list :addon/installable-list]
+  (run! install-addon updateable-addon-list))
 
 (defn -updateable?
   [rows]
@@ -1078,11 +1027,17 @@
 
 (defn-spec remove-many-addons nil?
   "deletes each of the addons in the given `toc-list` and then calls `refresh`"
-  [toc-list :addon/toc-list]
+  [installed-addon-list :addon/toc-list]
   (let [addon-dir (selected-addon-dir)]
-    (doseq [toc toc-list]
-      (addon/remove-addon addon-dir toc))
+    (doseq [installed-addon installed-addon-list]
+      (addon/remove-addon addon-dir installed-addon))
     (refresh)))
+
+(defn-spec remove-addon nil?
+  "removes given installed addon"
+  [installed-addon :addon/installed]
+  (addon/remove-addon (selected-addon-dir) installed-addon)
+  (refresh))
 
 (defn-spec remove-selected nil?
   []
@@ -1092,13 +1047,13 @@
 (defn-spec ignore-selected nil?
   "marks each of the selected addons as being 'ignored'"
   []
-  (->> (get-state) :selected-installed :dirname (run! (partial nfo/ignore (selected-addon-dir))))
+  (->> (get-state) :selected-installed (map :dirname) (run! (partial nfo/ignore (selected-addon-dir))))
   (refresh))
 
 (defn-spec clear-ignore-selected nil?
   "removes the 'ignore' flag from each of the selected addons."
   []
-  (->> (get-state) :selected-installed :dirname (run! (partial nfo/clear-ignore (selected-addon-dir))))
+  (->> (get-state) :selected-installed (map :dirname) (run! (partial addon/clear-ignore (selected-addon-dir))))
   (refresh))
 
 ;;
@@ -1165,22 +1120,6 @@
   (swap! state assoc :in-repl? (utils/in-repl?))
   nil)
 
-(defn-spec migrate-user-config nil?
-  []
-  (config/copy-wowman-user-config (paths :old-cfg-file) (paths :cfg-file)))
-
-(defn-spec migrate-user-catalogue nil?
-  []
-  (catalogue/copy-wowman-user-catalogue (paths :old-user-catalogue-file) (paths :user-catalogue-file)))
-
-(defn-spec migrate-user nil?
-  "migrates wowman settings and files to strongbox.
-  must be called *after* `init-dirs` otherwise destination directories may not exist yet."
-  []
-  ;; (migrate-nfo-files) ;; migrated during `refresh`
-  (migrate-user-config)
-  (migrate-user-catalogue))
-
 ;;
 
 (defn -start
@@ -1195,7 +1134,6 @@
   (detect-repl!)
   (init-dirs)
   (prune-http-cache!)
-  (migrate-user)
   (load-settings! cli-opts)
   (watch-for-addon-dir-change)
   (watch-for-catalogue-change)
