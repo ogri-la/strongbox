@@ -74,6 +74,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* gui, add confirmation before deleting addon directory
+
 * EOL planning, robustness, only download/update the catalogue *after* an existing catalogue has been confirmed
     - github is down, wowman is erroring with a 500
     - failure to download a catalogue shouldn't prevent addons from being displayed

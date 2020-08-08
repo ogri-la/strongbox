@@ -308,23 +308,27 @@
     (-> dialog ss/pack! ss/show!)
     nil))
 
+(defn-spec wow-dir-picker nil?
+  "opens a dialog box to select a new directory"
+  []
+  (when-let [dir (chooser/choose-file (select-ui :#root)
+                                      ;; ':open' forces a better dialog type in mac for opening directories
+                                      :type :open
+                                      :selection-mode :dirs-only)]
+    (if (fs/directory? dir)
+      (do
+        (core/set-addon-dir! (str dir))
+        (core/save-settings))
+      (ss/alert (format "Directory doesn't exist: %s" (str dir)))))
+  nil)
+
 (defn configure-app-panel
   []
-  (let [picker (fn []
-                 (when-let [dir (chooser/choose-file (select-ui :#root)
-                                                     ;; ':open' forces a better dialog type in mac for opening directories
-                                                     :type :open
-                                                     :selection-mode :dirs-only)]
-                   (if (fs/directory? dir)
-                     (do
-                       (core/set-addon-dir! (str dir))
-                       (core/save-settings))
-                     (ss/alert (format "Directory doesn't exist: %s" (str dir))))))
-        ;; important! release the event thread using async-handler else updates during process won't be shown until complete
-        refresh-button (button "Refresh" (async-handler core/refresh))
+  (let [;; important! release the event thread using async-handler else updates during process won't be shown until complete
+        ;;refresh-button (button "Refresh" (async-handler core/refresh))
         update-all-button (button "Update all" (async-handler core/install-update-all))
 
-        wow-dir-button (button "Addon directory" (async-handler picker))
+        ;;wow-dir-button (button "Addon directory" (async-handler wow-dir-picker))
 
         wow-dir-dropdown (ss/combobox :model (core/available-addon-dirs)
                                       :selected-item (core/selected-addon-dir))
@@ -374,11 +378,12 @@
                             ;; will save settings
                             (core/refresh))))))
 
-        items [[refresh-button]
+        items [;;[refresh-button]
                [update-all-button]
-               [wow-dir-dropdown "wmax 200"]
+               [wow-dir-dropdown] ;;wmax 200"]
                [wow-game-track]
-               [wow-dir-button]]
+               ;;[wow-dir-button]
+               ]
 
         update-clicker (button (str "Update Available: " (core/latest-strongbox-release))
                                (handler #(browse-to "https://github.com/ogri-la/strongbox/releases"))
@@ -748,7 +753,6 @@
                                   0 ;; start over
                                   next-idx)]
                    (ss/selection! tabber next-idx))))
-
     tabber))
 
 ;; todo: push this into core
@@ -922,8 +926,8 @@
                ;; calling `in-repl?` from gui thread will always return `nil`
                :on-close (if (core/get-state :in-repl?) :dispose :exit))
 
-        file-menu [(ss/action :name "Installed" :key "menu I" :mnemonic "i" :handler (switch-tab-handler INSTALLED-TAB))
-                   (ss/action :name "Search" :key "menu H" :mnemonic "h" :handler (switch-tab-handler SEARCH-TAB))
+        file-menu [(ss/action :name "New addon directory" :key "menu N" :mnemonic "n" :handler (async-handler wow-dir-picker))
+                   (ss/action :name "Remove addon directory" :handler (async-handler core/remove-addon-dir!))
                    :separator
                    (ss/action :name "Exit" :key "menu Q" :mnemonic "x" :handler
                               (fn [ev]
@@ -933,6 +937,9 @@
                                   (.dispatchEvent newui exit-ev))))]
 
         view-menu (into [(ss/action :name "Refresh" :key "F5" :handler (async-handler core/refresh))
+                         :separator
+                         (ss/action :name "Installed" :key "menu I" :mnemonic "i" :handler (switch-tab-handler INSTALLED-TAB))
+                         (ss/action :name "Search" :key "menu H" :mnemonic "h" :handler (switch-tab-handler SEARCH-TAB))
                          :separator]
                         (build-theme-menu))
 
@@ -941,9 +948,7 @@
                               (ss/action :name "Refresh user catalogue" :handler (async-handler core/refresh-user-catalogue))])
 
         addon-menu [(ss/action :name "Update all" :key "menu U" :mnemonic "u" :handler (async-handler core/install-update-all))
-                    (ss/action :name "Re-install all" :handler (async-handler core/re-install-all))
-                    :separator
-                    (ss/action :name "Remove directory" :handler (async-handler core/remove-addon-dir!))]
+                    (ss/action :name "Re-install all" :handler (async-handler core/re-install-all))]
 
         impexp-menu [(ss/action :name "Import addon from Github" :handler (handler import-addon-handler))
                      :separator

@@ -97,7 +97,6 @@
                    (warn "bad nfo data, deleting file:" path)
                    (rm-nfo-file path))
         invalid-data (fn []
-                       (info "slurp" path (slurp path))
                        (warn "invalid nfo data, deleting file:" path)
                        (rm-nfo-file path))
         opts {:bad-data? bad-data
