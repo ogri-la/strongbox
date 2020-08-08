@@ -29,7 +29,7 @@ It does not work on Windows. Windows will never be supported.
 
 ## Installation
 
-1. [download the jar](https://github.com/ogri-la/strongbox/releases/download/1.1.0/strongbox-1.1.0-standalone.jar) file
+1. [download the jar](https://github.com/ogri-la/strongbox/releases/download/2.0.0/strongbox-2.0.0-standalone.jar) file
 2. run with `java -jar strongbox-x.x.x-standalone.jar`
 
 ### Arch Linux users
