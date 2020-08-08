@@ -308,23 +308,25 @@
     (-> dialog ss/pack! ss/show!)
     nil))
 
+(defn wow-dir-picker
+  []
+  (when-let [dir (chooser/choose-file (select-ui :#root)
+                                      ;; ':open' forces a better dialog type in mac for opening directories
+                                      :type :open
+                                      :selection-mode :dirs-only)]
+    (if (fs/directory? dir)
+      (do
+        (core/set-addon-dir! (str dir))
+        (core/save-settings))
+      (ss/alert (format "Directory doesn't exist: %s" (str dir))))))
+
 (defn configure-app-panel
   []
-  (let [picker (fn []
-                 (when-let [dir (chooser/choose-file (select-ui :#root)
-                                                     ;; ':open' forces a better dialog type in mac for opening directories
-                                                     :type :open
-                                                     :selection-mode :dirs-only)]
-                   (if (fs/directory? dir)
-                     (do
-                       (core/set-addon-dir! (str dir))
-                       (core/save-settings))
-                     (ss/alert (format "Directory doesn't exist: %s" (str dir))))))
-        ;; important! release the event thread using async-handler else updates during process won't be shown until complete
-        refresh-button (button "Refresh" (async-handler core/refresh))
+  (let [;; important! release the event thread using async-handler else updates during process won't be shown until complete
+        ;;refresh-button (button "Refresh" (async-handler core/refresh))
         update-all-button (button "Update all" (async-handler core/install-update-all))
 
-        wow-dir-button (button "Addon directory" (async-handler picker))
+        ;;wow-dir-button (button "New addon directory" (async-handler wow-dir-picker))
 
         wow-dir-dropdown (ss/combobox :model (core/available-addon-dirs)
                                       :selected-item (core/selected-addon-dir))
@@ -344,7 +346,6 @@
                             (ss/invoke-later
                              (ss/selection! wow-game-track (-> new-addon-dir core/addon-dir-map :game-track kw2str))))
 
-                          (.setTitleAt (select-ui :#tabber) 0 new-addon-dir)
                           (core/set-addon-dir! new-addon-dir)
                           (core/save-settings)))))
 
@@ -375,11 +376,12 @@
                             ;; will save settings
                             (core/refresh))))))
 
-        items [[refresh-button]
+        items [;;[refresh-button]
                [update-all-button]
-               [wow-dir-dropdown "wmax 200"]
+               [wow-dir-dropdown ""] ;;wmax 200"]
                [wow-game-track]
-               [wow-dir-button]]
+               ;;[wow-dir-button]
+               ]
 
         update-clicker (button (str "Update Available: " (core/latest-strongbox-release))
                                (handler #(browse-to "https://github.com/ogri-la/strongbox/releases"))
@@ -923,7 +925,9 @@
                ;; calling `in-repl?` from gui thread will always return `nil`
                :on-close (if (core/get-state :in-repl?) :dispose :exit))
 
-        file-menu [(ss/action :name "Installed" :key "menu I" :mnemonic "i" :handler (switch-tab-handler INSTALLED-TAB))
+        file-menu [(ss/action :name "New addon directory" :key "menu N" :mnemonic "n" :handler (async-handler wow-dir-picker))
+                   :separator
+                   (ss/action :name "Installed" :key "menu I" :mnemonic "i" :handler (switch-tab-handler INSTALLED-TAB))
                    (ss/action :name "Search" :key "menu H" :mnemonic "h" :handler (switch-tab-handler SEARCH-TAB))
                    :separator
                    (ss/action :name "Exit" :key "menu Q" :mnemonic "x" :handler
