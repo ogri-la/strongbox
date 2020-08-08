@@ -308,7 +308,8 @@
     (-> dialog ss/pack! ss/show!)
     nil))
 
-(defn wow-dir-picker
+(defn-spec wow-dir-picker nil?
+  "opens a dialog box to select a new directory"
   []
   (when-let [dir (chooser/choose-file (select-ui :#root)
                                       ;; ':open' forces a better dialog type in mac for opening directories
@@ -318,7 +319,8 @@
       (do
         (core/set-addon-dir! (str dir))
         (core/save-settings))
-      (ss/alert (format "Directory doesn't exist: %s" (str dir))))))
+      (ss/alert (format "Directory doesn't exist: %s" (str dir)))))
+  nil)
 
 (defn configure-app-panel
   []
@@ -326,7 +328,7 @@
         ;;refresh-button (button "Refresh" (async-handler core/refresh))
         update-all-button (button "Update all" (async-handler core/install-update-all))
 
-        ;;wow-dir-button (button "New addon directory" (async-handler wow-dir-picker))
+        ;;wow-dir-button (button "Addon directory" (async-handler wow-dir-picker))
 
         wow-dir-dropdown (ss/combobox :model (core/available-addon-dirs)
                                       :selected-item (core/selected-addon-dir))
