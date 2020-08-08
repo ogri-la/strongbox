@@ -66,11 +66,11 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * issue 169, handle 5xx errors from curseforge and others predictably
 
+* issue 166, lengthen the addon directory dropdown
+
 ## todo
 
 * bug, new gui instance is spawned when switching themes outside of the REPL
-
-* issue 166, lengthen the addon directory dropdown
 
 ## todo bucket (no particular order)
 
