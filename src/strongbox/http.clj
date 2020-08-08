@@ -164,7 +164,9 @@
                   http-error (merge (select-keys (ex-data ex) [:reason-phrase :status])
                                     {:host (.getHost request-obj)})]
               (warn (format "failed to download file '%s': %s (HTTP %s)"
-                            url (:reason-phrase http-error) (:status http-error)))
+                            url
+                            (-> http-error :reason-phrase (utils/safe-subs 150))
+                            (:status http-error)))
 
               http-error)
 
@@ -181,15 +183,15 @@
   [http-err :http/error]
   (let [key (-> http-err (select-keys [:host :status]) vals set)]
     (condp (comp clojure.set/intersection =) key
-      ;; todo: test this
-      #{"raw.github.com" 500} "Github: service is down. Check www.githubstatus.com and try again later."
+      #{"raw.githubusercontent.com" 500} "Github: service is down. Check www.githubstatus.com and try again later."
 
       ;; github api quota exceeded OR github thinks we were making requests too quickly
       #{"api.github.com" 403} "Github: we've exceeded our request quota and have been blocked for an hour."
+      #{"api.github.com" 500} "Github: api is down. Check www.githubstatus.com and try again later."
 
       ;; issue 91, CDN problems 
-      #{"addons-ecs.forgesvc.net" 502} "Curseforge: the API is having problems right now (502). Try again later."
-      #{"addons-ecs.forgesvc.net" 504} "Curseforge: the API is habing problems right now (504). Trye again later."
+      #{"addons-ecs.forgesvc.net" 502} "Curseforge: the API is having problems right now. Try again later."
+      #{"addons-ecs.forgesvc.net" 504} "Curseforge: the API is having problems right now. Try again later."
 
       #{403} "Forbidden: we've been blocked from accessing that (403)"
 
