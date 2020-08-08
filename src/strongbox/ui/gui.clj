@@ -378,7 +378,7 @@
 
         items [;;[refresh-button]
                [update-all-button]
-               [wow-dir-dropdown ""] ;;wmax 200"]
+               [wow-dir-dropdown] ;;wmax 200"]
                [wow-game-track]
                ;;[wow-dir-button]
                ]
@@ -751,7 +751,6 @@
                                   0 ;; start over
                                   next-idx)]
                    (ss/selection! tabber next-idx))))
-
     tabber))
 
 ;; todo: push this into core
@@ -926,9 +925,7 @@
                :on-close (if (core/get-state :in-repl?) :dispose :exit))
 
         file-menu [(ss/action :name "New addon directory" :key "menu N" :mnemonic "n" :handler (async-handler wow-dir-picker))
-                   :separator
-                   (ss/action :name "Installed" :key "menu I" :mnemonic "i" :handler (switch-tab-handler INSTALLED-TAB))
-                   (ss/action :name "Search" :key "menu H" :mnemonic "h" :handler (switch-tab-handler SEARCH-TAB))
+                   (ss/action :name "Remove addon directory" :handler (async-handler core/remove-addon-dir!))
                    :separator
                    (ss/action :name "Exit" :key "menu Q" :mnemonic "x" :handler
                               (fn [ev]
@@ -938,6 +935,9 @@
                                   (.dispatchEvent newui exit-ev))))]
 
         view-menu (into [(ss/action :name "Refresh" :key "F5" :handler (async-handler core/refresh))
+                         :separator
+                         (ss/action :name "Installed" :key "menu I" :mnemonic "i" :handler (switch-tab-handler INSTALLED-TAB))
+                         (ss/action :name "Search" :key "menu H" :mnemonic "h" :handler (switch-tab-handler SEARCH-TAB))
                          :separator]
                         (build-theme-menu))
 
@@ -946,9 +946,7 @@
                               (ss/action :name "Refresh user catalogue" :handler (async-handler core/refresh-user-catalogue))])
 
         addon-menu [(ss/action :name "Update all" :key "menu U" :mnemonic "u" :handler (async-handler core/install-update-all))
-                    (ss/action :name "Re-install all" :handler (async-handler core/re-install-all))
-                    :separator
-                    (ss/action :name "Remove directory" :handler (async-handler core/remove-addon-dir!))]
+                    (ss/action :name "Re-install all" :handler (async-handler core/re-install-all))]
 
         impexp-menu [(ss/action :name "Import addon from Github" :handler (handler import-addon-handler))
                      :separator
