@@ -72,6 +72,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+* bug, stacktrace when removing the last of the addon directories
+* bug, stacktrace when changing the game track on an empty addon dir
 
 ## todo bucket (no particular order)
 
