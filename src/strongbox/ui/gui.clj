@@ -1009,5 +1009,8 @@
   (cond
     (:in-repl? @core/state) (-stop)
     (-> timbre/*config* :testing?) (-stop)
-    :else (ss/invoke-later
-           (-stop))))
+
+    ;; 2020-08-08: `ss/invoke-later` was keeping the old window around when running outside of repl.
+    ;; `ss/invoke-soon` seems to fix that.
+    ;;  - http://daveray.github.io/seesaw/seesaw.invoke-api.html
+    :else (ss/invoke-soon (-stop))))

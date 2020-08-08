@@ -68,9 +68,10 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * issue 166, lengthen the addon directory dropdown
 
+* bug, new gui instance is spawned when switching themes outside of the REPL
+
 ## todo
 
-* bug, new gui instance is spawned when switching themes outside of the REPL
 
 ## todo bucket (no particular order)
 
