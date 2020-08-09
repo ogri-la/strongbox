@@ -277,16 +277,22 @@
   (mapv :addon-dir (get-state :cfg :addon-dir-list)))
 
 (defn-spec addon-dir-map (s/or :ok ::sp/addon-dir-map, :missing nil?)
+  "returns the addon-dir map for the given `addon-dir`, if it exists in the map.
+  when called without args, returns the addon-dir map for the currently selected addon-dir."
   ([]
-   (addon-dir-map (selected-addon-dir)))
+   (when-let [addon-dir (selected-addon-dir)]
+     (addon-dir-map addon-dir)))
   ([addon-dir ::sp/addon-dir]
    (let [addon-dir-list (get-state :cfg :addon-dir-list)]
      (when-not (empty? addon-dir-list)
        (first (filter #(= addon-dir (:addon-dir %)) addon-dir-list))))))
 
 (defn-spec set-game-track! nil?
+  "changes the game track (retail or classic) for the given `addon-dir`.
+  when called without args, changes the game track on the currently selected addon-dir"
   ([game-track ::sp/game-track]
-   (set-game-track! game-track (selected-addon-dir)))
+   (when-let [addon-dir (selected-addon-dir)]
+     (set-game-track! game-track addon-dir)))
   ([game-track ::sp/game-track, addon-dir ::sp/addon-dir]
    (let [tform (fn [addon-dir-map]
                  (if (= addon-dir (:addon-dir addon-dir-map))
