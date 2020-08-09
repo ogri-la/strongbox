@@ -338,7 +338,7 @@
 
         ;; called when a different addon dir is selected
         _ (ss/listen wow-dir-dropdown :selection
-                     (async-handler ;; execute elsewhere
+                     (async-handler
                       (fn []
                         (let [old-addon-dir (core/selected-addon-dir)
                               new-addon-dir (ss/selection wow-dir-dropdown)]
@@ -347,7 +347,6 @@
                             ;; positioned here so the dropdown change is shown immediately
                             (ss/invoke-later
                              (ss/selection! wow-game-track (-> new-addon-dir core/addon-dir-map :game-track kw2str))))
-
                           (core/set-addon-dir! new-addon-dir)
                           (core/save-settings)))))
 
@@ -356,8 +355,14 @@
                       (fn [state]
                         (let [new-addon-dir (get-in state [:cfg :selected-addon-dir]) ;; use the given `state`
                               selected-addon-dir (ss/selection wow-dir-dropdown)]
-                          (when (and selected-addon-dir
-                                     (not (= selected-addon-dir new-addon-dir)))
+                          (cond
+                            ;; addon dir changed to 'no addon dir'.
+                            ;; happens when we remove the last addon directory in the list
+                            (nil? new-addon-dir) (ss/invoke-later
+                                                  (ss/config! wow-dir-dropdown :model (core/available-addon-dirs)))
+
+                            ;; addon dir changed to some other extant addon dir
+                            (not (= selected-addon-dir new-addon-dir))
                             (let [game-track (-> new-addon-dir core/addon-dir-map :game-track kw2str)]
                               (debug (format ":selected-addon-dir changed from '%s' to '%s'" (core/selected-addon-dir) new-addon-dir))
                               (ss/invoke-later
