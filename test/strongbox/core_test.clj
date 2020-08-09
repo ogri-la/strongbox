@@ -34,6 +34,12 @@
 
       ;; big long stateful test
 
+      (testing "fetching the addon-dir map data, without args, without addon directories, returns nil"
+        (is (nil? (core/addon-dir-map))))
+
+      (testing "setting the game track, without args, without addon directories, does nothing"
+        (is (nil? (core/set-game-track! :retail))))
+
       (testing "add-addon-dir! adds an addon dir with a default game track of 'retail'"
         (core/add-addon-dir! dir1 :retail)
         (is (= [{:addon-dir dir1 :game-track :retail}] (core/get-state :cfg :addon-dir-list))))
