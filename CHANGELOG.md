@@ -40,6 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * bug where switching themes would preserve the old window
 * 502 and 504 errors from Curseforge are now handled more gracefully with a custom error message
 * obscure bug where selecting addons through the gui may lead to bad data being propagated through the app
+* bug when selecting the game track on an empty addon directory
+* bug when removing the last addon directory
 
 ### Removed
 

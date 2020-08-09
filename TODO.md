@@ -70,10 +70,11 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * bug, new gui instance is spawned when switching themes outside of the REPL
 
-## todo
-
 * bug, stacktrace when removing the last of the addon directories
+
 * bug, stacktrace when changing the game track on an empty addon dir
+
+## todo
 
 ## todo bucket (no particular order)
 

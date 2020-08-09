@@ -41,10 +41,10 @@ Once installed it's available from the command line as `strongbox`.
 
 ## Screenshots
 
-[![wowman version 0.11.0](./screenshots/screenshot-0.11.0-installed-thumbnail.jpg)](./screenshots/screenshot-0.11.0-installed.png?raw=true) 
-[![wowman version 0.11.0](./screenshots/screenshot-0.11.0-search-thumbnail.jpg)](./screenshots/screenshot-0.11.0-search.png?raw=true) 
-[![wowman version 0.11.0](./screenshots/screenshot-0.11.0-dark-installed-thumbnail.jpg)](./screenshots/screenshot-0.11.0-dark-installed.png?raw=true) 
-[![wowman version 0.11.0](./screenshots/screenshot-0.11.0-dark-search-thumbnail.jpg)](./screenshots/screenshot-0.11.0-dark-search.png?raw=true) 
+[![wowman version 0.11.0](./screenshots/screenshot-2.0.0-installed-thumbnail.jpg)](./screenshots/screenshot-2.0.0-installed.png?raw=true) 
+[![wowman version 0.11.0](./screenshots/screenshot-2.0.0-search-thumbnail.jpg)](./screenshots/screenshot-2.0.0-search.png?raw=true) 
+[![wowman version 0.11.0](./screenshots/screenshot-2.0.0-dark-installed-thumbnail.jpg)](./screenshots/screenshot-2.0.0-dark-installed.png?raw=true) 
+[![wowman version 0.11.0](./screenshots/screenshot-2.0.0-dark-search-thumbnail.jpg)](./screenshots/screenshot-2.0.0-dark-search.png?raw=true) 
 
 *(dark mode only available in GTK+ 2 environments like [MATE](https://mate-desktop.org/) and 
 [Cinnamon](https://en.wikipedia.org/wiki/Cinnamon_(desktop_environment)))*
@@ -61,13 +61,12 @@ Some addons come bundled with other addons that *do not appear* in the online li
 
 First time usage:
 
-1. select your "Addons" directory (`/path/to/WoW/_retail_/Interface/Addons`)
-2. from the `Addons` menu select `Re-install all` to automatically re-install all **matching** addons
-3. addons that are **not** automatically matched can be searched for and installed from the `search` tab
-4. finally, addons can be deleted by selecting them, right-clicking, and selecting `delete`. Multiple addons can be 
-selected and removed at once.
+1. Select *File -> New addon directory* and select your "Addons" directory (`/path/to/WoW/_retail_/Interface/Addons`)
+2. Select *Addons -> Re-install all* to automatically re-install all **matching** addons
 
-Afterwards, simply use the `Update all` button to update all addons with new versions available. 
+Addons that are **not** automatically matched can be searched for and installed from the `search` tab.
+
+Afterwards, use the `Update all` button to update all addons with new versions available. 
 Addons with new versions available will be highlighted.
 
 ## Recognition
