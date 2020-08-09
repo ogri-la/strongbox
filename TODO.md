@@ -8,6 +8,18 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+* gui2
+    - an OpenJFX gui
+    - how large is bundle after uberjar?
+    - can an openjfx-11/openjdk-11 uberjar be run with openjdk 8?
+        - if not, then that is a hard upgrade for users :(
+            - unless we do a completely standalone version?
+                - this would depend on the modularisation introduced in java 9
+                - min JRE is 29MB, about ~9MB more than what we already have.
+                    - is filesize a problem for users?
+
+* single distributable binary with no reliance on external jvm
+
 ## todo bucket (no particular order)
 
 * gui, add confirmation before deleting addon directory
@@ -140,7 +152,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * toggleable columns as a menuitem
     - they're available from the column menu, but it's a little hidden and contains other fairly useless options like 'horizontal scroll'
-* gui, both panes, filter by categories
+
 * internationalisation?
     - Akitools has no english description but it does have a "Notes-zhCN" in the toc file that could be used
     - wowman was mentioned on a french forum the other day ..
@@ -157,10 +169,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - this is interesting actually. the exported addon list has become a mini-catalogue
         - some addons require the larger catalogue to resolve
         - github addons are resolved and installed by a different means...
-
-## backups
-
-
 
 ## import/export
 
@@ -210,15 +218,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## gui/gui2
 
-* gui2
-    - an OpenJFX gui
-    - how large is bundle after uberjar?
-    - can an openjfx-11/openjdk-11 uberjar be run with openjdk 8?
-        - if not, then that is a hard upgrade for users :(
-            - unless we do a completely standalone version?
-                - this would depend on the modularisation introduced in java 9
-                - min JRE is 29MB, about ~9MB more than what we already have.
-                    - is filesize a problem for users?
+* gui, both panes, filter by categories
 * gui, java look and feel
     - our 'theme' solution is too naive
         - we should be deferring to the current theme for highlighted colours
