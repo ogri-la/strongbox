@@ -14,6 +14,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## 2.0.0 - 2020-08-08
+
+### Added
+
+* addon uninstallation and uninstallation-before-installation
+    - previously new addons would just unzip over any existing addons
+* mutual dependency handling
+    - user is now alerted when two addons depend on the same bundled addon
+    - a mutual dependency is not removed until all dependent addons have been removed
+* addons can now be explicitly ignored and un-ignored from the GUI
+    - ignored addons cannot be uninstalled through strongbox and must be un-ignored first
+    - ignored addons cannot be overwritten by other addons creating mutual dependencies
+
+### Changed
+
+* 'Refresh' button has been moved to the 'View' menu
+* 'Addon directory' button has been moved to the 'File' menu as 'New addon directory'
+* 'Remove addon directory' has been moved to the 'File' menu as 'Remove addon directory'
+* the 'installed' and 'search' tab selectors under the 'File' menu have been moved to the 'View' menu
+
+### Fixed
+
+* the addon directory drop down is no longer width constrained
+* bug where switching themes would preserve the old window
+* 502 and 504 errors from Curseforge are now handled more gracefully with a custom error message
+* obscure bug where selecting addons through the gui may lead to bad data being propagated through the app
+* bug when selecting the game track on an empty addon directory
+* bug when removing the last addon directory
+
+### Removed
+
+* removed support for migrating wowman-era configuration and catalogues
+    - wowman-era v1 catalogues can still be read and parsed alongside v2 catalogues, strongbox just doesn't go looking for them
+
 ## 1.1.0 - 2020-06-27
 
 ### Added

@@ -10,6 +10,7 @@
    [trptcolin.versioneer.core :as versioneer]
    [envvar.core :refer [env]]
    [strongbox
+    [addon :as addon]
     [db :as db]
     [config :as config]
     [zip :as zip]
@@ -18,7 +19,6 @@
     [nfo :as nfo]
     [utils :as utils :refer [join not-empty? false-if-nil nav-map nav-map-fn delete-many-files! static-slurp expand-path if-let*]]
     [catalogue :as catalogue]
-    [toc]
     [specs :as sp]]))
 
 (def release-of-previous-expansion
@@ -255,7 +255,7 @@
   nil)
 
 (defn-spec selected-addon-dir (s/or :ok ::sp/addon-dir, :no-selection nil?)
-  "returns the currently selected addon or nil if no directories exist to select from"
+  "returns the currently selected addon directory or nil if no directories exist to select from"
   []
   (get-state :cfg :selected-addon-dir))
 
@@ -277,16 +277,22 @@
   (mapv :addon-dir (get-state :cfg :addon-dir-list)))
 
 (defn-spec addon-dir-map (s/or :ok ::sp/addon-dir-map, :missing nil?)
+  "returns the addon-dir map for the given `addon-dir`, if it exists in the map.
+  when called without args, returns the addon-dir map for the currently selected addon-dir."
   ([]
-   (addon-dir-map (selected-addon-dir)))
+   (when-let [addon-dir (selected-addon-dir)]
+     (addon-dir-map addon-dir)))
   ([addon-dir ::sp/addon-dir]
    (let [addon-dir-list (get-state :cfg :addon-dir-list)]
      (when-not (empty? addon-dir-list)
        (first (filter #(= addon-dir (:addon-dir %)) addon-dir-list))))))
 
 (defn-spec set-game-track! nil?
+  "changes the game track (retail or classic) for the given `addon-dir`.
+  when called without args, changes the game track on the currently selected addon-dir"
   ([game-track ::sp/game-track]
-   (set-game-track! game-track (selected-addon-dir)))
+   (when-let [addon-dir (selected-addon-dir)]
+     (set-game-track! game-track addon-dir)))
   ([game-track ::sp/game-track, addon-dir ::sp/addon-dir]
    (let [tform (fn [addon-dir-map]
                  (if (= addon-dir (:addon-dir addon-dir-map))
@@ -342,11 +348,7 @@
       (utils/instrument (:spec? cli-opts))))
   nil)
 
-
-;;
 ;; utils
-;;
-
 
 (defn-spec expanded? boolean?
   "returns true if an addon has found further details online"
@@ -370,9 +372,24 @@
       (finally
         (stop-affecting-addon addon)))))
 
-;;
+;; selecting addons
+
+(defn-spec select-addons* nil?
+  "sets the selected list of addons to the given `selected-addons` for bulk operations like 'update', 'delete', 'ignore', etc"
+  [selected-addons :addon/installed-list]
+  (swap! state assoc :selected-installed selected-addons)
+  nil)
+
+(defn-spec select-addons nil?
+  "creates a sub-selection of installed addons for bulk operations like 'update', 'delete', 'ignore', etc.
+  called with no args, selects *all* installed addons.
+  called with a function, selects just those where `(f addon)` is `true`"
+  ([]
+   (select-addons identity))
+  ([f fn?]
+   (->> (get-state :installed-addon-list) (filter f) (remove nil?) vec select-addons*)))
+
 ;; downloading and installing and updating
-;;
 
 (defn-spec downloaded-addon-fname string?
   [name string?, version string?]
@@ -380,7 +397,7 @@
 
 (defn-spec download-addon (s/or :ok ::sp/archive-file, :http-error :http/error, :error nil?)
   [addon :addon/installable, download-dir ::sp/writeable-dir]
-  (info "downloading" (:label addon) "...")
+  (info (format "downloading '%s' version '%s'" (:label addon) (:version addon)))
   (when (expanded? addon)
     (let [output-fname (downloaded-addon-fname (:name addon) (:version addon)) ;; addonname--1-2-3.zip
           output-path (join (fs/absolute download-dir) output-fname)] ;; /path/to/installed/addons/addonname--1.2.3.zip
@@ -391,40 +408,6 @@
 ;;(def download-addon
 ;;  (affects-addon-wrapper download-addon))
 
-(defn-spec determine-primary-subdir (s/or :found map?, :not-found nil?)
-  "if an addon unpacks to multiple directories, which is the 'main' addon?
-   a common convention looks like 'Addon[seperator]Subname', for example:
-       'Healbot' and 'Healbot_de' or 
-       'MogIt' and 'MogIt_Artifact'
-   DBM is one exception to this as the 'main' addon is 'DBM-Core' (I think, it's definitely the largest)
-   'MasterPlan' and 'MasterPlanA' is another exception
-   these exceptions to the rule are easily handled. the rule is:
-       1. if multiple directories,
-       2. assume dir with shortest name is the main addon
-       3. but only if it's a prefix of all other directories
-       4. if case doesn't hold, do nothing and accept we have no 'main' addon"
-  [toplevel-dirs ::sp/list-of-maps]
-  (let [path-val #(-> % :path (utils/rtrim "\\/")) ;; strips trailing line endings, they mess with comparison
-        path-len (comp count :path)
-        toplevel-dirs (remove #(empty? (:path %)) toplevel-dirs) ;; remove anything we can't compare
-        toplevel-dirs (vec (vals (utils/idx toplevel-dirs :path))) ;; remove duplicate paths
-        toplevel-dirs (sort-by path-len toplevel-dirs)
-        dirname-lengths (mapv path-len toplevel-dirs)
-        first-toplevel-dir (first toplevel-dirs)]
-
-    (cond
-      (= 1 (count toplevel-dirs)) ;; single dir, perfect case
-      first-toplevel-dir
-
-      (and
-       ;; multiple dirs, one shorter than all others
-       (not= (first dirname-lengths) (second dirname-lengths))
-       ;; all dirs are prefixed with the name of the first toplevel dir
-       (every? #(clojure.string/starts-with? (path-val %) (path-val first-toplevel-dir)) toplevel-dirs))
-      first-toplevel-dir
-
-      ;; couldn't reasonably determine the primary directory
-      :else nil)))
 
 (defn-spec guess-game-track ::sp/game-track
   "given a map of addon data, attempts to guess the most likely game track it belongs to"
@@ -442,69 +425,55 @@
       ;; very last here is for testing only
       :retail))
 
-(defn-spec -install-addon (s/or :ok (s/coll-of ::sp/extant-file), :error ::sp/empty-coll)
-  "installs an addon given an addon description, a place to install the addon and the addon zip file itself"
-  [addon :addon/installable, install-dir ::sp/writeable-dir, downloaded-file ::sp/archive-file]
-  ;; TODO: this function is becoming a mess. clean it up
-  (let [zipfile-entries (zip/zipfile-normal-entries downloaded-file)
-        sus-addons (zip/inconsistently-prefixed zipfile-entries)
-
-        ;; one single line message or multi-line?
-        msg "%s will install inconsistently prefixed addons: %s"
-        _ (when sus-addons
-            (warn (format msg (:label addon) (clojure.string/join ", " sus-addons))))
-
-        _ (zip/unzip-file downloaded-file install-dir)
-        toplevel-dirs (filter (every-pred :dir? :toplevel?) zipfile-entries)
-        primary-dirname (determine-primary-subdir toplevel-dirs)
-        game-track (or (:game-track addon) ;; from reading an export record. most of the time this value won't be here
-                       (get-game-track install-dir)
-
-                       ;; very last here is for testing only
-                       :retail)
-
-        ;; an addon may unzip to many directories, each directory needs the nfo file
-        update-nfo-fn (fn [zipentry]
-                        (let [addon-dirname (:path zipentry)
-                              primary? (= addon-dirname (:path primary-dirname))]
-                          (nfo/write-nfo install-dir addon addon-dirname primary? game-track)))
-
-        ;; write the nfo files, return a list of all nfo files written
-        retval (mapv update-nfo-fn toplevel-dirs)]
-    (info (:label addon) "installed.")
-    retval))
-
 (defn-spec install-addon-guard (s/or :ok (s/coll-of ::sp/extant-file), :passed-tests true?, :error nil?)
-  "downloads an addon and installs it. handles http and non-http errors, bad zip files, bad addons"
+  "downloads an addon and installs it. 
+  handles http and non-http errors, bad zip files, bad addons, bad directories."
+  ([addon :addon/installable]
+   (install-addon-guard addon (selected-addon-dir)))
   ([addon :addon/installable, install-dir ::sp/extant-dir]
    (install-addon-guard addon install-dir false))
   ([addon :addon/installable, install-dir ::sp/extant-dir, test-only? boolean?]
    (cond
      ;; do some pre-installation checks
-     (:ignore? addon) (warn "failing to install addon, addon is being ignored:" install-dir)
-     (not (fs/writeable? install-dir)) (error "failing to install addon, directory not writeable:" install-dir)
+     (:ignore? addon) (error "refusing to install addon, addon is being ignored:" (:name addon))
+     (not (fs/writeable? install-dir)) (error "refusing to install addon, directory not writeable:" install-dir)
 
      :else ;; attempt downloading and installing addon
 
-     (let [downloaded-file (download-addon addon install-dir)
+     (let [downloaded-file (or (:-testing-zipfile addon) ;; don't download, install from this file (testing only right now)
+                               (download-addon addon install-dir))
            bad-zipfile-msg (format "failed to read zip file '%s', could not install %s" downloaded-file (:name addon))
-           bad-addon-msg (format "refusing to install '%s'. It contains top-level files or top-level directories missing .toc files."  (:name addon))]
-       (info "installing" (:label addon) "...")
+           bad-addon-msg (format "refusing to install '%s'. It contains top-level files or top-level directories missing .toc files."  (:name addon))
+           ;; installing addon from an export record.
+           ;; a regular `addon` won't have a `game-track` (it has an `:installed-game-track`).
+           game-track (or (:game-track addon) (get-game-track install-dir))]
+
        (cond
          (map? downloaded-file) (error "failed to download addon, could not install" (:name addon))
+
          (nil? downloaded-file) (error "non-http error downloading addon, could not install" (:name addon)) ;; I dunno. /shrug
-         (not (zip/valid-zip-file? downloaded-file)) (do
-                                                       (error bad-zipfile-msg)
-                                                       (fs/delete downloaded-file)
-                                                       (warn "removed bad zip file" downloaded-file))
-         (not (zip/valid-addon-zip-file? downloaded-file)) (do
-                                                             (error bad-addon-msg)
-                                                             (fs/delete downloaded-file) ;; I could be more lenient
-                                                             (warn "removed bad addon" downloaded-file))
+
+         (not (zip/valid-zip-file? downloaded-file))
+         (do
+           (error bad-zipfile-msg)
+           (fs/delete downloaded-file)
+           (warn "removed bad zip file" downloaded-file))
+
+         (not (zip/valid-addon-zip-file? downloaded-file))
+         (do
+           (error bad-addon-msg)
+           (fs/delete downloaded-file) ;; I could be more lenient
+           (warn "removed bad addon" downloaded-file))
+
+         (not (s/valid? ::sp/writeable-dir install-dir))
+         (error (format "addon directory is not writable: %s" install-dir))
+
+         (addon/overwrites-ignored? downloaded-file (get-state :installed-addon-list))
+         (error "refusing to install addon that will overwrite an ignored addon")
 
          test-only? true ;; addon was successfully downloaded and verified as being sound
 
-         :else (-install-addon addon install-dir downloaded-file))))))
+         :else (addon/install-addon addon install-dir downloaded-file game-track))))))
 
 (def install-addon
   (affects-addon-wrapper install-addon-guard))
@@ -516,69 +485,11 @@
     (swap! state assoc :installed-addon-list installed-addon-list)
     nil))
 
-(defn-spec group-addons :addon/toc-list
-  "an addon may actually be many addons bundled together in a single download.
-  strongbox tags the bundled addons as they are unzipped and tries to determine the primary one.
-  after we've loaded the addons and merged their nfo data, we can then group them"
-  [addon-list :addon/toc-list]
-  (let [;; group-id comes from the nfo file
-        addon-groups (group-by :group-id addon-list)
-
-        ;; remove those addons without a group, we'll conj them in later
-        unknown-grouping (get addon-groups nil)
-        addon-groups (dissoc addon-groups nil)
-
-        expand (fn [[group-id addons]]
-                 (if (= 1 (count addons))
-                   ;; perfect case, no grouping.
-                   (first addons)
-
-                   ;; multiple addons in group
-                   (let [_ (debug (format "grouping '%s', %s addons in group" group-id (count addons)))
-                         primary (first (filter :primary? addons))
-                         next-best (first addons)
-                         new-data {:group-addons addons
-                                   :group-addon-count (count addons)}
-                         next-best-label (-> next-best :group-id fs/base-name)]
-                     (if primary
-                       ;; best, easiest case
-                       (merge primary new-data)
-                       ;; when we can't determine the primary addon, add a shitty synthetic one
-                       ;; TODO: should I dissoc :dirname? it could be misleading..
-                       (merge next-best new-data {:label (format "%s (group)" next-best-label)
-                                                  :description (format "group record for the %s addon" next-best-label)})))))
-
-        ;; this flattens the newly grouped addons from a map into a list and joins the unknowns
-        addon-list (apply conj (mapv expand addon-groups) unknown-grouping)]
-    addon-list))
-
-(defn-spec -load-installed-addons :addon/toc-list
-  "reads the .toc files from the given addon dir, reads any nfo data for 
-  these addons, groups them, returns the mooshed data"
-  [addon-dir ::sp/addon-dir]
-  (let [addon-list (strongbox.toc/installed-addons addon-dir)
-
-        ;; at this point we have a list of the 'top level' addons, with
-        ;; any bundled addons grouped within each one.
-
-        ;; each addon now needs to be merged with the 'nfo' data, the additional
-        ;; data we store alongside each addon when it is installed/updated
-
-        merge-nfo-data (fn [addon]
-                         (let [nfo-data (nfo/read-nfo addon-dir (:dirname addon))]
-                           ;; merge the addon with the nfo data.
-                           ;; when `ignore?` flag in addon is `true` but `false` in nfo-data, nfo-data will take precedence.
-                           (merge addon nfo-data)))
-
-        addon-list (mapv merge-nfo-data addon-list)]
-
-    (group-addons addon-list)))
-
 (defn-spec load-installed-addons nil?
   "guard function. offloads the hard work to `-load-installed-addons` then updates application state"
   []
   (if-let [addon-dir (selected-addon-dir)]
-    (let [addon-list (-load-installed-addons addon-dir)]
+    (let [addon-list (addon/load-installed-addons addon-dir)]
       (info "loading installed addons:" addon-dir)
       (update-installed-addon-list! addon-list))
 
@@ -652,7 +563,6 @@
     (merge installed-addon db-catalogue-addon {:matched? true})))
 
 ;;
-
 
 (defn-spec get-create-user-catalogue :catalogue/catalogue
   "returns the contents of the user catalogue, creating one if necessary"
@@ -808,11 +718,14 @@
   Accepts something as basic as toc data."
   [addon (s/or :unmatched :addon/toc
                :matched :addon/toc+summary+match)]
-  (let [expanded-addon (when (:matched? addon) (expand-summary-wrapper addon))
+  (let [expanded-addon (when (:matched? addon)
+                         (expand-summary-wrapper addon))
         addon (or expanded-addon addon) ;; expanded addon may still be nil
         {:keys [installed-version version]} addon
-        update? (and version
-                     (not= installed-version version))]
+        update? (boolean
+                 (and version
+                      (not= installed-version version)
+                      (not (:ignore? addon))))]
     (assoc addon :update? update?)))
 
 (defn-spec check-for-updates nil?
@@ -1014,7 +927,8 @@
         ;; gussy them up a bit so it looks like an `::sp/installed-addon-summary`
         padding {:label ""
                  :description ""
-                 :dirname ""
+                 ;; 2020-06: dirname must be a non-empty string
+                 :dirname "not-the-addon-dir-you-are-looking-for"
                  :interface-version 0
                  :installed-version "0"}
         addon-list (map #(merge padding %) addon-list)
@@ -1056,62 +970,10 @@
 
 ;;
 
-(defn-spec -upgrade-nfo nil?
-  "given an addon, upgrades it's nfo file to the current nfo spec."
-  [install-dir ::sp/extant-dir, addon (s/keys :req-un [::sp/dirname])]
-  (info "upgrading nfo file:" (:dirname addon))
-  (let [;; best guess of what the installed game track is
-        ;; TODO: remove this in 0.14.0 and delete invalid nfo-v2 files
-        ;; it's reasonable to assume nfo files will consistently have a :game-track by then
-        game-track (guess-game-track install-dir addon)
-        addon (merge addon {;; double handling of `:version` here with `nfo/update-nfo`
-                            ;; the new minimum spec to derive nfo data requires a `:version` key.
-                            ;; addons that are not expanded yet do not have this key.
-                            ;; which is beside the point, because we don't want to use the `:version` key anyway
-                            :version (:installed-version addon)
-                            :game-track game-track})
-        nfo-file (nfo/nfo-path install-dir (:dirname addon))]
-    (if (s/valid? :addon/nfo-input-minimum addon)
-      (nfo/upgrade-nfo install-dir addon)
-      (do
-        (warn (format "failed to upgrade file, removing: %s" nfo-file))
-        (nfo/rm-nfo nfo-file))))
-  nil)
-
-(defn-spec upgrade-nfo-files nil?
-  "upgrade the nfo files for all addons in the selected addon-dir.
-  new data may have been introduced since addon was installed"
-  []
-  (let [install-dir (selected-addon-dir)
-        has-nfo-file? (partial nfo/has-nfo-file? install-dir)
-        has-valid-nfo-file? (partial nfo/has-valid-nfo-file? install-dir)
-        upgrade-nfo (partial -upgrade-nfo install-dir)
-        upgrade-msg (fn [addon-list]
-                      (when-not (empty? addon-list)
-                        (info "upgrading nfo files"))
-                      addon-list)]
-    (->> (get-state)
-         :installed-addon-list
-         (filter has-nfo-file?) ;; only upgrade addons that have nfo files
-         (remove has-valid-nfo-file?) ;; skip good nfo files
-         upgrade-msg
-         (mapv upgrade-nfo)))
-  nil)
-
-(defn migrate-nfo-files
-  []
-  (when-let [addon-dir (selected-addon-dir)]
-    (nfo/copy-wowman-nfo-files addon-dir)))
-
-;; 
-
 (defn refresh
   [& _]
   (profile
    {:when (get-state :profile?)}
-
-   ;; rename any occurances of `.wowman.json` to `.strongbox.json`
-   (migrate-nfo-files)
 
    ;; parse toc files in install-dir. do this first so we see *something* while catalogue downloads (next)
    (load-installed-addons)
@@ -1131,18 +993,14 @@
    ;; 2019-06-30, travis is failing with 403: Forbidden. Moved to gui init
    ;;(latest-strongbox-release) ;; check for updates after everything else is done 
 
-   ;; otherwise nfo data is only updated when an addon is installed or updated
-   (upgrade-nfo-files)
-
    ;; seems like a good place to preserve the etag-db
    (save-settings)
 
    nil))
 
 (defn-spec -install-update-these nil?
-  [updateable-toc-addons :addon/installable-list]
-  (doseq [toc-addon updateable-toc-addons]
-    (install-addon toc-addon (selected-addon-dir))))
+  [updateable-addon-list :addon/installable-list]
+  (run! install-addon updateable-addon-list))
 
 (defn -updateable?
   [rows]
@@ -1173,40 +1031,38 @@
   (-> (get-state) :installed-addon-list -updateable? -install-update-these)
   (refresh))
 
-(defn -remove-addon
-  [addon-dirname]
-  (let [addon-dir (selected-addon-dir)
-        addon-path (fs/file addon-dir addon-dirname) ;; todo: perhaps this (addon-dir (base-name addon-dirname)) is safer
-        addon-path (-> addon-path fs/absolute fs/normalized)]
-    ;; if after resolving the given addon dir it's still within the install-dir, remove it
-    (if (and
-         (fs/directory? addon-path)
-         (clojure.string/starts-with? addon-path addon-dir)) ;; don't delete anything outside of install dir!
-      (do
-        (fs/delete-dir addon-path)
-        (warn (format "removed '%s'" addon-path))
-        nil)
-
-      (error (format "directory '%s' is outside the current installation dir of '%s', not removing" addon-path addon-dir)))))
+(defn-spec remove-many-addons nil?
+  "deletes each of the addons in the given `toc-list` and then calls `refresh`"
+  [installed-addon-list :addon/toc-list]
+  (let [addon-dir (selected-addon-dir)]
+    (doseq [installed-addon installed-addon-list]
+      (addon/remove-addon addon-dir installed-addon))
+    (refresh)))
 
 (defn-spec remove-addon nil?
-  "removes the given addon. if addon is part of a group, all addons in group are removed"
-  [toc :addon/toc]
-  (if (contains? toc :group-addons)
-    (doseq [subtoc (:group-addons toc)]
-      (-remove-addon (:dirname subtoc))) ;; top-level toc is contained in the :group-addons list
-    (-remove-addon (:dirname toc))))
-
-(defn-spec remove-many-addons nil?
-  [toc-list :addon/toc-list]
-  (doseq [toc toc-list]
-    (remove-addon toc))
+  "removes given installed addon"
+  [installed-addon :addon/installed]
+  (addon/remove-addon (selected-addon-dir) installed-addon)
   (refresh))
 
 (defn-spec remove-selected nil?
   []
   (-> (get-state) :selected-installed vec remove-many-addons)
   nil)
+
+(defn-spec ignore-selected nil?
+  "marks each of the selected addons as being 'ignored'"
+  []
+  (->> (get-state) :selected-installed (map :dirname) (run! (partial nfo/ignore (selected-addon-dir))))
+  (refresh))
+
+(defn-spec clear-ignore-selected nil?
+  "removes the 'ignore' flag from each of the selected addons."
+  []
+  (->> (get-state) :selected-installed (map :dirname) (run! (partial addon/clear-ignore (selected-addon-dir))))
+  (refresh))
+
+;;
 
 (defn-spec db-reload-catalogue nil?
   "unloads the database from state then calls `refresh` which will trigger a rebuild"
@@ -1270,22 +1126,6 @@
   (swap! state assoc :in-repl? (utils/in-repl?))
   nil)
 
-(defn-spec migrate-user-config nil?
-  []
-  (config/copy-wowman-user-config (paths :old-cfg-file) (paths :cfg-file)))
-
-(defn-spec migrate-user-catalogue nil?
-  []
-  (catalogue/copy-wowman-user-catalogue (paths :old-user-catalogue-file) (paths :user-catalogue-file)))
-
-(defn-spec migrate-user nil?
-  "migrates wowman settings and files to strongbox.
-  must be called *after* `init-dirs` otherwise destination directories may not exist yet."
-  []
-  ;; (migrate-nfo-files) ;; migrated during `refresh`
-  (migrate-user-config)
-  (migrate-user-catalogue))
-
 ;;
 
 (defn -start
@@ -1300,7 +1140,6 @@
   (detect-repl!)
   (init-dirs)
   (prune-http-cache!)
-  (migrate-user)
   (load-settings! cli-opts)
   (watch-for-addon-dir-change)
   (watch-for-catalogue-change)

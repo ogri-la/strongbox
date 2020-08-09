@@ -15,25 +15,27 @@
     [wowinterface-api :as wowinterface-api]
     [github-api :as github-api]]))
 
-(defn expand-summary
-  [addon-summary game-track]
+(defn-spec expand-summary (s/or :ok (s/merge :addon/expandable :addon/source-updates), :error nil?)
+  "fetches updates from the addon host for the given `addon`.
+  hosts handle the game track in different ways."
+  [addon :addon/expandable, game-track ::sp/game-track]
   (let [dispatch-map {"curseforge" curseforge-api/expand-summary
                       "wowinterface" wowinterface-api/expand-summary
                       "github" github-api/expand-summary
                       "tukui" tukui-api/expand-summary
                       "tukui-classic" tukui-api/expand-summary-classic
-                      nil (fn [_ _] (error "malformed addon-summary:" (utils/pprint addon-summary)))}
-        key (:source addon-summary)]
+                      nil (fn [_ _] (error "malformed addon:" (utils/pprint addon)))}
+        key (:source addon)]
     (try
       (if-not (contains? dispatch-map key)
-        (error (format "addon '%s' is from source '%s' that is unsupported" (:label addon-summary) key))
-        (if-let [source-updates ((get dispatch-map key) addon-summary game-track)]
-          (merge addon-summary source-updates)
+        (error (format "addon '%s' is from source '%s' that is unsupported" (:label addon) key))
+        (if-let [source-updates ((get dispatch-map key) addon game-track)]
+          (merge addon source-updates)
           ;; "no release found for 'adibags' (retail) on github"
           (warn (format "no release found for '%s' (%s) on %s"
-                        (:name addon-summary)
+                        (:name addon)
                         (utils/kw2str game-track)
-                        (:source addon-summary)))))
+                        (:source addon)))))
       (catch Exception e
         (error e "unhandled exception attempting to expand addon summary")
         (error "please report this! https://github.com/ogri-la/strongbox/issues")))))
@@ -197,10 +199,3 @@
                           (java-time/before? dtobj (utils/todt cutoff))))]
     (when addon-summary-list
       (format-catalogue-data (remove unmaintained? addon-summary-list) datestamp))))
-
-;;
-
-(defn-spec copy-wowman-user-catalogue nil?
-  [old-path ::sp/file, new-path ::sp/file]
-  (when (utils/copy-old-to-new-if-safe old-path new-path)
-    (info "migrated wowman user catalogue to strongbox")))

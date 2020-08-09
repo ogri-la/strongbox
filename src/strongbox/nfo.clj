@@ -15,17 +15,22 @@
   The file can be safely deleted but some addons may fail to find a match 
   in the catalogue and will need to be found and re-installed.")
 
-(def old-nfo-filename ".wowman.json")
-
 (def nfo-filename ".strongbox.json")
 
 (def ignorable-dir-set #{".git" ".hg" ".svn"})
 
-(defn-spec ignore? boolean?
-  "returns true if addon looks like it's under version control"
+(defn-spec version-controlled? boolean?
+  "returns `true` if addon looks like it's under version control"
   [path ::sp/extant-dir]
   (let [sub-dirs (->> path fs/list-dir (filter fs/directory?) (map fs/base-name) (mapv str))]
     (not (nil? (some ignorable-dir-set sub-dirs)))))
+
+(defn-spec prune :addon/nfo
+  "prevents writing unwanted data to nfo files by removing keys not present in the `addon/nfo` spec."
+  [addon :addon/nfo]
+  (if (sequential? addon)
+    (mapv prune addon)
+    (select-keys addon [:installed-version :installed-game-track :name :group-id :primary? :ignore? :source :source-id])))
 
 (defn-spec derive :addon/nfo
   "extract fields from the addon data that will be written to the nfo file"
@@ -55,98 +60,166 @@
         ;; it may be present when upgrading an existing nfo file and should be preserved
         ignore-flag (when-some [ignore? (:ignore? addon)]
                       {:ignore? ignore?})]
+
     (merge nfo ignore-flag)))
 
 (defn-spec nfo-path ::sp/file
   "given an installation directory and the directory name of an addon, return the absolute path to the nfo file"
-  [install-dir ::sp/extant-dir, dirname string?]
+  [install-dir ::sp/extant-dir, dirname ::sp/dirname]
   (join install-dir dirname nfo-filename)) ;; /path/to/addons/AddonName/.strongbox.json
 
-(defn-spec write-nfo ::sp/extant-file
-  "given an installation directory and an addon, extract the neccessary bits and write them to a nfo file"
-  [install-dir ::sp/extant-dir, addon :addon/nfo-input-minimum, addon-dirname string?, primary? boolean?, game-track ::sp/game-track]
-  (let [path (nfo-path install-dir addon-dirname)]
-    (utils/dump-json-file path (derive addon primary? game-track))
-    path))
-
-(defn-spec upgrade-nfo ::sp/extant-file
-  "refreshes the nfo data for the given addon. does NOT bump installed version"
-  [install-dir ::sp/extant-dir, addon :addon/nfo-input-minimum]
-  (debug "upgrading nfo file:" (nfo-path install-dir (:dirname addon)))
-  (let [;; important! as an addon is updated or installed, the `:installed-version` is overridden by the `:version`
-        ;; we don't want to alter the version it thinks is installed here
-        addon (merge addon {:version (:installed-version addon)})]
-    (write-nfo install-dir addon (:dirname addon) (:primary? addon) (:game-track addon))))
-
-(defn-spec rm-nfo nil?
-  "deletes a nfo file and only a nfo file"
+(defn-spec rm-nfo-file nil?
+  "deletes a nfo file and *only* a nfo file"
   [path ::sp/extant-file]
   (when (= nfo-filename (fs/base-name path))
     (fs/delete path)
     nil))
 
+(defn-spec read-nfo-file* (s/or :ok ::sp/map-or-list-of-maps, :error nil?)
+  "safely reads a nfo file with basic transformations.
+  old nfo data had no spec and it's shape changed several times.
+  this function returns whatever we can find or nil.
+  it won't destroy bad/invalid data like `read-nfo-file` will."
+  [path ::sp/file & [opts] (s/* map?)]
+  (let [default-opts {:no-file? nil
+                      :bad-data? nil
+                      :key-fn keyword
+                      :transform-map {:installed-game-track keyword}}]
+    (utils/load-json-file-safely path (merge default-opts opts))))
+
 (defn-spec read-nfo-file (s/or :ok :addon/nfo, :error nil?)
-  "reads the nfo file.
+  "reads the nfo file with basic transformations.
   failure to load the json results in the file being deleted.
   failure to validate the json data results in the file being deleted."
-  [install-dir ::sp/extant-dir, dirname string?]
+  [install-dir ::sp/extant-dir, dirname ::sp/dirname]
   (let [path (nfo-path install-dir dirname)
         bad-data (fn []
                    (warn "bad nfo data, deleting file:" path)
-                   (rm-nfo path))
+                   (rm-nfo-file path))
         invalid-data (fn []
                        (warn "invalid nfo data, deleting file:" path)
-                       (rm-nfo path))]
-    (utils/load-json-file-safely
-     path
-     {:no-file? nil
-      :bad-data? bad-data
-      :invalid-data? invalid-data,
-      :data-spec :addon/nfo
-      :key-fn keyword
-      :transform-map {:installed-game-track keyword}})))
+                       (rm-nfo-file path))
+        opts {:bad-data? bad-data
+              :invalid-data? invalid-data,
+              :data-spec :addon/nfo}]
+    (read-nfo-file* path opts)))
+
+(defn-spec mutual-dependency? boolean?
+  "returns `true` if multiple sets of nfo data exist in file"
+  ([nfo-data (s/nilable ::sp/map-or-list-of-maps)]
+   (vector? nfo-data))
+  ([install-dir ::sp/extant-dir, addon-dirname ::sp/dirname]
+   (mutual-dependency? (read-nfo-file install-dir addon-dirname))))
 
 (defn-spec read-nfo (s/or :ok :addon/nfo, :error nil?)
-  "reads and parses the contents of the .nfo file and checks if addon should be ignored or not"
-  [install-dir ::sp/extant-dir, dirname string?]
+  "parses the contents of the .nfo file and checks if addon should be ignored or not"
+  [install-dir ::sp/extant-dir, dirname ::sp/dirname]
   (let [nfo-file-contents (read-nfo-file install-dir dirname)
-        ;; `ignore?` is never written to file, although the user can put it there manually if they like.
+        nfo-file-contents (if (mutual-dependency? nfo-file-contents)
+                            (last nfo-file-contents)
+                            nfo-file-contents)
         ;; if `ignore?` is present in the nfo file it overrides the nfo and toc file checks.
         ;; this value may also be introduced in `toc.clj`
         user-ignored (contains? nfo-file-contents :ignore?)
         _ (when (and user-ignored
                      (:ignore? nfo-file-contents))
-            (warn (format "explicitly ignoring addon: %s" dirname)))
+            (warn (format "ignoring '%s'" dirname)))
 
         ignore-flag (when (and (not user-ignored)
-                               (ignore? (join install-dir dirname)))
-                      (warn (format "implicitly ignoring addon: %s; addon directory contains a .git/.hg/.svn folder" dirname))
+                               (version-controlled? (join install-dir dirname)))
+                      (warn (format "ignoring '%s': addon directory contains a .git/.hg/.svn folder" dirname))
                       {:ignore? true})]
     (merge nfo-file-contents ignore-flag)))
 
-(defn-spec has-nfo-file? boolean?
-  "returns true if a nfo (.strongbox.json) file exists in addon directory"
-  [install-dir ::sp/extant-dir, addon any?]
-  (if-let [dirname (:dirname addon)]
-    (fs/exists? (nfo-path install-dir dirname))
-    false))
+;;
 
-(defn-spec has-valid-nfo-file? boolean?
-  "returns true if a nfo file exists and contains valid `:addon/nfo` data"
-  [install-dir ::sp/extant-dir, addon any?]
-  (and (has-nfo-file? install-dir addon)
-       ;; don't use read-nfo-file here, it deletes invalid nfo files
-       (s/valid? :addon/nfo (utils/load-json-file-safely (nfo-path install-dir (:dirname addon))
-                                                         {:transform-map {:installed-game-track keyword}}))))
+(defn-spec flatten-nfo ::sp/map-or-list-of-maps
+  "ensures given `nfo-data` is either a map or a list of multiple maps."
+  [nfo-data ::sp/map-or-list-of-maps]
+  (if (and (sequential? nfo-data)
+           (-> nfo-data count (= 1)))
+    (first nfo-data)
+    nfo-data))
 
-(defn-spec copy-wowman-nfo-files nil?
-  "makes a copy of any `.wowman.json` nfo files to `.strongbox.json` ones.
-  user can delete `.wowman.json` files through the gui afterwards."
-  [install-dir ::sp/extant-dir]
-  (let [file-regex (re-pattern old-nfo-filename)
-        path-list (mapv str (fs/find-files install-dir file-regex))
-        copy (fn [old-path]
-               (let [new-path (join (fs/parent old-path) nfo-filename)]
-                 (when-not (fs/exists? new-path)
-                   (fs/copy old-path new-path))))]
-    (run! copy path-list)))
+(defn-spec rm-nfo* (s/or :ok :addon/nfo, :error nil?)
+  "removes any nfo data items matching `group-id`. returns a list of nfo data"
+  [nfo-data (s/nilable :addon/nfo), group-id (s/nilable ::sp/group-id)]
+  (when nfo-data
+    (let [nfo-data (if (sequential? nfo-data) nfo-data [nfo-data])]
+      (->> nfo-data (remove #(= group-id (:group-id %))) vec))))
+
+(defn-spec rm-nfo (s/or :ok :addon/nfo, :error nil?)
+  "removes any nfo data matching `group-id`. returns a nfo map or a list of nfo maps."
+  [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, group-id ::sp/group-id]
+  (-> (read-nfo-file install-dir addon-dirname) (rm-nfo* group-id) flatten-nfo))
+
+(defn-spec add-nfo :addon/nfo
+  "adds the given nfo data to the end of the list (most recent) and removes it from any other position in the list"
+  [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, new-nfo-data :addon/nfo]
+  (let [user-warning (fn [nfo-data-list]
+                       (when-not (empty? nfo-data-list)
+                         (warn (format "addon '%s' is overwriting '%s'" (:name new-nfo-data) (:name (last nfo-data-list)))))
+                       nfo-data-list)]
+    (-> (read-nfo-file install-dir addon-dirname)
+        (rm-nfo* (:group-id new-nfo-data))
+        user-warning
+        (conj new-nfo-data)
+        flatten-nfo)))
+
+;;
+
+(defn-spec write-nfo (s/or :ok ::sp/extant-file, :error nil?)
+  "given an installation directory and an addon, select the neccessary bits (`prune`) and write them to a nfo file"
+  [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, addon ::sp/map-or-list-of-maps]
+  (let [path (nfo-path install-dir addon-dirname)]
+    (if-not (s/valid? :addon/nfo addon)
+      (error "new nfo data is invalid and won't be written to file")
+      (utils/dump-json-file path (prune addon)))))
+
+;; this function could definitely do with a second pass, but not right now.
+;; it's doing two things: updating the nfo and writing/removing a file, but conditionally,
+;; and the update logic is tied to the removal logic
+(defn-spec update-nfo nil?
+  "updates *existing* nfo data with new values.
+  differs from `upgrade-nfo` in that existing nfo data is not being manipulated to make 
+  it valid for the current nfo spec."
+  [install-dir ::sp/extant-dir, dirname ::sp/dirname, updates map?]
+  (let [path (nfo-path install-dir dirname)
+        nfo (read-nfo install-dir dirname)
+        new-nfo (merge nfo updates)
+        ;; convenience for implicitly ignored addons.
+        ;; if the nfo file was missing (implicitly ignored) and the update is to clear the flag, set the flag to false instead
+        ;; this will create a new nfo file explicitly *not* ignoring the addon.
+        ;; if the flag is cleared again, it will encounter a nfo file and delete the nfo (see below)
+        new-nfo (if (and (not (fs/exists? path))
+                         (= {:ignore? nil} new-nfo))
+                  {:ignore? false}
+                  new-nfo)
+
+        new-nfo (if (nil? (:ignore? new-nfo))
+                  (dissoc new-nfo :ignore?)
+                  new-nfo)]
+    (if (empty? new-nfo)
+      ;; edge case. a valid nfo file is also simply a `ignore: [True|False]`
+      ;; when this condition is true, just delete the nfo file.
+      (rm-nfo-file path)
+      (write-nfo install-dir dirname new-nfo)))
+  nil)
+
+(defn-spec ignore nil?
+  "prevent any changes made by strongbox to this addon. 
+  explicitly ignores this addon by setting the `ignore?` flag to `true`."
+  [install-dir ::sp/extant-dir, dirname ::sp/dirname]
+  (update-nfo install-dir dirname {:ignore? true}))
+
+(defn-spec stop-ignoring nil?
+  "sets the `ignore?` flag to `false`, which is an explicit 'do not ignore'.
+  used for implicitly ignored addons."
+  [install-dir ::sp/extant-dir, dirname ::sp/dirname]
+  (update-nfo install-dir dirname {:ignore? false}))
+
+(defn-spec clear-ignore nil?
+  "removes the `ignore?` flag on an addon.
+  the addon may still be implicitly ignored afterwards."
+  [install-dir ::sp/extant-dir, dirname ::sp/dirname]
+  (update-nfo install-dir dirname {:ignore? nil}))

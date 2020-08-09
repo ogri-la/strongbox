@@ -34,6 +34,12 @@
 
       ;; big long stateful test
 
+      (testing "fetching the addon-dir map data, without args, without addon directories, returns nil"
+        (is (nil? (core/addon-dir-map))))
+
+      (testing "setting the game track, without args, without addon directories, does nothing"
+        (is (nil? (core/set-game-track! :retail))))
+
       (testing "add-addon-dir! adds an addon dir with a default game track of 'retail'"
         (core/add-addon-dir! dir1 :retail)
         (is (= [{:addon-dir dir1 :game-track :retail}] (core/get-state :cfg :addon-dir-list))))
@@ -159,34 +165,6 @@
             expected-data-dir (-> core/default-data-dir utils/expand-path)]
         (is (= expected-data-dir (:data-dir paths)))
         (is (= expected-config-dir (:config-dir paths)))))))
-
-(deftest determine-primary-subdir
-  (testing "basic failure cases"
-    (is (= nil (core/determine-primary-subdir [])))
-    (is (= nil (core/determine-primary-subdir [{}])))
-    (is (= nil (core/determine-primary-subdir [{:path nil}])))
-    (is (= nil (core/determine-primary-subdir [{:path ""}])))
-    (is (= nil (core/determine-primary-subdir [{:path "Foo/"} {:path "Bar/"}]))))
-
-  (testing "multiple paths, different lengths, shortest is not a common prefix"
-    (is (= nil (core/determine-primary-subdir [{:path "z"} {:path "az"}]))))
-
-  (testing "basic success cases"
-    (is (= {:path "Foo/"} (core/determine-primary-subdir [{:path "Foo/"}])))
-    (is (= {:path "Foo/"} (core/determine-primary-subdir [{:path "Foo-Bar/"} {:path "Foo/"}]))))
-
-  (testing "actual case with HealBot"
-    (let [fixture [{:path "HealBot/"} {:path "HealBot_br/"} {:path "HealBot_cn/"} {:path "HealBot_de/"}
-                   {:path "HealBot_es/"} {:path "HealBot_fr/"} {:path "HealBot_gr/"} {:path "HealBot_hu/"}
-                   {:path "HealBot_it/"} {:path "HealBot_kr/"} {:path "HealBot_ru/"} {:path "HealBot_Tips/"} {:path "HealBot_tw/"}]
-          expected {:path "HealBot/"}]
-      (is (= expected (core/determine-primary-subdir fixture)))))
-
-  (testing "only unique values are compared"
-    (is (= {:path "Foo/"} (core/determine-primary-subdir [{:path "Foo/"} {:path "Foo/"} {:path "Foo/"} {:path "Foo-Bar/"}]))))
-
-  (testing "original value is preserved despite modification for comparison"
-    (is (= {:path "Foo"} (core/determine-primary-subdir [{:path "Foo"}])))))
 
 (deftest export-installed-addon-list
   (testing "exported addon data is correct"
@@ -324,7 +302,7 @@
                        {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-other-addon-zip-file)})}}]
       (with-fake-routes-in-isolation fake-routes
         (with-running-app
-          (core/set-addon-dir! (str fs/*cwd*))
+          (helper/install-dir)
 
           (let [;; our list of addons to import
                 output-path (fixture-path "import-export--export-v2.json")
@@ -549,19 +527,21 @@
             fname (core/downloaded-addon-fname (:name addon) (:version addon))
             _ (utils/cp (fixture-path fname) install-dir)
             test-only? false
+            ;; without a running app we have no `selected-addon-dir`.
+            ;; pretend to be an export record with a `:game-track` instead
+            addon (assoc addon :game-track :retail)
             file-list (core/install-addon addon install-dir test-only?)]
 
         (testing "addon directory created, single file written (.strongbox.json nfo file)"
           (is (= (count file-list) 1))
           (is (fs/exists? (first file-list))))))))
 
-(deftest install-addon-2
+(deftest install-addon-trial-2
   (testing "trial installation of a good addon"
     (with-fake-routes-in-isolation {}
-      (let [install-dir (utils/join (str fs/*cwd*) "addons-dir")
+      (let [install-dir (helper/install-dir)
             ;; move dummy addon file into place so there is no cache miss
             fname (core/downloaded-addon-fname (:name addon) (:version addon))
-            _ (fs/mkdir install-dir)
             _ (utils/cp (fixture-path fname) install-dir)
 
             test-only? true
@@ -571,13 +551,12 @@
         ;; ensure nothing was actually unzipped
         (is (not (fs/exists? (utils/join install-dir "EveryAddon"))))))))
 
-(deftest install-addon-3
+(deftest install-addon-trial-3
   (testing "trial installation of a bad addon"
     (with-fake-routes-in-isolation {}
-      (let [install-dir (utils/join (str fs/*cwd*) "addons-dir")
+      (let [install-dir (helper/install-dir)
             ;; move dummy addon file into place so there is no cache miss
             fname (core/downloaded-addon-fname (:name addon) (:version addon))
-            _ (fs/mkdir install-dir)
             _ (fs/copy (fixture-path "bad-truncated.zip") (utils/join install-dir fname)) ;; hoho, so evil
 
             test-only? true
@@ -596,159 +575,281 @@
         (is (= (core/install-addon addon install-dir) nil))
         (is (= (count (fs/list-dir install-dir)) 0)))))) ;; bad zip file deleted
 
-;;
+(deftest install-bundled-addon
+  (testing "installing a bundled addon"
+    (with-fake-routes-in-isolation {}
+      (let [install-dir (helper/install-dir)
+            ;; without a running app we have no `selected-addon-dir`.
+            ;; pretend to be an export record with a `:game-track` instead
+            addon (merge addon {:version "0.1.2" :game-track :retail})
 
-(deftest load-installed-addons-1
-  (testing "regular .toc file can be loaded"
-    (let [addon-dir (str fs/*cwd*)
-          some-addon-path (utils/join addon-dir "SomeAddon")
-          _ (fs/mkdirs some-addon-path)
+            ;; move dummy addon file into place so there is no cache miss
+            fname (core/downloaded-addon-fname (:name addon) (:version addon))
 
-          some-addon-toc (utils/join some-addon-path "SomeAddon.toc")
-          _ (spit some-addon-toc "## Title: SomeAddon\n## Description: asdf\n## Interface: 80300\n## Version: 1.2.3")
+            _ (fs/copy (fixture-path "everyaddon--0-1-2.zip") (utils/join install-dir fname))
+            result (core/install-addon addon install-dir)
+            directory-list (->> install-dir fs/list-dir (filter fs/directory?) (map fs/base-name) sort)
+            expected-nfo {;; bundled addon is simply a part of the 'everyaddon' addon.
+                          ;; without a distinct name or version for itself.
+                          :name "everyaddon"
+                          :installed-version "0.1.2"
+                          :group-id "https://www.example.org/wow/addons/everyaddon",
+                          :installed-game-track :retail,
+                          :primary? false,
+                          :source "curseforge",
+                          :source-id 1}]
+        (is result) ;; success
+        (is (= ["EveryAddon" "EveryAddon-BundledAddon"] directory-list))
+        (is (= expected-nfo (nfo/read-nfo-file install-dir "EveryAddon-BundledAddon")))))))
 
-          expected [{:name "someaddon", :dirname "SomeAddon", :label "SomeAddon", :description "asdf", :interface-version 80300, :installed-version "1.2.3"}]]
-      (is (= expected (core/-load-installed-addons addon-dir))))))
+(deftest install-bundled-addon-overwriting-ignored-addon
+  (testing "installing/unzipping an addon with a shared mutual dependency of an addon that is ignored isn't possible"
+    (with-running-app
+      (let [install-dir (helper/install-dir)
+            addon {:name "everyaddon" :label "EveryAddon" :version "0.1.2" :url "https://group.id/never/fetched"
+                   :source "curseforge" :source-id 1
+                   :-testing-zipfile (fixture-path "everyaddon--0-1-2.zip")}]
 
-(deftest load-installed-addons-2
-  (testing "toc data and nfo data are mooshed together as expected"
-    (let [addon-dir (str fs/*cwd*)
-          some-addon-path (utils/join addon-dir "SomeAddon")
-          _ (fs/mkdirs some-addon-path)
+        (core/install-addon addon)
+        (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
 
-          some-addon-toc (utils/join some-addon-path "SomeAddon.toc")
-          _ (spit some-addon-toc "## Title: SomeAddon\n## Description: asdf\n## Interface: 80300\n## Version: 1.2.3")
+        (fs/mkdir (utils/join install-dir "EveryAddon" ".git"))
+        (core/load-installed-addons) ;; refresh our knowledge of what is installed
 
-          some-addon-nfo (utils/join some-addon-path nfo/nfo-filename)
-          nfo-data {:source "curseforge"
-                    :source-id 123
-                    :installed-version "1.2.3"
-                    :name "someaddon"
-                    :group-id "fdsa"
-                    :primary? true
-                    :installed-game-track :retail}
-          _ (spit some-addon-nfo (utils/to-json nfo-data))
-
-          expected [{;; toc data
-                     :name "someaddon",
-                     :dirname "SomeAddon",
-                     :label "SomeAddon",
-                     :description "asdf",
-                     :interface-version 80300,
-
-                     ;; shared between toc and nfo, nfo wins out
-                     :installed-version "1.2.3"
-
-                     ;; unique items from nfo data
-                     :source "curseforge"
-                     :source-id 123
-                     :group-id "fdsa"
-                     :installed-game-track :retail
-                     :primary? true}]]
-      (is (= expected (core/-load-installed-addons addon-dir))))))
-
-(deftest load-installed-addons-3
-  (testing "invalid nfo data is not loaded"
-    (let [addon-dir (str fs/*cwd*)
-          some-addon-path (utils/join addon-dir "SomeAddon")
-          _ (fs/mkdirs some-addon-path)
-
-          some-addon-toc (utils/join some-addon-path "SomeAddon.toc")
-          _ (spit some-addon-toc "## Title: SomeAddon\n## Description: asdf\n## Interface: 80300\n## Version: 1.2.3")
-
-          some-addon-nfo (utils/join some-addon-path nfo/nfo-filename)
-          nfo-data {:source nil ;; invalid
-                    :source-id 123
-                    :installed-version "1.2.3"
-                    :name "someaddon"
-                    ;; also invalid. all of these are required
-                    ;;:group-id "asdf"
-                    ;;:primary? true
-                    ;;:installed-game-track :retail
-                    }
-          _ (spit some-addon-nfo (utils/to-json nfo-data))
-
-          expected [{:name "someaddon", :dirname "SomeAddon", :label "SomeAddon", :description "asdf", :interface-version 80300, :installed-version "1.2.3"}]]
-      (is (= expected (core/-load-installed-addons addon-dir))))))
-
-(deftest load-installed-addons-4
-  (testing "ignore flag in nfo data overrides any ignore flag in toc data"
-    (let [addon-dir (str fs/*cwd*)
-          some-addon-path (utils/join addon-dir "SomeAddon")
-          _ (fs/mkdirs some-addon-path)
-
-          some-addon-toc (utils/join some-addon-path "SomeAddon.toc")
-          _ (spit some-addon-toc "## Title: SomeAddon\n## Description: asdf\n## Interface: 80300\n## Version: @project-version@")
-
-          some-addon-nfo (utils/join some-addon-path nfo/nfo-filename)
-          _ (spit some-addon-nfo (utils/to-json {:source "curseforge" :source-id 123
-                                                 :ignore? false})) ;; expressly un-ignoring this otherwise-ignored addon
-
-          expected [{:name "someaddon", :dirname "SomeAddon", :label "SomeAddon", :description "asdf", :interface-version 80300
-                     :installed-version "@project-version@"
-                     :source "curseforge" :source-id 123
-                     :ignore? false}]]
-      (is (= expected (core/-load-installed-addons addon-dir))))))
-
-(deftest group-addons
-  (testing "addons with nothing to group on are not modified"
-    (let [addon-list [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"}
-                      {:name "a2", :dirname "A2", :label "A2", :description "" :interface-version 80300 :installed-version "4.5.6"}
-                      {:name "a3", :dirname "A3", :label "A2", :description "" :interface-version 80300 :installed-version "7.8.9"}]
-          expected addon-list]
-      (is (= expected (core/group-addons addon-list)))))
-
-  (testing "addons with groupable data but no groupings are not modified"
-    (let [addon-list [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"
-                       :group-id "foo" :primary? true}
-                      {:name "a2", :dirname "A2", :label "A2", :description "" :interface-version 80300 :installed-version "4.5.6"
-                       :group-id "bar" :primary? true}
-                      {:name "a3", :dirname "A3", :label "A2", :description "" :interface-version 80300 :installed-version "7.8.9"
-                       :group-id "baz" :primary? true}]
-          expected addon-list]
-      (is (= expected (core/group-addons addon-list)))))
-
-  (testing "addons with groupable data with one marked as the `primary`, group as expected"
-    (let [addon-list [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"
-                       :group-id "foo" :primary? true}
-                      {:name "a2", :dirname "A2", :label "A2", :description "" :interface-version 80300 :installed-version "4.5.6"
-                       :group-id "foo" :primary? false}
-                      {:name "a3", :dirname "A3", :label "A2", :description "" :interface-version 80300 :installed-version "7.8.9"
-                       :group-id "bar" :primary? true}]
-
-          expected [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"
-                     :group-id "foo" :primary? true :group-addon-count 2 :group-addons
-                     [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"
-                       :group-id "foo" :primary? true}
-                      {:name "a2", :dirname "A2", :label "A2", :description "" :interface-version 80300 :installed-version "4.5.6"
-                       :group-id "foo" :primary? false}]}
-
-                    {:name "a3", :dirname "A3", :label "A2", :description "" :interface-version 80300 :installed-version "7.8.9"
-                     :group-id "bar" :primary? true}]]
-      (is (= expected (core/group-addons addon-list)))))
-
-  (testing "synthetic records are created for groupable addons with no primary addon"
-    (let [addon-list [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"
-                       :group-id "foo" :primary? false}
-                      {:name "a2", :dirname "A2", :label "A2", :description "" :interface-version 80300 :installed-version "4.5.6"
-                       :group-id "foo" :primary? false}
-                      {:name "a3", :dirname "A3", :label "A2", :description "" :interface-version 80300 :installed-version "7.8.9"
-                       :group-id "bar" :primary? true}]
-
-          expected [{:name "a1", :dirname "A1", :label "foo (group)", :description "group record for the foo addon" :interface-version 80300 :installed-version "1.2.3"
-                     :group-id "foo" :primary? false :group-addon-count 2 :group-addons
-                     [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"
-                       :group-id "foo" :primary? false}
-                      {:name "a2", :dirname "A2", :label "A2", :description "" :interface-version 80300 :installed-version "4.5.6"
-                       :group-id "foo" :primary? false}]}
-
-                    {:name "a3", :dirname "A3", :label "A2", :description "" :interface-version 80300 :installed-version "7.8.9"
-                     :group-id "bar" :primary? true}]]
-      (is (= expected (core/group-addons addon-list))))))
-
+        (let [addon2 {:name "everyotheraddon" :label "EveryOtherAddon" :version "5.6.7" :url "https://group.id/also/never/fetched"
+                      :source "curseforge" :source-id 2
+                      :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}]
+          (core/install-addon addon2)
+          (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents))))))))
 
 ;;
 
+(deftest uninstall-addon
+  (testing "uninstalling an addon without a nfo file is supported, but won't remove addons that came bundled"
+    (with-running-app
+      (let [install-dir (helper/install-dir)
+            ;; even though they're part of the same addon strongbox didn't install it
+            ;; and doesn't know about the connection. expect the bundled addon to remain
+            expected ["EveryAddon-BundledAddon"]]
+        (zip/unzip-file (fixture-path "everyaddon--0-1-2.zip") install-dir)
+        (core/remove-many-addons [toc])
+        (is (= expected (helper/install-dir-contents)))))))
+
+(deftest uninstall-installed-addon
+  (testing "uninstalling an addon installed with strongbox also removes bundled addons"
+    (with-running-app
+      (let [install-dir (helper/install-dir)
+
+            addon-v0 (merge addon {:version "0.1.2"})
+            addon-v1 addon
+
+            ;; move dummy addon files into place so there is no cache miss
+            fname-v0 (core/downloaded-addon-fname (:name addon-v0) (:version addon-v0))
+            fname-v1 (core/downloaded-addon-fname (:name addon-v1) (:version addon-v1))
+
+            fixture-v0 (fixture-path "everyaddon--0-1-2.zip") ;; v0.1 unzips to two directories
+            fixture-v1 (fixture-path "everyaddon--1-2-3.zip") ;; v1.2 has just the one directory
+
+            _ (fs/copy fixture-v0 (utils/join install-dir fname-v0))
+            _ (fs/copy fixture-v1 (utils/join install-dir fname-v1))
+
+            install-path-dirs #(->> install-dir fs/list-dir
+                                    (filter fs/directory?) ;; exclude any .zip files
+                                    (map fs/base-name) sort)]
+
+        (core/install-addon addon-v0 install-dir)
+        (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (install-path-dirs)))
+
+        ;; reload the list of addons. this groups the addons up by :group-id
+        (core/load-installed-addons)
+        (is (= 1 (count (core/get-state :installed-addon-list))))
+
+        (let [;; our v0 addon should now have group information
+              addon-v0 (first (core/get-state :installed-addon-list))
+              addon-v1 (merge addon-v0 source-updates {:url "https://example.org/"}) ;; there is no catalogue so there is no download-url. the version has changed also
+              ]
+          ;; install the upgrade that gets rid of a directory
+          (core/install-addon addon-v1 install-dir)
+          (is (= ["EveryAddon"] (install-path-dirs))))))))
+
+(deftest uninstall-ignored-addon
+  (testing "uninstalling an addon we're ignoring isn't possible."
+    (with-running-app
+      (let [install-dir (helper/install-dir)
+            _ (zip/unzip-file (fixture-path "everyaddon--1-2-3.zip") install-dir)
+            _ (fs/mkdir (utils/join install-dir "EveryAddon" ".git"))
+            _ (core/load-installed-addons)
+            addon (first (core/get-state :installed-addon-list))]
+        (core/remove-many-addons [addon])
+        (is (= ["EveryAddon"] (helper/install-dir-contents)))))))
+
+(deftest uninstall-ignored-bundled-addon
+  (testing "uninstalling an addon with a bundled addon that is being ignored isn't possible."
+    (with-running-app
+      (let [install-dir (helper/install-dir)
+            install-dir-contents #(->> install-dir fs/list-dir (filter fs/directory?) (map fs/base-name) sort)
+
+            ;; trick here: copying 0.1.2 fixture to 1.2.3 filename. this fixture unpacks two directories
+            fname (core/downloaded-addon-fname (:name addon) (:version addon))
+            _ (fs/copy (fixture-path "everyaddon--0-1-2.zip") (utils/join install-dir fname))
+            _ (core/install-addon addon install-dir)
+
+            ;; ensure bundled addon gets ignored
+            _ (fs/mkdir (utils/join install-dir "EveryAddon-BundledAddon" ".git"))
+            _ (core/load-installed-addons)
+            addon (first (core/get-state :installed-addon-list))]
+        (core/remove-many-addons [addon])
+        (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (install-dir-contents)))))))
+
+;; mutual dependencies
+
+(deftest install-addons-with-mutual-dependencies
+  (testing "installing addons with mutual dependencies captures the dependency"
+    (with-running-app
+      (let [install-dir (helper/install-dir)
+
+            ;; all these addons install the 'EveryAddon-BundledAddon' addon
+            addon-1 {:name "everyaddon" :label "EveryAddon" :version "0.1.2" :url "https://group.id/never/fetched"
+                     :source "curseforge" :source-id 1
+                     :-testing-zipfile (fixture-path "everyaddon--0-1-2.zip")}
+
+            addon-2 {:name "everyotheraddon" :label "EveryOtherAddon" :version "5.6.7" :url "https://group.id/also/never/fetched"
+                     :source "curseforge" :source-id 2
+                     :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}
+
+            ;; 'bundled is misleading here', standalone is more like it
+            addon-3 {:name "bundledaddon" :label "BundledAddon" :version "a.b.c" :url "https://group.id/still/not/fetched"
+                     :source "curseforge" :source-id 3
+                     :-testing-zipfile (fixture-path "everyaddon-bundledaddon--a-b-c.zip")}
+
+            bundled-dirname "EveryAddon-BundledAddon"
+
+            ;; addon-2 overwrites the bundled nfo data but preserves previous
+            ;; addon-3 overwrites the bundled nfo data *again* but preserves previous two
+            expected [{:group-id "https://group.id/never/fetched"
+                       :installed-game-track :retail ;; ignore the implications for now?
+                       :installed-version "0.1.2"
+                       :name "everyaddon"
+                       :primary? false
+                       :source "curseforge"
+                       :source-id 1}
+                      {:group-id "https://group.id/also/never/fetched",
+                       :installed-game-track :retail,
+                       :installed-version "5.6.7",
+                       :name "everyotheraddon",
+                       :primary? false,
+                       :source "curseforge",
+                       :source-id 2}
+                      {:group-id "https://group.id/still/not/fetched",
+                       :installed-game-track :retail,
+                       :installed-version "a.b.c",
+                       :name "bundledaddon",
+                       :primary? true,
+                       :source "curseforge",
+                       :source-id 3}]]
+
+        (core/install-addon addon-1)
+        (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
+        (is (= (first expected) (nfo/read-nfo install-dir bundled-dirname)))
+        (is (= (first expected) (nfo/read-nfo-file install-dir bundled-dirname)))
+
+        (core/load-installed-addons) ;; refresh our knowledge of what is installed
+
+        (core/install-addon addon-2)
+        (is (= ["EveryAddon" "EveryAddon-BundledAddon" "EveryOtherAddon"] (helper/install-dir-contents)))
+        (is (= (second expected) (nfo/read-nfo install-dir bundled-dirname)))
+        (is (= (subvec expected 0 2) (nfo/read-nfo-file install-dir bundled-dirname)))
+
+        (core/load-installed-addons) ;; refresh our knowledge of what is installed
+
+        (core/install-addon addon-3)
+        (is (= (last expected) (nfo/read-nfo install-dir bundled-dirname)))
+        (is (= expected (nfo/read-nfo-file install-dir bundled-dirname)))))))
+
+(deftest install-addons-with-mutual-dependencies-user-warning
+  (testing "installing addons with mutual dependencies warns the user"
+    (with-running-app
+      (let [addon-1 {:name "everyaddon" :label "EveryAddon" :version "0.1.2" :url "https://group.id/never/fetched"
+                     :source "curseforge" :source-id 1
+                     :-testing-zipfile (fixture-path "everyaddon--0-1-2.zip")}
+            addon-2 {:name "everyotheraddon" :label "EveryOtherAddon" :version "5.6.7" :url "https://group.id/also/never/fetched"
+                     :source "curseforge" :source-id 2
+                     :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}
+            expected ["addon 'everyotheraddon' is overwriting 'everyaddon'"]]
+        (helper/install-dir)
+        (core/install-addon addon-1)
+        (core/load-installed-addons) ;; refresh our knowledge of what is installed
+        (is (= expected (logging/buffered-log :warn (core/install-addon addon-2))))))))
+
+(deftest uninstall-addons-with-mutual-dependencies--overwrote
+  (testing "uninstalling an addon whose mutual dependency *overwrote another* will see the original one restored"
+    (with-running-app
+      (let [install-dir (helper/install-dir)
+            addon-1 {:name "everyaddon" :label "EveryAddon" :version "0.1.2" :url "https://group.id/never/fetched"
+                     :source "curseforge" :source-id 1
+                     :-testing-zipfile (fixture-path "everyaddon--0-1-2.zip")}
+
+            addon-2 {:name "everyotheraddon" :label "EveryOtherAddon" :version "5.6.7" :url "https://group.id/also/never/fetched"
+                     :source "curseforge" :source-id 2
+                     :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}
+
+            bundled-dirname "EveryAddon-BundledAddon"
+
+            expected {:group-id "https://group.id/never/fetched"
+                      :installed-game-track :retail
+                      :installed-version "0.1.2"
+                      :name "everyaddon"
+                      :primary? false
+                      :source "curseforge"
+                      :source-id 1}]
+
+        (core/install-addon addon-1)
+        (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
+        (core/load-installed-addons) ;; refresh our knowledge of what is installed
+
+        (core/install-addon addon-2)
+        (is (= ["EveryAddon" "EveryAddon-BundledAddon" "EveryOtherAddon"] (helper/install-dir-contents)))
+        (core/load-installed-addons) ;; refresh our knowledge of what is installed
+
+        (core/remove-addon (helper/select-addon (:url addon-2)))
+        (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
+        (is (= expected (nfo/read-nfo install-dir bundled-dirname)))))))
+
+(deftest uninstall-addons-with-mutual-dependencies--overwritten
+  (testing "uninstalling an addon whose mutual dependency *was overwritten* by another will see it removed from the list"
+    (with-running-app
+      (let [install-dir (helper/install-dir)
+            addon-1 {:name "everyaddon" :label "EveryAddon" :version "0.1.2" :url "https://group.id/never/fetched"
+                     :source "curseforge" :source-id 1
+                     :-testing-zipfile (fixture-path "everyaddon--0-1-2.zip")}
+
+            addon-2 {:name "everyotheraddon" :label "EveryOtherAddon" :version "5.6.7" :url "https://group.id/also/never/fetched"
+                     :source "curseforge" :source-id 2
+                     :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}
+
+            bundled-dirname "EveryAddon-BundledAddon"
+
+            expected {:group-id "https://group.id/also/never/fetched"
+                      :installed-game-track :retail
+                      :installed-version "5.6.7"
+                      :name "everyotheraddon"
+                      :primary? false
+                      :source "curseforge"
+                      :source-id 2}]
+
+        (core/install-addon addon-1)
+        (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
+        (core/load-installed-addons) ;; refresh our knowledge of what is installed
+
+        (core/install-addon addon-2)
+        (is (= ["EveryAddon" "EveryAddon-BundledAddon" "EveryOtherAddon"] (helper/install-dir-contents)))
+        (core/load-installed-addons) ;; refresh our knowledge of what is installed
+
+        (core/remove-addon (helper/select-addon (:url addon-1)))
+        (is (= ["EveryAddon-BundledAddon" "EveryOtherAddon"] (helper/install-dir-contents)))
+        (is (= expected (nfo/read-nfo install-dir bundled-dirname)))))))
+
+;;
 
 (deftest http-500-downloading-catalogue
   (testing "HTTP 500 while fetching catalogue from github"
@@ -869,8 +970,7 @@
 
           user-url "https://github.com/Aviana/HealComm"
 
-          install-dir (utils/join fs/*cwd* "addon-dir")
-          _ (fs/mkdir install-dir)
+          install-dir (helper/install-dir)
 
           expected-addon-dir (utils/join install-dir "EveryAddon")
 
@@ -936,41 +1036,91 @@
                     :matched? true}]
       (is (= expected (core/moosh-addons toc addon-summary))))))
 
-(deftest upgrade-nfo-files-1
-  (testing "addons without a .toc file are not upgraded"
-    (let [every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
-          install-dir (utils/join fs/*cwd* "addons")
+;;
 
-          _ (fs/mkdir install-dir)
-          _ (zip/unzip-file every-addon-zip-file install-dir)
+(deftest ignore-addon
+  (testing "a regular installed addon can be marked as 'ignored'"
+    (with-running-app
+      (helper/install-dir)
+      (let [addon {:name "everyaddon" :label "EveryAddon" :version "1.2.3" :url "https://group.id/never/fetched"
+                   :source "curseforge" :source-id 1
+                   :-testing-zipfile (fixture-path "everyaddon--1-2-3.zip")}
 
-          expected-dirname "EveryAddon"
-          addon-path (utils/join install-dir expected-dirname)
-          expected-nfo-file (utils/join addon-path nfo/nfo-filename)]
+            expected {:ignore? true,
+                      :description "Does what no other addon does, slightly differently",
+                      :dirname "EveryAddon",
+                      :group-id "https://group.id/never/fetched",
+                      :installed-game-track :retail,
+                      :installed-version "1.2.3",
+                      :interface-version 70000,
+                      :label "EveryAddon 1.2.3",
+                      :name "everyaddon",
+                      :primary? true,
+                      :source "curseforge",
+                      :source-id 1,
+                      :update? false}]
+        (core/install-addon addon)
+        (is (= ["EveryAddon"] (helper/install-dir-contents)))
+        (core/load-installed-addons)
+        (core/select-addons)
+        (core/ignore-selected) ;; calls `core/refresh`
+        (is (= expected (first (core/get-state :installed-addon-list))))))))
 
-      (with-running-app
-        (core/set-addon-dir! install-dir)
-        (is (not (fs/exists? expected-nfo-file))) ;; no nfo file to upgrade
-        (core/upgrade-nfo-files)
-        (is (not (fs/exists? expected-nfo-file))))))) ;; no nfo written
+(deftest clear-addon-ignore-flag
+  (testing "an ignored addon can be 'unignored'"
+    (with-running-app
+      (helper/install-dir)
+      (let [addon {:name "everyaddon" :label "EveryAddon" :version "1.2.3" :url "https://group.id/never/fetched"
+                   :source "curseforge" :source-id 1
+                   :-testing-zipfile (fixture-path "everyaddon--1-2-3.zip")}
 
-(deftest upgrade-nfo-files-2
-  (testing "addons with malformed .toc files even after upgrading are deleted"
-    (let [every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
-          install-dir (utils/join fs/*cwd* "addons")
+            expected {;;:ignore? false, ;; removed rather than set to false.
+                      :description "Does what no other addon does, slightly differently",
+                      :dirname "EveryAddon",
+                      :group-id "https://group.id/never/fetched",
+                      :installed-game-track :retail,
+                      :installed-version "1.2.3",
+                      :interface-version 70000,
+                      :label "EveryAddon 1.2.3",
+                      :name "everyaddon",
+                      :primary? true,
+                      :source "curseforge",
+                      :source-id 1,
+                      :update? false}]
+        (core/install-addon addon)
+        (core/load-installed-addons)
+        (core/select-addons)
+        (core/ignore-selected) ;; calls `core/refresh`
+        (is (:ignore? (first (core/get-state :installed-addon-list))))
 
-          _ (fs/mkdir install-dir)
-          _ (zip/unzip-file every-addon-zip-file install-dir)
+        (core/clear-ignore-selected)
+        (is (= expected (first (core/get-state :installed-addon-list)))))))
 
-          expected-dirname "EveryAddon"
-          addon-path (utils/join install-dir expected-dirname)
-          expected-nfo-file (utils/join addon-path nfo/nfo-filename)]
-      (with-running-app
-        (core/set-addon-dir! install-dir)
-        ;; create a nfo file whose contents ensure that even after an upgrade attempt
-        ;; it is still invalid
-        (spit expected-nfo-file (utils/to-json {}))
-        (is (fs/exists? expected-nfo-file)) ;; bad nfo exists
-        (core/upgrade-nfo-files)
-        (is (not (fs/exists? expected-nfo-file))))))) ;; bad nfo removed
+  (testing "an implicitly ignored (vcs) addon can be 'unignored' as well"
+    (with-running-app
+      (let [install-dir (helper/install-dir)
+            addon {:name "everyaddon" :label "EveryAddon" :version "1.2.3" :url "https://group.id/never/fetched"
+                   :source "curseforge" :source-id 1
+                   :-testing-zipfile (fixture-path "everyaddon--1-2-3.zip")}
 
+            expected {:ignore? false, ;; explicit `false` rather than removed
+                      :description "Does what no other addon does, slightly differently",
+                      :dirname "EveryAddon",
+                      :group-id "https://group.id/never/fetched",
+                      :installed-game-track :retail,
+                      :installed-version "1.2.3",
+                      :interface-version 70000,
+                      :label "EveryAddon 1.2.3",
+                      :name "everyaddon",
+                      :primary? true,
+                      :source "curseforge",
+                      :source-id 1,
+                      :update? false}]
+        (core/install-addon addon)
+        (fs/mkdir (utils/join install-dir "EveryAddon" ".git"))
+        (core/load-installed-addons)
+        (is (:ignore? (first (core/get-state :installed-addon-list)))) ;; implicitly ignored
+
+        (core/select-addons)
+        (core/clear-ignore-selected)
+        (is (= expected (first (core/get-state :installed-addon-list))))))))

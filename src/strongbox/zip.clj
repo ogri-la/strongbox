@@ -84,7 +84,8 @@
 (defn-spec inconsistently-prefixed (s/or :ok nil?, :inconsistencies sequential?)
   "returns a list of inconsistently prefixed top-level directories sorted by most to least common (with the most common excluded).
   nil if no inconsistencies found.
-  it's assumed this check is being done *after* the validity checks on the zip and addon and that the zipfile-entry list has been normalised"
+  Call *after* the validity checks on the zip file and addon. 
+  Ensure the zipfile-entry list has been normalised"
   [zipfile-entries :zipfile/entry-list]
   (let [grouped-entries (prefix-groups zipfile-entries) ;; [[{...}, {...}], [{...}]]
         magnitude 3 ;; ignore if there are no groups smaller than this
@@ -107,18 +108,27 @@
 
       ;; multiple groups with at least one group below the cutoff
       ;; in this case, anything that doesn't share the most common prefix is considered suspicious
-      ;; this is not perfect! there will be outliers
+      ;; this is not perfect! there will be outliers!
       :else (->> grouped-entries rest flatten (map :path) (map strip-suffix) vec))))
 
 ;;
 ;;
 ;;
 
-(defn -top-level-files?
+(defn-spec top-level-directories :zipfile/entry-list
+  "returns a list of all zipfile entries that are directories and exist at the top level"
+  [zipfile-entries :zipfile/entry-list]
+  (filter (every-pred :dir? :toplevel?) zipfile-entries))
+
+(defn-spec top-level-files :zipfile/entry-list
+  "returns a list of all zipfile entries that are files and exist at the top level"
+  [zipfile-entries :zipfile/entry-list]
+  (->> zipfile-entries (filter :toplevel?) (remove :dir?)))
+
+(defn-spec -top-level-files? boolean?
   "returns true if there are top-level files"
-  [zipfile-entries]
-  (let [targets (->> zipfile-entries (filter :toplevel?) (remove :dir?))]
-    (> (count targets) 0)))
+  [zipfile-entries :zipfile/entry-list]
+  (-> zipfile-entries top-level-files count (> 0)))
 
 (defn -top-level-non-addon-dirs?
   "returns true if there are top-level directories missing a toc file"
@@ -126,7 +136,7 @@
   (let [;; what is happening here?
         ;; we create a set of all top-level directories, and a set of the parents of second-level toc files
         ;; if there are any directories left after we diff them
-        toplevel-dirs (set (map :path (filter (every-pred :dir? :toplevel?) zipfile-entries)))
+        toplevel-dirs (->> zipfile-entries top-level-directories (map :path) set)
         toplevel-tocfiles (filter #(and (-> % :level (= 2))
                                         (-> % :path (ends-with? ".toc"))) zipfile-entries)
         toplevel-tocfile-dirs (set (map #(-> % :path (split #"/") first (str "/")) toplevel-tocfiles))

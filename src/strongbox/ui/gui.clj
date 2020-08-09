@@ -234,10 +234,15 @@
     (sstbl/value-at tbl (ss/selection tbl {:multi? true}))))
 
 (defn-spec installed-addons-selection-handler nil?
+  "matches the selected addons to the list of installed addons in application state.
+  because the gui forces every row to have a certain set of keys, even if it's value is `nil`,
+  then this skewed data can't be allowed 'back in' to the application state.
+  instead, we match what was selected against the list of installed addons using `:dirname`"
   [_ ::sp/gui-event]
-  (let [selected-rows (tbl-selected-rows :#tbl-installed-addons)]
-    (debug (count selected-rows) "selected, " (count (filter :update? selected-rows)) "updatable")
-    (swap! core/state assoc :selected-installed selected-rows))
+  (let [selected-rows (tbl-selected-rows :#tbl-installed-addons)
+        dirname-list (mapv :dirname selected-rows)]
+    (debug (count selected-rows) "selected")
+    (core/select-addons (fn [addon] (some #{(:dirname addon)} dirname-list))))
   nil)
 
 (defn-spec search-results-selection-handler nil?
@@ -262,21 +267,27 @@
 (defn-spec remove-selected-handler nil?
   []
   (when-let [selected (get-state :selected-installed)]
-    (let [header [[(format "Deleting %s:" (count selected)) ""]]
-          labels (mapv (fn [row] [(str " - " (-> row :name)) ""]) selected)
+    (if (utils/any (mapv :ignore? selected))
+      (-> (ss/dialog :parent (select-ui :#root)
+                     :content "Selection contains ignored addons. Stop ignoring them and then delete."
+                     :type :error)
+          ss/pack! ss/show!)
 
-          content (into header labels)
-          content (interleave content (repeat [:separator "growx, wrap"]))
+      (let [header [[(format "Deleting %s:" (count selected)) ""]]
+            labels (mapv (fn [row] [(->> row :name (str " - ")) ""]) selected)
 
-          dialog (ss/dialog :parent (select-ui :#root)
-                            :content (mig/mig-panel :items content)
-                            :resizable? false
-                            :type :warning
-                            :option-type :ok-cancel
-                            :default-option :no
-                            :success-fn (async-handler core/remove-selected))]
-      (-> dialog ss/pack! ss/show!)
-      nil)))
+            content (into header labels)
+            content (interleave content (repeat [:separator "growx, wrap"]))
+
+            dialog (ss/dialog :parent (select-ui :#root)
+                              :content (mig/mig-panel :items content)
+                              :resizable? false
+                              :type :warning
+                              :option-type :ok-cancel
+                              :default-option :no
+                              :success-fn (async-handler core/remove-selected))]
+        (-> dialog ss/pack! ss/show!)))
+    nil))
 
 (defn about-strongbox-dialog
   []
@@ -297,23 +308,27 @@
     (-> dialog ss/pack! ss/show!)
     nil))
 
+(defn-spec wow-dir-picker nil?
+  "opens a dialog box to select a new directory"
+  []
+  (when-let [dir (chooser/choose-file (select-ui :#root)
+                                      ;; ':open' forces a better dialog type in mac for opening directories
+                                      :type :open
+                                      :selection-mode :dirs-only)]
+    (if (fs/directory? dir)
+      (do
+        (core/set-addon-dir! (str dir))
+        (core/save-settings))
+      (ss/alert (format "Directory doesn't exist: %s" (str dir)))))
+  nil)
+
 (defn configure-app-panel
   []
-  (let [picker (fn []
-                 (when-let [dir (chooser/choose-file (select-ui :#root)
-                                                     ;; ':open' forces a better dialog type in mac for opening directories
-                                                     :type :open
-                                                     :selection-mode :dirs-only)]
-                   (if (fs/directory? dir)
-                     (do
-                       (core/set-addon-dir! (str dir))
-                       (core/save-settings))
-                     (ss/alert (format "Directory doesn't exist: %s" (str dir))))))
-        ;; important! release the event thread using async-handler else updates during process won't be shown until complete
-        refresh-button (button "Refresh" (async-handler core/refresh))
+  (let [;; important! release the event thread using async-handler else updates during process won't be shown until complete
+        ;;refresh-button (button "Refresh" (async-handler core/refresh))
         update-all-button (button "Update all" (async-handler core/install-update-all))
 
-        wow-dir-button (button "Addon directory" (async-handler picker))
+        ;;wow-dir-button (button "Addon directory" (async-handler wow-dir-picker))
 
         wow-dir-dropdown (ss/combobox :model (core/available-addon-dirs)
                                       :selected-item (core/selected-addon-dir))
@@ -321,10 +336,10 @@
         wow-game-track (ss/combobox :model (mapv kw2str core/game-tracks)
                                     :selected-item (kw2str (core/get-game-track)))
 
+        ;; called when a different addon dir is selected
         _ (ss/listen wow-dir-dropdown :selection
-                     (async-handler ;; execute elsewhere
+                     (async-handler
                       (fn []
-                        ;; called when a different addon dir is selected
                         (let [old-addon-dir (core/selected-addon-dir)
                               new-addon-dir (ss/selection wow-dir-dropdown)]
                           (when-not (= new-addon-dir old-addon-dir)
@@ -332,28 +347,34 @@
                             ;; positioned here so the dropdown change is shown immediately
                             (ss/invoke-later
                              (ss/selection! wow-game-track (-> new-addon-dir core/addon-dir-map :game-track kw2str))))
-
                           (core/set-addon-dir! new-addon-dir)
                           (core/save-settings)))))
 
+        ;; called when the selected addon directory changes (like via `core/set-addon-dir!`)
         _ (state-bind [:cfg :selected-addon-dir]
                       (fn [state]
-                        ;; called when the selected addon directory changes (like via `core/set-addon-dir!`)
                         (let [new-addon-dir (get-in state [:cfg :selected-addon-dir]) ;; use the given `state`
-                              game-track (-> new-addon-dir core/addon-dir-map :game-track kw2str)
                               selected-addon-dir (ss/selection wow-dir-dropdown)]
-                          (when-not (= selected-addon-dir new-addon-dir)
-                            (debug (format ":selected-addon-dir changed from '%s' to '%s'" (core/selected-addon-dir) new-addon-dir))
-                            (ss/invoke-later
-                             ;; it's possible the addon-dir-list data has changed as well, so update the dropdown model
-                             ;; adding a second listener for :addon-dir-list risks two updates being performed
-                             (ss/config! wow-dir-dropdown :model (core/available-addon-dirs))
-                             (ss/selection! wow-dir-dropdown new-addon-dir)
-                             (ss/selection! wow-game-track game-track))))))
+                          (cond
+                            ;; addon dir changed to 'no addon dir'.
+                            ;; happens when we remove the last addon directory in the list
+                            (nil? new-addon-dir) (ss/invoke-later
+                                                  (ss/config! wow-dir-dropdown :model (core/available-addon-dirs)))
 
+                            ;; addon dir changed to some other extant addon dir
+                            (not (= selected-addon-dir new-addon-dir))
+                            (let [game-track (-> new-addon-dir core/addon-dir-map :game-track kw2str)]
+                              (debug (format ":selected-addon-dir changed from '%s' to '%s'" (core/selected-addon-dir) new-addon-dir))
+                              (ss/invoke-later
+                               ;; it's possible the addon-dir-list data has changed as well, so update the dropdown model
+                               ;; as adding a second listener for `:addon-dir-list` risks two updates being performed.
+                               (ss/config! wow-dir-dropdown :model (core/available-addon-dirs))
+                               (ss/selection! wow-dir-dropdown new-addon-dir)
+                               (ss/selection! wow-game-track game-track)))))))
+
+        ;; called when a different game track is selected
         _ (ss/listen wow-game-track :selection
                      (fn [ev]
-                       ;; called when a different game track is selected
                        (let [new-game-track (ss/selection wow-game-track)
                              old-game-track (-> (core/addon-dir-map) :game-track kw2str)]
                          (when-not (= new-game-track old-game-track)
@@ -363,11 +384,12 @@
                             ;; will save settings
                             (core/refresh))))))
 
-        items [[refresh-button]
+        items [;;[refresh-button]
                [update-all-button]
-               [wow-dir-dropdown "wmax 200"]
+               [wow-dir-dropdown] ;;wmax 200"]
                [wow-game-track]
-               [wow-dir-button]]
+               ;;[wow-dir-button]
+               ]
 
         update-clicker (button (str "Update Available: " (core/latest-strongbox-release))
                                (handler #(browse-to "https://github.com/ogri-la/strongbox/releases"))
@@ -452,6 +474,9 @@
                           (ss/separator)
                           (menu-item "Update" (async-handler core/install-update-selected))
                           (menu-item "Re-install" (async-handler core/re-install-selected))
+                          (ss/separator)
+                          (menu-item "Ignore" (async-handler core/ignore-selected))
+                          (menu-item "Stop ignoring" (async-handler core/clear-ignore-selected))
                           (ss/separator)
                           (menu-item "Delete" (async-handler remove-selected-handler))]]
     (ss/popup :items popup-menu-items)))
@@ -734,7 +759,6 @@
                                   0 ;; start over
                                   next-idx)]
                    (ss/selection! tabber next-idx))))
-
     tabber))
 
 ;; todo: push this into core
@@ -908,8 +932,8 @@
                ;; calling `in-repl?` from gui thread will always return `nil`
                :on-close (if (core/get-state :in-repl?) :dispose :exit))
 
-        file-menu [(ss/action :name "Installed" :key "menu I" :mnemonic "i" :handler (switch-tab-handler INSTALLED-TAB))
-                   (ss/action :name "Search" :key "menu H" :mnemonic "h" :handler (switch-tab-handler SEARCH-TAB))
+        file-menu [(ss/action :name "New addon directory" :key "menu N" :mnemonic "n" :handler (async-handler wow-dir-picker))
+                   (ss/action :name "Remove addon directory" :handler (async-handler core/remove-addon-dir!))
                    :separator
                    (ss/action :name "Exit" :key "menu Q" :mnemonic "x" :handler
                               (fn [ev]
@@ -918,16 +942,19 @@
                                 (let [exit-ev (java.awt.event.WindowEvent. newui java.awt.event.WindowEvent/WINDOW_CLOSING)]
                                   (.dispatchEvent newui exit-ev))))]
 
-        view-menu (build-theme-menu)
+        view-menu (into [(ss/action :name "Refresh" :key "F5" :handler (async-handler core/refresh))
+                         :separator
+                         (ss/action :name "Installed" :key "menu I" :mnemonic "i" :handler (switch-tab-handler INSTALLED-TAB))
+                         (ss/action :name "Search" :key "menu H" :mnemonic "h" :handler (switch-tab-handler SEARCH-TAB))
+                         :separator]
+                        (build-theme-menu))
 
         catalogue-menu (into (build-catalogue-menu)
                              [:separator
                               (ss/action :name "Refresh user catalogue" :handler (async-handler core/refresh-user-catalogue))])
 
         addon-menu [(ss/action :name "Update all" :key "menu U" :mnemonic "u" :handler (async-handler core/install-update-all))
-                    (ss/action :name "Re-install all" :handler (async-handler core/re-install-all))
-                    :separator
-                    (ss/action :name "Remove directory" :handler (async-handler core/remove-addon-dir!))]
+                    (ss/action :name "Re-install all" :handler (async-handler core/re-install-all))]
 
         impexp-menu [(ss/action :name "Import addon from Github" :handler (handler import-addon-handler))
                      :separator
@@ -988,5 +1015,8 @@
   (cond
     (:in-repl? @core/state) (-stop)
     (-> timbre/*config* :testing?) (-stop)
-    :else (ss/invoke-later
-           (-stop))))
+
+    ;; 2020-08-08: `ss/invoke-later` was keeping the old window around when running outside of repl.
+    ;; `ss/invoke-soon` seems to fix that.
+    ;;  - http://daveray.github.io/seesaw/seesaw.invoke-api.html
+    :else (ss/invoke-soon (-stop))))

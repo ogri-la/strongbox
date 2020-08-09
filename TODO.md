@@ -6,111 +6,119 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* wowman-comrades, rename wowman to strongbox
-    - done
-* README, add caveat against screenshots
-    - those dark theme screenshots are only available on gtk2+ environments
-        - MATE and cinnamon
-* latest release gui bug
-    - add fix and tests to strongbox
-* joker linting
-    - does some stuff that eastwood can't do, or eastwood has disabled or something
-        - anyway, it's fast
-    - done
-* support for openjdk 11
-    - there is a localisation issue with formatting wowinterface objects in openjdk11 and java.time/clj-time
-        - it isn't present for Travis so it's passing tests
-        - it can be fixed if run with ":jvm-opts ["-Djava.locale.providers=COMPAT,CLDR"]"
-            - which fucking sucks
-        - done
-    - it's the next LTS however java 8 isn't going away anytime soon
-    - java 8 makes it difficult to work with openjfx though, so time to upgrade
-    - can a openjdk 11 compiled uberjar work on java 8?
-        - no, apparently. I got one of these:
-            - java.lang.ClassNotFoundException: java.awt.event.FocusEvent$Cause
-        - it could be a lone error or the first of dozens, not going to spend much time on it until gui2
-* search is painfully slow because I made no effort porting it
-    - have made the input vs output asynchronous
-        - this means the typing happens normally and results appear as they become available
-    - it could still be improved, definitely
-    - done
-* fixed a bug where using 'Quit' from the gui would leave app running
-* fixed useragent, it was still stuck on 'wowman'
-* tukui and elvui can't be switched to classic
-    - on classic track they show updates
-        - elvui 1.82 => 1.211
-        - tukui 4.42 => 1.321
-    - but updating them doesn't alter their reported versions
-        - the 'source' for these two are 'tukui-classic', the others are just 'tukui'
-    - problem seems to be in the :version and :installed-version attributes
-        - after refresh, the :version attribute is correct but :installed-version is still incorrect
-    - I have addons masking other addons!
-        - ElvUI_MerathilisUI/ was masking Tukui
-        - ElvUI_CodeNameBlaze/ was masking Elvui
-    - the addons were being updated, but were being mis-matched during the database search because of shared IDs ...?
-        - ids are 1 and 2
-        - I thought these were negative? or I made them negative?
-        - anyway
-* game track list in catalogue
-    - can game-track-list be included from all other hosts?
-        - not just wowi?
-            - even wowi is broken though
-            - I've seen a reference to a v4 of their 'api' that should be investigated
-                - naming changes mostly so far
-            - I've also noticed switches in game tracks for some of their addons this week (2020-03)
-        - tukui might benefit from this
-            - it might even be a fix for this bug: https://github.com/ogri-la/strongbox/issues/143
-    - not fixing
-        - game track for tukui would be redundant information as game track is already encoded into the catalogue name
-        - curseforge as of a few days ago has been acquired by Overwolf and catalogue may be disappearing or changing
-* search tweaks
-    - adjust the number of addons displayed in the search results according to number of addons in catalogue
-    - it's clear which tukui addons are classic and which are retail
-    - tukui search results shouldn't both be highlighted if only one is installed
-    - done
-* update ticket template
-    - with command to run that uses the debug flag
-        - do I even have a --debug flag?
-            - I do now
-        - does the arch script allow further commands?
-            - yup
-    - which files to upload
-        - ...
-    - done
-        - we now have custom bug and feature templates
-
-* wowman-comrades, shift asterisk description out of strongbox README
-    - done
-
-## todo
-
-## todo bucket (no particular order)
-
-* rename 'wowman-comrades' to 'strongbox-comrades'
-
 * change installation from 'overwrite' to 'uninstall+install'
+    - addons are uninstalled before they are installed
+        - done
+* strengthened 'ignore' rules
+    - ignored addons and any bundled addons cannot be overwritten by strongbox
+    - ignored addons cannot be uninstalled
+    - ignored addons can be unignored from the gui
+    - addons can be ignored from the gui
+* rename 'wowman-comrades' to 'strongbox-comrades'
+* add ability to explicitly unignore addon from context menu
+* wowman-data, stop publishing a 'daily' release
+    - we have multiple catalogs now
+    - 0.10.0 uses the raw catalog files directly
+    - 0.9.2 was still using the daily release
+    - done
+* change installation from 'overwrite' to 'uninstall+install'
+    - what to do about mutual dependencies?
+        - i.e., two addons both include some addon, one overwrites the other, that one is uninstalled leaving the other in a broken state. 
+        - Mutual dependencies aren't tracked ... 
+        - I could:
+            - detect if an addon were to be replaced by another addon in a different group
+            - if so, attach the details of the addon with the replaced group
+            - if the addon gets uninstalled, the other addon is re-installed
+            - caveats:
+                - what about three or more addons all relying on the same sub-addon?
+                    - the list accumulates
+                    - as each one is uninstalled, it gets removed from the list and the top-most is re-installed
+                - what if an ignored addon is relying on a sub-addon?
+                    - ignored addons shouldn't be automatically uninstalled or reinstalled
+                    - ignored addons may block the installation/uninstallation of others
+        - I could also:
+            - not remove a mutual dependency
+                - if A and B depend on C
+                - and B installed C last
+                - and then B is removed
+                - A is left depending on C that it didn't install
+                    - it could be of a different version ...
+                    - this is no different to the current situation
+            - the mutual dependency has it's group identity updated
+                - or we keep a list of group membership
+
+* bug, reinstall is busted
+    - looks like I've been relying on the selected table rows to be returning correct data
+        - it's not. it's been mangled and padded to suit the gui
+        - and now the ignore flag value isn't consistent with the proper data
 
 * just encountered a case where the classic version overwrote one of the retail directories but not the other
     - (tukui classic and retail?)
     - so there was a broken retail installation but a working classic installation
         - I was able to 'uninstall' the broken retail installation without a problem
+    - this is still a muddy state of affairs, but it's handled cleanly and predictably now
+        - the user is warned that an addon is overwriting another
+        - removing one will reveal the other
+            - this is a 'masking' effect I hadn't anticipated
+            - it could still be confusing but I suspect it's pretty rare
 
-* add ability to explicitly unignore addon from context menu
+* removed support for migrating wowman-era config and data
+
+* issue 169, handle 5xx errors from curseforge and others predictably
+
+* issue 166, lengthen the addon directory dropdown
+
+* bug, new gui instance is spawned when switching themes outside of the REPL
+
+* bug, stacktrace when removing the last of the addon directories
+
+* bug, stacktrace when changing the game track on an empty addon dir
+
+## todo
+
+## todo bucket (no particular order)
+
+* gui, add confirmation before deleting addon directory
+
+* EOL planning, robustness, only download/update the catalogue *after* an existing catalogue has been confirmed
+    - github is down, wowman is erroring with a 500
+    - failure to download a catalogue shouldn't prevent addons from being displayed
+    - failure to contact a host shouldn't prevent addons on other hosts from working
+
+* EOL planning, bundle a catalogue with the installation
+    - load it as a resource with static-slurp, like we do with the sql?
+        - also compressed so it's tiny?
+    - behind the scenes we download and load the full-catalogue
+        - would this block reconciliation?
+            - perhaps if there are unmatched addons after reconciliation we then wait and try again ...?
+
+* add checksum checks after downloading
+    - curseforge have an md5 that can be used
+        - unfortunately no checksum in api results
+        - they do have a 'fileLength' and a 'fingerprint'
+            - fingerprint is 9 digits and all decimal, so not a hex digest
+    - wowinterface checksum is hidden behind a javascript tabber but still available
+        - wowinterface do have a md5sum in results! score
+
+* spec, revisit usage of 'addon/toc'
+    - it was used too broadly before the recent spec shakeup
+    - it has optional keys which shouldn't be in there
+
+* gui, 're-install' for an addon that has an update available will update the addon
+    - it implies the same version would be installed
+    - strongbox doesn't support version pinning yet either
+
+* gui, context menu has 'n selected, m updatable'
+    - this is cute but not useful
+    - selecting this doesn't perform any action
+
+* github, if multiple releases available and first fails criteria, check the next and so on
+    - see altoholic: https://github.com/teelolws/Altoholic-Classic
 
 * test, can gui-diff and main/test be pushed back into the testing namespace and elided from release somehow?
 
 * http, revisit the http/expiry-offset-hours value
     - also, revisit prune-http-cache
-
-* robustness, only download/update the catalogue *after* an existing catalogue has been confirmed
-    - github is down, wowman is erroring with a 500
-    - failure to download a catalogue shouldn't prevent addons from being displayed
-    - bundle a catalogue with the installation?
-        - load it as a resource with static-slurp, like we do with the sql?
-            - also compressed so it's tiny?
-        - behind the scenes we download and load the full-catalogue
-            - would this block reconciliation?
-                - perhaps if there are unmatched addons after reconciliation we then wait and try again ...?
 
 * EOL planning
     - I'm not going away and neither is strongbox, but! *should* I or my free time disappear will strongbox continue being useful?
@@ -122,29 +130,18 @@ see CHANGELOG.md for a more formal list of changes by release
                 - our interface with them is their API or in wowi's case, their API and website
 
 * code refactor
-    * simplify `install-addon` interface in core.clj
-        - we need to provide an installation directory which can be pulled from the application state
     * core.clj is getting too large
         - it's difficult to navigate and debug
         - many tests are accumulating in core_test.clj
 
-* wowman-data, stop publishing a 'daily' release
-    - we have multiple catalogs now
-    - 0.10.0 uses the raw catalog files directly
-    - 0.9.2 was still using the daily release
-    - remove the 'daily' release after 0.11.0 is released
-    - this will break older releases but users who prefer older versions of the software shouldn't be stranded if the catalog goes away
-        - they should just be able to plug in a new location of the catalog
-        - unfortunately *these* users will be out of luck, but future users won't be
-    - I'll stop updating wowman-data when wowman is no longer being used
-* add dirname support to reconcilation and catalogue
+* reconciliation, revisit aliases
+    - use source and source-id now
+    - maybe externalise the list
+* reconciliation, add dirname support
     - not sure which hosts support these
 * wowinterface, multiple game tracks 
     - investigate just what is being downloaded when a classic version of a wowi addon is downloaded
     - see 'LagBar'
-* revisit aliases
-    - use source and source-id now
-    - maybe externalise the list
 * version pinning
     - user can opt to install a specific release of an addon
     - automatic updates for that addon are thereafter blocked
@@ -153,8 +150,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * bug, changing sort order during refresh doesn't reflect which addon is being updated
     - I think changing column ordering and moving columns should be disabled while updates happen
         - just freeze or disable them or something.
-* add support for user supplied github token
-    - necessary if they want a large number of github addons without hassles
 * investigate state of java packaging
     - https://www.infoq.com/news/2019/03/jep-343-jpackage/
 * add an option that forces installation of addon if matching game track not found
@@ -165,20 +160,14 @@ see CHANGELOG.md for a more formal list of changes by release
         - "123 addons installed, 2 classic addons installed"
     - preserve this in user settings
     - perhaps couple this with the GUI logic for the status bar down the bottom
-* github, importing an exported addon list with a github addon won't see that addon installed
-    - unless that addon is present in the user catalogue
-        - which in a fresh install where a list of addons are being restored is unlikely...
-    - this is interesting actually. the exported addon list has become a mini-catalogue
-        - some addons require the larger catalogue to resolve
-        - github addons are resolved and installed by a different means...
 * when curseforge api is down users get a wall of red error messages with very little useful information
     - see issue 91: https://github.com/ogri-la/wowman/issues/91
         - the error message has been improved but we still get a red wall of text
         - aggregate error messages?
-* rename 'reinstall all' to 'reconcile'
+* reconciliation, rename 'reinstall all' to 'reconcile'
     - steal from the best
     - make the reconcile automatic
-        - if a .wowman.json file isn't found
+        - if a nfo file isn't found
     - remove the 'first time instructions' from the readme
         - it should just fucking do it
 * investigate better popularity metric than 'downloads'
@@ -189,13 +178,7 @@ see CHANGELOG.md for a more formal list of changes by release
     - since this is the 'installed addons pane', should the value reflect the value of the installed addon?
         - (and not the value of the addon to be installed)
         - and would this be inconsistent with the other fields that are also changing with new catalog information?
-* add checksum checks after downloading
-    - curseforge have an md5 that can be used
-        - unfortunately no checksum in api results
-        - they do have a 'fileLength' and a 'fingerprint'
-            - fingerprint is 9 digits and all decimal, so not a hex digest
-    - wowinterface checksum is hidden behind a javascript tabber but still available
-        - wowinterface do have a md5sum in results! score
+
 * add a 'tabula rasa' option that wipes *everything* 
     - cache, catalog, config, downloaded zip files
 * coloured warnings/errors on console output
@@ -229,6 +212,23 @@ see CHANGELOG.md for a more formal list of changes by release
 * internationalisation?
     - Akitools has no english description but it does have a "Notes-zhCN" in the toc file that could be used
     - wowman was mentioned on a french forum the other day ..
+
+## github
+
+* github, add support for user supplied github token
+    - necessary if they want a large number of github addons without hassles
+* github, add a github catalogue
+    - just a simple list of wow addons on github that can be installed with strongbox
+* github, importing an exported addon list with a github addon won't see that addon installed
+    - unless that addon is present in the user catalogue
+        - which in a fresh install where a list of addons are being restored is unlikely...
+    - this is interesting actually. the exported addon list has become a mini-catalogue
+        - some addons require the larger catalogue to resolve
+        - github addons are resolved and installed by a different means...
+
+## backups
+
+
 
 ## import/export
 

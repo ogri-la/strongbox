@@ -135,7 +135,7 @@
                         :source-id x-tukui-id})
 
         ignore-flag (when (some->> keyvals :version (clojure.string/includes? "@project-version@"))
-                      (warn (format "ignoring addon '%s': 'Version' field in .toc file is unrendered" dirname))
+                      (warn (format "ignoring '%s': 'Version' field in .toc file is unrendered" dirname))
                       {:ignore? true})
 
         addon {:name (normalise-name label)
@@ -172,7 +172,7 @@
       ;; we found a .toc file, now parse it
       (parse-addon-toc addon-dir keyvals)
       ;; we didn't find a .toc file, but just ignore it if it looks like an official addon dir
-      (when-not (.startsWith (fs/base-name addon-dir) "Blizzard_")
+      (when-not (blizzard-addon? addon-dir)
         ;; not an official addon and we didn't find a .toc file. warn the user
         (warn "failed to find .toc file:" addon-dir)))
     (catch Exception e

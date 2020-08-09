@@ -1,11 +1,15 @@
 (ns strongbox.test-helper
   (:require
+   [orchestra.core :refer [defn-spec]]
+   [clojure.spec.alpha :as s]
    [envvar.core :refer [env with-env]]
    [taoensso.timbre :as timbre :refer [debug info warn error spy]]
    [me.raynes.fs :as fs :refer [with-cwd]]
    [clj-http.fake :refer [with-fake-routes-in-isolation]]
    [strongbox
+    [specs :as sp]
     [main :as main]
+    [core :as core]
     [utils :as utils]]))
 
 (def fixture-dir (-> "test/fixtures" fs/absolute fs/normalized str))
@@ -13,6 +17,24 @@
 (def helper-data-dir "data/strongbox")
 
 (def helper-config-dir "config/strongbox")
+
+(def helper-addon-dir "addons")
+
+(defn install-dir
+  "convenience. return path to an addon directory called 'addons', creating it if it doesn't exist."
+  []
+  (let [path (utils/join fs/*cwd* helper-addon-dir)]
+    (when-not (fs/exists? path)
+      (fs/mkdir path))
+    (when @core/state
+      ;; state is non-nil, assume app is running
+      (core/set-addon-dir! path))
+    path))
+
+(defn install-dir-contents
+  "convenience. returns the contents of the install-dir/addons-dir"
+  []
+  (->> (install-dir) fs/list-dir (map fs/base-name) sort))
 
 (defn fixture-path
   [filename]
@@ -74,3 +96,10 @@
 (defmacro with-running-app
   [& form]
   `(with-running-app+opts {:ui :cli} ~@form))
+
+(defn-spec select-addon (s/nilable :addon/installed)
+  "returns the first installed addon matching the given `group-id`"
+  [group-id ::sp/group-id]
+  (->> (core/get-state :installed-addon-list)
+       (filter (fn [addon] (= (:group-id addon) group-id)))
+       first))
