@@ -278,7 +278,8 @@
 
 (defn-spec addon-dir-map (s/or :ok ::sp/addon-dir-map, :missing nil?)
   ([]
-   (addon-dir-map (selected-addon-dir)))
+   (when-let [addon-dir (selected-addon-dir)]
+     (addon-dir-map addon-dir)))
   ([addon-dir ::sp/addon-dir]
    (let [addon-dir-list (get-state :cfg :addon-dir-list)]
      (when-not (empty? addon-dir-list)
@@ -286,7 +287,8 @@
 
 (defn-spec set-game-track! nil?
   ([game-track ::sp/game-track]
-   (set-game-track! game-track (selected-addon-dir)))
+   (when-let [addon-dir (selected-addon-dir)]
+     (set-game-track! game-track addon-dir)))
   ([game-track ::sp/game-track, addon-dir ::sp/addon-dir]
    (let [tform (fn [addon-dir-map]
                  (if (= addon-dir (:addon-dir addon-dir-map))
