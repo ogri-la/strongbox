@@ -328,7 +328,7 @@
         ;;refresh-button (button "Refresh" (async-handler core/refresh))
         update-all-button (button "Update all" (async-handler core/install-update-all))
 
-        ;;wow-dir-button (button "Addon directory" (async-handler wow-dir-picker))
+        ;;wow-dir-button (button "Addon directory" (handler wow-dir-picker))
 
         wow-dir-dropdown (ss/combobox :model (core/available-addon-dirs)
                                       :selected-item (core/selected-addon-dir))
@@ -958,9 +958,9 @@
 
         impexp-menu [(ss/action :name "Import addon from Github" :handler (handler import-addon-handler))
                      :separator
-                     (ss/action :name "Import addon list" :handler (async-handler import-addon-list-handler))
-                     (ss/action :name "Export addon list" :handler (async-handler export-addon-list-handler))
-                     (ss/action :name "Export Github addon list" :handler (async-handler export-user-catalogue-handler))]
+                     (ss/action :name "Import addon list" :handler (handler import-addon-list-handler))
+                     (ss/action :name "Export addon list" :handler (handler export-addon-list-handler))
+                     (ss/action :name "Export Github addon list" :handler (handler export-user-catalogue-handler))]
 
         cache-menu [(ss/action :name "Clear http cache" :handler (async-handler core/delete-http-cache!))
                     (ss/action :name "Clear addon zips" :handler (async-handler core/delete-downloaded-addon-zips!))
