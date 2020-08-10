@@ -932,7 +932,7 @@
                ;; calling `in-repl?` from gui thread will always return `nil`
                :on-close (if (core/get-state :in-repl?) :dispose :exit))
 
-        file-menu [(ss/action :name "New addon directory" :key "menu N" :mnemonic "n" :handler (async-handler wow-dir-picker))
+        file-menu [(ss/action :name "New addon directory" :key "menu N" :mnemonic "n" :handler (handler wow-dir-picker))
                    (ss/action :name "Remove addon directory" :handler (async-handler core/remove-addon-dir!))
                    :separator
                    (ss/action :name "Exit" :key "menu Q" :mnemonic "x" :handler
