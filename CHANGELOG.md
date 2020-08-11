@@ -14,6 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## 2.0.1 - 2020-08-11
+
+### Fixed
+
+* GUI bug causing the UI to hang indefinitely when adding a new addon directory
+    - affected macOS users only
+    - appears to have been happening with the 'import' dialogues as well, probably since always
+
 ## 2.0.0 - 2020-08-08
 
 ### Added
