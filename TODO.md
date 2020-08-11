@@ -6,75 +6,19 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* change installation from 'overwrite' to 'uninstall+install'
-    - addons are uninstalled before they are installed
-        - done
-* strengthened 'ignore' rules
-    - ignored addons and any bundled addons cannot be overwritten by strongbox
-    - ignored addons cannot be uninstalled
-    - ignored addons can be unignored from the gui
-    - addons can be ignored from the gui
-* rename 'wowman-comrades' to 'strongbox-comrades'
-* add ability to explicitly unignore addon from context menu
-* wowman-data, stop publishing a 'daily' release
-    - we have multiple catalogs now
-    - 0.10.0 uses the raw catalog files directly
-    - 0.9.2 was still using the daily release
-    - done
-* change installation from 'overwrite' to 'uninstall+install'
-    - what to do about mutual dependencies?
-        - i.e., two addons both include some addon, one overwrites the other, that one is uninstalled leaving the other in a broken state. 
-        - Mutual dependencies aren't tracked ... 
-        - I could:
-            - detect if an addon were to be replaced by another addon in a different group
-            - if so, attach the details of the addon with the replaced group
-            - if the addon gets uninstalled, the other addon is re-installed
-            - caveats:
-                - what about three or more addons all relying on the same sub-addon?
-                    - the list accumulates
-                    - as each one is uninstalled, it gets removed from the list and the top-most is re-installed
-                - what if an ignored addon is relying on a sub-addon?
-                    - ignored addons shouldn't be automatically uninstalled or reinstalled
-                    - ignored addons may block the installation/uninstallation of others
-        - I could also:
-            - not remove a mutual dependency
-                - if A and B depend on C
-                - and B installed C last
-                - and then B is removed
-                - A is left depending on C that it didn't install
-                    - it could be of a different version ...
-                    - this is no different to the current situation
-            - the mutual dependency has it's group identity updated
-                - or we keep a list of group membership
-
-* bug, reinstall is busted
-    - looks like I've been relying on the selected table rows to be returning correct data
-        - it's not. it's been mangled and padded to suit the gui
-        - and now the ignore flag value isn't consistent with the proper data
-
-* just encountered a case where the classic version overwrote one of the retail directories but not the other
-    - (tukui classic and retail?)
-    - so there was a broken retail installation but a working classic installation
-        - I was able to 'uninstall' the broken retail installation without a problem
-    - this is still a muddy state of affairs, but it's handled cleanly and predictably now
-        - the user is warned that an addon is overwriting another
-        - removing one will reveal the other
-            - this is a 'masking' effect I hadn't anticipated
-            - it could still be confusing but I suspect it's pretty rare
-
-* removed support for migrating wowman-era config and data
-
-* issue 169, handle 5xx errors from curseforge and others predictably
-
-* issue 166, lengthen the addon directory dropdown
-
-* bug, new gui instance is spawned when switching themes outside of the REPL
-
-* bug, stacktrace when removing the last of the addon directories
-
-* bug, stacktrace when changing the game track on an empty addon dir
-
 ## todo
+
+* gui2
+    - an OpenJFX gui
+    - how large is bundle after uberjar?
+    - can an openjfx-11/openjdk-11 uberjar be run with openjdk 8?
+        - if not, then that is a hard upgrade for users :(
+            - unless we do a completely standalone version?
+                - this would depend on the modularisation introduced in java 9
+                - min JRE is 29MB, about ~9MB more than what we already have.
+                    - is filesize a problem for users?
+
+* single distributable binary with no reliance on external jvm
 
 ## todo bucket (no particular order)
 
@@ -208,7 +152,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * toggleable columns as a menuitem
     - they're available from the column menu, but it's a little hidden and contains other fairly useless options like 'horizontal scroll'
-* gui, both panes, filter by categories
+
 * internationalisation?
     - Akitools has no english description but it does have a "Notes-zhCN" in the toc file that could be used
     - wowman was mentioned on a french forum the other day ..
@@ -225,10 +169,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - this is interesting actually. the exported addon list has become a mini-catalogue
         - some addons require the larger catalogue to resolve
         - github addons are resolved and installed by a different means...
-
-## backups
-
-
 
 ## import/export
 
@@ -278,15 +218,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## gui/gui2
 
-* gui2
-    - an OpenJFX gui
-    - how large is bundle after uberjar?
-    - can an openjfx-11/openjdk-11 uberjar be run with openjdk 8?
-        - if not, then that is a hard upgrade for users :(
-            - unless we do a completely standalone version?
-                - this would depend on the modularisation introduced in java 9
-                - min JRE is 29MB, about ~9MB more than what we already have.
-                    - is filesize a problem for users?
+* gui, both panes, filter by categories
 * gui, java look and feel
     - our 'theme' solution is too naive
         - we should be deferring to the current theme for highlighted colours
