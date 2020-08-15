@@ -48,10 +48,10 @@
 (defn stop
   []
   (let [opts (:cli-opts @core/state)]
-    (if (= :cli (:ui opts))
-      (cli/stop)
-      ;;(gui/stop))
-      (jfx/stop))
+    (case (:ui opts)
+      :cli (cli/stop)
+      :gui2 (jfx/stop)
+      (gui/stop))
     (core/stop core/state)))
 
 (defn shutdown-hook
@@ -63,10 +63,10 @@
 (defn start
   [& [cli-opts]]
   (core/start (merge {:profile? profile?, :spec? spec?} cli-opts))
-  (if (= :cli (:ui cli-opts))
-    (cli/start cli-opts)
-    ;;(gui/start))
-    (jfx/start))
+  (case (:ui cli-opts)
+    :cli (cli/start cli-opts)
+    :gui2 (jfx/start)
+    (gui/start))
 
   (watch-for-gui-restart)
 
@@ -142,7 +142,7 @@
    ["-u" "--ui UI" "ui is either 'gui' (graphical user interface, default) or 'cli' (command line interface)"
     ;;:default :gui ;; set after determining if --headless also set
     :parse-fn #(-> % lower-case keyword)
-    :validate [(in? [:cli :gui])]]
+    :validate [(in? [:cli :gui :gui2])]]
 
    ["-a" "--action ACTION" (str "perform action and exit. action is one of: 'list', 'list-updates', 'update-all'," catalogue-action-str)
     :id :action
