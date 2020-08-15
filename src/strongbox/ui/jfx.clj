@@ -112,10 +112,74 @@
              (menu "Help" help-menu)
              ]}))
 
+;; tabber
+
+(defn installed-addons-menu-bar
+  []
+  (let [update-all-button {:fx/type :button
+                           :text "Update all"}
+        wow-dir-dropdown {:fx/type :combo-box
+                          :items ["/home/torkus/path/to/wine/prefix/World of Warcraft/_retail_/Interface/Addons/"]}
+        
+        game-track-dropdown {:fx/type :combo-box
+                             :items ["retail" "classic"]}
+        ]
+    {:fx/type :h-box
+     :padding 10
+     :spacing 10
+     :children [update-all-button
+                wow-dir-dropdown
+                game-track-dropdown
+                ]}))
+
+(defn mkcol [label]
+  {:fx/type :table-column
+   :text label})
+
+(defn installed-addons-table
+  []
+  {:fx/type :v-box
+   :children [{:fx/type :table-view
+               :columns (mapv mkcol ["source" "name" "description" "installed" "available" "WoW"])
+               :items []}]})
+
+
+(defn app-notice-logger
+  []
+  {:fx/type :v-box
+   :children [{:fx/type :table-view
+               :columns (mapv mkcol ["level" "message"])}]})
+
+(defn installed-addons-pane
+  []
+  {:fx/type :v-box
+   :children [(installed-addons-menu-bar)
+              {:fx/type :split-pane
+               :orientation :vertical
+               :divider-positions [0.5]
+               :items [(installed-addons-table)
+                       (app-notice-logger)
+                       ]}
+              ]})
+(defn tabber
+  []
+  {:fx/type :tab-pane
+   :tabs [{:fx/type :tab
+           :text "installed"
+           :closable false
+           :content (installed-addons-pane)}
+          {:fx/type :tab
+           :text "search"
+           :closable false}]})
+
+
+;;
+
 (defn root
   []
   {:fx/type :v-box
    :children [(menu-bar)
+              (tabber)
               ]})
 
 (defn start
