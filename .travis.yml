@@ -2,7 +2,6 @@ dist: xenial # Ubuntu 16.04
 
 language: clojure
 jdk:
-    - openjdk8
     - openjdk11
 
 services:
@@ -23,7 +22,7 @@ jobs:
         # and the revision has been tagged
         -   
             stage: release
-            jdk: openjdk8
+            jdk: openjdk11
             if: tag IS present
             script: ./release.sh
             deploy:
