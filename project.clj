@@ -27,6 +27,8 @@
                  ;; remember to update the LICENCE.txt
                  ;; remember to update pom file (`lein pom`)
 
+                 [cljfx "1.7.4"]
+
                  ]
 
   ;; java 11 , java-time localisation issue 

@@ -22,6 +22,11 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* datetime parsing is broken *again* in wowinterface-api
+    - I thought I fixed this twice now??
+        - it could be I'm missing an explicit 'locale' value
+            - https://stackoverflow.com/questions/38250379/java8-datetimeformatter-am-pm
+
 * gui, add confirmation before deleting addon directory
 
 * EOL planning, robustness, only download/update the catalogue *after* an existing catalogue has been confirmed

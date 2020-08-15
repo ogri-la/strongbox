@@ -12,6 +12,7 @@
     [utils :as utils :refer [in?]]]
    [gui.diff :refer [with-gui-diff]]
    [strongbox.ui
+    [jfx :as jfx]
     [cli :as cli]
     [gui :as gui]])
   (:gen-class))
@@ -49,7 +50,8 @@
   (let [opts (:cli-opts @core/state)]
     (if (= :cli (:ui opts))
       (cli/stop)
-      (gui/stop))
+      ;;(gui/stop))
+      (jfx/stop))
     (core/stop core/state)))
 
 (defn shutdown-hook
@@ -63,7 +65,8 @@
   (core/start (merge {:profile? profile?, :spec? spec?} cli-opts))
   (if (= :cli (:ui cli-opts))
     (cli/start cli-opts)
-    (gui/start))
+    ;;(gui/start))
+    (jfx/start))
 
   (watch-for-gui-restart)
 
