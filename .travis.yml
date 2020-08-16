@@ -2,15 +2,17 @@ os: linux
 dist: xenial # Ubuntu 16.04
 
 language: clojure
-jdk: openjdk11
 
 services:
   - xvfb
 
-script: ./run-tests.sh
-
 jobs:
     include:
+        -
+            stage: test
+            jdk: openjdk11
+            script: ./run-tests.sh
+
         # run the release stage 
         # when the branch being tested is 'master'
         # and the revision has been tagged
