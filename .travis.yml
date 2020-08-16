@@ -2,8 +2,7 @@ os: linux
 dist: xenial # Ubuntu 16.04
 
 language: clojure
-jdk:
-    - openjdk11
+jdk: openjdk11
 
 services:
   - xvfb
