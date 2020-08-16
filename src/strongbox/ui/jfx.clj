@@ -41,9 +41,8 @@
   [[& args]]
   nil)
 
-;;(def separator (javafx.scene.control.SeparatorMenuItem.))
-(def separator (menu-item "----" donothing))
-
+(def separator {:fx/type fx/ext-instance-factory
+                :create #(javafx.scene.control.SeparatorMenuItem.)})
 
 (def wow-dir-picker donothing)
 (def import-addon-handler donothing)
@@ -105,7 +104,7 @@
      :id "main-menu"
      :menus [(menu "File" file-menu {:mnemonic "F"})
              (menu "View" view-menu {:mnemonic "V"})
-             (menu "Catalog" catalogue-menu)
+             (menu "Catalogue" catalogue-menu)
              (menu "Addons" addon-menu {:mnemonic "A"})
              (menu "Import/Export" impexp-menu {:mnemonic "i"})
              (menu "Cache" cache-menu)
