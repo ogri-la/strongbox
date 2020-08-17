@@ -3,8 +3,7 @@
    [taoensso.timbre :as timbre :refer [debug info warn error spy]]
    [cljfx.api :as fx]
    [strongbox
-    [core :as core]
-    [utils :as utils :refer [items]]]))
+    [core :as core]]))
 
 (def INSTALLED-TAB 0)
 (def SEARCH-TAB 1)
@@ -54,7 +53,7 @@
   nil)
 
 (defn menu-bar
-  [state]
+  [{:keys [_]}]
   (let [exit-handler (fn [ev]
                        nil)
 
@@ -108,7 +107,7 @@
 
 
 (defn installed-addons-menu-bar
-  [state]
+  [{:keys [_]}]
   (let [update-all-button {:fx/type :button
                            :text "Update all"}
         wow-dir-dropdown {:fx/type :combo-box
@@ -123,40 +122,86 @@
                 wow-dir-dropdown
                 game-track-dropdown]}))
 
-(defn mkcol [label]
+(defn table-column
+  [label]
   {:fx/type :table-column
-   :text label})
+   :text label
+   :cell-value-factory identity
+   :min-width 80
+   :cell-factory {:fx/cell-type :table-cell
+                  :describe (fn [row]
+                              {:text (str (or (get row label) ""))})}})
+
+(defn table-cell
+  [k v]
+  {k v})
+
+(defn source-to-href-fn
+  "if a source for the addon can be derived, return a hyperlink"
+  [row]
+  (when-let [source (:url row)]
+    (let [url (java.net.URL. source)]
+      (case (.getHost url)
+        "www.curseforge.com" "curseforge"
+        "www.wowinterface.com" "wowinterface"
+        "github.com" "github"
+        "www.tukui.org" (if (= (.getPath url) "/classic-addons.php")
+                          "tukui-classic"
+                          "tukui")
+        "???"))))
 
 (defn installed-addons-table
-  [state]
-  {:fx/type :v-box
-   :children [{:fx/type :table-view
-               :columns (mapv mkcol ["source" "name" "description" "installed" "available" "WoW"])
-               :items []}]})
+  [{:keys [state]}]
+  (let [row-list (:installed-addon-list state)
+        column-list ["source" "name" "description" "installed" "available" "WoW"]
+        transform-map {"source" source-to-href-fn
+                       "name" :label
+                       "description" :description
+                       "installed" :installed-version
+                       "available" :version
+                       "WoW" :interface-version}
+
+        table-data (vec (for [row row-list]
+                          (into {} (for [column column-list]
+                                     (table-cell column ((get transform-map column) row))))))
+
+        table-columns (mapv table-column column-list)]
+
+    {:fx/type :v-box
+
+     :max-height java.lang.Double/MAX_VALUE
+     :max-width java.lang.Double/MAX_VALUE
+     :children [{:fx/type :table-view
+                 :selection-mode :multiple
+                 :columns table-columns
+                 :items table-data
+                 ;;:pref-height java.lang.Double/MAX_VALUE
+                 :max-height java.lang.Double/MAX_VALUE
+                 :max-width java.lang.Double/MAX_VALUE}]}))
 
 (defn app-notice-logger
   []
   {:fx/type :v-box
    :children [{:fx/type :table-view
-               :columns (mapv mkcol ["level" "message"])}]})
+               :columns (mapv table-column ["level" "message"])}]})
 
 (defn installed-addons-pane
-  [state]
+  [{:keys [state]}]
   {:fx/type :v-box
    :children [{:fx/type installed-addons-menu-bar}
               {:fx/type :split-pane
                :orientation :vertical
                :divider-positions [0.7]
-               :items [{:fx/type installed-addons-table}
+               :items [{:fx/type installed-addons-table :state state}
                        (app-notice-logger)]}]})
 
 (defn tabber
-  [state]
+  [{:keys [state]}]
   {:fx/type :tab-pane
    :tabs [{:fx/type :tab
            :text "installed"
            :closable false
-           :content {:fx/type installed-addons-pane}}
+           :content {:fx/type installed-addons-pane :state state}}
           {:fx/type :tab
            :text "search"
            :closable false}]})
@@ -165,7 +210,7 @@
 
 (defn root
   [state]
-  (info "rendering root" state)
+  (info "rendering root")
   {:fx/type :stage
    :showing true
    :title "strongbox"
@@ -173,19 +218,23 @@
    :height 768
    :scene {:fx/type :scene
            :root {:fx/type :v-box
-                  :children [{:fx/type menu-bar}
-                             {:fx/type tabber}]}}})
+                  :children [{:fx/type menu-bar :state state}
+                             {:fx/type tabber :state state}]}}})
 
 (defn start
   []
   (info "starting gui")
   (let [middleware (fn [state]
-                     ;; might want to do a select-keys here,
-                     ;; watch just certain bits of the state
-                     (-> state :gui2 (assoc :fx/type root)))
+                     (root state))
         renderer (fx/create-renderer
                   :middleware (fx/wrap-map-desc middleware))]
-    (fx/mount-renderer core/state renderer)))
+
+    (fx/mount-renderer core/state renderer)
+
+    (future
+      (core/refresh))
+
+    renderer))
 
 (defn stop
   []
