@@ -107,13 +107,20 @@
 
 
 (defn installed-addons-menu-bar
-  [{:keys [_]}]
+  [{:keys [state]}]
   (let [update-all-button {:fx/type :button
                            :text "Update all"}
+
+        addon-dir-map-list (-> state :cfg :addon-dir-list (or []))
+        selected-addon-dir (-> state :cfg :selected-addon-dir)
+        selected-game-track (core/get-game-track selected-addon-dir)
+
         wow-dir-dropdown {:fx/type :combo-box
-                          :items ["/home/torkus/path/to/wine/prefix/World of Warcraft/_retail_/Interface/Addons/"]}
+                          :value selected-addon-dir
+                          :items (mapv :addon-dir addon-dir-map-list)}
 
         game-track-dropdown {:fx/type :combo-box
+                             :value selected-game-track
                              :items ["retail" "classic"]}]
     {:fx/type :h-box
      :padding 10
@@ -188,7 +195,7 @@
 (defn installed-addons-pane
   [{:keys [state]}]
   {:fx/type :v-box
-   :children [{:fx/type installed-addons-menu-bar}
+   :children [{:fx/type installed-addons-menu-bar :state state}
               {:fx/type :split-pane
                :orientation :vertical
                :divider-positions [0.7]
