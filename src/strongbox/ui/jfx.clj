@@ -24,10 +24,20 @@
    :text label
    :items items})
 
+(defn async
+  ([f]
+   (async f []))
+  ([f arg-list]
+   (future
+     (try
+       (apply f arg-list)
+       (catch RuntimeException re
+         (error re "unhandled exception in thread"))))))
+
 (defn async-handler
   [f]
-  (fn []
-    (f)))
+  (fn [& args]
+    (async f args)))
 
 (defn handler
   [f]
@@ -105,10 +115,14 @@
 
 ;; tabber
 
-
 (defn installed-addons-menu-bar
   [{:keys [state]}]
-  (let [update-all-button {:fx/type :button
+  (let [;; temporary
+        refresh-button {:fx/type :button
+                        :text "Refresh"
+                        :on-action (async-handler (fn [_]
+                                                    (core/refresh)))}
+        update-all-button {:fx/type :button
                            :text "Update all"}
 
         addon-dir-map-list (-> state :cfg :addon-dir-list (or []))
@@ -117,15 +131,20 @@
 
         wow-dir-dropdown {:fx/type :combo-box
                           :value selected-addon-dir
+                          :on-value-changed (async-handler (fn [new-addon-dir]
+                                                             (core/set-addon-dir! new-addon-dir)))
                           :items (mapv :addon-dir addon-dir-map-list)}
 
         game-track-dropdown {:fx/type :combo-box
                              :value (name selected-game-track)
+                             :on-value-changed (async-handler (fn [new-game-track]
+                                                                (core/set-game-track! (keyword new-game-track))))
                              :items ["retail" "classic"]}]
     {:fx/type :h-box
      :padding 10
      :spacing 10
-     :children [update-all-button
+     :children [refresh-button
+                update-all-button
                 wow-dir-dropdown
                 game-track-dropdown]}))
 
@@ -134,7 +153,7 @@
   {:fx/type :table-column
    :text label
    :cell-value-factory identity
-   :min-width 80
+   :min-width 100
    :cell-factory {:fx/cell-type :table-cell
                   :describe (fn [row]
                               {:text (str (or (get row label) ""))})}})
@@ -168,6 +187,7 @@
                        "available" :version
                        "WoW" :interface-version}
 
+        ;; this sucks, fix
         table-data (vec (for [row row-list]
                           (into {} (for [column column-list]
                                      (table-cell column ((get transform-map column) row))))))
@@ -175,16 +195,11 @@
         table-columns (mapv table-column column-list)]
 
     {:fx/type :v-box
-
-     :max-height java.lang.Double/MAX_VALUE
-     :max-width java.lang.Double/MAX_VALUE
      :children [{:fx/type :table-view
                  :selection-mode :multiple
+                 :pref-height 999.0
                  :columns table-columns
-                 :items table-data
-                 ;;:pref-height java.lang.Double/MAX_VALUE
-                 :max-height java.lang.Double/MAX_VALUE
-                 :max-width java.lang.Double/MAX_VALUE}]}))
+                 :items table-data}]}))
 
 (defn app-notice-logger
   []
