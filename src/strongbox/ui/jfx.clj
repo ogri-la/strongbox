@@ -149,14 +149,23 @@
                 game-track-dropdown]}))
 
 (defn table-column
-  [label]
-  {:fx/type :table-column
-   :text label
-   :cell-value-factory identity
-   :min-width 100
-   :cell-factory {:fx/cell-type :table-cell
-                  :describe (fn [row]
-                              {:text (str (or (get row label) ""))})}})
+  [column-data]
+  (let [column-data (if (string? column-data) {:text column-data} column-data)
+        column-name (:text column-data)
+
+        default-cvf (fn [row] (get row (keyword column-name)))
+        new-cvf (:cell-value-factory column-data)
+        final-cvf (if (and (some? new-cvf)
+                           (keyword? (:cell-value-factory column-data)))
+                    ;; keywords have to be wrapped in a function to be coerced to a javafx callback!
+                    #(get % (:cell-value-factory column-data))
+                    (or new-cvf default-cvf))
+        final-cvf {:cell-value-factory final-cvf}
+
+        default {:fx/type :table-column
+                 :visible true
+                 :min-width 80}]
+    (merge default column-data final-cvf)))
 
 (defn table-cell
   [k v]
@@ -178,28 +187,20 @@
 
 (defn installed-addons-table
   [{:keys [state]}]
-  (let [row-list (:installed-addon-list state)
-        column-list ["source" "name" "description" "installed" "available" "WoW"]
-        transform-map {"source" source-to-href-fn
-                       "name" :label
-                       "description" :description
-                       "installed" :installed-version
-                       "available" :version
-                       "WoW" :interface-version}
-
-        ;; this sucks, fix
-        table-data (vec (for [row row-list]
-                          (into {} (for [column column-list]
-                                     (table-cell column ((get transform-map column) row))))))
-
-        table-columns (mapv table-column column-list)]
-
+  (let [row-list (or (:installed-addon-list state) [])
+        column-list [{:text "source" :min-width 100 :max-width 110 :cell-value-factory source-to-href-fn}
+                     {:text "name" :min-width 150 :pref-width 300 :max-width 500 :cell-value-factory (fn [row] (:label row))}
+                     {:text "description" :pref-width 700 :cell-value-factory :description}
+                     {:text "installed" :max-width 150 :cell-value-factory :installed-version}
+                     {:text "available" :max-width 150 :cell-value-factory :version}
+                     {:text "WoW" :max-width 100 :cell-value-factory :interface-version}]]
     {:fx/type :v-box
      :children [{:fx/type :table-view
+                 :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
                  :selection-mode :multiple
                  :pref-height 999.0
-                 :columns table-columns
-                 :items table-data}]}))
+                 :columns (mapv table-column column-list)
+                 :items row-list}]}))
 
 (defn app-notice-logger
   []
@@ -213,7 +214,7 @@
    :children [{:fx/type installed-addons-menu-bar :state state}
               {:fx/type :split-pane
                :orientation :vertical
-               :divider-positions [0.7]
+               :divider-positions [0.65]
                :items [{:fx/type installed-addons-table :state state}
                        (app-notice-logger)]}]})
 
