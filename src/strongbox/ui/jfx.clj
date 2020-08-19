@@ -113,14 +113,14 @@
 
         addon-dir-map-list (-> state :cfg :addon-dir-list (or []))
         selected-addon-dir (-> state :cfg :selected-addon-dir)
-        selected-game-track (core/get-game-track selected-addon-dir)
+        selected-game-track (or (core/get-game-track selected-addon-dir) "")
 
         wow-dir-dropdown {:fx/type :combo-box
                           :value selected-addon-dir
                           :items (mapv :addon-dir addon-dir-map-list)}
 
         game-track-dropdown {:fx/type :combo-box
-                             :value selected-game-track
+                             :value (name selected-game-track)
                              :items ["retail" "classic"]}]
     {:fx/type :h-box
      :padding 10
