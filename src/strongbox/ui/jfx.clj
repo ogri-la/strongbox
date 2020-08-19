@@ -41,8 +41,8 @@
 
 (defn handler
   [f]
-  (fn []
-    (f)))
+  (fn [& arg-list]
+    (apply f arg-list)))
 
 (defn donothing
   [[& _]]
@@ -132,7 +132,10 @@
         wow-dir-dropdown {:fx/type :combo-box
                           :value selected-addon-dir
                           :on-value-changed (async-handler (fn [new-addon-dir]
-                                                             (core/set-addon-dir! new-addon-dir)))
+                                                             ;; possible race condition in gui if I don't update
+                                                             ;; state within a transaction. 
+                                                             (dosync
+                                                              (core/set-addon-dir! new-addon-dir))))
                           :items (mapv :addon-dir addon-dir-map-list)}
 
         game-track-dropdown {:fx/type :combo-box
@@ -167,10 +170,6 @@
                  :min-width 80}]
     (merge default column-data final-cvf)))
 
-(defn table-cell
-  [k v]
-  {k v})
-
 (defn source-to-href-fn
   "if a source for the addon can be derived, return a hyperlink"
   [row]
@@ -189,11 +188,12 @@
   [{:keys [state]}]
   (let [row-list (or (:installed-addon-list state) [])
         column-list [{:text "source" :min-width 100 :max-width 110 :cell-value-factory source-to-href-fn}
-                     {:text "name" :min-width 150 :pref-width 300 :max-width 500 :cell-value-factory (fn [row] (:label row))}
+                     {:text "name" :min-width 150 :pref-width 300 :max-width 500 :cell-value-factory :label}
                      {:text "description" :pref-width 700 :cell-value-factory :description}
                      {:text "installed" :max-width 150 :cell-value-factory :installed-version}
                      {:text "available" :max-width 150 :cell-value-factory :version}
                      {:text "WoW" :max-width 100 :cell-value-factory :interface-version}]]
+    ;; why the vbox ...?
     {:fx/type :v-box
      :children [{:fx/type :table-view
                  :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
@@ -212,24 +212,65 @@
   [{:keys [state]}]
   {:fx/type :v-box
    :children [{:fx/type installed-addons-menu-bar :state state}
-              {:fx/type :split-pane
-               :orientation :vertical
-               :divider-positions [0.65]
-               :items [{:fx/type installed-addons-table :state state}
-                       (app-notice-logger)]}]})
+              {:fx/type installed-addons-table :state state}]})
+
+(defn search-addons-table
+  [{:keys [state]}]
+  (let [addon-list (core/db-search (:search-field-input state))
+        column-list [{:text "source" :min-width 100 :max-width 110 :cell-value-factory source-to-href-fn}
+                     {:text "name" :min-width 150 :pref-width 300 :max-width 500 :cell-value-factory :label}
+                     {:text "description" :pref-width 700 :cell-value-factory :description}
+                     {:text "tags" :cell-value-factory (comp str :tag-list)}
+                     {:text "updated" :cell-value-factory :updated-date}
+                     {:text "downloads" :cell-value-factory :download-count}]]
+    {:fx/type :table-view
+     :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
+     :selection-mode :multiple
+     :pref-height 999.0
+     :columns (mapv table-column column-list)
+     :items addon-list}))
+
+(defn search-addons-search-field
+  [{:keys [_]}]
+  {:fx/type :h-box
+   :padding 10
+   :spacing 10
+   :children [{:fx/type :text-field
+               :prompt-text "search"
+               :on-text-changed (fn [v]
+                                  ;; todo: stick this in core
+                                  (swap! core/state assoc :search-field-input v))}
+              {:fx/type :button
+               :text "install selected"
+               :on-action (async-handler (fn [_]
+                                           ;;(switch-tab INSTALLED-TAB)
+                                           ;;(doseq [selected (get-state :selected-search)]
+                                           ;;  (some-> selected core/expand-summary-wrapper vector core/-install-update-these)
+                                           ;;  (core/load-installed-addons))
+                                           ;;(ss/selection! (select-ui :#tbl-search-addons) nil) ;; deselect rows in search table
+                                           ;;(core/refresh))
+                                           (println "installing ...")))}]})
+
+(defn search-addons-pane
+  [{:keys [state]}]
+  {:fx/type :v-box
+   :children [{:fx/type search-addons-search-field :state state}
+              {:fx/type search-addons-table :state state}]})
 
 (defn tabber
   [{:keys [state]}]
   {:fx/type :tab-pane
    :tabs [{:fx/type :tab
+           :text "search"
+           :closable false
+           :content {:fx/type search-addons-pane :state state}}
+          {:fx/type :tab
            :text "installed"
            :closable false
-           :content {:fx/type installed-addons-pane :state state}}
-          {:fx/type :tab
-           :text "search"
-           :closable false}]})
+           :content {:fx/type installed-addons-pane :state state}}]})
 
 ;;
+
 
 (defn root
   [state]
@@ -242,7 +283,11 @@
    :scene {:fx/type :scene
            :root {:fx/type :v-box
                   :children [{:fx/type menu-bar :state state}
-                             {:fx/type tabber :state state}]}}})
+                             {:fx/type :split-pane
+                              :orientation :vertical
+                              :divider-positions [0.65]
+                              :items [{:fx/type tabber :state state}
+                                      (app-notice-logger)]}]}}})
 
 (defn start
   []
