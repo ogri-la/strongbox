@@ -3,6 +3,7 @@
    [taoensso.timbre :as timbre :refer [debug info warn error spy]]
    [cljfx.api :as fx]
    [strongbox
+    [utils :as utils]
     [core :as core]]))
 
 (def INSTALLED-TAB 0)
@@ -218,11 +219,11 @@
   [{:keys [state]}]
   (let [addon-list (core/db-search (:search-field-input state))
         column-list [{:text "source" :min-width 100 :max-width 110 :cell-value-factory source-to-href-fn}
-                     {:text "name" :min-width 150 :pref-width 300 :max-width 500 :cell-value-factory :label}
+                     {:text "name" :min-width 150 :pref-width 300 :max-width 450 :cell-value-factory :label}
                      {:text "description" :pref-width 700 :cell-value-factory :description}
-                     {:text "tags" :cell-value-factory (comp str :tag-list)}
-                     {:text "updated" :cell-value-factory :updated-date}
-                     {:text "downloads" :cell-value-factory :download-count}]]
+                     {:text "tags" :pref-width 380 :min-width 230 :max-width 450 :cell-value-factory (comp str :tag-list)}
+                     {:text "updated" :min-width 85 :max-width 120 :pref-width 100 :cell-value-factory (comp #(utils/safe-subs % 10)  :updated-date)}
+                     {:text "downloads" :min-width 100 :max-width 120 :cell-value-factory :download-count}]]
     {:fx/type :table-view
      :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
      :selection-mode :multiple
