@@ -1,8 +1,10 @@
 (ns strongbox.ui.jfx
   (:require
    [taoensso.timbre :as timbre :refer [debug info warn error spy]]
-   [cljfx.api :as fx]
+   [cljfx
+    [api :as fx]]
    [strongbox
+    [logging :as logging]
     [utils :as utils]
     [core :as core]]))
 
@@ -117,7 +119,7 @@
 ;; tabber
 
 (defn installed-addons-menu-bar
-  [{:keys [state]}]
+  [{:keys [fx/context]}]
   (let [;; temporary
         refresh-button {:fx/type :button
                         :text "Refresh"
@@ -126,9 +128,11 @@
         update-all-button {:fx/type :button
                            :text "Update all"}
 
-        addon-dir-map-list (-> state :cfg :addon-dir-list (or []))
-        selected-addon-dir (-> state :cfg :selected-addon-dir)
-        selected-game-track (or (core/get-game-track selected-addon-dir) "")
+        addon-dir-map-list (or (fx/sub-val context get-in [:app-state :cfg :addon-dir-list]) [])
+        selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])
+        selected-game-track (if selected-addon-dir
+                              (core/get-game-track selected-addon-dir)
+                              "")
 
         wow-dir-dropdown {:fx/type :combo-box
                           :value selected-addon-dir
@@ -186,8 +190,8 @@
         "???"))))
 
 (defn installed-addons-table
-  [{:keys [state]}]
-  (let [row-list (or (:installed-addon-list state) [])
+  [{:keys [fx/context]}]
+  (let [row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
         column-list [{:text "source" :min-width 100 :max-width 110 :cell-value-factory source-to-href-fn}
                      {:text "name" :min-width 150 :pref-width 300 :max-width 500 :cell-value-factory :label}
                      {:text "description" :pref-width 700 :cell-value-factory :description}
@@ -201,23 +205,28 @@
                  :selection-mode :multiple
                  :pref-height 999.0
                  :columns (mapv table-column column-list)
-                 :items row-list}]}))
+                 :items (or row-list [])}]}))
 
-(defn app-notice-logger
-  []
-  {:fx/type :v-box
-   :children [{:fx/type :table-view
-               :columns (mapv table-column ["level" "message"])}]})
+(defn notice-logger
+  [{:keys [fx/context]}]
+  (let [log-message-list (fx/sub-val context :log-message-list)
+        log-message-list (reverse log-message-list) ;; nfi how to programmatically change column sort order
+        column-list [{:text "level" :max-width 100 :cell-value-factory :level}
+                     {:text "message" :pref-width 500 :cell-value-factory :message}]]
+    {:fx/type :table-view
+     :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
+     :columns (mapv table-column column-list)
+     :items (or log-message-list [])}))
 
 (defn installed-addons-pane
-  [{:keys [state]}]
+  [_]
   {:fx/type :v-box
-   :children [{:fx/type installed-addons-menu-bar :state state}
-              {:fx/type installed-addons-table :state state}]})
+   :children [{:fx/type installed-addons-menu-bar}
+              {:fx/type installed-addons-table}]})
 
 (defn search-addons-table
-  [{:keys [state]}]
-  (let [addon-list (core/db-search (:search-field-input state))
+  [{:keys [fx/context]}]
+  (let [addon-list (core/db-search (fx/sub-val context get-in [:app-state :search-field-input]))
         column-list [{:text "source" :min-width 100 :max-width 110 :cell-value-factory source-to-href-fn}
                      {:text "name" :min-width 150 :pref-width 300 :max-width 450 :cell-value-factory :label}
                      {:text "description" :pref-width 700 :cell-value-factory :description}
@@ -232,14 +241,13 @@
      :items addon-list}))
 
 (defn search-addons-search-field
-  [{:keys [_]}]
+  [_] ;;{:keys [fx/context]}]
   {:fx/type :h-box
    :padding 10
    :spacing 10
    :children [{:fx/type :text-field
                :prompt-text "search"
                :on-text-changed (fn [v]
-                                  ;; todo: stick this in core
                                   (swap! core/state assoc :search-field-input v))}
               {:fx/type :button
                :text "install selected"
@@ -250,32 +258,37 @@
                                            ;;  (core/load-installed-addons))
                                            ;;(ss/selection! (select-ui :#tbl-search-addons) nil) ;; deselect rows in search table
                                            ;;(core/refresh))
-                                           (println "installing ...")))}]})
+                                           (println "installing ...")))}
+              {:fx/type :button
+               :text "random"
+               :on-action (fn [_]
+
+                            (swap! core/state assoc :search-field-input
+                                   (if (nil? (:search-field-input @core/state)) "" nil)))}]})
 
 (defn search-addons-pane
-  [{:keys [state]}]
+  [_]
   {:fx/type :v-box
-   :children [{:fx/type search-addons-search-field :state state}
-              {:fx/type search-addons-table :state state}]})
+   :children [{:fx/type search-addons-search-field}
+              {:fx/type search-addons-table}]})
 
 (defn tabber
-  [{:keys [state]}]
+  [_]
   {:fx/type :tab-pane
    :tabs [{:fx/type :tab
-           :text "search"
-           :closable false
-           :content {:fx/type search-addons-pane :state state}}
-          {:fx/type :tab
            :text "installed"
            :closable false
-           :content {:fx/type installed-addons-pane :state state}}]})
+           :content {:fx/type installed-addons-pane}}
+          {:fx/type :tab
+           :text "search"
+           :closable false
+           :content {:fx/type search-addons-pane}}]})
 
 ;;
 
 
 (defn root
-  [state]
-  (info "rendering root")
+  [_] ;;{:keys [fx/context]}]
   {:fx/type :stage
    :showing true
    :title "strongbox"
@@ -283,25 +296,58 @@
    :height 768
    :scene {:fx/type :scene
            :root {:fx/type :v-box
-                  :children [{:fx/type menu-bar :state state}
+                  :children [{:fx/type menu-bar}
                              {:fx/type :split-pane
                               :orientation :vertical
                               :divider-positions [0.65]
-                              :items [{:fx/type tabber :state state}
-                                      (app-notice-logger)]}]}}})
+                              :items [{:fx/type tabber}
+                                      {:fx/type notice-logger}]}]}}})
+
+(defn init-notice-logger!
+  [gui-state]
+  (let [gui-logger (fn [log-data]
+                     (let [{:keys [timestamp_ msg_ level]} log-data
+                           formatted-output-str (force (format "%s - %s" (force timestamp_) (force msg_)))]
+                       (swap! gui-state fx/swap-context update-in [:log-message-list] conj {:level level :message formatted-output-str})))]
+    (logging/add-appender! :gui gui-logger {:timestamp-opts {:pattern "HH:mm:ss"}})))
 
 (defn start
   []
   (info "starting gui")
-  (let [middleware (fn [state]
-                     (root state))
-        renderer (fx/create-renderer
-                  :middleware (fx/wrap-map-desc middleware))]
+  (let [state-template {:app-state nil,
+                        :log-message-list []}
+        gui-state (atom (fx/create-context state-template))
 
-    (fx/mount-renderer core/state renderer)
+        update-gui-state (fn [new-state]
+                           (swap! gui-state fx/swap-context assoc :app-state new-state))
+        _ (core/state-bind [] update-gui-state)
+
+        renderer (fx/create-renderer
+                  :middleware (comp
+                               fx/wrap-context-desc
+                               (fx/wrap-map-desc (fn [_] {:fx/type root})))
+
+                  ;; magic :(
+
+                  :opts {:fx.opt/type->lifecycle #(or (fx/keyword->lifecycle %)
+                                                      ;; For functions in `:fx/type` values, pass
+                                                      ;; context from option map to these functions
+                                                      (fx/fn->lifecycle-with-context %))})
+
+        ;; on first load, because the catalogue hasn't been loaded
+        ;; and because the search-field-input doesn't change,
+        ;; and because the search component isn't re-rendered,
+        ;; fake a change to get something to appear
+        bump-search (fn []
+                      (when-not (:search-field-input core/state)
+                        (swap! core/state assoc :search-field-input "")))]
+
+    (fx/mount-renderer gui-state renderer)
+    (init-notice-logger! gui-state)
 
     (future
-      (core/refresh))
+      (core/refresh)
+      (bump-search))
 
     renderer))
 

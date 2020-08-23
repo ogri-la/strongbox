@@ -149,9 +149,6 @@
    ;; the root swing window
    :gui nil
 
-   ;; jfx gui state 
-   :gui2 nil
-
    ;; set to anything other than `nil` to have `main.clj` restart the gui
    :gui-restart-flag nil
 
