@@ -3,6 +3,7 @@
    [taoensso.timbre :as timbre :refer [debug info warn error spy]]
    [cljfx
     [api :as fx]]
+   ;;[clojure.core.cache :as cache]
    [strongbox
     [logging :as logging]
     [utils :as utils]
@@ -130,23 +131,19 @@
 
         addon-dir-map-list (or (fx/sub-val context get-in [:app-state :cfg :addon-dir-list]) [])
         selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])
-        selected-game-track (if selected-addon-dir
-                              (core/get-game-track selected-addon-dir)
-                              "")
+        selected-game-track (core/get-game-track selected-addon-dir)
 
         wow-dir-dropdown {:fx/type :combo-box
                           :value selected-addon-dir
                           :on-value-changed (async-handler (fn [new-addon-dir]
-                                                             ;; possible race condition in gui if I don't update
-                                                             ;; state within a transaction. 
-                                                             (dosync
-                                                              (core/set-addon-dir! new-addon-dir))))
+                                                              (core/set-addon-dir! new-addon-dir)))
                           :items (mapv :addon-dir addon-dir-map-list)}
 
         game-track-dropdown {:fx/type :combo-box
-                             :value (name selected-game-track)
+                             :value (-> selected-game-track (or "") name)
                              :on-value-changed (async-handler (fn [new-game-track]
-                                                                (core/set-game-track! (keyword new-game-track))))
+                                                                (core/set-game-track! (keyword new-game-track))
+                                                                (core/refresh)))
                              :items ["retail" "classic"]}]
     {:fx/type :h-box
      :padding 10
@@ -191,6 +188,7 @@
 
 (defn installed-addons-table
   [{:keys [fx/context]}]
+  ;;(info "---rendering installed addons table") ;; causes an infinite loop
   (let [row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
         column-list [{:text "source" :min-width 100 :max-width 110 :cell-value-factory source-to-href-fn}
                      {:text "name" :min-width 150 :pref-width 300 :max-width 500 :cell-value-factory :label}
@@ -198,14 +196,12 @@
                      {:text "installed" :max-width 150 :cell-value-factory :installed-version}
                      {:text "available" :max-width 150 :cell-value-factory :version}
                      {:text "WoW" :max-width 100 :cell-value-factory :interface-version}]]
-    ;; why the vbox ...?
-    {:fx/type :v-box
-     :children [{:fx/type :table-view
-                 :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
-                 :selection-mode :multiple
-                 :pref-height 999.0
-                 :columns (mapv table-column column-list)
-                 :items (or row-list [])}]}))
+    {:fx/type :table-view
+     :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
+     :selection-mode :multiple
+     :pref-height 999.0
+     :columns (mapv table-column column-list)
+     :items (or row-list [])}))
 
 (defn notice-logger
   [{:keys [fx/context]}]
@@ -241,7 +237,7 @@
      :items addon-list}))
 
 (defn search-addons-search-field
-  [_] ;;{:keys [fx/context]}]
+  [_]
   {:fx/type :h-box
    :padding 10
    :spacing 10
@@ -262,7 +258,6 @@
               {:fx/type :button
                :text "random"
                :on-action (fn [_]
-
                             (swap! core/state assoc :search-field-input
                                    (if (nil? (:search-field-input @core/state)) "" nil)))}]})
 
@@ -288,7 +283,7 @@
 
 
 (defn root
-  [_] ;;{:keys [fx/context]}]
+  [_]
   {:fx/type :stage
    :showing true
    :title "strongbox"
@@ -316,7 +311,7 @@
   (info "starting gui")
   (let [state-template {:app-state nil,
                         :log-message-list []}
-        gui-state (atom (fx/create-context state-template))
+        gui-state (atom (fx/create-context state-template)) ;; cache/lru-cache-factory))
 
         update-gui-state (fn [new-state]
                            (swap! gui-state fx/swap-context assoc :app-state new-state))

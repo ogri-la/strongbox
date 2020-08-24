@@ -28,6 +28,7 @@
                  ;; remember to update pom file (`lein pom`)
 
                  [cljfx "1.7.6"]
+                 ;;[org.clojure/core.cache "1.0.207"]
 
                  ]
 
