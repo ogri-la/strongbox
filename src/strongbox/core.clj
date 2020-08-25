@@ -304,10 +304,10 @@
 
 (defn-spec get-game-track (s/or :ok ::sp/game-track, :missing nil?)
   ([]
-   (when-let [addon-dir (selected-addon-dir)]
-     (get-game-track addon-dir)))
-  ([addon-dir ::sp/addon-dir]
-   (-> addon-dir addon-dir-map :game-track)))
+   (get-game-track (selected-addon-dir)))
+  ([addon-dir (s/nilable ::sp/addon-dir)]
+   (when addon-dir
+     (-> addon-dir addon-dir-map :game-track))))
 
 ;; settings
 
@@ -971,7 +971,7 @@
 ;;
 
 (defn refresh
-  [& _]
+  [& _] ;; todo: remove args with swing gui
   (profile
    {:when (get-state :profile?)}
 

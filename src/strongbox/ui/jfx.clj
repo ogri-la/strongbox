@@ -1,5 +1,6 @@
 (ns strongbox.ui.jfx
   (:require
+   [me.raynes.fs :as fs]
    [taoensso.timbre :as timbre :refer [debug info warn error spy]]
    [cljfx
     [api :as fx]]
@@ -7,7 +8,41 @@
    [strongbox
     [logging :as logging]
     [utils :as utils]
-    [core :as core]]))
+    [core :as core]])
+  (:import
+   [javafx.stage FileChooser DirectoryChooser]
+   
+   [javafx.event ActionEvent]
+   [javafx.scene Node]))
+
+(defn file-chooser
+  [^ActionEvent event]
+  (let [;; valid for a menu-item
+        window (-> event .getTarget .getParentPopup .getOwnerWindow .getScene .getWindow)
+        chooser (doto (FileChooser.)
+                  (.setTitle "Open File"))]
+    (when-let [file @(fx/on-fx-thread
+                      (.showOpenDialog chooser window))]
+      {:state {:file file :content (slurp file)}})))
+
+(defn dir-chooser
+  [^ActionEvent event]
+  (let [;; valid for a menu-item
+        window (-> event .getTarget .getParentPopup .getOwnerWindow .getScene .getWindow)
+        chooser (doto (DirectoryChooser.)
+                  (.setTitle "Select Directory"))]
+    (when-let [dir @(fx/on-fx-thread
+                     (.showDialog chooser window))]
+      (info "got dir" dir)
+      (if (fs/directory? dir)
+        (do
+          (core/set-addon-dir! (str dir))
+          (core/save-settings))
+        ;;(ss/alert (format "Directory doesn't exist: %s" (str dir)))))
+        (println (format "Directory doesn't exist: %s" (str dir)))))))
+
+
+;;
 
 (def INSTALLED-TAB 0)
 (def SEARCH-TAB 1)
@@ -15,7 +50,8 @@
 (defn menu-item
   [label handler & [_]]
   {:fx/type :menu-item
-   :text (str label)})
+   :text (str label)
+   :on-action handler})
 
 (defn build-catalogue-menu
   []
@@ -23,7 +59,6 @@
 
 (defn menu
   [label items & [_]]
-
   {:fx/type :menu
    :text label
    :items items})
@@ -38,10 +73,17 @@
        (catch RuntimeException re
          (error re "unhandled exception in thread"))))))
 
-(defn async-handler
+(defn async-event-handler
+  "wraps `f`, calling it with any given `args` later"
   [f]
   (fn [& args]
     (async f args)))
+
+(defn async-handler
+  "same as `async-handler` but calls `f` and ignores `args`"
+  [f]
+  (fn [& _]
+    (f)))
 
 (defn handler
   [f]
@@ -55,7 +97,15 @@
 (def separator {:fx/type fx/ext-instance-factory
                 :create #(javafx.scene.control.SeparatorMenuItem.)})
 
-(def wow-dir-picker donothing)
+(defn wow-dir-picker
+  [ev]
+  (dir-chooser ev))
+
+(defn exit-handler
+  [ev]
+  nil)
+  ;;(javafx.application.Platform/exit))
+
 (def import-addon-handler donothing)
 (def import-addon-list-handler donothing)
 (def export-addon-list-handler donothing)
@@ -64,14 +114,12 @@
 
 (defn switch-tab-handler
   [tab-idx]
-  nil)
+  (fn [_]
+    nil))
 
 (defn menu-bar
   [{:keys [_]}]
-  (let [exit-handler (fn [ev]
-                       nil)
-
-        file-menu [(menu-item "New addon directory" (async-handler wow-dir-picker) {:key "menu N" :mnemonic "n"})
+  (let [file-menu [(menu-item "New addon directory" (async-event-handler wow-dir-picker) {:key "menu N" :mnemonic "n"})
                    (menu-item "Remove addon directory" (async-handler core/remove-addon-dir!))
                    separator
                    (menu-item "Exit" exit-handler {:key "menu Q" :mnemonic "x"})]
@@ -124,10 +172,10 @@
   (let [;; temporary
         refresh-button {:fx/type :button
                         :text "Refresh"
-                        :on-action (async-handler (fn [_]
-                                                    (core/refresh)))}
+                        :on-action (async-handler core/refresh)}
         update-all-button {:fx/type :button
-                           :text "Update all"}
+                           :text "Update all"
+                           :on-action (async-handler core/install-update-all)}
 
         addon-dir-map-list (or (fx/sub-val context get-in [:app-state :cfg :addon-dir-list]) [])
         selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])
@@ -135,16 +183,22 @@
 
         wow-dir-dropdown {:fx/type :combo-box
                           :value selected-addon-dir
-                          :on-value-changed (async-handler (fn [new-addon-dir]
-                                                              (core/set-addon-dir! new-addon-dir)))
+                          :on-value-changed (async-event-handler
+                                             (fn [new-addon-dir]
+                                               (core/set-addon-dir! new-addon-dir)))
                           :items (mapv :addon-dir addon-dir-map-list)}
 
         game-track-dropdown {:fx/type :combo-box
                              :value (-> selected-game-track (or "") name)
-                             :on-value-changed (async-handler (fn [new-game-track]
-                                                                (core/set-game-track! (keyword new-game-track))
-                                                                (core/refresh)))
-                             :items ["retail" "classic"]}]
+                             :on-value-changed (async-event-handler
+                                                (fn [new-game-track]
+                                                  (core/set-game-track! (keyword new-game-track))
+                                                  (core/refresh)))
+                             :items ["retail" "classic"]}
+
+        ;; todo: add upgrade strongbox button
+        
+        ]
     {:fx/type :h-box
      :padding 10
      :spacing 10
@@ -188,7 +242,6 @@
 
 (defn installed-addons-table
   [{:keys [fx/context]}]
-  ;;(info "---rendering installed addons table") ;; causes an infinite loop
   (let [row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
         column-list [{:text "source" :min-width 100 :max-width 110 :cell-value-factory source-to-href-fn}
                      {:text "name" :min-width 150 :pref-width 300 :max-width 500 :cell-value-factory :label}
@@ -247,7 +300,7 @@
                                   (swap! core/state assoc :search-field-input v))}
               {:fx/type :button
                :text "install selected"
-               :on-action (async-handler (fn [_]
+               :on-action (async-handler (fn []
                                            ;;(switch-tab INSTALLED-TAB)
                                            ;;(doseq [selected (get-state :selected-search)]
                                            ;;  (some-> selected core/expand-summary-wrapper vector core/-install-update-these)
