@@ -49,8 +49,18 @@
    :on-action handler})
 
 (defn build-catalogue-menu
-  []
-  [])
+  [selected-catalogue catalogue-addon-list]
+  (when catalogue-addon-list
+    (let [rb (fn [{:keys [label name]}]
+               {:fx/type :radio-menu-item
+                :text label
+                :selected (= selected-catalogue name)
+                :toggle-group {:fx/type fx/ext-get-ref
+                               :ref ::catalogue-toggle-group}
+                :on-action (fn [_]
+                             (core/set-catalogue-location! name)
+                             (core/save-settings))})]
+      (mapv rb catalogue-addon-list))))
 
 (defn menu
   [label items & [_]]
@@ -123,7 +133,7 @@
       (.select (.getSelectionModel tabber-obj) tab-idx))))
 
 (defn menu-bar
-  [{:keys [_]}]
+  [{:keys [fx/context]}]
   (let [file-menu [(menu-item "New addon directory" (async-event-handler wow-dir-picker) {:key "menu N" :mnemonic "n"})
                    (menu-item "Remove addon directory" (async-handler core/remove-addon-dir!))
                    separator
@@ -133,9 +143,13 @@
                    separator
                    (menu-item "Installed" (switch-tab-handler INSTALLED-TAB) {:key "menu I" :mnemonic "i"})
                    (menu-item "Search" (switch-tab-handler SEARCH-TAB) {:key "menu H" :mnemonic "h"})
-                   separator]
+                   ;; separator
+                   ;; todo: build-theme-menu
+                   ]
 
-        catalogue-menu (into (build-catalogue-menu)
+        catalogue-menu (into (build-catalogue-menu
+                              (fx/sub-val context get-in [:app-state :cfg :selected-catalogue])
+                              (fx/sub-val context get-in [:app-state :cfg :catalogue-location-list]))
                              [separator
                               (menu-item "Refresh user catalogue" (async-handler core/refresh-user-catalogue))])
 
@@ -160,15 +174,17 @@
 
         help-menu [(menu-item "About strongbox" (handler about-strongbox-dialog))]]
 
-    {:fx/type :menu-bar
-     :id "main-menu"
-     :menus [(menu "File" file-menu {:mnemonic "F"})
-             (menu "View" view-menu {:mnemonic "V"})
-             (menu "Catalogue" catalogue-menu)
-             (menu "Addons" addon-menu {:mnemonic "A"})
-             (menu "Import/Export" impexp-menu {:mnemonic "i"})
-             (menu "Cache" cache-menu)
-             (menu "Help" help-menu)]}))
+    {:fx/type fx/ext-let-refs
+     :refs {::catalogue-toggle-group {:fx/type :toggle-group}}
+     :desc {:fx/type :menu-bar
+            :id "main-menu"
+            :menus [(menu "File" file-menu {:mnemonic "F"})
+                    (menu "View" view-menu {:mnemonic "V"})
+                    (menu "Catalogue" catalogue-menu)
+                    (menu "Addons" addon-menu {:mnemonic "A"})
+                    (menu "Import/Export" impexp-menu {:mnemonic "i"})
+                    (menu "Cache" cache-menu)
+                    (menu "Help" help-menu)]}}))
 
 ;; tabber
 
