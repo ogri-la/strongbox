@@ -11,7 +11,7 @@
     [core :as core]])
   (:import
    [javafx.stage FileChooser DirectoryChooser]
-   
+   [javafx.application Platform]
    [javafx.event ActionEvent]
    [javafx.scene Node]))
 
@@ -43,6 +43,7 @@
 
 
 ;;
+
 
 (def INSTALLED-TAB 0)
 (def SEARCH-TAB 1)
@@ -101,10 +102,15 @@
   [ev]
   (dir-chooser ev))
 
+
+;; todo: reconcile this with the on-close-request handler in the stage
 (defn exit-handler
-  [ev]
-  nil)
-  ;;(javafx.application.Platform/exit))
+  [event]
+  (println "hit exit handler")
+  ;;(javafx.application.Platform/exit) ;; won't open again
+  (-> event .getTarget .getParentPopup .getOwnerWindow .getScene .getWindow .close) ;; won't open again
+  (when-not (core/get-state :in-repl?)
+    (System/exit 0)))
 
 (def import-addon-handler donothing)
 (def import-addon-list-handler donothing)
@@ -197,7 +203,6 @@
                              :items ["retail" "classic"]}
 
         ;; todo: add upgrade strongbox button
-        
         ]
     {:fx/type :h-box
      :padding 10
@@ -339,6 +344,13 @@
   [_]
   {:fx/type :stage
    :showing true
+   :on-close-request (fn [ev]
+                       ;; called on ctrl-c
+                       (println "got ev" ev)
+                       (println (bean ev))
+                       (when-not (core/get-state :in-repl?)
+                         (System/exit 0)))
+
    :title "strongbox"
    :width 1024
    :height 768
@@ -401,4 +413,5 @@
 
 (defn stop
   []
+  (info "stopping gui") ;; nothing needs to happen ... yet?
   nil)
