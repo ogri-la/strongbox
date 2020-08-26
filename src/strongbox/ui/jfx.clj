@@ -33,13 +33,7 @@
                   (.setTitle "Select Directory"))]
     (when-let [dir @(fx/on-fx-thread
                      (.showDialog chooser window))]
-      (info "got dir" dir)
-      (if (fs/directory? dir)
-        (do
-          (core/set-addon-dir! (str dir))
-          (core/save-settings))
-        ;;(ss/alert (format "Directory doesn't exist: %s" (str dir)))))
-        (println (format "Directory doesn't exist: %s" (str dir)))))))
+      (str dir))))
 
 
 ;;
@@ -100,15 +94,18 @@
 
 (defn wow-dir-picker
   [ev]
-  (dir-chooser ev))
-
+  (when-let [dir (dir-chooser ev)]
+    (when (fs/directory? dir)
+      ;; doesn't appear possible to select a non-directory with javafx
+      (core/set-addon-dir! dir)
+      (core/save-settings))))
 
 ;; todo: reconcile this with the on-close-request handler in the stage
 (defn exit-handler
   [event]
   (println "hit exit handler")
   ;;(javafx.application.Platform/exit) ;; won't open again
-  (-> event .getTarget .getParentPopup .getOwnerWindow .getScene .getWindow .close) ;; won't open again
+  (-> event .getTarget .getParentPopup .getOwnerWindow .getScene .getWindow .close)
   (when-not (core/get-state :in-repl?)
     (System/exit 0)))
 
@@ -120,8 +117,10 @@
 
 (defn switch-tab-handler
   [tab-idx]
-  (fn [_]
-    nil))
+  (fn [event]
+    (let [node ^Node (-> event .getTarget .getParentPopup .getOwnerWindow .getScene .getRoot)
+          tabber-obj (first (.lookupAll node "#tabber"))]
+      (.select (.getSelectionModel tabber-obj) tab-idx))))
 
 (defn menu-bar
   [{:keys [_]}]
@@ -328,6 +327,7 @@
 (defn tabber
   [_]
   {:fx/type :tab-pane
+   :id "tabber"
    :tabs [{:fx/type :tab
            :text "installed"
            :closable false
