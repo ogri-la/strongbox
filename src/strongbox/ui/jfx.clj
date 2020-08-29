@@ -47,7 +47,7 @@
            @(fx/on-fx-thread
              (fx/create-component
               {:fx/type :text-input-dialog
-      ;;:prompt-text prompt
+               ;;:prompt-text prompt
                :header-text "header text" ;;prompt
                :showing true
                :content-text "content text"
@@ -67,19 +67,23 @@
       (.get optional-val))))
 
 (defn alert
-  [msg alert-type]
-  (let [alert-type-map {:warning javafx.scene.control.Alert$AlertType/WARNING
+  [event msg & [opt-map]]
+  (let [window (-> event .getTarget .getParentPopup .getOwnerWindow .getScene .getWindow)
+        alert-type-map {:warning javafx.scene.control.Alert$AlertType/WARNING
                         :error javafx.scene.control.Alert$AlertType/ERROR
                         :confirm javafx.scene.control.Alert$AlertType/CONFIRMATION
                         :info javafx.scene.control.Alert$AlertType/INFORMATION}
-        alert-type (get alert-type-map alert-type)
+        alert-type (->> opt-map :type (or :info) (get alert-type-map))
         widget (doto (Alert. alert-type)
-                 (.setContentText msg))]
-
+                 (.setTitle (:title opt-map))
+                 (.setHeaderText (:header opt-map))
+                 (.setContentText msg)
+                 (.initOwner window))]
+    (when (:content opt-map)
+      (.setContent (.getDialogPane widget) (:content opt-map)))
     @(fx/on-fx-thread (.showAndWait widget))))
 
 ;;
-
 
 (def INSTALLED-TAB 0)
 (def SEARCH-TAB 1)
@@ -162,8 +166,6 @@
   (when-not (core/get-state :in-repl?)
     (System/exit 0)))
 
-(def about-strongbox-dialog donothing)
-
 (defn switch-tab-handler
   [tab-idx]
   (fn [event]
@@ -183,10 +185,10 @@
   * latest release has a packaged 'asset'
   * asset must be a .zip file
   * zip file must be structured like an addon"
-        failure #(alert fail-msg :error)
+        failure #(alert event fail-msg {:type :error})
 
         warn-msg "Failed. Addon successfully added to catalogue but could not be installed."
-        warning #(alert warn-msg :warning)]
+        warning #(alert event warn-msg {:type :warning})]
     (when addon-url
       (if-let [result (core/add+install-user-addon! addon-url)]
         (when-not (contains? result :download-url)
@@ -217,6 +219,20 @@
   (when-let [;; todo: json filters
              file-obj (file-chooser event {:type :save})]
     (core/export-user-catalogue-addon-list-safely (-> file-obj .getAbsolutePath str))
+    nil))
+
+(defn about-strongbox-dialog
+  [event]
+  (let [content (fx/create-component {:fx/type :v-box
+                                      :children [{:fx/type :text
+                                                  :text "strongbox"}
+                                                 {:fx/type :text
+                                                  :text (format "version %s" (core/strongbox-version))}
+                                                 {:fx/type :hyperlink
+                                                  :text "https://github.com/ogri-la/strongbox"}
+                                                 {:fx/type :text
+                                                  :text "AGPL v3"}]})]
+    (alert event "" {:type :info :content (fx/instance content)})
     nil))
 
 ;;
@@ -264,7 +280,7 @@
                     (menu-item "Delete .wowman.json files" (async-handler (comp core/refresh core/delete-wowman-json-files!)))
                     (menu-item "Delete .strongbox.json files" (async-handler (comp core/refresh core/delete-strongbox-json-files!)))]
 
-        help-menu [(menu-item "About strongbox" (event-handler about-strongbox-dialog))]]
+        help-menu [(menu-item "About strongbox" about-strongbox-dialog)]]
 
     {:fx/type fx/ext-let-refs
      :refs {::catalogue-toggle-group {:fx/type :toggle-group}}
