@@ -10,6 +10,7 @@
     [utils :as utils]
     [core :as core]])
   (:import
+   [javafx.scene.control TextInputDialog Alert]
    [javafx.stage FileChooser DirectoryChooser]
    [javafx.application Platform]
    [javafx.event ActionEvent]
@@ -35,6 +36,42 @@
                      (.showDialog chooser window))]
       (str dir))))
 
+(comment "this works, but where does the value go? to an event listener?"
+         (defn text-input
+           [prompt]
+           @(fx/on-fx-thread
+             (fx/create-component
+              {:fx/type :text-input-dialog
+      ;;:prompt-text prompt
+               :header-text "header text" ;;prompt
+               :showing true
+               :content-text "content text"
+               :title "title"}))))
+
+(defn text-input
+  [event prompt]
+  (let [;;window (-> event .getTarget .getParentPopup .getOwnerWindow .getScene .getWindow)
+        widget (doto (TextInputDialog.)
+                 (.setTitle "Title")
+                 (.setHeaderText "Header Text")
+                 (.setContentText "content text"))
+        optional-val @(fx/on-fx-thread
+                       (.showAndWait widget))]
+    (when (and (.isPresent optional-val)
+               (not (empty? (.get optional-val))))
+      (.get optional-val))))
+
+(defn alert
+  [msg alert-type]
+  (let [alert-type-map {:warning javafx.scene.control.Alert$AlertType/WARNING
+                        :error javafx.scene.control.Alert$AlertType/ERROR
+                        :confirm javafx.scene.control.Alert$AlertType/CONFIRMATION
+                        :info javafx.scene.control.Alert$AlertType/INFORMATION}
+        alert-type (get alert-type-map alert-type)
+        widget (doto (Alert. alert-type)
+                 (.setContentText msg))]
+
+    @(fx/on-fx-thread (.showAndWait widget))))
 
 ;;
 
@@ -119,7 +156,6 @@
   (when-not (core/get-state :in-repl?)
     (System/exit 0)))
 
-(def import-addon-handler donothing)
 (def import-addon-list-handler donothing)
 (def export-addon-list-handler donothing)
 (def export-user-catalogue-handler donothing)
@@ -131,6 +167,29 @@
     (let [node ^Node (-> event .getTarget .getParentPopup .getOwnerWindow .getScene .getRoot)
           tabber-obj (first (.lookupAll node "#tabber"))]
       (.select (.getSelectionModel tabber-obj) tab-idx))))
+
+(defn import-addon-handler
+  "imports an addon by parsing a URL"
+  [event]
+  (let [addon-url (text-input event "Enter URL of addon")
+
+        fail-msg "Failed. URL must be:
+  * valid
+  * originate from github.com
+  * addon uses 'releases'
+  * latest release has a packaged 'asset'
+  * asset must be a .zip file
+  * zip file must be structured like an addon"
+        failure #(alert fail-msg :error)
+
+        warn-msg "Failed. Addon successfully added to catalogue but could not be installed."
+        warning #(alert warn-msg :warning)]
+    (when addon-url
+      (if-let [result (core/add+install-user-addon! addon-url)]
+        (when-not (contains? result :download-url)
+          (warning))
+        (failure))))
+  nil)
 
 (defn menu-bar
   [{:keys [fx/context]}]
@@ -362,8 +421,8 @@
    :showing true
    :on-close-request (fn [ev]
                        ;; called on ctrl-c
-                       (println "got ev" ev)
-                       (println (bean ev))
+                       ;;(println "got ev" ev)
+                       ;;(println (bean ev))
                        (when-not (core/get-state :in-repl?)
                          (System/exit 0)))
 
