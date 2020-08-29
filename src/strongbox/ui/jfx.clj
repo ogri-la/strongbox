@@ -17,14 +17,19 @@
    [javafx.scene Node]))
 
 (defn file-chooser
-  [^ActionEvent event]
-  (let [;; valid for a menu-item
+  [^ActionEvent event & [opt-map]]
+  (let [opt-map (or opt-map {})
+        default-open-type :open
+        open-type (get opt-map :type default-open-type)
+        ;; valid for a menu-item
         window (-> event .getTarget .getParentPopup .getOwnerWindow .getScene .getWindow)
         chooser (doto (FileChooser.)
                   (.setTitle "Open File"))]
-    (when-let [file @(fx/on-fx-thread
-                      (.showOpenDialog chooser window))]
-      {:state {:file file :content (slurp file)}})))
+    (when-let [file-obj @(fx/on-fx-thread
+                          (case open-type
+                            :save (.showSaveDialog chooser window)
+                            (.showOpenDialog chooser window)))]
+      file-obj)))
 
 (defn dir-chooser
   [^ActionEvent event]
@@ -115,6 +120,8 @@
        (catch RuntimeException re
          (error re "unhandled exception in thread"))))))
 
+;; handlers
+
 (defn async-event-handler
   "wraps `f`, calling it with any given `args` later"
   [f]
@@ -127,17 +134,16 @@
   (fn [& _]
     (f)))
 
-(defn handler
+(defn event-handler
+  "wraps `f`, calling it with any given `args`.
+  useful for debugging, otherwise just use the function directly"
   [f]
-  (fn [& arg-list]
-    (apply f arg-list)))
+  (fn [& args]
+    (apply f args)))
 
 (defn donothing
   [[& _]]
   nil)
-
-(def separator {:fx/type fx/ext-instance-factory
-                :create #(javafx.scene.control.SeparatorMenuItem.)})
 
 (defn wow-dir-picker
   [ev]
@@ -156,8 +162,6 @@
   (when-not (core/get-state :in-repl?)
     (System/exit 0)))
 
-(def import-addon-list-handler donothing)
-(def export-addon-list-handler donothing)
 (def export-user-catalogue-handler donothing)
 (def about-strongbox-dialog donothing)
 
@@ -191,6 +195,28 @@
         (failure))))
   nil)
 
+(defn import-addon-list-handler
+  "prompts user with a file selection dialogue then imports a list of addons from the selected file"
+  [event]
+  (when-let [;; todo: json file filter
+             file-obj (file-chooser event)]
+    (core/import-exported-file (-> file-obj .getAbsolutePath str))
+    (core/refresh)
+    nil))
+
+(defn export-addon-list-handler
+  "prompts user with a file selection dialogue then writes the current directory of addons to the selected file"
+  [event]
+  (when-let [;; todo: json filters
+             file-obj (file-chooser event {:type :save})]
+    (core/export-installed-addon-list-safely (-> file-obj .getAbsolutePath str))
+    nil))
+
+;;
+
+(def separator {:fx/type fx/ext-instance-factory
+                :create #(javafx.scene.control.SeparatorMenuItem.)})
+
 (defn menu-bar
   [{:keys [fx/context]}]
   (let [file-menu [(menu-item "New addon directory" (async-event-handler wow-dir-picker) {:key "menu N" :mnemonic "n"})
@@ -215,10 +241,10 @@
         addon-menu [(menu-item "Update all" (async-handler core/install-update-all) {:key "menu U" :mnemonic "u"})
                     (menu-item "Re-install all" (async-handler core/re-install-all))]
 
-        impexp-menu [(menu-item "Import addon from Github" (handler import-addon-handler))
+        impexp-menu [(menu-item "Import addon from Github" (event-handler import-addon-handler))
                      separator
-                     (menu-item "Import addon list" (async-handler import-addon-list-handler))
-                     (menu-item "Export addon list" (async-handler export-addon-list-handler))
+                     (menu-item "Import addon list" (async-event-handler import-addon-list-handler))
+                     (menu-item "Export addon list" (async-event-handler export-addon-list-handler))
                      (menu-item "Export Github addon list" (async-handler export-user-catalogue-handler))]
 
         cache-menu [(menu-item "Clear http cache" (async-handler core/delete-http-cache!))
@@ -231,7 +257,7 @@
                     (menu-item "Delete .wowman.json files" (async-handler (comp core/refresh core/delete-wowman-json-files!)))
                     (menu-item "Delete .strongbox.json files" (async-handler (comp core/refresh core/delete-strongbox-json-files!)))]
 
-        help-menu [(menu-item "About strongbox" (handler about-strongbox-dialog))]]
+        help-menu [(menu-item "About strongbox" (event-handler about-strongbox-dialog))]]
 
     {:fx/type fx/ext-let-refs
      :refs {::catalogue-toggle-group {:fx/type :toggle-group}}
@@ -244,8 +270,6 @@
                     (menu "Import/Export" impexp-menu {:mnemonic "i"})
                     (menu "Cache" cache-menu)
                     (menu "Help" help-menu)]}}))
-
-;; tabber
 
 (defn installed-addons-menu-bar
   [{:keys [fx/context]}]
@@ -413,7 +437,6 @@
            :content {:fx/type search-addons-pane}}]})
 
 ;;
-
 
 (defn root
   [_]
