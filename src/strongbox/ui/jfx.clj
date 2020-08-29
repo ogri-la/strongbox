@@ -162,7 +162,6 @@
   (when-not (core/get-state :in-repl?)
     (System/exit 0)))
 
-(def export-user-catalogue-handler donothing)
 (def about-strongbox-dialog donothing)
 
 (defn switch-tab-handler
@@ -212,6 +211,14 @@
     (core/export-installed-addon-list-safely (-> file-obj .getAbsolutePath str))
     nil))
 
+(defn export-user-catalogue-handler
+  "prompts user with a file selection dialogue then writes the user catalogue to selected file"
+  [event]
+  (when-let [;; todo: json filters
+             file-obj (file-chooser event {:type :save})]
+    (core/export-user-catalogue-addon-list-safely (-> file-obj .getAbsolutePath str))
+    nil))
+
 ;;
 
 (def separator {:fx/type fx/ext-instance-factory
@@ -245,7 +252,7 @@
                      separator
                      (menu-item "Import addon list" (async-event-handler import-addon-list-handler))
                      (menu-item "Export addon list" (async-event-handler export-addon-list-handler))
-                     (menu-item "Export Github addon list" (async-handler export-user-catalogue-handler))]
+                     (menu-item "Export Github addon list" (async-event-handler export-user-catalogue-handler))]
 
         cache-menu [(menu-item "Clear http cache" (async-handler core/delete-http-cache!))
                     (menu-item "Clear addon zips" (async-handler core/delete-downloaded-addon-zips!))
