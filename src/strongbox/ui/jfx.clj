@@ -2,6 +2,7 @@
   (:require
    [me.raynes.fs :as fs]
    [taoensso.timbre :as timbre :refer [debug info warn error spy]]
+   [cljfx.ext.table-view :as fx.ext.table-view]
    [cljfx
     [api :as fx]]
    ;;[clojure.core.cache :as cache]
@@ -159,10 +160,7 @@
 
 ;; todo: reconcile this with the on-close-request handler in the stage
 (defn exit-handler
-  [event]
-  (println "hit exit handler")
-  ;;(javafx.application.Platform/exit) ;; won't open again
-  (-> event .getTarget .getParentPopup .getOwnerWindow .getScene .getWindow .close)
+  [_]
   (when-not (core/get-state :in-repl?)
     (System/exit 0)))
 
@@ -375,12 +373,15 @@
                      {:text "installed" :max-width 150 :cell-value-factory :installed-version}
                      {:text "available" :max-width 150 :cell-value-factory :version}
                      {:text "WoW" :max-width 100 :cell-value-factory :interface-version}]]
-    {:fx/type :table-view
-     :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
-     :selection-mode :multiple
-     :pref-height 999.0
-     :columns (mapv table-column column-list)
-     :items (or row-list [])}))
+    {:fx/type fx.ext.table-view/with-selection-props
+     :props {:selection-mode :multiple
+             ;; unlike gui.clj, we have access to the original data here
+             :on-selected-items-changed core/select-addons*}
+     :desc {:fx/type :table-view
+            :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
+            :pref-height 999.0
+            :columns (mapv table-column column-list)
+            :items (or row-list [])}}))
 
 (defn notice-logger
   [{:keys [fx/context]}]
@@ -408,12 +409,15 @@
                      {:text "tags" :pref-width 380 :min-width 230 :max-width 450 :cell-value-factory (comp str :tag-list)}
                      {:text "updated" :min-width 85 :max-width 120 :pref-width 100 :cell-value-factory (comp #(utils/safe-subs % 10)  :updated-date)}
                      {:text "downloads" :min-width 100 :max-width 120 :cell-value-factory :download-count}]]
-    {:fx/type :table-view
-     :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
-     :selection-mode :multiple
-     :pref-height 999.0
-     :columns (mapv table-column column-list)
-     :items addon-list}))
+    {:fx/type fx.ext.table-view/with-selection-props
+     :props {:selection-mode :multiple
+             ;; unlike gui.clj, we have access to the original data here. and it's an ordered/map ...?
+             :on-selected-items-changed core/select-addons-search*}
+     :desc {:fx/type :table-view
+            :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
+            :pref-height 999.0
+            :columns (mapv table-column column-list)
+            :items addon-list}}))
 
 (defn search-addons-search-field
   [_]

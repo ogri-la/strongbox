@@ -374,6 +374,12 @@
 
 ;; selecting addons
 
+(defn-spec select-addons-search* nil?
+  "sets the selected list of addons to the given `selected-addons` for bulk operations like"
+  [selected-addons :addon/summary-list]
+  (swap! state assoc :selected-search selected-addons)
+  nil)
+
 (defn-spec select-addons* nil?
   "sets the selected list of addons to the given `selected-addons` for bulk operations like 'update', 'delete', 'ignore', etc"
   [selected-addons :addon/installed-list]
