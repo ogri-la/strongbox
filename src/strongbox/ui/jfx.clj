@@ -11,7 +11,7 @@
     [utils :as utils]
     [core :as core]])
   (:import
-   [javafx.scene.control TextInputDialog Alert]
+   [javafx.scene.control TextInputDialog Alert Alert$AlertType ButtonType]
    [javafx.stage FileChooser DirectoryChooser]
    [javafx.application Platform]
    [javafx.event ActionEvent]
@@ -70,11 +70,12 @@
 (defn alert
   [event msg & [opt-map]]
   (let [window (-> event .getTarget .getParentPopup .getOwnerWindow .getScene .getWindow)
-        alert-type-map {:warning javafx.scene.control.Alert$AlertType/WARNING
-                        :error javafx.scene.control.Alert$AlertType/ERROR
-                        :confirm javafx.scene.control.Alert$AlertType/CONFIRMATION
-                        :info javafx.scene.control.Alert$AlertType/INFORMATION}
-        alert-type (->> opt-map :type (or :info) (get alert-type-map))
+        alert-type-map {:warning Alert$AlertType/WARNING
+                        :error Alert$AlertType/ERROR
+                        :confirm Alert$AlertType/CONFIRMATION
+                        :info Alert$AlertType/INFORMATION}
+        alert-type-key (get opt-map :type, :info)
+        alert-type (get alert-type-map alert-type-key)
         widget (doto (Alert. alert-type)
                  (.setTitle (:title opt-map))
                  (.setHeaderText (:header opt-map))
@@ -147,7 +148,7 @@
     (apply f args)))
 
 (defn donothing
-  [[& _]]
+  [& [_]]
   nil)
 
 (defn wow-dir-picker
@@ -232,6 +233,23 @@
                                                   :text "AGPL v3"}]})]
     (alert event "" {:type :info :content (fx/instance content)})
     nil))
+
+(defn remove-selected-confirmation-handler
+  [event]
+  (when-let [selected (core/get-state :selected-installed)]
+    (if (utils/any (mapv :ignore? selected))
+      (alert event "Selection contains ignored addons. Stop ignoring them and then delete." {:type :error})
+
+      (let [label-list (mapv (fn [row]
+                               {:fx/type :text
+                                :text (str " - " (:name row))}) selected)
+            content (fx/create-component {:fx/type :v-box
+                                          :children (into [{:fx/type :text
+                                                            :text (format "Deleting %s:" (count selected))}] label-list)})
+            result (alert event "" {:content (fx/instance content)
+                                    :type :confirm})]
+        (when (= (.get result) ButtonType/OK)
+          (core/remove-selected))))))
 
 ;;
 
@@ -381,6 +399,14 @@
             :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
             :pref-height 999.0
             :columns (mapv table-column column-list)
+            :context-menu {:fx/type :context-menu
+                           :items [(menu-item "Update" (async-handler core/install-update-selected))
+                                   (menu-item "Re-install" (async-handler core/re-install-selected))
+                                   separator
+                                   (menu-item "Ignore" (async-handler core/ignore-selected))
+                                   (menu-item "Stop ignoring" (async-handler core/clear-ignore-selected))
+                                   separator
+                                   (menu-item "Delete" remove-selected-confirmation-handler)]}
             :items (or row-list [])}}))
 
 (defn notice-logger
