@@ -29,6 +29,7 @@
 
                  [cljfx "1.7.6"]
                  ;;[org.clojure/core.cache "1.0.207"]
+                 [cljfx/css "1.1.0"]
 
                  ]
 

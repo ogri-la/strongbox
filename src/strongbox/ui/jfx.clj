@@ -5,6 +5,7 @@
    [cljfx.ext.table-view :as fx.ext.table-view]
    [cljfx
     [api :as fx]]
+   [cljfx.css :as css]
    ;;[clojure.core.cache :as cache]
    [strongbox
     [logging :as logging]
@@ -16,6 +17,85 @@
    [javafx.application Platform]
    [javafx.event ActionEvent]
    [javafx.scene Node]))
+
+(def style
+  (css/register
+   ::style
+   (let [padding 0
+         ;;text-color "#111111"
+         text-color "black"
+         text-size 12
+         ]
+
+     ;; you can put style settings that you need to access from code at keyword keys in a
+     ;; style map and access them directly in an app
+
+     {::padding padding
+      ::text-color text-color
+      ::text-size text-size
+
+      ;; string key ".root" defines `.root` selector with these rules: `-fx-padding: 10;`
+
+      ".root" {:-fx-padding padding
+               :-fx-base "#fefefe"
+               ;;:-fx-base "white"
+               ;;:-fx-accent: "#0096C9"
+               :-fx-accent "#cfcfcf"
+               }
+      ".text" {;;:-fx-font-smoothing-type "gray"
+               ;;:-fx-font-size ".9em"
+               
+               }
+      ".table-view" {:-fx-table-cell-border-color "#aaa"
+                     :-fx-font-size ".9em"
+                     :-fx-font-family "\"Bitstream Vera Sans Mono\", Mono"
+
+                     }
+
+      ".tab-pane > .tab-header-area > .headers-region > .tab "
+      {:-fx-background-radius "0"
+       ;;:-fx-padding "3px 20px"
+
+       }
+      
+      ".table-view .column-header"
+      {;;:-fx-background-color "#ddd"
+       :-fx-font-size "1em"
+       :-fx-font-weight "Normal"
+       :-fx-font-family "Sans"
+       :-fx-size "1.9em"
+       }
+
+      ;;".table-row-cell" {:-fx-background "white"}
+      
+      ".table-row-cell:odd" {
+                             :-fx-background "white"
+                             
+                             }
+      
+      ".table-row-cell:hover" {;;:-fx-background "#eee"
+                               
+                               }
+      
+      ".label" {:-fx-text-fill text-color
+                :-fx-wrap-text true
+
+                }
+
+      ".context-menu" {:-fx-effect "None"}
+      ".combo-box-base" {:-fx-padding "1px"
+                         :-fx-background-radius "0"
+
+                         }
+      
+      ".button" {:-fx-background-radius "0"
+                 :-fx-text-fill text-color
+                 ;; vector values are space-separated
+                 :-fx-padding ["6px" "17px"]
+                 ;; nested string key defines new selector: `.button:hover`
+                 ":hover" {:-fx-text-fill :black}}})))
+
+;;
 
 (defn file-chooser
   [^ActionEvent event & [opt-map]]
@@ -492,7 +572,8 @@
 ;;
 
 (defn root
-  [_]
+  [{:keys [fx/context]}]
+  (fx/sub-val context get :style) ;; todo: remove outside of dev?
   {:fx/type :stage
    :showing true
    :on-close-request (fn [ev]
@@ -506,6 +587,7 @@
    :width 1024
    :height 768
    :scene {:fx/type :scene
+           :stylesheets [(::css/url style)]
            :root {:fx/type :v-box
                   :children [{:fx/type menu-bar}
                              {:fx/type :split-pane
@@ -526,8 +608,12 @@
   []
   (info "starting gui")
   (let [state-template {:app-state nil,
-                        :log-message-list []}
+                        :log-message-list []
+                        :style style}
         gui-state (atom (fx/create-context state-template)) ;; cache/lru-cache-factory))
+
+        _ (add-watch #'style :refresh-app (fn [_ _ _ _]
+                                            (swap! gui-state fx/swap-context assoc :style style)))
 
         update-gui-state (fn [new-state]
                            (swap! gui-state fx/swap-context assoc :app-state new-state))
