@@ -46,7 +46,7 @@
                ;;:-fx-font-size ".9em"
                
                }
-      ".table-view" {:-fx-table-cell-border-color "#aaa"
+      ".table-view" {:-fx-table-cell-border-color "#ccc"
                      :-fx-font-size ".9em"
                      :-fx-font-family "\"Bitstream Vera Sans Mono\", Mono"
 
@@ -70,6 +70,10 @@
       {:-fx-max-height 0
        :-fx-pref-height 0 
        :-fx-min-height 0
+       }
+
+      ".table-view#notice-logger #level"
+      {:-fx-alignment "center"
        }
 
       ;;".table-row-cell" {:-fx-background "white"}
@@ -499,7 +503,7 @@
   [{:keys [fx/context]}]
   (let [log-message-list (fx/sub-val context :log-message-list)
         log-message-list (reverse log-message-list) ;; nfi how to programmatically change column sort order
-        column-list [{:text "level" :max-width 100 :cell-value-factory :level}
+        column-list [{:id "level" :text "level" :max-width 100 :cell-value-factory (comp name :level)}
                      {:text "message" :pref-width 500 :cell-value-factory :message}]]
     {:fx/type :table-view
      :id "notice-logger"
