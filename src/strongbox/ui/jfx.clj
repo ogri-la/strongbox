@@ -475,12 +475,17 @@
 (defn installed-addons-table
   [{:keys [fx/context]}]
   (let [row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
+
+
+        iface-version (fn [row]
+                        (some-> row :interface-version str utils/interface-version-to-game-version))
+        
         column-list [{:text "source" :min-width 100 :max-width 110 :cell-value-factory source-to-href-fn}
                      {:text "name" :min-width 150 :pref-width 300 :max-width 500 :cell-value-factory :label}
                      {:text "description" :pref-width 700 :cell-value-factory :description}
                      {:text "installed" :max-width 150 :cell-value-factory :installed-version}
                      {:text "available" :max-width 150 :cell-value-factory :version}
-                     {:text "WoW" :max-width 100 :cell-value-factory :interface-version}]]
+                     {:text "WoW" :max-width 100 :cell-value-factory iface-version}]]
     {:fx/type fx.ext.table-view/with-selection-props
      :props {:selection-mode :multiple
              ;; unlike gui.clj, we have access to the original data here
