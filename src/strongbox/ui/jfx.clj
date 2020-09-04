@@ -21,7 +21,7 @@
 (def style
   (css/register
    ::style
-   (let [padding 0
+   (let [padding 2
          ;;text-color "#111111"
          text-color "black"
          text-size 12
@@ -37,7 +37,7 @@
       ;; string key ".root" defines `.root` selector with these rules: `-fx-padding: 10;`
 
       ".root" {:-fx-padding padding
-               :-fx-base "#fefefe"
+               ;;:-fx-base "#fefefe"
                ;;:-fx-base "white"
                ;;:-fx-accent: "#0096C9"
                :-fx-accent "#cfcfcf"
@@ -64,6 +64,12 @@
        :-fx-font-weight "Normal"
        :-fx-font-family "Sans"
        :-fx-size "1.9em"
+       }
+
+      ".table-view#notice-logger > .column-header-background"
+      {:-fx-max-height 0
+       :-fx-pref-height 0 
+       :-fx-min-height 0
        }
 
       ;;".table-row-cell" {:-fx-background "white"}
@@ -496,6 +502,7 @@
         column-list [{:text "level" :max-width 100 :cell-value-factory :level}
                      {:text "message" :pref-width 500 :cell-value-factory :message}]]
     {:fx/type :table-view
+     :id "notice-logger"
      :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
      :columns (mapv table-column column-list)
      :items (or log-message-list [])}))
