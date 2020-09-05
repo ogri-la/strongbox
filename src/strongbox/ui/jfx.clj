@@ -217,7 +217,7 @@
   "same as `async-handler` but calls `f` and ignores `args`"
   [f]
   (fn [& _]
-    (f)))
+    (async f)))
 
 (defn event-handler
   "wraps `f`, calling it with any given `args`.
@@ -516,7 +516,7 @@
 
 (defn search-addons-table
   [{:keys [fx/context]}]
-  (let [addon-list (core/db-search (fx/sub-val context get-in [:app-state :search-field-input]))
+  (let [addon-list (fx/sub-val context get-in [:app-state :search-results])
         column-list [{:text "source" :min-width 100 :max-width 110 :cell-value-factory source-to-href-fn}
                      {:text "name" :min-width 150 :pref-width 300 :max-width 450 :cell-value-factory :label}
                      {:text "description" :pref-width 700 :cell-value-factory :description}
@@ -626,6 +626,13 @@
         update-gui-state (fn [new-state]
                            (swap! gui-state fx/swap-context assoc :app-state new-state))
         _ (core/state-bind [] update-gui-state)
+
+        ;; async search. should be able to get this effect with idiomatic cljs use
+        ;; todo: stick this in core?
+        save-search-results (fn [new-state]
+                              (future
+                                (swap! core/state assoc :search-results (core/db-search (:search-field-input new-state)))))
+        _ (core/state-bind [:search-field-input] save-search-results)
 
         renderer (fx/create-renderer
                   :middleware (comp

@@ -163,6 +163,8 @@
    :selected-installed []
 
    :search-field-input nil
+   :search-results [] ;; results of searching db for `:search-field-input`
+
    :selected-search []
    ;; number of results to display in search results pane.
    ;; adjust to whatever performs the best
