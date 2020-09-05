@@ -27,7 +27,7 @@
                  ;; remember to update the LICENCE.txt
                  ;; remember to update pom file (`lein pom`)
 
-                 [cljfx "1.7.6"]
+                 [cljfx "1.7.8"]
                  ;;[org.clojure/core.cache "1.0.207"]
                  [cljfx/css "1.1.0"]
 

@@ -12,6 +12,8 @@
     [utils :as utils]
     [core :as core]])
   (:import
+   [javafx.util Callback]
+   [javafx.scene.control TableRow]
    [javafx.scene.control TextInputDialog Alert Alert$AlertType ButtonType]
    [javafx.stage FileChooser DirectoryChooser]
    [javafx.application Platform]
@@ -25,7 +27,7 @@
          ;;text-color "#111111"
          text-color "black"
          text-size 12
-         ]
+         table-border-colour "#ccc"]
 
      ;; you can put style settings that you need to access from code at keyword keys in a
      ;; style map and access them directly in an app
@@ -40,64 +42,51 @@
                ;;:-fx-base "#fefefe"
                ;;:-fx-base "white"
                ;;:-fx-accent: "#0096C9"
-               :-fx-accent "#cfcfcf"
-               }
+               :-fx-accent "#cfcfcf"}
       ".text" {;;:-fx-font-smoothing-type "gray"
                ;;:-fx-font-size ".9em"
-               
                }
-      ".table-view" {:-fx-table-cell-border-color "#ccc"
+      ".table-view" {:-fx-table-cell-border-color table-border-colour
                      :-fx-font-size ".9em"
-                     :-fx-font-family "\"Bitstream Vera Sans Mono\", Mono"
-
-                     }
+                     :-fx-font-family "\"Bitstream Vera Sans Mono\", Mono"}
 
       ".tab-pane > .tab-header-area > .headers-region > .tab "
       {:-fx-background-radius "0"
        ;;:-fx-padding "3px 20px"
-
        }
-      
+
       ".table-view .column-header"
       {;;:-fx-background-color "#ddd"
        :-fx-font-size "1em"
        :-fx-font-weight "Normal"
        :-fx-font-family "Sans"
-       :-fx-size "1.9em"
-       }
+       :-fx-size "1.9em"}
 
       ".table-view#notice-logger > .column-header-background"
       {:-fx-max-height 0
-       :-fx-pref-height 0 
-       :-fx-min-height 0
-       }
+       :-fx-pref-height 0
+       :-fx-min-height 0}
 
       ".table-view#notice-logger #level"
-      {:-fx-alignment "center"
-       }
+      {:-fx-alignment "center"}
 
-      ;;".table-row-cell" {:-fx-background "white"}
-      
-      ".table-row-cell:odd" {
-                             :-fx-background "white"
-                             
-                             }
-      
+      ".table-row-cell:odd" {:-fx-background "white"}
+
+      ".updateable"
+      {:-fx-background-color "lemonchiffon" ;;(core/colours :installed/needs-updating)
+       :-fx-border-color table-border-colour
+       :-fx-border-insets "-1 -1 1 -1"}
+
       ".table-row-cell:hover" {;;:-fx-background "#eee"
-                               
                                }
-      
-      ".label" {:-fx-text-fill text-color
-                :-fx-wrap-text true
 
-                }
+      ".label" {:-fx-text-fill text-color
+                :-fx-wrap-text true}
 
       ".context-menu" {:-fx-effect "None"}
       ".combo-box-base" {:-fx-padding "1px"
-                         :-fx-background-radius "0"
+                         :-fx-background-radius "0"}
 
-                         }
-      
       ".button" {:-fx-background-radius "0"
                  :-fx-text-fill text-color
                  ;; vector values are space-separated
@@ -454,7 +443,6 @@
         final-cvf {:cell-value-factory final-cvf}
 
         default {:fx/type :table-column
-                 :visible true
                  :min-width 80}]
     (merge default column-data final-cvf)))
 
@@ -476,10 +464,9 @@
   [{:keys [fx/context]}]
   (let [row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
 
-
         iface-version (fn [row]
                         (some-> row :interface-version str utils/interface-version-to-game-version))
-        
+
         column-list [{:text "source" :min-width 100 :max-width 110 :cell-value-factory source-to-href-fn}
                      {:text "name" :min-width 150 :pref-width 300 :max-width 500 :cell-value-factory :label}
                      {:text "description" :pref-width 700 :cell-value-factory :description}
@@ -491,8 +478,13 @@
              ;; unlike gui.clj, we have access to the original data here
              :on-selected-items-changed core/select-addons*}
      :desc {:fx/type :table-view
+            :id "installed-addons"
             :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
             :pref-height 999.0
+            :row-factory {:fx/cell-type :table-row
+                          :describe (fn [x]
+                                      (when (:update? x)
+                                        {:style-class ["updateable"]}))}
             :columns (mapv table-column column-list)
             :context-menu {:fx/type :context-menu
                            :items [(menu-item "Update" (async-handler core/install-update-selected))
