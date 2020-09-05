@@ -23,32 +23,42 @@
 (def style
   (css/register
    ::style
-   (let [padding 2
-         ;;text-color "#111111"
-         text-color "black"
-         text-size 12
-         table-border-colour "#ccc"]
+   (let [text-color "black"
+         table-border-colour "#ccc"
+         row-size "2em"
+         ]
 
-     ;; you can put style settings that you need to access from code at keyword keys in a
-     ;; style map and access them directly in an app
-
-     {::padding padding
-      ::text-color text-color
-      ::text-size text-size
-
-      ;; string key ".root" defines `.root` selector with these rules: `-fx-padding: 10;`
-
-      ".root" {:-fx-padding padding
+     {".root" {:-fx-padding 0
                ;;:-fx-base "#fefefe"
                ;;:-fx-base "white"
                ;;:-fx-accent: "#0096C9"
                :-fx-accent "#cfcfcf"}
-      ".text" {;;:-fx-font-smoothing-type "gray"
+
+      ".text" {:-fx-font-smoothing-type "gray"
                ;;:-fx-font-size ".9em"
                }
+
       ".table-view" {:-fx-table-cell-border-color table-border-colour
+                     ;;:-fx-font-size "1em"
                      :-fx-font-size ".9em"
-                     :-fx-font-family "\"Bitstream Vera Sans Mono\", Mono"}
+                     ;;:-fx-font-family "\"Bitstream Vera Sans Mono\", Mono"
+                     }
+
+      ".table-view .table-column"
+      {:-fx-alignment "center-left"
+       
+       }
+
+      ".table-view .table-row-cell"
+      {:-fx-cell-size row-size
+       ":odd" {:-fx-background "white"}
+       ":hover" {:-fx-background "#eee" }}
+      " .updateable" {:-fx-alignment "center-left"
+                      :-fx-background-color "lemonchiffon"
+                       :-fx-border-color table-border-colour
+                       :-fx-border-insets "-1 -1 1 -1"
+                       :-fx-cell-size row-size
+                       }
 
       ".tab-pane > .tab-header-area > .headers-region > .tab "
       {:-fx-background-radius "0"
@@ -60,7 +70,7 @@
        :-fx-font-size "1em"
        :-fx-font-weight "Normal"
        :-fx-font-family "Sans"
-       :-fx-size "1.9em"}
+       }
 
       ".table-view#notice-logger > .column-header-background"
       {:-fx-max-height 0
@@ -69,16 +79,6 @@
 
       ".table-view#notice-logger #level"
       {:-fx-alignment "center"}
-
-      ".table-row-cell:odd" {:-fx-background "white"}
-
-      ".updateable"
-      {:-fx-background-color "lemonchiffon" ;;(core/colours :installed/needs-updating)
-       :-fx-border-color table-border-colour
-       :-fx-border-insets "-1 -1 1 -1"}
-
-      ".table-row-cell:hover" {;;:-fx-background "#eee"
-                               }
 
       ".label" {:-fx-text-fill text-color
                 :-fx-wrap-text true}
@@ -92,7 +92,25 @@
                  ;; vector values are space-separated
                  :-fx-padding ["6px" "17px"]
                  ;; nested string key defines new selector: `.button:hover`
-                 ":hover" {:-fx-text-fill :black}}})))
+                 ":hover" {:-fx-text-fill :black}}
+
+      ".source"
+      {:-fx-alignment "center-left"
+       :-fx-padding "-2 0 0 0" ;; hyperlinks are just a little bit off .. weird.
+       :-fx-min-width "120px"
+       :-fx-pref-width "120px"
+       :-fx-max-width "130px"
+       " .hyperlink:visited" {:-fx-underline "false"}
+       " .hyperlink, .hyperlink:hover" {:-fx-underline "false"
+                                        :-fx-text-fill "blue"}
+       }
+
+      ".wow"
+      {:-fx-alignment "center"
+       }
+
+
+      })))
 
 ;;
 
@@ -225,6 +243,12 @@
   [f]
   (fn [& args]
     (apply f args)))
+
+(defn handler
+  "wraps `f`, calling it but ignores any args"
+  [f]
+  (fn [& _]
+    (f)))
 
 (defn donothing
   [& [_]]
@@ -460,6 +484,15 @@
                           "tukui")
         "???"))))
 
+(defn href-to-hyperlink
+  [row]
+  (let [href (source-to-href-fn row)
+        widget {:fx/type :hyperlink
+                :on-action (handler #(utils/browse-to (:url row)))
+                :text (when href
+                        (str "↪ " href))}]
+    (-> widget fx/create-component fx/instance)))
+
 (defn installed-addons-table
   [{:keys [fx/context]}]
   (let [row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
@@ -467,12 +500,12 @@
         iface-version (fn [row]
                         (some-> row :interface-version str utils/interface-version-to-game-version))
 
-        column-list [{:text "source" :min-width 100 :max-width 110 :cell-value-factory source-to-href-fn}
+        column-list [{:text "source" :cell-value-factory href-to-hyperlink :style-class "source"}
                      {:text "name" :min-width 150 :pref-width 300 :max-width 500 :cell-value-factory :label}
                      {:text "description" :pref-width 700 :cell-value-factory :description}
                      {:text "installed" :max-width 150 :cell-value-factory :installed-version}
                      {:text "available" :max-width 150 :cell-value-factory :version}
-                     {:text "WoW" :max-width 100 :cell-value-factory iface-version}]]
+                     {:text "WoW" :max-width 100 :style-class "wow" :cell-value-factory iface-version}]]
     {:fx/type fx.ext.table-view/with-selection-props
      :props {:selection-mode :multiple
              ;; unlike gui.clj, we have access to the original data here
@@ -517,7 +550,7 @@
 (defn search-addons-table
   [{:keys [fx/context]}]
   (let [addon-list (fx/sub-val context get-in [:app-state :search-results])
-        column-list [{:text "source" :min-width 100 :max-width 110 :cell-value-factory source-to-href-fn}
+        column-list [{:text "source" :min-width 100 :max-width 110 :cell-value-factory href-to-hyperlink :style-class "source"}
                      {:text "name" :min-width 150 :pref-width 300 :max-width 450 :cell-value-factory :label}
                      {:text "description" :pref-width 700 :cell-value-factory :description}
                      {:text "tags" :pref-width 380 :min-width 230 :max-width 450 :cell-value-factory (comp str :tag-list)}
