@@ -365,6 +365,10 @@
   [addon]
   (swap! state update-in [:unsteady-addons] clojure.set/difference #{(:name addon)}))
 
+(defn unsteady?
+  [addon]
+  (utils/in? (:name addon) (get-state :unsteady-addons)))
+
 (defn affects-addon-wrapper
   [wrapped-fn]
   (fn [addon & args]

@@ -38,16 +38,19 @@
                ;;:-fx-font-size ".9em"
                }
 
-      ".table-view" {:-fx-table-cell-border-color table-border-colour
-                     ;;:-fx-font-size "1em"
-                     :-fx-font-size ".9em"
-                     ;;:-fx-font-family "\"Bitstream Vera Sans Mono\", Mono"
-                     }
+      ".table-view"
+      {:-fx-table-cell-border-color table-border-colour
+       ;;:-fx-font-size "1em"
+       :-fx-font-size ".9em"
+       ;;:-fx-font-family "\"Bitstream Vera Sans Mono\", Mono"
+       }
 
       ".table-view .table-column"
       {:-fx-alignment "center-left"
        
        }
+
+      ".unsteady" {:-fx-background-color "lightsteelblue"}
 
       ".table-view .table-row-cell"
       {:-fx-cell-size row-size
@@ -108,7 +111,6 @@
       ".wow"
       {:-fx-alignment "center"
        }
-
 
       })))
 
@@ -495,7 +497,8 @@
 
 (defn installed-addons-table
   [{:keys [fx/context]}]
-  (let [row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
+  (let [_ (fx/sub-val context get-in [:app-state :unsteady-addons])
+        row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
 
         iface-version (fn [row]
                         (some-> row :interface-version str utils/interface-version-to-game-version))
@@ -515,9 +518,12 @@
             :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
             :pref-height 999.0
             :row-factory {:fx/cell-type :table-row
-                          :describe (fn [x]
-                                      (when (:update? x)
-                                        {:style-class ["updateable"]}))}
+                          :describe (fn [row]
+                                      {:style-class
+                                       (remove nil?
+                                               ["table-row-cell" ;; :style-class actually *replaces* the list of classes
+                                                (when (:update? row) "updateable")
+                                                (when (core/unsteady? row) "unsteady")])})}
             :columns (mapv table-column column-list)
             :context-menu {:fx/type :context-menu
                            :items [(menu-item "Update" (async-handler core/install-update-selected))
