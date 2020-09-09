@@ -92,9 +92,11 @@
       ".table-view#installed-addons"
       {" .updateable"
        {:-fx-background-color "lemonchiffon"
-
         ;; selected updateable addons are do not look any different
         ":selected" {:-fx-background-color "-fx-selection-bar"}}
+
+       " .ignored .table-cell"
+       {:-fx-text-fill "#aaa"}
 
        " .wow-column" {:-fx-alignment "center"}}
 
@@ -561,6 +563,7 @@
                                        (remove nil?
                                                ["table-row-cell" ;; :style-class actually *replaces* the list of classes
                                                 (when (:update? row) "updateable")
+                                                (when (:ignore? row) "ignored")
                                                 (when (core/unsteady? row) "unsteady")])})}
             :columns (mapv table-column column-list)
             :context-menu {:fx/type :context-menu
