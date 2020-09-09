@@ -24,55 +24,56 @@
   (css/register
    ::style
    (let [text-color "black"
-         table-border-colour "#ccc"
-         row-size "2em"
-         ]
+         table-border-colour "#bbb"]
 
-     {".root" {:-fx-padding 0
-               ;;:-fx-base "#fefefe"
-               ;;:-fx-base "white"
-               ;;:-fx-accent: "#0096C9"
-               :-fx-accent "#cfcfcf"}
+     {".root"
+      {:-fx-padding 0
+       ;;:-fx-base "#fefefe"
+       ;;:-fx-base "white"
+       ;;:-fx-accent "#0096C9"
 
-      ".text" {:-fx-font-smoothing-type "gray"
-               ;;:-fx-font-size ".9em"
-               }
+       ;; backgrounds
+       ;;:-fx-accent "transparent"
+       :-fx-accent "lightsteelblue"}
+
+      ".text"
+      {:-fx-font-smoothing-type "gray"}
 
       ".table-view"
       {:-fx-table-cell-border-color table-border-colour
-       ;;:-fx-font-size "1em"
-       :-fx-font-size ".9em"
-       ;;:-fx-font-family "\"Bitstream Vera Sans Mono\", Mono"
-       }
+       :-fx-font-size ".9em"}
 
-      ".table-view .table-column"
-      {:-fx-alignment "center-left"
-       
-       }
-
-      ".unsteady" {:-fx-background-color "lightsteelblue"}
+      ".table-view .column-header"
+      {;;:-fx-background-color "#ddd" ;; flat colour
+       :-fx-font-size "1em"
+       :-fx-font-weight "Normal"
+       :-fx-font-family "Sans"}
 
       ".table-view .table-row-cell"
-      {:-fx-cell-size row-size
-       ":odd" {:-fx-background "white"}
-       ":hover" {:-fx-background "#eee" }}
-      " .updateable" {:-fx-alignment "center-left"
-                      :-fx-background-color "lemonchiffon"
-                       :-fx-border-color table-border-colour
-                       :-fx-border-insets "-1 -1 1 -1"
-                       :-fx-cell-size row-size
-                       }
+      {:-fx-border-insets "-1 -1 0 -1"
+       :-fx-border-color table-border-colour
+
+       ":hover" {:-fx-background-color "#eee"}
+       ":selected" {:-fx-background-color "-fx-selection-bar"}
+
+       ;; fuck this odd styling
+       ":odd" {:-fx-background-color "white"}
+       ":odd:hover" {:-fx-background-color "#eee"}
+       ":odd:selected" {:-fx-background-color "-fx-selection-bar"}
+       ":odd:selected:hover" {:-fx-background-color "-fx-selection-bar"}
+
+       ".unsteady" {:-fx-background-color "lightsteelblue"}}
+
+      ".table-view#installed-addons"
+      {" .updateable"
+       {:-fx-background-color "lemonchiffon"
+
+        ;; selected updateable addons are do not look any different
+        ":selected" {:-fx-background-color "-fx-selection-bar"}}}
 
       ".tab-pane > .tab-header-area > .headers-region > .tab "
       {:-fx-background-radius "0"
        ;;:-fx-padding "3px 20px"
-       }
-
-      ".table-view .column-header"
-      {;;:-fx-background-color "#ddd"
-       :-fx-font-size "1em"
-       :-fx-font-weight "Normal"
-       :-fx-font-family "Sans"
        }
 
       ".table-view#notice-logger > .column-header-background"
@@ -85,6 +86,19 @@
 
       ".label" {:-fx-text-fill text-color
                 :-fx-wrap-text true}
+
+      ".table-view#notice-logger .text"
+      {:-fx-text-fill "green"}
+
+      ".table-view#notice-logger"
+      {" .warn" {:-fx-background-color "lemonchiffon"}
+       " .error" {:-fx-background-color "tomato"
+                  " .text" {:-fx-text-fill "blue"}
+                  ;;:-fx-border-color "black" ;;table-border-colour
+                  ;;:-fx-border-insets "0 0 -1 0"
+                  ;;:-fx-border-width "1 0 1 0"
+                  ;;:-fx-cell-size row-size
+                  }}
 
       ".context-menu" {:-fx-effect "None"}
       ".combo-box-base" {:-fx-padding "1px"
@@ -105,16 +119,13 @@
        :-fx-max-width "130px"
        " .hyperlink:visited" {:-fx-underline "false"}
        " .hyperlink, .hyperlink:hover" {:-fx-underline "false"
-                                        :-fx-text-fill "blue"}
-       }
+                                        :-fx-text-fill "blue"}}
 
       ".wow"
-      {:-fx-alignment "center"
-       }
-
-      })))
+      {:-fx-alignment "center"}})))
 
 ;;
+
 
 (defn file-chooser
   [^ActionEvent event & [opt-map]]
@@ -433,7 +444,9 @@
                           :value selected-addon-dir
                           :on-value-changed (async-event-handler
                                              (fn [new-addon-dir]
-                                               (core/set-addon-dir! new-addon-dir)))
+                                               ;; dosync doesn't work here, stop trying it
+                                               (core/set-addon-dir! new-addon-dir)
+                                               (println "done setting addon dir")))
                           :items (mapv :addon-dir addon-dir-map-list)}
 
         game-track-dropdown {:fx/type :combo-box
@@ -468,9 +481,11 @@
                     (or new-cvf default-cvf))
         final-cvf {:cell-value-factory final-cvf}
 
+        final-style {:style-class (into ["table-cell"] (get column-data :style-class))}
+
         default {:fx/type :table-column
                  :min-width 80}]
-    (merge default column-data final-cvf)))
+    (merge default column-data final-cvf final-style)))
 
 (defn source-to-href-fn
   "if a source for the addon can be derived, return a hyperlink"
@@ -497,18 +512,23 @@
 
 (defn installed-addons-table
   [{:keys [fx/context]}]
+  ;;(dosync
+  ;; (fx/sub-val context get-in [:app-state :selected-addon-dir])
+  ;; (fx/sub-val context get-in [:app-state :installed-addon-list]))
+
   (let [_ (fx/sub-val context get-in [:app-state :unsteady-addons])
+        ;;_ (fx/sub-val context get-in [:app-state :selected-addon-dir])
         row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
 
         iface-version (fn [row]
                         (some-> row :interface-version str utils/interface-version-to-game-version))
 
-        column-list [{:text "source" :cell-value-factory href-to-hyperlink :style-class "source"}
+        column-list [{:text "source" :cell-value-factory href-to-hyperlink :style-class ["source"]}
                      {:text "name" :min-width 150 :pref-width 300 :max-width 500 :cell-value-factory :label}
                      {:text "description" :pref-width 700 :cell-value-factory :description}
                      {:text "installed" :max-width 150 :cell-value-factory :installed-version}
                      {:text "available" :max-width 150 :cell-value-factory :version}
-                     {:text "WoW" :max-width 100 :style-class "wow" :cell-value-factory iface-version}]]
+                     {:text "WoW" :max-width 100 :style-class ["wow"] :cell-value-factory iface-version}]]
     {:fx/type fx.ext.table-view/with-selection-props
      :props {:selection-mode :multiple
              ;; unlike gui.clj, we have access to the original data here
@@ -543,6 +563,9 @@
                      {:text "message" :pref-width 500 :cell-value-factory :message}]]
     {:fx/type :table-view
      :id "notice-logger"
+     :row-factory {:fx/cell-type :table-row
+                   :describe (fn [row]
+                               {:style-class ["table-row-cell" (name (:level row))]})}
      :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
      :columns (mapv table-column column-list)
      :items (or log-message-list [])}))
@@ -556,7 +579,7 @@
 (defn search-addons-table
   [{:keys [fx/context]}]
   (let [addon-list (fx/sub-val context get-in [:app-state :search-results])
-        column-list [{:text "source" :min-width 100 :max-width 110 :cell-value-factory href-to-hyperlink :style-class "source"}
+        column-list [{:text "source" :min-width 100 :max-width 110 :cell-value-factory href-to-hyperlink :style-class ["source"]}
                      {:text "name" :min-width 150 :pref-width 300 :max-width 450 :cell-value-factory :label}
                      {:text "description" :pref-width 700 :cell-value-factory :description}
                      {:text "tags" :pref-width 380 :min-width 230 :max-width 450 :cell-value-factory (comp str :tag-list)}
@@ -663,7 +686,18 @@
                                             (swap! gui-state fx/swap-context assoc :style style)))
 
         update-gui-state (fn [new-state]
+                           ;;@(fx/on-fx-thread ;; doesn't work
+                           ;;(future ;; also doesn't work (why would it?)
                            (swap! gui-state fx/swap-context assoc :app-state new-state))
+
+
+        ;; when :selected-addon-dir changes the app state is updated then this watcher is triggered, updating the gui state.
+        ;; a watcher in the *app* looking at :selected-addon-dir is also triggered. it causes a refresh.
+        ;; a refresh causes many changes to app state, each change causes a change to the *gui* state.
+
+        ;; the installed-addon-list-table fn will update itself from the *gui* state when the installed-addon-list data changes.
+
+
         _ (core/state-bind [] update-gui-state)
 
         ;; async search. should be able to get this effect with idiomatic cljs use
