@@ -121,11 +121,18 @@
        :-fx-font-family "monospace"}
 
 
+      "#splitter .split-pane-divider"
+       {:-fx-padding "8px"}
+
       ;; search
       ".table-view#search-addons"
       {" .downloads-column" {:-fx-alignment "center-right"}
        " .installed" {:-fx-background-color "#99bc6b"}}
 
+
+      "#status-bar"
+      {:-fx-font-size ".9em"
+       :-fx-padding "5px"}      
 
       ;; common table fields
       ".table-view .source-column"
@@ -662,6 +669,33 @@
            :closable false
            :content {:fx/type search-addons-pane}}]})
 
+(defn status-bar
+  [{:keys [fx/context]}]
+  "this is the litle strip of text at the bottom of the application."
+  []
+  (let [num-matching-template "%s of %s installed addons found in catalogue."
+        all-matching-template "all installed addons found in catalogue."
+        catalogue-count-template "%s addons in catalogue."
+
+        ;;ia (:installed-addon-list state)
+        ia (fx/sub-val context get-in [:app-state :installed-addon-list])
+        
+        uia (filter :matched? ia)
+
+        a-count (count (fx/sub-val context get-in [:app-state :db]))
+        ia-count (count ia)
+        uia-count (count uia)
+
+        strings [(format catalogue-count-template a-count)
+                 (if (= ia-count uia-count)
+                   all-matching-template
+                   (format num-matching-template uia-count ia-count))]]
+    
+    {:fx/type :h-box
+     :id "status-bar"
+     :children [{:fx/type :text
+                 :text (clojure.string/join " " strings)}]}))
+
 ;;
 
 (defn root
@@ -684,10 +718,12 @@
            :root {:fx/type :v-box
                   :children [{:fx/type menu-bar}
                              {:fx/type :split-pane
+                              :id "splitter"
                               :orientation :vertical
                               :divider-positions [0.65]
                               :items [{:fx/type tabber}
-                                      {:fx/type notice-logger}]}]}}})
+                                      {:fx/type notice-logger}]}
+                             {:fx/type status-bar}]}}})
 
 (defn init-notice-logger!
   [gui-state]
