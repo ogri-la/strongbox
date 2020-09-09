@@ -54,14 +54,12 @@
       ;;          :-fx-wrap-text true}
 
       ;; tabber
-
       ".tab-pane > .tab-header-area > .headers-region > .tab "
       {:-fx-background-radius "0"
        ;;:-fx-padding "3px 20px"
        }
 
       ;; common tables
-
       ".table-view"
       {:-fx-table-cell-border-color table-border-colour
        :-fx-font-size ".9em"}
@@ -88,7 +86,6 @@
 
 
       ;; installed-addons table
-
       ".table-view#installed-addons"
       {" .updateable"
        {:-fx-background-color "lemonchiffon"
@@ -102,7 +99,6 @@
 
 
       ;; notice-logger
-
       ".table-view#notice-logger"
       {" .warn" {:-fx-background-color "lemonchiffon"
                  ":selected" {:-fx-background-color "-fx-selection-bar"}}
@@ -126,16 +122,12 @@
 
 
       ;; search
-
       ".table-view#search-addons"
-      {" .description" {:-fx-pref-width 700}
-       " .tags" {:-fx-min-width 230 :-fx-max-width 450}
-       " .updated" {:-fx-min-width 85 :-fx-max-width 120 :-fx-pref-width 100}
-       " .downloads" {:-fx-min-width 100 :-fx-max-width 120}}
+      {" .downloads-column" {:-fx-alignment "center-right"}
+       " .installed" {:-fx-background-color "#99bc6b"}}
 
 
       ;; common table fields
-
       ".table-view .source-column"
       {:-fx-alignment "center-left"
        :-fx-padding "-2 0 0 0" ;; hyperlinks are just a little bit off .. weird.
@@ -600,7 +592,10 @@
 
 (defn search-addons-table
   [{:keys [fx/context]}]
-  (let [addon-list (fx/sub-val context get-in [:app-state :search-results])
+  (let [idx-key #(select-keys % [:source :source-id])
+        installed-addon-idx (mapv idx-key (fx/sub-val context get-in [:app-state :installed-addon-list]))
+
+        addon-list (fx/sub-val context get-in [:app-state :search-results])
         column-list [{:text "source" :min-width 110 :pref-width 120 :max-width 160 :cell-value-factory href-to-hyperlink}
                      {:text "name" :min-width 150 :pref-width 300 :max-width 450 :cell-value-factory :label}
                      {:text "description" :pref-width 700 :cell-value-factory :description}
@@ -613,6 +608,11 @@
              :on-selected-items-changed core/select-addons-search*}
      :desc {:fx/type :table-view
             :id "search-addons"
+            :row-factory {:fx/cell-type :table-row
+                          :describe (fn [row]
+                                      {:style-class ["table-row-cell"
+                                                     (when (utils/in? (idx-key row) installed-addon-idx)
+                                                       "installed")]})}
             :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
             :pref-height 999.0
             :columns (mapv table-column column-list)
