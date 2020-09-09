@@ -39,6 +39,29 @@
       ".text"
       {:-fx-font-smoothing-type "gray"}
 
+      ".context-menu" {:-fx-effect "None"}
+      ".combo-box-base" {:-fx-padding "1px"
+                         :-fx-background-radius "0"}
+
+      ".button" {:-fx-background-radius "0"
+                 :-fx-text-fill text-color
+                 ;; vector values are space-separated
+                 :-fx-padding ["6px" "17px"]
+                 ;; nested string key defines new selector: `.button:hover`
+                 ":hover" {:-fx-text-fill :black}}
+
+      ;;".label" {:-fx-text-fill text-color
+      ;;          :-fx-wrap-text true}
+
+      ;; tabber
+
+      ".tab-pane > .tab-header-area > .headers-region > .tab "
+      {:-fx-background-radius "0"
+       ;;:-fx-padding "3px 20px"
+       }
+
+      ;; common tables
+
       ".table-view"
       {:-fx-table-cell-border-color table-border-colour
        :-fx-font-size ".9em"}
@@ -56,7 +79,6 @@
        ":hover" {:-fx-background-color "#eee"}
        ":selected" {:-fx-background-color "-fx-selection-bar"}
 
-       ;; fuck this odd styling
        ":odd" {:-fx-background-color "white"}
        ":odd:hover" {:-fx-background-color "#eee"}
        ":odd:selected" {:-fx-background-color "-fx-selection-bar"}
@@ -64,65 +86,60 @@
 
        ".unsteady" {:-fx-background-color "lightsteelblue"}}
 
+
+      ;; installed-addons table
+
       ".table-view#installed-addons"
       {" .updateable"
        {:-fx-background-color "lemonchiffon"
 
         ;; selected updateable addons are do not look any different
-        ":selected" {:-fx-background-color "-fx-selection-bar"}}}
+        ":selected" {:-fx-background-color "-fx-selection-bar"}}
 
-      ".tab-pane > .tab-header-area > .headers-region > .tab "
-      {:-fx-background-radius "0"
-       ;;:-fx-padding "3px 20px"
-       }
+       " .wow-column" {:-fx-alignment "center"}}
 
-      ".table-view#notice-logger > .column-header-background"
-      {:-fx-max-height 0
-       :-fx-pref-height 0
-       :-fx-min-height 0}
 
-      ".table-view#notice-logger #level"
-      {:-fx-alignment "center"}
-
-      ".label" {:-fx-text-fill text-color
-                :-fx-wrap-text true}
-
-      ".table-view#notice-logger .text"
-      {:-fx-text-fill "green"}
+      ;; notice-logger
 
       ".table-view#notice-logger"
-      {" .warn" {:-fx-background-color "lemonchiffon"}
+      {" .warn" {:-fx-background-color "lemonchiffon"
+                 ":selected" {:-fx-background-color "-fx-selection-bar"}}
        " .error" {:-fx-background-color "tomato"
                   " .text" {:-fx-text-fill "blue"}
-                  ;;:-fx-border-color "black" ;;table-border-colour
-                  ;;:-fx-border-insets "0 0 -1 0"
-                  ;;:-fx-border-width "1 0 1 0"
-                  ;;:-fx-cell-size row-size
-                  }}
+                  ":selected" {:-fx-background-color "-fx-selection-bar"}}
 
-      ".context-menu" {:-fx-effect "None"}
-      ".combo-box-base" {:-fx-padding "1px"
-                         :-fx-background-radius "0"}
+       " #level" {:-fx-alignment "center"
+                  :-fx-border-width "0"}
 
-      ".button" {:-fx-background-radius "0"
-                 :-fx-text-fill text-color
-                 ;; vector values are space-separated
-                 :-fx-padding ["6px" "17px"]
-                 ;; nested string key defines new selector: `.button:hover`
-                 ":hover" {:-fx-text-fill :black}}
+       ;; hide column headers
+       " > .column-header-background"
+       {:-fx-max-height 0
+        :-fx-pref-height 0
+        :-fx-min-height 0}
 
-      ".source"
+       " .table-row-cell"
+       {:-fx-border-color "white"}
+
+       :-fx-font-family "monospace"}
+
+
+      ;; search
+
+      ".table-view#search-addons"
+      {" .description" {:-fx-pref-width 700}
+       " .tags" {:-fx-min-width 230 :-fx-max-width 450}
+       " .updated" {:-fx-min-width 85 :-fx-max-width 120 :-fx-pref-width 100}
+       " .downloads" {:-fx-min-width 100 :-fx-max-width 120}}
+
+
+      ;; common table fields
+
+      ".table-view .source-column"
       {:-fx-alignment "center-left"
        :-fx-padding "-2 0 0 0" ;; hyperlinks are just a little bit off .. weird.
-       :-fx-min-width "120px"
-       :-fx-pref-width "120px"
-       :-fx-max-width "130px"
        " .hyperlink:visited" {:-fx-underline "false"}
        " .hyperlink, .hyperlink:hover" {:-fx-underline "false"
-                                        :-fx-text-fill "blue"}}
-
-      ".wow"
-      {:-fx-alignment "center"}})))
+                                        :-fx-text-fill "blue"}}})))
 
 ;;
 
@@ -469,8 +486,7 @@
 
 (defn table-column
   [column-data]
-  (let [column-data (if (string? column-data) {:text column-data} column-data)
-        column-name (:text column-data)
+  (let [column-name (:text column-data)
 
         default-cvf (fn [row] (get row (keyword column-name)))
         new-cvf (:cell-value-factory column-data)
@@ -481,7 +497,9 @@
                     (or new-cvf default-cvf))
         final-cvf {:cell-value-factory final-cvf}
 
-        final-style {:style-class (into ["table-cell"] (get column-data :style-class))}
+        final-style {:style-class (into ["table-cell"
+                                         (clojure.string/lower-case (str column-name "-column"))]
+                                        (get column-data :style-class))}
 
         default {:fx/type :table-column
                  :min-width 80}]
@@ -523,12 +541,12 @@
         iface-version (fn [row]
                         (some-> row :interface-version str utils/interface-version-to-game-version))
 
-        column-list [{:text "source" :cell-value-factory href-to-hyperlink :style-class ["source"]}
+        column-list [{:text "source" :min-width 110 :pref-width 120 :max-width 160 :cell-value-factory href-to-hyperlink}
                      {:text "name" :min-width 150 :pref-width 300 :max-width 500 :cell-value-factory :label}
                      {:text "description" :pref-width 700 :cell-value-factory :description}
                      {:text "installed" :max-width 150 :cell-value-factory :installed-version}
                      {:text "available" :max-width 150 :cell-value-factory :version}
-                     {:text "WoW" :max-width 100 :style-class ["wow"] :cell-value-factory iface-version}]]
+                     {:text "WoW" :max-width 100 :cell-value-factory iface-version}]]
     {:fx/type fx.ext.table-view/with-selection-props
      :props {:selection-mode :multiple
              ;; unlike gui.clj, we have access to the original data here
@@ -563,6 +581,7 @@
                      {:text "message" :pref-width 500 :cell-value-factory :message}]]
     {:fx/type :table-view
      :id "notice-logger"
+     :selection-mode :multiple
      :row-factory {:fx/cell-type :table-row
                    :describe (fn [row]
                                {:style-class ["table-row-cell" (name (:level row))]})}
@@ -579,7 +598,7 @@
 (defn search-addons-table
   [{:keys [fx/context]}]
   (let [addon-list (fx/sub-val context get-in [:app-state :search-results])
-        column-list [{:text "source" :min-width 100 :max-width 110 :cell-value-factory href-to-hyperlink :style-class ["source"]}
+        column-list [{:text "source" :min-width 110 :pref-width 120 :max-width 160 :cell-value-factory href-to-hyperlink}
                      {:text "name" :min-width 150 :pref-width 300 :max-width 450 :cell-value-factory :label}
                      {:text "description" :pref-width 700 :cell-value-factory :description}
                      {:text "tags" :pref-width 380 :min-width 230 :max-width 450 :cell-value-factory (comp str :tag-list)}
@@ -590,6 +609,7 @@
              ;; unlike gui.clj, we have access to the original data here. and it's an ordered/map ...?
              :on-selected-items-changed core/select-addons-search*}
      :desc {:fx/type :table-view
+            :id "search-addons"
             :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
             :pref-height 999.0
             :columns (mapv table-column column-list)
