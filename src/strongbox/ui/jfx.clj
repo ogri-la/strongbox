@@ -142,6 +142,12 @@
        " .hyperlink, .hyperlink:hover" {:-fx-underline "false"
                                         :-fx-text-fill "blue"}}})))
 
+(defn get-root
+  [event]
+  (try
+    (-> event .getTarget .getScene .getRoot)
+    (catch java.lang.IllegalArgumentException _
+      (-> event .getTarget .getParentPopup .getOwnerWindow .getScene .getRoot))))
 ;;
 
 
@@ -302,7 +308,7 @@
 (defn switch-tab-handler
   [tab-idx]
   (fn [event]
-    (let [node ^Node (-> event .getTarget .getParentPopup .getOwnerWindow .getScene .getRoot)
+    (let [node ^Node (get-root event) ;;(-> event .getTarget .getParentPopup .getOwnerWindow .getScene .getRoot)
           tabber-obj (first (.lookupAll node "#tabber"))]
       (.select (.getSelectionModel tabber-obj) tab-idx))))
 
@@ -384,6 +390,18 @@
                                     :type :confirm})]
         (when (= (.get result) ButtonType/OK)
           (core/remove-selected))))))
+
+(defn search-results-install-handler
+  [event]
+  ;; this: switches tab, then, for each addon selected, expands summary, installs addon, calls load-installed-addons and finally refreshes;
+  ;; there will be a plodding step-wise update which is better than a blank screen and apparent hang
+  ;;(core/-install-update-these (map curseforge/expand-summary (get-state :selected-search))) ;; original approach. efficient but no feedback for user
+  ((switch-tab-handler INSTALLED-TAB) event)
+  (doseq [selected (core/get-state :selected-search)]
+    (some-> selected core/expand-summary-wrapper vector core/-install-update-these)
+    (core/load-installed-addons))
+  ;;(ss/selection! (select-ui :#tbl-search-addons) nil) ;; deselect rows in search table
+  (core/refresh))
 
 ;;
 
@@ -636,14 +654,7 @@
                                   (swap! core/state assoc :search-field-input v))}
               {:fx/type :button
                :text "install selected"
-               :on-action (async-handler (fn []
-                                           ;;(switch-tab INSTALLED-TAB)
-                                           ;;(doseq [selected (get-state :selected-search)]
-                                           ;;  (some-> selected core/expand-summary-wrapper vector core/-install-update-these)
-                                           ;;  (core/load-installed-addons))
-                                           ;;(ss/selection! (select-ui :#tbl-search-addons) nil) ;; deselect rows in search table
-                                           ;;(core/refresh))
-                                           (println "installing ...")))}
+               :on-action (async-event-handler search-results-install-handler)}
               {:fx/type :button
                :text "random"
                :on-action (fn [_]

@@ -1120,7 +1120,9 @@
 (defn watch-for-addon-dir-change
   "when the current addon directory changes, the list of installed addons should be re-read"
   []
-  (state-bind [:cfg :selected-addon-dir] (fn [_] (refresh))))
+  (state-bind [:cfg :selected-addon-dir] (fn [_]
+                                           ;;(future ;; this seems to prevent it, but it can't stay.
+                                           (refresh))))
 
 (defn watch-for-catalogue-change
   "when the catalogue changes, the db should be rebuilt"
@@ -1153,7 +1155,7 @@
   (init-dirs)
   (prune-http-cache!)
   (load-settings! cli-opts)
-  (watch-for-addon-dir-change)
+  (watch-for-addon-dir-change) ;; this is causing a race condition/double update with gui
   (watch-for-catalogue-change)
 
   state)

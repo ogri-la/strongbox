@@ -1,7 +1,7 @@
 (ns strongbox.main
   (:refer-clojure :rename {test clj-test})
   (:require
-   [taoensso.timbre :as timbre :refer [spy info error]]
+   [taoensso.timbre :as timbre :refer [spy info warn error]]
    [clojure.test]
    [clojure.tools.cli]
    [clojure.tools.namespace.repl :as tn :refer [refresh]]
@@ -65,8 +65,9 @@
   (core/start (merge {:profile? profile?, :spec? spec?} cli-opts))
   (case (:ui cli-opts)
     :cli (cli/start cli-opts)
+    :gui (gui/start)
     :gui2 (jfx/start)
-    (gui/start))
+    (jfx/start))
 
   (watch-for-gui-restart)
 
@@ -181,7 +182,7 @@
 
             ;; switch default ui to :cli if --headless given without explicit --ui
             args (if (not (contains? options :ui))
-                   (assoc-in args [:options :ui] (if (:headless? options) :cli :gui))
+                   (assoc-in args [:options :ui] (if (:headless? options) :cli :gui2))
                    args)
 
             ;; force :cli for certain actions
