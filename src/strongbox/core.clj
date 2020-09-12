@@ -38,9 +38,12 @@
    :search/already-installed "#99bc6b" ;; greenish
    :hyperlink :blue
 
+   ;; jfx
+   :base "#ececec"
    :button-text-hovering "black"
-   :table-border-colour "#bbb"
-   :odd-coloured-rows "white"
+   :table-border "#bbb"
+   :row "-fx-control-inner-background"
+   :row-hover "derive(-fx-control-inner-background,-10%)"
    :unsteady "lightsteelblue"})
 
 ;; inverse colours of -colour-map
@@ -55,9 +58,12 @@
    :search/already-installed "#664394"
    :hyperlink :yellow
 
+   ;; jfx
+   :base "#121212"
    :button-text-hovering "white"
-   :table-border-colour "#333"
-   :odd-coloured-rows "black"
+   :table-border "#333"
+   :row "-fx-control-inner-background"
+   :row-hover "derive(-fx-control-inner-background,-10%)"
    :unsteady "lightsteelblue"})
 
 (def themes

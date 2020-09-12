@@ -30,13 +30,12 @@
                  colour #(name (get colour-map %))]
              {(format "#%s.root " (name theme-kw))
               {:-fx-padding 0
-               ;;:-fx-base "#fefefe"
-               ;;:-fx-base "white"
                ;;:-fx-accent "#0096C9"
+               :-fx-base (colour :base)
 
                ;; backgrounds
                ;;:-fx-accent "transparent"
-               :-fx-accent "lightsteelblue"
+               :-fx-accent "lightsteelblue" ;; selection colour of backgrounds
                ".text" {:-fx-font-smoothing-type "gray"}
 
                ".context-menu" {:-fx-effect "None"}
@@ -57,7 +56,7 @@
 
                ;; common tables
                ".table-view"
-               {:-fx-table-cell-border-color (colour :table-border-colour)
+               {:-fx-table-cell-border-color (colour :table-border)
                 :-fx-font-size ".9em"}
 
                ".table-view .column-header"
@@ -68,17 +67,21 @@
 
                ".table-view .table-row-cell"
                {:-fx-border-insets "-1 -1 0 -1"
-                :-fx-border-color (colour :table-border-colour)
+                :-fx-border-color (colour :table-border)
 
-                ":hover" {:-fx-background-color (colour :installed/hovering)}
+                ;; even
+                :-fx-background-color (colour :row)
+                ":hover" {:-fx-background-color (colour :row-hover)}
                 ":selected" {:-fx-background-color "-fx-selection-bar"}
 
-                ":odd" {:-fx-background-color (colour :odd-coloured-rows)}
-                ":odd:hover" {:-fx-background-color (colour :installed/hovering)}
+                ":odd" {:-fx-background-color (colour :row)}
+                ":odd:hover" {:-fx-background-color (colour :row-hover)}
                 ":odd:selected" {:-fx-background-color "-fx-selection-bar"}
                 ":odd:selected:hover" {:-fx-background-color "-fx-selection-bar"}
 
-                ".unsteady" {:-fx-background-color (colour :unsteady)}}
+                ".unsteady" {:-fx-background-color (colour :unsteady)}
+
+                }
 
 
                ;; installed-addons table
