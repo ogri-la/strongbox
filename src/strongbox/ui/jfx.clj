@@ -1,6 +1,7 @@
 (ns strongbox.ui.jfx
   (:require
    [me.raynes.fs :as fs]
+   [clojure.string :refer [lower-case join]]
    [taoensso.timbre :as timbre :refer [debug info warn error spy]]
    [cljfx.ext.table-view :as fx.ext.table-view]
    [cljfx
@@ -86,6 +87,8 @@
 
 
       ;; installed-addons table
+
+
       ".table-view#installed-addons"
       {" .updateable"
        {:-fx-background-color "lemonchiffon"
@@ -99,6 +102,8 @@
 
 
       ;; notice-logger
+
+
       ".table-view#notice-logger"
       {" .warn" {:-fx-background-color "lemonchiffon"
                  ":selected" {:-fx-background-color "-fx-selection-bar"}}
@@ -120,19 +125,17 @@
 
        :-fx-font-family "monospace"}
 
-
       "#splitter .split-pane-divider"
-       {:-fx-padding "8px"}
+      {:-fx-padding "8px"}
 
       ;; search
       ".table-view#search-addons"
       {" .downloads-column" {:-fx-alignment "center-right"}
        " .installed" {:-fx-background-color "#99bc6b"}}
 
-
       "#status-bar"
       {:-fx-font-size ".9em"
-       :-fx-padding "5px"}      
+       :-fx-padding "5px"}
 
       ;; common table fields
       ".table-view .source-column"
@@ -225,10 +228,14 @@
 (def SEARCH-TAB 1)
 
 (defn menu-item
-  [label handler & [_]]
-  {:fx/type :menu-item
-   :text (str label)
-   :on-action handler})
+  [label handler & [opt-map]]
+  (merge
+   {:fx/type :menu-item
+    :text label
+    :mnemonic-parsing true
+    :on-action handler}
+   (when-let [key (:key opt-map)]
+     {:accelerator key})))
 
 (defn build-catalogue-menu
   [selected-catalogue catalogue-addon-list]
@@ -245,10 +252,14 @@
       (mapv rb catalogue-addon-list))))
 
 (defn menu
-  [label items & [_]]
-  {:fx/type :menu
-   :text label
-   :items items})
+  [label items & [opt-map]]
+  (merge
+   {:fx/type :menu
+    :text label
+    :mnemonic-parsing true
+    :items items}
+   (when-let [key (:key opt-map)]
+     {:accelerator key})))
 
 (defn async
   ([f]
@@ -410,15 +421,15 @@
 
 (defn menu-bar
   [{:keys [fx/context]}]
-  (let [file-menu [(menu-item "New addon directory" (async-event-handler wow-dir-picker) {:key "menu N" :mnemonic "n"})
+  (let [file-menu [(menu-item "_New addon directory" (event-handler wow-dir-picker) {:key "Ctrl+N"})
                    (menu-item "Remove addon directory" (async-handler core/remove-addon-dir!))
                    separator
-                   (menu-item "Exit" exit-handler {:key "menu Q" :mnemonic "x"})]
+                   (menu-item "E_xit" exit-handler {:key "Ctrl+Q"})]
 
         view-menu [(menu-item "Refresh" (async-handler core/refresh) {:key "F5"})
                    separator
-                   (menu-item "Installed" (switch-tab-handler INSTALLED-TAB) {:key "menu I" :mnemonic "i"})
-                   (menu-item "Search" (switch-tab-handler SEARCH-TAB) {:key "menu H" :mnemonic "h"})
+                   (menu-item "_Installed" (switch-tab-handler INSTALLED-TAB) {:key "Ctrl+I"})
+                   (menu-item "Searc_h" (switch-tab-handler SEARCH-TAB) {:key "Ctrl+H"})
                    ;; separator
                    ;; todo: build-theme-menu
                    ]
@@ -429,7 +440,7 @@
                              [separator
                               (menu-item "Refresh user catalogue" (async-handler core/refresh-user-catalogue))])
 
-        addon-menu [(menu-item "Update all" (async-handler core/install-update-all) {:key "menu U" :mnemonic "u"})
+        addon-menu [(menu-item "_Update all" (async-handler core/install-update-all) {:key "Ctrl+U"})
                     (menu-item "Re-install all" (async-handler core/re-install-all))]
 
         impexp-menu [(menu-item "Import addon from Github" (event-handler import-addon-handler))
@@ -454,11 +465,11 @@
      :refs {::catalogue-toggle-group {:fx/type :toggle-group}}
      :desc {:fx/type :menu-bar
             :id "main-menu"
-            :menus [(menu "File" file-menu {:mnemonic "F"})
-                    (menu "View" view-menu {:mnemonic "V"})
+            :menus [(menu "_File" file-menu)
+                    (menu "_View" view-menu)
                     (menu "Catalogue" catalogue-menu)
-                    (menu "Addons" addon-menu {:mnemonic "A"})
-                    (menu "Import/Export" impexp-menu {:mnemonic "i"})
+                    (menu "_Addons" addon-menu)
+                    (menu "_Import/Export" impexp-menu)
                     (menu "Cache" cache-menu)
                     (menu "Help" help-menu)]}}))
 
@@ -517,7 +528,7 @@
         final-cvf {:cell-value-factory final-cvf}
 
         final-style {:style-class (into ["table-cell"
-                                         (clojure.string/lower-case (str column-name "-column"))]
+                                         (lower-case (str column-name "-column"))]
                                         (get column-data :style-class))}
 
         default {:fx/type :table-column
@@ -681,8 +692,8 @@
            :content {:fx/type search-addons-pane}}]})
 
 (defn status-bar
-  [{:keys [fx/context]}]
   "this is the litle strip of text at the bottom of the application."
+  [{:keys [fx/context]}]
   []
   (let [num-matching-template "%s of %s installed addons found in catalogue."
         all-matching-template "all installed addons found in catalogue."
@@ -690,7 +701,7 @@
 
         ;;ia (:installed-addon-list state)
         ia (fx/sub-val context get-in [:app-state :installed-addon-list])
-        
+
         uia (filter :matched? ia)
 
         a-count (count (fx/sub-val context get-in [:app-state :db]))
@@ -701,11 +712,11 @@
                  (if (= ia-count uia-count)
                    all-matching-template
                    (format num-matching-template uia-count ia-count))]]
-    
+
     {:fx/type :h-box
      :id "status-bar"
      :children [{:fx/type :text
-                 :text (clojure.string/join " " strings)}]}))
+                 :text (join " " strings)}]}))
 
 ;;
 
