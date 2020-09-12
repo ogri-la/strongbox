@@ -36,7 +36,12 @@
    :installed/needs-updating :lemonchiffon
    :installed/hovering "#e6e6e6" ;; light grey
    :search/already-installed "#99bc6b" ;; greenish
-   :hyperlink :blue})
+   :hyperlink :blue
+
+   :button-text-hovering "black"
+   :table-border-colour "#bbb"
+   :odd-coloured-rows "white"
+   :unsteady "lightsteelblue"})
 
 ;; inverse colours of -colour-map
 (def -dark-colour-map
@@ -48,7 +53,12 @@
    :installed/needs-updating "#000532"
    :installed/hovering "#191919"
    :search/already-installed "#664394"
-   :hyperlink :yellow})
+   :hyperlink :yellow
+
+   :button-text-hovering "white"
+   :table-border-colour "#333"
+   :odd-coloured-rows "black"
+   :unsteady "lightsteelblue"})
 
 (def themes
   {:light -colour-map

@@ -24,126 +24,126 @@
 (def style
   (css/register
    ::style
-   (let [text-color "black"
-         table-border-colour "#bbb"]
+   (let [generate-style
+         (fn [theme-kw]
+           (let [colour-map (theme-kw  core/themes)
+                 colour #(name (get colour-map %))]
+             {(format "#%s.root " (name theme-kw))
+              {:-fx-padding 0
+               ;;:-fx-base "#fefefe"
+               ;;:-fx-base "white"
+               ;;:-fx-accent "#0096C9"
 
-     {".root"
-      {:-fx-padding 0
-       ;;:-fx-base "#fefefe"
-       ;;:-fx-base "white"
-       ;;:-fx-accent "#0096C9"
+               ;; backgrounds
+               ;;:-fx-accent "transparent"
+               :-fx-accent "lightsteelblue"
+               ".text" {:-fx-font-smoothing-type "gray"}
 
-       ;; backgrounds
-       ;;:-fx-accent "transparent"
-       :-fx-accent "lightsteelblue"}
+               ".context-menu" {:-fx-effect "None"}
+               ".combo-box-base" {:-fx-padding "1px"
+                                  :-fx-background-radius "0"}
 
-      ".text"
-      {:-fx-font-smoothing-type "gray"}
+               ".button" {:-fx-background-radius "0"
+                          ;;:-fx-text-fill "black"
+                          ;; vector values are space-separated
+                          :-fx-padding ["6px" "17px"]
+                          ":hover" {:-fx-text-fill (colour :button-text-hovering)}}
 
-      ".context-menu" {:-fx-effect "None"}
-      ".combo-box-base" {:-fx-padding "1px"
-                         :-fx-background-radius "0"}
+               ;; tabber
+               ".tab-pane > .tab-header-area > .headers-region > .tab "
+               {:-fx-background-radius "0"
+                ;;:-fx-padding "3px 20px"
+                }
 
-      ".button" {:-fx-background-radius "0"
-                 :-fx-text-fill text-color
-                 ;; vector values are space-separated
-                 :-fx-padding ["6px" "17px"]
-                 ;; nested string key defines new selector: `.button:hover`
-                 ":hover" {:-fx-text-fill :black}}
+               ;; common tables
+               ".table-view"
+               {:-fx-table-cell-border-color (colour :table-border-colour)
+                :-fx-font-size ".9em"}
 
-      ;;".label" {:-fx-text-fill text-color
-      ;;          :-fx-wrap-text true}
+               ".table-view .column-header"
+               {;;:-fx-background-color "#ddd" ;; flat colour
+                :-fx-font-size "1em"
+                :-fx-font-weight "Normal"
+                :-fx-font-family "Sans"}
 
-      ;; tabber
-      ".tab-pane > .tab-header-area > .headers-region > .tab "
-      {:-fx-background-radius "0"
-       ;;:-fx-padding "3px 20px"
-       }
+               ".table-view .table-row-cell"
+               {:-fx-border-insets "-1 -1 0 -1"
+                :-fx-border-color (colour :table-border-colour)
 
-      ;; common tables
-      ".table-view"
-      {:-fx-table-cell-border-color table-border-colour
-       :-fx-font-size ".9em"}
+                ":hover" {:-fx-background-color (colour :installed/hovering)}
+                ":selected" {:-fx-background-color "-fx-selection-bar"}
 
-      ".table-view .column-header"
-      {;;:-fx-background-color "#ddd" ;; flat colour
-       :-fx-font-size "1em"
-       :-fx-font-weight "Normal"
-       :-fx-font-family "Sans"}
+                ":odd" {:-fx-background-color (colour :odd-coloured-rows)}
+                ":odd:hover" {:-fx-background-color (colour :installed/hovering)}
+                ":odd:selected" {:-fx-background-color "-fx-selection-bar"}
+                ":odd:selected:hover" {:-fx-background-color "-fx-selection-bar"}
 
-      ".table-view .table-row-cell"
-      {:-fx-border-insets "-1 -1 0 -1"
-       :-fx-border-color table-border-colour
-
-       ":hover" {:-fx-background-color "#eee"}
-       ":selected" {:-fx-background-color "-fx-selection-bar"}
-
-       ":odd" {:-fx-background-color "white"}
-       ":odd:hover" {:-fx-background-color "#eee"}
-       ":odd:selected" {:-fx-background-color "-fx-selection-bar"}
-       ":odd:selected:hover" {:-fx-background-color "-fx-selection-bar"}
-
-       ".unsteady" {:-fx-background-color "lightsteelblue"}}
+                ".unsteady" {:-fx-background-color (colour :unsteady)}}
 
 
-      ;; installed-addons table
+               ;; installed-addons table
 
 
-      ".table-view#installed-addons"
-      {" .updateable"
-       {:-fx-background-color "lemonchiffon"
-        ;; selected updateable addons are do not look any different
-        ":selected" {:-fx-background-color "-fx-selection-bar"}}
-
-       " .ignored .table-cell"
-       {:-fx-text-fill "#aaa"}
-
-       " .wow-column" {:-fx-alignment "center"}}
-
-
-      ;; notice-logger
-
-
-      ".table-view#notice-logger"
-      {" .warn" {:-fx-background-color "lemonchiffon"
+               ".table-view#installed-addons"
+               {" .updateable"
+                {:-fx-background-color (colour :installed/needs-updating)
+                 ;; selected updateable addons are do not look any different
                  ":selected" {:-fx-background-color "-fx-selection-bar"}}
-       " .error" {:-fx-background-color "tomato"
-                  " .text" {:-fx-text-fill "blue"}
-                  ":selected" {:-fx-background-color "-fx-selection-bar"}}
 
-       " #level" {:-fx-alignment "center"
-                  :-fx-border-width "0"}
+                " .ignored .table-cell"
+                {:-fx-text-fill (colour :installed/ignored-fg)}
 
-       ;; hide column headers
-       " > .column-header-background"
-       {:-fx-max-height 0
-        :-fx-pref-height 0
-        :-fx-min-height 0}
+                " .wow-column" {:-fx-alignment "center"}}
 
-       " .table-row-cell"
-       {:-fx-border-color "white"}
 
-       :-fx-font-family "monospace"}
+               ;; notice-logger
 
-      "#splitter .split-pane-divider"
-      {:-fx-padding "8px"}
 
-      ;; search
-      ".table-view#search-addons"
-      {" .downloads-column" {:-fx-alignment "center-right"}
-       " .installed" {:-fx-background-color "#99bc6b"}}
+               ".table-view#notice-logger"
+               {" .warn" {:-fx-background-color (colour :notice/warning)
+                          ":selected" {:-fx-background-color "-fx-selection-bar"}}
+                " .error" {:-fx-background-color (colour :notice/error)
+                           ;;" .text" {:-fx-text-fill "blue"}
+                           ":selected" {:-fx-background-color "-fx-selection-bar"}}
 
-      "#status-bar"
-      {:-fx-font-size ".9em"
-       :-fx-padding "5px"}
+                " #level" {:-fx-alignment "center"
+                           :-fx-border-width "0"}
 
-      ;; common table fields
-      ".table-view .source-column"
-      {:-fx-alignment "center-left"
-       :-fx-padding "-2 0 0 0" ;; hyperlinks are just a little bit off .. weird.
-       " .hyperlink:visited" {:-fx-underline "false"}
-       " .hyperlink, .hyperlink:hover" {:-fx-underline "false"
-                                        :-fx-text-fill "blue"}}})))
+                ;; hide column headers
+
+
+                " > .column-header-background"
+                {:-fx-max-height 0
+                 :-fx-pref-height 0
+                 :-fx-min-height 0}
+
+                ;;" .table-row-cell" {:-fx-border-color "white"}
+
+                :-fx-font-family "monospace"}
+
+               "#splitter .split-pane-divider"
+               {:-fx-padding "8px"}
+
+               ;; search
+               ".table-view#search-addons"
+               {" .downloads-column" {:-fx-alignment "center-right"}
+                " .installed" {:-fx-background-color "#99bc6b"}}
+
+               "#status-bar"
+               {:-fx-font-size ".9em"
+                :-fx-padding "5px"}
+
+               ;; common table fields
+               ".table-view .source-column"
+               {:-fx-alignment "center-left"
+                :-fx-padding "-2 0 0 0" ;; hyperlinks are just a little bit off .. weird.
+                " .hyperlink:visited" {:-fx-underline "false"}
+                " .hyperlink, .hyperlink:hover" {:-fx-underline "false"
+                                                 :-fx-text-fill (colour :hyperlink)}}}}))]
+
+     (merge
+      (generate-style :light)
+      (generate-style :dark)))))
 
 (defn get-root
   [event]
@@ -250,6 +250,23 @@
                              (core/set-catalogue-location! name)
                              (core/save-settings))})]
       (mapv rb catalogue-addon-list))))
+
+(defn build-theme-menu
+  "returns a menu of radio buttons that can toggle through the available themes defined in `core/themes`"
+  [selected-theme theme-map]
+  (let [rb (fn [theme-key]
+             {:fx/type :radio-menu-item
+              :text (format "%s theme" (-> theme-key name clojure.string/capitalize))
+              :selected (= selected-theme theme-key)
+              :toggle-group {:fx/type fx/ext-get-ref
+                             :ref ::theme-toggle-group}
+              :on-action (fn [_]
+                           (swap! core/state assoc-in [:cfg :gui-theme] theme-key)
+                           (core/save-settings)
+                           ;; trigger-gui-restart ...
+                           )})]
+
+    (mapv rb (keys theme-map))))
 
 (defn menu
   [label items & [opt-map]]
@@ -416,6 +433,7 @@
 
 ;;
 
+
 (def separator {:fx/type fx/ext-instance-factory
                 :create #(javafx.scene.control.SeparatorMenuItem.)})
 
@@ -426,13 +444,15 @@
                    separator
                    (menu-item "E_xit" exit-handler {:key "Ctrl+Q"})]
 
-        view-menu [(menu-item "Refresh" (async-handler core/refresh) {:key "F5"})
-                   separator
-                   (menu-item "_Installed" (switch-tab-handler INSTALLED-TAB) {:key "Ctrl+I"})
-                   (menu-item "Searc_h" (switch-tab-handler SEARCH-TAB) {:key "Ctrl+H"})
-                   ;; separator
-                   ;; todo: build-theme-menu
-                   ]
+        view-menu (into
+                   [(menu-item "Refresh" (async-handler core/refresh) {:key "F5"})
+                    separator
+                    (menu-item "_Installed" (switch-tab-handler INSTALLED-TAB) {:key "Ctrl+I"})
+                    (menu-item "Searc_h" (switch-tab-handler SEARCH-TAB) {:key "Ctrl+H"})
+                    separator]
+                   (build-theme-menu
+                    (fx/sub-val context get-in [:app-state :cfg :gui-theme])
+                    core/themes))
 
         catalogue-menu (into (build-catalogue-menu
                               (fx/sub-val context get-in [:app-state :cfg :selected-catalogue])
@@ -462,7 +482,8 @@
         help-menu [(menu-item "About strongbox" about-strongbox-dialog)]]
 
     {:fx/type fx/ext-let-refs
-     :refs {::catalogue-toggle-group {:fx/type :toggle-group}}
+     :refs {::catalogue-toggle-group {:fx/type :toggle-group}
+            ::theme-toggle-group {:fx/type :toggle-group}}
      :desc {:fx/type :menu-bar
             :id "main-menu"
             :menus [(menu "_File" file-menu)
@@ -722,30 +743,35 @@
 
 (defn root
   [{:keys [fx/context]}]
-  (fx/sub-val context get :style) ;; todo: remove outside of dev?
-  {:fx/type :stage
-   :showing true
-   :on-close-request (fn [ev]
-                       ;; called on ctrl-c
-                       ;;(println "got ev" ev)
-                       ;;(println (bean ev))
-                       (when-not (core/get-state :in-repl?)
-                         (System/exit 0)))
 
-   :title "strongbox"
-   :width 1024
-   :height 768
-   :scene {:fx/type :scene
-           :stylesheets [(::css/url style)]
-           :root {:fx/type :v-box
-                  :children [{:fx/type menu-bar}
-                             {:fx/type :split-pane
-                              :id "splitter"
-                              :orientation :vertical
-                              :divider-positions [0.65]
-                              :items [{:fx/type tabber}
-                                      {:fx/type notice-logger}]}
-                             {:fx/type status-bar}]}}})
+  (let [;; re-render gui whenever style state changes
+        _ (fx/sub-val context get :style) ;; todo: remove outside of dev?
+        theme (fx/sub-val context get-in [:app-state :cfg :gui-theme])]
+
+    {:fx/type :stage
+     :showing true
+     :on-close-request (fn [ev]
+                         ;; called on ctrl-c
+                         ;;(println "got ev" ev)
+                         ;;(println (bean ev))
+                         (when-not (core/get-state :in-repl?)
+                           (System/exit 0)))
+
+     :title "strongbox"
+     :width 1024
+     :height 768
+     :scene {:fx/type :scene
+             :stylesheets [(::css/url style)]
+             :root {:fx/type :v-box
+                    :id (name theme)
+                    :children [{:fx/type menu-bar}
+                               {:fx/type :split-pane
+                                :id "splitter"
+                                :orientation :vertical
+                                :divider-positions [0.65]
+                                :items [{:fx/type tabber}
+                                        {:fx/type notice-logger}]}
+                               {:fx/type status-bar}]}}}))
 
 (defn init-notice-logger!
   [gui-state]
