@@ -40,11 +40,15 @@
 
    ;; jfx
    :base "#ececec"
+   :accent "lightsteelblue"
    :button-text-hovering "black"
    :table-border "#bbb"
    :row "-fx-control-inner-background"
    :row-hover "derive(-fx-control-inner-background,-10%)"
-   :unsteady "lightsteelblue"})
+   :unsteady "lightsteelblue"
+   :row-updateable "lemonchiffon"
+   :row-warning "lemonchiffon"
+   :row-error "tomato"})
 
 ;; inverse colours of -colour-map
 (def -dark-colour-map
@@ -60,11 +64,15 @@
 
    ;; jfx
    :base "#121212"
+   :accent "#443754" ;; dark purple
    :button-text-hovering "white"
    :table-border "#333"
    :row "-fx-control-inner-background"
    :row-hover "derive(-fx-control-inner-background,-10%)"
-   :unsteady "lightsteelblue"})
+   :unsteady "-fx-selection-bar"
+   :row-updateable "#aaa"
+   :row-warning "#ce6028"
+   :row-error "#ce2828"})
 
 (def themes
   {:light -colour-map

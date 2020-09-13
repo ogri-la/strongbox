@@ -27,7 +27,7 @@
    (let [generate-style
          (fn [theme-kw]
            (let [colour-map (theme-kw  core/themes)
-                 colour #(name (get colour-map %))]
+                 colour #(name (get colour-map % "green"))]
              {(format "#%s.root " (name theme-kw))
               {:-fx-padding 0
                ;;:-fx-accent "#0096C9"
@@ -35,8 +35,9 @@
 
                ;; backgrounds
                ;;:-fx-accent "transparent"
-               :-fx-accent "lightsteelblue" ;; selection colour of backgrounds
-               ".text" {:-fx-font-smoothing-type "gray"}
+               :-fx-accent (colour :accent) ;; selection colour of backgrounds
+
+               ;;".text" {:-fx-font-smoothing-type "gray"}
 
                ".context-menu" {:-fx-effect "None"}
                ".combo-box-base" {:-fx-padding "1px"
@@ -69,19 +70,22 @@
                {:-fx-border-insets "-1 -1 0 -1"
                 :-fx-border-color (colour :table-border)
 
+                " .table-cell" {;;:-fx-text-fill "derive(-fx-control-inner-background,-90%)"
+                                }
+
                 ;; even
                 :-fx-background-color (colour :row)
                 ":hover" {:-fx-background-color (colour :row-hover)}
-                ":selected" {:-fx-background-color "-fx-selection-bar"}
+                ":selected" {:-fx-background-color "-fx-selection-bar"
+                             " .table-cell" {:-fx-text-fill "-fx-focused-text-base-color"}
+                             :-fx-table-cell-border-color (colour :table-border)}
 
                 ":odd" {:-fx-background-color (colour :row)}
                 ":odd:hover" {:-fx-background-color (colour :row-hover)}
                 ":odd:selected" {:-fx-background-color "-fx-selection-bar"}
                 ":odd:selected:hover" {:-fx-background-color "-fx-selection-bar"}
 
-                ".unsteady" {:-fx-background-color (colour :unsteady)}
-
-                }
+                ".unsteady" {:-fx-background-color (colour :unsteady)}}
 
 
                ;; installed-addons table
@@ -89,7 +93,8 @@
 
                ".table-view#installed-addons"
                {" .updateable"
-                {:-fx-background-color (colour :installed/needs-updating)
+                {:-fx-background-color (colour :row-updateable)
+
                  ;; selected updateable addons are do not look any different
                  ":selected" {:-fx-background-color "-fx-selection-bar"}}
 
@@ -103,10 +108,10 @@
 
 
                ".table-view#notice-logger"
-               {" .warn" {:-fx-background-color (colour :notice/warning)
+               {" .warn" {:-fx-background-color (colour :row-warning)
                           ":selected" {:-fx-background-color "-fx-selection-bar"}}
-                " .error" {:-fx-background-color (colour :notice/error)
-                           ;;" .text" {:-fx-text-fill "blue"}
+
+                " .error" {:-fx-background-color (colour :row-error)
                            ":selected" {:-fx-background-color "-fx-selection-bar"}}
 
                 " #level" {:-fx-alignment "center"
@@ -771,7 +776,7 @@
                                {:fx/type :split-pane
                                 :id "splitter"
                                 :orientation :vertical
-                                :divider-positions [0.65]
+                                :divider-positions [0.7]
                                 :items [{:fx/type tabber}
                                         {:fx/type notice-logger}]}
                                {:fx/type status-bar}]}}}))
