@@ -689,6 +689,7 @@
    :padding 10
    :spacing 10
    :children [{:fx/type :text-field
+               :id "search-text-field"
                :prompt-text "search"
                :on-text-changed (fn [v]
                                   (swap! core/state assoc :search-field-input v))}
@@ -718,6 +719,12 @@
           {:fx/type :tab
            :text "search"
            :closable false
+           :on-selection-changed (fn [ev]
+                                   (when (-> ev .getTarget .isSelected)
+                                     (let [text-field (-> ev .getTarget .getTabPane (.lookupAll "#search-text-field") first)]
+                                       (Platform/runLater
+                                        (fn []
+                                          (-> text-field .requestFocus))))))
            :content {:fx/type search-addons-pane}}]})
 
 (defn status-bar
