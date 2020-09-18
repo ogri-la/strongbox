@@ -71,7 +71,7 @@
    :row-hover "derive(-fx-control-inner-background,-10%)"
    :unsteady "-fx-selection-bar"
    :row-updateable "#aaa"
-   :row-warning "#ce6028"
+   :row-warning "#aaa"
    :row-error "#ce2828"})
 
 (def themes
