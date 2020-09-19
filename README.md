@@ -6,8 +6,6 @@
 
 It supports addons hosted by Curseforge, wowinterface, Tukui and Github.
 
-If you are a user of strongbox and you ever want to get in touch, please just [open an issue](https://github.com/ogri-la/strongbox/issues) or [PM me on reddit](https://www.reddit.com/message/compose/?to=torkus-jr&subject=strongbox)
-
 ## Notice!
 
 `wowman` has been renamed to `strongbox` for the (`1.0.0`) release.
@@ -29,7 +27,7 @@ It does not work on Windows. Windows will never be supported.
 
 ## Installation
 
-1. [download the jar](https://github.com/ogri-la/strongbox/releases/download/2.0.0/strongbox-2.0.0-standalone.jar) file
+1. [download the jar](https://github.com/ogri-la/strongbox/releases/download/2.0.1/strongbox-2.0.1-standalone.jar) file
 2. run with `java -jar strongbox-x.x.x-standalone.jar`
 
 ### Arch Linux users
@@ -139,8 +137,7 @@ These interactions use a HTTP user agent header unique to `strongbox` so that it
 
 Changes are recorded in the [CHANGELOG.md](CHANGELOG.md) file.
 
-All bugs/questions/feedback should go in [Github Issues](https://github.com/ogri-la/strongbox/issues) or 
-via a Reddit [private message](https://www.reddit.com/message/compose/?to=torkus-jr&subject=strongbox).
+All bugs/questions/feedback should go in [Github Issues](https://github.com/ogri-la/strongbox/issues).
 
 All code contributions should take the form of a pull request with unit tests.  
 [The licence](LICENCE.txt) is quite strict and all code contributions are subject to it.

@@ -1,7 +1,7 @@
 (ns strongbox.wowinterface
   (:require
    [orchestra.core :refer [defn-spec]]
-   [clojure.string :refer [trim lower-case]]
+   [clojure.string :refer [trim lower-case upper-case]]
    [clojure.set]
    [slugify.core :refer [slugify]]
    [strongbox
@@ -28,7 +28,6 @@
   [dt string?]
   (let [;; https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html
         dt (java-time/local-date-time "MM-dd-yy hh:mm a" dt) ;; "09-07-18 01:27 PM" => obj with no tz
-
         ;; no tz info available on site, assume utc
         dt-utc (java-time/zoned-date-time dt "UTC") ;; obj with no tz => utc obj
         fmt (get java-time.format/predefined-formatters "iso-offset-date-time")]
@@ -39,13 +38,12 @@
   into a glorious RFC3399 formatted UTC string."
   [dt string?]
   (try
-    (-format-wowinterface-dt dt)
-    (catch java.time.format.DateTimeParseException e
+    (-format-wowinterface-dt (lower-case dt)) ;; lowercase (java 11) first
+    (catch Exception e ;; DateTimeParseException *isn't* being thrown here
       ;; because of some locale bs, datetime formatting is case sensitive in java 11 but not java 8
-      ;; and only in non-US locales. solution? an elaborate DateTimeFormatterBuilder or just making the
-      ;; whole value lowercase? yeah. OO types are sick.
+      ;; and only in non-US locales. This is why it passes tests in CI but not locally.
       ;; -- https://stackoverflow.com/questions/38250379/java8-datetimeformatter-am-pm
-      (-format-wowinterface-dt (lower-case dt)))))
+      (-format-wowinterface-dt (upper-case dt))))) ;; upper-case (java 8) is what is returned by wowi. 
 
 (defn scrape-category-group-page
   [category-page] ;; => "cat23.html"
