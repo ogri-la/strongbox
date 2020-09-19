@@ -16,7 +16,7 @@
    [javafx.util Callback]
    [javafx.scene.control TableRow]
    [javafx.scene.control TextInputDialog Alert Alert$AlertType ButtonType]
-   [javafx.stage FileChooser DirectoryChooser]
+   [javafx.stage FileChooser DirectoryChooser WindowEvent]
    [javafx.application Platform]
    [javafx.event ActionEvent]
    [javafx.scene Node]))
@@ -337,8 +337,19 @@
 
 ;; todo: reconcile this with the on-close-request handler in the stage
 (defn exit-handler
-  [_]
-  (when-not (core/get-state :in-repl?)
+  [ev]
+  (if (core/get-state :in-repl?)
+    (when-let [stage (try
+                       (-> ev 
+                           .getTarget
+                           .getParentPopup
+                           .getOwnerWindow
+                           .getScene
+                           .getWindow
+                           )
+                       (catch NullPointerException npe
+                         (println "cannot use Ctrl-Q in repl :(")))]
+      (.fireEvent stage (WindowEvent. stage WindowEvent/WINDOW_CLOSE_REQUEST)))
     (System/exit 0)))
 
 (defn switch-tab-handler
