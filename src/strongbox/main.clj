@@ -182,7 +182,7 @@
 
             ;; switch default ui to :cli if --headless given without explicit --ui
             args (if (not (contains? options :ui))
-                   (assoc-in args [:options :ui] (if (:headless? options) :cli :gui2))
+                   (assoc-in args [:options :ui] (if (:headless? options) :cli :gui))
                    args)
 
             ;; force :cli for certain actions

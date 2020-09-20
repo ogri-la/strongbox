@@ -1,6 +1,8 @@
 #!/bin/bash
 # (always ratchet threshold upwards)
 
+set -e
+
 # this file can't live in src/strongbox because lein-cloverage can't be found during dev.
 # so we copy it in and destroy it afterwards
 cp cloverage.clj src/strongbox/cloverage.clj
