@@ -39,7 +39,9 @@
   :profiles {:dev {:dependencies [;; fake http responses for testing
                                   [clj-http-fake "1.0.3"]
                                   ]}
-             :uberjar {:aot :all}}
+             :uberjar {:aot :all
+                       ;; https://github.com/cljfx/cljfx/issues/17
+                       :injections [(javafx.application.Platform/exit)]}}
 
   :main strongbox.main
 

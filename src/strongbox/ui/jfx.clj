@@ -15,8 +15,7 @@
     [core :as core]])
   (:import
    [javafx.util Callback]
-   [javafx.scene.control TableRow]
-   [javafx.scene.control TextInputDialog Alert Alert$AlertType ButtonType]
+   [javafx.scene.control TableRow TextInputDialog Alert Alert$AlertType ButtonType]
    [javafx.stage FileChooser DirectoryChooser WindowEvent]
    [javafx.application Platform]
    [javafx.event ActionEvent]
