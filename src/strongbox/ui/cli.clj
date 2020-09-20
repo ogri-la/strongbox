@@ -36,11 +36,8 @@
 (defn-spec set-catalogue-location! nil?
   [catalogue-name keyword?]
   (core/set-catalogue-location! catalogue-name)
-  (core/download-current-catalogue)
-  (core/db-load-catalogue)
-  (core/match-installed-addons-with-catalogue)
-  (core/check-for-updates)
-  (core/save-settings)
+  ;; a full refresh is necessary for this action
+  (core/db-reload-catalogue)
   nil)
 
 ;;

@@ -247,36 +247,6 @@
    (when-let [key (:key opt-map)]
      {:accelerator key})))
 
-(defn build-catalogue-menu
-  [selected-catalogue catalogue-addon-list]
-  (when catalogue-addon-list
-    (let [rb (fn [{:keys [label name]}]
-               {:fx/type :radio-menu-item
-                :text label
-                :selected (= selected-catalogue name)
-                :toggle-group {:fx/type fx/ext-get-ref
-                               :ref ::catalogue-toggle-group}
-                :on-action (fn [_]
-                             (cli/set-catalogue-location! name))})]
-      (mapv rb catalogue-addon-list))))
-
-(defn build-theme-menu
-  "returns a menu of radio buttons that can toggle through the available themes defined in `core/themes`"
-  [selected-theme theme-map]
-  (let [rb (fn [theme-key]
-             {:fx/type :radio-menu-item
-              :text (format "%s theme" (-> theme-key name clojure.string/capitalize))
-              :selected (= selected-theme theme-key)
-              :toggle-group {:fx/type fx/ext-get-ref
-                             :ref ::theme-toggle-group}
-              :on-action (fn [_]
-                           (swap! core/state assoc-in [:cfg :gui-theme] theme-key)
-                           (core/save-settings)
-                           ;; trigger-gui-restart ...
-                           )})]
-
-    (mapv rb (keys theme-map))))
-
 (defn menu
   [label items & [opt-map]]
   (merge
@@ -454,6 +424,35 @@
 
 (def separator {:fx/type fx/ext-instance-factory
                 :create #(javafx.scene.control.SeparatorMenuItem.)})
+
+(defn build-catalogue-menu
+  [selected-catalogue catalogue-addon-list]
+  (when catalogue-addon-list
+    (let [rb (fn [{:keys [label name]}]
+               {:fx/type :radio-menu-item
+                :text label
+                :selected (= selected-catalogue name)
+                :toggle-group {:fx/type fx/ext-get-ref
+                               :ref ::catalogue-toggle-group}
+                :on-action (async-handler #(cli/set-catalogue-location! name))})]
+      (mapv rb catalogue-addon-list))))
+
+(defn build-theme-menu
+  "returns a menu of radio buttons that can toggle through the available themes defined in `core/themes`"
+  [selected-theme theme-map]
+  (let [rb (fn [theme-key]
+             {:fx/type :radio-menu-item
+              :text (format "%s theme" (-> theme-key name clojure.string/capitalize))
+              :selected (= selected-theme theme-key)
+              :toggle-group {:fx/type fx/ext-get-ref
+                             :ref ::theme-toggle-group}
+              :on-action (fn [_]
+                           (swap! core/state assoc-in [:cfg :gui-theme] theme-key)
+                           (core/save-settings)
+                           ;; trigger-gui-restart ...
+                           )})]
+
+    (mapv rb (keys theme-map))))
 
 (defn menu-bar
   [{:keys [fx/context]}]
