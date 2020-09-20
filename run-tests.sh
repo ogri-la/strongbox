@@ -1,13 +1,19 @@
 #!/bin/bash
-# (always ratchet threshold upwards)
+set -e
 
-set -ex
+# always ratchet *upwards*
+fail_threshold=80
 
 # this file can't live in src/strongbox because lein-cloverage can't be found during dev.
 # so we copy it in and destroy it afterwards
 cp cloverage.clj src/strongbox/cloverage.clj
 
-lein cloverage --runner "strongbox" --fail-threshold 80 --html || {
+function finish {
+  rm src/strongbox/cloverage.clj
+}
+trap finish EXIT
+
+lein cloverage --runner "strongbox" --fail-threshold "$fail_threshold" --html || {
     retval="$?"
     # 1 for failed tests
     # 253 for failed coverage
@@ -18,5 +24,3 @@ lein cloverage --runner "strongbox" --fail-threshold 80 --html || {
     fi
     exit "$retval"
 }
-
-rm src/strongbox/cloverage.clj
