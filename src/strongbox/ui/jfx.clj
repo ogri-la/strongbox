@@ -383,6 +383,9 @@
                                                   :text "strongbox"}
                                                  {:fx/type :text
                                                   :text (format "version %s" (core/strongbox-version))}
+                                                 {:fx/type :text
+                                                  :text (format "version %s is now available to download!" (core/latest-strongbox-release))
+                                                  :visible (not (core/latest-strongbox-version?))}
                                                  {:fx/type :hyperlink
                                                   :text "https://github.com/ogri-la/strongbox"}
                                                  {:fx/type :text
@@ -513,11 +516,7 @@
 
 (defn installed-addons-menu-bar
   [{:keys [fx/context]}]
-  (let [;; temporary
-        refresh-button {:fx/type :button
-                        :text "Refresh"
-                        :on-action (async-handler core/refresh)}
-        update-all-button {:fx/type :button
+  (let [update-all-button {:fx/type :button
                            :text "Update all"
                            :on-action (async-handler core/install-update-all)}
 
@@ -545,13 +544,12 @@
         update-app-button {:fx/type :button
                            :text (str "Update Available: " (core/latest-strongbox-release))
                            :on-action (handler #(utils/browse-to "https://github.com/ogri-la/strongbox/releases"))
-                           :visible (not (core/latest-strongbox-version?))}
-        ]
+                           :visible (not (core/latest-strongbox-version?))}]
+
     {:fx/type :h-box
      :padding 10
      :spacing 10
-     :children [refresh-button
-                update-all-button
+     :children [update-all-button
                 wow-dir-dropdown
                 game-track-dropdown
                 update-app-button]}))

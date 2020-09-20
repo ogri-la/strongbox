@@ -98,7 +98,6 @@
     (if (fresh-cache-file-exists? output-file)
       (do
         (debug "cache hit for:" url "(" output-file ")")
-        (Thread/sleep 10)
         output-file)
 
       ;; ... otherwise, we must sing and dance
