@@ -270,6 +270,7 @@
       (swap! state update-in [:cfg :addon-dir-list] conj stub))
     nil))
 
+;; see strongbox.ui.cli/set-addon-dir! 
 (defn-spec set-addon-dir! nil?
   "adds a new :addon-dir to :addon-dir-list (if it doesn't already exist) and marks it as selected"
   [addon-dir ::sp/addon-dir]
@@ -1179,7 +1180,12 @@
   (init-dirs)
   (prune-http-cache!)
   (load-settings! cli-opts)
-  (watch-for-addon-dir-change) ;; this is causing a race condition/double update with gui
+
+  ;; I'm coming to the opinion that these two are only here because I'm lazy and calling (refresh) is convenient
+  ;; I've also been interested in separating UI concerns from core logic for a while
+  ;; shifting this logic to ui/cli.clj
+
+  ;;(watch-for-addon-dir-change) ;; this is causing a race condition/double update with gui
   (watch-for-catalogue-change)
 
   state)

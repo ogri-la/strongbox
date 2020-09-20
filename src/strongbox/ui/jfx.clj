@@ -8,6 +8,7 @@
     [api :as fx]]
    [cljfx.css :as css]
    ;;[clojure.core.cache :as cache]
+   [strongbox.ui.cli :as cli]
    [strongbox
     [logging :as logging]
     [utils :as utils]
@@ -332,8 +333,7 @@
   (when-let [dir (dir-chooser ev)]
     (when (fs/directory? dir)
       ;; doesn't appear possible to select a non-directory with javafx
-      (core/set-addon-dir! dir)
-      (core/save-settings))))
+      (cli/set-addon-dir! dir))))
 
 ;; todo: reconcile this with the on-close-request handler in the stage
 (defn exit-handler
@@ -459,7 +459,7 @@
 (defn menu-bar
   [{:keys [fx/context]}]
   (let [file-menu [(menu-item "_New addon directory" (event-handler wow-dir-picker) {:key "Ctrl+N"})
-                   (menu-item "Remove addon directory" (async-handler core/remove-addon-dir!))
+                   (menu-item "Remove addon directory" (async-handler cli/remove-addon-dir!))
                    separator
                    (menu-item "E_xit" exit-handler {:key "Ctrl+Q"})]
 
@@ -532,7 +532,7 @@
                           :on-value-changed (async-event-handler
                                              (fn [new-addon-dir]
                                                ;; dosync doesn't work here, stop trying it
-                                               (core/set-addon-dir! new-addon-dir)
+                                               (cli/set-addon-dir! new-addon-dir)
                                                (println "done setting addon dir")))
                           :items (mapv :addon-dir addon-dir-map-list)}
 
