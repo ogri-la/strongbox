@@ -542,7 +542,10 @@
                                                   (core/refresh)))
                              :items ["retail" "classic"]}
 
-        ;; todo: add upgrade strongbox button
+        update-app-button {:fx/type :button
+                           :text (str "Update Available: " (core/latest-strongbox-release))
+                           :on-action (handler #(utils/browse-to "https://github.com/ogri-la/strongbox/releases"))
+                           :visible (not (core/latest-strongbox-version?))}
         ]
     {:fx/type :h-box
      :padding 10
@@ -550,7 +553,8 @@
      :children [refresh-button
                 update-all-button
                 wow-dir-dropdown
-                game-track-dropdown]}))
+                game-track-dropdown
+                update-app-button]}))
 
 (defn table-column
   [column-data]
@@ -740,7 +744,6 @@
         all-matching-template "all installed addons found in catalogue."
         catalogue-count-template "%s addons in catalogue."
 
-        ;;ia (:installed-addon-list state)
         ia (fx/sub-val context get-in [:app-state :installed-addon-list])
 
         uia (filter :matched? ia)
@@ -813,18 +816,9 @@
                                             (swap! gui-state fx/swap-context assoc :style style)))
 
         update-gui-state (fn [new-state]
-                           ;;@(fx/on-fx-thread ;; doesn't work
-                           ;;(future ;; also doesn't work (why would it?)
                            (swap! gui-state fx/swap-context assoc :app-state new-state))
 
-
-        ;; when :selected-addon-dir changes the app state is updated then this watcher is triggered, updating the gui state.
-        ;; a watcher in the *app* looking at :selected-addon-dir is also triggered. it causes a refresh.
-        ;; a refresh causes many changes to app state, each change causes a change to the *gui* state.
-
         ;; the installed-addon-list-table fn will update itself from the *gui* state when the installed-addon-list data changes.
-
-
         _ (core/state-bind [] update-gui-state)
 
         ;; async search. should be able to get this effect with idiomatic cljs use
