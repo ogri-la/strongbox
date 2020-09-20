@@ -1142,18 +1142,6 @@
 
 ;; init
 
-(defn watch-for-addon-dir-change
-  "when the current addon directory changes, the list of installed addons should be re-read"
-  []
-  (state-bind [:cfg :selected-addon-dir] (fn [_]
-                                           ;;(future ;; this seems to prevent it, but it can't stay.
-                                           (refresh))))
-
-(defn watch-for-catalogue-change
-  "when the catalogue changes, the db should be rebuilt"
-  []
-  (state-bind [:cfg :selected-catalogue] (fn [_] (db-reload-catalogue))))
-
 (defn-spec set-paths! nil?
   []
   (swap! state assoc :paths (generate-path-map))
@@ -1180,13 +1168,6 @@
   (init-dirs)
   (prune-http-cache!)
   (load-settings! cli-opts)
-
-  ;; I'm coming to the opinion that these two are only here because I'm lazy and calling (refresh) is convenient
-  ;; I've also been interested in separating UI concerns from core logic for a while
-  ;; shifting this logic to ui/cli.clj
-
-  ;;(watch-for-addon-dir-change) ;; this is causing a race condition/double update with gui
-  (watch-for-catalogue-change)
 
   state)
 

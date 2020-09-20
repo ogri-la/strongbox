@@ -86,7 +86,8 @@
                 ":odd:selected" {:-fx-background-color "-fx-selection-bar"}
                 ":odd:selected:hover" {:-fx-background-color "-fx-selection-bar"}
 
-                ".unsteady" {:-fx-background-color (colour :unsteady)}}
+                ".unsteady" {;; '!important' so that it takes precedence over .updateable addons
+                             :-fx-background-color (str (colour :unsteady) " !important")}}
 
 
                ;; installed-addons table
@@ -256,8 +257,7 @@
                 :toggle-group {:fx/type fx/ext-get-ref
                                :ref ::catalogue-toggle-group}
                 :on-action (fn [_]
-                             (core/set-catalogue-location! name)
-                             (core/save-settings))})]
+                             (cli/set-catalogue-location! name))})]
       (mapv rb catalogue-addon-list))))
 
 (defn build-theme-menu
@@ -340,13 +340,12 @@
   [ev]
   (if (core/get-state :in-repl?)
     (when-let [stage (try
-                       (-> ev 
+                       (-> ev
                            .getTarget
                            .getParentPopup
                            .getOwnerWindow
                            .getScene
-                           .getWindow
-                           )
+                           .getWindow)
                        (catch NullPointerException npe
                          (println "cannot use Ctrl-Q in repl :(")))]
       (.fireEvent stage (WindowEvent. stage WindowEvent/WINDOW_CLOSE_REQUEST)))
@@ -600,13 +599,9 @@
 
 (defn installed-addons-table
   [{:keys [fx/context]}]
-  ;;(dosync
-  ;; (fx/sub-val context get-in [:app-state :selected-addon-dir])
-  ;; (fx/sub-val context get-in [:app-state :installed-addon-list]))
-
-  (let [_ (fx/sub-val context get-in [:app-state :unsteady-addons])
-        ;;_ (fx/sub-val context get-in [:app-state :selected-addon-dir])
-        row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
+  ;; re-render table when unsteady addons changes
+  (fx/sub-val context get-in [:app-state :unsteady-addons])
+  (let [row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
 
         iface-version (fn [row]
                         (some-> row :interface-version str utils/interface-version-to-game-version))

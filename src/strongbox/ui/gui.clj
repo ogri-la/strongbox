@@ -346,8 +346,7 @@
                             ;; positioned here so the dropdown change is shown immediately
                             (ss/invoke-later
                              (ss/selection! wow-game-track (-> new-addon-dir core/addon-dir-map :game-track kw2str))))
-                          (cli/set-addon-dir! new-addon-dir)
-                          ))))
+                          (cli/set-addon-dir! new-addon-dir)))))
 
         ;; called when the selected addon directory changes (like via `cli/set-addon-dir!`)
         _ (state-bind [:cfg :selected-addon-dir]
@@ -876,8 +875,7 @@
      (sb/b-do [val]
               (when val ;; hrm, we're getting two events here, one where the value is nil ...
                 (async (fn []
-                         (core/set-catalogue-location! (-> val ss/user-data :name))
-                         (core/save-settings))))))
+                         (cli/set-catalogue-location! (-> val ss/user-data :name)))))))
 
     ;; application state updates menu selection
     (core/state-bind [:cfg :selected-catalogue]
