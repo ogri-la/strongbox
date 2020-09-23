@@ -304,21 +304,15 @@
       ;; doesn't appear possible to select a non-directory with javafx
       (cli/set-addon-dir! dir))))
 
-;; todo: reconcile this with the on-close-request handler in the stage
 (defn exit-handler
-  [ev]
+  [& [_]]
   (if (core/get-state :in-repl?)
-    (when-let [stage (try
-                       (-> ev
-                           .getTarget
-                           .getParentPopup
-                           .getOwnerWindow
-                           .getScene
-                           .getWindow)
-                       (catch NullPointerException npe
-                         (println "cannot use Ctrl-Q in repl :(")))]
-      (.fireEvent stage (WindowEvent. stage WindowEvent/WINDOW_CLOSE_REQUEST)))
-    (System/exit 0)))
+    (do
+      (debug "exit handler, in repl, just closing window")
+      (swap! core/state assoc :showing? false))
+    (do
+      (debug "exit handler, no repl, quitting app")
+      (Platform/runLater #(do (Platform/exit) (System/exit 0))))))
 
 (defn switch-tab-handler
   [tab-idx]
@@ -766,17 +760,12 @@
 
   (let [;; re-render gui whenever style state changes
         _ (fx/sub-val context get :style) ;; todo: remove outside of dev?
+        showing? (fx/sub-val context get-in [:app-state :showing?] true)
         theme (fx/sub-val context get-in [:app-state :cfg :gui-theme])]
 
     {:fx/type :stage
-     :showing true
-     :on-close-request (fn [ev]
-                         ;; called on ctrl-c
-                         ;;(println "got ev" ev)
-                         ;;(println (bean ev))
-                         (when-not (core/get-state :in-repl?)
-                           (System/exit 0)))
-
+     :showing showing?
+     :on-close-request exit-handler
      :title "strongbox"
      :width 1024
      :height 768
@@ -857,4 +846,5 @@
 (defn stop
   []
   (info "stopping gui") ;; nothing needs to happen ... yet?
+  (exit-handler)
   nil)
