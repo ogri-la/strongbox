@@ -173,6 +173,9 @@
    ;; the root swing window
    :gui nil
 
+   ;; jfx ui showing?
+   :gui-showing? true
+
    ;; set to anything other than `nil` to have `main.clj` restart the gui
    :gui-restart-flag nil
 
@@ -232,6 +235,11 @@
    :get-etag #(get-state :etag-db %) ;; do this instead
    :cache-dir (paths :cache-dir)})
 
+(defn-spec add-cleanup-fn nil?
+  [f fn?]
+  (swap! state update-in [:cleanup] conj f)
+  nil)
+
 (defn-spec state-bind nil?
   "executes given callback function when value at path in state map changes. 
   trigger is discarded if old and new values are identical"
@@ -251,8 +259,7 @@
                      (callback new-state)
                      (catch Exception e
                        (error e "error caught in watch! your callback *must* be catching these or the thread dies silently:" path))))))
-
-    (swap! state update-in [:cleanup] conj rmwatch)
+    (add-cleanup-fn rmwatch)
     nil))
 
 ;; addon dirs

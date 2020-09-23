@@ -21,7 +21,7 @@
    [javafx.event ActionEvent]
    [javafx.scene Node]))
 
-(def style
+(defn style []
   (css/register
    ::style
    (let [generate-style
@@ -306,13 +306,15 @@
 
 (defn exit-handler
   [& [_]]
-  (if (core/get-state :in-repl?)
-    (do
-      (debug "exit handler, in repl, just closing window")
-      (swap! core/state assoc :showing? false))
-    (do
-      (debug "exit handler, no repl, quitting app")
-      (Platform/runLater #(do (Platform/exit) (System/exit 0))))))
+  (cond
+    (:in-repl? @core/state) (swap! core/state assoc :gui-showing? false)
+    (-> timbre/*config* :testing?) (swap! core/state assoc :gui-showing? false)
+    ;; 2020-08-08: `ss/invoke-later` was keeping the old window around when running outside of repl.
+    ;; `ss/invoke-soon` seems to fix that.
+    ;;  - http://daveray.github.io/seesaw/seesaw.invoke-api.html
+    :else (Platform/runLater (fn []
+                               (Platform/exit)
+                               (System/exit 0)))))
 
 (defn switch-tab-handler
   [tab-idx]
@@ -522,8 +524,7 @@
                           :on-value-changed (async-event-handler
                                              (fn [new-addon-dir]
                                                ;; dosync doesn't work here, stop trying it
-                                               (cli/set-addon-dir! new-addon-dir)
-                                               (println "done setting addon dir")))
+                                               (cli/set-addon-dir! new-addon-dir)))
                           :items (mapv :addon-dir addon-dir-map-list)}
 
         game-track-dropdown {:fx/type :combo-box
@@ -759,8 +760,8 @@
   [{:keys [fx/context]}]
 
   (let [;; re-render gui whenever style state changes
-        _ (fx/sub-val context get :style) ;; todo: remove outside of dev?
-        showing? (fx/sub-val context get-in [:app-state :showing?] true)
+        style (fx/sub-val context get :style) ;; todo: remove outside of dev?
+        showing? (fx/sub-val context get-in [:app-state :gui-showing?])
         theme (fx/sub-val context get-in [:app-state :cfg :gui-theme])]
 
     {:fx/type :stage
@@ -795,11 +796,12 @@
   (info "starting gui")
   (let [state-template {:app-state nil,
                         :log-message-list []
-                        :style style}
+                        :style (style)}
         gui-state (atom (fx/create-context state-template)) ;; cache/lru-cache-factory))
 
         _ (add-watch #'style :refresh-app (fn [_ _ _ _]
-                                            (swap! gui-state fx/swap-context assoc :style style)))
+                                            (swap! gui-state fx/swap-context assoc :style (style))))
+        _ (core/add-cleanup-fn #(remove-watch core/state :refresh-app))
 
         update-gui-state (fn [new-state]
                            (swap! gui-state fx/swap-context assoc :app-state new-state))
@@ -825,6 +827,13 @@
                                                       ;; For functions in `:fx/type` values, pass
                                                       ;; context from option map to these functions
                                                       (fx/fn->lifecycle-with-context %))})
+        ;;_ (core/add-cleanup-fn #(fx/unmount-renderer gui-state renderer))
+        _ (swap! core/state assoc :disable-gui (fn []
+                                                 (debug "unmounting renderer")
+                                                 (fx/unmount-renderer gui-state renderer)
+                                                 ;; the slightest of delays allows any final rendering to happen before the exit-handler is called.
+                                                 ;; only affects testing from the repl apparently and not running the tests from `run-tests.sh`
+                                                 (Thread/sleep 25)))
 
         ;; on first load, because the catalogue hasn't been loaded
         ;; and because the search-field-input doesn't change,
@@ -837,14 +846,21 @@
     (fx/mount-renderer gui-state renderer)
     (init-notice-logger! gui-state)
 
-    (future
-      (core/refresh)
-      (bump-search))
+    ;; refresh the app but kill it if app is closed before it finishes.
+    ;; if we don't, we may leave windows hanging around.
+    ;; see `(mapv (fn [_] (test :jfx)) (range 0 100))`
+    (let [kick (future
+                 (core/refresh)
+                 (bump-search))]
+      (core/add-cleanup-fn #(future-cancel kick)))
 
     renderer))
 
 (defn stop
   []
   (info "stopping gui") ;; nothing needs to happen ... yet?
+  (when-let [unmount-renderer (:disable-gui @core/state)]
+    ;; only affects running tests from repl apparently
+    (unmount-renderer))
   (exit-handler)
   nil)
