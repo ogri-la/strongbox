@@ -174,7 +174,7 @@
    :gui nil
 
    ;; jfx ui showing?
-   :gui-showing? true
+   :gui-showing? false
 
    ;; set to anything other than `nil` to have `main.clj` restart the gui
    :gui-restart-flag nil
@@ -764,6 +764,7 @@
                :matched :addon/toc+summary+match)]
   (let [expanded-addon (when (:matched? addon)
                          (expand-summary-wrapper addon))
+        _ (debug "done expanding")
         addon (or expanded-addon addon) ;; expanded addon may still be nil
         {:keys [installed-version version]} addon
         update? (boolean

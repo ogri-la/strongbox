@@ -50,6 +50,7 @@
   (let [opts (:cli-opts @core/state)]
     (case (:ui opts)
       :cli (cli/stop)
+      :gui (gui/stop)
       :gui2 (jfx/stop)
       (gui/stop))
     (core/stop core/state)))
@@ -67,7 +68,7 @@
     :cli (cli/start cli-opts)
     :gui (gui/start)
     :gui2 (jfx/start)
-    (jfx/start))
+    (gui/start))
 
   (watch-for-gui-restart)
 

@@ -843,6 +843,7 @@
                       (when-not (:search-field-input core/state)
                         (swap! core/state assoc :search-field-input "")))]
 
+    (swap! core/state assoc :gui-showing? true)
     (fx/mount-renderer gui-state renderer)
     (init-notice-logger! gui-state)
 
