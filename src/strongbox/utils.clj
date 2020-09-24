@@ -632,3 +632,22 @@
   [url ::sp/url]
   (future-call #((find-browser) url))
   nil)
+
+(defn source-to-href-label-fn
+  "if a source for the addon can be derived, return a label suitable for the link"
+  [url]
+  (let [url-obj (try
+                  (java.net.URL. url)
+                  (catch NullPointerException _
+                    nil)
+                  (catch java.net.MalformedURLException _
+                    nil))]
+    (when url-obj
+      (case (.getHost url-obj)
+        "www.curseforge.com" "curseforge"
+        "www.wowinterface.com" "wowinterface"
+        "www.github.com" "github"
+        "www.tukui.org" (if (= (.getPath url-obj) "/classic-addons.php")
+                          "tukui-classic"
+                          "tukui")
+        nil))))

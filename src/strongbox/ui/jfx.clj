@@ -551,15 +551,8 @@
 (defn table-column
   [column-data]
   (let [column-name (:text column-data)
-
         default-cvf (fn [row] (get row (keyword column-name)))
-        new-cvf (:cell-value-factory column-data)
-        final-cvf (if (and (some? new-cvf)
-                           (keyword? (:cell-value-factory column-data)))
-                    ;; keywords have to be wrapped in a function to be coerced to a javafx callback!
-                    #(get % (:cell-value-factory column-data))
-                    (or new-cvf default-cvf))
-        final-cvf {:cell-value-factory final-cvf}
+        final-cvf {:cell-value-factory (get column-data :cell-value-factory default-cvf)}
 
         final-style {:style-class (into ["table-cell"
                                          (lower-case (str column-name "-column"))]
@@ -569,28 +562,19 @@
                  :min-width 80}]
     (merge default column-data final-cvf final-style)))
 
-(defn source-to-href-fn
-  "if a source for the addon can be derived, return a hyperlink"
+(defn -href-to-hyperlink
   [row]
-  (when-let [source (:url row)]
-    (let [url (java.net.URL. source)]
-      (case (.getHost url)
-        "www.curseforge.com" "curseforge"
-        "www.wowinterface.com" "wowinterface"
-        "github.com" "github"
-        "www.tukui.org" (if (= (.getPath url) "/classic-addons.php")
-                          "tukui-classic"
-                          "tukui")
-        "???"))))
+  (if-let [label (utils/source-to-href-label-fn (:url row))]
+    {:fx/type :hyperlink
+     :on-action (handler #(utils/browse-to (:url row)))
+     :text (str "↪ " label)}
+
+    {:fx/type :text
+     :text ""}))
 
 (defn href-to-hyperlink
   [row]
-  (let [href (source-to-href-fn row)
-        widget {:fx/type :hyperlink
-                :on-action (handler #(utils/browse-to (:url row)))
-                :text (when href
-                        (str "↪ " href))}]
-    (-> widget fx/create-component fx/instance)))
+  (-> row -href-to-hyperlink fx/create-component fx/instance))
 
 (defn installed-addons-table
   [{:keys [fx/context]}]

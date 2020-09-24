@@ -2,7 +2,7 @@
   (:require
    ;;[clj-http.fake :refer [with-fake-routes-in-isolation]]
    [clojure.test :refer [deftest testing is use-fixtures]]
-   ;;[strongbox.ui.jfx :as jfx]
+   [strongbox.ui.jfx :as jfx]
    ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [strongbox
     [main :as main]
@@ -15,3 +15,29 @@
   (testing "the gui can be started and stopped"
     (with-running-app+opts {:ui :gui2}
       (is (core/get-state :gui-showing?)))))
+
+(deftest href-to-hyperlink
+  (testing "urls are converted to component descriptions. bad urls are safely handled"
+    (let [bad-text {:fx/type :text :text ""}
+          cases [[{} bad-text]
+                 [{:url ""} bad-text]
+                 [{:url "http"} bad-text]
+                 [{:url "http://"} bad-text]
+                 [{:url "http://foo"} bad-text]
+                 [{:url "http://foo.bar"} bad-text]
+
+                 [{:url "https://www.curseforge.com/foo/bar"} {:fx/type :hyperlink :text "↪ curseforge"}]
+                 [{:url "https://www.wowinterface.com/foo/bar"} {:fx/type :hyperlink :text "↪ wowinterface"}]
+                 [{:url "https://www.github.com/foo/bar"} {:fx/type :hyperlink :text "↪ github"}]
+                 [{:url "https://www.tukui.org/foo/bar"} {:fx/type :hyperlink :text "↪ tukui"}]
+                 [{:url "https://www.tukui.org/classic-addons.php"} {:fx/type :hyperlink :text "↪ tukui-classic"}]]]
+      (doseq [[given expected] cases]
+        (is (= expected (dissoc (jfx/-href-to-hyperlink given) :on-action)))))))
+
+(deftest table-column
+  (testing "table-column data is converted to component descriptions"
+    (let [cases [[{} {:fx/type :table-column, :min-width 80, :style-class ["table-cell" "-column"]}]
+                 [{:text "foo"} {:fx/type :table-column, :text "foo", :min-width 80, :style-class ["table-cell" "foo-column"]}]
+                 [{:style-class ["foo"]} {:fx/type :table-column, :min-width 80, :style-class ["table-cell" "-column" "foo"]}]]]
+      (doseq [[given expected] cases]
+        (is (= expected (dissoc (jfx/table-column given) :cell-value-factory)))))))
