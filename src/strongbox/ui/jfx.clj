@@ -371,22 +371,25 @@
     (core/export-user-catalogue-addon-list-safely (-> file-obj .getAbsolutePath str))
     nil))
 
+(defn -about-strongbox-dialog
+  []
+  {:fx/type :v-box
+   :children [{:fx/type :text
+               :text "strongbox"}
+              {:fx/type :text
+               :text (format "version %s" (core/strongbox-version))}
+              {:fx/type :text
+               :text (format "version %s is now available to download!" (core/latest-strongbox-release))
+               :visible (not (core/latest-strongbox-version?))}
+              {:fx/type :hyperlink
+               :text "https://github.com/ogri-la/strongbox"}
+              {:fx/type :text
+               :text "AGPL v3"}]})
+
 (defn about-strongbox-dialog
   [event]
-  (let [content (fx/create-component {:fx/type :v-box
-                                      :children [{:fx/type :text
-                                                  :text "strongbox"}
-                                                 {:fx/type :text
-                                                  :text (format "version %s" (core/strongbox-version))}
-                                                 {:fx/type :text
-                                                  :text (format "version %s is now available to download!" (core/latest-strongbox-release))
-                                                  :visible (not (core/latest-strongbox-version?))}
-                                                 {:fx/type :hyperlink
-                                                  :text "https://github.com/ogri-la/strongbox"}
-                                                 {:fx/type :text
-                                                  :text "AGPL v3"}]})]
-    (alert event "" {:type :info :content (fx/instance content)})
-    nil))
+  (alert event "" {:type :info :content (fx/instance (fx/create-component (-about-strongbox-dialog)))})
+  nil)
 
 (defn remove-selected-confirmation-handler
   [event]
@@ -715,7 +718,6 @@
 (defn status-bar
   "this is the litle strip of text at the bottom of the application."
   [{:keys [fx/context]}]
-  []
   (let [num-matching-template "%s of %s installed addons found in catalogue."
         all-matching-template "all installed addons found in catalogue."
         catalogue-count-template "%s addons in catalogue."

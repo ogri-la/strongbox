@@ -14,7 +14,9 @@
 (deftest gui-init
   (testing "the gui can be started and stopped"
     (with-running-app+opts {:ui :gui2}
-      (is (core/get-state :gui-showing?)))))
+      (is (core/get-state :gui-showing?))
+      ;; give time for the init to finish
+      (Thread/sleep 1000))))
 
 (deftest href-to-hyperlink
   (testing "urls are converted to component descriptions. bad urls are safely handled"
@@ -41,3 +43,18 @@
                  [{:style-class ["foo"]} {:fx/type :table-column, :min-width 80, :style-class ["table-cell" "-column" "foo"]}]]]
       (doseq [[given expected] cases]
         (is (= expected (dissoc (jfx/table-column given) :cell-value-factory)))))))
+
+(deftest about-strongbox
+  (testing "'about' dialog is correct and new version text is correctly hidden"
+    (with-running-app
+      (let [expected 
+            {:children [{:text "strongbox", :fx/type :text}
+                        {:text "version 3.0.0-unreleased", :fx/type :text}
+                        {:text "version 0.0.0 is now available to download!",
+                         :visible false,
+                         :fx/type :text}
+                        {:text "https://github.com/ogri-la/strongbox",
+                         :fx/type :hyperlink}
+                        {:text "AGPL v3", :fx/type :text}],
+             :fx/type :v-box}]
+        (is (= expected (jfx/-about-strongbox-dialog)))))))
