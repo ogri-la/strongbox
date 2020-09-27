@@ -10,6 +10,7 @@ cp cloverage.clj src/strongbox/cloverage.clj
 
 function finish {
   rm src/strongbox/cloverage.clj
+  lein clean
 }
 trap finish EXIT
 

@@ -277,3 +277,12 @@
 (s/def :db/installed-addon :addon/installed) ;; alias :(
 (s/def :db/addon-catalogue-match (s/or :no-match nil?
                                        :match (s/keys :req-un [:db/idx :db/key :db/installed-addon ::matched? :db/catalogue-match])))
+
+;; javafx, cljfx, gui2
+
+(s/def :javafx/action-event #(instance? javafx.event.ActionEvent %))
+
+(s/def :gui/text string?)
+(s/def :gui/cell-value-factory ifn?)
+(s/def :gui/style-class (s/coll-of string? :kind vector?))
+(s/def :gui/column-data (s/keys :opt-un [:gui/text :gui/cell-value-factory :gui/style-class]))

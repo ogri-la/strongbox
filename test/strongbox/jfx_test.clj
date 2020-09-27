@@ -22,8 +22,8 @@
   (testing "urls are converted to component descriptions. bad urls are safely handled"
     (let [bad-text {:fx/type :text :text ""}
           cases [[{} bad-text]
-                 [{:url ""} bad-text]
-                 [{:url "http"} bad-text]
+                 ;;[{:url ""} bad-text] ;; caught by spec
+                 ;;[{:url "http"} bad-text] ;; caught by spec
                  [{:url "http://"} bad-text]
                  [{:url "http://foo"} bad-text]
                  [{:url "http://foo.bar"} bad-text]
@@ -47,7 +47,7 @@
 (deftest about-strongbox
   (testing "'about' dialog is correct and new version text is correctly hidden"
     (with-running-app
-      (let [expected 
+      (let [expected
             {:children [{:text "strongbox", :fx/type :text}
                         {:text "version 3.0.0-unreleased", :fx/type :text}
                         {:text "version 0.0.0 is now available to download!",

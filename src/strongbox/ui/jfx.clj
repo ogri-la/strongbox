@@ -2,14 +2,18 @@
   (:require
    [me.raynes.fs :as fs]
    [clojure.string :refer [lower-case join]]
-   [taoensso.timbre :as timbre :refer [debug info warn error spy]]
+   ;; cljs has problems with infinite recursion.
+   [taoensso.timbre :as timbre :refer [spy]] ;; debug info warn error spy]] 
    [cljfx.ext.table-view :as fx.ext.table-view]
    [cljfx
     [api :as fx]]
    [cljfx.css :as css]
+   [clojure.spec.alpha :as s]
+   [orchestra.core :refer [defn-spec]]
    ;;[clojure.core.cache :as cache]
    [strongbox.ui.cli :as cli]
    [strongbox
+    [specs :as sp]
     [logging :as logging]
     [utils :as utils]
     [core :as core]])
@@ -18,10 +22,13 @@
    [javafx.scene.control TableRow TextInputDialog Alert Alert$AlertType ButtonType]
    [javafx.stage FileChooser DirectoryChooser WindowEvent]
    [javafx.application Platform]
-   [javafx.event ActionEvent]
    [javafx.scene Node]))
 
-(defn style []
+(defn-spec style map?
+  "generates javafx css definitions for the different themes.
+  if editor is connected to a running repl session then modifying
+  the css will reload the running GUI for immediate feedback."
+  []
   (css/register
    ::style
    (let [generate-style
@@ -154,17 +161,13 @@
       (generate-style :light)
       (generate-style :dark)))))
 
-(defn get-root
-  [event]
-  (try
-    (-> event .getTarget .getScene .getRoot)
-    (catch java.lang.IllegalArgumentException _
-      (-> event .getTarget .getParentPopup .getOwnerWindow .getScene .getRoot))))
+
 ;;
 
 
 (defn file-chooser
-  [^ActionEvent event & [opt-map]]
+  "prompt user to select a file"
+  [event & [opt-map]]
   (let [opt-map (or opt-map {})
         default-open-type :open
         open-type (get opt-map :type default-open-type)
@@ -176,10 +179,11 @@
                           (case open-type
                             :save (.showSaveDialog chooser window)
                             (.showOpenDialog chooser window)))]
-      file-obj)))
+      (-> file-obj .getAbsolutePath str))))
 
-(defn dir-chooser
-  [^ActionEvent event]
+(defn-spec dir-chooser (s/or :ok ::sp/extant-dir, :noop nil?)
+  "prompt user to select a directory"
+  [event :javafx/action-event]
   (let [;; valid for a menu-item
         window (-> event .getTarget .getParentPopup .getOwnerWindow .getScene .getWindow)
         chooser (doto (DirectoryChooser.)
@@ -188,25 +192,13 @@
                      (.showDialog chooser window))]
       (str dir))))
 
-(comment "this works, but where does the value go? to an event listener?"
-         (defn text-input
-           [prompt]
-           @(fx/on-fx-thread
-             (fx/create-component
-              {:fx/type :text-input-dialog
-               ;;:prompt-text prompt
-               :header-text "header text" ;;prompt
-               :showing true
-               :content-text "content text"
-               :title "title"}))))
-
-(defn text-input
-  [event prompt]
-  (let [;;window (-> event .getTarget .getParentPopup .getOwnerWindow .getScene .getWindow)
-        widget (doto (TextInputDialog.)
-                 (.setTitle "Title")
-                 (.setHeaderText "Header Text")
-                 (.setContentText "content text"))
+(defn-spec text-input (s/or :ok string? :noop nil?)
+  "prompt user to enter text"
+  [prompt string?]
+  (let [widget (doto (TextInputDialog.)
+                 (.setTitle prompt)
+                 (.setHeaderText nil)
+                 (.setContentText prompt))
         optional-val @(fx/on-fx-thread
                        (.showAndWait widget))]
     (when (and (.isPresent optional-val)
@@ -214,6 +206,9 @@
       (.get optional-val))))
 
 (defn alert
+  "displays an alert dialog to the user with varying button combinations they can press.
+  the result object is a weirdo `java.util.Optional` https://docs.oracle.com/javase/8/docs/api/java/util/Optional.html
+  whose `.get` return value is equal to the button type clicked"
   [event msg & [opt-map]]
   (let [window (-> event .getTarget .getParentPopup .getOwnerWindow .getScene .getWindow)
         alert-type-map {:warning Alert$AlertType/WARNING
@@ -257,6 +252,8 @@
      {:accelerator key})))
 
 (defn async
+  "execute given function and it's optional argument list asynchronously.
+  for example: `(async println [1 2 3])` prints \"1 2 3\" on another thread."
   ([f]
    (async f []))
   ([f arg-list]
@@ -264,47 +261,52 @@
      (try
        (apply f arg-list)
        (catch RuntimeException re
-         (error re "unhandled exception in thread"))))))
+         ;;(error re "unhandled exception in thread"))))))
+         (println "unhandled exception in thread" re))))))
 
 ;; handlers
 
-(defn async-event-handler
+(defn-spec async-event-handler fn?
   "wraps `f`, calling it with any given `args` later"
-  [f]
+  [f fn?]
   (fn [& args]
     (async f args)))
 
-(defn async-handler
+(defn-spec async-handler fn?
   "same as `async-handler` but calls `f` and ignores `args`"
-  [f]
+  [f fn?]
   (fn [& _]
     (async f)))
 
-(defn event-handler
+(defn-spec event-handler fn?
   "wraps `f`, calling it with any given `args`.
   useful for debugging, otherwise just use the function directly"
-  [f]
+  [f fn?]
   (fn [& args]
     (apply f args)))
 
-(defn handler
+(defn-spec handler fn?
   "wraps `f`, calling it but ignores any args"
-  [f]
+  [f fn?]
   (fn [& _]
     (f)))
 
-(defn donothing
-  [& [_]]
-  nil)
+(def donothing
+  "accepts any args, does nothing, returns nil.
+  good for placeholder event handlers."
+  (constantly nil))
 
-(defn wow-dir-picker
-  [ev]
-  (when-let [dir (dir-chooser ev)]
+(defn-spec wow-dir-picker nil?
+  "prompts the user to select an addon dir. 
+  if a valid addon directory is selected, calls `cli/set-addon-dir!`"
+  [event :javafx/action-event]
+  (when-let [dir (dir-chooser event)]
     (when (fs/directory? dir)
-      ;; doesn't appear possible to select a non-directory with javafx
+      ;; doesn't appear possible to select a non-directory with javafx (good)
       (cli/set-addon-dir! dir))))
 
 (defn exit-handler
+  "exit the application. if running while testing or within a repl, it just closes the window"
   [& [_]]
   (cond
     (:in-repl? @core/state) (swap! core/state assoc :gui-showing? false)
@@ -316,18 +318,23 @@
                                (Platform/exit)
                                (System/exit 0)))))
 
-(defn switch-tab-handler
-  [tab-idx]
+(defn-spec switch-tab-handler fn?
+  "returns a function that will switch the tab-pane to the tab at the given index when called"
+  [tab-idx int?]
   (fn [event]
-    (let [node ^Node (get-root event) ;;(-> event .getTarget .getParentPopup .getOwnerWindow .getScene .getRoot)
-          tabber-obj (first (.lookupAll node "#tabber"))]
-      (.select (.getSelectionModel tabber-obj) tab-idx))))
+    (if-let [node ^Node (try
+                          (-> event .getTarget .getScene .getRoot)
+                          (catch java.lang.IllegalArgumentException _
+                            (try
+                              (-> event .getTarget .getParentPopup .getOwnerWindow .getScene .getRoot)
+                              (catch NullPointerException _
+                                (println "known bug. menu has to be displayed first")))))]
+      (-> node (.lookupAll "#tabber") first .getSelectionModel (.select tab-idx)))))
 
-(defn import-addon-handler
+(defn-spec import-addon-handler nil?
   "imports an addon by parsing a URL"
-  [event]
-  (let [addon-url (text-input event "Enter URL of addon")
-
+  [event :javafx/action-event]
+  (let [addon-url (text-input "Enter URL of addon")
         fail-msg "Failed. URL must be:
   * valid
   * originate from github.com
@@ -336,7 +343,6 @@
   * asset must be a .zip file
   * zip file must be structured like an addon"
         failure #(alert event fail-msg {:type :error})
-
         warn-msg "Failed. Addon successfully added to catalogue but could not be installed."
         warning #(alert event warn-msg {:type :warning})]
     (when addon-url
@@ -346,32 +352,34 @@
         (failure))))
   nil)
 
-(defn import-addon-list-handler
+(defn-spec import-addon-list-handler nil?
   "prompts user with a file selection dialogue then imports a list of addons from the selected file"
-  [event]
+  [event :javafx/action-event]
   (when-let [;; todo: json file filter
-             file-obj (file-chooser event)]
-    (core/import-exported-file (-> file-obj .getAbsolutePath str))
-    (core/refresh)
-    nil))
+             abs-path (file-chooser event)]
+    (core/import-exported-file abs-path)
+    (core/refresh))
+  nil)
 
-(defn export-addon-list-handler
+(defn-spec export-addon-list-handler nil?
   "prompts user with a file selection dialogue then writes the current directory of addons to the selected file"
-  [event]
+  [event :javafx/action-event]
   (when-let [;; todo: json filters
-             file-obj (file-chooser event {:type :save})]
-    (core/export-installed-addon-list-safely (-> file-obj .getAbsolutePath str))
-    nil))
+             abs-path (file-chooser event {:type :save})]
+    (core/export-installed-addon-list-safely abs-path))
+  nil)
 
-(defn export-user-catalogue-handler
+(defn-spec export-user-catalogue-handler nil?
   "prompts user with a file selection dialogue then writes the user catalogue to selected file"
-  [event]
+  [event :javafx/action-event]
   (when-let [;; todo: json filters
-             file-obj (file-chooser event {:type :save})]
-    (core/export-user-catalogue-addon-list-safely (-> file-obj .getAbsolutePath str))
-    nil))
+             abs-path (file-chooser event {:type :save})]
+    (core/export-user-catalogue-addon-list-safely abs-path))
+  nil)
 
-(defn -about-strongbox-dialog
+(defn-spec -about-strongbox-dialog map?
+  "returns a description of the 'about' dialog contents.
+  separated here for testing and test coverage."
   []
   {:fx/type :v-box
    :children [{:fx/type :text
@@ -386,13 +394,16 @@
               {:fx/type :text
                :text "AGPL v3"}]})
 
-(defn about-strongbox-dialog
-  [event]
-  (alert event "" {:type :info :content (fx/instance (fx/create-component (-about-strongbox-dialog)))})
+(defn-spec about-strongbox-dialog nil?
+  "displays an informational dialog to the user about strongbox"
+  [event :javafx/action-event]
+  (alert event "" {:type :info
+                   :content (-> (-about-strongbox-dialog) fx/create-component fx/instance)})
   nil)
 
-(defn remove-selected-confirmation-handler
-  [event]
+(defn-spec remove-selected-confirmation-handler nil?
+  "prompts the user to confirm if they really want to delete those addons they just selected and clicked 'delete' on"
+  [event :javafx/action-event]
   (when-let [selected (core/get-state :selected-installed)]
     (if (utils/any (mapv :ignore? selected))
       (alert event "Selection contains ignored addons. Stop ignoring them and then delete." {:type :error})
@@ -406,29 +417,37 @@
             result (alert event "" {:content (fx/instance content)
                                     :type :confirm})]
         (when (= (.get result) ButtonType/OK)
-          (core/remove-selected))))))
+          (core/remove-selected)))))
+  nil)
 
-(defn search-results-install-handler
-  [event]
-  ;; this: switches tab, then, for each addon selected, expands summary, installs addon, calls load-installed-addons and finally refreshes;
-  ;; there will be a plodding step-wise update which is better than a blank screen and apparent hang
-  ;;(core/-install-update-these (map curseforge/expand-summary (get-state :selected-search))) ;; original approach. efficient but no feedback for user
+(defn-spec search-results-install-handler nil?
+  "this switches to the 'installed' tab, then, for each addon selected, expands summary, installs addon, calls load-installed-addons and finally refreshes;
+  this presents as a plodding step-wise update but is better than a blank screen and apparent hang"
+  [event :javafx/action-event]
+  ;; original approach. efficient but no feedback for user
+  ;; note: still true as of 2020-09?
+  ;; todo: stick this in `ui.cli`
+  ;;(core/-install-update-these (map curseforge/expand-summary (get-state :selected-search))) 
   ((switch-tab-handler INSTALLED-TAB) event)
   (doseq [selected (core/get-state :selected-search)]
     (some-> selected core/expand-summary-wrapper vector core/-install-update-these)
     (core/load-installed-addons))
-  ;;(ss/selection! (select-ui :#tbl-search-addons) nil) ;; deselect rows in search table
+  ;; deselect rows in search table
+  ;; note: don't know how to do this in jfx
+  ;;(ss/selection! (select-ui :#tbl-search-addons) nil) 
   (core/refresh))
 
 ;;
 
+(def separator
+  "horizontal rule to logically separate menu items"
+  {:fx/type fx/ext-instance-factory
+   :create #(javafx.scene.control.SeparatorMenuItem.)})
 
-(def separator {:fx/type fx/ext-instance-factory
-                :create #(javafx.scene.control.SeparatorMenuItem.)})
-
-(defn build-catalogue-menu
-  [selected-catalogue catalogue-addon-list]
-  (when catalogue-addon-list
+(defn-spec build-catalogue-menu (s/or :ok ::sp/list-of-maps :no-catalogues nil?)
+  "returns a list of radio button descriptions that can toggle through the available catalogues"
+  [selected-catalogue :catalogue/name, catalogue-location-list :catalogue/location-list]
+  (when catalogue-location-list
     (let [rb (fn [{:keys [label name]}]
                {:fx/type :radio-menu-item
                 :text label
@@ -436,11 +455,11 @@
                 :toggle-group {:fx/type fx/ext-get-ref
                                :ref ::catalogue-toggle-group}
                 :on-action (async-handler #(cli/set-catalogue-location! name))})]
-      (mapv rb catalogue-addon-list))))
+      (mapv rb catalogue-location-list))))
 
-(defn build-theme-menu
-  "returns a menu of radio buttons that can toggle through the available themes defined in `core/themes`"
-  [selected-theme theme-map]
+(defn-spec build-theme-menu ::sp/list-of-maps
+  "returns a list of radio button descriptions that can toggle through the available themes defined in `core/themes`"
+  [selected-theme ::sp/gui-theme, theme-map map?]
   (let [rb (fn [theme-key]
              {:fx/type :radio-menu-item
               :text (format "%s theme" (-> theme-key name clojure.string/capitalize))
@@ -449,13 +468,11 @@
                              :ref ::theme-toggle-group}
               :on-action (fn [_]
                            (swap! core/state assoc-in [:cfg :gui-theme] theme-key)
-                           (core/save-settings)
-                           ;; trigger-gui-restart ...
-                           )})]
-
+                           (core/save-settings))})]
     (mapv rb (keys theme-map))))
 
 (defn menu-bar
+  "returns a description of the menu at the top of the application"
   [{:keys [fx/context]}]
   (let [file-menu [(menu-item "_New addon directory" (event-handler wow-dir-picker) {:key "Ctrl+N"})
                    (menu-item "Remove addon directory" (async-handler cli/remove-addon-dir!))
@@ -513,6 +530,7 @@
                     (menu "Help" help-menu)]}}))
 
 (defn installed-addons-menu-bar
+  "returns a description of the installed-addons tab-pane menu"
   [{:keys [fx/context]}]
   (let [update-all-button {:fx/type :button
                            :text "Update all"
@@ -551,8 +569,9 @@
                 game-track-dropdown
                 update-app-button]}))
 
-(defn table-column
-  [column-data]
+(defn-spec table-column map?
+  "returns a description of a table column that lives within a table"
+  [column-data :gui/column-data]
   (let [column-name (:text column-data)
         default-cvf (fn [row] (get row (keyword column-name)))
         final-cvf {:cell-value-factory (get column-data :cell-value-factory default-cvf)}
@@ -565,18 +584,19 @@
                  :min-width 80}]
     (merge default column-data final-cvf final-style)))
 
-(defn -href-to-hyperlink
-  [row]
+(defn-spec -href-to-hyperlink map?
+  [row (s/keys :opt-un [::sp/url])]
   (if-let [label (utils/source-to-href-label-fn (:url row))]
     {:fx/type :hyperlink
      :on-action (handler #(utils/browse-to (:url row)))
      :text (str "↪ " label)}
-
     {:fx/type :text
      :text ""}))
 
-(defn href-to-hyperlink
-  [row]
+(defn-spec href-to-hyperlink (s/or :ok #(instance? javafx.scene.control.Hyperlink %)
+                                   :noop #(instance? javafx.scene.text.Text %))
+  "returns a hyperlink instance or empty text"
+  [row map?]
   (-> row -href-to-hyperlink fx/create-component fx/instance))
 
 (defn installed-addons-table
@@ -742,14 +762,14 @@
 
 ;;
 
-(defn root
+(defn app
+  "returns a description of the javafx Stage, Scene and the 'root' node.
+  the root node is the top-most node from which all others are descendents of."
   [{:keys [fx/context]}]
-
   (let [;; re-render gui whenever style state changes
-        style (fx/sub-val context get :style) ;; todo: remove outside of dev?
+        style (fx/sub-val context get :style)
         showing? (fx/sub-val context get-in [:app-state :gui-showing?])
         theme (fx/sub-val context get-in [:app-state :cfg :gui-theme])]
-
     {:fx/type :stage
      :showing showing?
      :on-close-request exit-handler
@@ -770,6 +790,7 @@
                                {:fx/type status-bar}]}}}))
 
 (defn init-notice-logger!
+  "log handler for the gui. incoming log messages update the gui"
   [gui-state]
   (let [gui-logger (fn [log-data]
                      (let [{:keys [timestamp_ msg_ level]} log-data
@@ -779,24 +800,26 @@
 
 (defn start
   []
-  (info "starting gui")
-  (let [state-template {:app-state nil,
+  (println "starting gui")
+  (let [;; the gui uses a copy of the application state because the state atom needs to be wrapped
+        state-template {:app-state nil,
                         :log-message-list []
                         :style (style)}
         gui-state (atom (fx/create-context state-template)) ;; cache/lru-cache-factory))
+        update-gui-state (fn [new-state]
+                           (swap! gui-state fx/swap-context assoc :app-state new-state))
+        _ (core/state-bind [] update-gui-state)
 
+        _ (init-notice-logger! gui-state)
+
+        ;; css watcher for live coding
         _ (add-watch #'style :refresh-app (fn [_ _ _ _]
                                             (swap! gui-state fx/swap-context assoc :style (style))))
         _ (core/add-cleanup-fn #(remove-watch core/state :refresh-app))
 
-        update-gui-state (fn [new-state]
-                           (swap! gui-state fx/swap-context assoc :app-state new-state))
-
-        ;; the installed-addon-list-table fn will update itself from the *gui* state when the installed-addon-list data changes.
-        _ (core/state-bind [] update-gui-state)
-
-        ;; async search. should be able to get this effect with idiomatic cljs use
-        ;; todo: stick this in core?
+        ;; asynchronous searching. as the user types, update the state with search results asynchronously
+        ;; todo: stick this in core/cli?
+        ;; todo: cancel any current searching going on?
         save-search-results (fn [new-state]
                               (future
                                 (swap! core/state assoc :search-results (core/db-search (:search-field-input new-state)))))
@@ -805,7 +828,7 @@
         renderer (fx/create-renderer
                   :middleware (comp
                                fx/wrap-context-desc
-                               (fx/wrap-map-desc (fn [_] {:fx/type root})))
+                               (fx/wrap-map-desc (fn [_] {:fx/type app})))
 
                   ;; magic :(
 
@@ -813,12 +836,14 @@
                                                       ;; For functions in `:fx/type` values, pass
                                                       ;; context from option map to these functions
                                                       (fx/fn->lifecycle-with-context %))})
+
+        ;; don't do this, renderer has to be unmounted and the app closed before further state changes happen during cleanup
         ;;_ (core/add-cleanup-fn #(fx/unmount-renderer gui-state renderer))
         _ (swap! core/state assoc :disable-gui (fn []
-                                                 (debug "unmounting renderer")
+                                                 (println "unmounting renderer")
                                                  (fx/unmount-renderer gui-state renderer)
                                                  ;; the slightest of delays allows any final rendering to happen before the exit-handler is called.
-                                                 ;; only affects testing from the repl apparently and not running the tests from `run-tests.sh`
+                                                 ;; only affects testing from the repl apparently and not `./run-tests.sh`
                                                  (Thread/sleep 25)))
 
         ;; on first load, because the catalogue hasn't been loaded
@@ -831,21 +856,23 @@
 
     (swap! core/state assoc :gui-showing? true)
     (fx/mount-renderer gui-state renderer)
-    (init-notice-logger! gui-state)
 
-    ;; refresh the app but kill it if app is closed before it finishes.
-    ;; if we don't, we may leave windows hanging around.
+    ;; `refresh` the app but kill the `refresh` if app is closed before it finishes.
+    ;; happens during testing and causes a few weird windows to hang around.
     ;; see `(mapv (fn [_] (test :jfx)) (range 0 100))`
     (let [kick (future
                  (core/refresh)
                  (bump-search))]
       (core/add-cleanup-fn #(future-cancel kick)))
 
-    renderer))
+    ;; calling the `renderer` will re-render the GUI.
+    ;; useful apparently, but not being used.
+    ;;renderer
+    ))
 
 (defn stop
   []
-  (info "stopping gui") ;; nothing needs to happen ... yet?
+  (println "stopping gui")
   (when-let [unmount-renderer (:disable-gui @core/state)]
     ;; only affects running tests from repl apparently
     (unmount-renderer))
