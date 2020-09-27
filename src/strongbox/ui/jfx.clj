@@ -571,10 +571,13 @@
 
         wow-dir-dropdown {:fx/type :combo-box
                           :value selected-addon-dir
+                          :button-cell (fn [row] {:text (:addon-dir row)})
+                          :cell-factory {:fx/cell-type :list-cell
+                                         :describe (fn [row] {:text (:addon-dir row)})}
                           :on-value-changed (async-event-handler
                                              (fn [new-addon-dir]
-                                               (cli/set-addon-dir! new-addon-dir)))
-                          :items (mapv :addon-dir addon-dir-map-list)}
+                                               (cli/set-addon-dir! (:addon-dir new-addon-dir))))
+                          :items addon-dir-map-list}
 
         game-track-dropdown {:fx/type :combo-box
                              :value (-> selected-game-track (or "") name)
@@ -869,7 +872,6 @@
         ;; don't do this, renderer has to be unmounted and the app closed before further state changes happen during cleanup
         ;;_ (core/add-cleanup-fn #(fx/unmount-renderer gui-state renderer))
         _ (swap! core/state assoc :disable-gui (fn []
-                                                 (println "unmounting renderer")
                                                  (fx/unmount-renderer gui-state renderer)
                                                  ;; the slightest of delays allows any final rendering to happen before the exit-handler is called.
                                                  ;; only affects testing from the repl apparently and not `./run-tests.sh`
