@@ -18,9 +18,10 @@
     [utils :as utils]
     [core :as core]])
   (:import
+   [java.util List]
    [javafx.util Callback]
    [javafx.scene.control TableRow TextInputDialog Alert Alert$AlertType ButtonType]
-   [javafx.stage FileChooser DirectoryChooser WindowEvent]
+   [javafx.stage FileChooser FileChooser$ExtensionFilter DirectoryChooser WindowEvent]
    [javafx.application Platform]
    [javafx.scene Node]))
 
@@ -35,40 +36,52 @@
          (fn [theme-kw]
            (let [colour-map (theme-kw  core/themes)
                  colour #(name (get colour-map % "green"))]
-             {(format "#%s.root " (name theme-kw))
+             {"#about-dialog "
+
+              {:-fx-spacing "3"
+
+               "#about-pane-hyperlink"
+               {:-fx-font-size "1.1em"
+                :-fx-padding "0 0 4 -1"
+
+                ":hover" {:-fx-text-fill "blue"}}
+
+               "#about-pane-title"
+               {:-fx-font-size "1.5em"
+                :-fx-padding "10em"}}
+
+              (format "#%s.root " (name theme-kw))
               {:-fx-padding 0
-               ;;:-fx-accent "#0096C9"
                :-fx-base (colour :base)
 
-               ;; backgrounds
-               ;;:-fx-accent "transparent"
-               :-fx-accent (colour :accent) ;; selection colour of backgrounds
 
-               ;;".text" {:-fx-font-smoothing-type "gray"}
+
+               ;; backgrounds
+
+
+               :-fx-accent (colour :accent) ;; selection colour of backgrounds
 
                ".context-menu" {:-fx-effect "None"}
                ".combo-box-base" {:-fx-padding "1px"
                                   :-fx-background-radius "0"}
 
                ".button" {:-fx-background-radius "0"
-                          ;;:-fx-text-fill "black"
-                          ;; vector values are space-separated
                           :-fx-padding ["6px" "17px"]
                           ":hover" {:-fx-text-fill (colour :button-text-hovering)}}
 
                ;; tabber
                ".tab-pane > .tab-header-area > .headers-region > .tab "
-               {:-fx-background-radius "0"
-                ;;:-fx-padding "3px 20px"
-                }
+               {:-fx-background-radius "0"}
 
                ;; common tables
+
+
                ".table-view"
                {:-fx-table-cell-border-color (colour :table-border)
                 :-fx-font-size ".9em"}
 
                ".table-view .column-header"
-               {;;:-fx-background-color "#ddd" ;; flat colour
+               {;;:-fx-background-color "#ddd" ;; flat colour vs gradient
                 :-fx-font-size "1em"
                 :-fx-font-weight "Normal"
                 :-fx-font-family "Sans"}
@@ -76,9 +89,6 @@
                ".table-view .table-row-cell"
                {:-fx-border-insets "-1 -1 0 -1"
                 :-fx-border-color (colour :table-border)
-
-                " .table-cell" {;;:-fx-text-fill "derive(-fx-control-inner-background,-90%)"
-                                }
 
                 ;; even
                 :-fx-background-color (colour :row)
@@ -133,8 +143,6 @@
                  :-fx-pref-height 0
                  :-fx-min-height 0}
 
-                ;;" .table-row-cell" {:-fx-border-color "white"}
-
                 :-fx-font-family "monospace"}
 
                "#splitter .split-pane-divider"
@@ -164,6 +172,16 @@
 
 ;;
 
+;; taken from here:
+;; - https://github.com/cljfx/cljfx/pull/40/files
+
+
+(defn extension-filter
+  [x]
+  (cond
+    (instance? FileChooser$ExtensionFilter x) x
+    (map? x) (FileChooser$ExtensionFilter. ^String (:description x) ^List (seq (:extensions x)))
+    :else (throw (Exception. (format "cannot coerce '%s' to `FileChooser$ExtensionFilter`" (type x))))))
 
 (defn file-chooser
   "prompt user to select a file"
@@ -175,6 +193,8 @@
         window (-> event .getTarget .getParentPopup .getOwnerWindow .getScene .getWindow)
         chooser (doto (FileChooser.)
                   (.setTitle "Open File"))]
+    (when-let [ext-filters (:filters opt-map)]
+      (-> chooser .getExtensionFilters (.addAll (mapv extension-filter ext-filters))))
     (when-let [file-obj @(fx/on-fx-thread
                           (case open-type
                             :save (.showSaveDialog chooser window)
@@ -190,7 +210,7 @@
                   (.setTitle "Select Directory"))]
     (when-let [dir @(fx/on-fx-thread
                      (.showDialog chooser window))]
-      (str dir))))
+      (-> dir .getAbsolutePath str))))
 
 (defn-spec text-input (s/or :ok string? :noop nil?)
   "prompt user to enter text"
@@ -273,7 +293,8 @@
     (async f args)))
 
 (defn-spec async-handler fn?
-  "same as `async-handler` but calls `f` and ignores `args`"
+  "same as `async-handler` but calls `f` and ignores `args`.
+  useful for calling functions asynchronously that don't accept an `event` object."
   [f fn?]
   (fn [& _]
     (async f)))
@@ -286,7 +307,8 @@
     (apply f args)))
 
 (defn-spec handler fn?
-  "wraps `f`, calling it but ignores any args"
+  "wraps `f`, calling it but ignores any args.
+  useful for calling functions that don't accept an `event` object."
   [f fn?]
   (fn [& _]
     (f)))
@@ -302,7 +324,7 @@
   [event :javafx/action-event]
   (when-let [dir (dir-chooser event)]
     (when (fs/directory? dir)
-      ;; doesn't appear possible to select a non-directory with javafx (good)
+      ;; unlike swing, it doesn't appear possible to select a non-directory with javafx (good)
       (cli/set-addon-dir! dir))))
 
 (defn exit-handler
@@ -314,6 +336,7 @@
     ;; 2020-08-08: `ss/invoke-later` was keeping the old window around when running outside of repl.
     ;; `ss/invoke-soon` seems to fix that.
     ;;  - http://daveray.github.io/seesaw/seesaw.invoke-api.html
+    ;; 2020-09-27: similar issue in javafx
     :else (Platform/runLater (fn []
                                (Platform/exit)
                                (System/exit 0)))))
@@ -322,13 +345,13 @@
   "returns a function that will switch the tab-pane to the tab at the given index when called"
   [tab-idx int?]
   (fn [event]
-    (if-let [node ^Node (try
-                          (-> event .getTarget .getScene .getRoot)
-                          (catch java.lang.IllegalArgumentException _
-                            (try
-                              (-> event .getTarget .getParentPopup .getOwnerWindow .getScene .getRoot)
-                              (catch NullPointerException _
-                                (println "known bug. menu has to be displayed first")))))]
+    (if-let [node (try
+                    (-> event .getTarget .getScene .getRoot)
+                    (catch java.lang.IllegalArgumentException _
+                      (try
+                        (-> event .getTarget .getParentPopup .getOwnerWindow .getScene .getRoot)
+                        (catch NullPointerException _
+                          (println "known bug. menu has to be displayed first")))))]
       (-> node (.lookupAll "#tabber") first .getSelectionModel (.select tab-idx)))))
 
 (defn-spec import-addon-handler nil?
@@ -352,11 +375,13 @@
         (failure))))
   nil)
 
+(def json-files-extension-filters
+  [{:description "JSON files" :extensions ["*.json"]}])
+
 (defn-spec import-addon-list-handler nil?
   "prompts user with a file selection dialogue then imports a list of addons from the selected file"
   [event :javafx/action-event]
-  (when-let [;; todo: json file filter
-             abs-path (file-chooser event)]
+  (when-let [abs-path (file-chooser event {:filters json-files-extension-filters})]
     (core/import-exported-file abs-path)
     (core/refresh))
   nil)
@@ -364,16 +389,16 @@
 (defn-spec export-addon-list-handler nil?
   "prompts user with a file selection dialogue then writes the current directory of addons to the selected file"
   [event :javafx/action-event]
-  (when-let [;; todo: json filters
-             abs-path (file-chooser event {:type :save})]
+  (when-let [abs-path (file-chooser event {:type :save
+                                           :filters json-files-extension-filters})]
     (core/export-installed-addon-list-safely abs-path))
   nil)
 
 (defn-spec export-user-catalogue-handler nil?
   "prompts user with a file selection dialogue then writes the user catalogue to selected file"
   [event :javafx/action-event]
-  (when-let [;; todo: json filters
-             abs-path (file-chooser event {:type :save})]
+  (when-let [abs-path (file-chooser event {:type :save
+                                           :filters json-files-extension-filters})]
     (core/export-user-catalogue-addon-list-safely abs-path))
   nil)
 
@@ -382,15 +407,19 @@
   separated here for testing and test coverage."
   []
   {:fx/type :v-box
+   :id "about-dialog"
    :children [{:fx/type :text
+               :id "about-pane-title"
                :text "strongbox"}
               {:fx/type :text
                :text (format "version %s" (core/strongbox-version))}
               {:fx/type :text
                :text (format "version %s is now available to download!" (core/latest-strongbox-release))
+               :managed (not (core/latest-strongbox-version?))
                :visible (not (core/latest-strongbox-version?))}
               {:fx/type :hyperlink
-               :text "https://github.com/ogri-la/strongbox"}
+               :text "https://github.com/ogri-la/strongbox"
+               :id "about-pane-hyperlink"}
               {:fx/type :text
                :text "AGPL v3"}]})
 
@@ -402,7 +431,7 @@
   nil)
 
 (defn-spec remove-selected-confirmation-handler nil?
-  "prompts the user to confirm if they really want to delete those addons they just selected and clicked 'delete' on"
+  "prompts the user to confirm if they *really* want to delete those addons they just selected and clicked 'delete' on"
   [event :javafx/action-event]
   (when-let [selected (core/get-state :selected-installed)]
     (if (utils/any (mapv :ignore? selected))
@@ -444,7 +473,7 @@
   {:fx/type fx/ext-instance-factory
    :create #(javafx.scene.control.SeparatorMenuItem.)})
 
-(defn-spec build-catalogue-menu (s/or :ok ::sp/list-of-maps :no-catalogues nil?)
+(defn-spec build-catalogue-menu (s/or :ok ::sp/list-of-maps, :no-catalogues nil?)
   "returns a list of radio button descriptions that can toggle through the available catalogues"
   [selected-catalogue :catalogue/name, catalogue-location-list :catalogue/location-list]
   (when catalogue-location-list
@@ -544,7 +573,6 @@
                           :value selected-addon-dir
                           :on-value-changed (async-event-handler
                                              (fn [new-addon-dir]
-                                               ;; dosync doesn't work here, stop trying it
                                                (cli/set-addon-dir! new-addon-dir)))
                           :items (mapv :addon-dir addon-dir-map-list)}
 
@@ -585,6 +613,7 @@
     (merge default column-data final-cvf final-style)))
 
 (defn-spec -href-to-hyperlink map?
+  "returns a hyperlink description or an empty text description"
   [row (s/keys :opt-un [::sp/url])]
   (if-let [label (utils/source-to-href-label-fn (:url row))]
     {:fx/type :hyperlink
@@ -601,7 +630,7 @@
 
 (defn installed-addons-table
   [{:keys [fx/context]}]
-  ;; re-render table when unsteady addons changes
+  ;; subscribe to re-render table when addons become unsteady
   (fx/sub-val context get-in [:app-state :unsteady-addons])
   (let [row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
 
@@ -616,7 +645,7 @@
                      {:text "WoW" :max-width 100 :cell-value-factory iface-version}]]
     {:fx/type fx.ext.table-view/with-selection-props
      :props {:selection-mode :multiple
-             ;; unlike gui.clj, we have access to the original data here
+             ;; unlike gui.clj, we have access to the original data here. no need to re-select addons.
              :on-selected-items-changed core/select-addons*}
      :desc {:fx/type :table-view
             :id "installed-addons"
@@ -626,7 +655,7 @@
                           :describe (fn [row]
                                       {:style-class
                                        (remove nil?
-                                               ["table-row-cell" ;; :style-class actually *replaces* the list of classes
+                                               ["table-row-cell" ;; `:style-class` will actually *replace* the list of classes
                                                 (when (:update? row) "updateable")
                                                 (when (:ignore? row) "ignored")
                                                 (when (core/unsteady? row) "unsteady")])})}
@@ -677,7 +706,7 @@
                      {:text "downloads" :min-width 100 :max-width 120 :cell-value-factory :download-count}]]
     {:fx/type fx.ext.table-view/with-selection-props
      :props {:selection-mode :multiple
-             ;; unlike gui.clj, we have access to the original data here. and it's an ordered/map ...?
+             ;; unlike gui.clj, we have access to the original data here. no need to re-select addons.
              :on-selected-items-changed core/select-addons-search*}
      :desc {:fx/type :table-view
             :id "search-addons"
@@ -874,7 +903,7 @@
   []
   (println "stopping gui")
   (when-let [unmount-renderer (:disable-gui @core/state)]
-    ;; only affects running tests from repl apparently
+    ;; only affects tests running from repl apparently
     (unmount-renderer))
   (exit-handler)
   nil)

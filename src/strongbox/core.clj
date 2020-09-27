@@ -72,7 +72,8 @@
    :unsteady "-fx-selection-bar"
    :row-updateable "#aaa"
    :row-warning "#aaa"
-   :row-error "#ce2828"})
+   :row-error "#ce2828"
+   :hyperlink-hover "yellow"})
 
 (def themes
   {:light -colour-map

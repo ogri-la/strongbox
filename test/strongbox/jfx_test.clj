@@ -48,13 +48,16 @@
   (testing "'about' dialog is correct and new version text is correctly hidden"
     (with-running-app
       (let [expected
-            {:children [{:text "strongbox", :fx/type :text}
+            {:id "about-dialog"
+             :children [{:text "strongbox", :fx/type :text, :id "about-pane-title"}
                         {:text "version 3.0.0-unreleased", :fx/type :text}
                         {:text "version 0.0.0 is now available to download!",
                          :visible false,
+                         :managed false,
                          :fx/type :text}
                         {:text "https://github.com/ogri-la/strongbox",
-                         :fx/type :hyperlink}
+                         :fx/type :hyperlink
+                         :id "about-pane-hyperlink"}
                         {:text "AGPL v3", :fx/type :text}],
              :fx/type :v-box}]
         (is (= expected (jfx/-about-strongbox-dialog)))))))
