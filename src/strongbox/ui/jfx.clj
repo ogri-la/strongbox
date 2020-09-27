@@ -661,7 +661,7 @@
                                                ["table-row-cell" ;; `:style-class` will actually *replace* the list of classes
                                                 (when (:update? row) "updateable")
                                                 (when (:ignore? row) "ignored")
-                                                (when (core/unsteady? row) "unsteady")])})}
+                                                (when (and row (core/unsteady? (:name row))) "unsteady")])})}
             :columns (mapv table-column column-list)
             :context-menu {:fx/type :context-menu
                            :items [(menu-item "Update" (async-handler core/install-update-selected))

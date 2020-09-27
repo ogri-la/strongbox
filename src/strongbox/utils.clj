@@ -633,9 +633,9 @@
   (future-call #((find-browser) url))
   nil)
 
-(defn source-to-href-label-fn
+(defn-spec source-to-href-label-fn (s/or :ok string? :bad-url nil?)
   "if a source for the addon can be derived, return a label suitable for the link"
-  [url]
+  [url (s/nilable string?)]
   (let [url-obj (try
                   (java.net.URL. url)
                   (catch NullPointerException _

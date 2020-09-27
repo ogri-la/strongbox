@@ -191,7 +191,9 @@
    :selected-installed []
 
    :search-field-input nil
-   :search-results [] ;; results of searching db for `:search-field-input`
+
+   ;; results of searching db for `:search-field-input`
+   :search-results [] 
 
    :selected-search []
    ;; number of results to display in search results pane.
@@ -237,6 +239,7 @@
    :cache-dir (paths :cache-dir)})
 
 (defn-spec add-cleanup-fn nil?
+  "adds a function to a list of functions that are called without arguments when the application is stopped"
   [f fn?]
   (swap! state update-in [:cleanup] conj f)
   nil)
@@ -278,7 +281,7 @@
       (swap! state update-in [:cfg :addon-dir-list] conj stub))
     nil))
 
-;; see strongbox.ui.cli/set-addon-dir! 
+;; see also: strongbox.ui.cli/set-addon-dir! 
 (defn-spec set-addon-dir! nil?
   "adds a new :addon-dir to :addon-dir-list (if it doesn't already exist) and marks it as selected"
   [addon-dir ::sp/addon-dir]
@@ -338,6 +341,7 @@
      nil)))
 
 (defn-spec get-game-track (s/or :ok ::sp/game-track, :missing nil?)
+  "returns the game track for the given `addon-dir` or the currently selected addon-dir if no `addon-dir` given"
   ([]
    (get-game-track (selected-addon-dir)))
   ([addon-dir (s/nilable ::sp/addon-dir)]
@@ -398,9 +402,10 @@
   [addon]
   (swap! state update-in [:unsteady-addons] clojure.set/difference #{(:name addon)}))
 
-(defn unsteady?
-  [addon]
-  (utils/in? (:name addon) (get-state :unsteady-addons)))
+(defn-spec unsteady? boolean?
+  "returns `true` if given `addon` is being updated"
+  [addon-name ::sp/name]
+  (utils/in? addon-name (get-state :unsteady-addons)))
 
 (defn affects-addon-wrapper
   [wrapped-fn]
@@ -414,7 +419,7 @@
 ;; selecting addons
 
 (defn-spec select-addons-search* nil?
-  "sets the selected list of addons to the given `selected-addons` for bulk operations like"
+  "sets the selected list of addons in application state for a later action"
   [selected-addons :addon/summary-list]
   (swap! state assoc :selected-search selected-addons)
   nil)
@@ -765,7 +770,6 @@
                :matched :addon/toc+summary+match)]
   (let [expanded-addon (when (:matched? addon)
                          (expand-summary-wrapper addon))
-        _ (debug "done expanding")
         addon (or expanded-addon addon) ;; expanded addon may still be nil
         {:keys [installed-version version]} addon
         update? (boolean

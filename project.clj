@@ -28,7 +28,6 @@
                  ;; remember to update pom file (`lein pom`)
 
                  [cljfx "1.7.8"]
-                 ;;[org.clojure/core.cache "1.0.207"]
                  [cljfx/css "1.1.0"]
 
                  ]
@@ -40,7 +39,8 @@
                                   [clj-http-fake "1.0.3"]
                                   ]}
              :uberjar {:aot :all
-                       ;; https://github.com/cljfx/cljfx/issues/17
+                       ;; fixes hanging issue:
+                       ;; - https://github.com/cljfx/cljfx/issues/17
                        :injections [(javafx.application.Platform/exit)]}}
 
   :main strongbox.main
