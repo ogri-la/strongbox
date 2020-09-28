@@ -2,7 +2,10 @@
   (:require
    [me.raynes.fs :as fs]
    [clojure.string :refer [lower-case join]]
-   ;; cljs has problems with infinite recursion.
+   ;; we have problems with logging and infinite recursion.
+   ;; logging will cause a gui refresh and if any log messages are emitted
+   ;; during refresh it will cause another refresh, ad infinitum.
+   ;; so don't log in the gui!
    [taoensso.timbre :as timbre :refer [spy]] ;; debug info warn error spy]] 
    [cljfx.ext.table-view :as fx.ext.table-view]
    [cljfx
@@ -10,7 +13,6 @@
    [cljfx.css :as css]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
-   ;;[clojure.core.cache :as cache]
    [strongbox.ui.cli :as cli]
    [strongbox
     [specs :as sp]
@@ -21,7 +23,7 @@
    [java.util List]
    [javafx.util Callback]
    [javafx.scene.control TableRow TextInputDialog Alert Alert$AlertType ButtonType]
-   [javafx.stage FileChooser FileChooser$ExtensionFilter DirectoryChooser WindowEvent]
+   [javafx.stage FileChooser FileChooser$ExtensionFilter DirectoryChooser Window WindowEvent]
    [javafx.application Platform]
    [javafx.scene Node]))
 
@@ -172,12 +174,20 @@
 
 ;;
 
-;; taken from here:
-;; - https://github.com/cljfx/cljfx/pull/40/files
+(defn get-window
+  "returns the application `Window` object."
+  []
+  (first (Window/getWindows)))
+
+(defn select
+  [node-id]
+  (-> (get-window) .getScene .getRoot (.lookupAll node-id)))
 
 
 (defn extension-filter
   [x]
+  ;; taken from here:
+  ;; - https://github.com/cljfx/cljfx/pull/40/files
   (cond
     (instance? FileChooser$ExtensionFilter x) x
     (map? x) (FileChooser$ExtensionFilter. ^String (:description x) ^List (seq (:extensions x)))
@@ -190,7 +200,8 @@
         default-open-type :open
         open-type (get opt-map :type default-open-type)
         ;; valid for a menu-item
-        window (-> event .getTarget .getParentPopup .getOwnerWindow .getScene .getWindow)
+        ;;window (-> event .getTarget .getParentPopup .getOwnerWindow .getScene .getWindow)
+        window (get-window)
         chooser (doto (FileChooser.)
                   (.setTitle "Open File"))]
     (when-let [ext-filters (:filters opt-map)]
@@ -345,14 +356,7 @@
   "returns a function that will switch the tab-pane to the tab at the given index when called"
   [tab-idx int?]
   (fn [event]
-    (if-let [node (try
-                    (-> event .getTarget .getScene .getRoot)
-                    (catch java.lang.IllegalArgumentException _
-                      (try
-                        (-> event .getTarget .getParentPopup .getOwnerWindow .getScene .getRoot)
-                        (catch NullPointerException _
-                          (println "known bug. menu has to be displayed first")))))]
-      (-> node (.lookupAll "#tabber") first .getSelectionModel (.select tab-idx)))))
+    (some-> (select "#tabber") first .getSelectionModel (.select tab-idx))))
 
 (defn-spec import-addon-handler nil?
   "imports an addon by parsing a URL"
