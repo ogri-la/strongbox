@@ -424,6 +424,7 @@
                :visible (not (core/latest-strongbox-version?))}
               {:fx/type :hyperlink
                :text "https://github.com/ogri-la/strongbox"
+               :on-action (handler #(utils/browse-to "https://github.com/ogri-la/strongbox"))
                :id "about-pane-hyperlink"}
               {:fx/type :text
                :text "AGPL v3"}]})
