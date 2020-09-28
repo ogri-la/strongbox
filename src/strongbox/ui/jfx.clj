@@ -57,7 +57,6 @@
                :-fx-base (colour :base)
 
 
-
                ;; backgrounds
 
 
@@ -174,6 +173,7 @@
 
 ;;
 
+
 (defn get-window
   "returns the application `Window` object."
   []
@@ -182,7 +182,6 @@
 (defn select
   [node-id]
   (-> (get-window) .getScene .getRoot (.lookupAll node-id)))
-
 
 (defn extension-filter
   [x]
@@ -226,36 +225,38 @@
 (defn-spec text-input (s/or :ok string? :noop nil?)
   "prompt user to enter text"
   [prompt string?]
-  (let [widget (doto (TextInputDialog.)
-                 (.setTitle prompt)
-                 (.setHeaderText nil)
-                 (.setContentText prompt))
-        optional-val @(fx/on-fx-thread
-                       (.showAndWait widget))]
-    (when (and (.isPresent optional-val)
-               (not (empty? (.get optional-val))))
-      (.get optional-val))))
+  @(fx/on-fx-thread
+    (let [widget (doto (TextInputDialog.)
+                   (.setTitle prompt)
+                   (.setHeaderText nil)
+                   (.setContentText prompt)
+                   (.initOwner (get-window)))
+          optional-val (.showAndWait widget)]
+      (when (and (.isPresent optional-val)
+                 (not (empty? (.get optional-val))))
+        (.get optional-val)))))
 
 (defn alert
   "displays an alert dialog to the user with varying button combinations they can press.
   the result object is a weirdo `java.util.Optional` https://docs.oracle.com/javase/8/docs/api/java/util/Optional.html
   whose `.get` return value is equal to the button type clicked"
   [event msg & [opt-map]]
-  (let [window (-> event .getTarget .getParentPopup .getOwnerWindow .getScene .getWindow)
-        alert-type-map {:warning Alert$AlertType/WARNING
-                        :error Alert$AlertType/ERROR
-                        :confirm Alert$AlertType/CONFIRMATION
-                        :info Alert$AlertType/INFORMATION}
-        alert-type-key (get opt-map :type, :info)
-        alert-type (get alert-type-map alert-type-key)
-        widget (doto (Alert. alert-type)
-                 (.setTitle (:title opt-map))
-                 (.setHeaderText (:header opt-map))
-                 (.setContentText msg)
-                 (.initOwner window))]
-    (when (:content opt-map)
-      (.setContent (.getDialogPane widget) (:content opt-map)))
-    @(fx/on-fx-thread (.showAndWait widget))))
+  @(fx/on-fx-thread
+    (let [window (-> event .getTarget .getParentPopup .getOwnerWindow .getScene .getWindow)
+          alert-type-map {:warning Alert$AlertType/WARNING
+                          :error Alert$AlertType/ERROR
+                          :confirm Alert$AlertType/CONFIRMATION
+                          :info Alert$AlertType/INFORMATION}
+          alert-type-key (get opt-map :type, :info)
+          alert-type (get alert-type-map alert-type-key)
+          widget (doto (Alert. alert-type)
+                   (.setTitle (:title opt-map))
+                   (.setHeaderText (:header opt-map))
+                   (.setContentText msg)
+                   (.initOwner window))]
+      (when (:content opt-map)
+        (.setContent (.getDialogPane widget) (:content opt-map)))
+      (.showAndWait widget))))
 
 ;;
 
@@ -531,7 +532,7 @@
         addon-menu [(menu-item "_Update all" (async-handler core/install-update-all) {:key "Ctrl+U"})
                     (menu-item "Re-install all" (async-handler core/re-install-all))]
 
-        impexp-menu [(menu-item "Import addon from Github" (event-handler import-addon-handler))
+        impexp-menu [(menu-item "Import addon from Github" (async-event-handler import-addon-handler))
                      separator
                      (menu-item "Import addon list" (async-event-handler import-addon-list-handler))
                      (menu-item "Export addon list" (async-event-handler export-addon-list-handler))

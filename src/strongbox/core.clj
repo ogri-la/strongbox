@@ -193,7 +193,7 @@
    :search-field-input nil
 
    ;; results of searching db for `:search-field-input`
-   :search-results [] 
+   :search-results []
 
    :selected-search []
    ;; number of results to display in search results pane.
