@@ -30,7 +30,7 @@
 
                  [{:url "https://www.curseforge.com/foo/bar"} {:fx/type :hyperlink :text "↪ curseforge"}]
                  [{:url "https://www.wowinterface.com/foo/bar"} {:fx/type :hyperlink :text "↪ wowinterface"}]
-                 [{:url "https://www.github.com/foo/bar"} {:fx/type :hyperlink :text "↪ github"}]
+                 [{:url "https://github.com/teelolws/Altoholic-Classic"} {:fx/type :hyperlink :text "↪ github"}]
                  [{:url "https://www.tukui.org/foo/bar"} {:fx/type :hyperlink :text "↪ tukui"}]
                  [{:url "https://www.tukui.org/classic-addons.php"} {:fx/type :hyperlink :text "↪ tukui-classic"}]]]
       (doseq [[given expected] cases]
@@ -59,5 +59,9 @@
                          :fx/type :hyperlink
                          :id "about-pane-hyperlink"}
                         {:text "AGPL v3", :fx/type :text}],
-             :fx/type :v-box}]
-        (is (= expected (jfx/-about-strongbox-dialog)))))))
+             :fx/type :v-box}
+
+            actual (jfx/-about-strongbox-dialog)
+            actual (update-in actual [:children 3] dissoc :on-action)
+            ]
+        (is (= expected actual))))))

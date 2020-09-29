@@ -646,7 +646,7 @@
       (case (.getHost url-obj)
         "www.curseforge.com" "curseforge"
         "www.wowinterface.com" "wowinterface"
-        "www.github.com" "github"
+        "github.com" "github"
         "www.tukui.org" (if (= (.getPath url-obj) "/classic-addons.php")
                           "tukui-classic"
                           "tukui")
