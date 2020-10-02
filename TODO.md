@@ -20,7 +20,19 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * single distributable binary with no reliance on external jvm
 
+* scrub gui string values of newlines before displaying
+    - see tukui-classic, id 2, it's description is 
+        "A USER INTERFACE DESIGNED AROUND USER-FRIENDLINESS WITH EXTRA FEATURES THAT ARE NOT INCLUDED IN THE STANDARD UI.\r\n"
+    - swing gui ignored these
+    - probably do this in the catalogue
+        - is it possible to enter the system via tocs?
+
 ## todo bucket (no particular order)
+
+* datetime parsing is broken *again* in wowinterface-api
+    - I thought I fixed this twice now??
+        - it could be I'm missing an explicit 'locale' value
+            - https://stackoverflow.com/questions/38250379/java8-datetimeformatter-am-pm
 
 * gui, add confirmation before deleting addon directory
 

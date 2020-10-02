@@ -36,7 +36,19 @@
    :installed/needs-updating :lemonchiffon
    :installed/hovering "#e6e6e6" ;; light grey
    :search/already-installed "#99bc6b" ;; greenish
-   :hyperlink :blue})
+   :hyperlink :blue
+
+   ;; jfx
+   :base "#ececec"
+   :accent "lightsteelblue"
+   :button-text-hovering "black"
+   :table-border "#bbb"
+   :row "-fx-control-inner-background"
+   :row-hover "derive(-fx-control-inner-background,-10%)"
+   :unsteady "lightsteelblue"
+   :row-updateable "lemonchiffon"
+   :row-warning "lemonchiffon"
+   :row-error "tomato"})
 
 ;; inverse colours of -colour-map
 (def -dark-colour-map
@@ -48,7 +60,20 @@
    :installed/needs-updating "#000532"
    :installed/hovering "#191919"
    :search/already-installed "#664394"
-   :hyperlink :yellow})
+   :hyperlink :yellow
+
+   ;; jfx
+   :base "#121212"
+   :accent "#443754" ;; dark purple
+   :button-text-hovering "white"
+   :table-border "#333"
+   :row "-fx-control-inner-background"
+   :row-hover "derive(-fx-control-inner-background,-10%)"
+   :unsteady "-fx-selection-bar"
+   :row-updateable "#aaa"
+   :row-warning "#aaa"
+   :row-error "#ce2828"
+   :hyperlink-hover "yellow"})
 
 (def themes
   {:light -colour-map
@@ -149,6 +174,9 @@
    ;; the root swing window
    :gui nil
 
+   ;; jfx ui showing?
+   :gui-showing? false
+
    ;; set to anything other than `nil` to have `main.clj` restart the gui
    :gui-restart-flag nil
 
@@ -163,6 +191,10 @@
    :selected-installed []
 
    :search-field-input nil
+
+   ;; results of searching db for `:search-field-input`
+   :search-results []
+
    :selected-search []
    ;; number of results to display in search results pane.
    ;; adjust to whatever performs the best
@@ -206,6 +238,12 @@
    :get-etag #(get-state :etag-db %) ;; do this instead
    :cache-dir (paths :cache-dir)})
 
+(defn-spec add-cleanup-fn nil?
+  "adds a function to a list of functions that are called without arguments when the application is stopped"
+  [f fn?]
+  (swap! state update-in [:cleanup] conj f)
+  nil)
+
 (defn-spec state-bind nil?
   "executes given callback function when value at path in state map changes. 
   trigger is discarded if old and new values are identical"
@@ -225,8 +263,7 @@
                      (callback new-state)
                      (catch Exception e
                        (error e "error caught in watch! your callback *must* be catching these or the thread dies silently:" path))))))
-
-    (swap! state update-in [:cleanup] conj rmwatch)
+    (add-cleanup-fn rmwatch)
     nil))
 
 ;; addon dirs
@@ -244,6 +281,7 @@
       (swap! state update-in [:cfg :addon-dir-list] conj stub))
     nil))
 
+;; see also: strongbox.ui.cli/set-addon-dir! 
 (defn-spec set-addon-dir! nil?
   "adds a new :addon-dir to :addon-dir-list (if it doesn't already exist) and marks it as selected"
   [addon-dir ::sp/addon-dir]
@@ -303,11 +341,12 @@
      nil)))
 
 (defn-spec get-game-track (s/or :ok ::sp/game-track, :missing nil?)
+  "returns the game track for the given `addon-dir` or the currently selected addon-dir if no `addon-dir` given"
   ([]
-   (when-let [addon-dir (selected-addon-dir)]
-     (get-game-track addon-dir)))
-  ([addon-dir ::sp/addon-dir]
-   (-> addon-dir addon-dir-map :game-track)))
+   (get-game-track (selected-addon-dir)))
+  ([addon-dir (s/nilable ::sp/addon-dir)]
+   (when addon-dir
+     (-> addon-dir addon-dir-map :game-track))))
 
 ;; settings
 
@@ -363,6 +402,11 @@
   [addon]
   (swap! state update-in [:unsteady-addons] clojure.set/difference #{(:name addon)}))
 
+(defn-spec unsteady? boolean?
+  "returns `true` if given `addon` is being updated"
+  [addon-name ::sp/name]
+  (utils/in? addon-name (get-state :unsteady-addons)))
+
 (defn affects-addon-wrapper
   [wrapped-fn]
   (fn [addon & args]
@@ -373,6 +417,12 @@
         (stop-affecting-addon addon)))))
 
 ;; selecting addons
+
+(defn-spec select-addons-search* nil?
+  "sets the selected list of addons in application state for a later action"
+  [selected-addons :addon/summary-list]
+  (swap! state assoc :selected-search selected-addons)
+  nil)
 
 (defn-spec select-addons* nil?
   "sets the selected list of addons to the given `selected-addons` for bulk operations like 'update', 'delete', 'ignore', etc"
@@ -971,7 +1021,7 @@
 ;;
 
 (defn refresh
-  [& _]
+  [& _] ;; todo: remove args with swing gui
   (profile
    {:when (get-state :profile?)}
 
@@ -1105,16 +1155,6 @@
 
 ;; init
 
-(defn watch-for-addon-dir-change
-  "when the current addon directory changes, the list of installed addons should be re-read"
-  []
-  (state-bind [:cfg :selected-addon-dir] (fn [_] (refresh))))
-
-(defn watch-for-catalogue-change
-  "when the catalogue changes, the db should be rebuilt"
-  []
-  (state-bind [:cfg :selected-catalogue] (fn [_] (db-reload-catalogue))))
-
 (defn-spec set-paths! nil?
   []
   (swap! state assoc :paths (generate-path-map))
@@ -1141,8 +1181,6 @@
   (init-dirs)
   (prune-http-cache!)
   (load-settings! cli-opts)
-  (watch-for-addon-dir-change)
-  (watch-for-catalogue-change)
 
   state)
 

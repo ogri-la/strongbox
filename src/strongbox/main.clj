@@ -1,7 +1,7 @@
 (ns strongbox.main
   (:refer-clojure :rename {test clj-test})
   (:require
-   [taoensso.timbre :as timbre :refer [spy info error]]
+   [taoensso.timbre :as timbre :refer [spy info warn error]]
    [clojure.test]
    [clojure.tools.cli]
    [clojure.tools.namespace.repl :as tn :refer [refresh]]
@@ -12,6 +12,7 @@
     [utils :as utils :refer [in?]]]
    [gui.diff :refer [with-gui-diff]]
    [strongbox.ui
+    [jfx :as jfx]
     [cli :as cli]
     [gui :as gui]])
   (:gen-class))
@@ -47,8 +48,10 @@
 (defn stop
   []
   (let [opts (:cli-opts @core/state)]
-    (if (= :cli (:ui opts))
-      (cli/stop)
+    (case (:ui opts)
+      :cli (cli/stop)
+      :gui (gui/stop)
+      :gui2 (jfx/stop)
       (gui/stop))
     (core/stop core/state)))
 
@@ -61,8 +64,10 @@
 (defn start
   [& [cli-opts]]
   (core/start (merge {:profile? profile?, :spec? spec?} cli-opts))
-  (if (= :cli (:ui cli-opts))
-    (cli/start cli-opts)
+  (case (:ui cli-opts)
+    :cli (cli/start cli-opts)
+    :gui (gui/start)
+    :gui2 (jfx/start)
     (gui/start))
 
   (watch-for-gui-restart)
@@ -90,7 +95,7 @@
     (if ns-kw
       (if (some #{ns-kw} [:main :utils :http :tags
                           :core :toc :nfo :zip :config :catalogue :db :addon
-                          :cli :gui
+                          :cli :gui :jfx
                           :curseforge-api :wowinterface :wowinterface-api :github-api :tukui-api])
         (with-gui-diff
           (if fn-kw
@@ -139,7 +144,7 @@
    ["-u" "--ui UI" "ui is either 'gui' (graphical user interface, default) or 'cli' (command line interface)"
     ;;:default :gui ;; set after determining if --headless also set
     :parse-fn #(-> % lower-case keyword)
-    :validate [(in? [:cli :gui])]]
+    :validate [(in? [:cli :gui :gui2])]]
 
    ["-a" "--action ACTION" (str "perform action and exit. action is one of: 'list', 'list-updates', 'update-all'," catalogue-action-str)
     :id :action

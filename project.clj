@@ -1,4 +1,4 @@
-(defproject ogri-la/strongbox "2.1.0-unreleased"
+(defproject ogri-la/strongbox "3.0.0-unreleased"
   :description "World Of Warcraft Addon Manager"
   :url "https://github.com/ogri-la/strongbox"
   :license {:name "GNU Affero General Public License (AGPL)"
@@ -27,6 +27,9 @@
                  ;; remember to update the LICENCE.txt
                  ;; remember to update pom file (`lein pom`)
 
+                 [cljfx "1.7.8"]
+                 [cljfx/css "1.1.0"]
+
                  ]
 
   ;; java 11 , java-time localisation issue 
@@ -35,7 +38,10 @@
   :profiles {:dev {:dependencies [;; fake http responses for testing
                                   [clj-http-fake "1.0.3"]
                                   ]}
-             :uberjar {:aot :all}}
+             :uberjar {:aot :all
+                       ;; fixes hanging issue:
+                       ;; - https://github.com/cljfx/cljfx/issues/17
+                       :injections [(javafx.application.Platform/exit)]}}
 
   :main strongbox.main
 

@@ -118,7 +118,7 @@
   [catalogue-data :catalogue/catalogue, output-file ::sp/file]
   (if (some->> catalogue-data validate (utils/dump-json-file output-file))
     (do
-      (info "wrote" output-file)
+      (info "wrote:" output-file)
       output-file)
     (error "catalogue data is invalid, refusing to write:" output-file)))
 

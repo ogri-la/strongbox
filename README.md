@@ -1,6 +1,6 @@
 # strongbox, a World of Warcraft Addon Manager
 
-[![Build Status](https://travis-ci.org/ogri-la/strongbox.svg?branch=master)](https://travis-ci.org/ogri-la/strongbox)
+[![Build Status](https://api.travis-ci.com/ogri-la/strongbox.svg?branch=develop)](https://travis-ci.com/ogri-la/strongbox)
 
 `strongbox` is an **open source**, **advertisement free** and **privacy respecting** addon manager for World of Warcraft. 
 
