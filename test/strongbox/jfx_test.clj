@@ -62,6 +62,5 @@
              :fx/type :v-box}
 
             actual (jfx/-about-strongbox-dialog)
-            actual (update-in actual [:children 3] dissoc :on-action)
-            ]
+            actual (update-in actual [:children 3] dissoc :on-action)]
         (is (= expected actual))))))

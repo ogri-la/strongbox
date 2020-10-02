@@ -564,47 +564,51 @@
                     (menu "Cache" cache-menu)
                     (menu "Help" help-menu)]}}))
 
+(defn wow-dir-dropdown
+  [{:keys [fx/context]}]
+  (let [config (fx/sub-val context get-in [:app-state :cfg])
+        selected-addon-dir (:selected-addon-dir config)
+        addon-dir-map-list (get config :addon-dir-list [])]
+    {:fx/type :combo-box
+     :id "shitty-combo-box"
+     :value selected-addon-dir
+     :button-cell (fn [row] {:text (:addon-dir row)})
+     :cell-factory {:fx/cell-type :list-cell
+                    :describe (fn [row] {:text (:addon-dir row)})}
+     :on-value-changed (async-event-handler
+                        (fn [new-addon-dir]
+                          (cli/set-addon-dir! (:addon-dir new-addon-dir))))
+                          ;;(cli/set-addon-dir! new-addon-dir)))
+     :items addon-dir-map-list
+     ;;:items (mapv :addon-dir addon-dir-map-list)
+     }))
+
+(defn game-track-dropdown
+  [{:keys [fx/context]}]
+  (let [selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])]
+    {:fx/type :combo-box
+     :value (-> selected-addon-dir core/get-game-track (or "") name)
+     :on-value-changed (async-event-handler
+                        (fn [new-game-track]
+                          (core/set-game-track! (keyword new-game-track))
+                          (core/refresh)))
+     :items ["retail" "classic"]}))
+
 (defn installed-addons-menu-bar
   "returns a description of the installed-addons tab-pane menu"
-  [{:keys [fx/context]}]
-  (let [update-all-button {:fx/type :button
-                           :text "Update all"
-                           :on-action (async-handler core/install-update-all)}
-
-        addon-dir-map-list (or (fx/sub-val context get-in [:app-state :cfg :addon-dir-list]) [])
-        selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])
-        selected-game-track (core/get-game-track selected-addon-dir)
-
-        wow-dir-dropdown {:fx/type :combo-box
-                          :value selected-addon-dir
-                          :button-cell (fn [row] {:text (:addon-dir row)})
-                          :cell-factory {:fx/cell-type :list-cell
-                                         :describe (fn [row] {:text (:addon-dir row)})}
-                          :on-value-changed (async-event-handler
-                                             (fn [new-addon-dir]
-                                               (cli/set-addon-dir! (:addon-dir new-addon-dir))))
-                          :items addon-dir-map-list}
-
-        game-track-dropdown {:fx/type :combo-box
-                             :value (-> selected-game-track (or "") name)
-                             :on-value-changed (async-event-handler
-                                                (fn [new-game-track]
-                                                  (core/set-game-track! (keyword new-game-track))
-                                                  (core/refresh)))
-                             :items ["retail" "classic"]}
-
-        update-app-button {:fx/type :button
-                           :text (str "Update Available: " (core/latest-strongbox-release))
-                           :on-action (handler #(utils/browse-to "https://github.com/ogri-la/strongbox/releases"))
-                           :visible (not (core/latest-strongbox-version?))}]
-
-    {:fx/type :h-box
-     :padding 10
-     :spacing 10
-     :children [update-all-button
-                wow-dir-dropdown
-                game-track-dropdown
-                update-app-button]}))
+  [_]
+  {:fx/type :h-box
+   :padding 10
+   :spacing 10
+   :children [{:fx/type :button
+               :text "Update all"
+               :on-action (async-handler core/install-update-all)}
+              {:fx/type wow-dir-dropdown}
+              {:fx/type game-track-dropdown}
+              {:fx/type :button
+               :text (str "Update Available: " (core/latest-strongbox-release))
+               :on-action (handler #(utils/browse-to "https://github.com/ogri-la/strongbox/releases"))
+               :visible (not (core/latest-strongbox-version?))}]})
 
 (defn-spec table-column map?
   "returns a description of a table column that lives within a table"
