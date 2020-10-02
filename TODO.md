@@ -6,17 +6,20 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-## todo
-
 * gui2
     - an OpenJFX gui
+        - done
     - how large is bundle after uberjar?
+        - too damn large
+            - 61MB, up from ~20MB
     - can an openjfx-11/openjdk-11 uberjar be run with openjdk 8?
         - if not, then that is a hard upgrade for users :(
             - unless we do a completely standalone version?
                 - this would depend on the modularisation introduced in java 9
                 - min JRE is 29MB, about ~9MB more than what we already have.
                     - is filesize a problem for users?
+
+## todo
 
 * single distributable binary with no reliance on external jvm
 
@@ -26,6 +29,9 @@ see CHANGELOG.md for a more formal list of changes by release
     - swing gui ignored these
     - probably do this in the catalogue
         - is it possible to enter the system via tocs?
+
+* mac, combo-box empty when adding/removing directories
+    - *or* combo-box gets a datastructure instead of a label, depending on how this is fixed
 
 ## todo bucket (no particular order)
 

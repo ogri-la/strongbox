@@ -3,7 +3,14 @@
    [java-time]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
-   [me.raynes.fs :as fs]))
+   [me.raynes.fs :as fs])
+  (:import
+   [javafx.scene.text Text]
+   [javafx.event ActionEvent]
+   ;; prevents uberjar'ing
+   ;;[javafx.scene.control Hyperlink]
+   )
+  )
 
 (def placeholder "even qualified specs still require `specs.clj` to be included for linting and uberjar")
 
@@ -280,7 +287,11 @@
 
 ;; javafx, cljfx, gui2
 
+
+
 (s/def :javafx/action-event #(instance? javafx.event.ActionEvent %))
+;;(s/def :javafx/hyperlink-component #(instance? javafx.scene.control.Hyperlink %))
+(s/def :javafx/text-component #(instance? javafx.scene.text.Text %))
 
 (s/def :gui/text string?)
 (s/def :gui/cell-value-factory ifn?)

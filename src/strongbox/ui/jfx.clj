@@ -635,10 +635,10 @@
     {:fx/type :text
      :text ""}))
 
-(defn-spec href-to-hyperlink (s/or :ok #(instance? javafx.scene.control.Hyperlink %)
-                                   :noop #(instance? javafx.scene.text.Text %))
+;;(defn-spec href-to-hyperlink (s/or :ok :javafx/hyperlink-component, :noop :javafx/text-component)
+(defn href-to-hyperlink
   "returns a hyperlink instance or empty text"
-  [row map?]
+  [row]
   (-> row -href-to-hyperlink fx/create-component fx/instance))
 
 (defn installed-addons-table
