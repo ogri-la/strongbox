@@ -66,11 +66,11 @@
   (core/start (merge {:profile? profile?, :spec? spec?} cli-opts))
   (case (:ui cli-opts)
     :cli (cli/start cli-opts)
-    :gui (gui/start)
+    :gui (do
+           (gui/start)
+           (watch-for-gui-restart))
     :gui2 (jfx/start)
     (gui/start))
-
-  (watch-for-gui-restart)
 
   nil)
 
@@ -201,9 +201,9 @@
         args))))
 
 (defn exit
-  [status msg]
+  [status & [msg]]
   (stop)
-  (println msg)
+  (when msg (println msg))
   (System/exit status))
 
 (defn -main
@@ -212,11 +212,6 @@
     (shutdown-hook)
     (if exit-message
       (exit (if ok? 0 1) exit-message)
-      (cond
-        (:test? options) (try (test) (exit 0 "")
-                              (catch Exception e (exit 1 "") (str e)))
-        (:profile? options) (do
-                              (profile options)
-                              (Thread/sleep 5000)
-                              (exit 0 ""))
-        :else (start options)))))
+      (start options))
+    ;; triggers shutdown hook and `stop`
+    (exit 0)))
