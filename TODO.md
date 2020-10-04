@@ -37,6 +37,9 @@ see CHANGELOG.md for a more formal list of changes by release
     - while updating 'github' dir with 'update all'
     - something to do with logger?
 
+* bug, notice logging in new gui will still do an infinite fail
+    - shouldn't be too difficult to replicate
+
 ## todo bucket (no particular order)
 
 * datetime parsing is broken *again* in wowinterface-api
