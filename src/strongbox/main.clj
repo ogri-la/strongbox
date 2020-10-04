@@ -12,7 +12,10 @@
     [utils :as utils :refer [in?]]]
    [gui.diff :refer [with-gui-diff]]
    [strongbox.ui
-    [jfx :as jfx]
+    ;; warning! requiring cljfx starts the javafx application thread.
+    ;; this is a pita for exiting a non-javafx UI (cli) and aot as it just 'hangs'.
+    ;; hanging aot is handled in project.clj, but dynamic inclusion of jfx is handled here.
+    ;;[jfx :as jfx] 
     [cli :as cli]
     [gui :as gui]])
   (:gen-class))
@@ -45,13 +48,21 @@
                      (swap! core/state assoc :gui-restart-flag nil)))]
     (core/state-bind [:gui-restart-flag] callback)))
 
+(defn jfx
+  [action]
+  (require 'strongbox.ui.jfx)
+  (let [jfx-ns (find-ns 'strongbox.ui.jfx)]
+    (case action
+      :start ((ns-resolve jfx-ns 'start))
+      :stop ((ns-resolve jfx-ns 'stop)))))
+
 (defn stop
   []
   (let [opts (:cli-opts @core/state)]
     (case (:ui opts)
       :cli (cli/stop)
       :gui (gui/stop)
-      :gui2 (jfx/stop)
+      :gui2 (jfx :stop)
       (gui/stop))
     (core/stop core/state)))
 
@@ -69,7 +80,7 @@
     :gui (do
            (gui/start)
            (watch-for-gui-restart))
-    :gui2 (jfx/start)
+    :gui2 (jfx :start)
     (gui/start))
 
   nil)
@@ -212,6 +223,4 @@
     (shutdown-hook)
     (if exit-message
       (exit (if ok? 0 1) exit-message)
-      (start options))
-    ;; triggers shutdown hook and `stop`
-    (exit 0)))
+      (start options))))
