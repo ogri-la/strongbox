@@ -128,6 +128,14 @@
     :parse-fn #(-> % fs/expand-home fs/normalized str)
     :validate [#(fs/directory? %) "must be a directory that exists"]]
 
+   ["-T" "--test" "run the tests"
+    :id :test?
+    :default false]
+
+   ["-P" "--profile" "run the profiler"
+    :id :profile?
+    :default false]
+
    ["-H" "--headless" "headless mode will never prompt you for input and always choose the most sensible default. headless mode uses the CLI rather than the GUI."
     :id :headless?
     :parse-fn #(-> % lower-case (= "true"))
@@ -204,4 +212,11 @@
     (shutdown-hook)
     (if exit-message
       (exit (if ok? 0 1) exit-message)
-      (start options))))
+      (cond
+        (:test? options) (try (test) (exit 0 "")
+                              (catch Exception e (exit 1 "") (str e)))
+        (:profile? options) (do
+                              (profile options)
+                              (Thread/sleep 5000)
+                              (exit 0 ""))
+        :else (start options)))))
