@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=Strongbox
+Exec=AppRun %F
+Categories=
+Icon=strongbox

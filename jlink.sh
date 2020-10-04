@@ -1,6 +1,6 @@
 #!/bin/bash
 # creates a custom JRE and launcher for application uberjar
-set -ex
+set -e
 
 output_dir="jlink-output"
 
@@ -23,6 +23,20 @@ echo "building app"
 lein uberjar
 cp target/*-standalone.jar "$output_dir/uberjar.jar"
 
-echo "writing launcher"
-printf "#!/bin/bash\n./bin/java -jar uberjar.jar" > "$output_dir/launcher"
-chmod +x "$output_dir/launcher"
+echo "building AppImage"
+if [ ! -e appimagetool ]; then
+    wget \
+        -c "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage" \
+        -o appimagetool
+    mv appimagetool-x86_64.AppImage appimagetool
+    chmod +x appimagetool
+fi
+rm -rf ./AppDir
+mkdir AppDir
+mv "$output_dir" AppDir/usr
+cp strongbox.desktop AppDir/
+cp strongbox.png AppDir/
+cp AppRun AppDir/
+du -sh AppDir/
+ARCH=x86_64 ./appimagetool AppDir strongbox.AppImage
+du -sh strongbox.AppImage
