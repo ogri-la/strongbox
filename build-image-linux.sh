@@ -41,7 +41,7 @@ cp strongbox.png AppDir/
 cp AppRun AppDir/
 du -sh AppDir/
 ARCH=x86_64 ./appimagetool AppDir strongbox
-du -sh strongbox.AppImage
+du -sh strongbox
 
 
 echo "cleaning up"
