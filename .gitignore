@@ -10,4 +10,6 @@
 .eastwood
 .vagrant/
 AppDir/
+custom-jre/
 appimagetool
+strongbox

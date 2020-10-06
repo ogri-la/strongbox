@@ -49,6 +49,10 @@
     (core/state-bind [:gui-restart-flag] callback)))
 
 (defn jfx
+  "dynamically resolve the `strongbox.ui.jfx` ns and call the requisite `action`.
+  `action` is either `:start` or `:stop`.
+  this is done because including the cljfx directly will start will the JavaFX application
+  thread and cause hanging behaviour when running tests or using the non-gui CLI"
   [action]
   (require 'strongbox.ui.jfx)
   (let [jfx-ns (find-ns 'strongbox.ui.jfx)]
@@ -92,6 +96,7 @@
   (start cli-opts))
 
 (defn profile
+  "runs the app the same as `start`, but enables profiling output"
   [& [cli-ops]]
   (let [default-opts {:verbosity :error, :ui :cli, :spec? false}]
     (restart (merge default-opts cli-ops {:profile? true}))))
@@ -138,14 +143,6 @@
     :id :install-dir
     :parse-fn #(-> % fs/expand-home fs/normalized str)
     :validate [#(fs/directory? %) "must be a directory that exists"]]
-
-   ["-T" "--test" "run the tests"
-    :id :test?
-    :default false]
-
-   ["-P" "--profile" "run the profiler"
-    :id :profile?
-    :default false]
 
    ["-H" "--headless" "headless mode will never prompt you for input and always choose the most sensible default. headless mode uses the CLI rather than the GUI."
     :id :headless?
