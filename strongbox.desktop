@@ -1,0 +1,8 @@
+[Desktop Entry]
+# https://specifications.freedesktop.org/desktop-entry-spec/latest/
+Type=Application
+Name=strongbox
+#Version=1.0
+Exec=AppRun
+Categories=Game;PackageManager;Java;
+Icon=strongbox

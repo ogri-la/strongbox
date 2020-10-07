@@ -27,13 +27,9 @@
                  ;; remember to update the LICENCE.txt
                  ;; remember to update pom file (`lein pom`)
 
-                 [cljfx "1.7.8"]
-                 [cljfx/css "1.1.0"]
-
-                 ]
-
-  ;; java 11 , java-time localisation issue 
-  ;;:jvm-opts ["-Djava.locale.providers=COMPAT,CLDR"]
+                 [cljfx "1.7.8" :exclusions [org.openjfx/javafx-web
+                                             org.openjfx/javafx-media]]
+                 [cljfx/css "1.1.0"]]
 
   :profiles {:dev {:dependencies [;; fake http responses for testing
                                   [clj-http-fake "1.0.3"]

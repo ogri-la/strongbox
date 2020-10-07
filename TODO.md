@@ -33,6 +33,13 @@ see CHANGELOG.md for a more formal list of changes by release
 * mac, combo-box empty when adding/removing directories
     - *or* combo-box gets a datastructure instead of a label, depending on how this is fixed
 
+* bug, just got loads of "addon 'altoholicretail' is overwriting 'altoholicclassic'"
+    - while updating 'github' dir with 'update all'
+    - something to do with logger?
+
+* bug, notice logging in new gui will still do an infinite fail
+    - shouldn't be too difficult to replicate
+
 ## todo bucket (no particular order)
 
 * datetime parsing is broken *again* in wowinterface-api

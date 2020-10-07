@@ -133,7 +133,7 @@
 
 (defmethod action :default
   [opts]
-  (println opts))
+  (println "(no action) given:" opts))
 
 (defn start
   [opts]

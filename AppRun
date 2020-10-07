@@ -1,0 +1,6 @@
+#!/bin/bash
+# uses a custom modular JRE to run the application uberjar
+set -e
+DIR="$(dirname "$(readlink -f "$0")")"
+cd $DIR
+./usr/bin/java -jar ./usr/app.jar "$@"

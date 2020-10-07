@@ -12,7 +12,10 @@
     [utils :as utils :refer [in?]]]
    [gui.diff :refer [with-gui-diff]]
    [strongbox.ui
-    [jfx :as jfx]
+    ;; warning! requiring cljfx starts the javafx application thread.
+    ;; this is a pita for exiting a non-javafx UI (cli) and aot as it just 'hangs'.
+    ;; hanging aot is handled in project.clj, but dynamic inclusion of jfx is handled here.
+    ;;[jfx :as jfx] 
     [cli :as cli]
     [gui :as gui]])
   (:gen-class))
@@ -45,13 +48,25 @@
                      (swap! core/state assoc :gui-restart-flag nil)))]
     (core/state-bind [:gui-restart-flag] callback)))
 
+(defn jfx
+  "dynamically resolve the `strongbox.ui.jfx` ns and call the requisite `action`.
+  `action` is either `:start` or `:stop`.
+  this is done because including the cljfx directly will start will the JavaFX application
+  thread and cause hanging behaviour when running tests or using the non-gui CLI"
+  [action]
+  (require 'strongbox.ui.jfx)
+  (let [jfx-ns (find-ns 'strongbox.ui.jfx)]
+    (case action
+      :start ((ns-resolve jfx-ns 'start))
+      :stop ((ns-resolve jfx-ns 'stop)))))
+
 (defn stop
   []
   (let [opts (:cli-opts @core/state)]
     (case (:ui opts)
       :cli (cli/stop)
       :gui (gui/stop)
-      :gui2 (jfx/stop)
+      :gui2 (jfx :stop)
       (gui/stop))
     (core/stop core/state)))
 
@@ -66,11 +81,11 @@
   (core/start (merge {:profile? profile?, :spec? spec?} cli-opts))
   (case (:ui cli-opts)
     :cli (cli/start cli-opts)
-    :gui (gui/start)
-    :gui2 (jfx/start)
+    :gui (do
+           (gui/start)
+           (watch-for-gui-restart))
+    :gui2 (jfx :start)
     (gui/start))
-
-  (watch-for-gui-restart)
 
   nil)
 
@@ -81,6 +96,7 @@
   (start cli-opts))
 
 (defn profile
+  "runs the app the same as `start`, but enables profiling output"
   [& [cli-ops]]
   (let [default-opts {:verbosity :error, :ui :cli, :spec? false}]
     (restart (merge default-opts cli-ops {:profile? true}))))
@@ -193,9 +209,9 @@
         args))))
 
 (defn exit
-  [status msg]
+  [status & [msg]]
   (stop)
-  (println msg)
+  (when msg (println msg))
   (System/exit status))
 
 (defn -main

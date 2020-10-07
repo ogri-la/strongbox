@@ -211,9 +211,9 @@
                             (.showOpenDialog chooser window)))]
       (-> file-obj .getAbsolutePath str))))
 
-(defn-spec dir-chooser (s/or :ok ::sp/extant-dir, :noop nil?)
+(defn dir-chooser
   "prompt user to select a directory"
-  [event :javafx/action-event]
+  [event]
   (let [;; valid for a menu-item
         window (-> event .getTarget .getParentPopup .getOwnerWindow .getScene .getWindow)
         chooser (doto (DirectoryChooser.)
@@ -330,10 +330,10 @@
   good for placeholder event handlers."
   (constantly nil))
 
-(defn-spec wow-dir-picker nil?
+(defn wow-dir-picker
   "prompts the user to select an addon dir. 
   if a valid addon directory is selected, calls `cli/set-addon-dir!`"
-  [event :javafx/action-event]
+  [event]
   (when-let [dir (dir-chooser event)]
     (when (fs/directory? dir)
       ;; unlike swing, it doesn't appear possible to select a non-directory with javafx (good)
@@ -359,9 +359,9 @@
   (fn [event]
     (some-> (select "#tabber") first .getSelectionModel (.select tab-idx))))
 
-(defn-spec import-addon-handler nil?
+(defn import-addon-handler
   "imports an addon by parsing a URL"
-  [event :javafx/action-event]
+  [event]
   (let [addon-url (text-input "Enter URL of addon")
         fail-msg "Failed. URL must be:
   * valid
@@ -383,25 +383,25 @@
 (def json-files-extension-filters
   [{:description "JSON files" :extensions ["*.json"]}])
 
-(defn-spec import-addon-list-handler nil?
+(defn import-addon-list-handler
   "prompts user with a file selection dialogue then imports a list of addons from the selected file"
-  [event :javafx/action-event]
+  [event]
   (when-let [abs-path (file-chooser event {:filters json-files-extension-filters})]
     (core/import-exported-file abs-path)
     (core/refresh))
   nil)
 
-(defn-spec export-addon-list-handler nil?
+(defn export-addon-list-handler
   "prompts user with a file selection dialogue then writes the current directory of addons to the selected file"
-  [event :javafx/action-event]
+  [event]
   (when-let [abs-path (file-chooser event {:type :save
                                            :filters json-files-extension-filters})]
     (core/export-installed-addon-list-safely abs-path))
   nil)
 
-(defn-spec export-user-catalogue-handler nil?
+(defn export-user-catalogue-handler
   "prompts user with a file selection dialogue then writes the user catalogue to selected file"
-  [event :javafx/action-event]
+  [event]
   (when-let [abs-path (file-chooser event {:type :save
                                            :filters json-files-extension-filters})]
     (core/export-user-catalogue-addon-list-safely abs-path))
@@ -429,16 +429,16 @@
               {:fx/type :text
                :text "AGPL v3"}]})
 
-(defn-spec about-strongbox-dialog nil?
+(defn about-strongbox-dialog
   "displays an informational dialog to the user about strongbox"
-  [event :javafx/action-event]
+  [event]
   (alert event "" {:type :info
                    :content (-> (-about-strongbox-dialog) fx/create-component fx/instance)})
   nil)
 
-(defn-spec remove-selected-confirmation-handler nil?
+(defn remove-selected-confirmation-handler
   "prompts the user to confirm if they *really* want to delete those addons they just selected and clicked 'delete' on"
-  [event :javafx/action-event]
+  [event]
   (when-let [selected (core/get-state :selected-installed)]
     (if (utils/any (mapv :ignore? selected))
       (alert event "Selection contains ignored addons. Stop ignoring them and then delete." {:type :error})
@@ -455,10 +455,10 @@
           (core/remove-selected)))))
   nil)
 
-(defn-spec search-results-install-handler nil?
+(defn search-results-install-handler
   "this switches to the 'installed' tab, then, for each addon selected, expands summary, installs addon, calls load-installed-addons and finally refreshes;
   this presents as a plodding step-wise update but is better than a blank screen and apparent hang"
-  [event :javafx/action-event]
+  [event]
   ;; original approach. efficient but no feedback for user
   ;; note: still true as of 2020-09?
   ;; todo: stick this in `ui.cli`
