@@ -8,6 +8,8 @@
    ;; so don't log in the gui!
    [taoensso.timbre :as timbre :refer [spy]] ;; debug info warn error spy]] 
    [cljfx.ext.table-view :as fx.ext.table-view]
+   [cljfx.lifecycle :as fx.lifecycle]
+   [cljfx.component :as fx.component]
    [cljfx
     [api :as fx]]
    [cljfx.css :as css]
@@ -26,6 +28,27 @@
    [javafx.stage FileChooser FileChooser$ExtensionFilter DirectoryChooser Window WindowEvent]
    [javafx.application Platform]
    [javafx.scene Node]))
+
+;; javafx hack, fixes combobox that sometimes goes blank:
+;; https://github.com/cljfx/cljfx/issues/76#issuecomment-645563116
+(def ext-recreate-on-key-changed
+  "Extension lifecycle that recreates its component when lifecycle's key is changed
+  
+  Supported keys:
+  - `:key` (required) - a value that determines if returned component should be recreated
+  - `:desc` (required) - a component description with additional lifecycle semantics"
+  (reify fx.lifecycle/Lifecycle
+    (create [_ {:keys [key desc]} opts]
+      (with-meta {:key key
+                  :child (fx.lifecycle/create fx.lifecycle/dynamic desc opts)}
+        {`fx.component/instance #(-> % :child fx.component/instance)}))
+    (advance [this component {:keys [key desc] :as this-desc} opts]
+      (if (= (:key component) key)
+        (update component :child #(fx.lifecycle/advance fx.lifecycle/dynamic % desc opts))
+        (do (fx.lifecycle/delete this component opts)
+            (fx.lifecycle/create this this-desc opts))))
+    (delete [_ component opts]
+      (fx.lifecycle/delete fx.lifecycle/dynamic (:child component) opts))))
 
 (defn-spec style map?
   "generates javafx css definitions for the different themes.
@@ -569,19 +592,14 @@
   (let [config (fx/sub-val context get-in [:app-state :cfg])
         selected-addon-dir (:selected-addon-dir config)
         addon-dir-map-list (get config :addon-dir-list [])]
-    {:fx/type :combo-box
-     :id "shitty-combo-box"
-     :value selected-addon-dir
-     :button-cell (fn [row] {:text (:addon-dir row)})
-     :cell-factory {:fx/cell-type :list-cell
-                    :describe (fn [row] {:text (:addon-dir row)})}
-     :on-value-changed (async-event-handler
-                        (fn [new-addon-dir]
-                          (cli/set-addon-dir! (:addon-dir new-addon-dir))))
-                          ;;(cli/set-addon-dir! new-addon-dir)))
-     :items addon-dir-map-list
-     ;;:items (mapv :addon-dir addon-dir-map-list)
-     }))
+    {:fx/type ext-recreate-on-key-changed
+     :key (sort-by :addon-dir addon-dir-map-list)
+     :desc {:fx/type :combo-box
+            :value selected-addon-dir
+            :on-value-changed (async-event-handler
+                               (fn [new-addon-dir]
+                                 (cli/set-addon-dir! new-addon-dir)))
+            :items (mapv :addon-dir addon-dir-map-list)}}))
 
 (defn game-track-dropdown
   [{:keys [fx/context]}]

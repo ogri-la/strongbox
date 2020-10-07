@@ -19,9 +19,17 @@ see CHANGELOG.md for a more formal list of changes by release
                 - min JRE is 29MB, about ~9MB more than what we already have.
                     - is filesize a problem for users?
 
+* single distributable binary with no reliance on external jvm
+    - done. adding a JRE and excluding some webview and media bits makes the binary about ~57MB
+
+* mac, combo-box empty when adding/removing directories
+    - *or* combo-box gets a datastructure instead of a label, depending on how this is fixed
+
 ## todo
 
-* single distributable binary with no reliance on external jvm
+* update release.sh script to generate binary as well
+    - we'll upload the .appimage and .jar 
+    - arch users will get the .appimage and will drop the java runtime requirement
 
 * scrub gui string values of newlines before displaying
     - see tukui-classic, id 2, it's description is 
@@ -29,9 +37,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - swing gui ignored these
     - probably do this in the catalogue
         - is it possible to enter the system via tocs?
-
-* mac, combo-box empty when adding/removing directories
-    - *or* combo-box gets a datastructure instead of a label, depending on how this is fixed
 
 * bug, just got loads of "addon 'altoholicretail' is overwriting 'altoholicclassic'"
     - while updating 'github' dir with 'update all'
@@ -41,6 +46,8 @@ see CHANGELOG.md for a more formal list of changes by release
     - shouldn't be too difficult to replicate
 
 ## todo bucket (no particular order)
+
+* better icon for appimage
 
 * datetime parsing is broken *again* in wowinterface-api
     - I thought I fixed this twice now??
