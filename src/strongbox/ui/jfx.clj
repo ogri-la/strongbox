@@ -41,7 +41,7 @@
     (create [_ {:keys [key desc]} opts]
       (with-meta {:key key
                   :child (fx.lifecycle/create fx.lifecycle/dynamic desc opts)}
-                 {`fx.component/instance #(-> % :child fx.component/instance)}))
+        {`fx.component/instance #(-> % :child fx.component/instance)}))
     (advance [this component {:keys [key desc] :as this-desc} opts]
       (if (= (:key component) key)
         (update component :child #(fx.lifecycle/advance fx.lifecycle/dynamic % desc opts))
@@ -49,7 +49,6 @@
             (fx.lifecycle/create this this-desc opts))))
     (delete [_ component opts]
       (fx.lifecycle/delete fx.lifecycle/dynamic (:child component) opts))))
-
 
 (defn-spec style map?
   "generates javafx css definitions for the different themes.
@@ -592,23 +591,15 @@
   [{:keys [fx/context]}]
   (let [config (fx/sub-val context get-in [:app-state :cfg])
         selected-addon-dir (:selected-addon-dir config)
-        addon-dir-map-list (get config :addon-dir-list [])
-        aru (sort-by :addon-dir addon-dir-map-list)
-        ]
+        addon-dir-map-list (get config :addon-dir-list [])]
     {:fx/type ext-recreate-on-key-changed
-     :key aru
+     :key (sort-by :addon-dir addon-dir-map-list)
      :desc {:fx/type :combo-box
             :value selected-addon-dir
-            ;;:button-cell (fn [row] {:text (:addon-dir row)})
-            ;;:cell-factory {:fx/cell-type :list-cell
-            ;;               :describe (fn [row] {:text (:addon-dir row)})}
             :on-value-changed (async-event-handler
                                (fn [new-addon-dir]
-                                 ;;(cli/set-addon-dir! (:addon-dir new-addon-dir))))
                                  (cli/set-addon-dir! new-addon-dir)))
-            ;;:items aru
-            :items (mapv :addon-dir addon-dir-map-list)
-            }}))
+            :items (mapv :addon-dir addon-dir-map-list)}}))
 
 (defn game-track-dropdown
   [{:keys [fx/context]}]

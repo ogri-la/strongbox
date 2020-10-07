@@ -22,6 +22,9 @@ see CHANGELOG.md for a more formal list of changes by release
 * single distributable binary with no reliance on external jvm
     - done. adding a JRE and excluding some webview and media bits makes the binary about ~57MB
 
+* mac, combo-box empty when adding/removing directories
+    - *or* combo-box gets a datastructure instead of a label, depending on how this is fixed
+
 ## todo
 
 * update release.sh script to generate binary as well
@@ -34,9 +37,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - swing gui ignored these
     - probably do this in the catalogue
         - is it possible to enter the system via tocs?
-
-* mac, combo-box empty when adding/removing directories
-    - *or* combo-box gets a datastructure instead of a label, depending on how this is fixed
 
 * bug, just got loads of "addon 'altoholicretail' is overwriting 'altoholicclassic'"
     - while updating 'github' dir with 'update all'
