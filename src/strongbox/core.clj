@@ -17,7 +17,7 @@
     [http :as http]
     [logging :as logging]
     [nfo :as nfo]
-    [utils :as utils :refer [join not-empty? false-if-nil nav-map nav-map-fn delete-many-files! static-slurp expand-path if-let*]]
+    [utils :as utils :refer [join nav-map nav-map-fn delete-many-files! static-slurp expand-path if-let*]]
     [catalogue :as catalogue]
     [specs :as sp]]))
 

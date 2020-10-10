@@ -6,7 +6,7 @@
    [slugify.core :refer [slugify]]
    [strongbox
     [tags :as tags]
-    [utils :as utils :refer [to-url]]
+    [utils :as utils]
     [http :as http]]
    [flatland.ordered.map :as omap]
    [net.cgrand.enlive-html :as html :refer [html-snippet select]]

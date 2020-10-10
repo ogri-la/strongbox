@@ -51,5 +51,6 @@
                            ;;:unused-locals ;; prefer to keep for readability
                            ;;:unused-fn-args ;; prefer to keep for readability
                            ;;:keyword-typos ;; bugged with spec?
-                           ]}
+                           ]
+             :only-modified true}
   )
