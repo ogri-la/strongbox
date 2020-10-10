@@ -47,6 +47,10 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* investigate *warn-on-reflections*
+    - I think there may be some solid performance gains by turning this on
+        - remember to profile first
+
 * better icon for appimage
 
 * datetime parsing is broken *again* in wowinterface-api

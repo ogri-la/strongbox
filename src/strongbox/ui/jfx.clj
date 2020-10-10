@@ -19,7 +19,7 @@
    [strongbox
     [specs :as sp]
     [logging :as logging]
-    [utils :as utils]
+    [utils :as utils :refer [no-new-lines]]
     [core :as core]])
   (:import
    [java.util List]
@@ -669,8 +669,8 @@
                         (some-> row :interface-version str utils/interface-version-to-game-version))
 
         column-list [{:text "source" :min-width 110 :pref-width 120 :max-width 160 :cell-value-factory href-to-hyperlink}
-                     {:text "name" :min-width 150 :pref-width 300 :max-width 500 :cell-value-factory :label}
-                     {:text "description" :pref-width 700 :cell-value-factory :description}
+                     {:text "name" :min-width 150 :pref-width 300 :max-width 500 :cell-value-factory (comp no-new-lines :label)}
+                     {:text "description" :pref-width 700 :cell-value-factory (comp no-new-lines :description)}
                      {:text "installed" :max-width 150 :cell-value-factory :installed-version}
                      {:text "available" :max-width 150 :cell-value-factory :version}
                      {:text "WoW" :max-width 100 :cell-value-factory iface-version}]]
@@ -730,8 +730,8 @@
 
         addon-list (fx/sub-val context get-in [:app-state :search-results])
         column-list [{:text "source" :min-width 110 :pref-width 120 :max-width 160 :cell-value-factory href-to-hyperlink}
-                     {:text "name" :min-width 150 :pref-width 300 :max-width 450 :cell-value-factory :label}
-                     {:text "description" :pref-width 700 :cell-value-factory :description}
+                     {:text "name" :min-width 150 :pref-width 300 :max-width 450 :cell-value-factory (comp no-new-lines :label)}
+                     {:text "description" :pref-width 700 :cell-value-factory (comp no-new-lines :description)}
                      {:text "tags" :pref-width 380 :min-width 230 :max-width 450 :cell-value-factory (comp str :tag-list)}
                      {:text "updated" :min-width 85 :max-width 120 :pref-width 100 :cell-value-factory (comp #(utils/safe-subs % 10)  :updated-date)}
                      {:text "downloads" :min-width 100 :max-width 120 :cell-value-factory :download-count}]]

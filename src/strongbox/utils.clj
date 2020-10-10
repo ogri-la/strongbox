@@ -534,3 +534,11 @@
                           "tukui-classic"
                           "tukui")
         nil))))
+
+(defn-spec no-new-lines (s/or :ok string? :also-ok nil?)
+  "removes all \n and \r\n from a string"
+  [string (s/nilable string?)]
+  (some-> string
+          (clojure.string/replace "\r\n" " ")
+          (clojure.string/replace "\n" " ")))
+  

@@ -191,3 +191,15 @@
                [["foo" -100] ""]]]
     (doseq [[[string max] expected] cases]
       (is (= expected (utils/safe-subs string max))))))
+
+(deftest no-new-lines
+  (let [cases [[nil nil]
+               ["" ""]
+               [" " " "]
+               ["\n" " "]
+               ["\r\n" " "]
+               ["foo\nbar" "foo bar"]
+               ["foo\r\nbar" "foo bar"]
+               ["foo\nbar\r\nbaz" "foo bar baz"]]]
+        (doseq [[given expected] cases]
+          (is (= expected (utils/no-new-lines given)) (format "failed given '%s'" given)))))
