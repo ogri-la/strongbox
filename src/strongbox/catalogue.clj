@@ -8,7 +8,7 @@
    [java-time]
    [strongbox
     [tags :as tags]
-    [utils :as utils :refer [todt utcnow]]
+    [utils :as utils :refer [todt]]
     [specs :as sp]
     [tukui-api :as tukui-api]
     [curseforge-api :as curseforge-api]

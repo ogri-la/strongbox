@@ -4,7 +4,7 @@
     [tags :as tags]
     [http :as http]
     [specs :as sp]
-    [utils :as utils :refer [to-int to-json fmap join from-epoch to-url]]]
+    [utils :as utils :refer [to-json join]]]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :as log :refer [debug info warn error spy]]))
