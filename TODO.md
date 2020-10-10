@@ -25,18 +25,19 @@ see CHANGELOG.md for a more formal list of changes by release
 * mac, combo-box empty when adding/removing directories
     - *or* combo-box gets a datastructure instead of a label, depending on how this is fixed
 
-## todo
-
-* update release.sh script to generate binary as well
-    - we'll upload the .appimage and .jar 
-    - arch users will get the .appimage and will drop the java runtime requirement
-
 * scrub gui string values of newlines before displaying
     - see tukui-classic, id 2, it's description is 
         "A USER INTERFACE DESIGNED AROUND USER-FRIENDLINESS WITH EXTRA FEATURES THAT ARE NOT INCLUDED IN THE STANDARD UI.\r\n"
     - swing gui ignored these
     - probably do this in the catalogue
         - is it possible to enter the system via tocs?
+    - done
+
+## todo
+
+* update release.sh script to generate binary as well
+    - we'll upload the .appimage and .jar 
+    - arch users will get the .appimage and will drop the java runtime requirement
 
 * bug, just got loads of "addon 'altoholicretail' is overwriting 'altoholicclassic'"
     - while updating 'github' dir with 'update all'
