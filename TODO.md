@@ -35,17 +35,17 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * bug, notice logging in new gui will still do an infinite fail
     - shouldn't be too difficult to replicate
-    - done
+
+* bug, just got loads of "addon 'altoholicretail' is overwriting 'altoholicclassic'"
+    - while updating 'github' dir with 'update all'
+    - something to do with logger?
+        - if it was, it would be fixed now with recursion check
 
 ## todo
 
 * update release.sh script to generate binary as well
     - we'll upload the .appimage and .jar 
     - arch users will get the .appimage and will drop the java runtime requirement
-
-* bug, just got loads of "addon 'altoholicretail' is overwriting 'altoholicclassic'"
-    - while updating 'github' dir with 'update all'
-    - something to do with logger?
 
 ## todo bucket (no particular order)
 

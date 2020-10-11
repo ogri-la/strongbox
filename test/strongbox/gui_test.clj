@@ -14,7 +14,7 @@
 
 (deftest gui-init
   (testing "the gui can be started and stopped"
-    (with-running-app+opts {:ui :gui}
+    (with-running-app+opts {:ui :gui1}
       (is (gui/select-ui :#root))))
 
   (testing "attempting to select components of the gui when the app is started but the gui isn't causes a runtime error"
@@ -30,7 +30,7 @@
     (let [fake-routes {"https://api.github.com/repos/ogri-la/strongbox/releases/latest"
                        {:get (fn [req] {:status 200 :body "{\"tag_name\": \"9.99.999\"}"})}}]
       (with-global-fake-routes-in-isolation fake-routes
-        (with-running-app+opts {:ui :gui}
+        (with-running-app+opts {:ui :gui1}
           (let [btn (gui/select-ui :#update-available-btn)]
             (is (= (ss/text btn) "Update Available: 9.99.999"))))))))
 
@@ -68,7 +68,7 @@
                      ;; may or may not appear.
                      ;; :update? false
                      }]]
-      (with-running-app+opts {:ui :gui}
+      (with-running-app+opts {:ui :gui1}
         (Thread/sleep 200)
         (helper/install-dir)
         (core/install-addon addon)

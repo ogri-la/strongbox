@@ -1,33 +1,39 @@
 os: linux
-dist: xenial # Ubuntu 16.04
+dist: bionic # Ubuntu 18.04
 
 language: clojure
 
 services:
   - xvfb
 
+jdk:
+- openjdk11
+- openjdk14
+
+script: ./run-tests.sh
+
 jobs:
     include:
-        -
-            stage: test
-            jdk: openjdk11
-            script: ./run-tests.sh
 
         # run the release stage 
         # when the branch being tested is 'master'
         # and the revision has been tagged
         -   
             stage: release
-            jdk: openjdk11
+            jdk: openjdk14
             if: tag IS present
             script: ./release.sh
             deploy:
                 provider: releases
                 token: $GITHUB_TOKEN
+                skip_cleanup: true
                 file_glob: true
                 file: 
                     - "target/strongbox-*-standalone.jar" # target/strongbox-1.1.1-standalone.jar
                     - "target/strongbox-*-standalone.jar.sha256" # target/strongbox-1.1.1-standalone.jar.sha256
+                    - "target/strongbox"
+                    - "target/strongbox.sha256"
+                    
                 # redundant if "if: tag is present" ?
                 on:
                     tags: true

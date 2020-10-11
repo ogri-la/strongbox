@@ -11,5 +11,9 @@ lein uberjar
     filepath=$(realpath strongbox-*-standalone.jar | head -n 1)
     filename=$(basename "$filepath")
     sha256sum strongbox-*-standalone.jar > "$filename.sha256"
-    echo "Created $filepath.sha256"
 )
+
+# generates an AppImage called 'strongbox'
+. build-linux-image.sh
+sha256sum strongbox > "target/strongbox.sha256"
+mv strongbox target/strongbox
