@@ -10,11 +10,10 @@ jdk:
 - openjdk11
 - openjdk14
 
+script: ./run-tests.sh
+
 jobs:
     include:
-        -
-            stage: test
-            script: ./run-tests.sh
 
         # run the release stage 
         # when the branch being tested is 'master'
