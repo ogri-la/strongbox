@@ -853,7 +853,7 @@
   (let [gui-logger (fn [log-data]
                      (let [{:keys [timestamp_ msg_ level]} log-data
                            this-msg (force msg_)
-                           prev-msg (-> (fx/sub-val @gui-state get :log-message-list) last :message)
+                           prev-msg (-> (fx/sub-val @gui-state :log-message-list) last :message)
                            log-line {:level level :time (force timestamp_) :message this-msg}]
                        ;; infinite recursion protection.
                        ;; logging updates the `log-message-list` ->

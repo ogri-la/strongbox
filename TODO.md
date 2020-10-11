@@ -33,6 +33,10 @@ see CHANGELOG.md for a more formal list of changes by release
         - is it possible to enter the system via tocs?
     - done
 
+* bug, notice logging in new gui will still do an infinite fail
+    - shouldn't be too difficult to replicate
+    - done
+
 ## todo
 
 * update release.sh script to generate binary as well
@@ -42,9 +46,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * bug, just got loads of "addon 'altoholicretail' is overwriting 'altoholicclassic'"
     - while updating 'github' dir with 'update all'
     - something to do with logger?
-
-* bug, notice logging in new gui will still do an infinite fail
-    - shouldn't be too difficult to replicate
 
 ## todo bucket (no particular order)
 
