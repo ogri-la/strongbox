@@ -6,11 +6,14 @@ language: clojure
 services:
   - xvfb
 
+jdk:
+- openjdk11
+- openjdk14
+
 jobs:
     include:
         -
             stage: test
-            jdk: openjdk11
             script: ./run-tests.sh
 
         # run the release stage 
@@ -18,7 +21,7 @@ jobs:
         # and the revision has been tagged
         -   
             stage: release
-            jdk: openjdk11
+            jdk: openjdk14
             if: tag IS present
             script: ./release.sh
             deploy:
@@ -28,6 +31,8 @@ jobs:
                 file: 
                     - "target/strongbox-*-standalone.jar" # target/strongbox-1.1.1-standalone.jar
                     - "target/strongbox-*-standalone.jar.sha256" # target/strongbox-1.1.1-standalone.jar.sha256
+                    - "strongbox"
+                    - "strongbox.sha256"
                 # redundant if "if: tag is present" ?
                 on:
                     tags: true

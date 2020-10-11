@@ -15,10 +15,12 @@ jlink \
     --compress=2
 du -sh "$output_dir"
 
-echo
-echo "--- building app ---"
-lein uberjar
-cp target/*-standalone.jar "$output_dir/app.jar"
+if [ ! -f ./target/*-standalone.jar ]; then
+    echo
+    echo "--- building app ---"
+    lein uberjar
+fi
+cp ./target/*-standalone.jar "$output_dir/app.jar"
 
 echo
 echo "--- building AppImage ---"
@@ -44,7 +46,6 @@ du -sh strongbox
 echo
 echo "--- cleaning up ---"
 rm -rf AppDir
-lein clean
 
 echo
 echo "done."
