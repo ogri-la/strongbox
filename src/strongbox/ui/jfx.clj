@@ -362,7 +362,12 @@
   "exit the application. if running while testing or within a repl, it just closes the window"
   [& [_]]
   (cond
-    (:in-repl? @core/state) (swap! core/state assoc :gui-showing? false)
+    ;; fresh repl => (restart) => (:in-repl? @state) => nil
+    ;; because the app hasn't been started and there is no state yet, the app will exit.
+    ;; when hitting ctrl-c while the gui is running, `(utils/in-repl?) => false` because it's running on the JavaFX thread,
+    ;; and so will exit again there :( the double-check here seems to work though.
+    (or (:in-repl? @core/state)
+        (utils/in-repl?)) (swap! core/state assoc :gui-showing? false)
     (-> timbre/*config* :testing?) (swap! core/state assoc :gui-showing? false)
     ;; 2020-08-08: `ss/invoke-later` was keeping the old window around when running outside of repl.
     ;; `ss/invoke-soon` seems to fix that.
