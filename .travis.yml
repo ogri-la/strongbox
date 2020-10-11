@@ -30,8 +30,8 @@ jobs:
                 file: 
                     - "target/strongbox-*-standalone.jar" # target/strongbox-1.1.1-standalone.jar
                     - "target/strongbox-*-standalone.jar.sha256" # target/strongbox-1.1.1-standalone.jar.sha256
-                    - "strongbox"
-                    - "strongbox.sha256"
+                    - "target/strongbox"
+                    - "target/strongbox.sha256"
                 # redundant if "if: tag is present" ?
                 on:
                     tags: true

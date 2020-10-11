@@ -15,4 +15,5 @@ lein uberjar
 
 # generates an AppImage called 'strongbox'
 . build-linux-image.sh
-sha256sum strongbox > "strongbox.sha256"
+mv strongbox target/strongbox
+sha256sum strongbox > "target/strongbox.sha256"
