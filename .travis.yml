@@ -26,12 +26,14 @@ jobs:
             deploy:
                 provider: releases
                 token: $GITHUB_TOKEN
+                deploy.skip_cleanup: true
                 file_glob: true
                 file: 
                     - "target/strongbox-*-standalone.jar" # target/strongbox-1.1.1-standalone.jar
                     - "target/strongbox-*-standalone.jar.sha256" # target/strongbox-1.1.1-standalone.jar.sha256
                     - "target/strongbox"
                     - "target/strongbox.sha256"
+                    
                 # redundant if "if: tag is present" ?
                 on:
                     tags: true
