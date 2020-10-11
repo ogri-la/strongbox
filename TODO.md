@@ -41,11 +41,14 @@ see CHANGELOG.md for a more formal list of changes by release
     - something to do with logger?
         - if it was, it would be fixed now with recursion check
 
-## todo
-
 * update release.sh script to generate binary as well
     - we'll upload the .appimage and .jar 
     - arch users will get the .appimage and will drop the java runtime requirement
+    - done
+        - see pre-3.0.0 release
+
+## todo
+
 
 ## todo bucket (no particular order)
 
