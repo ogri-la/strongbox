@@ -26,7 +26,7 @@ jobs:
             deploy:
                 provider: releases
                 token: $GITHUB_TOKEN
-                deploy.skip_cleanup: true
+                skip_cleanup: true
                 file_glob: true
                 file: 
                     - "target/strongbox-*-standalone.jar" # target/strongbox-1.1.1-standalone.jar
