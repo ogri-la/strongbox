@@ -541,4 +541,4 @@
   (some-> string
           (clojure.string/replace "\r\n" " ")
           (clojure.string/replace "\n" " ")))
-  
+

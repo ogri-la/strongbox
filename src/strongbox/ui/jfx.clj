@@ -2,11 +2,7 @@
   (:require
    [me.raynes.fs :as fs]
    [clojure.string :refer [lower-case join]]
-   ;; we have problems with logging and infinite recursion.
-   ;; logging will cause a gui refresh and if any log messages are emitted
-   ;; during refresh it will cause another refresh, ad infinitum.
-   ;; so don't log in the gui!
-   [taoensso.timbre :as timbre :refer [spy]] ;; debug info warn error spy]] 
+   [taoensso.timbre :as timbre :refer [spy info]] ;; debug info warn error spy]] 
    [cljfx.ext.table-view :as fx.ext.table-view]
    [cljfx.lifecycle :as fx.lifecycle]
    [cljfx.component :as fx.component]
@@ -706,6 +702,7 @@
   (let [log-message-list (fx/sub-val context :log-message-list)
         log-message-list (reverse log-message-list) ;; nfi how to programmatically change column sort order
         column-list [{:id "level" :text "level" :max-width 100 :cell-value-factory (comp name :level)}
+                     {:id "time" :text "time" :max-width 100 :cell-value-factory :time}
                      {:text "message" :pref-width 500 :cell-value-factory :message}]]
     {:fx/type :table-view
      :id "notice-logger"
@@ -849,13 +846,26 @@
                                         {:fx/type notice-logger}]}
                                {:fx/type status-bar}]}}}))
 
+;; absolutely no logging in here
 (defn init-notice-logger!
   "log handler for the gui. incoming log messages update the gui"
   [gui-state]
   (let [gui-logger (fn [log-data]
                      (let [{:keys [timestamp_ msg_ level]} log-data
-                           formatted-output-str (force (format "%s - %s" (force timestamp_) (force msg_)))]
-                       (swap! gui-state fx/swap-context update-in [:log-message-list] conj {:level level :message formatted-output-str})))]
+                           this-msg (force msg_)
+                           prev-msg (-> (fx/sub-val @gui-state get :log-message-list) last :message)
+                           log-line {:level level :time (force timestamp_) :message this-msg}]
+                       ;; infinite recursion protection.
+                       ;; logging updates the `log-message-list` ->
+                       ;;   that causes the notice-logger to update it's rows ->
+                       ;;   that requires re-rendering the GUI ->
+                       ;;   that calls *all* of the component functions ->
+                       ;;   that may trigger log messages ->
+                       ;;   that causes the notice-logger to update it's rows ->
+                       ;;   ...
+                       ;; the trade off is duplicate messages are not displayed
+                       (when-not (= prev-msg this-msg)
+                         (swap! gui-state fx/swap-context update-in [:log-message-list] conj log-line))))]
     (logging/add-appender! :gui gui-logger {:timestamp-opts {:pattern "HH:mm:ss"}})))
 
 (defn start

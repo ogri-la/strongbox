@@ -201,5 +201,5 @@
                ["foo\nbar" "foo bar"]
                ["foo\r\nbar" "foo bar"]
                ["foo\nbar\r\nbaz" "foo bar baz"]]]
-        (doseq [[given expected] cases]
-          (is (= expected (utils/no-new-lines given)) (format "failed given '%s'" given)))))
+    (doseq [[given expected] cases]
+      (is (= expected (utils/no-new-lines given)) (format "failed given '%s'" given)))))
