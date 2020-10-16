@@ -82,8 +82,12 @@
                :-fx-accent (colour :accent) ;; selection colour of backgrounds
 
                ".context-menu" {:-fx-effect "None"}
-               ".combo-box-base" {:-fx-padding "1px"
-                                  :-fx-background-radius "0"}
+               ".combo-box-base"
+               {:-fx-padding "1px"
+                :-fx-background-radius "0"
+                ;; truncation happens from the left. thanks to:
+                ;; https://stackoverflow.com/questions/36264656/scalafx-javafx-how-can-i-change-the-overrun-style-of-a-combobox
+                " > .list-cell" {:-fx-text-overrun "leading-ellipsis"}}
 
                ".button" {:-fx-background-radius "0"
                           :-fx-padding ["6px" "17px"]
@@ -103,8 +107,7 @@
                ".table-view .column-header"
                {;;:-fx-background-color "#ddd" ;; flat colour vs gradient
                 :-fx-font-size "1em"
-                :-fx-font-weight "Normal"
-                :-fx-font-family "Sans"}
+                :-fx-font-weight "Normal"}
 
                ".table-view .table-row-cell"
                {:-fx-border-insets "-1 -1 0 -1"
@@ -125,6 +128,14 @@
                 ".unsteady" {;; '!important' so that it takes precedence over .updateable addons
                              :-fx-background-color (str (colour :unsteady) " !important")}}
 
+
+               ;; installed-addons menu
+
+               ;; prevent truncation and ellipses
+               "#update-all-button "
+               {:-fx-min-width "101px"}
+               "#game-track-combo-box "
+               {:-fx-min-width "100px"}
 
                ;; installed-addons table
 
@@ -606,6 +617,7 @@
   [{:keys [fx/context]}]
   (let [selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])]
     {:fx/type :combo-box
+     :id "game-track-combo-box"
      :value (-> selected-addon-dir core/get-game-track (or "") name)
      :on-value-changed (async-event-handler
                         (fn [new-game-track]
@@ -621,13 +633,15 @@
    :spacing 10
    :children [{:fx/type :button
                :text "Update all"
+               :id "update-all-button"
                :on-action (async-handler core/install-update-all)}
               {:fx/type wow-dir-dropdown}
               {:fx/type game-track-dropdown}
               {:fx/type :button
                :text (str "Update Available: " (core/latest-strongbox-release))
                :on-action (handler #(utils/browse-to "https://github.com/ogri-la/strongbox/releases"))
-               :visible (not (core/latest-strongbox-version?))}]})
+               :visible (not (core/latest-strongbox-version?))
+               :managed (not (core/latest-strongbox-version?))}]})
 
 (defn-spec table-column map?
   "returns a description of a table column that lives within a table"
