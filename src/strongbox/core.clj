@@ -48,7 +48,10 @@
    :unsteady "lightsteelblue"
    :row-updateable "lemonchiffon"
    :row-warning "lemonchiffon"
-   :row-error "tomato"})
+   :row-error "tomato"
+   :jfx-hyperlink "blue"
+   :jfx-hyperlink-weight "normal"
+   :table-font-colour "derive(-fx-background,-80%)"})
 
 ;; inverse colours of -colour-map
 (def -dark-colour-map
@@ -63,17 +66,20 @@
    :hyperlink :yellow
 
    ;; jfx
-   :base "#121212"
-   :accent "#443754" ;; dark purple
+   ;; https://github.com/dracula/dracula-theme
+   :base "#1e1f29"
+   :accent "#44475a"
    :button-text-hovering "white"
    :table-border "#333"
-   :row "-fx-control-inner-background"
+   :row "#1e1f29" ;; same as :base
    :row-hover "derive(-fx-control-inner-background,-10%)"
    :unsteady "-fx-selection-bar"
-   :row-updateable "#aaa"
-   :row-warning "#aaa"
+   :row-updateable "#6272a4"
+   :row-warning "#6272a4"
    :row-error "#ce2828"
-   :hyperlink-hover "yellow"})
+   :jfx-hyperlink "#f8f8f2"
+   :jfx-hyperlink-weight "bold"
+   :table-font-colour "white"})
 
 (def themes
   {:light -colour-map

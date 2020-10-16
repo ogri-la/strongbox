@@ -81,6 +81,8 @@
 
                :-fx-accent (colour :accent) ;; selection colour of backgrounds
 
+               "#main-menu" {:-fx-background-color (colour :base)}
+
                ".context-menu" {:-fx-effect "None"}
                ".combo-box-base"
                {:-fx-padding "1px"
@@ -106,24 +108,24 @@
 
                ".table-view .column-header"
                {;;:-fx-background-color "#ddd" ;; flat colour vs gradient
-                :-fx-font-size "1em"
-                :-fx-font-weight "Normal"}
+                :-fx-font-size "1em"}
 
                ".table-view .table-row-cell"
                {:-fx-border-insets "-1 -1 0 -1"
                 :-fx-border-color (colour :table-border)
+                " .table-cell" {:-fx-text-fill (colour :table-font-colour)}
 
                 ;; even
                 :-fx-background-color (colour :row)
                 ":hover" {:-fx-background-color (colour :row-hover)}
-                ":selected" {:-fx-background-color "-fx-selection-bar"
+                ":selected" {:-fx-background-color (colour :unsteady)
                              " .table-cell" {:-fx-text-fill "-fx-focused-text-base-color"}
                              :-fx-table-cell-border-color (colour :table-border)}
 
                 ":odd" {:-fx-background-color (colour :row)}
                 ":odd:hover" {:-fx-background-color (colour :row-hover)}
-                ":odd:selected" {:-fx-background-color "-fx-selection-bar"}
-                ":odd:selected:hover" {:-fx-background-color "-fx-selection-bar"}
+                ":odd:selected" {:-fx-background-color (colour :unsteady)}
+                ":odd:selected:hover" {:-fx-background-color (colour :unsteady)}
 
                 ".unsteady" {;; '!important' so that it takes precedence over .updateable addons
                              :-fx-background-color (str (colour :unsteady) " !important")}}
@@ -137,6 +139,7 @@
                "#game-track-combo-box "
                {:-fx-min-width "100px"}
 
+               
                ;; installed-addons table
 
 
@@ -186,15 +189,22 @@
 
                "#status-bar"
                {:-fx-font-size ".9em"
-                :-fx-padding "5px"}
+                :-fx-padding "5px"
+
+                " > .text"
+                {;; omg, wtf does 'fx-fill' work and not 'fx-text-fill' ???
+                 :-fx-fill (colour :table-font-color)}}
 
                ;; common table fields
+
+
                ".table-view .source-column"
                {:-fx-alignment "center-left"
                 :-fx-padding "-2 0 0 0" ;; hyperlinks are just a little bit off .. weird.
                 " .hyperlink:visited" {:-fx-underline "false"}
                 " .hyperlink, .hyperlink:hover" {:-fx-underline "false"
-                                                 :-fx-text-fill (colour :hyperlink)}}}}))]
+                                                 :-fx-text-fill (colour :jfx-hyperlink)
+                                                 :-fx-font-weight (colour :jfx-hyperlink-weight)}}}}))]
 
      (merge
       (generate-style :light)
@@ -834,6 +844,7 @@
     {:fx/type :h-box
      :id "status-bar"
      :children [{:fx/type :text
+                 :style-class ["text"]
                  :text (join " " strings)}]}))
 
 ;;
