@@ -92,6 +92,14 @@
         addon-list (apply conj (mapv expand addon-groups) unknown-grouping)]
     addon-list))
 
+(defn ungroup-addon
+  "an addon may actually be many addons bundled together with a primary one chosen to represent them.
+  sometimes we want to treat this addon as a list of addons"
+  [addon]
+  (if (empty? (:group-addons addon))
+    [addon]
+    (get addon :group-addons [])))
+
 (defn-spec load-installed-addons :addon/toc-list
   "reads the .toc files from the given addon dir, reads any nfo data for 
   these addons, groups them, returns the mooshed data"
@@ -218,7 +226,7 @@
 
 (defn-spec implicitly-ignored? boolean?
   "returns `true` if the addon in the given `install-dir`+`addon-dirname` directory is being implicitly ignored.
-  an implicit 'ignore' is when the addon is under version control or the .toc file looks like an unrendered template."
+  an 'implicit ignore' is when the addon is under version control or the `.toc` file looks like an unrendered template."
   [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname]
   (let [path (utils/join install-dir addon-dirname)
         toc-data (toc/parse-addon-toc-guard path)]
@@ -226,8 +234,8 @@
         (nfo/version-controlled? path))))
 
 (defn-spec clear-ignore nil?
-  "clears the `ignore?` flag on an addon, either by remove it from the nfo or setting it in the nfo to `false`.
-  Has to happen here so we can distinguish between toc-ignores and nfo-ignores."
+  "clears the `ignore?` flag on an addon, either by removing it from the nfo or setting it in the nfo to `false`.
+  Has to happen here so we can distinguish between 'toc-ignores' and 'nfo-ignores'."
   [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname]
   (if (implicitly-ignored? install-dir addon-dirname)
     (nfo/stop-ignoring install-dir addon-dirname)

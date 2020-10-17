@@ -191,7 +191,7 @@
                      :primary? true}]]
       (is (= expected (addon/load-installed-addons addon-dir))))))
 
-(deftest load-installed-addons-3
+(deftest load-installed-addons--invalid-nfo-data-not-loaded
   (testing "invalid nfo data is not loaded"
     (let [addon-dir (str fs/*cwd*)
           some-addon-path (utils/join addon-dir "SomeAddon")
@@ -215,7 +215,7 @@
           expected [{:name "someaddon", :dirname "SomeAddon", :label "SomeAddon", :description "asdf", :interface-version 80300, :installed-version "1.2.3"}]]
       (is (= expected (addon/load-installed-addons addon-dir))))))
 
-(deftest load-installed-addons-4--explicit-nfo-ignore
+(deftest load-installed-addons--explicit-nfo-ignore
   (testing "ignore flag in nfo data overrides any ignore flag in toc data"
     (let [addon-dir (str fs/*cwd*)
           some-addon-path (utils/join addon-dir "SomeAddon")

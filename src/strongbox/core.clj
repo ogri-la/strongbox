@@ -1109,7 +1109,11 @@
 (defn-spec clear-ignore-selected nil?
   "removes the 'ignore' flag from each of the selected addons."
   []
-  (->> (get-state) :selected-installed (map :dirname) (run! (partial addon/clear-ignore (selected-addon-dir))))
+  (->> (get-state :selected-installed)
+       (mapv addon/ungroup-addon)
+       flatten
+       (mapv :dirname)
+       (run! (partial addon/clear-ignore (selected-addon-dir))))
   (refresh))
 
 ;;
