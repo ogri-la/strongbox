@@ -81,9 +81,19 @@
 
                :-fx-accent (colour :accent) ;; selection colour of backgrounds
 
+               ".table-placeholder-text"
+               {:-fx-font-size "1.5em"
+                :-fx-fill (colour :table-font-colour)}
+
+               "#main-menu" {:-fx-background-color (colour :base)}
+
                ".context-menu" {:-fx-effect "None"}
-               ".combo-box-base" {:-fx-padding "1px"
-                                  :-fx-background-radius "0"}
+               ".combo-box-base"
+               {:-fx-padding "1px"
+                :-fx-background-radius "0"
+                ;; truncation happens from the left. thanks to:
+                ;; https://stackoverflow.com/questions/36264656/scalafx-javafx-how-can-i-change-the-overrun-style-of-a-combobox
+                " > .list-cell" {:-fx-text-overrun "leading-ellipsis"}}
 
                ".button" {:-fx-background-radius "0"
                           :-fx-padding ["6px" "17px"]
@@ -102,30 +112,38 @@
 
                ".table-view .column-header"
                {;;:-fx-background-color "#ddd" ;; flat colour vs gradient
-                :-fx-font-size "1em"
-                :-fx-font-weight "Normal"
-                :-fx-font-family "Sans"}
+                :-fx-font-size "1em"}
 
                ".table-view .table-row-cell"
                {:-fx-border-insets "-1 -1 0 -1"
                 :-fx-border-color (colour :table-border)
+                " .table-cell" {:-fx-text-fill (colour :table-font-colour)}
 
                 ;; even
                 :-fx-background-color (colour :row)
                 ":hover" {:-fx-background-color (colour :row-hover)}
-                ":selected" {:-fx-background-color "-fx-selection-bar"
+                ":selected" {:-fx-background-color (colour :unsteady)
                              " .table-cell" {:-fx-text-fill "-fx-focused-text-base-color"}
                              :-fx-table-cell-border-color (colour :table-border)}
 
                 ":odd" {:-fx-background-color (colour :row)}
                 ":odd:hover" {:-fx-background-color (colour :row-hover)}
-                ":odd:selected" {:-fx-background-color "-fx-selection-bar"}
-                ":odd:selected:hover" {:-fx-background-color "-fx-selection-bar"}
+                ":odd:selected" {:-fx-background-color (colour :unsteady)}
+                ":odd:selected:hover" {:-fx-background-color (colour :unsteady)}
 
                 ".unsteady" {;; '!important' so that it takes precedence over .updateable addons
                              :-fx-background-color (str (colour :unsteady) " !important")}}
 
 
+               ;; installed-addons menu
+
+               ;; prevent truncation and ellipses
+               "#update-all-button "
+               {:-fx-min-width "101px"}
+               "#game-track-combo-box "
+               {:-fx-min-width "100px"}
+
+               
                ;; installed-addons table
 
 
@@ -169,21 +187,34 @@
                {:-fx-padding "8px"}
 
                ;; search
+
+               "#search-text-field "
+               {:-fx-text-fill (colour :table-font-colour)}
+
                ".table-view#search-addons"
                {" .downloads-column" {:-fx-alignment "center-right"}
-                " .installed" {:-fx-background-color "#99bc6b"}}
+                " .installed" {" > .table-cell" {} ;;:-fx-text-fill "black"
+                               :-fx-background-color (colour :already-installed-row-colour)}}
 
                "#status-bar"
                {:-fx-font-size ".9em"
-                :-fx-padding "5px"}
+                :-fx-padding "5px"
+
+                " > .text"
+                {;; omg, wtf does 'fx-fill' work and not 'fx-text-fill' ???
+                 :-fx-fill (colour :table-font-colour)}}
+
 
                ;; common table fields
+
+
                ".table-view .source-column"
                {:-fx-alignment "center-left"
                 :-fx-padding "-2 0 0 0" ;; hyperlinks are just a little bit off .. weird.
                 " .hyperlink:visited" {:-fx-underline "false"}
                 " .hyperlink, .hyperlink:hover" {:-fx-underline "false"
-                                                 :-fx-text-fill (colour :hyperlink)}}}}))]
+                                                 :-fx-text-fill (colour :jfx-hyperlink)
+                                                 :-fx-font-weight (colour :jfx-hyperlink-weight)}}}}))]
 
      (merge
       (generate-style :light)
@@ -606,6 +637,7 @@
   [{:keys [fx/context]}]
   (let [selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])]
     {:fx/type :combo-box
+     :id "game-track-combo-box"
      :value (-> selected-addon-dir core/get-game-track (or "") name)
      :on-value-changed (async-event-handler
                         (fn [new-game-track]
@@ -621,13 +653,15 @@
    :spacing 10
    :children [{:fx/type :button
                :text "Update all"
+               :id "update-all-button"
                :on-action (async-handler core/install-update-all)}
               {:fx/type wow-dir-dropdown}
               {:fx/type game-track-dropdown}
               {:fx/type :button
                :text (str "Update Available: " (core/latest-strongbox-release))
                :on-action (handler #(utils/browse-to "https://github.com/ogri-la/strongbox/releases"))
-               :visible (not (core/latest-strongbox-version?))}]})
+               :visible (not (core/latest-strongbox-version?))
+               :managed (not (core/latest-strongbox-version?))}]})
 
 (defn-spec table-column map?
   "returns a description of a table column that lives within a table"
@@ -681,6 +715,9 @@
              :on-selected-items-changed core/select-addons*}
      :desc {:fx/type :table-view
             :id "installed-addons"
+            :placeholder {:fx/type :text
+                          :style-class ["table-placeholder-text"]
+                          :text "No addons found."}
             :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
             :pref-height 999.0
             :row-factory {:fx/cell-type :table-row
@@ -743,6 +780,9 @@
              :on-selected-items-changed core/select-addons-search*}
      :desc {:fx/type :table-view
             :id "search-addons"
+            :placeholder {:fx/type :text
+                          :style-class ["table-placeholder-text"]
+                          :text "No search results."}
             :row-factory {:fx/cell-type :table-row
                           :describe (fn [row]
                                       {:style-class ["table-row-cell"
@@ -820,6 +860,7 @@
     {:fx/type :h-box
      :id "status-bar"
      :children [{:fx/type :text
+                 :style-class ["text"]
                  :text (join " " strings)}]}))
 
 ;;
