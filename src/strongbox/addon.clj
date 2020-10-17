@@ -96,10 +96,10 @@
         addon-list (apply conj (mapv expand addon-groups) unknown-grouping)]
     addon-list))
 
-(defn ungroup-addon
+(defn-spec ungroup-addon :addon/installed-list
   "an addon may actually be many addons bundled together with a primary one chosen to represent them.
   sometimes we want to treat this addon as a list of addons"
-  [addon]
+  [addon :addon/installed]
   (if (empty? (:group-addons addon))
     [addon]
     (get addon :group-addons [])))

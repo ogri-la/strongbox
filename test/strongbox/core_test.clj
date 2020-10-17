@@ -1132,9 +1132,7 @@
                                       :name "everyotheraddon",
                                       :primary? false,
                                       :source "curseforge",
-                                      :source-id 2}
-                                     
-                                     ],
+                                      :source-id 2}],
                       :group-id "https://group.id/also/never/fetched",
                       :ignore? true,
                       :installed-game-track :retail,
