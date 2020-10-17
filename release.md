@@ -9,7 +9,6 @@ Just for my own reference
 * run
     - lein clean
 * new branch '0.x.0-prep'
-* ensure you're on java 8
 * ensure all non-gpl dependencies have an exclusion in LICENCE
 * update version in project.clj to the new version
     - remove the '-unreleased' extension

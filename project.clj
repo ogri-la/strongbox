@@ -1,4 +1,4 @@
-(defproject ogri-la/strongbox "3.0.0-unreleased"
+(defproject ogri-la/strongbox "3.0.0"
   :description "World Of Warcraft Addon Manager"
   :url "https://github.com/ogri-la/strongbox"
   :license {:name "GNU Affero General Public License (AGPL)"
@@ -23,13 +23,14 @@
                  [envvar "1.1.0"] ;; environment variable wrangling
                  [gui-diff "0.6.7"] ;; pops up a graphical diff for test results
                  [com.taoensso/tufte "2.1.0"]
+                 [cljfx "1.7.8" :exclusions [org.openjfx/javafx-web
+                                             org.openjfx/javafx-media]]
+                 [cljfx/css "1.1.0"]
                  
                  ;; remember to update the LICENCE.txt
                  ;; remember to update pom file (`lein pom`)
 
-                 [cljfx "1.7.8" :exclusions [org.openjfx/javafx-web
-                                             org.openjfx/javafx-media]]
-                 [cljfx/css "1.1.0"]]
+                 ]
 
   :profiles {:dev {:dependencies [;; fake http responses for testing
                                   [clj-http-fake "1.0.3"]

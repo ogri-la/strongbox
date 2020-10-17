@@ -40,6 +40,9 @@ see CHANGELOG.md for a more formal list of changes by release
     - while updating 'github' dir with 'update all'
     - something to do with logger?
         - if it was, it would be fixed now with recursion check
+    - no, altoholic split the addon into two, retail and classic and added a 'redirect' stub addon
+        - plus there was a bug
+        - so it got messy
 
 * update release.sh script to generate binary as well
     - we'll upload the .appimage and .jar 

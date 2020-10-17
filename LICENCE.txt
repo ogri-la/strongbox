@@ -686,3 +686,5 @@ If you modify this Program, or any covered work, by linking or combining it with
 * clj-http-fake
 * gui-diff
 * com.taoensso/tufte
+* cljfx
+* cljfxcss
