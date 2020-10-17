@@ -6,52 +6,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* gui2
-    - an OpenJFX gui
-        - done
-    - how large is bundle after uberjar?
-        - too damn large
-            - 61MB, up from ~20MB
-    - can an openjfx-11/openjdk-11 uberjar be run with openjdk 8?
-        - if not, then that is a hard upgrade for users :(
-            - unless we do a completely standalone version?
-                - this would depend on the modularisation introduced in java 9
-                - min JRE is 29MB, about ~9MB more than what we already have.
-                    - is filesize a problem for users?
-
-* single distributable binary with no reliance on external jvm
-    - done. adding a JRE and excluding some webview and media bits makes the binary about ~57MB
-
-* mac, combo-box empty when adding/removing directories
-    - *or* combo-box gets a datastructure instead of a label, depending on how this is fixed
-
-* scrub gui string values of newlines before displaying
-    - see tukui-classic, id 2, it's description is 
-        "A USER INTERFACE DESIGNED AROUND USER-FRIENDLINESS WITH EXTRA FEATURES THAT ARE NOT INCLUDED IN THE STANDARD UI.\r\n"
-    - swing gui ignored these
-    - probably do this in the catalogue
-        - is it possible to enter the system via tocs?
-    - done
-
-* bug, notice logging in new gui will still do an infinite fail
-    - shouldn't be too difficult to replicate
-
-* bug, just got loads of "addon 'altoholicretail' is overwriting 'altoholicclassic'"
-    - while updating 'github' dir with 'update all'
-    - something to do with logger?
-        - if it was, it would be fixed now with recursion check
-    - no, altoholic split the addon into two, retail and classic and added a 'redirect' stub addon
-        - plus there was a bug
-        - so it got messy
-
-* update release.sh script to generate binary as well
-    - we'll upload the .appimage and .jar 
-    - arch users will get the .appimage and will drop the java runtime requirement
-    - done
-        - see pre-3.0.0 release
-
 ## todo
-
 
 ## todo bucket (no particular order)
 
