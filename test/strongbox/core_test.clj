@@ -1107,18 +1107,7 @@
             expected {:description "group record for the fetched addon",
                       :dirname "EveryOtherAddon",
                       :group-addon-count 2,
-                      :group-addons [{:description "Does what every addon does, just better",
-                                      :dirname "EveryOtherAddon",
-                                      :group-id "https://group.id/also/never/fetched",
-                                      :installed-game-track :retail,
-                                      :installed-version "5.6.7",
-                                      :interface-version 70000,
-                                      :label "EveryOtherAddon 5.6.7",
-                                      :name "everyotheraddon",
-                                      :primary? false,
-                                      :source "curseforge",
-                                      :source-id 2}
-                                     {:description "A useful addon that everyone bundles with their own.",
+                      :group-addons [{:description "A useful addon that everyone bundles with their own.",
                                       :dirname "EveryAddon-BundledAddon",
                                       :group-id "https://group.id/also/never/fetched",
 
@@ -1131,7 +1120,21 @@
                                       :name "everyotheraddon",
                                       :primary? false,
                                       :source "curseforge",
-                                      :source-id 2}],
+                                      :source-id 2}
+
+                                     {:description "Does what every addon does, just better",
+                                      :dirname "EveryOtherAddon",
+                                      :group-id "https://group.id/also/never/fetched",
+                                      :installed-game-track :retail,
+                                      :installed-version "5.6.7",
+                                      :interface-version 70000,
+                                      :label "EveryOtherAddon 5.6.7",
+                                      :name "everyotheraddon",
+                                      :primary? false,
+                                      :source "curseforge",
+                                      :source-id 2}
+                                     
+                                     ],
                       :group-id "https://group.id/also/never/fetched",
                       :ignore? true,
                       :installed-game-track :retail,
@@ -1143,10 +1146,11 @@
                       :source "curseforge",
                       :source-id 2}
 
+            target-idx 0
             expected-2 (-> expected
                            (dissoc :ignore?)
                            (assoc :update? false)
-                           (update-in [:group-addons 1] dissoc :ignore?))]
+                           (update-in [:group-addons target-idx] dissoc :ignore?))]
         (core/install-addon addon)
         (nfo/ignore install-dir "EveryAddon-BundledAddon")
         (core/load-installed-addons)
