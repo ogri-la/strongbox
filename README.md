@@ -2,8 +2,9 @@
 
 [![Build Status](https://api.travis-ci.com/ogri-la/strongbox.svg?branch=develop)](https://travis-ci.com/ogri-la/strongbox)
 
-`strongbox` is an **open source**, **advertisement free** and **privacy respecting** addon manager for World of Warcraft
-players using Linux of macOS. It does not work on Windows.
+`strongbox` is an **open source**, **advertisement free** and **privacy respecting** addon manager for World of Warcraft.
+
+It supports Linux and macOS.
 
 It supports addons hosted by Curseforge, wowinterface, Tukui and Github.
 
@@ -16,16 +17,16 @@ Arch Linux users can install `strongbox` from the [AUR](https://aur.archlinux.or
 
 For everyone else:
 
-1. [download it](https://github.com/ogri-la/strongbox/releases/download/3.0.0/strongbox)
-2. make it executable with `chmod +x strongbox`
-3. run it with `./strongbox`
+1. download it: [strongbox](https://github.com/ogri-la/strongbox/releases/download/3.0.0/strongbox)
+2. make it executable: `chmod +x strongbox`
+3. run it: `./strongbox`
 
-If you would prefer to use the `.jar` file:
+If you prefer Java `.jar` files:
 
-1. [download the latest .jar file](https://github.com/ogri-la/strongbox/releases/)
-2. run with `java -jar strongbox-x.x.x-standalone.jar`
+1. download it: [strongbox-3.0.0-standalone.jar](https://github.com/ogri-la/strongbox/releases/download/3.0.0/strongbox-3.0.0-standalone.jar)
+2. run it: `java -jar strongbox-x.x.x-standalone.jar`
 
-The `.jar` file requires Java 11+.
+`.jar` file requires Java 11+
 
 ## Usage
 
@@ -76,11 +77,13 @@ that it's my privilege to offer this small piece back.
 * safeguards against bad addons
 * warnings when addons install other bundled addons
 * lock addons to prevent changes
-* mutual dependency tracking and safer uninstallations
+* mutual dependency tracking and safer addon uninstallation
 
 ## Notes
 
-Prior to `1.0.0`, `strongbox` was known as `wowman`. The [AUR package](https://aur.archlinux.org/packages/wowman) is obsolete.
+Original GUI is still available with: `./strongbox --ui gui1`
+
+Prior to `1.0.0`, `strongbox` was known as `wowman`. The [AUR package](https://aur.archlinux.org/packages/wowman) for `wowman` is obsolete.
 
 User configuration is stored in `~/.config/strongbox` unless run with the envvar `$XDG_CONFIG_HOME` set.
 
@@ -99,7 +102,7 @@ Addon `.zip` files that contain top-level files or top-level directories missing
 and the downloaded `.zip` file will be deleted immediately. This is a guard against poorly or maliciously constructed
 `.zip` files.
 
-Addon `.rar` and `.tar.gz` files are not supported. You can still find a few on wowinterface.com.
+Addon `.rar` and `.tar.gz` files are not supported. You can find a few of these on wowinterface.com.
 
 This software interacts with the following remote hosts:
 
