@@ -50,7 +50,7 @@
       (let [expected
             {:id "about-dialog"
              :children [{:text "strongbox", :fx/type :text, :id "about-pane-title"}
-                        {:text "version 3.0.0-unreleased", :fx/type :text}
+                        {:text (str "version " (core/strongbox-version)), :fx/type :text}
                         {:text "version 0.0.0 is now available to download!",
                          :visible false,
                          :managed false,
