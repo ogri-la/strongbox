@@ -1,7 +1,7 @@
 (ns strongbox.main
   (:refer-clojure :rename {test clj-test})
   (:require
-   [taoensso.timbre :as timbre :refer [spy info error]]
+   [taoensso.timbre :as timbre :refer [spy info warn error]]
    [clojure.test]
    [clojure.tools.cli]
    [clojure.tools.namespace.repl :as tn :refer [refresh]]
@@ -12,6 +12,10 @@
     [utils :as utils :refer [in?]]]
    [gui.diff :refer [with-gui-diff]]
    [strongbox.ui
+    ;; warning! requiring cljfx starts the javafx application thread.
+    ;; this is a pita for exiting a non-javafx UI (cli) and aot as it just 'hangs'.
+    ;; hanging aot is handled in project.clj, but dynamic inclusion of jfx is handled here.
+    ;;[jfx :as jfx] 
     [cli :as cli]
     [gui :as gui]])
   (:gen-class))
@@ -44,12 +48,26 @@
                      (swap! core/state assoc :gui-restart-flag nil)))]
     (core/state-bind [:gui-restart-flag] callback)))
 
+(defn jfx
+  "dynamically resolve the `strongbox.ui.jfx` ns and call the requisite `action`.
+  `action` is either `:start` or `:stop`.
+  this is done because including the cljfx directly will start will the JavaFX application
+  thread and cause hanging behaviour when running tests or using the non-gui CLI"
+  [action]
+  (require 'strongbox.ui.jfx)
+  (let [jfx-ns (find-ns 'strongbox.ui.jfx)]
+    (case action
+      :start ((ns-resolve jfx-ns 'start))
+      :stop ((ns-resolve jfx-ns 'stop)))))
+
 (defn stop
   []
   (let [opts (:cli-opts @core/state)]
-    (if (= :cli (:ui opts))
-      (cli/stop)
-      (gui/stop))
+    (case (:ui opts)
+      :cli (cli/stop)
+      :gui1 (gui/stop)
+      :gui (jfx :stop)
+      (jfx :stop))
     (core/stop core/state)))
 
 (defn shutdown-hook
@@ -61,12 +79,13 @@
 (defn start
   [& [cli-opts]]
   (core/start (merge {:profile? profile?, :spec? spec?} cli-opts))
-  (if (= :cli (:ui cli-opts))
-    (cli/start cli-opts)
-    (gui/start))
-
-  (watch-for-gui-restart)
-
+  (case (:ui cli-opts)
+    :cli (cli/start cli-opts)
+    :gui1 (do
+            (gui/start)
+            (watch-for-gui-restart))
+    :gui (jfx :start)
+    (jfx :start))
   nil)
 
 (defn restart
@@ -76,6 +95,7 @@
   (start cli-opts))
 
 (defn profile
+  "runs the app the same as `start`, but enables profiling output"
   [& [cli-ops]]
   (let [default-opts {:verbosity :error, :ui :cli, :spec? false}]
     (restart (merge default-opts cli-ops {:profile? true}))))
@@ -90,7 +110,7 @@
     (if ns-kw
       (if (some #{ns-kw} [:main :utils :http :tags
                           :core :toc :nfo :zip :config :catalogue :db :addon
-                          :cli :gui
+                          :cli :gui :jfx
                           :curseforge-api :wowinterface :wowinterface-api :github-api :tukui-api])
         (with-gui-diff
           (if fn-kw
@@ -139,7 +159,7 @@
    ["-u" "--ui UI" "ui is either 'gui' (graphical user interface, default) or 'cli' (command line interface)"
     ;;:default :gui ;; set after determining if --headless also set
     :parse-fn #(-> % lower-case keyword)
-    :validate [(in? [:cli :gui])]]
+    :validate [(in? [:cli :gui1 :gui])]]
 
    ["-a" "--action ACTION" (str "perform action and exit. action is one of: 'list', 'list-updates', 'update-all'," catalogue-action-str)
     :id :action
@@ -188,9 +208,9 @@
         args))))
 
 (defn exit
-  [status msg]
+  [status & [msg]]
   (stop)
-  (println msg)
+  (when msg (println msg))
   (System/exit status))
 
 (defn -main

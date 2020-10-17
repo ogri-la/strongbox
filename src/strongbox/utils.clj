@@ -31,7 +31,7 @@
   (every? identity lst))
 
 (defn-spec any boolean?
-  "true if any item in `lst` is neither nil nor false"
+  "false if any item in `lst` is either nil or false"
   [lst sequential?]
   ((complement not-any?) identity lst))
 
@@ -78,29 +78,6 @@
             (warn (format "deleting %s %s files" (count file-list) file-type))
             (dorun (map (juxt alert fs/delete) file-list))))))))
 
-(defn shallow-flatten
-  [lst]
-  (mapcat identity lst))
-
-(defn coerce-map-values
-  "given a mapping of {key fn} matching keys in given map will be transformed
-  (coerce-map-values {:foo str} {:foo 123}) => {:foo '123'}"
-  [mapping row]
-  (let [reducer (fn [ncoll [k v]]
-                  (assoc ncoll k
-                         (if (contains? mapping k)
-                           ((get mapping k) v)
-                           v)))]
-    (reduce reducer {} row)))
-
-(defn uuid
-  []
-  (.toString (java.util.UUID/randomUUID)))
-
-(defn dissoc-all
-  [m l]
-  (apply dissoc m l))
-
 (defn-spec file-older-than boolean?
   [file ::sp/extant-file, hours pos-int?]
   (let [modtime (jt/instant (fs/mod-time file))
@@ -125,43 +102,15 @@
   ([dateobj fmt]
    (.format (java.text.SimpleDateFormat. fmt) dateobj)))
 
-(defn-spec from-epoch string?
-  "epoch-time-with-ms to ymdhmstz"
-  [epoch int?]
-  ;; we *1000 to get the ms
-  (-> epoch (* 1000) java-time/instant str))
-
 (defn datestamp-now-ymd
   []
   (.format (java.text.SimpleDateFormat. "yyyy-MM-dd") (java.util.Date.)))
-
-;; todo: handy, but target for pruning.
-(defn detect-dt-formatting
-  [dtstr]
-  (info "testing" dtstr)
-  (let [fmt (fn [dtfmt]
-              (try
-                (when-let [result (java-time/zoned-date-time (get java-time.format/predefined-formatters dtfmt) dtstr)]
-                  (info "success with" dtfmt ":" result)
-                  {dtfmt result})
-                (catch Exception e
-                  (info "failed testing" dtfmt))))]
-    (into {} (mapv fmt (keys java-time.format/predefined-formatters)))))
 
 (defn-spec todt ::sp/zoned-dt-obj
   "takes an ISO8901 string and returns a java.time.ZonedDateTime object. 
   these are needed to calculate durations"
   [dt ::sp/inst]
   (java-time/zoned-date-time (get java-time.format/predefined-formatters "iso-zoned-date-time") dt))
-
-(defn-spec utcnow ::sp/zoned-dt-obj
-  "returns a UTC timestamp for *right now*"
-  []
-  (java-time/zoned-date-time (java-time/local-date-time) "UTC"))
-
-
-;;
-
 
 (defn repl-stack-element?
   [stack-element]
@@ -172,15 +121,6 @@
   []
   (let [current-stack-trace (.getStackTrace (Thread/currentThread))]
     (some repl-stack-element? current-stack-trace)))
-
-(comment
-  (defn ensure
-    "wraps `assert` but fails on `nil` or `false` rather than passing on `true`. a message is required"
-    [x message]
-    (if (or (nil? x)
-            (false? x))
-      (AssertionError. message)
-      x)))
 
 (defn nav-map
   "wrapper around `get-in` that returns the map as-is if given `path` is empty"
@@ -196,19 +136,6 @@
   [m map?]
   (fn [& path]
     (nav-map m path)))
-
-(defn to-url
-  [v]
-  (when-not (empty? v)
-    (-> v java.net.URI. str)))
-
-(defn false-if-nil
-  [x]
-  (if (nil? x) false x))
-
-(defn nil-if-false
-  [x]
-  (if (false? x) nil x))
 
 (defn nilable
   [x]
@@ -229,8 +156,6 @@
   [& lst]
   (vec (remove nil? (flatten lst))))
 
-(def not-empty? (comp not empty?))
-
 (defn-spec safe-subs (s/nilable string?)
   "similar to `subs` but can handle `nil` input and a `max` value larger than (or less than) length of given string `x`."
   [x (s/nilable string?), maxval int?]
@@ -247,48 +172,6 @@
 (defn-spec idx map?
   [list-of-maps ::sp/list-of-maps, key keyword?]
   (into {} (map (fn [row] {(get row key) row}) list-of-maps)))
-
-(defn merge-lists
-  "given two lists and a key, returns list1 with matching entries from list2 when keys match. unmatched entries in list2 are prepended to list1"
-  [key list1 list2 & {:keys [prepend?]}]
-  (loop [index (idx list2 key)
-         ilist list1
-         list3 []]
-
-    (if (empty? ilist)
-      ;; we've exhaused list1, return
-      (if prepend?
-        (into (vec (vals index)) list3)
-        (into list3 (vec (vals index))))
-
-      (let [row (first ilist)
-            keyed-val (get row key)]
-
-        (if (contains? index keyed-val)
-          (recur (dissoc index keyed-val) ;; shrink index as we go along
-                 (next ilist)
-                 (conj list3 (get index keyed-val)))
-
-          (recur index
-                 (next ilist)
-                 (conj list3 row)))))))
-
-;; Applies function f to each item in the data structure m
-;; https://github.com/clojure/clojure-contrib/blob/b8d2743d3a89e13fc9deb2844ca2167b34aaa9b6/src/main/clojure/clojure/contrib/generic/functor.clj#L34
-(defn fmap
-  "applies fn to each key-val in map"
-  [f m]
-  (into (empty m) (for [[k v] m] [k (f k v)])))
-
-(defn filter-map
-  "filters a map using f"
-  [f m]
-  (select-keys m (for [[k v] m :when (f k v)] k)))
-
-(defn filter+map
-  "filters and transforms a list at the same time. transformed value must be truth-y"
-  [f l]
-  (for [x l :let [tx (f x)] :when tx] tx))
 
 (defn-spec to-json string?
   [x ::sp/anything]
@@ -589,3 +472,73 @@
   (when (and (fs/exists? old-path)
              (not (fs/exists? new-path)))
     (fs/copy old-path new-path)))
+
+;;
+
+(defn-spec browser (s/or :ok fn? :error nil?)
+  "given the name of a binary, returns a function that will open a given URL in a browser or nil if 
+  the binary cannot be found."
+  [bin string?]
+  (try
+    (when (->> bin (clojure.java.shell/sh "which") :exit (= 0))
+      (fn [url]
+        (info (format "opening URL with %s: %s" bin url))
+        (clojure.java.shell/sh bin url)))
+    (catch Exception uncaught-exception
+      (error uncaught-exception "failed to call `which`"))))
+
+(defn-spec java-browser (s/or :ok fn? :error nil?)
+  "returns a function that will open a given URL in a browser, or nil if 
+  current Desktop is not supported"
+  []
+  (when (and (java.awt.Desktop/isDesktopSupported)
+             (.isSupported (java.awt.Desktop/getDesktop) java.awt.Desktop$Action/BROWSE))
+    (fn [url]
+      (info "opening URL:" url)
+      (.browse (java.awt.Desktop/getDesktop) (java.net.URI. url)))))
+
+(defn-spec find-browser fn?
+  "returns a function that attempts to open a given URL in a browser.
+  Prints an error message to console if URL cannot be opened."
+  []
+  (let [xdg-open #(browser "xdg-open")
+        gnome-open #(browser "gnome-open")
+        kde-open #(browser "kde-open")
+        fail (constantly #(error "failed to find a program to open URL:" (str %)))]
+    (loop [lst [java-browser xdg-open gnome-open kde-open fail]]
+      (if-let [browser-fn ((first lst))]
+        browser-fn
+        (recur (rest lst))))))
+
+(defn-spec browse-to nil?
+  "given a URL, open a browser window with it"
+  [url ::sp/url]
+  (future-call #((find-browser) url))
+  nil)
+
+(defn-spec source-to-href-label-fn (s/or :ok string? :bad-url nil?)
+  "if a source for the addon can be derived, return a label suitable for the link"
+  [url (s/nilable string?)]
+  (let [url-obj (try
+                  (java.net.URL. url)
+                  (catch NullPointerException _
+                    nil)
+                  (catch java.net.MalformedURLException _
+                    nil))]
+    (when url-obj
+      (case (.getHost url-obj)
+        "www.curseforge.com" "curseforge"
+        "www.wowinterface.com" "wowinterface"
+        "github.com" "github"
+        "www.tukui.org" (if (= (.getPath url-obj) "/classic-addons.php")
+                          "tukui-classic"
+                          "tukui")
+        nil))))
+
+(defn-spec no-new-lines (s/or :ok string? :also-ok nil?)
+  "removes all \n and \r\n from a string"
+  [string (s/nilable string?)]
+  (some-> string
+          (clojure.string/replace "\r\n" " ")
+          (clojure.string/replace "\n" " ")))
+

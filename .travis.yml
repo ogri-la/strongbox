@@ -1,39 +1,39 @@
-dist: xenial # Ubuntu 16.04
+os: linux
+dist: bionic # Ubuntu 18.04
 
 language: clojure
-jdk:
-    - openjdk8
-    - openjdk11
 
 services:
   - xvfb
 
-script: ./run-tests.sh
+jdk:
+- openjdk11
+- openjdk14
 
-# https://github.com/travis-ci/travis-ci/issues/3897
-#branches:
-#    only:
-#        - master
-#        - /\d+\.\d+\.\d+/
+script: ./run-tests.sh
 
 jobs:
     include:
+
         # run the release stage 
         # when the branch being tested is 'master'
         # and the revision has been tagged
         -   
             stage: release
-            jdk: openjdk8
+            jdk: openjdk14
             if: tag IS present
             script: ./release.sh
             deploy:
                 provider: releases
-                api_key: $GITHUB_TOKEN
+                token: $GITHUB_TOKEN
+                cleanup: false
                 file_glob: true
                 file: 
                     - "target/strongbox-*-standalone.jar" # target/strongbox-1.1.1-standalone.jar
                     - "target/strongbox-*-standalone.jar.sha256" # target/strongbox-1.1.1-standalone.jar.sha256
-                skip_cleanup: true
+                    - "target/strongbox"
+                    - "target/strongbox.sha256"
+                    
                 # redundant if "if: tag is present" ?
                 on:
                     tags: true

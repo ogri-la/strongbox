@@ -1,7 +1,9 @@
 (ns strongbox.ui.cli
   (:require
+   [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :as timbre :refer [spy info warn error debug]]
    [strongbox
+    [specs :as sp]
     [tukui-api :as tukui-api]
     [catalogue :as catalogue]
     [http :as http]
@@ -9,6 +11,39 @@
     [curseforge-api :as curseforge-api]
     [wowinterface :as wowinterface]
     [core :as core :refer [get-state paths find-catalogue-local-path]]]))
+
+(comment "the UIs pool their logic here, which calls core.clj.")
+
+(defn-spec set-addon-dir! nil?
+  "adds/sets an addon-dir marks it as selected, partial refresh of application state"
+  [addon-dir ::sp/addon-dir]
+  (core/set-addon-dir! addon-dir)
+  (core/load-installed-addons)
+  (core/match-installed-addons-with-catalogue)
+  (core/check-for-updates)
+  (core/save-settings)
+  nil)
+
+(defn-spec remove-addon-dir! nil?
+  "deletes an addon-dir, selects first available addon dir, partial refresh of application state"
+  []
+  (core/remove-addon-dir!)
+  ;; the next addon dir is selected, if any
+  (core/load-installed-addons)
+  (core/match-installed-addons-with-catalogue)
+  (core/check-for-updates)
+  (core/save-settings)
+  nil)
+
+(defn-spec set-catalogue-location! nil?
+  "changes the catalogue and refreshes application state.
+  a complete refresh is necessary for this action as addons accumulate keys like `:matched?` and `:update?`"
+  [catalogue-name keyword?]
+  (core/set-catalogue-location! catalogue-name)
+  (core/db-reload-catalogue)
+  nil)
+
+;;
 
 (defmulti action
   "handles the following actions:
@@ -98,7 +133,7 @@
 
 (defmethod action :default
   [opts]
-  (println opts))
+  (println "(no action) given:" opts))
 
 (defn start
   [opts]

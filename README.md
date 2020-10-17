@@ -1,53 +1,30 @@
 # strongbox, a World of Warcraft Addon Manager
 
-[![Build Status](https://travis-ci.org/ogri-la/strongbox.svg?branch=master)](https://travis-ci.org/ogri-la/strongbox)
+[![Build Status](https://api.travis-ci.com/ogri-la/strongbox.svg?branch=develop)](https://travis-ci.com/ogri-la/strongbox)
 
-`strongbox` is an **open source**, **advertisement free** and **privacy respecting** addon manager for World of Warcraft. 
+`strongbox` is an **open source**, **advertisement free** and **privacy respecting** addon manager for World of Warcraft.
+
+It supports Linux and macOS.
 
 It supports addons hosted by Curseforge, wowinterface, Tukui and Github.
 
-If you are a user of strongbox and you ever want to get in touch, please just [open an issue](https://github.com/ogri-la/strongbox/issues) or [PM me on reddit](https://www.reddit.com/message/compose/?to=torkus-jr&subject=strongbox)
-
-## Notice!
-
-`wowman` has been renamed to `strongbox` for the (`1.0.0`) release.
-
-Arch users will need to install the [strongbox AUR package](https://aur.archlinux.org/packages/strongbox) as updates to 
-the `wowman` package will end with the `0.12.x` line.
-
-## Audience
-
-This software is for World of Warcraft players using Linux.
-
-It also works on macOS.
-
-It does not work on Windows. Windows will never be supported.
-
-## Requirements
-
-* Java 8+
+[![strongbox version 3.0.0](./screenshots/screenshot-3.0.0-installed-thumbnail.jpg)](./screenshots/screenshot-3.0.0-installed.png?raw=true) 
+[![strongbox version 3.0.0](./screenshots/screenshot-3.0.0-dark-installed-thumbnail.jpg)](./screenshots/screenshot-3.0.0-dark-installed.png?raw=true)
 
 ## Installation
 
-1. [download the jar](https://github.com/ogri-la/strongbox/releases/download/2.0.1/strongbox-2.0.1-standalone.jar) file
-2. run with `java -jar strongbox-x.x.x-standalone.jar`
+Arch Linux users can install `strongbox` from the [AUR](https://aur.archlinux.org/packages/strongbox/) ([mirror](https://github.com/ogri-la/strongbox-pkgbuild/)).
 
-### Arch Linux users
+For everyone else:
 
-A PKGBUILD exists in the AUR [here](https://aur.archlinux.org/packages/strongbox/) 
-with a mirror [here](https://github.com/ogri-la/strongbox-pkgbuild/).
+1. download: [./releases/strongbox](https://github.com/ogri-la/strongbox/releases/download/3.0.0/strongbox)
+2. make executable: `chmod +x strongbox`
+3. run: `./strongbox`
 
-Once installed it's available from the command line as `strongbox`.
+If you prefer Java `.jar` files (requires Java 11+):
 
-## Screenshots
-
-[![wowman version 0.11.0](./screenshots/screenshot-2.0.0-installed-thumbnail.jpg)](./screenshots/screenshot-2.0.0-installed.png?raw=true) 
-[![wowman version 0.11.0](./screenshots/screenshot-2.0.0-search-thumbnail.jpg)](./screenshots/screenshot-2.0.0-search.png?raw=true) 
-[![wowman version 0.11.0](./screenshots/screenshot-2.0.0-dark-installed-thumbnail.jpg)](./screenshots/screenshot-2.0.0-dark-installed.png?raw=true) 
-[![wowman version 0.11.0](./screenshots/screenshot-2.0.0-dark-search-thumbnail.jpg)](./screenshots/screenshot-2.0.0-dark-search.png?raw=true) 
-
-*(dark mode only available in GTK+ 2 environments like [MATE](https://mate-desktop.org/) and 
-[Cinnamon](https://en.wikipedia.org/wiki/Cinnamon_(desktop_environment)))*
+1. download: [./releases/strongbox-3.0.0-standalone.jar](https://github.com/ogri-la/strongbox/releases/download/3.0.0/strongbox-3.0.0-standalone.jar)
+2. run: `java -jar strongbox-3.0.0-standalone.jar`
 
 ## Usage
 
@@ -56,18 +33,15 @@ Once installed it's available from the command line as `strongbox`.
 Some addons match directly to those online but others require you to manually search and re-install them before that 
 match can be made.
 
-Some addons come bundled with other addons that *do not appear* in the online list. You will need to re-install the 
-'parent' addon that bundles those addons.
+Some addons bundle other addons that *do not appear* in the online list. You will need to re-install the 'parent' addon 
+that bundled those addons.
 
 First time usage:
 
 1. Select *File -> New addon directory* and select your "Addons" directory (`/path/to/WoW/_retail_/Interface/Addons`)
-2. Select *Addons -> Re-install all* to automatically re-install all **matching** addons
+2. Select *Addons -> Re-install all* to re-install all **matching** addons
 
-Addons that are **not** automatically matched can be searched for and installed from the `search` tab.
-
-Afterwards, use the `Update all` button to update all addons with new versions available. 
-Addons with new versions available will be highlighted.
+Afterwards, use the `Update all` button to update all addons with new versions available.
 
 ## Recognition
 
@@ -92,16 +66,22 @@ that it's my privilege to offer this small piece back.
 * classic and retail addon support
 * catalogue search
 * bulk update
-* addons from multiple sources:
+* install addons from multiple sources:
     - [curseforge](https://www.curseforge.com/wow/addons)
     - [wowinterface](https://wowinterface.com/addons.php)
-    - [github](./github-addons.md) using *releases*
     - [tukui](https://www.tukui.org)
+    - [github](./github-addons.md) using *releases*
 * import and export of lists of addons
 * safeguards against bad addons
 * warnings when addons install other bundled addons
+* lock addons to prevent changes
+* mutual dependency tracking and safer addon uninstallation
 
 ## Notes
+
+Original GUI is still available with: `./strongbox --ui gui1`
+
+Prior to `1.0.0`, `strongbox` was known as `wowman`. The [AUR package](https://aur.archlinux.org/packages/wowman) for `wowman` is obsolete.
 
 User configuration is stored in `~/.config/strongbox` unless run with the envvar `$XDG_CONFIG_HOME` set.
 
@@ -113,17 +93,18 @@ A file called `.strongbox.json` is created within newly installed or re-installe
 attributes between the addon host (like curseforge.com) and the addon as well as *across* addons, as some addons unzip 
 to multiple directories. It's a simple `txt` file in a structured format called `json`.
 
-Addon zip files, `.strongbox.json` files, cached data and `WowMatrix.dat` files can all be removed from the `Cache` menu.
+Addon zip files, `.strongbox.json` files, old `.wowman.json` files, cached data and `WowMatrix.dat` files can all be 
+removed from the `Cache` menu.
 
 Addon `.zip` files that contain top-level files or top-level directories missing a `.toc` file **will not be installed**
 and the downloaded `.zip` file will be deleted immediately. This is a guard against poorly or maliciously constructed
 `.zip` files.
 
-Addon `.rar` files are not supported.
+Addon `.rar` and `.tar.gz` files are not supported. You can find a few of these on wowinterface.com.
 
 This software interacts with the following remote hosts:
 
-* Twitch (Curseforge) [Addons API](https://addons-ecs.forgesvc.net/) and it's [CDN](https://edge.forgecdn.net/)
+* Overwolf/Twitch/Curseforge [Addons API](https://addons-ecs.forgesvc.net/) and it's [CDN](https://edge.forgecdn.net/)
 * [wowinterface.com](https://wowinterface.com)
 * [www.tukui.org](https://www.tukui.org/api.php)
 * [api.github.com](https://developer.github.com/v3/repos/releases)
@@ -131,7 +112,7 @@ This software interacts with the following remote hosts:
     - to download the latest `strongbox` release data
 * [github.com/ogri-la/strongbox-catalogue](https://github.com/ogri-la/strongbox-catalogue), to download addon catalogues
 
-These hosts *may* redirect requests.
+These hosts *may* redirect requests to other hosts.
 
 These interactions use a HTTP user agent header unique to `strongbox` so that it may be identified easily.
 
@@ -139,8 +120,7 @@ These interactions use a HTTP user agent header unique to `strongbox` so that it
 
 Changes are recorded in the [CHANGELOG.md](CHANGELOG.md) file.
 
-All bugs/questions/feedback should go in [Github Issues](https://github.com/ogri-la/strongbox/issues) or 
-via a Reddit [private message](https://www.reddit.com/message/compose/?to=torkus-jr&subject=strongbox).
+All bugs/questions/feedback should go in [Github Issues](https://github.com/ogri-la/strongbox/issues).
 
 All code contributions should take the form of a pull request with unit tests.  
 [The licence](LICENCE.txt) is quite strict and all code contributions are subject to it.

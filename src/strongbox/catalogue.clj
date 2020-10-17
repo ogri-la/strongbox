@@ -8,7 +8,7 @@
    [java-time]
    [strongbox
     [tags :as tags]
-    [utils :as utils :refer [todt utcnow]]
+    [utils :as utils :refer [todt]]
     [specs :as sp]
     [tukui-api :as tukui-api]
     [curseforge-api :as curseforge-api]
@@ -118,7 +118,7 @@
   [catalogue-data :catalogue/catalogue, output-file ::sp/file]
   (if (some->> catalogue-data validate (utils/dump-json-file output-file))
     (do
-      (info "wrote" output-file)
+      (info "wrote:" output-file)
       output-file)
     (error "catalogue data is invalid, refusing to write:" output-file)))
 

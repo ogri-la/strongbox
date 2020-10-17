@@ -14,6 +14,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## 3.0.0 - 2020-10-17
+
+### Added
+
+* a new GUI that uses JavaFX
+* a standalone distribution of srongbox that doesn't require Java to be installed
+
+### Changed
+
+* the default GUI to JavaFX
+
+### Fixed
+
+* addons with an ignored group member were not being 'un-ignored' through the GUI
+    - this caused a problem when Altoholic did a buggy release with a .toc file that wasn't rendered, got implicitly ignored and then couldn't be uninstalled
+
+### Removed
+
+* support for the `wowman-data` repository and thus, any future updates for pre-1.0.0 strongbox
+
 ## 2.0.1 - 2020-08-11
 
 ### Fixed

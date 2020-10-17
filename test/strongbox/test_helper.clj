@@ -5,7 +5,7 @@
    [envvar.core :refer [env with-env]]
    [taoensso.timbre :as timbre :refer [debug info warn error spy]]
    [me.raynes.fs :as fs :refer [with-cwd]]
-   [clj-http.fake :refer [with-fake-routes-in-isolation]]
+   [clj-http.fake :refer [with-global-fake-routes-in-isolation]]
    [strongbox
     [specs :as sp]
     [main :as main]
@@ -75,7 +75,7 @@
       (debug "stopping application if it hasn't already been stopped")
       (main/stop)
 
-      (with-fake-routes-in-isolation fake-routes
+      (with-global-fake-routes-in-isolation fake-routes
         (with-env [:xdg-data-home (utils/join temp-dir-path helper-data-dir)
                    :xdg-config-home (utils/join temp-dir-path helper-config-dir)]
           (with-cwd temp-dir-path

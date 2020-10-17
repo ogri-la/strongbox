@@ -1,6 +1,7 @@
 (ns strongbox.ui.gui
   (:require
    [me.raynes.fs :as fs]
+   [strongbox.ui.cli :as cli]
    [strongbox
     [core :as core :refer [get-state state-bind colours]]
     [logging :as logging]
@@ -316,9 +317,7 @@
                                       :type :open
                                       :selection-mode :dirs-only)]
     (if (fs/directory? dir)
-      (do
-        (core/set-addon-dir! (str dir))
-        (core/save-settings))
+      (cli/set-addon-dir! (str dir))
       (ss/alert (format "Directory doesn't exist: %s" (str dir)))))
   nil)
 
@@ -347,10 +346,9 @@
                             ;; positioned here so the dropdown change is shown immediately
                             (ss/invoke-later
                              (ss/selection! wow-game-track (-> new-addon-dir core/addon-dir-map :game-track kw2str))))
-                          (core/set-addon-dir! new-addon-dir)
-                          (core/save-settings)))))
+                          (cli/set-addon-dir! new-addon-dir)))))
 
-        ;; called when the selected addon directory changes (like via `core/set-addon-dir!`)
+        ;; called when the selected addon directory changes (like via `cli/set-addon-dir!`)
         _ (state-bind [:cfg :selected-addon-dir]
                       (fn [state]
                         (let [new-addon-dir (get-in state [:cfg :selected-addon-dir]) ;; use the given `state`
@@ -877,8 +875,7 @@
      (sb/b-do [val]
               (when val ;; hrm, we're getting two events here, one where the value is nil ...
                 (async (fn []
-                         (core/set-catalogue-location! (-> val ss/user-data :name))
-                         (core/save-settings))))))
+                         (cli/set-catalogue-location! (-> val ss/user-data :name)))))))
 
     ;; application state updates menu selection
     (core/state-bind [:cfg :selected-catalogue]

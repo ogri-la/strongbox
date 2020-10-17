@@ -1,6 +1,6 @@
 (ns strongbox.gui-test
   (:require
-   [clj-http.fake :refer [with-fake-routes-in-isolation]]
+   [clj-http.fake :refer [with-global-fake-routes-in-isolation]]
    [clojure.test :refer [deftest testing is use-fixtures]]
    [seesaw.core :as ss]
    [strongbox.ui.gui :as gui]
@@ -14,7 +14,7 @@
 
 (deftest gui-init
   (testing "the gui can be started and stopped"
-    (with-running-app+opts {:ui :gui}
+    (with-running-app+opts {:ui :gui1}
       (is (gui/select-ui :#root))))
 
   (testing "attempting to select components of the gui when the app is started but the gui isn't causes a runtime error"
@@ -29,8 +29,8 @@
   (testing "the 'update available' button is displayed when a new update is available"
     (let [fake-routes {"https://api.github.com/repos/ogri-la/strongbox/releases/latest"
                        {:get (fn [req] {:status 200 :body "{\"tag_name\": \"9.99.999\"}"})}}]
-      (with-fake-routes-in-isolation fake-routes
-        (with-running-app+opts {:ui :gui}
+      (with-global-fake-routes-in-isolation fake-routes
+        (with-running-app+opts {:ui :gui1}
           (let [btn (gui/select-ui :#update-available-btn)]
             (is (= (ss/text btn) "Update Available: 9.99.999"))))))))
 
@@ -60,8 +60,16 @@
                      :name "everyaddon",
                      :primary? true,
                      :source "curseforge",
-                     :source-id 1}]]
-      (with-running-app+opts {:ui :gui}
+                     :source-id 1
+                     ;; 2020-09-22: with the change to selecting addons, the fixes to the test script,
+                     ;; switching to `with-global-fake-routes-in-isolation`, and (possibly) the removal of the state watchers in core,
+                     ;; I've discovered this test has a problem being deterministic.
+                     ;; without the Thread/sleep below, the gui init doesn't have time to complete and this `update?` field
+                     ;; may or may not appear.
+                     ;; :update? false
+                     }]]
+      (with-running-app+opts {:ui :gui1}
+        (Thread/sleep 200)
         (helper/install-dir)
         (core/install-addon addon)
         (core/load-installed-addons) ;; refresh our knowledge of what is installed

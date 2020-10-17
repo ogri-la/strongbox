@@ -9,3 +9,6 @@
 /.nrepl-port
 .eastwood
 .vagrant/
+AppDir/
+custom-jre/
+appimagetool
