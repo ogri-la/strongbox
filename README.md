@@ -43,6 +43,22 @@ First time usage:
 
 Afterwards, use the `Update all` button to update all addons with new versions available.
 
+## Features
+
+* classic and retail addon support
+* catalogue search
+* bulk update
+* install addons from multiple sources:
+    - [curseforge](https://www.curseforge.com/wow/addons)
+    - [wowinterface](https://wowinterface.com/addons.php)
+    - [tukui](https://www.tukui.org)
+    - [github](./github-addons.md) using *releases*
+* import and export of lists of addons
+* safeguards against bad addons
+* warnings when addons install other bundled addons
+* lock addons to prevent changes
+* mutual dependency tracking and safer addon uninstallation
+
 ## Recognition
 
 Under no circumstances whatsoever does this software:
@@ -61,21 +77,13 @@ This software also tries very hard to:
 I benefit so much from the hard work of those who write free and open source software, including addon developers, 
 that it's my privilege to offer this small piece back.
 
-## Features
+### Special thanks to:
 
-* classic and retail addon support
-* catalogue search
-* bulk update
-* install addons from multiple sources:
-    - [curseforge](https://www.curseforge.com/wow/addons)
-    - [wowinterface](https://wowinterface.com/addons.php)
-    - [tukui](https://www.tukui.org)
-    - [github](./github-addons.md) using *releases*
-* import and export of lists of addons
-* safeguards against bad addons
-* warnings when addons install other bundled addons
-* lock addons to prevent changes
-* mutual dependency tracking and safer addon uninstallation
+* [bug reporters, complimenters and those with constructive feedback](https://github.com/ogri-la/strongbox/issues)
+    - if you guys hadn't reported it, I wouldn't have known to fix it.
+* [eVen-gits](https://github.com/eVen-gits) for help improving the dark theme
+* [layday](https://github.com/layday) of [instawow](https://github.com/layday/instawow)
+* [vlaaad](https://github.com/vlaaad) of [cljfx](https://github.com/cljfx/cljfx) and his patience
 
 ## Notes
 
