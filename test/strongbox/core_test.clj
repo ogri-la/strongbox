@@ -1105,7 +1105,7 @@
                    :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}
 
             expected {:description "group record for the fetched addon",
-                      :dirname "EveryOtherAddon",
+                      :dirname "EveryAddon-BundledAddon",
                       :group-addon-count 2,
                       :group-addons [{:description "A useful addon that everyone bundles with their own.",
                                       :dirname "EveryAddon-BundledAddon",
@@ -1139,7 +1139,7 @@
                       :ignore? true,
                       :installed-game-track :retail,
                       :installed-version "5.6.7",
-                      :interface-version 70000,
+                      :interface-version 80000,
                       :label "fetched (group)",
                       :name "everyotheraddon",
                       :primary? false,

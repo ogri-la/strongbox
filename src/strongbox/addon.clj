@@ -71,9 +71,13 @@
 
                    ;; multiple addons in group
                    (let [_ (debug (format "grouping '%s', %s addons in group" group-id (count addons)))
+                         ;; `addons` comes from `toc/installed-addon-list` fed by `fs/list-dir` that wraps `java.io.File/listFiles`:
+                         ;; "There is no guarantee that the name strings in the resulting array will appear in any specific order"
+                         ;;   - https://docs.oracle.com/javase/7/docs/api/java/io/File.html#listFiles()
+                         addons (vec (sort-by :dirname addons))
                          primary (first (filter :primary? addons))
                          next-best (first addons)
-                         new-data {:group-addons (sort-by :dirname addons)
+                         new-data {:group-addons addons
                                    :group-addon-count (count addons)}
                          next-best-label (-> next-best :group-id fs/base-name)
                          ;; add a group-level ignore flag if any bundled addon is being ignored
