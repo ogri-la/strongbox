@@ -81,6 +81,10 @@
 
                :-fx-accent (colour :accent) ;; selection colour of backgrounds
 
+               ".table-placeholder-text"
+               {:-fx-font-size "1.5em"
+                :-fx-fill (colour :table-font-colour)}
+
                "#main-menu" {:-fx-background-color (colour :base)}
 
                ".context-menu" {:-fx-effect "None"}
@@ -183,9 +187,14 @@
                {:-fx-padding "8px"}
 
                ;; search
+
+               "#search-text-field "
+               {:-fx-text-fill (colour :table-font-colour)}
+
                ".table-view#search-addons"
                {" .downloads-column" {:-fx-alignment "center-right"}
-                " .installed" {:-fx-background-color "#99bc6b"}}
+                " .installed" {" > .table-cell" {} ;;:-fx-text-fill "black"
+                               :-fx-background-color (colour :already-installed-row-colour)}}
 
                "#status-bar"
                {:-fx-font-size ".9em"
@@ -193,7 +202,8 @@
 
                 " > .text"
                 {;; omg, wtf does 'fx-fill' work and not 'fx-text-fill' ???
-                 :-fx-fill (colour :table-font-color)}}
+                 :-fx-fill (colour :table-font-colour)}}
+
 
                ;; common table fields
 
@@ -705,6 +715,9 @@
              :on-selected-items-changed core/select-addons*}
      :desc {:fx/type :table-view
             :id "installed-addons"
+            :placeholder {:fx/type :text
+                          :style-class ["table-placeholder-text"]
+                          :text "No addons found."}
             :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
             :pref-height 999.0
             :row-factory {:fx/cell-type :table-row
@@ -767,6 +780,9 @@
              :on-selected-items-changed core/select-addons-search*}
      :desc {:fx/type :table-view
             :id "search-addons"
+            :placeholder {:fx/type :text
+                          :style-class ["table-placeholder-text"]
+                          :text "No search results."}
             :row-factory {:fx/cell-type :table-row
                           :describe (fn [row]
                                       {:style-class ["table-row-cell"

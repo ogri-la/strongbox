@@ -51,7 +51,8 @@
    :row-error "tomato"
    :jfx-hyperlink "blue"
    :jfx-hyperlink-weight "normal"
-   :table-font-colour "derive(-fx-background,-80%)"})
+   :table-font-colour "derive(-fx-background,-80%)"
+   :already-installed-row-colour "#99bc6b"})
 
 ;; inverse colours of -colour-map
 (def -dark-colour-map
@@ -79,7 +80,8 @@
    :row-error "#ce2828"
    :jfx-hyperlink "#f8f8f2"
    :jfx-hyperlink-weight "bold"
-   :table-font-colour "white"})
+   :table-font-colour "white"
+   :already-installed-row-colour "#99bc6b"})
 
 (def themes
   {:light -colour-map
