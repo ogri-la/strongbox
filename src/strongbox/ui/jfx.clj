@@ -143,7 +143,7 @@
                "#game-track-combo-box "
                {:-fx-min-width "100px"}
 
-               
+
                ;; installed-addons table
 
 

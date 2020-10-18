@@ -52,7 +52,7 @@
   "find a match for the given `installed-addon` in the database using a list of attributes in `match-on-list`.
   returns immediately when first match is found (does not check other joins in `match-on-list`)."
   [db :addon/summary-list, installed-addon :addon/installed, match-on-list vector?]
-  (if (or (:ignore? installed-addon) 
+  (if (or (:ignore? installed-addon)
           (empty? match-on-list))
     ;; either addon is being ignored, or,
     ;; we have exhausted all possibilities. not finding a match is ok.
