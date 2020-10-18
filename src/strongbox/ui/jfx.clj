@@ -810,7 +810,25 @@
                :text "random"
                :on-action (fn [_]
                             (swap! core/state assoc :search-field-input
-                                   (if (nil? (:search-field-input @core/state)) "" nil)))}]})
+                                   (if (nil? (:search-field-input @core/state)) "" nil)))}
+
+              {:fx/type :h-box
+               :id "spacer"
+               :h-box/hgrow :ALWAYS}
+              
+              {:fx/type :button
+               :text "first"}
+               
+              {:fx/type :button
+               :text "previous"}
+
+              {:fx/type :button
+               :text "next"}
+
+              {:fx/type :button
+               :text "last"}
+
+              ]})
 
 (defn search-addons-pane
   [_]
