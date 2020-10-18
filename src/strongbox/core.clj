@@ -733,7 +733,7 @@
          ;; todo: metrics gathering is good, but this is a little adhoc.
          ;; some metrics we'll emit for the user
          [num-installed num-matched] [(count installed-addon-list) (count matched)]
-         ;; we don't bother trying to match ignored addons, we shouldn't bother reporting they were also unmatched.
+         ;; we don't match ignored addons, we shouldn't report we couldn't find them either
          unmatched-names (->> unmatched (remove :ignore?) (map :name) set)]
 
      (when-not (= num-installed num-matched)

@@ -36,7 +36,7 @@
                      :matched? true
                      ;; catalogue entry that was matched
                      :catalogue-match catalogue-entry
-                     ;; addon that was matched
+                     ;; installed addon that was matched
                      :installed-addon toc}]]
       (is (= expected (db/-db-match-installed-addons-with-catalogue db installed-addon-list))))))
 
