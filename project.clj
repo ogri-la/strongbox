@@ -1,4 +1,4 @@
-(defproject ogri-la/strongbox "3.0.0"
+(defproject ogri-la/strongbox "3.0.1"
   :description "World Of Warcraft Addon Manager"
   :url "https://github.com/ogri-la/strongbox"
   :license {:name "GNU Affero General Public License (AGPL)"
@@ -26,7 +26,19 @@
                  [cljfx "1.7.8" :exclusions [org.openjfx/javafx-web
                                              org.openjfx/javafx-media]]
                  [cljfx/css "1.1.0"]
-                 
+
+                 [org.openjfx/javafx-base "14"]
+                 [org.openjfx/javafx-base "14" :classifier "linux"]
+                 [org.openjfx/javafx-base "14" :classifier "mac"]
+
+                 [org.openjfx/javafx-controls "14"]
+                 [org.openjfx/javafx-controls "14" :classifier "linux"]
+                 [org.openjfx/javafx-controls "14" :classifier "mac"]
+
+                 [org.openjfx/javafx-graphics "14"]
+                 [org.openjfx/javafx-graphics "14" :classifier "linux"]
+                 [org.openjfx/javafx-graphics "14" :classifier "mac"]
+
                  ;; remember to update the LICENCE.txt
                  ;; remember to update pom file (`lein pom`)
 

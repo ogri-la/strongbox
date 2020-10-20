@@ -733,15 +733,16 @@
          ;; todo: metrics gathering is good, but this is a little adhoc.
          ;; some metrics we'll emit for the user
          [num-installed num-matched] [(count installed-addon-list) (count matched)]
-         unmatched-names (set (map :name unmatched))]
+         ;; we don't match ignored addons, we shouldn't report we couldn't find them either
+         unmatched-names (->> unmatched (remove :ignore?) (map :name) set)]
 
      (when-not (= num-installed num-matched)
        (info "num installed" num-installed ", num matched" num-matched))
 
-     (when-not (empty? unmatched)
+     (when-not (empty? unmatched-names)
        (warn "you need to manually search for them and then re-install them")
        (warn (format "failed to find %s addons in the '%s' catalogue: %s"
-                     (count unmatched)
+                     (count unmatched-names)
                      (name (get-state :cfg :selected-catalogue))
                      (clojure.string/join ", " unmatched-names))))
 

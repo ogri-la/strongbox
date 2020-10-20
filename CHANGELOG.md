@@ -14,6 +14,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## 3.0.1 - 2020-10-20
+
+### Changed
+
+* ignored addons are no longer matched against the catalogue nor will they emit a warning about not being found in catalogue
+
+### Fixed
+
+* `.jar` files for macOS were not bundling the native JavaFX libraries
+
 ## 3.0.0 - 2020-10-17
 
 ### Added

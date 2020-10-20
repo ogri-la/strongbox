@@ -52,8 +52,11 @@
   "find a match for the given `installed-addon` in the database using a list of attributes in `match-on-list`.
   returns immediately when first match is found (does not check other joins in `match-on-list`)."
   [db :addon/summary-list, installed-addon :addon/installed, match-on-list vector?]
-  (if (empty? match-on-list)
-    nil ;; we may have exhausted all possibilities. not finding a match is ok.
+  (if (or (:ignore? installed-addon)
+          (empty? match-on-list))
+    ;; either addon is being ignored, or,
+    ;; we have exhausted all possibilities. not finding a match is ok.
+    nil
     (let [[toc-keys catalogue-keys] (first match-on-list) ;; => [:name] or [:source-id :source]
           match (find-in-db db installed-addon toc-keys catalogue-keys)]
       (if-not match ;; recur
