@@ -11,9 +11,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * "Option to force retail version to be installed in a classic folder"
     - https://github.com/ogri-la/strongbox/issues/185
 
-* "Warning for Ignored Addon Strongbox Can't Find"
-    - https://github.com/ogri-la/strongbox/issues/183
-
 * "Option to automaticallly remove zips"
     - https://github.com/ogri-la/strongbox/issues/182
     
