@@ -43,6 +43,27 @@
   (core/db-reload-catalogue)
   nil)
 
+;; search
+
+(defn search-results-prev-page
+  []
+  (swap! core/state update-in [:search :page] dec)
+  nil)
+
+(defn search-results-next-page
+  []
+  (swap! core/state update-in [:search :page] inc)
+  nil)
+
+(defn search
+  [search-term]
+  (swap! core/state assoc-in [:search :term] search-term)
+  nil)
+
+(defn random-search
+  []
+  (search (if (-> @core/state :search :term nil?) "" nil)))
+
 ;;
 
 (defmulti action

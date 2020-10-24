@@ -115,6 +115,38 @@
                           (re-find desc-regex (get row :description "")))))]
         (into [] (comp xf (take cap)) db)))))
 
+(defn -search-2
+  "returns a pair of [search-results, potential-search-results].
+  `search-results` is a list of addon/summary-list items  whose label or description matches the given user input `uin`.
+  matches are case insensitive.
+  label-matching matches from the beginning of the label.
+  description-matching matches any substring within description.
+  `potential-search-results` is a lazy sequence of "
+  [db uin cap]
+  ;;(info "----- db size" (count db))
+  ;;(info "----- search term" uin)
+  ;;(info "----- results cap" cap)
+  (if (nil? uin)
+    (let [pct (->> db count (max 1) (/ 100) (* 0.6))
+          empty-rest []]
+      [(take cap (random-sample pct db)) empty-rest])
+
+    ;; we should see if a non-regex solution may be faster:
+    ;; - https://www.baeldung.com/java-case-insensitive-string-matching
+    (let [label-regex (re-pattern (str "(?i)^" uin ".*"))
+          desc-regex (re-pattern (str "(?i).*" uin ".*"))
+          f (fn [row]
+              (or
+               (re-find label-regex (:label row))
+               (re-find desc-regex (get row :description ""))))
+
+          sneaky-cap (inc cap) ;; grab n + 1 results and if the realised resultset is greater than the cap, there are more results for this search
+          xf (comp (filter f) (take sneaky-cap))
+
+          actual (into [] xf db)
+          potential (drop cap (filter f db))]
+      [actual potential])))
+
 ;; not specced because the results and argument lists may vary greatly
 (defn stored-query
   "common queries we can call by keyword"
@@ -123,4 +155,5 @@
     :addon-by-source-and-name (-addon-by-source-and-name db (first arg-list) (second arg-list))
     :addon-by-name (-addon-by-name db (first arg-list))
     :search (-search db (first arg-list) (second arg-list))
+    :search-2 (-search-2 db (first arg-list) (second arg-list))
     nil))

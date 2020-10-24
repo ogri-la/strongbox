@@ -767,7 +767,13 @@
   (let [idx-key #(select-keys % [:source :source-id])
         installed-addon-idx (mapv idx-key (fx/sub-val context get-in [:app-state :installed-addon-list]))
 
-        addon-list (fx/sub-val context get-in [:app-state :search-results])
+        default-results [[] []]
+        addon-list (fx/sub-val context get-in [:app-state :search :results])
+
+        addon-list (-> addon-list (or default-results) first
+                       (or []) ;; this shouldn't be
+                       )
+
         column-list [{:text "source" :min-width 110 :pref-width 120 :max-width 160 :cell-value-factory href-to-hyperlink}
                      {:text "name" :min-width 150 :pref-width 300 :max-width 450 :cell-value-factory (comp no-new-lines :label)}
                      {:text "description" :pref-width 700 :cell-value-factory (comp no-new-lines :description)}
@@ -794,41 +800,47 @@
             :items addon-list}}))
 
 (defn search-addons-search-field
-  [_]
-  {:fx/type :h-box
-   :padding 10
-   :spacing 10
-   :children [{:fx/type :text-field
-               :id "search-text-field"
-               :prompt-text "search"
-               :on-text-changed (fn [v]
-                                  (swap! core/state assoc :search-field-input v))}
-              {:fx/type :button
-               :text "install selected"
-               :on-action (async-event-handler search-results-install-handler)}
-              {:fx/type :button
-               :text "random"
-               :on-action (fn [_]
-                            (swap! core/state assoc :search-field-input
-                                   (if (nil? (:search-field-input @core/state)) "" nil)))}
+  [{:keys [fx/context]}]
+  (let [search-state (fx/sub-val context get-in [:app-state :search])
 
-              {:fx/type :h-box
-               :id "spacer"
-               :h-box/hgrow :ALWAYS}
-              
-              {:fx/type :button
-               :text "first"}
-               
-              {:fx/type :button
-               :text "previous"}
+        results (-> search-state :results first)
 
-              {:fx/type :button
-               :text "next"}
+        ;; true if we've navigated forwards
+        has-prev? (> 1 (:page search-state))
+        ;; true if there are > N results per page
+        ;; results are lazily realised so fetching N + 1 indicates if there is another page not just precisely N results
+        has-next? (> (count results) (:results-per-page search-state))]
 
-              {:fx/type :button
-               :text "last"}
+    {:fx/type :h-box
+     :padding 10
+     :spacing 10
+     :children
+     [{:fx/type :text-field
+       :id "search-text-field"
+       :prompt-text "search"
+       :on-text-changed cli/search}
 
-              ]})
+      {:fx/type :button
+       :text "install selected"
+       :on-action (async-event-handler search-results-install-handler)}
+
+      {:fx/type :button
+       :text "random"
+       :on-action (handler cli/random-search)}
+
+      {:fx/type :h-box
+       :id "spacer"
+       :h-box/hgrow :ALWAYS}
+
+      {:fx/type :button
+       :text "previous"
+       :disable (not has-prev?)
+       :on-action cli/search-results-prev-page}
+
+      {:fx/type :button
+       :text "next"
+       :disable (not has-next?)
+       :on-action cli/search-results-next-page}]}))
 
 (defn search-addons-pane
   [_]
@@ -841,10 +853,6 @@
   {:fx/type :tab-pane
    :id "tabber"
    :tabs [{:fx/type :tab
-           :text "installed"
-           :closable false
-           :content {:fx/type installed-addons-pane}}
-          {:fx/type :tab
            :text "search"
            :closable false
            :on-selection-changed (fn [ev]
@@ -853,7 +861,12 @@
                                        (Platform/runLater
                                         (fn []
                                           (-> text-field .requestFocus))))))
-           :content {:fx/type search-addons-pane}}]})
+           :content {:fx/type search-addons-pane}}
+
+          {:fx/type :tab
+           :text "installed"
+           :closable false
+           :content {:fx/type installed-addons-pane}}]})
 
 (defn status-bar
   "this is the litle strip of text at the bottom of the application."
@@ -934,7 +947,7 @@
 
 (defn start
   []
-  (println "starting gui")
+  (info "starting gui")
   (let [;; the gui uses a copy of the application state because the state atom needs to be wrapped
         state-template {:app-state nil,
                         :log-message-list []
@@ -956,8 +969,9 @@
         ;; todo: cancel any current searching going on?
         save-search-results (fn [new-state]
                               (future
-                                (swap! core/state assoc :search-results (core/db-search (:search-field-input new-state)))))
-        _ (core/state-bind [:search-field-input] save-search-results)
+                                (let [results (core/db-search-2 (-> new-state :search :term))]
+                                  (swap! core/state assoc-in [:search :results] results))))
+        _ (core/state-bind [:search :term] save-search-results)
 
         renderer (fx/create-renderer
                   :middleware (comp
@@ -984,8 +998,8 @@
         ;; and because the search component isn't re-rendered,
         ;; fake a change to get something to appear
         bump-search (fn []
-                      (when-not (:search-field-input core/state)
-                        (swap! core/state assoc :search-field-input "")))]
+                      (when-not (-> @core/state :search :term)
+                        (cli/search "")))]
 
     (swap! core/state assoc :gui-showing? true)
     (fx/mount-renderer gui-state renderer)
@@ -1005,7 +1019,7 @@
 
 (defn stop
   []
-  (println "stopping gui")
+  (info "stopping gui")
   (when-let [unmount-renderer (:disable-gui @core/state)]
     ;; only affects tests running from repl apparently
     (unmount-renderer))
