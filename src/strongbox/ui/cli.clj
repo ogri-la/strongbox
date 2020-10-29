@@ -1,6 +1,7 @@
 (ns strongbox.ui.cli
   (:require
    [orchestra.core :refer [defn-spec]]
+   [clojure.spec.alpha :as s]
    [taoensso.timbre :as timbre :refer [spy info warn error debug]]
    [strongbox
     [specs :as sp]
@@ -45,22 +46,29 @@
 
 ;; search
 
-(defn search-results-prev-page
-  []
-  (swap! core/state update-in [:search :page] dec)
-  nil)
-
-(defn search-results-next-page
+(defn-spec search-results-next-page nil?
+  "increments the current page of results. relies on state watchers to update their search results.
+  relies on caller for bounds checking."
   []
   (swap! core/state update-in [:search :page] inc)
   nil)
 
-(defn search
-  [search-term]
+(defn-spec search-results-prev-page nil?
+  "decrements the current page of results. relies on state watchers to update their search results.
+  does not descend below 0."
+  []
+  (when (-> @core/state :search :page (> 0))
+    (swap! core/state update-in [:search :page] dec))
+  nil)
+
+(defn-spec search nil?
+  "updates the search `term` and resets the current page of results to `0`"
+  [search-term (s/nilable string?)]
   (swap! core/state update-in [:search] merge {:term search-term :page 0})
   nil)
 
-(defn random-search
+(defn-spec random-search nil?
+  "trigger a random sample of addons"
   []
   (search (if (-> @core/state :search :term nil?) "" nil)))
 

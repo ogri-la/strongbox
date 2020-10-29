@@ -6,8 +6,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* "Warning for Ignored Addon Strongbox Can't Find"
-    - https://github.com/ogri-la/strongbox/issues/183
+* "'vui' addon not found in search results despite being in catalogue"
+    - https://github.com/ogri-la/strongbox/issues/163
 
 ## todo
 
@@ -17,10 +17,10 @@ see CHANGELOG.md for a more formal list of changes by release
 * "Option to automaticallly remove zips"
     - https://github.com/ogri-la/strongbox/issues/182
     
-* "'vui' addon not found in search results despite being in catalogue"
-    - https://github.com/ogri-la/strongbox/issues/163
-
 ## todo bucket (no particular order)
+
+* remove gui1
+    - remove original db-search
 
 * investigate *warn-on-reflections*
     - I think there may be some solid performance gains by turning this on

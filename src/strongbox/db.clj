@@ -116,16 +116,14 @@
         (into [] (comp xf (take cap)) db)))))
 
 (defn -search-2
-  "returns a pair of [search-results, potential-search-results].
-  `search-results` is a list of addon/summary-list items  whose label or description matches the given user input `uin`.
+  "returns a lazily fetched and paginated list of addon summaries.
+  unlike `-search`, `-search-2` results are constructed using a `seque` that (somehow)
+  bypasses chunking behaviour so our slow search never takes more than `cap` results.
   matches are case insensitive.
   label-matching matches from the beginning of the label.
   description-matching matches any substring within description.
   `potential-search-results` is a lazy sequence of "
   [db uin cap]
-  ;;(info "----- db size" (count db))
-  ;;(info "----- search term" uin)
-  ;;(info "----- results cap" cap)
   (if (nil? uin)
     (let [pct (->> db count (max 1) (/ 100) (* 0.6))
           empty-rest []]

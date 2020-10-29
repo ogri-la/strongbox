@@ -767,6 +767,7 @@
   (let [idx-key #(select-keys % [:source :source-id])
         installed-addon-idx (mapv idx-key (fx/sub-val context get-in [:app-state :installed-addon-list]))
 
+        ;; section replicated slightly in `search-addons-search-field`
         search-state (fx/sub-val context get-in [:app-state :search])
         page (:page search-state)
         results (:results search-state)
@@ -803,17 +804,17 @@
   [{:keys [fx/context]}]
   (let [search-state (fx/sub-val context get-in [:app-state :search])
 
-        ;; true if we've navigated forwards
-        has-prev? (-> search-state :page (> 0))
-
-        cap (:results-per-page search-state)
         page (:page search-state)
-        
         results (-> search-state :results)
         results (if-not (empty? results)
-                     (nth results page)
-                     [])
-        has-next? (= (count results) cap)]
+                  (nth results page)
+                  [])
+
+        ;; true if we've navigated forwards
+        has-prev? (> page 0)
+        ;; true if we've maxed out the number of results per-page.
+        ;; where there are *precisely* that number of results we'll get an empty next page
+        has-next? (= (count results) (:results-per-page search-state))]
 
     {:fx/type :h-box
      :padding 10
