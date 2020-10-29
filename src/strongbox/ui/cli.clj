@@ -57,7 +57,7 @@
 
 (defn search
   [search-term]
-  (swap! core/state assoc-in [:search :term] search-term)
+  (swap! core/state update-in [:search] merge {:term search-term :page 0})
   nil)
 
 (defn random-search

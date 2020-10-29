@@ -767,12 +767,12 @@
   (let [idx-key #(select-keys % [:source :source-id])
         installed-addon-idx (mapv idx-key (fx/sub-val context get-in [:app-state :installed-addon-list]))
 
-        default-results [[] []]
-        addon-list (fx/sub-val context get-in [:app-state :search :results])
-
-        addon-list (-> addon-list (or default-results) first
-                       (or []) ;; this shouldn't be
-                       )
+        search-state (fx/sub-val context get-in [:app-state :search])
+        page (:page search-state)
+        results (:results search-state)
+        addon-list (if-not (empty? results)
+                     (nth results page)
+                     [])
 
         column-list [{:text "source" :min-width 110 :pref-width 120 :max-width 160 :cell-value-factory href-to-hyperlink}
                      {:text "name" :min-width 150 :pref-width 300 :max-width 450 :cell-value-factory (comp no-new-lines :label)}
@@ -803,13 +803,17 @@
   [{:keys [fx/context]}]
   (let [search-state (fx/sub-val context get-in [:app-state :search])
 
-        results (-> search-state :results first)
-
         ;; true if we've navigated forwards
-        has-prev? (> 1 (:page search-state))
-        ;; true if there are > N results per page
-        ;; results are lazily realised so fetching N + 1 indicates if there is another page not just precisely N results
-        has-next? (> (count results) (:results-per-page search-state))]
+        has-prev? (-> search-state :page (> 0))
+
+        cap (:results-per-page search-state)
+        page (:page search-state)
+        
+        results (-> search-state :results)
+        results (if-not (empty? results)
+                     (nth results page)
+                     [])
+        has-next? (= (count results) cap)]
 
     {:fx/type :h-box
      :padding 10
@@ -835,12 +839,12 @@
       {:fx/type :button
        :text "previous"
        :disable (not has-prev?)
-       :on-action cli/search-results-prev-page}
+       :on-action (handler cli/search-results-prev-page)}
 
       {:fx/type :button
        :text "next"
        :disable (not has-next?)
-       :on-action cli/search-results-next-page}]}))
+       :on-action (handler cli/search-results-next-page)}]}))
 
 (defn search-addons-pane
   [_]
@@ -853,6 +857,10 @@
   {:fx/type :tab-pane
    :id "tabber"
    :tabs [{:fx/type :tab
+           :text "installed"
+           :closable false
+           :content {:fx/type installed-addons-pane}}
+          {:fx/type :tab
            :text "search"
            :closable false
            :on-selection-changed (fn [ev]
@@ -861,12 +869,7 @@
                                        (Platform/runLater
                                         (fn []
                                           (-> text-field .requestFocus))))))
-           :content {:fx/type search-addons-pane}}
-
-          {:fx/type :tab
-           :text "installed"
-           :closable false
-           :content {:fx/type installed-addons-pane}}]})
+           :content {:fx/type search-addons-pane}}]})
 
 (defn status-bar
   "this is the litle strip of text at the bottom of the application."

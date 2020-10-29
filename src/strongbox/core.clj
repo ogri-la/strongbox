@@ -209,7 +209,7 @@
    :search-results-cap 80
 
    :search {:term nil
-            :page 1
+            :page 0
             :results []
             :selected-results []
             :results-per-page 80}})

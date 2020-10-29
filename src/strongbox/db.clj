@@ -129,23 +129,18 @@
   (if (nil? uin)
     (let [pct (->> db count (max 1) (/ 100) (* 0.6))
           empty-rest []]
-      [(take cap (random-sample pct db)) empty-rest])
+      ;; decrement cap here so navigation for random is disabled
+      [(take (dec cap) (random-sample pct db)) empty-rest])
 
     ;; we should see if a non-regex solution may be faster:
     ;; - https://www.baeldung.com/java-case-insensitive-string-matching
     (let [label-regex (re-pattern (str "(?i)^" uin ".*"))
           desc-regex (re-pattern (str "(?i).*" uin ".*"))
-          f (fn [row]
-              (or
-               (re-find label-regex (:label row))
-               (re-find desc-regex (get row :description ""))))
-
-          sneaky-cap (inc cap) ;; grab n + 1 results and if the realised resultset is greater than the cap, there are more results for this search
-          xf (comp (filter f) (take sneaky-cap))
-
-          actual (into [] xf db)
-          potential (drop cap (filter f db))]
-      [actual potential])))
+          slow-fn (fn [row]
+                    (or
+                     (re-find label-regex (:label row))
+                     (re-find desc-regex (get row :description ""))))]
+      (partition-all cap (seque 100 (filter slow-fn db))))))
 
 ;; not specced because the results and argument lists may vary greatly
 (defn stored-query
