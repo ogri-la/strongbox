@@ -115,6 +115,30 @@
                           (re-find desc-regex (get row :description "")))))]
         (into [] (comp xf (take cap)) db)))))
 
+(defn -search-2
+  "returns a lazily fetched and paginated list of addon summaries.
+  unlike `-search`, `-search-2` results are constructed using a `seque` that (somehow)
+  bypasses chunking behaviour so our slow search never takes more than `cap` results.
+  matches are case insensitive.
+  label-matching matches from the beginning of the label.
+  description-matching matches any substring within description.
+  `potential-search-results` is a lazy sequence of "
+  [db uin cap]
+  (if (nil? uin)
+    (let [pct (->> db count (max 1) (/ 100) (* 0.6))]
+      ;; decrement cap here so navigation for random is disabled
+      [(take cap (random-sample pct db))])
+
+    ;; we should see if a non-regex solution may be faster:
+    ;; - https://www.baeldung.com/java-case-insensitive-string-matching
+    (let [label-regex (re-pattern (str "(?i)^" uin ".*"))
+          desc-regex (re-pattern (str "(?i).*" uin ".*"))
+          slow-fn (fn [row]
+                    (or
+                     (re-find label-regex (:label row))
+                     (re-find desc-regex (get row :description ""))))]
+      (partition-all cap (seque 100 (filter slow-fn db))))))
+
 ;; not specced because the results and argument lists may vary greatly
 (defn stored-query
   "common queries we can call by keyword"
@@ -123,4 +147,5 @@
     :addon-by-source-and-name (-addon-by-source-and-name db (first arg-list) (second arg-list))
     :addon-by-name (-addon-by-name db (first arg-list))
     :search (-search db (first arg-list) (second arg-list))
+    :search-2 (-search-2 db (first arg-list) (second arg-list))
     nil))

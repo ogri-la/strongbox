@@ -43,6 +43,78 @@
   (core/db-reload-catalogue)
   nil)
 
+;; search
+
+(defn-spec search-results-next-page nil?
+  "increments the current page of results. relies on state watchers to update their search results.
+  relies on caller for bounds checking."
+  []
+  (swap! core/state update-in [:search :page] inc)
+  nil)
+
+(defn-spec search-results-prev-page nil?
+  "decrements the current page of results. relies on state watchers to update their search results.
+  does not descend below 0."
+  []
+  (when (-> @core/state :search :page (> 0))
+    (swap! core/state update-in [:search :page] dec))
+  nil)
+
+(defn search
+  "updates the search `term` and resets the current page of results to `0`.
+  does not actually do any searching, that is up to the interface"
+  [search-term]
+  (swap! core/state update-in [:search] merge {:term search-term :page 0})
+  nil)
+
+(defn-spec random-search nil?
+  "trigger a random sample of addons"
+  []
+  (search (if (-> @core/state :search :term nil?) "" nil)))
+
+(defn search-results
+  "returns the current page of results"
+  ([]
+   (search-results (core/get-state :search)))
+  ([search-state]
+   (let [results (:results search-state)
+         page (:page search-state)]
+     (if-not (empty? results)
+       (try
+         (nth results page)
+         (catch java.lang.IndexOutOfBoundsException e
+           (info "precisely %s results returned, there is no next page" (:results-per-page search-state))
+           []))
+       []))))
+
+(defn search-has-next?
+  "true if we've maxed out the number of results per-page.
+  where there are *precisely* that number of results we'll get an empty next page"
+  ([]
+   (search-has-next? (core/get-state :search)))
+  ([search-state]
+   (= (count (search-results search-state))
+      (:results-per-page search-state))))
+
+(defn search-has-prev?
+  "true if we've navigated forwards"
+  ([]
+   (search-has-prev? (core/get-state :search)))
+  ([search-state]
+   (> (:page search-state) 0)))
+
+(defn-spec -init-search-listener nil?
+  "starts a listener that triggers a search whenever the search term is updated.
+  results are updated at [:search :results]"
+  []
+  ;; todo: cancel any other searching going on?
+  (core/state-bind
+   [:search :term]
+   (fn [new-state]
+     (future
+       (let [results (core/db-search-2 (-> new-state :search :term))]
+         (swap! core/state assoc-in [:search :results] results))))))
+
 ;;
 
 (defmulti action
@@ -138,6 +210,7 @@
 (defn start
   [opts]
   (info "starting cli")
+  (-init-search-listener)
   (core/refresh)
   (action opts))
 

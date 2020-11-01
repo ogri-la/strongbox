@@ -206,7 +206,13 @@
    :selected-search []
    ;; number of results to display in search results pane.
    ;; adjust to whatever performs the best
-   :search-results-cap 80})
+   :search-results-cap 80
+
+   :search {:term nil
+            :page 0
+            :results []
+            :selected-results []
+            :results-per-page 60}})
 
 (def state (atom nil))
 
@@ -672,6 +678,16 @@
          args [(utils/nilable uin) (get-state :search-results-cap)]]
      (or (query-db :search args) empty-results))))
 
+(defn db-search-2
+  "searches database for addons whose name or description contains given user input.
+  if no user input, returns a list of randomly ordered results"
+  ([]
+   ;; random list of addons, no preference
+   (db-search nil))
+  ([search-term]
+   (let [args [(utils/nilable search-term) (get-state :search :results-per-page)]]
+     (query-db :search-2 args))))
+
 (defn-spec load-current-catalogue (s/or :ok :catalogue/catalogue, :error nil?)
   "merges the currently selected catalogue with the user-catalogue and returns the definitive list of addons 
   available to install. Handles malformed catalogue data by re-downloading catalogue."
@@ -695,6 +711,7 @@
           catalogue-data (p :p2/db:catalogue:read-catalogue (catalogue/read-catalogue catalogue-path {:bad-data? bad-json-file-handler}))
           user-catalogue-data (p :p2/db:catalogue:read-user-catalogue (catalogue/read-catalogue (paths :user-catalogue-file) {:bad-data? nil}))
           final-catalogue (p :p2/db:catalogue:merge-catalogues (catalogue/merge-catalogues catalogue-data user-catalogue-data))]
+      (info (str (count final-catalogue) " in final catalogue"))
       final-catalogue)))
 
 (defn-spec db-load-catalogue nil?
