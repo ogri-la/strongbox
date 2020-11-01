@@ -52,7 +52,8 @@
       contents)))
 
 (defn fixture-tempcwd
-  "each test is executed in a new and self-contained location, accessible as fs/*cwd*
+  "each `deftest` is executed in a new and self-contained location, accessible as fs/*cwd*.
+  `(testing ...` sections share the same fixture. beware of cache hits.
   if the app is started:
   * an empty catalogue is downloaded
   * fake strongbox version data is downloaded"

@@ -767,13 +767,8 @@
   (let [idx-key #(select-keys % [:source :source-id])
         installed-addon-idx (mapv idx-key (fx/sub-val context get-in [:app-state :installed-addon-list]))
 
-        ;; section replicated slightly in `search-addons-search-field`
         search-state (fx/sub-val context get-in [:app-state :search])
-        page (:page search-state)
-        results (:results search-state)
-        addon-list (if-not (empty? results)
-                     (nth results page)
-                     [])
+        addon-list (cli/search-results search-state)
 
         column-list [{:text "source" :min-width 110 :pref-width 120 :max-width 160 :cell-value-factory href-to-hyperlink}
                      {:text "name" :min-width 150 :pref-width 300 :max-width 450 :cell-value-factory (comp no-new-lines :label)}
@@ -802,20 +797,7 @@
 
 (defn search-addons-search-field
   [{:keys [fx/context]}]
-  (let [search-state (fx/sub-val context get-in [:app-state :search])
-
-        page (:page search-state)
-        results (-> search-state :results)
-        results (if-not (empty? results)
-                  (nth results page)
-                  [])
-
-        ;; true if we've navigated forwards
-        has-prev? (> page 0)
-        ;; true if we've maxed out the number of results per-page.
-        ;; where there are *precisely* that number of results we'll get an empty next page
-        has-next? (= (count results) (:results-per-page search-state))]
-
+  (let [search-state (fx/sub-val context get-in [:app-state :search])]
     {:fx/type :h-box
      :padding 10
      :spacing 10
@@ -839,12 +821,12 @@
 
       {:fx/type :button
        :text "previous"
-       :disable (not has-prev?)
+       :disable (not (cli/search-has-prev? search-state))
        :on-action (handler cli/search-results-prev-page)}
 
       {:fx/type :button
        :text "next"
-       :disable (not has-next?)
+       :disable (not (cli/search-has-next? search-state))
        :on-action (handler cli/search-results-next-page)}]}))
 
 (defn search-addons-pane
@@ -969,13 +951,7 @@
         _ (core/add-cleanup-fn #(remove-watch core/state :refresh-app))
 
         ;; asynchronous searching. as the user types, update the state with search results asynchronously
-        ;; todo: stick this in core/cli?
-        ;; todo: cancel any current searching going on?
-        save-search-results (fn [new-state]
-                              (future
-                                (let [results (core/db-search-2 (-> new-state :search :term))]
-                                  (swap! core/state assoc-in [:search :results] results))))
-        _ (core/state-bind [:search :term] save-search-results)
+        _ (cli/-init-search-listener)
 
         renderer (fx/create-renderer
                   :middleware (comp

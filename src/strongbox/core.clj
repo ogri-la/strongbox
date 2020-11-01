@@ -212,7 +212,7 @@
             :page 0
             :results []
             :selected-results []
-            :results-per-page 80}})
+            :results-per-page 60}})
 
 (def state (atom nil))
 
@@ -711,6 +711,7 @@
           catalogue-data (p :p2/db:catalogue:read-catalogue (catalogue/read-catalogue catalogue-path {:bad-data? bad-json-file-handler}))
           user-catalogue-data (p :p2/db:catalogue:read-user-catalogue (catalogue/read-catalogue (paths :user-catalogue-file) {:bad-data? nil}))
           final-catalogue (p :p2/db:catalogue:merge-catalogues (catalogue/merge-catalogues catalogue-data user-catalogue-data))]
+      (info (str (count final-catalogue) " in final catalogue"))
       final-catalogue)))
 
 (defn-spec db-load-catalogue nil?
