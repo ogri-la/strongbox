@@ -15,7 +15,7 @@
     [wowinterface-api :as wowinterface-api]
     [github-api :as github-api]]))
 
-(defn-spec expand-summary (s/or :ok (s/merge :addon/expandable :addon/source-updates), :error nil?)
+(defn-spec -expand-summary (s/or :ok (s/merge :addon/expandable :addon/source-updates), :error nil?)
   "fetches updates from the addon host for the given `addon`.
   hosts handle the game track in different ways."
   [addon :addon/expandable, game-track ::sp/game-track]
@@ -39,6 +39,21 @@
       (catch Exception e
         (error e "unhandled exception attempting to expand addon summary")
         (error "please report this! https://github.com/ogri-la/strongbox/issues")))))
+
+(defn-spec expand-summary (s/or :ok (s/merge :addon/expandable :addon/source-updates),
+                                :error nil?)
+  "fetches updates from the addon host for the given `addon`.
+  hosts handle the game track in different ways."
+  [addon :addon/expandable, game-track :addon-dir/game-track]
+  (case game-track
+    :retail (-expand-summary addon :retail)
+    :classic (-expand-summary addon :classic)
+    :retail-classic (or
+                     (-expand-summary addon :retail)
+                     (-expand-summary addon :classic))
+    :classic-retail (or
+                     (-expand-summary addon :classic)
+                     (-expand-summary addon :retail))))
 
 ;;
 

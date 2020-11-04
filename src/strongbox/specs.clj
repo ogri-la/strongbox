@@ -48,7 +48,20 @@
 (s/def ::selected? boolean?)
 (s/def ::gui-theme #{:light :dark})
 
-(s/def ::game-track #{:retail :classic})
+;; preserve order, used in GUI
+(def game-track-labels [[:retail "retail"]
+                        [:classic "classic"]])
+(def selectable-game-track-labels (into game-track-labels
+                                        [[:retail-classic "any, prefer retail"]
+                                         [:classic-retail "any, prefer classic"]]))
+
+(def selectable-game-track-labels-inv (clojure.set/map-invert selectable-game-track-labels))
+
+(def game-tracks (->> game-track-labels (into {}) keys set))
+(def selectable-game-tracks (->> selectable-game-track-labels (into {}) keys set))
+
+
+(s/def ::game-track game-tracks)
 (s/def ::installed-game-track ::game-track) ;; alias
 (s/def ::game-track-list (s/coll-of ::game-track :kind vector? :distinct true))
 (s/def ::download-count (s/and int? #(>= % 0)))
@@ -82,8 +95,10 @@
 
 ;; user config
 
+;; the game tracks *selectable by the user* are mapped to a simpler set internally
+(s/def :addon-dir/game-track selectable-game-tracks)
 (s/def ::addon-dir ::extant-dir)
-(s/def ::addon-dir-map (s/keys :req-un [::addon-dir ::game-track]))
+(s/def ::addon-dir-map (s/keys :req-un [::addon-dir :addon-dir/game-track]))
 (s/def ::addon-dir-list (s/coll-of ::addon-dir-map))
 (s/def ::selected-catalogue keyword?)
 

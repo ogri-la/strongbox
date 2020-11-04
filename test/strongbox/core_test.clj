@@ -354,6 +354,7 @@
             (core/refresh) ;; re-read the installation directory
             (is (= (first expected) (first (core/get-state :installed-addon-list))))
 
+            ;; todo: revisit this logic/comment
             ;; bit of a hack. the second expected addon won't be expanded properly after the refresh
             ;; because it's a classic addon and the addon dir is 'retail'. so we change the addon dir
             ;; and then test the second one matches.
@@ -420,6 +421,7 @@
                      :source "curseforge"
                      :source-id 0}
 
+                ;; todo: revisit this
                 ;; the nfo data is simply merged over the top of the scraped toc data
                 toc (merge toc nfo)
 
