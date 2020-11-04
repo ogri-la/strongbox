@@ -127,7 +127,7 @@
   (if (nil? uin)
     (let [pct (->> db count (max 1) (/ 100) (* 0.6))]
       ;; decrement cap here so navigation for random is disabled
-      [(take cap (random-sample pct db))])
+      [(take (dec cap) (random-sample pct db))])
 
     ;; we should see if a non-regex solution may be faster:
     ;; - https://www.baeldung.com/java-case-insensitive-string-matching
