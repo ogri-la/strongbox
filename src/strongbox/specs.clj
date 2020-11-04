@@ -1,6 +1,7 @@
 (ns strongbox.specs
   (:require
    [java-time]
+   [clojure.set :refer [map-invert]]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
    [me.raynes.fs :as fs]))
@@ -55,11 +56,11 @@
                                         [[:retail-classic "any, prefer retail"]
                                          [:classic-retail "any, prefer classic"]]))
 
-(def selectable-game-track-labels-inv (clojure.set/map-invert selectable-game-track-labels))
+(def selectable-game-track-labels-map (into {} selectable-game-track-labels))
+(def selectable-game-track-labels-map-inv (map-invert selectable-game-track-labels))
 
 (def game-tracks (->> game-track-labels (into {}) keys set))
 (def selectable-game-tracks (->> selectable-game-track-labels (into {}) keys set))
-
 
 (s/def ::game-track game-tracks)
 (s/def ::installed-game-track ::game-track) ;; alias

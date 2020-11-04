@@ -636,18 +636,16 @@
 (defn game-track-dropdown
   [{:keys [fx/context]}]
   (let [selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])
-        selected-game-track (:game-track selected-addon-dir)
         key (-> selected-addon-dir core/get-game-track)]
     {:fx/type :combo-box
      :id "game-track-combo-box"
-     :value (get sp/selectable-game-track-labels key)
+     :value (get sp/selectable-game-track-labels-map key)
      :on-value-changed (async-event-handler
                         (fn [new-game-track]
                           ;; todo: push to cli
-                          (core/set-game-track! (get sp/selectable-game-track-labels-inv new-game-track))
+                          (core/set-game-track! (get sp/selectable-game-track-labels-map-inv new-game-track))
                           (core/refresh)))
-     :items (mapv second sp/selectable-game-track-labels)
-     }))
+     :items (mapv second sp/selectable-game-track-labels)}))
 
 (defn installed-addons-menu-bar
   "returns a description of the installed-addons tab-pane menu"
