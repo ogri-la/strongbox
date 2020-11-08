@@ -29,13 +29,8 @@
     (try
       (if-not (contains? dispatch-map key)
         (error (format "addon '%s' is from source '%s' that is unsupported" (:label addon) key))
-        (if-let [source-updates ((get dispatch-map key) addon game-track)]
-          (merge addon source-updates)
-          ;; "no release found for 'adibags' (retail) on github"
-          (warn (format "no release found for '%s' (%s) on %s"
-                        (:name addon)
-                        (utils/kw2str game-track)
-                        (:source addon)))))
+        (when-let [source-updates ((get dispatch-map key) addon game-track)]
+          (merge addon source-updates)))
       (catch Exception e
         (error e "unhandled exception attempting to expand addon summary")
         (error "please report this! https://github.com/ogri-la/strongbox/issues")))))
@@ -45,17 +40,31 @@
   "fetches updates from the addon host for the given `addon`.
   hosts handle the game track in different ways."
   [addon :addon/expandable, game-track :addon-dir/game-track]
-  (case game-track
-    :retail (-expand-summary addon :retail)
-    :classic (-expand-summary addon :classic)
-    :retail-classic (or
-                     (-expand-summary addon :retail)
-                     (-expand-summary addon :classic))
-    :classic-retail (or
-                     (-expand-summary addon :classic)
-                     (-expand-summary addon :retail))))
+  (if-let [source-updates
+           (case game-track
+             :retail (-expand-summary addon :retail)
+             :classic (-expand-summary addon :classic)
+             :retail-classic (or
+                              (-expand-summary addon :retail)
+                              (-expand-summary addon :classic))
+             :classic-retail (or
+                              (-expand-summary addon :classic)
+                              (-expand-summary addon :retail)))]
+    source-updates
+
+    (let [;; "no release found for 'adibags' (retail) on github"
+          ;; "no release found for 'adibags' (retail or classic) on github"
+          ;; "no release found for 'adibags' (classic or retail) on github"
+          track-list (-> game-track name (clojure.string/split #"-"))
+          track-list (clojure.string/join " or " track-list)]
+      (warn (format "no release found for '%s' (%s) on %s"
+                    (:name addon)
+                    track-list
+                    (:source addon))))))
+
 
 ;;
+
 
 (defn-spec format-catalogue-data :catalogue/catalogue
   "returns a correctly formatted catalogue given a list of addons and a created and updated date"
