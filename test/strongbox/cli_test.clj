@@ -92,7 +92,7 @@
         (with-running-app
           ;; any catalogue with less than 60 (a magic number) items has >100% probability of being included.
           (cli/random-search)
-          (Thread/sleep 20)
+          (Thread/sleep 50)
           (is (= (core/get-state :db)
                  (cli/search-results))))))))
 

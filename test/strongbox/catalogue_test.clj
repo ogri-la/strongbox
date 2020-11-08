@@ -3,7 +3,6 @@
    [clojure.test :refer [deftest testing is use-fixtures]]
    ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [strongbox
-    [utils :as utils]
     [logging :as logging]
     [catalogue :as catalogue]
     [test-helper :refer [fixture-path]]]
@@ -276,7 +275,7 @@
           expected (merge addon expected)]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (catalogue/expand-summary addon game-track))))))
-  
+
   (testing "when just classic is available, use nothing"
     (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"}
           game-track :retail
@@ -293,14 +292,13 @@
           response (slurp (fixture-path "curseforge-api-addon--retail-AND-classic.json"))
           fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/4646"
                        {:get (fn [req] {:status 200 :body response})}}
-          
           expected {:download-url "https://edge.forgecdn.net/files/3104/62/Pawn-2.4.5.zip",
                     :interface-version 90000,
                     :version "2.4.5"}
           expected (merge addon expected)]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (catalogue/expand-summary addon game-track)))))))
-  
+
 (deftest expand-summary--retail-then-classic
   (testing "when just classic is available, use it"
     (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"}
@@ -311,7 +309,7 @@
           expected {:download-url "https://edge.forgecdn.net/files/3104/60/Pawn-2.4.5-Classic.zip",
                     :interface-version 11300,
                     :version "2.4.5 (Classic)"}
-          expected (merge addon expected)]      
+          expected (merge addon expected)]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (catalogue/expand-summary addon game-track)))))))
 
@@ -327,7 +325,7 @@
           expected {:download-url "https://edge.forgecdn.net/files/3104/60/Pawn-2.4.5-Classic.zip",
                     :interface-version 11300,
                     :version "2.4.5 (Classic)"}
-          expected (merge addon expected)]      
+          expected (merge addon expected)]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (catalogue/expand-summary addon game-track))))))
 
@@ -340,7 +338,7 @@
           expected nil]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (catalogue/expand-summary addon game-track))))))
-  
+
   (testing "when both retail and classic are available, use classic"
     (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"}
           game-track :classic
