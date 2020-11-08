@@ -255,61 +255,6 @@
       "isServerPack": false,
       "serverPackFileId": null,
       "gameVersionFlavor": "wow_classic"
-    },
-    {
-      "id": 3104062,
-      "displayName": "2.4.5",
-      "fileName": "Pawn-2.4.5.zip",
-      "fileDate": "2020-11-06T20:47:12.92Z",
-      "fileLength": 767569,
-      "releaseType": 1,
-      "fileStatus": 4,
-      "downloadUrl": "https://edge.forgecdn.net/files/3104/62/Pawn-2.4.5.zip",
-      "isAlternate": false,
-      "alternateFileId": 0,
-      "dependencies": [],
-      "isAvailable": true,
-      "modules": [
-        {
-          "foldername": "Pawn",
-          "fingerprint": 2686444960,
-          "type": 3
-        }
-      ],
-      "packageFingerprint": 1780532995,
-      "gameVersion": [
-        "9.0.1"
-      ],
-      "sortableGameVersion": [
-        {
-          "gameVersionPadded": "0000000009.0000000000.0000000001",
-          "gameVersion": "9.0.1",
-          "gameVersionReleaseDate": "2020-07-17T00:00:00Z",
-          "gameVersionName": "9.0.1"
-        }
-      ],
-      "installMetadata": null,
-      "changelog": null,
-      "hasInstallScript": false,
-      "isCompatibleWithClient": true,
-      "categorySectionPackageType": 1,
-      "restrictProjectFileAccess": 1,
-      "projectStatus": 4,
-      "renderCacheId": 2044633,
-      "fileLegacyMappingId": null,
-      "projectId": 4646,
-      "parentProjectFileId": null,
-      "parentFileLegacyMappingId": null,
-      "fileTypeId": null,
-      "exposeAsAlternative": null,
-      "packageFingerprintId": 549342237,
-      "gameVersionDateReleased": "2020-07-17T00:00:00Z",
-      "gameVersionMappingId": 2518415,
-      "gameVersionId": 7971,
-      "gameId": 1,
-      "isServerPack": false,
-      "serverPackFileId": null,
-      "gameVersionFlavor": "wow_retail"
     }
   ],
   "categories": [
@@ -361,13 +306,6 @@
   },
   "slug": "pawn",
   "gameVersionLatestFiles": [
-    {
-      "gameVersion": "9.0.1",
-      "projectFileId": 3104062,
-      "projectFileName": "Pawn-2.4.5.zip",
-      "fileType": 1,
-      "gameVersionFlavor": "wow_retail"
-    },
     {
       "gameVersion": "1.13.5",
       "projectFileId": 3104060,
