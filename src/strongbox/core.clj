@@ -1158,11 +1158,8 @@
   [addon-url string?]
   (binding [http/*cache* (cache)]
     (if-let* [addon-summary (catalogue/parse-user-string addon-url)
-              ;; game track doesn't matter when adding it to the user catalogue ...
-              ;; todo, revisit this
-              addon (or
-                     (catalogue/expand-summary addon-summary :retail)
-                     (catalogue/expand-summary addon-summary :classic))
+              ;; game track doesn't matter when adding it to the user catalogue. prefer retail though.
+              addon (catalogue/expand-summary addon-summary :retail-classic)
               test-only? true
               _ (install-addon-guard addon (selected-addon-dir) test-only?)]
 

@@ -110,6 +110,9 @@
                {:-fx-table-cell-border-color (colour :table-border)
                 :-fx-font-size ".9em"}
 
+               ".table-view .table-placeholder-text"
+               {:-fx-font-size "3em"}
+
                ".table-view .column-header"
                {;;:-fx-background-color "#ddd" ;; flat colour vs gradient
                 :-fx-font-size "1em"}
@@ -772,6 +775,10 @@
         search-state (fx/sub-val context get-in [:app-state :search])
         addon-list (cli/search-results search-state)
 
+        ;; rare case when there are precisely $cap results, the next page is empty
+        empty-next-page (and (= 0 (count addon-list))
+                             (> (-> search-state :page) 0))
+
         column-list [{:text "source" :min-width 110 :pref-width 120 :max-width 160 :cell-value-factory href-to-hyperlink}
                      {:text "name" :min-width 150 :pref-width 300 :max-width 450 :cell-value-factory (comp no-new-lines :label)}
                      {:text "description" :pref-width 700 :cell-value-factory (comp no-new-lines :description)}
@@ -786,7 +793,9 @@
             :id "search-addons"
             :placeholder {:fx/type :text
                           :style-class ["table-placeholder-text"]
-                          :text "No search results."}
+                          :text (if empty-next-page
+                                  "ᕙ(`▿´)ᕗ"
+                                  "No search results.")}
             :row-factory {:fx/cell-type :table-row
                           :describe (fn [row]
                                       {:style-class ["table-row-cell"

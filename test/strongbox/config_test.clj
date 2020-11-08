@@ -298,3 +298,35 @@
 
                     :etag-db {}}]
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))
+
+(deftest load-settings-3.1
+  (testing "a standard config file circa 3.1 is loaded and parsed as expected"
+    (let [cli-opts {}
+          cfg-file (fixture-path "user-config-3.1.json")
+          etag-db-file (fixture-path "empty-map.json")
+
+          expected {:cfg {:gui-theme :dark ;; new in 0.11
+                          :selected-catalogue :full ;; new in 0.10
+                          ;;:debug? true ;; removed in 0.12
+                          :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail-classic} ;; compound game tracks added in 3.1
+                                           {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]
+
+                          ;; new in 1.0
+                          :catalogue-location-list (:catalogue-location-list config/default-cfg)
+
+                          ;; new in 0.12
+                          ;; moved to :cfg in 1.0
+                          :selected-addon-dir "/tmp/.strongbox-foo"}
+
+                    :cli-opts {}
+                    :file-opts {:gui-theme :dark
+                                :selected-catalogue :full
+                                :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail-classic}
+                                                 {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]
+                                :selected-addon-dir "/tmp/.strongbox-foo"
+
+                                ;; new in 1.0
+                                :catalogue-location-list (:catalogue-location-list config/default-cfg)}
+
+                    :etag-db {}}]
+      (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))

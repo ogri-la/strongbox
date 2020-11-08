@@ -16,8 +16,9 @@
     [github-api :as github-api]]))
 
 (defn-spec -expand-summary (s/or :ok (s/merge :addon/expandable :addon/source-updates), :error nil?)
-  "fetches updates from the addon host for the given `addon`.
-  hosts handle the game track in different ways."
+  "fetches updates from the addon host for the given `addon` and `game-track`.
+  does *not* support compound game tracks or warning the user, see `expand-summary`.
+  returns `nil` when release not found"
   [addon :addon/expandable, game-track ::sp/game-track]
   (let [dispatch-map {"curseforge" curseforge-api/expand-summary
                       "wowinterface" wowinterface-api/expand-summary
@@ -35,10 +36,10 @@
         (error e "unhandled exception attempting to expand addon summary")
         (error "please report this! https://github.com/ogri-la/strongbox/issues")))))
 
-(defn-spec expand-summary (s/or :ok (s/merge :addon/expandable :addon/source-updates),
-                                :error nil?)
-  "fetches updates from the addon host for the given `addon`.
-  hosts handle the game track in different ways."
+(defn-spec expand-summary (s/or :ok (s/merge :addon/expandable :addon/source-updates), :error nil?)
+  "fetches updates from the addon host for the given `addon` and `game-track`.
+  supports compound game tracks like `:retail-classic` and `:classic-retail`.
+  emits warnings to user when no release found."
   [addon :addon/expandable, game-track :addon-dir/game-track]
   (if-let [source-updates
            (case game-track
@@ -54,7 +55,6 @@
 
     (let [;; "no release found for 'adibags' (retail) on github"
           ;; "no release found for 'adibags' (retail or classic) on github"
-          ;; "no release found for 'adibags' (classic or retail) on github"
           track-list (-> game-track name (clojure.string/split #"-"))
           track-list (clojure.string/join " or " track-list)]
       (warn (format "no release found for '%s' (%s) on %s"

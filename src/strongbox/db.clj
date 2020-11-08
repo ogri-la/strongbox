@@ -126,7 +126,7 @@
   [db uin cap]
   (if (nil? uin)
     (let [pct (->> db count (max 1) (/ 100) (* 0.6))]
-      ;; decrement cap here so navigation for random is disabled
+      ;; decrement cap here so navigation for random search results is disabled
       [(take (dec cap) (random-sample pct db))])
 
     ;; we should see if a non-regex solution may be faster:
