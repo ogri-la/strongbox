@@ -351,7 +351,7 @@
                            :matched? true}]]
 
             (core/import-exported-file output-path)
-            (core/set-game-track! :retail-classic) ;; unnecessary as :retail is default, just for explicitness.
+            (core/set-game-track! :retail-classic)
             (core/refresh) ;; re-read the installation directory
             (is (= (first expected) (first (core/get-state :installed-addon-list))))
             ;; the second addon (classic) is expanded because the game track is set to 'any, prefer retail'
