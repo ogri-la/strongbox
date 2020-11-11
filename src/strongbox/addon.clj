@@ -104,6 +104,11 @@
     [addon]
     (get addon :group-addons [])))
 
+(defn merge-toc-nfo
+  "it's own function because the logic is duplicated in tests otherwise"
+  [toc nfo]
+  (merge toc nfo))
+
 (defn-spec load-installed-addons :addon/toc-list
   "reads the .toc files from the given addon dir, reads any nfo data for 
   these addons, groups them, returns the mooshed data"
@@ -120,7 +125,7 @@
                          (let [nfo-data (nfo/read-nfo install-dir (:dirname addon))]
                            ;; merge the addon with the nfo data.
                            ;; when `ignore?` flag in addon is `true` but `false` in nfo-data, nfo-data will take precedence.
-                           (merge addon nfo-data)))
+                           (merge-toc-nfo addon nfo-data)))
 
         addon-list (mapv merge-nfo-data addon-list)]
 

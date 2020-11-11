@@ -7,6 +7,7 @@
    [me.raynes.fs :as fs]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
    [strongbox
+    [addon :as addon]
     [db :as db]
     [logging :as logging]
     [zip :as zip]
@@ -350,16 +351,10 @@
                            :matched? true}]]
 
             (core/import-exported-file output-path)
-            (core/set-game-track! :retail) ;; unnecessary as :retail is default, just for explicitness.
+            (core/set-game-track! :retail-classic) ;; unnecessary as :retail is default, just for explicitness.
             (core/refresh) ;; re-read the installation directory
             (is (= (first expected) (first (core/get-state :installed-addon-list))))
-
-            ;; todo: revisit this logic/comment
-            ;; bit of a hack. the second expected addon won't be expanded properly after the refresh
-            ;; because it's a classic addon and the addon dir is 'retail'. so we change the addon dir
-            ;; and then test the second one matches.
-            (core/set-game-track! :classic)
-            (core/refresh)
+            ;; the second addon (classic) is expanded because the game track is set to 'any, prefer retail'
             (is (= (second expected) (second (core/get-state :installed-addon-list))))))))))
 
 (deftest check-for-addon-update
@@ -423,7 +418,7 @@
 
                 ;; todo: revisit this
                 ;; the nfo data is simply merged over the top of the scraped toc data
-                toc (merge toc nfo)
+                toc (addon/merge-toc-nfo toc nfo)
 
                 ;; we then attempt to match this 'toc+nfo' to an addon in the catalogue
                 ;; in this case we have a catalogue of 1 and only interested in the first result

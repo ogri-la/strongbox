@@ -85,9 +85,15 @@
                {:-fx-font-size "1.5em"
                 :-fx-fill (colour :table-font-colour)}
 
-               "#main-menu" {:-fx-background-color (colour :base)}
+               "#main-menu"
+               {:-fx-background-color (colour :base)}
 
-               ".context-menu" {:-fx-effect "None"}
+               "#addon-dir-dropdown"
+               {:-fx-max-width "600px"}
+
+               ".context-menu"
+               {:-fx-effect "None"}
+
                ".combo-box-base"
                {:-fx-padding "1px"
                 :-fx-background-radius "0"
@@ -143,29 +149,26 @@
                ;; prevent truncation and ellipses
                "#update-all-button "
                {:-fx-min-width "101px"}
+               
                "#game-track-combo-box "
                {:-fx-min-width "100px"}
 
 
                ;; installed-addons table
-
-
                ".table-view#installed-addons"
                {" .updateable"
                 {:-fx-background-color (colour :row-updateable)
 
                  ;; selected updateable addons are do not look any different
-                 ":selected" {:-fx-background-color "-fx-selection-bar"}}
+                 ":selected"
+                 {:-fx-background-color "-fx-selection-bar"}}
 
                 " .ignored .table-cell"
                 {:-fx-text-fill (colour :installed/ignored-fg)}
-
                 " .wow-column" {:-fx-alignment "center"}}
 
 
                ;; notice-logger
-
-
                ".table-view#notice-logger"
                {" .warn" {:-fx-background-color (colour :row-warning)
                           ":selected" {:-fx-background-color "-fx-selection-bar"}}
@@ -191,8 +194,21 @@
 
                ;; search
 
+               "#search-install-button"
+               {:-fx-min-width "90px"}
+               
+               "#search-random-button"
+               {:-fx-min-width "80px"}
+
+               "#search-prev-button"
+               {:-fx-min-width "80px"}
+
+               "#search-next-button"
+               {:-fx-min-width "70px"}
+               
                "#search-text-field "
-               {:-fx-text-fill (colour :table-font-colour)}
+               {:-fx-min-width "100px"
+                :-fx-text-fill (colour :table-font-colour)}
 
                ".table-view#search-addons"
                {" .downloads-column" {:-fx-alignment "center-right"}
@@ -630,6 +646,7 @@
     {:fx/type ext-recreate-on-key-changed
      :key (sort-by :addon-dir addon-dir-map-list)
      :desc {:fx/type :combo-box
+            :id "addon-dir-dropdown"
             :value selected-addon-dir
             :on-value-changed (async-event-handler
                                (fn [new-addon-dir]
@@ -819,10 +836,12 @@
        :on-text-changed cli/search}
 
       {:fx/type :button
+       :id "search-install-button"
        :text "install selected"
        :on-action (async-event-handler search-results-install-handler)}
 
       {:fx/type :button
+       :id "search-random-button"
        :text "random"
        :on-action (handler cli/random-search)}
 
@@ -831,11 +850,13 @@
        :h-box/hgrow :ALWAYS}
 
       {:fx/type :button
+       :id "search-prev-button"
        :text "previous"
        :disable (not (cli/search-has-prev? search-state))
        :on-action (handler cli/search-results-prev-page)}
 
       {:fx/type :button
+       :id "search-next-button"
        :text "next"
        :disable (not (cli/search-has-next? search-state))
        :on-action (handler cli/search-results-next-page)}]}))
