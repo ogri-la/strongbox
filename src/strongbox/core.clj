@@ -342,10 +342,10 @@
 (defn-spec set-game-track! nil?
   "changes the game track (retail or classic) for the given `addon-dir`.
   when called without args, changes the game track on the currently selected addon-dir"
-  ([game-track ::sp/game-track]
+  ([game-track :addon-dir/game-track]
    (when-let [addon-dir (selected-addon-dir)]
      (set-game-track! game-track addon-dir)))
-  ([game-track ::sp/game-track, addon-dir ::sp/addon-dir]
+  ([game-track :addon-dir/game-track, addon-dir ::sp/addon-dir]
    (let [tform (fn [addon-dir-map]
                  (if (= addon-dir (:addon-dir addon-dir-map))
                    (assoc addon-dir-map :game-track game-track)
@@ -354,7 +354,7 @@
      (swap! state update-in [:cfg] assoc :addon-dir-list new-addon-dir-map-list)
      nil)))
 
-(defn-spec get-game-track (s/or :ok ::sp/game-track, :missing nil?)
+(defn-spec get-game-track (s/or :ok :addon-dir/game-track, :missing nil?)
   "returns the game track for the given `addon-dir` or the currently selected addon-dir if no `addon-dir` given"
   ([]
    (get-game-track (selected-addon-dir)))
@@ -1158,10 +1158,8 @@
   [addon-url string?]
   (binding [http/*cache* (cache)]
     (if-let* [addon-summary (catalogue/parse-user-string addon-url)
-              ;; game track doesn't matter when adding it to the user catalogue ...
-              addon (or
-                     (catalogue/expand-summary addon-summary :retail)
-                     (catalogue/expand-summary addon-summary :classic))
+              ;; game track doesn't matter when adding it to the user catalogue. prefer retail though.
+              addon (catalogue/expand-summary addon-summary :retail-classic)
               test-only? true
               _ (install-addon-guard addon (selected-addon-dir) test-only?)]
 

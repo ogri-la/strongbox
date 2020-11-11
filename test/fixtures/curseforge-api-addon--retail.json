@@ -1,0 +1,329 @@
+{
+  "id": 4646,
+  "name": "Pawn",
+  "authors": [
+    {
+      "name": "TravisSpomer",
+      "url": "https://www.curseforge.com/members/127788-travisspomer?username=travisspomer",
+      "projectId": 4646,
+      "id": 70193,
+      "projectTitleId": null,
+      "projectTitleTitle": null,
+      "userId": 127788,
+      "twitchId": 102465511
+    }
+  ],
+  "attachments": [
+    {
+      "id": 229261,
+      "projectId": 4646,
+      "description": "",
+      "isDefault": false,
+      "thumbnailUrl": "https://media.forgecdn.net/avatars/thumbnails/229/261/256/256/637054162513412977.jpeg",
+      "title": "637054162513412977.jpeg",
+      "url": "https://media.forgecdn.net/avatars/229/261/637054162513412977.jpeg",
+      "status": 1
+    },
+    {
+      "id": 241286,
+      "projectId": 4646,
+      "description": "",
+      "isDefault": true,
+      "thumbnailUrl": "https://media.forgecdn.net/avatars/thumbnails/241/286/256/256/637126762505530549.jpeg",
+      "title": "637126762505530549.jpeg",
+      "url": "https://media.forgecdn.net/avatars/241/286/637126762505530549.jpeg",
+      "status": 1
+    },
+    {
+      "id": 61157,
+      "projectId": 4646,
+      "description": "",
+      "isDefault": false,
+      "thumbnailUrl": "https://media.forgecdn.net/avatars/thumbnails/61/157/256/256/636141608867724105.jpg",
+      "title": "636141608867724105.jpg",
+      "url": "https://media.forgecdn.net/avatars/61/157/636141608867724105.jpg",
+      "status": 1
+    },
+    {
+      "id": 102344,
+      "projectId": 4646,
+      "description": "<p>The loot upgrade advisor helps you know when you should roll on an item that drops in a dungeon right away.</p>",
+      "isDefault": false,
+      "thumbnailUrl": "https://media.forgecdn.net/attachments/thumbnails/102/344/310/172/Loot_upgrade_advisor.jpg",
+      "title": "Loot_upgrade_advisor.jpg",
+      "url": "https://media.forgecdn.net/attachments/102/344/Loot_upgrade_advisor.jpg",
+      "status": 1
+    },
+    {
+      "id": 102336,
+      "projectId": 4646,
+      "description": "<p>You can use Pawn to quickly evaluate upgrades in AtlasLoot (and other loot mods) and build up your wish lists.</p>",
+      "isDefault": false,
+      "thumbnailUrl": "https://media.forgecdn.net/attachments/thumbnails/102/336/310/172/Pawn_-_AtlasLoot.png",
+      "title": "Pawn_-_AtlasLoot.png",
+      "url": "https://media.forgecdn.net/attachments/102/336/Pawn_-_AtlasLoot.png",
+      "status": 1
+    },
+    {
+      "id": 200060,
+      "projectId": 4646,
+      "description": "Pawn 2.2 helps you find relic upgrades for your artifact weapons, regardless of which spec you're in.",
+      "isDefault": false,
+      "thumbnailUrl": "https://media.forgecdn.net/attachments/thumbnails/200/60/310/172/relic-upgrades.jpg",
+      "title": "Relic upgrades",
+      "url": "https://media.forgecdn.net/attachments/200/60/relic-upgrades.jpg",
+      "status": 1
+    },
+    {
+      "id": 102337,
+      "projectId": 4646,
+      "description": "<p>Pawn's in ur tooltipz helpin u decide what 2 spend ur dkp on</p>",
+      "isDefault": false,
+      "thumbnailUrl": "https://media.forgecdn.net/attachments/thumbnails/102/337/310/172/Pawn_-_tooltips.png",
+      "title": "Pawn_-_tooltips.png",
+      "url": "https://media.forgecdn.net/attachments/102/337/Pawn_-_tooltips.png",
+      "status": 1
+    },
+    {
+      "id": 102333,
+      "projectId": 4646,
+      "description": "<p>Pawn integrates with the new bag arrows feature in WoW 7.1 to help you find upgrades to your gear, even if they're not just a higher item level.</p>",
+      "isDefault": false,
+      "thumbnailUrl": "https://media.forgecdn.net/attachments/thumbnails/102/333/310/172/Bag_arrows.jpg",
+      "title": "Bag_arrows.jpg",
+      "url": "https://media.forgecdn.net/attachments/102/333/Bag_arrows.jpg",
+      "status": 1
+    },
+    {
+      "id": 102338,
+      "projectId": 4646,
+      "description": "<p>Pawn tells you which gems of each color are best for each of your specs.</p>",
+      "isDefault": false,
+      "thumbnailUrl": "https://media.forgecdn.net/attachments/thumbnails/102/338/310/172/Pawn_-_gems.png",
+      "title": "Pawn_-_gems.png",
+      "url": "https://media.forgecdn.net/attachments/102/338/Pawn_-_gems.png",
+      "status": 1
+    },
+    {
+      "id": 102345,
+      "projectId": 4646,
+      "description": "<p>Pawn lets you customize your tooltips the way you like them.</p>",
+      "isDefault": false,
+      "thumbnailUrl": "https://media.forgecdn.net/attachments/thumbnails/102/345/310/172/Pawn_options.jpg",
+      "title": "Pawn_options.jpg",
+      "url": "https://media.forgecdn.net/attachments/102/345/Pawn_options.jpg",
+      "status": 1
+    },
+    {
+      "id": 102346,
+      "projectId": 4646,
+      "description": "<p>Pawn can tell you which gems will maximize an item's value for a specific purpose.  It's smart enough to know when to keep socket bonuses and when to ignore them.  It selects a gem quality level appropriate for the item level of the armor or weapon y...",
+      "isDefault": false,
+      "thumbnailUrl": "https://media.forgecdn.net/attachments/thumbnails/102/346/310/172/Pawn_1.7_socketing_advisor.jpg",
+      "title": "Pawn_1.7_socketing_advisor.jpg",
+      "url": "https://media.forgecdn.net/attachments/102/346/Pawn_1.7_socketing_advisor.jpg",
+      "status": 1
+    },
+    {
+      "id": 102335,
+      "projectId": 4646,
+      "description": "<p>Pawn 2.0 still lets you fully customize what it suggests, including turning on multiple specs, importing stat weights from the internet, or starting from scratch.</p>",
+      "isDefault": false,
+      "thumbnailUrl": "https://media.forgecdn.net/attachments/thumbnails/102/335/310/172/Pawn_manual_mode.jpg",
+      "title": "Pawn_manual_mode.jpg",
+      "url": "https://media.forgecdn.net/attachments/102/335/Pawn_manual_mode.jpg",
+      "status": 1
+    },
+    {
+      "id": 102334,
+      "projectId": 4646,
+      "description": "<p>Pawn 2.0 will automatically select the scale for your current spec, so by default it will just give you suggestions for the way you're currently playing.&nbsp;&nbsp;The simplified no-hassle annotations on your tooltips make it easy to see at a glance...",
+      "isDefault": false,
+      "thumbnailUrl": "https://media.forgecdn.net/attachments/thumbnails/102/334/310/172/Pawn_auto_mode.jpg",
+      "title": "Pawn_auto_mode.jpg",
+      "url": "https://media.forgecdn.net/attachments/102/334/Pawn_auto_mode.jpg",
+      "status": 1
+    },
+    {
+      "id": 102347,
+      "projectId": 4646,
+      "description": "<p>Pawn's Compare tab.</p>",
+      "isDefault": false,
+      "thumbnailUrl": "https://media.forgecdn.net/attachments/thumbnails/102/347/310/172/Pawn_s_Compare_tab.jpg",
+      "title": "Pawn_s_Compare_tab.jpg",
+      "url": "https://media.forgecdn.net/attachments/102/347/Pawn_s_Compare_tab.jpg",
+      "status": 1
+    },
+    {
+      "id": 102341,
+      "projectId": 4646,
+      "description": "<p>Pawn lets you create your own valuation scales with whatever stat values you like.</p>",
+      "isDefault": false,
+      "thumbnailUrl": "https://media.forgecdn.net/attachments/thumbnails/102/341/310/172/Pawn_-_values.png",
+      "title": "Pawn_-_values.png",
+      "url": "https://media.forgecdn.net/attachments/102/341/Pawn_-_values.png",
+      "status": 1
+    },
+    {
+      "id": 102339,
+      "projectId": 4646,
+      "description": "<p>Find upgrades for your alts' gear at the auction house using Pawn.&nbsp;&nbsp;You can immediately see which items have a better combination of stats.</p>",
+      "isDefault": false,
+      "thumbnailUrl": "https://media.forgecdn.net/attachments/thumbnails/102/339/310/172/Pawn_-_auctions.jpg",
+      "title": "Pawn_-_auctions.jpg",
+      "url": "https://media.forgecdn.net/attachments/102/339/Pawn_-_auctions.jpg",
+      "status": 1
+    },
+    {
+      "id": 102343,
+      "projectId": 4646,
+      "description": "<p>Pawn's quest advisor makes it easy to see which quest rewards are upgrades to your gear, or which useless item is worth the most money.</p>",
+      "isDefault": false,
+      "thumbnailUrl": "https://media.forgecdn.net/attachments/thumbnails/102/343/310/172/Pawn_quest_advisor.jpg",
+      "title": "Pawn_quest_advisor.jpg",
+      "url": "https://media.forgecdn.net/attachments/102/343/Pawn_quest_advisor.jpg",
+      "status": 1
+    },
+    {
+      "id": 102332,
+      "projectId": 4646,
+      "description": "<p>Starting with version 2.1, Pawn now includes custom advice for all 36 specs from Mr. Robot himself.</p>",
+      "isDefault": false,
+      "thumbnailUrl": "https://media.forgecdn.net/attachments/thumbnails/102/332/310/172/AMR.jpg",
+      "title": "AMR.jpg",
+      "url": "https://media.forgecdn.net/attachments/102/332/AMR.jpg",
+      "status": 1
+    }
+  ],
+  "websiteUrl": "https://www.curseforge.com/wow/addons/pawn",
+  "gameId": 1,
+  "summary": "Pawn helps you compare items and find upgrades.",
+  "defaultFileId": 3104060,
+  "downloadCount": 41474151,
+  "latestFiles": [
+    {
+      "id": 3104062,
+      "displayName": "2.4.5",
+      "fileName": "Pawn-2.4.5.zip",
+      "fileDate": "2020-11-06T20:47:12.92Z",
+      "fileLength": 767569,
+      "releaseType": 1,
+      "fileStatus": 4,
+      "downloadUrl": "https://edge.forgecdn.net/files/3104/62/Pawn-2.4.5.zip",
+      "isAlternate": false,
+      "alternateFileId": 0,
+      "dependencies": [],
+      "isAvailable": true,
+      "modules": [
+        {
+          "foldername": "Pawn",
+          "fingerprint": 2686444960,
+          "type": 3
+        }
+      ],
+      "packageFingerprint": 1780532995,
+      "gameVersion": [
+        "9.0.1"
+      ],
+      "sortableGameVersion": [
+        {
+          "gameVersionPadded": "0000000009.0000000000.0000000001",
+          "gameVersion": "9.0.1",
+          "gameVersionReleaseDate": "2020-07-17T00:00:00Z",
+          "gameVersionName": "9.0.1"
+        }
+      ],
+      "installMetadata": null,
+      "changelog": null,
+      "hasInstallScript": false,
+      "isCompatibleWithClient": true,
+      "categorySectionPackageType": 1,
+      "restrictProjectFileAccess": 1,
+      "projectStatus": 4,
+      "renderCacheId": 2044633,
+      "fileLegacyMappingId": null,
+      "projectId": 4646,
+      "parentProjectFileId": null,
+      "parentFileLegacyMappingId": null,
+      "fileTypeId": null,
+      "exposeAsAlternative": null,
+      "packageFingerprintId": 549342237,
+      "gameVersionDateReleased": "2020-07-17T00:00:00Z",
+      "gameVersionMappingId": 2518415,
+      "gameVersionId": 7971,
+      "gameId": 1,
+      "isServerPack": false,
+      "serverPackFileId": null,
+      "gameVersionFlavor": "wow_retail"
+    }
+  ],
+  "categories": [
+    {
+      "categoryId": 1009,
+      "name": "Bags & Inventory",
+      "url": "https://www.curseforge.com/wow/addons/bags-inventory",
+      "avatarUrl": "https://media.forgecdn.net/avatars/54/445/636135209663914354.png",
+      "parentId": 1,
+      "rootId": 1,
+      "projectId": 4646,
+      "avatarId": 54445,
+      "gameId": 1
+    },
+    {
+      "categoryId": 1013,
+      "name": "Quests & Leveling",
+      "url": "https://www.curseforge.com/wow/addons/quests-leveling",
+      "avatarUrl": "https://media.forgecdn.net/avatars/54/449/636135209685443713.png",
+      "parentId": 1,
+      "rootId": 1,
+      "projectId": 4646,
+      "avatarId": 54449,
+      "gameId": 1
+    },
+    {
+      "categoryId": 1055,
+      "name": "Tooltip",
+      "url": "https://www.curseforge.com/wow/addons/tooltip",
+      "avatarUrl": "https://media.forgecdn.net/avatars/54/459/636135209747227110.png",
+      "parentId": 1,
+      "rootId": 1,
+      "projectId": 4646,
+      "avatarId": 54459,
+      "gameId": 1
+    }
+  ],
+  "status": 4,
+  "primaryCategoryId": 1009,
+  "categorySection": {
+    "id": 1,
+    "gameId": 1,
+    "name": "Addons",
+    "packageType": 1,
+    "path": "Interface\\Addons",
+    "initialInclusionPattern": "(?i)^([^/]+)[\\\\/]\\1\\.toc$",
+    "extraIncludePattern": "(?i)^[^/\\\\]+[/\\\\]Bindings\\.xml$",
+    "gameCategoryId": 1
+  },
+  "slug": "pawn",
+  "gameVersionLatestFiles": [
+    {
+      "gameVersion": "9.0.1",
+      "projectFileId": 3104062,
+      "projectFileName": "Pawn-2.4.5.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    }
+  ],
+  "isFeatured": false,
+  "popularityScore": 114915.8125,
+  "gamePopularityRank": 6,
+  "primaryLanguage": "enUS",
+  "gameSlug": "wow",
+  "gameName": "World of Warcraft",
+  "portalName": "www.curseforge.com",
+  "dateModified": "2020-11-06T20:56:32.41Z",
+  "dateCreated": "2008-01-14T07:05:01Z",
+  "dateReleased": "2020-11-06T20:47:12.92Z",
+  "isAvailable": true,
+  "isExperiemental": false
+}

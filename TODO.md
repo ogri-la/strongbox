@@ -8,11 +8,26 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * "'vui' addon not found in search results despite being in catalogue"
     - https://github.com/ogri-la/strongbox/issues/163
-
-## todo
+    - done
 
 * "Option to force retail version to be installed in a classic folder"
     - https://github.com/ogri-la/strongbox/issues/185
+    - so, an addon-dir still requires a game track.
+        - it tells us which type of an addon was installed
+        - however, when we're selecting addons to install, we don't know the game track
+        - we hit install and we pass the currently selected game track
+            - *that* is the game track used to find the addon online
+            - *that* is the game track recorded in the nfo file
+        - we can't have an 'any' because it would have to prefer something
+            - so we can have 'any (prefer retail)' that will install retail if it has a choice or classic if it doesnt
+            - or 'any (prefer classic)' that will install classic if it has a choice and retail if it doesn't
+        - problem 1:
+            - 'expanding' the addon just returns the addon details and not the track it picked
+                - it assumes the track picked is the one currently selected
+                - so the track that was picked needs to be returned
+    - done
+
+## todo
 
 * "Option to automaticallly remove zips"
     - https://github.com/ogri-la/strongbox/issues/182

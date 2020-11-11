@@ -83,7 +83,7 @@
        (try
          (nth results page)
          (catch java.lang.IndexOutOfBoundsException e
-           (info "precisely %s results returned, there is no next page" (:results-per-page search-state))
+           (debug (format "precisely %s results returned, there is no next page" (:results-per-page search-state)))
            []))
        []))))
 

@@ -85,9 +85,15 @@
                {:-fx-font-size "1.5em"
                 :-fx-fill (colour :table-font-colour)}
 
-               "#main-menu" {:-fx-background-color (colour :base)}
+               "#main-menu"
+               {:-fx-background-color (colour :base)}
 
-               ".context-menu" {:-fx-effect "None"}
+               "#addon-dir-dropdown"
+               {:-fx-max-width "600px"}
+
+               ".context-menu"
+               {:-fx-effect "None"}
+
                ".combo-box-base"
                {:-fx-padding "1px"
                 :-fx-background-radius "0"
@@ -109,6 +115,9 @@
                ".table-view"
                {:-fx-table-cell-border-color (colour :table-border)
                 :-fx-font-size ".9em"}
+
+               ".table-view .table-placeholder-text"
+               {:-fx-font-size "3em"}
 
                ".table-view .column-header"
                {;;:-fx-background-color "#ddd" ;; flat colour vs gradient
@@ -140,29 +149,26 @@
                ;; prevent truncation and ellipses
                "#update-all-button "
                {:-fx-min-width "101px"}
+               
                "#game-track-combo-box "
                {:-fx-min-width "100px"}
 
 
                ;; installed-addons table
-
-
                ".table-view#installed-addons"
                {" .updateable"
                 {:-fx-background-color (colour :row-updateable)
 
                  ;; selected updateable addons are do not look any different
-                 ":selected" {:-fx-background-color "-fx-selection-bar"}}
+                 ":selected"
+                 {:-fx-background-color "-fx-selection-bar"}}
 
                 " .ignored .table-cell"
                 {:-fx-text-fill (colour :installed/ignored-fg)}
-
                 " .wow-column" {:-fx-alignment "center"}}
 
 
                ;; notice-logger
-
-
                ".table-view#notice-logger"
                {" .warn" {:-fx-background-color (colour :row-warning)
                           ":selected" {:-fx-background-color "-fx-selection-bar"}}
@@ -188,8 +194,21 @@
 
                ;; search
 
+               "#search-install-button"
+               {:-fx-min-width "90px"}
+               
+               "#search-random-button"
+               {:-fx-min-width "80px"}
+
+               "#search-prev-button"
+               {:-fx-min-width "80px"}
+
+               "#search-next-button"
+               {:-fx-min-width "70px"}
+               
                "#search-text-field "
-               {:-fx-text-fill (colour :table-font-colour)}
+               {:-fx-min-width "100px"
+                :-fx-text-fill (colour :table-font-colour)}
 
                ".table-view#search-addons"
                {" .downloads-column" {:-fx-alignment "center-right"}
@@ -627,6 +646,7 @@
     {:fx/type ext-recreate-on-key-changed
      :key (sort-by :addon-dir addon-dir-map-list)
      :desc {:fx/type :combo-box
+            :id "addon-dir-dropdown"
             :value selected-addon-dir
             :on-value-changed (async-event-handler
                                (fn [new-addon-dir]
@@ -635,15 +655,17 @@
 
 (defn game-track-dropdown
   [{:keys [fx/context]}]
-  (let [selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])]
+  (let [selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])
+        key (-> selected-addon-dir core/get-game-track)]
     {:fx/type :combo-box
      :id "game-track-combo-box"
-     :value (-> selected-addon-dir core/get-game-track (or "") name)
+     :value (get sp/selectable-game-track-labels-map key)
      :on-value-changed (async-event-handler
                         (fn [new-game-track]
-                          (core/set-game-track! (keyword new-game-track))
+                          ;; todo: push to cli
+                          (core/set-game-track! (get sp/selectable-game-track-labels-map-inv new-game-track))
                           (core/refresh)))
-     :items ["retail" "classic"]}))
+     :items (mapv second sp/selectable-game-track-labels)}))
 
 (defn installed-addons-menu-bar
   "returns a description of the installed-addons tab-pane menu"
@@ -770,6 +792,10 @@
         search-state (fx/sub-val context get-in [:app-state :search])
         addon-list (cli/search-results search-state)
 
+        ;; rare case when there are precisely $cap results, the next page is empty
+        empty-next-page (and (= 0 (count addon-list))
+                             (> (-> search-state :page) 0))
+
         column-list [{:text "source" :min-width 110 :pref-width 120 :max-width 160 :cell-value-factory href-to-hyperlink}
                      {:text "name" :min-width 150 :pref-width 300 :max-width 450 :cell-value-factory (comp no-new-lines :label)}
                      {:text "description" :pref-width 700 :cell-value-factory (comp no-new-lines :description)}
@@ -784,7 +810,9 @@
             :id "search-addons"
             :placeholder {:fx/type :text
                           :style-class ["table-placeholder-text"]
-                          :text "No search results."}
+                          :text (if empty-next-page
+                                  "ᕙ(`▿´)ᕗ"
+                                  "No search results.")}
             :row-factory {:fx/cell-type :table-row
                           :describe (fn [row]
                                       {:style-class ["table-row-cell"
@@ -808,10 +836,12 @@
        :on-text-changed cli/search}
 
       {:fx/type :button
+       :id "search-install-button"
        :text "install selected"
        :on-action (async-event-handler search-results-install-handler)}
 
       {:fx/type :button
+       :id "search-random-button"
        :text "random"
        :on-action (handler cli/random-search)}
 
@@ -820,11 +850,13 @@
        :h-box/hgrow :ALWAYS}
 
       {:fx/type :button
+       :id "search-prev-button"
        :text "previous"
        :disable (not (cli/search-has-prev? search-state))
        :on-action (handler cli/search-results-prev-page)}
 
       {:fx/type :button
+       :id "search-next-button"
        :text "next"
        :disable (not (cli/search-has-next? search-state))
        :on-action (handler cli/search-results-next-page)}]}))
