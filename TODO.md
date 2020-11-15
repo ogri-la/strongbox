@@ -31,8 +31,22 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * "Option to automaticallly remove zips"
     - https://github.com/ogri-la/strongbox/issues/182
-    
+    - move zip files to cache directory
+        - hrm. I'm in two minds about this.
+            - one, it's the more correct place for them
+            - but two, being able to see previous addon zips and just unzip them if you want to downgrade is very practical
+    - move zip files to system temp directory after unzipping
+        - cache misses :(
+    - keep none/keep N zips
+        - does anybody really want this feature?
+            - do I really care?
+            - do I have any means of soliciting feedback?
+
 ## todo bucket (no particular order)
+
+* add a 'Delete all' option to cache menu
+
+* add OS and Java versions to debug file output
 
 * remove gui1
     - remove original db-search
@@ -42,11 +56,6 @@ see CHANGELOG.md for a more formal list of changes by release
         - remember to profile first
 
 * better icon for appimage
-
-* datetime parsing is broken *again* in wowinterface-api
-    - I thought I fixed this twice now??
-        - it could be I'm missing an explicit 'locale' value
-            - https://stackoverflow.com/questions/38250379/java8-datetimeformatter-am-pm
 
 * gui, add confirmation before deleting addon directory
 
@@ -77,10 +86,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * gui, 're-install' for an addon that has an update available will update the addon
     - it implies the same version would be installed
     - strongbox doesn't support version pinning yet either
-
-* gui, context menu has 'n selected, m updatable'
-    - this is cute but not useful
-    - selecting this doesn't perform any action
 
 * github, if multiple releases available and first fails criteria, check the next and so on
     - see altoholic: https://github.com/teelolws/Altoholic-Classic
@@ -120,16 +125,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * bug, changing sort order during refresh doesn't reflect which addon is being updated
     - I think changing column ordering and moving columns should be disabled while updates happen
         - just freeze or disable them or something.
-* investigate state of java packaging
-    - https://www.infoq.com/news/2019/03/jep-343-jpackage/
-* add an option that forces installation of addon if matching game track not found
-    - enable it by default
-    - add a warning when installing an addon that doesn't match game track
-    - add a summary after each refresh about the state of installed addons
-        - "123 addons installed, 1 unmatched addon, 2 retail addons installed"
-        - "123 addons installed, 2 classic addons installed"
-    - preserve this in user settings
-    - perhaps couple this with the GUI logic for the status bar down the bottom
 * when curseforge api is down users get a wall of red error messages with very little useful information
     - see issue 91: https://github.com/ogri-la/wowman/issues/91
         - the error message has been improved but we still get a red wall of text
