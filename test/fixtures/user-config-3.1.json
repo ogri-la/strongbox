@@ -38,5 +38,9 @@
       "source": "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/wowinterface-catalogue.json"
     }
   ],
-  "selected-catalogue": "full"
+  "selected-catalogue": "full",
+  "preferences":
+  {
+      "addon-zips-to-keep": 3
+  }
 }

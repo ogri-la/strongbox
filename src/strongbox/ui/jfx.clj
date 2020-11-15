@@ -149,7 +149,7 @@
                ;; prevent truncation and ellipses
                "#update-all-button "
                {:-fx-min-width "101px"}
-               
+
                "#game-track-combo-box "
                {:-fx-min-width "100px"}
 
@@ -196,7 +196,7 @@
 
                "#search-install-button"
                {:-fx-min-width "90px"}
-               
+
                "#search-random-button"
                {:-fx-min-width "80px"}
 
@@ -205,7 +205,7 @@
 
                "#search-next-button"
                {:-fx-min-width "70px"}
-               
+
                "#search-text-field "
                {:-fx-min-width "100px"
                 :-fx-text-fill (colour :table-font-colour)}
@@ -580,13 +580,35 @@
                            (core/save-settings))})]
     (mapv rb (keys theme-map))))
 
+(defn num-zips-to-keep-menu-item
+  [{:keys [fx/context]}]
+  (let [num-addon-zips-to-keep (fx/sub-val context get-in [:app-state :cfg :preferences :addon-zips-to-keep])
+        selected? (not (nil? num-addon-zips-to-keep)) ;; `nil` is 'keep all zips', see `config.clj`
+        ]
+    {:fx/type :check-menu-item
+     :text "Remove addon zip after installation (global)"
+     :selected selected?
+     :on-action (fn [ev]
+                  (swap! core/state assoc-in [:cfg :preferences :addon-zips-to-keep]
+                         (if (.isSelected (.getSource ev)) 0 nil)))}))
+
 (defn menu-bar
   "returns a description of the menu at the top of the application"
   [{:keys [fx/context]}]
   (let [file-menu [(menu-item "_New addon directory" (event-handler wow-dir-picker) {:key "Ctrl+N"})
                    (menu-item "Remove addon directory" (async-handler cli/remove-addon-dir!))
                    separator
+                   (menu-item "_Update all" (async-handler core/install-update-all) {:key "Ctrl+U"})
+                   (menu-item "Re-install all" (async-handler core/re-install-all))
+                   separator
+                   (menu-item "Import list of addons" (async-event-handler import-addon-list-handler))
+                   (menu-item "Export list of addons" (async-event-handler export-addon-list-handler))
+                   (menu-item "Import addon from Github" (async-event-handler import-addon-handler))
+                   (menu-item "Export Github addon list" (async-event-handler export-user-catalogue-handler))
+                   separator
                    (menu-item "E_xit" exit-handler {:key "Ctrl+Q"})]
+
+        prefs-menu [{:fx/type num-zips-to-keep-menu-item}]
 
         view-menu (into
                    [(menu-item "Refresh" (async-handler core/refresh) {:key "F5"})
@@ -603,15 +625,6 @@
                               (fx/sub-val context get-in [:app-state :cfg :catalogue-location-list]))
                              [separator
                               (menu-item "Refresh user catalogue" (async-handler core/refresh-user-catalogue))])
-
-        addon-menu [(menu-item "_Update all" (async-handler core/install-update-all) {:key "Ctrl+U"})
-                    (menu-item "Re-install all" (async-handler core/re-install-all))]
-
-        impexp-menu [(menu-item "Import addon from Github" (async-event-handler import-addon-handler))
-                     separator
-                     (menu-item "Import addon list" (async-event-handler import-addon-list-handler))
-                     (menu-item "Export addon list" (async-event-handler export-addon-list-handler))
-                     (menu-item "Export Github addon list" (async-event-handler export-user-catalogue-handler))]
 
         cache-menu [(menu-item "Clear http cache" (async-handler core/delete-http-cache!))
                     (menu-item "Clear addon zips" (async-handler core/delete-downloaded-addon-zips!))
@@ -633,8 +646,7 @@
             :menus [(menu "_File" file-menu)
                     (menu "_View" view-menu)
                     (menu "Catalogue" catalogue-menu)
-                    (menu "_Addons" addon-menu)
-                    (menu "_Import/Export" impexp-menu)
+                    (menu "_Preferences" prefs-menu)
                     (menu "Cache" cache-menu)
                     (menu "Help" help-menu)]}}))
 
