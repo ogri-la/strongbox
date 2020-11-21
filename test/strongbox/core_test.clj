@@ -6,6 +6,7 @@
    [envvar.core :refer [with-env]]
    [me.raynes.fs :as fs]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
+   [strongbox.ui.cli :as cli]
    [strongbox
     [addon :as addon]
     [db :as db]
@@ -90,9 +91,11 @@
         (core/set-game-track! :classic)
         (is (= {:addon-dir dir2 :game-track :classic} (core/addon-dir-map dir2))))
 
-      ;;
+      (testing "set-game-track! can change the game track to a compound game track"
+        (core/set-game-track! :classic-retail)
+        (is (= {:addon-dir dir2 :game-track :classic-retail} (core/addon-dir-map dir2))))
 
-      (testing "set-game-track! changes default path to 'classic' if detected in addon-dir"
+      (testing "set-addon-dir! changes default game-track to 'classic' if '_classic_' detected in addon dir name"
         (core/set-addon-dir! dir4)
         (is (= {:addon-dir dir4 :game-track :classic} (core/addon-dir-map dir4)))))))
 
@@ -516,8 +519,8 @@
   "final mooshed result"
   (merge toc addon-summary matched? source-updates))
 
-(deftest install-addon-1
-  (testing "installing an addon"
+(deftest install-addon
+  (testing "an addon can be installed"
     (with-fake-routes-in-isolation {}
       (let [install-dir (str fs/*cwd*)
             ;; move dummy addon file into place so there is no cache miss
@@ -533,7 +536,7 @@
           (is (= (count file-list) 1))
           (is (fs/exists? (first file-list))))))))
 
-(deftest install-addon-trial-2
+(deftest install-addon--trial-installation
   (testing "trial installation of a good addon"
     (with-fake-routes-in-isolation {}
       (let [install-dir (helper/install-dir)
@@ -548,7 +551,7 @@
         ;; ensure nothing was actually unzipped
         (is (not (fs/exists? (utils/join install-dir "EveryAddon"))))))))
 
-(deftest install-addon-trial-3
+(deftest install-addon--trial-installation-bad-addon
   (testing "trial installation of a bad addon"
     (with-fake-routes-in-isolation {}
       (let [install-dir (helper/install-dir)
@@ -618,6 +621,17 @@
                       :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}]
           (core/install-addon addon2)
           (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents))))))))
+
+(deftest install-addon--remove-zip
+  (testing "installing an addon with the `:addon-zips-to-keep` preference set to 0 will delete the zip afterwards"
+    (with-running-app
+      (let [install-dir (helper/install-dir)
+            ;; move dummy addon file into place so there is no cache miss
+            fname (core/downloaded-addon-fname (:name addon) (:version addon))
+            _ (utils/cp (fixture-path fname) install-dir)]
+        (cli/set-preference :addon-zips-to-keep 0)
+        (core/install-addon addon install-dir)
+        (is (= ["EveryAddon"] (helper/install-dir-contents)))))))
 
 ;;
 
