@@ -68,6 +68,7 @@
     (let [fixture (slurp (fixture-path "tukui--addon-details.json"))
 
           source-id 98
+          game-track :retail
 
           fake-routes {(format tukui-api/summary-url source-id)
                        {:get (fn [req] {:status 200 :body fixture})}}
@@ -80,16 +81,15 @@
                          :source "tukui",
                          :label "[rp:tags]",
                          :download-count 2838,
-                         :source-id 98,
+                         :source-id source-id,
                          :url "https://www.tukui.org/addons.php?id=98"}
 
           source-updates {:download-url "https://www.tukui.org/addons.php?download=98"
                           :version "0.960"
-                          :interface-version 80200}
+                          :interface-version 80200
+                          :game-track game-track}
 
-          expected source-updates
-
-          game-track :retail]
+          expected source-updates]
 
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (tukui-api/expand-summary addon-summary game-track))))))
@@ -99,6 +99,8 @@
 
           fake-routes {tukui-api/elvui-proper-url
                        {:get (fn [req] {:status 200 :body fixture})}}
+
+          game-track :retail
 
           addon-summary {:description "A user interface designed around user-friendliness with extra features that are not included in the standard ui",
                          :tag-list [:ui]
@@ -113,11 +115,10 @@
 
           source-updates {:download-url "https://www.tukui.org/downloads/elvui-11.26.zip"
                           :version "11.26"
-                          :interface-version 80200}
+                          :interface-version 80200
+                          :game-track game-track}
 
-          expected source-updates
-
-          game-track :retail]
+          expected source-updates]
 
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (tukui-api/expand-summary addon-summary game-track)))))))

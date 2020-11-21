@@ -20,7 +20,7 @@
 (def tukui-proper-url (format proper-url "tukui"))
 (def elvui-proper-url (format proper-url "elvui"))
 
-(defn-spec -expand-summary (s/or :ok :addon/source-updates, :error nil?)
+(defn-spec expand-summary (s/or :ok :addon/source-updates, :error nil?)
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
   [addon :addon/expandable, game-track ::sp/game-track]
   (let [source-id (:source-id addon)
@@ -37,19 +37,8 @@
     (when ti
       {:download-url (:url ti)
        :version (:version ti)
-       :interface-version (-> ti :patch utils/game-version-to-interface-version)})))
-
-(defn-spec expand-summary (s/or :ok :addon/source-updates, :error nil?)
-  "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
-  [addon :addon/expandable, game-track ::sp/game-track]
-  (when (= game-track :retail)
-    (-expand-summary addon game-track)))
-
-(defn-spec expand-summary-classic (s/or :ok :addon/source-updates, :error nil?)
-  "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
-  [addon :addon/expandable, game-track ::sp/game-track]
-  (when (= game-track :classic)
-    (-expand-summary addon game-track)))
+       :interface-version (-> ti :patch utils/game-version-to-interface-version)
+       :game-track game-track})))
 
 ;; catalogue building
 

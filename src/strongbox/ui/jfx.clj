@@ -149,7 +149,7 @@
                ;; prevent truncation and ellipses
                "#update-all-button "
                {:-fx-min-width "101px"}
-               
+
                "#game-track-combo-box "
                {:-fx-min-width "100px"}
 
@@ -196,7 +196,7 @@
 
                "#search-install-button"
                {:-fx-min-width "90px"}
-               
+
                "#search-random-button"
                {:-fx-min-width "80px"}
 
@@ -205,7 +205,7 @@
 
                "#search-next-button"
                {:-fx-min-width "70px"}
-               
+
                "#search-text-field "
                {:-fx-min-width "100px"
                 :-fx-text-fill (colour :table-font-colour)}

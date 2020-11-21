@@ -26,4 +26,5 @@
           ;; has this happened before? can we find an example?
           (warn "wowinterface api returned more than one result for addon with id:" (:source-id addon-summary)))
         {:download-url (str "https://cdn.wowinterface.com/downloads/getfile.php?id=" (:source-id addon-summary))
-         :version (:UIVersion result)}))))
+         :version (:UIVersion result)
+         :game-track game-track}))))
