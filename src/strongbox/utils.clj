@@ -60,6 +60,15 @@
   [dir ::sp/extant-dir file ::sp/extant-file]
   (clojure.string/starts-with? file dir))
 
+(defn delete-file!
+  "returns given `path` if deleting it was successful, else nil"
+  [dir path]
+  (cond
+    (not (fs/exists? dir)) (warn "directory does not exist:" dir) ;; app may not have been started yet
+    (not (safe-to-delete? dir path)) (error (format "refusing to delete file. file was not rooted at %s" dir))
+    (not (fs/file? path)) (error (format "refusing to delete file. file is not a file! %s" path))
+    :else (and (fs/delete path) path)))
+
 (defn-spec delete-many-files! nil?
   "deletes a list of files rooted in given directory"
   [dir ::sp/dir, regex ::sp/regex, file-type ::sp/short-string]

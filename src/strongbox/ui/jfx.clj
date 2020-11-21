@@ -589,8 +589,7 @@
      :text "Remove addon zip after installation (global)"
      :selected selected?
      :on-action (fn [ev]
-                  (swap! core/state assoc-in [:cfg :preferences :addon-zips-to-keep]
-                         (if (.isSelected (.getSource ev)) 0 nil)))}))
+                  (cli/set-preference :addon-zips-to-keep (if (.isSelected (.getSource ev)) 0 nil)))}))
 
 (defn menu-bar
   "returns a description of the menu at the top of the application"

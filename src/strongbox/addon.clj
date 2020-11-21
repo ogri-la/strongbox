@@ -172,7 +172,8 @@
 
 (defn-spec install-addon (s/or :ok (s/coll-of ::sp/extant-file), :error ::sp/empty-coll)
   "installs an addon given an addon description, a place to install the addon and the addon zip file itself.
-  handles suspicious looking bundles, conflicts with other addons, uninstalling previous addon version and updating nfo files."
+  handles suspicious looking bundles, conflicts with other addons, uninstalling previous addon version and updating nfo files.
+  returns ... ?"
   [addon :addon/installable, install-dir ::sp/writeable-dir, downloaded-file ::sp/archive-file, game-track ::sp/game-track]
   (let [zipfile-entries (zip/zipfile-normal-entries downloaded-file)
         toplevel-dirs (zip/top-level-directories zipfile-entries)
@@ -210,6 +211,30 @@
     (info (format "installing '%s' version '%s'" (:label addon) (:version addon)))
     (install-addon)
     (update-nfo-files)))
+
+(defn-spec downloaded-addon-fname string?
+  [name string?, version string?]
+  (format "%s--%s.zip" name (utils/slugify version))) ;; addonname--1-2-3.zip
+
+(defn-spec remove-zip-files! nil?
+  [install-dir ::sp/install-dir, addon-name ::sp/name, n-zips-to-keep (s/or :ok zero? :also-ok pos-int?)]
+  (let [pattern (re-pattern (str (utils/slugify addon-name) "\\-\\-.+\\.zip$")) ;; "addonname\-\-.+\.zip"
+        file-list (fs/find-files install-dir pattern)
+        [asc desc] [> <]
+        ;; oldest to newest
+        sorted-file-list (mapv str (sort-by #(.lastModified %) asc file-list))
+        [keepers, to-be-deleted] (split-at n-zips-to-keep sorted-file-list)
+        ;;_ (debug "keeping" keepers "deleting" tbd)
+        results (mapv (partial utils/delete-file! install-dir) to-be-deleted)
+        ]
+    (when-not (= (count results) (count to-be-deleted))
+      (warn "failed to remove some files")))
+  nil)
+
+(defn post-install
+  [addon install-dir n-zips-to-keep]
+  (when n-zips-to-keep
+    (remove-zip-files! install-dir (:name addon) n-zips-to-keep)))
 
 ;;
 
