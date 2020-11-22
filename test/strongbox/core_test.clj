@@ -310,6 +310,8 @@
           (let [;; our list of addons to import
                 output-path (fixture-path "import-export--export-v2.json")
 
+                game-track :retail-classic
+
                 expected [{:created-date "2010-05-07T18:48:16Z",
                            :description "Does what no other addon does, slightly differently",
                            :tag-list [:bags :inventory]
@@ -357,7 +359,7 @@
                            :matched? true}]]
 
             (core/import-exported-file output-path)
-            (core/set-game-track! :retail-classic)
+            (core/set-game-track! game-track)
             (core/refresh) ;; re-read the installation directory
             (is (= expected (core/get-state :installed-addon-list)))))))))
 
@@ -434,14 +436,14 @@
                 alt-toc-addon (assoc toc-addon :source-id 1)
 
                 ;; and what we 'expand' that data into
-                api-xform {:download-url "https://example.org/foo",
-                           :version "v8.10.00"
-                           :game-track :retail}
-                alt-api-xform (assoc api-xform :version "v8.20.00")
+                source-updates {:download-url "https://example.org/foo",
+                                :version "v8.10.00"
+                                :game-track :retail}
+                alt-source-updates (assoc source-updates :version "v8.20.00")
 
                 ;; after calling `check-for-update` we expect the result to be the merged sum of the below parts
-                expected (merge toc-addon api-xform {:update? false})
-                alt-expected (merge alt-toc-addon alt-api-xform {:update? true})]
+                expected (merge toc-addon source-updates {:update? false})
+                alt-expected (merge alt-toc-addon alt-source-updates {:update? true})]
 
             (is (= expected (core/check-for-update toc-addon)))
             (is (= alt-expected (core/check-for-update alt-toc-addon)))))))))
@@ -1077,14 +1079,16 @@
                    :-testing-zipfile (fixture-path "everyaddon--1-2-3.zip")}
 
             expected {:ignore? true,
+                      ;; `catalogue/expand-summary` is never called so the source updates are never added.
+                      ;;:game-track :retail
+                      ;;:download-url ...
+                      ;;:version ...
                       :description "Does what no other addon does, slightly differently",
                       :dirname "EveryAddon",
                       :group-id "https://group.id/never/fetched",
                       :installed-game-track :retail,
                       :installed-version "1.2.3",
                       :interface-version 70000,
-                      ;; catalogue/expand-summary is never called and the source updates are never added.
-                      ;;:game-track :retail 
                       :label "EveryAddon 1.2.3",
                       :name "everyaddon",
                       :primary? true,

@@ -406,6 +406,7 @@
 (defn-spec expanded? boolean?
   "returns true if an addon has found further details online"
   [addon map?]
+  ;; nice and quick but essentially validating addon against `:addon/installable`
   (some? (:download-url addon)))
 
 (defn start-affecting-addon

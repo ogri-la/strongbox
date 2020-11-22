@@ -173,7 +173,7 @@
 (defn-spec install-addon (s/or :ok (s/coll-of ::sp/extant-file), :error ::sp/empty-coll)
   "installs an addon given an addon description, a place to install the addon and the addon zip file itself.
   handles suspicious looking bundles, conflicts with other addons, uninstalling previous addon version and updating nfo files."
-  [addon :addon/installable, install-dir ::sp/writeable-dir, downloaded-file ::sp/archive-file] ;;, game-track ::sp/game-track]
+  [addon :addon/installable, install-dir ::sp/writeable-dir, downloaded-file ::sp/archive-file]
   (let [zipfile-entries (zip/zipfile-normal-entries downloaded-file)
         toplevel-dirs (zip/top-level-directories zipfile-entries)
         primary-dirname (determine-primary-subdir toplevel-dirs)
