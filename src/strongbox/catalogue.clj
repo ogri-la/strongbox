@@ -15,7 +15,7 @@
     [wowinterface-api :as wowinterface-api]
     [github-api :as github-api]]))
 
-(defn-spec -expand-summary (s/or :ok (s/merge :addon/expandable :addon/source-updates), :error nil?)
+(defn-spec -expand-summary (s/or :ok :addon/expanded, :error nil?)
   "fetches updates from the addon host for the given `addon` and `game-track`.
   does *not* support compound game tracks or warning the user, see `expand-summary`.
   returns `nil` when release not found"
@@ -24,7 +24,7 @@
                       "wowinterface" wowinterface-api/expand-summary
                       "github" github-api/expand-summary
                       "tukui" tukui-api/expand-summary
-                      "tukui-classic" tukui-api/expand-summary-classic
+                      "tukui-classic" tukui-api/expand-summary
                       nil (fn [_ _] (error "malformed addon:" (utils/pprint addon)))}
         key (:source addon)]
     (try
@@ -36,7 +36,7 @@
         (error e "unhandled exception attempting to expand addon summary")
         (error "please report this! https://github.com/ogri-la/strongbox/issues")))))
 
-(defn-spec expand-summary (s/or :ok (s/merge :addon/expandable :addon/source-updates), :error nil?)
+(defn-spec expand-summary (s/or :ok :addon/expanded, :error nil?)
   "fetches updates from the addon host for the given `addon` and `game-track`.
   supports compound game tracks like `:retail-classic` and `:classic-retail`.
   emits warnings to user when no release found."

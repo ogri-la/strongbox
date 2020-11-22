@@ -173,7 +173,7 @@
 (defn-spec install-addon (s/or :ok (s/coll-of ::sp/extant-file), :error ::sp/empty-coll)
   "installs an addon given an addon description, a place to install the addon and the addon zip file itself.
   handles suspicious looking bundles, conflicts with other addons, uninstalling previous addon version and updating nfo files."
-  [addon :addon/installable, install-dir ::sp/writeable-dir, downloaded-file ::sp/archive-file, game-track ::sp/game-track]
+  [addon :addon/installable, install-dir ::sp/writeable-dir, downloaded-file ::sp/archive-file]
   (let [zipfile-entries (zip/zipfile-normal-entries downloaded-file)
         toplevel-dirs (zip/top-level-directories zipfile-entries)
         primary-dirname (determine-primary-subdir toplevel-dirs)
@@ -185,14 +185,14 @@
                                     (when sus-addons
                                       (warn (format msg (:label addon) (clojure.string/join ", " sus-addons))))))
 
-        install-addon (fn []
-                        (zip/unzip-file downloaded-file install-dir))
+        unzip-addon (fn []
+                      (zip/unzip-file downloaded-file install-dir))
 
         ;; an addon may unzip to many directories, each directory needs the nfo file
         update-nfo-fn (fn [zipentry]
                         (let [addon-dirname (:path zipentry)
                               primary? (= addon-dirname (:path primary-dirname))
-                              new-nfo-data (nfo/derive addon primary? game-track)
+                              new-nfo-data (nfo/derive addon primary?)
                               new-nfo-data (nfo/add-nfo install-dir addon-dirname new-nfo-data)]
                           (nfo/write-nfo install-dir addon-dirname new-nfo-data)))
 
@@ -208,7 +208,7 @@
       (remove-addon install-dir addon))
 
     (info (format "installing '%s' version '%s'" (:label addon) (:version addon)))
-    (install-addon)
+    (unzip-addon)
     (update-nfo-files)))
 
 ;;
