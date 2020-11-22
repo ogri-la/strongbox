@@ -34,13 +34,13 @@
 
 (defn-spec derive :addon/nfo
   "extract fields from the addon data that will be written to the nfo file"
-  [addon :addon/nfo-input-minimum, primary? boolean?, game-track ::sp/game-track]
+  [addon :addon/nfo-input-minimum, primary? boolean?]
   (let [nfo {;; important! as an addon is updated or installed, the `:installed-version` from the .toc file is overridden by the `:version` online
              ;; later, when comparing installed addons against the catalogue, the comparisons will be more consistent
              :installed-version (:version addon)
 
              ;; knowing the regime the addon was installed under allows us to export and later re-import the correct version
-             :installed-game-track game-track
+             :installed-game-track (:game-track addon)
 
              ;; normalised name. once used to match to online addon, we now use source+source-id
              :name (:name addon)

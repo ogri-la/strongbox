@@ -406,6 +406,7 @@
 (defn-spec expanded? boolean?
   "returns true if an addon has found further details online"
   [addon map?]
+  ;; nice and quick but essentially validating addon against `:addon/installable`
   (some? (:download-url addon)))
 
 (defn start-affecting-addon
@@ -473,23 +474,6 @@
 ;;(def download-addon
 ;;  (affects-addon-wrapper download-addon))
 
-
-(defn-spec guess-game-track ::sp/game-track
-  "given a map of addon data, attempts to guess the most likely game track it belongs to"
-  [install-dir ::sp/extant-dir, addon map?]
-  (or (:game-track addon) ;; from reading an export record. most of the time this value won't be here
-      (:installed-game-track addon) ;; re-use the value we have if updating an existing addon
-      (cond
-        ;; addon has been successfully expanded, current game track is being used.
-        (expanded? addon) (get-game-track install-dir)
-
-        ;; the interface version is set in the .toc file but is also part of 'expanding' an addon.
-        ;; prefer current game track over this as the real value may be overridden.
-        (some? (:interface-version addon)) (utils/interface-version-to-game-track (:interface-version addon)))
-
-      ;; very last here is for testing only
-      :retail))
-
 (defn-spec install-addon-guard (s/or :ok (s/coll-of ::sp/extant-file), :passed-tests true?, :error nil?)
   "downloads an addon and installs it. 
   handles http and non-http errors, bad zip files, bad addons, bad directories."
@@ -510,12 +494,7 @@
            downloaded-file (or (:-testing-zipfile addon) ;; don't download, install from this file (testing only right now)
                                (download-addon addon install-dir))
            bad-zipfile-msg (format "failed to read zip file '%s', could not install %s" downloaded-file (:name addon))
-           bad-addon-msg (format "refusing to install '%s'. It contains top-level files or top-level directories missing .toc files."  (:name addon))
-           ;; installing addon from an export record. ;; todo: pre-process addon before sending it to `install-addon`
-           ;; a regular `addon` won't have a `game-track` (it has an `:installed-game-track`).
-           game-track (or (:game-track addon) (get-game-track install-dir)) ;; todo: add fourth arity to `install-adodn-guard`
-           ]
-
+           bad-addon-msg (format "refusing to install '%s'. It contains top-level files or top-level directories missing .toc files."  (:name addon))]
        (cond
          (map? downloaded-file) (error "failed to download addon, could not install" (:name addon))
 
@@ -541,7 +520,7 @@
 
          test-only? true ;; addon was successfully downloaded and verified as being sound
 
-         :else (let [result (addon/install-addon addon install-dir downloaded-file game-track)]
+         :else (let [result (addon/install-addon addon install-dir downloaded-file)]
                  (addon/post-install addon install-dir (get-state :cfg :preferences :addon-zips-to-keep))
                  result)
          )))))

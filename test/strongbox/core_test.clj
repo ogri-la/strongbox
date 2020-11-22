@@ -236,6 +236,7 @@
                            :group-id "https://www.curseforge.com/wow/addons/everyaddon",
                            :installed-version "v8.2.0-v1.13.2-7135.139",
                            :installed-game-track :retail
+                           :game-track :retail
                            :name "everyaddon",
                            :source "curseforge",
                            :interface-version 80000,
@@ -257,6 +258,7 @@
                            :group-id "https://www.curseforge.com/wow/addons/everyotheraddon",
                            :installed-version "v8.2.0-v1.13.2-7135.139",
                            :installed-game-track :retail
+                           :game-track :retail
                            :name "everyotheraddon",
                            :source "curseforge",
                            :interface-version 80200,
@@ -311,6 +313,8 @@
           (let [;; our list of addons to import
                 output-path (fixture-path "import-export--export-v2.json")
 
+                game-track :retail-classic
+
                 expected [{:created-date "2010-05-07T18:48:16Z",
                            :description "Does what no other addon does, slightly differently",
                            :tag-list [:bags :inventory]
@@ -319,6 +323,7 @@
                            :group-id "https://www.curseforge.com/wow/addons/everyaddon",
                            :installed-version "v8.2.0-v1.13.2-7135.139",
                            :installed-game-track :retail
+                           :game-track :retail
                            :name "everyaddon",
                            :source "curseforge",
                            :interface-version 80000,
@@ -340,6 +345,9 @@
                            :group-id "https://www.curseforge.com/wow/addons/everyotheraddon",
                            :installed-version "v8.2.0-v1.13.2-7135.139",
                            :installed-game-track :classic
+                           ;; significant! differs from above because addon directory's `:game-track`
+                           ;; is set to the compound `:retail-classic`
+                           :game-track :classic
                            :name "everyotheraddon",
                            :source "curseforge",
                            :interface-version 11300, ;; changed
@@ -354,11 +362,9 @@
                            :matched? true}]]
 
             (core/import-exported-file output-path)
-            (core/set-game-track! :retail-classic)
+            (core/set-game-track! game-track)
             (core/refresh) ;; re-read the installation directory
-            (is (= (first expected) (first (core/get-state :installed-addon-list))))
-            ;; the second addon (classic) is expanded because the game track is set to 'any, prefer retail'
-            (is (= (second expected) (second (core/get-state :installed-addon-list))))))))))
+            (is (= expected (core/get-state :installed-addon-list)))))))))
 
 (deftest check-for-addon-update
   (testing "the key :update? is set on an addon when there is a difference between the installed version of an addon and it's matching catalogue version"
@@ -419,7 +425,6 @@
                      :source "curseforge"
                      :source-id 0}
 
-                ;; todo: revisit this
                 ;; the nfo data is simply merged over the top of the scraped toc data
                 toc (addon/merge-toc-nfo toc nfo)
 
@@ -434,13 +439,14 @@
                 alt-toc-addon (assoc toc-addon :source-id 1)
 
                 ;; and what we 'expand' that data into
-                api-xform {:download-url "https://example.org/foo",
-                           :version "v8.10.00"}
-                alt-api-xform (assoc api-xform :version "v8.20.00")
+                source-updates {:download-url "https://example.org/foo",
+                                :version "v8.10.00"
+                                :game-track :retail}
+                alt-source-updates (assoc source-updates :version "v8.20.00")
 
                 ;; after calling `check-for-update` we expect the result to be the merged sum of the below parts
-                expected (merge toc-addon api-xform {:update? false})
-                alt-expected (merge alt-toc-addon alt-api-xform {:update? true})]
+                expected (merge toc-addon source-updates {:update? false})
+                alt-expected (merge alt-toc-addon alt-source-updates {:update? true})]
 
             (is (= expected (core/check-for-update toc-addon)))
             (is (= alt-expected (core/check-for-update alt-toc-addon)))))))))
@@ -513,7 +519,8 @@
   "updates to the addon data fetched from remote source"
   {:interface-version  70000,
    :download-url  "https://www.example.org/wow/addons/everyaddon/download/123456/file",
-   :version  "1.2.3"})
+   :version  "1.2.3"
+   :game-track :retail})
 
 (def addon
   "final mooshed result"
@@ -571,24 +578,26 @@
     (with-fake-routes-in-isolation {}
       (let [install-dir (str fs/*cwd*)
             fname (core/downloaded-addon-fname (:name addon) (:version addon))]
-        (fs/copy (fixture-path "bad-truncated.zip") (utils/join install-dir fname)) ;; hoho, so evil
+        ;; move dummy addon file into place so there is no cache miss
+        (fs/copy (fixture-path "bad-truncated.zip") (utils/join install-dir fname))
         (is (= (core/install-addon addon install-dir) nil))
-        (is (= (count (fs/list-dir install-dir)) 0)))))) ;; bad zip file deleted
+        ;; bad zip file deleted
+        (is (= 0 (count (fs/list-dir install-dir))))))))
 
 (deftest install-bundled-addon
   (testing "installing a bundled addon"
-    (with-fake-routes-in-isolation {}
+    (with-running-app
       (let [install-dir (helper/install-dir)
-            ;; without a running app we have no `selected-addon-dir`.
-            ;; pretend to be an export record with a `:game-track` instead
-            addon (merge addon {:version "0.1.2" :game-track :retail})
+            ;; reuse the addon fixture but change it's version
+            bundled-addon (merge addon {:version "0.1.2"})
 
             ;; move dummy addon file into place so there is no cache miss
-            fname (core/downloaded-addon-fname (:name addon) (:version addon))
-
+            fname (core/downloaded-addon-fname (:name bundled-addon) (:version bundled-addon))
             _ (fs/copy (fixture-path "everyaddon--0-1-2.zip") (utils/join install-dir fname))
-            result (core/install-addon addon install-dir)
-            directory-list (->> install-dir fs/list-dir (filter fs/directory?) (map fs/base-name) sort)
+
+            result (core/install-addon bundled-addon)
+            directory-list (helper/install-dir-contents)
+
             expected-nfo {;; bundled addon is simply a part of the 'everyaddon' addon.
                           ;; without a distinct name or version for itself.
                           :name "everyaddon"
@@ -599,7 +608,7 @@
                           :source "curseforge",
                           :source-id 1}]
         (is result) ;; success
-        (is (= ["EveryAddon" "EveryAddon-BundledAddon"] directory-list))
+        (is (= ["EveryAddon" "EveryAddon-BundledAddon" "everyaddon--0-1-2.zip"] directory-list))
         (is (= expected-nfo (nfo/read-nfo-file install-dir "EveryAddon-BundledAddon")))))))
 
 (deftest install-bundled-addon-overwriting-ignored-addon
@@ -608,6 +617,7 @@
       (let [install-dir (helper/install-dir)
             addon {:name "everyaddon" :label "EveryAddon" :version "0.1.2" :url "https://group.id/never/fetched"
                    :source "curseforge" :source-id 1
+                   :download-url "https://path/to/remote/addon.zip" :game-track :retail
                    :-testing-zipfile (fixture-path "everyaddon--0-1-2.zip")}]
 
         (core/install-addon addon)
@@ -618,9 +628,24 @@
 
         (let [addon2 {:name "everyotheraddon" :label "EveryOtherAddon" :version "5.6.7" :url "https://group.id/also/never/fetched"
                       :source "curseforge" :source-id 2
+                      :download-url "https://path/to/remote/addon.zip" :game-track :retail
                       :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}]
           (core/install-addon addon2)
           (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents))))))))
+
+(deftest install-addon--compound-game-track
+  (testing "a classic addon can be installed into an addon directory using a compound game track with retail preferred"
+    (with-running-app
+      (let [install-dir (helper/install-dir)
+            _ (core/set-game-track! :retail-classic)
+
+            addon {:name "everyaddon-classic" :label "EveryAddon (Classic)" :version "1.2.3" :url "https://group.id/never/fetched"
+                   :source "curseforge" :source-id 1
+                   :download-url "https://path/to/remote/addon.zip"
+                   :game-track :classic
+                   :-testing-zipfile (fixture-path "everyaddon-classic--1-2-3.zip")}]
+
+        (core/install-addon addon install-dir)))))
 
 (deftest install-addon--remove-zip
   (testing "installing an addon with the `:addon-zips-to-keep` preference set to 0 will delete the zip afterwards"
@@ -722,15 +747,18 @@
             ;; all these addons install the 'EveryAddon-BundledAddon' addon
             addon-1 {:name "everyaddon" :label "EveryAddon" :version "0.1.2" :url "https://group.id/never/fetched"
                      :source "curseforge" :source-id 1
+                     :download-url "https://path/to/remote/addon.zip" :game-track :retail
                      :-testing-zipfile (fixture-path "everyaddon--0-1-2.zip")}
 
             addon-2 {:name "everyotheraddon" :label "EveryOtherAddon" :version "5.6.7" :url "https://group.id/also/never/fetched"
                      :source "curseforge" :source-id 2
+                     :download-url "https://path/to/remote/addon.zip" :game-track :retail
                      :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}
 
             ;; 'bundled is misleading here', standalone is more like it
             addon-3 {:name "bundledaddon" :label "BundledAddon" :version "a.b.c" :url "https://group.id/still/not/fetched"
                      :source "curseforge" :source-id 3
+                     :download-url "https://path/to/remote/addon.zip" :game-track :retail
                      :-testing-zipfile (fixture-path "everyaddon-bundledaddon--a-b-c.zip")}
 
             bundled-dirname "EveryAddon-BundledAddon"
@@ -782,9 +810,11 @@
     (with-running-app
       (let [addon-1 {:name "everyaddon" :label "EveryAddon" :version "0.1.2" :url "https://group.id/never/fetched"
                      :source "curseforge" :source-id 1
+                     :download-url "https://path/to/remote/addon.zip" :game-track :retail
                      :-testing-zipfile (fixture-path "everyaddon--0-1-2.zip")}
             addon-2 {:name "everyotheraddon" :label "EveryOtherAddon" :version "5.6.7" :url "https://group.id/also/never/fetched"
                      :source "curseforge" :source-id 2
+                     :download-url "https://path/to/remote/addon.zip" :game-track :retail
                      :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}
             expected ["addon 'everyotheraddon' is overwriting 'everyaddon'"]]
         (helper/install-dir)
@@ -798,10 +828,12 @@
       (let [install-dir (helper/install-dir)
             addon-1 {:name "everyaddon" :label "EveryAddon" :version "0.1.2" :url "https://group.id/never/fetched"
                      :source "curseforge" :source-id 1
+                     :download-url "https://path/to/remote/addon.zip" :game-track :retail
                      :-testing-zipfile (fixture-path "everyaddon--0-1-2.zip")}
 
             addon-2 {:name "everyotheraddon" :label "EveryOtherAddon" :version "5.6.7" :url "https://group.id/also/never/fetched"
                      :source "curseforge" :source-id 2
+                     :download-url "https://path/to/remote/addon.zip" :game-track :retail
                      :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}
 
             bundled-dirname "EveryAddon-BundledAddon"
@@ -832,10 +864,12 @@
       (let [install-dir (helper/install-dir)
             addon-1 {:name "everyaddon" :label "EveryAddon" :version "0.1.2" :url "https://group.id/never/fetched"
                      :source "curseforge" :source-id 1
+                     :download-url "https://path/to/remote/addon.zip" :game-track :retail
                      :-testing-zipfile (fixture-path "everyaddon--0-1-2.zip")}
 
             addon-2 {:name "everyotheraddon" :label "EveryOtherAddon" :version "5.6.7" :url "https://group.id/also/never/fetched"
                      :source "curseforge" :source-id 2
+                     :download-url "https://path/to/remote/addon.zip" :game-track :retail
                      :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}
 
             bundled-dirname "EveryAddon-BundledAddon"
@@ -1055,9 +1089,14 @@
       (helper/install-dir)
       (let [addon {:name "everyaddon" :label "EveryAddon" :version "1.2.3" :url "https://group.id/never/fetched"
                    :source "curseforge" :source-id 1
+                   :download-url "https://path/to/remote/addon.zip" :game-track :retail
                    :-testing-zipfile (fixture-path "everyaddon--1-2-3.zip")}
 
             expected {:ignore? true,
+                      ;; `catalogue/expand-summary` is never called so the source updates are never added.
+                      ;;:game-track :retail
+                      ;;:download-url ...
+                      ;;:version ...
                       :description "Does what no other addon does, slightly differently",
                       :dirname "EveryAddon",
                       :group-id "https://group.id/never/fetched",
@@ -1083,6 +1122,7 @@
       (helper/install-dir)
       (let [addon {:name "everyaddon" :label "EveryAddon" :version "1.2.3" :url "https://group.id/never/fetched"
                    :source "curseforge" :source-id 1
+                   :download-url "https://path/to/remote/addon.zip" :game-track :retail
                    :-testing-zipfile (fixture-path "everyaddon--1-2-3.zip")}
 
             expected {;;:ignore? false, ;; removed rather than set to false.
@@ -1113,6 +1153,7 @@
       (let [install-dir (helper/install-dir)
             addon {:name "everyotheraddon" :label "EveryOtherAddon" :version "5.6.7" :url "https://group.id/also/never/fetched"
                    :source "curseforge" :source-id 2
+                   :download-url "https://path/to/remote/addon.zip" :game-track :retail
                    :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}
 
             expected {:description "group record for the fetched addon",
@@ -1175,6 +1216,7 @@
       (let [install-dir (helper/install-dir)
             addon {:name "everyaddon" :label "EveryAddon" :version "1.2.3" :url "https://group.id/never/fetched"
                    :source "curseforge" :source-id 1
+                   :download-url "https://path/to/remote/addon.zip" :game-track :retail
                    :-testing-zipfile (fixture-path "everyaddon--1-2-3.zip")}
 
             expected {:ignore? false, ;; explicit `false` rather than removed

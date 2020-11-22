@@ -108,7 +108,8 @@
             interface-version (some-> latest-release :gameVersion first utils/game-version-to-interface-version)
             interface-version (when interface-version {:interface-version interface-version})]
         (merge {:download-url (:downloadUrl latest-release)
-                :version (:displayName latest-release)}
+                :version (:displayName latest-release)
+                :game-track game-track}
                interface-version)))))
 
 ;; catalogue building

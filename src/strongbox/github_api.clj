@@ -155,7 +155,8 @@
         asset (-> latest-release -group-assets (get game-track) first (dissoc :-mo))]
     (when asset
       {:download-url (:browser_download_url asset)
-       :version (:version asset)})))
+       :version (:version asset)
+       :game-track game-track})))
 
 ;;
 
