@@ -149,6 +149,8 @@
 
           source-id 98
 
+          game-track :retail
+
           fake-routes {(format tukui-api/summary-url source-id)
                        {:get (fn [req] {:status 200 :body fixture})}}
 
@@ -165,9 +167,8 @@
 
           expected {:download-url "https://www.tukui.org/addons.php?download=98"
                     ;; :interface-version ... ;; elided
-                    :version "0.960"}
-
-          game-track :retail]
+                    :version "0.960"
+                    :game-track game-track}]
 
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (tukui-api/expand-summary addon-summary game-track)))))))
