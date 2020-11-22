@@ -33,12 +33,13 @@
         ;; tukui addons do not share IDs across game tracks like curseforge does.
         ;; tukui will also return a successful-but-empty response (200) for addons
         ;; that don't exist in that catalogue. I'm treating empty responses as 404s.
-        ti (some-> url http/download utils/nilable http/sink-error utils/from-json)]
+        ti (some-> url http/download utils/nilable http/sink-error utils/from-json)
+        interface-version (when-let [patch (:patch ti)]
+                            {:interface-version (utils/game-version-to-interface-version patch)})]
     (when ti
-      {:download-url (:url ti)
-       :version (:version ti)
-       :interface-version (-> ti :patch utils/game-version-to-interface-version)
-       :game-track game-track})))
+      (merge {:download-url (:url ti)
+              :version (:version ti)}
+             interface-version))))
 
 ;; catalogue building
 

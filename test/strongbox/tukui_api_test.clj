@@ -94,7 +94,7 @@
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (tukui-api/expand-summary addon-summary game-track))))))
 
-  (testing "expanding proper addon"
+  (testing "expanding addon proper"
     (let [fixture (slurp (fixture-path "tukui--elvui-addon-proper.json"))
 
           fake-routes {tukui-api/elvui-proper-url
@@ -142,3 +142,32 @@
                        {:get (fn [req] {:status 404 :reason-phrase "Not Found" :body "<h1>Not Found</h1>"})}}]
       (with-fake-routes-in-isolation fake-routes
         (is (nil? (tukui-api/expand-summary addon-summary game-track)))))))
+
+(deftest expanding-addon--missing-patch
+  (testing "2020-11-21 the tukui addon proper was found to be missing it's `:patch` key resulting in a NPE attempting to convert it to game version"
+    (let [fixture (slurp (fixture-path "tukui--addon-details-missing-patch.json"))
+
+          source-id 98
+
+          fake-routes {(format tukui-api/summary-url source-id)
+                       {:get (fn [req] {:status 200 :body fixture})}}
+
+          addon-summary {:description "Add roleplaying fields to ElvUI to create RP UIs.",
+                         :tag-list [:roleplay],
+                         :game-track-list [:retail],
+                         :updated-date "2019-07-29T20:48:25Z",
+                         :name "-rp-tags",
+                         :source "tukui",
+                         :label "[rp:tags]",
+                         :download-count 2838,
+                         :source-id source-id,
+                         :url "https://www.tukui.org/addons.php?id=98"}
+
+          expected {:download-url "https://www.tukui.org/addons.php?download=98"
+                    ;; :interface-version ... ;; elided
+                    :version "0.960"}
+
+          game-track :retail]
+
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (tukui-api/expand-summary addon-summary game-track)))))))
