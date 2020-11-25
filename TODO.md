@@ -27,7 +27,6 @@ see CHANGELOG.md for a more formal list of changes by release
                 - so the track that was picked needs to be returned
     - done
 
-## todo
 
 * "Option to automaticallly remove zips"
     - https://github.com/ogri-la/strongbox/issues/182
@@ -41,6 +40,9 @@ see CHANGELOG.md for a more formal list of changes by release
         - does anybody really want this feature?
             - do I really care?
             - do I have any means of soliciting feedback?
+
+
+## todo
 
 ## todo bucket (no particular order)
 
