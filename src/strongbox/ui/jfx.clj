@@ -147,6 +147,8 @@
                ;; installed-addons menu
 
                ;; prevent truncation and ellipses
+
+
                "#update-all-button "
                {:-fx-min-width "101px"}
 
@@ -155,6 +157,8 @@
 
 
                ;; installed-addons table
+
+
                ".table-view#installed-addons"
                {" .updateable"
                 {:-fx-background-color (colour :row-updateable)
@@ -169,6 +173,8 @@
 
 
                ;; notice-logger
+
+
                ".table-view#notice-logger"
                {" .warn" {:-fx-background-color (colour :row-warning)
                           ":selected" {:-fx-background-color "-fx-selection-bar"}}
@@ -580,7 +586,8 @@
                            (core/save-settings))})]
     (mapv rb (keys theme-map))))
 
-(defn num-zips-to-keep-menu-item
+(defn menu-item--num-zips-to-keep
+  "returns a checkbox menuitem that affects the user preference `addon-zips-to-keep`"
   [{:keys [fx/context]}]
   (let [num-addon-zips-to-keep (fx/sub-val context get-in [:app-state :cfg :preferences :addon-zips-to-keep])
         selected? (not (nil? num-addon-zips-to-keep)) ;; `nil` is 'keep all zips', see `config.clj`
@@ -607,7 +614,7 @@
                    separator
                    (menu-item "E_xit" exit-handler {:key "Ctrl+Q"})]
 
-        prefs-menu [{:fx/type num-zips-to-keep-menu-item}]
+        prefs-menu [{:fx/type menu-item--num-zips-to-keep}]
 
         view-menu (into
                    [(menu-item "Refresh" (async-handler core/refresh) {:key "F5"})

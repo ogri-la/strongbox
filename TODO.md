@@ -44,6 +44,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* import v2, change addon dir game-track to a compound one prior to importing
+    - this will prevent addons from being skipped
+
 * add a 'Delete all' option to cache menu
 
 * add OS and Java versions to debug file output

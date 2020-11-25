@@ -56,18 +56,25 @@
   (slurp path))
 
 (defn-spec safe-to-delete? boolean?
-  "predicate, returns true if given file is rooted in given directory"
+  "predicate, returns `true` if given file is prefixed with given directory."
   [dir ::sp/extant-dir file ::sp/extant-file]
   (clojure.string/starts-with? file dir))
 
-(defn delete-file!
-  "returns given `path` if deleting it was successful, else nil"
-  [dir path]
+(defn-spec delete-file! (s/or :ok nil?, :failed ::sp/file)
+  "returns `nil` if deleting `path` inside `dir` was successful. returns `path` if deleting it was unsuccessful."
+  [dir ::sp/extant-dir, path ::sp/extant-file]
+  ;; these checks are important despite `defn-spec` as instrumentation is disabled for release.
   (cond
-    (not (fs/exists? dir)) (warn "directory does not exist:" dir) ;; app may not have been started yet
-    (not (safe-to-delete? dir path)) (error (format "refusing to delete file. file was not rooted at %s" dir))
-    (not (fs/file? path)) (error (format "refusing to delete file. file is not a file! %s" path))
-    :else (and (fs/delete path) path)))
+    (not (fs/exists? dir)) (do (warn "directory does not exist:" dir) path) ;; app may not have been started yet
+    (not (safe-to-delete? dir path)) (do (error (format "refusing to delete file. file was not rooted at %s" dir)) path)
+    (not (fs/file? path)) (do (error (format "refusing to delete file. file is not a file! %s" path)) path)
+    :else (try
+            (fs/delete path)
+            (when (fs/exists? path)
+              path)
+            (catch Exception uncaught-exception
+              (error uncaught-exception (str "unhandled exception attempting to delete file: " path))
+              path))))
 
 (defn-spec delete-many-files! nil?
   "deletes a list of files rooted in given directory"

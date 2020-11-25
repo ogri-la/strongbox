@@ -116,9 +116,10 @@
          (swap! core/state assoc-in [:search :results] results))))))
 
 (defn-spec set-preference nil?
+  "updates a user preference `preference-key` with given `preference-val` and saves the settings"
   [preference-key keyword?, preference-val any?]
   (swap! core/state assoc-in [:cfg :preferences preference-key] preference-val)
-;; todo: save settings
+  (core/save-settings)
   nil)
 
 ;;

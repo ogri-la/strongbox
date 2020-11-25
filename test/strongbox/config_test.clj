@@ -209,7 +209,7 @@
                           :selected-addon-dir "/tmp/.strongbox-bar"
 
                           ;; new in 3.1.0
-                          :preferences {:addon-zips-to-keep nil}}                          
+                          :preferences {:addon-zips-to-keep nil}}
 
                     :cli-opts {}
                     :file-opts {:selected-catalogue :full
