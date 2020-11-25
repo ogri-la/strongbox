@@ -129,7 +129,7 @@
         (with-running-app
           (swap! core/state assoc-in [:search :results-per-page] 1)
           (cli/search "c")
-          (Thread/sleep 10)
+          (Thread/sleep 100)
           (is (= 1 (count (cli/search-results))))
           (is (= expected-page-1 (cli/search-results)))
           (is (cli/search-has-next?))
