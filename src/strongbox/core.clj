@@ -456,15 +456,11 @@
 
 ;; downloading and installing and updating
 
-(defn-spec downloaded-addon-fname string?
-  [name string?, version string?]
-  (format "%s--%s.zip" name (utils/slugify version))) ;; addonname--1-2-3.zip
-
 (defn-spec download-addon (s/or :ok ::sp/archive-file, :http-error :http/error, :error nil?)
   [addon :addon/installable, download-dir ::sp/writeable-dir]
   (info (format "downloading '%s' version '%s'" (:label addon) (:version addon)))
   (when (expanded? addon)
-    (let [output-fname (downloaded-addon-fname (:name addon) (:version addon)) ;; addonname--1-2-3.zip
+    (let [output-fname (addon/downloaded-addon-fname (:name addon) (:version addon)) ;; addonname--1-2-3.zip
           output-path (join (fs/absolute download-dir) output-fname)] ;; /path/to/installed/addons/addonname--1.2.3.zip
       (binding [http/*cache* (cache)]
         (http/download-file (:download-url addon) output-path)))))
@@ -488,7 +484,9 @@
 
      :else ;; attempt downloading and installing addon
 
-     (let [downloaded-file (or (:-testing-zipfile addon) ;; don't download, install from this file (testing only right now)
+     (let [;; todo: if -testing-zipfile, move zipfile into download dir
+           ;; this will help the zipfile pruning tests
+           downloaded-file (or (:-testing-zipfile addon) ;; don't download, install from this file (testing only right now)
                                (download-addon addon install-dir))
            bad-zipfile-msg (format "failed to read zip file '%s', could not install %s" downloaded-file (:name addon))
            bad-addon-msg (format "refusing to install '%s'. It contains top-level files or top-level directories missing .toc files."  (:name addon))]
@@ -517,7 +515,9 @@
 
          test-only? true ;; addon was successfully downloaded and verified as being sound
 
-         :else (addon/install-addon addon install-dir downloaded-file))))))
+         :else (let [result (addon/install-addon addon install-dir downloaded-file)]
+                 (addon/post-install addon install-dir (get-state :cfg :preferences :addon-zips-to-keep))
+                 result))))))
 
 (def install-addon
   (affects-addon-wrapper install-addon-guard))
@@ -969,10 +969,8 @@
   "handles exports with partial information (name, or name and source) from <=0.10.0 versions of strongbox."
   [addon-list] ;; todo: spec
   (info (format "attempting to import %s addons. this may take a minute" (count addon-list)))
-  (let [matching-addon-list (-import-addon-list-v1 addon-list)
-        addon-dir (selected-addon-dir)]
-    (doseq [addon matching-addon-list]
-      (install-addon addon addon-dir))))
+  (let [matching-addon-list (-import-addon-list-v1 addon-list)]
+    (run! install-addon matching-addon-list)))
 
 ;; v2 uses the same mechanism to match addons as the rest of the app does
 (defn import-addon-list-v2
@@ -993,15 +991,13 @@
         ;; afterwards this will call `update-installed-addon-list!` that will trigger a refresh in the gui
         _ (match-installed-addons-with-catalogue (get-state :db) addon-list)
 
-        addon-dir (selected-addon-dir)
-
         ;; this is what v1 does, but it's hidden away in `expand-summary-wrapper`
         default-game-track (get-game-track)]
 
     (doseq [addon (get-state :installed-addon-list)
             :let [game-track (get addon :game-track default-game-track)]]
       (when-let [expanded-addon (catalogue/expand-summary addon game-track)]
-        (install-addon expanded-addon addon-dir)))))
+        (install-addon expanded-addon)))))
 
 (defn-spec import-exported-file nil?
   "imports a file at given `path` created with the export function.

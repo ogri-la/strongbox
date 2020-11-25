@@ -103,9 +103,13 @@
 (s/def ::addon-dir-list (s/coll-of ::addon-dir-map))
 (s/def ::selected-catalogue keyword?)
 
+(s/def :config/addon-zips-to-keep (s/nilable int?))
+(s/def :config/preferences (s/keys :req-un [:config/addon-zips-to-keep]))
+
 (s/def ::user-config (s/keys :req-un [::addon-dir-list ::selected-addon-dir
                                       ::catalogue-location-list ::selected-catalogue
-                                      ::gui-theme]))
+                                      ::gui-theme
+                                      :config/preferences]))
 
 ;; http
 

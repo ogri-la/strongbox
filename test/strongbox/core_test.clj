@@ -6,8 +6,9 @@
    [envvar.core :refer [with-env]]
    [me.raynes.fs :as fs]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
+   [strongbox.ui.cli :as cli]
    [strongbox
-    [addon :as addon]
+    [addon :as addon :refer [downloaded-addon-fname]]
     [db :as db]
     [logging :as logging]
     [zip :as zip]
@@ -90,9 +91,11 @@
         (core/set-game-track! :classic)
         (is (= {:addon-dir dir2 :game-track :classic} (core/addon-dir-map dir2))))
 
-      ;;
+      (testing "set-game-track! can change the game track to a compound game track"
+        (core/set-game-track! :classic-retail)
+        (is (= {:addon-dir dir2 :game-track :classic-retail} (core/addon-dir-map dir2))))
 
-      (testing "set-game-track! changes default path to 'classic' if detected in addon-dir"
+      (testing "set-addon-dir! changes default game-track to 'classic' if '_classic_' detected in addon dir name"
         (core/set-addon-dir! dir4)
         (is (= {:addon-dir dir4 :game-track :classic} (core/addon-dir-map dir4)))))))
 
@@ -523,12 +526,12 @@
   "final mooshed result"
   (merge toc addon-summary matched? source-updates))
 
-(deftest install-addon-1
-  (testing "installing an addon"
+(deftest install-addon
+  (testing "an addon can be installed"
     (with-fake-routes-in-isolation {}
       (let [install-dir (str fs/*cwd*)
             ;; move dummy addon file into place so there is no cache miss
-            fname (core/downloaded-addon-fname (:name addon) (:version addon))
+            fname (downloaded-addon-fname (:name addon) (:version addon))
             _ (utils/cp (fixture-path fname) install-dir)
             test-only? false
             ;; without a running app we have no `selected-addon-dir`.
@@ -540,12 +543,12 @@
           (is (= (count file-list) 1))
           (is (fs/exists? (first file-list))))))))
 
-(deftest install-addon-trial-2
+(deftest install-addon--trial-installation
   (testing "trial installation of a good addon"
     (with-fake-routes-in-isolation {}
       (let [install-dir (helper/install-dir)
             ;; move dummy addon file into place so there is no cache miss
-            fname (core/downloaded-addon-fname (:name addon) (:version addon))
+            fname (downloaded-addon-fname (:name addon) (:version addon))
             _ (utils/cp (fixture-path fname) install-dir)
 
             test-only? true
@@ -555,12 +558,12 @@
         ;; ensure nothing was actually unzipped
         (is (not (fs/exists? (utils/join install-dir "EveryAddon"))))))))
 
-(deftest install-addon-trial-3
+(deftest install-addon--trial-installation-bad-addon
   (testing "trial installation of a bad addon"
     (with-fake-routes-in-isolation {}
       (let [install-dir (helper/install-dir)
             ;; move dummy addon file into place so there is no cache miss
-            fname (core/downloaded-addon-fname (:name addon) (:version addon))
+            fname (downloaded-addon-fname (:name addon) (:version addon))
             _ (fs/copy (fixture-path "bad-truncated.zip") (utils/join install-dir fname)) ;; hoho, so evil
 
             test-only? true
@@ -574,7 +577,7 @@
   (testing "installing a bad addon"
     (with-fake-routes-in-isolation {}
       (let [install-dir (str fs/*cwd*)
-            fname (core/downloaded-addon-fname (:name addon) (:version addon))]
+            fname (downloaded-addon-fname (:name addon) (:version addon))]
         ;; move dummy addon file into place so there is no cache miss
         (fs/copy (fixture-path "bad-truncated.zip") (utils/join install-dir fname))
         (is (= (core/install-addon addon install-dir) nil))
@@ -589,7 +592,7 @@
             bundled-addon (merge addon {:version "0.1.2"})
 
             ;; move dummy addon file into place so there is no cache miss
-            fname (core/downloaded-addon-fname (:name bundled-addon) (:version bundled-addon))
+            fname (downloaded-addon-fname (:name bundled-addon) (:version bundled-addon))
             _ (fs/copy (fixture-path "everyaddon--0-1-2.zip") (utils/join install-dir fname))
 
             result (core/install-addon bundled-addon)
@@ -644,6 +647,50 @@
 
         (core/install-addon addon install-dir)))))
 
+(deftest install-addon--remove-zip
+  (testing "installing an addon with the `:addon-zips-to-keep` preference set to `0` will delete the zip afterwards"
+    (with-running-app
+      (let [install-dir (helper/install-dir)
+            ;; move dummy addon file into place so there is no cache miss
+            fname (downloaded-addon-fname (:name addon) (:version addon))
+            _ (utils/cp (fixture-path fname) install-dir)]
+        (cli/set-preference :addon-zips-to-keep 0)
+        (core/install-addon addon install-dir)
+        (is (= ["EveryAddon"] (helper/install-dir-contents)))))))
+
+(deftest install-addon--remove-multiple-zips
+  (testing "installing an addon with the `:addon-zips-to-keep` preference set to `0` will delete the zip afterwards"
+    (with-running-app
+      (let [install-dir (helper/install-dir)
+            ;; move dummy addon file into place so there is no cache miss
+            fname (downloaded-addon-fname (:name addon) (:version addon))]
+
+        ;; create a bunch of empty files that will be matched and cleaned up.
+        (doseq [i (range 1 6)]
+          (let [empty-file (fs/file install-dir (downloaded-addon-fname (:name addon) (str "0.0." i)))]
+            (fs/touch empty-file)
+            ;; ensure each one is definitively a little older than the previous
+            (Thread/sleep 10)))
+
+        ;; ensure the actual zip arrives last
+        (utils/cp (fixture-path fname) install-dir)
+
+        (is (= ["everyaddon--0-0-1.zip"
+                "everyaddon--0-0-2.zip"
+                "everyaddon--0-0-3.zip"
+                "everyaddon--0-0-4.zip"
+                "everyaddon--0-0-5.zip"
+                "everyaddon--1-2-3.zip"]
+               (helper/install-dir-contents)))
+
+        (cli/set-preference :addon-zips-to-keep 3)
+        (core/install-addon addon install-dir)
+        (is (= ["EveryAddon"
+                "everyaddon--0-0-4.zip"
+                "everyaddon--0-0-5.zip"
+                "everyaddon--1-2-3.zip"]
+               (helper/install-dir-contents)))))))
+
 ;;
 
 (deftest uninstall-addon
@@ -666,8 +713,8 @@
             addon-v1 addon
 
             ;; move dummy addon files into place so there is no cache miss
-            fname-v0 (core/downloaded-addon-fname (:name addon-v0) (:version addon-v0))
-            fname-v1 (core/downloaded-addon-fname (:name addon-v1) (:version addon-v1))
+            fname-v0 (downloaded-addon-fname (:name addon-v0) (:version addon-v0))
+            fname-v1 (downloaded-addon-fname (:name addon-v1) (:version addon-v1))
 
             fixture-v0 (fixture-path "everyaddon--0-1-2.zip") ;; v0.1 unzips to two directories
             fixture-v1 (fixture-path "everyaddon--1-2-3.zip") ;; v1.2 has just the one directory
@@ -712,7 +759,7 @@
             install-dir-contents #(->> install-dir fs/list-dir (filter fs/directory?) (map fs/base-name) sort)
 
             ;; trick here: copying 0.1.2 fixture to 1.2.3 filename. this fixture unpacks two directories
-            fname (core/downloaded-addon-fname (:name addon) (:version addon))
+            fname (downloaded-addon-fname (:name addon) (:version addon))
             _ (fs/copy (fixture-path "everyaddon--0-1-2.zip") (utils/join install-dir fname))
             _ (core/install-addon addon install-dir)
 

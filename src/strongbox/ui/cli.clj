@@ -115,6 +115,13 @@
        (let [results (core/db-search-2 (-> new-state :search :term))]
          (swap! core/state assoc-in [:search :results] results))))))
 
+(defn-spec set-preference nil?
+  "updates a user preference `preference-key` with given `preference-val` and saves the settings"
+  [preference-key keyword?, preference-val any?]
+  (swap! core/state assoc-in [:cfg :preferences preference-key] preference-val)
+  (core/save-settings)
+  nil)
+
 ;;
 
 (defmulti action

@@ -211,6 +211,35 @@
     (unzip-addon)
     (update-nfo-files)))
 
+(defn-spec downloaded-addon-fname string?
+  "given an addon's `name` and `version`, returns the expected addon zip filename."
+  [name ::sp/name, version ::sp/version]
+  (format "%s--%s.zip" name (utils/slugify version))) ;; addonname--1-2-3.zip
+
+(defn-spec remove-zip-files! nil?
+  "given a directory `install-dir`, and a prefix `addon-name`, find all zip files that match a pattern, sort 
+  them, keep `n-zips-to-keep` files and delete the rest."
+  [install-dir ::sp/install-dir, addon-name ::sp/name, n-zips-to-keep (s/or :ok zero? :also-ok pos-int?)]
+  (let [pattern (re-pattern (str (utils/slugify addon-name) "\\-\\-.+\\.zip$")) ;; #"addonname\-\-.+\.zip$"
+        file-list (fs/find-files install-dir pattern)
+        ;; sort files oldest to newest
+        asc >
+        sorted-file-list (mapv str (sort-by #(.lastModified %) asc file-list))
+        ;; drop N of the newest files
+        to-be-deleted (drop n-zips-to-keep sorted-file-list)
+        failed-to-delete (remove nil? (mapv (partial utils/delete-file! install-dir) to-be-deleted))]
+    (when-not (empty? failed-to-delete)
+      (warn (format "failed to delete: %s"
+                    (clojure.string/join ", " (mapv fs/base-name failed-to-delete))))))
+  nil)
+
+(defn-spec post-install nil?
+  "does any final cleanup tasks.
+  executed immediately after `install-addon`, coordinated by `core.clj`"
+  [addon :addon/installable, install-dir ::sp/install-dir, n-zips-to-keep :config/addon-zips-to-keep]
+  (when n-zips-to-keep
+    (remove-zip-files! install-dir (:name addon) n-zips-to-keep)))
+
 ;;
 
 (defn-spec ignored-dir-list (s/coll-of ::sp/dirname)

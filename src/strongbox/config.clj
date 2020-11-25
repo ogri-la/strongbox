@@ -24,7 +24,12 @@
    :selected-addon-dir nil
    :catalogue-location-list -default-catalogue-list
    :selected-catalogue :short
-   :gui-theme :light})
+   :gui-theme :light
+   :preferences {;; nil: keep all zips (default)
+                 ;; 0:   keep no zips
+                 ;; 1:   keep 1 zip
+                 ;; N:   keep N zips
+                 :addon-zips-to-keep nil}})
 
 (defn handle-install-dir
   "`:install-dir` was once supported in the user configuration but is now only supported in the command line options.
@@ -82,6 +87,8 @@
                             (some #{selected-addon-dir} (map :addon-dir (:addon-dir-list cfg))))]
     (assoc cfg :selected-addon-dir (or selected-addon-dir default-selected-addon-dir))))
 
+;; todo: rather than removing keys before validation (wtf?),
+;; create a different or sub-spec where these values are optional
 (defn strip-unspecced-keys
   "removes any keys from the given configuration that are not in the spec"
   [cfg]
@@ -93,7 +100,8 @@
   ;; * it didn't support :opt(ional) keysets
   (select-keys cfg [:addon-dir-list :selected-addon-dir
                     :gui-theme
-                    :catalogue-location-list :selected-catalogue]))
+                    :catalogue-location-list :selected-catalogue
+                    :preferences]))
 
 (defn-spec -merge-with ::sp/user-config
   "merges `cfg-b` over `cfg-a`, returning the result if valid else `cfg-a`"
