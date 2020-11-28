@@ -8,25 +8,52 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
-## todo bucket (no particular order)
+* issue #204 "Dark theme - "addon has update" row color could be more clear"
+    - https://github.com/ogri-la/strongbox/issues/204
+
+* issue #206 "mac, 3.0.1 crashes/exits without warning"
+    - https://github.com/ogri-la/strongbox/issues/206
+    - very fucking mysterious
 
 * import v2, change addon dir game-track to a compound one prior to importing
     - this will prevent addons from being skipped
 
-* add a 'Delete all' option to cache menu
-
 * add OS and Java versions to debug file output
 
-* remove gui1
-    - remove original db-search
-
-* investigate *warn-on-reflections*
-    - I think there may be some solid performance gains by turning this on
-        - remember to profile first
+* reconciliation, revisit aliases
+    - use source and source-id now
+    - maybe externalise the list
 
 * better icon for appimage
 
 * gui, add confirmation before deleting addon directory
+    - language should be 'remove' rather than 'delete'
+
+* github, if multiple releases available and first fails criteria, check the next and so on
+    - see altoholic: https://github.com/teelolws/Altoholic-Classic
+
+* http, revisit the http/expiry-offset-hours value
+    - drop to 24 at the very least
+    - also, revisit prune-http-cache
+
+## todo bucket (no particular order)
+
+* gitlab as addon host
+    - https://gitlab.com/search?search=wow+addon
+    - returned to bucket 2019-12-04, notes:
+        - gitlab doesn't handle releases like github does
+            - https://stackoverflow.com/questions/29520905/how-to-create-releases-in-gitlab
+        - there are very few gitlab addons (88)
+            - where did this number come from?
+        - api is quite slow
+    - update: as of Oct 2020 gitlab sucks a little bit less and, like github, you can attach binaries to releases
+        - https://gitlab.com/explore/projects?tag=World+of+Warcraft
+        - https://gitlab.com/shrugal/PersoLootRoll
+        - any others ...?
+
+* investigate *warn-on-reflections*
+    - I think there may be some solid performance gains by turning this on
+        - remember to profile first
 
 * EOL planning, robustness, only download/update the catalogue *after* an existing catalogue has been confirmed
     - github is down, wowman is erroring with a 500
@@ -48,21 +75,11 @@ see CHANGELOG.md for a more formal list of changes by release
     - wowinterface checksum is hidden behind a javascript tabber but still available
         - wowinterface do have a md5sum in results! score
 
-* spec, revisit usage of 'addon/toc'
-    - it was used too broadly before the recent spec shakeup
-    - it has optional keys which shouldn't be in there
-
 * gui, 're-install' for an addon that has an update available will update the addon
     - it implies the same version would be installed
     - strongbox doesn't support version pinning yet either
 
-* github, if multiple releases available and first fails criteria, check the next and so on
-    - see altoholic: https://github.com/teelolws/Altoholic-Classic
-
 * test, can gui-diff and main/test be pushed back into the testing namespace and elided from release somehow?
-
-* http, revisit the http/expiry-offset-hours value
-    - also, revisit prune-http-cache
 
 * EOL planning
     - I'm not going away and neither is strongbox, but! *should* I or my free time disappear will strongbox continue being useful?
@@ -73,14 +90,6 @@ see CHANGELOG.md for a more formal list of changes by release
             - addon hosts
                 - our interface with them is their API or in wowi's case, their API and website
 
-* code refactor
-    * core.clj is getting too large
-        - it's difficult to navigate and debug
-        - many tests are accumulating in core_test.clj
-
-* reconciliation, revisit aliases
-    - use source and source-id now
-    - maybe externalise the list
 * reconciliation, add dirname support
     - not sure which hosts support these
 * wowinterface, multiple game tracks 
@@ -106,13 +115,6 @@ see CHANGELOG.md for a more formal list of changes by release
         - it should just fucking do it
 * investigate better popularity metric than 'downloads'
     - if we make an effort to scrape everyday, we can generate this popularity graph ourselves
-* gui 'wow' column is inconsistent
-    - for curseforge, it's pulling it's value from :gameVersion, which may be empty
-        - in which case it pulls it's value from the toc file, which may be different from the selected game track
-    - since this is the 'installed addons pane', should the value reflect the value of the installed addon?
-        - (and not the value of the addon to be installed)
-        - and would this be inconsistent with the other fields that are also changing with new catalog information?
-
 * add a 'tabula rasa' option that wipes *everything* 
     - cache, catalog, config, downloaded zip files
 * coloured warnings/errors on console output
@@ -140,12 +142,29 @@ see CHANGELOG.md for a more formal list of changes by release
                     - got to have backups+imports happening first
         - identify slow things and measure their improvement
 
-* toggleable columns as a menuitem
-    - they're available from the column menu, but it's a little hidden and contains other fairly useless options like 'horizontal scroll'
+* gui 'wow' column is inconsistent
+    - for curseforge, it's pulling it's value from :gameVersion, which may be empty
+        - in which case it pulls it's value from the toc file, which may be different from the selected game track
+    - since this is the 'installed addons pane', should the value reflect the value of the installed addon?
+        - (and not the value of the addon to be installed)
+        - and would this be inconsistent with the other fields that are also changing with new catalog information?
+
+* gui, toggleable columns as a menuitem
 
 * internationalisation?
     - Akitools has no english description but it does have a "Notes-zhCN" in the toc file that could be used
     - wowman was mentioned on a french forum the other day ..
+
+* gui, download progress bar *inside* the grid ...?
+    - pure fantasy?
+    - defer until after gui2
+    - defer until after job queue
+* gui, toggleable highlighers as a menuitem
+    - highlight unmatched
+    - highlight updates
+    - touch of colour against each menuitem would serve as a legend
+* gui, have the log scroll the other direction
+* gui, new tab for dedicated log
 
 ## github
 
@@ -172,9 +191,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## search
 
-* search, indicate results are paginated
 * search, order by date only orders the *current page* of results
-* search, pagination controls in search pane
 * search, group results
     - group by downloads/age/category?
         - it would finally be the best use for category data
@@ -206,46 +223,30 @@ see CHANGELOG.md for a more formal list of changes by release
             - we already have a match!
         - this might fit in with the greater-parallelism/queue based infrastructure
 
-## gui/gui2
+## unified UI
 
+* remove tabs
 * gui, both panes, filter by categories
-* gui, java look and feel
-    - our 'theme' solution is too naive
-        - we should be deferring to the current theme for highlighted colours
-        - how?
-            - https://pirlwww.lpl.arizona.edu/resources/guide/software/SwingX/org/jdesktop/swingx/plaf/UIColorHighlighterAddon.html
-    - defer until after gui2
-* download progress bar *inside* the grid ...?
-    - pure fantasy?
-    - defer until after gui2
-    - defer until after job queue
-* add custom highlighting colours
-    - I don't mind my colours but not everybody may
-    - my colours don't work very well on native lnf + dark themes:
-        - https://github.com/ogri-la/wowman/issues/105
-    - defer until after gui2
-* toggleable highlighers as a menuitem
-    - highlight unmatched
-    - highlight updates
-    - touch of colour against each menuitem would serve as a legend
-* have the info box scroll the other direction
-    - this is possible, see the seesaw examples
-* new tab for dedicated log
+* gui, group results
+    - installed
+    - updates
+    - category ...
+
+## 4.0 major release
+
+* remove gui1
+    - remove original db-search
 
 ## wontfix
 
+* add a 'Delete all' option to cache menu
+    - we don't really want legitimate nfo files to be accidentally deleted
 * nightly unstable builds
     - building the 'develop' branch once a day
         - making it available as the 'unstable' release that always gets replaced
     - project.clj "x.y.z-unreleased" would be changed to "x.y.z-unstable"
     - development would happen mainly in feature branches
     - too much effort for what? more user reports? I don't have that sort of time
-* wowman, add support for reading strongbox catalogues
-    - I have the strongbox-catalogue update.sh script building wowman catalogues
-    - there is no extra work involved
-* wowman, remove wowman-data repository
-    - eh, this won't be happening any time soon
-    - it's no extra work to maintain it
 * investigate `.csv` as a human-readable but more compact representation
     - might be able to save a MB on extraneous syntax
     - might be able to speed up parsing and loading
@@ -253,27 +254,10 @@ see CHANGELOG.md for a more formal list of changes by release
         - update: profiling happened, it's not the json loading that is slow it was many other things. 
         - reading the file and parsing the json is actually very quick, validation is slower but necessary
         - json is just more flexible all around than csv.
-* remove backwards compatibility, wowman to strongbox
-    - there will be a migration of wowman data to strongbox data, or the data is discarded
-        - rename `test/fixtures/user-config-0.11.json` to `wowman--user-config ...`
-    - decided against this
-        - providing backward compatibility and testing against previous versions of data shapes gives us:
-            - robustness
-            - a reminder of what the state was like and what we've done previously to handle it
-            - seamless upgrades between versions for users
-                - they (including myself) shouldn't have to deal with bs 'technical' reasons why it used to work but not longer does
-                    - we're just not *that* special
 * windows support
     - windows is just the worst, most awful dystopian software I've ever seen and it hurts my soul every time I try to use it
     - I just plain hate it, it epitomises the very opposite of what I stand for and I refuse to work on it ever again
-* gitlab as addon host
-    - https://gitlab.com/search?search=wow+addon
-    - returned to bucket 2019-12-04, notes:
-        - gitlab doesn't handle releases like github does
-            - https://stackoverflow.com/questions/29520905/how-to-create-releases-in-gitlab
-        - there are very few gitlab addons (88)
-        - api is quite slow
-    - if somebody asks for this especially I'll consider it
+
 * add support for finding addons by url for other hosts
     - wowinterface
     - curseforge
