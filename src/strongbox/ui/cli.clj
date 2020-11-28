@@ -15,7 +15,7 @@
 (comment "the UIs pool their logic here, which calls core.clj.")
 
 (defn-spec set-addon-dir! nil?
-  "adds/sets an addon-dir marks it as selected, partial refresh of application state"
+  "adds/sets an addon-dir, partial refresh of application state"
   [addon-dir ::sp/addon-dir]
   (core/set-addon-dir! addon-dir)
   (core/load-installed-addons)
