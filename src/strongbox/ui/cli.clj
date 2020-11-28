@@ -14,6 +14,12 @@
 
 (comment "the UIs pool their logic here, which calls core.clj.")
 
+(defn refresh
+  "unlike `core/refresh`, `cli/refresh` removes the http cache files for the current addon dir before checking for addons."
+  []
+  (core/delete-http-cache!)
+  (core/check-for-updates))
+
 (defn-spec set-addon-dir! nil?
   "adds/sets an addon-dir, partial refresh of application state"
   [addon-dir ::sp/addon-dir]
