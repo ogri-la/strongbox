@@ -113,8 +113,9 @@
             cases [["https://github.com/Aviana/HealComm" github-api]]]
         (doseq [[given expected] cases]
           (testing (str "user input is routed to the correct parser")
-            (is (= expected (catalogue/parse-user-string given))))))))
+            (is (= expected (catalogue/parse-user-string given)))))))))
 
+(deftest parse-user-string-router--bad-cases
   (let [cases [""
                "foo"
                "https"
@@ -258,3 +259,115 @@
                     "no release found for 'foo' (retail) on curseforge"]]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (logging/buffered-log :info (catalogue/expand-summary addon game-track))))))))
+
+;; retail
+
+(deftest expand-summary--retail-strict
+  (testing "when just retail is available, use it"
+    (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"}
+          game-track :retail
+          response (slurp (fixture-path "curseforge-api-addon--retail.json"))
+          fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/4646"
+                       {:get (fn [req] {:status 200 :body response})}}
+          expected {:download-url "https://edge.forgecdn.net/files/3104/62/Pawn-2.4.5.zip",
+                    :interface-version 90000,
+                    :version "2.4.5"
+                    :game-track :retail}
+          expected (merge addon expected)]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (catalogue/expand-summary addon game-track))))))
+
+  (testing "when just classic is available, use nothing"
+    (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"}
+          game-track :retail
+          response (slurp (fixture-path "curseforge-api-addon--classic.json"))
+          fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/4646"
+                       {:get (fn [req] {:status 200 :body response})}}
+          expected nil]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (catalogue/expand-summary addon game-track))))))
+
+  (testing "when both retail and classic are available, use retail"
+    (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"}
+          game-track :retail
+          response (slurp (fixture-path "curseforge-api-addon--retail-AND-classic.json"))
+          fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/4646"
+                       {:get (fn [req] {:status 200 :body response})}}
+          expected {:download-url "https://edge.forgecdn.net/files/3104/62/Pawn-2.4.5.zip",
+                    :interface-version 90000,
+                    :version "2.4.5"
+                    :game-track :retail}
+          expected (merge addon expected)]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (catalogue/expand-summary addon game-track)))))))
+
+(deftest expand-summary--retail-then-classic
+  (testing "when just classic is available, use it"
+    (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"}
+          game-track :retail-classic
+          response (slurp (fixture-path "curseforge-api-addon--classic.json"))
+          fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/4646"
+                       {:get (fn [req] {:status 200 :body response})}}
+          expected {:download-url "https://edge.forgecdn.net/files/3104/60/Pawn-2.4.5-Classic.zip",
+                    :interface-version 11300,
+                    :version "2.4.5 (Classic)"
+                    :game-track :classic}
+          expected (merge addon expected)]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (catalogue/expand-summary addon game-track)))))))
+
+;; classic
+
+(deftest expand-summary--classic-strict
+  (testing "when just classic is available, use it"
+    (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"}
+          game-track :classic
+          response (slurp (fixture-path "curseforge-api-addon--classic.json"))
+          fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/4646"
+                       {:get (fn [req] {:status 200 :body response})}}
+          expected {:download-url "https://edge.forgecdn.net/files/3104/60/Pawn-2.4.5-Classic.zip",
+                    :interface-version 11300,
+                    :version "2.4.5 (Classic)"
+                    :game-track :classic}
+          expected (merge addon expected)]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (catalogue/expand-summary addon game-track))))))
+
+  (testing "when just retail is available, use nothing"
+    (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"}
+          game-track :classic
+          response (slurp (fixture-path "curseforge-api-addon--retail.json"))
+          fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/4646"
+                       {:get (fn [req] {:status 200 :body response})}}
+          expected nil]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (catalogue/expand-summary addon game-track))))))
+
+  (testing "when both retail and classic are available, use classic"
+    (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"}
+          game-track :classic
+          response (slurp (fixture-path "curseforge-api-addon--retail-AND-classic.json"))
+          fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/4646"
+                       {:get (fn [req] {:status 200 :body response})}}
+          expected {:download-url "https://edge.forgecdn.net/files/3104/60/Pawn-2.4.5-Classic.zip",
+                    :interface-version 11300,
+                    :version "2.4.5 (Classic)"
+                    :game-track :classic}
+          expected (merge addon expected)]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (catalogue/expand-summary addon game-track)))))))
+
+(deftest expand-summary--classic-then-retail
+  (testing "when just retail is available, use it"
+    (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"}
+          game-track :classic-retail
+          response (slurp (fixture-path "curseforge-api-addon--retail.json"))
+          fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/4646"
+                       {:get (fn [req] {:status 200 :body response})}}
+          expected {:download-url "https://edge.forgecdn.net/files/3104/62/Pawn-2.4.5.zip",
+                    :interface-version 90000,
+                    :version "2.4.5"
+                    :game-track :retail}
+          expected (merge addon expected)]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (catalogue/expand-summary addon game-track)))))))

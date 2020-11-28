@@ -99,7 +99,8 @@
           game-track :retail
 
           source-updates {:download-url "https://github.com/Aviana/HealComm/releases/download/2.04/HealComm.zip"
-                          :version "2.04 Beta"}
+                          :version "2.04 Beta"
+                          :game-track game-track}
 
           expected source-updates
 
@@ -123,7 +124,8 @@
           game-track :classic
 
           source-updates {:download-url "https://github.com/Ravendwyr/Chinchilla/releases/download/v2.10.0/Chinchilla-v2.10.0-classic.zip"
-                          :version "v2.10.0-classic"}
+                          :version "v2.10.0-classic"
+                          :game-track game-track}
 
           expected source-updates
 

@@ -85,9 +85,15 @@
                {:-fx-font-size "1.5em"
                 :-fx-fill (colour :table-font-colour)}
 
-               "#main-menu" {:-fx-background-color (colour :base)}
+               "#main-menu"
+               {:-fx-background-color (colour :base)}
 
-               ".context-menu" {:-fx-effect "None"}
+               "#addon-dir-dropdown"
+               {:-fx-max-width "600px"}
+
+               ".context-menu"
+               {:-fx-effect "None"}
+
                ".combo-box-base"
                {:-fx-padding "1px"
                 :-fx-background-radius "0"
@@ -109,6 +115,9 @@
                ".table-view"
                {:-fx-table-cell-border-color (colour :table-border)
                 :-fx-font-size ".9em"}
+
+               ".table-view .table-placeholder-text"
+               {:-fx-font-size "3em"}
 
                ".table-view .column-header"
                {;;:-fx-background-color "#ddd" ;; flat colour vs gradient
@@ -138,8 +147,11 @@
                ;; installed-addons menu
 
                ;; prevent truncation and ellipses
+
+
                "#update-all-button "
                {:-fx-min-width "101px"}
+
                "#game-track-combo-box "
                {:-fx-min-width "100px"}
 
@@ -152,11 +164,11 @@
                 {:-fx-background-color (colour :row-updateable)
 
                  ;; selected updateable addons are do not look any different
-                 ":selected" {:-fx-background-color "-fx-selection-bar"}}
+                 ":selected"
+                 {:-fx-background-color "-fx-selection-bar"}}
 
                 " .ignored .table-cell"
                 {:-fx-text-fill (colour :installed/ignored-fg)}
-
                 " .wow-column" {:-fx-alignment "center"}}
 
 
@@ -188,8 +200,21 @@
 
                ;; search
 
+               "#search-install-button"
+               {:-fx-min-width "90px"}
+
+               "#search-random-button"
+               {:-fx-min-width "80px"}
+
+               "#search-prev-button"
+               {:-fx-min-width "80px"}
+
+               "#search-next-button"
+               {:-fx-min-width "70px"}
+
                "#search-text-field "
-               {:-fx-text-fill (colour :table-font-colour)}
+               {:-fx-min-width "100px"
+                :-fx-text-fill (colour :table-font-colour)}
 
                ".table-view#search-addons"
                {" .downloads-column" {:-fx-alignment "center-right"}
@@ -561,13 +586,35 @@
                            (core/save-settings))})]
     (mapv rb (keys theme-map))))
 
+(defn menu-item--num-zips-to-keep
+  "returns a checkbox menuitem that affects the user preference `addon-zips-to-keep`"
+  [{:keys [fx/context]}]
+  (let [num-addon-zips-to-keep (fx/sub-val context get-in [:app-state :cfg :preferences :addon-zips-to-keep])
+        selected? (not (nil? num-addon-zips-to-keep)) ;; `nil` is 'keep all zips', see `config.clj`
+        ]
+    {:fx/type :check-menu-item
+     :text "Remove addon zip after installation (global)"
+     :selected selected?
+     :on-action (fn [ev]
+                  (cli/set-preference :addon-zips-to-keep (if (.isSelected (.getSource ev)) 0 nil)))}))
+
 (defn menu-bar
   "returns a description of the menu at the top of the application"
   [{:keys [fx/context]}]
   (let [file-menu [(menu-item "_New addon directory" (event-handler wow-dir-picker) {:key "Ctrl+N"})
                    (menu-item "Remove addon directory" (async-handler cli/remove-addon-dir!))
                    separator
+                   (menu-item "_Update all" (async-handler core/install-update-all) {:key "Ctrl+U"})
+                   (menu-item "Re-install all" (async-handler core/re-install-all))
+                   separator
+                   (menu-item "Import list of addons" (async-event-handler import-addon-list-handler))
+                   (menu-item "Export list of addons" (async-event-handler export-addon-list-handler))
+                   (menu-item "Import addon from Github" (async-event-handler import-addon-handler))
+                   (menu-item "Export Github addon list" (async-event-handler export-user-catalogue-handler))
+                   separator
                    (menu-item "E_xit" exit-handler {:key "Ctrl+Q"})]
+
+        prefs-menu [{:fx/type menu-item--num-zips-to-keep}]
 
         view-menu (into
                    [(menu-item "Refresh" (async-handler core/refresh) {:key "F5"})
@@ -584,15 +631,6 @@
                               (fx/sub-val context get-in [:app-state :cfg :catalogue-location-list]))
                              [separator
                               (menu-item "Refresh user catalogue" (async-handler core/refresh-user-catalogue))])
-
-        addon-menu [(menu-item "_Update all" (async-handler core/install-update-all) {:key "Ctrl+U"})
-                    (menu-item "Re-install all" (async-handler core/re-install-all))]
-
-        impexp-menu [(menu-item "Import addon from Github" (async-event-handler import-addon-handler))
-                     separator
-                     (menu-item "Import addon list" (async-event-handler import-addon-list-handler))
-                     (menu-item "Export addon list" (async-event-handler export-addon-list-handler))
-                     (menu-item "Export Github addon list" (async-event-handler export-user-catalogue-handler))]
 
         cache-menu [(menu-item "Clear http cache" (async-handler core/delete-http-cache!))
                     (menu-item "Clear addon zips" (async-handler core/delete-downloaded-addon-zips!))
@@ -614,8 +652,7 @@
             :menus [(menu "_File" file-menu)
                     (menu "_View" view-menu)
                     (menu "Catalogue" catalogue-menu)
-                    (menu "_Addons" addon-menu)
-                    (menu "_Import/Export" impexp-menu)
+                    (menu "_Preferences" prefs-menu)
                     (menu "Cache" cache-menu)
                     (menu "Help" help-menu)]}}))
 
@@ -627,6 +664,7 @@
     {:fx/type ext-recreate-on-key-changed
      :key (sort-by :addon-dir addon-dir-map-list)
      :desc {:fx/type :combo-box
+            :id "addon-dir-dropdown"
             :value selected-addon-dir
             :on-value-changed (async-event-handler
                                (fn [new-addon-dir]
@@ -635,15 +673,17 @@
 
 (defn game-track-dropdown
   [{:keys [fx/context]}]
-  (let [selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])]
+  (let [selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])
+        key (-> selected-addon-dir core/get-game-track)]
     {:fx/type :combo-box
      :id "game-track-combo-box"
-     :value (-> selected-addon-dir core/get-game-track (or "") name)
+     :value (get sp/selectable-game-track-labels-map key)
      :on-value-changed (async-event-handler
                         (fn [new-game-track]
-                          (core/set-game-track! (keyword new-game-track))
+                          ;; todo: push to cli
+                          (core/set-game-track! (get sp/selectable-game-track-labels-map-inv new-game-track))
                           (core/refresh)))
-     :items ["retail" "classic"]}))
+     :items (mapv second sp/selectable-game-track-labels)}))
 
 (defn installed-addons-menu-bar
   "returns a description of the installed-addons tab-pane menu"
@@ -767,7 +807,13 @@
   (let [idx-key #(select-keys % [:source :source-id])
         installed-addon-idx (mapv idx-key (fx/sub-val context get-in [:app-state :installed-addon-list]))
 
-        addon-list (fx/sub-val context get-in [:app-state :search-results])
+        search-state (fx/sub-val context get-in [:app-state :search])
+        addon-list (cli/search-results search-state)
+
+        ;; rare case when there are precisely $cap results, the next page is empty
+        empty-next-page (and (= 0 (count addon-list))
+                             (> (-> search-state :page) 0))
+
         column-list [{:text "source" :min-width 110 :pref-width 120 :max-width 160 :cell-value-factory href-to-hyperlink}
                      {:text "name" :min-width 150 :pref-width 300 :max-width 450 :cell-value-factory (comp no-new-lines :label)}
                      {:text "description" :pref-width 700 :cell-value-factory (comp no-new-lines :description)}
@@ -782,7 +828,9 @@
             :id "search-addons"
             :placeholder {:fx/type :text
                           :style-class ["table-placeholder-text"]
-                          :text "No search results."}
+                          :text (if empty-next-page
+                                  "ᕙ(`▿´)ᕗ"
+                                  "No search results.")}
             :row-factory {:fx/cell-type :table-row
                           :describe (fn [row]
                                       {:style-class ["table-row-cell"
@@ -794,23 +842,42 @@
             :items addon-list}}))
 
 (defn search-addons-search-field
-  [_]
-  {:fx/type :h-box
-   :padding 10
-   :spacing 10
-   :children [{:fx/type :text-field
-               :id "search-text-field"
-               :prompt-text "search"
-               :on-text-changed (fn [v]
-                                  (swap! core/state assoc :search-field-input v))}
-              {:fx/type :button
-               :text "install selected"
-               :on-action (async-event-handler search-results-install-handler)}
-              {:fx/type :button
-               :text "random"
-               :on-action (fn [_]
-                            (swap! core/state assoc :search-field-input
-                                   (if (nil? (:search-field-input @core/state)) "" nil)))}]})
+  [{:keys [fx/context]}]
+  (let [search-state (fx/sub-val context get-in [:app-state :search])]
+    {:fx/type :h-box
+     :padding 10
+     :spacing 10
+     :children
+     [{:fx/type :text-field
+       :id "search-text-field"
+       :prompt-text "search"
+       :on-text-changed cli/search}
+
+      {:fx/type :button
+       :id "search-install-button"
+       :text "install selected"
+       :on-action (async-event-handler search-results-install-handler)}
+
+      {:fx/type :button
+       :id "search-random-button"
+       :text "random"
+       :on-action (handler cli/random-search)}
+
+      {:fx/type :h-box
+       :id "spacer"
+       :h-box/hgrow :ALWAYS}
+
+      {:fx/type :button
+       :id "search-prev-button"
+       :text "previous"
+       :disable (not (cli/search-has-prev? search-state))
+       :on-action (handler cli/search-results-prev-page)}
+
+      {:fx/type :button
+       :id "search-next-button"
+       :text "next"
+       :disable (not (cli/search-has-next? search-state))
+       :on-action (handler cli/search-results-next-page)}]}))
 
 (defn search-addons-pane
   [_]
@@ -916,7 +983,7 @@
 
 (defn start
   []
-  (println "starting gui")
+  (info "starting gui")
   (let [;; the gui uses a copy of the application state because the state atom needs to be wrapped
         state-template {:app-state nil,
                         :log-message-list []
@@ -934,12 +1001,7 @@
         _ (core/add-cleanup-fn #(remove-watch core/state :refresh-app))
 
         ;; asynchronous searching. as the user types, update the state with search results asynchronously
-        ;; todo: stick this in core/cli?
-        ;; todo: cancel any current searching going on?
-        save-search-results (fn [new-state]
-                              (future
-                                (swap! core/state assoc :search-results (core/db-search (:search-field-input new-state)))))
-        _ (core/state-bind [:search-field-input] save-search-results)
+        _ (cli/-init-search-listener)
 
         renderer (fx/create-renderer
                   :middleware (comp
@@ -966,8 +1028,8 @@
         ;; and because the search component isn't re-rendered,
         ;; fake a change to get something to appear
         bump-search (fn []
-                      (when-not (:search-field-input core/state)
-                        (swap! core/state assoc :search-field-input "")))]
+                      (when-not (-> @core/state :search :term)
+                        (cli/search "")))]
 
     (swap! core/state assoc :gui-showing? true)
     (fx/mount-renderer gui-state renderer)
@@ -987,7 +1049,7 @@
 
 (defn stop
   []
-  (println "stopping gui")
+  (info "stopping gui")
   (when-let [unmount-renderer (:disable-gui @core/state)]
     ;; only affects tests running from repl apparently
     (unmount-renderer))

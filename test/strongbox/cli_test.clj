@@ -2,6 +2,7 @@
   (:require
    [clojure.test :refer [deftest testing is use-fixtures]]
    [strongbox.ui.cli :as cli]
+   [clj-http.fake :refer [with-global-fake-routes-in-isolation]]
    [strongbox
     [main :as main]
     [catalogue :as catalogue]
@@ -53,3 +54,102 @@
 
       (testing "the short catalogue has just one addon in range"
         (is (= 1 (-> short catalogue/read-catalogue :total)))))))
+
+(deftest search-db--empty-db
+  (testing "an empty database can be searched from the CLI"
+    (with-running-app
+      (let [expected []]
+        (cli/search "foo")
+        (Thread/sleep 10)
+        (is (= expected (cli/search-results)))))))
+
+(deftest search-db
+  (testing "a populated database can be searched from the CLI"
+    (let [catalogue (slurp (fixture-path "catalogue--v2.json"))
+          fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
+                       {:get (fn [req] {:status 200 :body catalogue})}}
+          expected [{:download-count 9,
+                     :game-track-list [:retail :classic],
+                     :label "Chinchilla",
+                     :name "chinchilla",
+                     :source "github",
+                     :source-id "Ravendwyr/Chinchilla",
+                     :tag-list [],
+                     :updated-date "2019-10-19T15:07:07Z",
+                     :url "https://github.com/Ravendwyr/Chinchilla"}]]
+      (with-global-fake-routes-in-isolation fake-routes
+        (with-running-app
+          (cli/search "chin")
+          (Thread/sleep 10)
+          (is (= expected (cli/search-results))))))))
+
+(deftest search-db--random
+  (testing "a populated database can be randomly searched from the CLI"
+    (let [catalogue (slurp (fixture-path "catalogue--v2.json"))
+          fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
+                       {:get (fn [req] {:status 200 :body catalogue})}}]
+      (with-global-fake-routes-in-isolation fake-routes
+        (with-running-app
+          ;; any catalogue with less than 60 (a magic number) items has >100% probability of being included.
+          (cli/random-search)
+          (Thread/sleep 50)
+          (is (= (core/get-state :db)
+                 (cli/search-results))))))))
+
+(deftest search-db--navigate
+  (testing "a populated database can be searched forwards and backwards from the CLI"
+    (let [catalogue (slurp (fixture-path "catalogue--v2.json"))
+          fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
+                       {:get (fn [req] {:status 200 :body catalogue})}}
+
+          expected-page-1 [{:created-date "2019-04-13T15:23:09.397Z",
+                            :description "A New Simple Percent",
+                            :download-count 1034,
+                            :label "A New Simple Percent",
+                            :name "a-new-simple-percent",
+                            :source "curseforge",
+                            :source-id 319346,
+                            :tag-list [:unit-frames],
+                            :updated-date "2019-10-29T22:47:42.463Z",
+                            :url "https://www.curseforge.com/wow/addons/a-new-simple-percent"}]
+
+          expected-page-2 [{:download-count 9,
+                            :game-track-list [:retail :classic],
+                            :label "Chinchilla",
+                            :name "chinchilla",
+                            :source "github",
+                            :source-id "Ravendwyr/Chinchilla",
+                            :tag-list [],
+                            :updated-date "2019-10-19T15:07:07Z",
+                            :url "https://github.com/Ravendwyr/Chinchilla"}]
+
+          no-results []]
+
+      (with-global-fake-routes-in-isolation fake-routes
+        (with-running-app
+          (swap! core/state assoc-in [:search :results-per-page] 1)
+          (cli/search "c")
+          (Thread/sleep 100)
+          (is (= 1 (count (cli/search-results))))
+          (is (= expected-page-1 (cli/search-results)))
+          (is (cli/search-has-next?))
+          (cli/search-results-next-page)
+          (is (= expected-page-2 (cli/search-results)))
+
+          ;; with 1 result per-page and exactly 1 result on this page, there may be more results
+          ;; but we can't know for definite without realising the next page of results.
+          (is (cli/search-has-next?))
+          (cli/search-results-next-page)
+          ;; in this case, there wasn't. 
+          (is (= no-results (cli/search-results)))
+
+          ;; now walk backwards
+          (is (cli/search-has-prev?))
+          (cli/search-results-prev-page)
+          (is (= expected-page-2 (cli/search-results)))
+
+          (is (cli/search-has-prev?))
+          (cli/search-results-prev-page)
+          (is (= expected-page-1 (cli/search-results)))
+
+          (is (not (cli/search-has-prev?))))))))

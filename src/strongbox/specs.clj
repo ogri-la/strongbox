@@ -1,6 +1,7 @@
 (ns strongbox.specs
   (:require
    [java-time]
+   [clojure.set :refer [map-invert]]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
    [me.raynes.fs :as fs]))
@@ -48,7 +49,20 @@
 (s/def ::selected? boolean?)
 (s/def ::gui-theme #{:light :dark})
 
-(s/def ::game-track #{:retail :classic})
+;; preserve order, used in GUI
+(def game-track-labels [[:retail "retail"]
+                        [:classic "classic"]])
+(def selectable-game-track-labels (into game-track-labels
+                                        [[:retail-classic "any, prefer retail"]
+                                         [:classic-retail "any, prefer classic"]]))
+
+(def selectable-game-track-labels-map (into {} selectable-game-track-labels))
+(def selectable-game-track-labels-map-inv (map-invert selectable-game-track-labels))
+
+(def game-tracks (->> game-track-labels (into {}) keys set))
+(def selectable-game-tracks (->> selectable-game-track-labels (into {}) keys set))
+
+(s/def ::game-track game-tracks)
 (s/def ::installed-game-track ::game-track) ;; alias
 (s/def ::game-track-list (s/coll-of ::game-track :kind vector? :distinct true))
 (s/def ::download-count (s/and int? #(>= % 0)))
@@ -82,14 +96,20 @@
 
 ;; user config
 
+;; the game tracks *selectable by the user* are mapped to a simpler set internally
+(s/def :addon-dir/game-track selectable-game-tracks)
 (s/def ::addon-dir ::extant-dir)
-(s/def ::addon-dir-map (s/keys :req-un [::addon-dir ::game-track]))
+(s/def ::addon-dir-map (s/keys :req-un [::addon-dir :addon-dir/game-track]))
 (s/def ::addon-dir-list (s/coll-of ::addon-dir-map))
 (s/def ::selected-catalogue keyword?)
 
+(s/def :config/addon-zips-to-keep (s/nilable int?))
+(s/def :config/preferences (s/keys :req-un [:config/addon-zips-to-keep]))
+
 (s/def ::user-config (s/keys :req-un [::addon-dir-list ::selected-addon-dir
                                       ::catalogue-location-list ::selected-catalogue
-                                      ::gui-theme]))
+                                      ::gui-theme
+                                      :config/preferences]))
 
 ;; http
 
@@ -154,8 +174,13 @@
 (s/def ::group-addons :addon/toc-list)
 
 ;; 'nfo' files contain extra per-addon data written to addon directories as .strongbox.json
-(s/def :addon/-nfo (s/keys :req-un [::installed-version ::name ::group-id ::primary? :addon/source
-                                    ::installed-game-track :addon/source-id]
+(s/def :addon/-nfo (s/keys :req-un [::installed-version
+                                    ::name
+                                    ::group-id
+                                    ::primary?
+                                    :addon/source
+                                    ::installed-game-track
+                                    :addon/source-id]
                            :opt-un [::ignore?]))
 
 (s/def :addon/nfo (s/or :ignored ::ignore-flag
@@ -163,13 +188,23 @@
                         :mutual-depedency (s/coll-of :addon/-nfo :kind vector?)))
 
 ;; intermediate spec. minimum amount of data required to create a nfo file. the rest is derived.
-(s/def :addon/nfo-input-minimum (s/keys :req-un [::version ::name
+(s/def :addon/nfo-input-minimum (s/keys :req-un [::version
+                                                 ::name
+                                                 ::game-track
                                                  ::url ;; becomes the `group-id`
-                                                 :addon/source :addon/source-id]))
+                                                 :addon/source
+                                                 :addon/source-id]))
 
 ;; a catalogue entry, essentially
 (s/def :addon/summary
-  (s/keys :req-un [::url ::name ::label :addon/tag-list :addon/updated-date ::download-count :addon/source :addon/source-id]
+  (s/keys :req-un [::url
+                   ::name
+                   ::label
+                   :addon/tag-list
+                   :addon/updated-date
+                   ::download-count
+                   :addon/source
+                   :addon/source-id]
           ;; todo: bug here, `:opt` should be `:opt-un`
           :opt [::description ;; wowinterface summaries have no description
                 :addon/created-date ;; wowinterface summaries have no created date
@@ -182,30 +217,33 @@
 (s/def :addon/match (s/keys :req-un [::matched?]
                             :opt-un [::update?]))
 
-;; bare minimum required to find and 'expand' an addon
+;; bare minimum required to find and 'expand' an addon summary
 (s/def :addon/expandable
-  (s/keys :req-un [::name ::label
+  (s/keys :req-un [::name
+                   ::label
                    :addon/source ;; for host resolver dispatch
                    :addon/source-id ;; unique identifier for host resolver
                    ]
           :opt-un [::game-track-list ;; wowinterface only
                    ]))
 
-;; bare minimum required to install an addon
-(s/def :addon/installable (s/merge
-                           :addon/expandable
-                           :addon/nfo-input-minimum
-                           (s/keys :opt-un [;; present only on imported addons
-                                            ::game-track
-                                            ;; used if present
-                                            ::ignore?])))
-
-(s/def :addon/installable-list (s/coll-of :addon/installable))
-
 ;; the set of per-addon values provided by the remote host on each check
 (s/def :addon/source-updates
-  (s/keys :req-un [::version ::download-url]
+  (s/keys :req-un [::version
+                   ::download-url
+                   ::game-track]
           :opt-un [::interface-version]))
+
+;; result of expanding an addon
+(s/def :addon/expanded (s/merge :addon/expandable :addon/source-updates))
+
+;; bare minimum required to install an addon summary
+(s/def :addon/installable (s/merge
+                           :addon/expanded
+                           :addon/nfo-input-minimum
+                           (s/keys :opt-un [;; used if present
+                                            ::ignore?])))
+(s/def :addon/installable-list (s/coll-of :addon/installable))
 
 ;; addon has nfo data
 (s/def :addon/toc+nfo (s/merge :addon/toc :addon/nfo))

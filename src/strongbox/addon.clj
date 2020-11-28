@@ -104,6 +104,11 @@
     [addon]
     (get addon :group-addons [])))
 
+(defn merge-toc-nfo
+  "it's own function because the logic is duplicated in tests otherwise"
+  [toc nfo]
+  (merge toc nfo))
+
 (defn-spec load-installed-addons :addon/toc-list
   "reads the .toc files from the given addon dir, reads any nfo data for 
   these addons, groups them, returns the mooshed data"
@@ -120,7 +125,7 @@
                          (let [nfo-data (nfo/read-nfo install-dir (:dirname addon))]
                            ;; merge the addon with the nfo data.
                            ;; when `ignore?` flag in addon is `true` but `false` in nfo-data, nfo-data will take precedence.
-                           (merge addon nfo-data)))
+                           (merge-toc-nfo addon nfo-data)))
 
         addon-list (mapv merge-nfo-data addon-list)]
 
@@ -168,7 +173,7 @@
 (defn-spec install-addon (s/or :ok (s/coll-of ::sp/extant-file), :error ::sp/empty-coll)
   "installs an addon given an addon description, a place to install the addon and the addon zip file itself.
   handles suspicious looking bundles, conflicts with other addons, uninstalling previous addon version and updating nfo files."
-  [addon :addon/installable, install-dir ::sp/writeable-dir, downloaded-file ::sp/archive-file, game-track ::sp/game-track]
+  [addon :addon/installable, install-dir ::sp/writeable-dir, downloaded-file ::sp/archive-file]
   (let [zipfile-entries (zip/zipfile-normal-entries downloaded-file)
         toplevel-dirs (zip/top-level-directories zipfile-entries)
         primary-dirname (determine-primary-subdir toplevel-dirs)
@@ -180,14 +185,14 @@
                                     (when sus-addons
                                       (warn (format msg (:label addon) (clojure.string/join ", " sus-addons))))))
 
-        install-addon (fn []
-                        (zip/unzip-file downloaded-file install-dir))
+        unzip-addon (fn []
+                      (zip/unzip-file downloaded-file install-dir))
 
         ;; an addon may unzip to many directories, each directory needs the nfo file
         update-nfo-fn (fn [zipentry]
                         (let [addon-dirname (:path zipentry)
                               primary? (= addon-dirname (:path primary-dirname))
-                              new-nfo-data (nfo/derive addon primary? game-track)
+                              new-nfo-data (nfo/derive addon primary?)
                               new-nfo-data (nfo/add-nfo install-dir addon-dirname new-nfo-data)]
                           (nfo/write-nfo install-dir addon-dirname new-nfo-data)))
 
@@ -203,8 +208,37 @@
       (remove-addon install-dir addon))
 
     (info (format "installing '%s' version '%s'" (:label addon) (:version addon)))
-    (install-addon)
+    (unzip-addon)
     (update-nfo-files)))
+
+(defn-spec downloaded-addon-fname string?
+  "given an addon's `name` and `version`, returns the expected addon zip filename."
+  [name ::sp/name, version ::sp/version]
+  (format "%s--%s.zip" name (utils/slugify version))) ;; addonname--1-2-3.zip
+
+(defn-spec remove-zip-files! nil?
+  "given a directory `install-dir`, and a prefix `addon-name`, find all zip files that match a pattern, sort 
+  them, keep `n-zips-to-keep` files and delete the rest."
+  [install-dir ::sp/install-dir, addon-name ::sp/name, n-zips-to-keep (s/or :ok zero? :also-ok pos-int?)]
+  (let [pattern (re-pattern (str (utils/slugify addon-name) "\\-\\-.+\\.zip$")) ;; #"addonname\-\-.+\.zip$"
+        file-list (fs/find-files install-dir pattern)
+        ;; sort files oldest to newest
+        asc >
+        sorted-file-list (mapv str (sort-by #(.lastModified %) asc file-list))
+        ;; drop N of the newest files
+        to-be-deleted (drop n-zips-to-keep sorted-file-list)
+        failed-to-delete (remove nil? (mapv (partial utils/delete-file! install-dir) to-be-deleted))]
+    (when-not (empty? failed-to-delete)
+      (warn (format "failed to delete: %s"
+                    (clojure.string/join ", " (mapv fs/base-name failed-to-delete))))))
+  nil)
+
+(defn-spec post-install nil?
+  "does any final cleanup tasks.
+  executed immediately after `install-addon`, coordinated by `core.clj`"
+  [addon :addon/installable, install-dir ::sp/install-dir, n-zips-to-keep :config/addon-zips-to-keep]
+  (when n-zips-to-keep
+    (remove-zip-files! install-dir (:name addon) n-zips-to-keep)))
 
 ;;
 

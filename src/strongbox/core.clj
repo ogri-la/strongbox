@@ -206,7 +206,13 @@
    :selected-search []
    ;; number of results to display in search results pane.
    ;; adjust to whatever performs the best
-   :search-results-cap 80})
+   :search-results-cap 80
+
+   :search {:term nil
+            :page 0
+            :results []
+            :selected-results []
+            :results-per-page 60}})
 
 (def state (atom nil))
 
@@ -336,10 +342,10 @@
 (defn-spec set-game-track! nil?
   "changes the game track (retail or classic) for the given `addon-dir`.
   when called without args, changes the game track on the currently selected addon-dir"
-  ([game-track ::sp/game-track]
+  ([game-track :addon-dir/game-track]
    (when-let [addon-dir (selected-addon-dir)]
      (set-game-track! game-track addon-dir)))
-  ([game-track ::sp/game-track, addon-dir ::sp/addon-dir]
+  ([game-track :addon-dir/game-track, addon-dir ::sp/addon-dir]
    (let [tform (fn [addon-dir-map]
                  (if (= addon-dir (:addon-dir addon-dir-map))
                    (assoc addon-dir-map :game-track game-track)
@@ -348,7 +354,7 @@
      (swap! state update-in [:cfg] assoc :addon-dir-list new-addon-dir-map-list)
      nil)))
 
-(defn-spec get-game-track (s/or :ok ::sp/game-track, :missing nil?)
+(defn-spec get-game-track (s/or :ok :addon-dir/game-track, :missing nil?)
   "returns the game track for the given `addon-dir` or the currently selected addon-dir if no `addon-dir` given"
   ([]
    (get-game-track (selected-addon-dir)))
@@ -400,6 +406,7 @@
 (defn-spec expanded? boolean?
   "returns true if an addon has found further details online"
   [addon map?]
+  ;; nice and quick but essentially validating addon against `:addon/installable`
   (some? (:download-url addon)))
 
 (defn start-affecting-addon
@@ -449,15 +456,11 @@
 
 ;; downloading and installing and updating
 
-(defn-spec downloaded-addon-fname string?
-  [name string?, version string?]
-  (format "%s--%s.zip" name (utils/slugify version))) ;; addonname--1-2-3.zip
-
 (defn-spec download-addon (s/or :ok ::sp/archive-file, :http-error :http/error, :error nil?)
   [addon :addon/installable, download-dir ::sp/writeable-dir]
   (info (format "downloading '%s' version '%s'" (:label addon) (:version addon)))
   (when (expanded? addon)
-    (let [output-fname (downloaded-addon-fname (:name addon) (:version addon)) ;; addonname--1-2-3.zip
+    (let [output-fname (addon/downloaded-addon-fname (:name addon) (:version addon)) ;; addonname--1-2-3.zip
           output-path (join (fs/absolute download-dir) output-fname)] ;; /path/to/installed/addons/addonname--1.2.3.zip
       (binding [http/*cache* (cache)]
         (http/download-file (:download-url addon) output-path)))))
@@ -465,23 +468,6 @@
 ;; don't do this. `download-addon` is wrapped by `install-addon` that is already affecting the addon
 ;;(def download-addon
 ;;  (affects-addon-wrapper download-addon))
-
-
-(defn-spec guess-game-track ::sp/game-track
-  "given a map of addon data, attempts to guess the most likely game track it belongs to"
-  [install-dir ::sp/extant-dir, addon map?]
-  (or (:game-track addon) ;; from reading an export record. most of the time this value won't be here
-      (:installed-game-track addon) ;; re-use the value we have if updating an existing addon
-      (cond
-        ;; addon has been successfully expanded, current game track is being used.
-        (expanded? addon) (get-game-track install-dir)
-
-        ;; the interface version is set in the .toc file but is also part of 'expanding' an addon.
-        ;; prefer current game track over this as the real value may be overridden.
-        (some? (:interface-version addon)) (utils/interface-version-to-game-track (:interface-version addon)))
-
-      ;; very last here is for testing only
-      :retail))
 
 (defn-spec install-addon-guard (s/or :ok (s/coll-of ::sp/extant-file), :passed-tests true?, :error nil?)
   "downloads an addon and installs it. 
@@ -498,14 +484,12 @@
 
      :else ;; attempt downloading and installing addon
 
-     (let [downloaded-file (or (:-testing-zipfile addon) ;; don't download, install from this file (testing only right now)
+     (let [;; todo: if -testing-zipfile, move zipfile into download dir
+           ;; this will help the zipfile pruning tests
+           downloaded-file (or (:-testing-zipfile addon) ;; don't download, install from this file (testing only right now)
                                (download-addon addon install-dir))
            bad-zipfile-msg (format "failed to read zip file '%s', could not install %s" downloaded-file (:name addon))
-           bad-addon-msg (format "refusing to install '%s'. It contains top-level files or top-level directories missing .toc files."  (:name addon))
-           ;; installing addon from an export record.
-           ;; a regular `addon` won't have a `game-track` (it has an `:installed-game-track`).
-           game-track (or (:game-track addon) (get-game-track install-dir))]
-
+           bad-addon-msg (format "refusing to install '%s'. It contains top-level files or top-level directories missing .toc files."  (:name addon))]
        (cond
          (map? downloaded-file) (error "failed to download addon, could not install" (:name addon))
 
@@ -531,7 +515,9 @@
 
          test-only? true ;; addon was successfully downloaded and verified as being sound
 
-         :else (addon/install-addon addon install-dir downloaded-file game-track))))))
+         :else (let [result (addon/install-addon addon install-dir downloaded-file)]
+                 (addon/post-install addon install-dir (get-state :cfg :preferences :addon-zips-to-keep))
+                 result))))))
 
 (def install-addon
   (affects-addon-wrapper install-addon-guard))
@@ -672,6 +658,16 @@
          args [(utils/nilable uin) (get-state :search-results-cap)]]
      (or (query-db :search args) empty-results))))
 
+(defn db-search-2
+  "searches database for addons whose name or description contains given user input.
+  if no user input, returns a list of randomly ordered results"
+  ([]
+   ;; random list of addons, no preference
+   (db-search nil))
+  ([search-term]
+   (let [args [(utils/nilable search-term) (get-state :search :results-per-page)]]
+     (query-db :search-2 args))))
+
 (defn-spec load-current-catalogue (s/or :ok :catalogue/catalogue, :error nil?)
   "merges the currently selected catalogue with the user-catalogue and returns the definitive list of addons 
   available to install. Handles malformed catalogue data by re-downloading catalogue."
@@ -695,6 +691,7 @@
           catalogue-data (p :p2/db:catalogue:read-catalogue (catalogue/read-catalogue catalogue-path {:bad-data? bad-json-file-handler}))
           user-catalogue-data (p :p2/db:catalogue:read-user-catalogue (catalogue/read-catalogue (paths :user-catalogue-file) {:bad-data? nil}))
           final-catalogue (p :p2/db:catalogue:merge-catalogues (catalogue/merge-catalogues catalogue-data user-catalogue-data))]
+      (info (str (count final-catalogue) " in final catalogue"))
       final-catalogue)))
 
 (defn-spec db-load-catalogue nil?
@@ -972,10 +969,8 @@
   "handles exports with partial information (name, or name and source) from <=0.10.0 versions of strongbox."
   [addon-list] ;; todo: spec
   (info (format "attempting to import %s addons. this may take a minute" (count addon-list)))
-  (let [matching-addon-list (-import-addon-list-v1 addon-list)
-        addon-dir (selected-addon-dir)]
-    (doseq [addon matching-addon-list]
-      (install-addon addon addon-dir))))
+  (let [matching-addon-list (-import-addon-list-v1 addon-list)]
+    (run! install-addon matching-addon-list)))
 
 ;; v2 uses the same mechanism to match addons as the rest of the app does
 (defn import-addon-list-v2
@@ -996,15 +991,13 @@
         ;; afterwards this will call `update-installed-addon-list!` that will trigger a refresh in the gui
         _ (match-installed-addons-with-catalogue (get-state :db) addon-list)
 
-        addon-dir (selected-addon-dir)
-
         ;; this is what v1 does, but it's hidden away in `expand-summary-wrapper`
         default-game-track (get-game-track)]
 
     (doseq [addon (get-state :installed-addon-list)
             :let [game-track (get addon :game-track default-game-track)]]
       (when-let [expanded-addon (catalogue/expand-summary addon game-track)]
-        (install-addon expanded-addon addon-dir)))))
+        (install-addon expanded-addon)))))
 
 (defn-spec import-exported-file nil?
   "imports a file at given `path` created with the export function.
@@ -1141,10 +1134,8 @@
   [addon-url string?]
   (binding [http/*cache* (cache)]
     (if-let* [addon-summary (catalogue/parse-user-string addon-url)
-              ;; game track doesn't matter when adding it to the user catalogue ...
-              addon (or
-                     (catalogue/expand-summary addon-summary :retail)
-                     (catalogue/expand-summary addon-summary :classic))
+              ;; game track doesn't matter when adding it to the user catalogue. prefer retail though.
+              addon (catalogue/expand-summary addon-summary :retail-classic)
               test-only? true
               _ (install-addon-guard addon (selected-addon-dir) test-only?)]
 

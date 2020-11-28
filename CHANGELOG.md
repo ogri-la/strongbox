@@ -14,6 +14,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## 3.1.0
+
+### Added
+
+* search results pagination
+* retail and classic addons can be installed in the same addon directory, preferring one over the other
+* added 'Preferences' menu
+* add option to remove zip files after installation
+    - `Preferences` -> `Remove addon zip after installation`
+    - this is a global option, it will apply to all addon directories
+
+### Changed
+
+* 'import/export' menu has been moved to the 'file' menu
+* 'addon' menu has been moved to the 'file' menu
+
+### Fixed
+
+* a case where Tukui was returning a `null` value for the `patch` field, causing an error
+
 ## 3.0.1 - 2020-10-20
 
 ### Changed
