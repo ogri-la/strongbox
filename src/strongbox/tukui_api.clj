@@ -3,7 +3,7 @@
    [slugify.core :refer [slugify]]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
-   [taoensso.timbre :as log :refer [debug info warn error spy]]
+   ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [strongbox
     [tags :as tags]
     [http :as http]
@@ -28,6 +28,8 @@
               (= game-track :classic) classic-summary-list-url
               (= game-track :retail) summary-list-url)
 
+        ;; tukui addons do not share IDs across game tracks like curseforge does.
+        ;; 2020-12-02: Tukui has dropped the per-addon endpoint, all results are now lists of items
         addon-list (some-> url http/download utils/nilable http/sink-error utils/from-json)
         addon-list (if (sequential? addon-list)
                      addon-list
@@ -105,8 +107,7 @@
 (defn-spec download-retail-summaries :addon/summary-list
   "downloads and processes all items in the tukui 'live' (retail) catalogue"
   []
-  (info "------------------")
-  (mapv #(process-tukui-item % false) (spy :info (-> summary-list-url http/download utils/from-json))))
+  (mapv #(process-tukui-item % false) (-> summary-list-url http/download utils/from-json)))
 
 (defn-spec download-classic-summaries :addon/summary-list
   "downloads and processes all items in the tukui classic catalogue"
