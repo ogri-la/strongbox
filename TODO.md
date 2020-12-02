@@ -49,6 +49,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* http, add a timeout for requests
+    - I have tukui API taking a looooong time``s
+
 * add support for finding addons by url for other hosts
     - wowinterface
     - curseforge

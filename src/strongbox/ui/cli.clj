@@ -17,6 +17,9 @@
 (defn refresh
   "unlike `core/refresh`, `cli/refresh` removes the http cache files for the current addon dir before checking for addons."
   []
+  ;; todo: be more specific, just the addons in this directory please
+  ;; todo: this is also removing the etag cache
+  ;; todo: is the etag db even being used if a file cache exists?
   (core/delete-http-cache!)
   (core/check-for-updates))
 
