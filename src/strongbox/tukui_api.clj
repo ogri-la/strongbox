@@ -3,15 +3,12 @@
    [slugify.core :refer [slugify]]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
-   ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
+   [taoensso.timbre :as log :refer [debug info warn error spy]]
    [strongbox
     [tags :as tags]
     [http :as http]
     [utils :as utils]
     [specs :as sp]]))
-
-(def summary-url "https://www.tukui.org/api.php?addon=%s")
-(def classic-summary-url "https://www.tukui.org/api.php?classic-addon=%s")
 
 (def summary-list-url "https://www.tukui.org/api.php?addons=all")
 (def classic-summary-list-url "https://www.tukui.org/api.php?classic-addons=all")
@@ -24,16 +21,20 @@
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
   [addon :addon/expandable, game-track ::sp/game-track]
   (let [source-id (:source-id addon)
-        url (cond
-              (neg? source-id) [proper-url (:name addon)]
-              (= game-track :classic) [classic-summary-url source-id]
-              (= game-track :retail) [summary-url source-id])
-        url (apply format url)
+        source-id-str (str source-id)
 
-        ;; tukui addons do not share IDs across game tracks like curseforge does.
-        ;; tukui will also return a successful-but-empty response (200) for addons
-        ;; that don't exist in that catalogue. I'm treating empty responses as 404s.
-        ti (some-> url http/download utils/nilable http/sink-error utils/from-json)
+        url (cond
+              (neg? source-id) (format proper-url (:name addon))
+              (= game-track :classic) classic-summary-list-url
+              (= game-track :retail) summary-list-url)
+
+        addon-list (some-> url http/download utils/nilable http/sink-error utils/from-json)
+        addon-list (if (sequential? addon-list)
+                     addon-list
+                     (-> addon-list (update :id str) vector))
+
+        ti (->> addon-list (filter #(= source-id-str (:id %))) first)
+
         interface-version (when-let [patch (:patch ti)]
                             {:interface-version (utils/game-version-to-interface-version patch)})]
     (when ti
@@ -104,7 +105,8 @@
 (defn-spec download-retail-summaries :addon/summary-list
   "downloads and processes all items in the tukui 'live' (retail) catalogue"
   []
-  (mapv #(process-tukui-item % false) (-> summary-list-url http/download utils/from-json)))
+  (info "------------------")
+  (mapv #(process-tukui-item % false) (spy :info (-> summary-list-url http/download utils/from-json))))
 
 (defn-spec download-classic-summaries :addon/summary-list
   "downloads and processes all items in the tukui classic catalogue"

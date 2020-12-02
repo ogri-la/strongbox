@@ -1,4 +1,4 @@
-{
+[{
   "id": "13",
   "name": "BenikUI Classic",
   "small_desc": "BenikUI is an external ElvUI Classic mod, adding different frame style and new features like detatched portraits and dashboards.",
@@ -14,4 +14,4 @@
   "web_url": "https://www.tukui.org/classic-addons.php?id=13",
   "changelog": "https://www.tukui.org/classic-addons.php?id=13&changelog",
   "donate_url": "https://www.paypal.com/cgi-bin/webscr?cmd=_donations&amp;business=benik23%40msn%2ecom&amp;lc=GR&amp;item_name=Nikos%20Bentis%20%28BenikUI%29%A4cy_code=EUR&amp;bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHost"
-}
+}]
