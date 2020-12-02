@@ -9,7 +9,7 @@
 
 (deftest parse-addons
   (testing "parsing retail/'live' addons"
-    (let [fixture (format "[%s]" (slurp (fixture-path "tukui--addon-details.json")))
+    (let [fixture (slurp (fixture-path "tukui--addon-details.json"))
 
           fake-routes {tukui-api/summary-list-url
                        {:get (fn [req] {:status 200 :body fixture})}}
@@ -25,10 +25,11 @@
                      :source-id 98,
                      :url "https://www.tukui.org/addons.php?id=98"}]]
       (with-fake-routes-in-isolation fake-routes
-        (is (= expected (tukui-api/download-retail-summaries))))))
+        (is (= expected (tukui-api/download-retail-summaries)))))))
 
+(deftest parse-addons--classic
   (testing "parsing classic addons"
-    (let [fixture (format "[%s]" (slurp (fixture-path "tukui--classic-addon-details.json")))
+    (let [fixture (slurp (fixture-path "tukui--classic-addon-details.json"))
           fake-routes {tukui-api/classic-summary-list-url
                        {:get (fn [req] {:status 200 :body fixture})}}
 
@@ -43,8 +44,9 @@
                      :source-id 13,
                      :url "https://www.tukui.org/classic-addons.php?id=13"}]]
       (with-fake-routes-in-isolation fake-routes
-        (is (= expected (tukui-api/download-classic-summaries))))))
+        (is (= expected (tukui-api/download-classic-summaries)))))))
 
+(deftest parse-addons--proper
   (testing "parsing tukui/elvui addons proper"
     (let [fixture (slurp (fixture-path "tukui--elvui-addon-proper.json"))
           fake-routes {tukui-api/elvui-proper-url
@@ -70,7 +72,7 @@
           source-id 98
           game-track :retail
 
-          fake-routes {(format tukui-api/summary-url source-id)
+          fake-routes {(format tukui-api/summary-list-url source-id)
                        {:get (fn [req] {:status 200 :body fixture})}}
 
           addon-summary {:description "Add roleplaying fields to ElvUI to create RP UIs.",
@@ -151,7 +153,7 @@
 
           game-track :retail
 
-          fake-routes {(format tukui-api/summary-url source-id)
+          fake-routes {(format tukui-api/summary-list-url source-id)
                        {:get (fn [req] {:status 200 :body fixture})}}
 
           addon-summary {:description "Add roleplaying fields to ElvUI to create RP UIs.",
