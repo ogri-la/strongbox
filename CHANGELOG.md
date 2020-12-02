@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## 3.1.1
+
+### Fixed
+
+* tukui, changes to accommodate their change in API
+
 ## 3.1.0
 
 ### Added
