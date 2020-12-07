@@ -15,6 +15,7 @@
     [config :as config]
     [zip :as zip]
     [http :as http]
+    [http2 :as http2]
     [logging :as logging]
     [nfo :as nfo]
     [utils :as utils :refer [join nav-map nav-map-fn delete-many-files! static-slurp expand-path if-let*]]
@@ -250,7 +251,7 @@
   []
   {;;:etag-db (get-state :etag-db) ;; don't do this. encourages stale reads of the etag-db
    :set-etag set-etag
-   :get-etag #(get-state :etag-db %) ;; do this instead
+   :get-etag #(-> (get-state :etag-db) (get %)) ;; do this instead
    :cache-dir (paths :cache-dir)})
 
 (defn-spec add-cleanup-fn nil?
@@ -463,8 +464,8 @@
   (when (expanded? addon)
     (let [output-fname (addon/downloaded-addon-fname (:name addon) (:version addon)) ;; addonname--1-2-3.zip
           output-path (join (fs/absolute download-dir) output-fname)] ;; /path/to/installed/addons/addonname--1.2.3.zip
-      (binding [http/*cache* (cache)]
-        (http/download-file (:download-url addon) output-path)))))
+      (binding [http2/*cache* (cache)]
+        (http2/download-file (:download-url addon) output-path)))))
 
 ;; don't do this. `download-addon` is wrapped by `install-addon` that is already affecting the addon
 ;;(def download-addon
@@ -583,11 +584,11 @@
 (defn-spec download-catalogue (s/or :ok ::sp/extant-file, :error nil?)
   "downloads catalogue to expected location, nothing more"
   [catalogue-location :catalogue/location]
-  (binding [http/*cache* (cache)]
+  (binding [http2/*cache* (cache)]
     (let [remote-catalogue (:source catalogue-location)
           local-catalogue (catalogue-local-path catalogue-location)
           message (format "downloading catalogue: %s" (name (:name catalogue-location)))
-          resp (http/download-file remote-catalogue local-catalogue message)]
+          resp (spy :info (http2/download-file remote-catalogue local-catalogue))] ;; message)]
       (when-not (http/http-error? resp)
         resp))))
 
@@ -748,10 +749,16 @@
 
 ;;
 
+(defn dl
+  [url output-file]
+  (binding [http2/*cache* (cache)]
+    (info "---" "etagdb:" (get-state :etag-db))
+    (http2/download-file url output-file)))
+
 (defn-spec refresh-user-catalogue nil?
   "re-fetch each item in user catalogue using the URI and replace old entry with any updated details"
   []
-  (binding [http/*cache* (cache)]
+  (binding [http2/*cache* (cache)]
     (info "refreshing \"user-catalogue.json\", this may take a minute ...")
     (->> (get-create-user-catalogue)
          :addon-summary-list
@@ -765,7 +772,7 @@
 
 (defn expand-summary-wrapper
   [addon-summary]
-  (binding [http/*cache* (cache)]
+  (binding [http2/*cache* (cache)]
     (let [game-track (get-game-track) ;; scope creep, but it fits so nicely
           wrapper (affects-addon-wrapper catalogue/expand-summary)]
       (wrapper addon-summary game-track))))
@@ -885,10 +892,10 @@
 (defn-spec latest-strongbox-release string?
   "returns the most recently released version of strongbox it can find"
   []
-  (binding [http/*cache* (cache)]
+  (binding [http2/*cache* (cache)]
     (let [message "downloading strongbox version data"
           url "https://api.github.com/repos/ogri-la/strongbox/releases/latest"
-          resp (utils/from-json (http/download url message))]
+          resp (utils/from-json (http2/download url))] ;; message))]
       (-> resp :tag_name))))
 
 (defn-spec latest-strongbox-version? boolean?
@@ -1133,7 +1140,7 @@
   "convenience. parses string, adds to user catalogue, installs addon then reloads database.
   relies on UI to call refresh (or not)"
   [addon-url string?]
-  (binding [http/*cache* (cache)]
+  (binding [http2/*cache* (cache)]
     (if-let* [addon-summary (catalogue/parse-user-string addon-url)
               ;; game track doesn't matter when adding it to the user catalogue. prefer retail though.
               addon (catalogue/expand-summary addon-summary :retail-classic)

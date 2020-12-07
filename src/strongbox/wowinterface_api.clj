@@ -5,7 +5,9 @@
    [strongbox
     [utils :as utils]
     [specs :as sp]
-    [http :as http]]
+    [http :as http]
+    [http2 :as http2]
+    ]
    [taoensso.timbre :as log :refer [debug info warn error spy]]))
 
 (def wowinterface-api "https://api.mmoui.com/v3/game/WOW")
@@ -19,7 +21,7 @@
   ;; until wowinterface improve, and short of doing more scraping of html, this is the best we can do.
   (if (some #{game-track} (:game-track-list addon-summary))
     (let [url (str wowinterface-api "/filedetails/" (:source-id addon-summary) ".json")
-          result-list (some-> url http/download http/sink-error utils/from-json)
+          result-list (some-> url http2/download http/sink-error utils/from-json)
           result (first result-list)]
       (when result
         (when (> (count result-list) 1)

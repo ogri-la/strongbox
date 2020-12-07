@@ -119,6 +119,7 @@
 (s/def :http/error (s/keys :req-un [:http/reason-phrase :http/status :http/host]))
 (s/def :http/body any?) ;; even a nil body is allowed (304 Not Modified)
 (s/def :http/resp (s/keys :req-un [:http/status :http/body])) ;; *at least* these keys, it will definitely have others
+(s/def :http/req map?) ;; boo, improve
 
 ;; zipfiles
 
