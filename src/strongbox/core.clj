@@ -1171,6 +1171,26 @@
   (swap! state assoc :in-repl? (utils/in-repl?))
   nil)
 
+(defn-spec dump-useful-log-info nil?
+  "writes selected system properties to the log.
+  mostly concerned with OS, Java and JavaFX versions."
+  []
+  (let [useful-keys ["strongbox.version"
+                     "os.name"
+                     "os.version"
+                     "os.arch"
+                     "java.runtime.name"
+                     "java.vm.name"
+                     "java.version"
+                     "java.runtime.version"
+                     "java.vendor.url"
+                     "java.version.date"
+                     "java.awt.graphicsenv"                     
+                     "javafx.version"
+                     "javafx.runtime.version"]
+        props (System/getProperties)]
+    (run! #(info (format "%s=%s" % (get props %))) useful-keys)))
+
 ;;
 
 (defn -start
@@ -1198,6 +1218,6 @@
     (f))
   (when (and @state
              (logging/debug-mode?))
-    (info "strongbox" (strongbox-version))
+    (dump-useful-log-info)
     (info "wrote logs to:" (paths :log-file)))
   (reset! state nil))

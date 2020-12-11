@@ -6,32 +6,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-## todo
-
-* issue #204 "Dark theme - "addon has update" row color could be more clear"
-    - https://github.com/ogri-la/strongbox/issues/204
-
-* issue #206 "mac, 3.0.1 crashes/exits without warning"
-    - https://github.com/ogri-la/strongbox/issues/206
-    - very fucking mysterious
-
-* import v2, change addon dir game-track to a compound one prior to importing
-    - this will prevent addons from being skipped
-
-* add OS and Java versions to debug file output
-
-* reconciliation, revisit aliases
-    - use source and source-id now
-    - maybe externalise the list
-
-* better icon for appimage
-
-* gui, add confirmation before deleting addon directory
-    - language should be 'remove' rather than 'delete'
-
-* github, if multiple releases available and first fails criteria, check the next and so on
-    - see altoholic: https://github.com/teelolws/Altoholic-Classic
-
 * issue 209, http, revisit the http/expiry-offset-hours value
     - https://github.com/ogri-la/strongbox/issues/209
     - drop to 24 at the very least
@@ -46,6 +20,35 @@ see CHANGELOG.md for a more formal list of changes by release
                 - we want 'refresh'/'f5' to behave like the oldschool ctrl-f5 'hard refresh' and bypass caching
                 - we want regular refreshes, like when switching addon directories or game tracks or catalogues
     - also, revisit prune-http-cache
+    - done
+
+* add OS and Java versions to debug file output
+    - done
+
+## todo
+
+* issue #204 "Dark theme - "addon has update" row color could be more clear"
+    - https://github.com/ogri-la/strongbox/issues/204
+
+* issue #206 "mac, 3.0.1 crashes/exits without warning"
+    - https://github.com/ogri-la/strongbox/issues/206
+    - very fucking mysterious
+
+* import v2, change addon dir game-track to a compound one prior to importing
+    - this will prevent addons from being skipped
+
+* reconciliation, revisit aliases
+    - use source and source-id now
+    - maybe externalise the list
+
+* better icon for appimage
+
+* gui, add confirmation before deleting addon directory
+    - language should be 'remove' rather than 'delete'
+
+* github, if multiple releases available and first fails criteria, check the next and so on
+    - see altoholic: https://github.com/teelolws/Altoholic-Classic
+
 
 ## todo bucket (no particular order)
 
