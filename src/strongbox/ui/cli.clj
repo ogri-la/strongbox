@@ -14,8 +14,21 @@
 
 (comment "the UIs pool their logic here, which calls core.clj.")
 
+(defn refresh
+  "unlike `core/refresh`, `cli/refresh` clears the http cache before checking for addon updates."
+  []
+  ;; why can we be more specific, like just the addons for the current addon-dir?
+  ;; the url used to 'expand' an addon from the catalogue isn't preserved.
+  ;; it may also change with the game track (tukui, historically) or not even exist (tukui, currently)
+  ;; a thorough accounting would be too much code.
+
+  ;; this is also removing the etag cache.
+  ;; the etag db is pretty worthless and only applies to catalogues and downloaded zip files.
+  (core/delete-http-cache!)
+  (core/check-for-updates))
+
 (defn-spec set-addon-dir! nil?
-  "adds/sets an addon-dir marks it as selected, partial refresh of application state"
+  "adds/sets an addon-dir, partial refresh of application state"
   [addon-dir ::sp/addon-dir]
   (core/set-addon-dir! addon-dir)
   (core/load-installed-addons)

@@ -32,11 +32,59 @@ see CHANGELOG.md for a more formal list of changes by release
 * github, if multiple releases available and first fails criteria, check the next and so on
     - see altoholic: https://github.com/teelolws/Altoholic-Classic
 
-* http, revisit the http/expiry-offset-hours value
+* issue 209, http, revisit the http/expiry-offset-hours value
+    - https://github.com/ogri-la/strongbox/issues/209
     - drop to 24 at the very least
+        - already at 24
+        - I guess the problem is the case where a user is polling an addon for updates and a cached response is being returned
+            - a refresh should go and hit all of the addons again
+            - but refreshing is also being used to 'reload' the addons
+                - perhaps I'm using refresh too loosely
+                    - ui/cli.clj is already doing 'bits' of a refresh and skipping some parts
+                - the step we want to avoid in refresh is `core/check-for-updates`
+            - so we want a fast one and we want an uncached one?
+                - we want 'refresh'/'f5' to behave like the oldschool ctrl-f5 'hard refresh' and bypass caching
+                - we want regular refreshes, like when switching addon directories or game tracks or catalogues
     - also, revisit prune-http-cache
 
 ## todo bucket (no particular order)
+
+* if a match has been made and the addon installed using that match, and then the catalogue changes, addon should still be downloadable
+    - right?
+        - we have the source and source-id, even the group-id to some extent
+    - switching catalogues may see the addon matched against another host
+        - nothing wrong with that, but ...
+
+* http, add a timeout for requests
+    - I have tukui API taking a looooong time``s
+
+* add support for finding addons by url for other hosts
+    - wowinterface
+    - curseforge
+    - but these addons already exist in the main catalog ...
+        - should they be taken to a search results page?
+        - because what is presumably happening is the user can't find their addon in the search results (or can't be arsed to) and is saying "just install this please"
+            - but wowman uses catalogs as a source of data, so if it can't find the addon in the catalog, then what? 
+                - fail? but the user just gave us a URL (UNIVERSAL RESOURCE LOCATOR) ! what is the fucking problem here?
+    - the problem is expectations. wowman doesn't scrape addon host website HTML if it can avoid it
+        - and user enters addon host website URL
+    - this should be solved with more sophisticated catalogue searching
+        - parse identifiers from URL, like source and source ID, then display search results
+            - again, by encouraging the copying+pasting of URLs and then failing to find results when the URL IS RIGHT THERE AND WORKING we set ourselves up for failure and the user for disappointment/frustration
+    - parking this
+        - 2020-11-28: unparking this
+        - since this was parked I've added source-id and source as standard across all addons
+            - user just needs to copy and paste a url, strongbox matches it against catalogue, and installs it.
+
+* gui, feature, install addon from local zipfile
+    - *not* the 'reinstallation' feature, but literally selecting a zipfile from somewhere and installing it
+    - would be good for installing older versions of an addon?
+    - would be good for installing addons from unsupported sources
+        - wouldn't be able to update it however :(
+        - I think I'll stick with supporting sources of addons 
+            - rather than enabling ad-hoc installation of unsupported addons
+
+* search, results not updated when catalogue is changed
 
 * gitlab as addon host
     - https://gitlab.com/search?search=wow+addon
@@ -225,6 +273,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## unified UI
 
+* remove log split
 * remove tabs
 * gui, both panes, filter by categories
 * gui, group results
@@ -257,28 +306,14 @@ see CHANGELOG.md for a more formal list of changes by release
 * windows support
     - windows is just the worst, most awful dystopian software I've ever seen and it hurts my soul every time I try to use it
     - I just plain hate it, it epitomises the very opposite of what I stand for and I refuse to work on it ever again
-
-* add support for finding addons by url for other hosts
-    - wowinterface
-    - curseforge
-    - but these addons already exist in the main catalog ...
-        - should they be taken to a search results page?
-        - because what is presumably happening is the user can't find their addon in the search results (or can't be arsed to) and is saying "just install this please"
-            - but wowman uses catalogs as a source of data, so if it can't find the addon in the catalog, then what? 
-                - fail? but the user just gave us a URL (UNIVERSAL RESOURCE LOCATOR) ! what is the fucking problem here?
-    - the problem is expectations. wowman doesn't scrape addon host website HTML if it can avoid it
-        - and user enters addon host website URL
-    - this should be solved with more sophisticated catalogue searching
-        - parse identifiers from URL, like source and source ID, then display search results
-            - again, by encouraging the copying+pasting of URLs and then failing to find results when the URL IS RIGHT THERE AND WORKING we set ourselves up for failure and the user for disappointment/frustration
-    - parking this
 * addon 'detail' tab
     - link to curseforge
     - donation url
     - other addons by author ?
     - list the hidden/sub dependencies
     - too vague, too open ended, too much effort
-* addons distributed as .rar files
+        - just send them to the official addon page
+* .rar/.tar.gz addons
     - !BeautyLoot on wowinterface is an example of this
         - https://www.wowinterface.com/downloads/info20212
     - rar is a proprietary format
@@ -286,8 +321,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - no native support in java/clojure for it
         - library here: https://github.com/junrar/junrar
             - just found it while going through minion source
-    - would I consider .tar.gz distributed addons?
-        - mmmmmmmm I want to say yes, but 'no', for now.
 * fallback to using :group-id (a uri) if curseforge.json is not available
     - low priority
     - curseforge.json will only ever be missing:
@@ -299,34 +332,11 @@ see CHANGELOG.md for a more formal list of changes by release
             - it may change in the future
         - there is a really really slim chance of this actually happening
             - I don't think it justifies the extra complexity tbh
-* curseforge, addons whose :name changes
-    - see 'speedyloot' that changed to 'speedyautoloot'
-        - they share the same creation date
-        - /speedyloot now redirects to /speedyautoloot, so curseforge definitely have support for name changing
-        - wowinterface probably doesn't
-            - or it does, users are creating duplicate addons
-    - ignoring until this becomes a problem somehow
-* gui, feature, install addon from local zipfile
-    - *not* the 'reinstallation' feature, but literally selecting a zipfile from somewhere and installing it
-    - would be good for installing older versions of an addon?
-    - would be good for installing addons from unsupported sources
-        - wouldn't be able to update it however :(
-        - I think I'll stick with supporting sources of addons 
-            - rather than enabling ad-hoc installation of unsupported addons
-    - see item in TODO for custom user catalogs
+    - 2020-11-28: I think this was about being able to download catalogues (curseforge.json) when github is down
+        - if a catalogue is embedded then we can always fall back to that
+        - see EOL planning
 * gui, search pane, clear search button
     - I don't think this is necessary anymore
-* bug, 'whoa thick frames' is reporting a version number of '0.9.zip'
-    - toc file just says '0.9'
-    - update: it's using the version value from curseforge which *is* '0.9.zip'
-        - addon problem, wontfix
-    - update2: this seems to happen a lot actually
-        - I can also see
-            - zep-mix-damage-taken
-            - training grounds
-            - pvp-mate addon
-            - mekka robo helper
-            - jcs media sounds
 * gui, stateful buttons
     - don't allow enabled 'delete selected' buttons if nothing is selected
     - not going to coddle the user. deleting nothing will see nothing deleted.

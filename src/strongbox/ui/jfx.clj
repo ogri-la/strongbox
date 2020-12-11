@@ -617,7 +617,7 @@
         prefs-menu [{:fx/type menu-item--num-zips-to-keep}]
 
         view-menu (into
-                   [(menu-item "Refresh" (async-handler core/refresh) {:key "F5"})
+                   [(menu-item "Refresh" (async-handler cli/refresh) {:key "F5"})
                     separator
                     (menu-item "_Installed" (switch-tab-handler INSTALLED-TAB) {:key "Ctrl+I"})
                     (menu-item "Searc_h" (switch-tab-handler SEARCH-TAB) {:key "Ctrl+H"})
