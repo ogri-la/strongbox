@@ -49,6 +49,12 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* if a match has been made and the addon installed using that match, and then the catalogue changes, addon should still be downloadable
+    - right?
+        - we have the source and source-id, even the group-id to some extent
+    - switching catalogues may see the addon matched against another host
+        - nothing wrong with that, but ...
+
 * http, add a timeout for requests
     - I have tukui API taking a looooong time``s
 
