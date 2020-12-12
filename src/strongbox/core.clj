@@ -1185,7 +1185,7 @@
                      "java.runtime.version"
                      "java.vendor.url"
                      "java.version.date"
-                     "java.awt.graphicsenv"                     
+                     "java.awt.graphicsenv"
                      "javafx.version"
                      "javafx.runtime.version"]
         props (System/getProperties)]

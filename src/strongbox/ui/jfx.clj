@@ -315,23 +315,29 @@
   "displays an alert dialog to the user with varying button combinations they can press.
   the result object is a weirdo `java.util.Optional` https://docs.oracle.com/javase/8/docs/api/java/util/Optional.html
   whose `.get` return value is equal to the button type clicked"
-  [event msg & [opt-map]]
+  [alert-type-key msg & [opt-map]]
   @(fx/on-fx-thread
-    (let [window (-> event .getTarget .getParentPopup .getOwnerWindow .getScene .getWindow)
-          alert-type-map {:warning Alert$AlertType/WARNING
+    (let [alert-type-map {:warning Alert$AlertType/WARNING
                           :error Alert$AlertType/ERROR
                           :confirm Alert$AlertType/CONFIRMATION
                           :info Alert$AlertType/INFORMATION}
-          alert-type-key (get opt-map :type, :info)
           alert-type (get alert-type-map alert-type-key)
           widget (doto (Alert. alert-type)
                    (.setTitle (:title opt-map))
                    (.setHeaderText (:header opt-map))
                    (.setContentText msg)
-                   (.initOwner window))]
+                   (.initOwner (get-window)))]
       (when (:content opt-map)
         (.setContent (.getDialogPane widget) (:content opt-map)))
       (.showAndWait widget))))
+
+(defn-spec confirm boolean?
+  "displays a confirmation prompt with the given `heading` and `message`.
+  `heading` may be `nil`.
+  returns `true` if the 'ok' button is clicked, else `false`."
+  [heading (s/nilable string?), message string?]
+  (let [result (alert :confirm message {:title "confirm" :header heading})]
+    (= (.get result) ButtonType/OK)))
 
 ;;
 
@@ -450,9 +456,9 @@
   * latest release has a packaged 'asset'
   * asset must be a .zip file
   * zip file must be structured like an addon"
-        failure #(alert event fail-msg {:type :error})
+        failure #(alert :error fail-msg)
         warn-msg "Failed. Addon successfully added to catalogue but could not be installed."
-        warning #(alert event warn-msg {:type :warning})]
+        warning #(alert :warning warn-msg)]
     (when addon-url
       (if-let [result (core/add+install-user-addon! addon-url)]
         (when-not (contains? result :download-url)
@@ -512,8 +518,7 @@
 (defn about-strongbox-dialog
   "displays an informational dialog to the user about strongbox"
   [event]
-  (alert event "" {:type :info
-                   :content (-> (-about-strongbox-dialog) fx/create-component fx/instance)})
+  (alert :info "" {:content (-> (-about-strongbox-dialog) fx/create-component fx/instance)})
   nil)
 
 (defn remove-selected-confirmation-handler
@@ -521,7 +526,7 @@
   [event]
   (when-let [selected (core/get-state :selected-installed)]
     (if (utils/any (mapv :ignore? selected))
-      (alert event "Selection contains ignored addons. Stop ignoring them and then delete." {:type :error})
+      (alert :error "Selection contains ignored addons. Stop ignoring them and then delete.")
 
       (let [label-list (mapv (fn [row]
                                {:fx/type :text
@@ -529,8 +534,7 @@
             content (fx/create-component {:fx/type :v-box
                                           :children (into [{:fx/type :text
                                                             :text (format "Deleting %s:" (count selected))}] label-list)})
-            result (alert event "" {:content (fx/instance content)
-                                    :type :confirm})]
+            result (alert :confirm "" {:content (fx/instance content)})]
         (when (= (.get result) ButtonType/OK)
           (core/remove-selected)))))
   nil)
@@ -551,6 +555,14 @@
   ;; note: don't know how to do this in jfx
   ;;(ss/selection! (select-ui :#tbl-search-addons) nil) 
   (core/refresh))
+
+;;
+
+(defn remove-addon-dir
+  []
+  (when (confirm "Confirm" ;; soft touch here, it's not a big deal.
+                 "You can add this directory back at any time.")
+    (cli/remove-addon-dir!)))
 
 ;;
 
@@ -602,7 +614,7 @@
   "returns a description of the menu at the top of the application"
   [{:keys [fx/context]}]
   (let [file-menu [(menu-item "_New addon directory" (event-handler wow-dir-picker) {:key "Ctrl+N"})
-                   (menu-item "Remove addon directory" (async-handler cli/remove-addon-dir!))
+                   (menu-item "Remove addon directory" (async-handler remove-addon-dir))
                    separator
                    (menu-item "_Update all" (async-handler core/install-update-all) {:key "Ctrl+U"})
                    (menu-item "Re-install all" (async-handler core/re-install-all))

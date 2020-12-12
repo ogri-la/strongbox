@@ -25,6 +25,9 @@ see CHANGELOG.md for a more formal list of changes by release
 * add OS and Java versions to debug file output
     - done
 
+* gui, add confirmation before deleting addon directory
+    - language should be 'remove' rather than 'delete'
+
 ## todo
 
 * issue #204 "Dark theme - "addon has update" row color could be more clear"
@@ -43,12 +46,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * better icon for appimage
 
-* gui, add confirmation before deleting addon directory
-    - language should be 'remove' rather than 'delete'
-
 * github, if multiple releases available and first fails criteria, check the next and so on
     - see altoholic: https://github.com/teelolws/Altoholic-Classic
-
 
 ## todo bucket (no particular order)
 
