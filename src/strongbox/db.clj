@@ -26,7 +26,8 @@
         arg-vals (mapv #(get installed-addon %) toc-keys)
         missing-args? (some nil? arg-vals)
 
-        ;; there are cases where the installed-addon is missing an attribute to match on. typically happens on :alias
+        ;; there are cases where the installed-addon is missing an attribute to match on.
+        ;; typically happened on the old `:alias` key that has since been replaced but we also have cases of missing `:title` values.
         _ (when missing-args?
             (debug "failed to find all values for db search, refusing to match against nil values. keys:" toc-keys "; vals:" arg-vals))
 
@@ -72,7 +73,6 @@
         ;; most -> least desirable match
         ;; nest to search across multiple parameters
         match-on-list [[[:source :source-id] [:source :source-id]] ;; source+source-id, perfect case
-                       [:alias :name] ;; alias = name, popular addon's hardcoded name to a catalogue item
                        [:source :name] ;; source+name, we have a source but no source-id (nfo-v1 files)
                        [:name :name]
                        [:label :label]

@@ -28,6 +28,11 @@ see CHANGELOG.md for a more formal list of changes by release
 * gui, add confirmation before deleting addon directory
     - language should be 'remove' rather than 'delete'
 
+* reconciliation, revisit aliases
+    - use source and source-id now
+        - done
+    - maybe externalise the list
+
 ## todo
 
 * issue #204 "Dark theme - "addon has update" row color could be more clear"
@@ -39,10 +44,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * import v2, change addon dir game-track to a compound one prior to importing
     - this will prevent addons from being skipped
-
-* reconciliation, revisit aliases
-    - use source and source-id now
-    - maybe externalise the list
 
 * better icon for appimage
 
