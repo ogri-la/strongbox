@@ -317,7 +317,10 @@
   whose `.get` return value is equal to the button type clicked"
   [event msg & [opt-map]]
   @(fx/on-fx-thread
-    (let [window (-> event .getTarget .getParentPopup .getOwnerWindow .getScene .getWindow)
+    (let [window (if event
+                   ;; any benefit to keeping this?
+                   (-> event .getTarget .getParentPopup .getOwnerWindow .getScene .getWindow)
+                   (get-window))
           alert-type-map {:warning Alert$AlertType/WARNING
                           :error Alert$AlertType/ERROR
                           :confirm Alert$AlertType/CONFIRMATION
@@ -332,6 +335,14 @@
       (when (:content opt-map)
         (.setContent (.getDialogPane widget) (:content opt-map)))
       (.showAndWait widget))))
+
+(defn-spec confirm boolean?
+  "displays a confirmation prompt with the given `heading` and `message`.
+  `heading` may be `nil`.
+  returns `true` if the 'ok' button is clicked, else `false`."
+  [heading (s/nilable string?), message string?]
+  (let [result (alert nil message {:title "Confirm" :header heading :type :confirm})]
+    (= (.get result) ButtonType/OK)))
 
 ;;
 
@@ -554,6 +565,14 @@
 
 ;;
 
+(defn remove-addon-dir
+  []
+  (when (confirm "Confirm" ;; soft touch here, it's not a big deal.
+                 "You can add this directory back at any time.")
+    (cli/remove-addon-dir!)))
+
+;;
+
 (def separator
   "horizontal rule to logically separate menu items"
   {:fx/type fx/ext-instance-factory
@@ -602,7 +621,7 @@
   "returns a description of the menu at the top of the application"
   [{:keys [fx/context]}]
   (let [file-menu [(menu-item "_New addon directory" (event-handler wow-dir-picker) {:key "Ctrl+N"})
-                   (menu-item "Remove addon directory" (async-handler cli/remove-addon-dir!))
+                   (menu-item "Remove addon directory" (async-handler remove-addon-dir))
                    separator
                    (menu-item "_Update all" (async-handler core/install-update-all) {:key "Ctrl+U"})
                    (menu-item "Re-install all" (async-handler core/re-install-all))
