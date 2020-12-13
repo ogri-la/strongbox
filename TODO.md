@@ -33,6 +33,11 @@ see CHANGELOG.md for a more formal list of changes by release
         - done
     - maybe externalise the list
 
+* bug, resolve addon directory before attempting to uninstall it
+    - using the import function with a :dirname of './' I managed to delete the addon directory
+    - dirname should have been resolved, compared with install dir and ensured they were not the same as well as dirname being a child of install-dir
+    - fixed
+
 ## todo
 
 * issue #204 "Dark theme - "addon has update" row color could be more clear"
@@ -54,10 +59,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * create a parser for that shit markup that is preventing reconcilation
     - see aliases
-
-* bug, resolve addon directory before attempting to uninstall it
-    - using the import function with a :dirname of './' I managed to delete the addon directory
-    - dirname should have been resolved, compared with install dir and ensured they were not the same as well as dirname being a child of install-dir
 
 * if a match has been made and the addon installed using that match, and then the catalogue changes, addon should still be downloadable
     - right?

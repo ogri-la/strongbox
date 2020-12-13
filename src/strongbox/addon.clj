@@ -12,25 +12,36 @@
     [zip :as zip]
     [specs :as sp]]))
 
+(def dummy-dirname "not-the-addon-dir-you-are-looking-for")
+
 (defn-spec -remove-addon nil?
   "safely removes the given `addon-dirname` from `install-dir`"
   [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, group-id (s/nilable ::sp/group-id)]
   (let [addon-path (fs/file install-dir (fs/base-name addon-dirname)) ;; `fs/base-name` strips any parents
         addon-path (-> addon-path fs/absolute fs/normalized)]
-    ;; if after resolving the given addon dir it's still within the install-dir, remove it
-    (if (and
-         (fs/directory? addon-path)
-         (starts-with? addon-path install-dir)) ;; don't delete anything outside of install dir!
-      (if-not (nfo/mutual-dependency? install-dir addon-dirname)
-        (do
-          (fs/delete-dir addon-path)
-          (debug (format "removed '%s'" addon-path)))
+    (cond
+      ;; todo: unhandled case here when importing addons into a directory of pre-existing addons.
+      ;; what happens when we import the same set of addons over each other? it bypasses the mutual dependency handling for one thing ...
+      (= addon-dirname dummy-dirname) (debug "dummy dirname found, skipping removal")
 
-        (let [updated-nfo-data (nfo/rm-nfo install-dir addon-dirname group-id)]
-          (nfo/write-nfo install-dir addon-dirname updated-nfo-data)
-          (debug (format "removed '%s' as mutual dependency" addon-dirname))))
+      ;; directory to remove is not a directory!
+      (not (fs/directory? addon-path))
+      (error (str "addon not removed, path is not a directory: " addon-path))
+      
+      ;; directory to remove is outside of addon directory (or exactly equal to it)!
+      (or (not (starts-with? addon-path install-dir))
+          (= addon-path install-dir))
+      (format "directory '%s' is outside the current installation dir of '%s', not removing" addon-path install-dir)
 
-      (error (format "directory '%s' is outside the current installation dir of '%s', not removing" addon-path install-dir)))))
+      ;; other addons depend on this addon, just remove the nfo file
+      (nfo/mutual-dependency? install-dir addon-dirname)
+      (let [updated-nfo-data (nfo/rm-nfo install-dir addon-dirname group-id)]
+        (nfo/write-nfo install-dir addon-dirname updated-nfo-data)
+        (debug (format "removed '%s' as mutual dependency" addon-dirname)))
+
+      ;; all good, remove addon
+      :else (do (fs/delete-dir addon-path)
+                (debug (format "removed '%s'" addon-path))))))
 
 (defn-spec remove-addon nil?
   "removes the given addon. if addon is part of a group, all addons in group are removed"

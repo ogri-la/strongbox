@@ -983,7 +983,7 @@
         padding {:label ""
                  :description ""
                  ;; 2020-06: dirname must be a non-empty string
-                 :dirname "not-the-addon-dir-you-are-looking-for"
+                 :dirname addon/dummy-dirname
                  :interface-version 0
                  :installed-version "0"}
         addon-list (map #(merge padding %) addon-list)
