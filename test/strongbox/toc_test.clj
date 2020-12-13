@@ -98,7 +98,7 @@ SomeAddon.lua")
                      :dirname "EveryAddon"
                      :label "EveryAddon *"
                      :description nil
-                     :interface-version 80200
+                     :interface-version toc/default-interface-version
                      :installed-version nil}
 
           cases [;; empty/no title

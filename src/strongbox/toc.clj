@@ -12,12 +12,12 @@
 
 ;; interface version to use if .toc file is missing theirs
 ;; assume addon is compatible with the most recent version
-(def default-interface-version 80200)
+(def default-interface-version 90100)
 
 ;; matches a tocfile's 'Title' (label) to a catalogue's name
 ;; aliases are maintained for the top-50 downloaded addons (ever) only, and only for those that need it
 ;; best and nicest way to avoid needing an alias is to have your .toc 'Title' attribute match your curseforge addon name
-(def aliases
+(def aliases1
   {"AtlasLoot |cFF22B14C[Core]|r" {:source "curseforge" :source-id 2134}
    "BigWigs [|cffeda55fCore|r]" {:source "curseforge" :source-id 2382}
    "|cffffd200Deadly Boss Mods|r |cff69ccf0Core|r" {:source "curseforge" :source-id 8814}
@@ -33,6 +33,19 @@
    "Omen3" {:source "curseforge" :source-id 4963}
    "|cffffe00a<|r|cffff7d0aDBM|r|cffffe00a>|r |cff69ccf0Firelands|r" {:source "curseforge" :source-id 43971}
    "X-Perl UnitFrames by |cFFFF8080Zek|r" {:source "curseforge" :source-id 14911}})
+
+;; 2020-12-13
+;; took the top 50 downloaded addons from curseforge and the top 50 from wowinterface,
+;; installed them, removed the nfo files, reconciled them and below are the ones that were not found.
+;; when multiple sources available, the most recently updated one was picked.
+(def aliases2
+  {"Plater" {:source "curseforge" :source-id 100547}
+   "|cff1784d1ElvUI|r |cff9482c9Shadow & Light|r" {:source "tukui" :source-id 38}
+   "|cff00aeffCharacterStatsClassic|r" {:source "curseforge" :source-id 338856}
+   "Adapt" {:source "wowinterface" :source-id 4729}
+   "Dugi Questing Essential |cffffffff5.504|r" {:source "wowinterface" :source-id 20540}})
+
+(def aliases (merge aliases1 aliases2))
 
 (defn-spec -parse-toc-file map?
   [toc-contents string?]
