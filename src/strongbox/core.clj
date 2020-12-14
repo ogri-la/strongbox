@@ -1006,10 +1006,11 @@
         ;; version of the currently selected game track.
         default-game-track (get-lenient-game-track)]
 
-    (doseq [addon (get-state :installed-addon-list)
-            :let [game-track (get addon :game-track default-game-track)]]
-      (when-let [expanded-addon (catalogue/expand-summary addon game-track)]
-        (install-addon expanded-addon)))))
+    (binding [http/*cache* (cache)]
+      (doseq [addon (get-state :installed-addon-list)
+              :let [game-track (get addon :game-track default-game-track)]]
+        (when-let [expanded-addon (catalogue/expand-summary addon game-track)]
+          (install-addon expanded-addon))))))
 
 (defn-spec import-exported-file nil?
   "imports a file at given `path` created with the export function.

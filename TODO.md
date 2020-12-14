@@ -57,6 +57,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* import, skip importing an addon if addon already exists in addon dir
+
 * create a parser for that shit markup that is preventing reconcilation
     - see aliases
 
