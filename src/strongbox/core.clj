@@ -363,6 +363,13 @@
    (when addon-dir
      (-> addon-dir addon-dir-map :game-track))))
 
+(defn-spec get-lenient-game-track ::sp/lenient-game-track
+  []
+  (case (get-game-track)
+    :classic-retail :classic-retail
+    :classic :classic-retail
+    :retail-classic))
+
 ;; settings
 
 (defn-spec change-log-level! nil?
@@ -993,7 +1000,11 @@
         _ (match-installed-addons-with-catalogue (get-state :db) addon-list)
 
         ;; this is what v1 does, but it's hidden away in `expand-summary-wrapper`
-        default-game-track (get-game-track)]
+        ;;default-game-track (get-game-track)
+
+        ;; when no game-track is present in the import record, use the more lenient
+        ;; version of the currently selected game track.
+        default-game-track (get-lenient-game-track)]
 
     (doseq [addon (get-state :installed-addon-list)
             :let [game-track (get addon :game-track default-game-track)]]
