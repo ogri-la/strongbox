@@ -27,7 +27,7 @@
       ;; directory to remove is not a directory!
       (not (fs/directory? addon-path))
       (error (str "addon not removed, path is not a directory: " addon-path))
-      
+
       ;; directory to remove is outside of addon directory (or exactly equal to it)!
       (or (not (starts-with? addon-path install-dir))
           (= addon-path install-dir))

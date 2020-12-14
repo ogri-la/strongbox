@@ -716,42 +716,47 @@
     (debug "skipping db load. already loaded or no catalogue selected."))
   nil)
 
+(defn-spec -match-installed-addons-with-catalogue :addon/installed-list
+  "compare the list of addons installed with the database of known addons and try to match the two up.
+  when a match is found (see `db/-db-match-installed-addons-with-catalogue`), merge it into the addon data."
+  [database :addon/summary-list, installed-addon-list :addon/toc-list]
+  (info (format "matching %s addons to catalogue" (count installed-addon-list)))
+  (let [match-results (db/-db-match-installed-addons-with-catalogue database installed-addon-list)
+        [matched unmatched] (utils/split-filter :matched? match-results)
+
+        ;; for those that *did* match, merge the installed addon data together with the catalogue data
+        matched (mapv #(moosh-addons (:installed-addon %) (:catalogue-match %)) matched)
+        ;; and then make them a single list of addons again
+        expanded-installed-addon-list (into matched unmatched)
+
+        ;; todo: metrics gathering is good, but this is a little adhoc. shift into parent wrapper somehow.
+        ;; some metrics we'll emit for the user.
+        [num-installed num-matched] [(count installed-addon-list) (count matched)]
+        ;; we don't match ignored addons, we shouldn't report we couldn't find them either
+        unmatched-names (->> unmatched (remove :ignore?) (map :name) set)]
+
+    (when-not (= num-installed num-matched)
+      (info "num installed" num-installed ", num matched" num-matched))
+
+    (when-not (empty? unmatched-names)
+      (warn "you need to manually search for them and then re-install them")
+      (warn (format "failed to find %s addons in the '%s' catalogue: %s"
+                    (count unmatched-names)
+                    (name (get-state :cfg :selected-catalogue))
+                    (clojure.string/join ", " unmatched-names))))
+
+    expanded-installed-addon-list))
+
 (defn-spec match-installed-addons-with-catalogue nil?
-  "when we have a list of installed addons as well as the addon list,
-   merge what we can into ::specs/addon-toc records and update state.
-   any installed addon not found in :addon-idx has a mapping problem"
-  ([]
-   ;; skip matching if no addon dir selected or db not loaded (no db or invalid db)
-   (when (and (db-catalogue-loaded?)
-              (selected-addon-dir))
-     (match-installed-addons-with-catalogue (get-state :db) (get-state :installed-addon-list))))
-  ([database :addon/summary-list, installed-addon-list :addon/toc-list]
-   (info (format "matching %s addons to catalogue" (count installed-addon-list)))
-   (let [match-results (db/-db-match-installed-addons-with-catalogue database installed-addon-list)
-         [matched unmatched] (utils/split-filter :matched? match-results)
+  "compare the list of addons installed with the database of known addons match the two up, merging
+  the two together and update the list of installed addons.
+  Does not attempt matching if there is no catalogue loaded or addon directory loaded."
+  []
+  (when (and (db-catalogue-loaded?)
+             (selected-addon-dir))
+    (update-installed-addon-list!
+     (-match-installed-addons-with-catalogue (get-state :db) (get-state :installed-addon-list)))))
 
-         ;; for those that *did* match, merge the installed addon data together with the catalogue data
-         matched (mapv #(moosh-addons (:installed-addon %) (:catalogue-match %)) matched)
-         ;; and then make them a single list of addons again
-         expanded-installed-addon-list (into matched unmatched)
-
-         ;; todo: metrics gathering is good, but this is a little adhoc.
-         ;; some metrics we'll emit for the user
-         [num-installed num-matched] [(count installed-addon-list) (count matched)]
-         ;; we don't match ignored addons, we shouldn't report we couldn't find them either
-         unmatched-names (->> unmatched (remove :ignore?) (map :name) set)]
-
-     (when-not (= num-installed num-matched)
-       (info "num installed" num-installed ", num matched" num-matched))
-
-     (when-not (empty? unmatched-names)
-       (warn "you need to manually search for them and then re-install them")
-       (warn (format "failed to find %s addons in the '%s' catalogue: %s"
-                     (count unmatched-names)
-                     (name (get-state :cfg :selected-catalogue))
-                     (clojure.string/join ", " unmatched-names))))
-
-     (update-installed-addon-list! expanded-installed-addon-list))))
 
 ;;
 
@@ -997,7 +1002,7 @@
 
         ;; match each of these padded addon maps to entries in the catalogue database
         ;; afterwards this will call `update-installed-addon-list!` that will trigger a refresh in the gui
-        _ (match-installed-addons-with-catalogue (get-state :db) addon-list)
+        matching-addon-list (-match-installed-addons-with-catalogue (get-state :db) addon-list)
 
         ;; this is what v1 does, but it's hidden away in `expand-summary-wrapper`
         ;;default-game-track (get-game-track)
@@ -1007,7 +1012,7 @@
         default-game-track (get-lenient-game-track)]
 
     (binding [http/*cache* (cache)]
-      (doseq [addon (get-state :installed-addon-list)
+      (doseq [addon matching-addon-list
               :let [game-track (get addon :game-track default-game-track)]]
         (when-let [expanded-addon (catalogue/expand-summary addon game-track)]
           (install-addon expanded-addon))))))
