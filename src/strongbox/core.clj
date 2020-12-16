@@ -364,6 +364,8 @@
      (-> addon-dir addon-dir-map :game-track))))
 
 (defn-spec get-lenient-game-track ::sp/lenient-game-track
+  "returns the lenient/compound version of the currently selected game track. 
+  if `:retail` then `:retail-classic`, etc"
   []
   (case (get-game-track)
     :classic-retail :classic-retail
@@ -748,9 +750,9 @@
     expanded-installed-addon-list))
 
 (defn-spec match-installed-addons-with-catalogue nil?
-  "compare the list of addons installed with the database of known addons match the two up, merging
+  "compare the list of addons installed with the database of known addons, match the two up, merge
   the two together and update the list of installed addons.
-  Does not attempt matching if there is no catalogue loaded or addon directory loaded."
+  Skipped when no catalogue loaded or no addon directory selected."
   []
   (when (and (db-catalogue-loaded?)
              (selected-addon-dir))
@@ -759,6 +761,7 @@
 
 
 ;;
+
 
 (defn-spec refresh-user-catalogue nil?
   "re-fetch each item in user catalogue using the URI and replace old entry with any updated details"
@@ -1007,8 +1010,9 @@
         ;; this is what v1 does, but it's hidden away in `expand-summary-wrapper`
         ;;default-game-track (get-game-track)
 
-        ;; when no game-track is present in the import record, use the more lenient
+        ;; when no game-track is present in the export record, use the more lenient
         ;; version of the currently selected game track.
+        ;; it's better to have an addon installed with the incorrect game track then missing addons.
         default-game-track (get-lenient-game-track)]
 
     (binding [http/*cache* (cache)]

@@ -18,11 +18,13 @@
   "safely removes the given `addon-dirname` from `install-dir`"
   [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, group-id (s/nilable ::sp/group-id)]
   (let [addon-path (fs/file install-dir (fs/base-name addon-dirname)) ;; `fs/base-name` strips any parents
-        addon-path (-> addon-path fs/absolute fs/normalized)]
+        addon-path (-> addon-path fs/absolute fs/normalized)
+        addon-path (str addon-path)] ;; very important, otherwise a bunch of checks quietly pass
     (cond
       ;; todo: unhandled case here when importing addons into a directory of pre-existing addons.
       ;; what happens when we import the same set of addons over each other? it bypasses the mutual dependency handling for one thing ...
-      (= addon-dirname dummy-dirname) (debug "dummy dirname found, skipping removal")
+      (= addon-dirname dummy-dirname)
+      (debug "dummy dirname found, skipping removal")
 
       ;; directory to remove is not a directory!
       (not (fs/directory? addon-path))
@@ -31,7 +33,7 @@
       ;; directory to remove is outside of addon directory (or exactly equal to it)!
       (or (not (starts-with? addon-path install-dir))
           (= addon-path install-dir))
-      (format "directory '%s' is outside the current installation dir of '%s', not removing" addon-path install-dir)
+      (error (format "directory is outside the current installation dir, not removing: %s" addon-path))
 
       ;; other addons depend on this addon, just remove the nfo file
       (nfo/mutual-dependency? install-dir addon-dirname)

@@ -38,6 +38,9 @@ see CHANGELOG.md for a more formal list of changes by release
     - dirname should have been resolved, compared with install dir and ensured they were not the same as well as dirname being a child of install-dir
     - fixed
 
+* import v2, change addon dir game-track to a compound one prior to importing
+    - this will prevent addons from being skipped
+
 ## todo
 
 * issue #204 "Dark theme - "addon has update" row color could be more clear"
@@ -47,9 +50,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - https://github.com/ogri-la/strongbox/issues/206
     - very fucking mysterious
 
-* import v2, change addon dir game-track to a compound one prior to importing
-    - this will prevent addons from being skipped
-
 * better icon for appimage
 
 * github, if multiple releases available and first fails criteria, check the next and so on
@@ -58,6 +58,13 @@ see CHANGELOG.md for a more formal list of changes by release
 ## todo bucket (no particular order)
 
 * import, skip importing an addon if addon already exists in addon dir
+
+* import, why can't an export record be matched to the catalogue and then installed that way?
+    - no need for padding and dummy dirnames then
+    - installing normally would also include the mutual dependency handling
+
+* toc, add support for x-github key
+    - X-Github: https://github.com/teelolws/Altoholic-Retail 
 
 * create a parser for that shit markup that is preventing reconcilation
     - see aliases

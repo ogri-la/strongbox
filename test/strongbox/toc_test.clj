@@ -44,7 +44,7 @@
   
 SomeAddon.lua")
 
-(deftest parse-addon-toc
+(deftest parse-toc-file
   (testing "scrape of toc-file contents"
     (let [expected {:version "1.6.1"
                     :title "Addon Name"
@@ -73,9 +73,9 @@ SomeAddon.lua")
 
                     :interface "80205"
                     :#interface "11302"}]
+      (is (= expected (toc/-parse-toc-file toc-file-contents))))))
 
-      (is (= expected (toc/-parse-toc-file toc-file-contents)))))
-
+(deftest parse-addon-toc-guard
   (testing "parsing of scraped toc-file key-vals"
     (let [addon-path (join fs/*cwd* "SomeAddon")
           toc-file-path (join addon-path "SomeAddon.toc")
@@ -90,8 +90,9 @@ SomeAddon.lua")
                     :source-id 54321}]
       (fs/mkdir addon-path)
       (spit toc-file-path toc-file-contents)
-      (is (= expected (toc/parse-addon-toc-guard addon-path)))))
+      (is (= expected (toc/parse-addon-toc-guard addon-path))))))
 
+(deftest parse-addon-toc
   (testing "parsing scraped keyvals in .toc yields expected values"
     (let [;; all of this can be derived from the directory name and sensible defaults
           base-case {:name "everyaddon-*"
@@ -114,6 +115,41 @@ SomeAddon.lua")
       (fs/mkdir addon-dir)
       (doseq [[toc-data expected] cases]
         (is (= expected (toc/parse-addon-toc addon-dir toc-data)))))))
+
+(deftest parse-addon-toc--aliased
+  (testing "addons whose toc files have a `:title` value that matches an alias get a hardcoded source and source-id value"
+    (let [addon-dir (utils/join (helper/install-dir) "dirname")
+          defaults {:dirname "dirname" :description nil :installed-version nil :interface-version toc/default-interface-version}
+          cases [[{:title "Plater"} {:label "Plater" :name "plater" :source "curseforge" :source-id 100547}]
+                 [{:title "|cffffd200Deadly Boss Mods|r |cff69ccf0Core|r"}
+                  {:label "|cffffd200Deadly Boss Mods|r |cff69ccf0Core|r"
+                   :name "|cffffd200deadly-boss-mods|r-|cff69ccf0core|r" ;; gibberish :(
+                   :source "curseforge" :source-id 8814}]]]
+      (fs/mkdir addon-dir)
+      (doseq [[given expected] cases
+              :let [expected (merge expected defaults)]]
+        (is (= expected (toc/parse-addon-toc addon-dir given)))))))
+
+(deftest parse-addon-toc--x-source
+  (testing "addons whose toc files have a 'x-$host-id=val' will use those as `:source` and `:source-id`"
+    (let [addon-dir (utils/join (helper/install-dir) "dirname")
+          defaults {:dirname "dirname" :description nil :installed-version nil :interface-version toc/default-interface-version}
+          cases [[{:x-wowi-id "123"} {:label "dirname *" :name "dirname-*" :source "wowinterface" :source-id 123}]
+                 [{:x-wowi-id 123} {:label "dirname *" :name "dirname-*" :source "wowinterface" :source-id 123}]
+                 [{:x-wowi-id "abc"} {:label "dirname *" :name "dirname-*"}] ;; bad case, non-numeric wowi ID
+
+                 [{:x-curse-project-id "123"} {:label "dirname *" :name "dirname-*" :source "curseforge" :source-id 123}]
+                 [{:x-curse-project-id 123} {:label "dirname *" :name "dirname-*" :source "curseforge" :source-id 123}]
+                 [{:x-curse-project-id "abc"} {:label "dirname *" :name "dirname-*"}] ;; bad case, non-numeric curse ID
+
+                 [{:x-tukui-projectid "123"} {:label "dirname *" :name "dirname-*" :source "tukui" :source-id 123}]
+                 [{:x-tukui-projectid "-1"} {:label "dirname *" :name "dirname-*" :source "tukui" :source-id -1}]
+                 [{:x-tukui-projectid 123} {:label "dirname *" :name "dirname-*" :source "tukui" :source-id 123}]
+                 [{:x-tukui-projectid "abc"} {:label "dirname *" :name "dirname-*"}]]] ;; bad case
+      (fs/mkdir addon-dir)
+      (doseq [[given expected] cases
+              :let [expected (merge expected defaults)]]
+        (is (= expected (toc/parse-addon-toc addon-dir given)))))))
 
 (deftest rm-trailing-version
   (testing "parsing of 'Title' attribute in toc file"

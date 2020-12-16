@@ -147,6 +147,9 @@
                        {:source "tukui"
                         :source-id x-tukui-id})
 
+        ;; todo: add support for x-github
+        ;; ## X-Github: https://github.com/teelolws/Altoholic-Retail => source "github", source-id "teelolws/Altoholic-Retail"
+
         ignore-flag (when (some->> keyvals :version (clojure.string/includes? "@project-version@"))
                       (warn (format "ignoring '%s': 'Version' field in .toc file is unrendered" dirname))
                       {:ignore? true})
