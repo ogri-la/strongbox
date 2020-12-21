@@ -145,14 +145,24 @@
       (warn "multiple game tracks (classic and retail) detected with many downloadable assets and unable to differentiate between them. Refusing to pick.")
       (group-by :game-track asset-list))))
 
+(defn-spec parse-github-release-data vector?
+  [addon :addon/expandable, game-track ::sp/game-track, release-list vector?]
+  (->> release-list
+       (map (partial group-assets addon))
+       (filter #(contains? % game-track))
+       (map game-track)
+       vec))
+
 (defn-spec expand-summary (s/or :ok :addon/source-updates, :error nil?)
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. 
   one additional look-up per ::addon required"
   [addon :addon/expandable, game-track ::sp/game-track]
-  (let [release-list (download-releases (:source-id addon))
-        latest-release (first release-list)
-        -group-assets (partial group-assets addon)
-        asset (-> latest-release -group-assets (get game-track) first (dissoc :-mo))]
+  (let [release-data (or (download-releases (:source-id addon)) [])
+        release-data (parse-github-release-data addon game-track release-data)
+        asset (-> release-data
+                  first ;; latest release
+                  first ;; first asset
+                  (dissoc :-mo))]
     (when asset
       {:download-url (:browser_download_url asset)
        :version (:version asset)
