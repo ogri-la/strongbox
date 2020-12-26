@@ -32,6 +32,9 @@ see CHANGELOG.md for a more formal list of changes by release
     - use source and source-id now
         - done
     - maybe externalise the list
+        - decided not to.
+        - I did add scripts to strongbox-catalogue to come up with a better list of popular addons
+    - done
 
 * bug, resolve addon directory before attempting to uninstall it
     - using the import function with a :dirname of './' I managed to delete the addon directory
@@ -40,6 +43,11 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * import v2, change addon dir game-track to a compound one prior to importing
     - this will prevent addons from being skipped
+    - done
+
+* github, if multiple releases available and first fails criteria, check the next and so on
+    - see altoholic: https://github.com/teelolws/Altoholic-Classic
+    - done
 
 ## todo
 
@@ -52,8 +60,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * better icon for appimage
 
-* github, if multiple releases available and first fails criteria, check the next and so on
-    - see altoholic: https://github.com/teelolws/Altoholic-Classic
 
 ## todo bucket (no particular order)
 
