@@ -91,7 +91,7 @@
     (when (and cache?
                ((:get-etag *cache*) etag-key)
                (not (fs/exists? output-file)))
-      (warn "orphaned .etag found:" etag-key)
+      (debug "orphaned .etag found:" etag-key)
       ((:set-etag *cache*) etag-key)) ;; dissoc etag from db
 
     ;; use the file on disk if it's not too old ...

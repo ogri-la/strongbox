@@ -89,6 +89,7 @@
 
         track-version (fn [version gametrack]
                         (if (= gametrack :classic)
+                          ;; why am I doing this?
                           (str version "-classic")
                           version))
 
@@ -146,7 +147,8 @@
       (group-by :game-track asset-list))))
 
 (defn-spec parse-github-release-data vector?
-  [addon :addon/expandable, game-track ::sp/game-track, release-list vector?]
+  "given a `release-list` (a response from Github), parse the assets in each release."
+  [release-list vector?, addon :addon/expandable, game-track ::sp/game-track]
   (->> release-list
        (map (partial group-assets addon))
        (filter #(contains? % game-track))
@@ -157,8 +159,7 @@
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. 
   one additional look-up per ::addon required"
   [addon :addon/expandable, game-track ::sp/game-track]
-  (let [release-data (or (download-releases (:source-id addon)) [])
-        release-data (parse-github-release-data addon game-track release-data)
+  (let [release-data (-> addon :source-id download-releases (or []) (parse-github-release-data addon game-track))
         asset (-> release-data
                   first ;; latest release
                   first ;; first asset

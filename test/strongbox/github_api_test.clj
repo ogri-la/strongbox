@@ -102,8 +102,8 @@
           expected-classic 45
           expected-retail 2]
       (with-fake-routes-in-isolation {} ;; necessary?
-        (is (= expected-classic (count (github-api/parse-github-release-data addon-summary :classic fixture))))
-        (is (= expected-retail (count (github-api/parse-github-release-data addon-summary :retail fixture))))))))
+        (is (= expected-classic (count (github-api/parse-github-release-data fixture addon-summary :classic))))
+        (is (= expected-retail (count (github-api/parse-github-release-data fixture addon-summary :retail))))))))
 
 (deftest expand-addon-summary
   (testing "expand-summary correctly extracts and adds additional properties"
