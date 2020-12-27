@@ -132,22 +132,26 @@
                 :-fx-background-color (colour :row)
                 ":hover" {:-fx-background-color (colour :row-hover)
                           }
-                ":selected" {:-fx-background-color (colour :unsteady)
+                ":selected" {:-fx-background-color (colour :row-selected)
                              " .table-cell" {:-fx-text-fill "-fx-focused-text-base-color"}
-                             :-fx-table-cell-border-color (colour :table-border)}
-                ":selected:hover" {:-fx-background-color (colour :unsteady)}
+                             :-fx-table-cell-border-color (colour :table-border)
+                             }
+                
+                ":selected:hover" {:-fx-background-color (colour :row-hover)}
 
                 ":odd" {:-fx-background-color (colour :row)}
                 ":odd:hover" {:-fx-background-color (colour :row-hover)
                              }
-                ":odd:selected" {:-fx-background-color (colour :unsteady)
+                ":odd:selected" {:-fx-background-color (colour :row-selected)
                                  }
-                ":odd:selected:hover" {:-fx-background-color (colour :unsteady)
+                ":odd:selected:hover" {:-fx-background-color (colour :row-hover)
                                        }
 
                 ".unsteady" {;; '!important' so that it takes precedence over .updateable addons
-                             :-fx-background-color (str (colour :unsteady) " !important")}}
-
+                             :-fx-background-color (str (colour :unsteady) " !important")
+                             
+                             }}
+               
 
                ;; installed-addons menu
 
@@ -173,11 +177,11 @@
                  " .hyperlink, .hyperlink:hover" {:-fx-text-fill (colour :jfx-hyperlink-updateable)
                                                   }
 
-
                  ;; selected updateable addons are do not look any different
                  ;; todo: make selected+updateable addons use slightly brighter versions of themselves
                  ":selected"
-                 {:-fx-background-color "-fx-selection-bar"}}
+                 {:-fx-background-color "-fx-selection-bar"
+                  }}
 
                 " .ignored .table-cell"
                 {:-fx-text-fill (colour :installed/ignored-fg)}

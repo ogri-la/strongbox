@@ -46,6 +46,7 @@
    :table-border "#bbb"
    :row "-fx-control-inner-background"
    :row-hover "derive(-fx-control-inner-background,-10%)"
+   :row-selected "lightsteelblue"
    :unsteady "lightsteelblue"
    :row-updateable "lemonchiffon"
    :row-warning "lemonchiffon"
@@ -75,9 +76,10 @@
    :button-text-hovering "white"
    :table-border "#333"
    :row "#1e1f29" ;; same as :base
-   :row-hover "derive(-fx-control-inner-background,-10%)"
-   :unsteady "-fx-selection-bar"
+   :row-hover "#303147" ;; "derive(-fx-control-inner-background,-10%)"
+   :unsteady "#50fa7b" ;;"-fx-selection-bar"
    :row-updateable "#50a67b" ;; (green) "#df8750" (orange) "#6272a4" (blue)
+   :row-selected "blue"
    :row-warning "#6272a4"
    :row-error "#ce2828"
    :jfx-hyperlink "#f8f8f2"
