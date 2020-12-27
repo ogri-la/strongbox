@@ -130,15 +130,20 @@
 
                 ;; even
                 :-fx-background-color (colour :row)
-                ":hover" {:-fx-background-color (colour :row-hover)}
+                ":hover" {:-fx-background-color (colour :row-hover)
+                          }
                 ":selected" {:-fx-background-color (colour :unsteady)
                              " .table-cell" {:-fx-text-fill "-fx-focused-text-base-color"}
                              :-fx-table-cell-border-color (colour :table-border)}
+                ":selected:hover" {:-fx-background-color (colour :unsteady)}
 
                 ":odd" {:-fx-background-color (colour :row)}
-                ":odd:hover" {:-fx-background-color (colour :row-hover)}
-                ":odd:selected" {:-fx-background-color (colour :unsteady)}
-                ":odd:selected:hover" {:-fx-background-color (colour :unsteady)}
+                ":odd:hover" {:-fx-background-color (colour :row-hover)
+                             }
+                ":odd:selected" {:-fx-background-color (colour :unsteady)
+                                 }
+                ":odd:selected:hover" {:-fx-background-color (colour :unsteady)
+                                       }
 
                 ".unsteady" {;; '!important' so that it takes precedence over .updateable addons
                              :-fx-background-color (str (colour :unsteady) " !important")}}
@@ -163,7 +168,14 @@
                {" .updateable"
                 {:-fx-background-color (colour :row-updateable)
 
+                 " .table-cell" {"black" ;; todo
+                                 }
+                 " .hyperlink, .hyperlink:hover" {:-fx-text-fill (colour :jfx-hyperlink-updateable)
+                                                  }
+
+
                  ;; selected updateable addons are do not look any different
+                 ;; todo: make selected+updateable addons use slightly brighter versions of themselves
                  ":selected"
                  {:-fx-background-color "-fx-selection-bar"}}
 
@@ -755,7 +767,7 @@
         iface-version (fn [row]
                         (some-> row :interface-version str utils/interface-version-to-game-version))
 
-        column-list [{:text "source" :min-width 110 :pref-width 120 :max-width 160 :cell-value-factory href-to-hyperlink}
+        column-list [{:text "source" :min-width 115 :pref-width 120 :max-width 160 :cell-value-factory href-to-hyperlink}
                      {:text "name" :min-width 150 :pref-width 300 :max-width 500 :cell-value-factory (comp no-new-lines :label)}
                      {:text "description" :pref-width 700 :cell-value-factory (comp no-new-lines :description)}
                      {:text "installed" :max-width 150 :cell-value-factory :installed-version}

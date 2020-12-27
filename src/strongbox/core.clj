@@ -51,6 +51,7 @@
    :row-warning "lemonchiffon"
    :row-error "tomato"
    :jfx-hyperlink "blue"
+   :jfx-hyperlink-updateable "blue"
    :jfx-hyperlink-weight "normal"
    :table-font-colour "derive(-fx-background,-80%)"
    :already-installed-row-colour "#99bc6b"})
@@ -76,10 +77,11 @@
    :row "#1e1f29" ;; same as :base
    :row-hover "derive(-fx-control-inner-background,-10%)"
    :unsteady "-fx-selection-bar"
-   :row-updateable "#6272a4"
+   :row-updateable "#50a67b" ;; (green) "#df8750" (orange) "#6272a4" (blue)
    :row-warning "#6272a4"
    :row-error "#ce2828"
    :jfx-hyperlink "#f8f8f2"
+   :jfx-hyperlink-updateable "black"
    :jfx-hyperlink-weight "bold"
    :table-font-colour "white"
    :already-installed-row-colour "#99bc6b"})
