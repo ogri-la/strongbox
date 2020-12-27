@@ -168,7 +168,7 @@
                {" .updateable"
                 {:-fx-background-color (colour :row-updateable)
 
-                 " .table-cell" {"black" ;; todo
+                 " .table-cell" {:-fx-text-fill "black" ;; todo
                                  }
                  " .hyperlink, .hyperlink:hover" {:-fx-text-fill (colour :jfx-hyperlink-updateable)
                                                   }
