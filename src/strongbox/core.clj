@@ -187,7 +187,7 @@
    :gui-showing? false
 
    ;; set to anything other than `nil` to have `main.clj` restart the gui
-   :gui-restart-flag nil
+   ;;:gui-restart-flag nil ;; 2020-12: disabled, swing gui can't switch themes anymore.
 
    ;; which of the addon directories is currently selected
    ;;:selected-addon-dir nil ;; moved to [:cfg :selected-addon-dir]
