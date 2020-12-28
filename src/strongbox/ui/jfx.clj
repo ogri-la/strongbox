@@ -53,10 +53,52 @@
   []
   (css/register
    ::style
-   (let [generate-style
+   (let [-colour-map
+         {:installed/ignored-fg :darkgray
+          :base "#ececec"
+          :accent "lightsteelblue"
+          :button-text-hovering "black"
+          :table-border "#bbb"
+          :row "-fx-control-inner-background"
+          :row-hover "derive(-fx-control-inner-background,-10%)"
+          :row-selected "lightsteelblue"
+          :unsteady "lightsteelblue"
+          :row-updateable "lemonchiffon"
+          :row-warning "lemonchiffon"
+          :row-error "tomato"
+          :jfx-hyperlink "blue"
+          :jfx-hyperlink-updateable "blue"
+          :jfx-hyperlink-weight "normal"
+          :table-font-colour "derive(-fx-background,-80%)"
+          :already-installed-row-colour "#99bc6b"}
+
+         ;; "'dracula' theme: https://github.com/dracula/dracula-theme"
+         -dark-colour-map
+         {:installed/ignored-fg "#666666"
+          :base "#1e1f29"
+          :accent "#44475a"
+          :button-text-hovering "white"
+          :table-border "#333"
+          :row "#1e1f29" ;; same as :base
+          :row-hover "#303147" ;; "derive(-fx-control-inner-background,-10%)"
+          :unsteady "#50fa7b" ;;"-fx-selection-bar"
+          :row-updateable "#50a67b" ;; (green) "#df8750" (orange) "#6272a4" (blue)
+          :row-selected "blue"
+          :row-warning "#6272a4"
+          :row-error "#ce2828"
+          :jfx-hyperlink "#f8f8f2"
+          :jfx-hyperlink-updateable "black"
+          :jfx-hyperlink-weight "bold"
+          :table-font-colour "white"
+          :already-installed-row-colour "#99bc6b"}
+
+         themes {:light -colour-map
+                 :dark -dark-colour-map}
+
+         generate-style
          (fn [theme-kw]
-           (let [colour-map (theme-kw  core/themes)
-                 colour #(name (get colour-map % "green"))]
+           (let [colour-map (get themes theme-kw)
+                 colour #(name (get colour-map % "pink"))]
              {"#about-dialog "
 
               {:-fx-spacing "3"
@@ -260,7 +302,6 @@
      (merge
       (generate-style :light)
       (generate-style :dark)))))
-
 
 ;;
 
