@@ -64,6 +64,8 @@
           :row-selected "lightsteelblue"
           :unsteady "lightsteelblue"
           :row-updateable "lemonchiffon"
+          :row-updateable-hover "lemonchiffon"
+          :row-updateable-selected "#fdfd96" ;; "Lemon Meringue"
           :row-warning "lemonchiffon"
           :row-error "tomato"
           :jfx-hyperlink "blue"
@@ -80,17 +82,20 @@
           :button-text-hovering "white"
           :table-border "#333"
           :row "#1e1f29" ;; same as :base
-          :row-hover "#303147" ;; "derive(-fx-control-inner-background,-10%)"
-          :unsteady "#50fa7b" ;;"-fx-selection-bar"
+          :row-hover "derive(-fx-control-inner-background,-50%)"
+          :row-selected "derive(-fx-control-inner-background,-30%)"
+          :unsteady "derive(-fx-selection-bar,+50%)"
           :row-updateable "#50a67b" ;; (green) "#df8750" (orange) "#6272a4" (blue)
-          :row-selected "blue"
+          :row-updateable-hover "#50a67b"
+          :row-updateable-selected "#40c762"
           :row-warning "#6272a4"
           :row-error "#ce2828"
           :jfx-hyperlink "#f8f8f2"
           :jfx-hyperlink-updateable "black"
           :jfx-hyperlink-weight "bold"
           :table-font-colour "white"
-          :already-installed-row-colour "#99bc6b"}
+          :already-installed-row-colour "#99bc6b"
+          }
 
          themes {:light -colour-map
                  :dark -dark-colour-map}
@@ -222,8 +227,13 @@
                  ;; selected updateable addons are do not look any different
                  ;; todo: make selected+updateable addons use slightly brighter versions of themselves
                  ":selected"
-                 {:-fx-background-color "-fx-selection-bar"
-                  }}
+                 {;; !important so that hovering over a selected+updateable row doesn't change it's colour
+                  :-fx-background-color (str (colour :row-updateable-selected) " !important")
+                  }
+
+                 ":hover" {:-fx-background-color (colour :row-updateable-hover)}
+
+                 }
 
                 " .ignored .table-cell"
                 {:-fx-text-fill (colour :installed/ignored-fg)}
