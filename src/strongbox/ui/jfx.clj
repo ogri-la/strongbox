@@ -46,6 +46,74 @@
     (delete [_ component opts]
       (fx.lifecycle/delete fx.lifecycle/dynamic (:child component) opts))))
 
+(def major-theme-map
+  {:light 
+   {:installed/ignored-fg :darkgray
+    :base "#ececec"
+    :accent "lightsteelblue"
+    :button-text-hovering "black"
+    :table-border "#bbb"
+    :row "-fx-control-inner-background"
+    :row-hover "derive(-fx-control-inner-background,-10%)"
+    :row-selected "lightsteelblue"
+    :unsteady "lightsteelblue"
+    :row-updateable "lemonchiffon"
+    :row-updateable-hover "lemonchiffon"
+    :row-updateable-selected "#fdfd96" ;; "Lemon Meringue"
+    :row-warning "lemonchiffon"
+    :row-error "tomato"
+    :jfx-hyperlink "blue"
+    :jfx-hyperlink-updateable "blue"
+    :jfx-hyperlink-weight "normal"
+    :table-font-colour "derive(-fx-background,-80%)"
+    :already-installed-row-colour "#99bc6b"}
+
+   :dark ;; "'dracula' theme: https://github.com/dracula/dracula-theme"
+   {:installed/ignored-fg "#666666"
+    :base "#1e1f29"
+    :accent "#44475a"
+    :button-text-hovering "white"
+    :table-border "#333"
+    :row "#1e1f29" ;; same as :base
+    :row-hover "derive(-fx-control-inner-background,-50%)"
+    :row-selected "derive(-fx-control-inner-background,-30%)"
+    :unsteady "derive(-fx-selection-bar,+50%)"
+    :row-updateable "#6272a4" ;; (blue) "#df8750" (orange)
+    :row-updateable-hover "#50a67b"
+    :row-updateable-selected "#40c762"
+    :row-warning "#6272a4"
+    :row-error "#ce2828"
+    :jfx-hyperlink "#f8f8f2"
+    :jfx-hyperlink-updateable "black"
+    :jfx-hyperlink-weight "bold"
+    :table-font-colour "white"
+    :already-installed-row-colour "#99bc6b"
+    }})
+
+(def sub-theme-map
+  {:dark
+   {:green
+    {:row-updateable "#50a67b" ;; (green)
+     :row-updateable-hover "#50a67b"
+     :row-updateable-selected "#40c762" ;; (brighter green)
+     }
+    
+    :orange
+    {:row-updateable "#df8750" ;; (orange)
+     :row-updateable-hover "#50a67b"
+     :row-updateable-selected "#40c762" ;; (brighter green)
+     }
+
+    }})
+
+(def themes (into major-theme-map
+                  (for [[major-theme-key sub-theme-val] sub-theme-map
+                          [sub-theme-key sub-theme] sub-theme-val
+                          :let [major-theme (get major-theme-map major-theme-key)
+                                ;; "dark-green", "dark-orange"
+                                theme-name (keyword (format "%s-%s" (name major-theme-key) (name sub-theme-key)))]]
+                    {theme-name (merge major-theme sub-theme)})))
+
 (defn-spec style map?
   "generates javafx css definitions for the different themes.
   if editor is connected to a running repl session then modifying
@@ -53,54 +121,7 @@
   []
   (css/register
    ::style
-   (let [-colour-map
-         {:installed/ignored-fg :darkgray
-          :base "#ececec"
-          :accent "lightsteelblue"
-          :button-text-hovering "black"
-          :table-border "#bbb"
-          :row "-fx-control-inner-background"
-          :row-hover "derive(-fx-control-inner-background,-10%)"
-          :row-selected "lightsteelblue"
-          :unsteady "lightsteelblue"
-          :row-updateable "lemonchiffon"
-          :row-updateable-hover "lemonchiffon"
-          :row-updateable-selected "#fdfd96" ;; "Lemon Meringue"
-          :row-warning "lemonchiffon"
-          :row-error "tomato"
-          :jfx-hyperlink "blue"
-          :jfx-hyperlink-updateable "blue"
-          :jfx-hyperlink-weight "normal"
-          :table-font-colour "derive(-fx-background,-80%)"
-          :already-installed-row-colour "#99bc6b"}
-
-         ;; "'dracula' theme: https://github.com/dracula/dracula-theme"
-         -dark-colour-map
-         {:installed/ignored-fg "#666666"
-          :base "#1e1f29"
-          :accent "#44475a"
-          :button-text-hovering "white"
-          :table-border "#333"
-          :row "#1e1f29" ;; same as :base
-          :row-hover "derive(-fx-control-inner-background,-50%)"
-          :row-selected "derive(-fx-control-inner-background,-30%)"
-          :unsteady "derive(-fx-selection-bar,+50%)"
-          :row-updateable "#50a67b" ;; (green) "#df8750" (orange) "#6272a4" (blue)
-          :row-updateable-hover "#50a67b"
-          :row-updateable-selected "#40c762"
-          :row-warning "#6272a4"
-          :row-error "#ce2828"
-          :jfx-hyperlink "#f8f8f2"
-          :jfx-hyperlink-updateable "black"
-          :jfx-hyperlink-weight "bold"
-          :table-font-colour "white"
-          :already-installed-row-colour "#99bc6b"
-          }
-
-         themes {:light -colour-map
-                 :dark -dark-colour-map}
-
-         generate-style
+   (let [generate-style
          (fn [theme-kw]
            (let [colour-map (get themes theme-kw)
                  colour #(name (get colour-map % "pink"))]
@@ -309,9 +330,8 @@
                                                  :-fx-text-fill (colour :jfx-hyperlink)
                                                  :-fx-font-weight (colour :jfx-hyperlink-weight)}}}}))]
 
-     (merge
-      (generate-style :light)
-      (generate-style :dark)))))
+     (into {} (for [[theme-key _] themes]
+                (generate-style theme-key))))))
 
 ;;
 
@@ -656,7 +676,7 @@
   [selected-theme ::sp/gui-theme, theme-map map?]
   (let [rb (fn [theme-key]
              {:fx/type :radio-menu-item
-              :text (format "%s theme" (-> theme-key name clojure.string/capitalize))
+              :text (format "%s theme" (-> theme-key name (clojure.string/replace #"-" " ") clojure.string/capitalize))
               :selected (= selected-theme theme-key)
               :toggle-group {:fx/type fx/ext-get-ref
                              :ref ::theme-toggle-group}
@@ -703,7 +723,7 @@
                     separator]
                    (build-theme-menu
                     (fx/sub-val context get-in [:app-state :cfg :gui-theme])
-                    core/themes))
+                    themes))
 
         catalogue-menu (into (build-catalogue-menu
                               (fx/sub-val context get-in [:app-state :cfg :selected-catalogue])
@@ -1077,6 +1097,9 @@
         ;; css watcher for live coding
         _ (add-watch #'style :refresh-app (fn [_ _ _ _]
                                             (swap! gui-state fx/swap-context assoc :style (style))))
+        _ (add-watch #'themes :refresh-app2 (fn [_ _ _ _]
+                                            (swap! gui-state fx/swap-context assoc :style (style))))
+        
         _ (core/add-cleanup-fn #(remove-watch core/state :refresh-app))
 
         ;; asynchronous searching. as the user types, update the state with search results asynchronously
