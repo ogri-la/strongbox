@@ -47,7 +47,7 @@
 (s/def ::gui-event #(instance? java.util.EventObject %))
 (s/def ::install-dir (s/nilable ::extant-dir))
 (s/def ::selected? boolean?)
-(s/def ::gui-theme #{:light :dark})
+(s/def ::gui-theme #{:light :dark :dark-green :dark-orange})
 
 ;; preserve order, used in GUI
 (def game-track-labels [[:retail "retail"]

@@ -56,6 +56,19 @@
   (core/db-reload-catalogue)
   nil)
 
+;;
+
+(defn-spec touch nil?
+  "used to select each addon in the GUI so the 'unsteady' colour can be tested."
+  []
+  (let [touch (fn [a]
+                (core/start-affecting-addon a)
+                (Thread/sleep 200)
+                (core/stop-affecting-addon a))]
+    (->> (core/get-state :installed-addon-list)
+         core/-updateable?
+         (run! touch))))
+
 ;; search
 
 (defn-spec search-results-next-page nil?

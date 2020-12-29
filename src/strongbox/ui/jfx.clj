@@ -1,7 +1,7 @@
 (ns strongbox.ui.jfx
   (:require
    [me.raynes.fs :as fs]
-   [clojure.string :refer [lower-case join]]
+   [clojure.string :refer [lower-case join capitalize replace] :rename {replace str-replace}]
    [taoensso.timbre :as timbre :refer [spy info]] ;; debug info warn error spy]] 
    [cljfx.ext.table-view :as fx.ext.table-view]
    [cljfx.lifecycle :as fx.lifecycle]
@@ -46,6 +46,76 @@
     (delete [_ component opts]
       (fx.lifecycle/delete fx.lifecycle/dynamic (:child component) opts))))
 
+(def major-theme-map
+  {:light
+   {:installed/ignored-fg :darkgray
+    :base "#ececec"
+    :accent "lightsteelblue"
+    :button-text-hovering "black"
+    :table-border "#bbb"
+    :row "-fx-control-inner-background"
+    :row-hover "derive(-fx-control-inner-background,-10%)"
+    :row-selected "lightsteelblue"
+    :unsteady "lightsteelblue"
+    :row-updateable "lemonchiffon"
+    :row-updateable-hover "lemonchiffon"
+    :row-updateable-selected "#fdfd96" ;; "Lemon Meringue" (brighter yellow)
+    :row-updateable-text "black"
+    :row-warning "lemonchiffon"
+    :row-error "tomato"
+    :jfx-hyperlink "blue"
+    :jfx-hyperlink-updateable "blue"
+    :jfx-hyperlink-weight "normal"
+    :table-font-colour "derive(-fx-background,-80%)"
+    :already-installed-row-colour "#99bc6b"}
+
+   :dark ;; "'dracula' theme: https://github.com/dracula/dracula-theme"
+   {:installed/ignored-fg "#666666"
+    :base "#1e1f29"
+    :accent "#44475a"
+    :button-text-hovering "white"
+    :table-border "#333"
+    :row "#1e1f29" ;; same as :base
+    :row-hover "derive(-fx-control-inner-background,-50%)"
+    :row-selected "derive(-fx-control-inner-background,-30%)"
+    :unsteady "#bbb"
+    :row-updateable "#6272a4" ;; (blue)
+    :row-updateable-hover "#6272a4"
+    :row-updateable-selected "#6272c3" ;; (brighter blue) ;; todo: can this be derived from :row-updateable?
+    :row-updateable-text "white"
+    :row-warning "#6272a4"
+    :row-error "#ce2828"
+    :jfx-hyperlink "#f8f8f2"
+    :jfx-hyperlink-updateable "white"
+    :jfx-hyperlink-weight "bold"
+    :table-font-colour "white"
+    :already-installed-row-colour "#99bc6b"}})
+
+(def sub-theme-map
+  {:dark
+   {:green
+    {:row-updateable "#50a67b" ;; (green)
+     :row-updateable-hover "#50a67b"
+     :row-updateable-selected "#40c762" ;; (brighter green)
+     :row-updateable-text "black"
+     :jfx-hyperlink-updateable "black"}
+
+    :orange
+    {:row-updateable "#df8750" ;; (orange)
+     :row-updateable-hover "#df8750"
+     :row-updateable-selected "#df722e" ;; (brigher orange)
+     :row-updateable-text "black"
+     :jfx-hyperlink-updateable "black"}}})
+
+(def themes
+  (into major-theme-map
+        (for [[major-theme-key sub-theme-val] sub-theme-map
+              [sub-theme-key sub-theme] sub-theme-val
+              :let [major-theme (get major-theme-map major-theme-key)
+                    ;; "dark-green", "dark-orange"
+                    theme-name (keyword (format "%s-%s" (name major-theme-key) (name sub-theme-key)))]]
+          {theme-name (merge major-theme sub-theme)})))
+
 (defn-spec style map?
   "generates javafx css definitions for the different themes.
   if editor is connected to a running repl session then modifying
@@ -55,8 +125,8 @@
    ::style
    (let [generate-style
          (fn [theme-kw]
-           (let [colour-map (theme-kw  core/themes)
-                 colour #(name (get colour-map % "green"))]
+           (let [colour-map (get themes theme-kw)
+                 colour #(name (get colour-map % "pink"))]
              {"#about-dialog "
 
               {:-fx-spacing "3"
@@ -131,14 +201,15 @@
                 ;; even
                 :-fx-background-color (colour :row)
                 ":hover" {:-fx-background-color (colour :row-hover)}
-                ":selected" {:-fx-background-color (colour :unsteady)
+                ":selected" {:-fx-background-color (colour :row-selected)
                              " .table-cell" {:-fx-text-fill "-fx-focused-text-base-color"}
                              :-fx-table-cell-border-color (colour :table-border)}
+                ":selected:hover" {:-fx-background-color (colour :row-hover)}
 
                 ":odd" {:-fx-background-color (colour :row)}
                 ":odd:hover" {:-fx-background-color (colour :row-hover)}
-                ":odd:selected" {:-fx-background-color (colour :unsteady)}
-                ":odd:selected:hover" {:-fx-background-color (colour :unsteady)}
+                ":odd:selected" {:-fx-background-color (colour :row-selected)}
+                ":odd:selected:hover" {:-fx-background-color (colour :row-hover)}
 
                 ".unsteady" {;; '!important' so that it takes precedence over .updateable addons
                              :-fx-background-color (str (colour :unsteady) " !important")}}
@@ -163,9 +234,16 @@
                {" .updateable"
                 {:-fx-background-color (colour :row-updateable)
 
+                 " .table-cell" {:-fx-text-fill (colour :row-updateable-text)}
+                 " .hyperlink, .hyperlink:hover" {:-fx-text-fill (colour :jfx-hyperlink-updateable)}
+
                  ;; selected updateable addons are do not look any different
+                 ;; todo: make selected+updateable addons use slightly brighter versions of themselves
                  ":selected"
-                 {:-fx-background-color "-fx-selection-bar"}}
+                 {;; !important so that hovering over a selected+updateable row doesn't change it's colour
+                  :-fx-background-color (str (colour :row-updateable-selected) " !important")}
+
+                 ":hover" {:-fx-background-color (colour :row-updateable-hover)}}
 
                 " .ignored .table-cell"
                 {:-fx-text-fill (colour :installed/ignored-fg)}
@@ -241,10 +319,10 @@
                                                  :-fx-text-fill (colour :jfx-hyperlink)
                                                  :-fx-font-weight (colour :jfx-hyperlink-weight)}}}}))]
 
-     (merge
-      (generate-style :light)
-      (generate-style :dark)))))
-
+     ;; return a single map with all themes in it.
+     ;; themes are separated by their top-level 'root' key.
+     (into {} (for [[theme-key _] themes]
+                (generate-style theme-key))))))
 
 ;;
 
@@ -589,7 +667,8 @@
   [selected-theme ::sp/gui-theme, theme-map map?]
   (let [rb (fn [theme-key]
              {:fx/type :radio-menu-item
-              :text (format "%s theme" (-> theme-key name clojure.string/capitalize))
+              ;; "Light theme", "Dark green theme"
+              :text (format "%s theme" (-> theme-key name (str-replace #"-" " ") capitalize))
               :selected (= selected-theme theme-key)
               :toggle-group {:fx/type fx/ext-get-ref
                              :ref ::theme-toggle-group}
@@ -636,7 +715,7 @@
                     separator]
                    (build-theme-menu
                     (fx/sub-val context get-in [:app-state :cfg :gui-theme])
-                    core/themes))
+                    themes))
 
         catalogue-menu (into (build-catalogue-menu
                               (fx/sub-val context get-in [:app-state :cfg :selected-catalogue])
@@ -755,7 +834,7 @@
         iface-version (fn [row]
                         (some-> row :interface-version str utils/interface-version-to-game-version))
 
-        column-list [{:text "source" :min-width 110 :pref-width 120 :max-width 160 :cell-value-factory href-to-hyperlink}
+        column-list [{:text "source" :min-width 115 :pref-width 120 :max-width 160 :cell-value-factory href-to-hyperlink}
                      {:text "name" :min-width 150 :pref-width 300 :max-width 500 :cell-value-factory (comp no-new-lines :label)}
                      {:text "description" :pref-width 700 :cell-value-factory (comp no-new-lines :description)}
                      {:text "installed" :max-width 150 :cell-value-factory :installed-version}
@@ -1008,9 +1087,12 @@
         _ (init-notice-logger! gui-state)
 
         ;; css watcher for live coding
-        _ (add-watch #'style :refresh-app (fn [_ _ _ _]
-                                            (swap! gui-state fx/swap-context assoc :style (style))))
-        _ (core/add-cleanup-fn #(remove-watch core/state :refresh-app))
+        _ (doseq [rf [#'style #'major-theme-map #'sub-theme-map #'themes]
+                  :let [key (str rf)]]
+            (add-watch rf key (fn [_ _ _ _]
+                                (info "updating gui state")
+                                (swap! gui-state fx/swap-context assoc :style (style))))
+            (core/add-cleanup-fn #(remove-watch rf key)))
 
         ;; asynchronous searching. as the user types, update the state with search results asynchronously
         _ (cli/-init-search-listener)
