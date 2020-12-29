@@ -31,11 +31,13 @@
 ;; - https://github.com/daveray/seesaw/wiki#native-look-and-feel
 (ss/native!)
 
+(comment "disabled 2020-12: gui is going away entirely in the next major release, 
+but the restart flag has had to be removed which means you can't switch themes through the old gui anymore."
 (defn-spec trigger-gui-restart nil?
   "call to dispose of the current gui and let `main.clj` restart it"
   []
   (swap! core/state assoc :gui-restart-flag true)
-  nil)
+  nil))
 
 (defn select-ui
   [& path]
@@ -886,6 +888,8 @@
 
     catalogue-menu))
 
+(comment "disabled 2020-12: gui is going away entirely in the next major release, 
+but the restart flag has had to be removed which means you can't switch themes through the old gui anymore."
 (defn build-theme-menu
   "returns a menu of radio buttons that can toggle through the available themes defined in `core/themes`"
   []
@@ -904,7 +908,7 @@
                            (swap! core/state assoc-in [:cfg :gui-theme] (ss/id-of val))
                            (core/save-settings)
                            (trigger-gui-restart)))))
-    menu))
+    menu)))
 
 (defn start-ui
   []
@@ -942,9 +946,9 @@
         view-menu (into [(ss/action :name "Refresh" :key "F5" :handler (async-handler core/refresh))
                          :separator
                          (ss/action :name "Installed" :key "menu I" :mnemonic "i" :handler (switch-tab-handler INSTALLED-TAB))
-                         (ss/action :name "Search" :key "menu H" :mnemonic "h" :handler (switch-tab-handler SEARCH-TAB))
-                         :separator]
-                        (build-theme-menu))
+                         (ss/action :name "Search" :key "menu H" :mnemonic "h" :handler (switch-tab-handler SEARCH-TAB))])
+                         ;;:separator]
+                        ;;(build-theme-menu))
 
         catalogue-menu (into (build-catalogue-menu)
                              [:separator
