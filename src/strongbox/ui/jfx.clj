@@ -1,7 +1,7 @@
 (ns strongbox.ui.jfx
   (:require
    [me.raynes.fs :as fs]
-   [clojure.string :refer [lower-case join]]
+   [clojure.string :refer [lower-case join capitalize replace] :rename {replace str-replace}]
    [taoensso.timbre :as timbre :refer [spy info]] ;; debug info warn error spy]] 
    [cljfx.ext.table-view :as fx.ext.table-view]
    [cljfx.lifecycle :as fx.lifecycle]
@@ -59,7 +59,7 @@
     :unsteady "lightsteelblue"
     :row-updateable "lemonchiffon"
     :row-updateable-hover "lemonchiffon"
-    :row-updateable-selected "#fdfd96" ;; "Lemon Meringue"
+    :row-updateable-selected "#fdfd96" ;; "Lemon Meringue" (brighter yellow)
     :row-updateable-text "black"
     :row-warning "lemonchiffon"
     :row-error "tomato"
@@ -79,9 +79,9 @@
     :row-hover "derive(-fx-control-inner-background,-50%)"
     :row-selected "derive(-fx-control-inner-background,-30%)"
     :unsteady "#bbb"
-    :row-updateable "#6272a4" ;; (blue) "#df8750" (orange)
+    :row-updateable "#6272a4" ;; (blue)
     :row-updateable-hover "#6272a4"
-    :row-updateable-selected "#6272c3" ;; todo: can this be derived from :row-updateable?
+    :row-updateable-selected "#6272c3" ;; (brighter blue) ;; todo: can this be derived from :row-updateable?
     :row-updateable-text "white"
     :row-warning "#6272a4"
     :row-error "#ce2828"
@@ -101,9 +101,9 @@
      :jfx-hyperlink-updateable "black"}
 
     :orange
-    {:row-updateable "#df8750" ;;"#ffb86c"
+    {:row-updateable "#df8750" ;; (orange)
      :row-updateable-hover "#df8750"
-     :row-updateable-selected "#df722e"
+     :row-updateable-selected "#df722e" ;; (brigher orange)
      :row-updateable-text "black"
      :jfx-hyperlink-updateable "black"}}})
 
@@ -204,7 +204,6 @@
                 ":selected" {:-fx-background-color (colour :row-selected)
                              " .table-cell" {:-fx-text-fill "-fx-focused-text-base-color"}
                              :-fx-table-cell-border-color (colour :table-border)}
-
                 ":selected:hover" {:-fx-background-color (colour :row-hover)}
 
                 ":odd" {:-fx-background-color (colour :row)}
@@ -320,6 +319,8 @@
                                                  :-fx-text-fill (colour :jfx-hyperlink)
                                                  :-fx-font-weight (colour :jfx-hyperlink-weight)}}}}))]
 
+     ;; return a single map with all themes in it.
+     ;; themes are separated by their top-level 'root' key.
      (into {} (for [[theme-key _] themes]
                 (generate-style theme-key))))))
 
@@ -666,7 +667,8 @@
   [selected-theme ::sp/gui-theme, theme-map map?]
   (let [rb (fn [theme-key]
              {:fx/type :radio-menu-item
-              :text (format "%s theme" (-> theme-key name (clojure.string/replace #"-" " ") clojure.string/capitalize))
+              ;; "Light theme", "Dark green theme"
+              :text (format "%s theme" (-> theme-key name (str-replace #"-" " ") capitalize))
               :selected (= selected-theme theme-key)
               :toggle-group {:fx/type fx/ext-get-ref
                              :ref ::theme-toggle-group}

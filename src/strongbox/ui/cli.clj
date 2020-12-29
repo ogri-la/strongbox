@@ -58,7 +58,8 @@
 
 ;;
 
-(defn touch
+(defn-spec touch nil?
+  "used to select each addon in the GUI so the 'unsteady' colour can be tested."
   []
   (let [touch (fn [a]
                 (core/start-affecting-addon a)

@@ -37,25 +37,7 @@
    :installed/needs-updating :lemonchiffon
    :installed/hovering "#e6e6e6" ;; light grey
    :search/already-installed "#99bc6b" ;; greenish
-   :hyperlink :blue
-
-   ;; jfx
-   :base "#ececec"
-   :accent "lightsteelblue"
-   :button-text-hovering "black"
-   :table-border "#bbb"
-   :row "-fx-control-inner-background"
-   :row-hover "derive(-fx-control-inner-background,-10%)"
-   :row-selected "lightsteelblue"
-   :unsteady "lightsteelblue"
-   :row-updateable "lemonchiffon"
-   :row-warning "lemonchiffon"
-   :row-error "tomato"
-   :jfx-hyperlink "blue"
-   :jfx-hyperlink-updateable "blue"
-   :jfx-hyperlink-weight "normal"
-   :table-font-colour "derive(-fx-background,-80%)"
-   :already-installed-row-colour "#99bc6b"})
+   :hyperlink :blue})
 
 ;; inverse colours of -colour-map
 (def -dark-colour-map
@@ -67,26 +49,7 @@
    :installed/needs-updating "#000532"
    :installed/hovering "#191919"
    :search/already-installed "#664394"
-   :hyperlink :yellow
-
-   ;; jfx
-   ;; https://github.com/dracula/dracula-theme
-   :base "#1e1f29"
-   :accent "#44475a"
-   :button-text-hovering "white"
-   :table-border "#333"
-   :row "#1e1f29" ;; same as :base
-   :row-hover "#303147" ;; "derive(-fx-control-inner-background,-10%)"
-   :unsteady "#50fa7b" ;;"-fx-selection-bar"
-   :row-updateable "#50a67b" ;; (green) "#df8750" (orange) "#6272a4" (blue)
-   :row-selected "blue"
-   :row-warning "#6272a4"
-   :row-error "#ce2828"
-   :jfx-hyperlink "#f8f8f2"
-   :jfx-hyperlink-updateable "black"
-   :jfx-hyperlink-weight "bold"
-   :table-font-colour "white"
-   :already-installed-row-colour "#99bc6b"})
+   :hyperlink :yellow})
 
 (def themes
   {:light -colour-map
