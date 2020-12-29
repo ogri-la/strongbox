@@ -49,17 +49,25 @@ see CHANGELOG.md for a more formal list of changes by release
     - see altoholic: https://github.com/teelolws/Altoholic-Classic
     - done
 
-## todo
-
-* issue #204 "Dark theme - "addon has update" row color could be more clear"
-    - https://github.com/ogri-la/strongbox/issues/204
-
 * issue #206 "mac, 3.0.1 crashes/exits without warning"
     - https://github.com/ogri-la/strongbox/issues/206
     - very fucking mysterious
+    - it's some bad interaction between swing and jfx on macs only, not sure what
+        - dynamically importing the swing ns like I already do for the jfx ns to avoid any side effects seems to work
+    - done
+
+* issue #204 "Dark theme - "addon has update" row color could be more clear"
+    - https://github.com/ogri-la/strongbox/issues/204
+    - made the css colours a little clearer and more fine grained
+        - a lot of the colours before were just using the 'unsteady' colour
+    - added 'sub themes', dark-green and dark-orange that use tweaked dark theme values
+    - added 'cli/touch' that just iterates over the addons so I can see the unsteady colour working
+        - I think it was this colour that was a little forked in the dark theme
+    - done
+
+## todo
 
 * better icon for appimage
-
 
 ## todo bucket (no particular order)
 
