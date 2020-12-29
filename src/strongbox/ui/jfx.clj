@@ -47,7 +47,7 @@
       (fx.lifecycle/delete fx.lifecycle/dynamic (:child component) opts))))
 
 (def major-theme-map
-  {:light 
+  {:light
    {:installed/ignored-fg :darkgray
     :base "#ececec"
     :accent "lightsteelblue"
@@ -60,6 +60,7 @@
     :row-updateable "lemonchiffon"
     :row-updateable-hover "lemonchiffon"
     :row-updateable-selected "#fdfd96" ;; "Lemon Meringue"
+    :row-updateable-text "black"
     :row-warning "lemonchiffon"
     :row-error "tomato"
     :jfx-hyperlink "blue"
@@ -77,18 +78,18 @@
     :row "#1e1f29" ;; same as :base
     :row-hover "derive(-fx-control-inner-background,-50%)"
     :row-selected "derive(-fx-control-inner-background,-30%)"
-    :unsteady "derive(-fx-selection-bar,+50%)"
+    :unsteady "#bbb"
     :row-updateable "#6272a4" ;; (blue) "#df8750" (orange)
-    :row-updateable-hover "#50a67b"
-    :row-updateable-selected "#40c762"
+    :row-updateable-hover "#6272a4"
+    :row-updateable-selected "#6272c3" ;; todo: can this be derived from :row-updateable?
+    :row-updateable-text "white"
     :row-warning "#6272a4"
     :row-error "#ce2828"
     :jfx-hyperlink "#f8f8f2"
-    :jfx-hyperlink-updateable "black"
+    :jfx-hyperlink-updateable "white"
     :jfx-hyperlink-weight "bold"
     :table-font-colour "white"
-    :already-installed-row-colour "#99bc6b"
-    }})
+    :already-installed-row-colour "#99bc6b"}})
 
 (def sub-theme-map
   {:dark
@@ -96,23 +97,24 @@
     {:row-updateable "#50a67b" ;; (green)
      :row-updateable-hover "#50a67b"
      :row-updateable-selected "#40c762" ;; (brighter green)
-     }
-    
+     :row-updateable-text "black"
+     :jfx-hyperlink-updateable "black"}
+
     :orange
-    {:row-updateable "#df8750" ;; (orange)
-     :row-updateable-hover "#50a67b"
-     :row-updateable-selected "#40c762" ;; (brighter green)
-     }
+    {:row-updateable "#df8750" ;;"#ffb86c"
+     :row-updateable-hover "#df8750"
+     :row-updateable-selected "#df722e"
+     :row-updateable-text "black"
+     :jfx-hyperlink-updateable "black"}}})
 
-    }})
-
-(def themes (into major-theme-map
-                  (for [[major-theme-key sub-theme-val] sub-theme-map
-                          [sub-theme-key sub-theme] sub-theme-val
-                          :let [major-theme (get major-theme-map major-theme-key)
-                                ;; "dark-green", "dark-orange"
-                                theme-name (keyword (format "%s-%s" (name major-theme-key) (name sub-theme-key)))]]
-                    {theme-name (merge major-theme sub-theme)})))
+(def themes
+  (into major-theme-map
+        (for [[major-theme-key sub-theme-val] sub-theme-map
+              [sub-theme-key sub-theme] sub-theme-val
+              :let [major-theme (get major-theme-map major-theme-key)
+                    ;; "dark-green", "dark-orange"
+                    theme-name (keyword (format "%s-%s" (name major-theme-key) (name sub-theme-key)))]]
+          {theme-name (merge major-theme sub-theme)})))
 
 (defn-spec style map?
   "generates javafx css definitions for the different themes.
@@ -198,28 +200,21 @@
 
                 ;; even
                 :-fx-background-color (colour :row)
-                ":hover" {:-fx-background-color (colour :row-hover)
-                          }
+                ":hover" {:-fx-background-color (colour :row-hover)}
                 ":selected" {:-fx-background-color (colour :row-selected)
                              " .table-cell" {:-fx-text-fill "-fx-focused-text-base-color"}
-                             :-fx-table-cell-border-color (colour :table-border)
-                             }
-                
+                             :-fx-table-cell-border-color (colour :table-border)}
+
                 ":selected:hover" {:-fx-background-color (colour :row-hover)}
 
                 ":odd" {:-fx-background-color (colour :row)}
-                ":odd:hover" {:-fx-background-color (colour :row-hover)
-                             }
-                ":odd:selected" {:-fx-background-color (colour :row-selected)
-                                 }
-                ":odd:selected:hover" {:-fx-background-color (colour :row-hover)
-                                       }
+                ":odd:hover" {:-fx-background-color (colour :row-hover)}
+                ":odd:selected" {:-fx-background-color (colour :row-selected)}
+                ":odd:selected:hover" {:-fx-background-color (colour :row-hover)}
 
                 ".unsteady" {;; '!important' so that it takes precedence over .updateable addons
-                             :-fx-background-color (str (colour :unsteady) " !important")
-                             
-                             }}
-               
+                             :-fx-background-color (str (colour :unsteady) " !important")}}
+
 
                ;; installed-addons menu
 
@@ -240,21 +235,16 @@
                {" .updateable"
                 {:-fx-background-color (colour :row-updateable)
 
-                 " .table-cell" {:-fx-text-fill "black" ;; todo
-                                 }
-                 " .hyperlink, .hyperlink:hover" {:-fx-text-fill (colour :jfx-hyperlink-updateable)
-                                                  }
+                 " .table-cell" {:-fx-text-fill (colour :row-updateable-text)}
+                 " .hyperlink, .hyperlink:hover" {:-fx-text-fill (colour :jfx-hyperlink-updateable)}
 
                  ;; selected updateable addons are do not look any different
                  ;; todo: make selected+updateable addons use slightly brighter versions of themselves
                  ":selected"
                  {;; !important so that hovering over a selected+updateable row doesn't change it's colour
-                  :-fx-background-color (str (colour :row-updateable-selected) " !important")
-                  }
+                  :-fx-background-color (str (colour :row-updateable-selected) " !important")}
 
-                 ":hover" {:-fx-background-color (colour :row-updateable-hover)}
-
-                 }
+                 ":hover" {:-fx-background-color (colour :row-updateable-hover)}}
 
                 " .ignored .table-cell"
                 {:-fx-text-fill (colour :installed/ignored-fg)}
@@ -1095,12 +1085,12 @@
         _ (init-notice-logger! gui-state)
 
         ;; css watcher for live coding
-        _ (add-watch #'style :refresh-app (fn [_ _ _ _]
-                                            (swap! gui-state fx/swap-context assoc :style (style))))
-        _ (add-watch #'themes :refresh-app2 (fn [_ _ _ _]
-                                            (swap! gui-state fx/swap-context assoc :style (style))))
-        
-        _ (core/add-cleanup-fn #(remove-watch core/state :refresh-app))
+        _ (doseq [rf [#'style #'major-theme-map #'sub-theme-map #'themes]
+                  :let [key (str rf)]]
+            (add-watch rf key (fn [_ _ _ _]
+                                (info "updating gui state")
+                                (swap! gui-state fx/swap-context assoc :style (style))))
+            (core/add-cleanup-fn #(remove-watch rf key)))
 
         ;; asynchronous searching. as the user types, update the state with search results asynchronously
         _ (cli/-init-search-listener)

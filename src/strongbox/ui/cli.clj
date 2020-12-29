@@ -63,11 +63,10 @@
   (let [touch (fn [a]
                 (core/start-affecting-addon a)
                 (Thread/sleep 200)
-                (core/stop-affecting-addon a))
-        ]
-  (->> (core/get-state :installed-addon-list)
-       core/-updateable?
-       (run! touch))))
+                (core/stop-affecting-addon a))]
+    (->> (core/get-state :installed-addon-list)
+         core/-updateable?
+         (run! touch))))
 
 ;; search
 
