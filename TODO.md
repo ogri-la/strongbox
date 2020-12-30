@@ -68,7 +68,9 @@ see CHANGELOG.md for a more formal list of changes by release
 ## todo
 
 * better icon for appimage
-
+    - add it to javafx
+    - add it to AppImage    
+    
 ## todo bucket (no particular order)
 
 * import, skip importing an addon if addon already exists in addon dir

@@ -35,7 +35,7 @@ rm -rf ./AppDir
 mkdir AppDir
 mv "$output_dir" AppDir/usr
 cp strongbox.desktop AppDir/
-cp strongbox.png AppDir/
+cp resources/strongbox.svg resources/strongbox.png AppDir/
 cp AppRun AppDir/
 du -sh AppDir/
 rm -f strongbox.appimage # safer than 'rm -f strongbox'
