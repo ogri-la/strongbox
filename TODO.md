@@ -65,12 +65,17 @@ see CHANGELOG.md for a more formal list of changes by release
         - I think it was this colour that was a little forked in the dark theme
     - done
 
-## todo
-
 * better icon for appimage
     - add it to javafx
+        - done
     - add it to AppImage    
-    
+        - done
+    - done
+
+## todo
+
+* 3.2.0 release
+
 ## todo bucket (no particular order)
 
 * import, skip importing an addon if addon already exists in addon dir

@@ -333,6 +333,7 @@
   (first (Window/getWindows)))
 
 (defn set-icon
+  "adds the strongbox icon to the application window"
   []
   @(fx/on-fx-thread
     (.add (.getIcons (get-window))
