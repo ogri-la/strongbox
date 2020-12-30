@@ -14,6 +14,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## 3.2.0
+
+### Added
+
+* new themes 'dark-green' and 'dark-orange'.
+* a confirmation before removing an addon directory.
+* aliases of a few more very popular addons that evade reconciliation.
+* more (anonymous) debug information to the log file when run with `--debug` or `-v debug`.
+* application icon.
+    - this is very minor on Linux and macOS and does *not* affect the dock icon on macOS.
+    - it also doesn't affect the icon of the standalone AppImage either.
+
+### Changed
+
+* refresh/F5 now clears the file cache so updates are always re-fetched.
+* aliases now use `source` and `source-id` to match against the catalogue rather than `name`.
+    - this was very old code that pre-dated using addon host APIs.
+* import no longer skips an addon if the game-track on the addon-dir or the export record is too strict.
+    - the new behaviour changes the game-track to the more lenient version. `retail-classic` if `retail` or vice-versa.
+    - I think it's better to have the addon installed but set to the incorrect game track than not present at all.
+* import will now use the cache.
+    - might be helpful if you're attempting the same import over and over again.
+* github addons now check against multiple releases for a valid asset to install.
+    - rather than just the first release and fail if no valid installable asset found.
+* made the distinction between colours in the dark and light themes more prominent.
+    - especially the 'unsteady' colour in the dark themes that a row gets when it's being updated.
+
+### Fixed
+
+* a major bug affecting the new GUI on macOS *only*.
+    - some kind of bad interaction between new and old GUIs caused the new GUI to quietly exit 30-60s after app init.
+* a theoretical case when an entire addon directory may be deleted when importing a list of addons.
+    - not as bad as it sounds, I could only recreate it under test conditions.
+
 ## 3.1.1
 
 ### Fixed
