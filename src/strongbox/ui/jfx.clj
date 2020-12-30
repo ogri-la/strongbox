@@ -332,6 +332,13 @@
   []
   (first (Window/getWindows)))
 
+(defn set-icon
+  "adds the strongbox icon to the application window"
+  []
+  @(fx/on-fx-thread
+    (.add (.getIcons (get-window))
+          (javafx.scene.image.Image. (.openStream (clojure.java.io/resource "strongbox.png"))))))
+
 (defn select
   [node-id]
   (-> (get-window) .getScene .getRoot (.lookupAll node-id)))
@@ -1132,6 +1139,7 @@
     ;; happens during testing and causes a few weird windows to hang around.
     ;; see `(mapv (fn [_] (test :jfx)) (range 0 100))`
     (let [kick (future
+                 (set-icon)
                  (core/refresh)
                  (bump-search))]
       (core/add-cleanup-fn #(future-cancel kick)))

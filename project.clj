@@ -44,6 +44,8 @@
 
                  ]
 
+  :resource-paths ["resources"]
+
   :profiles {:dev {:dependencies [;; fake http responses for testing
                                   [clj-http-fake "1.0.3"]
                                   ]}

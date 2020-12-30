@@ -65,9 +65,16 @@ see CHANGELOG.md for a more formal list of changes by release
         - I think it was this colour that was a little forked in the dark theme
     - done
 
+* better icon for appimage
+    - add it to javafx
+        - done
+    - add it to AppImage    
+        - done
+    - done
+
 ## todo
 
-* better icon for appimage
+* 3.2.0 release
 
 ## todo bucket (no particular order)
 
