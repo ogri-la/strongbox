@@ -8,6 +8,17 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+* version pinning
+    - user can opt to install a specific release of an addon
+    - automatic updates for that addon are thereafter blocked
+
+* gui, 're-install' for an addon that has an update available will update the addon
+    - it implies the same version would be installed
+    - strongbox doesn't support version pinning yet either
+
+* alpha/beta opt-in
+    - user can opt to install alpha/beta/no-lib releases per-addon
+
 ## todo bucket (no particular order)
 
 * import, skip importing an addon if addon already exists in addon dir
@@ -96,10 +107,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - wowinterface checksum is hidden behind a javascript tabber but still available
         - wowinterface do have a md5sum in results! score
 
-* gui, 're-install' for an addon that has an update available will update the addon
-    - it implies the same version would be installed
-    - strongbox doesn't support version pinning yet either
-
 * test, can gui-diff and main/test be pushed back into the testing namespace and elided from release somehow?
 
 * EOL planning
@@ -116,11 +123,8 @@ see CHANGELOG.md for a more formal list of changes by release
 * wowinterface, multiple game tracks 
     - investigate just what is being downloaded when a classic version of a wowi addon is downloaded
     - see 'LagBar'
-* version pinning
-    - user can opt to install a specific release of an addon
-    - automatic updates for that addon are thereafter blocked
-* alpha/beta opt-in
-    - user can opt to install alpha/beta/no-lib releases per-addon
+
+
 * bug, changing sort order during refresh doesn't reflect which addon is being updated
     - I think changing column ordering and moving columns should be disabled while updates happen
         - just freeze or disable them or something.
@@ -178,7 +182,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * gui, download progress bar *inside* the grid ...?
     - pure fantasy?
-    - defer until after gui2
     - defer until after job queue
 * gui, toggleable highlighers as a menuitem
     - highlight unmatched
