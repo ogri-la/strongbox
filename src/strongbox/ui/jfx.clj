@@ -1,7 +1,7 @@
 (ns strongbox.ui.jfx
   (:require
    [me.raynes.fs :as fs]
-   [clojure.string :refer [lower-case join]]
+   [clojure.string :refer [lower-case join capitalize replace] :rename {replace str-replace}]
    [taoensso.timbre :as timbre :refer [spy info]] ;; debug info warn error spy]] 
    [cljfx.ext.table-view :as fx.ext.table-view]
    [cljfx.lifecycle :as fx.lifecycle]
@@ -46,6 +46,76 @@
     (delete [_ component opts]
       (fx.lifecycle/delete fx.lifecycle/dynamic (:child component) opts))))
 
+(def major-theme-map
+  {:light
+   {:installed/ignored-fg :darkgray
+    :base "#ececec"
+    :accent "lightsteelblue"
+    :button-text-hovering "black"
+    :table-border "#bbb"
+    :row "-fx-control-inner-background"
+    :row-hover "derive(-fx-control-inner-background,-10%)"
+    :row-selected "lightsteelblue"
+    :unsteady "lightsteelblue"
+    :row-updateable "lemonchiffon"
+    :row-updateable-hover "lemonchiffon"
+    :row-updateable-selected "#fdfd96" ;; "Lemon Meringue" (brighter yellow)
+    :row-updateable-text "black"
+    :row-warning "lemonchiffon"
+    :row-error "tomato"
+    :jfx-hyperlink "blue"
+    :jfx-hyperlink-updateable "blue"
+    :jfx-hyperlink-weight "normal"
+    :table-font-colour "derive(-fx-background,-80%)"
+    :already-installed-row-colour "#99bc6b"}
+
+   :dark ;; "'dracula' theme: https://github.com/dracula/dracula-theme"
+   {:installed/ignored-fg "#666666"
+    :base "#1e1f29"
+    :accent "#44475a"
+    :button-text-hovering "white"
+    :table-border "#333"
+    :row "#1e1f29" ;; same as :base
+    :row-hover "derive(-fx-control-inner-background,-50%)"
+    :row-selected "derive(-fx-control-inner-background,-30%)"
+    :unsteady "#bbb"
+    :row-updateable "#6272a4" ;; (blue)
+    :row-updateable-hover "#6272a4"
+    :row-updateable-selected "#6272c3" ;; (brighter blue) ;; todo: can this be derived from :row-updateable?
+    :row-updateable-text "white"
+    :row-warning "#6272a4"
+    :row-error "#ce2828"
+    :jfx-hyperlink "#f8f8f2"
+    :jfx-hyperlink-updateable "white"
+    :jfx-hyperlink-weight "bold"
+    :table-font-colour "white"
+    :already-installed-row-colour "#99bc6b"}})
+
+(def sub-theme-map
+  {:dark
+   {:green
+    {:row-updateable "#50a67b" ;; (green)
+     :row-updateable-hover "#50a67b"
+     :row-updateable-selected "#40c762" ;; (brighter green)
+     :row-updateable-text "black"
+     :jfx-hyperlink-updateable "black"}
+
+    :orange
+    {:row-updateable "#df8750" ;; (orange)
+     :row-updateable-hover "#df8750"
+     :row-updateable-selected "#df722e" ;; (brigher orange)
+     :row-updateable-text "black"
+     :jfx-hyperlink-updateable "black"}}})
+
+(def themes
+  (into major-theme-map
+        (for [[major-theme-key sub-theme-val] sub-theme-map
+              [sub-theme-key sub-theme] sub-theme-val
+              :let [major-theme (get major-theme-map major-theme-key)
+                    ;; "dark-green", "dark-orange"
+                    theme-name (keyword (format "%s-%s" (name major-theme-key) (name sub-theme-key)))]]
+          {theme-name (merge major-theme sub-theme)})))
+
 (defn-spec style map?
   "generates javafx css definitions for the different themes.
   if editor is connected to a running repl session then modifying
@@ -55,8 +125,8 @@
    ::style
    (let [generate-style
          (fn [theme-kw]
-           (let [colour-map (theme-kw  core/themes)
-                 colour #(name (get colour-map % "green"))]
+           (let [colour-map (get themes theme-kw)
+                 colour #(name (get colour-map % "pink"))]
              {"#about-dialog "
 
               {:-fx-spacing "3"
@@ -131,14 +201,15 @@
                 ;; even
                 :-fx-background-color (colour :row)
                 ":hover" {:-fx-background-color (colour :row-hover)}
-                ":selected" {:-fx-background-color (colour :unsteady)
+                ":selected" {:-fx-background-color (colour :row-selected)
                              " .table-cell" {:-fx-text-fill "-fx-focused-text-base-color"}
                              :-fx-table-cell-border-color (colour :table-border)}
+                ":selected:hover" {:-fx-background-color (colour :row-hover)}
 
                 ":odd" {:-fx-background-color (colour :row)}
                 ":odd:hover" {:-fx-background-color (colour :row-hover)}
-                ":odd:selected" {:-fx-background-color (colour :unsteady)}
-                ":odd:selected:hover" {:-fx-background-color (colour :unsteady)}
+                ":odd:selected" {:-fx-background-color (colour :row-selected)}
+                ":odd:selected:hover" {:-fx-background-color (colour :row-hover)}
 
                 ".unsteady" {;; '!important' so that it takes precedence over .updateable addons
                              :-fx-background-color (str (colour :unsteady) " !important")}}
@@ -163,9 +234,16 @@
                {" .updateable"
                 {:-fx-background-color (colour :row-updateable)
 
+                 " .table-cell" {:-fx-text-fill (colour :row-updateable-text)}
+                 " .hyperlink, .hyperlink:hover" {:-fx-text-fill (colour :jfx-hyperlink-updateable)}
+
                  ;; selected updateable addons are do not look any different
+                 ;; todo: make selected+updateable addons use slightly brighter versions of themselves
                  ":selected"
-                 {:-fx-background-color "-fx-selection-bar"}}
+                 {;; !important so that hovering over a selected+updateable row doesn't change it's colour
+                  :-fx-background-color (str (colour :row-updateable-selected) " !important")}
+
+                 ":hover" {:-fx-background-color (colour :row-updateable-hover)}}
 
                 " .ignored .table-cell"
                 {:-fx-text-fill (colour :installed/ignored-fg)}
@@ -241,10 +319,10 @@
                                                  :-fx-text-fill (colour :jfx-hyperlink)
                                                  :-fx-font-weight (colour :jfx-hyperlink-weight)}}}}))]
 
-     (merge
-      (generate-style :light)
-      (generate-style :dark)))))
-
+     ;; return a single map with all themes in it.
+     ;; themes are separated by their top-level 'root' key.
+     (into {} (for [[theme-key _] themes]
+                (generate-style theme-key))))))
 
 ;;
 
@@ -253,6 +331,13 @@
   "returns the application `Window` object."
   []
   (first (Window/getWindows)))
+
+(defn set-icon
+  "adds the strongbox icon to the application window"
+  []
+  @(fx/on-fx-thread
+    (.add (.getIcons (get-window))
+          (javafx.scene.image.Image. (.openStream (clojure.java.io/resource "strongbox.png"))))))
 
 (defn select
   [node-id]
@@ -315,23 +400,29 @@
   "displays an alert dialog to the user with varying button combinations they can press.
   the result object is a weirdo `java.util.Optional` https://docs.oracle.com/javase/8/docs/api/java/util/Optional.html
   whose `.get` return value is equal to the button type clicked"
-  [event msg & [opt-map]]
+  [alert-type-key msg & [opt-map]]
   @(fx/on-fx-thread
-    (let [window (-> event .getTarget .getParentPopup .getOwnerWindow .getScene .getWindow)
-          alert-type-map {:warning Alert$AlertType/WARNING
+    (let [alert-type-map {:warning Alert$AlertType/WARNING
                           :error Alert$AlertType/ERROR
                           :confirm Alert$AlertType/CONFIRMATION
                           :info Alert$AlertType/INFORMATION}
-          alert-type-key (get opt-map :type, :info)
           alert-type (get alert-type-map alert-type-key)
           widget (doto (Alert. alert-type)
                    (.setTitle (:title opt-map))
                    (.setHeaderText (:header opt-map))
                    (.setContentText msg)
-                   (.initOwner window))]
+                   (.initOwner (get-window)))]
       (when (:content opt-map)
         (.setContent (.getDialogPane widget) (:content opt-map)))
       (.showAndWait widget))))
+
+(defn-spec confirm boolean?
+  "displays a confirmation prompt with the given `heading` and `message`.
+  `heading` may be `nil`.
+  returns `true` if the 'ok' button is clicked, else `false`."
+  [heading (s/nilable string?), message string?]
+  (let [result (alert :confirm message {:title "confirm" :header heading})]
+    (= (.get result) ButtonType/OK)))
 
 ;;
 
@@ -450,9 +541,9 @@
   * latest release has a packaged 'asset'
   * asset must be a .zip file
   * zip file must be structured like an addon"
-        failure #(alert event fail-msg {:type :error})
+        failure #(alert :error fail-msg)
         warn-msg "Failed. Addon successfully added to catalogue but could not be installed."
-        warning #(alert event warn-msg {:type :warning})]
+        warning #(alert :warning warn-msg)]
     (when addon-url
       (if-let [result (core/add+install-user-addon! addon-url)]
         (when-not (contains? result :download-url)
@@ -512,8 +603,7 @@
 (defn about-strongbox-dialog
   "displays an informational dialog to the user about strongbox"
   [event]
-  (alert event "" {:type :info
-                   :content (-> (-about-strongbox-dialog) fx/create-component fx/instance)})
+  (alert :info "" {:content (-> (-about-strongbox-dialog) fx/create-component fx/instance)})
   nil)
 
 (defn remove-selected-confirmation-handler
@@ -521,7 +611,7 @@
   [event]
   (when-let [selected (core/get-state :selected-installed)]
     (if (utils/any (mapv :ignore? selected))
-      (alert event "Selection contains ignored addons. Stop ignoring them and then delete." {:type :error})
+      (alert :error "Selection contains ignored addons. Stop ignoring them and then delete.")
 
       (let [label-list (mapv (fn [row]
                                {:fx/type :text
@@ -529,8 +619,7 @@
             content (fx/create-component {:fx/type :v-box
                                           :children (into [{:fx/type :text
                                                             :text (format "Deleting %s:" (count selected))}] label-list)})
-            result (alert event "" {:content (fx/instance content)
-                                    :type :confirm})]
+            result (alert :confirm "" {:content (fx/instance content)})]
         (when (= (.get result) ButtonType/OK)
           (core/remove-selected)))))
   nil)
@@ -551,6 +640,14 @@
   ;; note: don't know how to do this in jfx
   ;;(ss/selection! (select-ui :#tbl-search-addons) nil) 
   (core/refresh))
+
+;;
+
+(defn remove-addon-dir
+  []
+  (when (confirm "Confirm" ;; soft touch here, it's not a big deal.
+                 "You can add this directory back at any time.")
+    (cli/remove-addon-dir!)))
 
 ;;
 
@@ -577,7 +674,8 @@
   [selected-theme ::sp/gui-theme, theme-map map?]
   (let [rb (fn [theme-key]
              {:fx/type :radio-menu-item
-              :text (format "%s theme" (-> theme-key name clojure.string/capitalize))
+              ;; "Light theme", "Dark green theme"
+              :text (format "%s theme" (-> theme-key name (str-replace #"-" " ") capitalize))
               :selected (= selected-theme theme-key)
               :toggle-group {:fx/type fx/ext-get-ref
                              :ref ::theme-toggle-group}
@@ -602,7 +700,7 @@
   "returns a description of the menu at the top of the application"
   [{:keys [fx/context]}]
   (let [file-menu [(menu-item "_New addon directory" (event-handler wow-dir-picker) {:key "Ctrl+N"})
-                   (menu-item "Remove addon directory" (async-handler cli/remove-addon-dir!))
+                   (menu-item "Remove addon directory" (async-handler remove-addon-dir))
                    separator
                    (menu-item "_Update all" (async-handler core/install-update-all) {:key "Ctrl+U"})
                    (menu-item "Re-install all" (async-handler core/re-install-all))
@@ -617,14 +715,14 @@
         prefs-menu [{:fx/type menu-item--num-zips-to-keep}]
 
         view-menu (into
-                   [(menu-item "Refresh" (async-handler core/refresh) {:key "F5"})
+                   [(menu-item "Refresh" (async-handler cli/refresh) {:key "F5"})
                     separator
                     (menu-item "_Installed" (switch-tab-handler INSTALLED-TAB) {:key "Ctrl+I"})
                     (menu-item "Searc_h" (switch-tab-handler SEARCH-TAB) {:key "Ctrl+H"})
                     separator]
                    (build-theme-menu
                     (fx/sub-val context get-in [:app-state :cfg :gui-theme])
-                    core/themes))
+                    themes))
 
         catalogue-menu (into (build-catalogue-menu
                               (fx/sub-val context get-in [:app-state :cfg :selected-catalogue])
@@ -743,7 +841,7 @@
         iface-version (fn [row]
                         (some-> row :interface-version str utils/interface-version-to-game-version))
 
-        column-list [{:text "source" :min-width 110 :pref-width 120 :max-width 160 :cell-value-factory href-to-hyperlink}
+        column-list [{:text "source" :min-width 115 :pref-width 120 :max-width 160 :cell-value-factory href-to-hyperlink}
                      {:text "name" :min-width 150 :pref-width 300 :max-width 500 :cell-value-factory (comp no-new-lines :label)}
                      {:text "description" :pref-width 700 :cell-value-factory (comp no-new-lines :description)}
                      {:text "installed" :max-width 150 :cell-value-factory :installed-version}
@@ -996,9 +1094,12 @@
         _ (init-notice-logger! gui-state)
 
         ;; css watcher for live coding
-        _ (add-watch #'style :refresh-app (fn [_ _ _ _]
-                                            (swap! gui-state fx/swap-context assoc :style (style))))
-        _ (core/add-cleanup-fn #(remove-watch core/state :refresh-app))
+        _ (doseq [rf [#'style #'major-theme-map #'sub-theme-map #'themes]
+                  :let [key (str rf)]]
+            (add-watch rf key (fn [_ _ _ _]
+                                (info "updating gui state")
+                                (swap! gui-state fx/swap-context assoc :style (style))))
+            (core/add-cleanup-fn #(remove-watch rf key)))
 
         ;; asynchronous searching. as the user types, update the state with search results asynchronously
         _ (cli/-init-search-listener)
@@ -1038,6 +1139,7 @@
     ;; happens during testing and causes a few weird windows to hang around.
     ;; see `(mapv (fn [_] (test :jfx)) (range 0 100))`
     (let [kick (future
+                 (set-icon)
                  (core/refresh)
                  (bump-search))]
       (core/add-cleanup-fn #(future-cancel kick)))

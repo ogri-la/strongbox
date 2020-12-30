@@ -4,6 +4,7 @@
    ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [me.raynes.fs :as fs]
    [strongbox
+    [logging :as logging]
     [utils :as utils]
     [test-helper :as helper :refer [fixture-path slurp-fixture helper-data-dir with-running-app]]
     [nfo :as nfo]
@@ -205,7 +206,7 @@
                     :source-id 123
                     :installed-version "1.2.3"
                     :name "someaddon"
-                    ;; also invalid. all of these are required
+                    ;; also invalid. the below are all required:
                     ;;:group-id "asdf"
                     ;;:primary? true
                     ;;:installed-game-track :retail
@@ -235,3 +236,28 @@
                      :ignore? false}]]
       (is (= expected (addon/load-installed-addons addon-dir))))))
 
+(deftest remove-addon--malign-addon-data
+  (testing "uninstalling an addon whose `:dirname` value is corrupted (somehow) shouldn't affect data outside of the addon dir"
+    (let [install-dir (helper/install-dir)
+
+          cases [[{:dirname "./"} "directory is outside the current installation dir, not removing"]
+                 [{:dirname "../"} "directory is outside the current installation dir, not removing"]
+                 [{:dirname "../../"} "directory is outside the current installation dir, not removing"]
+
+                 ;; basename is called on install-dir so you get a DNE error in these cases
+                 [{:dirname "/root"} "addon not removed, path is not a directory"]
+                 [{:dirname "~/Desktop"} "addon not removed, path is not a directory"]
+                 [{:dirname install-dir} "addon not removed, path is not a directory"]]
+
+          _ (fs/touch (utils/join install-dir "somefile"))
+          _ (fs/mkdir (utils/join install-dir "somedir"))
+
+          expected (helper/install-dir-contents)
+
+          defaults {:name "nom" :label "Nom" :description "" :interface-version 90100 :installed-version "0.1"}]
+      (doseq [[given error-prefix] cases]
+        (let [[error-message]
+              (logging/buffered-log :error
+                                    (addon/remove-addon install-dir (merge defaults given)))]
+          (is (= expected (helper/install-dir-contents)))
+          (is (clojure.string/starts-with? error-message error-prefix)))))))

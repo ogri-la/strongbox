@@ -17,7 +17,10 @@
     ;; hanging aot is handled in project.clj, but dynamic inclusion of jfx is handled here.
     ;;[jfx :as jfx] 
     [cli :as cli]
-    [gui :as gui]])
+    ;; 2020-12: on macs there is a bad interaction between jfx and swing that causes jfx to trigger a shutdown a few seconds to a minute after launch.
+    ;; not sure of the deeper reason, but if we don't pull in `gui` unless we need it, it bypasses the problem.
+    ;;[gui :as gui]
+    ])
   (:gen-class))
 
 (Thread/setDefaultUncaughtExceptionHandler
@@ -33,21 +36,6 @@
 ;; spec checking is disabled upon release
 (def spec? (utils/in-repl?))
 
-(defn watch-for-gui-restart
-  "monitors application state for requests to restart the gui.
-  logic lives here rather than `core.clj` because `core.clj` is a dependency of `gui.clj` and
-  having the gui restart *itself* requires `declare` statements"
-  []
-  (let [callback (fn [{:keys [cli-opts gui gui-restart-flag]}]
-                   (when (and (not= :cli (:ui cli-opts)) ;; using a gui
-                              (some? gui-restart-flag) ;; and the restart flag is set
-                              (some? gui)) ;; and we actually have a gui to restart
-                     (gui/stop)
-                     (gui/start)
-                     ;; reset flag. will trigger watch again but the checks will prevent infinite recursion
-                     (swap! core/state assoc :gui-restart-flag nil)))]
-    (core/state-bind [:gui-restart-flag] callback)))
-
 (defn jfx
   "dynamically resolve the `strongbox.ui.jfx` ns and call the requisite `action`.
   `action` is either `:start` or `:stop`.
@@ -60,12 +48,23 @@
       :start ((ns-resolve jfx-ns 'start))
       :stop ((ns-resolve jfx-ns 'stop)))))
 
+(defn swing
+  "dynamically resolve the `strongbox.ui.gui` ns and call the requisite `action`.
+  `action` is either `:start` or `:stop`.
+  this is done because including the original gui ns directly on a mac causes the jfx ui to crash."
+  [action]
+  (require 'strongbox.ui.gui)
+  (let [swing-ns (find-ns 'strongbox.ui.gui)]
+    (case action
+      :start ((ns-resolve swing-ns 'start))
+      :stop ((ns-resolve swing-ns 'stop)))))
+
 (defn stop
   []
   (let [opts (:cli-opts @core/state)]
     (case (:ui opts)
       :cli (cli/stop)
-      :gui1 (gui/stop)
+      :gui1 (swing :stop)
       :gui (jfx :stop)
       (jfx :stop))
     (core/stop core/state)))
@@ -81,9 +80,7 @@
   (core/start (merge {:profile? profile?, :spec? spec?} cli-opts))
   (case (:ui cli-opts)
     :cli (cli/start cli-opts)
-    :gui1 (do
-            (gui/start)
-            (watch-for-gui-restart))
+    :gui1 (swing :start)
     :gui (jfx :start)
     (jfx :start))
   nil)

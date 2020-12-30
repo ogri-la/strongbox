@@ -5,7 +5,7 @@
    [strongbox
     [logging :as logging]
     [github-api :as github-api]
-    [test-helper :refer [fixture-path]]]
+    [test-helper :refer [fixture-path slurp-fixture]]]
    [clj-http.fake :refer [with-fake-routes-in-isolation]]))
 
 (deftest parse-user-string
@@ -85,6 +85,26 @@
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (github-api/parse-user-string reasonable-looking-url)))))))
 
+(deftest parse-github-release-data
+  (testing "a complete list of release data can be parsed and filtered"
+    (let [fixture (slurp-fixture "github-repo-releases--altoholic-classic.json")
+          addon-summary
+          {:url "https://github.com/Bar/Foo"
+           :updated-date "2019-10-09T17:40:04Z"
+           :source "github"
+           :source-id "Bar/Foo"
+           :label "Foo"
+           :name "foo"
+           :download-count 123
+           :game-track-list []
+           :tag-list []}
+
+          expected-classic 45
+          expected-retail 2]
+      (with-fake-routes-in-isolation {} ;; necessary?
+        (is (= expected-classic (count (github-api/parse-github-release-data fixture addon-summary :classic))))
+        (is (= expected-retail (count (github-api/parse-github-release-data fixture addon-summary :retail))))))))
+
 (deftest expand-addon-summary
   (testing "expand-summary correctly extracts and adds additional properties"
     (let [given {:url "https://github.com/Aviana/HealComm"
@@ -98,11 +118,9 @@
 
           game-track :retail
 
-          source-updates {:download-url "https://github.com/Aviana/HealComm/releases/download/2.04/HealComm.zip"
-                          :version "2.04 Beta"
-                          :game-track game-track}
-
-          expected source-updates
+          expected {:download-url "https://github.com/Aviana/HealComm/releases/download/2.04/HealComm.zip"
+                    :version "2.04 Beta"
+                    :game-track game-track}
 
           fixture (slurp (fixture-path "github-repo-releases--aviana-healcomm.json"))
           fake-routes {"https://api.github.com/repos/Aviana/HealComm/releases"
@@ -123,11 +141,9 @@
 
           game-track :classic
 
-          source-updates {:download-url "https://github.com/Ravendwyr/Chinchilla/releases/download/v2.10.0/Chinchilla-v2.10.0-classic.zip"
-                          :version "v2.10.0-classic"
-                          :game-track game-track}
-
-          expected source-updates
+          expected {:download-url "https://github.com/Ravendwyr/Chinchilla/releases/download/v2.10.0/Chinchilla-v2.10.0-classic.zip"
+                    :version "v2.10.0-classic"
+                    :game-track game-track}
 
           fixture (slurp (fixture-path "github-repo-releases--many-assets-many-gametracks.json"))
           fake-routes {"https://api.github.com/repos/Ravendwyr/Chinchilla/releases"
@@ -156,7 +172,7 @@
         (is (= expected (github-api/expand-summary given :classic)))
         (is (= expected (github-api/expand-summary given :retail))))))
 
-  (testing "releases whose assets are only partially uploaded, due to an upload failure, are ignored"
+  (testing "releases whose assets are only partially uploaded due to an upload failure are ignored"
     (let [given {:url "https://github.com/jsb/RingMenu"
                  :updated-date "2019-10-09T17:40:04Z"
                  :source "github"
@@ -175,7 +191,32 @@
                        {:get (fn [_] {:status 200 :body fixture})}}]
 
       (with-fake-routes-in-isolation fake-routes
-        (is (= expected (github-api/expand-summary given game-track)))))))
+        (is (= expected (github-api/expand-summary given game-track))))))
+
+  (testing "releases whose assets do not match the given `:game-track` are skipped"
+    (let [fixture (slurp (fixture-path "github-repo-releases--altoholic-classic--leading-bad-assets.json"))
+          addon-summary
+          {:url "https://github.com/Bar/Foo"
+           :updated-date "2019-10-09T17:40:04Z"
+           :source "github"
+           :source-id "Bar/Foo"
+           :label "Foo"
+           :name "foo"
+           :download-count 123
+           :game-track-list []
+           :tag-list []}
+
+          game-track :classic
+
+          expected {:game-track :classic
+                    :version "Classic-v1.13.6-057-classic"
+                    :download-url "https://github.com/teelolws/Altoholic-Classic/releases/download/Classic-v1.13.6-057/Altoholic-Classic-v1.13.6-057.zip"}
+
+          fake-routes {"https://api.github.com/repos/Bar/Foo/releases"
+                       {:get (fn [_] {:status 200 :body fixture})}}]
+
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (github-api/expand-summary addon-summary game-track)))))))
 
 (deftest extract-source-id
   (testing "a source-id can be extracted from a github URL"

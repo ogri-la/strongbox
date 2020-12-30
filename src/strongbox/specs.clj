@@ -47,7 +47,7 @@
 (s/def ::gui-event #(instance? java.util.EventObject %))
 (s/def ::install-dir (s/nilable ::extant-dir))
 (s/def ::selected? boolean?)
-(s/def ::gui-theme #{:light :dark})
+(s/def ::gui-theme #{:light :dark :dark-green :dark-orange})
 
 ;; preserve order, used in GUI
 (def game-track-labels [[:retail "retail"]
@@ -61,9 +61,11 @@
 
 (def game-tracks (->> game-track-labels (into {}) keys set))
 (def selectable-game-tracks (->> selectable-game-track-labels (into {}) keys set))
+(def lenient-game-tracks #{:retail-classic :classic-retail})
 
 (s/def ::game-track game-tracks)
 (s/def ::installed-game-track ::game-track) ;; alias
+(s/def ::lenient-game-track lenient-game-tracks)
 (s/def ::game-track-list (s/coll-of ::game-track :kind vector? :distinct true))
 (s/def ::download-count (s/and int? #(>= % 0)))
 (s/def ::ignore? boolean?)

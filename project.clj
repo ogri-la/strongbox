@@ -1,4 +1,4 @@
-(defproject ogri-la/strongbox "3.1.1"
+(defproject ogri-la/strongbox "3.2.0"
   :description "World Of Warcraft Addon Manager"
   :url "https://github.com/ogri-la/strongbox"
   :license {:name "GNU Affero General Public License (AGPL)"
@@ -43,6 +43,8 @@
                  ;; remember to update pom file (`lein pom`)
 
                  ]
+
+  :resource-paths ["resources"]
 
   :profiles {:dev {:dependencies [;; fake http responses for testing
                                   [clj-http-fake "1.0.3"]
