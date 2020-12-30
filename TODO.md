@@ -6,75 +6,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* issue 209, http, revisit the http/expiry-offset-hours value
-    - https://github.com/ogri-la/strongbox/issues/209
-    - drop to 24 at the very least
-        - already at 24
-        - I guess the problem is the case where a user is polling an addon for updates and a cached response is being returned
-            - a refresh should go and hit all of the addons again
-            - but refreshing is also being used to 'reload' the addons
-                - perhaps I'm using refresh too loosely
-                    - ui/cli.clj is already doing 'bits' of a refresh and skipping some parts
-                - the step we want to avoid in refresh is `core/check-for-updates`
-            - so we want a fast one and we want an uncached one?
-                - we want 'refresh'/'f5' to behave like the oldschool ctrl-f5 'hard refresh' and bypass caching
-                - we want regular refreshes, like when switching addon directories or game tracks or catalogues
-    - also, revisit prune-http-cache
-    - done
-
-* add OS and Java versions to debug file output
-    - done
-
-* gui, add confirmation before deleting addon directory
-    - language should be 'remove' rather than 'delete'
-
-* reconciliation, revisit aliases
-    - use source and source-id now
-        - done
-    - maybe externalise the list
-        - decided not to.
-        - I did add scripts to strongbox-catalogue to come up with a better list of popular addons
-    - done
-
-* bug, resolve addon directory before attempting to uninstall it
-    - using the import function with a :dirname of './' I managed to delete the addon directory
-    - dirname should have been resolved, compared with install dir and ensured they were not the same as well as dirname being a child of install-dir
-    - fixed
-
-* import v2, change addon dir game-track to a compound one prior to importing
-    - this will prevent addons from being skipped
-    - done
-
-* github, if multiple releases available and first fails criteria, check the next and so on
-    - see altoholic: https://github.com/teelolws/Altoholic-Classic
-    - done
-
-* issue #206 "mac, 3.0.1 crashes/exits without warning"
-    - https://github.com/ogri-la/strongbox/issues/206
-    - very fucking mysterious
-    - it's some bad interaction between swing and jfx on macs only, not sure what
-        - dynamically importing the swing ns like I already do for the jfx ns to avoid any side effects seems to work
-    - done
-
-* issue #204 "Dark theme - "addon has update" row color could be more clear"
-    - https://github.com/ogri-la/strongbox/issues/204
-    - made the css colours a little clearer and more fine grained
-        - a lot of the colours before were just using the 'unsteady' colour
-    - added 'sub themes', dark-green and dark-orange that use tweaked dark theme values
-    - added 'cli/touch' that just iterates over the addons so I can see the unsteady colour working
-        - I think it was this colour that was a little forked in the dark theme
-    - done
-
-* better icon for appimage
-    - add it to javafx
-        - done
-    - add it to AppImage    
-        - done
-    - done
-
 ## todo
-
-* 3.2.0 release
 
 ## todo bucket (no particular order)
 
