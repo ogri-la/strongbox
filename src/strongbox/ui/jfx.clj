@@ -437,7 +437,8 @@
     :mnemonic-parsing true
     :on-action handler}
    (when-let [key (:key opt-map)]
-     {:accelerator key})))
+     {:accelerator key})
+   (dissoc opt-map :key)))
 
 (defn menu
   [label items & [opt-map]]
@@ -447,7 +448,8 @@
     :mnemonic-parsing true
     :items items}
    (when-let [key (:key opt-map)]
-     {:accelerator key})))
+     {:accelerator key})
+   (dissoc opt-map :key)))
 
 (defn async
   "execute given function and it's optional argument list asynchronously.
@@ -837,6 +839,8 @@
   ;; subscribe to re-render table when addons become unsteady
   (fx/sub-val context get-in [:app-state :unsteady-addons])
   (let [row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
+        selected (fx/sub-val context get-in [:app-state :selected-installed])
+        releases-available? (= 1 (count selected)) ;; todo: one selected AND selected has been expanded AND releases available
 
         iface-version (fn [row]
                         (some-> row :interface-version str utils/interface-version-to-game-version))
@@ -868,7 +872,11 @@
                                                 (when (and row (core/unsteady? (:name row))) "unsteady")])})}
             :columns (mapv table-column column-list)
             :context-menu {:fx/type :context-menu
-                           :items [(menu-item "Update" (async-handler core/install-update-selected))
+                           :items [(menu "Releases" [(menu-item "Foo" donothing)
+                                                     (menu-item "Bar" donothing)]
+                                         {:disable (not releases-available?)})
+                                   separator
+                                   (menu-item "Update" (async-handler core/install-update-selected))
                                    (menu-item "Re-install" (async-handler core/re-install-selected))
                                    separator
                                    (menu-item "Ignore" (async-handler core/ignore-selected))
