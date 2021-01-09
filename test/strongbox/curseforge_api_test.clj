@@ -4,6 +4,7 @@
    [clj-http.fake :refer [with-fake-routes-in-isolation]]
    ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [strongbox
+    [constants :as constants]
     [curseforge-api :as curseforge-api]
     [test-helper :as helper :refer [fixture-path]]]))
 
@@ -70,9 +71,13 @@
                         {:gameVersionFlavor "wow_classic", :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative true}]
 
           fixture {:latestFiles latest-files}
-          expected {:retail [{:gameVersionFlavor :retail, :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}]
-                    :classic [{:gameVersionFlavor :classic, :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}]}]
-      (is (= expected (curseforge-api/latest-versions-by-gameVersionFlavor fixture))))))
+          expected {:retail [{:gameVersionFlavor :retail, :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil
+                              ;; synthetic, we had to guess.
+                              :gameVersion [constants/latest-retail-game-version]}]
+                    :classic [{:gameVersionFlavor :classic, :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil
+                               ;; synthetic, we had to guess.
+                               :gameVersion [constants/latest-classic-game-version]}]}]
+      (is (= expected (curseforge-api/latest-versions fixture))))))
 
 (deftest latest-versions-by-gameVersion
   (testing "a release supporting multiple game tracks is expanded into multiple releases"
@@ -86,7 +91,7 @@
 
                     :classic [{:gameVersionFlavor :classic, :gameVersion ["1.13.1"]
                                :fileDate "2001-01-03T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}]}]
-      (is (= expected (curseforge-api/latest-versions-by-gameVersion fixture)))))
+      (is (= expected (curseforge-api/latest-versions fixture)))))
 
   (testing "previous releases with multiple game tracks are still available even when dropped in the latest release"
     (let [stable 1
@@ -106,7 +111,7 @@
                     ;; classic version available from the 2001-01-01 release
                     :classic [{:gameVersionFlavor :classic, :gameVersion ["1.13.1"]
                                :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}]}]
-      (is (= expected (curseforge-api/latest-versions-by-gameVersion fixture)))))
+      (is (= expected (curseforge-api/latest-versions fixture)))))
 
   (testing "unstable and alternate releases are not considered"
     (let [[alpha, beta, stable] [3 2 1]
@@ -125,7 +130,7 @@
                               :fileDate "2001-01-04T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}]
                     :classic [{:gameVersionFlavor :classic, :gameVersion ["1.13.1"]
                                :fileDate "2001-01-04T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}]}]
-      (is (= expected (curseforge-api/latest-versions-by-gameVersion fixture))))))
+      (is (= expected (curseforge-api/latest-versions fixture))))))
 
 (deftest latest-versions
   (testing "if contents of :gameVersion is available for *all* releases, divine the latest version using that"
@@ -150,10 +155,12 @@
                          :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}]
           fixture {:latestFiles latest-files}
 
-          expected {:retail [{:gameVersionFlavor :retail, :gameVersion ["1.13.1" "8.2.5"]
+          expected {:retail [{:gameVersionFlavor :retail, :gameVersion ["8.2.5"]
                               :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}]
-                    :classic [{:gameVersionFlavor :classic, :gameVersion []
-                               :fileDate "2019-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}]}]
+                    :classic [{:gameVersionFlavor :classic, :gameVersion [constants/latest-classic-game-version]
+                               :fileDate "2019-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}
+                              {:gameVersionFlavor :classic, :gameVersion ["1.13.1"]
+                               :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil}]}]
       (is (= expected (curseforge-api/latest-versions fixture))))))
 
 (deftest extract-addon-summary

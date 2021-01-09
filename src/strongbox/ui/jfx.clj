@@ -834,6 +834,19 @@
   [row]
   (-> row -href-to-hyperlink fx/create-component fx/instance))
 
+(defn available-versions
+  [row]
+  (if (contains? row :release-list)
+    (fx/create-component
+     (fx/instance
+      {:fx/type :hyperlink
+       :on-action (fn [_]
+                    ;; on-click, update state so that it changes from a hyperlink to a dropdown
+                    ;; populate release list
+                    (println "hiya"))
+       :text (:version row)}))
+    (:version row)))
+
 (defn installed-addons-table
   [{:keys [fx/context]}]
   ;; subscribe to re-render table when addons become unsteady
@@ -849,7 +862,7 @@
                      {:text "name" :min-width 150 :pref-width 300 :max-width 500 :cell-value-factory (comp no-new-lines :label)}
                      {:text "description" :pref-width 700 :cell-value-factory (comp no-new-lines :description)}
                      {:text "installed" :max-width 150 :cell-value-factory :installed-version}
-                     {:text "available" :max-width 150 :cell-value-factory :version}
+                     {:text "available" :max-width 150 :cell-value-factory available-versions}
                      {:text "WoW" :max-width 100 :cell-value-factory iface-version}]]
     {:fx/type fx.ext.table-view/with-selection-props
      :props {:selection-mode :multiple

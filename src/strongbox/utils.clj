@@ -1,6 +1,8 @@
 (ns strongbox.utils
   (:require
-   [strongbox.specs :as sp]
+   [strongbox
+    [specs :as sp]
+    [constants :as constants]]
    [clojure.string :refer [trim lower-case]]
    [clojure.java.io]
    [clojure.spec.alpha :as s]
@@ -276,6 +278,7 @@
       (clojure.string/join "." major-minor-patch))))
 
 (defn-spec game-version-to-interface-version (s/or :ok ::sp/interface-version :error nil?)
+  "'8.2.0' => '80200', '1.13.2' => '101300"
   [game-version string?]
   (let [;; patch-version isn't considered apparently: http://wowwiki.wikia.com/wiki/Getting_the_current_interface_number
         [major minor & _] (clojure.string/split game-version #"\.")
@@ -285,7 +288,7 @@
       (+ (* 10000 major) (* 100 minor)))))
 
 (defn-spec game-version-to-game-track ::sp/game-track
-  "'1.13.2' => 'classic', '8.2.0' => 'retail'"
+  "'1.13.2' => ':classic', '8.2.0' => 'retail'"
   [game-version string?]
   (if (= "1." (subs game-version 0 2))
     ;; 1.x.x == classic (for now)
@@ -293,12 +296,19 @@
     :retail))
 
 (defn-spec interface-version-to-game-track (s/or :ok ::sp/game-track, :err nil?)
-  "converts an interface version like '80000' to a game track like 'retail'"
+  "converts an interface version like '80000' to a game track like ':retail'"
   [interface-version ::sp/interface-version]
   (-> interface-version
       str ;; aru?
       interface-version-to-game-version
       game-version-to-game-track))
+
+(defn-spec game-track-to-latest-game-version (s/or :ok string?, :err nil?)
+  "':classic' => '1.13.0'"
+  [game-track ::sp/game-track]
+  (case game-track
+    :retail constants/latest-retail-game-version
+    :classic constants/latest-classic-game-version))
 
 ;; https://stackoverflow.com/questions/13789092/length-of-the-first-line-in-an-utf-8-file-with-bom
 (defn debomify

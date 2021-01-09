@@ -3,6 +3,7 @@
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :as timbre :refer [spy info warn error debug]]
    [strongbox
+    [constants :as constants]
     [specs :as sp]
     [tukui-api :as tukui-api]
     [catalogue :as catalogue]
@@ -205,7 +206,7 @@
           (catalogue/write-catalogue (find-catalogue-local-path :full))
 
           ;; 'short' catalogue is derived from the full catalogue
-          (catalogue/shorten-catalogue core/release-of-previous-expansion)
+          (catalogue/shorten-catalogue constants/release-of-previous-expansion)
           (catalogue/write-catalogue (find-catalogue-local-path :short))))))
 
 (defmethod action :scrape-catalogue
