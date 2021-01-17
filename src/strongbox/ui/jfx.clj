@@ -854,7 +854,7 @@
   (let [row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
         selected (fx/sub-val context get-in [:app-state :selected-installed])
         releases-available? (= 1 (count selected)) ;; todo: one selected AND selected has been expanded AND releases available
-        some-unpinned (->> selected (map :pinned-version) (some nil?))
+        some-pinned? (or (->> selected (map :pinned-version) (some some?)) false)
 
         iface-version (fn [row]
                         (some-> row :interface-version str utils/interface-version-to-game-version))
@@ -886,12 +886,13 @@
                                                 (when (and row (core/unsteady? (:name row))) "unsteady")])})}
             :columns (mapv table-column column-list)
             :context-menu {:fx/type :context-menu
-                           :items [(menu-item "Update" (async-handler cli/install-update-selected))
+                           :items [(menu-item "Update" (async-handler cli/install-update-selected)
+                                              {:disable some-pinned?}) ;; disable 'update' when some of the selected are pinned
                                    (menu-item "Re-install" (async-handler cli/re-install-selected))
                                    separator
-                                   (if some-unpinned
-                                     (menu-item "Pin release" (async-handler cli/pin))
-                                     (menu-item "Unpin release" (async-handler cli/unpin)))
+                                   (if some-pinned?
+                                     (menu-item "Unpin release" (async-handler cli/unpin))
+                                     (menu-item "Pin release" (async-handler cli/pin)))
                                    (menu "Releases" [(menu-item "Foo" donothing)
                                                      (menu-item "Bar1" donothing)
                                                      (menu-item "Bar2" donothing)
