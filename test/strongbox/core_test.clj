@@ -1146,8 +1146,10 @@
         (core/install-addon addon)
         (is (= ["EveryAddon"] (helper/install-dir-contents)))
         (core/load-installed-addons)
-        (core/select-addons)
-        (core/ignore-selected) ;; calls `core/refresh`
+
+        ;; todo: the below makes this a UI test. move test to cli_test.clj
+        (cli/select-addons)
+        (cli/ignore-selected) ;; calls `core/refresh`
         (is (= expected (first (core/get-state :installed-addon-list))))))))
 
 (deftest clear-addon-ignore-flag
@@ -1174,11 +1176,13 @@
                       :update? false}]
         (core/install-addon addon)
         (core/load-installed-addons)
-        (core/select-addons)
-        (core/ignore-selected) ;; calls `core/refresh`
+
+        ;; todo: the below makes this a UI test. move test to cli_test.clj
+        (cli/select-addons)
+        (cli/ignore-selected) ;; calls `core/refresh`
         (is (:ignore? (first (core/get-state :installed-addon-list))))
 
-        (core/clear-ignore-selected)
+        (cli/clear-ignore-selected)
         (is (= expected (first (core/get-state :installed-addon-list))))))))
 
 (deftest clear-addon-ignore-flag--group-addons
@@ -1238,10 +1242,12 @@
         (core/install-addon addon)
         (nfo/ignore install-dir "EveryAddon-BundledAddon")
         (core/load-installed-addons)
-        (core/select-addons)
+
+        ;; todo: the below makes this a UI test. move test to cli_test.clj
+        (cli/select-addons)
         (is (= expected (first (core/get-state :installed-addon-list))))
 
-        (core/clear-ignore-selected)
+        (cli/clear-ignore-selected)
         (is (= expected-2 (first (core/get-state :installed-addon-list))))))))
 
 (deftest clear-addon-ignore-flag--implicit-ignore
@@ -1271,6 +1277,7 @@
         (core/load-installed-addons)
         (is (:ignore? (first (core/get-state :installed-addon-list)))) ;; implicitly ignored
 
-        (core/select-addons)
-        (core/clear-ignore-selected)
+        ;; todo: the below makes this a UI test. move test to cli_test.clj
+        (cli/select-addons)
+        (cli/clear-ignore-selected)
         (is (= expected (first (core/get-state :installed-addon-list))))))))

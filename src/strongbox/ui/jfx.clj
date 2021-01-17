@@ -623,7 +623,7 @@
                                                             :text (format "Deleting %s:" (count selected))}] label-list)})
             result (alert :confirm "" {:content (fx/instance content)})]
         (when (= (.get result) ButtonType/OK)
-          (core/remove-selected)))))
+          (cli/remove-selected)))))
   nil)
 
 (defn search-results-install-handler
@@ -632,11 +632,11 @@
   [event]
   ;; original approach. efficient but no feedback for user
   ;; note: still true as of 2020-09?
-  ;; todo: stick this in `ui.cli`
+  ;; todo: stick this in `cli.clj`
   ;;(core/-install-update-these (map curseforge/expand-summary (get-state :selected-search))) 
   ((switch-tab-handler INSTALLED-TAB) event)
   (doseq [selected (core/get-state :selected-search)]
-    (some-> selected core/expand-summary-wrapper vector core/-install-update-these)
+    (some-> selected core/expand-summary-wrapper vector cli/-install-update-these)
     (core/load-installed-addons))
   ;; deselect rows in search table
   ;; note: don't know how to do this in jfx
@@ -704,8 +704,8 @@
   (let [file-menu [(menu-item "_New addon directory" (event-handler wow-dir-picker) {:key "Ctrl+N"})
                    (menu-item "Remove addon directory" (async-handler remove-addon-dir))
                    separator
-                   (menu-item "_Update all" (async-handler core/install-update-all) {:key "Ctrl+U"})
-                   (menu-item "Re-install all" (async-handler core/re-install-all))
+                   (menu-item "_Update all" (async-handler cli/install-update-all) {:key "Ctrl+U"})
+                   (menu-item "Re-install all" (async-handler cli/re-install-all))
                    separator
                    (menu-item "Import list of addons" (async-event-handler import-addon-list-handler))
                    (menu-item "Export list of addons" (async-event-handler export-addon-list-handler))
@@ -717,7 +717,7 @@
         prefs-menu [{:fx/type menu-item--num-zips-to-keep}]
 
         view-menu (into
-                   [(menu-item "Refresh" (async-handler cli/refresh) {:key "F5"})
+                   [(menu-item "Refresh" (async-handler cli/hard-refresh) {:key "F5"})
                     separator
                     (menu-item "_Installed" (switch-tab-handler INSTALLED-TAB) {:key "Ctrl+I"})
                     (menu-item "Searc_h" (switch-tab-handler SEARCH-TAB) {:key "Ctrl+H"})
@@ -794,7 +794,7 @@
    :children [{:fx/type :button
                :text "Update all"
                :id "update-all-button"
-               :on-action (async-handler core/install-update-all)}
+               :on-action (async-handler cli/install-update-all)}
               {:fx/type wow-dir-dropdown}
               {:fx/type game-track-dropdown}
               {:fx/type :button
@@ -868,7 +868,7 @@
     {:fx/type fx.ext.table-view/with-selection-props
      :props {:selection-mode :multiple
              ;; unlike gui.clj, we have access to the original data here. no need to re-select addons.
-             :on-selected-items-changed core/select-addons*}
+             :on-selected-items-changed cli/select-addons*}
      :desc {:fx/type :table-view
             :id "installed-addons"
             :placeholder {:fx/type :text
@@ -886,8 +886,8 @@
                                                 (when (and row (core/unsteady? (:name row))) "unsteady")])})}
             :columns (mapv table-column column-list)
             :context-menu {:fx/type :context-menu
-                           :items [(menu-item "Update" (async-handler core/install-update-selected))
-                                   (menu-item "Re-install" (async-handler core/re-install-selected))
+                           :items [(menu-item "Update" (async-handler cli/install-update-selected))
+                                   (menu-item "Re-install" (async-handler cli/re-install-selected))
                                    separator
                                    (if some-unpinned
                                      (menu-item "Pin release" (async-handler cli/pin))
@@ -917,8 +917,8 @@
                                                      ]
                                          {:disable (not releases-available?)})
                                    separator
-                                   (menu-item "Ignore" (async-handler core/ignore-selected))
-                                   (menu-item "Stop ignoring" (async-handler core/clear-ignore-selected))
+                                   (menu-item "Ignore" (async-handler cli/ignore-selected))
+                                   (menu-item "Stop ignoring" (async-handler cli/clear-ignore-selected))
                                    separator
                                    (menu-item "Delete" remove-selected-confirmation-handler)]}
             :items (or row-list [])}}))
@@ -967,7 +967,7 @@
     {:fx/type fx.ext.table-view/with-selection-props
      :props {:selection-mode :multiple
              ;; unlike gui.clj, we have access to the original data here. no need to re-select addons.
-             :on-selected-items-changed core/select-addons-search*}
+             :on-selected-items-changed cli/select-addons-search*}
      :desc {:fx/type :table-view
             :id "search-addons"
             :placeholder {:fx/type :text

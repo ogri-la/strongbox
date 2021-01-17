@@ -245,7 +245,7 @@ but the restart flag has had to be removed which means you can't switch themes t
   (let [selected-rows (tbl-selected-rows :#tbl-installed-addons)
         dirname-list (mapv :dirname selected-rows)]
     (debug (count selected-rows) "selected")
-    (core/select-addons (fn [addon] (some #{(:dirname addon)} dirname-list))))
+    (cli/select-addons (fn [addon] (some #{(:dirname addon)} dirname-list))))
   nil)
 
 (defn-spec search-results-selection-handler nil?
@@ -262,7 +262,7 @@ but the restart flag has had to be removed which means you can't switch themes t
   ;;(core/-install-update-these (map curseforge/expand-summary (get-state :selected-search))) ;; original approach. efficient but no feedback for user
   (switch-tab INSTALLED-TAB)
   (doseq [selected (get-state :selected-search)]
-    (some-> selected core/expand-summary-wrapper vector core/-install-update-these)
+    (some-> selected core/expand-summary-wrapper vector cli/-install-update-these)
     (core/load-installed-addons))
   (ss/selection! (select-ui :#tbl-search-addons) nil) ;; deselect rows in search table
   (core/refresh))
@@ -288,7 +288,7 @@ but the restart flag has had to be removed which means you can't switch themes t
                               :type :warning
                               :option-type :ok-cancel
                               :default-option :no
-                              :success-fn (async-handler core/remove-selected))]
+                              :success-fn (async-handler cli/remove-selected))]
         (-> dialog ss/pack! ss/show!)))
     nil))
 
@@ -327,7 +327,7 @@ but the restart flag has had to be removed which means you can't switch themes t
   []
   (let [;; important! release the event thread using async-handler else updates during process won't be shown until complete
         ;;refresh-button (button "Refresh" (async-handler core/refresh))
-        update-all-button (button "Update all" (async-handler core/install-update-all))
+        update-all-button (button "Update all" (async-handler cli/install-update-all))
 
         ;;wow-dir-button (button "Addon directory" (handler wow-dir-picker))
 
@@ -472,11 +472,11 @@ but the restart flag has had to be removed which means you can't switch themes t
                                                  (count (filter :update? selected-rows)))))
                            :onclick donothing)
                           (ss/separator)
-                          (menu-item "Update" (async-handler core/install-update-selected))
-                          (menu-item "Re-install" (async-handler core/re-install-selected))
+                          (menu-item "Update" (async-handler cli/install-update-selected))
+                          (menu-item "Re-install" (async-handler cli/re-install-selected))
                           (ss/separator)
-                          (menu-item "Ignore" (async-handler core/ignore-selected))
-                          (menu-item "Stop ignoring" (async-handler core/clear-ignore-selected))
+                          (menu-item "Ignore" (async-handler cli/ignore-selected))
+                          (menu-item "Stop ignoring" (async-handler cli/clear-ignore-selected))
                           (ss/separator)
                           (menu-item "Delete" (async-handler remove-selected-handler))]]
     (ss/popup :items popup-menu-items)))
@@ -954,8 +954,8 @@ but the restart flag has had to be removed which means you can't switch themes t
                              [:separator
                               (ss/action :name "Refresh user catalogue" :handler (async-handler core/refresh-user-catalogue))])
 
-        addon-menu [(ss/action :name "Update all" :key "menu U" :mnemonic "u" :handler (async-handler core/install-update-all))
-                    (ss/action :name "Re-install all" :handler (async-handler core/re-install-all))]
+        addon-menu [(ss/action :name "Update all" :key "menu U" :mnemonic "u" :handler (async-handler cli/install-update-all))
+                    (ss/action :name "Re-install all" :handler (async-handler cli/re-install-all))]
 
         impexp-menu [(ss/action :name "Import addon from Github" :handler (handler import-addon-handler))
                      :separator

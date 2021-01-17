@@ -3,6 +3,7 @@
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :as timbre :refer [spy info warn error debug]]
    [strongbox
+    [addon :as addon]
     [nfo :as nfo]
     [constants :as constants]
     [specs :as sp]
@@ -16,8 +17,8 @@
 
 (comment "the UIs pool their logic here, which calls core.clj.")
 
-(defn refresh
-  "unlike `core/refresh`, `cli/refresh` clears the http cache before checking for addon updates."
+(defn hard-refresh
+  "unlike `core/refresh`, `cli/hard-refresh` clears the http cache before checking for addon updates."
   []
   ;; why can we be more specific, like just the addons for the current addon-dir?
   ;; the url used to 'expand' an addon from the catalogue isn't preserved.
@@ -57,19 +58,6 @@
   (core/set-catalogue-location! catalogue-name)
   (core/db-reload-catalogue)
   nil)
-
-;;
-
-(defn-spec touch nil?
-  "used to select each addon in the GUI so the 'unsteady' colour can be tested."
-  []
-  (let [touch (fn [a]
-                (core/start-affecting-addon a)
-                (Thread/sleep 200)
-                (core/stop-affecting-addon a))]
-    (->> (get-state :installed-addon-list)
-         core/-updateable?
-         (run! touch))))
 
 ;; search
 
@@ -177,6 +165,112 @@
 
 ;;
 
+(defn-spec -install-update-these nil?
+  [updateable-addon-list :addon/installable-list]
+  (run! core/install-addon updateable-addon-list))
+
+(defn -updateable?
+  [rows]
+  (filterv :update? rows))
+
+(defn -re-installable?
+  "an addon can only be re-installed if it's been matched to an addon in the catalogue and a release available to download"
+  [rows]
+  (filterv core/expanded? rows))
+
+(defn re-install-selected
+  []
+  (-> (get-state :selected-installed)
+      -re-installable?
+      -install-update-these)
+  (core/refresh))
+
+(defn re-install-all
+  []
+  (-> (get-state :installed-addon-list)
+      -re-installable?
+      -install-update-these)
+  (core/refresh))
+
+(defn install-update-selected
+  []
+  (-> (get-state :selected-installed)
+      -updateable?
+      -install-update-these)
+  (core/refresh))
+
+(defn-spec install-update-all nil?
+  []
+  (-> (get-state :installed-addon-list)
+      -updateable?
+      -install-update-these)
+  (core/refresh))
+
+(defn-spec remove-selected nil?
+  []
+  (-> (get-state) :selected-installed vec core/remove-many-addons)
+  nil)
+
+(defn-spec ignore-selected nil?
+  "marks each of the selected addons as being 'ignored'"
+  []
+  (->> (get-state :selected-installed)
+       (map :dirname)
+       (run! (partial nfo/ignore (core/selected-addon-dir))))
+  (core/refresh))
+
+(defn-spec clear-ignore-selected nil?
+  "removes the 'ignore' flag from each of the selected addons."
+  []
+  (->> (get-state :selected-installed)
+       (mapv addon/ungroup-addon)
+       flatten
+       (mapv :dirname)
+       (run! (partial addon/clear-ignore (core/selected-addon-dir))))
+  (core/refresh))
+
+;; selecting addons
+
+(defn-spec select-addons-search* nil?
+  "sets the selected list of addons in application state for a later action"
+  [selected-addons :addon/summary-list]
+  (swap! core/state assoc :selected-search selected-addons)
+  nil)
+
+(defn-spec select-addons* nil?
+  "sets the selected list of addons to the given `selected-addons` for bulk operations like 'update', 'delete', 'ignore', etc"
+  [selected-addons :addon/installed-list]
+  (swap! core/state assoc :selected-installed selected-addons)
+  nil)
+
+(defn-spec select-addons nil?
+  "creates a sub-selection of installed addons for bulk operations like 'update', 'delete', 'ignore', etc.
+  called with no args, selects *all* installed addons.
+  called with a function, selects just those where `(filter-fn addon)` is `true`."
+  ([]
+   (select-addons identity))
+  ([filter-fn fn?]
+   (->> (get-state :installed-addon-list)
+        (filter filter-fn)
+        (remove nil?)
+        vec
+        select-addons*)))
+
+;; debug
+
+(defn-spec touch nil?
+  "used to select each addon in the GUI so the 'unsteady' colour can be tested."
+  []
+  (let [touch (fn [a]
+                (core/start-affecting-addon a)
+                (Thread/sleep 200)
+                (core/stop-affecting-addon a))]
+    (->> (get-state :installed-addon-list)
+         -updateable?
+         (run! touch))))
+
+;;
+
 (defmulti action
   "handles the following actions:
     :scrape-wowinterface-catalogue - scrapes wowinterface host and creates a wowinterface catalogue
@@ -260,7 +354,7 @@
 
 (defmethod action :update-all
   [_]
-  (core/install-update-all)
+  (install-update-all)
   (action :list-updates))
 
 (defmethod action :default

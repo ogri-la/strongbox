@@ -404,29 +404,6 @@
       (finally
         (stop-affecting-addon addon)))))
 
-;; selecting addons
-
-(defn-spec select-addons-search* nil?
-  "sets the selected list of addons in application state for a later action"
-  [selected-addons :addon/summary-list]
-  (swap! state assoc :selected-search selected-addons)
-  nil)
-
-(defn-spec select-addons* nil?
-  "sets the selected list of addons to the given `selected-addons` for bulk operations like 'update', 'delete', 'ignore', etc"
-  [selected-addons :addon/installed-list]
-  (swap! state assoc :selected-installed selected-addons)
-  nil)
-
-(defn-spec select-addons nil?
-  "creates a sub-selection of installed addons for bulk operations like 'update', 'delete', 'ignore', etc.
-  called with no args, selects *all* installed addons.
-  called with a function, selects just those where `(f addon)` is `true`"
-  ([]
-   (select-addons identity))
-  ([f fn?]
-   (->> (get-state :installed-addon-list) (filter f) (remove nil?) vec select-addons*)))
-
 ;; downloading and installing and updating
 
 (defn-spec download-addon (s/or :ok ::sp/archive-file, :http-error :http/error, :error nil?)
@@ -1035,39 +1012,6 @@
 
    nil))
 
-(defn-spec -install-update-these nil?
-  [updateable-addon-list :addon/installable-list]
-  (run! install-addon updateable-addon-list))
-
-(defn -updateable?
-  [rows]
-  (filterv :update? rows))
-
-(defn -re-installable?
-  "an addon can only be re-installed if it's been matched to an addon in the catalogue and a release available to download"
-  [rows]
-  (filterv expanded? rows))
-
-(defn re-install-selected
-  []
-  (-> (get-state) :selected-installed -re-installable? -install-update-these)
-  (refresh))
-
-(defn re-install-all
-  []
-  (-> (get-state) :installed-addon-list -re-installable? -install-update-these)
-  (refresh))
-
-(defn install-update-selected
-  []
-  (-> (get-state) :selected-installed -updateable? -install-update-these)
-  (refresh))
-
-(defn-spec install-update-all nil?
-  []
-  (-> (get-state) :installed-addon-list -updateable? -install-update-these)
-  (refresh))
-
 (defn-spec remove-many-addons nil?
   "deletes each of the addons in the given `toc-list` and then calls `refresh`"
   [installed-addon-list :addon/toc-list]
@@ -1080,27 +1024,6 @@
   "removes given installed addon"
   [installed-addon :addon/installed]
   (addon/remove-addon (selected-addon-dir) installed-addon)
-  (refresh))
-
-(defn-spec remove-selected nil?
-  []
-  (-> (get-state) :selected-installed vec remove-many-addons)
-  nil)
-
-(defn-spec ignore-selected nil?
-  "marks each of the selected addons as being 'ignored'"
-  []
-  (->> (get-state) :selected-installed (map :dirname) (run! (partial nfo/ignore (selected-addon-dir))))
-  (refresh))
-
-(defn-spec clear-ignore-selected nil?
-  "removes the 'ignore' flag from each of the selected addons."
-  []
-  (->> (get-state :selected-installed)
-       (mapv addon/ungroup-addon)
-       flatten
-       (mapv :dirname)
-       (run! (partial addon/clear-ignore (selected-addon-dir))))
   (refresh))
 
 ;;
