@@ -854,6 +854,7 @@
   (let [row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
         selected (fx/sub-val context get-in [:app-state :selected-installed])
         releases-available? (= 1 (count selected)) ;; todo: one selected AND selected has been expanded AND releases available
+        some-unpinned (->> selected (map :pinned-version) (some nil?))
 
         iface-version (fn [row]
                         (some-> row :interface-version str utils/interface-version-to-game-version))
@@ -888,7 +889,9 @@
                            :items [(menu-item "Update" (async-handler core/install-update-selected))
                                    (menu-item "Re-install" (async-handler core/re-install-selected))
                                    separator
-                                   (menu-item "Pin release" donothing)
+                                   (if some-unpinned
+                                     (menu-item "Pin release" (async-handler cli/pin))
+                                     (menu-item "Unpin release" (async-handler cli/unpin)))
                                    (menu "Releases" [(menu-item "Foo" donothing)
                                                      (menu-item "Bar1" donothing)
                                                      (menu-item "Bar2" donothing)

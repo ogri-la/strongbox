@@ -3,6 +3,7 @@
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :as timbre :refer [spy info warn error debug]]
    [strongbox
+    [nfo :as nfo]
     [constants :as constants]
     [specs :as sp]
     [tukui-api :as tukui-api]
@@ -66,7 +67,7 @@
                 (core/start-affecting-addon a)
                 (Thread/sleep 200)
                 (core/stop-affecting-addon a))]
-    (->> (core/get-state :installed-addon-list)
+    (->> (get-state :installed-addon-list)
          core/-updateable?
          (run! touch))))
 
@@ -102,7 +103,7 @@
 (defn search-results
   "returns the current page of results"
   ([]
-   (search-results (core/get-state :search)))
+   (search-results (get-state :search)))
   ([search-state]
    (let [results (:results search-state)
          page (:page search-state)]
@@ -118,7 +119,7 @@
   "true if we've maxed out the number of results per-page.
   where there are *precisely* that number of results we'll get an empty next page"
   ([]
-   (search-has-next? (core/get-state :search)))
+   (search-has-next? (get-state :search)))
   ([search-state]
    (= (count (search-results search-state))
       (:results-per-page search-state))))
@@ -126,7 +127,7 @@
 (defn search-has-prev?
   "true if we've navigated forwards"
   ([]
-   (search-has-prev? (core/get-state :search)))
+   (search-has-prev? (get-state :search)))
   ([search-state]
    (> (:page search-state) 0)))
 
@@ -148,6 +149,31 @@
   (swap! core/state assoc-in [:cfg :preferences preference-key] preference-val)
   (core/save-settings)
   nil)
+
+;;
+
+(defn-spec pin nil?
+  "pins the currently selected addons to their current versions.
+  addon is ignored if it is already pinned"
+  []
+  (let [unpinned? (fn [addon]
+                    (and (contains? addon :installed-version) ;; can be pinned
+                         (not (contains? addon :pinned-version))))  ;; not already pinned
+        pin (fn [addon]
+              (nfo/pin (core/selected-addon-dir) (:dirname addon)))]
+    (->> (get-state :selected-installed)
+         (filterv unpinned?)
+         (run! pin)))
+  (core/refresh))
+
+(defn-spec unpin nil?
+  "unpins the currently selected addons, regardless of whether they are pinned or not."
+  []
+  (let [unpin (fn [addon]
+                (nfo/unpin (core/selected-addon-dir) (:dirname addon)))]
+    (->> (get-state :selected-installed)
+         (run! unpin))
+    (core/refresh)))
 
 ;;
 

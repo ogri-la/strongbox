@@ -1008,7 +1008,7 @@
 ;;
 
 (defn refresh
-  [& _] ;; todo: remove args with swing gui
+  [& _] ;; todo: remove args with swing gui + spec
   (profile
    {:when (get-state :profile?)}
 
