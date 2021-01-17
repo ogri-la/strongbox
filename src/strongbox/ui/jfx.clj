@@ -836,15 +836,10 @@
 
 (defn available-versions
   [row]
-  (if (contains? row :release-list)
-    (fx/create-component
-     (fx/instance
-      {:fx/type :hyperlink
-       :on-action (fn [_]
-                    ;; on-click, update state so that it changes from a hyperlink to a dropdown
-                    ;; populate release list
-                    (println "hiya"))
-       :text (:version row)}))
+  (cond
+    (:ignore? row) "(ignored)"
+    (:pinned-version row) "(pinned)"
+    :else
     (:version row)))
 
 (defn installed-addons-table
