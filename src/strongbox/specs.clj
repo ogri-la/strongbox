@@ -14,6 +14,15 @@
   (when (s/valid? spec x)
     x))
 
+(defn spec-to-kw-list
+  "very limited. only works for basic specs that have a :req [keys] and :opt [keys]"
+  [spec]
+  (let [required #(nth % 2)
+        optional #(last %)
+        extract (juxt optional required)
+        normalise (comp keyword name)]
+    (->> spec clojure.spec.alpha/form extract (apply concat) (mapv normalise))))
+
 (s/def ::list-of-strings (s/coll-of string?))
 (s/def ::list-of-maps (s/coll-of map?))
 (s/def ::list-of-keywords (s/coll-of keyword?))
@@ -152,6 +161,8 @@
 
 ;; addons
 
+(s/def :addon/pinned-version ::version) 
+
 (s/def :addon/tag keyword?)
 (s/def :addon/tag-list (s/or :ok (s/coll-of :addon/tag)
                              :empty ::empty-coll))
@@ -183,7 +194,8 @@
                                     :addon/source
                                     ::installed-game-track
                                     :addon/source-id]
-                           :opt-un [::ignore?]))
+                           :opt-un [::ignore?
+                                    :addon/pinned-version]))
 
 (s/def :addon/nfo (s/or :ignored ::ignore-flag
                         :ok :addon/-nfo

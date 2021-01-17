@@ -885,12 +885,34 @@
                                                 (when (and row (core/unsteady? (:name row))) "unsteady")])})}
             :columns (mapv table-column column-list)
             :context-menu {:fx/type :context-menu
-                           :items [(menu "Releases" [(menu-item "Foo" donothing)
-                                                     (menu-item "Bar" donothing)]
-                                         {:disable (not releases-available?)})
-                                   separator
-                                   (menu-item "Update" (async-handler core/install-update-selected))
+                           :items [(menu-item "Update" (async-handler core/install-update-selected))
                                    (menu-item "Re-install" (async-handler core/re-install-selected))
+                                   separator
+                                   (menu-item "Pin release" donothing)
+                                   (menu "Releases" [(menu-item "Foo" donothing)
+                                                     (menu-item "Bar1" donothing)
+                                                     (menu-item "Bar2" donothing)
+                                                     (menu-item "Bar3" donothing)
+                                                     (menu-item "Bar4" donothing)
+                                                     (menu-item "Bar5" donothing)
+                                                     (menu-item "Bar6" donothing)
+                                                     (menu-item "Bar7" donothing)
+                                                     (menu-item "Bar8" donothing)
+                                                     (menu-item "Bar9" donothing)
+                                                     (menu-item "Bar10" donothing)
+                                                     (menu-item "Bar11" donothing)
+                                                     (menu-item "Bar12" donothing)
+                                                     (menu-item "Bar13" donothing)
+                                                     (menu-item "Bar14" donothing)
+                                                     (menu-item "Bar15" donothing)
+                                                     (menu-item "Bar16" donothing)
+                                                     (menu-item "Bar17" donothing)
+                                                     (menu-item "Bar18" donothing)
+                                                     (menu-item "Bar19" donothing)
+                                                     (menu-item "Bar20" donothing)
+                                                     (menu-item "Bar21" donothing)
+                                                     ]
+                                         {:disable (not releases-available?)})
                                    separator
                                    (menu-item "Ignore" (async-handler core/ignore-selected))
                                    (menu-item "Stop ignoring" (async-handler core/clear-ignore-selected))
