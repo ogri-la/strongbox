@@ -155,7 +155,7 @@
        (map game-track)
        vec))
 
-(defn-spec expand-summary (s/or :ok :addon/source-updates, :error nil?)
+(defn-spec expand-summary (s/or :ok :addon/release-list, :error nil?)
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. 
   one additional look-up per ::addon required"
   [addon :addon/expandable, game-track ::sp/game-track]
@@ -165,9 +165,9 @@
                   first ;; first asset
                   (dissoc :-mo))]
     (when asset
-      {:download-url (:browser_download_url asset)
-       :version (:version asset)
-       :game-track game-track})))
+      [{:download-url (:browser_download_url asset)
+        :version (:version asset)
+        :game-track game-track}])))
 
 ;;
 

@@ -15,7 +15,32 @@
   [path string?, & args (s/* any?)]
   (str curseforge-api (apply format path args)))
 
-(defn latest-versions
+(defn expand-release
+  "for each release, set the correct value for `:gameVersionFlavor` and `:gameVersion`
+  if `:gameVersion` is an empty list, use the value from `:gameVersionFlavor` to come up with a value.
+  return multiple instances of the release if necessary."
+  [release]
+  (let [;; "wow_retail", "wow_classic" => :retail, :classic
+        fallback (if (= (:gameVersionFlavor release) "wow_classic") :classic :retail)
+        release (if (empty? (:gameVersion release))
+                  (assoc release :gameVersion [(utils/game-track-to-latest-game-version fallback)])
+                  release)
+
+        ;; generate a release per-gametrack
+        pad-release (fn [game-version]
+                      (let [;; api value is empty in some cases (carbonite, improved loot frames, skada damage meter)
+                            ;; this value overrides the one found in .toc files, so if it can't be scraped, use the .toc version
+                            interface-version (utils/game-version-to-interface-version game-version)
+                            interface-version (when interface-version
+                                                {:interface-version interface-version})]
+                        (merge {:download-url (:downloadUrl release)
+                                :version (:displayName release)
+                                :game-track (utils/game-version-to-game-track game-version)}
+                               interface-version)))
+        ]
+    (mapv pad-release (:gameVersion release))))
+
+(defn group-releases
   "given a curseforge-api result, returns a map of release data.
   uses :gameVersion which, if present, indicates the game tracks a release supports"
   [api-result]
@@ -40,38 +65,15 @@
         stable-releases (filterv #(= (:releaseType %) stable) latest-files)
 
         ;; no alternative versions, for now
-        stable-releases (remove :exposeAsAlternative stable-releases)
+        stable-releases (remove :exposeAsAlternative stable-releases)]
+    (->> stable-releases (map expand-release) flatten (group-by :game-track))))
 
-        ;; for each release, set the correct value for `:gameVersionFlavor` and `:gameVersion`
-        ;; if `:gameVersion` is an empty list, use the value from `:gameVersionFlavor` to come up with a value.
-        ;; return multiple instances of the release if necessary.
-        expand-release (fn [release]
-                         (let [;; "wow_retail", "wow_classic" => :retail, :classic
-                               fallback (if (= (:gameVersionFlavor release) "wow_classic") :classic :retail)
-                               release (if (empty? (:gameVersion release))
-                                         (assoc release :gameVersion [(utils/game-track-to-latest-game-version fallback)])
-                                         release)]
-                           (mapv (fn [game-version]
-                                   (merge release {:gameVersionFlavor (utils/game-version-to-game-track game-version)
-                                                   :gameVersion [game-version]}))
-                                 (:gameVersion release))))]
-    (->> stable-releases (map expand-release) flatten (group-by :gameVersionFlavor))))
-
-(defn-spec expand-summary (s/or :ok :addon/source-updates, :error nil?)
+(defn-spec expand-summary (s/or :ok :addon/release-list, :error nil?)
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
   [addon-summary :addon/expandable, game-track ::sp/game-track]
   (let [url (api-url "/addon/%s" (:source-id addon-summary))
-        result (some-> url http/download http/sink-error utils/from-json)
-        latest-release (-> result latest-versions (get game-track) first)]
-    (when latest-release
-      (let [;; api value is empty in some cases (carbonite, improved loot frames, skada damage meter)
-            ;; this value overrides the one found in .toc files, so if it can't be scraped, use the .toc version
-            interface-version (some-> latest-release :gameVersion first utils/game-version-to-interface-version)
-            interface-version (when interface-version {:interface-version interface-version})]
-        (merge {:download-url (:downloadUrl latest-release)
-                :version (:displayName latest-release)
-                :game-track game-track}
-               interface-version)))))
+        result (some-> url http/download http/sink-error utils/from-json)]
+    (-> result group-releases (get game-track))))
 
 ;; catalogue building
 

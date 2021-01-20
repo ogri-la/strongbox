@@ -118,9 +118,9 @@
 
           game-track :retail
 
-          expected {:download-url "https://github.com/Aviana/HealComm/releases/download/2.04/HealComm.zip"
+          expected [{:download-url "https://github.com/Aviana/HealComm/releases/download/2.04/HealComm.zip"
                     :version "2.04 Beta"
-                    :game-track game-track}
+                    :game-track game-track}]
 
           fixture (slurp (fixture-path "github-repo-releases--aviana-healcomm.json"))
           fake-routes {"https://api.github.com/repos/Aviana/HealComm/releases"
@@ -141,9 +141,9 @@
 
           game-track :classic
 
-          expected {:download-url "https://github.com/Ravendwyr/Chinchilla/releases/download/v2.10.0/Chinchilla-v2.10.0-classic.zip"
-                    :version "v2.10.0-classic"
-                    :game-track game-track}
+          expected [{:download-url "https://github.com/Ravendwyr/Chinchilla/releases/download/v2.10.0/Chinchilla-v2.10.0-classic.zip"
+                     :version "v2.10.0-classic"
+                     :game-track game-track}]
 
           fixture (slurp (fixture-path "github-repo-releases--many-assets-many-gametracks.json"))
           fake-routes {"https://api.github.com/repos/Ravendwyr/Chinchilla/releases"
@@ -208,9 +208,9 @@
 
           game-track :classic
 
-          expected {:game-track :classic
-                    :version "Classic-v1.13.6-057-classic"
-                    :download-url "https://github.com/teelolws/Altoholic-Classic/releases/download/Classic-v1.13.6-057/Altoholic-Classic-v1.13.6-057.zip"}
+          expected [{:game-track :classic
+                     :version "Classic-v1.13.6-057-classic"
+                     :download-url "https://github.com/teelolws/Altoholic-Classic/releases/download/Classic-v1.13.6-057/Altoholic-Classic-v1.13.6-057.zip"}]
 
           fake-routes {"https://api.github.com/repos/Bar/Foo/releases"
                        {:get (fn [_] {:status 200 :body fixture})}}]

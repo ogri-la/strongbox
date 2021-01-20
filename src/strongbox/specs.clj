@@ -248,6 +248,8 @@
                    ::game-track]
           :opt-un [::interface-version]))
 
+(s/def :addon/release-list (s/coll-of :addon/source-updates))
+
 ;; result of expanding an addon
 (s/def :addon/expanded (s/merge :addon/expandable :addon/source-updates))
 

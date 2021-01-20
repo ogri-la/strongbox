@@ -10,7 +10,7 @@
 
 (def wowinterface-api "https://api.mmoui.com/v3/game/WOW")
 
-(defn-spec expand-summary (s/or :ok :addon/source-updates, :error nil?)
+(defn-spec expand-summary (s/or :ok :addon/release-list, :error nil?)
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per addon required"
   [addon-summary :addon/expandable, game-track ::sp/game-track]
   ;; this check is a little different to the others.
@@ -25,6 +25,6 @@
         (when (> (count result-list) 1)
           ;; has this happened before? can we find an example?
           (warn "wowinterface api returned more than one result for addon with id:" (:source-id addon-summary)))
-        {:download-url (str "https://cdn.wowinterface.com/downloads/getfile.php?id=" (:source-id addon-summary))
-         :version (:UIVersion result)
-         :game-track game-track}))))
+        [{:download-url (str "https://cdn.wowinterface.com/downloads/getfile.php?id=" (:source-id addon-summary))
+          :version (:UIVersion result)
+          :game-track game-track}]))))
