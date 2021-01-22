@@ -842,13 +842,22 @@
     :else
     (:version row)))
 
+(defn build-release-menu
+  [release-list]
+  (mapv (fn [release]
+          (menu-item (:version release) donothing)) release-list))
+
 (defn installed-addons-table
   [{:keys [fx/context]}]
   ;; subscribe to re-render table when addons become unsteady
   (fx/sub-val context get-in [:app-state :unsteady-addons])
   (let [row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
         selected (fx/sub-val context get-in [:app-state :selected-installed])
-        releases-available? (= 1 (count selected)) ;; todo: one selected AND selected has been expanded AND releases available
+
+        release-list (:release-list (first selected))
+        releases-available? (and (= 1 (count selected))
+                                 (not (empty? release-list)))
+
         some-pinned? (or (->> selected (map :pinned-version) (some some?)) false)
 
         iface-version (fn [row]
@@ -888,30 +897,7 @@
                                    (if some-pinned?
                                      (menu-item "Unpin release" (async-handler cli/unpin))
                                      (menu-item "Pin release" (async-handler cli/pin)))
-                                   (menu "Releases" [(menu-item "Foo" donothing)
-                                                     (menu-item "Bar1" donothing)
-                                                     (menu-item "Bar2" donothing)
-                                                     (menu-item "Bar3" donothing)
-                                                     (menu-item "Bar4" donothing)
-                                                     (menu-item "Bar5" donothing)
-                                                     (menu-item "Bar6" donothing)
-                                                     (menu-item "Bar7" donothing)
-                                                     (menu-item "Bar8" donothing)
-                                                     (menu-item "Bar9" donothing)
-                                                     (menu-item "Bar10" donothing)
-                                                     (menu-item "Bar11" donothing)
-                                                     (menu-item "Bar12" donothing)
-                                                     (menu-item "Bar13" donothing)
-                                                     (menu-item "Bar14" donothing)
-                                                     (menu-item "Bar15" donothing)
-                                                     (menu-item "Bar16" donothing)
-                                                     (menu-item "Bar17" donothing)
-                                                     (menu-item "Bar18" donothing)
-                                                     (menu-item "Bar19" donothing)
-                                                     (menu-item "Bar20" donothing)
-                                                     (menu-item "Bar21" donothing)
-                                                     ]
-                                         {:disable (not releases-available?)})
+                                   (menu "Releases" (build-release-menu release-list) {:disable (not releases-available?)})
                                    separator
                                    (menu-item "Ignore" (async-handler cli/ignore-selected))
                                    (menu-item "Stop ignoring" (async-handler cli/clear-ignore-selected))

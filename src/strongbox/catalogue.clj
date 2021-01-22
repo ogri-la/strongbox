@@ -31,11 +31,16 @@
       (if-not (contains? dispatch-map key)
         (error (format "addon '%s' is from source '%s' that is unsupported" (:label addon) key))
         (let [release-list ((get dispatch-map key) addon game-track)
-              source-updates (first release-list)]
+              source-updates (first release-list)
+              ]
           ;; todo: figure out which release should be merged into the addon here
           ;; todo: also include the full release list
           (when source-updates
-            (merge addon source-updates))))
+            (merge addon
+                   source-updates
+                   (when (> (count release-list) 1)
+                     {:release-list release-list})
+                   ))))
       (catch Exception e
         (error e "unhandled exception attempting to expand addon summary")
         (error "please report this! https://github.com/ogri-la/strongbox/issues")))))
