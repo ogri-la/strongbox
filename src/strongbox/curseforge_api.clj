@@ -15,6 +15,33 @@
   [path string?, & args (s/* any?)]
   (str curseforge-api (apply format path args)))
 
+(defn release-download-url
+  [release]
+  (let [project-file-id (-> release :projectFileId str)
+        offset (- (count project-file-id) 3)
+        bit1 (-> project-file-id (.substring 0 offset))
+        bit2 (-> project-file-id (.substring offset))]
+    (format "https://edge.forgecdn.net/files/%s/%s/%s" bit1 bit2 (:projectFileName release))))
+
+(defn game-version-releases
+  "These appear to be the most recent release by 'fileType' (stability) and by game version (WotLK, etc).
+  If you navigate to the 'files' page of an addon you can see more intermediate releases for the current
+  game version with the same 'fileType':
+    https://www.curseforge.com/wow/addons/deadly-boss-mods/files"
+  [release-list]
+  (let [;; todo: I guess? check this assumption
+        stable 1 ;; 2 is beta, 3 is alpha
+        stable-releases #(-> % :fileType (= stable))
+    pad-release (fn [release]
+                  {:download-url (release-download-url release)
+                   :version (:projectFileName release)
+                   :interface-version (utils/game-version-to-interface-version (:gameVersion release))
+                   :game-track (if (= (:gameVersionFlavor release) "wow_classic") :classic :retail)})]
+    (->> release-list
+         (filter stable-releases)
+         (map pad-release)
+         vec)))
+  
 (defn expand-release
   "for each release, set the correct value for `:gameVersionFlavor` and `:gameVersion`
   if `:gameVersion` is an empty list, use the value from `:gameVersionFlavor` to come up with a value.
@@ -41,8 +68,7 @@
     (mapv pad-release (:gameVersion release))))
 
 (defn group-releases
-  "given a curseforge-api result, returns a map of release data.
-  uses :gameVersion which, if present, indicates the game tracks a release supports"
+  "given a curseforge-api result, returns a map of release data."
   [api-result]
 
   ;; issue #63: curseforge actually allow a release to be on both retail and classic game tracks.
@@ -65,8 +91,20 @@
         stable-releases (filterv #(= (:releaseType %) stable) latest-files)
 
         ;; no alternative versions, for now
-        stable-releases (remove :exposeAsAlternative stable-releases)]
-    (->> stable-releases (map expand-release) flatten (group-by :game-track))))
+        stable-releases (remove :exposeAsAlternative stable-releases)
+
+        more-releases (game-version-releases (:gameVersionLatestFiles api-result))
+
+        cc #(concat %2 %1)
+        
+        ]
+    (->> stable-releases
+         (map expand-release)
+         flatten
+         (cc more-releases) ;;(concat more-releases)
+         vec
+         (spy :info)
+         (group-by :game-track))))
 
 (defn-spec expand-summary (s/or :ok :addon/release-list, :error nil?)
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
