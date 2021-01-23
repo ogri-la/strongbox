@@ -138,6 +138,12 @@
   (core/save-settings)
   nil)
 
+(defn set-version
+  "updates addon with the given `release` data and then installs it."
+  [addon release]
+  (core/install-addon (merge addon release))
+  (core/refresh))
+
 ;;
 
 (defn-spec pin nil?

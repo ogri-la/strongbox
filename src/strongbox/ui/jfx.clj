@@ -843,9 +843,11 @@
     (:version row)))
 
 (defn build-release-menu
-  [release-list]
-  (mapv (fn [release]
-          (menu-item (:version release) donothing)) release-list))
+  [addon release-list]
+  (let [pin (fn [release _]
+              (cli/set-version addon release))]
+    (mapv (fn [release]
+            (menu-item (or (:label release) (:version release)) (partial pin release))) (rest release-list))))
 
 (defn installed-addons-table
   [{:keys [fx/context]}]
@@ -897,7 +899,9 @@
                                    (if some-pinned?
                                      (menu-item "Unpin release" (async-handler cli/unpin))
                                      (menu-item "Pin release" (async-handler cli/pin)))
-                                   (menu "Releases" (build-release-menu release-list) {:disable (not releases-available?)})
+                                   (if releases-available?
+                                     (menu "Releases" (build-release-menu (first selected) release-list))
+                                     (menu "Releases" [] {:disable true}))
                                    separator
                                    (menu-item "Ignore" (async-handler cli/ignore-selected))
                                    (menu-item "Stop ignoring" (async-handler cli/clear-ignore-selected))

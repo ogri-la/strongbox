@@ -6,6 +6,7 @@
     [specs :as sp]
     [utils :as utils :refer [to-json join]]]
    [clojure.spec.alpha :as s]
+   [me.raynes.fs :as fs]
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :as log :refer [debug info warn error spy]]))
 
@@ -15,34 +16,41 @@
   [path string?, & args (s/* any?)]
   (str curseforge-api (apply format path args)))
 
-(defn release-download-url
-  [release]
-  (let [project-file-id (-> release :projectFileId str)
-        offset (- (count project-file-id) 3)
-        bit1 (-> project-file-id (.substring 0 offset))
-        bit2 (-> project-file-id (.substring offset))]
-    (format "https://edge.forgecdn.net/files/%s/%s/%s" bit1 bit2 (:projectFileName release))))
+;; addon expansion
 
-(defn game-version-releases
-  "These appear to be the most recent release by 'fileType' (stability) and by game version (WotLK, etc).
-  If you navigate to the 'files' page of an addon you can see more intermediate releases for the current
-  game version with the same 'fileType':
-    https://www.curseforge.com/wow/addons/deadly-boss-mods/files"
-  [release-list]
+(defn-spec release-download-url (s/or :ok ::sp/url, :error nil?)
+  [release map?]
+  (try
+    (let [project-file-id (-> release :projectFileId str)
+          offset (- (count project-file-id) 3)
+          bit1 (-> project-file-id (.substring 0 offset))
+          bit2 (-> project-file-id (.substring offset))]
+      (format "https://edge.forgecdn.net/files/%s/%s/%s" bit1 bit2 (:projectFileName release)))
+    (catch java.lang.StringIndexOutOfBoundsException e
+      (warn (format "failed to construct a download url for release '%s'" (:projectFileName release))))))
+
+(defn-spec older-releases :addon/release-list
+  "releases under `:gameVersionLatestFiles` appear to be the most recent release by `fileType` (stability)
+  and by game/interface version (WotLK, etc).
+  There is no means to filter by 'alternative release' (like 'no-lib') from these results."
+  [gameVersionLatestFiles ::sp/list-of-maps]
   (let [;; todo: I guess? check this assumption
         stable 1 ;; 2 is beta, 3 is alpha
         stable-releases #(-> % :fileType (= stable))
-    pad-release (fn [release]
-                  {:download-url (release-download-url release)
-                   :version (:projectFileName release)
-                   :interface-version (utils/game-version-to-interface-version (:gameVersion release))
-                   :game-track (if (= (:gameVersionFlavor release) "wow_classic") :classic :retail)})]
-    (->> release-list
+        pad-release (fn [release]
+                      (when-let [download-url (release-download-url release)]
+                        {:download-url download-url
+                         :version (-> release :projectFileName)
+                         :label (format "[WoW %s] %s" (:gameVersion release) (-> release :projectFileName fs/split-ext first))
+                         :interface-version (utils/game-version-to-interface-version (:gameVersion release))
+                         :game-track (if (= (:gameVersionFlavor release) "wow_classic") :classic :retail)}))]
+    (->> gameVersionLatestFiles
          (filter stable-releases)
          (map pad-release)
+         (remove nil?)
          vec)))
-  
-(defn expand-release
+
+(defn extract-release
   "for each release, set the correct value for `:gameVersionFlavor` and `:gameVersion`
   if `:gameVersion` is an empty list, use the value from `:gameVersionFlavor` to come up with a value.
   return multiple instances of the release if necessary."
@@ -68,7 +76,7 @@
     (mapv pad-release (:gameVersion release))))
 
 (defn group-releases
-  "given a curseforge-api result, returns a map of release data."
+  "given a curseforge api result, returns a map of release data keyed by `game-track`."
   [api-result]
 
   ;; issue #63: curseforge actually allow a release to be on both retail and classic game tracks.
@@ -80,34 +88,27 @@
   ;; however! `gameVersion` is occasionally *empty* (see Adibags) and we have to guess which game track
   ;; this release supports. In these cases we fall back to `:gameVersionFlavor`.
 
-  (let [latest-files (:latestFiles api-result)
-
-        ;; results appear sorted, but lets be sure as we'll be taking the first
+  (let [;; results appear sorted, but lets be sure as we'll be taking the first
         desc (comp - compare) ;; most to least recent (desc)
-        latest-files (sort-by :fileDate desc latest-files)
-
-        ;; stable releases only, for now
         stable 1 ;; 2 is beta, 3 is alpha
-        stable-releases (filterv #(= (:releaseType %) stable) latest-files)
-
-        ;; no alternative versions, for now
-        stable-releases (remove :exposeAsAlternative stable-releases)
-
-        more-releases (game-version-releases (:gameVersionLatestFiles api-result))
-
-        cc #(concat %2 %1)
-        
-        ]
-    (->> stable-releases
-         (map expand-release)
+        stable-release #(= (:releaseType %) stable)
+        concat* #(concat %2 %1)
+        more-releases (if-let [gameVersionLatestFiles (spy :info (:gameVersionLatestFiles api-result))]
+                        (older-releases gameVersionLatestFiles)
+                        [])]
+    (->> api-result
+         :latestFiles
+         (sort-by :fileDate desc)
+         (filter stable-release) ;; stable releases only, for now
+         (remove :exposeAsAlternative) ;; no alternative versions, for now
+         (map extract-release)
          flatten
-         (cc more-releases) ;;(concat more-releases)
-         vec
-         (spy :info)
+         (concat* more-releases)
          (group-by :game-track))))
 
 (defn-spec expand-summary (s/or :ok :addon/release-list, :error nil?)
-  "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
+  "given an `addon-summary`, adds the remaining attributes that couldn't be gleaned from the summary page ('source-updates').
+  one additional HTTP call per addon required."
   [addon-summary :addon/expandable, game-track ::sp/game-track]
   (let [url (api-url "/addon/%s" (:source-id addon-summary))
         result (some-> url http/download http/sink-error utils/from-json)]

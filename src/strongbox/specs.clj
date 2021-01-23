@@ -246,7 +246,8 @@
   (s/keys :req-un [::version
                    ::download-url
                    ::game-track]
-          :opt-un [::interface-version]))
+          :opt-un [::interface-version
+                   ::label]))
 
 (s/def :addon/release-list (s/coll-of :addon/source-updates))
 

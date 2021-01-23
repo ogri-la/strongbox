@@ -31,13 +31,12 @@
       (if-not (contains? dispatch-map key)
         (error (format "addon '%s' is from source '%s' that is unsupported" (:label addon) key))
         (let [release-list ((get dispatch-map key) addon game-track)
-              source-updates (first release-list)
-              ]
+              latest-release (first release-list)]
           ;; todo: figure out which release should be merged into the addon here
           ;; todo: also include the full release list
-          (when source-updates
+          (when latest-release
             (merge addon
-                   source-updates
+                   latest-release
                    (when (> (count release-list) 1)
                      {:release-list release-list})
                    ))))

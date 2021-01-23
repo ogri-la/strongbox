@@ -35,8 +35,9 @@
                      :game-track game-track}]
           ]
       (with-fake-routes-in-isolation fake-routes
-        (is (= expected (curseforge-api/expand-summary addon-summary game-track))))))
+        (is (= expected (curseforge-api/expand-summary addon-summary game-track)))))))
 
+(deftest expand-summary--no-matching-release
   (testing "addon expansion when selected game track doesn't match anything available in releases"
     (let [api-results (slurp (fixture-path "curseforge-api-addon--everyaddon.json"))
           fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/1"
