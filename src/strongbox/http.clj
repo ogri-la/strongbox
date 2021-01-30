@@ -12,11 +12,9 @@
    [clj-http
     [core]
     [util :refer [opt]]
-    [client :as client]]
-   )
+    [client :as client]])
   (:import
-   [org.apache.http.client.config CookieSpecs RequestConfig]
-   ))
+   [org.apache.http.client.config CookieSpecs RequestConfig]))
 
 
 ;; todo: revisit this value
@@ -141,8 +139,7 @@
         (when message (info message)) ;; always show the message that was explicitly passed in
         (debug (format "downloading %s to %s" (fs/base-name url) output-file))
         (client/with-additional-middleware [client/wrap-lower-case-headers (etag-middleware etag-key)]
-          (let [
-                params {:cookie-policy :ignore ;; completely ignore cookies. doesn't stop HttpComponents warning
+          (let [params {:cookie-policy :ignore ;; completely ignore cookies. doesn't stop HttpComponents warning
                         :http-request-config (request-config {})}
                 use-anon-useragent? false
                 params (merge params (user-agent use-anon-useragent?) extra-params)

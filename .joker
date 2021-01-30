@@ -1,5 +1,5 @@
 {
 :known-macros [orchestra.core/defn-spec strongbox.utils/if-let*]
 ;; main.clj dynamically includes this ns
-:ignored-unused-namespaces [strongbox.ui.jfx]
+:ignored-unused-namespaces [strongbox.ui.jfx strongbox.ui.gui]
 }
