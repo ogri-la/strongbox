@@ -22,6 +22,7 @@
 (def ^:dynamic *cache* nil)
 
 ;; todo: remove when upstream fix is in
+;; https://github.com/dakrone/clj-http/pull/583
 (defn request-config [{:keys [connection-timeout
                               connection-request-timeout
                               socket-timeout
