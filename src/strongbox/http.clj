@@ -9,7 +9,9 @@
    [me.raynes.fs :as fs]
    [orchestra.core :refer [defn-spec]]
    [trptcolin.versioneer.core :as versioneer]
-   [clj-http.client :as client]))
+   [clj-http
+    [core]
+    [client :as client]]))
 
 ;; todo: revisit this value
 (def expiry-offset-hours 24) ;; hours
@@ -105,7 +107,8 @@
         (when message (info message)) ;; always show the message that was explicitly passed in
         (debug (format "downloading %s to %s" (fs/base-name url) output-file))
         (client/with-additional-middleware [client/wrap-lower-case-headers (etag-middleware etag-key)]
-          (let [params {:cookie-policy :ignore} ;; completely ignore cookies. doesn't stop HttpComponents warning
+          (let [params {:cookie-policy :ignore ;; completely ignore cookies. doesn't stop HttpComponents warning
+                        :http-request-config (clj-http.core/request-config {:normalize-uri false})}
                 use-anon-useragent? false
                 params (merge params (user-agent use-anon-useragent?) extra-params)
                 _ (debug "requesting" url "with params" params)
