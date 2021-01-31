@@ -12,43 +12,11 @@
    [clj-http
     [core]
     [util :refer [opt]]
-    [client :as client]])
-  (:import
-   [org.apache.http.client.config CookieSpecs RequestConfig]))
-
+    [client :as client]]))
 
 ;; todo: revisit this value
 (def expiry-offset-hours 24) ;; hours
 (def ^:dynamic *cache* nil)
-
-;; todo: remove when upstream fix is in
-;; https://github.com/dakrone/clj-http/pull/583
-(defn request-config [{:keys [connection-timeout
-                              connection-request-timeout
-                              socket-timeout
-                              max-redirects
-                              cookie-spec
-                              ; deprecated
-                              conn-request-timeout
-                              conn-timeout]
-                       :as req}]
-  (let [config (-> (RequestConfig/custom)
-                   (.setNormalizeUri false)
-                   (.setConnectTimeout (or connection-timeout conn-timeout -1))
-                   (.setSocketTimeout (or socket-timeout -1))
-                   (.setConnectionRequestTimeout
-                    (or connection-request-timeout conn-request-timeout -1))
-                   (.setRedirectsEnabled true)
-                   (.setCircularRedirectsAllowed
-                    (boolean (opt req :allow-circular-redirects)))
-                   (.setRelativeRedirectsAllowed
-                    ((complement false?)
-                     (opt req :allow-relative-redirects))))]
-    (if cookie-spec
-      (.setCookieSpec config clj-http.core/CUSTOM_COOKIE_POLICY)
-      (.setCookieSpec config (clj-http.core/get-cookie-policy req)))
-    (when max-redirects (.setMaxRedirects config max-redirects))
-    (.build config)))
 
 (defn- add-etag-or-not
   [etag-key req]
@@ -141,7 +109,7 @@
         (debug (format "downloading %s to %s" (fs/base-name url) output-file))
         (client/with-additional-middleware [client/wrap-lower-case-headers (etag-middleware etag-key)]
           (let [params {:cookie-policy :ignore ;; completely ignore cookies. doesn't stop HttpComponents warning
-                        :http-request-config (request-config {})}
+                        :http-request-config (clj-http.core/request-config {:normalize-uri false})}
                 use-anon-useragent? false
                 params (merge params (user-agent use-anon-useragent?) extra-params)
                 _ (debug "requesting" url "with params" params)
