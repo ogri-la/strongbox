@@ -11,7 +11,6 @@
    [trptcolin.versioneer.core :as versioneer]
    [clj-http
     [core]
-    [util :refer [opt]]
     [client :as client]]))
 
 ;; todo: revisit this value
