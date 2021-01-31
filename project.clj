@@ -1,4 +1,4 @@
-(defproject ogri-la/strongbox "3.2.0"
+(defproject ogri-la/strongbox "3.2.1"
   :description "World Of Warcraft Addon Manager"
   :url "https://github.com/ogri-la/strongbox"
   :license {:name "GNU Affero General Public License (AGPL)"
@@ -13,7 +13,7 @@
                  ;; see lein deps :tree
                  [com.taoensso/timbre "4.10.0"] ;; logging
                  [enlive "1.1.6"] ;; html parsing
-                 [clj-http "3.10.1"] ;; better http slurping
+                 [clj-http "3.12.1"] ;; better http slurping
                  [seesaw "1.5.0"] ;; swing
                  [clj-commons/fs "1.5.2"] ;; file system wrangling
                  [slugify "0.0.1"]
