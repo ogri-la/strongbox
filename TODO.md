@@ -21,6 +21,11 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* gui, new tab for dedicated log
+* per-addon logging
+    - I want the user to see a list of messages regarding that *specific* addon
+    - when emitting a log line about a particular addon, capture that addon's source and source-id somehow
+
 * import, skip importing an addon if addon already exists in addon dir
 
 * import, why can't an export record be matched to the catalogue and then installed that way?
@@ -188,7 +193,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - highlight updates
     - touch of colour against each menuitem would serve as a legend
 * gui, have the log scroll the other direction
-* gui, new tab for dedicated log
 
 ## github
 
