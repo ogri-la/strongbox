@@ -144,6 +144,6 @@ See [CONTRIBUTING](CONTRIBUTING.md) for more detail.
 
 ## License
 
-Copyright © 2018-2020 Torkus
+Copyright © 2018-2021 Torkus
 
 Distributed under the GNU Affero General Public Licence, version 3 [with additional permissions](LICENCE.txt#L665)
