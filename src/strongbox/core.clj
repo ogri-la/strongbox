@@ -726,18 +726,21 @@
       (wrapper addon-summary game-track))))
 
 (defn-spec check-for-update :addon/toc
-  "Returns given `addon` with source updates, if any, and an `update?` boolean if a different version is available.
-  Accepts something as basic as toc data."
+  "Returns given `addon` with source updates, if any, and sets an `update?` property if a different version is available.
+  If addon is pinned to a specific version, `update?` will only be true if pinned version is different from installed version."
   [addon (s/or :unmatched :addon/toc
                :matched :addon/toc+summary+match)]
   (let [expanded-addon (when (:matched? addon)
                          (expand-summary-wrapper addon))
         addon (or expanded-addon addon) ;; expanded addon may still be nil
-        {:keys [installed-version version]} addon
-        update? (boolean
-                 (and version
-                      (not= installed-version version)
-                      (not (:ignore? addon))))]
+        {:keys [installed-version pinned-version version]} addon
+
+        update? (when version
+                  (if pinned-version
+                    (not= version pinned-version)
+                    (not= version installed-version)))
+        update? (boolean (and (not (:ignore? addon)) update?))
+        ]
     (assoc addon :update? update?)))
 
 (defn-spec check-for-updates nil?

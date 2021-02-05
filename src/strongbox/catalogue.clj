@@ -31,15 +31,16 @@
       (if-not (contains? dispatch-map key)
         (error (format "addon '%s' is from source '%s' that is unsupported" (:label addon) key))
         (let [release-list ((get dispatch-map key) addon game-track)
-              latest-release (first release-list)]
-          ;; todo: figure out which release should be merged into the addon here
-          ;; todo: also include the full release list
-          (when latest-release
+              latest-release (first release-list)
+              pinned-release (first (filter (fn [release]
+                                              (when-let [pinned-version (:pinned-version addon)]
+                                                (= (:version release) pinned-version))) release-list))
+              source-updates (or pinned-release latest-release)]
+          (when source-updates
             (merge addon
-                   latest-release
+                   source-updates
                    (when (> (count release-list) 1)
-                     {:release-list release-list})
-                   ))))
+                     {:release-list release-list})))))
       (catch Exception e
         (error e "unhandled exception attempting to expand addon summary")
         (error "please report this! https://github.com/ogri-la/strongbox/issues")))))
