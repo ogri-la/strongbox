@@ -29,6 +29,22 @@
     (catch java.lang.StringIndexOutOfBoundsException e
       (warn (format "failed to construct a download url for release '%s'" (:projectFileName release))))))
 
+(defn-spec rename-identical-releases ::sp/list-of-maps
+  [release-list ::sp/list-of-maps]
+  (let [count-occurances (fn [accumulator-map m]
+                           (let [key :projectFileName]
+                             (update accumulator-map (get m key) (fn [x] (inc (or x 0))))))
+        occurances (reduce count-occurances {} release-list)
+        get* #(get %2 %1)
+        rename-release (fn [release]
+                         (assoc release :-unique-name
+                                (if (-> release :projectFileName (get* occurances) (> 1))
+                                  (let [[name _] (fs/split-ext (:projectFileName release))
+                                        pid (:projectFileId release)]
+                                    (format "%s--%s" name pid))
+                                  (:projectFileName release))))]
+    (mapv rename-release release-list)))
+
 (defn-spec older-releases :addon/release-list
   "releases under `:gameVersionLatestFiles` appear to be the most recent release by `fileType` (stability)
   and by game/interface version (WotLK, etc).
@@ -40,12 +56,13 @@
         pad-release (fn [release]
                       (when-let [download-url (release-download-url release)]
                         {:download-url download-url
-                         :version (-> release :projectFileName)
-                         :label (format "[WoW %s] %s" (:gameVersion release) (-> release :projectFileName fs/split-ext first))
+                         :version (:-unique-name release)
+                         :label (format "[WoW %s] %s" (:gameVersion release) (:-unique-name release))
                          :interface-version (utils/game-version-to-interface-version (:gameVersion release))
                          :game-track (if (= (:gameVersionFlavor release) "wow_classic") :classic :retail)}))]
     (->> gameVersionLatestFiles
          (filter stable-releases)
+         rename-identical-releases
          (map pad-release)
          (remove nil?)
          vec)))
@@ -93,7 +110,7 @@
         stable 1 ;; 2 is beta, 3 is alpha
         stable-release #(= (:releaseType %) stable)
         concat* #(concat %2 %1)
-        more-releases (if-let [gameVersionLatestFiles (spy :info (:gameVersionLatestFiles api-result))]
+        more-releases (if-let [gameVersionLatestFiles (:gameVersionLatestFiles api-result)]
                         (older-releases gameVersionLatestFiles)
                         [])]
     (->> api-result
