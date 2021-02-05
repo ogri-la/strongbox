@@ -838,7 +838,7 @@
   [row]
   (cond
     (:ignore? row) "(ignored)"
-    (:pinned-version row) "(pinned)"
+    (:pinned-version row) (str "(pinned) " (:pinned-version row))
     :else
     (:version row)))
 
@@ -869,7 +869,7 @@
                      {:text "name" :min-width 150 :pref-width 300 :max-width 500 :cell-value-factory (comp no-new-lines :label)}
                      {:text "description" :pref-width 700 :cell-value-factory (comp no-new-lines :description)}
                      {:text "installed" :max-width 150 :cell-value-factory :installed-version}
-                     {:text "available" :max-width 150 :cell-value-factory available-versions}
+                     {:text "available" :max-width 250 :cell-value-factory available-versions}
                      {:text "WoW" :max-width 100 :cell-value-factory iface-version}]]
     {:fx/type fx.ext.table-view/with-selection-props
      :props {:selection-mode :multiple
