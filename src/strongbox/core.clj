@@ -463,6 +463,9 @@
          (addon/overwrites-ignored? downloaded-file (get-state :installed-addon-list))
          (error "refusing to install addon that will overwrite an ignored addon")
 
+         (addon/overwrites-pinned? downloaded-file (get-state :installed-addon-list))
+         (error "refusing to install addon that will overwrite a pinned addon")
+
          test-only? true ;; addon was successfully downloaded and verified as being sound
 
          :else (let [result (addon/install-addon addon install-dir downloaded-file)]

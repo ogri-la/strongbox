@@ -194,7 +194,7 @@
         ;; not a show stopper, but if there are bundled addons and they don't share a common prefix, let the user know
         suspicious-bundle-check (fn []
                                   (let [sus-addons (zip/inconsistently-prefixed zipfile-entries)
-                                        msg "%s will install inconsistently prefixed addons: %s"]
+                                        msg "%s will also install these addons: %s"]
                                     (when sus-addons
                                       (warn (format msg (:label addon) (clojure.string/join ", " sus-addons))))))
 
@@ -273,8 +273,6 @@
         zip-dir-in-ignore-dir-list? (fn [zip-dir] (some #{zip-dir} ignore-list))]
     (utils/any (map zip-dir-in-ignore-dir-list? zip-dir-list))))
 
-;;
-
 (defn-spec implicitly-ignored? boolean?
   "returns `true` if the addon in the given `install-dir`+`addon-dirname` directory is being implicitly ignored.
   an 'implicit ignore' is when the addon is under version control or the `.toc` file looks like an unrendered template."
@@ -291,3 +289,23 @@
   (if (implicitly-ignored? install-dir addon-dirname)
     (nfo/stop-ignoring install-dir addon-dirname)
     (nfo/clear-ignore install-dir addon-dirname)))
+
+;;
+
+(defn-spec pinned-dir-list (s/coll-of ::sp/dirname)
+  "returns a list of unique addon directory names (including grouped addons) that are pinned"
+  [addon-list (s/nilable :addon/installed-list)]
+  (->> addon-list (filter :pinned-version) (map :group-addons) flatten (map :dirname) (remove nil?) set))
+
+(defn-spec overwrites-pinned? boolean?
+  "returns true if given archive file would unpack over any *pinned* addons.
+  this includes already installed versions of itself."
+  [downloaded-file ::sp/archive-file, addon-list (s/nilable :addon/installed-list)]
+  (let [pinned-list (pinned-dir-list addon-list)
+        zip-dir-list (->> downloaded-file
+                          zip/zipfile-normal-entries
+                          zip/top-level-directories
+                          (map :path)
+                          (mapv #(utils/rtrim % "/")))
+        zip-dir-in-pinned-dir-list? (fn [zip-dir] (some #{zip-dir} pinned-list))]
+    (utils/any (map zip-dir-in-pinned-dir-list? zip-dir-list))))
