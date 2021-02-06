@@ -64,6 +64,7 @@ Afterwards, use the `Update all` button to update all addons with new versions a
 
 Under no circumstances whatsoever does this software:
 
+* solicit, beg or manipulate for donations
 * deal with advertising or advertisers
 * collect, monitor or report upon your usage of `strongbox` or your data
 * attempt to monitise you, the user, in any way
