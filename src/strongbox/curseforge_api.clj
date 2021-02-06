@@ -89,8 +89,7 @@
                                 :version (:displayName release)
                                 :release-label (format "[WoW %s] %s" (first (:gameVersion release)) (:fileName release))
                                 :game-track (utils/game-version-to-game-track game-version)}
-                               interface-version)))
-        ]
+                               interface-version)))]
     (mapv pad-release (:gameVersion release))))
 
 (defn group-releases

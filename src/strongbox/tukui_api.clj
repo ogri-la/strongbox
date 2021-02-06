@@ -41,9 +41,9 @@
                             {:interface-version (utils/game-version-to-interface-version patch)})]
     (when ti
       [(merge {:download-url (:url ti)
-              :version (:version ti)
-              :game-track game-track}
-             interface-version)])))
+               :version (:version ti)
+               :game-track game-track}
+              interface-version)])))
 
 ;; catalogue building
 

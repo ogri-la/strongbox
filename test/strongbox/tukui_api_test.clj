@@ -89,8 +89,7 @@
           expected [{:download-url "https://www.tukui.org/addons.php?download=98"
                      :version "0.960"
                      :interface-version 80200
-                     :game-track game-track}]
-          ]
+                     :game-track game-track}]]
 
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (tukui-api/expand-summary addon-summary game-track))))))
@@ -117,8 +116,7 @@
           expected [{:download-url "https://www.tukui.org/downloads/elvui-11.26.zip"
                      :version "11.26"
                      :interface-version 80200
-                     :game-track game-track}]
-          ]
+                     :game-track game-track}]]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (tukui-api/expand-summary addon-summary game-track)))))))
 
@@ -167,7 +165,6 @@
           expected [{:download-url "https://www.tukui.org/addons.php?download=98"
                      ;; :interface-version ... ;; elided
                      :version "0.960"
-                     :game-track game-track}]
-          ]
+                     :game-track game-track}]]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (tukui-api/expand-summary addon-summary game-track)))))))

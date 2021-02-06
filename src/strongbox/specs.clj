@@ -162,7 +162,7 @@
 
 ;; addons
 
-(s/def :addon/pinned-version ::version) 
+(s/def :addon/pinned-version ::version)
 
 (s/def :addon/tag keyword?)
 (s/def :addon/tag-list (s/or :ok (s/coll-of :addon/tag)

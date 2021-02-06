@@ -119,8 +119,8 @@
           game-track :retail
 
           expected [{:download-url "https://github.com/Aviana/HealComm/releases/download/2.04/HealComm.zip"
-                    :version "2.04 Beta"
-                    :game-track game-track}]
+                     :version "2.04 Beta"
+                     :game-track game-track}]
 
           fixture (slurp (fixture-path "github-repo-releases--aviana-healcomm.json"))
           fake-routes {"https://api.github.com/repos/Aviana/HealComm/releases"

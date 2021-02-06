@@ -367,8 +367,7 @@
             (is (= expected (core/get-state :installed-addon-list)))))))))
 
 (deftest check-for-addon-update
-  (testing "the key :update? is set on an addon when there is a difference between the installed version of an addon and it's matching catalogue version"
-
+  (testing "the key `:update?` is set to `true` when the installed version doesn't match the catalogue version"
     (let [;; we start off with a list of these called a catalogue. it's downloaded from github
           catalogue {:category-list ["Auction House & Vendors"],
                      :download-count 1
@@ -1281,3 +1280,4 @@
         (cli/select-addons)
         (cli/clear-ignore-selected)
         (is (= expected (first (core/get-state :installed-addon-list))))))))
+

@@ -16,7 +16,6 @@
     [zip :as zip]
     [http :as http]
     [logging :as logging]
-    [nfo :as nfo]
     [utils :as utils :refer [join nav-map nav-map-fn delete-many-files! static-slurp expand-path if-let*]]
     [catalogue :as catalogue]
     [specs :as sp]]))

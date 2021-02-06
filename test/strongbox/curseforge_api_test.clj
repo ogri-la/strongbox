@@ -4,7 +4,6 @@
    [clj-http.fake :refer [with-fake-routes-in-isolation]]
    ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [strongbox
-    [constants :as constants]
     [curseforge-api :as curseforge-api]
     [test-helper :as helper :refer [fixture-path]]]))
 
@@ -33,8 +32,7 @@
                      :version "v8.2.0-v1.13.2-7135.139"
                      :interface-version 80000 ;; "8.0.1" => 80000
                      :release-label "[WoW 8.0.1] EveryAddon-v8.2.0-v1.13.2-7135.139.zip"
-                     :game-track game-track}]
-          ]
+                     :game-track game-track}]]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (curseforge-api/expand-summary addon-summary game-track)))))))
 
@@ -94,10 +92,9 @@
                     :classic [{:download-url "https://example.org/path/to/a.b.c.zip"
                                :version "a.b.c"
                                :game-track :classic
-                               :release-label "[WoW 1.13.5] Foo.zip",                               
+                               :release-label "[WoW 1.13.5] Foo.zip"
                                ;; synthetic, we had to guess using `:gameVersionFlavor`
-                               :interface-version 11300}]}
-          ]
+                               :interface-version 11300}]}]
       (is (= expected (curseforge-api/group-releases fixture)))))
 
   (testing "a release using both `:gameVersionFlavor` and a list of supported `:gameVersion` game tracks ignores `:gameVersionFlavor` and is expanded into multiple releases"
@@ -116,8 +113,7 @@
                                :version "1.2.3"
                                :game-track :classic
                                :release-label "[WoW 1.13.1] Foo.zip",
-                               :interface-version 11300}]}
-          ]
+                               :interface-version 11300}]}]
       (is (= expected (curseforge-api/group-releases fixture)))))
 
   (testing "multiple releases supporting mixed, multiple, game tracks are expanded and ordered correctly"
@@ -135,7 +131,7 @@
                     :retail [{:download-url "https://example.org/path/to/1.2.4.zip"
                               :version "1.2.4"
                               :game-track :retail
-                               :release-label "[WoW 8.2.5] Foo.zip"
+                              :release-label "[WoW 8.2.5] Foo.zip"
                               :interface-version 80200}
                              {:download-url "https://example.org/path/to/1.2.3.zip"
                               :version "1.2.3"
@@ -148,8 +144,7 @@
                                :version "1.2.3"
                                :game-track :classic
                                :release-label "[WoW 1.13.1] Foo.zip",
-                               :interface-version 11300}]}
-          ]
+                               :interface-version 11300}]}]
       (is (= expected (curseforge-api/group-releases fixture)))))
 
   (testing "use `:gameVersionFlavor` to decide the game track when `:gameVersion` is empty."
@@ -157,7 +152,7 @@
           latest-files [{:gameVersionFlavor "wow_classic", :gameVersion []
                          :fileDate "2019-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil
                          :displayName "1.2.4" :fileName "Foo.zip" :downloadUrl "https://example.org/path/to/1.2.4.zip"}
-                        
+
                         {:gameVersionFlavor "wow_retail", :gameVersion ["1.13.1" "8.2.5"]
                          :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil
                          :displayName "1.2.3" :fileName "Foo.zip" :downloadUrl "https://example.org/path/to/1.2.3.zip"}]
@@ -178,8 +173,7 @@
                                :version "1.2.3"
                                :game-track :classic
                                :release-label "[WoW 1.13.1] Foo.zip",
-                               :interface-version 11300}]}
-          ]
+                               :interface-version 11300}]}]
       (is (= expected (curseforge-api/group-releases fixture))))))
 
 (deftest extract-addon-summary

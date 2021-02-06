@@ -877,8 +877,7 @@
                (menu-item "Ignore" (async-handler cli/ignore-selected)))
              separator
              (menu-item "Delete" remove-selected-confirmation-handler
-                        {:disable ignored?})
-             ]}))
+                        {:disable ignored?})]}))
 
 (defn multiple-context-menu
   [selected-addon-list]
