@@ -91,6 +91,7 @@
 (s/def ::interface-version int?)
 (s/def ::name string?) ;; normalised name of the addon, shared between toc file and curseforge
 (s/def ::label string?) ;; name of the addon without normalisation
+(s/def ::release-label ::label)
 
 ;; dates and times
 
@@ -247,7 +248,7 @@
                    ::download-url
                    ::game-track]
           :opt-un [::interface-version
-                   ::label]))
+                   ::release-label]))
 
 (s/def :addon/release-list (s/coll-of :addon/source-updates))
 

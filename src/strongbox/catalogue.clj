@@ -35,12 +35,13 @@
               pinned-release (first (filter (fn [release]
                                               (when-let [pinned-version (:pinned-version addon)]
                                                 (= (:version release) pinned-version))) release-list))
-              source-updates (or pinned-release latest-release)]
+              source-updates (or pinned-release latest-release)
+              release-list* (when (> (count release-list) 1)
+                              {:release-list release-list})]
           (when source-updates
-            (merge addon
-                   source-updates
-                   (when (> (count release-list) 1)
-                     {:release-list release-list})))))
+            (-> addon
+                (merge source-updates release-list*)
+                (dissoc :release-label)))))
       (catch Exception e
         (error e "unhandled exception attempting to expand addon summary")
         (error "please report this! https://github.com/ogri-la/strongbox/issues")))))

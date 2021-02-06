@@ -848,7 +848,7 @@
   (let [pin (fn [release _]
               (cli/set-version addon release))]
     (mapv (fn [release]
-            (menu-item (or (:label release) (:version release)) (partial pin release))) (rest release-list))))
+            (menu-item (or (:release-label release) (:version release)) (partial pin release))) (rest release-list))))
 
 (defn singular-context-menu
   [selected-addon]

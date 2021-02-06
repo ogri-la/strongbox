@@ -32,6 +32,7 @@
           expected [{:download-url "https://edge.forgecdn.net/files/1/1/EveryAddon.zip"
                      :version "v8.2.0-v1.13.2-7135.139"
                      :interface-version 80000 ;; "8.0.1" => 80000
+                     :release-label "[WoW 8.0.1] EveryAddon-v8.2.0-v1.13.2-7135.139.zip"
                      :game-track game-track}]
           ]
       (with-fake-routes-in-isolation fake-routes
@@ -65,33 +66,35 @@
     (let [[alpha, beta, stable] [3 2 1]
           latest-files [;; retail versions
                         {:gameVersionFlavor "wow_retail", :fileDate "2001-01-03T00:00:00.000Z", :releaseType alpha, :exposeAsAlternative nil
-                         :displayName "1.2.3-alpha" :downloadUrl "https://example.org/path/to/1.2.3-alpha.zip"}
+                         :displayName "1.2.3-alpha" :fileName "Foo.zip" :downloadUrl "https://example.org/path/to/1.2.3-alpha.zip"}
                         {:gameVersionFlavor "wow_retail", :fileDate "2001-01-02T00:00:00.000Z", :releaseType beta, :exposeAsAlternative nil
-                         :displayName "1.2.3-beta" :downloadUrl "https://example.org/path/to/1.2.3-beta.zip"}
+                         :displayName "1.2.3-beta" :fileName "Foo.zip" :downloadUrl "https://example.org/path/to/1.2.3-beta.zip"}
                         {:gameVersionFlavor "wow_retail", :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil
-                         :displayName "1.2.3" :downloadUrl "https://example.org/path/to/1.2.3.zip"}
+                         :displayName "1.2.3" :fileName "Foo.zip" :downloadUrl "https://example.org/path/to/1.2.3.zip"}
                         {:gameVersionFlavor "wow_retail", :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative true
-                         :displayName "1.2.3-nolib" :downloadUrl "https://example.org/path/to/1.2.3-no-lib.zip"}
+                         :displayName "1.2.3-nolib" :fileName "Foo.zip" :downloadUrl "https://example.org/path/to/1.2.3-no-lib.zip"}
 
                         ;; classic versions, mirror retail releases
                         {:gameVersionFlavor "wow_classic", :fileDate "2001-01-03T00:00:00.000Z", :releaseType alpha, :exposeAsAlternative nil
-                         :displayName "a.b.c-nolib" :downloadUrl "https://example.org/path/to/a.b.c-alpha.zip"}
+                         :displayName "a.b.c-nolib" :fileName "Foo.zip" :downloadUrl "https://example.org/path/to/a.b.c-alpha.zip"}
                         {:gameVersionFlavor "wow_classic", :fileDate "2001-01-02T00:00:00.000Z", :releaseType beta, :exposeAsAlternative nil
-                         :displayName "a.b.c-beta" :downloadUrl "https://example.org/path/to/a.b.c-beta.zip"}
+                         :displayName "a.b.c-beta" :fileName "Foo.zip" :downloadUrl "https://example.org/path/to/a.b.c-beta.zip"}
                         {:gameVersionFlavor "wow_classic", :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil
-                         :displayName "a.b.c" :downloadUrl "https://example.org/path/to/a.b.c.zip"}
+                         :displayName "a.b.c" :fileName "Foo.zip" :downloadUrl "https://example.org/path/to/a.b.c.zip"}
                         {:gameVersionFlavor "wow_classic", :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative true
-                         :displayName "a.b.c-nolib" :downloadUrl "https://example.org/path/to/a.b.c-no-lib.zip"}]
+                         :displayName "a.b.c-nolib" :fileName "Foo.zip" :downloadUrl "https://example.org/path/to/a.b.c-no-lib.zip"}]
 
           fixture {:latestFiles latest-files}
           expected {:retail [{:download-url "https://example.org/path/to/1.2.3.zip"
                               :version "1.2.3"
                               :game-track :retail
+                              :release-label "[WoW 9.0.3] Foo.zip",
                               ;; synthetic, we had to guess using `:gameVersionFlavor`
                               :interface-version 90000}]
                     :classic [{:download-url "https://example.org/path/to/a.b.c.zip"
                                :version "a.b.c"
                                :game-track :classic
+                               :release-label "[WoW 1.13.5] Foo.zip",                               
                                ;; synthetic, we had to guess using `:gameVersionFlavor`
                                :interface-version 11300}]}
           ]
@@ -101,16 +104,18 @@
     (let [stable 1
           latest-files [{:gameVersionFlavor "wow_retail", :gameVersion ["1.13.1" "8.2.5"]
                          :fileDate "2001-01-03T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil
-                         :displayName "1.2.3" :downloadUrl "https://example.org/path/to/foo.zip"}]
+                         :displayName "1.2.3" :fileName "Foo.zip" :downloadUrl "https://example.org/path/to/foo.zip"}]
           fixture {:latestFiles latest-files}
 
           expected {:retail [{:download-url "https://example.org/path/to/foo.zip"
                               :version "1.2.3"
                               :game-track :retail
+                              :release-label "[WoW 1.13.1] Foo.zip",
                               :interface-version 80200}]
                     :classic [{:download-url "https://example.org/path/to/foo.zip"
                                :version "1.2.3"
                                :game-track :classic
+                               :release-label "[WoW 1.13.1] Foo.zip",
                                :interface-version 11300}]}
           ]
       (is (= expected (curseforge-api/group-releases fixture)))))
@@ -119,27 +124,30 @@
     (let [stable 1
           latest-files [{:gameVersionFlavor "wow_retail", :gameVersion ["8.2.5"]
                          :fileDate "2001-01-03T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil
-                         :displayName "1.2.4" :downloadUrl "https://example.org/path/to/1.2.4.zip"}
+                         :displayName "1.2.4" :fileName "Foo.zip" :downloadUrl "https://example.org/path/to/1.2.4.zip"}
 
                         {:gameVersionFlavor "wow_retail", :gameVersion ["1.13.1" "8.2.5"]
                          :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil
-                         :displayName "1.2.3" :downloadUrl "https://example.org/path/to/1.2.3.zip"}]
+                         :displayName "1.2.3" :fileName "Foo.zip" :downloadUrl "https://example.org/path/to/1.2.3.zip"}]
           fixture {:latestFiles latest-files}
 
           expected {;; retail versions available from 2001-01-03 and 2001-01-01 releases
                     :retail [{:download-url "https://example.org/path/to/1.2.4.zip"
                               :version "1.2.4"
                               :game-track :retail
+                               :release-label "[WoW 8.2.5] Foo.zip"
                               :interface-version 80200}
                              {:download-url "https://example.org/path/to/1.2.3.zip"
                               :version "1.2.3"
                               :game-track :retail
+                              :release-label "[WoW 1.13.1] Foo.zip",
                               :interface-version 80200}]
 
                     ;; classic version available from the 2001-01-01 release
                     :classic [{:download-url "https://example.org/path/to/1.2.3.zip"
                                :version "1.2.3"
                                :game-track :classic
+                               :release-label "[WoW 1.13.1] Foo.zip",
                                :interface-version 11300}]}
           ]
       (is (= expected (curseforge-api/group-releases fixture)))))
@@ -148,25 +156,28 @@
     (let [stable 1
           latest-files [{:gameVersionFlavor "wow_classic", :gameVersion []
                          :fileDate "2019-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil
-                         :displayName "1.2.4" :downloadUrl "https://example.org/path/to/1.2.4.zip"}
+                         :displayName "1.2.4" :fileName "Foo.zip" :downloadUrl "https://example.org/path/to/1.2.4.zip"}
                         
                         {:gameVersionFlavor "wow_retail", :gameVersion ["1.13.1" "8.2.5"]
                          :fileDate "2001-01-01T00:00:00.000Z", :releaseType stable, :exposeAsAlternative nil
-                         :displayName "1.2.3" :downloadUrl "https://example.org/path/to/1.2.3.zip"}]
+                         :displayName "1.2.3" :fileName "Foo.zip" :downloadUrl "https://example.org/path/to/1.2.3.zip"}]
           fixture {:latestFiles latest-files}
 
           expected {:retail [{:download-url "https://example.org/path/to/1.2.3.zip"
                               :version "1.2.3"
                               :game-track :retail
+                              :release-label "[WoW 1.13.1] Foo.zip",
                               :interface-version 80200}]
 
                     :classic [{:download-url "https://example.org/path/to/1.2.4.zip"
                                :version "1.2.4"
                                :game-track :classic
+                               :release-label "[WoW 1.13.5] Foo.zip",
                                :interface-version 11300}
                               {:download-url "https://example.org/path/to/1.2.3.zip"
                                :version "1.2.3"
                                :game-track :classic
+                               :release-label "[WoW 1.13.1] Foo.zip",
                                :interface-version 11300}]}
           ]
       (is (= expected (curseforge-api/group-releases fixture))))))

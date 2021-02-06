@@ -57,7 +57,7 @@
                       (when-let [download-url (release-download-url release)]
                         {:download-url download-url
                          :version (:-unique-name release)
-                         :label (format "[WoW %s] %s" (:gameVersion release) (:-unique-name release))
+                         :release-label (format "[WoW %s] %s" (:gameVersion release) (:-unique-name release))
                          :interface-version (utils/game-version-to-interface-version (:gameVersion release))
                          :game-track (if (= (:gameVersionFlavor release) "wow_classic") :classic :retail)}))]
     (->> gameVersionLatestFiles
@@ -87,6 +87,7 @@
                                                 {:interface-version interface-version})]
                         (merge {:download-url (:downloadUrl release)
                                 :version (:displayName release)
+                                :release-label (format "[WoW %s] %s" (first (:gameVersion release)) (:fileName release))
                                 :game-track (utils/game-version-to-game-track game-version)}
                                interface-version)))
         ]
