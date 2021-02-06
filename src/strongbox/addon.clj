@@ -310,7 +310,23 @@
         zip-dir-in-pinned-dir-list? (fn [zip-dir] (some #{zip-dir} pinned-list))]
     (utils/any (map zip-dir-in-pinned-dir-list? zip-dir-list))))
 
-(defn-spec find-release (s/or :ok :addon/release :not-found nil?)
+(defn-spec find-release (s/or :ok :addon/source-updates :not-found nil?)
   "returns the first release from an addon's `:release-list` that matches the addon's `:installed-version`"
-  [addon :addon/expanded]
+  [addon map?]
   (->> addon :release-list (filter #(= (:installed-version addon) (:version %))) first))
+
+(defn-spec updateable? boolean?
+  "returns true if given `addon` can be updated to a newer version"
+  [addon map?]
+  (let [{:keys [installed-version pinned-version version]} addon]
+    (boolean
+     (and version
+          (not (:ignore? addon))
+          (if pinned-version
+            (not= version pinned-version)
+            (not= version installed-version))))))
+
+(defn-spec re-installable? boolean?
+  "returns true if given `addon` can be re-installed to the current `:installed-version`"
+  [addon map?]
+  (some? (find-release addon)))

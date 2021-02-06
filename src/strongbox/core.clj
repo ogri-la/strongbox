@@ -735,16 +735,8 @@
                :matched :addon/toc+summary+match)]
   (let [expanded-addon (when (:matched? addon)
                          (expand-summary-wrapper addon))
-        addon (or expanded-addon addon) ;; expanded addon may still be nil
-        {:keys [installed-version pinned-version version]} addon
-
-        update? (when version
-                  (if pinned-version
-                    (not= version pinned-version)
-                    (not= version installed-version)))
-        update? (boolean (and (not (:ignore? addon)) update?))
-        ]
-    (assoc addon :update? update?)))
+        addon (or expanded-addon addon)] ;; expanded addon may still be nil
+    (assoc addon :update? (addon/updateable? addon))))
 
 (defn-spec check-for-updates nil?
   "downloads full details for all installed addons that can be found in summary list"
