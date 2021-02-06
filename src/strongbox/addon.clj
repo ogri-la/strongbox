@@ -309,3 +309,8 @@
                           (mapv #(utils/rtrim % "/")))
         zip-dir-in-pinned-dir-list? (fn [zip-dir] (some #{zip-dir} pinned-list))]
     (utils/any (map zip-dir-in-pinned-dir-list? zip-dir-list))))
+
+(defn-spec find-release (s/or :ok :addon/release :not-found nil?)
+  "returns the first release from an addon's `:release-list` that matches the addon's `:installed-version`"
+  [addon :addon/expanded]
+  (->> addon :release-list (filter #(= (:installed-version addon) (:version %))) first))

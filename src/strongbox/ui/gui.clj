@@ -327,7 +327,7 @@ but the restart flag has had to be removed which means you can't switch themes t
   []
   (let [;; important! release the event thread using async-handler else updates during process won't be shown until complete
         ;;refresh-button (button "Refresh" (async-handler core/refresh))
-        update-all-button (button "Update all" (async-handler cli/install-update-all))
+        update-all-button (button "Update all" (async-handler cli/update-all))
 
         ;;wow-dir-button (button "Addon directory" (handler wow-dir-picker))
 
@@ -472,8 +472,8 @@ but the restart flag has had to be removed which means you can't switch themes t
                                                  (count (filter :update? selected-rows)))))
                            :onclick donothing)
                           (ss/separator)
-                          (menu-item "Update" (async-handler cli/install-update-selected))
-                          (menu-item "Re-install" (async-handler cli/re-install-selected))
+                          (menu-item "Update" (async-handler cli/update-selected))
+                          (menu-item "Re-install" (async-handler cli/re-install-or-update-selected))
                           (ss/separator)
                           (menu-item "Ignore" (async-handler cli/ignore-selected))
                           (menu-item "Stop ignoring" (async-handler cli/clear-ignore-selected))
@@ -954,8 +954,8 @@ but the restart flag has had to be removed which means you can't switch themes t
                              [:separator
                               (ss/action :name "Refresh user catalogue" :handler (async-handler core/refresh-user-catalogue))])
 
-        addon-menu [(ss/action :name "Update all" :key "menu U" :mnemonic "u" :handler (async-handler cli/install-update-all))
-                    (ss/action :name "Re-install all" :handler (async-handler cli/re-install-all))]
+        addon-menu [(ss/action :name "Update all" :key "menu U" :mnemonic "u" :handler (async-handler cli/update-all))
+                    (ss/action :name "Re-install all" :handler (async-handler cli/re-install-or-update-all))]
 
         impexp-menu [(ss/action :name "Import addon from Github" :handler (handler import-addon-handler))
                      :separator

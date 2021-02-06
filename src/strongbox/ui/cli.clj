@@ -169,6 +169,14 @@
          (run! unpin))
     (core/refresh)))
 
+(defn find-replace-release
+  "looks for the `:installed-version` in the list of available releases and, if found, updates the addon."
+  [addon]
+  (if-let [matching-release (addon/find-release addon)]
+    (merge addon matching-release)
+    (do (warn (format "%s '%s' not found in known releases. Using latest release instead." (:label addon) (:installed-version addon)))
+        addon)))
+
 ;;
 
 (defn-spec -install-update-these nil?
@@ -180,32 +188,38 @@
   (filterv :update? rows))
 
 (defn -re-installable?
-  "an addon can only be re-installed if it's been matched to an addon in the catalogue and a release available to download"
+  "an addon can only be re-installed if it's been matched to an addon in the catalogue."
   [rows]
-  (filterv core/expanded? rows))
+  (->> rows
+       (filter core/expanded?)
+       (map find-replace-release)))
 
-(defn re-install-selected
+(defn re-install-or-update-selected
+  "re-installs (if possible) or updates all selected addons"
   []
   (-> (get-state :selected-installed)
       -re-installable?
       -install-update-these)
   (core/refresh))
 
-(defn re-install-all
+(defn re-install-or-update-all
+  "re-installs (if possible) or updates all installed addons"
   []
   (-> (get-state :installed-addon-list)
       -re-installable?
       -install-update-these)
   (core/refresh))
 
-(defn install-update-selected
+(defn update-selected
+  "updates all selected addons that have updates available"
   []
   (-> (get-state :selected-installed)
       -updateable?
       -install-update-these)
   (core/refresh))
 
-(defn-spec install-update-all nil?
+(defn-spec update-all nil?
+  "updates all installed addons with updates available"
   []
   (-> (get-state :installed-addon-list)
       -updateable?
@@ -360,7 +374,7 @@
 
 (defmethod action :update-all
   [_]
-  (install-update-all)
+  (update-all)
   (action :list-updates))
 
 (defmethod action :default

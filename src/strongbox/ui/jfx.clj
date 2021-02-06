@@ -704,8 +704,8 @@
   (let [file-menu [(menu-item "_New addon directory" (event-handler wow-dir-picker) {:key "Ctrl+N"})
                    (menu-item "Remove addon directory" (async-handler remove-addon-dir))
                    separator
-                   (menu-item "_Update all" (async-handler cli/install-update-all) {:key "Ctrl+U"})
-                   (menu-item "Re-install all" (async-handler cli/re-install-all))
+                   (menu-item "_Update all" (async-handler cli/update-all) {:key "Ctrl+U"})
+                   (menu-item "Re-install all" (async-handler cli/re-install-or-update-all))
                    separator
                    (menu-item "Import list of addons" (async-event-handler import-addon-list-handler))
                    (menu-item "Export list of addons" (async-event-handler export-addon-list-handler))
@@ -794,7 +794,7 @@
    :children [{:fx/type :button
                :text "Update all"
                :id "update-all-button"
-               :on-action (async-handler cli/install-update-all)}
+               :on-action (async-handler cli/update-all)}
               {:fx/type wow-dir-dropdown}
               {:fx/type game-track-dropdown}
               {:fx/type :button
@@ -891,9 +891,9 @@
                                                 (when (and row (core/unsteady? (:name row))) "unsteady")])})}
             :columns (mapv table-column column-list)
             :context-menu {:fx/type :context-menu
-                           :items [(menu-item "Update" (async-handler cli/install-update-selected)
+                           :items [(menu-item "Update" (async-handler cli/update-selected)
                                               {:disable some-pinned?}) ;; disable 'update' when some of the selected are pinned
-                                   (menu-item "Re-install" (async-handler cli/re-install-selected))
+                                   (menu-item "Re-install" (async-handler cli/re-install-or-update-selected))
                                    separator
                                    (if some-pinned?
                                      (menu-item "Unpin release" (async-handler cli/unpin))
