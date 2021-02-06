@@ -13,6 +13,7 @@
    [orchestra.core :refer [defn-spec]]
    [strongbox.ui.cli :as cli]
    [strongbox
+    [addon :as addon]
     [specs :as sp]
     [logging :as logging]
     [utils :as utils :refer [no-new-lines]]
@@ -849,17 +850,64 @@
     (mapv (fn [release]
             (menu-item (or (:label release) (:version release)) (partial pin release))) (rest release-list))))
 
+(defn singular-context-menu
+  [selected-addon]
+  (let [pinned? (some? (:pinned-version selected-addon))
+        release-list (:release-list selected-addon)
+        releases-available? (and (not (empty? release-list))
+                                 (not pinned?))
+        ignored? (get selected-addon :ignore? false)]
+    {:fx/type :context-menu
+     :items [(menu-item "Update" (async-handler cli/update-selected)
+                        {:disable (not (addon/updateable? selected-addon))})
+             (menu-item "Re-install" (async-handler cli/re-install-or-update-selected)
+                        {:disable (not (addon/re-installable? selected-addon))})
+             separator
+             (if pinned?
+               (menu-item "Unpin release" (async-handler cli/unpin)
+                          {:disable ignored?})
+               (menu-item "Pin release" (async-handler cli/pin)
+                          {:disable ignored?}))
+             (if releases-available?
+               (menu "Releases" (build-release-menu selected-addon release-list))
+               (menu "Releases" [] {:disable true})) ;; skips even attempting to build the menu
+             separator
+             (if ignored?
+               (menu-item "Stop ignoring" (async-handler cli/clear-ignore-selected))
+               (menu-item "Ignore" (async-handler cli/ignore-selected)))
+             separator
+             (menu-item "Delete" remove-selected-confirmation-handler
+                        {:disable ignored?})
+             ]}))
+
+(defn multiple-context-menu
+  [selected-addon-list]
+  (let [num-selected (count selected-addon-list)
+        some-pinned? (->> selected-addon-list (map :pinned-version) (some some?) boolean)
+        some-ignored? (->> selected-addon-list (filter :ignore?) (some some?) boolean)]
+    {:fx/type :context-menu
+     :items [(menu-item (str num-selected " addons selected") donothing {:disable true})
+             separator
+             (menu-item "Update" (async-handler cli/update-selected))
+             (menu-item "Re-install" (async-handler cli/re-install-or-update-selected))
+             separator
+             (if some-pinned?
+               (menu-item "Unpin release" (async-handler cli/unpin))
+               (menu-item "Pin release" (async-handler cli/pin)))
+             (menu "Releases" [] {:disable true})
+             separator
+             (if some-ignored?
+               (menu-item "Stop ignoring" (async-handler cli/clear-ignore-selected))
+               (menu-item "Ignore" (async-handler cli/ignore-selected)))
+             separator
+             (menu-item "Delete" remove-selected-confirmation-handler)]}))
+
 (defn installed-addons-table
   [{:keys [fx/context]}]
   ;; subscribe to re-render table when addons become unsteady
   (fx/sub-val context get-in [:app-state :unsteady-addons])
   (let [row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
         selected (fx/sub-val context get-in [:app-state :selected-installed])
-        some-pinned? (or (->> selected (map :pinned-version) (some some?)) false)
-        release-list (:release-list (first selected))
-        releases-available? (and (= 1 (count selected))
-                                 (not (empty? release-list))
-                                 (not some-pinned?))
 
         iface-version (fn [row]
                         (some-> row :interface-version str utils/interface-version-to-game-version))
@@ -890,22 +938,9 @@
                                                 (when (:ignore? row) "ignored")
                                                 (when (and row (core/unsteady? (:name row))) "unsteady")])})}
             :columns (mapv table-column column-list)
-            :context-menu {:fx/type :context-menu
-                           :items [(menu-item "Update" (async-handler cli/update-selected)
-                                              {:disable some-pinned?}) ;; disable 'update' when some of the selected are pinned
-                                   (menu-item "Re-install" (async-handler cli/re-install-or-update-selected))
-                                   separator
-                                   (if some-pinned?
-                                     (menu-item "Unpin release" (async-handler cli/unpin))
-                                     (menu-item "Pin release" (async-handler cli/pin)))
-                                   (if releases-available?
-                                     (menu "Releases" (build-release-menu (first selected) release-list))
-                                     (menu "Releases" [] {:disable true}))
-                                   separator
-                                   (menu-item "Ignore" (async-handler cli/ignore-selected))
-                                   (menu-item "Stop ignoring" (async-handler cli/clear-ignore-selected))
-                                   separator
-                                   (menu-item "Delete" remove-selected-confirmation-handler)]}
+            :context-menu (if (= 1 (count selected))
+                            (singular-context-menu (first selected))
+                            (multiple-context-menu selected))
             :items (or row-list [])}}))
 
 (defn notice-logger

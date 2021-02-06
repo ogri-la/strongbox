@@ -185,7 +185,7 @@
 
 (defn -updateable?
   [rows]
-  (filterv :update? rows))
+  (filterv addon/updateable? rows))
 
 (defn -re-installable?
   "an addon can only be re-installed if it's been matched to an addon in the catalogue."
