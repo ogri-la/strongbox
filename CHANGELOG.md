@@ -14,6 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## 3.2.1
+
+### Fixed
+
+* fixed issue where URLs of redirect responses were being normalised and the normalised URL didn't exist, causing a 404.
+    - https://github.com/dakrone/clj-http/issues/582
+    - thanks to @rymndhng of dakrone/clj-http for all the help
+
 ## 3.2.0
 
 ### Added

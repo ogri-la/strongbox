@@ -49,3 +49,24 @@
 
       (doseq [[given expected] cases]
         (is (= expected (http/strongbox-user-agent given)))))))
+
+(comment
+  "doesn't work as expected. The fake response doesn't trigger a redirect. Not sure why."
+  (deftest http-redirect
+    (testing ""
+      (let [url "https://edge.forgecdn.net/files/3135/377/MobInfo2-8.3.15+Classic.zip"
+            redirect "https://media.forgecdn.net/files/3135/377/MobInfo2-8.3.15%2BClassic.zip"
+            bad-redirect "https://media.forgecdn.net/files/3135/377/MobInfo2-8.3.15+Classic.zip"
+            fake-routes {url {:get (fn [req]
+                                     {:status 302 :reason-phrase "Moved temporarily"
+                                      :headers {"location" redirect}})}
+                         redirect {:get (fn [req]
+                                          {:status 200 :body "woo!"})}
+                         bad-redirect {:get (fn [req]
+                                              {:status 500 :body "boo!"})}}
+            default-request-config {:http-request-config (clj-http.core/request-config {})}
+            expected-good "woo!"
+            expected-bad "boo!"]
+        (with-fake-routes-in-isolation fake-routes
+          (is (= expected-bad (http/-download url nil "message" default-request-config)))
+          (is (= expected-good (http/download url))))))))
