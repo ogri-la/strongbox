@@ -57,7 +57,7 @@
   :main strongbox.main
 
   :plugins [[lein-cljfmt "0.6.4"]
-            [jonase/eastwood "0.3.11"]
+            [jonase/eastwood "0.3.13"]
             [lein-cloverage "1.1.1"]]
   :eastwood {:exclude-linters [:constant-test]
              ;; linters that are otherwise disabled
