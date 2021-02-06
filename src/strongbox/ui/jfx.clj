@@ -855,12 +855,11 @@
   (fx/sub-val context get-in [:app-state :unsteady-addons])
   (let [row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
         selected (fx/sub-val context get-in [:app-state :selected-installed])
-
+        some-pinned? (or (->> selected (map :pinned-version) (some some?)) false)
         release-list (:release-list (first selected))
         releases-available? (and (= 1 (count selected))
-                                 (not (empty? release-list)))
-
-        some-pinned? (or (->> selected (map :pinned-version) (some some?)) false)
+                                 (not (empty? release-list))
+                                 (not some-pinned?))
 
         iface-version (fn [row]
                         (some-> row :interface-version str utils/interface-version-to-game-version))
