@@ -21,6 +21,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* preferences, "update all addons automatically"
+
 * import, skip importing an addon if addon already exists in addon dir
 
 * import, why can't an export record be matched to the catalogue and then installed that way?
