@@ -33,11 +33,11 @@
 
 (comment "disabled 2020-12: gui is going away entirely in the next major release, 
 but the restart flag has had to be removed which means you can't switch themes through the old gui anymore."
-(defn-spec trigger-gui-restart nil?
-  "call to dispose of the current gui and let `main.clj` restart it"
-  []
-  (swap! core/state assoc :gui-restart-flag true)
-  nil))
+         (defn-spec trigger-gui-restart nil?
+           "call to dispose of the current gui and let `main.clj` restart it"
+           []
+           (swap! core/state assoc :gui-restart-flag true)
+           nil))
 
 (defn select-ui
   [& path]
@@ -890,25 +890,25 @@ but the restart flag has had to be removed which means you can't switch themes t
 
 (comment "disabled 2020-12: gui is going away entirely in the next major release, 
 but the restart flag has had to be removed which means you can't switch themes through the old gui anymore."
-(defn build-theme-menu
-  "returns a menu of radio buttons that can toggle through the available themes defined in `core/themes`"
-  []
-  (let [button-grp (ss/button-group)
+         (defn build-theme-menu
+           "returns a menu of radio buttons that can toggle through the available themes defined in `core/themes`"
+           []
+           (let [button-grp (ss/button-group)
 
-        menu (mapv (fn [theme-key]
-                     (ss/radio-menu-item :id theme-key
-                                         :text (format "%s theme" (-> theme-key name clojure.string/capitalize))
-                                         :group button-grp
-                                         :selected? (= (core/get-state :cfg :gui-theme) theme-key)))
-                   (keys core/themes))]
+                 menu (mapv (fn [theme-key]
+                              (ss/radio-menu-item :id theme-key
+                                                  :text (format "%s theme" (-> theme-key name clojure.string/capitalize))
+                                                  :group button-grp
+                                                  :selected? (= (core/get-state :cfg :gui-theme) theme-key)))
+                            (keys core/themes))]
 
-    (sb/bind (sb/selection button-grp)
-             (sb/b-do* (fn [val]
-                         (when val ;; sometimes we get nil values?
-                           (swap! core/state assoc-in [:cfg :gui-theme] (ss/id-of val))
-                           (core/save-settings)
-                           (trigger-gui-restart)))))
-    menu)))
+             (sb/bind (sb/selection button-grp)
+                      (sb/b-do* (fn [val]
+                                  (when val ;; sometimes we get nil values?
+                                    (swap! core/state assoc-in [:cfg :gui-theme] (ss/id-of val))
+                                    (core/save-settings)
+                                    (trigger-gui-restart)))))
+             menu)))
 
 (defn start-ui
   []
@@ -943,12 +943,10 @@ but the restart flag has had to be removed which means you can't switch themes t
                                 (let [exit-ev (java.awt.event.WindowEvent. newui java.awt.event.WindowEvent/WINDOW_CLOSING)]
                                   (.dispatchEvent newui exit-ev))))]
 
-        view-menu (into [(ss/action :name "Refresh" :key "F5" :handler (async-handler core/refresh))
-                         :separator
-                         (ss/action :name "Installed" :key "menu I" :mnemonic "i" :handler (switch-tab-handler INSTALLED-TAB))
-                         (ss/action :name "Search" :key "menu H" :mnemonic "h" :handler (switch-tab-handler SEARCH-TAB))])
-                         ;;:separator]
-                        ;;(build-theme-menu))
+        view-menu [(ss/action :name "Refresh" :key "F5" :handler (async-handler core/refresh))
+                   :separator
+                   (ss/action :name "Installed" :key "menu I" :mnemonic "i" :handler (switch-tab-handler INSTALLED-TAB))
+                   (ss/action :name "Search" :key "menu H" :mnemonic "h" :handler (switch-tab-handler SEARCH-TAB))]
 
         catalogue-menu (into (build-catalogue-menu)
                              [:separator
