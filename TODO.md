@@ -21,6 +21,14 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* github, revisit the "-classic" prefix naming
+    - this was solved more elegantly in curseforge-api
+
+* dedicated tab for "user-catalogue" ?
+    - add, delete, update github addons
+    - see accumulating release history for addons?
+        - 
+
 * preferences, "update all addons automatically"
 
 * gui, new tab for dedicated log
