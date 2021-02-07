@@ -62,15 +62,20 @@
   [string string?]
   (-> string .toLowerCase (index-of "classic") nil? not))
 
+(defn asset-version
+  [release asset]
+  (let [candidates [(:name release) (:tag_name release) (:name asset)]]
+    (->> candidates (map utils/nilable) (remove nil?) first)))
+
 (defn group-assets
-  [addon latest-release]
+  [addon release]
   (let [;; ignore assets whose :content_type is *not* a known zip type
         supported-zips #(-> % :content_type vector set (some supported-zip-mimes))
 
         ;; ignore any assets that are not completely uploaded
         ;; - https://developer.github.com/v3/repos/releases/#response-for-upstream-failure
         fully-uploaded #(-> % :state (= "uploaded"))
-        asset-list (->> latest-release :assets (filter supported-zips) (filter fully-uploaded))
+        asset-list (->> release :assets (filter supported-zips) (filter fully-uploaded))
 
         single-asset? (-> asset-list count (= 1))
         many-assets? (-> asset-list count (> 1))
@@ -90,12 +95,14 @@
         track-version (fn [version gametrack]
                         (if (= gametrack :classic)
                           ;; why am I doing this?
+                          ;; iirc it's to differentiate between identically named releases for different game tracks.
+                          ;; we could do what we did with curseforge and ensure all releases get a unique name
                           (str version "-classic")
                           version))
 
         updater ;; returns a list of updated versions of this asset. if the asset supports multiple game tracks, two versions are returned
         (fn [asset]
-          (let [version (:name latest-release) ;; "v2.10.0"
+          (let [version (asset-version release asset)
                 ;; todo: change this to look for 'classic' or 'retail'
                 ;; so, "FooAddon-retail" or "BarAddon-classic"
                 ;; no known cases but it would be forward proof
@@ -132,7 +139,7 @@
                   ;; ambiguous case, other assets may have game track in their file name.
                   (and many-assets? many-game-tracks?) {:game-track :retail :version version :-mo :ma--Ngt}
 
-                  :else (error (format "unhandled state attempting to determine game track(s) for asset '%s' in latest release of '%s'"
+                  :else (error (format "unhandled state attempting to determine game track(s) for asset '%s' in release of '%s'"
                                        asset addon)))
 
                 update-list (if (sequential? update-list) update-list [update-list])]
@@ -159,15 +166,18 @@
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. 
   one additional look-up per ::addon required"
   [addon :addon/expandable, game-track ::sp/game-track]
-  (let [release-data (-> addon :source-id download-releases (or []) (parse-github-release-data addon game-track))
-        asset (-> release-data
-                  first ;; latest release
-                  first ;; first asset
-                  (dissoc :-mo))]
-    (when asset
-      [{:download-url (:browser_download_url asset)
-        :version (:version asset)
-        :game-track game-track}])))
+  (let [release-data (-> addon
+                         :source-id
+                         download-releases
+                         (or [])
+                         (parse-github-release-data addon game-track))
+
+        wrangle-release (fn [release]
+                          (when-let [asset (first release)]
+                            {:download-url (:browser_download_url asset)
+                             :version (:version asset)
+                             :game-track game-track}))]
+    (mapv wrangle-release release-data)))
 
 ;;
 
