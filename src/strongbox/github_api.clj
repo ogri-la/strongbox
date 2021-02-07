@@ -166,18 +166,18 @@
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. 
   one additional look-up per ::addon required"
   [addon :addon/expandable, game-track ::sp/game-track]
-  (let [release-data (-> addon
-                         :source-id
-                         download-releases
-                         (or [])
-                         (parse-github-release-data addon game-track))
-
-        wrangle-release (fn [release]
+  (let [wrangle-release (fn [release]
                           (when-let [asset (first release)]
                             {:download-url (:browser_download_url asset)
                              :version (:version asset)
-                             :game-track game-track}))]
-    (mapv wrangle-release release-data)))
+                             :game-track game-track}))
+        wrangle-release-list #(mapv wrangle-release %)]
+    (some-> addon
+            :source-id
+            download-releases
+            (parse-github-release-data addon game-track)
+            wrangle-release-list
+            utils/nilable)))
 
 ;;
 

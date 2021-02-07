@@ -120,7 +120,37 @@
 
           expected [{:download-url "https://github.com/Aviana/HealComm/releases/download/2.04/HealComm.zip"
                      :version "2.04 Beta"
-                     :game-track game-track}]
+                     :game-track :retail}
+                    {:download-url "https://github.com/Aviana/HealComm/releases/download/2.03/HealComm.zip",
+                     :game-track :retail,
+                     :version "2.03 Beta"}
+                    {:download-url "https://github.com/Aviana/HealComm/releases/download/2.02/HealComm.zip",
+                     :game-track :retail,
+                     :version "2.02 Beta"}
+                    {:download-url "https://github.com/Aviana/HealComm/releases/download/2.01/HealComm-2.01.zip",
+                     :game-track :retail,
+                     :version "2.01 Beta"}
+                    {:download-url "https://github.com/Aviana/HealComm/releases/download/1.15/HealComm.zip",
+                     :game-track :retail,
+                     :version "1.15"}
+                    {:download-url "https://github.com/Aviana/HealComm/releases/download/1.14/HealComm.zip",
+                     :game-track :retail,
+                     :version "1.14"}
+                    {:download-url "https://github.com/Aviana/HealComm/releases/download/1.13/HealComm.zip",
+                     :game-track :retail,
+                     :version "1.13"}
+                    {:download-url "https://github.com/Aviana/HealComm/releases/download/1.12/HealComm.zip",
+                     :game-track :retail,
+                     :version "1.12"}
+                    {:download-url "https://github.com/Aviana/HealComm/releases/download/1.11/HealComm.zip",
+                     :game-track :retail,
+                     :version "1.11"}
+                    {:download-url "https://github.com/Aviana/HealComm/releases/download/1.10/HealComm.zip",
+                     :game-track :retail,
+                     :version "1.10"}
+                    {:download-url "https://github.com/Aviana/HealComm/releases/download/1.9/HealComm.zip",
+                     :game-track :retail,
+                     :version "1.9"}]
 
           fixture (slurp (fixture-path "github-repo-releases--aviana-healcomm.json"))
           fake-routes {"https://api.github.com/repos/Aviana/HealComm/releases"
@@ -143,7 +173,10 @@
 
           expected [{:download-url "https://github.com/Ravendwyr/Chinchilla/releases/download/v2.10.0/Chinchilla-v2.10.0-classic.zip"
                      :version "v2.10.0-classic"
-                     :game-track game-track}]
+                     :game-track game-track}
+                    {:download-url "https://github.com/Ravendwyr/Chinchilla/releases/download/v2.10.0-beta3/Chinchilla-v2.10.0-beta3-classic.zip",
+                     :game-track :classic,
+                     :version "v2.10.0-beta3-classic"}]
 
           fixture (slurp (fixture-path "github-repo-releases--many-assets-many-gametracks.json"))
           fake-routes {"https://api.github.com/repos/Ravendwyr/Chinchilla/releases"
