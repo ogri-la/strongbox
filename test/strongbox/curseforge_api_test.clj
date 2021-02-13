@@ -211,3 +211,21 @@
                        {:get (fn [req] {:status 404 :reason-phrase "Not Found" :body "<h1>Not Found</h1>"})}}]
       (with-fake-routes-in-isolation fake-routes
         (is (nil? (curseforge-api/expand-summary zombie-addon :retail)))))))
+
+;;
+
+(deftest release-download-url
+  (testing ""
+    (let [cases [[1234 "foo.zip" "https://edge.forgecdn.net/files/1/234/foo.zip"]
+                 [12345 "foo.zip" "https://edge.forgecdn.net/files/12/345/foo.zip"]
+                 [123456 "foo.zip" "https://edge.forgecdn.net/files/123/456/foo.zip"]
+                 [1234567 "foo.zip" "https://edge.forgecdn.net/files/1234/567/foo.zip"]
+                 [12345678 "foo.zip" "https://edge.forgecdn.net/files/12345/678/foo.zip"]
+                 [123456789 "foo.zip" "https://edge.forgecdn.net/files/123456/789/foo.zip"]
+                 [1234567899 "foo.zip" "https://edge.forgecdn.net/files/1234567/899/foo.zip"]
+
+                 ;; actual example
+                 [842942 "DraenorTreasures-r20141229205945.zip" "https://edge.forgecdn.net/files/842/942/DraenorTreasures-r20141229205945.zip"]]]
+
+      (doseq [[project-file-id project-file-name expected] cases]
+        (is (= expected (curseforge-api/release-download-url project-file-id project-file-name)))))))

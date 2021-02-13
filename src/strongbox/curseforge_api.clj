@@ -19,42 +19,46 @@
 ;; addon expansion
 
 (defn-spec release-download-url (s/or :ok ::sp/url, :error nil?)
-  [release map?]
+  "returns a URL to the release file.
+  'https://edge.forgecdn.net/files/1234/567/Addon-v7.8.9.zip'"
+  [project-file-id int?, project-file-name string?]
   (try
-    (let [project-file-id (-> release :projectFileId str)
-          offset (- (count project-file-id) 3)
-          bit1 (-> project-file-id (.substring 0 offset))
-          bit2 (-> project-file-id (.substring offset))]
-      (format "https://edge.forgecdn.net/files/%s/%s/%s" bit1 bit2 (:projectFileName release)))
+    (let [project-file-id (str project-file-id) ;; "3160417"
+          offset (- (count project-file-id) 3) ;; "4"
+          bit1 (-> project-file-id (.substring 0 offset)) ;; "3160"
+          bit2 (-> project-file-id (.substring offset))] ;; "417"
+      (format "https://edge.forgecdn.net/files/%s/%s/%s" bit1 bit2 project-file-name))
     (catch java.lang.StringIndexOutOfBoundsException e
-      (warn (format "failed to construct a download url for release '%s'" (:projectFileName release))))))
+      (warn (format "failed to build a download url for release '%s'" project-file-name)))))
 
 (defn-spec rename-identical-releases ::sp/list-of-maps
+  "releases must have unique names otherwise we can't find them in the list of available releases.
+  This function assigns each release a `:-unique-name` that is either `:projectFileName` or
+  `:projectFileName` + `projectFileId`."
   [release-list ::sp/list-of-maps]
-  (let [count-occurances (fn [accumulator-map m]
+  (let [count-occurances (fn [accumulator-m m]
                            (let [key :projectFileName]
-                             (update accumulator-map (get m key) (fn [x] (inc (or x 0))))))
-        occurances (reduce count-occurances {} release-list)
+                             (update accumulator-m (get m key) (fn [x] (inc (or x 0))))))
+        occurances (reduce count-occurances {} release-list) ;; {"Foo-v1.zip" 1, "Foo-v2.zip 1, "Foo.zip" 5}
         get* #(get %2 %1)
         rename-release (fn [release]
                          (assoc release :-unique-name
                                 (if (-> release :projectFileName (get* occurances) (> 1))
                                   (let [[name _] (fs/split-ext (:projectFileName release))
                                         pid (:projectFileId release)]
-                                    (format "%s--%s" name pid))
+                                    (format "%s--%s" name pid)) ;; "Foo--3084724"
                                   (:projectFileName release))))]
     (mapv rename-release release-list)))
 
 (defn-spec older-releases :addon/release-list
-  "releases under `:gameVersionLatestFiles` appear to be the most recent release by `fileType` (stability)
-  and by game/interface version (WotLK, etc).
-  There is no means to filter by 'alternative release' (like 'no-lib') from these results."
+  "these are releases under `:gameVersionLatestFiles` that that are the most recent release by game/interface version (8.0.3 etc).
+  returns only stable releases."
   [gameVersionLatestFiles ::sp/list-of-maps]
   (let [;; todo: I guess? check this assumption
         stable 1 ;; 2 is beta, 3 is alpha
         stable-releases #(-> % :fileType (= stable))
         pad-release (fn [release]
-                      (when-let [download-url (release-download-url release)]
+                      (when-let [download-url (release-download-url (:projectFileId release) (:projectFileName release))]
                         {:download-url download-url
                          :version (:-unique-name release)
                          :release-label (format "[WoW %s] %s" (:gameVersion release) (:-unique-name release))
@@ -80,8 +84,8 @@
 
         ;; generate a release per-gametrack
         pad-release (fn [game-version]
-                      (let [;; api value is empty in some cases (carbonite, improved loot frames, skada damage meter)
-                            ;; this value overrides the one found in .toc files, so if it can't be scraped, use the .toc version
+                      (let [;; api value is empty in some cases (carbonite, improved loot frames, skada damage meter).
+                            ;; this value overrides the one found in .toc files, so if it can't be scraped, use the .toc version.
                             interface-version (utils/game-version-to-interface-version game-version)
                             interface-version (when interface-version
                                                 {:interface-version interface-version})]
@@ -108,15 +112,14 @@
   (let [;; results appear sorted, but lets be sure as we'll be taking the first
         desc (comp - compare) ;; most to least recent (desc)
         stable 1 ;; 2 is beta, 3 is alpha
-        stable-release #(= (:releaseType %) stable)
+        stable-release #(-> % :releaseType (= stable))
         concat* #(concat %2 %1)
-        more-releases (if-let [gameVersionLatestFiles (:gameVersionLatestFiles api-result)]
-                        (older-releases gameVersionLatestFiles)
-                        [])]
+        more-releases (when-let [gameVersionLatestFiles (:gameVersionLatestFiles api-result)]
+                        (older-releases gameVersionLatestFiles))]
     (->> api-result
          :latestFiles
          (sort-by :fileDate desc)
-         (filter stable-release) ;; stable releases only, for now
+         (filter stable-release)
          (remove :exposeAsAlternative) ;; no alternative versions, for now
          (map extract-release)
          flatten

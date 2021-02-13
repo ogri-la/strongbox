@@ -21,7 +21,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
-* github, revisit the "-classic" prefix naming
+* github, revisit the "-classic" suffix naming
     - this was solved more elegantly in curseforge-api
 
 * dedicated tab for "user-catalogue" ?

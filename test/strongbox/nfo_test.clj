@@ -274,19 +274,6 @@
       (is (= expected (nfo/read-nfo (install-dir) ignorable-addon-dir))))))
 
 (deftest pin-addon
-  (testing "an addon with valid nfo data can be pinned to the currently installed version"
-    (let [nfo-data {:installed-version "1.2.1"
-                    :installed-game-track :classic
-                    :name "EveryAddon"
-                    :group-id "https://foo.bar"
-                    :primary? true
-                    :source "curseforge"
-                    :source-id 321}
-          expected (assoc nfo-data :pinned-version "1.2.1")]
-      (nfo/write-nfo (install-dir) addon-dir nfo-data)
-      (nfo/pin (install-dir) addon-dir)
-      (is (= expected (nfo/read-nfo (install-dir) addon-dir)))))
-
   (testing "a pinned addon can be pinned to a specific version"
     (let [nfo-data {:installed-version "1.2.1"
                     :installed-game-track :classic

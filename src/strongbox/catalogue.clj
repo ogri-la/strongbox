@@ -7,6 +7,7 @@
    [taoensso.tufte :as tufte :refer [p profile]]
    [java-time]
    [strongbox
+    [addon]
     [tags :as tags]
     [utils :as utils :refer [todt]]
     [specs :as sp]
@@ -32,11 +33,11 @@
         (error (format "addon '%s' is from source '%s' that is unsupported" (:label addon) key))
         (let [release-list ((get dispatch-map key) addon game-track)
               latest-release (first release-list)
-              pinned-release (first (filter (fn [release]
-                                              (when-let [pinned-version (:pinned-version addon)]
-                                                (= (:version release) pinned-version))) release-list))
+              pinned-release (when (and release-list
+                                        (contains? addon :pinned-version))
+                               (strongbox.addon/find-pinned-release (assoc addon :release-list release-list)))
               source-updates (or pinned-release latest-release)
-              release-list* (when (> (count release-list) 1)
+              release-list* (when-not (empty? release-list)
                               {:release-list release-list})]
           (when source-updates
             (-> addon

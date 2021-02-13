@@ -248,7 +248,12 @@
                            :version "v8.2.0-v1.13.2-7135.139",
                            :dirname "EveryAddon",
                            :primary? true,
-                           :matched? true}
+                           :matched? true
+                           :release-list [{:download-url "https://edge.forgecdn.net/files/1/1/EveryAddon.zip",
+                                           :game-track :retail,
+                                           :interface-version 80000,
+                                           :release-label "[WoW 8.0.1] EveryAddon-v8.2.0-v1.13.2-7135.139.zip",
+                                           :version "v8.2.0-v1.13.2-7135.139"}]}
 
                           {:created-date "2011-01-04T05:42:23Z",
                            :description "Does what every addon does, just better",
@@ -270,7 +275,12 @@
                            :version "v8.2.0-v1.13.2-7135.139",
                            :dirname "EveryOtherAddon",
                            :primary? true,
-                           :matched? true}]]
+                           :matched? true
+                           :release-list [{:download-url "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip",
+                                           :game-track :retail,
+                                           :interface-version 80200,
+                                           :release-label "[WoW 8.2.0] EveryOtherAddon-v8.2.0-v1.13.2-7135.139.zip",
+                                           :version "v8.2.0-v1.13.2-7135.139"}]}]]
 
             (core/import-exported-file output-path)
             (core/refresh) ;; re-read the installation directory
@@ -335,7 +345,12 @@
                            :version "v8.2.0-v1.13.2-7135.139",
                            :dirname "EveryAddon",
                            :primary? true,
-                           :matched? true}
+                           :matched? true
+                           :release-list [{:download-url "https://edge.forgecdn.net/files/1/1/EveryAddon.zip",
+                                           :game-track :retail,
+                                           :interface-version 80000,
+                                           :release-label "[WoW 8.0.1] EveryAddon-v8.2.0-v1.13.2-7135.139.zip",
+                                           :version "v8.2.0-v1.13.2-7135.139"}]},
 
                           {:created-date "2011-01-04T05:42:23Z",
                            :description "Does what every addon does, just better",
@@ -359,7 +374,12 @@
                            :version "v8.2.0-v1.13.2-7135.139",
                            :dirname "EveryOtherAddon",
                            :primary? true,
-                           :matched? true}]]
+                           :matched? true
+                           :release-list [{:download-url "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip",
+                                           :game-track :classic,
+                                           :interface-version 11300,
+                                           :release-label "[WoW 1.13.2] EveryOtherAddon-v8.2.0-v1.13.2-7135.139.zip",
+                                           :version "v8.2.0-v1.13.2-7135.139"}]}]]
 
             (core/import-exported-file output-path)
             (core/set-game-track! game-track)
@@ -441,8 +461,15 @@
                 ;; and what we 'expand' that data into
                 source-updates {:download-url "https://example.org/foo",
                                 :version "v8.10.00"
-                                :game-track :retail}
+                                :game-track :retail
+                                :release-list [{:download-url "https://example.org/foo",
+                                                :game-track :retail,
+                                                :interface-version 70000,
+                                                :release-label "[WoW 7.0.0] null",
+                                                :version "v8.10.00"}]}
+
                 alt-source-updates (assoc source-updates :version "v8.20.00")
+                alt-source-updates (assoc-in alt-source-updates [:release-list 0 :version] "v8.20.00")
 
                 ;; after calling `check-for-update` we expect the result to be the merged sum of the below parts
                 expected (merge toc-addon source-updates {:update? false})

@@ -227,15 +227,14 @@
 
 ;;
 
+;; do we pin a single addon or a set of addons?
+;; do we ignore a single addon or a set of addons?
 (defn-spec pin nil?
-  "'pins' the given `version` of an addon or the addon's `:latest-version` if not given"
-  ([install-dir ::sp/extant-dir, dirname ::sp/dirname]
-   (when-let [installed-version (:installed-version (read-nfo install-dir dirname))]
-     (pin install-dir dirname installed-version)))
-  ([install-dir ::sp/extant-dir, dirname ::sp/dirname, version :addon/pinned-version]
-   (update-nfo install-dir dirname {:pinned-version version})))
+  "'pins' the given `version` of an addon"
+  [install-dir ::sp/extant-dir, dirname ::sp/dirname, version :addon/pinned-version]
+  (update-nfo install-dir dirname {:pinned-version version}))
 
 (defn-spec unpin nil?
-  "clears the `:pinned-version` keyval from the nfo file if it exists"
+  "removes `:pinned-version` from the nfo file, if it exists"
   [install-dir ::sp/extant-dir, dirname ::sp/dirname]
   (update-nfo install-dir dirname {:pinned-version nil}))

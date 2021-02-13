@@ -2,6 +2,7 @@
   (:require
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :as timbre :refer [spy info warn error debug]]
+   [clojure.spec.alpha :as s]
    [strongbox
     [addon :as addon]
     [nfo :as nfo]
@@ -139,7 +140,7 @@
   nil)
 
 (defn set-version
-  "updates addon with the given `release` data and then installs it."
+  "updates `addon` with the given `release` data and then installs it."
   [addon release]
   (core/install-addon (merge addon release))
   (core/refresh))
@@ -147,31 +148,20 @@
 ;;
 
 (defn-spec pin nil?
-  "pins the currently selected addons to their current versions.
-  addon is ignored if it is already pinned"
+  "pins the currently selected addons to their current `:installed-version` versions."
   []
-  (let [unpinned? (fn [addon]
-                    (and (contains? addon :installed-version) ;; can be pinned
-                         (not (contains? addon :pinned-version))))  ;; not already pinned
-        pin (fn [addon]
-              (nfo/pin (core/selected-addon-dir) (:dirname addon)))]
-    (->> (get-state :selected-installed)
-         (filterv unpinned?)
-         (run! pin)))
+  (run! #(addon/pin (core/selected-addon-dir) %) (get-state :selected-installed))
   (core/refresh))
 
 (defn-spec unpin nil?
   "unpins the currently selected addons, regardless of whether they are pinned or not."
   []
-  (let [unpin (fn [addon]
-                (nfo/unpin (core/selected-addon-dir) (:dirname addon)))]
-    (->> (get-state :selected-installed)
-         (run! unpin))
-    (core/refresh)))
+  (run! #(addon/unpin (core/selected-addon-dir) %) (get-state :selected-installed))
+  (core/refresh))
 
-(defn find-replace-release
+(defn-spec -find-replace-release (s/or :ok :addon/expanded, :release-not-found nil?)
   "looks for the `:installed-version` in the list of available releases and, if found, updates the addon."
-  [addon]
+  [addon :addon/expanded]
   (if-let [matching-release (addon/find-release addon)]
     (merge addon matching-release)
     (do (warn (format "%s '%s' not found in known releases. Using latest release instead." (:label addon) (:installed-version addon)))
@@ -183,54 +173,45 @@
   [updateable-addon-list :addon/installable-list]
   (run! core/install-addon updateable-addon-list))
 
-(defn -updateable?
-  [rows]
-  (filterv addon/updateable? rows))
-
-(defn -re-installable?
-  "an addon can only be re-installed if it's been matched to an addon in the catalogue."
-  [rows]
-  (->> rows
-       (filter core/expanded?)
-       (map find-replace-release)))
-
 (defn re-install-or-update-selected
   "re-installs (if possible) or updates all selected addons"
   []
-  (-> (get-state :selected-installed)
-      -re-installable?
-      -install-update-these)
+  (->> (get-state :selected-installed)
+       (filter core/expanded?)
+       (map -find-replace-release)
+       -install-update-these)
   (core/refresh))
 
 (defn re-install-or-update-all
   "re-installs (if possible) or updates all installed addons"
   []
-  (-> (get-state :installed-addon-list)
-      -re-installable?
-      -install-update-these)
+  (->> (get-state :installed-addon-list)
+       (filter core/expanded?)
+       (map -find-replace-release)
+       -install-update-these)
   (core/refresh))
 
 (defn update-selected
   "updates all selected addons that have updates available"
   []
-  (-> (get-state :selected-installed)
-      -updateable?
-      -install-update-these)
+  (->> (get-state :selected-installed)
+       (filter addon/updateable?)
+       -install-update-these)
   (core/refresh))
 
 (defn-spec update-all nil?
   "updates all installed addons with updates available"
   []
-  (-> (get-state :installed-addon-list)
-      -updateable?
-      -install-update-these)
+  (->> (get-state :installed-addon-list)
+       (filter addon/updateable?)
+       -install-update-these)
   (core/refresh))
 
 (defn-spec remove-selected nil?
   []
-  (-> (get-state) :selected-installed vec core/remove-many-addons)
-  nil)
+  (core/remove-many-addons (get-state :selected-installed)))
 
+;; todo: shift this to addon.clj
 (defn-spec ignore-selected nil?
   "marks each of the selected addons as being 'ignored'"
   []
@@ -239,6 +220,7 @@
        (run! (partial nfo/ignore (core/selected-addon-dir))))
   (core/refresh))
 
+;; todo: shift this to addon.clj
 (defn-spec clear-ignore-selected nil?
   "removes the 'ignore' flag from each of the selected addons."
   []
@@ -286,7 +268,7 @@
                 (Thread/sleep 200)
                 (core/stop-affecting-addon a))]
     (->> (get-state :installed-addon-list)
-         -updateable?
+         (filter addon/updateable?)
          (run! touch))))
 
 ;;
