@@ -303,10 +303,10 @@
 (defn-spec pin nil?
   "pins an `addon` and all of it's group members (if any) to the given `version` or the `:installed-version` when missing.
   if addon does not have an `:installed-version` it will fail silently."
-  ([install-dir ::sp/install-dir, addon map?]
+  ([install-dir ::sp/install-dir, addon :addon/toc]
    (when-let [installed-version (:installed-version addon)]
-     (pin install-dir install-dir installed-version)))
-  ([install-dir ::sp/install-dir, addon map?, version :addon/pinned-version]
+     (pin install-dir addon installed-version)))
+  ([install-dir ::sp/install-dir, addon :addon/toc, version :addon/pinned-version]
    (->> addon
         flatten-addon
         (map :dirname)
@@ -315,7 +315,7 @@
 (defn-spec unpin nil?
   "unpins an `addon` and all of it's group members. 
   if an addon is not pinned it will fail silently."
-  [install-dir ::sp/extant-dir, addon map?]
+  [install-dir ::sp/extant-dir, addon :addon/toc]
   (->> addon
        flatten-addon
        (map :dirname)
@@ -369,5 +369,6 @@
 (defn-spec re-installable? boolean?
   "returns `true` if given `addon` can be re-installed to its current `:installed-version`."
   [addon map?] ;; deliberately lenient. it's called directly from the gui
-  (when (contains? addon :release-list)
-    (some? (find-release addon))))
+  (boolean
+   (when (contains? addon :release-list)
+     (some? (find-release addon)))))

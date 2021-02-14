@@ -288,7 +288,7 @@ but the restart flag has had to be removed which means you can't switch themes t
                               :type :warning
                               :option-type :ok-cancel
                               :default-option :no
-                              :success-fn (async-handler cli/remove-selected))]
+                              :success-fn (async-handler cli/delete-selected))]
         (-> dialog ss/pack! ss/show!)))
     nil))
 

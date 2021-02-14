@@ -609,7 +609,7 @@
   (alert :info "" {:content (-> (-about-strongbox-dialog) fx/create-component fx/instance)})
   nil)
 
-(defn remove-selected-confirmation-handler
+(defn delete-selected-confirmation-handler
   "prompts the user to confirm if they *really* want to delete those addons they just selected and clicked 'delete' on"
   [event]
   (when-let [selected (core/get-state :selected-installed)]
@@ -624,7 +624,7 @@
                                                             :text (format "Deleting %s:" (count selected))}] label-list)})
             result (alert :confirm "" {:content (fx/instance content)})]
         (when (= (.get result) ButtonType/OK)
-          (cli/remove-selected)))))
+          (cli/delete-selected)))))
   nil)
 
 (defn search-results-install-handler
@@ -835,23 +835,30 @@
   [row]
   (-> row -href-to-hyperlink fx/create-component fx/instance))
 
-(defn available-versions
-  [row]
+(defn-spec available-versions (s/or :ok string? :no-version-available nil?)
+  "formats the 'available version' string depending on the state of the addon.
+  pinned and ignored addons get a helpful prefix."
+  [row map?]
   (cond
     (:ignore? row) "(ignored)"
     (:pinned-version row) (str "(pinned) " (:pinned-version row))
     :else
     (:version row)))
 
-(defn build-release-menu
-  [addon release-list]
+(defn-spec build-release-menu ::sp/list-of-maps
+  "returns a list of `:menu-item` maps that will update the given `addon` with 
+  the release data for a selected release in `release-list`."
+  [addon :addon/expanded]
   (let [pin (fn [release _]
               (cli/set-version addon release))]
     (mapv (fn [release]
-            (menu-item (or (:release-label release) (:version release)) (partial pin release))) (rest release-list))))
+            (menu-item (or (:release-label release) (:version release))
+                       (partial pin release)))
+          (rest (:release-list addon)))))
 
-(defn singular-context-menu
-  [selected-addon]
+(defn-spec singular-context-menu map?
+  "context menu when a single addon is selected."
+  [selected-addon :addon/toc]
   (let [pinned? (some? (:pinned-version selected-addon))
         release-list (:release-list selected-addon)
         releases-available? (and (not (empty? release-list))
@@ -869,18 +876,19 @@
                (menu-item "Pin release" (async-handler cli/pin)
                           {:disable ignored?}))
              (if releases-available?
-               (menu "Releases" (build-release-menu selected-addon release-list))
+               (menu "Releases" (build-release-menu selected-addon))
                (menu "Releases" [] {:disable true})) ;; skips even attempting to build the menu
              separator
              (if ignored?
                (menu-item "Stop ignoring" (async-handler cli/clear-ignore-selected))
                (menu-item "Ignore" (async-handler cli/ignore-selected)))
              separator
-             (menu-item "Delete" remove-selected-confirmation-handler
+             (menu-item "Delete" delete-selected-confirmation-handler
                         {:disable ignored?})]}))
 
-(defn multiple-context-menu
-  [selected-addon-list]
+(defn-spec multiple-context-menu map?
+  "context menu when multiple addons are selected."
+  [selected-addon-list :addon/toc-list]
   (let [num-selected (count selected-addon-list)
         some-pinned? (->> selected-addon-list (map :pinned-version) (some some?) boolean)
         some-ignored? (->> selected-addon-list (filter :ignore?) (some some?) boolean)]
@@ -899,7 +907,7 @@
                (menu-item "Stop ignoring" (async-handler cli/clear-ignore-selected))
                (menu-item "Ignore" (async-handler cli/ignore-selected)))
              separator
-             (menu-item "Delete" remove-selected-confirmation-handler)]}))
+             (menu-item "Delete" delete-selected-confirmation-handler)]}))
 
 (defn installed-addons-table
   [{:keys [fx/context]}]

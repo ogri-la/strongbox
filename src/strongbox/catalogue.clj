@@ -36,12 +36,10 @@
               pinned-release (when (and release-list
                                         (contains? addon :pinned-version))
                                (strongbox.addon/find-pinned-release (assoc addon :release-list release-list)))
-              source-updates (or pinned-release latest-release)
-              release-list* (when-not (empty? release-list)
-                              {:release-list release-list})]
+              source-updates (or pinned-release latest-release)]
           (when source-updates
             (-> addon
-                (merge source-updates release-list*)
+                (merge source-updates {:release-list release-list})
                 (dissoc :release-label)))))
       (catch Exception e
         (error e "unhandled exception attempting to expand addon summary")

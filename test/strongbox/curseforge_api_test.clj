@@ -215,17 +215,72 @@
 ;;
 
 (deftest release-download-url
-  (testing ""
-    (let [cases [[1234 "foo.zip" "https://edge.forgecdn.net/files/1/234/foo.zip"]
-                 [12345 "foo.zip" "https://edge.forgecdn.net/files/12/345/foo.zip"]
-                 [123456 "foo.zip" "https://edge.forgecdn.net/files/123/456/foo.zip"]
-                 [1234567 "foo.zip" "https://edge.forgecdn.net/files/1234/567/foo.zip"]
-                 [12345678 "foo.zip" "https://edge.forgecdn.net/files/12345/678/foo.zip"]
-                 [123456789 "foo.zip" "https://edge.forgecdn.net/files/123456/789/foo.zip"]
-                 [1234567899 "foo.zip" "https://edge.forgecdn.net/files/1234567/899/foo.zip"]
+  (let [cases [[1234 "foo.zip" "https://edge.forgecdn.net/files/1/234/foo.zip"]
+               [12345 "foo.zip" "https://edge.forgecdn.net/files/12/345/foo.zip"]
+               [123456 "foo.zip" "https://edge.forgecdn.net/files/123/456/foo.zip"]
+               [1234567 "foo.zip" "https://edge.forgecdn.net/files/1234/567/foo.zip"]
+               [12345678 "foo.zip" "https://edge.forgecdn.net/files/12345/678/foo.zip"]
+               [123456789 "foo.zip" "https://edge.forgecdn.net/files/123456/789/foo.zip"]
+               [1234567899 "foo.zip" "https://edge.forgecdn.net/files/1234567/899/foo.zip"]
+               ;; actual example
+               [842942 "DraenorTreasures-r20141229205945.zip" "https://edge.forgecdn.net/files/842/942/DraenorTreasures-r20141229205945.zip"]]]
 
-                 ;; actual example
-                 [842942 "DraenorTreasures-r20141229205945.zip" "https://edge.forgecdn.net/files/842/942/DraenorTreasures-r20141229205945.zip"]]]
+    (doseq [[project-file-id project-file-name expected] cases]
+      (is (= expected (curseforge-api/release-download-url project-file-id project-file-name))))))
 
-      (doseq [[project-file-id project-file-name expected] cases]
-        (is (= expected (curseforge-api/release-download-url project-file-id project-file-name)))))))
+(deftest older-releases
+  (testing "bad cases"
+    (let [cases [[[] []]
+                 [[{}] []]]]
+      (doseq [[given expected] cases]
+        (is (= expected (curseforge-api/older-releases given))))))
+
+  (testing "single release"
+    (let [given [{:fileType 1 :projectFileId 123456 :projectFileName "Foo.zip" :gameVersion "8.0.3" :gameVersionFlavor "wow_classic"}]
+          expected [{:download-url "https://edge.forgecdn.net/files/123/456/Foo.zip",
+                     :game-track :classic,
+                     :interface-version 80000,
+                     :release-label "[WoW 8.0.3] Foo.zip",
+                     :version "Foo.zip"}]]
+      (is (= expected (curseforge-api/older-releases given)))))
+
+  (testing "multiple releases, only stable releases returned"
+    (let [given [{:fileType 1 :projectFileId 123456 :projectFileName "Foo.zip" :gameVersion "8.0.3" :gameVersionFlavor "wow_classic"}
+                 {:fileType 2 :projectFileId 123457 :projectFileName "Foo-beta.zip" :gameVersion "8.0.3" :gameVersionFlavor "wow_classic"}
+                 {:fileType 3 :projectFileId 123458 :projectFileName "Foo-alpha.zip" :gameVersion "8.0.3" :gameVersionFlavor "wow_classic"}]
+          expected [{:download-url "https://edge.forgecdn.net/files/123/456/Foo.zip",
+                     :game-track :classic,
+                     :interface-version 80000,
+                     :release-label "[WoW 8.0.3] Foo.zip",
+                     :version "Foo.zip"}]]
+      (is (= expected (curseforge-api/older-releases given)))))
+
+  (testing "multiple releases, multiple stable"
+    (let [given [{:fileType 1 :projectFileId 123456 :projectFileName "Foo-v2.zip" :gameVersion "8.0.3" :gameVersionFlavor "wow_classic"}
+                 {:fileType 1 :projectFileId 123457 :projectFileName "Foo-v1.zip" :gameVersion "8.0.0" :gameVersionFlavor "wow_classic"}]
+          expected [{:download-url "https://edge.forgecdn.net/files/123/456/Foo-v2.zip",
+                     :game-track :classic,
+                     :interface-version 80000,
+                     :release-label "[WoW 8.0.3] Foo-v2.zip",
+                     :version "Foo-v2.zip"}
+                    {:download-url "https://edge.forgecdn.net/files/123/457/Foo-v1.zip",
+                     :game-track :classic,
+                     :interface-version 80000,
+                     :release-label "[WoW 8.0.0] Foo-v1.zip",
+                     :version "Foo-v1.zip"}]]
+      (is (= expected (curseforge-api/older-releases given)))))
+
+  (testing "multiple releases, multiple stable, ambiguous naming"
+    (let [given [{:fileType 1 :projectFileId 123456 :projectFileName "Foo.zip" :gameVersion "8.0.3" :gameVersionFlavor "wow_classic"}
+                 {:fileType 1 :projectFileId 123457 :projectFileName "Foo.zip" :gameVersion "8.0.0" :gameVersionFlavor "wow_classic"}]
+          expected [{:download-url "https://edge.forgecdn.net/files/123/456/Foo.zip",
+                     :game-track :classic,
+                     :interface-version 80000,
+                     :release-label "[WoW 8.0.3] Foo--123456",
+                     :version "Foo--123456"}
+                    {:download-url "https://edge.forgecdn.net/files/123/457/Foo.zip",
+                     :game-track :classic,
+                     :interface-version 80000,
+                     :release-label "[WoW 8.0.0] Foo--123457",
+                     :version "Foo--123457"}]]
+      (is (= expected (curseforge-api/older-releases given))))))

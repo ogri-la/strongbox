@@ -408,3 +408,22 @@
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (logging/buffered-log
                          :info (github-api/expand-summary addon-summary game-track))))))))
+
+(deftest pick-version-name
+  (testing "use the release name if possible"
+    (let [release {:name "4.050 Beta" :tag_name "4050"}
+          asset {:name "LunaUnitFrames-classic.zip"}
+          expected "4.050 Beta"]
+      (is (= expected (github-api/pick-version-name release asset)))))
+
+  (testing "releases missing titles use the `tag-name` instead."
+    (let [release {:name "" :tag_name "4050"}
+          asset {:name "LunaUnitFrames-classic.zip"}
+          expected "4050"]
+      (is (= expected (github-api/pick-version-name release asset)))))
+
+  (testing "releases missing titles and tags (!!) use the asset's file `name`"
+    (let [release {:name ""} ;; :tag_name "4050"}
+          asset {:name "LunaUnitFrames-classic.zip"}
+          expected "LunaUnitFrames-classic.zip"]
+      (is (= expected (github-api/pick-version-name release asset))))))

@@ -54,13 +54,12 @@
   "these are releases under `:gameVersionLatestFiles` that that are the most recent release by game/interface version (8.0.3 etc).
   returns only stable releases."
   [gameVersionLatestFiles ::sp/list-of-maps]
-  (let [;; todo: I guess? check this assumption
-        stable 1 ;; 2 is beta, 3 is alpha
+  (let [stable 1 ;; 2 is beta, 3 is alpha
         stable-releases #(-> % :fileType (= stable))
         pad-release (fn [release]
                       (when-let [download-url (release-download-url (:projectFileId release) (:projectFileName release))]
                         {:download-url download-url
-                         :version (:-unique-name release)
+                         :version (:-unique-name release) ;; see `rename-identical-releases`
                          :release-label (format "[WoW %s] %s" (:gameVersion release) (:-unique-name release))
                          :interface-version (utils/game-version-to-interface-version (:gameVersion release))
                          :game-track (if (= (:gameVersionFlavor release) "wow_classic") :classic :retail)}))]
@@ -71,11 +70,11 @@
          (remove nil?)
          vec)))
 
-(defn extract-release
-  "for each release, set the correct value for `:gameVersionFlavor` and `:gameVersion`
+(defn-spec extract-release :addon/release-list
+  "for each release, set the correct value for `:gameVersionFlavor` and `:gameVersion`.
   if `:gameVersion` is an empty list, use the value from `:gameVersionFlavor` to come up with a value.
   return multiple instances of the release if necessary."
-  [release]
+  [release map?]
   (let [;; "wow_retail", "wow_classic" => :retail, :classic
         fallback (if (= (:gameVersionFlavor release) "wow_classic") :classic :retail)
         release (if (empty? (:gameVersion release))
@@ -96,9 +95,9 @@
                                interface-version)))]
     (mapv pad-release (:gameVersion release))))
 
-(defn group-releases
+(defn-spec group-releases map?
   "given a curseforge api result, returns a map of release data keyed by `game-track`."
-  [api-result]
+  [api-result (s/nilable map?)]
 
   ;; issue #63: curseforge actually allow a release to be on both retail and classic game tracks.
   ;; the single value under `gameVersionFlavor` is *inaccurate and misleading* and we can't trust it.

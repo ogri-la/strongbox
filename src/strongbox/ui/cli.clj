@@ -18,7 +18,7 @@
 
 (comment "the UIs pool their logic here, which calls core.clj.")
 
-(defn hard-refresh
+(defn-spec hard-refresh nil?
   "unlike `core/refresh`, `cli/hard-refresh` clears the http cache before checking for addon updates."
   []
   ;; why can we be more specific, like just the addons for the current addon-dir?
@@ -77,10 +77,10 @@
     (swap! core/state update-in [:search :page] dec))
   nil)
 
-(defn search
+(defn-spec search nil?
   "updates the search `term` and resets the current page of results to `0`.
   does not actually do any searching, that is up to the interface"
-  [search-term]
+  [search-term (s/nilable string?)]
   (swap! core/state update-in [:search] merge {:term search-term :page 0})
   nil)
 
@@ -89,11 +89,11 @@
   []
   (search (if (-> @core/state :search :term nil?) "" nil)))
 
-(defn search-results
+(defn-spec search-results ::sp/list-of-maps
   "returns the current page of results"
   ([]
    (search-results (get-state :search)))
-  ([search-state]
+  ([search-state map?]
    (let [results (:results search-state)
          page (:page search-state)]
      (if-not (empty? results)
@@ -104,20 +104,20 @@
            []))
        []))))
 
-(defn search-has-next?
+(defn-spec search-has-next? boolean?
   "true if we've maxed out the number of results per-page.
   where there are *precisely* that number of results we'll get an empty next page"
   ([]
    (search-has-next? (get-state :search)))
-  ([search-state]
+  ([search-state map?]
    (= (count (search-results search-state))
       (:results-per-page search-state))))
 
-(defn search-has-prev?
+(defn-spec search-has-prev? boolean?
   "true if we've navigated forwards"
   ([]
    (search-has-prev? (get-state :search)))
-  ([search-state]
+  ([search-state map?]
    (> (:page search-state) 0)))
 
 (defn-spec -init-search-listener nil?
@@ -139,9 +139,9 @@
   (core/save-settings)
   nil)
 
-(defn set-version
+(defn-spec set-version nil?
   "updates `addon` with the given `release` data and then installs it."
-  [addon release]
+  [addon :addon/installable, release :addon/source-updates]
   (core/install-addon (merge addon release))
   (core/refresh))
 
@@ -173,7 +173,7 @@
   [updateable-addon-list :addon/installable-list]
   (run! core/install-addon updateable-addon-list))
 
-(defn re-install-or-update-selected
+(defn-spec re-install-or-update-selected nil?
   "re-installs (if possible) or updates all selected addons"
   []
   (->> (get-state :selected-installed)
@@ -182,7 +182,7 @@
        -install-update-these)
   (core/refresh))
 
-(defn re-install-or-update-all
+(defn-spec re-install-or-update-all nil?
   "re-installs (if possible) or updates all installed addons"
   []
   (->> (get-state :installed-addon-list)
@@ -191,7 +191,7 @@
        -install-update-these)
   (core/refresh))
 
-(defn update-selected
+(defn-spec update-selected nil?
   "updates all selected addons that have updates available"
   []
   (->> (get-state :selected-installed)
@@ -207,7 +207,9 @@
        -install-update-these)
   (core/refresh))
 
-(defn-spec remove-selected nil?
+(defn-spec delete-selected nil?
+  "deletes all selected addons. 
+  GUI should have popped up a confirmation beforehand ;)"
   []
   (core/remove-many-addons (get-state :selected-installed)))
 

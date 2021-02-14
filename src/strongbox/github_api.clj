@@ -62,13 +62,23 @@
   [string string?]
   (-> string .toLowerCase (index-of "classic") nil? not))
 
-(defn asset-version
-  [release asset]
-  (let [candidates [(:name release) (:tag_name release) (:name asset)]]
+(defn-spec pick-version-name (s/or :ok string? :failed nil?)
+  "returns the first non-nil value that can be used as a 'version' from a list of good candidates.
+  `asset` is a subset of `release` that has been filtered out from the other assets in the release.
+  ideally we want to use the name the author has specifically chosen for a release.
+  if that doesn't exist, we fallback to the git tag which is typically better than the asset's name."
+  [release map?, asset map?]
+  (let [;; most to least desirable
+        candidates [(:name release) (:tag_name release) (:name asset)]]
     (->> candidates (map utils/nilable) (remove nil?) first)))
 
-(defn group-assets
-  [addon release]
+(defn-spec group-assets (s/or :ok map? :too-ambiguous nil?)
+  "filters, groups and classifies a release's assets.
+  a release may have many assets, however we're only interested in fully uploaded zip files.
+  an asset may contain 'classic' and/or 'retail' that will help to classify which game track the
+  asset lives in.
+  it may ultimately be too ambiguous classifying the asset and we fall back to sensible defaults and guessing."
+  [addon :addon/expandable, release map?]
   (let [;; ignore assets whose :content_type is *not* a known zip type
         supported-zips #(-> % :content_type vector set (some supported-zip-mimes))
 
@@ -102,7 +112,7 @@
 
         updater ;; returns a list of updated versions of this asset. if the asset supports multiple game tracks, two versions are returned
         (fn [asset]
-          (let [version (asset-version release asset)
+          (let [version (pick-version-name release asset)
                 ;; todo: change this to look for 'classic' or 'retail'
                 ;; so, "FooAddon-retail" or "BarAddon-classic"
                 ;; no known cases but it would be forward proof

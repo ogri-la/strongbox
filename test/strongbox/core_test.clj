@@ -650,6 +650,7 @@
         (core/install-addon addon)
         (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
 
+        ;; make newly installed addon implicitly ignored
         (fs/mkdir (utils/join install-dir "EveryAddon" ".git"))
         (core/load-installed-addons) ;; refresh our knowledge of what is installed
 
@@ -659,6 +660,37 @@
                       :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}]
           (core/install-addon addon2)
           (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents))))))))
+
+(deftest install-bundled-addon-overwriting-pinned-addon
+  (testing "installing/unzipping an addon with a shared mutual dependency of an addon that is pinned isn't possible"
+    (with-running-app
+      (let [install-dir (helper/install-dir)
+            addon {:name "everyaddon" :label "EveryAddon" :version "0.1.2" :url "https://group.id/never/fetched"
+                   :source "curseforge" :source-id 1
+                   :download-url "https://path/to/remote/addon.zip" :game-track :retail
+                   :-testing-zipfile (fixture-path "everyaddon--0-1-2.zip")}
+
+            addon2 {:name "everyotheraddon" :label "EveryOtherAddon" :version "5.6.7" :url "https://group.id/also/never/fetched"
+                    :source "curseforge" :source-id 2
+                    :download-url "https://path/to/remote/addon.zip" :game-track :retail
+                    :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}]
+
+        (core/install-addon addon)
+        (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
+
+        ;; refresh our knowledge of what is installed.
+        (core/load-installed-addons)
+
+        ;; pin the addon. 
+        (addon/pin install-dir (first (core/get-state :installed-addon-list)) "0.1.2")
+
+        ;; refresh our knowledge of what is installed.
+        (core/load-installed-addons)
+
+        ;; overwrite first addon with addon2.
+        ;; this would ordinarily introduce the 'EveryOtherAddon' dirname
+        (core/install-addon addon2)
+        (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))))))
 
 (deftest install-addon--compound-game-track
   (testing "a classic addon can be installed into an addon directory using a compound game track with retail preferred"
