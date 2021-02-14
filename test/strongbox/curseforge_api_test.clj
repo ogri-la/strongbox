@@ -222,8 +222,11 @@
                [12345678 "foo.zip" "https://edge.forgecdn.net/files/12345/678/foo.zip"]
                [123456789 "foo.zip" "https://edge.forgecdn.net/files/123456/789/foo.zip"]
                [1234567899 "foo.zip" "https://edge.forgecdn.net/files/1234567/899/foo.zip"]
-               ;; actual example
-               [842942 "DraenorTreasures-r20141229205945.zip" "https://edge.forgecdn.net/files/842/942/DraenorTreasures-r20141229205945.zip"]]]
+               ;; actual examples
+               [842942 "DraenorTreasures-r20141229205945.zip" "https://edge.forgecdn.net/files/842/942/DraenorTreasures-r20141229205945.zip"]
+               ;; leading zeroes stripped on second bit to more closely match URLs from `:latestFiles`
+               [3117033 "CanIMogIt-9.0.2v1.30.zip" "https://edge.forgecdn.net/files/3117/33/CanIMogIt-9.0.2v1.30.zip"]
+               [2731023 "xptracker.zip" "https://edge.forgecdn.net/files/2731/23/xptracker.zip"]]]
 
     (doseq [[project-file-id project-file-name expected] cases]
       (is (= expected (curseforge-api/release-download-url project-file-id project-file-name))))))
@@ -284,3 +287,39 @@
                      :release-label "[WoW 8.0.0] Foo--123457",
                      :version "Foo--123457"}]]
       (is (= expected (curseforge-api/older-releases given))))))
+
+(deftest strip-leading-duplicates
+  (testing "second addon is removed if it's url matches the first. third is preserved."
+    (let [given [{:download-url "https://edge.forgecdn.net/files/3104/62/Pawn-2.4.5.zip",
+                  :game-track :retail,
+                  :interface-version 90000,
+                  :release-label "[WoW 9.0.1] Pawn-2.4.5.zip",
+                  :version "2.4.5"}
+                 {:download-url "https://edge.forgecdn.net/files/3104/62/Pawn-2.4.5.zip",
+                  :game-track :retail,
+                  :interface-version 90000,
+                  :release-label "[WoW 9.0.1] Pawn-2.4.5.zip",
+                  :version "Pawn-2.4.5.zip"}
+                 {:download-url "https://edge.forgecdn.net/files/3100/42/Pawn-2.4.0.zip",
+                  :game-track :retail,
+                  :interface-version 90000,
+                  :release-label "[WoW 9.0.0] Pawn-2.4.0.zip",
+                  :version "Pawn-2.4.0.zip"}]
+          expected (concat [(first given)] (rest (rest given)))]
+      (is (= expected (curseforge-api/prune-leading-duplicates given)))))
+
+  (testing "single release isn't modified"
+    (let [given [{:download-url "https://edge.forgecdn.net/files/3104/62/Pawn-2.4.5.zip",
+                  :game-track :retail,
+                  :interface-version 90000,
+                  :release-label "[WoW 9.0.1] Pawn-2.4.5.zip",
+                  :version "2.4.5"}]
+          expected given]
+      (is (= expected (curseforge-api/prune-leading-duplicates given)))))
+
+  (testing "empty/nil releases return nil"
+    (let [cases [[[] nil]
+                 [nil nil]]]
+      (doseq [[given expected] cases]
+        (is (= expected (curseforge-api/prune-leading-duplicates given)))))))
+

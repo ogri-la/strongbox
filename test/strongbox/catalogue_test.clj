@@ -277,12 +277,7 @@
                                     :game-track :retail,
                                     :interface-version 90000,
                                     :release-label "[WoW 9.0.1] Pawn-2.4.5.zip",
-                                    :version "2.4.5"}
-                                   {:download-url "https://edge.forgecdn.net/files/3104/062/Pawn-2.4.5.zip",
-                                    :game-track :retail,
-                                    :interface-version 90000,
-                                    :release-label "[WoW 9.0.1] Pawn-2.4.5.zip",
-                                    :version "Pawn-2.4.5.zip"}]}
+                                    :version "2.4.5"}]}
           expected (merge addon expected)]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (catalogue/expand-summary addon game-track))))))
@@ -311,12 +306,7 @@
                                     :game-track :retail,
                                     :interface-version 90000,
                                     :release-label "[WoW 9.0.1] Pawn-2.4.5.zip",
-                                    :version "2.4.5"}
-                                   {:download-url "https://edge.forgecdn.net/files/3104/062/Pawn-2.4.5.zip",
-                                    :game-track :retail,
-                                    :interface-version 90000,
-                                    :release-label "[WoW 9.0.1] Pawn-2.4.5.zip",
-                                    :version "Pawn-2.4.5.zip"}]}
+                                    :version "2.4.5"}]}
           expected (merge addon expected)]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (catalogue/expand-summary addon game-track)))))))
@@ -336,12 +326,7 @@
                                     :game-track :classic,
                                     :interface-version 11300,
                                     :release-label "[WoW 1.13.5] Pawn-2.4.5-Classic.zip",
-                                    :version "2.4.5 (Classic)"}
-                                   {:download-url "https://edge.forgecdn.net/files/3104/060/Pawn-2.4.5-Classic.zip",
-                                    :game-track :classic,
-                                    :interface-version 11300,
-                                    :release-label "[WoW 1.13.5] Pawn-2.4.5-Classic.zip",
-                                    :version "Pawn-2.4.5-Classic.zip"}]}
+                                    :version "2.4.5 (Classic)"}]}
           expected (merge addon expected)]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (catalogue/expand-summary addon game-track)))))))
@@ -363,12 +348,7 @@
                                     :game-track :classic,
                                     :interface-version 11300,
                                     :release-label "[WoW 1.13.5] Pawn-2.4.5-Classic.zip",
-                                    :version "2.4.5 (Classic)"}
-                                   {:download-url "https://edge.forgecdn.net/files/3104/060/Pawn-2.4.5-Classic.zip",
-                                    :game-track :classic,
-                                    :interface-version 11300,
-                                    :release-label "[WoW 1.13.5] Pawn-2.4.5-Classic.zip",
-                                    :version "Pawn-2.4.5-Classic.zip"}]}
+                                    :version "2.4.5 (Classic)"}]}
           expected (merge addon expected)]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (catalogue/expand-summary addon game-track))))))
@@ -397,12 +377,7 @@
                                     :game-track :classic,
                                     :interface-version 11300,
                                     :release-label "[WoW 1.13.5] Pawn-2.4.5-Classic.zip",
-                                    :version "2.4.5 (Classic)"}
-                                   {:download-url "https://edge.forgecdn.net/files/3104/060/Pawn-2.4.5-Classic.zip",
-                                    :game-track :classic,
-                                    :interface-version 11300,
-                                    :release-label "[WoW 1.13.5] Pawn-2.4.5-Classic.zip",
-                                    :version "Pawn-2.4.5-Classic.zip"}]}
+                                    :version "2.4.5 (Classic)"}]}
           expected (merge addon expected)]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (catalogue/expand-summary addon game-track)))))))
@@ -422,12 +397,7 @@
                                     :game-track :retail,
                                     :interface-version 90000,
                                     :release-label "[WoW 9.0.1] Pawn-2.4.5.zip",
-                                    :version "2.4.5"}
-                                   {:download-url "https://edge.forgecdn.net/files/3104/062/Pawn-2.4.5.zip",
-                                    :game-track :retail,
-                                    :interface-version 90000,
-                                    :release-label "[WoW 9.0.1] Pawn-2.4.5.zip",
-                                    :version "Pawn-2.4.5.zip"}]}
+                                    :version "2.4.5"}]}
           expected (merge addon expected)]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (catalogue/expand-summary addon game-track)))))))

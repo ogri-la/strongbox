@@ -23,10 +23,10 @@
   'https://edge.forgecdn.net/files/1234/567/Addon-v7.8.9.zip'"
   [project-file-id int?, project-file-name string?]
   (try
-    (let [project-file-id (str project-file-id) ;; "3160417"
+    (let [project-file-id (str project-file-id) ;; "3164017"
           offset (- (count project-file-id) 3) ;; "4"
-          bit1 (-> project-file-id (.substring 0 offset)) ;; "3160"
-          bit2 (-> project-file-id (.substring offset))] ;; "417"
+          bit1 (-> project-file-id (.substring 0 offset)) ;; "3164"
+          bit2 (-> project-file-id (.substring offset) (utils/ltrim "0"))] ;; 17 (strips leading zeroes)
       (format "https://edge.forgecdn.net/files/%s/%s/%s" bit1 bit2 project-file-name))
     (catch java.lang.StringIndexOutOfBoundsException e
       (warn (format "failed to build a download url for release '%s'" project-file-name)))))
@@ -95,6 +95,21 @@
                                interface-version)))]
     (mapv pad-release (:gameVersion release))))
 
+(defn-spec prune-leading-duplicates (s/or :ok :addon/release-list, :garbage-in nil?)
+  "curseforge may produce the same release under `:latestFiles` and `:gameVersionLatestFiles`.
+  remove any `:gameVersionLatestFiles` releases in favour of releases from `:latestFiles`.
+  because we're duplicating releases by `:game-track`, assume two different releases may share 
+  the same download URL and only call this *after* a game track has been selected."
+  [release-list (s/nilable :addon/release-list)]
+  (if (empty? release-list)
+    nil
+    (let [[latest-release latest-release-by-game-version] release-list]
+      (if (= (:download-url latest-release)
+             (:download-url latest-release-by-game-version))
+        (concat [latest-release] (rest (rest release-list)))
+        (do (info "no match!" latest-release latest-release-by-game-version)
+            release-list)))))
+
 (defn-spec group-releases map?
   "given a curseforge api result, returns a map of release data keyed by `game-track`."
   [api-result (s/nilable map?)]
@@ -131,7 +146,7 @@
   [addon-summary :addon/expandable, game-track ::sp/game-track]
   (let [url (api-url "/addon/%s" (:source-id addon-summary))
         result (some-> url http/download http/sink-error utils/from-json)]
-    (-> result group-releases (get game-track))))
+    (-> result group-releases (get game-track) prune-leading-duplicates)))
 
 ;; catalogue building
 
