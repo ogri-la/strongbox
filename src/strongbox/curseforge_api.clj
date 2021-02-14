@@ -88,10 +88,11 @@
                             ;; this value overrides the one found in .toc files, so if it can't be scraped, use the .toc version.
                             interface-version (utils/game-version-to-interface-version game-version)
                             interface-version (when interface-version
-                                                {:interface-version interface-version})]
+                                                {:interface-version interface-version})
+                            [name _] (fs/split-ext (get release :fileName "null"))]
                         (merge {:download-url (:downloadUrl release)
                                 :version (:displayName release)
-                                :release-label (format "[WoW %s] %s" (first (:gameVersion release)) (:fileName release))
+                                :release-label (format "[WoW %s] %s" (first (:gameVersion release)) name)
                                 :game-track (utils/game-version-to-game-track game-version)}
                                interface-version)))]
     (mapv pad-release (:gameVersion release))))

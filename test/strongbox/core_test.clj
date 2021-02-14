@@ -252,7 +252,7 @@
                            :release-list [{:download-url "https://edge.forgecdn.net/files/1/1/EveryAddon.zip",
                                            :game-track :retail,
                                            :interface-version 80000,
-                                           :release-label "[WoW 8.0.1] EveryAddon-v8.2.0-v1.13.2-7135.139.zip",
+                                           :release-label "[WoW 8.0.1] EveryAddon-v8.2.0-v1.13.2-7135.139",
                                            :version "v8.2.0-v1.13.2-7135.139"}]}
 
                           {:created-date "2011-01-04T05:42:23Z",
@@ -279,7 +279,7 @@
                            :release-list [{:download-url "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip",
                                            :game-track :retail,
                                            :interface-version 80200,
-                                           :release-label "[WoW 8.2.0] EveryOtherAddon-v8.2.0-v1.13.2-7135.139.zip",
+                                           :release-label "[WoW 8.2.0] EveryOtherAddon-v8.2.0-v1.13.2-7135.139",
                                            :version "v8.2.0-v1.13.2-7135.139"}]}]]
 
             (core/import-exported-file output-path)
@@ -349,7 +349,7 @@
                            :release-list [{:download-url "https://edge.forgecdn.net/files/1/1/EveryAddon.zip",
                                            :game-track :retail,
                                            :interface-version 80000,
-                                           :release-label "[WoW 8.0.1] EveryAddon-v8.2.0-v1.13.2-7135.139.zip",
+                                           :release-label "[WoW 8.0.1] EveryAddon-v8.2.0-v1.13.2-7135.139",
                                            :version "v8.2.0-v1.13.2-7135.139"}]},
 
                           {:created-date "2011-01-04T05:42:23Z",
@@ -378,7 +378,7 @@
                            :release-list [{:download-url "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip",
                                            :game-track :classic,
                                            :interface-version 11300,
-                                           :release-label "[WoW 1.13.2] EveryOtherAddon-v8.2.0-v1.13.2-7135.139.zip",
+                                           :release-label "[WoW 1.13.2] EveryOtherAddon-v8.2.0-v1.13.2-7135.139",
                                            :version "v8.2.0-v1.13.2-7135.139"}]}]]
 
             (core/import-exported-file output-path)
@@ -404,6 +404,7 @@
                                      :gameVersionFlavor "wow_retail",
                                      :gameVersion ["7.0.0"]
                                      :fileDate "2001-01-03T00:00:00.000Z",
+                                     :fileName "EveryAddon.zip"
                                      :releaseType 1,
                                      :exposeAsAlternative nil}]}
           alt-api-result (assoc-in api-result [:latestFiles 0 :displayName] "v8.20.00")
@@ -465,7 +466,7 @@
                                 :release-list [{:download-url "https://example.org/foo",
                                                 :game-track :retail,
                                                 :interface-version 70000,
-                                                :release-label "[WoW 7.0.0] null",
+                                                :release-label "[WoW 7.0.0] EveryAddon",
                                                 :version "v8.10.00"}]}
 
                 alt-source-updates (assoc source-updates :version "v8.20.00")

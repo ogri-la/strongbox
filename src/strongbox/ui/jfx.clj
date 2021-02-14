@@ -854,7 +854,7 @@
     (mapv (fn [release]
             (menu-item (or (:release-label release) (:version release))
                        (partial pin release)))
-          (rest (:release-list addon)))))
+          (:release-list addon))))
 
 (defn-spec singular-context-menu map?
   "context menu when a single addon is selected."

@@ -276,7 +276,7 @@
                     :release-list [{:download-url "https://edge.forgecdn.net/files/3104/62/Pawn-2.4.5.zip",
                                     :game-track :retail,
                                     :interface-version 90000,
-                                    :release-label "[WoW 9.0.1] Pawn-2.4.5.zip",
+                                    :release-label "[WoW 9.0.1] Pawn-2.4.5",
                                     :version "2.4.5"}]}
           expected (merge addon expected)]
       (with-fake-routes-in-isolation fake-routes
@@ -305,7 +305,7 @@
                     :release-list [{:download-url "https://edge.forgecdn.net/files/3104/62/Pawn-2.4.5.zip",
                                     :game-track :retail,
                                     :interface-version 90000,
-                                    :release-label "[WoW 9.0.1] Pawn-2.4.5.zip",
+                                    :release-label "[WoW 9.0.1] Pawn-2.4.5",
                                     :version "2.4.5"}]}
           expected (merge addon expected)]
       (with-fake-routes-in-isolation fake-routes
@@ -325,7 +325,7 @@
                     :release-list [{:download-url "https://edge.forgecdn.net/files/3104/60/Pawn-2.4.5-Classic.zip",
                                     :game-track :classic,
                                     :interface-version 11300,
-                                    :release-label "[WoW 1.13.5] Pawn-2.4.5-Classic.zip",
+                                    :release-label "[WoW 1.13.5] Pawn-2.4.5-Classic",
                                     :version "2.4.5 (Classic)"}]}
           expected (merge addon expected)]
       (with-fake-routes-in-isolation fake-routes
@@ -347,7 +347,7 @@
                     :release-list [{:download-url "https://edge.forgecdn.net/files/3104/60/Pawn-2.4.5-Classic.zip",
                                     :game-track :classic,
                                     :interface-version 11300,
-                                    :release-label "[WoW 1.13.5] Pawn-2.4.5-Classic.zip",
+                                    :release-label "[WoW 1.13.5] Pawn-2.4.5-Classic",
                                     :version "2.4.5 (Classic)"}]}
           expected (merge addon expected)]
       (with-fake-routes-in-isolation fake-routes
@@ -376,7 +376,7 @@
                     :release-list [{:download-url "https://edge.forgecdn.net/files/3104/60/Pawn-2.4.5-Classic.zip",
                                     :game-track :classic,
                                     :interface-version 11300,
-                                    :release-label "[WoW 1.13.5] Pawn-2.4.5-Classic.zip",
+                                    :release-label "[WoW 1.13.5] Pawn-2.4.5-Classic",
                                     :version "2.4.5 (Classic)"}]}
           expected (merge addon expected)]
       (with-fake-routes-in-isolation fake-routes
@@ -396,7 +396,7 @@
                     :release-list [{:download-url "https://edge.forgecdn.net/files/3104/62/Pawn-2.4.5.zip",
                                     :game-track :retail,
                                     :interface-version 90000,
-                                    :release-label "[WoW 9.0.1] Pawn-2.4.5.zip",
+                                    :release-label "[WoW 9.0.1] Pawn-2.4.5",
                                     :version "2.4.5"}]}
           expected (merge addon expected)]
       (with-fake-routes-in-isolation fake-routes
@@ -416,7 +416,7 @@
                    {:download-url "https://edge.forgecdn.net/files/3104/062/Addon-2.4.5.zip",
                     :game-track :retail,
                     :interface-version 90000,
-                    :release-label "[WoW 9.0.1] Addon-1.2.0.zip",
+                    :release-label "[WoW 9.0.1] Addon-1.2.0",
                     :version "1.2.0"}]
           expected (-> addon
                        (merge {:release-list fixture}
@@ -434,12 +434,12 @@
           fixture [{:download-url "https://edge.forgecdn.net/files/3104/62/Pawn-2.4.5.zip",
                     :game-track :retail,
                     :interface-version 90000,
-                    :release-label "[WoW 9.0.1] Pawn-1.2.3.zip",
+                    :release-label "[WoW 9.0.1] Pawn-1.2.3",
                     :version "1.2.3"}
                    {:download-url "https://edge.forgecdn.net/files/3104/062/Addon-2.4.5.zip",
                     :game-track :retail,
                     :interface-version 90000,
-                    :release-label "[WoW 9.0.1] Addon-1.2.0.zip",
+                    :release-label "[WoW 9.0.1] Addon-1.2.0",
                     :version "1.2.0"}]
           expected (-> addon
                        (merge {:release-list fixture}
