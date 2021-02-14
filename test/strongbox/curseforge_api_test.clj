@@ -243,8 +243,8 @@
           expected [{:download-url "https://edge.forgecdn.net/files/123/456/Foo.zip",
                      :game-track :classic,
                      :interface-version 80000,
-                     :release-label "[WoW 8.0.3] Foo.zip",
-                     :version "Foo.zip"}]]
+                     :release-label "[WoW 8.0.3] Foo",
+                     :version "Foo"}]]
       (is (= expected (curseforge-api/older-releases given)))))
 
   (testing "multiple releases, only stable releases returned"
@@ -254,8 +254,8 @@
           expected [{:download-url "https://edge.forgecdn.net/files/123/456/Foo.zip",
                      :game-track :classic,
                      :interface-version 80000,
-                     :release-label "[WoW 8.0.3] Foo.zip",
-                     :version "Foo.zip"}]]
+                     :release-label "[WoW 8.0.3] Foo",
+                     :version "Foo"}]]
       (is (= expected (curseforge-api/older-releases given)))))
 
   (testing "multiple releases, multiple stable"
@@ -264,13 +264,13 @@
           expected [{:download-url "https://edge.forgecdn.net/files/123/456/Foo-v2.zip",
                      :game-track :classic,
                      :interface-version 80000,
-                     :release-label "[WoW 8.0.3] Foo-v2.zip",
-                     :version "Foo-v2.zip"}
+                     :release-label "[WoW 8.0.3] Foo-v2",
+                     :version "Foo-v2"}
                     {:download-url "https://edge.forgecdn.net/files/123/457/Foo-v1.zip",
                      :game-track :classic,
                      :interface-version 80000,
-                     :release-label "[WoW 8.0.0] Foo-v1.zip",
-                     :version "Foo-v1.zip"}]]
+                     :release-label "[WoW 8.0.0] Foo-v1",
+                     :version "Foo-v1"}]]
       (is (= expected (curseforge-api/older-releases given)))))
 
   (testing "multiple releases, multiple stable, ambiguous naming"

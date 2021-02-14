@@ -42,12 +42,13 @@
         occurances (reduce count-occurances {} release-list) ;; {"Foo-v1.zip" 1, "Foo-v2.zip 1, "Foo.zip" 5}
         get* #(get %2 %1)
         rename-release (fn [release]
-                         (assoc release :-unique-name
-                                (if (-> release :projectFileName (get* occurances) (> 1))
-                                  (let [[name _] (fs/split-ext (:projectFileName release))
-                                        pid (:projectFileId release)]
-                                    (format "%s--%s" name pid)) ;; "Foo--3084724"
-                                  (:projectFileName release))))]
+                         (let [[name _] (fs/split-ext (:projectFileName release))
+                               pid (:projectFileId release)]
+                           (assoc release :-unique-name
+                                  (if (-> release :projectFileName (get* occurances) (> 1))
+                                    (format "%s--%s" name pid) ;; "Foo--3084724"
+                                    name)))) ;; "Foo"
+        ]
     (mapv rename-release release-list)))
 
 (defn-spec older-releases :addon/release-list
