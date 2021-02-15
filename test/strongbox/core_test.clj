@@ -248,7 +248,12 @@
                            :version "v8.2.0-v1.13.2-7135.139",
                            :dirname "EveryAddon",
                            :primary? true,
-                           :matched? true}
+                           :matched? true
+                           :release-list [{:download-url "https://edge.forgecdn.net/files/1/1/EveryAddon.zip",
+                                           :game-track :retail,
+                                           :interface-version 80000,
+                                           :release-label "[WoW 8.0.1] EveryAddon-v8.2.0-v1.13.2-7135.139",
+                                           :version "v8.2.0-v1.13.2-7135.139"}]}
 
                           {:created-date "2011-01-04T05:42:23Z",
                            :description "Does what every addon does, just better",
@@ -270,7 +275,12 @@
                            :version "v8.2.0-v1.13.2-7135.139",
                            :dirname "EveryOtherAddon",
                            :primary? true,
-                           :matched? true}]]
+                           :matched? true
+                           :release-list [{:download-url "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip",
+                                           :game-track :retail,
+                                           :interface-version 80200,
+                                           :release-label "[WoW 8.2.0] EveryOtherAddon-v8.2.0-v1.13.2-7135.139",
+                                           :version "v8.2.0-v1.13.2-7135.139"}]}]]
 
             (core/import-exported-file output-path)
             (core/refresh) ;; re-read the installation directory
@@ -335,7 +345,12 @@
                            :version "v8.2.0-v1.13.2-7135.139",
                            :dirname "EveryAddon",
                            :primary? true,
-                           :matched? true}
+                           :matched? true
+                           :release-list [{:download-url "https://edge.forgecdn.net/files/1/1/EveryAddon.zip",
+                                           :game-track :retail,
+                                           :interface-version 80000,
+                                           :release-label "[WoW 8.0.1] EveryAddon-v8.2.0-v1.13.2-7135.139",
+                                           :version "v8.2.0-v1.13.2-7135.139"}]},
 
                           {:created-date "2011-01-04T05:42:23Z",
                            :description "Does what every addon does, just better",
@@ -359,7 +374,12 @@
                            :version "v8.2.0-v1.13.2-7135.139",
                            :dirname "EveryOtherAddon",
                            :primary? true,
-                           :matched? true}]]
+                           :matched? true
+                           :release-list [{:download-url "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip",
+                                           :game-track :classic,
+                                           :interface-version 11300,
+                                           :release-label "[WoW 1.13.2] EveryOtherAddon-v8.2.0-v1.13.2-7135.139",
+                                           :version "v8.2.0-v1.13.2-7135.139"}]}]]
 
             (core/import-exported-file output-path)
             (core/set-game-track! game-track)
@@ -367,8 +387,7 @@
             (is (= expected (core/get-state :installed-addon-list)))))))))
 
 (deftest check-for-addon-update
-  (testing "the key :update? is set on an addon when there is a difference between the installed version of an addon and it's matching catalogue version"
-
+  (testing "the key `:update?` is set to `true` when the installed version doesn't match the catalogue version"
     (let [;; we start off with a list of these called a catalogue. it's downloaded from github
           catalogue {:category-list ["Auction House & Vendors"],
                      :download-count 1
@@ -382,8 +401,10 @@
           ;; this is subset of the data the remote addon host (like curseforge) serves us
           api-result {:latestFiles [{:downloadUrl "https://example.org/foo"
                                      :displayName "v8.10.00"
-                                     :gameVersionFlavor :retail,
+                                     :gameVersionFlavor "wow_retail",
+                                     :gameVersion ["7.0.0"]
                                      :fileDate "2001-01-03T00:00:00.000Z",
+                                     :fileName "EveryAddon.zip"
                                      :releaseType 1,
                                      :exposeAsAlternative nil}]}
           alt-api-result (assoc-in api-result [:latestFiles 0 :displayName] "v8.20.00")
@@ -441,8 +462,15 @@
                 ;; and what we 'expand' that data into
                 source-updates {:download-url "https://example.org/foo",
                                 :version "v8.10.00"
-                                :game-track :retail}
+                                :game-track :retail
+                                :release-list [{:download-url "https://example.org/foo",
+                                                :game-track :retail,
+                                                :interface-version 70000,
+                                                :release-label "[WoW 7.0.0] EveryAddon",
+                                                :version "v8.10.00"}]}
+
                 alt-source-updates (assoc source-updates :version "v8.20.00")
+                alt-source-updates (assoc-in alt-source-updates [:release-list 0 :version] "v8.20.00")
 
                 ;; after calling `check-for-update` we expect the result to be the merged sum of the below parts
                 expected (merge toc-addon source-updates {:update? false})
@@ -623,6 +651,7 @@
         (core/install-addon addon)
         (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
 
+        ;; make newly installed addon implicitly ignored
         (fs/mkdir (utils/join install-dir "EveryAddon" ".git"))
         (core/load-installed-addons) ;; refresh our knowledge of what is installed
 
@@ -632,6 +661,37 @@
                       :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}]
           (core/install-addon addon2)
           (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents))))))))
+
+(deftest install-bundled-addon-overwriting-pinned-addon
+  (testing "installing/unzipping an addon with a shared mutual dependency of an addon that is pinned isn't possible"
+    (with-running-app
+      (let [install-dir (helper/install-dir)
+            addon {:name "everyaddon" :label "EveryAddon" :version "0.1.2" :url "https://group.id/never/fetched"
+                   :source "curseforge" :source-id 1
+                   :download-url "https://path/to/remote/addon.zip" :game-track :retail
+                   :-testing-zipfile (fixture-path "everyaddon--0-1-2.zip")}
+
+            addon2 {:name "everyotheraddon" :label "EveryOtherAddon" :version "5.6.7" :url "https://group.id/also/never/fetched"
+                    :source "curseforge" :source-id 2
+                    :download-url "https://path/to/remote/addon.zip" :game-track :retail
+                    :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}]
+
+        (core/install-addon addon)
+        (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
+
+        ;; refresh our knowledge of what is installed.
+        (core/load-installed-addons)
+
+        ;; pin the addon. 
+        (addon/pin install-dir (first (core/get-state :installed-addon-list)) "0.1.2")
+
+        ;; refresh our knowledge of what is installed.
+        (core/load-installed-addons)
+
+        ;; overwrite first addon with addon2.
+        ;; this would ordinarily introduce the 'EveryOtherAddon' dirname
+        (core/install-addon addon2)
+        (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))))))
 
 (deftest install-addon--compound-game-track
   (testing "a classic addon can be installed into an addon directory using a compound game track with retail preferred"
@@ -1145,8 +1205,10 @@
         (core/install-addon addon)
         (is (= ["EveryAddon"] (helper/install-dir-contents)))
         (core/load-installed-addons)
-        (core/select-addons)
-        (core/ignore-selected) ;; calls `core/refresh`
+
+        ;; todo: the below makes this a UI test. move test to cli_test.clj
+        (cli/select-addons)
+        (cli/ignore-selected) ;; calls `core/refresh`
         (is (= expected (first (core/get-state :installed-addon-list))))))))
 
 (deftest clear-addon-ignore-flag
@@ -1173,11 +1235,13 @@
                       :update? false}]
         (core/install-addon addon)
         (core/load-installed-addons)
-        (core/select-addons)
-        (core/ignore-selected) ;; calls `core/refresh`
+
+        ;; todo: the below makes this a UI test. move test to cli_test.clj
+        (cli/select-addons)
+        (cli/ignore-selected) ;; calls `core/refresh`
         (is (:ignore? (first (core/get-state :installed-addon-list))))
 
-        (core/clear-ignore-selected)
+        (cli/clear-ignore-selected)
         (is (= expected (first (core/get-state :installed-addon-list))))))))
 
 (deftest clear-addon-ignore-flag--group-addons
@@ -1237,10 +1301,12 @@
         (core/install-addon addon)
         (nfo/ignore install-dir "EveryAddon-BundledAddon")
         (core/load-installed-addons)
-        (core/select-addons)
+
+        ;; todo: the below makes this a UI test. move test to cli_test.clj
+        (cli/select-addons)
         (is (= expected (first (core/get-state :installed-addon-list))))
 
-        (core/clear-ignore-selected)
+        (cli/clear-ignore-selected)
         (is (= expected-2 (first (core/get-state :installed-addon-list))))))))
 
 (deftest clear-addon-ignore-flag--implicit-ignore
@@ -1270,6 +1336,8 @@
         (core/load-installed-addons)
         (is (:ignore? (first (core/get-state :installed-addon-list)))) ;; implicitly ignored
 
-        (core/select-addons)
-        (core/clear-ignore-selected)
+        ;; todo: the below makes this a UI test. move test to cli_test.clj
+        (cli/select-addons)
+        (cli/clear-ignore-selected)
         (is (= expected (first (core/get-state :installed-addon-list))))))))
+

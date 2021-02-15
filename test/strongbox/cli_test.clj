@@ -153,3 +153,51 @@
           (is (= expected-page-1 (cli/search-results)))
 
           (is (not (cli/search-has-prev?))))))))
+
+(deftest pin-addon
+  (testing "an addon can be installed, selected and pinned to it's current installed version"
+    (let [addon {:name "everyaddon-classic" :label "EveryAddon (Classic)" :version "1.2.3" :url "https://group.id/never/fetched"
+                 :source "curseforge" :source-id 1
+                 :download-url "https://path/to/remote/addon.zip"
+                 :game-track :classic
+                 :-testing-zipfile (fixture-path "everyaddon-classic--1-2-3.zip")}]
+      (with-running-app
+        (cli/set-addon-dir! (helper/install-dir))
+        (core/install-addon addon)
+        (core/load-installed-addons)
+
+        (let [addon (first (core/get-state :installed-addon-list))]
+          (is (= "1.2.3" (:installed-version addon)))
+          (is (not (contains? addon :pinned-version))))
+
+        (cli/select-addons)
+        (is (= 1 (count (core/get-state :selected-installed))))
+        (cli/pin)
+
+        (let [addon (first (core/get-state :installed-addon-list))]
+          (is (= "1.2.3" (:pinned-version addon))))))))
+
+(deftest unpin-addon
+  (testing "an addon can be installed, selected and un-pinned"
+    (let [addon {:name "everyaddon-classic" :label "EveryAddon (Classic)" :version "1.2.3" :url "https://group.id/never/fetched"
+                 :source "curseforge" :source-id 1
+                 :download-url "https://path/to/remote/addon.zip"
+                 :game-track :classic
+                 :-testing-zipfile (fixture-path "everyaddon-classic--1-2-3.zip")
+                 ;; yes! we can installed an addon that is pre-pinned.
+                 :pinned-version "1.2.3"}]
+      (with-running-app
+        (cli/set-addon-dir! (helper/install-dir))
+        (core/install-addon addon)
+        (core/load-installed-addons)
+
+        (let [addon (first (core/get-state :installed-addon-list))]
+          (is (= "1.2.3" (:installed-version addon)))
+          (is (= "1.2.3" (:pinned-version addon))))
+
+        (cli/select-addons)
+        (is (= 1 (count (core/get-state :selected-installed))))
+        (cli/unpin)
+
+        (let [addon (first (core/get-state :installed-addon-list))]
+          (is (not (contains? addon :pinned-version))))))))

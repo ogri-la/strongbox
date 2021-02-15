@@ -64,6 +64,7 @@ Afterwards, use the `Update all` button to update all addons with new versions a
 
 Under no circumstances whatsoever does this software:
 
+* solicit, beg or manipulate for donations
 * deal with advertising or advertisers
 * collect, monitor or report upon your usage of `strongbox` or your data
 * attempt to monitise you, the user, in any way
@@ -144,6 +145,6 @@ See [CONTRIBUTING](CONTRIBUTING.md) for more detail.
 
 ## License
 
-Copyright © 2018-2020 Torkus
+Copyright © 2018-2021 Torkus
 
 Distributed under the GNU Affero General Public Licence, version 3 [with additional permissions](LICENCE.txt#L665)

@@ -30,7 +30,7 @@
   [addon :addon/nfo]
   (if (sequential? addon)
     (mapv prune addon)
-    (select-keys addon [:installed-version :installed-game-track :name :group-id :primary? :ignore? :source :source-id])))
+    (select-keys addon (sp/spec-to-kw-list :addon/-nfo))))
 
 (defn-spec derive :addon/nfo
   "extract fields from the addon data that will be written to the nfo file"
@@ -59,9 +59,12 @@
         ;; it can be drived later in the process by examining the addon's toc file or subdirs, or
         ;; it may be present when upgrading an existing nfo file and should be preserved
         ignore-flag (when-some [ignore? (:ignore? addon)]
-                      {:ignore? ignore?})]
+                      {:ignore? ignore?})
 
-    (merge nfo ignore-flag)))
+        pinned-version (when-some [pinned-version (:pinned-version addon)]
+                         {:pinned-version pinned-version})]
+
+    (merge nfo ignore-flag pinned-version)))
 
 (defn-spec nfo-path ::sp/file
   "given an installation directory and the directory name of an addon, return the absolute path to the nfo file"
@@ -177,12 +180,10 @@
       (utils/dump-json-file path (prune addon)))))
 
 ;; this function could definitely do with a second pass, but not right now.
-;; it's doing two things: updating the nfo and writing/removing a file, but conditionally,
+;; it's doing two things: updating the nfo and conditionally writing/removing a file
 ;; and the update logic is tied to the removal logic
 (defn-spec update-nfo nil?
-  "updates *existing* nfo data with new values.
-  differs from `upgrade-nfo` in that existing nfo data is not being manipulated to make 
-  it valid for the current nfo spec."
+  "updates *existing* nfo data with new values."
   [install-dir ::sp/extant-dir, dirname ::sp/dirname, updates map?]
   (let [path (nfo-path install-dir dirname)
         nfo (read-nfo install-dir dirname)
@@ -196,15 +197,18 @@
                   {:ignore? false}
                   new-nfo)
 
-        new-nfo (if (nil? (:ignore? new-nfo))
-                  (dissoc new-nfo :ignore?)
-                  new-nfo)]
+        ;; if these values are nil they will be dissoc'ed from the map
+        dissoc-nil-keys [:ignore? :pinned-version]
+        new-nfo (utils/drop-nils new-nfo dissoc-nil-keys)]
+
     (if (empty? new-nfo)
-      ;; edge case. a valid nfo file is also simply a `ignore: [True|False]`
-      ;; when this condition is true, just delete the nfo file.
+      ;; edge case. a valid nfo file is also simply a `ignore: [True|False]`.
+      ;; if `:ignore?` was dissociated, it's now empty. when this happens, just delete the nfo file.
       (rm-nfo-file path)
       (write-nfo install-dir dirname new-nfo)))
   nil)
+
+;;
 
 (defn-spec ignore nil?
   "prevent any changes made by strongbox to this addon. 
@@ -223,3 +227,15 @@
   the addon may still be implicitly ignored afterwards."
   [install-dir ::sp/extant-dir, dirname ::sp/dirname]
   (update-nfo install-dir dirname {:ignore? nil}))
+
+;;
+
+(defn-spec pin nil?
+  "'pins' the given `version` of a specific addon"
+  [install-dir ::sp/extant-dir, dirname ::sp/dirname, version :addon/pinned-version]
+  (update-nfo install-dir dirname {:pinned-version version}))
+
+(defn-spec unpin nil?
+  "removes `:pinned-version` from a specific addon's nfo file, if it exists"
+  [install-dir ::sp/extant-dir, dirname ::sp/dirname]
+  (update-nfo install-dir dirname {:pinned-version nil}))

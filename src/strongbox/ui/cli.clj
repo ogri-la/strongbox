@@ -2,7 +2,11 @@
   (:require
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :as timbre :refer [spy info warn error debug]]
+   [clojure.spec.alpha :as s]
    [strongbox
+    [addon :as addon]
+    [nfo :as nfo]
+    [constants :as constants]
     [specs :as sp]
     [tukui-api :as tukui-api]
     [catalogue :as catalogue]
@@ -14,8 +18,8 @@
 
 (comment "the UIs pool their logic here, which calls core.clj.")
 
-(defn refresh
-  "unlike `core/refresh`, `cli/refresh` clears the http cache before checking for addon updates."
+(defn-spec hard-refresh nil?
+  "unlike `core/refresh`, `cli/hard-refresh` clears the http cache before checking for addon updates."
   []
   ;; why can we be more specific, like just the addons for the current addon-dir?
   ;; the url used to 'expand' an addon from the catalogue isn't preserved.
@@ -56,19 +60,6 @@
   (core/db-reload-catalogue)
   nil)
 
-;;
-
-(defn-spec touch nil?
-  "used to select each addon in the GUI so the 'unsteady' colour can be tested."
-  []
-  (let [touch (fn [a]
-                (core/start-affecting-addon a)
-                (Thread/sleep 200)
-                (core/stop-affecting-addon a))]
-    (->> (core/get-state :installed-addon-list)
-         core/-updateable?
-         (run! touch))))
-
 ;; search
 
 (defn-spec search-results-next-page nil?
@@ -86,10 +77,10 @@
     (swap! core/state update-in [:search :page] dec))
   nil)
 
-(defn search
+(defn-spec search nil?
   "updates the search `term` and resets the current page of results to `0`.
   does not actually do any searching, that is up to the interface"
-  [search-term]
+  [search-term (s/nilable string?)]
   (swap! core/state update-in [:search] merge {:term search-term :page 0})
   nil)
 
@@ -98,11 +89,11 @@
   []
   (search (if (-> @core/state :search :term nil?) "" nil)))
 
-(defn search-results
+(defn-spec search-results ::sp/list-of-maps
   "returns the current page of results"
   ([]
-   (search-results (core/get-state :search)))
-  ([search-state]
+   (search-results (get-state :search)))
+  ([search-state map?]
    (let [results (:results search-state)
          page (:page search-state)]
      (if-not (empty? results)
@@ -113,20 +104,20 @@
            []))
        []))))
 
-(defn search-has-next?
+(defn-spec search-has-next? boolean?
   "true if we've maxed out the number of results per-page.
   where there are *precisely* that number of results we'll get an empty next page"
   ([]
-   (search-has-next? (core/get-state :search)))
-  ([search-state]
+   (search-has-next? (get-state :search)))
+  ([search-state map?]
    (= (count (search-results search-state))
       (:results-per-page search-state))))
 
-(defn search-has-prev?
+(defn-spec search-has-prev? boolean?
   "true if we've navigated forwards"
   ([]
-   (search-has-prev? (core/get-state :search)))
-  ([search-state]
+   (search-has-prev? (get-state :search)))
+  ([search-state map?]
    (> (:page search-state) 0)))
 
 (defn-spec -init-search-listener nil?
@@ -147,6 +138,140 @@
   (swap! core/state assoc-in [:cfg :preferences preference-key] preference-val)
   (core/save-settings)
   nil)
+
+(defn-spec set-version nil?
+  "updates `addon` with the given `release` data and then installs it."
+  [addon :addon/installable, release :addon/source-updates]
+  (core/install-addon (merge addon release))
+  (core/refresh))
+
+;;
+
+(defn-spec pin nil?
+  "pins the currently selected addons to their current `:installed-version` versions."
+  []
+  (run! #(addon/pin (core/selected-addon-dir) %) (get-state :selected-installed))
+  (core/refresh))
+
+(defn-spec unpin nil?
+  "unpins the currently selected addons, regardless of whether they are pinned or not."
+  []
+  (run! #(addon/unpin (core/selected-addon-dir) %) (get-state :selected-installed))
+  (core/refresh))
+
+(defn-spec -find-replace-release (s/or :ok :addon/expanded, :release-not-found nil?)
+  "looks for the `:installed-version` in the list of available releases and, if found, updates the addon."
+  [addon :addon/expanded]
+  (if-let [matching-release (addon/find-release addon)]
+    (merge addon matching-release)
+    (do (warn (format "%s '%s' not found in known releases. Using latest release instead." (:label addon) (:installed-version addon)))
+        addon)))
+
+;;
+
+(defn-spec -install-update-these nil?
+  [updateable-addon-list :addon/installable-list]
+  (run! core/install-addon updateable-addon-list))
+
+(defn-spec re-install-or-update-selected nil?
+  "re-installs (if possible) or updates all selected addons"
+  []
+  (->> (get-state :selected-installed)
+       (filter core/expanded?)
+       (map -find-replace-release)
+       -install-update-these)
+  (core/refresh))
+
+(defn-spec re-install-or-update-all nil?
+  "re-installs (if possible) or updates all installed addons"
+  []
+  (->> (get-state :installed-addon-list)
+       (filter core/expanded?)
+       (map -find-replace-release)
+       -install-update-these)
+  (core/refresh))
+
+(defn-spec update-selected nil?
+  "updates all selected addons that have updates available"
+  []
+  (->> (get-state :selected-installed)
+       (filter addon/updateable?)
+       -install-update-these)
+  (core/refresh))
+
+(defn-spec update-all nil?
+  "updates all installed addons with updates available"
+  []
+  (->> (get-state :installed-addon-list)
+       (filter addon/updateable?)
+       -install-update-these)
+  (core/refresh))
+
+(defn-spec delete-selected nil?
+  "deletes all selected addons. 
+  GUI should have popped up a confirmation beforehand ;)"
+  []
+  (core/remove-many-addons (get-state :selected-installed)))
+
+;; todo: shift this to addon.clj
+(defn-spec ignore-selected nil?
+  "marks each of the selected addons as being 'ignored'"
+  []
+  (->> (get-state :selected-installed)
+       (map :dirname)
+       (run! (partial nfo/ignore (core/selected-addon-dir))))
+  (core/refresh))
+
+;; todo: shift this to addon.clj
+(defn-spec clear-ignore-selected nil?
+  "removes the 'ignore' flag from each of the selected addons."
+  []
+  (->> (get-state :selected-installed)
+       (mapv addon/ungroup-addon)
+       flatten
+       (mapv :dirname)
+       (run! (partial addon/clear-ignore (core/selected-addon-dir))))
+  (core/refresh))
+
+;; selecting addons
+
+(defn-spec select-addons-search* nil?
+  "sets the selected list of addons in application state for a later action"
+  [selected-addons :addon/summary-list]
+  (swap! core/state assoc :selected-search selected-addons)
+  nil)
+
+(defn-spec select-addons* nil?
+  "sets the selected list of addons to the given `selected-addons` for bulk operations like 'update', 'delete', 'ignore', etc"
+  [selected-addons :addon/installed-list]
+  (swap! core/state assoc :selected-installed selected-addons)
+  nil)
+
+(defn-spec select-addons nil?
+  "creates a sub-selection of installed addons for bulk operations like 'update', 'delete', 'ignore', etc.
+  called with no args, selects *all* installed addons.
+  called with a function, selects just those where `(filter-fn addon)` is `true`."
+  ([]
+   (select-addons identity))
+  ([filter-fn fn?]
+   (->> (get-state :installed-addon-list)
+        (filter filter-fn)
+        (remove nil?)
+        vec
+        select-addons*)))
+
+;; debug
+
+(defn-spec touch nil?
+  "used to select each addon in the GUI so the 'unsteady' colour can be tested."
+  []
+  (let [touch (fn [a]
+                (core/start-affecting-addon a)
+                (Thread/sleep 200)
+                (core/stop-affecting-addon a))]
+    (->> (get-state :installed-addon-list)
+         (filter addon/updateable?)
+         (run! touch))))
 
 ;;
 
@@ -205,7 +330,7 @@
           (catalogue/write-catalogue (find-catalogue-local-path :full))
 
           ;; 'short' catalogue is derived from the full catalogue
-          (catalogue/shorten-catalogue core/release-of-previous-expansion)
+          (catalogue/shorten-catalogue constants/release-of-previous-expansion)
           (catalogue/write-catalogue (find-catalogue-local-path :short))))))
 
 (defmethod action :scrape-catalogue
@@ -233,7 +358,7 @@
 
 (defmethod action :update-all
   [_]
-  (core/install-update-all)
+  (update-all)
   (action :list-updates))
 
 (defmethod action :default
