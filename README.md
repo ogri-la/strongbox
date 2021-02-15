@@ -59,15 +59,17 @@ Afterwards, use the `Update all` button to update all addons with new versions a
 * warnings when addons install other bundled addons
 * lock addons to prevent changes
 * mutual dependency tracking and safer addon uninstallation
+* installing a previous release of an addon
+* pinning an addon to a specific release
 
 ## Recognition
 
 Under no circumstances whatsoever does this software:
 
-* solicit, beg or manipulate for donations
 * deal with advertising or advertisers
 * collect, monitor or report upon your usage of `strongbox` or your data
 * attempt to monitise you, the user, in any way
+* solicit, beg or manipulate for donations
 
 This software also tries very hard to:
 
