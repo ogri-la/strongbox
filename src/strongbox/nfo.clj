@@ -59,9 +59,12 @@
         ;; it can be drived later in the process by examining the addon's toc file or subdirs, or
         ;; it may be present when upgrading an existing nfo file and should be preserved
         ignore-flag (when-some [ignore? (:ignore? addon)]
-                      {:ignore? ignore?})]
+                      {:ignore? ignore?})
 
-    (merge nfo ignore-flag)))
+        pinned-version (when-some [pinned-version (:pinned-version addon)]
+                         {:pinned-version pinned-version})]
+
+    (merge nfo ignore-flag pinned-version)))
 
 (defn-spec nfo-path ::sp/file
   "given an installation directory and the directory name of an addon, return the absolute path to the nfo file"

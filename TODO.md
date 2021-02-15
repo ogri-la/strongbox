@@ -21,6 +21,13 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* import, export, capture 'pinned' information
+    - we can now import addons at a specific version
+        - when importing a pinned addon, should we keep the pin? 
+        - or drop the pin it and display updates?
+    - we can now export addons at specific versions
+        - I think we already have this though ... called :version
+
 * github, revisit the "-classic" suffix naming
     - this was solved more elegantly in curseforge-api
 
