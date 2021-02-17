@@ -969,9 +969,9 @@
 
 (defn installed-addons-pane
   [_]
-  {:fx/type :v-box
-   :children [{:fx/type installed-addons-menu-bar}
-              {:fx/type installed-addons-table}]})
+  {:fx/type :border-pane
+   :top {:fx/type installed-addons-menu-bar}
+   :center {:fx/type installed-addons-table}})
 
 (defn search-addons-table
   [{:keys [fx/context]}]
@@ -1052,9 +1052,9 @@
 
 (defn search-addons-pane
   [_]
-  {:fx/type :v-box
-   :children [{:fx/type search-addons-search-field}
-              {:fx/type search-addons-table}]})
+  {:fx/type :border-pane
+   :top {:fx/type search-addons-search-field}
+   :center {:fx/type search-addons-table}})
 
 (defn tabber
   [_]
@@ -1119,16 +1119,16 @@
      :height 768
      :scene {:fx/type :scene
              :stylesheets [(::css/url style)]
-             :root {:fx/type :v-box
+             :root {:fx/type :border-pane
                     :id (name theme)
-                    :children [{:fx/type menu-bar}
-                               {:fx/type :split-pane
-                                :id "splitter"
-                                :orientation :vertical
-                                :divider-positions [0.7]
-                                :items [{:fx/type tabber}
-                                        {:fx/type notice-logger}]}
-                               {:fx/type status-bar}]}}}))
+                    :top {:fx/type menu-bar}
+                    :center {:fx/type :split-pane
+                             :id "splitter"
+                             :orientation :vertical
+                             :divider-positions [0.7]
+                             :items [{:fx/type tabber}
+                                     {:fx/type notice-logger}]}
+                    :bottom {:fx/type status-bar}}}}))
 
 ;; absolutely no logging in here
 (defn init-notice-logger!
