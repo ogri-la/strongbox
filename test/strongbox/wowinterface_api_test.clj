@@ -22,15 +22,15 @@
 
           game-track :retail
 
-          source-updates {:download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=25079"
-                          :version "1.2.3"
-                          :game-track game-track}
+          expected [{:download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=25079"
+                     :version "1.2.3"
+                     :game-track game-track}]
 
           fixture (slurp (fixture-path "wowinterface-api--addon-details.json"))
           fake-routes {"https://api.mmoui.com/v3/game/WOW/filedetails/25079.json"
                        {:get (fn [_] {:status 200 :body fixture})}}]
       (with-fake-routes-in-isolation fake-routes
-        (is (= source-updates (wowinterface-api/expand-summary given game-track)))))))
+        (is (= expected (wowinterface-api/expand-summary given game-track)))))))
 
 (deftest download-addon-404
   (testing "regular addon fetch that yields a 404 returns nil"

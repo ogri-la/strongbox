@@ -118,9 +118,39 @@
 
           game-track :retail
 
-          expected {:download-url "https://github.com/Aviana/HealComm/releases/download/2.04/HealComm.zip"
-                    :version "2.04 Beta"
-                    :game-track game-track}
+          expected [{:download-url "https://github.com/Aviana/HealComm/releases/download/2.04/HealComm.zip"
+                     :version "2.04 Beta"
+                     :game-track :retail}
+                    {:download-url "https://github.com/Aviana/HealComm/releases/download/2.03/HealComm.zip",
+                     :game-track :retail,
+                     :version "2.03 Beta"}
+                    {:download-url "https://github.com/Aviana/HealComm/releases/download/2.02/HealComm.zip",
+                     :game-track :retail,
+                     :version "2.02 Beta"}
+                    {:download-url "https://github.com/Aviana/HealComm/releases/download/2.01/HealComm-2.01.zip",
+                     :game-track :retail,
+                     :version "2.01 Beta"}
+                    {:download-url "https://github.com/Aviana/HealComm/releases/download/1.15/HealComm.zip",
+                     :game-track :retail,
+                     :version "1.15"}
+                    {:download-url "https://github.com/Aviana/HealComm/releases/download/1.14/HealComm.zip",
+                     :game-track :retail,
+                     :version "1.14"}
+                    {:download-url "https://github.com/Aviana/HealComm/releases/download/1.13/HealComm.zip",
+                     :game-track :retail,
+                     :version "1.13"}
+                    {:download-url "https://github.com/Aviana/HealComm/releases/download/1.12/HealComm.zip",
+                     :game-track :retail,
+                     :version "1.12"}
+                    {:download-url "https://github.com/Aviana/HealComm/releases/download/1.11/HealComm.zip",
+                     :game-track :retail,
+                     :version "1.11"}
+                    {:download-url "https://github.com/Aviana/HealComm/releases/download/1.10/HealComm.zip",
+                     :game-track :retail,
+                     :version "1.10"}
+                    {:download-url "https://github.com/Aviana/HealComm/releases/download/1.9/HealComm.zip",
+                     :game-track :retail,
+                     :version "1.9"}]
 
           fixture (slurp (fixture-path "github-repo-releases--aviana-healcomm.json"))
           fake-routes {"https://api.github.com/repos/Aviana/HealComm/releases"
@@ -141,9 +171,12 @@
 
           game-track :classic
 
-          expected {:download-url "https://github.com/Ravendwyr/Chinchilla/releases/download/v2.10.0/Chinchilla-v2.10.0-classic.zip"
-                    :version "v2.10.0-classic"
-                    :game-track game-track}
+          expected [{:download-url "https://github.com/Ravendwyr/Chinchilla/releases/download/v2.10.0/Chinchilla-v2.10.0-classic.zip"
+                     :version "v2.10.0-classic"
+                     :game-track game-track}
+                    {:download-url "https://github.com/Ravendwyr/Chinchilla/releases/download/v2.10.0-beta3/Chinchilla-v2.10.0-beta3-classic.zip",
+                     :game-track :classic,
+                     :version "v2.10.0-beta3-classic"}]
 
           fixture (slurp (fixture-path "github-repo-releases--many-assets-many-gametracks.json"))
           fake-routes {"https://api.github.com/repos/Ravendwyr/Chinchilla/releases"
@@ -208,9 +241,9 @@
 
           game-track :classic
 
-          expected {:game-track :classic
-                    :version "Classic-v1.13.6-057-classic"
-                    :download-url "https://github.com/teelolws/Altoholic-Classic/releases/download/Classic-v1.13.6-057/Altoholic-Classic-v1.13.6-057.zip"}
+          expected [{:game-track :classic
+                     :version "Classic-v1.13.6-057-classic"
+                     :download-url "https://github.com/teelolws/Altoholic-Classic/releases/download/Classic-v1.13.6-057/Altoholic-Classic-v1.13.6-057.zip"}]
 
           fake-routes {"https://api.github.com/repos/Bar/Foo/releases"
                        {:get (fn [_] {:status 200 :body fixture})}}]
@@ -375,3 +408,22 @@
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (logging/buffered-log
                          :info (github-api/expand-summary addon-summary game-track))))))))
+
+(deftest pick-version-name
+  (testing "use the release name if possible"
+    (let [release {:name "4.050 Beta" :tag_name "4050"}
+          asset {:name "LunaUnitFrames-classic.zip"}
+          expected "4.050 Beta"]
+      (is (= expected (github-api/pick-version-name release asset)))))
+
+  (testing "releases missing titles use the `tag-name` instead."
+    (let [release {:name "" :tag_name "4050"}
+          asset {:name "LunaUnitFrames-classic.zip"}
+          expected "4050"]
+      (is (= expected (github-api/pick-version-name release asset)))))
+
+  (testing "releases missing titles and tags (!!) use the asset's file `name`"
+    (let [release {:name ""} ;; :tag_name "4050"}
+          asset {:name "LunaUnitFrames-classic.zip"}
+          expected "LunaUnitFrames-classic.zip"]
+      (is (= expected (github-api/pick-version-name release asset))))))

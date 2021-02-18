@@ -13,6 +13,7 @@
    [orchestra.core :refer [defn-spec]]
    [strongbox.ui.cli :as cli]
    [strongbox
+    [addon :as addon]
     [specs :as sp]
     [logging :as logging]
     [utils :as utils :refer [no-new-lines]]
@@ -437,7 +438,8 @@
     :mnemonic-parsing true
     :on-action handler}
    (when-let [key (:key opt-map)]
-     {:accelerator key})))
+     {:accelerator key})
+   (dissoc opt-map :key)))
 
 (defn menu
   [label items & [opt-map]]
@@ -447,7 +449,8 @@
     :mnemonic-parsing true
     :items items}
    (when-let [key (:key opt-map)]
-     {:accelerator key})))
+     {:accelerator key})
+   (dissoc opt-map :key)))
 
 (defn async
   "execute given function and it's optional argument list asynchronously.
@@ -606,7 +609,7 @@
   (alert :info "" {:content (-> (-about-strongbox-dialog) fx/create-component fx/instance)})
   nil)
 
-(defn remove-selected-confirmation-handler
+(defn delete-selected-confirmation-handler
   "prompts the user to confirm if they *really* want to delete those addons they just selected and clicked 'delete' on"
   [event]
   (when-let [selected (core/get-state :selected-installed)]
@@ -621,7 +624,7 @@
                                                             :text (format "Deleting %s:" (count selected))}] label-list)})
             result (alert :confirm "" {:content (fx/instance content)})]
         (when (= (.get result) ButtonType/OK)
-          (core/remove-selected)))))
+          (cli/delete-selected)))))
   nil)
 
 (defn search-results-install-handler
@@ -630,11 +633,11 @@
   [event]
   ;; original approach. efficient but no feedback for user
   ;; note: still true as of 2020-09?
-  ;; todo: stick this in `ui.cli`
+  ;; todo: stick this in `cli.clj`
   ;;(core/-install-update-these (map curseforge/expand-summary (get-state :selected-search))) 
   ((switch-tab-handler INSTALLED-TAB) event)
   (doseq [selected (core/get-state :selected-search)]
-    (some-> selected core/expand-summary-wrapper vector core/-install-update-these)
+    (some-> selected core/expand-summary-wrapper vector cli/-install-update-these)
     (core/load-installed-addons))
   ;; deselect rows in search table
   ;; note: don't know how to do this in jfx
@@ -702,8 +705,8 @@
   (let [file-menu [(menu-item "_New addon directory" (event-handler wow-dir-picker) {:key "Ctrl+N"})
                    (menu-item "Remove addon directory" (async-handler remove-addon-dir))
                    separator
-                   (menu-item "_Update all" (async-handler core/install-update-all) {:key "Ctrl+U"})
-                   (menu-item "Re-install all" (async-handler core/re-install-all))
+                   (menu-item "_Update all" (async-handler cli/update-all) {:key "Ctrl+U"})
+                   (menu-item "Re-install all" (async-handler cli/re-install-or-update-all))
                    separator
                    (menu-item "Import list of addons" (async-event-handler import-addon-list-handler))
                    (menu-item "Export list of addons" (async-event-handler export-addon-list-handler))
@@ -715,7 +718,7 @@
         prefs-menu [{:fx/type menu-item--num-zips-to-keep}]
 
         view-menu (into
-                   [(menu-item "Refresh" (async-handler cli/refresh) {:key "F5"})
+                   [(menu-item "Refresh" (async-handler cli/hard-refresh) {:key "F5"})
                     separator
                     (menu-item "_Installed" (switch-tab-handler INSTALLED-TAB) {:key "Ctrl+I"})
                     (menu-item "Searc_h" (switch-tab-handler SEARCH-TAB) {:key "Ctrl+H"})
@@ -792,7 +795,7 @@
    :children [{:fx/type :button
                :text "Update all"
                :id "update-all-button"
-               :on-action (async-handler core/install-update-all)}
+               :on-action (async-handler cli/update-all)}
               {:fx/type wow-dir-dropdown}
               {:fx/type game-track-dropdown}
               {:fx/type :button
@@ -832,11 +835,86 @@
   [row]
   (-> row -href-to-hyperlink fx/create-component fx/instance))
 
+(defn-spec available-versions (s/or :ok string? :no-version-available nil?)
+  "formats the 'available version' string depending on the state of the addon.
+  pinned and ignored addons get a helpful prefix."
+  [row map?]
+  (cond
+    (:ignore? row) "(ignored)"
+    (:pinned-version row) (str "(pinned) " (:pinned-version row))
+    :else
+    (:version row)))
+
+(defn-spec build-release-menu ::sp/list-of-maps
+  "returns a list of `:menu-item` maps that will update the given `addon` with 
+  the release data for a selected release in `release-list`."
+  [addon :addon/expanded]
+  (let [pin (fn [release _]
+              (cli/set-version addon release))]
+    (mapv (fn [release]
+            (menu-item (or (:release-label release) (:version release))
+                       (partial pin release)))
+          (:release-list addon))))
+
+(defn-spec singular-context-menu map?
+  "context menu when a single addon is selected."
+  [selected-addon :addon/toc]
+  (let [pinned? (some? (:pinned-version selected-addon))
+        release-list (:release-list selected-addon)
+        releases-available? (and (not (empty? release-list))
+                                 (not pinned?))
+        ignored? (get selected-addon :ignore? false)]
+    {:fx/type :context-menu
+     :items [(menu-item "Update" (async-handler cli/update-selected)
+                        {:disable (not (addon/updateable? selected-addon))})
+             (menu-item "Re-install" (async-handler cli/re-install-or-update-selected)
+                        {:disable (not (addon/re-installable? selected-addon))})
+             separator
+             (if pinned?
+               (menu-item "Unpin release" (async-handler cli/unpin)
+                          {:disable ignored?})
+               (menu-item "Pin release" (async-handler cli/pin)
+                          {:disable ignored?}))
+             (if releases-available?
+               (menu "Releases" (build-release-menu selected-addon))
+               (menu "Releases" [] {:disable true})) ;; skips even attempting to build the menu
+             separator
+             (if ignored?
+               (menu-item "Stop ignoring" (async-handler cli/clear-ignore-selected))
+               (menu-item "Ignore" (async-handler cli/ignore-selected)))
+             separator
+             (menu-item "Delete" delete-selected-confirmation-handler
+                        {:disable ignored?})]}))
+
+(defn-spec multiple-context-menu map?
+  "context menu when multiple addons are selected."
+  [selected-addon-list :addon/toc-list]
+  (let [num-selected (count selected-addon-list)
+        some-pinned? (->> selected-addon-list (map :pinned-version) (some some?) boolean)
+        some-ignored? (->> selected-addon-list (filter :ignore?) (some some?) boolean)]
+    {:fx/type :context-menu
+     :items [(menu-item (str num-selected " addons selected") donothing {:disable true})
+             separator
+             (menu-item "Update" (async-handler cli/update-selected))
+             (menu-item "Re-install" (async-handler cli/re-install-or-update-selected))
+             separator
+             (if some-pinned?
+               (menu-item "Unpin release" (async-handler cli/unpin))
+               (menu-item "Pin release" (async-handler cli/pin)))
+             (menu "Releases" [] {:disable true})
+             separator
+             (if some-ignored?
+               (menu-item "Stop ignoring" (async-handler cli/clear-ignore-selected))
+               (menu-item "Ignore" (async-handler cli/ignore-selected)))
+             separator
+             (menu-item "Delete" delete-selected-confirmation-handler)]}))
+
 (defn installed-addons-table
   [{:keys [fx/context]}]
   ;; subscribe to re-render table when addons become unsteady
   (fx/sub-val context get-in [:app-state :unsteady-addons])
   (let [row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
+        selected (fx/sub-val context get-in [:app-state :selected-installed])
 
         iface-version (fn [row]
                         (some-> row :interface-version str utils/interface-version-to-game-version))
@@ -844,13 +922,13 @@
         column-list [{:text "source" :min-width 115 :pref-width 120 :max-width 160 :cell-value-factory href-to-hyperlink}
                      {:text "name" :min-width 150 :pref-width 300 :max-width 500 :cell-value-factory (comp no-new-lines :label)}
                      {:text "description" :pref-width 700 :cell-value-factory (comp no-new-lines :description)}
-                     {:text "installed" :max-width 150 :cell-value-factory :installed-version}
-                     {:text "available" :max-width 150 :cell-value-factory :version}
+                     {:text "installed" :max-width 250 :cell-value-factory :installed-version}
+                     {:text "available" :max-width 250 :cell-value-factory available-versions}
                      {:text "WoW" :max-width 100 :cell-value-factory iface-version}]]
     {:fx/type fx.ext.table-view/with-selection-props
      :props {:selection-mode :multiple
              ;; unlike gui.clj, we have access to the original data here. no need to re-select addons.
-             :on-selected-items-changed core/select-addons*}
+             :on-selected-items-changed cli/select-addons*}
      :desc {:fx/type :table-view
             :id "installed-addons"
             :placeholder {:fx/type :text
@@ -867,14 +945,9 @@
                                                 (when (:ignore? row) "ignored")
                                                 (when (and row (core/unsteady? (:name row))) "unsteady")])})}
             :columns (mapv table-column column-list)
-            :context-menu {:fx/type :context-menu
-                           :items [(menu-item "Update" (async-handler core/install-update-selected))
-                                   (menu-item "Re-install" (async-handler core/re-install-selected))
-                                   separator
-                                   (menu-item "Ignore" (async-handler core/ignore-selected))
-                                   (menu-item "Stop ignoring" (async-handler core/clear-ignore-selected))
-                                   separator
-                                   (menu-item "Delete" remove-selected-confirmation-handler)]}
+            :context-menu (if (= 1 (count selected))
+                            (singular-context-menu (first selected))
+                            (multiple-context-menu selected))
             :items (or row-list [])}}))
 
 (defn notice-logger
@@ -896,9 +969,9 @@
 
 (defn installed-addons-pane
   [_]
-  {:fx/type :v-box
-   :children [{:fx/type installed-addons-menu-bar}
-              {:fx/type installed-addons-table}]})
+  {:fx/type :border-pane
+   :top {:fx/type installed-addons-menu-bar}
+   :center {:fx/type installed-addons-table}})
 
 (defn search-addons-table
   [{:keys [fx/context]}]
@@ -921,7 +994,7 @@
     {:fx/type fx.ext.table-view/with-selection-props
      :props {:selection-mode :multiple
              ;; unlike gui.clj, we have access to the original data here. no need to re-select addons.
-             :on-selected-items-changed core/select-addons-search*}
+             :on-selected-items-changed cli/select-addons-search*}
      :desc {:fx/type :table-view
             :id "search-addons"
             :placeholder {:fx/type :text
@@ -979,9 +1052,9 @@
 
 (defn search-addons-pane
   [_]
-  {:fx/type :v-box
-   :children [{:fx/type search-addons-search-field}
-              {:fx/type search-addons-table}]})
+  {:fx/type :border-pane
+   :top {:fx/type search-addons-search-field}
+   :center {:fx/type search-addons-table}})
 
 (defn tabber
   [_]
@@ -1046,16 +1119,16 @@
      :height 768
      :scene {:fx/type :scene
              :stylesheets [(::css/url style)]
-             :root {:fx/type :v-box
+             :root {:fx/type :border-pane
                     :id (name theme)
-                    :children [{:fx/type menu-bar}
-                               {:fx/type :split-pane
-                                :id "splitter"
-                                :orientation :vertical
-                                :divider-positions [0.7]
-                                :items [{:fx/type tabber}
-                                        {:fx/type notice-logger}]}
-                               {:fx/type status-bar}]}}}))
+                    :top {:fx/type menu-bar}
+                    :center {:fx/type :split-pane
+                             :id "splitter"
+                             :orientation :vertical
+                             :divider-positions [0.7]
+                             :items [{:fx/type tabber}
+                                     {:fx/type notice-logger}]}
+                    :bottom {:fx/type status-bar}}}}))
 
 ;; absolutely no logging in here
 (defn init-notice-logger!

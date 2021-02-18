@@ -18,14 +18,14 @@ Arch Linux users can install `strongbox` from the [AUR](https://aur.archlinux.or
 
 For other Linux users:
 
-1. download: [./releases/strongbox](https://github.com/ogri-la/strongbox/releases/download/3.2.1/strongbox)
+1. download: [./releases/strongbox](https://github.com/ogri-la/strongbox/releases/download/3.3.0/strongbox)
 2. make executable: `chmod +x strongbox`
 3. run: `./strongbox`
 
 If you're on macOS or just prefer Java `.jar` files (requires Java 11+):
 
-1. download: [./releases/strongbox-3.2.1-standalone.jar](https://github.com/ogri-la/strongbox/releases/download/3.2.1/strongbox-3.2.1-standalone.jar)
-2. run: `java -jar strongbox-3.2.1-standalone.jar`
+1. download: [./releases/strongbox-3.3.0-standalone.jar](https://github.com/ogri-la/strongbox/releases/download/3.3.0/strongbox-3.3.0-standalone.jar)
+2. run: `java -jar strongbox-3.3.0-standalone.jar`
 
 ## Usage
 
@@ -59,6 +59,8 @@ Afterwards, use the `Update all` button to update all addons with new versions a
 * warnings when addons install other bundled addons
 * lock addons to prevent changes
 * mutual dependency tracking and safer addon uninstallation
+* installing a previous release of an addon
+* pinning an addon to a specific release
 
 ## Recognition
 
@@ -67,6 +69,7 @@ Under no circumstances whatsoever does this software:
 * deal with advertising or advertisers
 * collect, monitor or report upon your usage of `strongbox` or your data
 * attempt to monitise you, the user, in any way
+* solicit, beg or manipulate for donations
 
 This software also tries very hard to:
 
@@ -144,6 +147,6 @@ See [CONTRIBUTING](CONTRIBUTING.md) for more detail.
 
 ## License
 
-Copyright © 2018-2020 Torkus
+Copyright © 2018-2021 Torkus
 
 Distributed under the GNU Affero General Public Licence, version 3 [with additional permissions](LICENCE.txt#L665)

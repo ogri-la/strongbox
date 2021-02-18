@@ -10,6 +10,8 @@ Just for my own reference
     - lein clean
 * new branch '0.x.0-prep'
 * ensure all non-gpl dependencies have an exclusion in LICENCE
+* if major version change, update
+    - SECURITY.md
 * update version in project.clj to the new version
     - remove the '-unreleased' extension
 * update CHANGELOG

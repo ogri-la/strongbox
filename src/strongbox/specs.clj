@@ -14,6 +14,15 @@
   (when (s/valid? spec x)
     x))
 
+(defn spec-to-kw-list
+  "very limited. only works for basic specs that have a :req [keys] and :opt [keys]"
+  [spec]
+  (let [required #(nth % 2)
+        optional #(last %)
+        extract (juxt optional required)
+        normalise (comp keyword name)]
+    (->> spec clojure.spec.alpha/form extract (apply concat) (mapv normalise))))
+
 (s/def ::list-of-strings (s/coll-of string?))
 (s/def ::list-of-maps (s/coll-of map?))
 (s/def ::list-of-keywords (s/coll-of keyword?))
@@ -82,6 +91,7 @@
 (s/def ::interface-version int?)
 (s/def ::name string?) ;; normalised name of the addon, shared between toc file and curseforge
 (s/def ::label string?) ;; name of the addon without normalisation
+(s/def ::release-label ::label)
 
 ;; dates and times
 
@@ -152,6 +162,8 @@
 
 ;; addons
 
+(s/def :addon/pinned-version ::version)
+
 (s/def :addon/tag keyword?)
 (s/def :addon/tag-list (s/or :ok (s/coll-of :addon/tag)
                              :empty ::empty-coll))
@@ -175,7 +187,8 @@
 ;; circular dependency? :addon/toc has an optional ::group-addons and ::group-addons is a list of :addon/toc ? oof
 (s/def ::group-addons :addon/toc-list)
 
-;; 'nfo' files contain extra per-addon data written to addon directories as .strongbox.json
+;; 'nfo' files contain extra per-addon data written to addon directories as .strongbox.json.
+;; note! this form is being targeted by `spec-to-kw-list` in nfo.clj to strip unspecced keys before writing to file.
 (s/def :addon/-nfo (s/keys :req-un [::installed-version
                                     ::name
                                     ::group-id
@@ -183,7 +196,8 @@
                                     :addon/source
                                     ::installed-game-track
                                     :addon/source-id]
-                           :opt-un [::ignore?]))
+                           :opt-un [::ignore?
+                                    :addon/pinned-version]))
 
 (s/def :addon/nfo (s/or :ignored ::ignore-flag
                         :ok :addon/-nfo
@@ -234,10 +248,16 @@
   (s/keys :req-un [::version
                    ::download-url
                    ::game-track]
-          :opt-un [::interface-version]))
+          :opt-un [::interface-version
+                   ::release-label]))
+
+(s/def :addon/release-list (s/coll-of :addon/source-updates))
 
 ;; result of expanding an addon
-(s/def :addon/expanded (s/merge :addon/expandable :addon/source-updates))
+(s/def :addon/expanded (s/merge :addon/expandable
+                                :addon/source-updates
+                                ;; todo: make this required
+                                (s/keys :opt-un [:addon/release-list])))
 
 ;; bare minimum required to install an addon summary
 (s/def :addon/installable (s/merge

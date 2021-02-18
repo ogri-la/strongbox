@@ -86,12 +86,10 @@
                          :source-id source-id,
                          :url "https://www.tukui.org/addons.php?id=98"}
 
-          source-updates {:download-url "https://www.tukui.org/addons.php?download=98"
-                          :version "0.960"
-                          :interface-version 80200
-                          :game-track game-track}
-
-          expected source-updates]
+          expected [{:download-url "https://www.tukui.org/addons.php?download=98"
+                     :version "0.960"
+                     :interface-version 80200
+                     :game-track game-track}]]
 
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (tukui-api/expand-summary addon-summary game-track))))))
@@ -115,13 +113,10 @@
                          :source-id -2,
                          :url "https://www.tukui.org/download.php?ui=elvui"}
 
-          source-updates {:download-url "https://www.tukui.org/downloads/elvui-11.26.zip"
-                          :version "11.26"
-                          :interface-version 80200
-                          :game-track game-track}
-
-          expected source-updates]
-
+          expected [{:download-url "https://www.tukui.org/downloads/elvui-11.26.zip"
+                     :version "11.26"
+                     :interface-version 80200
+                     :game-track game-track}]]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (tukui-api/expand-summary addon-summary game-track)))))))
 
@@ -167,10 +162,9 @@
                          :source-id source-id,
                          :url "https://www.tukui.org/addons.php?id=98"}
 
-          expected {:download-url "https://www.tukui.org/addons.php?download=98"
-                    ;; :interface-version ... ;; elided
-                    :version "0.960"
-                    :game-track game-track}]
-
+          expected [{:download-url "https://www.tukui.org/addons.php?download=98"
+                     ;; :interface-version ... ;; elided
+                     :version "0.960"
+                     :game-track game-track}]]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (tukui-api/expand-summary addon-summary game-track)))))))

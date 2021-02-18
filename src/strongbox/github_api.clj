@@ -62,15 +62,30 @@
   [string string?]
   (-> string .toLowerCase (index-of "classic") nil? not))
 
-(defn group-assets
-  [addon latest-release]
+(defn-spec pick-version-name (s/or :ok string? :failed nil?)
+  "returns the first non-nil value that can be used as a 'version' from a list of good candidates.
+  `asset` is a subset of `release` that has been filtered out from the other assets in the release.
+  ideally we want to use the name the author has specifically chosen for a release.
+  if that doesn't exist, we fallback to the git tag which is typically better than the asset's name."
+  [release map?, asset map?]
+  (let [;; most to least desirable
+        candidates [(:name release) (:tag_name release) (:name asset)]]
+    (->> candidates (map utils/nilable) (remove nil?) first)))
+
+(defn-spec group-assets (s/or :ok map? :too-ambiguous nil?)
+  "filters, groups and classifies a release's assets.
+  a release may have many assets, however we're only interested in fully uploaded zip files.
+  an asset may contain 'classic' and/or 'retail' that will help to classify which game track the
+  asset lives in.
+  it may ultimately be too ambiguous classifying the asset and we fall back to sensible defaults and guessing."
+  [addon :addon/expandable, release map?]
   (let [;; ignore assets whose :content_type is *not* a known zip type
         supported-zips #(-> % :content_type vector set (some supported-zip-mimes))
 
         ;; ignore any assets that are not completely uploaded
         ;; - https://developer.github.com/v3/repos/releases/#response-for-upstream-failure
         fully-uploaded #(-> % :state (= "uploaded"))
-        asset-list (->> latest-release :assets (filter supported-zips) (filter fully-uploaded))
+        asset-list (->> release :assets (filter supported-zips) (filter fully-uploaded))
 
         single-asset? (-> asset-list count (= 1))
         many-assets? (-> asset-list count (> 1))
@@ -90,12 +105,14 @@
         track-version (fn [version gametrack]
                         (if (= gametrack :classic)
                           ;; why am I doing this?
+                          ;; iirc it's to differentiate between identically named releases for different game tracks.
+                          ;; we could do what we did with curseforge and ensure all releases get a unique name
                           (str version "-classic")
                           version))
 
         updater ;; returns a list of updated versions of this asset. if the asset supports multiple game tracks, two versions are returned
         (fn [asset]
-          (let [version (:name latest-release) ;; "v2.10.0"
+          (let [version (pick-version-name release asset)
                 ;; todo: change this to look for 'classic' or 'retail'
                 ;; so, "FooAddon-retail" or "BarAddon-classic"
                 ;; no known cases but it would be forward proof
@@ -132,7 +149,7 @@
                   ;; ambiguous case, other assets may have game track in their file name.
                   (and many-assets? many-game-tracks?) {:game-track :retail :version version :-mo :ma--Ngt}
 
-                  :else (error (format "unhandled state attempting to determine game track(s) for asset '%s' in latest release of '%s'"
+                  :else (error (format "unhandled state attempting to determine game track(s) for asset '%s' in release of '%s'"
                                        asset addon)))
 
                 update-list (if (sequential? update-list) update-list [update-list])]
@@ -155,19 +172,22 @@
        (map game-track)
        vec))
 
-(defn-spec expand-summary (s/or :ok :addon/source-updates, :error nil?)
+(defn-spec expand-summary (s/or :ok :addon/release-list, :error nil?)
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. 
   one additional look-up per ::addon required"
   [addon :addon/expandable, game-track ::sp/game-track]
-  (let [release-data (-> addon :source-id download-releases (or []) (parse-github-release-data addon game-track))
-        asset (-> release-data
-                  first ;; latest release
-                  first ;; first asset
-                  (dissoc :-mo))]
-    (when asset
-      {:download-url (:browser_download_url asset)
-       :version (:version asset)
-       :game-track game-track})))
+  (let [wrangle-release (fn [release]
+                          (when-let [asset (first release)]
+                            {:download-url (:browser_download_url asset)
+                             :version (:version asset)
+                             :game-track game-track}))
+        wrangle-release-list #(mapv wrangle-release %)]
+    (some-> addon
+            :source-id
+            download-releases
+            (parse-github-release-data addon game-track)
+            wrangle-release-list
+            utils/nilable)))
 
 ;;
 

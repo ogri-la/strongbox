@@ -272,7 +272,12 @@
           expected {:download-url "https://edge.forgecdn.net/files/3104/62/Pawn-2.4.5.zip",
                     :interface-version 90000,
                     :version "2.4.5"
-                    :game-track :retail}
+                    :game-track :retail
+                    :release-list [{:download-url "https://edge.forgecdn.net/files/3104/62/Pawn-2.4.5.zip",
+                                    :game-track :retail,
+                                    :interface-version 90000,
+                                    :release-label "[WoW 9.0.1] Pawn-2.4.5",
+                                    :version "2.4.5"}]}
           expected (merge addon expected)]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (catalogue/expand-summary addon game-track))))))
@@ -296,7 +301,12 @@
           expected {:download-url "https://edge.forgecdn.net/files/3104/62/Pawn-2.4.5.zip",
                     :interface-version 90000,
                     :version "2.4.5"
-                    :game-track :retail}
+                    :game-track :retail
+                    :release-list [{:download-url "https://edge.forgecdn.net/files/3104/62/Pawn-2.4.5.zip",
+                                    :game-track :retail,
+                                    :interface-version 90000,
+                                    :release-label "[WoW 9.0.1] Pawn-2.4.5",
+                                    :version "2.4.5"}]}
           expected (merge addon expected)]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (catalogue/expand-summary addon game-track)))))))
@@ -311,7 +321,12 @@
           expected {:download-url "https://edge.forgecdn.net/files/3104/60/Pawn-2.4.5-Classic.zip",
                     :interface-version 11300,
                     :version "2.4.5 (Classic)"
-                    :game-track :classic}
+                    :game-track :classic
+                    :release-list [{:download-url "https://edge.forgecdn.net/files/3104/60/Pawn-2.4.5-Classic.zip",
+                                    :game-track :classic,
+                                    :interface-version 11300,
+                                    :release-label "[WoW 1.13.5] Pawn-2.4.5-Classic",
+                                    :version "2.4.5 (Classic)"}]}
           expected (merge addon expected)]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (catalogue/expand-summary addon game-track)))))))
@@ -328,7 +343,12 @@
           expected {:download-url "https://edge.forgecdn.net/files/3104/60/Pawn-2.4.5-Classic.zip",
                     :interface-version 11300,
                     :version "2.4.5 (Classic)"
-                    :game-track :classic}
+                    :game-track :classic
+                    :release-list [{:download-url "https://edge.forgecdn.net/files/3104/60/Pawn-2.4.5-Classic.zip",
+                                    :game-track :classic,
+                                    :interface-version 11300,
+                                    :release-label "[WoW 1.13.5] Pawn-2.4.5-Classic",
+                                    :version "2.4.5 (Classic)"}]}
           expected (merge addon expected)]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (catalogue/expand-summary addon game-track))))))
@@ -352,7 +372,12 @@
           expected {:download-url "https://edge.forgecdn.net/files/3104/60/Pawn-2.4.5-Classic.zip",
                     :interface-version 11300,
                     :version "2.4.5 (Classic)"
-                    :game-track :classic}
+                    :game-track :classic
+                    :release-list [{:download-url "https://edge.forgecdn.net/files/3104/60/Pawn-2.4.5-Classic.zip",
+                                    :game-track :classic,
+                                    :interface-version 11300,
+                                    :release-label "[WoW 1.13.5] Pawn-2.4.5-Classic",
+                                    :version "2.4.5 (Classic)"}]}
           expected (merge addon expected)]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (catalogue/expand-summary addon game-track)))))))
@@ -367,7 +392,60 @@
           expected {:download-url "https://edge.forgecdn.net/files/3104/62/Pawn-2.4.5.zip",
                     :interface-version 90000,
                     :version "2.4.5"
-                    :game-track :retail}
+                    :game-track :retail
+                    :release-list [{:download-url "https://edge.forgecdn.net/files/3104/62/Pawn-2.4.5.zip",
+                                    :game-track :retail,
+                                    :interface-version 90000,
+                                    :release-label "[WoW 9.0.1] Pawn-2.4.5",
+                                    :version "2.4.5"}]}
           expected (merge addon expected)]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (catalogue/expand-summary addon game-track)))))))
+
+(deftest expand-summary--pinned
+  (testing "when an addon is pinned, look for it's release in the list of releases returned from the host"
+    (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"
+                 :installed-version "1.2.3" :pinned-version "1.2.0"}
+          game-track :retail
+          fixture [{:download-url "https://edge.forgecdn.net/files/3104/62/Pawn-2.4.5.zip",
+                    :game-track :retail,
+                    :interface-version 90000,
+                    :release-label "[WoW 9.0.1] Pawn-1.2.3.zip",
+                    :version "1.2.3"}
+                   ;; pinned release
+                   {:download-url "https://edge.forgecdn.net/files/3104/062/Addon-2.4.5.zip",
+                    :game-track :retail,
+                    :interface-version 90000,
+                    :release-label "[WoW 9.0.1] Addon-1.2.0",
+                    :version "1.2.0"}]
+          expected (-> addon
+                       (merge {:release-list fixture}
+                              (second fixture))
+                       (dissoc :release-label))]
+      (with-fake-routes-in-isolation {}
+        ;; omg, with-redefs is fantastic
+        (with-redefs [strongbox.curseforge-api/expand-summary (constantly fixture)]
+          (is (= expected (catalogue/expand-summary addon game-track)))))))
+
+  (testing "when a pinned addon cannot find it's pinned release, use the latest release available"
+    (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"
+                 :installed-version "0.9.9" :pinned-version "0.9.9"}
+          game-track :retail
+          fixture [{:download-url "https://edge.forgecdn.net/files/3104/62/Pawn-2.4.5.zip",
+                    :game-track :retail,
+                    :interface-version 90000,
+                    :release-label "[WoW 9.0.1] Pawn-1.2.3",
+                    :version "1.2.3"}
+                   {:download-url "https://edge.forgecdn.net/files/3104/062/Addon-2.4.5.zip",
+                    :game-track :retail,
+                    :interface-version 90000,
+                    :release-label "[WoW 9.0.1] Addon-1.2.0",
+                    :version "1.2.0"}]
+          expected (-> addon
+                       (merge {:release-list fixture}
+                              (first fixture))
+                       (dissoc :release-label))]
+      (with-fake-routes-in-isolation {}
+        ;; omg, with-redefs is fantastic
+        (with-redefs [strongbox.curseforge-api/expand-summary (constantly fixture)]
+          (is (= expected (catalogue/expand-summary addon game-track))))))))

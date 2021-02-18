@@ -16,16 +16,11 @@
     [zip :as zip]
     [http :as http]
     [logging :as logging]
-    [nfo :as nfo]
     [utils :as utils :refer [join nav-map nav-map-fn delete-many-files! static-slurp expand-path if-let*]]
     [catalogue :as catalogue]
     [specs :as sp]]))
 
-(def release-of-previous-expansion
-  "'Battle for Azeroth (BfA)', released August 14th 2018. Used to shorten the 'full' catalogue.
-  https://en.wikipedia.org/wiki/World_of_Warcraft#Expansions"
-  "2018-08-14T00:00:00Z")
-
+;; todo: remove when old gui is removed
 (def game-tracks [:retail :classic])
 
 (def -colour-map
@@ -408,29 +403,6 @@
       (finally
         (stop-affecting-addon addon)))))
 
-;; selecting addons
-
-(defn-spec select-addons-search* nil?
-  "sets the selected list of addons in application state for a later action"
-  [selected-addons :addon/summary-list]
-  (swap! state assoc :selected-search selected-addons)
-  nil)
-
-(defn-spec select-addons* nil?
-  "sets the selected list of addons to the given `selected-addons` for bulk operations like 'update', 'delete', 'ignore', etc"
-  [selected-addons :addon/installed-list]
-  (swap! state assoc :selected-installed selected-addons)
-  nil)
-
-(defn-spec select-addons nil?
-  "creates a sub-selection of installed addons for bulk operations like 'update', 'delete', 'ignore', etc.
-  called with no args, selects *all* installed addons.
-  called with a function, selects just those where `(f addon)` is `true`"
-  ([]
-   (select-addons identity))
-  ([f fn?]
-   (->> (get-state :installed-addon-list) (filter f) (remove nil?) vec select-addons*)))
-
 ;; downloading and installing and updating
 
 (defn-spec download-addon (s/or :ok ::sp/archive-file, :http-error :http/error, :error nil?)
@@ -489,6 +461,9 @@
 
          (addon/overwrites-ignored? downloaded-file (get-state :installed-addon-list))
          (error "refusing to install addon that will overwrite an ignored addon")
+
+         (addon/overwrites-pinned? downloaded-file (get-state :installed-addon-list))
+         (error "refusing to install addon that will overwrite a pinned addon")
 
          test-only? true ;; addon was successfully downloaded and verified as being sound
 
@@ -753,19 +728,14 @@
       (wrapper addon-summary game-track))))
 
 (defn-spec check-for-update :addon/toc
-  "Returns given `addon` with source updates, if any, and an `update?` boolean if a different version is available.
-  Accepts something as basic as toc data."
+  "Returns given `addon` with source updates, if any, and sets an `update?` property if a different version is available.
+  If addon is pinned to a specific version, `update?` will only be true if pinned version is different from installed version."
   [addon (s/or :unmatched :addon/toc
                :matched :addon/toc+summary+match)]
   (let [expanded-addon (when (:matched? addon)
                          (expand-summary-wrapper addon))
-        addon (or expanded-addon addon) ;; expanded addon may still be nil
-        {:keys [installed-version version]} addon
-        update? (boolean
-                 (and version
-                      (not= installed-version version)
-                      (not (:ignore? addon))))]
-    (assoc addon :update? update?)))
+        addon (or expanded-addon addon)] ;; expanded addon may still be nil
+    (assoc addon :update? (addon/updateable? addon))))
 
 (defn-spec check-for-updates nil?
   "downloads full details for all installed addons that can be found in summary list"
@@ -1012,7 +982,7 @@
 ;;
 
 (defn refresh
-  [& _] ;; todo: remove args with swing gui
+  [& _] ;; todo: remove args with swing gui + spec
   (profile
    {:when (get-state :profile?)}
 
@@ -1039,39 +1009,6 @@
 
    nil))
 
-(defn-spec -install-update-these nil?
-  [updateable-addon-list :addon/installable-list]
-  (run! install-addon updateable-addon-list))
-
-(defn -updateable?
-  [rows]
-  (filterv :update? rows))
-
-(defn -re-installable?
-  "an addon can only be re-installed if it's been matched to an addon in the catalogue and a release available to download"
-  [rows]
-  (filterv expanded? rows))
-
-(defn re-install-selected
-  []
-  (-> (get-state) :selected-installed -re-installable? -install-update-these)
-  (refresh))
-
-(defn re-install-all
-  []
-  (-> (get-state) :installed-addon-list -re-installable? -install-update-these)
-  (refresh))
-
-(defn install-update-selected
-  []
-  (-> (get-state) :selected-installed -updateable? -install-update-these)
-  (refresh))
-
-(defn-spec install-update-all nil?
-  []
-  (-> (get-state) :installed-addon-list -updateable? -install-update-these)
-  (refresh))
-
 (defn-spec remove-many-addons nil?
   "deletes each of the addons in the given `toc-list` and then calls `refresh`"
   [installed-addon-list :addon/toc-list]
@@ -1084,27 +1021,6 @@
   "removes given installed addon"
   [installed-addon :addon/installed]
   (addon/remove-addon (selected-addon-dir) installed-addon)
-  (refresh))
-
-(defn-spec remove-selected nil?
-  []
-  (-> (get-state) :selected-installed vec remove-many-addons)
-  nil)
-
-(defn-spec ignore-selected nil?
-  "marks each of the selected addons as being 'ignored'"
-  []
-  (->> (get-state) :selected-installed (map :dirname) (run! (partial nfo/ignore (selected-addon-dir))))
-  (refresh))
-
-(defn-spec clear-ignore-selected nil?
-  "removes the 'ignore' flag from each of the selected addons."
-  []
-  (->> (get-state :selected-installed)
-       (mapv addon/ungroup-addon)
-       flatten
-       (mapv :dirname)
-       (run! (partial addon/clear-ignore (selected-addon-dir))))
   (refresh))
 
 ;;

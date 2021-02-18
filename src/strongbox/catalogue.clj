@@ -7,6 +7,7 @@
    [taoensso.tufte :as tufte :refer [p profile]]
    [java-time]
    [strongbox
+    [addon]
     [tags :as tags]
     [utils :as utils :refer [todt]]
     [specs :as sp]
@@ -30,8 +31,16 @@
     (try
       (if-not (contains? dispatch-map key)
         (error (format "addon '%s' is from source '%s' that is unsupported" (:label addon) key))
-        (when-let [source-updates ((get dispatch-map key) addon game-track)]
-          (merge addon source-updates)))
+        (let [release-list ((get dispatch-map key) addon game-track)
+              latest-release (first release-list)
+              pinned-release (when (and release-list
+                                        (contains? addon :pinned-version))
+                               (strongbox.addon/find-pinned-release (assoc addon :release-list release-list)))
+              source-updates (or pinned-release latest-release)]
+          (when source-updates
+            (-> addon
+                (merge source-updates {:release-list release-list})
+                (dissoc :release-label)))))
       (catch Exception e
         (error e "unhandled exception attempting to expand addon summary")
         (error "please report this! https://github.com/ogri-la/strongbox/issues")))))

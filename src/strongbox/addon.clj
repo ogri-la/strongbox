@@ -91,7 +91,7 @@
                          primary (first (filter :primary? addons))
                          next-best (first addons)
                          new-data {:group-addons addons
-                                   :group-addon-count (count addons)}
+                                   :group-addon-count (count addons)} ;; todo: do I need this?
                          next-best-label (-> next-best :group-id fs/base-name)
                          ;; add a group-level ignore flag if any bundled addon is being ignored
                          ;; todo: test for this
@@ -194,7 +194,7 @@
         ;; not a show stopper, but if there are bundled addons and they don't share a common prefix, let the user know
         suspicious-bundle-check (fn []
                                   (let [sus-addons (zip/inconsistently-prefixed zipfile-entries)
-                                        msg "%s will install inconsistently prefixed addons: %s"]
+                                        msg "%s will also install these addons: %s"]
                                     (when sus-addons
                                       (warn (format msg (:label addon) (clojure.string/join ", " sus-addons))))))
 
@@ -255,13 +255,14 @@
 
 ;;
 
+;; todo: does this have tests? is it flawed like pinned-dir-list is?
 (defn-spec ignored-dir-list (s/coll-of ::sp/dirname)
   "returns a list of unique addon directory names (including grouped addons) that are not being ignored"
   [addon-list (s/nilable :addon/installed-list)]
   (->> addon-list (filter :ignore?) (map :group-addons) flatten (map :dirname) (remove nil?) set))
 
 (defn-spec overwrites-ignored? boolean?
-  "returns true if given archive file would unpack over *any* ignored addon.
+  "returns `true` if given archive file would unpack over *any* ignored addon.
   this includes already installed versions of itself and is another check against modifying ignored addons."
   [downloaded-file ::sp/archive-file, addon-list (s/nilable :addon/installed-list)]
   (let [ignore-list (ignored-dir-list addon-list)
@@ -272,8 +273,6 @@
                           (mapv #(utils/rtrim % "/")))
         zip-dir-in-ignore-dir-list? (fn [zip-dir] (some #{zip-dir} ignore-list))]
     (utils/any (map zip-dir-in-ignore-dir-list? zip-dir-list))))
-
-;;
 
 (defn-spec implicitly-ignored? boolean?
   "returns `true` if the addon in the given `install-dir`+`addon-dirname` directory is being implicitly ignored.
@@ -291,3 +290,85 @@
   (if (implicitly-ignored? install-dir addon-dirname)
     (nfo/stop-ignoring install-dir addon-dirname)
     (nfo/clear-ignore install-dir addon-dirname)))
+
+;;
+
+(defn flatten-addon
+  "given an `addon`, returns a list of that addon's members (that includes itself) or the addon wrapped in a list."
+  [addon]
+  (if-let [group-members (:group-addons addon)]
+    group-members
+    [addon]))
+
+(defn-spec pin nil?
+  "pins an `addon` and all of it's group members (if any) to the given `version` or the `:installed-version` when missing.
+  if addon does not have an `:installed-version` it will fail silently."
+  ([install-dir ::sp/install-dir, addon :addon/toc]
+   (when-let [installed-version (:installed-version addon)]
+     (pin install-dir addon installed-version)))
+  ([install-dir ::sp/install-dir, addon :addon/toc, version :addon/pinned-version]
+   (->> addon
+        flatten-addon
+        (map :dirname)
+        (run! #(nfo/pin install-dir % version)))))
+
+(defn-spec unpin nil?
+  "unpins an `addon` and all of it's group members. 
+  if an addon is not pinned it will fail silently."
+  [install-dir ::sp/extant-dir, addon :addon/toc]
+  (->> addon
+       flatten-addon
+       (map :dirname)
+       (run! #(nfo/unpin install-dir %))))
+
+(defn-spec pinned-dir-list (s/coll-of ::sp/dirname)
+  "returns a set of unique addon directory names (including grouped addons) that are pinned"
+  [addon-list (s/nilable :addon/installed-list)]
+  (into (->> addon-list (filter :pinned-version) (map :dirname) (remove nil?) set)
+        (->> addon-list (map :group-addons) flatten (filter :pinned-version) (map :dirname) (remove nil?))))
+
+(defn-spec overwrites-pinned? boolean?
+  "returns `true` if given `downloaded-file` would unpack over any pinned addons.
+  this includes already installed versions of itself."
+  [downloaded-file ::sp/archive-file, addon-list (s/nilable :addon/installed-list)]
+  (let [pinned-list (pinned-dir-list addon-list)
+        zip-dir-list (->> downloaded-file
+                          zip/zipfile-normal-entries
+                          zip/top-level-directories
+                          (map :path)
+                          (mapv #(utils/rtrim % "/")))
+        zip-dir-in-pinned-dir-list? (fn [zip-dir] (some #{zip-dir} pinned-list))]
+    (utils/any (map zip-dir-in-pinned-dir-list? zip-dir-list))))
+
+(defn-spec find-release (s/or :ok :addon/source-updates :not-found nil?)
+  "returns the first release from an addon's `:release-list` that matches the addon's `:installed-version`"
+  [addon :addon/expanded]
+  (some->> addon :release-list (filter #(= (:installed-version addon) (:version %))) first))
+
+(defn-spec find-pinned-release (s/or :ok :addon/source-updates :not-found nil?)
+  "returns the first release from an addon's `:release-list` that matches the addon's `:pinned-version`"
+  [addon :addon/expandable]
+  (when-let [{:keys [pinned-version]} addon]
+    (some->> addon :release-list (filter #(= pinned-version (:version %))) first)))
+
+(defn-spec updateable? boolean?
+  "returns `true` when given `addon` can be updated to a newer version"
+  [addon map?] ;; deliberately lenient. called from all over
+  (let [{:keys [installed-version pinned-version version]} addon]
+    (boolean
+     (and version
+          (not (:ignore? addon))
+          (if pinned-version
+            ;; a pinned addon can only be *updated* if its installed version doesn't match its pinned version and it's pinned version matches the available version.
+            (and
+             (not= installed-version pinned-version)
+             (= pinned-version version))
+
+            (not= version installed-version))))))
+
+(defn-spec re-installable? boolean?
+  "returns `true` if given `addon` can be re-installed to its current `:installed-version`."
+  [addon map?] ;; deliberately lenient. it's called directly from the gui
+  (boolean
+   (when (contains? addon :release-list)
+     (some? (find-release addon)))))
