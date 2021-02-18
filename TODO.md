@@ -6,21 +6,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* version pinning
-    - user can opt to install a specific release of an addon
-    - automatic updates for that addon are thereafter blocked
-    - done
-
-* gui, 're-install' for an addon that has an update available will update the addon
-    - it implies the same version would be installed
-    - strongbox doesn't support version pinning yet either
-        - it does now!
-    - done
-
-* issue #229, pane not resizing properly at larger resolutions
-    - https://github.com/ogri-la/strongbox/issues/229
-    - done
-
 ## todo
 
 ## todo bucket (no particular order)
