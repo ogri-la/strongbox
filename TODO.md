@@ -17,10 +17,11 @@ see CHANGELOG.md for a more formal list of changes by release
         - it does now!
     - done
 
-## todo
-
 * issue #229, pane not resizing properly at larger resolutions
     - https://github.com/ogri-la/strongbox/issues/229
+    - done
+
+## todo
 
 ## todo bucket (no particular order)
 

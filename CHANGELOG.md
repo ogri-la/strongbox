@@ -14,6 +14,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## 3.3.0
+
+### Added
+
+* installing previous releases of addons. 
+    - Right-click an addon and select *Releases*.
+    - curseforge and github only. wowi and tukui will only ever have a single, latest release available.
+    - previous curseforge releases are limited to the most stable release of that addon by game version.
+* release pinning
+    - similar to 'ignore', pinning an addon at a specific release ensures the addon is not upgraded.
+    - pinning an addon also prevents any grouped addons from being overwritten.
+
+### Changed
+
+* 're-install' will now attempt to re-install the version of the addon that is currently installed
+    - if this version cannot be found in the list of available versions, then the latest version will be used.
+* context menu actions now more accurately reflect what options are available.
+    - unavailable actions are disabled.
+    - bulk operations when many addons are selected may have different actions available.
+
+### Fixed
+
+* issue #229, "Limited pane size when vertically resizing window"
+    - the gui wasn't positioning it's components as well as it could once vertical resolution exceeded 768px
+    - thanks to @DarkVirtue for raising the issue
+
+### Removed
+
 ## 3.2.1
 
 ### Fixed
