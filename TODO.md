@@ -8,6 +8,36 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+* remove gui1
+    - remove original db-search
+
+* gui, new tab for dedicated log
+
+* per-addon logging
+    - I want the user to see a list of messages regarding that *specific* addon
+    - when emitting a log line about a particular addon, capture that addon's source and source-id somehow
+
+* gui, download progress bar *inside* the grid ...?
+    - pure fantasy?
+    - defer until after job queue
+
+* greater parallelism
+    - internal job queue
+    - replace log at bottom of screen with a list of jobs being processed and how far along they are
+        - each job can be cancelled/stopped/discarded
+    - separate tab for log
+        - that scrolls the other way
+* a 'stop' button to stop updates would be nice
+* download addon details in parallel
+    - speed benefits, mostly
+    - share a pool of connections between threads
+        - N connections serving M threads
+* performance, check addons for updates immediately after loading
+    - if after we've read the nfo data and we have everything we need, check the addon for updates immediately
+        - don't wait for db loading and addon matching
+            - we already have a match!
+        - this might fit in with the greater-parallelism/queue based infrastructure
+
 ## todo bucket (no particular order)
 
 * alpha/beta opt-in
@@ -26,15 +56,8 @@ see CHANGELOG.md for a more formal list of changes by release
 * dedicated tab for "user-catalogue" ?
     - add, delete, update github addons
     - see accumulating release history for addons?
-        - 
 
 * preferences, "update all addons automatically"
-
-* gui, new tab for dedicated log
-
-* per-addon logging
-    - I want the user to see a list of messages regarding that *specific* addon
-    - when emitting a log line about a particular addon, capture that addon's source and source-id somehow
 
 * import, skip importing an addon if addon already exists in addon dir
 
@@ -55,7 +78,7 @@ see CHANGELOG.md for a more formal list of changes by release
         - nothing wrong with that, but ...
 
 * http, add a timeout for requests
-    - I have tukui API taking a looooong time``s
+    - I have tukui API taking a looooong time
 
 * add support for finding addons by url for other hosts
     - wowinterface
@@ -139,7 +162,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - investigate just what is being downloaded when a classic version of a wowi addon is downloaded
     - see 'LagBar'
 
-
 * bug, changing sort order during refresh doesn't reflect which addon is being updated
     - I think changing column ordering and moving columns should be disabled while updates happen
         - just freeze or disable them or something.
@@ -195,9 +217,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - Akitools has no english description but it does have a "Notes-zhCN" in the toc file that could be used
     - wowman was mentioned on a french forum the other day ..
 
-* gui, download progress bar *inside* the grid ...?
-    - pure fantasy?
-    - defer until after job queue
 * gui, toggleable highlighers as a menuitem
     - highlight unmatched
     - highlight updates
@@ -242,25 +261,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * cli, replace with a repl
     - lein --cli gives you access to the code directly
 
-## job queue
-
-* greater parallelism
-    - internal job queue
-    - replace log at bottom of screen with a list of jobs being processed and how far along they are
-        - each job can be cancelled/stopped/discarded
-    - separate tab for log
-        - that scrolls the other way
-* a 'stop' button to stop updates would be nice
-* download addon details in parallel
-    - speed benefits, mostly
-    - share a pool of connections between threads
-        - N connections serving M threads
-* performance, check addons for updates immediately after loading
-    - if after we've read the nfo data and we have everything we need, check the addon for updates immediately
-        - don't wait for db loading and addon matching
-            - we already have a match!
-        - this might fit in with the greater-parallelism/queue based infrastructure
-
 ## unified UI
 
 * remove log split
@@ -270,11 +270,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - installed
     - updates
     - category ...
-
-## 4.0 major release
-
-* remove gui1
-    - remove original db-search
 
 ## wontfix
 
