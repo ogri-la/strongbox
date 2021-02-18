@@ -10,17 +10,13 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * remove gui1
     - remove original db-search
-
 * gui, new tab for dedicated log
-
 * per-addon logging
     - I want the user to see a list of messages regarding that *specific* addon
     - when emitting a log line about a particular addon, capture that addon's source and source-id somehow
-
 * gui, download progress bar *inside* the grid ...?
     - pure fantasy?
     - defer until after job queue
-
 * greater parallelism
     - internal job queue
     - replace log at bottom of screen with a list of jobs being processed and how far along they are
