@@ -20,36 +20,6 @@
     [catalogue :as catalogue]
     [specs :as sp]]))
 
-;; todo: remove when old gui is removed
-(def game-tracks [:retail :classic])
-
-(def -colour-map
-  {:notice/error :tomato
-   :notice/warning :lemonchiffon
-   ;;:installed/unmatched :tomato
-   :installed/ignored-bg nil
-   :installed/ignored-fg :darkgray
-   :installed/needs-updating :lemonchiffon
-   :installed/hovering "#e6e6e6" ;; light grey
-   :search/already-installed "#99bc6b" ;; greenish
-   :hyperlink :blue})
-
-;; inverse colours of -colour-map
-(def -dark-colour-map
-  {:notice/error "#009CB8"
-   :notice/warning "#000532"
-   ;;:installed/unmatched :tomato
-   :installed/ignored-bg nil
-   :installed/ignored-fg "#666666"
-   :installed/needs-updating "#000532"
-   :installed/hovering "#191919"
-   :search/already-installed "#664394"
-   :hyperlink :yellow})
-
-(def themes
-  {:light -colour-map
-   :dark -dark-colour-map})
-
 (def default-config-dir "~/.config/strongbox")
 (def default-data-dir "~/.local/share/strongbox")
 
@@ -142,17 +112,8 @@
 
    ;; ui
 
-   ;; the root swing window
-   :gui nil
-
    ;; jfx ui showing?
    :gui-showing? false
-
-   ;; set to anything other than `nil` to have `main.clj` restart the gui
-   ;;:gui-restart-flag nil ;; 2020-12: disabled, swing gui can't switch themes anymore.
-
-   ;; which of the addon directories is currently selected
-   ;;:selected-addon-dir nil ;; moved to [:cfg :selected-addon-dir]
 
    ;; addons in an unsteady state (data being updated, addon being installed, etc)
    ;; allows a UI to watch and update with progress
@@ -160,16 +121,6 @@
 
    ;; a sublist of merged toc+addon that are selected
    :selected-installed []
-
-   :search-field-input nil
-
-   ;; results of searching db for `:search-field-input`
-   :search-results []
-
-   :selected-search []
-   ;; number of results to display in search results pane.
-   ;; adjust to whatever performs the best
-   :search-results-cap 80
 
    :search {:term nil
             :page 0
@@ -190,11 +141,6 @@
   "like `get-in` and `get-state` but for the map of paths being used. requires running app"
   [& path]
   (nav-map (get-state :paths) path))
-
-(defn colours
-  "like `get-in` but for the currently selected colour theme. requires running app"
-  [& path]
-  (nav-map (get themes (get-state :cfg :gui-theme)) path))
 
 ;;
 
@@ -599,26 +545,12 @@
   []
   (-> (get-state :db) nil? not))
 
-(defn-spec db-search :addon/summary-list
-  "searches database for addons whose name or description contains given user input.
-  if no user input, returns a list of randomly ordered results"
-  ([]
-   ;; random list of addons, no preference
-   (db-search nil))
-  ([uin (s/nilable string?)]
-   (let [empty-results []
-         args [(utils/nilable uin) (get-state :search-results-cap)]]
-     (or (query-db :search args) empty-results))))
-
 (defn db-search-2
   "searches database for addons whose name or description contains given user input.
   if no user input, returns a list of randomly ordered results"
-  ([]
-   ;; random list of addons, no preference
-   (db-search nil))
-  ([search-term]
-   (let [args [(utils/nilable search-term) (get-state :search :results-per-page)]]
-     (query-db :search-2 args))))
+  [search-term]
+  (let [args [(utils/nilable search-term) (get-state :search :results-per-page)]]
+    (query-db :search-2 args)))
 
 (defn-spec load-current-catalogue (s/or :ok :catalogue/catalogue, :error nil?)
   "merges the currently selected catalogue with the user-catalogue and returns the definitive list of addons 
@@ -981,8 +913,8 @@
 
 ;;
 
-(defn refresh
-  [& _] ;; todo: remove args with swing gui + spec
+(defn-spec refresh nil?
+  []
   (profile
    {:when (get-state :profile?)}
 

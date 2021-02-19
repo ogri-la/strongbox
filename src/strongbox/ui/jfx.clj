@@ -673,7 +673,7 @@
       (mapv rb catalogue-location-list))))
 
 (defn-spec build-theme-menu ::sp/list-of-maps
-  "returns a list of radio button descriptions that can toggle through the available themes defined in `core/themes`"
+  "returns a list of radio button descriptions that can toggle through the available themes defined in `themes`"
   [selected-theme ::sp/gui-theme, theme-map map?]
   (let [rb (fn [theme-key]
              {:fx/type :radio-menu-item

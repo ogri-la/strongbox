@@ -13,7 +13,7 @@
 
 (deftest gui-init
   (testing "the gui can be started and stopped"
-    (with-running-app+opts {:ui :gui2}
+    (with-running-app+opts {:ui :gui}
       (is (core/get-state :gui-showing?))
       ;; give time for the init to finish
       (Thread/sleep 1000))))
