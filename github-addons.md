@@ -1,4 +1,14 @@
-# examples of github addons supported by strongbox
+# examples of Github addons supported by strongbox
+
+A Github **release** may have many **assets**.
+
+Each **asset** in a release must, at a minimum, be a fully uploaded zip file.
+
+Each candidate asset is then inspected for the presence of 'retail' or 'classic' or both or neither.
+
+The remote addon `.toc` file is looked for in the root of the code directory and it's `Interface` value inspected.
+
+Below are some supported examples of each case.
 
 ## single asset, classic, no toc file, 'classic' in asset name
 * https://github.com/wardz/ClassicCastbars
@@ -21,9 +31,6 @@
 * https://github.com/ascott18/TellMeWhen
 
 ## single asset, retail and classic (template .toc file), no 'classic' in asset name
-
-(how ...?)
-
 * https://github.com/sylvanaar/wow-instant-messenger
 * https://github.com/sylvanaar/prat-3-0
 * https://github.com/sylvanaar/who-lib 
@@ -36,7 +43,6 @@
 ## multi asset, retail and classic, no 'classic' in asset name
 
 ...?
-
 
 # unsupported, but would love to support:
 

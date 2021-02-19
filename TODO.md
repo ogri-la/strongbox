@@ -33,8 +33,13 @@ see CHANGELOG.md for a more formal list of changes by release
         - don't wait for db loading and addon matching
             - we already have a match!
         - this might fit in with the greater-parallelism/queue based infrastructure
+* remove 'hostname' from log output
+    - update privacy section in readme
+* bug, 'strongbox.version' in debug output is null when run as a binary
 
 ## todo bucket (no particular order)
+
+* cli, exports
 
 * alpha/beta opt-in
     - user can opt to install alpha/beta/no-lib releases per-addon
@@ -54,6 +59,7 @@ see CHANGELOG.md for a more formal list of changes by release
     - see accumulating release history for addons?
 
 * preferences, "update all addons automatically"
+    - update README features
 
 * import, skip importing an addon if addon already exists in addon dir
 
