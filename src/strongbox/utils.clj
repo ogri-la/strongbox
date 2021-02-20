@@ -514,15 +514,17 @@
     (catch Exception uncaught-exception
       (error uncaught-exception "failed to call `which`"))))
 
-(defn-spec java-browser (s/or :ok fn? :error nil?)
-  "returns a function that will open a given URL in a browser, or nil if 
+(comment
+  "disabled 2021-02. java.desktop removed from list of modules compiled into JRE to save ~8MiB"
+  (defn-spec java-browser (s/or :ok fn? :error nil?)
+    "returns a function that will open a given URL in a browser, or nil if 
   current Desktop is not supported"
-  []
-  (when (and (java.awt.Desktop/isDesktopSupported)
-             (.isSupported (java.awt.Desktop/getDesktop) java.awt.Desktop$Action/BROWSE))
-    (fn [url]
-      (info "opening URL:" url)
-      (.browse (java.awt.Desktop/getDesktop) (java.net.URI. url)))))
+    []
+    (when (and (java.awt.Desktop/isDesktopSupported)
+               (.isSupported (java.awt.Desktop/getDesktop) java.awt.Desktop$Action/BROWSE))
+      (fn [url]
+        (info "opening URL:" url)
+        (.browse (java.awt.Desktop/getDesktop) (java.net.URI. url))))))
 
 (defn-spec find-browser fn?
   "returns a function that attempts to open a given URL in a browser.
@@ -532,7 +534,11 @@
         gnome-open #(browser "gnome-open")
         kde-open #(browser "kde-open")
         fail (constantly #(error "failed to find a program to open URL:" (str %)))]
-    (loop [lst [java-browser xdg-open gnome-open kde-open fail]]
+    (loop [lst [;;java-browser ;; disabled 2021-02
+                xdg-open
+                gnome-open
+                kde-open
+                fail]]
       (if-let [browser-fn ((first lst))]
         browser-fn
         (recur (rest lst))))))

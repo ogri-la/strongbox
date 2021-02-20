@@ -7,7 +7,7 @@ rm -rf "./$output_dir"
 
 echo "--- building custom JRE ---"
 jlink \
-    --add-modules "java.sql,java.naming,java.desktop,jdk.unsupported,jdk.crypto.ec" \
+    --add-modules "java.sql,java.naming,jdk.unsupported,jdk.crypto.ec" \
     --output "$output_dir" \
     --strip-debug \
     --no-man-pages \
