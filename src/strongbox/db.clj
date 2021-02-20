@@ -97,28 +97,10 @@
   (let [xf (filter #(= name (:name %)))]
     (into [] xf db)))
 
-(defn-spec -search :addon/summary-list
-  "returns a list of addon summaries whose label or description matches the given user input `uin`.
-  matches are case insensitive.
-  label-matching matches from the beginning of the label.
-  description-matching matches any substring within description"
-  [db :addon/summary-list, uin (s/nilable string?), cap int?]
-  (let [pct (->> db count (max 1) (/ 100) (* 0.6))]
-    (if (nil? uin)
-      (take cap (random-sample pct db))
-      (let [label-regex (re-pattern (str "(?i)^" uin ".*"))
-            desc-regex (re-pattern (str "(?i).*" uin ".*"))
-            ;; a little slow and naive, but ok for now
-            xf (filter (fn [row]
-                         (or
-                          (re-find label-regex (:label row))
-                          (re-find desc-regex (get row :description "")))))]
-        (into [] (comp xf (take cap)) db)))))
-
-(defn -search-2
+(defn -search
   "returns a lazily fetched and paginated list of addon summaries.
-  unlike `-search`, `-search-2` results are constructed using a `seque` that (somehow)
-  bypasses chunking behaviour so our slow search never takes more than `cap` results.
+  results are constructed using a `seque` that (somehow) bypasses chunking behaviour so our
+  slow search never takes more than `cap` results.
   matches are case insensitive.
   label-matching matches from the beginning of the label.
   description-matching matches any substring within description.
@@ -147,5 +129,4 @@
     :addon-by-source-and-name (-addon-by-source-and-name db (first arg-list) (second arg-list))
     :addon-by-name (-addon-by-name db (first arg-list))
     :search (-search db (first arg-list) (second arg-list))
-    :search-2 (-search-2 db (first arg-list) (second arg-list))
     nil))

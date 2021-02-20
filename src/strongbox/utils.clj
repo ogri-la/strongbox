@@ -3,6 +3,7 @@
    [strongbox
     [specs :as sp]
     [constants :as constants]]
+   [clojure.java.shell]
    [clojure.string :refer [trim lower-case]]
    [clojure.java.io]
    [clojure.spec.alpha :as s]

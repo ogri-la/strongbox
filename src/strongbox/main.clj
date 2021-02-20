@@ -16,11 +16,7 @@
     ;; this is a pita for exiting a non-javafx UI (cli) and aot as it just 'hangs'.
     ;; hanging aot is handled in project.clj, but dynamic inclusion of jfx is handled here.
     ;;[jfx :as jfx] 
-    [cli :as cli]
-    ;; 2020-12: on macs there is a bad interaction between jfx and swing that causes jfx to trigger a shutdown a few seconds to a minute after launch.
-    ;; not sure of the deeper reason, but if we don't pull in `gui` unless we need it, it bypasses the problem.
-    ;;[gui :as gui]
-    ])
+    [cli :as cli]])
   (:gen-class))
 
 (Thread/setDefaultUncaughtExceptionHandler
@@ -48,23 +44,11 @@
       :start ((ns-resolve jfx-ns 'start))
       :stop ((ns-resolve jfx-ns 'stop)))))
 
-(defn swing
-  "dynamically resolve the `strongbox.ui.gui` ns and call the requisite `action`.
-  `action` is either `:start` or `:stop`.
-  this is done because including the original gui ns directly on a mac causes the jfx ui to crash."
-  [action]
-  (require 'strongbox.ui.gui)
-  (let [swing-ns (find-ns 'strongbox.ui.gui)]
-    (case action
-      :start ((ns-resolve swing-ns 'start))
-      :stop ((ns-resolve swing-ns 'stop)))))
-
 (defn stop
   []
   (let [opts (:cli-opts @core/state)]
     (case (:ui opts)
       :cli (cli/stop)
-      :gui1 (swing :stop)
       :gui (jfx :stop)
       (jfx :stop))
     (core/stop core/state)))
@@ -80,7 +64,6 @@
   (core/start (merge {:profile? profile?, :spec? spec?} cli-opts))
   (case (:ui cli-opts)
     :cli (cli/start cli-opts)
-    :gui1 (swing :start)
     :gui (jfx :start)
     (jfx :start))
   nil)
@@ -156,7 +139,7 @@
    ["-u" "--ui UI" "ui is either 'gui' (graphical user interface, default) or 'cli' (command line interface)"
     ;;:default :gui ;; set after determining if --headless also set
     :parse-fn #(-> % lower-case keyword)
-    :validate [(in? [:cli :gui1 :gui])]]
+    :validate [(in? [:cli :gui])]]
 
    ["-a" "--action ACTION" (str "perform action and exit. action is one of: 'list', 'list-updates', 'update-all'," catalogue-action-str)
     :id :action

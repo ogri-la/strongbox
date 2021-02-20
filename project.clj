@@ -1,4 +1,4 @@
-(defproject ogri-la/strongbox "3.4.0-unreleased"
+(defproject ogri-la/strongbox "4.0.0-unreleased"
   :description "World Of Warcraft Addon Manager"
   :url "https://github.com/ogri-la/strongbox"
   :license {:name "GNU Affero General Public License (AGPL)"
@@ -14,7 +14,6 @@
                  [com.taoensso/timbre "4.10.0"] ;; logging
                  [enlive "1.1.6"] ;; html parsing
                  [clj-http "3.12.1"] ;; better http slurping
-                 [seesaw "1.5.0"] ;; swing
                  [clj-commons/fs "1.5.2"] ;; file system wrangling
                  [slugify "0.0.1"]
                  [trptcolin/versioneer "0.2.0"] ;; version number wrangling. it's more involved than you might suspect

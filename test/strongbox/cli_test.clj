@@ -171,7 +171,7 @@
           (is (not (contains? addon :pinned-version))))
 
         (cli/select-addons)
-        (is (= 1 (count (core/get-state :selected-installed))))
+        (is (= 1 (count (core/get-state :selected-addon-list))))
         (cli/pin)
 
         (let [addon (first (core/get-state :installed-addon-list))]
@@ -196,7 +196,7 @@
           (is (= "1.2.3" (:pinned-version addon))))
 
         (cli/select-addons)
-        (is (= 1 (count (core/get-state :selected-installed))))
+        (is (= 1 (count (core/get-state :selected-addon-list))))
         (cli/unpin)
 
         (let [addon (first (core/get-state :installed-addon-list))]
