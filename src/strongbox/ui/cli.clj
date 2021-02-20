@@ -238,7 +238,7 @@
 (defn-spec select-addons-search* nil?
   "sets the selected list of addons in application state for a later action"
   [selected-addons :addon/summary-list]
-  (swap! core/state assoc :selected-search selected-addons)
+  (swap! core/state assoc-in [:search :selected-results] selected-addons)
   nil)
 
 (defn-spec select-addons* nil?

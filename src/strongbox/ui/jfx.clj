@@ -634,9 +634,9 @@
   ;; original approach. efficient but no feedback for user
   ;; note: still true as of 2020-09?
   ;; todo: stick this in `cli.clj`
-  ;;(core/-install-update-these (map curseforge/expand-summary (get-state :selected-search))) 
+  ;;(core/-install-update-these (map curseforge/expand-summary (get-state :search :selected-results))) 
   ((switch-tab-handler INSTALLED-TAB) event)
-  (doseq [selected (core/get-state :selected-search)]
+  (doseq [selected (core/get-state :search :selected-results)]
     (some-> selected core/expand-summary-wrapper vector cli/-install-update-these)
     (core/load-installed-addons))
   ;; deselect rows in search table
@@ -991,6 +991,7 @@
                      {:text "tags" :pref-width 380 :min-width 230 :max-width 450 :cell-value-factory (comp str :tag-list)}
                      {:text "updated" :min-width 85 :max-width 120 :pref-width 100 :cell-value-factory (comp #(utils/safe-subs % 10)  :updated-date)}
                      {:text "downloads" :min-width 100 :max-width 120 :cell-value-factory :download-count}]]
+
     {:fx/type fx.ext.table-view/with-selection-props
      :props {:selection-mode :multiple
              ;; unlike gui.clj, we have access to the original data here. no need to re-select addons.
