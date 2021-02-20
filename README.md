@@ -46,21 +46,21 @@ Afterwards, use the `Update all` button to update all addons with new versions a
 
 ## Features
 
-* classic and retail addon support
-* catalogue search
-* bulk update
-* install addons from multiple sources:
+* [classic and retail addon support](#classic-and-retail-addon-support)
+* [catalogue search](#catalogue-search)
+* [bulk update](#bulk-update)
+* [install addons from multiple sources](#install-addons-from-multiple-sources):
     - [curseforge](https://www.curseforge.com/wow/addons)
     - [wowinterface](https://wowinterface.com/addons.php)
     - [tukui](https://www.tukui.org)
     - [github](https://www.github.com) using *releases*
-* import and export of lists of addons
-* safeguards against bad addons
-* warnings when addons install other bundled addons
-* ignore addons to prevent accidental changes
-* mutual dependency tracking and safer addon uninstallation
-* installing a previous release of an addon
-* pinning an addon to a specific release
+* [import and export of lists of addons](#import-and-export-lists-of-addons)
+* [safeguards against bad addons](#safeguards-against-bad-addons)
+* [warnings when addons install other bundled addons](#warnings-when-addons-install-other-bundled-addons)
+* [ignore addons to prevent accidental changes](#ignore-addons-to-prevent-accidental-changes)
+* [mutual dependency tracking](#mutual-dependency-tracking)
+* [installing a previous release of an addon](#installing-a-previous-release-of-an-addon)
+* [pinning an addon to a specific release](#pinning-an-adodn-to-a-specific-release)
 
 ## Recognition
 
@@ -128,50 +128,74 @@ bug. *Some* of the details it contains are:
 
 ### classic and retail addon support
 
-Addon developers and managers and hosts all scrambled to accommodate multiple game types when 'classic' was released.
+Addon developers, addon hosts and addon managers all scrambled to accommodate 'classic' WoW when it was released.
 
-No addon host currently handles this state well. Curseforge is complete but fat in some places, truncated and plain wrong in other places. The wowinterface API is a mix of plain wrong and missing data. Tukui has two instances of their API and is probably the sanest.
+Addons for 'classic' WoW are not the same as very old addons for vanilla WoW. 
 
-Strongbox calls these different versions of WoW 'game tracks'.
+Some addons support both retail and classic in a single download, some support classic as an 'alternate' download, some support classic only or vice versa, some addons have been split into two.
 
-Strongbox supports addon directories using strict 'retail' or 'classic' only game tracks as well as mixed game tracks by preferring one over the other.
+Click the drop-down next to your addon directory and select either `retail` or `classic` or `any, prefer retail` or `any, prefer classic`.
 
-[There will probably be BC and WotLK coming next](https://blizzardwatch.com/2021/02/12/will-wow-classic-incorporate-burning-crusade/)
-and the state of classic and retail addon support will only get messier.
+This will restrict the types of addons that can be installed in to the current addon directory. The last two options allow you to mix classic and retail addons together in the same addon directory. If an addon is available for both retail and classic it will prefer one over the other.
 
 ### catalogue search
 
-Strongbox uses lists of addons it creates from publicly available and accessible addon hosts and uses these 'catalogues' to find and install addons.
-
-The default catalogue strongbox uses is the 'short' catalogue. It contains all addons from all supported hosts that have been updated since the beginning of the previous expansion. At time of writing this is Battle For Azeroth, released 2018-08-14. The short catalogue is naturally truncated on each new expansion.
-
-The other catalogues available are 'full' (all addons from all hosts, ever) and per-host catalogues, so you can opt to use addons only from wowinterface or cursefurge or tukui if you'd prefer.
-
-Catalogues are updated weekly.
-
-There is also the 'user' catalogue that is empty but grows as the user (you) imports addons from hosts like Github. These addons also appear in search results and you may opt to install from a bleeding-edge development version of an addon than from a traditional host.
-
-### bulk update
-
-Many addons can be downloaded and installed in one operation.
-
-### install addons from multiple sources
-
-Strongbox supports the following addon hosts:
+Strongbox supports searching for addons from the following addon hosts:
 
 * [curseforge](https://www.curseforge.com/wow/addons)
 * [wowinterface](https://wowinterface.com/addons.php)
 * [tukui](https://www.tukui.org)
-* [github](https://www.github.com) using *releases*
 
-Addons hosted on Github must be [configured in a certain way](./github-addons.md) and make use of Github's 'releases' 
-feature.
+Click the `search` tab and start typing.
+
+When you search for an addon you are searching a list of thousands of addons that live in a file called a *catalogue*.
+
+Click `Catalogue` from the top menu and choose your preferred catalogue.
+
+The default catalogue is the 'short' catalogue. It contains all addons from all supported hosts that have been *updated* since *the beginning of the previous expansion*. This is currently Battle For Azeroth, released 2018-08-14 and the catalogue has approximately 7.5k addons.
+
+The 'full' catalogue contains all addons from all supported hosts, ever, and is approximately 15.3k addons large. It contains many addons that haven't been updated in years.
+
+There are also per-host catalogues and strongbox supports selecting between them.
+
+Catalogues are updated weekly.
+
+The 'user' catalogue is a little different. It's initially empty but grows as addons are imported from hosts like Github. These addons do appear in search results. Individual addons from the user catalogue are checked for new releases normally, but the catalogue itself can only be updated manually.
+
+Click `Catalogue` from the top menu and select `Refresh user catalogue`.
+
+The user catalogue lives at `~/.config/strongbox/user-catalogue.json`.
+
+### bulk update
+
+Many addons can be updated in one operation. Addons with updates available are highlighted.
+
+Click the `Update all` button next to your addon directory.
+
+### install addons from multiple sources
+
+Strongbox supports installing addons from the following addon hosts:
+
+* [curseforge](https://www.curseforge.com/wow/addons)
+* [wowinterface](https://wowinterface.com/addons.php)
+* [tukui](https://www.tukui.org)
+* [github](https://www.github.com), using *releases*
+
+Click the `search` tab and begin typing. Select the addon you wish to install and click the `install selected` button.
+
+Addons hosted on Github must meet [certain requirements](./github-addons.md) before they can be installed.
 
 ### import and export of lists of addons
 
 Your list of addons can be *exported* to a simple format that allows them to be *imported* again later.
 
-This allows for simple backups and sharing of lists of addons.
+Click `File` and then select `Export list of addons`.
+
+This allows for simple backups of the *current addon directory* and the sharing of lists of addons.
+
+Github addons installed in *any* addon directory can be exported as a single list.
+
+Click `File` and then select `Export Github addon list`.
 
 ### safeguards against bad addons
 
@@ -179,23 +203,23 @@ If a downloaded addon is corrupt or does not adhere to the common addon folder s
 
 ### warnings when addons install other bundled addons
 
-A warning is issued when an addon is unzipped and contains multiple directories with inconsistent naming.
+A warning is issued when an addon is unzipped and contains multiple *inconsistently named* directories.
 
 For example, installing [RealUI](https://github.com/RealUI/RealUI) will emit this warning:
 
 > RealUI will also install these addons: Kui_Media, Kui_Nameplates, Kui_Nameplates_Core, Kui_Nameplates_Core_Config, RealUI_Bugs, RealUI_Inventory, RealUI_Skins, RealUI_Tooltips, BadBoy, BadBoy_Guilded, BadBoy_CCleaner, Raven, Raven_Options, nibRealUI, nibRealUI_Config, Masque, Clique, Skada, Bartender4
 
-Strongbox leaves it to the user to decide if this is legitimate or not.
+It is up to the user to decide if this is OK or not.
 
 ### ignore addons to prevent accidental changes
 
-Addons can be 'ignored' and strongbox will not attempt to find that addon in the catalogue, look for or download updates or even allow the installation of other addons that may overwrite the ignored addon or any of its files.
+When an addon is ignored strongbox will not attempt to find that addon in the catalogue, look for or download updates or even allow the installation of other addons that may alter the ignored addon or any of its files.
 
 Right-click an addon and select `Ignore` or `Stop ignoring`.
 
 Addons under development are automatically ('implicitly') ignored.
 
-### mutual dependency tracking and safer addon uninstallation
+### mutual dependency tracking
 
 A 'mutual dependency' in strongbox is when 'Addon A' installs an addon called 'Addon Z' and 'Addon B' *also* installs 'Addon Z'.
 

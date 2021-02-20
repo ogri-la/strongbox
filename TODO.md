@@ -6,10 +6,13 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
+* remove gui1
+    - done
+    - remove original db-search
+        - done
+
 ## todo
 
-* remove gui1
-    - remove original db-search
 * gui, new tab for dedicated log
 * per-addon logging
     - I want the user to see a list of messages regarding that *specific* addon
