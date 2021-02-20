@@ -545,12 +545,12 @@
   []
   (-> (get-state :db) nil? not))
 
-(defn db-search-2
+(defn db-search
   "searches database for addons whose name or description contains given user input.
   if no user input, returns a list of randomly ordered results"
   [search-term]
   (let [args [(utils/nilable search-term) (get-state :search :results-per-page)]]
-    (query-db :search-2 args)))
+    (query-db :search args)))
 
 (defn-spec load-current-catalogue (s/or :ok :catalogue/catalogue, :error nil?)
   "merges the currently selected catalogue with the user-catalogue and returns the definitive list of addons 

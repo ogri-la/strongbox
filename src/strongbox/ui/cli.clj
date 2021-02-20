@@ -129,7 +129,7 @@
    [:search :term]
    (fn [new-state]
      (future
-       (let [results (core/db-search-2 (-> new-state :search :term))]
+       (let [results (core/db-search (-> new-state :search :term))]
          (swap! core/state assoc-in [:search :results] results))))))
 
 (defn-spec set-preference nil?

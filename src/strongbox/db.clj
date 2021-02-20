@@ -97,10 +97,10 @@
   (let [xf (filter #(= name (:name %)))]
     (into [] xf db)))
 
-(defn -search-2
+(defn -search
   "returns a lazily fetched and paginated list of addon summaries.
-  unlike `-search`, `-search-2` results are constructed using a `seque` that (somehow)
-  bypasses chunking behaviour so our slow search never takes more than `cap` results.
+  results are constructed using a `seque` that (somehow) bypasses chunking behaviour so our
+  slow search never takes more than `cap` results.
   matches are case insensitive.
   label-matching matches from the beginning of the label.
   description-matching matches any substring within description.
@@ -128,5 +128,5 @@
   (case query-kw
     :addon-by-source-and-name (-addon-by-source-and-name db (first arg-list) (second arg-list))
     :addon-by-name (-addon-by-name db (first arg-list))
-    :search-2 (-search-2 db (first arg-list) (second arg-list))
+    :search (-search db (first arg-list) (second arg-list))
     nil))
