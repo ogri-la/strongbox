@@ -117,7 +117,7 @@
 
    ;; addons in an unsteady state (data being updated, addon being installed, etc)
    ;; allows a UI to watch and update with progress
-   :unsteady-addons #{}
+   :unsteady-addon-list #{}
 
    ;; a sublist of merged toc+addon that are selected
    :selected-installed []
@@ -329,16 +329,16 @@
 
 (defn start-affecting-addon
   [addon]
-  (swap! state update-in [:unsteady-addons] clojure.set/union #{(:name addon)}))
+  (swap! state update-in [:unsteady-addon-list] clojure.set/union #{(:name addon)}))
 
 (defn stop-affecting-addon
   [addon]
-  (swap! state update-in [:unsteady-addons] clojure.set/difference #{(:name addon)}))
+  (swap! state update-in [:unsteady-addon-list] clojure.set/difference #{(:name addon)}))
 
 (defn-spec unsteady? boolean?
   "returns `true` if given `addon` is being updated"
   [addon-name ::sp/name]
-  (utils/in? addon-name (get-state :unsteady-addons)))
+  (utils/in? addon-name (get-state :unsteady-addon-list)))
 
 (defn affects-addon-wrapper
   [wrapped-fn]

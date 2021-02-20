@@ -912,7 +912,7 @@
 (defn installed-addons-table
   [{:keys [fx/context]}]
   ;; subscribe to re-render table when addons become unsteady
-  (fx/sub-val context get-in [:app-state :unsteady-addons])
+  (fx/sub-val context get-in [:app-state :unsteady-addon-list])
   (let [row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
         selected (fx/sub-val context get-in [:app-state :selected-installed])
 
