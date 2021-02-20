@@ -634,9 +634,9 @@
   ;; original approach. efficient but no feedback for user
   ;; note: still true as of 2020-09?
   ;; todo: stick this in `cli.clj`
-  ;;(core/-install-update-these (map curseforge/expand-summary (get-state :search :selected-results))) 
+  ;;(core/-install-update-these (map curseforge/expand-summary (get-state :search :selected-result-list))) 
   ((switch-tab-handler INSTALLED-TAB) event)
-  (doseq [selected (core/get-state :search :selected-results)]
+  (doseq [selected (core/get-state :search :selected-result-list)]
     (some-> selected core/expand-summary-wrapper vector cli/-install-update-these)
     (core/load-installed-addons))
   ;; deselect rows in search table

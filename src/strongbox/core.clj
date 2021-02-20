@@ -125,7 +125,7 @@
    :search {:term nil
             :page 0
             :results []
-            :selected-results []
+            :selected-result-list []
             :results-per-page 60}})
 
 (def state (atom nil))

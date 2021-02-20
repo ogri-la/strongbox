@@ -4,7 +4,7 @@
   <groupId>ogri-la</groupId>
   <artifactId>strongbox</artifactId>
   <packaging>jar</packaging>
-  <version>3.3.0</version>
+  <version>4.0.0-unreleased</version>
   <name>strongbox</name>
   <description>World Of Warcraft Addon Manager</description>
   <url>https://github.com/ogri-la/strongbox</url>
@@ -18,7 +18,7 @@
     <url>https://github.com/ogri-la/strongbox</url>
     <connection>scm:git:git://github.com/ogri-la/strongbox.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/ogri-la/strongbox.git</developerConnection>
-    <tag>9b3efb0dd48022d95bdd2ac797f731f43aeed05a</tag>
+    <tag>f6cd3a6db21d6c9011394d5f6da9b037cdd6d3bc</tag>
   </scm>
   <build>
     <sourceDirectory>src</sourceDirectory>
@@ -107,11 +107,6 @@
       <groupId>clj-http</groupId>
       <artifactId>clj-http</artifactId>
       <version>3.12.1</version>
-    </dependency>
-    <dependency>
-      <groupId>seesaw</groupId>
-      <artifactId>seesaw</artifactId>
-      <version>1.5.0</version>
     </dependency>
     <dependency>
       <groupId>clj-commons</groupId>
