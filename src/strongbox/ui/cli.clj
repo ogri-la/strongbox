@@ -150,13 +150,13 @@
 (defn-spec pin nil?
   "pins the currently selected addons to their current `:installed-version` versions."
   []
-  (run! #(addon/pin (core/selected-addon-dir) %) (get-state :selected-installed))
+  (run! #(addon/pin (core/selected-addon-dir) %) (get-state :selected-addon-list))
   (core/refresh))
 
 (defn-spec unpin nil?
   "unpins the currently selected addons, regardless of whether they are pinned or not."
   []
-  (run! #(addon/unpin (core/selected-addon-dir) %) (get-state :selected-installed))
+  (run! #(addon/unpin (core/selected-addon-dir) %) (get-state :selected-addon-list))
   (core/refresh))
 
 (defn-spec -find-replace-release (s/or :ok :addon/expanded, :release-not-found nil?)
@@ -176,7 +176,7 @@
 (defn-spec re-install-or-update-selected nil?
   "re-installs (if possible) or updates all selected addons"
   []
-  (->> (get-state :selected-installed)
+  (->> (get-state :selected-addon-list)
        (filter core/expanded?)
        (map -find-replace-release)
        -install-update-these)
@@ -194,7 +194,7 @@
 (defn-spec update-selected nil?
   "updates all selected addons that have updates available"
   []
-  (->> (get-state :selected-installed)
+  (->> (get-state :selected-addon-list)
        (filter addon/updateable?)
        -install-update-these)
   (core/refresh))
@@ -211,13 +211,13 @@
   "deletes all selected addons. 
   GUI should have popped up a confirmation beforehand ;)"
   []
-  (core/remove-many-addons (get-state :selected-installed)))
+  (core/remove-many-addons (get-state :selected-addon-list)))
 
 ;; todo: shift this to addon.clj
 (defn-spec ignore-selected nil?
   "marks each of the selected addons as being 'ignored'"
   []
-  (->> (get-state :selected-installed)
+  (->> (get-state :selected-addon-list)
        (map :dirname)
        (run! (partial nfo/ignore (core/selected-addon-dir))))
   (core/refresh))
@@ -226,7 +226,7 @@
 (defn-spec clear-ignore-selected nil?
   "removes the 'ignore' flag from each of the selected addons."
   []
-  (->> (get-state :selected-installed)
+  (->> (get-state :selected-addon-list)
        (mapv addon/ungroup-addon)
        flatten
        (mapv :dirname)
@@ -244,7 +244,7 @@
 (defn-spec select-addons* nil?
   "sets the selected list of addons to the given `selected-addons` for bulk operations like 'update', 'delete', 'ignore', etc"
   [selected-addons :addon/installed-list]
-  (swap! core/state assoc :selected-installed selected-addons)
+  (swap! core/state assoc :selected-addon-list selected-addons)
   nil)
 
 (defn-spec select-addons nil?

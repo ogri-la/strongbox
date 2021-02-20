@@ -612,7 +612,7 @@
 (defn delete-selected-confirmation-handler
   "prompts the user to confirm if they *really* want to delete those addons they just selected and clicked 'delete' on"
   [event]
-  (when-let [selected (core/get-state :selected-installed)]
+  (when-let [selected (core/get-state :selected-addon-list)]
     (if (utils/any (mapv :ignore? selected))
       (alert :error "Selection contains ignored addons. Stop ignoring them and then delete.")
 
@@ -914,7 +914,7 @@
   ;; subscribe to re-render table when addons become unsteady
   (fx/sub-val context get-in [:app-state :unsteady-addon-list])
   (let [row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
-        selected (fx/sub-val context get-in [:app-state :selected-installed])
+        selected (fx/sub-val context get-in [:app-state :selected-addon-list])
 
         iface-version (fn [row]
                         (some-> row :interface-version str utils/interface-version-to-game-version))

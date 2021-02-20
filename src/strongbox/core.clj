@@ -120,7 +120,7 @@
    :unsteady-addon-list #{}
 
    ;; a sublist of merged toc+addon that are selected
-   :selected-installed []
+   :selected-addon-list []
 
    :search {:term nil
             :page 0
