@@ -50,17 +50,17 @@ Afterwards, use the `Update all` button to update all addons with new versions a
 * [catalogue search](#catalogue-search)
 * [bulk update](#bulk-update)
 * [install addons from multiple sources](#install-addons-from-multiple-sources):
-    - [curseforge](https://www.curseforge.com/wow/addons)
-    - [wowinterface](https://wowinterface.com/addons.php)
-    - [tukui](https://www.tukui.org)
-    - [github](https://www.github.com) using *releases*
-* [import and export of lists of addons](#import-and-export-lists-of-addons)
+    - curseforge
+    - wowinterface
+    - tukui
+    - github using *releases*
+* [import and export lists of addons](#import-and-export-lists-of-addons)
 * [safeguards against bad addons](#safeguards-against-bad-addons)
 * [warnings when addons install other bundled addons](#warnings-when-addons-install-other-bundled-addons)
 * [ignore addons to prevent accidental changes](#ignore-addons-to-prevent-accidental-changes)
 * [mutual dependency tracking](#mutual-dependency-tracking)
 * [installing a previous release of an addon](#installing-a-previous-release-of-an-addon)
-* [pinning an addon to a specific release](#pinning-an-adodn-to-a-specific-release)
+* [pinning an addon to a specific release](#pinning-an-addon-to-a-specific-release)
 
 ## Recognition
 
@@ -185,7 +185,7 @@ Click the `search` tab and begin typing. Select the addon you wish to install an
 
 Addons hosted on Github must meet [certain requirements](./github-addons.md) before they can be installed.
 
-### import and export of lists of addons
+### import and export lists of addons
 
 Your list of addons can be *exported* to a simple format that allows them to be *imported* again later.
 
@@ -199,7 +199,10 @@ Click `File` and then select `Export Github addon list`.
 
 ### safeguards against bad addons
 
-If a downloaded addon is corrupt or does not adhere to the common addon folder structure then it will not be unzipped and will be deleted.
+Addon `.zip` files that contain top-level files or top-level directories missing a `.toc` file **will not be installed**
+and the downloaded `.zip` file will be deleted. This is a guard against poorly or maliciously constructed `.zip` files.
+
+Corrupted zip files that cannot be read or decompressed will be deleted.
 
 ### warnings when addons install other bundled addons
 
@@ -252,7 +255,7 @@ Right-click an addon and select `Pin release`.
 
 Pinned addons won't be marked as having updates available and other addons won't be able to overwrite the files of a pinned addon.
 
-## Notes
+## Misc
 
 Original Swing GUI was last available in v3 using: `./strongbox --ui gui1`
 
@@ -270,9 +273,6 @@ to multiple directories. It's a simple `txt` file in a structured format called 
 
 Addon zip files, `.strongbox.json` files, old `.wowman.json` files, cached data and `WowMatrix.dat` files can all be 
 removed from the `Cache` menu.
-
-Addon `.zip` files that contain top-level files or top-level directories missing a `.toc` file **will not be installed**
-and the downloaded `.zip` file will be deleted. This is a guard against poorly or maliciously constructed `.zip` files.
 
 Addon `.rar` and `.tar.gz` files are not supported. You can find a few of these on wowinterface.com.
 
