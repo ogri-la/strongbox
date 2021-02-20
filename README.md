@@ -1,8 +1,8 @@
-# strongbox, a World of Warcraft Addon Manager
+# strongbox, a World of Warcraft addon manager
 
 [![Build Status](https://api.travis-ci.com/ogri-la/strongbox.svg?branch=develop)](https://travis-ci.com/ogri-la/strongbox)
 
-`strongbox` is an **open source**, **advertisement free** and **privacy respecting** addon manager for World of Warcraft.
+`strongbox` is an **open source**, **[advertisement free](#recognition)** and **[privacy respecting](#privacy)** addon manager for World of Warcraft.
 
 It supports Linux and macOS.
 
@@ -87,7 +87,7 @@ that it's my privilege to offer this small piece back.
 
 This software interacts with the following remote hosts:
 
-* Overwolf/Twitch/Curseforge [Addons API](https://addons-ecs.forgesvc.net/) and it's [CDN](https://edge.forgecdn.net/)
+* Overwolf/Twitch/Curseforge [Addons API](https://addons-ecs.forgesvc.net/) and its [CDN](https://edge.forgecdn.net/)
 * [wowinterface.com](https://wowinterface.com)
 * [www.tukui.org](https://www.tukui.org/api.php)
 * [api.github.com](https://developer.github.com/v3/repos/releases)
@@ -97,70 +97,47 @@ This software interacts with the following remote hosts:
 
 These hosts *may* redirect requests to other hosts.
 
-These interactions use a HTTP user agent header unique to `strongbox` so that it may be identified easily.
+These interactions use a HTTP user agent header unique to `strongbox` so that it may be identified easily:
+
+    "strongbox/4.0 (https://github.com/ogri-la/strongbox)"
 
 Running strongbox with `--debug` will generate a file called "debug.log" that I may ask you to upload if you report a 
-bug. Please review the contents of this file before you upload. *Some* of the details it contains are:
+bug. *Some* of the details it contains are:
 
 * addons detected in the currently selected addon directory
 * your machine's `hostname`
 * paths to strongbox configuration and data:
-    - /home/torkus/.local/share/strongbox
-    - /home/torkus/.config/strongbox
+    - `/home/torkus/.local/share/strongbox`
+    - `/home/torkus/.config/strongbox`
 * details about your OS and the version of Java in use:
-    - strongbox.version=3.3.0
-    - os.name=Linux
-    - os.version=5.10.11-arch1-1
-    - os.arch=amd64
-    - java.runtime.name=OpenJDK Runtime Environment
-    - java.vm.name=OpenJDK 64-Bit Server VM
-    - java.version=11.0.10
-    - java.runtime.version=11.0.10+9
-    - java.vendor.url=https://openjdk.java.net/
-    - java.version.date=2021-01-19
-    - java.awt.graphicsenv=sun.awt.X11GraphicsEnvironment
-    - javafx.version=14
-    - javafx.runtime.version=14+9
+    - `strongbox.version=4.0.0`
+    - `os.name=Linux`
+    - `os.version=5.10.11-arch1-1`
+    - `os.arch=amd64`
+    - `java.runtime.name=OpenJDK Runtime Environment`
+    - `java.vm.name=OpenJDK 64-Bit Server VM`
+    - `java.version=11.0.10`
+    - `java.runtime.version=11.0.10+9`
+    - `java.vendor.url=https://openjdk.java.net/`
+    - `java.version.date=2021-01-19`
+    - `java.awt.graphicsenv=sun.awt.X11GraphicsEnvironment`
+    - `javafx.version=14`
+    - `javafx.runtime.version=14+9`
 
-## Notes
-
-Original Swing GUI was last available in v3 using: `./strongbox --ui gui1`
-
-Prior to `1.0.0`, `strongbox` was known as `wowman`. The [AUR package](https://aur.archlinux.org/packages/wowman) for `wowman` is obsolete.
-
-User configuration is stored in `~/.config/strongbox` unless run with the envvar `$XDG_CONFIG_HOME` set.
-
-Temporary data is stored in `~/.local/share/strongbox` unless run with the envvar `$XDG_DATA_HOME` set.
-
-Addon zip files are downloaded to your WoW `Addons` directory. See `Preferences -> Remove addon zip after installation`.
-
-A file called `.strongbox.json` is created within newly installed or re-installed addons. This file maps specific 
-attributes between the addon host (like curseforge.com) and the addon as well as *across* addons, as some addons unzip 
-to multiple directories. It's a simple `txt` file in a structured format called `json`.
-
-Addon zip files, `.strongbox.json` files, old `.wowman.json` files, cached data and `WowMatrix.dat` files can all be 
-removed from the `Cache` menu.
-
-Addon `.zip` files that contain top-level files or top-level directories missing a `.toc` file **will not be installed**
-and the downloaded `.zip` file will be deleted. This is a guard against poorly or maliciously constructed `.zip` files.
-
-Addon `.rar` and `.tar.gz` files are not supported. You can find a few of these on wowinterface.com.
+## Features in detail
 
 ### classic and retail addon support
 
-WoW Classic was introduced and addon managers and hosts scrambled to accommodate addons that supported 'retail', or 
-'classic' or both.
+Addon developers and managers and hosts all scrambled to accommodate multiple game types when 'classic' was released.
 
-'classic' WoW is *not* just an older instance of 'retail' WoW. Very old vanilla addons are not guaranteed to work to 
-work on the newer 'classic' WoW.
+No addon host currently handles this state well. Curseforge is complete but fat in some places, truncated and plain wrong in other places. The wowinterface API is a mix of plain wrong and missing data. Tukui has two instances of their API and is probably the sanest.
 
-No addon host currently handles this state well. Curseforge is complete but fat in some places, wrong in others, truncated in yet others. The wowinterface API is a mix of plain wrong and missing data. Tukui has two instances of the same API and is 
-probably the sanest.
+Strongbox calls these different versions of WoW 'game tracks'.
 
-[I suspect there will be BC and WotLK coming next](https://blizzardwatch.com/2021/02/12/will-wow-classic-incorporate-burning-crusade/)
+Strongbox supports addon directories using strict 'retail' or 'classic' only game tracks as well as mixed game tracks by preferring one over the other.
+
+[There will probably be BC and WotLK coming next](https://blizzardwatch.com/2021/02/12/will-wow-classic-incorporate-burning-crusade/)
 and the state of classic and retail addon support will only get messier.
-
-Strongbox calls these different versions of WoW 'tracks'. It supports 'classic' and 'retail' game tracks as best it can, given the state of addon host support.
 
 ### catalogue search
 
@@ -250,6 +227,30 @@ Once an addon has been installed it can be 'pinned' to that specific release lik
 Right-click an addon and select `Pin release`.
 
 Pinned addons won't be marked as having updates available and other addons won't be able to overwrite the files of a pinned addon.
+
+## Notes
+
+Original Swing GUI was last available in v3 using: `./strongbox --ui gui1`
+
+Prior to `1.0.0`, `strongbox` was known as `wowman`. The [AUR package](https://aur.archlinux.org/packages/wowman) for `wowman` is obsolete.
+
+User configuration is stored in `~/.config/strongbox` unless run with the envvar `$XDG_CONFIG_HOME` set.
+
+Temporary data is stored in `~/.local/share/strongbox` unless run with the envvar `$XDG_DATA_HOME` set.
+
+Addon zip files are downloaded to your WoW `Addons` directory. See `Preferences -> Remove addon zip after installation`.
+
+A file called `.strongbox.json` is created within newly installed or re-installed addons. This file maps specific 
+attributes between the addon host (like curseforge.com) and the addon as well as *across* addons, as some addons unzip 
+to multiple directories. It's a simple `txt` file in a structured format called `json`.
+
+Addon zip files, `.strongbox.json` files, old `.wowman.json` files, cached data and `WowMatrix.dat` files can all be 
+removed from the `Cache` menu.
+
+Addon `.zip` files that contain top-level files or top-level directories missing a `.toc` file **will not be installed**
+and the downloaded `.zip` file will be deleted. This is a guard against poorly or maliciously constructed `.zip` files.
+
+Addon `.rar` and `.tar.gz` files are not supported. You can find a few of these on wowinterface.com.
 
 ## Releases, bugs, questions, feedback, contributing
 
