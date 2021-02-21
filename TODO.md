@@ -11,15 +11,39 @@ see CHANGELOG.md for a more formal list of changes by release
     - remove original db-search
         - done
 
+* gui, new tab for dedicated log
+    - done
+
 ## todo
 
-* gui, new tab for dedicated log
 * per-addon logging
-    - I want the user to see a list of messages regarding that *specific* addon
+    - I want the user to see a list of messages regarding a *specific* addon
     - when emitting a log line about a particular addon, capture that addon's source and source-id somehow
+        - and addon directory
+        - and events? like changing game track
+* highlight new log pane or status bar when there is an non-addon error or warning
+* log pane, filter by log level
+    - log level should have number of instances against it
+        - warn (2)
+        - error (1)
+* remove 'hostname' from log output
+    - update privacy section in readme
+* addon detail pane
+    - clicking an addon row opens a new tab with as much detail as we can about that addon
+
+* uber-button
+    - new column that displays overall health of addon
+        - clicking whatever is in there takes you to a detail pane for that addon
+        - if a task is being performed for that addon, it shows a progress meter
+        - if addon is up-to-date, it shows a happy green tick
+            - if there is something to be concerned about (and that the user can fix), show a warning or error
+
 * gui, download progress bar *inside* the grid ...?
     - pure fantasy?
     - defer until after job queue
+
+--
+
 * greater parallelism
     - internal job queue
     - replace log at bottom of screen with a list of jobs being processed and how far along they are
@@ -36,8 +60,9 @@ see CHANGELOG.md for a more formal list of changes by release
         - don't wait for db loading and addon matching
             - we already have a match!
         - this might fit in with the greater-parallelism/queue based infrastructure
-* remove 'hostname' from log output
-    - update privacy section in readme
+
+--
+
 * bug, 'strongbox.version' in debug output is null when run as a binary
 
 ## todo bucket (no particular order)
