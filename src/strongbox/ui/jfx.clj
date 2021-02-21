@@ -429,6 +429,7 @@
 
 (def INSTALLED-TAB 0)
 (def SEARCH-TAB 1)
+(def LOG-TAB 2)
 
 (defn menu-item
   [label handler & [opt-map]]
@@ -722,6 +723,7 @@
                     separator
                     (menu-item "_Installed" (switch-tab-handler INSTALLED-TAB) {:key "Ctrl+I"})
                     (menu-item "Searc_h" (switch-tab-handler SEARCH-TAB) {:key "Ctrl+H"})
+                    (menu-item "_Log" (switch-tab-handler LOG-TAB) {:key "Ctrl+L"})
                     separator]
                    (build-theme-menu
                     (fx/sub-val context get-in [:app-state :cfg :gui-theme])
@@ -1074,7 +1076,11 @@
                                        (Platform/runLater
                                         (fn []
                                           (-> text-field .requestFocus))))))
-           :content {:fx/type search-addons-pane}}]})
+           :content {:fx/type search-addons-pane}}
+          {:fx/type :tab
+           :text "log"
+           :closable false
+           :content {:fx/type notice-logger}}]})
 
 (defn status-bar
   "this is the litle strip of text at the bottom of the application."
@@ -1123,12 +1129,7 @@
              :root {:fx/type :border-pane
                     :id (name theme)
                     :top {:fx/type menu-bar}
-                    :center {:fx/type :split-pane
-                             :id "splitter"
-                             :orientation :vertical
-                             :divider-positions [0.7]
-                             :items [{:fx/type tabber}
-                                     {:fx/type notice-logger}]}
+                    :center {:fx/type tabber}
                     :bottom {:fx/type status-bar}}}}))
 
 ;; absolutely no logging in here
