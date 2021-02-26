@@ -182,7 +182,6 @@
 
                ;; common tables
 
-
                ".table-view"
                {:-fx-table-cell-border-color (colour :table-border)
                 :-fx-font-size ".9em"}
@@ -1059,28 +1058,55 @@
    :top {:fx/type search-addons-search-field}
    :center {:fx/type search-addons-table}})
 
+(defn addon-detail-pane
+  [{:keys [addon]}]
+  {:fx/type :text-area
+   :text (str "!!!!!!!!!" addon )
+   :wrap-text true})
+
 (defn tabber
-  [_]
+  [{:keys [fx/context]}]
+  (println "tabber updated")
+  (let [addons-in-detail-list (:addons-in-detail-list (fx/sub-val context get-in [:app-state]))
+        tabs [{:fx/type :tab
+               :text "installed"
+               :id "installed-tab"
+               :closable false
+               :content {:fx/type installed-addons-pane}}
+              {:fx/type :tab
+               :text "search"
+               :id "search-tab"
+               :closable false
+               :on-selection-changed (fn [ev]
+                                       (when (-> ev .getTarget .isSelected)
+                                         (let [text-field (-> ev .getTarget .getTabPane (.lookupAll "#search-text-field") first)]
+                                           (Platform/runLater
+                                            (fn []
+                                              (-> text-field .requestFocus))))))
+               :content {:fx/type search-addons-pane}}
+              {:fx/type :tab
+               :text "log"
+               :id "log-tab"
+               :closable false
+               :content {:fx/type notice-logger}}]
+
+        mktab (fn [addon]
+                (let [tab-id (str (java.util.UUID/randomUUID))]
+                  {:fx/type :tab
+                   :id tab-id
+                   :text (str "name: " (str (java.util.UUID/randomUUID)))
+                   :closable true
+                   :on-closed (fn [_]
+                                (cli/remove-tab tab-id))
+                   :content {:fx/type addon-detail-pane
+                             :addon addon}}))
+        
+        dynamic-tabs (mapv mktab addons-in-detail-list)
+
+        tab-list (into tabs dynamic-tabs)]
   {:fx/type :tab-pane
    :id "tabber"
-   :tabs [{:fx/type :tab
-           :text "installed"
-           :closable false
-           :content {:fx/type installed-addons-pane}}
-          {:fx/type :tab
-           :text "search"
-           :closable false
-           :on-selection-changed (fn [ev]
-                                   (when (-> ev .getTarget .isSelected)
-                                     (let [text-field (-> ev .getTarget .getTabPane (.lookupAll "#search-text-field") first)]
-                                       (Platform/runLater
-                                        (fn []
-                                          (-> text-field .requestFocus))))))
-           :content {:fx/type search-addons-pane}}
-          {:fx/type :tab
-           :text "log"
-           :closable false
-           :content {:fx/type notice-logger}}]})
+   :tabs tab-list}))
 
 (defn status-bar
   "this is the litle strip of text at the bottom of the application."

@@ -22,21 +22,21 @@
                  [envvar "1.1.0"] ;; environment variable wrangling
                  [gui-diff "0.6.7"] ;; pops up a graphical diff for test results
                  [com.taoensso/tufte "2.1.0"]
-                 [cljfx "1.7.8" :exclusions [org.openjfx/javafx-web
-                                             org.openjfx/javafx-media]]
+                 [cljfx "1.7.13" :exclusions [org.openjfx/javafx-web
+                                              org.openjfx/javafx-media]]
                  [cljfx/css "1.1.0"]
 
-                 [org.openjfx/javafx-base "14"]
-                 [org.openjfx/javafx-base "14" :classifier "linux"]
-                 [org.openjfx/javafx-base "14" :classifier "mac"]
+                 [org.openjfx/javafx-base "15"]
+                 [org.openjfx/javafx-base "15" :classifier "linux"]
+                 [org.openjfx/javafx-base "15" :classifier "mac"]
 
-                 [org.openjfx/javafx-controls "14"]
-                 [org.openjfx/javafx-controls "14" :classifier "linux"]
-                 [org.openjfx/javafx-controls "14" :classifier "mac"]
+                 [org.openjfx/javafx-controls "15"]
+                 [org.openjfx/javafx-controls "15" :classifier "linux"]
+                 [org.openjfx/javafx-controls "15" :classifier "mac"]
 
-                 [org.openjfx/javafx-graphics "14"]
-                 [org.openjfx/javafx-graphics "14" :classifier "linux"]
-                 [org.openjfx/javafx-graphics "14" :classifier "mac"]
+                 [org.openjfx/javafx-graphics "15"]
+                 [org.openjfx/javafx-graphics "15" :classifier "linux"]
+                 [org.openjfx/javafx-graphics "15" :classifier "mac"]
 
                  ;; remember to update the LICENCE.txt
                  ;; remember to update pom file (`lein pom`)

@@ -67,6 +67,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* logs, persistent addon events
+    - installed, updated, pin, ignore events
+
 * cli, exports
 
 * alpha/beta opt-in

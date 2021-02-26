@@ -260,6 +260,17 @@
         vec
         select-addons*)))
 
+;; tabs
+
+(defn-spec add-tab nil?
+  "removes a UI tab"
+  [addon map?]
+  nil)
+
+(defn-spec remove-tab nil?
+  [tab-id string?]
+  nil)
+
 ;; debug
 
 (defn-spec touch nil?
