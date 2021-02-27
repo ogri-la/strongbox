@@ -262,14 +262,28 @@
 
 ;; tabs
 
-(defn-spec add-tab nil?
-  "removes a UI tab"
-  [addon map?]
-  nil)
-
 (defn-spec remove-tab nil?
   [tab-id string?]
+  (swap! core/state update-in [:tab-list] (partial (comp vec remove) #(= tab-id (:label %))))
   nil)
+
+(defn remove-open-tab-if-possible
+  []
+  (println "what tab is open???"))
+
+(defn-spec add-tab nil?
+  "removes a UI tab"
+  [tab-label ::sp/label, closable? ::sp/closable?, addon :ui/tab-data]
+  (let [tab {:label tab-label
+             :closable? closable?
+             :tab-data addon}]
+    (swap! core/state update-in [:tab-list] into [tab]))
+  nil)
+
+(defn-spec add-addon-tab nil?
+  [addon :ui/tab-data]
+  (add-tab (:label addon) true addon))
+
 
 ;; debug
 

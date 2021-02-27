@@ -122,7 +122,7 @@
    ;; a sublist of merged toc+addon that are selected
    :selected-addon-list []
 
-   :addons-in-detail-list []
+   :tab-list []
 
    :search {:term nil
             :page 0

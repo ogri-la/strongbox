@@ -57,6 +57,7 @@
 (s/def ::install-dir (s/nilable ::extant-dir))
 (s/def ::selected? boolean?)
 (s/def ::gui-theme #{:light :dark :dark-green :dark-orange})
+(s/def ::closable? boolean?)
 
 ;; preserve order, used in GUI
 (def game-track-labels [[:retail "retail"]
@@ -342,3 +343,12 @@
 ;; requiring cljfx or anything in javafx.scene.control starts the javafx application thread
 
 (s/def :gui/column-data (s/keys :opt-un [:gui/text :gui/cell-value-factory :gui/style-class]))
+
+(s/def :ui/tab-data (s/or
+                     ;; exists with some basic .toc or nfo data
+                     :installed :addon/installed 
+                     ;; simple catalogue entry/search result
+                     :addon-summary :addon/summary
+                     ;; complete set of data, may not have been installed by strongbox
+                     :full :addon/addon))
+(s/def :ui/tab (s/keys :req-un [::label ::closable? :ui/tab-data]))

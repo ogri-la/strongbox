@@ -22,6 +22,7 @@
    [java.util List]
    [javafx.util Callback]
    [javafx.scene.control TableRow TextInputDialog Alert Alert$AlertType ButtonType]
+   [javafx.scene.input KeyCode]
    [javafx.stage FileChooser FileChooser$ExtensionFilter DirectoryChooser Window WindowEvent]
    [javafx.application Platform]
    [javafx.scene Node]))
@@ -247,7 +248,32 @@
 
                 " .ignored .table-cell"
                 {:-fx-text-fill (colour :installed/ignored-fg)}
-                " .wow-column" {:-fx-alignment "center"}}
+
+                " .wow-column"
+                {:-fx-alignment "center"}
+
+                " .button"
+                {:-fx-padding 0
+                 :-fx-pref-width 100
+                 :-fx-pref-height "20" ;; awfully specific :(
+                 :-fx-background-color nil
+                 :-fx-font-size "1.5em"
+                 ;;:-fx-text-fill "aquamarine" ;; good for dark theme
+                 :-fx-text-fill "darkseagreen" ;; good for light
+                 }
+
+                 " .column-header.more-column .table-cell"
+                {:-fx-fill "green"
+                 ;;:-fx-padding 10
+                 :-fx-text-fill "green"
+                 ;;:-fx-background-color "green"
+                 }
+
+                " .more-column"
+                {:-fx-padding 0
+                 :-fx-spacing 0}
+
+                }
 
 
                ;; notice-logger
@@ -527,11 +553,20 @@
                                (Platform/exit)
                                (System/exit 0)))))
 
-(defn-spec switch-tab-handler fn?
+;;(defn pt
+;;  [x]
+;;  (-> x clojure.reflect/reflect :members clojure.pprint/print-table)
+;;  x)
+
+(defn-spec switch-tab nil?
   "returns a function that will switch the tab-pane to the tab at the given index when called"
   [tab-idx int?]
-  (fn [event]
-    (some-> (select "#tabber") first .getSelectionModel (.select tab-idx))))
+  (-> (select "#tabber") first .getSelectionModel (.select tab-idx))
+  nil)
+
+(defn-spec switch-tab-handler fn?
+  [tab-idx int?]
+  (event-handler (partial switch-tab tab-idx)))
 
 (defn import-addon-handler
   "imports an addon by parsing a URL"
@@ -910,6 +945,27 @@
              separator
              (menu-item "Delete" delete-selected-confirmation-handler)]}))
 
+(defn uber-button
+  [row]
+  ;; if unsteady, 'updating'
+  ;; if updates available, 'update'
+  ;; else, 'more'
+  (let [tick "\u2714"
+        update "\u21E5"
+        update "\u21A6"
+        ub {:fx/type :button
+            :text (if (:update? row) update tick)
+            
+            :on-action (fn [_]
+                         (cli/add-addon-tab row)
+                         (Platform/runLater
+                          (fn []
+                           ;;(Thread/sleep 10) ;; this sucks. can we control the selected tab via app state instead?
+                           (switch-tab (-> (core/get-state :tab-list) count (+ 3) dec)))))
+            }
+        ]
+    (-> ub fx/create-component fx/instance)))
+
 (defn installed-addons-table
   [{:keys [fx/context]}]
   ;; subscribe to re-render table when addons become unsteady
@@ -922,10 +978,13 @@
 
         column-list [{:text "source" :min-width 115 :pref-width 120 :max-width 160 :cell-value-factory href-to-hyperlink}
                      {:text "name" :min-width 150 :pref-width 300 :max-width 500 :cell-value-factory (comp no-new-lines :label)}
-                     {:text "description" :pref-width 700 :cell-value-factory (comp no-new-lines :description)}
+                     {:text "description" :pref-width 400 :cell-value-factory (comp no-new-lines :description)}
                      {:text "installed" :max-width 250 :cell-value-factory :installed-version}
                      {:text "available" :max-width 250 :cell-value-factory available-versions}
-                     {:text "WoW" :max-width 100 :cell-value-factory iface-version}]]
+                     {:text "WoW" :max-width 100 :cell-value-factory iface-version}
+                     {:text "" :style-class ["more-column"] :max-width 100 :cell-value-factory uber-button}
+
+                     ]]
     {:fx/type fx.ext.table-view/with-selection-props
      :props {:selection-mode :multiple
              ;; unlike gui.clj, we have access to the original data here. no need to re-select addons.
@@ -1061,52 +1120,55 @@
 (defn addon-detail-pane
   [{:keys [addon]}]
   {:fx/type :text-area
-   :text (str "!!!!!!!!!" addon )
+   :text (str addon)
    :wrap-text true})
+
+(defn-spec make-addon-tab map?
+  [tab :ui/tab]
+  (let [tab-id (str (java.util.UUID/randomUUID))]
+    {:fx/type :tab
+     :id tab-id
+     :text (:label tab)
+     :closable (:closable? tab)
+     :on-closed (fn [_]
+                  (cli/remove-tab (:label tab))
+                  (switch-tab INSTALLED-TAB))
+     :content {:fx/type addon-detail-pane
+               :addon (:tab-data tab)}}))
 
 (defn tabber
   [{:keys [fx/context]}]
-  (println "tabber updated")
-  (let [addons-in-detail-list (:addons-in-detail-list (fx/sub-val context get-in [:app-state]))
-        tabs [{:fx/type :tab
-               :text "installed"
-               :id "installed-tab"
-               :closable false
-               :content {:fx/type installed-addons-pane}}
-              {:fx/type :tab
-               :text "search"
-               :id "search-tab"
-               :closable false
-               :on-selection-changed (fn [ev]
-                                       (when (-> ev .getTarget .isSelected)
-                                         (let [text-field (-> ev .getTarget .getTabPane (.lookupAll "#search-text-field") first)]
-                                           (Platform/runLater
-                                            (fn []
-                                              (-> text-field .requestFocus))))))
-               :content {:fx/type search-addons-pane}}
-              {:fx/type :tab
-               :text "log"
-               :id "log-tab"
-               :closable false
-               :content {:fx/type notice-logger}}]
-
-        mktab (fn [addon]
-                (let [tab-id (str (java.util.UUID/randomUUID))]
-                  {:fx/type :tab
-                   :id tab-id
-                   :text (str "name: " (str (java.util.UUID/randomUUID)))
-                   :closable true
-                   :on-closed (fn [_]
-                                (cli/remove-tab tab-id))
-                   :content {:fx/type addon-detail-pane
-                             :addon addon}}))
+  (let [static-tabs
+        [{:fx/type :tab
+          :text "installed"
+          :id "installed-tab"
+          :closable false
+          :content {:fx/type installed-addons-pane}}
+         {:fx/type :tab
+          :text "search"
+          :id "search-tab"
+          :closable false
+          :on-selection-changed (fn [ev]
+                                  (when (-> ev .getTarget .isSelected)
+                                    (let [text-field (-> ev .getTarget .getTabPane (.lookupAll "#search-text-field") first)]
+                                      (Platform/runLater
+                                       (fn []
+                                         (-> text-field .requestFocus))))))
+          :content {:fx/type search-addons-pane}}
+         {:fx/type :tab
+          :text "log"
+          :id "log-tab"
+          :closable false
+          ;;:on-selection-changed (fn [x]
+          ;;                        (println "log tab changed" x))
+                                  
+          :content {:fx/type notice-logger}}]
         
-        dynamic-tabs (mapv mktab addons-in-detail-list)
-
-        tab-list (into tabs dynamic-tabs)]
+        dynamic-tabs (mapv make-addon-tab (fx/sub-val context get-in [:app-state :tab-list]))]
   {:fx/type :tab-pane
    :id "tabber"
-   :tabs tab-list}))
+   :tabs (into static-tabs dynamic-tabs)
+   }))
 
 (defn status-bar
   "this is the litle strip of text at the bottom of the application."
@@ -1151,6 +1213,12 @@
      :width 1024
      :height 768
      :scene {:fx/type :scene
+             :on-key-released (fn [e]
+                                (when (and (.isControlDown e)
+                                           (= (.getCode e) (KeyCode/W)))
+                                  (println "selected item" (-> (select "#tabber") first .getSelectionModel .getSelectedItem))
+                                  (cli/remove-open-tab-if-possible))
+                                nil)
              :stylesheets [(::css/url style)]
              :root {:fx/type :border-pane
                     :id (name theme)
