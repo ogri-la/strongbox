@@ -269,7 +269,6 @@
 
 (defn-spec remove-tab-at-idx nil?
   [idx int?]
-  (println "ctrl-w on index" idx)
   (swap! core/state update-in [:tab-list] utils/drop-idx idx)
   nil)
 

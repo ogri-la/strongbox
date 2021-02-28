@@ -35,7 +35,7 @@
           (= addon-path install-dir))
       (error (format "directory is outside the current installation dir, not removing: %s" addon-path))
 
-      ;; other addons depend on this addon, just remove the nfo file
+      ;; other addons depend on this addon, just remove the nfo file entry
       (nfo/mutual-dependency? install-dir addon-dirname)
       (let [updated-nfo-data (nfo/rm-nfo install-dir addon-dirname group-id)]
         (nfo/write-nfo install-dir addon-dirname updated-nfo-data)
@@ -253,7 +253,12 @@
   (when n-zips-to-keep
     (remove-zip-files! install-dir (:name addon) n-zips-to-keep)))
 
-;;
+;; ignore
+
+(defn-spec ignored? boolean?
+  "returns true if the given `addon` is being ignored"
+  [addon map?]
+  (get addon :ignore? false))
 
 ;; todo: does this have tests? is it flawed like pinned-dir-list is?
 (defn-spec ignored-dir-list (s/coll-of ::sp/dirname)
@@ -368,7 +373,34 @@
 
 (defn-spec re-installable? boolean?
   "returns `true` if given `addon` can be re-installed to its current `:installed-version`."
-  [addon map?] ;; deliberately lenient. it's called directly from the gui
+  [addon map?] ;; deliberately lenient, called directly from the gui
   (boolean
    (when (contains? addon :release-list)
      (some? (find-release addon)))))
+
+(defn-spec installed? boolean?
+  "returns true if the given `addon` is present on the filesystem"
+  [addon map?] ;; deliberately lenient, called directly from the gui
+  (contains? addon :dirname))
+
+(defn-spec pinned? boolean?
+  "returns `true` if the given `addon` is currently pinned to a specific version"
+  [addon map?]
+  (some? (:pinned-version addon)))
+
+(defn-spec pinnable? boolean?
+  "returns `true` if the given `addon` can be pinned."
+  [addon map?]
+  (and (not (pinned? addon))
+       (not (ignored? addon))))
+
+(defn-spec unpinnable? boolean?
+  [addon map?]
+  (and (pinned? addon)
+       (not (ignored? addon))))
+
+(defn-spec deletable? boolean?
+  "returns `true` if the given `addon` can be deleted."
+  [addon map?]
+  (and (not (ignored? addon))
+       (installed? addon)))

@@ -178,9 +178,25 @@
                           ":hover" {:-fx-text-fill (colour :button-text-hovering)}}
 
                ;; tabber
-               ".tab-pane > .tab-header-area > .headers-region > .tab "
-               {:-fx-background-radius "0"}
+               ".tab-pane > .tab-header-area > .headers-region > .tab"
+               {:-fx-background-radius "0"
+                ;;:-fx-pref-width "150px"
+                }
 
+
+               ".addon-detail-title"
+               {:-fx-font-size "2em"
+                :-fx-padding "1em"
+                ;;:-fx-background-color "green"
+                :-fx-alignment "center"
+                }
+
+               ".addon-detail-description"
+               {:-fx-font-size "1.2em"
+                :-fx-padding "0 1em 1em 1em"
+                :-fx-wrap-text true
+                }
+               
                ;; common tables
 
                ".table-view"
@@ -899,7 +915,7 @@
         release-list (:release-list selected-addon)
         releases-available? (and (not (empty? release-list))
                                  (not pinned?))
-        ignored? (get selected-addon :ignore? false)]
+        ignored? (addon/ignored? selected-addon)]
     {:fx/type :context-menu
      :items [(menu-item "Update" (async-handler cli/update-selected)
                         {:disable (not (addon/updateable? selected-addon))})
@@ -1117,11 +1133,86 @@
    :top {:fx/type search-addons-search-field}
    :center {:fx/type search-addons-table}})
 
-(defn addon-detail-pane
+(defn addon-detail-button-menu
   [{:keys [addon]}]
-  {:fx/type :text-area
-   :text (str addon)
-   :wrap-text true})
+  (let [
+        ]
+    {:fx/type :h-box
+     :children [{:fx/type :button
+                 :text "Install"
+                 :on-action donothing
+                 :disable (addon/installed? addon)}
+                
+                {:fx/type :button
+                 :text (if (addon/updateable? addon)
+                         (str "Update to " (:version addon))
+                         "Update")
+                 :on-action donothing
+                 :disable (not (addon/updateable? addon))}
+                
+                {:fx/type :button
+                 :text (if (addon/re-installable? addon)
+                         (str "Re-install " (:installed-version addon))
+                         "Re-install")
+                 :on-action donothing
+                 :disable (not (addon/re-installable? addon))}
+
+                (if (addon/pinned? addon)
+                  {:fx/type :button
+                   :text "Unpin A.B.C"
+                   :disable (not (addon/unpinnable? addon))}
+                  
+                  {:fx/type :button
+                   :text (if (addon/pinnable? addon)
+                           (str "Pin " (:version addon))
+                           "Pin")
+                   :disable (not (addon/pinnable? addon))})
+
+                {:fx/type :separator
+                 :orientation :vertical}
+
+                (if (addon/ignored? addon)
+                  {:fx/type :button
+                   :text "Stop ignoring"}
+                  
+                  {:fx/type :button
+                   :text "Ignore"})
+
+                {:fx/type :separator
+                 :orientation :vertical}
+
+                {:fx/type :button
+                 :text "Delete"
+                 :on-action donothing
+                 :disable (not (addon/deletable? addon))}
+                
+                ]}))
+
+
+(defn addon-detail-pane
+  [{:keys [fx/context addon]}]
+  {:fx/type :v-box
+   :children (utils/items
+              [{:fx/type :label
+                :style-class ["addon-detail-title"]
+                :text (:label addon)}
+
+               (when (:description addon)
+                 {:fx/type :label
+                  :style-class ["addon-detail-description"]
+                  :text (:description addon)})
+               
+               ;; if installed, path to addon directory, clicking it opens file browser
+
+               {:fx/type addon-detail-button-menu
+                :addon addon}
+
+               {:fx/type :text-area
+                :text (str addon)
+                :wrap-text true}
+
+               ])
+   })
 
 (defn-spec make-addon-tab map?
   [tab :ui/tab]
@@ -1167,6 +1258,7 @@
         dynamic-tabs (mapv make-addon-tab (fx/sub-val context get-in [:app-state :tab-list]))]
   {:fx/type :tab-pane
    :id "tabber"
+   :tab-closing-policy javafx.scene.control.TabPane$TabClosingPolicy/ALL_TABS
    :tabs (into static-tabs dynamic-tabs)
    }))
 
@@ -1219,7 +1311,7 @@
      :width 1024
      :height 768
      :scene {:fx/type :scene
-             :on-key-released (fn [e]
+             :on-key-pressed (fn [e]
                                 (when (and (.isControlDown e)
                                            (= (.getCode e) (KeyCode/W)))
                                   (cli/remove-tab-at-idx (tab-list-tab-index)))

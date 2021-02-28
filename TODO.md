@@ -67,6 +67,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* keep a list of previously installed addons
+
 * logs, persistent addon events
     - installed, updated, pin, ignore events
 
