@@ -1198,6 +1198,12 @@
 
 ;;
 
+(defn tab-list-tab-index
+  []
+  (let [idx (-> (select "#tabber") first .getSelectionModel .getSelectedIndex)
+        num-static-tabs 3]
+    (- idx num-static-tabs)))
+
 (defn app
   "returns a description of the javafx Stage, Scene and the 'root' node.
   the root node is the top-most node from which all others are descendents of."
@@ -1216,8 +1222,7 @@
              :on-key-released (fn [e]
                                 (when (and (.isControlDown e)
                                            (= (.getCode e) (KeyCode/W)))
-                                  (println "selected item" (-> (select "#tabber") first .getSelectionModel .getSelectedItem))
-                                  (cli/remove-open-tab-if-possible))
+                                  (cli/remove-tab-at-idx (tab-list-tab-index)))
                                 nil)
              :stylesheets [(::css/url style)]
              :root {:fx/type :border-pane

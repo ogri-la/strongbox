@@ -347,7 +347,7 @@
         parent (some->> (-> path fs/split butlast) (apply join))]
     (join parent (-> path str fs/split-ext first (str ext)))))
 
-;; repurposing
+;; repurposing ;; 2021-02: wtf?
 (defn-spec file-to-lazy-byte-array bytes?
   [path ::sp/extant-file]
   (let [fobj (java.io.File. path)
@@ -569,3 +569,13 @@
           (clojure.string/replace "\r\n" " ")
           (clojure.string/replace "\n" " ")))
 
+(defn-spec drop-idx (s/or :ok vector? :bad nil?)
+  [v (s/nilable vector?), idx (s/nilable int?)]
+  (when-not (nil? v)
+    (let [c (count v)]
+      (cond
+        (nil? idx) v
+        (empty? v) v
+        (< idx 0) v ;; negative indices return the vector as-is
+        (>= idx c) v ;; indicies greater than num items return vector as-is
+        :else (into (subvec v 0 idx) (subvec v (inc idx) c))))))

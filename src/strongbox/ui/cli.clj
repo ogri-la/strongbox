@@ -267,9 +267,11 @@
   (swap! core/state update-in [:tab-list] (partial (comp vec remove) #(= tab-id (:label %))))
   nil)
 
-(defn remove-open-tab-if-possible
-  []
-  (println "what tab is open???"))
+(defn-spec remove-tab-at-idx nil?
+  [idx int?]
+  (println "ctrl-w on index" idx)
+  (swap! core/state update-in [:tab-list] utils/drop-idx idx)
+  nil)
 
 (defn-spec add-tab nil?
   "removes a UI tab"

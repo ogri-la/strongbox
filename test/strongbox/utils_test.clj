@@ -203,3 +203,27 @@
                ["foo\nbar\r\nbaz" "foo bar baz"]]]
     (doseq [[given expected] cases]
       (is (= expected (utils/no-new-lines given)) (format "failed given '%s'" given)))))
+
+(deftest drop-idx
+  (let [cases [
+
+               [nil 0 nil]
+               [[] nil []]
+                
+               [[] 0 []]
+               [[] 1 []]
+               [[] 1000000000000 []]
+
+               [[1 2 3] 0 [2 3]]
+               [[1 2 3] 1 [1 3]]
+               [[1 2 3] 2 [1 2]]
+               [[1 2 3] 3 [1 2 3]]
+               [[1 2 3] 4 [1 2 3]]
+
+               ;; error cases
+               ;;[[] -1 []]
+               
+               ]
+        ]
+    (doseq [[v idx expected] cases]
+      (is (= expected (utils/drop-idx v idx))))))
