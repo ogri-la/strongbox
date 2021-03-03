@@ -579,3 +579,7 @@
         (< idx 0) v ;; negative indices return the vector as-is
         (>= idx c) v ;; indicies greater than num items return vector as-is
         :else (into (subvec v 0 idx) (subvec v (inc idx) c))))))
+
+(defn extract-addon-id
+  [addon]
+  (select-keys addon [:source :source-id]))

@@ -205,11 +205,9 @@
       (is (= expected (utils/no-new-lines given)) (format "failed given '%s'" given)))))
 
 (deftest drop-idx
-  (let [cases [
-
-               [nil 0 nil]
+  (let [cases [[nil 0 nil]
                [[] nil []]
-                
+
                [[] 0 []]
                [[] 1 []]
                [[] 1000000000000 []]
@@ -222,8 +220,7 @@
 
                ;; error cases
                ;;[[] -1 []]
-               
-               ]
-        ]
+               ]]
+
     (doseq [[v idx expected] cases]
       (is (= expected (utils/drop-idx v idx))))))

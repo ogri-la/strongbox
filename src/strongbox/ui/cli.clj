@@ -5,7 +5,6 @@
    [clojure.spec.alpha :as s]
    [strongbox
     [addon :as addon]
-    [nfo :as nfo]
     [constants :as constants]
     [specs :as sp]
     [tukui-api :as tukui-api]
@@ -149,15 +148,21 @@
 
 (defn-spec pin nil?
   "pins the currently selected addons to their current `:installed-version` versions."
-  []
-  (run! #(addon/pin (core/selected-addon-dir) %) (get-state :selected-addon-list))
-  (core/refresh))
+  ([]
+   (pin (get-state :selected-addon-list)))
+  ([addon-list :addon/installed-list]
+   (run! #(addon/pin (core/selected-addon-dir) %)
+         addon-list)
+   (core/refresh)))
 
 (defn-spec unpin nil?
   "unpins the currently selected addons, regardless of whether they are pinned or not."
-  []
-  (run! #(addon/unpin (core/selected-addon-dir) %) (get-state :selected-addon-list))
-  (core/refresh))
+  ([]
+   (unpin (get-state :selected-addon-list)))
+  ([addon-list :addon/installed-list]
+   (run! #(addon/unpin (core/selected-addon-dir) %)
+         addon-list)
+   (core/refresh)))
 
 (defn-spec -find-replace-release (s/or :ok :addon/expanded, :release-not-found nil?)
   "looks for the `:installed-version` in the list of available releases and, if found, updates the addon."
@@ -191,6 +196,13 @@
        -install-update-these)
   (core/refresh))
 
+(defn-spec update-addon nil?
+  "updates given addon"
+  [addon :addon/installable]
+  (when (addon/updateable? addon)
+    (-install-update-these [addon])
+    (core/refresh)))
+
 (defn-spec update-selected nil?
   "updates all selected addons that have updates available"
   []
@@ -213,25 +225,23 @@
   []
   (core/remove-many-addons (get-state :selected-addon-list)))
 
-;; todo: shift this to addon.clj
 (defn-spec ignore-selected nil?
   "marks each of the selected addons as being 'ignored'"
-  []
-  (->> (get-state :selected-addon-list)
-       (map :dirname)
-       (run! (partial nfo/ignore (core/selected-addon-dir))))
-  (core/refresh))
+  ([]
+   (ignore-selected (get-state :selected-addon-list)))
+  ([addon-list :addon/installed-list]
+   (->> addon-list
+        (filter addon/ignorable?)
+        (run! (partial addon/ignore (core/selected-addon-dir))))
+   (core/refresh)))
 
-;; todo: shift this to addon.clj
 (defn-spec clear-ignore-selected nil?
   "removes the 'ignore' flag from each of the selected addons."
-  []
-  (->> (get-state :selected-addon-list)
-       (mapv addon/ungroup-addon)
-       flatten
-       (mapv :dirname)
-       (run! (partial addon/clear-ignore (core/selected-addon-dir))))
-  (core/refresh))
+  ([]
+   (clear-ignore-selected (get-state :selected-addon-list)))
+  ([addon-list :addon/installed-list]
+   (run! (partial addon/clear-ignore (core/selected-addon-dir)) addon-list)
+   (core/refresh)))
 
 ;; selecting addons
 
@@ -264,7 +274,7 @@
 
 (defn-spec remove-tab nil?
   [tab-id string?]
-  (swap! core/state update-in [:tab-list] (partial (comp vec remove) #(= tab-id (:label %))))
+  (swap! core/state update-in [:tab-list] (partial (comp vec remove) #(= tab-id (:id %))))
   nil)
 
 (defn-spec remove-tab-at-idx nil?
@@ -274,19 +284,24 @@
 
 (defn-spec add-tab nil?
   "removes a UI tab"
-  [tab-label ::sp/label, closable? ::sp/closable?, addon :ui/tab-data]
-  (let [tab {:label tab-label
+  [tab-id :ui/tab-id, tab-label ::sp/label, closable? ::sp/closable?, tab-data :ui/tab-data]
+  (let [tab {:id tab-id
+             :label tab-label
              :closable? closable?
-             :tab-data addon}]
+             :tab-data tab-data}]
     (swap! core/state update-in [:tab-list] into [tab]))
   nil)
 
 (defn-spec add-addon-tab nil?
-  [addon :ui/tab-data]
-  (add-tab (:label addon) true addon))
+  [addon map?]
+  (let [tab-id (str (java.util.UUID/randomUUID))
+        closeable? true
+        addon-id (utils/extract-addon-id addon)]
+    (add-tab tab-id (:label addon) closeable? addon-id)))
 
 
 ;; debug
+
 
 (defn-spec touch nil?
   "used to select each addon in the GUI so the 'unsteady' colour can be tested."

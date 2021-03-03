@@ -344,11 +344,7 @@
 
 (s/def :gui/column-data (s/keys :opt-un [:gui/text :gui/cell-value-factory :gui/style-class]))
 
-(s/def :ui/tab-data (s/or
-                     ;; exists with some basic .toc or nfo data
-                     :installed :addon/installed 
-                     ;; simple catalogue entry/search result
-                     :addon-summary :addon/summary
-                     ;; complete set of data, may not have been installed by strongbox
-                     :full :addon/addon))
-(s/def :ui/tab (s/keys :req-un [::label ::closable? :ui/tab-data]))
+(s/def :addon/id (s/keys :req-un [:addon/source :addon/source-id]))
+(s/def :ui/tab-data :addon/id) ;; for now
+(s/def :ui/tab-id string?)
+(s/def :ui/tab (s/keys :req-un [:ui/tab-id ::label ::closable? :ui/tab-data]))

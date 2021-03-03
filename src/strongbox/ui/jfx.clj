@@ -183,21 +183,19 @@
                 ;;:-fx-pref-width "150px"
                 }
 
-
                ".addon-detail-title"
                {:-fx-font-size "2em"
                 :-fx-padding "1em"
                 ;;:-fx-background-color "green"
-                :-fx-alignment "center"
-                }
+                :-fx-alignment "center"}
 
                ".addon-detail-description"
                {:-fx-font-size "1.2em"
                 :-fx-padding "0 1em 1em 1em"
-                :-fx-wrap-text true
-                }
-               
+                :-fx-wrap-text true}
+
                ;; common tables
+
 
                ".table-view"
                {:-fx-table-cell-border-color (colour :table-border)
@@ -278,7 +276,7 @@
                  :-fx-text-fill "darkseagreen" ;; good for light
                  }
 
-                 " .column-header.more-column .table-cell"
+                " .column-header.more-column .table-cell"
                 {:-fx-fill "green"
                  ;;:-fx-padding 10
                  :-fx-text-fill "green"
@@ -287,9 +285,7 @@
 
                 " .more-column"
                 {:-fx-padding 0
-                 :-fx-spacing 0}
-
-                }
+                 :-fx-spacing 0}}
 
 
                ;; notice-logger
@@ -967,19 +963,17 @@
   ;; if updates available, 'update'
   ;; else, 'more'
   (let [tick "\u2714"
-        update "\u21E5"
+        ;;update "\u21E5"
         update "\u21A6"
         ub {:fx/type :button
             :text (if (:update? row) update tick)
-            
             :on-action (fn [_]
                          (cli/add-addon-tab row)
                          (Platform/runLater
                           (fn []
-                           ;;(Thread/sleep 10) ;; this sucks. can we control the selected tab via app state instead?
-                           (switch-tab (-> (core/get-state :tab-list) count (+ 3) dec)))))
-            }
-        ]
+                            ;;(Thread/sleep 10) ;; this sucks. can we control the selected tab via app state instead?
+                            (switch-tab (-> (core/get-state :tab-list) count (+ 3) dec)))))}]
+
     (-> ub fx/create-component fx/instance)))
 
 (defn installed-addons-table
@@ -998,9 +992,8 @@
                      {:text "installed" :max-width 250 :cell-value-factory :installed-version}
                      {:text "available" :max-width 250 :cell-value-factory available-versions}
                      {:text "WoW" :max-width 100 :cell-value-factory iface-version}
-                     {:text "" :style-class ["more-column"] :max-width 100 :cell-value-factory uber-button}
+                     {:text "" :style-class ["more-column"] :max-width 100 :cell-value-factory uber-button}]]
 
-                     ]]
     {:fx/type fx.ext.table-view/with-selection-props
      :props {:selection-mode :multiple
              ;; unlike gui.clj, we have access to the original data here. no need to re-select addons.
@@ -1135,97 +1128,94 @@
 
 (defn addon-detail-button-menu
   [{:keys [addon]}]
-  (let [
-        ]
-    {:fx/type :h-box
-     :children [{:fx/type :button
-                 :text "Install"
-                 :on-action donothing
-                 :disable (addon/installed? addon)}
-                
+  {:fx/type :h-box
+   :children [{:fx/type :button
+               :text "Install"
+               :on-action donothing
+               :disable (addon/installed? addon)}
+
+              {:fx/type :button
+               :text (if (addon/updateable? addon)
+                       (str "Update to " (:version addon))
+                       "Update")
+               :on-action (async-handler #(cli/update-addon addon))
+               :disable (not (addon/updateable? addon))}
+
+              {:fx/type :button
+               :text (if (addon/re-installable? addon)
+                       (str "Re-install " (:installed-version addon))
+                       "Re-install")
+               :on-action donothing
+               :disable (not (addon/re-installable? addon))}
+
+              (if (addon/pinned? addon)
                 {:fx/type :button
-                 :text (if (addon/updateable? addon)
-                         (str "Update to " (:version addon))
-                         "Update")
-                 :on-action donothing
-                 :disable (not (addon/updateable? addon))}
-                
-                {:fx/type :button
-                 :text (if (addon/re-installable? addon)
-                         (str "Re-install " (:installed-version addon))
-                         "Re-install")
-                 :on-action donothing
-                 :disable (not (addon/re-installable? addon))}
-
-                (if (addon/pinned? addon)
-                  {:fx/type :button
-                   :text "Unpin A.B.C"
-                   :disable (not (addon/unpinnable? addon))}
-                  
-                  {:fx/type :button
-                   :text (if (addon/pinnable? addon)
-                           (str "Pin " (:version addon))
-                           "Pin")
-                   :disable (not (addon/pinnable? addon))})
-
-                {:fx/type :separator
-                 :orientation :vertical}
-
-                (if (addon/ignored? addon)
-                  {:fx/type :button
-                   :text "Stop ignoring"}
-                  
-                  {:fx/type :button
-                   :text "Ignore"})
-
-                {:fx/type :separator
-                 :orientation :vertical}
+                 :text (str "Unpin " (:pinned-version addon))
+                 :on-action (async-handler #(cli/unpin addon))
+                 :disable (not (addon/unpinnable? addon))}
 
                 {:fx/type :button
-                 :text "Delete"
-                 :on-action donothing
-                 :disable (not (addon/deletable? addon))}
-                
-                ]}))
+                 :text (if (addon/pinnable? addon)
+                         (str "Pin " (:installed-version addon))
+                         "Pin")
+                 :on-action (async-handler #(cli/pin addon))
+                 :disable (not (addon/pinnable? addon))})
 
+              {:fx/type :separator
+               :orientation :vertical}
+
+              (if (addon/ignored? addon)
+                {:fx/type :button
+                 :text "Stop ignoring"
+                 :on-action (async-handler #(cli/clear-ignore-selected [addon]))}
+
+                {:fx/type :button
+                 :text "Ignore"
+                 :on-action (async-handler #(cli/ignore-selected [addon]))})
+
+              {:fx/type :separator
+               :orientation :vertical}
+
+              {:fx/type :button
+               :text "Delete"
+               :on-action donothing
+               :disable (not (addon/deletable? addon))}]})
 
 (defn addon-detail-pane
-  [{:keys [fx/context addon]}]
-  {:fx/type :v-box
-   :children (utils/items
-              [{:fx/type :label
-                :style-class ["addon-detail-title"]
-                :text (:label addon)}
+  [{:keys [fx/context addon-id]}]
+  (let [addon (first (filter #(= addon-id (utils/extract-addon-id %)) (fx/sub-val context get-in [:app-state :installed-addon-list])))]
 
-               (when (:description addon)
-                 {:fx/type :label
-                  :style-class ["addon-detail-description"]
-                  :text (:description addon)})
-               
-               ;; if installed, path to addon directory, clicking it opens file browser
+    {:fx/type :v-box
+     :children (utils/items
+                [{:fx/type :label
+                  :style-class ["addon-detail-title"]
+                  :text (:label addon)}
 
-               {:fx/type addon-detail-button-menu
-                :addon addon}
+                 (when (:description addon)
+                   {:fx/type :label
+                    :style-class ["addon-detail-description"]
+                    :text (:description addon)})
 
-               {:fx/type :text-area
-                :text (str addon)
-                :wrap-text true}
+                 ;; if installed, path to addon directory, clicking it opens file browser
 
-               ])
-   })
+                 {:fx/type addon-detail-button-menu
+                  :addon addon}
 
-(defn-spec make-addon-tab map?
-  [tab :ui/tab]
-  (let [tab-id (str (java.util.UUID/randomUUID))]
-    {:fx/type :tab
-     :id tab-id
-     :text (:label tab)
-     :closable (:closable? tab)
-     :on-closed (fn [_]
-                  (cli/remove-tab (:label tab))
-                  (switch-tab INSTALLED-TAB))
-     :content {:fx/type addon-detail-pane
-               :addon (:tab-data tab)}}))
+                 {:fx/type :text-area
+                  :text (str addon)
+                  :wrap-text true}])}))
+
+(defn addon-detail-tab
+  [{:keys [tab]}]
+  {:fx/type :tab
+   :id (:tab-id tab)
+   :text (:label tab)
+   :closable (:closable? tab)
+   :on-closed (fn [_]
+                (cli/remove-tab (:id tab))
+                (switch-tab INSTALLED-TAB))
+   :content {:fx/type addon-detail-pane
+             :addon-id (:tab-data tab)}})
 
 (defn tabber
   [{:keys [fx/context]}]
@@ -1252,15 +1242,16 @@
           :closable false
           ;;:on-selection-changed (fn [x]
           ;;                        (println "log tab changed" x))
-                                  
+
           :content {:fx/type notice-logger}}]
-        
-        dynamic-tabs (mapv make-addon-tab (fx/sub-val context get-in [:app-state :tab-list]))]
-  {:fx/type :tab-pane
-   :id "tabber"
-   :tab-closing-policy javafx.scene.control.TabPane$TabClosingPolicy/ALL_TABS
-   :tabs (into static-tabs dynamic-tabs)
-   }))
+
+        dynamic-tabs (mapv (fn [tab]
+                             {:fx/type addon-detail-tab :tab tab})
+                           (fx/sub-val context get-in [:app-state :tab-list]))]
+    {:fx/type :tab-pane
+     :id "tabber"
+     :tab-closing-policy javafx.scene.control.TabPane$TabClosingPolicy/ALL_TABS
+     :tabs (into static-tabs dynamic-tabs)}))
 
 (defn status-bar
   "this is the litle strip of text at the bottom of the application."
@@ -1312,10 +1303,10 @@
      :height 768
      :scene {:fx/type :scene
              :on-key-pressed (fn [e]
-                                (when (and (.isControlDown e)
-                                           (= (.getCode e) (KeyCode/W)))
-                                  (cli/remove-tab-at-idx (tab-list-tab-index)))
-                                nil)
+                               (when (and (.isControlDown e)
+                                          (= (.getCode e) (KeyCode/W)))
+                                 (cli/remove-tab-at-idx (tab-list-tab-index)))
+                               nil)
              :stylesheets [(::css/url style)]
              :root {:fx/type :border-pane
                     :id (name theme)

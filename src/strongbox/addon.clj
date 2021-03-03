@@ -260,6 +260,13 @@
   [addon map?]
   (get addon :ignore? false))
 
+(defn-spec ignorable? boolean?
+  "returns `true` if the given `addon` can be ignored."
+  [addon map?]
+  (and (contains? addon :dirname) ;; installed ...
+       ;; todo: and what if one of it's grouped addons is ignored??
+       (not (ignored? addon)))) ;; and not already ignored.
+
 ;; todo: does this have tests? is it flawed like pinned-dir-list is?
 (defn-spec ignored-dir-list (s/coll-of ::sp/dirname)
   "returns a list of unique addon directory names (including grouped addons) that are not being ignored"
@@ -288,13 +295,27 @@
     (or (contains? toc-data :ignore?)
         (nfo/version-controlled? path))))
 
+(defn-spec ignore nil?
+  "marks the given `addon` and all of it's group members (if any) as 'ignored'"
+  [install-dir ::sp/extant-dir, addon :addon/installed]
+  (->> addon
+       ungroup-addon
+       flatten
+       (map :dirname)
+       (run! (partial nfo/ignore install-dir))))
+
 (defn-spec clear-ignore nil?
   "clears the `ignore?` flag on an addon, either by removing it from the nfo or setting it in the nfo to `false`.
   Has to happen here so we can distinguish between 'toc-ignores' and 'nfo-ignores'."
-  [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname]
-  (if (implicitly-ignored? install-dir addon-dirname)
-    (nfo/stop-ignoring install-dir addon-dirname)
-    (nfo/clear-ignore install-dir addon-dirname)))
+  [install-dir ::sp/extant-dir, addon :addon/installed]
+  (let [addon-dirname (:dirname addon)
+        ignore-fn (if (implicitly-ignored? install-dir addon-dirname)
+                    nfo/stop-ignoring
+                    nfo/clear-ignore)]
+    (->> addon
+         ungroup-addon
+         (mapv :dirname)
+         (run! (partial ignore-fn install-dir)))))
 
 ;;
 
