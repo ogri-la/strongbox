@@ -515,14 +515,21 @@
       (error uncaught-exception "failed to call `which`"))))
 
 (defn-spec java-browser (s/or :ok fn? :error nil?)
-  "returns a function that will open a given URL in a browser, or nil if 
-  current Desktop is not supported"
+  "returns a function that will open a given value or nil if current Desktop is not supported
+  if the given value is a URL, we attempt to 'browse' it.
+  if the given value is an extant directory, we attempt to 'open' it."
   []
-  (when (and (java.awt.Desktop/isDesktopSupported)
-             (.isSupported (java.awt.Desktop/getDesktop) java.awt.Desktop$Action/BROWSE))
-    (fn [url]
-      (info "opening URL:" url)
-      (.browse (java.awt.Desktop/getDesktop) (java.net.URI. url)))))
+  (let [desktop (java.awt.Desktop/getDesktop)]
+    (when (and (java.awt.Desktop/isDesktopSupported)
+               (.isSupported desktop java.awt.Desktop$Action/BROWSE)
+               (.isSupported desktop java.awt.Desktop$Action/OPEN))
+      (fn [x]
+        (cond
+          (s/valid? ::sp/url x) (do (info "opening URL:" x)
+                                    (.browse desktop (java.net.URI. x)))
+          (s/valid? ::sp/extant-dir x) (do (info "opening directory:" x)
+                                           (.open desktop (java.io.File. x)))
+          :else (error "can't open: " x))))))
 
 (defn-spec find-browser fn?
   "returns a function that attempts to open a given URL in a browser.
@@ -532,15 +539,17 @@
         gnome-open #(browser "gnome-open")
         kde-open #(browser "kde-open")
         fail (constantly #(error "failed to find a program to open URL:" (str %)))]
-    (loop [lst [java-browser xdg-open gnome-open kde-open fail]]
+    (loop [lst [java-browser
+                xdg-open gnome-open kde-open fail]]
       (if-let [browser-fn ((first lst))]
         browser-fn
         (recur (rest lst))))))
 
 (defn-spec browse-to nil?
   "given a URL, open a browser window with it"
-  [url ::sp/url]
-  (future-call #((find-browser) url))
+  [x (s/or :url ::sp/url, :dir ::sp/extant-dir)]
+  (future
+    ((find-browser) x))
   nil)
 
 (defn-spec source-to-href-label-fn (s/or :ok string? :bad-url nil?)

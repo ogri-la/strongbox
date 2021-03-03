@@ -183,6 +183,11 @@
                 ;;:-fx-pref-width "150px"
                 }
 
+
+               ;;
+               ;; addon-detail
+               ;;
+               
                ".addon-detail-title"
                {:-fx-font-size "2em"
                 :-fx-padding "1em"
@@ -191,9 +196,20 @@
 
                ".addon-detail-description"
                {:-fx-font-size "1.2em"
-                :-fx-padding "0 1em 1em 1em"
+                :-fx-padding "0 0 0 1em"
                 :-fx-wrap-text true}
 
+               ".addon-detail-ext-links"
+               {;;:-fx-background-color "gray"
+                :-fx-padding "0 0 1em .5em"
+
+                " .hyperlink"
+                {;;:-fx-background-color "green"
+                 :-fx-text-fill "blue"
+
+                 }
+                }
+               
                ;; common tables
 
 
@@ -877,6 +893,13 @@
     {:fx/type :text
      :text ""}))
 
+(defn addon-fs-link
+  [row]
+  (when-let [dirname (:dirname row)]
+    {:fx/type :hyperlink
+     :on-action (handler #(utils/browse-to (format "%s/%s" (core/selected-addon-dir) dirname)))
+     :text "↪ browse local files"}))
+
 ;;(defn-spec href-to-hyperlink (s/or :ok :javafx/hyperlink-component, :noop :javafx/text-component)
 (defn href-to-hyperlink
   "returns a hyperlink instance or empty text"
@@ -1198,6 +1221,15 @@
 
                  ;; if installed, path to addon directory, clicking it opens file browser
 
+                 {:fx/type :h-box
+                  :style-class ["addon-detail-ext-links"]
+                  :children (utils/items
+                              [(addon-fs-link addon)
+                             ;; order is important, a hyperlink may not exist, can't have nav jumping around
+                             (-href-to-hyperlink addon)
+                             
+                             ])}
+                 
                  {:fx/type addon-detail-button-menu
                   :addon addon}
 
