@@ -6,8 +6,8 @@
    [cljfx.ext.table-view :as fx.ext.table-view]
    [cljfx.lifecycle :as fx.lifecycle]
    [cljfx.component :as fx.component]
-   [cljfx
-    [api :as fx]]
+   [cljfx.api :as fx]
+   [cljfx.ext.node :as fx.ext.node]
    [cljfx.css :as css]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
@@ -187,29 +187,34 @@
                ;;
                ;; addon-detail
                ;;
-               
+
+
                ".addon-detail-title"
                {:-fx-font-size "2em"
-                :-fx-padding "1em"
+                :-fx-padding "1em 0 .25em 1em"
                 ;;:-fx-background-color "green"
                 :-fx-alignment "center"}
 
+               ".addon-detail-subtitle"
+               {;;:-fx-background-color "green"
+                ;;:-fx-padding "0 0 0 1em"
+                :-fx-font-size "1.1em"}
+
                ".addon-detail-description"
-               {:-fx-font-size "1.2em"
-                :-fx-padding "0 0 0 1em"
-                :-fx-wrap-text true}
+               {:-fx-font-size "1.4em"
+                :-fx-padding "0 0 1.5em 1em"
+                :-fx-wrap-text true
+                :-fx-font-style "italic"}
 
                ".addon-detail-ext-links"
                {;;:-fx-background-color "gray"
-                :-fx-padding "0 0 1em .5em"
+                :-fx-padding "0 0 1em 1.75em"
 
                 " .hyperlink"
                 {;;:-fx-background-color "green"
                  :-fx-text-fill "blue"
+                 :-fx-padding "0 0 0 1em"}}
 
-                 }
-                }
-               
                ;; common tables
 
 
@@ -484,6 +489,25 @@
 (def SEARCH-TAB 1)
 (def LOG-TAB 2)
 
+(defn button
+  [label on-action & [{:keys [disabled? tooltip]}]]
+  (let [btn (cond->
+             {:fx/type :button
+              :text label
+              :on-action on-action}
+
+              (boolean? disabled?)
+              (merge {:disable disabled?}))]
+
+    (if (some? tooltip)
+      {:fx/type fx.ext.node/with-tooltip-props
+       :props {:tooltip {:fx/type :tooltip
+                         :text tooltip
+                         :show-delay 200}}
+       :desc btn}
+
+      btn)))
+
 (defn menu-item
   [label handler & [opt-map]]
   (merge
@@ -591,6 +615,12 @@
   [tab-idx int?]
   (-> (select "#tabber") first .getSelectionModel (.select tab-idx))
   nil)
+
+(defn-spec switch-tab-latest nil?
+  []
+  (Platform/runLater
+   (fn []
+     (switch-tab (-> (core/get-state :tab-list) count (+ 3) dec)))))
 
 (defn-spec switch-tab-handler fn?
   [tab-idx int?]
@@ -992,11 +1022,7 @@
             :text (if (:update? row) update tick)
             :on-action (fn [_]
                          (cli/add-addon-tab row)
-                         (Platform/runLater
-                          (fn []
-                            ;;(Thread/sleep 10) ;; this sucks. can we control the selected tab via app state instead?
-                            (switch-tab (-> (core/get-state :tab-list) count (+ 3) dec)))))}]
-
+                         (switch-tab-latest))}]
     (-> ub fx/create-component fx/instance)))
 
 (defn installed-addons-table
@@ -1030,7 +1056,12 @@
             :pref-height 999.0
             :row-factory {:fx/cell-type :table-row
                           :describe (fn [row]
-                                      {:style-class
+                                      {:on-mouse-clicked (fn [e]
+                                                           (when (and (= javafx.scene.input.MouseButton/PRIMARY (.getButton e))
+                                                                      (= 2 (.getClickCount e)))
+                                                             (cli/add-addon-tab row)
+                                                             (switch-tab-latest)))
+                                       :style-class
                                        (remove nil?
                                                ["table-row-cell" ;; `:style-class` will actually *replace* the list of classes
                                                 (when (:update? row) "updateable")
@@ -1097,7 +1128,12 @@
                                   "No search results.")}
             :row-factory {:fx/cell-type :table-row
                           :describe (fn [row]
-                                      {:style-class ["table-row-cell"
+                                      {:on-mouse-clicked (fn [e]
+                                                           (when (and (= javafx.scene.input.MouseButton/PRIMARY (.getButton e))
+                                                                      (= 2 (.getClickCount e)))
+                                                             (cli/add-addon-tab row)
+                                                             (switch-tab-latest)))
+                                       :style-class ["table-row-cell"
                                                      (when (utils/in? (idx-key row) installed-addon-idx)
                                                        "installed")]})}
             :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
@@ -1152,84 +1188,82 @@
 (defn addon-detail-button-menu
   [{:keys [addon]}]
   {:fx/type :h-box
-   :children [{:fx/type :button
-               :text "Install"
-               :on-action donothing
-               :disable (addon/installed? addon)}
+   :children [(button "Install" donothing
+                      {:disabled? (addon/installed? addon)
+                       :tooltip (format "Install %s version %s" (:name addon) (:version addon))})
 
-              {:fx/type :button
-               :text (if (addon/updateable? addon)
-                       (str "Update to " (:version addon))
-                       "Update")
-               :on-action (async-handler #(cli/update-addon addon))
-               :disable (not (addon/updateable? addon))}
+              (button "Update" (async-handler #(cli/update-addon addon))
+                      {:disabled? (not (addon/updateable? addon))
+                       :tooltip (format "Update to version %s" (:version addon))})
 
-              {:fx/type :button
-               :text (if (addon/re-installable? addon)
-                       (str "Re-install " (:installed-version addon))
-                       "Re-install")
-               :on-action donothing
-               :disable (not (addon/re-installable? addon))}
+              (button "Re-install" donothing
+                      {:disabled? (not (addon/re-installable? addon))
+                       :tooltip (format "Re-install version %s" (:installed-version addon))})
 
               (if (addon/pinned? addon)
-                {:fx/type :button
-                 :text (str "Unpin " (:pinned-version addon))
-                 :on-action (async-handler #(cli/unpin addon))
-                 :disable (not (addon/unpinnable? addon))}
+                (button "Unpin" (async-handler #(cli/unpin addon))
+                        {:disabled? (not (addon/unpinnable? addon))
+                         :tooltip (format "Unpin from version %s" (:pinned-version addon))})
 
-                {:fx/type :button
-                 :text (if (addon/pinnable? addon)
-                         (str "Pin " (:installed-version addon))
-                         "Pin")
-                 :on-action (async-handler #(cli/pin addon))
-                 :disable (not (addon/pinnable? addon))})
+                (button "Pin" (async-handler #(cli/pin addon))
+                        {:disabled? (not (addon/pinnable? addon))
+                         :tooltip (format "Pin to version %s" (:installed-version addon))}))
 
               {:fx/type :separator
                :orientation :vertical}
 
               (if (addon/ignored? addon)
-                {:fx/type :button
-                 :text "Stop ignoring"
-                 :on-action (async-handler #(cli/clear-ignore-selected [addon]))}
-
-                {:fx/type :button
-                 :text "Ignore"
-                 :on-action (async-handler #(cli/ignore-selected [addon]))})
+                (button "Stop ignoring" (async-handler #(cli/clear-ignore-selected [addon])))
+                (button "Ignore" (async-handler #(cli/ignore-selected [addon]))
+                        {:tooltip "Prevent all changes"}))
 
               {:fx/type :separator
                :orientation :vertical}
 
-              {:fx/type :button
-               :text "Delete"
-               :on-action donothing
-               :disable (not (addon/deletable? addon))}]})
+              (button "Delete" donothing
+                      {:disabled? (not (addon/deletable? addon))
+                       :tooltip "Permanently delete"})]})
 
 (defn addon-detail-pane
   [{:keys [fx/context addon-id]}]
   (let [addon (first (filter #(= addon-id (utils/extract-addon-id %)) (fx/sub-val context get-in [:app-state :installed-addon-list])))]
-
     {:fx/type :v-box
+     :id "addon-detail-pane"
      :children (utils/items
                 [{:fx/type :label
                   :style-class ["addon-detail-title"]
                   :text (:label addon)}
 
-                 (when (:description addon)
-                   {:fx/type :label
-                    :style-class ["addon-detail-description"]
-                    :text (:description addon)})
 
                  ;; if installed, path to addon directory, clicking it opens file browser
+
 
                  {:fx/type :h-box
                   :style-class ["addon-detail-ext-links"]
                   :children (utils/items
-                              [(addon-fs-link addon)
-                             ;; order is important, a hyperlink may not exist, can't have nav jumping around
-                             (-href-to-hyperlink addon)
-                             
-                             ])}
-                 
+                             [{:fx/type :label
+                               :style-class ["addon-detail-subtitle"]
+                               :text (cond
+                                       (and (:installed-version addon)
+                                            (:version addon)
+                                            (:update? addon))
+                                       (format "%s (%s available)" (:installed-version addon) (:version addon))
+
+                                       (:installed-version addon)
+                                       (format "%s" (:installed-version addon))
+
+                                       (:version addon)
+                                       (format "%s" (:version addon)))}
+
+                              (addon-fs-link addon)
+                               ;; order is important, a hyperlink may not exist, can't have nav jumping around
+                              (-href-to-hyperlink addon)])}
+
+                 (when-not (empty? (:description addon))
+                   {:fx/type :label
+                    :style-class ["addon-detail-description"]
+                    :text (:description addon)})
+
                  {:fx/type addon-detail-button-menu
                   :addon addon}
 
