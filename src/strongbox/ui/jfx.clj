@@ -1190,17 +1190,19 @@
 (defn addon-detail-button-menu
   [{:keys [addon]}]
   {:fx/type :h-box
-   :children [(button "Install" (async-handler #(cli/install-addon addon))
-                      {:disabled? (addon/installed? addon)
-                       :tooltip (format "Install %s version %s" (:name addon) (:version addon))})
+   :children [(if (addon/installed? addon)
+                (button "Re-install" (async-handler #(cli/re-install-or-update-selected [addon]))
+                        {:disabled? (not (addon/re-installable? addon))
+                         :tooltip (format "Re-install version %s" (:installed-version addon))})
+                
+                (button "Install" (async-handler #(cli/install-addon addon))
+                        {:disabled? (addon/installed? addon)
+                         :tooltip (format "Install %s version %s" (:name addon) (:version addon))}))
 
               (button "Update" (async-handler #(cli/update-addon addon))
                       {:disabled? (not (addon/updateable? addon))
                        :tooltip (format "Update to version %s" (:version addon))})
 
-              (button "Re-install" donothing
-                      {:disabled? (not (addon/re-installable? addon))
-                       :tooltip (format "Re-install version %s" (:installed-version addon))})
 
               (if (addon/pinned? addon)
                 (button "Unpin" (async-handler #(cli/unpin addon))

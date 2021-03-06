@@ -180,12 +180,14 @@
 
 (defn-spec re-install-or-update-selected nil?
   "re-installs (if possible) or updates all selected addons"
-  []
-  (->> (get-state :selected-addon-list)
-       (filter core/expanded?)
-       (map -find-replace-release)
-       -install-update-these)
-  (core/refresh))
+  ([]
+   (re-install-or-update-selected (get-state :selected-addon-list)))
+  ([addon-list :addon/installed-list]
+   (->> addon-list
+        (filter core/expanded?)
+        (map -find-replace-release)
+        -install-update-these)
+   (core/refresh)))
 
 (defn-spec re-install-or-update-all nil?
   "re-installs (if possible) or updates all installed addons"
