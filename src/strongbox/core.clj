@@ -213,7 +213,7 @@
   (let [addon-dir (-> addon-dir fs/absolute fs/normalized str)
         ;; if '_classic_' is in given path, use the classic game track
         default-game-track (if (clojure.string/index-of addon-dir "_classic_") :classic :retail)]
-    (sync
+    (dosync ;; necessary? makes me feel better
      (add-addon-dir! addon-dir default-game-track)
      (swap! state assoc-in [:cfg :selected-addon-dir] addon-dir)
      (swap! state assoc :tab-list [])))
