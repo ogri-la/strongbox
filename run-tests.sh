@@ -14,7 +14,7 @@ function finish {
 }
 trap finish EXIT
 
-lein cloverage --runner "strongbox" --fail-threshold "$fail_threshold" --html || {
+xvfb-run lein cloverage --runner "strongbox" --fail-threshold "$fail_threshold" --html || {
     retval="$?"
     # 1 for failed tests
     # 253 for failed coverage
