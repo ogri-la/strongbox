@@ -32,8 +32,8 @@ jobs:
             - v1-dependencies-
 
       - run: 
-        - lein deps
-        - lein cloverage -h > /dev/null
+        lein deps
+        lein cloverage -h > /dev/null
 
       - save_cache:
           paths:
