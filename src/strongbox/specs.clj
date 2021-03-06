@@ -344,7 +344,8 @@
 
 (s/def :gui/column-data (s/keys :opt-un [:gui/text :gui/cell-value-factory :gui/style-class]))
 
-(s/def :addon/id (s/keys :req-un [:addon/source :addon/source-id]))
+(s/def :addon/id (s/or :regular (s/keys :req-un [:addon/source :addon/source-id]) ;; installed addons and catalogue addons
+                       :edge (s/keys :req-in [:addon/dirname]))) ;; unmatched and ignored addons
 (s/def :ui/tab-data :addon/id) ;; for now
 (s/def :ui/tab-id string?)
 (s/def :ui/tab (s/keys :req-un [:ui/tab-id ::label ::closable? :ui/tab-data]))

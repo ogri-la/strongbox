@@ -1057,6 +1057,7 @@
             :row-factory {:fx/cell-type :table-row
                           :describe (fn [row]
                                       {:on-mouse-clicked (fn [e]
+                                                           ;; double click check https://github.com/cljfx/cljfx/issues/118
                                                            (when (and (= javafx.scene.input.MouseButton/PRIMARY (.getButton e))
                                                                       (= 2 (.getClickCount e)))
                                                              (cli/add-addon-tab row)
@@ -1129,6 +1130,7 @@
             :row-factory {:fx/cell-type :table-row
                           :describe (fn [row]
                                       {:on-mouse-clicked (fn [e]
+                                                           ;; double click check https://github.com/cljfx/cljfx/issues/118
                                                            (when (and (= javafx.scene.input.MouseButton/PRIMARY (.getButton e))
                                                                       (= 2 (.getClickCount e)))
                                                              (cli/add-addon-tab row)
@@ -1226,7 +1228,14 @@
 
 (defn addon-detail-pane
   [{:keys [fx/context addon-id]}]
-  (let [addon (first (filter #(= addon-id (utils/extract-addon-id %)) (fx/sub-val context get-in [:app-state :installed-addon-list])))]
+  (let [installed-addons (fx/sub-val context get-in [:app-state :installed-addon-list])
+        catalogue (fx/sub-val context get-in [:app-state :db]) ;; worst case is actually not so bad ...
+
+        addon-id-keys (keys addon-id)
+        matcher (fn [addon]
+                  (= addon-id (select-keys addon addon-id-keys)))
+        addon (or (->> installed-addons (filter matcher) first)
+                  (->> catalogue (filter matcher) first))]
     {:fx/type :v-box
      :id "addon-detail-pane"
      :children (utils/items
