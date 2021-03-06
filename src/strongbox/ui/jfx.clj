@@ -1190,7 +1190,7 @@
 (defn addon-detail-button-menu
   [{:keys [addon]}]
   {:fx/type :h-box
-   :children [(button "Install" donothing
+   :children [(button "Install" (async-handler #(cli/install-addon addon))
                       {:disabled? (addon/installed? addon)
                        :tooltip (format "Install %s version %s" (:name addon) (:version addon))})
 

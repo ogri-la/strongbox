@@ -196,6 +196,16 @@
        -install-update-these)
   (core/refresh))
 
+(defn-spec install-addon nil?
+  "install an addon from the catalogue.
+  should work on expanded addons as well, but those are already installed ...?"
+  [addon :addon/summary]
+  (-> addon
+      core/expand-summary-wrapper
+      vector
+      -install-update-these)
+  (core/refresh))
+
 (defn-spec update-addon nil?
   "updates given addon"
   [addon :addon/installable]
