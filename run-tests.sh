@@ -16,7 +16,7 @@ trap finish EXIT
 
 if which xvfb-run; then
     # CI
-    lein cloverage --runner "strongbox" --fail-threshold "$fail_threshold" --html
+    xvfb-run lein cloverage --runner "strongbox" --fail-threshold "$fail_threshold" --html
 else
     lein cloverage --runner "strongbox" --fail-threshold "$fail_threshold" --html || {
         retval="$?"
