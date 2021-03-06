@@ -13,7 +13,7 @@
 (defmethod c/runner-fn :strongbox
   [_]
   (fn [ns-list]
-    (with-redefs [main/profile? true
+    (with-redefs [main/profile? false
                   main/spec? true]
       (timbre/with-merged-config {:level :debug, :testing? true
                                   ;; ensure we're not writing logs to files
