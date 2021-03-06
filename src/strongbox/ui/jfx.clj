@@ -1217,7 +1217,8 @@
               (if (addon/ignored? addon)
                 (button "Stop ignoring" (async-handler #(cli/clear-ignore-selected [addon])))
                 (button "Ignore" (async-handler #(cli/ignore-selected [addon]))
-                        {:tooltip "Prevent all changes"}))
+                        {:tooltip "Prevent all changes"
+                         :disabled? (not (addon/ignorable? addon))}))
 
               {:fx/type :separator
                :orientation :vertical}
@@ -1230,7 +1231,6 @@
   [{:keys [fx/context addon-id]}]
   (let [installed-addons (fx/sub-val context get-in [:app-state :installed-addon-list])
         catalogue (fx/sub-val context get-in [:app-state :db]) ;; worst case is actually not so bad ...
-
         addon-id-keys (keys addon-id)
         matcher (fn [addon]
                   (= addon-id (select-keys addon addon-id-keys)))
@@ -1242,11 +1242,6 @@
                 [{:fx/type :label
                   :style-class ["addon-detail-title"]
                   :text (:label addon)}
-
-
-                 ;; if installed, path to addon directory, clicking it opens file browser
-
-
                  {:fx/type :h-box
                   :style-class ["addon-detail-ext-links"]
                   :children (utils/items
@@ -1264,7 +1259,9 @@
                                        (:version addon)
                                        (format "%s" (:version addon)))}
 
+                              ;; if installed, path to addon directory, clicking it opens file browser
                               (addon-fs-link addon)
+
                                ;; order is important, a hyperlink may not exist, can't have nav jumping around
                               (-href-to-hyperlink addon)])}
 
