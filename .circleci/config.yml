@@ -7,7 +7,8 @@ jobs:
   build:
     docker:
       # specify the version you desire here
-      - image: circleci/clojure:lein-2.7.1
+      - image: circleci/clojure:openjdk-14-buster
+      - user: circleci
 
       # Specify service dependencies here if necessary
       # CircleCI maintains a library of pre-built images
@@ -17,7 +18,7 @@ jobs:
     working_directory: ~/repo
 
     environment:
-      LEIN_ROOT: "true" # hrm
+      # LEIN_ROOT: "true"
       # Customize the JVM maximum heap limit
       JVM_OPTS: -Xmx3200m
 
@@ -39,4 +40,4 @@ jobs:
           key: v1-dependencies-{{ checksum "project.clj" }}
 
       # run tests!
-      - run: xvfb ./run-tests.sh
+      - run: lein test
