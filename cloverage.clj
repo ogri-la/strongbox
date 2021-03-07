@@ -1,6 +1,5 @@
 (ns strongbox.cloverage
   (:require
-   [cljfx.api]
    [taoensso.timbre :as timbre]
    [strongbox.main :as main]
    [clojure.test :as test]

@@ -24,7 +24,21 @@ jobs:
     steps:
       - checkout
 
-      - run: lein deps && lein cloverage -h > /dev/null
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "project.clj" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
+
+      - run: |
+            sudo apt install libgtk-3-0 libxtst6 --no-install-recommends -y
+            lein deps && lein cloverage -h > /dev/null
+
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: v1-dependencies-{{ checksum "project.clj" }}
 
       # run tests!
       - run: ./run-tests.sh

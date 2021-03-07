@@ -23,8 +23,8 @@
                  [envvar "1.1.0"] ;; environment variable wrangling
                  [gui-diff "0.6.7"] ;; pops up a graphical diff for test results
                  [com.taoensso/tufte "2.1.0"]
-                 [cljfx "1.7.13"] ;; :exclusions [org.openjfx/javafx-web
-                                   ;;          org.openjfx/javafx-media]]
+                 [cljfx "1.7.13" :exclusions [org.openjfx/javafx-web
+                                             org.openjfx/javafx-media]]
                  [cljfx/css "1.1.0"]
 
                  [org.openjfx/javafx-base "15.0.1"]
@@ -53,6 +53,8 @@
                        ;; fixes hanging issue:
                        ;; - https://github.com/cljfx/cljfx/issues/17
                        :injections [(javafx.application.Platform/exit)]}}
+
+  :jvm-opts ["-Djdk.gtk.verbose=true"]
 
   :main strongbox.main
 

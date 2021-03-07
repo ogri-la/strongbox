@@ -1,0 +1,35 @@
+FROM circleci/clojure:openjdk-11
+
+USER root
+
+RUN mkdir strongbox
+COPY src strongbox/src
+COPY test strongbox/test
+COPY cloverage.clj run-tests.sh project.clj strongbox/
+RUN chown circleci:circleci -R strongbox
+
+USER circleci
+WORKDIR strongbox
+
+RUN lein deps && lein cloverage -h > /dev/null
+
+
+#RUN sudo apt install openjfx-source # nope
+#RUN sudo apt install libopenjfx-java # something in here
+RUN sudo apt install libgtk-3-0 --no-install-recommends
+
+# nope
+#RUN sudo apt install libgtk-3-0 --no-install-recommends
+#RUN sudo apt install libgtk2.0-0 --no-install-recommends
+
+# nope
+#RUN sudo apt install libgtk-3-bin libgtk2.0-bin --no-install-recommends
+
+# nope
+# RUN sudo apt install libgtk-3-0 libgtk-3-bin libgtk-3-common libgtk2.0-0 libgtk2.0-bin libgtk2.0-common --no-install-recommends
+
+#RUN sudo apt install libopenjfx-jni --no-install-recommends
+
+RUN sudo apt-get install libxtst6 --no-install-recommends
+
+RUN ./run-tests.sh || cat /tmp/clojure-*.edn
