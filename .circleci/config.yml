@@ -1,0 +1,45 @@
+# Clojure CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-clojure/ for more details
+#
+version: 2
+jobs:
+  build:
+    docker:
+      # specify the version you desire here
+      - image: circleci/clojure:openjdk-11
+
+      # Specify service dependencies here if necessary
+      # CircleCI maintains a library of pre-built images
+      # documented at https://circleci.com/docs/2.0/circleci-images/
+      # - image: circleci/postgres:9.4
+
+    working_directory: ~/repo
+
+    environment:
+      # LEIN_ROOT: "true" # running as root not cool
+      # Customize the JVM maximum heap limit
+      JVM_OPTS: -Xmx3200m # 3.2GB, 2.9GiB
+
+    steps:
+      - checkout
+
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "project.clj" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
+
+      - run: |
+            sudo apt install libgtk-3-0 libxtst6 --no-install-recommends -y
+            # 'lein cloverage -h' will pull down further deps for the plugin without actually running it
+            lein deps && lein cloverage -h > /dev/null
+
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: v1-dependencies-{{ checksum "project.clj" }}
+
+      # run tests!
+      - run: ./run-tests.sh

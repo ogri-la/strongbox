@@ -1,0 +1,19 @@
+# for debugging circle-ci
+
+FROM circleci/clojure:openjdk-11
+
+USER root
+RUN mkdir strongbox
+COPY src strongbox/src
+COPY test strongbox/test
+COPY cloverage.clj run-tests.sh project.clj strongbox/
+RUN chown circleci:circleci -R strongbox
+
+USER circleci
+WORKDIR strongbox
+
+# --- roughly where we come in
+
+RUN sudo apt install libgtk-3-0 libxtst6 --no-install-recommends
+RUN lein deps && lein cloverage -h > /dev/null
+RUN ./run-tests.sh

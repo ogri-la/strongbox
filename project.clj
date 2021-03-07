@@ -26,17 +26,17 @@
                                               org.openjfx/javafx-media]]
                  [cljfx/css "1.1.0"]
 
-                 [org.openjfx/javafx-base "15"]
-                 [org.openjfx/javafx-base "15" :classifier "linux"]
-                 [org.openjfx/javafx-base "15" :classifier "mac"]
+                 [org.openjfx/javafx-base "15.0.1"]
+                 [org.openjfx/javafx-base "15.0.1" :classifier "linux"]
+                 [org.openjfx/javafx-base "15.0.1" :classifier "mac"]
 
-                 [org.openjfx/javafx-controls "15"]
-                 [org.openjfx/javafx-controls "15" :classifier "linux"]
-                 [org.openjfx/javafx-controls "15" :classifier "mac"]
+                 [org.openjfx/javafx-controls "15.0.1"]
+                 [org.openjfx/javafx-controls "15.0.1" :classifier "linux"]
+                 [org.openjfx/javafx-controls "15.0.1" :classifier "mac"]
 
-                 [org.openjfx/javafx-graphics "15"]
-                 [org.openjfx/javafx-graphics "15" :classifier "linux"]
-                 [org.openjfx/javafx-graphics "15" :classifier "mac"]
+                 [org.openjfx/javafx-graphics "15.0.1"]
+                 [org.openjfx/javafx-graphics "15.0.1" :classifier "linux"]
+                 [org.openjfx/javafx-graphics "15.0.1" :classifier "mac"]
 
                  ;; remember to update the LICENCE.txt
                  ;; remember to update pom file (`lein pom`)
@@ -53,11 +53,14 @@
                        ;; - https://github.com/cljfx/cljfx/issues/17
                        :injections [(javafx.application.Platform/exit)]}}
 
+  :jvm-opts ["-Djdk.gtk.verbose=true" ;; debug output from JavaFX about which GTK it is looking for
+             ]
+
   :main strongbox.main
 
   :plugins [[lein-cljfmt "0.6.4"]
             [jonase/eastwood "0.3.13"]
-            [lein-cloverage "1.1.1"]]
+            [lein-cloverage "1.2.2"]]
   :eastwood {:exclude-linters [:constant-test]
              ;; linters that are otherwise disabled
              :add-linters [:unused-namespaces

@@ -14,14 +14,19 @@ function finish {
 }
 trap finish EXIT
 
-lein cloverage --runner "strongbox" --fail-threshold "$fail_threshold" --html || {
-    retval="$?"
-    # 1 for failed tests
-    # 253 for failed coverage
-    if [ "$retval" = "253" ]; then
-        if which otter-browser; then
-            otter-browser "file://$(pwd)/target/coverage/index.html" &
+if which xvfb-run; then
+    # CI
+    xvfb-run lein cloverage --runner "strongbox" --fail-threshold "$fail_threshold" --html
+else
+    lein cloverage --runner "strongbox" --fail-threshold "$fail_threshold" --html || {
+        retval="$?"
+        # 1 for failed tests
+        # 253 for failed coverage
+        if [ "$retval" = "253" ]; then
+            if which otter-browser; then
+                otter-browser "file://$(pwd)/target/coverage/index.html" &
+            fi
         fi
-    fi
-    exit "$retval"
-}
+        exit "$retval"
+    }
+fi
