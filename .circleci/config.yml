@@ -17,9 +17,9 @@ jobs:
     working_directory: ~/repo
 
     environment:
-      # LEIN_ROOT: "true"
+      # LEIN_ROOT: "true" # running as root not cool
       # Customize the JVM maximum heap limit
-      JVM_OPTS: -Xmx3200m
+      JVM_OPTS: -Xmx3200m # 3.2GB, 2.9GiB
 
     steps:
       - checkout
@@ -33,6 +33,7 @@ jobs:
 
       - run: |
             sudo apt install libgtk-3-0 libxtst6 --no-install-recommends -y
+            # 'lein cloverage -h' will pull down further deps for the plugin without actually running it
             lein deps && lein cloverage -h > /dev/null
 
       - save_cache:

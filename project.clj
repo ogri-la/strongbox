@@ -54,7 +54,8 @@
                        ;; - https://github.com/cljfx/cljfx/issues/17
                        :injections [(javafx.application.Platform/exit)]}}
 
-  :jvm-opts ["-Djdk.gtk.verbose=true"]
+  :jvm-opts ["-Djdk.gtk.verbose=true" ;; debug output from JavaFX about which GTK it is looking for
+             ]
 
   :main strongbox.main
 
