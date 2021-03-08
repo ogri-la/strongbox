@@ -349,3 +349,4 @@
 (s/def :ui/tab-data :addon/id) ;; for now
 (s/def :ui/tab-id string?)
 (s/def :ui/tab (s/keys :req-un [:ui/tab-id ::label ::closable? :ui/tab-data]))
+(s/def :ui/tab-list (s/coll-of :ui/tab))

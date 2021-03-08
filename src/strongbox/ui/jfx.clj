@@ -787,6 +787,14 @@
                            (core/save-settings))})]
     (mapv rb (keys theme-map))))
 
+(defn-spec build-addon-detail-menu ::sp/list-of-maps
+  [tab-list :ui/tab-list]
+  (let [addon-detail-menuitem
+        (fn [idx tab]
+          (let [tab-idx (+ idx 3)]
+            (menu-item (:label tab) (async-handler #(switch-tab tab-idx)))))]
+    (map-indexed addon-detail-menuitem tab-list)))
+
 (defn menu-item--num-zips-to-keep
   "returns a checkbox menuitem that affects the user preference `addon-zips-to-keep`"
   [{:keys [fx/context]}]
@@ -823,6 +831,9 @@
                     (menu-item "_Installed" (switch-tab-handler INSTALLED-TAB) {:key "Ctrl+I"})
                     (menu-item "Searc_h" (switch-tab-handler SEARCH-TAB) {:key "Ctrl+H"})
                     (menu-item "_Log" (switch-tab-handler LOG-TAB) {:key "Ctrl+L"})
+                    (let [tab-list (fx/sub-val context get-in [:app-state :tab-list])]
+                      (menu "Ad_don detail" (build-addon-detail-menu tab-list)
+                            {:disable (empty? tab-list)}))
                     separator]
                    (build-theme-menu
                     (fx/sub-val context get-in [:app-state :cfg :gui-theme])
@@ -1201,7 +1212,7 @@
                 (button "Re-install" (async-handler #(cli/re-install-or-update-selected [addon]))
                         {:disabled? (not (addon/re-installable? addon))
                          :tooltip (format "Re-install version %s" (:installed-version addon))})
-                
+
                 (button "Install" (async-handler #(cli/install-addon addon))
                         {:disabled? (addon/installed? addon)
                          :tooltip (format "Install %s version %s" (:name addon) (:version addon))}))
@@ -1209,7 +1220,6 @@
               (button "Update" (async-handler #(cli/update-selected [addon]))
                       {:disabled? (not (addon/updateable? addon))
                        :tooltip (format "Update to version %s" (:version addon))})
-
 
               (if (addon/pinned? addon)
                 (button "Unpin" (async-handler #(cli/unpin [addon]))
@@ -1293,7 +1303,7 @@
    :text (:label tab)
    :closable (:closable? tab)
    :on-closed (fn [_]
-                (cli/remove-tab (:id tab))
+                (cli/remove-tab (:tab-id tab))
                 (switch-tab INSTALLED-TAB))
    :content {:fx/type addon-detail-pane
              :addon-id (:tab-data tab)}})

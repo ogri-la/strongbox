@@ -283,7 +283,7 @@
 
 (defn-spec remove-tab nil?
   [tab-id string?]
-  (swap! core/state update-in [:tab-list] (partial (comp vec remove) #(= tab-id (:id %))))
+  (swap! core/state update-in [:tab-list] (partial (comp vec remove) #(= tab-id (:tab-id %))))
   nil)
 
 (defn-spec remove-tab-at-idx nil?
@@ -294,7 +294,7 @@
 (defn-spec add-tab nil?
   "removes a UI tab"
   [tab-id :ui/tab-id, tab-label ::sp/label, closable? ::sp/closable?, tab-data :ui/tab-data]
-  (let [tab {:id tab-id
+  (let [tab {:tab-id tab-id
              :label tab-label
              :closable? closable?
              :tab-data tab-data}]
