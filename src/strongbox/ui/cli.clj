@@ -297,13 +297,20 @@
   nil)
 
 (defn-spec add-tab nil?
-  "removes a UI tab"
+  "adds a tab to `:tab-list`.
+  if tab already exists then it is removed from list and the new one is appeneded to the end.
+  this is purely so the latest tab can be selected without index wrangling."
   [tab-id :ui/tab-id, tab-label ::sp/label, closable? ::sp/closable?, tab-data :ui/tab-data]
-  (let [tab {:tab-id tab-id
-             :label tab-label
-             :closable? closable?
-             :tab-data tab-data}]
-    (swap! core/state update-in [:tab-list] into [tab]))
+  (let [new-tab {:tab-id tab-id
+                 :label tab-label
+                 :closable? closable?
+                 :tab-data tab-data}
+        tab-list (remove (fn [tab]
+                           (= (dissoc tab :tab-id)
+                              (dissoc new-tab :tab-id)))
+                         (core/get-state :tab-list))
+        tab-list (vec (concat tab-list [new-tab]))]
+    (swap! core/state assoc :tab-list tab-list))
   nil)
 
 (defn-spec add-addon-tab nil?
