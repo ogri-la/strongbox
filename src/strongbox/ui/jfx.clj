@@ -483,6 +483,13 @@
   (let [result (alert :confirm message {:title "confirm" :header heading})]
     (= (.get result) ButtonType/OK)))
 
+(defn-spec confirm->action nil?
+  "displays a confirmation prompt with the given `heading` and `message` and then calls given `callback` on success"
+  [heading (s/nilable string?), message string?, callback fn?]
+  (when (confirm heading message)
+    (callback)
+    nil))
+
 ;;
 
 (def INSTALLED-TAB 0)
@@ -1225,7 +1232,7 @@
               {:fx/type :separator
                :orientation :vertical}
 
-              (button "Delete" donothing
+              (button "Delete" (async-handler #(confirm->action "Confirm" "Are you sure you want to delete this addon?" (partial cli/delete-selected [addon])))
                       {:disabled? (not (addon/deletable? addon))
                        :tooltip "Permanently delete"})]})
 

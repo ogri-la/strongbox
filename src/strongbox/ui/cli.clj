@@ -234,8 +234,10 @@
 (defn-spec delete-selected nil?
   "deletes all selected addons. 
   GUI should have popped up a confirmation beforehand ;)"
-  []
-  (core/remove-many-addons (get-state :selected-addon-list)))
+  ([]
+   (delete-selected (get-state :selected-addon-list)))
+  ([addon-list :addon/installed-list]
+   (core/remove-many-addons addon-list)))
 
 (defn-spec ignore-selected nil?
   "marks each of the selected addons as being 'ignored'"
