@@ -281,6 +281,11 @@
 
 ;; tabs
 
+(defn-spec remove-all-tabs nil?
+  []
+  (swap! core/state assoc :tab-list [])
+  nil)
+
 (defn-spec remove-tab nil?
   [tab-id string?]
   (swap! core/state update-in [:tab-list] (partial (comp vec remove) #(= tab-id (:tab-id %))))

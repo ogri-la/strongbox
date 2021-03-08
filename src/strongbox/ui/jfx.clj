@@ -792,8 +792,10 @@
   (let [addon-detail-menuitem
         (fn [idx tab]
           (let [tab-idx (+ idx 3)]
-            (menu-item (:label tab) (async-handler #(switch-tab tab-idx)))))]
-    (map-indexed addon-detail-menuitem tab-list)))
+            (menu-item (:label tab) (async-handler #(switch-tab tab-idx)))))
+        close-all (menu-item "Close all" (async-handler cli/remove-all-tabs))]
+    (concat (map-indexed addon-detail-menuitem tab-list)
+            [separator close-all])))
 
 (defn menu-item--num-zips-to-keep
   "returns a checkbox menuitem that affects the user preference `addon-zips-to-keep`"
