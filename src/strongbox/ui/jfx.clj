@@ -1206,17 +1206,17 @@
                         {:disabled? (addon/installed? addon)
                          :tooltip (format "Install %s version %s" (:name addon) (:version addon))}))
 
-              (button "Update" (async-handler #(cli/update-addon addon))
+              (button "Update" (async-handler #(cli/update-selected [addon]))
                       {:disabled? (not (addon/updateable? addon))
                        :tooltip (format "Update to version %s" (:version addon))})
 
 
               (if (addon/pinned? addon)
-                (button "Unpin" (async-handler #(cli/unpin addon))
+                (button "Unpin" (async-handler #(cli/unpin [addon]))
                         {:disabled? (not (addon/unpinnable? addon))
                          :tooltip (format "Unpin from version %s" (:pinned-version addon))})
 
-                (button "Pin" (async-handler #(cli/pin addon))
+                (button "Pin" (async-handler #(cli/pin [addon]))
                         {:disabled? (not (addon/pinnable? addon))
                          :tooltip (format "Pin to version %s" (:installed-version addon))}))
 

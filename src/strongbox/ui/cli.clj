@@ -208,20 +208,15 @@
       -install-update-these)
   (core/refresh))
 
-(defn-spec update-addon nil?
-  "updates given addon"
-  [addon :addon/installable]
-  (when (addon/updateable? addon)
-    (-install-update-these [addon])
-    (core/refresh)))
-
 (defn-spec update-selected nil?
   "updates all selected addons that have updates available"
-  []
-  (->> (get-state :selected-addon-list)
-       (filter addon/updateable?)
-       -install-update-these)
-  (core/refresh))
+  ([]
+   (update-selected (get-state :selected-addon-list)))
+  ([addon-list :addon/installed-list]
+   (->> addon-list
+        (filter addon/updateable?)
+        -install-update-these)
+   (core/refresh)))
 
 (defn-spec update-all nil?
   "updates all installed addons with updates available"
