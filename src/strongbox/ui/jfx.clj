@@ -623,11 +623,16 @@
   (-> (select "#tabber") first .getSelectionModel (.select tab-idx))
   nil)
 
-(defn-spec switch-tab-latest nil?
-  []
+(defn-spec switch-tab-idx nil?
+  "dynamic tabs seem to require a `runLater` unlike static tabs. /shrug"
+  [idx int?]
   (Platform/runLater
    (fn []
-     (switch-tab (-> (core/get-state :tab-list) count (+ 3) dec)))))
+     (switch-tab idx))))
+
+(defn-spec switch-tab-latest nil?
+  []
+  (switch-tab-idx (-> (core/get-state :tab-list) count (+ 3) dec)))
 
 (defn-spec switch-tab-handler fn?
   [tab-idx int?]
@@ -1374,11 +1379,14 @@
 
 ;;
 
+(defn tab-index
+  []
+  (-> (select "#tabber") first .getSelectionModel .getSelectedIndex))
+
 (defn tab-list-tab-index
   []
-  (let [idx (-> (select "#tabber") first .getSelectionModel .getSelectedIndex)
-        num-static-tabs 3]
-    (- idx num-static-tabs)))
+  (let [num-static-tabs 3]
+    (- (tab-index) num-static-tabs)))
 
 (defn app
   "returns a description of the javafx Stage, Scene and the 'root' node.
@@ -1396,9 +1404,17 @@
      :height 768
      :scene {:fx/type :scene
              :on-key-pressed (fn [e]
+                               ;; ctrl-w
                                (when (and (.isControlDown e)
                                           (= (.getCode e) (KeyCode/W)))
-                                 (cli/remove-tab-at-idx (tab-list-tab-index)))
+                                 (let [;; when closing a tab, select the previous tab
+                                       ;; UNLESS that previous tab is the last of the static tabs
+                                       ;; then select the first of the static tabs
+                                       prev-tab (dec (tab-index))
+                                       num-static-tabs 3
+                                       prev-tab (if (= prev-tab (dec num-static-tabs)) 0 prev-tab)]
+                                   (cli/remove-tab-at-idx (tab-list-tab-index))
+                                   (switch-tab prev-tab)))
                                nil)
              :stylesheets [(::css/url style)]
              :root {:fx/type :border-pane
