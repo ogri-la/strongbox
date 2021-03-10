@@ -515,7 +515,7 @@
       (error uncaught-exception "failed to call `which`"))))
 
 (defn-spec java-browser (s/or :ok fn? :error nil?)
-  "returns a function that will open a given value or nil if current Desktop is not supported
+  "returns a function that will open a given value or nil if current Desktop is not supported.
   if the given value is a URL, we attempt to 'browse' it.
   if the given value is an extant directory, we attempt to 'open' it."
   []
@@ -523,13 +523,13 @@
     (when (and (java.awt.Desktop/isDesktopSupported)
                (.isSupported desktop java.awt.Desktop$Action/BROWSE)
                (.isSupported desktop java.awt.Desktop$Action/OPEN))
-      (fn [x]
+      (fn [path]
         (cond
-          (s/valid? ::sp/url x) (do (info "opening URL:" x)
-                                    (.browse desktop (java.net.URI. x)))
-          (s/valid? ::sp/extant-dir x) (do (info "opening directory:" x)
-                                           (.open desktop (java.io.File. x)))
-          :else (error "can't open: " x))))))
+          (s/valid? ::sp/url path) (do (info "opening URL:" path)
+                                       (.browse desktop (java.net.URI. path)))
+          (s/valid? ::sp/extant-dir path) (do (info "opening directory:" path)
+                                              (.open desktop (java.io.File. path)))
+          :else (error "can't open: " path))))))
 
 (defn-spec find-browser fn?
   "returns a function that attempts to open a given URL in a browser.
@@ -579,6 +579,9 @@
           (clojure.string/replace "\n" " ")))
 
 (defn-spec drop-idx (s/or :ok vector? :bad nil?)
+  "removes element at index `idx` within vector `v`.
+  if `v` is nil or empty, `v` will be returned as-is.
+  if `idx` is negative or greater than the number of elements in `v`, `v` will be returned as-is."
   [v (s/nilable vector?), idx (s/nilable int?)]
   (when-not (nil? v)
     (let [c (count v)]
@@ -589,6 +592,16 @@
         (>= idx c) v ;; indicies greater than num items return vector as-is
         :else (into (subvec v 0 idx) (subvec v (inc idx) c))))))
 
-(defn extract-addon-id
-  [addon]
-  (select-keys addon [:source :source-id]))
+(defn-spec extract-addon-id map?
+  "attempts to extract a set of uniquely identifying attributes of the given `addon`.
+  if it fails to find these attributes, the whole map will be returned as-is."
+  [addon map?]
+  (let [addon-id (select-keys addon [:source :source-id :dirname])]
+    (if (not (empty? addon-id))
+      addon-id
+      addon)))
+
+(defn-spec unique-id string?
+  "returns a UUID as a string that is guaranteed to always be unique."
+  []
+  (str (java.util.UUID/randomUUID)))

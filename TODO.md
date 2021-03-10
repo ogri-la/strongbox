@@ -10,8 +10,10 @@ see CHANGELOG.md for a more formal list of changes by release
     - done
     - remove original db-search
         - done
-
 * gui, new tab for dedicated log
+    - done
+* addon detail pane
+    - clicking an addon row opens a new tab with as much detail as we can about that addon
     - done
 
 ## todo
@@ -28,8 +30,6 @@ see CHANGELOG.md for a more formal list of changes by release
         - error (1)
 * remove 'hostname' from log output
     - update privacy section in readme
-* addon detail pane
-    - clicking an addon row opens a new tab with as much detail as we can about that addon
 
 * uber-button
     - new column that displays overall health of addon

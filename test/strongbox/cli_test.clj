@@ -201,3 +201,57 @@
 
         (let [addon (first (core/get-state :installed-addon-list))]
           (is (not (contains? addon :pinned-version))))))))
+
+(deftest add-tab
+  (testing "a generic tab can be created"
+    (let [expected [{:tab-id "foo" :label "Foo!" :closable? false :tab-data {:dirname "EveryAddon"}}]]
+      (with-running-app
+        (is (= [] (core/get-state :tab-list)))
+        (cli/add-tab "foo" "Foo!" false {:dirname "EveryAddon"})
+        (is (= expected (core/get-state :tab-list)))))))
+
+(deftest add-addon-tab
+  (testing "an addon can be used to create a tab"
+    (let [addon {:source "curseforge" :source-id 123 :label "Foo"}
+          expected [{:closable? true, :label "Foo", :tab-data {:source "curseforge", :source-id 123}, :tab-id "foobar"}]]
+      (with-running-app
+        (with-redefs [strongbox.utils/unique-id (constantly "foobar")]
+          (cli/add-addon-tab addon))
+        (is (= expected (core/get-state :tab-list)))))))
+
+(deftest remove-tab
+  (testing "a single tab can be removed by its `id`"
+    (let [tab [{:tab-id "foo" :label "Foo!" :closable? false :tab-data {:dirname "EveryAddon"}}]
+          expected []]
+      (with-running-app
+        (cli/add-tab "foo" "Foo!" false {:dirname "EveryAddon"})
+        (is (= tab (core/get-state :tab-list)))
+        (cli/remove-tab "foo")
+        (is (= expected (core/get-state :tab-list)))))))
+
+(deftest remove-all-tabs
+  (testing "all tabs can be removed at once"
+    (let [tab-list [{:tab-id "foo" :label "Foo!" :closable? false :tab-data {:dirname "EveryAddon"}}
+                    {:tab-id "bar" :label "Bar!" :closable? true :tab-data {:dirname "EveryOtherAddon"}}]
+          expected []]
+      (with-running-app
+        (cli/add-tab "foo" "Foo!" false {:dirname "EveryAddon"})
+        (cli/add-tab "bar" "Bar!" true {:dirname "EveryOtherAddon"})
+        (is (= tab-list (core/get-state :tab-list)))
+        (cli/remove-all-tabs)
+        (is (= expected (core/get-state :tab-list)))))))
+
+(deftest remove-tab-at-idx
+  (testing "all tabs can be removed at once"
+    (let [tab-list [{:tab-id "foo" :label "Foo!" :closable? false :tab-data {:dirname "EveryAddon"}}
+                    {:tab-id "bar" :label "Bar!" :closable? true :tab-data {:dirname "EveryOtherAddon"}}
+                    {:tab-id "baz" :label "Baz!" :closable? false :tab-data {:dirname "EveryAddonClassic"}}]
+          expected [(first tab-list)
+                    (last tab-list)]]
+      (with-running-app
+        (cli/add-tab "foo" "Foo!" false {:dirname "EveryAddon"})
+        (cli/add-tab "bar" "Bar!" true {:dirname "EveryOtherAddon"})
+        (cli/add-tab "baz" "Baz!" false {:dirname "EveryAddonClassic"})
+        (is (= tab-list (core/get-state :tab-list)))
+        (cli/remove-tab-at-idx 1)
+        (is (= expected (core/get-state :tab-list)))))))

@@ -368,25 +368,25 @@
 ;;
 
 (defn-spec installed? boolean?
-  "returns true if the given `addon` is present on the filesystem"
-  [addon map?] ;; deliberately lenient, called directly from the gui
+  "returns `true` if given `addon` is present on filesystem."
+  [addon map?] ;; deliberately lenient
   (contains? addon :dirname))
 
 (defn-spec ignored? boolean?
-  "returns true if the given `addon` is being ignored"
+  "returns `true` if given `addon` is being ignored."
   [addon map?]
   (get addon :ignore? false))
 
 (defn-spec ignorable? boolean?
-  "returns `true` if the given `addon` can be ignored."
+  "returns `true` if given `addon` can be ignored."
   [addon map?]
   ;; todo: and what if one of it's grouped addons is ignored??
   (and (installed? addon)
        (not (ignored? addon))))
 
 (defn-spec updateable? boolean?
-  "returns `true` when given `addon` can be updated to a newer version"
-  [addon map?] ;; deliberately lenient. called from all over
+  "returns `true` when given `addon` can be updated to a newer version."
+  [addon map?] ;; deliberately lenient
   (let [{:keys [installed-version pinned-version version]} addon]
     (boolean
      (and version
@@ -401,28 +401,29 @@
 
 (defn-spec re-installable? boolean?
   "returns `true` if given `addon` can be re-installed to its current `:installed-version`."
-  [addon map?] ;; deliberately lenient, called directly from the gui
+  [addon map?] ;; deliberately lenient
   (boolean
    (and (installed? addon)
         (contains? addon :release-list)
         (some? (find-release addon)))))
 
 (defn-spec pinned? boolean?
-  "returns `true` if the given `addon` is currently pinned to a specific version"
+  "returns `true` if given `addon` is pinned to a specific version."
   [addon map?]
   (some? (:pinned-version addon)))
 
 (defn-spec pinnable? boolean?
-  "returns `true` if the given `addon` can be pinned."
+  "returns `true` if given `addon` can be pinned."
   [addon map?]
   (and (installed? addon)
+       (contains? addon :installed-version) ;; could this live in `installed?`
        (not (pinned? addon))
        (not (ignored? addon))))
 
 (defn-spec unpinnable? boolean?
+  "returns `true` if given `addon` can be un-pinned."
   [addon map?]
-  (and (installed? addon)
-       (pinned? addon)
+  (and (pinned? addon)
        (not (ignored? addon))))
 
 (defn-spec deletable? boolean?

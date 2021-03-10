@@ -113,7 +113,7 @@
       (:results-per-page search-state))))
 
 (defn-spec search-has-prev? boolean?
-  "true if we've navigated forwards"
+  "returns `true` if we've navigated forwards and previous pages of search results exist"
   ([]
    (search-has-prev? (get-state :search)))
   ([search-state map?]
@@ -147,7 +147,8 @@
 ;;
 
 (defn-spec pin nil?
-  "pins the currently selected addons to their current `:installed-version` versions."
+  "pins the addons in given `addon-list` to their current `:installed-version` versions.
+  defaults to all addons in `:selected-addon-list` when called without parameters."
   ([]
    (pin (get-state :selected-addon-list)))
   ([addon-list :addon/installed-list]
@@ -156,7 +157,8 @@
    (core/refresh)))
 
 (defn-spec unpin nil?
-  "unpins the currently selected addons, regardless of whether they are pinned or not."
+  "unpins the addons in given `addon-list` regardless of whether they are pinned or not.
+  defaults to all addons in `:selected-addon-list` when called without parameters."
   ([]
    (unpin (get-state :selected-addon-list)))
   ([addon-list :addon/installed-list]
@@ -179,7 +181,8 @@
   (run! core/install-addon updateable-addon-list))
 
 (defn-spec re-install-or-update-selected nil?
-  "re-installs (if possible) or updates all selected addons"
+  "re-installs (if possible) or updates all addons in given `addon-list`.
+  defaults to all addons in `:selected-addon-list` when called without parameters."
   ([]
    (re-install-or-update-selected (get-state :selected-addon-list)))
   ([addon-list :addon/installed-list]
@@ -209,7 +212,8 @@
   (core/refresh))
 
 (defn-spec update-selected nil?
-  "updates all selected addons that have updates available"
+  "updates all addons in given `addon-list` that have updates available.
+  defaults to all addons in `:selected-addon-list` when called without parameters."
   ([]
    (update-selected (get-state :selected-addon-list)))
   ([addon-list :addon/installed-list]
@@ -227,15 +231,16 @@
   (core/refresh))
 
 (defn-spec delete-selected nil?
-  "deletes all selected addons. 
-  GUI should have popped up a confirmation beforehand ;)"
+  "deletes all addons in given `addon-list`.
+  defaults to all addons in `:selected-addon-list` when called without parameters."
   ([]
    (delete-selected (get-state :selected-addon-list)))
   ([addon-list :addon/installed-list]
    (core/remove-many-addons addon-list)))
 
 (defn-spec ignore-selected nil?
-  "marks each of the selected addons as being 'ignored'"
+  "marks each addon in given `addon-list` as being 'ignored'.
+  defaults to all addons in `:selected-addon-list` when called without parameters."
   ([]
    (ignore-selected (get-state :selected-addon-list)))
   ([addon-list :addon/installed-list]
@@ -245,7 +250,8 @@
    (core/refresh)))
 
 (defn-spec clear-ignore-selected nil?
-  "removes the 'ignore' flag from each of the selected addons."
+  "removes the 'ignore' flag from each addon in given `addon-list`.
+  defaults to all addons in `:selected-addon-list` when called without parameters."
   ([]
    (clear-ignore-selected (get-state :selected-addon-list)))
   ([addon-list :addon/installed-list]
@@ -282,16 +288,19 @@
 ;; tabs
 
 (defn-spec remove-all-tabs nil?
+  "removes all dynamic addon detail tabs leaving only the static tabs"
   []
   (swap! core/state assoc :tab-list [])
   nil)
 
 (defn-spec remove-tab nil?
+  "removes a specific tab from the `:tab-list` using that tab's `:tab-id`"
   [tab-id string?]
   (swap! core/state update-in [:tab-list] (partial (comp vec remove) #(= tab-id (:tab-id %))))
   nil)
 
 (defn-spec remove-tab-at-idx nil?
+  "removes a tab from the `:tab-list` at a specific given `idx`."
   [idx int?]
   (swap! core/state update-in [:tab-list] utils/drop-idx idx)
   nil)
@@ -314,11 +323,12 @@
   nil)
 
 (defn-spec add-addon-tab nil?
+  "convenience, adds a tab using given the `addon` data"
   [addon map?]
-  (let [tab-id (str (java.util.UUID/randomUUID))
-        closeable? true
+  (let [tab-id (utils/unique-id)
+        closable? true
         addon-id (utils/extract-addon-id addon)]
-    (add-tab tab-id (:label addon) closeable? addon-id)))
+    (add-tab tab-id (:label addon) closable? addon-id)))
 
 
 ;; debug

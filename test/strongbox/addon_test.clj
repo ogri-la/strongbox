@@ -346,6 +346,36 @@
       (doseq [addon cases]
         (is (not (addon/updateable? addon)))))))
 
+(deftest test-ignored?
+  (testing "an addon is being ignored if the `:ignore?` flag is present and set to `true`"
+    (is (addon/ignored? {:ignore? true}))
+    (is (not (addon/ignored? {:ignore? false})))
+    (is (not (addon/ignored? {})))))
+
+(deftest test-ignorable?
+  (is (addon/ignorable? {:dirname "Foo"}))
+  (is (addon/ignorable? {:dirname "Foo" :ignore? false}))
+  (is (not (addon/ignorable? {:dirname "Foo" :ignore? true})))
+  (is (not (addon/ignorable? {:ignore? true}))) ;; we need something (a dirname) to ignore!
+  (is (not (addon/ignorable? {}))))
+
+(deftest test-re-installable?
+  (testing "an addon is re-installable if a release matching its installed-version is present"
+    (let [addon {:name "a3", :dirname "A3", :label "A3", :description "" :interface-version 80300 :installed-version "1.2.0"
+                 :group-id "baz", :primary? true, :download-url "https://example.org/path/to/addon.zip"
+                 :source "curseforge" :source-id 123 :version "1.2.0" :game-track :retail
+                 :release-list [{:download-url "https://example.org/path/to/addon.zip"
+                                 :game-track :retail,
+                                 :interface-version 90000,
+                                 :release-label "[WoW 9.0.1] Addon-1.2.3.zip",
+                                 :version "1.2.3"}
+                                {:download-url "https://example.org/path/to/addon.zip"
+                                 :game-track :retail,
+                                 :interface-version 90000,
+                                 :release-label "[WoW 9.0.1] Addon-1.2.0.zip",
+                                 :version "1.2.0"}]}]
+      (is (addon/re-installable? addon)))))
+
 (deftest test-find-release
   (testing "an addon's installed release can be found"
     (let [addon {:name "a3", :dirname "A3", :label "A3", :description "" :interface-version 80300 :installed-version "1.2.0"
@@ -382,3 +412,21 @@
                                  :version "1.2.0"}]}
           expected (get-in addon [:release-list 0])]
       (is (= expected (addon/find-pinned-release addon))))))
+
+(deftest test-pinned?
+  (testing "an addon is considered 'pinned' if a pinned version is present"
+    (is (addon/pinned? {:pinned-version "1.2.3"}))
+    (is (not (addon/pinned? {})))))
+
+(deftest test-pinnable?
+  (testing "an addon is pinnable if a version of it is installed and it's not being ignored"
+    (is (addon/pinnable? {:dirname "Foo" :installed-version "1.2.3"}))
+    (is (addon/pinnable? {:dirname "Foo" :installed-version "1.2.3" :ignore? false}))
+    (is (not (addon/pinnable? {:dirname "Foo" :installed-version "1.2.3" :ignore? true})))
+    (is (not (addon/pinnable? {:dirname "Foo"})))
+    (is (not (addon/pinnable? {:installed-version "1.2.3"})))))
+
+(deftest test-unpinnable?
+  (is (addon/unpinnable? {:pinned-version "1.2.3"}))
+  (is (not (addon/unpinnable? {:pinned-version "1.2.3" :ignore? true})))
+  (is (not (addon/unpinnable? {}))))
