@@ -1040,11 +1040,15 @@
   ;; if unsteady, 'updating'
   ;; if updates available, 'update'
   ;; else, 'more'
-  (let [tick "\u2714"
-        ;;update "\u21E5"
-        update "\u21A6"
+  (let [tick "\u2714" ;; ✔
+        update "\u21A6" ;; ↦
+        unsteady "\u2941" ;; ⥁ CLOCKWISE CLOSED CIRCLE ARROW
         ub {:fx/type :button
-            :text (if (:update? row) update tick)
+            :text (cond
+                    (:ignore? row) ""
+                    (core/unsteady? (:name row)) unsteady
+                    (:update? row) update
+                    :else tick)
             :on-action (fn [_]
                          (cli/add-addon-tab row)
                          (switch-tab-latest))}]
