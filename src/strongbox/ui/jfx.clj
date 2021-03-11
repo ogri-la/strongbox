@@ -6,8 +6,8 @@
    [cljfx.ext.table-view :as fx.ext.table-view]
    [cljfx.lifecycle :as fx.lifecycle]
    [cljfx.component :as fx.component]
-   [cljfx
-    [api :as fx]]
+   [cljfx.api :as fx]
+   [cljfx.ext.node :as fx.ext.node]
    [cljfx.css :as css]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
@@ -22,6 +22,7 @@
    [java.util List]
    [javafx.util Callback]
    [javafx.scene.control TableRow TextInputDialog Alert Alert$AlertType ButtonType]
+   [javafx.scene.input KeyCode]
    [javafx.stage FileChooser FileChooser$ExtensionFilter DirectoryChooser Window WindowEvent]
    [javafx.application Platform]
    [javafx.scene Node]))
@@ -177,8 +178,42 @@
                           ":hover" {:-fx-text-fill (colour :button-text-hovering)}}
 
                ;; tabber
-               ".tab-pane > .tab-header-area > .headers-region > .tab "
+               ".tab-pane > .tab-header-area > .headers-region > .tab"
                {:-fx-background-radius "0"}
+
+
+               ;;
+               ;; addon-detail
+               ;;
+
+
+               ".addon-detail "
+               {".title"
+                {:-fx-font-size "2em"
+                 :-fx-padding "1em 0 .25em 1em"
+                 ;;:-fx-background-color "green"
+                 :-fx-alignment "center"}
+
+                ".subtitle"
+                {;;:-fx-background-color "green"
+                 ;;:-fx-padding "0 0 0 1em"
+                 :-fx-font-size "1.1em"}
+
+                ".description"
+                {:-fx-font-size "1.4em"
+                 :-fx-padding "0 0 1.5em 1em"
+                 :-fx-wrap-text true
+                 :-fx-font-style "italic"}
+
+                ".ext-links "
+                {;;:-fx-background-color "gray"
+                 :-fx-padding "0 0 1em 1.75em"
+
+                 ".hyperlink"
+                 {;;:-fx-background-color "green"
+                  :-fx-text-fill "blue"
+                  :-fx-padding "0 0 0 1em"}}} ;; ends .addon-detail
+
 
                ;; common tables
 
@@ -248,7 +283,30 @@
 
                 " .ignored .table-cell"
                 {:-fx-text-fill (colour :installed/ignored-fg)}
-                " .wow-column" {:-fx-alignment "center"}}
+
+                " .wow-column"
+                {:-fx-alignment "center"}
+
+                " .button"
+                {:-fx-padding 0
+                 :-fx-pref-width 100
+                 :-fx-pref-height "20" ;; awfully specific :(
+                 :-fx-background-color nil
+                 :-fx-font-size "1.5em"
+                 ;;:-fx-text-fill "aquamarine" ;; good for dark theme
+                 :-fx-text-fill "darkseagreen" ;; good for light
+                 }
+
+                " .column-header.more-column .table-cell"
+                {:-fx-fill "green"
+                 ;;:-fx-padding 10
+                 :-fx-text-fill "green"
+                 ;;:-fx-background-color "green"
+                 }
+
+                " .more-column"
+                {:-fx-padding 0
+                 :-fx-spacing 0}}
 
 
                ;; notice-logger
@@ -425,10 +483,38 @@
   (let [result (alert :confirm message {:title "confirm" :header heading})]
     (= (.get result) ButtonType/OK)))
 
+(defn-spec confirm->action nil?
+  "displays a confirmation prompt with the given `heading` and `message` and then calls given `callback` on success"
+  [heading (s/nilable string?), message string?, callback fn?]
+  (when (confirm heading message)
+    (callback)
+    nil))
+
 ;;
 
 (def INSTALLED-TAB 0)
 (def SEARCH-TAB 1)
+(def LOG-TAB 2)
+
+(defn button
+  "generates a simple button with a means to check to see if it should be disabled and an optional tooltip"
+  [label on-action & [{:keys [disabled? tooltip]}]]
+  (let [btn (cond->
+             {:fx/type :button
+              :text label
+              :on-action on-action}
+
+              (boolean? disabled?)
+              (merge {:disable disabled?}))]
+
+    (if (some? tooltip)
+      {:fx/type fx.ext.node/with-tooltip-props
+       :props {:tooltip {:fx/type :tooltip
+                         :text tooltip
+                         :show-delay 200}}
+       :desc btn}
+
+      btn)))
 
 (defn menu-item
   [label handler & [opt-map]]
@@ -527,11 +613,31 @@
                                (Platform/exit)
                                (System/exit 0)))))
 
-(defn-spec switch-tab-handler fn?
-  "returns a function that will switch the tab-pane to the tab at the given index when called"
+(defn-spec switch-tab nil?
+  "switches the tab-pane to the tab at the given index"
   [tab-idx int?]
-  (fn [event]
-    (some-> (select "#tabber") first .getSelectionModel (.select tab-idx))))
+  (-> (select "#tabber") first .getSelectionModel (.select tab-idx))
+  nil)
+
+(defn-spec switch-tab-idx nil?
+  "switches the tab-pane to the tab at the given index *on the JavaFX event thread*.
+  the dynamic tabs seem to require a `runLater` unlike static tabs.
+  multiple instances of strongbox will still interfere with this behaviour and the switching won't occur"
+  [idx int?]
+  (Platform/runLater
+   (fn []
+     (switch-tab idx))))
+
+(defn-spec switch-tab-latest nil?
+  "switches the tab-pan to the furthest-right tab"
+  []
+  (switch-tab-idx (-> (core/get-state :tab-list) count (+ 3) dec)))
+
+(defn-spec switch-tab-event-handler fn?
+  "returns an event handler that switches to the given `tab-idx` when called."
+  [tab-idx int?]
+  (fn [_]
+    (switch-tab tab-idx)))
 
 (defn import-addon-handler
   "imports an addon by parsing a URL"
@@ -635,7 +741,7 @@
   ;; note: still true as of 2020-09?
   ;; todo: stick this in `cli.clj`
   ;;(core/-install-update-these (map curseforge/expand-summary (get-state :search :selected-result-list))) 
-  ((switch-tab-handler INSTALLED-TAB) event)
+  ((switch-tab-event-handler INSTALLED-TAB) event)
   (doseq [selected (core/get-state :search :selected-result-list)]
     (some-> selected core/expand-summary-wrapper vector cli/-install-update-these)
     (core/load-installed-addons))
@@ -687,6 +793,18 @@
                            (core/save-settings))})]
     (mapv rb (keys theme-map))))
 
+(defn-spec build-addon-detail-menu ::sp/list-of-maps
+  "returns a menu of dynamic tabs with a 'close all' button at the bottom"
+  [tab-list :ui/tab-list]
+  (let [addon-detail-menuitem
+        (fn [idx tab]
+          (let [num-static-tabs 3
+                tab-idx (+ idx num-static-tabs)]
+            (menu-item (:label tab) (async-handler #(switch-tab tab-idx)))))
+        close-all (menu-item "Close all" (async-handler cli/remove-all-tabs))]
+    (concat (map-indexed addon-detail-menuitem tab-list)
+            [separator close-all])))
+
 (defn menu-item--num-zips-to-keep
   "returns a checkbox menuitem that affects the user preference `addon-zips-to-keep`"
   [{:keys [fx/context]}]
@@ -720,8 +838,12 @@
         view-menu (into
                    [(menu-item "Refresh" (async-handler cli/hard-refresh) {:key "F5"})
                     separator
-                    (menu-item "_Installed" (switch-tab-handler INSTALLED-TAB) {:key "Ctrl+I"})
-                    (menu-item "Searc_h" (switch-tab-handler SEARCH-TAB) {:key "Ctrl+H"})
+                    (menu-item "_Installed" (switch-tab-event-handler INSTALLED-TAB) {:key "Ctrl+I"})
+                    (menu-item "Searc_h" (switch-tab-event-handler SEARCH-TAB) {:key "Ctrl+H"})
+                    (menu-item "_Log" (switch-tab-event-handler LOG-TAB) {:key "Ctrl+L"})
+                    (let [tab-list (fx/sub-val context get-in [:app-state :tab-list])]
+                      (menu "Ad_don detail" (build-addon-detail-menu tab-list)
+                            {:disable (empty? tab-list)}))
                     separator]
                    (build-theme-menu
                     (fx/sub-val context get-in [:app-state :cfg :gui-theme])
@@ -740,8 +862,8 @@
                     (menu-item "Clear all" (async-handler core/clear-all-temp-files!))
                     separator
                     (menu-item "Delete WowMatrix.dat files" (async-handler core/delete-wowmatrix-dat-files!))
-                    (menu-item "Delete .wowman.json files" (async-handler (comp core/refresh core/delete-wowman-json-files!)))
-                    (menu-item "Delete .strongbox.json files" (async-handler (comp core/refresh core/delete-strongbox-json-files!)))]
+                    (menu-item "Delete .wowman.json files" (async-handler (juxt core/delete-wowman-json-files! core/refresh)))
+                    (menu-item "Delete .strongbox.json files" (async-handler (juxt core/delete-strongbox-json-files! core/refresh)))]
 
         help-menu [(menu-item "About strongbox" about-strongbox-dialog)]]
 
@@ -829,6 +951,14 @@
     {:fx/type :text
      :text ""}))
 
+(defn-spec addon-fs-link (s/or :hyperlink map?, :nothing nil?)
+  "returns a hyperlink that opens a file browser to a path on the filesystem."
+  [dirname (s/nilable ::sp/dirname)]
+  (when dirname
+    {:fx/type :hyperlink
+     :on-action (handler #(utils/browse-to (format "%s/%s" (core/selected-addon-dir) dirname)))
+     :text "↪ browse local files"}))
+
 ;;(defn-spec href-to-hyperlink (s/or :ok :javafx/hyperlink-component, :noop :javafx/text-component)
 (defn href-to-hyperlink
   "returns a hyperlink instance or empty text"
@@ -863,7 +993,7 @@
         release-list (:release-list selected-addon)
         releases-available? (and (not (empty? release-list))
                                  (not pinned?))
-        ignored? (get selected-addon :ignore? false)]
+        ignored? (addon/ignored? selected-addon)]
     {:fx/type :context-menu
      :items [(menu-item "Update" (async-handler cli/update-selected)
                         {:disable (not (addon/updateable? selected-addon))})
@@ -909,6 +1039,23 @@
              separator
              (menu-item "Delete" delete-selected-confirmation-handler)]}))
 
+(defn uber-button
+  "returns a widget describing the current state of the given addon"
+  [row]
+  (let [tick "\u2714" ;; ✔
+        update "\u21A6" ;; ↦
+        unsteady "\u2941" ;; ⥁ CLOCKWISE CLOSED CIRCLE ARROW
+        ub {:fx/type :button
+            :text (cond
+                    (:ignore? row) ""
+                    (core/unsteady? (:name row)) unsteady
+                    (:update? row) update
+                    :else tick)
+            :on-action (fn [_]
+                         (cli/add-addon-tab row)
+                         (switch-tab-latest))}]
+    (-> ub fx/create-component fx/instance)))
+
 (defn installed-addons-table
   [{:keys [fx/context]}]
   ;; subscribe to re-render table when addons become unsteady
@@ -921,10 +1068,12 @@
 
         column-list [{:text "source" :min-width 115 :pref-width 120 :max-width 160 :cell-value-factory href-to-hyperlink}
                      {:text "name" :min-width 150 :pref-width 300 :max-width 500 :cell-value-factory (comp no-new-lines :label)}
-                     {:text "description" :pref-width 700 :cell-value-factory (comp no-new-lines :description)}
+                     {:text "description" :pref-width 400 :cell-value-factory (comp no-new-lines :description)}
                      {:text "installed" :max-width 250 :cell-value-factory :installed-version}
                      {:text "available" :max-width 250 :cell-value-factory available-versions}
-                     {:text "WoW" :max-width 100 :cell-value-factory iface-version}]]
+                     {:text "WoW" :max-width 100 :cell-value-factory iface-version}
+                     {:text "" :style-class ["more-column"] :max-width 100 :cell-value-factory uber-button}]]
+
     {:fx/type fx.ext.table-view/with-selection-props
      :props {:selection-mode :multiple
              ;; unlike gui.clj, we have access to the original data here. no need to re-select addons.
@@ -938,7 +1087,13 @@
             :pref-height 999.0
             :row-factory {:fx/cell-type :table-row
                           :describe (fn [row]
-                                      {:style-class
+                                      {:on-mouse-clicked (fn [e]
+                                                           ;; double click handler https://github.com/cljfx/cljfx/issues/118
+                                                           (when (and (= javafx.scene.input.MouseButton/PRIMARY (.getButton e))
+                                                                      (= 2 (.getClickCount e)))
+                                                             (cli/add-addon-tab row)
+                                                             (switch-tab-latest)))
+                                       :style-class
                                        (remove nil?
                                                ["table-row-cell" ;; `:style-class` will actually *replace* the list of classes
                                                 (when (:update? row) "updateable")
@@ -1005,7 +1160,13 @@
                                   "No search results.")}
             :row-factory {:fx/cell-type :table-row
                           :describe (fn [row]
-                                      {:style-class ["table-row-cell"
+                                      {:on-mouse-clicked (fn [e]
+                                                           ;; double click handler https://github.com/cljfx/cljfx/issues/118
+                                                           (when (and (= javafx.scene.input.MouseButton/PRIMARY (.getButton e))
+                                                                      (= 2 (.getClickCount e)))
+                                                             (cli/add-addon-tab row)
+                                                             (switch-tab-latest)))
+                                       :style-class ["table-row-cell"
                                                      (when (utils/in? (idx-key row) installed-addon-idx)
                                                        "installed")]})}
             :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
@@ -1057,24 +1218,145 @@
    :top {:fx/type search-addons-search-field}
    :center {:fx/type search-addons-table}})
 
+(defn addon-detail-button-menu
+  "a row of buttons attached to available actions for the given addon"
+  [{:keys [addon]}]
+  {:fx/type :h-box
+   :children [(if (addon/installed? addon)
+                (button "Re-install" (async-handler #(cli/re-install-or-update-selected [addon]))
+                        {:disabled? (not (addon/re-installable? addon))
+                         :tooltip (format "Re-install version %s" (:installed-version addon))})
+
+                (button "Install" (async-handler #(cli/install-addon addon))
+                        {:disabled? (addon/installed? addon)
+                         :tooltip (format "Install %s version %s" (:name addon) (:version addon))}))
+
+              (button "Update" (async-handler #(cli/update-selected [addon]))
+                      {:disabled? (not (addon/updateable? addon))
+                       :tooltip (format "Update to version %s" (:version addon))})
+
+              (if (addon/pinned? addon)
+                (button "Unpin" (async-handler #(cli/unpin [addon]))
+                        {:disabled? (not (addon/unpinnable? addon))
+                         :tooltip (format "Unpin from version %s" (:pinned-version addon))})
+
+                (button "Pin" (async-handler #(cli/pin [addon]))
+                        {:disabled? (not (addon/pinnable? addon))
+                         :tooltip (format "Pin to version %s" (:installed-version addon))}))
+
+              {:fx/type :separator
+               :orientation :vertical}
+
+              (if (addon/ignored? addon)
+                (button "Stop ignoring" (async-handler #(cli/clear-ignore-selected [addon])))
+                (button "Ignore" (async-handler #(cli/ignore-selected [addon]))
+                        {:tooltip "Prevent all changes"
+                         :disabled? (not (addon/ignorable? addon))}))
+
+              {:fx/type :separator
+               :orientation :vertical}
+
+              (button "Delete" (async-handler #(confirm->action "Confirm" "Are you sure you want to delete this addon?" (partial cli/delete-selected [addon])))
+                      {:disabled? (not (addon/deletable? addon))
+                       :tooltip "Permanently delete"})]})
+
+(defn addon-detail-pane
+  [{:keys [fx/context addon-id]}]
+  (let [installed-addons (fx/sub-val context get-in [:app-state :installed-addon-list])
+        catalogue (fx/sub-val context get-in [:app-state :db]) ;; worst case is actually not so bad ...
+        addon-id-keys (keys addon-id)
+        matcher (fn [addon]
+                  (= addon-id (select-keys addon addon-id-keys)))
+        ;; we may be given an installed addon, an ignored and unmatched addon, a catalogue entry so look in the installed
+        ;; addon list first because it's smaller than the catalogue.
+        addon (or (->> installed-addons (filter matcher) first)
+                  (->> catalogue (filter matcher) first))]
+    {:fx/type :v-box
+     :id "addon-detail-pane"
+     :style-class ["addon-detail"]
+     :children (utils/items
+                [{:fx/type :label
+                  :style-class ["title"]
+                  :text (:label addon)}
+
+                 {:fx/type :h-box
+                  :style-class ["ext-links"]
+                  :children (utils/items
+                             [{:fx/type :label
+                               :style-class ["subtitle"]
+                               :text (cond
+                                       (:update? addon)
+                                       (format "%s (%s available)" (:installed-version addon) (:version addon))
+
+                                       (:installed-version addon)
+                                       (format "%s" (:installed-version addon))
+
+                                       (:version addon)
+                                       (format "%s" (:version addon)))}
+
+                              ;; if installed, path to addon directory, clicking it opens file browser
+                              (addon-fs-link (:dirname addon))
+
+                               ;; order is important, a hyperlink may not exist, can't have nav jumping around
+                              (-href-to-hyperlink addon)])}
+
+                 (when-not (empty? (:description addon))
+                   {:fx/type :label
+                    :style-class ["description"]
+                    :text (:description addon)})
+
+                 {:fx/type addon-detail-button-menu
+                  :addon addon}
+
+                 {:fx/type :text-area
+                  :text (str addon)
+                  :wrap-text true}])}))
+
+(defn addon-detail-tab
+  [{:keys [tab]}]
+  {:fx/type :tab
+   :id (:tab-id tab)
+   :text (:label tab)
+   :closable (:closable? tab)
+   :on-closed (fn [_]
+                (cli/remove-tab (:tab-id tab))
+                (switch-tab INSTALLED-TAB))
+   :content {:fx/type addon-detail-pane
+             :addon-id (:tab-data tab)}})
+
 (defn tabber
-  [_]
-  {:fx/type :tab-pane
-   :id "tabber"
-   :tabs [{:fx/type :tab
-           :text "installed"
-           :closable false
-           :content {:fx/type installed-addons-pane}}
-          {:fx/type :tab
-           :text "search"
-           :closable false
-           :on-selection-changed (fn [ev]
-                                   (when (-> ev .getTarget .isSelected)
-                                     (let [text-field (-> ev .getTarget .getTabPane (.lookupAll "#search-text-field") first)]
-                                       (Platform/runLater
-                                        (fn []
-                                          (-> text-field .requestFocus))))))
-           :content {:fx/type search-addons-pane}}]})
+  [{:keys [fx/context]}]
+  (let [static-tabs
+        [{:fx/type :tab
+          :text "installed"
+          :id "installed-tab"
+          :closable false
+          :content {:fx/type installed-addons-pane}}
+         {:fx/type :tab
+          :text "search"
+          :id "search-tab"
+          :closable false
+          ;; when the 'search' tab is selected, ensure the search field is focused so the user can just start typing
+          :on-selection-changed (fn [ev]
+                                  (when (-> ev .getTarget .isSelected)
+                                    (let [text-field (-> ev .getTarget .getTabPane (.lookupAll "#search-text-field") first)]
+                                      (Platform/runLater
+                                       (fn []
+                                         (-> text-field .requestFocus))))))
+          :content {:fx/type search-addons-pane}}
+         {:fx/type :tab
+          :text "log"
+          :id "log-tab"
+          :closable false
+          :content {:fx/type notice-logger}}]
+
+        dynamic-tabs (mapv (fn [tab]
+                             {:fx/type addon-detail-tab :tab tab})
+                           (fx/sub-val context get-in [:app-state :tab-list]))]
+    {:fx/type :tab-pane
+     :id "tabber"
+     :tab-closing-policy javafx.scene.control.TabPane$TabClosingPolicy/ALL_TABS
+     :tabs (into static-tabs dynamic-tabs)}))
 
 (defn status-bar
   "this is the litle strip of text at the bottom of the application."
@@ -1104,6 +1386,17 @@
 
 ;;
 
+(defn-spec tab-index int?
+  "returns the index of the currently selected tab"
+  []
+  (-> (select "#tabber") first .getSelectionModel .getSelectedIndex))
+
+(defn-spec tab-list-tab-index int?
+  "returns the index of the currently selected tab within `:tab-list`, which doesn't include the static tabs"
+  []
+  (let [num-static-tabs 3]
+    (- (tab-index) num-static-tabs)))
+
 (defn app
   "returns a description of the javafx Stage, Scene and the 'root' node.
   the root node is the top-most node from which all others are descendents of."
@@ -1119,16 +1412,24 @@
      :width 1024
      :height 768
      :scene {:fx/type :scene
+             :on-key-pressed (fn [e]
+                               ;; ctrl-w
+                               (when (and (.isControlDown e)
+                                          (= (.getCode e) (KeyCode/W)))
+                                 (let [;; when closing a tab, select the previous tab
+                                       ;; UNLESS that previous tab is the last of the static tabs
+                                       ;; then select the first of the static tabs
+                                       prev-tab (dec (tab-index))
+                                       num-static-tabs 3
+                                       prev-tab (if (= prev-tab (dec num-static-tabs)) 0 prev-tab)]
+                                   (cli/remove-tab-at-idx (tab-list-tab-index))
+                                   (switch-tab prev-tab)))
+                               nil)
              :stylesheets [(::css/url style)]
              :root {:fx/type :border-pane
                     :id (name theme)
                     :top {:fx/type menu-bar}
-                    :center {:fx/type :split-pane
-                             :id "splitter"
-                             :orientation :vertical
-                             :divider-positions [0.7]
-                             :items [{:fx/type tabber}
-                                     {:fx/type notice-logger}]}
+                    :center {:fx/type tabber}
                     :bottom {:fx/type status-bar}}}}))
 
 ;; absolutely no logging in here

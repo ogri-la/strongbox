@@ -347,7 +347,6 @@
         parent (some->> (-> path fs/split butlast) (apply join))]
     (join parent (-> path str fs/split-ext first (str ext)))))
 
-;; repurposing
 (defn-spec file-to-lazy-byte-array bytes?
   [path ::sp/extant-file]
   (let [fobj (java.io.File. path)
@@ -515,14 +514,21 @@
       (error uncaught-exception "failed to call `which`"))))
 
 (defn-spec java-browser (s/or :ok fn? :error nil?)
-  "returns a function that will open a given URL in a browser, or nil if 
-  current Desktop is not supported"
+  "returns a function that will open a given value or nil if current Desktop is not supported.
+  if the given value is a URL, we attempt to 'browse' it.
+  if the given value is an extant directory, we attempt to 'open' it."
   []
-  (when (and (java.awt.Desktop/isDesktopSupported)
-             (.isSupported (java.awt.Desktop/getDesktop) java.awt.Desktop$Action/BROWSE))
-    (fn [url]
-      (info "opening URL:" url)
-      (.browse (java.awt.Desktop/getDesktop) (java.net.URI. url)))))
+  (let [desktop (java.awt.Desktop/getDesktop)]
+    (when (and (java.awt.Desktop/isDesktopSupported)
+               (.isSupported desktop java.awt.Desktop$Action/BROWSE)
+               (.isSupported desktop java.awt.Desktop$Action/OPEN))
+      (fn [path]
+        (cond
+          (s/valid? ::sp/url path) (do (info "opening URL:" path)
+                                       (.browse desktop (java.net.URI. path)))
+          (s/valid? ::sp/extant-dir path) (do (info "opening directory:" path)
+                                              (.open desktop (java.io.File. path)))
+          :else (error "can't open: " path))))))
 
 (defn-spec find-browser fn?
   "returns a function that attempts to open a given URL in a browser.
@@ -532,15 +538,17 @@
         gnome-open #(browser "gnome-open")
         kde-open #(browser "kde-open")
         fail (constantly #(error "failed to find a program to open URL:" (str %)))]
-    (loop [lst [java-browser xdg-open gnome-open kde-open fail]]
+    (loop [lst [java-browser
+                xdg-open gnome-open kde-open fail]]
       (if-let [browser-fn ((first lst))]
         browser-fn
         (recur (rest lst))))))
 
 (defn-spec browse-to nil?
   "given a URL, open a browser window with it"
-  [url ::sp/url]
-  (future-call #((find-browser) url))
+  [x (s/or :url ::sp/url, :dir ::sp/extant-dir)]
+  (future
+    ((find-browser) x))
   nil)
 
 (defn-spec source-to-href-label-fn (s/or :ok string? :bad-url nil?)
@@ -569,3 +577,30 @@
           (clojure.string/replace "\r\n" " ")
           (clojure.string/replace "\n" " ")))
 
+(defn-spec drop-idx (s/or :ok vector? :bad nil?)
+  "removes element at index `idx` within vector `v`.
+  if `v` is nil or empty, `v` will be returned as-is.
+  if `idx` is negative or greater than the number of elements in `v`, `v` will be returned as-is."
+  [v (s/nilable vector?), idx (s/nilable int?)]
+  (when-not (nil? v)
+    (let [c (count v)]
+      (cond
+        (nil? idx) v
+        (empty? v) v
+        (< idx 0) v ;; negative indices return the vector as-is
+        (>= idx c) v ;; indicies greater than num items return vector as-is
+        :else (into (subvec v 0 idx) (subvec v (inc idx) c))))))
+
+(defn-spec extract-addon-id map?
+  "attempts to extract a set of uniquely identifying attributes of the given `addon`.
+  if it fails to find these attributes, the whole map will be returned as-is."
+  [addon map?]
+  (let [addon-id (select-keys addon [:source :source-id :dirname])]
+    (if (not (empty? addon-id))
+      addon-id
+      addon)))
+
+(defn-spec unique-id string?
+  "returns a UUID as a string that is guaranteed to always be unique."
+  []
+  (str (java.util.UUID/randomUUID)))

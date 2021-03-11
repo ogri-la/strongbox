@@ -136,7 +136,9 @@ Some addons support both retail and classic in a single download, some support c
 
 Click the drop-down next to your addon directory and select either `retail` or `classic` or `any, prefer retail` or `any, prefer classic`.
 
-This will restrict the types of addons that can be installed in to the current addon directory. The last two options allow you to mix classic and retail addons together in the same addon directory. If an addon is available for both retail and classic it will prefer one over the other.
+This will restrict the types of addons that can be installed in the current addon directory. 
+
+The last two options allow you to mix classic and retail addons together in the same addon directory. If an addon is available for both retail and classic it will prefer one over the other.
 
 ### catalogue search
 
@@ -156,11 +158,11 @@ The default catalogue is the 'short' catalogue. It contains all addons from all 
 
 The 'full' catalogue contains all addons from all supported hosts, ever, and is approximately 15.3k addons large. It contains many addons that haven't been updated in years.
 
-There are also per-host catalogues and strongbox supports selecting between them.
+There are also per-host catalogues, like a 'curseforge' catalogue, and strongbox supports selecting between all of them.
 
 Catalogues are updated weekly.
 
-The 'user' catalogue is a little different. It's initially empty but grows as addons are imported from hosts like Github. These addons do appear in search results. Individual addons from the user catalogue are checked for new releases normally, but the catalogue itself can only be updated manually.
+The 'user' catalogue is a little different. It's initially empty but grows as addons are imported from hosts like Github. These addons also appear in search results. Individual addons from the user catalogue are checked for new releases normally, but the catalogue itself can only be updated manually.
 
 Click `Catalogue` from the top menu and select `Refresh user catalogue`.
 

@@ -57,6 +57,7 @@
 (s/def ::install-dir (s/nilable ::extant-dir))
 (s/def ::selected? boolean?)
 (s/def ::gui-theme #{:light :dark :dark-green :dark-orange})
+(s/def ::closable? boolean?)
 
 ;; preserve order, used in GUI
 (def game-track-labels [[:retail "retail"]
@@ -342,3 +343,10 @@
 ;; requiring cljfx or anything in javafx.scene.control starts the javafx application thread
 
 (s/def :gui/column-data (s/keys :opt-un [:gui/text :gui/cell-value-factory :gui/style-class]))
+
+(s/def :addon/id (s/or :regular (s/keys :req-un [:addon/source :addon/source-id]) ;; installed addons and catalogue addons
+                       :edge (s/keys :req-in [::dirname]))) ;; unmatched and ignored addons
+(s/def :ui/tab-data :addon/id) ;; for now
+(s/def :ui/tab-id string?)
+(s/def :ui/tab (s/keys :req-un [:ui/tab-id ::label ::closable? :ui/tab-data]))
+(s/def :ui/tab-list (s/coll-of :ui/tab))

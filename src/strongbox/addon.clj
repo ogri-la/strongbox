@@ -35,7 +35,7 @@
           (= addon-path install-dir))
       (error (format "directory is outside the current installation dir, not removing: %s" addon-path))
 
-      ;; other addons depend on this addon, just remove the nfo file
+      ;; other addons depend on this addon, just remove the nfo file entry
       (nfo/mutual-dependency? install-dir addon-dirname)
       (let [updated-nfo-data (nfo/rm-nfo install-dir addon-dirname group-id)]
         (nfo/write-nfo install-dir addon-dirname updated-nfo-data)
@@ -253,7 +253,7 @@
   (when n-zips-to-keep
     (remove-zip-files! install-dir (:name addon) n-zips-to-keep)))
 
-;;
+;; ignore
 
 ;; todo: does this have tests? is it flawed like pinned-dir-list is?
 (defn-spec ignored-dir-list (s/coll-of ::sp/dirname)
@@ -283,13 +283,27 @@
     (or (contains? toc-data :ignore?)
         (nfo/version-controlled? path))))
 
+(defn-spec ignore nil?
+  "marks the given `addon` and all of it's group members (if any) as 'ignored'"
+  [install-dir ::sp/extant-dir, addon :addon/installed]
+  (->> addon
+       ungroup-addon
+       flatten
+       (map :dirname)
+       (run! (partial nfo/ignore install-dir))))
+
 (defn-spec clear-ignore nil?
   "clears the `ignore?` flag on an addon, either by removing it from the nfo or setting it in the nfo to `false`.
   Has to happen here so we can distinguish between 'toc-ignores' and 'nfo-ignores'."
-  [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname]
-  (if (implicitly-ignored? install-dir addon-dirname)
-    (nfo/stop-ignoring install-dir addon-dirname)
-    (nfo/clear-ignore install-dir addon-dirname)))
+  [install-dir ::sp/extant-dir, addon :addon/installed]
+  (let [addon-dirname (:dirname addon)
+        ignore-fn (if (implicitly-ignored? install-dir addon-dirname)
+                    nfo/stop-ignoring
+                    nfo/clear-ignore)]
+    (->> addon
+         ungroup-addon
+         (mapv :dirname)
+         (run! (partial ignore-fn install-dir)))))
 
 ;;
 
@@ -351,9 +365,27 @@
   (when-let [{:keys [pinned-version]} addon]
     (some->> addon :release-list (filter #(= pinned-version (:version %))) first)))
 
+;;
+
+(defn-spec installed? boolean?
+  "returns `true` if given `addon` is present on filesystem."
+  [addon map?] ;; deliberately lenient
+  (contains? addon :dirname))
+
+(defn-spec ignored? boolean?
+  "returns `true` if given `addon` is being ignored."
+  [addon map?]
+  (get addon :ignore? false))
+
+(defn-spec ignorable? boolean?
+  "returns `true` if given `addon` can be ignored."
+  [addon map?]
+  (and (installed? addon)
+       (not (ignored? addon))))
+
 (defn-spec updateable? boolean?
-  "returns `true` when given `addon` can be updated to a newer version"
-  [addon map?] ;; deliberately lenient. called from all over
+  "returns `true` when given `addon` can be updated to a newer version."
+  [addon map?] ;; deliberately lenient
   (let [{:keys [installed-version pinned-version version]} addon]
     (boolean
      (and version
@@ -368,7 +400,33 @@
 
 (defn-spec re-installable? boolean?
   "returns `true` if given `addon` can be re-installed to its current `:installed-version`."
-  [addon map?] ;; deliberately lenient. it's called directly from the gui
+  [addon map?] ;; deliberately lenient
   (boolean
-   (when (contains? addon :release-list)
-     (some? (find-release addon)))))
+   (and (installed? addon)
+        (contains? addon :release-list)
+        (some? (find-release addon)))))
+
+(defn-spec pinned? boolean?
+  "returns `true` if given `addon` is pinned to a specific version."
+  [addon map?]
+  (some? (:pinned-version addon)))
+
+(defn-spec pinnable? boolean?
+  "returns `true` if given `addon` can be pinned."
+  [addon map?]
+  (and (installed? addon)
+       (contains? addon :installed-version) ;; could this live in `installed?`
+       (not (pinned? addon))
+       (not (ignored? addon))))
+
+(defn-spec unpinnable? boolean?
+  "returns `true` if given `addon` can be un-pinned."
+  [addon map?]
+  (and (pinned? addon)
+       (not (ignored? addon))))
+
+(defn-spec deletable? boolean?
+  "returns `true` if the given `addon` can be deleted."
+  [addon map?]
+  (and (installed? addon)
+       (not (ignored? addon))))
