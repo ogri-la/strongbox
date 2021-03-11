@@ -380,7 +380,6 @@
 (defn-spec ignorable? boolean?
   "returns `true` if given `addon` can be ignored."
   [addon map?]
-  ;; todo: and what if one of it's grouped addons is ignored??
   (and (installed? addon)
        (not (ignored? addon))))
 

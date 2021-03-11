@@ -347,15 +347,15 @@
         parent (some->> (-> path fs/split butlast) (apply join))]
     (join parent (-> path str fs/split-ext first (str ext)))))
 
-;; repurposing ;; 2021-02: wtf?
-(defn-spec file-to-lazy-byte-array bytes?
-  [path ::sp/extant-file]
-  (let [fobj (java.io.File. path)
-        ary (byte-array (.length fobj))
-        is (java.io.FileInputStream. fobj)]
-    (.read is ary)
-    (.close is)
-    ary))
+(comment "useful looking but unused"
+         (defn-spec file-to-lazy-byte-array bytes?
+           [path ::sp/extant-file]
+           (let [fobj (java.io.File. path)
+                 ary (byte-array (.length fobj))
+                 is (java.io.FileInputStream. fobj)]
+             (.read is ary)
+             (.close is)
+             ary)))
 
 (defn split-filter
   [f c]
