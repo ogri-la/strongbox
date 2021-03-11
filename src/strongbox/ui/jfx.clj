@@ -1310,7 +1310,14 @@
 
                  {:fx/type :text-area
                   :text (str addon)
-                  :wrap-text true}])}))
+                  :wrap-text true}
+
+                 {:fx/type notice-logger
+                  :addon addon
+                  }
+
+
+                 ])}))
 
 (defn addon-detail-tab
   [{:keys [tab]}]
@@ -1450,6 +1457,7 @@
                        ;;   that causes the notice-logger to update it's rows ->
                        ;;   ...
                        ;; the trade off is duplicate messages are not displayed
+                       ;; sometimes doesn't work when there are pairs of messages displayed
                        (when-not (= prev-msg this-msg)
                          (swap! gui-state fx/swap-context update-in [:log-message-list] conj log-line))))]
     (logging/add-appender! :gui gui-logger {:timestamp-opts {:pattern "HH:mm:ss"}})))
@@ -1466,7 +1474,7 @@
                            (swap! gui-state fx/swap-context assoc :app-state new-state))
         _ (core/state-bind [] update-gui-state)
 
-        _ (init-notice-logger! gui-state)
+        ;;_ (init-notice-logger! gui-state) ;; pushing this into core/log-lines
 
         ;; css watcher for live coding
         _ (doseq [rf [#'style #'major-theme-map #'sub-theme-map #'themes]

@@ -73,6 +73,19 @@
     (add-appender! :spit func))
   nil)
 
+(defn add-atom-appender!
+  [atm]
+  (let [path [:log-lines]
+        func (fn [data]
+               (let [log-line {:level (force (:level data))
+                               :msg (force (:msg_ data))
+                               :instance (force (:instant data))
+                               :addon (some-> data :context :addon force)
+                               }]
+                 (swap! atm update-in path into [log-line])))]
+    (add-appender! :atom func))
+  nil)
+
 (defn-spec rm-appender! nil?
   "removes appender at `key` from logging config"
   [key keyword?]

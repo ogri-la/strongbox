@@ -107,6 +107,8 @@
    ;; the list of addons from the catalogue
    :db nil
 
+   :log-lines []
+
    ;; a map of paths whose location may vary according to the cwd and envvars.
    :paths nil
 
@@ -173,10 +175,12 @@
   "executes given callback function when value at path in state map changes. 
   trigger is discarded if old and new values are identical"
   [path ::sp/list-of-keywords, callback fn?]
-  (let [prefn identity
+  (let [postfn identity
+        prefn (fn [x]
+                (dissoc x :log-lines))
         has-changed (fn [old-state new-state]
-                      (not= (prefn (get-in old-state path))
-                            (prefn (get-in new-state path))))
+                      (not= (postfn (get-in (prefn old-state) path))
+                            (postfn (get-in (prefn new-state) path))))
         wid (keyword (gensym callback)) ;; :foo.bar$baz@123456789
         rmwatch #(remove-watch state wid)]
 
@@ -292,6 +296,7 @@
   enables the profiling of certain sections of code."
   [new-level keyword?]
   (timbre/merge-config! {:level new-level})
+  (logging/add-atom-appender! state)
   (when (logging/debug-mode?) ;; debug level + not-testing
     (if-not @state
       (warn "application has not been started, no location to write log or profile data")
