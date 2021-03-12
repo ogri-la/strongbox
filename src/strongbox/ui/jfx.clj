@@ -2,7 +2,7 @@
   (:require
    [me.raynes.fs :as fs]
    [clojure.string :refer [lower-case join capitalize replace] :rename {replace str-replace}]
-   [taoensso.timbre :as timbre :refer [spy info]] ;; debug info warn error spy]] 
+   [taoensso.timbre :as timbre :refer [spy info debug]] ;; debug info warn error spy]] 
    [cljfx.ext.table-view :as fx.ext.table-view]
    [cljfx.lifecycle :as fx.lifecycle]
    [cljfx.component :as fx.component]
@@ -179,7 +179,11 @@
 
                ;; tabber
                ".tab-pane > .tab-header-area > .headers-region > .tab"
-               {:-fx-background-radius "0"}
+               {:-fx-background-radius "0"
+                :-fx-padding ".25em 1em"
+                :-fx-focus-color "transparent" ;; it's a tab, why gild the lilly
+                :-fx-faint-focus-color "transparent" ;; literally, a very faint box remains
+                }
 
 
                ;;
@@ -212,7 +216,22 @@
                  ".hyperlink"
                  {;;:-fx-background-color "green"
                   :-fx-text-fill "blue"
-                  :-fx-padding "0 0 0 1em"}}} ;; ends .addon-detail
+                  :-fx-padding "0 0 0 1em"}}
+
+                "#notice-logger#source"
+                ;; hide 'source' column in notice-logger in addon-detail pane
+                {:-fx-max-width 0
+                 :-fx-pref-width 0
+                 :-fx-min-width 0}
+
+                ;; hide column headers in notice-logger in addon-detail pane
+                ".table-view#notice-logger .column-header-background"
+                {:-fx-max-height 0
+                 :-fx-pref-height 0
+                 :-fx-min-height 0
+                 }
+
+                } ;; ends .addon-detail
 
 
                ;; common tables
@@ -308,34 +327,39 @@
                 {:-fx-padding 0
                  :-fx-spacing 0}}
 
-
+               ;;
                ;; notice-logger
+               ;;
+
+               ".table-view#notice-logger "
+               {:-fx-font-family "monospace"
+
+                ".warn"
+                {:-fx-background-color (colour :row-warning)}
+                ".warn:selected"
+                {:-fx-background-color "-fx-selection-bar"}
+
+                ".error"
+                {:-fx-background-color (colour :row-error)}
+                ".error:selected"
+                {:-fx-background-color "-fx-selection-bar"}
+
+                "#level"
+                {:-fx-alignment "center"}
+
+                "#source"
+                {:-fx-alignment "center"}
+
+                "#time"
+                {:-fx-alignment "center"}
+
+                "#message"
+                {:-fx-padding "0 0 0 .5em"}}
 
 
-               ".table-view#notice-logger"
-               {" .warn" {:-fx-background-color (colour :row-warning)
-                          ":selected" {:-fx-background-color "-fx-selection-bar"}}
-
-                " .error" {:-fx-background-color (colour :row-error)
-                           ":selected" {:-fx-background-color "-fx-selection-bar"}}
-
-                " #level" {:-fx-alignment "center"
-                           :-fx-border-width "0"}
-
-                ;; hide column headers
-
-
-                " > .column-header-background"
-                {:-fx-max-height 0
-                 :-fx-pref-height 0
-                 :-fx-min-height 0}
-
-                :-fx-font-family "monospace"}
-
-               "#splitter .split-pane-divider"
-               {:-fx-padding "8px"}
-
+               ;;
                ;; search
+               ;;
 
                "#search-install-button"
                {:-fx-min-width "90px"}
@@ -366,9 +390,9 @@
                 {;; omg, wtf does 'fx-fill' work and not 'fx-text-fill' ???
                  :-fx-fill (colour :table-font-colour)}}
 
-
-               ;; common table fields
-
+               ;;
+               ;; common table fields ;; move under 'common table' ?
+               ;;
 
                ".table-view .source-column"
                {:-fx-alignment "center-left"
@@ -1107,11 +1131,12 @@
 
 (defn notice-logger
   [{:keys [fx/context]}]
-  (let [log-message-list (fx/sub-val context :log-message-list)
+  (let [log-message-list (fx/sub-val context get-in [:app-state :log-lines])
         log-message-list (reverse log-message-list) ;; nfi how to programmatically change column sort order
-        column-list [{:id "level" :text "level" :max-width 100 :cell-value-factory (comp name :level)}
+        column-list [{:id "source" :text "source" :max-width 120 :cell-value-factory (fn [row] (or (:source row) "app"))}
+                     {:id "level" :text "level" :max-width 80 :cell-value-factory (comp name :level)}
                      {:id "time" :text "time" :max-width 100 :cell-value-factory :time}
-                     {:text "message" :pref-width 500 :cell-value-factory :message}]]
+                     {:id "message" :text "message" :pref-width 500 :cell-value-factory :message}]]
     {:fx/type :table-view
      :id "notice-logger"
      :selection-mode :multiple
@@ -1308,14 +1333,17 @@
                  {:fx/type addon-detail-button-menu
                   :addon addon}
 
-                 {:fx/type :text-area
-                  :text (str addon)
-                  :wrap-text true}
 
                  {:fx/type notice-logger
                   :addon addon
                   }
 
+
+                 ;; ----
+                 
+                 {:fx/type :text-area
+                  :text (str addon)
+                  :wrap-text true}
 
                  ])}))
 
@@ -1439,35 +1467,11 @@
                     :center {:fx/type tabber}
                     :bottom {:fx/type status-bar}}}}))
 
-;; absolutely no logging in here
-(defn init-notice-logger!
-  "log handler for the gui. incoming log messages update the gui"
-  [gui-state]
-  (let [gui-logger (fn [log-data]
-                     (let [{:keys [timestamp_ msg_ level]} log-data
-                           this-msg (force msg_)
-                           prev-msg (-> (fx/sub-val @gui-state :log-message-list) last :message)
-                           log-line {:level level :time (force timestamp_) :message this-msg}]
-                       ;; infinite recursion protection.
-                       ;; logging updates the `log-message-list` ->
-                       ;;   that causes the notice-logger to update it's rows ->
-                       ;;   that requires re-rendering the GUI ->
-                       ;;   that calls *all* of the component functions ->
-                       ;;   that may trigger log messages ->
-                       ;;   that causes the notice-logger to update it's rows ->
-                       ;;   ...
-                       ;; the trade off is duplicate messages are not displayed
-                       ;; sometimes doesn't work when there are pairs of messages displayed
-                       (when-not (= prev-msg this-msg)
-                         (swap! gui-state fx/swap-context update-in [:log-message-list] conj log-line))))]
-    (logging/add-appender! :gui gui-logger {:timestamp-opts {:pattern "HH:mm:ss"}})))
-
 (defn start
   []
   (info "starting gui")
   (let [;; the gui uses a copy of the application state because the state atom needs to be wrapped
         state-template {:app-state nil,
-                        :log-message-list []
                         :style (style)}
         gui-state (atom (fx/create-context state-template)) ;; cache/lru-cache-factory))
         update-gui-state (fn [new-state]
@@ -1480,7 +1484,7 @@
         _ (doseq [rf [#'style #'major-theme-map #'sub-theme-map #'themes]
                   :let [key (str rf)]]
             (add-watch rf key (fn [_ _ _ _]
-                                (info "updating gui state")
+                                (debug "updating gui state")
                                 (swap! gui-state fx/swap-context assoc :style (style))))
             (core/add-cleanup-fn #(remove-watch rf key)))
 
