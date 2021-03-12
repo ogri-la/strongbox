@@ -77,13 +77,14 @@
   [atm]
   (let [path [:log-lines]
         func (fn [data]
-               (let [log-line {:level (force (:level data))
-                               :msg (force (:msg_ data))
-                               :instance (force (:instant data))
-                               :addon (some-> data :context :addon force)
+               (let [log-line {:time (force (:timestamp_ data))
+                               :message (force (:msg_ data))
+                               :level (force (:level data))
+                               :source (some-> data :context :addon force)
                                }]
-                 (swap! atm update-in path into [log-line])))]
-    (add-appender! :atom func))
+                 (when atm
+                   (swap! atm update-in path into [log-line]))))]
+    (add-appender! :atom func {:timestamp-opts {:pattern "HH:mm:ss"}}))
   nil)
 
 (defn-spec rm-appender! nil?
