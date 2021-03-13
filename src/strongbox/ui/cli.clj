@@ -152,7 +152,10 @@
   ([]
    (pin (get-state :selected-addon-list)))
   ([addon-list :addon/installed-list]
-   (run! #(addon/pin (core/selected-addon-dir) %)
+   (run! (fn [addon]
+           (core/with-addon-log addon
+             (info (format "pinning addon '%s' to version %s" (:label addon) (:installed-version addon)))
+             (addon/pin (core/selected-addon-dir) addon)))
          addon-list)
    (core/refresh)))
 
@@ -162,12 +165,15 @@
   ([]
    (unpin (get-state :selected-addon-list)))
   ([addon-list :addon/installed-list]
-   (run! #(addon/unpin (core/selected-addon-dir) %)
+   (run! (fn [addon]
+           (core/addon-log :info addon (format "unpinning addon '%s' from %s" (:label addon) (:pinned-version addon)))
+           (addon/unpin (core/selected-addon-dir) addon))
          addon-list)
    (core/refresh)))
 
 (defn-spec -find-replace-release (s/or :ok :addon/expanded, :release-not-found nil?)
-  "looks for the `:installed-version` in the list of available releases and, if found, updates the addon."
+  "looks for the `:installed-version` in the `:release-list` and, if found, updates the addon.
+  this is an intermediate step before pinning or installing a previous release."
   [addon :addon/expanded]
   (if-let [matching-release (addon/find-release addon)]
     (merge addon matching-release)
@@ -246,7 +252,10 @@
   ([addon-list :addon/installed-list]
    (->> addon-list
         (filter addon/ignorable?)
-        (run! (partial addon/ignore (core/selected-addon-dir))))
+        (run! (fn [addon]
+                (core/with-addon-log addon
+                  (info (format "ignoring addon '%s'" (:label addon)))
+                  (addon/ignore (core/selected-addon-dir) addon)))))
    (core/refresh)))
 
 (defn-spec clear-ignore-selected nil?
@@ -255,7 +264,11 @@
   ([]
    (clear-ignore-selected (get-state :selected-addon-list)))
   ([addon-list :addon/installed-list]
-   (run! (partial addon/clear-ignore (core/selected-addon-dir)) addon-list)
+   (run! (fn [addon]
+           (core/with-addon-log addon
+             (addon/clear-ignore (core/selected-addon-dir) addon)
+             (info (format "stopped ignoring addon '%s'" (:label addon)))))
+         addon-list)
    (core/refresh)))
 
 ;; selecting addons

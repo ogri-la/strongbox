@@ -126,7 +126,7 @@
         user-ignored (contains? nfo-file-contents :ignore?)
         _ (when (and user-ignored
                      (:ignore? nfo-file-contents))
-            (warn (format "ignoring '%s'" dirname)))
+            (debug (format "ignoring '%s'" dirname))) ;; todo: on ignore, list all dirs that will be ignored
 
         ignore-flag (when (and (not user-ignored)
                                (version-controlled? (join install-dir dirname)))

@@ -77,11 +77,14 @@
   [atm]
   (let [path [:log-lines]
         func (fn [data]
-               (let [log-line {:time (force (:timestamp_ data))
+               (let [dirname (some-> data :context :addon :dirname)
+                     install-dir (some-> data :context :install-dir)
+                     source (when (and install-dir dirname)
+                              {:install-dir install-dir :dirname dirname})
+                     log-line {:time (force (:timestamp_ data))
                                :message (force (:msg_ data))
                                :level (force (:level data))
-                               :source (some-> data :context :addon force)
-                               }]
+                               :source source}]
                  (when atm
                    (swap! atm update-in path into [log-line]))))]
     (add-appender! :atom func {:timestamp-opts {:pattern "HH:mm:ss"}}))

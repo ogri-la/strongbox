@@ -15,7 +15,6 @@
    [strongbox
     [addon :as addon]
     [specs :as sp]
-    [logging :as logging]
     [utils :as utils :refer [no-new-lines]]
     [core :as core]])
   (:import
@@ -209,14 +208,12 @@
                  :-fx-wrap-text true
                  :-fx-font-style "italic"}
 
-                ".ext-links "
-                {;;:-fx-background-color "gray"
-                 :-fx-padding "0 0 1em 1.75em"
+                ".ext-links"
+                {:-fx-padding "0 0 1em 1.75em"}
 
-                 ".hyperlink"
-                 {;;:-fx-background-color "green"
-                  :-fx-text-fill "blue"
-                  :-fx-padding "0 0 0 1em"}}
+                ".ext-links .hyperlink"
+                {:-fx-text-fill "blue"
+                 :-fx-padding "0 0 0 1em"}
 
                 "#notice-logger#source"
                 ;; hide 'source' column in notice-logger in addon-detail pane
@@ -228,10 +225,21 @@
                 ".table-view#notice-logger .column-header-background"
                 {:-fx-max-height 0
                  :-fx-pref-height 0
-                 :-fx-min-height 0
-                 }
+                 :-fx-min-height 0}
 
-                } ;; ends .addon-detail
+                "#notice-logger-nav"
+                {:-fx-padding "0 0 .5em 0"
+                 :-fx-alignment "top-right"
+                 :-fx-font-size ".9em"
+
+                 " .label"
+                 {:-fx-padding ".25em 1em"
+                  :-fx-border-width "1px"
+                  :-fx-border-color "black"
+                  :-fx-border-radius "30"}
+
+                 " .radio-button"
+                 {:-fx-padding "0 .5em"}}} ;; ends .addon-detail
 
 
                ;; common tables
@@ -360,6 +368,7 @@
                ;;
                ;; search
                ;;
+
 
                "#search-install-button"
                {:-fx-min-width "90px"}
@@ -519,6 +528,12 @@
 (def INSTALLED-TAB 0)
 (def SEARCH-TAB 1)
 (def LOG-TAB 2)
+
+(defn label
+  [label & [{:keys [disabled?]}]]
+  {:fx/type :label
+   :text label
+   :disable (boolean disabled?)})
 
 (defn button
   "generates a simple button with a means to check to see if it should be disabled and an optional tooltip"
@@ -1130,10 +1145,13 @@
             :items (or row-list [])}}))
 
 (defn notice-logger
-  [{:keys [fx/context]}]
-  (let [log-message-list (fx/sub-val context get-in [:app-state :log-lines])
-        log-message-list (reverse log-message-list) ;; nfi how to programmatically change column sort order
-        column-list [{:id "source" :text "source" :max-width 120 :cell-value-factory (fn [row] (or (:source row) "app"))}
+  [{:keys [fx/context filter-fn]}]
+  (let [filter-fn (or filter-fn identity)
+        log-message-list (->> (fx/sub-val context get-in [:app-state :log-lines])
+                              (filter filter-fn)
+                              reverse) ;; nfi how to programmatically change column sort order
+        ;;log-message-list (reverse log-message-list) 
+        column-list [{:id "source" :text "source" :max-width 120 :cell-value-factory (fn [row] (or (some-> row :source :dirname) "app"))}
                      {:id "level" :text "level" :max-width 80 :cell-value-factory (comp name :level)}
                      {:id "time" :text "time" :max-width 100 :cell-value-factory :time}
                      {:id "message" :text "message" :pref-width 500 :cell-value-factory :message}]]
@@ -1285,6 +1303,25 @@
                       {:disabled? (not (addon/deletable? addon))
                        :tooltip "Permanently delete"})]})
 
+(defn notice-logger-nav
+  [_]
+  {:fx/type :h-box
+   :id "notice-logger-nav"
+   :children [;;(label "Filtered by 'Addon Name'" {:disabled? true})
+              {:fx/type :radio-button
+               :selected false
+               :text "debug"}
+
+              {:fx/type :radio-button
+               :selected true
+               :text "info"}
+              {:fx/type :radio-button
+               :selected false
+               :text "warn (2)"}
+              {:fx/type :radio-button
+               :selected false
+               :text "error"}]})
+
 (defn addon-detail-pane
   [{:keys [fx/context addon-id]}]
   (let [installed-addons (fx/sub-val context get-in [:app-state :installed-addon-list])
@@ -1295,7 +1332,12 @@
         ;; we may be given an installed addon, an ignored and unmatched addon, a catalogue entry so look in the installed
         ;; addon list first because it's smaller than the catalogue.
         addon (or (->> installed-addons (filter matcher) first)
-                  (->> catalogue (filter matcher) first))]
+                  (->> catalogue (filter matcher) first))
+
+        ;; no notice pane for 
+        notice-pane-filter (fn [log-line]
+                             (= (:source log-line)
+                                {:install-dir (core/selected-addon-dir) :dirname (:dirname addon)}))]
     {:fx/type :v-box
      :id "addon-detail-pane"
      :style-class ["addon-detail"]
@@ -1333,19 +1375,18 @@
                  {:fx/type addon-detail-button-menu
                   :addon addon}
 
-
-                 {:fx/type notice-logger
-                  :addon addon
-                  }
-
+                 ;; only display the notice logger when the addon is installed
+                 (when (:dirname addon)
+                   [{:fx/type notice-logger-nav}
+                    {:fx/type notice-logger
+                     :filter-fn notice-pane-filter}])
 
                  ;; ----
-                 
+
+
                  {:fx/type :text-area
                   :text (str addon)
-                  :wrap-text true}
-
-                 ])}))
+                  :wrap-text true}])}))
 
 (defn addon-detail-tab
   [{:keys [tab]}]

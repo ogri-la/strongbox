@@ -176,8 +176,7 @@
   trigger is discarded if old and new values are identical"
   [path ::sp/list-of-keywords, callback fn?]
   (let [postfn identity
-        prefn (fn [x]
-                (dissoc x :log-lines))
+        prefn identity
         has-changed (fn [old-state new-state]
                       (not= (postfn (get-in (prefn old-state) path))
                             (postfn (get-in (prefn new-state) path))))
@@ -288,7 +287,7 @@
     :classic :classic-retail
     :retail-classic))
 
-;; settings
+;; stateful logging
 
 (defn-spec change-log-level! nil?
   "changes the effective log level from `logging/default-log-level` to `new-level`.
@@ -305,6 +304,27 @@
         (logging/add-file-appender! (paths :log-file))
         (info "writing logs to:" (paths :log-file)))))
   nil)
+
+;; => (addon-log :info {...} "installed!")
+(defmacro addon-log
+  "once-off addon logging message"
+  [level addon & form]
+  `(timbre/with-context
+     {:install-dir (selected-addon-dir)
+      :addon ~addon}
+     (timbre/log ~level ~@form)))
+
+;; => (with-addon-log {...} (info "installed!"))
+(defmacro with-addon-log
+  "all calls to debug/info/warn etc within enclosure become addon-level logging.
+  app-level logging will have to futz with the logging context"
+  [addon & form]
+  `(timbre/with-context
+     {:install-dir (selected-addon-dir)
+      :addon ~addon}
+     ~@form))
+
+;; settings
 
 (defn save-settings
   "writes user configuration to the filesystem"
