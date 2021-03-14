@@ -1181,9 +1181,10 @@
 
         log-message-list (->> (fx/sub-val context get-in [:app-state :log-lines])
                               (filter filter-fn)
-                              (filter log-level-filter)
                               ;; nfi how to programmatically change column sort order
                               reverse)
+
+        level-occurances (utils/count-occurances log-message-list :level)
 
         column-list [{:id "source" :text "source" :max-width 120 :cell-value-factory (fn [row] (or (some-> row :source :dirname) "app"))}
                      {:id "level" :text "level" :max-width 80 :cell-value-factory (comp name :level)}
@@ -1191,17 +1192,26 @@
                      {:id "message" :text "message" :pref-width 500 :cell-value-factory :message}]
 
         log-level-list [:debug :info :warn :error]
+        log-level-list (if-not (contains? level-occurances :debug)
+                         (rest log-level-list)
+                         log-level-list)
         selected-log-level (fx/sub-val context get-in (if tab-idx
                                                         [:app-state :tab-list tab-idx :log-level]
                                                         [:app-state :gui-log-level]))
         log-level-changed-handler (fn [log-level _]
                                     (cli/change-notice-logger-level tab-idx (keyword log-level)))
+
+        label-coercer (fn [log-level]
+                        (let [num-occurances (level-occurances log-level)]
+                          (format "%s (%s)" (name log-level) (or num-occurances 0))))
+
+        log-message-list (filter log-level-filter log-message-list)
         ]
     {:fx/type :border-pane
      :top {:fx/type radio-group
            :options log-level-list
            :value selected-log-level
-           :label-coercer name
+           :label-coercer label-coercer
            :container-id "notice-logger-nav"
            :on-action log-level-changed-handler}
      

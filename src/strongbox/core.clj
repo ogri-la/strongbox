@@ -190,7 +190,14 @@
     (add-watch state wid
                (fn [_ _ old-state new-state] ;; key, atom, old-state, new-state
                  (when (has-changed old-state new-state)
-                   (debug (format "path %s triggered %s" path wid))
+                   ;; prevents infinite recursion
+                   (when (= :debug (:level timbre/*config*))
+                     ;; this would cause the gui to receive a :debug of "path [] triggered a ..."
+                     ;; this would update the :log-lines in the state
+                     ;; this would cause the gui to receive a :debug of "path [] triggered a ..." ...
+                     ;;(debug (format "path %s triggered %s" path wid)))
+                     ;; instead, if :debug is the log level, print this to stdout
+                     (println (format "path %s triggered %s" path wid)))
                    (try
                      (callback new-state)
                      (catch Exception e
