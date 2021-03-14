@@ -117,6 +117,9 @@
    ;; jfx ui showing?
    :gui-showing? false
 
+   ;; log-level for the gui dedicated notice-logger
+   :gui-log-level :info
+
    ;; addons in an unsteady state (data being updated, addon being installed, etc)
    ;; allows a UI to watch and update with progress
    :unsteady-addon-list #{}
@@ -124,6 +127,7 @@
    ;; a sublist of merged toc+addon that are selected
    :selected-addon-list []
 
+   ;; dynamic tabs
    :tab-list []
 
    :search {:term nil

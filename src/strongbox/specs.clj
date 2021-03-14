@@ -58,6 +58,7 @@
 (s/def ::selected? boolean?)
 (s/def ::gui-theme #{:light :dark :dark-green :dark-orange})
 (s/def ::closable? boolean?)
+(s/def ::log-level #{:debug :info :warn :error})
 
 ;; preserve order, used in GUI
 (def game-track-labels [[:retail "retail"]
@@ -348,5 +349,5 @@
                        :edge (s/keys :req-in [::dirname]))) ;; unmatched and ignored addons
 (s/def :ui/tab-data :addon/id) ;; for now
 (s/def :ui/tab-id string?)
-(s/def :ui/tab (s/keys :req-un [:ui/tab-id ::label ::closable? :ui/tab-data]))
+(s/def :ui/tab (s/keys :req-un [:ui/tab-id ::label ::closable? :ui/tab-data ::log-level]))
 (s/def :ui/tab-list (s/coll-of :ui/tab))

@@ -418,6 +418,7 @@
 
 ;;
 
+(def num-static-tabs 3)
 
 (defn get-window
   "returns the application `Window` object."
@@ -434,6 +435,16 @@
 (defn select
   [node-id]
   (-> (get-window) .getScene .getRoot (.lookupAll node-id)))
+
+(defn-spec tab-index int?
+  "returns the index of the currently selected tab"
+  []
+  (-> (select "#tabber") first .getSelectionModel .getSelectedIndex))
+
+(defn-spec tab-list-tab-index int?
+  "returns the index of the currently selected tab within `:tab-list`, which doesn't include the static tabs"
+  []
+  (- (tab-index) num-static-tabs))
 
 (defn extension-filter
   [x]
@@ -522,6 +533,21 @@
   (when (confirm heading message)
     (callback)
     nil))
+
+;; https://github.com/cljfx/cljfx/blob/babc2f09e4827efb29f859a442a1658d82169a62/examples/e25_radio_buttons.clj
+(defn radio-group
+  [{:keys [options value on-action label-coercer container-id container-type]}]
+  {:fx/type fx/ext-let-refs
+   :refs {::toggle-group {:fx/type :toggle-group}}
+   :desc {:fx/type (or container-type :h-box)
+          :id (or container-id (utils/unique-id))
+          :children (for [option options]
+                      {:fx/type :radio-button
+                       :toggle-group {:fx/type fx/ext-get-ref
+                                      :ref ::toggle-group}
+                       :selected (= option value)
+                       :text ((or label-coercer str) option)
+                       :on-action (partial on-action option)})}})
 
 ;;
 
@@ -670,7 +696,7 @@
 (defn-spec switch-tab-latest nil?
   "switches the tab-pan to the furthest-right tab"
   []
-  (switch-tab-idx (-> (core/get-state :tab-list) count (+ 3) dec)))
+  (switch-tab-idx (-> (core/get-state :tab-list) count (+ num-static-tabs) dec)))
 
 (defn-spec switch-tab-event-handler fn?
   "returns an event handler that switches to the given `tab-idx` when called."
@@ -837,8 +863,7 @@
   [tab-list :ui/tab-list]
   (let [addon-detail-menuitem
         (fn [idx tab]
-          (let [num-static-tabs 3
-                tab-idx (+ idx num-static-tabs)]
+          (let [tab-idx (+ idx num-static-tabs)]
             (menu-item (:label tab) (async-handler #(switch-tab tab-idx)))))
         close-all (menu-item "Close all" (async-handler cli/remove-all-tabs))]
     (concat (map-indexed addon-detail-menuitem tab-list)
@@ -1145,25 +1170,51 @@
             :items (or row-list [])}}))
 
 (defn notice-logger
-  [{:keys [fx/context filter-fn]}]
+  [{:keys [fx/context tab-idx filter-fn]}]
   (let [filter-fn (or filter-fn identity)
+        level-map {:debug 0 :info 1 :warn 2 :error 3}
+        current-log-level (if tab-idx
+                            (fx/sub-val context get-in [:app-state :tab-list tab-idx :log-level])
+                            (fx/sub-val context get-in [:app-state :gui-log-level]))
+        log-level-filter (fn [log-line]
+                           (>= (-> log-line :level level-map) (level-map current-log-level)))
+
         log-message-list (->> (fx/sub-val context get-in [:app-state :log-lines])
                               (filter filter-fn)
-                              reverse) ;; nfi how to programmatically change column sort order
-        ;;log-message-list (reverse log-message-list) 
+                              (filter log-level-filter)
+                              ;; nfi how to programmatically change column sort order
+                              reverse)
+
         column-list [{:id "source" :text "source" :max-width 120 :cell-value-factory (fn [row] (or (some-> row :source :dirname) "app"))}
                      {:id "level" :text "level" :max-width 80 :cell-value-factory (comp name :level)}
                      {:id "time" :text "time" :max-width 100 :cell-value-factory :time}
-                     {:id "message" :text "message" :pref-width 500 :cell-value-factory :message}]]
-    {:fx/type :table-view
-     :id "notice-logger"
-     :selection-mode :multiple
-     :row-factory {:fx/cell-type :table-row
-                   :describe (fn [row]
-                               {:style-class ["table-row-cell" (name (:level row))]})}
-     :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
-     :columns (mapv table-column column-list)
-     :items (or log-message-list [])}))
+                     {:id "message" :text "message" :pref-width 500 :cell-value-factory :message}]
+
+        log-level-list [:debug :info :warn :error]
+        selected-log-level (fx/sub-val context get-in (if tab-idx
+                                                        [:app-state :tab-list tab-idx :log-level]
+                                                        [:app-state :gui-log-level]))
+        log-level-changed-handler (fn [log-level _]
+                                    (cli/change-notice-logger-level tab-idx (keyword log-level)))
+        ]
+    {:fx/type :border-pane
+     :top {:fx/type radio-group
+           :options log-level-list
+           :value selected-log-level
+           :label-coercer name
+           :container-id "notice-logger-nav"
+           :on-action log-level-changed-handler}
+     
+     :center {:fx/type :table-view
+              :id "notice-logger"
+              :selection-mode :multiple
+              :row-factory {:fx/cell-type :table-row
+                            :describe (fn [row]
+                                        (when row ;; we get a nil rows when going up the severity level and some rows get filtered out ... weird.
+                                          {:style-class ["table-row-cell" (name (:level row))]}))}
+              :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
+              :columns (mapv table-column column-list)
+              :items (or log-message-list [])}}))
 
 (defn installed-addons-pane
   [_]
@@ -1303,27 +1354,8 @@
                       {:disabled? (not (addon/deletable? addon))
                        :tooltip "Permanently delete"})]})
 
-(defn notice-logger-nav
-  [_]
-  {:fx/type :h-box
-   :id "notice-logger-nav"
-   :children [;;(label "Filtered by 'Addon Name'" {:disabled? true})
-              {:fx/type :radio-button
-               :selected false
-               :text "debug"}
-
-              {:fx/type :radio-button
-               :selected true
-               :text "info"}
-              {:fx/type :radio-button
-               :selected false
-               :text "warn (2)"}
-              {:fx/type :radio-button
-               :selected false
-               :text "error"}]})
-
 (defn addon-detail-pane
-  [{:keys [fx/context addon-id]}]
+  [{:keys [fx/context addon-id tab-idx]}]
   (let [installed-addons (fx/sub-val context get-in [:app-state :installed-addon-list])
         catalogue (fx/sub-val context get-in [:app-state :db]) ;; worst case is actually not so bad ...
         addon-id-keys (keys addon-id)
@@ -1333,11 +1365,10 @@
         ;; addon list first because it's smaller than the catalogue.
         addon (or (->> installed-addons (filter matcher) first)
                   (->> catalogue (filter matcher) first))
-
-        ;; no notice pane for 
+        addon-source {:install-dir (core/selected-addon-dir) :dirname (:dirname addon)}
         notice-pane-filter (fn [log-line]
-                             (= (:source log-line)
-                                {:install-dir (core/selected-addon-dir) :dirname (:dirname addon)}))]
+                             (= addon-source (:source log-line)))
+    ]
     {:fx/type :v-box
      :id "addon-detail-pane"
      :style-class ["addon-detail"]
@@ -1377,9 +1408,9 @@
 
                  ;; only display the notice logger when the addon is installed
                  (when (:dirname addon)
-                   [{:fx/type notice-logger-nav}
-                    {:fx/type notice-logger
-                     :filter-fn notice-pane-filter}])
+                   {:fx/type notice-logger
+                    :tab-idx tab-idx
+                    :filter-fn notice-pane-filter})
 
                  ;; ----
 
@@ -1389,20 +1420,22 @@
                   :wrap-text true}])}))
 
 (defn addon-detail-tab
-  [{:keys [tab]}]
+  [{:keys [tab tab-idx]}]
   {:fx/type :tab
    :id (:tab-id tab)
    :text (:label tab)
    :closable (:closable? tab)
    :on-closed (fn [_]
-                (cli/remove-tab (:tab-id tab))
+                (cli/remove-tab-at-idx tab-idx)
                 (switch-tab INSTALLED-TAB))
    :content {:fx/type addon-detail-pane
+             :tab-idx tab-idx
              :addon-id (:tab-data tab)}})
 
 (defn tabber
   [{:keys [fx/context]}]
-  (let [static-tabs
+  (let [dynamic-tab-list (fx/sub-val context get-in [:app-state :tab-list])
+        static-tabs
         [{:fx/type :tab
           :text "installed"
           :id "installed-tab"
@@ -1425,10 +1458,7 @@
           :id "log-tab"
           :closable false
           :content {:fx/type notice-logger}}]
-
-        dynamic-tabs (mapv (fn [tab]
-                             {:fx/type addon-detail-tab :tab tab})
-                           (fx/sub-val context get-in [:app-state :tab-list]))]
+        dynamic-tabs (map-indexed (fn [idx tab] {:fx/type addon-detail-tab :tab tab :tab-idx idx}) dynamic-tab-list)]
     {:fx/type :tab-pane
      :id "tabber"
      :tab-closing-policy javafx.scene.control.TabPane$TabClosingPolicy/ALL_TABS
@@ -1462,17 +1492,6 @@
 
 ;;
 
-(defn-spec tab-index int?
-  "returns the index of the currently selected tab"
-  []
-  (-> (select "#tabber") first .getSelectionModel .getSelectedIndex))
-
-(defn-spec tab-list-tab-index int?
-  "returns the index of the currently selected tab within `:tab-list`, which doesn't include the static tabs"
-  []
-  (let [num-static-tabs 3]
-    (- (tab-index) num-static-tabs)))
-
 (defn app
   "returns a description of the javafx Stage, Scene and the 'root' node.
   the root node is the top-most node from which all others are descendents of."
@@ -1496,7 +1515,6 @@
                                        ;; UNLESS that previous tab is the last of the static tabs
                                        ;; then select the first of the static tabs
                                        prev-tab (dec (tab-index))
-                                       num-static-tabs 3
                                        prev-tab (if (= prev-tab (dec num-static-tabs)) 0 prev-tab)]
                                    (cli/remove-tab-at-idx (tab-list-tab-index))
                                    (switch-tab prev-tab)))
@@ -1518,8 +1536,6 @@
         update-gui-state (fn [new-state]
                            (swap! gui-state fx/swap-context assoc :app-state new-state))
         _ (core/state-bind [] update-gui-state)
-
-        ;;_ (init-notice-logger! gui-state) ;; pushing this into core/log-lines
 
         ;; css watcher for live coding
         _ (doseq [rf [#'style #'major-theme-map #'sub-theme-map #'themes]

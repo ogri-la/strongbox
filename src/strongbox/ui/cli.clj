@@ -300,12 +300,20 @@
 
 ;; tabs
 
+(defn-spec change-notice-logger-level nil?
+  [tab-idx (s/nilable int?), new-log-level ::sp/log-level]
+  (if tab-idx
+    (swap! core/state assoc-in [:tab-list tab-idx :log-level] new-log-level)
+    (swap! core/state assoc :gui-log-level new-log-level))
+  nil)
+
 (defn-spec remove-all-tabs nil?
   "removes all dynamic addon detail tabs leaving only the static tabs"
   []
   (swap! core/state assoc :tab-list [])
   nil)
 
+;; todo: still being used?
 (defn-spec remove-tab nil?
   "removes a specific tab from the `:tab-list` using that tab's `:tab-id`"
   [tab-id string?]
@@ -326,6 +334,7 @@
   (let [new-tab {:tab-id tab-id
                  :label tab-label
                  :closable? closable?
+                 :log-level :info
                  :tab-data tab-data}
         tab-list (remove (fn [tab]
                            (= (dissoc tab :tab-id)

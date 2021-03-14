@@ -204,7 +204,7 @@
 
 (deftest add-tab
   (testing "a generic tab can be created"
-    (let [expected [{:tab-id "foo" :label "Foo!" :closable? false :tab-data {:dirname "EveryAddon"}}]]
+    (let [expected [{:tab-id "foo" :label "Foo!" :closable? false :log-level :info :tab-data {:dirname "EveryAddon"}}]]
       (with-running-app
         (is (= [] (core/get-state :tab-list)))
         (cli/add-tab "foo" "Foo!" false {:dirname "EveryAddon"})
@@ -213,7 +213,7 @@
 (deftest add-addon-tab
   (testing "an addon can be used to create a tab"
     (let [addon {:source "curseforge" :source-id 123 :label "Foo"}
-          expected [{:closable? true, :label "Foo", :tab-data {:source "curseforge", :source-id 123}, :tab-id "foobar"}]]
+          expected [{:closable? true, :label "Foo", :tab-data {:source "curseforge", :source-id 123}, :tab-id "foobar" :log-level :info}]]
       (with-running-app
         (with-redefs [strongbox.utils/unique-id (constantly "foobar")]
           (cli/add-addon-tab addon))
@@ -221,7 +221,7 @@
 
 (deftest remove-tab
   (testing "a single tab can be removed by its `id`"
-    (let [tab [{:tab-id "foo" :label "Foo!" :closable? false :tab-data {:dirname "EveryAddon"}}]
+    (let [tab [{:tab-id "foo" :label "Foo!" :closable? false :log-level :info :tab-data {:dirname "EveryAddon"}}]
           expected []]
       (with-running-app
         (cli/add-tab "foo" "Foo!" false {:dirname "EveryAddon"})
@@ -231,8 +231,8 @@
 
 (deftest remove-all-tabs
   (testing "all tabs can be removed at once"
-    (let [tab-list [{:tab-id "foo" :label "Foo!" :closable? false :tab-data {:dirname "EveryAddon"}}
-                    {:tab-id "bar" :label "Bar!" :closable? true :tab-data {:dirname "EveryOtherAddon"}}]
+    (let [tab-list [{:tab-id "foo" :label "Foo!" :closable? false :log-level :info :tab-data {:dirname "EveryAddon"}}
+                    {:tab-id "bar" :label "Bar!" :closable? true :log-level :info :tab-data {:dirname "EveryOtherAddon"}}]
           expected []]
       (with-running-app
         (cli/add-tab "foo" "Foo!" false {:dirname "EveryAddon"})
@@ -243,9 +243,9 @@
 
 (deftest remove-tab-at-idx
   (testing "all tabs can be removed at once"
-    (let [tab-list [{:tab-id "foo" :label "Foo!" :closable? false :tab-data {:dirname "EveryAddon"}}
-                    {:tab-id "bar" :label "Bar!" :closable? true :tab-data {:dirname "EveryOtherAddon"}}
-                    {:tab-id "baz" :label "Baz!" :closable? false :tab-data {:dirname "EveryAddonClassic"}}]
+    (let [tab-list [{:tab-id "foo" :label "Foo!" :closable? false :log-level :info :tab-data {:dirname "EveryAddon"}}
+                    {:tab-id "bar" :label "Bar!" :closable? true :log-level :info :tab-data {:dirname "EveryOtherAddon"}}
+                    {:tab-id "baz" :label "Baz!" :closable? false :log-level :info :tab-data {:dirname "EveryAddonClassic"}}]
           expected [(first tab-list)
                     (last tab-list)]]
       (with-running-app
