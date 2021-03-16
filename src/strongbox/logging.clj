@@ -1,6 +1,6 @@
 (ns strongbox.logging
   (:require
-   [taoensso.timbre :as logging]
+   [taoensso.timbre :as timbre]
    [taoensso.timbre.appenders.core :refer [spit-appender]]
    [taoensso.tufte :as tufte :refer [p profile]]
    [orchestra.core :refer [defn-spec]]
@@ -33,8 +33,8 @@
   the log level may change by using a `--verbosity` flag at runtime.
   `main.clj` adds an adhoc `testing?` flag to the logging configuration and removes it afterwards."
   []
-  (and (-> logging/*config* :level (= :debug))
-       (not (-> logging/*config* :testing?))))
+  (and (-> timbre/*config* :level (= :debug))
+       (not (-> timbre/*config* :testing?))))
 
 (defn anon-println-appender
   "removes the hostname from the output format string"
@@ -54,16 +54,16 @@
                          ;;:fn anon-println-appender ;; not printing out the exception as the first arg!
                          }}})
 
-(logging/merge-config! default-logging-config)
+(timbre/merge-config! default-logging-config)
 
 (defn-spec add-appender! nil?
   "adds appender at `key` to logging config"
   ([key keyword?, f fn?]
    (add-appender! key f {}))
   ([key keyword?, f fn?, config map?]
-   (logging/debug "adding appender" key config)
+   (timbre/debug "adding appender" key config)
    (let [appender-config (merge {:fn f, :enabled? true} config)]
-     (logging/merge-config! {:appenders {key appender-config}})
+     (timbre/merge-config! {:appenders {key appender-config}})
      nil)))
 
 (defn-spec add-file-appender! nil?
@@ -74,11 +74,11 @@
   nil)
 
 (defn add-atom-appender!
-  [atm]
+  [atm install-dir]
   (let [path [:log-lines]
         func (fn [data]
                (let [dirname (some-> data :context :addon :dirname)
-                     install-dir (some-> data :context :install-dir)
+                     ;;install-dir (some-> data :context :install-dir)
                      source (when (and install-dir dirname)
                               {:install-dir install-dir :dirname dirname})
                      log-line {:time (force (:timestamp_ data))
@@ -93,7 +93,7 @@
 (defn-spec rm-appender! nil?
   "removes appender at `key` from logging config"
   [key keyword?]
-  (logging/merge-config! {:appenders {key nil}})
+  (timbre/merge-config! {:appenders {key nil}})
   nil)
 
 (defmacro buffered-log
@@ -102,8 +102,27 @@
   `(let [stateful-buffer# (atom [])
          appender# (fn [data#]
                      (swap! stateful-buffer# into [(force (:msg_ data#))]))]
-     (logging/with-merged-config {:level ~level,
+     (timbre/with-merged-config {:level ~level,
                                   :appenders {:-temp {:fn appender#
                                                       :enabled? true}}}
        ~@form)
      (deref stateful-buffer#)))
+
+;; => (logging/addon-log :info {...} "installed!")
+(defmacro addon-log
+  "once-off addon logging message"
+  [addon level & form]
+  `(timbre/with-context
+     {;;:install-dir (selected-addon-dir)
+      :addon ~addon}
+     (timbre/log ~level ~@form)))
+
+;; => (logging/with-addon {...} (info "installed!"))
+(defmacro with-addon
+  "all calls to debug/info/warn etc within enclosure become addon-level logging.
+  app-level logging will have to futz with the logging context"
+  [addon & form]
+  `(timbre/with-context
+     {;;:install-dir (selected-addon-dir)
+      :addon ~addon}
+     ~@form))

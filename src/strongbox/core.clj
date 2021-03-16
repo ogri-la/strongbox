@@ -207,6 +207,11 @@
 
 ;; addon dirs
 
+(defn-spec selected-addon-dir (s/or :ok ::sp/addon-dir, :no-selection nil?)
+  "returns the currently selected addon directory or nil if no directories exist to select from"
+  []
+  (get-state :cfg :selected-addon-dir))
+
 (defn-spec addon-dir-exists? boolean?
   ([addon-dir ::sp/addon-dir]
    (addon-dir-exists? addon-dir (get-state :cfg :addon-dir-list)))
@@ -230,13 +235,9 @@
     (dosync ;; necessary? makes me feel better
      (add-addon-dir! addon-dir default-game-track)
      (swap! state assoc-in [:cfg :selected-addon-dir] addon-dir)
-     (swap! state assoc :tab-list [])))
+     (swap! state assoc :tab-list [])
+     (logging/add-atom-appender! state (selected-addon-dir))))
   nil)
-
-(defn-spec selected-addon-dir (s/or :ok ::sp/addon-dir, :no-selection nil?)
-  "returns the currently selected addon directory or nil if no directories exist to select from"
-  []
-  (get-state :cfg :selected-addon-dir))
 
 (defn-spec remove-addon-dir! nil?
   "removes the directory from user configuration, does not alter the directory or it's contents at all"
@@ -306,7 +307,6 @@
   enables the profiling of certain sections of code."
   [new-level keyword?]
   (timbre/merge-config! {:level new-level})
-  (logging/add-atom-appender! state)
   (when (logging/debug-mode?) ;; debug level + not-testing
     (if-not @state
       (warn "application has not been started, no location to write log or profile data")
@@ -315,25 +315,6 @@
         (logging/add-file-appender! (paths :log-file))
         (info "writing logs to:" (paths :log-file)))))
   nil)
-
-;; => (addon-log :info {...} "installed!")
-(defmacro addon-log
-  "once-off addon logging message"
-  [level addon & form]
-  `(timbre/with-context
-     {:install-dir (selected-addon-dir)
-      :addon ~addon}
-     (timbre/log ~level ~@form)))
-
-;; => (with-addon-log {...} (info "installed!"))
-(defmacro with-addon-log
-  "all calls to debug/info/warn etc within enclosure become addon-level logging.
-  app-level logging will have to futz with the logging context"
-  [addon & form]
-  `(timbre/with-context
-     {:install-dir (selected-addon-dir)
-      :addon ~addon}
-     ~@form))
 
 ;; settings
 
@@ -383,11 +364,12 @@
 (defn affects-addon-wrapper
   [wrapped-fn]
   (fn [addon & args]
-    (try
-      (start-affecting-addon addon)
-      (apply wrapped-fn addon args)
-      (finally
-        (stop-affecting-addon addon)))))
+    (logging/with-addon addon
+      (try
+        (start-affecting-addon addon)
+        (apply wrapped-fn addon args)
+        (finally
+          (stop-affecting-addon addon))))))
 
 ;; downloading and installing and updating
 
@@ -542,6 +524,7 @@
   (let [;; nil fields are removed from the catalogue item because they might override good values in the .toc or .nfo
         db-catalogue-addon (utils/drop-nils db-catalogue-addon [:description])]
     ;; merges left->right. catalogue-addon overwrites installed-addon, ':matched' overwrites catalogue-addon, etc
+    (logging/addon-log installed-addon :info (format "found in catalogue: source '%s' with id '%s'" (:source installed-addon) (:source-id installed-addon)))
     (merge installed-addon db-catalogue-addon {:matched? true})))
 
 ;;
@@ -661,6 +644,21 @@
                     (name (get-state :cfg :selected-catalogue))
                     (clojure.string/join ", " unmatched-names))))
 
+    (when-not (empty? unmatched)
+      (run! (fn [addon]
+              (logging/with-addon addon
+                (if (:ignore? addon)
+                  (info "not matched to catalogue, addon is being ignored")
+
+                  (do ;; todo: replace these with a :help level and a less scary colour
+                      (info "if this is part of a bundle, try \"File -> Re-install all\"")
+                      (info "try searching for this addon by name or description")
+                      (warn (format "failed to find %s in the '%s' catalogue"
+                                    (:dirname addon)
+                                    (name (get-state :cfg :selected-catalogue))))))))
+
+            unmatched))
+
     expanded-installed-addon-list))
 
 (defn-spec match-installed-addons-with-catalogue nil?
@@ -704,10 +702,17 @@
   If addon is pinned to a specific version, `update?` will only be true if pinned version is different from installed version."
   [addon (s/or :unmatched :addon/toc
                :matched :addon/toc+summary+match)]
-  (let [expanded-addon (when (:matched? addon)
-                         (expand-summary-wrapper addon))
-        addon (or expanded-addon addon)] ;; expanded addon may still be nil
-    (assoc addon :update? (addon/updateable? addon))))
+  (logging/with-addon addon
+    (let [expanded-addon (when (:matched? addon)
+                           (expand-summary-wrapper addon))
+          addon (or expanded-addon addon) ;; expanded addon may still be nil
+          has-update? (addon/updateable? addon)]
+      ;; bit noisy
+      ;;(when (> (count (:release-list addon)) 1)
+      ;;  (info (format "%s previous releases available" (count (:release-list addon)))))
+      (when has-update?
+        (info (format "update available: %s" (:version addon))))
+      (assoc addon :update? has-update?))))
 
 (defn-spec check-for-updates nil?
   "downloads full details for all installed addons that can be found in summary list"
@@ -957,6 +962,10 @@
   []
   (profile
    {:when (get-state :profile?)}
+
+   ;; moved to `set-addon-dir!`.
+   ;; it needs to be updated as the addon dir changes.
+   ;;(logging/add-atom-appender! state (selected-addon-dir)) 
 
    ;; parse toc files in install-dir. do this first so we see *something* while catalogue downloads (next)
    (load-installed-addons)

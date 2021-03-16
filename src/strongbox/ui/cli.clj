@@ -4,6 +4,7 @@
    [taoensso.timbre :as timbre :refer [spy info warn error debug]]
    [clojure.spec.alpha :as s]
    [strongbox
+    [logging :as logging]
     [addon :as addon]
     [constants :as constants]
     [specs :as sp]
@@ -153,7 +154,7 @@
    (pin (get-state :selected-addon-list)))
   ([addon-list :addon/installed-list]
    (run! (fn [addon]
-           (core/with-addon-log addon
+           (logging/with-addon addon
              (info (format "pinning addon '%s' to version %s" (:label addon) (:installed-version addon)))
              (addon/pin (core/selected-addon-dir) addon)))
          addon-list)
@@ -166,7 +167,7 @@
    (unpin (get-state :selected-addon-list)))
   ([addon-list :addon/installed-list]
    (run! (fn [addon]
-           (core/addon-log :info addon (format "unpinning addon '%s' from %s" (:label addon) (:pinned-version addon)))
+           (logging/addon-log addon :info (format "unpinning addon '%s' from %s" (:label addon) (:pinned-version addon)))
            (addon/unpin (core/selected-addon-dir) addon))
          addon-list)
    (core/refresh)))
@@ -253,7 +254,7 @@
    (->> addon-list
         (filter addon/ignorable?)
         (run! (fn [addon]
-                (core/with-addon-log addon
+                (logging/with-addon addon
                   (info (format "ignoring addon '%s'" (:label addon)))
                   (addon/ignore (core/selected-addon-dir) addon)))))
    (core/refresh)))
@@ -265,7 +266,7 @@
    (clear-ignore-selected (get-state :selected-addon-list)))
   ([addon-list :addon/installed-list]
    (run! (fn [addon]
-           (core/with-addon-log addon
+           (logging/with-addon addon
              (addon/clear-ignore (core/selected-addon-dir) addon)
              (info (format "stopped ignoring addon '%s'" (:label addon)))))
          addon-list)

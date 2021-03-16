@@ -323,7 +323,9 @@
                 {:-fx-alignment "center"}
 
                 "#source"
-                {:-fx-alignment "center"}
+                {:-fx-alignment "center"
+                 :-fx-pref-width 150
+                 }
 
                 "#time"
                 {:-fx-alignment "center"}
