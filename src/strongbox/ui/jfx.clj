@@ -128,55 +128,62 @@
          (fn [theme-kw]
            (let [colour-map (get themes theme-kw)
                  colour #(name (get colour-map % "pink"))]
-             {"#about-dialog "
+             {;;
+              ;; 'about' dialog
+              ;; lives outside of main styling for some reason
+              ;;
 
+              "#about-dialog "
               {:-fx-spacing "3"
 
                "#about-pane-hyperlink"
                {:-fx-font-size "1.1em"
-                :-fx-padding "0 0 4 -1"
+                :-fx-padding "0 0 4 -1"}
 
-                ":hover" {:-fx-text-fill "blue"}}
+               "#about-pane-hyperlink:hover"
+               {:-fx-text-fill "blue"}
 
                "#about-pane-title"
                {:-fx-font-size "1.5em"
                 :-fx-padding "10em"}}
 
+              ;;
+              ;; main app styling
+              ;; 
+
               (format "#%s.root " (name theme-kw))
               {:-fx-padding 0
                :-fx-base (colour :base)
-
-
-               ;; backgrounds
-
-
                :-fx-accent (colour :accent) ;; selection colour of backgrounds
 
-               ".table-placeholder-text"
-               {:-fx-font-size "1.5em"
-                :-fx-fill (colour :table-font-colour)}
-
+               ;; removes gradient from 'File' menu
                "#main-menu"
                {:-fx-background-color (colour :base)}
 
-               "#addon-dir-dropdown"
-               {:-fx-max-width "600px"}
-
-               ".context-menu"
-               {:-fx-effect "None"}
+               ;; todo: what did this do again?
+               ;;".context-menu"
+               ;;{:-fx-effect "None"}
 
                ".combo-box-base"
-               {:-fx-padding "1px"
-                :-fx-background-radius "0"
-                ;; truncation happens from the left. thanks to:
+               {:-fx-background-radius "0"
+                ;; truncation now happens from the left. thanks to:
                 ;; https://stackoverflow.com/questions/36264656/scalafx-javafx-how-can-i-change-the-overrun-style-of-a-combobox
                 " > .list-cell" {:-fx-text-overrun "leading-ellipsis"}}
 
-               ".button" {:-fx-background-radius "0"
-                          :-fx-padding ["6px" "17px"]
-                          ":hover" {:-fx-text-fill (colour :button-text-hovering)}}
+               ".button"
+               {:-fx-background-radius "0"
+                :-fx-padding "5px 17px" ;; makes buttons same height as dropdowns
+                ":hover" {:-fx-text-fill (colour :button-text-hovering)}}
 
+               ;;
                ;; tabber
+               ;;
+
+               ".tab-pane > .tab-header-area"
+               {:-fx-padding ".65em 0 0 .6em"
+                :-fx-background-color "green"}
+
+               ;; tabs
                ".tab-pane > .tab-header-area > .headers-region > .tab"
                {:-fx-background-radius "0"
                 :-fx-padding ".25em 1em"
@@ -186,64 +193,13 @@
 
 
                ;;
-               ;; addon-detail
+               ;; common tables
                ;;
 
 
-               ".addon-detail "
-               {".title"
-                {:-fx-font-size "2em"
-                 :-fx-padding "1em 0 .25em 1em"
-                 ;;:-fx-background-color "green"
-                 :-fx-alignment "center"}
-
-                ".subtitle"
-                {;;:-fx-background-color "green"
-                 ;;:-fx-padding "0 0 0 1em"
-                 :-fx-font-size "1.1em"}
-
-                ".description"
-                {:-fx-font-size "1.4em"
-                 :-fx-padding "0 0 1.5em 1em"
-                 :-fx-wrap-text true
-                 :-fx-font-style "italic"}
-
-                ".ext-links"
-                {:-fx-padding "0 0 1em 1.75em"}
-
-                ".ext-links .hyperlink"
-                {:-fx-text-fill "blue"
-                 :-fx-padding "0 0 0 1em"}
-
-                "#notice-logger#source"
-                ;; hide 'source' column in notice-logger in addon-detail pane
-                {:-fx-max-width 0
-                 :-fx-pref-width 0
-                 :-fx-min-width 0}
-
-                ;; hide column headers in notice-logger in addon-detail pane
-                ".table-view#notice-logger .column-header-background"
-                {:-fx-max-height 0
-                 :-fx-pref-height 0
-                 :-fx-min-height 0}
-
-                "#notice-logger-nav"
-                {:-fx-padding "0 0 .5em 0"
-                 :-fx-alignment "top-right"
-                 :-fx-font-size ".9em"
-
-                 " .label"
-                 {:-fx-padding ".25em 1em"
-                  :-fx-border-width "1px"
-                  :-fx-border-color "black"
-                  :-fx-border-radius "30"}
-
-                 " .radio-button"
-                 {:-fx-padding "0 .5em"}}} ;; ends .addon-detail
-
-
-               ;; common tables
-
+               ".table-placeholder-text"
+               {:-fx-font-size "1.5em"
+                :-fx-fill (colour :table-font-colour)}
 
                ".table-view"
                {:-fx-table-cell-border-color (colour :table-border)
@@ -278,21 +234,32 @@
                              :-fx-background-color (str (colour :unsteady) " !important")}}
 
 
-               ;; installed-addons menu
+               ;;
+               ;; common table fields
+               ;;
 
-               ;; prevent truncation and ellipses
+
+               ".table-view .source-column"
+               {:-fx-alignment "center-left"
+                :-fx-padding "-2 0 0 0" ;; hyperlinks are just a little bit off .. weird.
+                " .hyperlink:visited" {:-fx-underline "false"}
+                " .hyperlink, .hyperlink:hover" {:-fx-underline "false"
+                                                 :-fx-text-fill (colour :jfx-hyperlink)
+                                                 :-fx-font-weight (colour :jfx-hyperlink-weight)}}
 
 
-               "#update-all-button "
+               ;;
+               ;; installed-addons tab
+               ;;
+
+
+               "#update-all-button"
                {:-fx-min-width "101px"}
 
-               "#game-track-combo-box "
+               "#game-track-combo-box"
                {:-fx-min-width "100px"}
 
-
                ;; installed-addons table
-
-
                ".table-view#installed-addons"
                {" .updateable"
                 {:-fx-background-color (colour :row-updateable)
@@ -364,6 +331,19 @@
                 "#message"
                 {:-fx-padding "0 0 0 .5em"}}
 
+               "#notice-logger-nav"
+               {:-fx-padding "1.1em .75em" ;; 1.1em so installed, search and log pane tables all start at the same height
+                :-fx-font-size ".9em"
+
+                " .label"
+                {:-fx-padding ".25em 1em"
+                 :-fx-border-width "1px"
+                 :-fx-border-color "black"
+                 :-fx-border-radius "30"}
+
+                " .radio-button"
+                {:-fx-padding "0 .5em"}}
+
 
                ;;
                ;; search
@@ -399,17 +379,54 @@
                 {;; omg, wtf does 'fx-fill' work and not 'fx-text-fill' ???
                  :-fx-fill (colour :table-font-colour)}}
 
+
                ;;
-               ;; common table fields ;; move under 'common table' ?
+               ;; addon-detail
                ;;
 
-               ".table-view .source-column"
-               {:-fx-alignment "center-left"
-                :-fx-padding "-2 0 0 0" ;; hyperlinks are just a little bit off .. weird.
-                " .hyperlink:visited" {:-fx-underline "false"}
-                " .hyperlink, .hyperlink:hover" {:-fx-underline "false"
-                                                 :-fx-text-fill (colour :jfx-hyperlink)
-                                                 :-fx-font-weight (colour :jfx-hyperlink-weight)}}}}))]
+
+               ".addon-detail "
+               {".title"
+                {:-fx-font-size "2em"
+                 :-fx-padding "1em 0 .25em 1em"
+                 ;;:-fx-background-color "green"
+                 :-fx-alignment "center"}
+
+                ".subtitle"
+                {;;:-fx-padding "0 0 0 1em"
+                 :-fx-font-size "1.1em"}
+
+                ".description"
+                {:-fx-font-size "1.4em"
+                 :-fx-padding "0 0 1.5em 1em"
+                 :-fx-wrap-text true
+                 :-fx-font-style "italic"}
+
+                ".ext-links"
+                {:-fx-padding "0 0 1em 1.75em"}
+
+                ".ext-links .hyperlink"
+                {:-fx-text-fill "blue"
+                 :-fx-padding "0 0 0 1em"}
+
+                ;; hide 'source' column in notice-logger in addon-detail pane
+                "#notice-logger#source"
+                {:-fx-max-width 0
+                 :-fx-pref-width 0
+                 :-fx-min-width 0}
+
+                ;; hide column headers in notice-logger in addon-detail pane
+                ".table-view#notice-logger .column-header-background"
+                {:-fx-max-height 0
+                 :-fx-pref-height 0
+                 :-fx-min-height 0}
+
+                "#notice-logger-nav"
+                {:-fx-padding "0 0 .5em 0"
+                 :-fx-alignment "top-right"}} ;; ends .addon-detail
+
+                ;; ---
+               }}))]
 
      ;; return a single map with all themes in it.
      ;; themes are separated by their top-level 'root' key.
@@ -1205,8 +1222,7 @@
                         (let [num-occurances (level-occurances log-level)]
                           (format "%s (%s)" (name log-level) (or num-occurances 0))))
 
-        log-message-list (filter log-level-filter log-message-list)
-        ]
+        log-message-list (filter log-level-filter log-message-list)]
     {:fx/type :border-pane
      :top {:fx/type radio-group
            :options log-level-list
@@ -1214,9 +1230,12 @@
            :label-coercer label-coercer
            :container-id "notice-logger-nav"
            :on-action log-level-changed-handler}
-     
+
      :center {:fx/type :table-view
               :id "notice-logger"
+              :placeholder {:fx/type :text
+                            :style-class ["table-placeholder-text"]
+                            :text ""}
               :selection-mode :multiple
               :row-factory {:fx/cell-type :table-row
                             :describe (fn [row]
@@ -1377,8 +1396,7 @@
                   (->> catalogue (filter matcher) first))
         addon-source {:install-dir (core/selected-addon-dir) :dirname (:dirname addon)}
         notice-pane-filter (fn [log-line]
-                             (= addon-source (:source log-line)))
-    ]
+                             (= addon-source (:source log-line)))]
     {:fx/type :v-box
      :id "addon-detail-pane"
      :style-class ["addon-detail"]
