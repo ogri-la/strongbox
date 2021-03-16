@@ -109,8 +109,7 @@
       (if (= (:download-url latest-release)
              (:download-url latest-release-by-game-version))
         (concat [latest-release] (rest (rest release-list)))
-        (do (info "no match!" latest-release latest-release-by-game-version)
-            release-list)))))
+        release-list))))
 
 (defn-spec group-releases map?
   "given a curseforge api result, returns a map of release data keyed by `game-track`."
