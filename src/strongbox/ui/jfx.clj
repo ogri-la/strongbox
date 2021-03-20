@@ -324,8 +324,7 @@
 
                 "#source"
                 {:-fx-alignment "center"
-                 :-fx-pref-width 150
-                 }
+                 :-fx-pref-width 150}
 
                 "#time"
                 {:-fx-alignment "center"}
@@ -1205,7 +1204,12 @@
 
         level-occurances (utils/count-occurances log-message-list :level)
 
-        column-list [{:id "source" :text "source" :max-width 120 :cell-value-factory (fn [row] (or (some-> row :source :dirname) "app"))}
+        source-label (fn [row]
+                       (or (some-> row :source :dirname)
+                           (some-> row :source :name)
+                           "app"))
+
+        column-list [{:id "source" :text "source" :max-width 120 :cell-value-factory source-label}
                      {:id "level" :text "level" :max-width 80 :cell-value-factory (comp name :level)}
                      {:id "time" :text "time" :max-width 100 :cell-value-factory :time}
                      {:id "message" :text "message" :pref-width 500 :cell-value-factory :message}]
@@ -1389,16 +1393,22 @@
   [{:keys [fx/context addon-id tab-idx]}]
   (let [installed-addons (fx/sub-val context get-in [:app-state :installed-addon-list])
         catalogue (fx/sub-val context get-in [:app-state :db]) ;; worst case is actually not so bad ...
-        addon-id-keys (keys addon-id)
+        addon-id-keys (keys addon-id) ;; [source source-id] or [dirname]
         matcher (fn [addon]
                   (= addon-id (select-keys addon addon-id-keys)))
         ;; we may be given an installed addon, an ignored and unmatched addon, a catalogue entry so look in the installed
         ;; addon list first because it's smaller than the catalogue.
         addon (or (->> installed-addons (filter matcher) first)
                   (->> catalogue (filter matcher) first))
-        addon-source {:install-dir (core/selected-addon-dir) :dirname (:dirname addon)}
+
+        addon-source {:install-dir (core/selected-addon-dir)}
+        preferred-match (merge addon-source {:dirname (:dirname addon)})
+        alt-match (merge addon-source {:source (:source addon) :source-id (:source-id addon)})
+
         notice-pane-filter (fn [log-line]
-                             (= addon-source (:source log-line)))]
+                             (or (= preferred-match (select-keys (:source log-line) [:install-dir :dirname]))
+                                 (= alt-match (select-keys (:source log-line) [:install-dir :source :source-id]))))
+        ]
     {:fx/type :v-box
      :id "addon-detail-pane"
      :style-class ["addon-detail"]
@@ -1436,11 +1446,9 @@
                  {:fx/type addon-detail-button-menu
                   :addon addon}
 
-                 ;; only display the notice logger when the addon is installed
-                 (when (:dirname addon)
                    {:fx/type notice-logger
                     :tab-idx tab-idx
-                    :filter-fn notice-pane-filter})
+                    :filter-fn notice-pane-filter}
 
                  ;; ----
 

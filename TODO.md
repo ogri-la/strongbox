@@ -14,23 +14,26 @@ see CHANGELOG.md for a more formal list of changes by release
     - done
 * addon detail pane
     - clicking an addon row opens a new tab with as much detail as we can about that addon
-    - done
-
-## todo
-
+    - done  
+* log pane, filter by log level
+    - log level should have number of instances against it
+        - warn (2)
+        - error (1)
 * per-addon logging
     - I want the user to see a list of messages regarding a *specific* addon
     - when emitting a log line about a particular addon, capture that addon's source and source-id somehow
         - and addon directory
         - and events? like changing game track
+
+## todo
+
+* 4.0 styling
+    - dark theme styling for addon-detail
+        - use derived colours rather than hardcode
+    - bug, addon detail, description box may grow or shrink after finding a match in the catalogue, bumping the content below up or down
 * highlight new log pane or status bar when there is an non-addon error or warning
-* log pane, filter by log level
-    - log level should have number of instances against it
-        - warn (2)
-        - error (1)
 * remove 'hostname' from log output
     - update privacy section in readme
-
 * uber-button
     - new column that displays overall health of addon
         - clicking whatever is in there takes you to a detail pane for that addon
@@ -38,12 +41,25 @@ see CHANGELOG.md for a more formal list of changes by release
         - if addon is up-to-date, it shows a happy green tick
             - if there is something to be concerned about (and that the user can fix), show a warning or error
 
+* bug, 'strongbox.version' in debug output is null when run as a binary
+
+## todo bucket (no particular order)
+
+* zip, better errors for failing to decompress .rar files
+    - see !FREEZING from wowinterface
+        - it's a .rar addon
+        - the full path is emitted in the error, which is impossible to fully read
+        - the extension has been replaced with .zip
+            - if the extension were preserved we could dismiss it immediately as unsupported
+
+        2021-03-20 01:35:58.026 DEBUG [strongbox.zip:23] - failed to open+close zip file: /home/torkus/path/to/wine/dir/drive_c/program files/World of Warcraft/_retail_/Interface/Addons/-freezing--1-04.zip
+        path [] triggered :strongbox.ui.jfx$start$update_gui_state__39204@608569a040151
+        2021-03-20 01:35:58.027 ERROR [strongbox.core:419] - failed to read zip file '/home/torkus/path/to/wine/dir/drive_c/program files/World of Warcraft/_retail_/Interface/Addons/-freezing--1-04.zip', could not install -freezing
+
+
 * gui, download progress bar *inside* the grid ...?
     - pure fantasy?
     - defer until after job queue
-
---
-
 * greater parallelism
     - internal job queue
     - replace log at bottom of screen with a list of jobs being processed and how far along they are
@@ -61,11 +77,6 @@ see CHANGELOG.md for a more formal list of changes by release
             - we already have a match!
         - this might fit in with the greater-parallelism/queue based infrastructure
 
---
-
-* bug, 'strongbox.version' in debug output is null when run as a binary
-
-## todo bucket (no particular order)
 
 * keep a list of previously installed addons
 

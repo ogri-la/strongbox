@@ -77,10 +77,9 @@
   [atm install-dir]
   (let [path [:log-lines]
         func (fn [data]
-               (let [dirname (some-> data :context :addon :dirname)
-                     ;;install-dir (some-> data :context :install-dir)
-                     source (when (and install-dir dirname)
-                              {:install-dir install-dir :dirname dirname})
+               (let [addon (some-> data :context :addon)
+                     addon-id (select-keys addon [:dirname :source :source-id :name])
+                     source (merge {:install-dir install-dir} addon-id)
                      log-line {:time (force (:timestamp_ data))
                                :message (force (:msg_ data))
                                :level (force (:level data))
@@ -103,8 +102,8 @@
          appender# (fn [data#]
                      (swap! stateful-buffer# into [(force (:msg_ data#))]))]
      (timbre/with-merged-config {:level ~level,
-                                  :appenders {:-temp {:fn appender#
-                                                      :enabled? true}}}
+                                 :appenders {:-temp {:fn appender#
+                                                     :enabled? true}}}
        ~@form)
      (deref stateful-buffer#)))
 
@@ -125,4 +124,9 @@
   `(timbre/with-context
      {;;:install-dir (selected-addon-dir)
       :addon ~addon}
+     ~@form))
+
+(defmacro with-label
+  [label & form]
+  `(with-addon {:name ~label}
      ~@form))

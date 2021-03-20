@@ -178,8 +178,9 @@
   [addon :addon/expanded]
   (if-let [matching-release (addon/find-release addon)]
     (merge addon matching-release)
-    (do (warn (format "%s '%s' not found in known releases. Using latest release instead." (:label addon) (:installed-version addon)))
-        addon)))
+    (logging/with-addon addon ;; can this replace the previous `do` ?
+      (warn (format "%s '%s' not found in known releases. Using latest release instead." (:label addon) (:installed-version addon)))
+      addon)))
 
 ;;
 

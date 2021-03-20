@@ -524,7 +524,7 @@
   (let [;; nil fields are removed from the catalogue item because they might override good values in the .toc or .nfo
         db-catalogue-addon (utils/drop-nils db-catalogue-addon [:description])]
     ;; merges left->right. catalogue-addon overwrites installed-addon, ':matched' overwrites catalogue-addon, etc
-    (logging/addon-log installed-addon :info (format "found in catalogue: source '%s' with id '%s'" (:source installed-addon) (:source-id installed-addon)))
+    (logging/addon-log installed-addon :info (format "found in catalogue with source '%s' and id '%s'" (:source installed-addon) (:source-id installed-addon)))
     (merge installed-addon db-catalogue-addon {:matched? true})))
 
 ;;
@@ -619,8 +619,10 @@
   "compare the list of addons installed with the database of known addons and try to match the two up.
   when a match is found (see `db/-db-match-installed-addons-with-catalogue`), merge it into the addon data."
   [database :addon/summary-list, installed-addon-list :addon/toc-list]
-  (info (format "matching %s addons to catalogue" (count installed-addon-list)))
-  (let [match-results (db/-db-match-installed-addons-with-catalogue database installed-addon-list)
+  (let [num-installed (count installed-addon-list)
+        _ (when (> num-installed 0)
+            (info (format "matching %s addons to catalogue" (count installed-addon-list))))
+        match-results (db/-db-match-installed-addons-with-catalogue database installed-addon-list)
         [matched unmatched] (utils/split-filter :matched? match-results)
 
         ;; for those that *did* match, merge the installed addon data together with the catalogue data
@@ -630,7 +632,7 @@
 
         ;; todo: metrics gathering is good, but this is a little adhoc. shift into parent wrapper somehow.
         ;; some metrics we'll emit for the user.
-        [num-installed num-matched] [(count installed-addon-list) (count matched)]
+        num-matched (count matched)
         ;; we don't match ignored addons, we shouldn't report we couldn't find them either
         unmatched-names (->> unmatched (remove :ignore?) (map :name) set)]
 
@@ -718,12 +720,15 @@
   "downloads full details for all installed addons that can be found in summary list"
   []
   (when (selected-addon-dir)
-    (info "checking for updates")
-    (let [improved-addon-list (mapv check-for-update (get-state :installed-addon-list))
-          num-matched (->> improved-addon-list (filterv :matched?) count)
-          num-updates (->> improved-addon-list (filterv :update?) count)]
-      (update-installed-addon-list! improved-addon-list)
-      (info (format "%s addons checked, %s updates available" num-matched num-updates)))))
+    (let [installed-addon-list (get-state :installed-addon-list)
+          num-installed (count installed-addon-list)]
+      (when (> num-installed 0)
+        (info "checking for updates")
+        (let [improved-addon-list (mapv check-for-update installed-addon-list)
+              num-matched (->> improved-addon-list (filterv :matched?) count)
+              num-updates (->> improved-addon-list (filterv :update?) count)]
+          (update-installed-addon-list! improved-addon-list)
+          (info (format "%s addons checked, %s updates available" num-matched num-updates)))))))
 
 ;; ui interface
 
@@ -853,7 +858,8 @@
 
     ;; target any unmatched addons with no `:source` from the addon list and emit a warning
     (doseq [addon (remove :source addon-list)]
-      (warn (format "Addon '%s' has no match in the catalogue and may be skipped durlng import. It's best all addons match before doing an export." (:name addon))))
+      (logging/with-label "export"
+        (warn (format "Addon '%s' has no match in the catalogue and may be skipped during import. It's best all addons match before doing an export." (:name addon)))))
 
     (utils/dump-json-file output-file export)
     (info "wrote:" output-file)
@@ -912,11 +918,13 @@
         padding {:label ""
                  :description ""
                  ;; 2020-06: dirname must be a non-empty string
+                 ;; todo: why is dirname needed here?
                  :dirname addon/dummy-dirname
                  :interface-version 0
                  :installed-version "0"}
         addon-list (map #(merge padding %) addon-list)
 
+        ;; todo: why aren't we just calling `expand-summary-wrapper` ?
         ;; match each of these padded addon maps to entries in the catalogue database
         ;; afterwards this will call `update-installed-addon-list!` that will trigger a refresh in the gui
         matching-addon-list (-match-installed-addons-with-catalogue (get-state :db) addon-list)
@@ -963,9 +971,10 @@
   (profile
    {:when (get-state :profile?)}
 
-   ;; moved to `set-addon-dir!`.
+   ;; also in `set-addon-dir!`.
    ;; it needs to be updated as the addon dir changes.
-   ;;(logging/add-atom-appender! state (selected-addon-dir)) 
+   ;; todo: fix this duplication
+   (logging/add-atom-appender! state (selected-addon-dir)) 
 
    ;; parse toc files in install-dir. do this first so we see *something* while catalogue downloads (next)
    (load-installed-addons)
@@ -990,19 +999,23 @@
 
    nil))
 
+;; todo: move to ui.cli
+(defn-spec remove-addon nil?
+  "removes given installed addon"
+  [installed-addon :addon/installed]
+  (logging/with-addon installed-addon
+    (addon/remove-addon (selected-addon-dir) installed-addon))
+  (refresh))
+
+;; todo: move to ui.cli
 (defn-spec remove-many-addons nil?
   "deletes each of the addons in the given `toc-list` and then calls `refresh`"
   [installed-addon-list :addon/toc-list]
   (let [addon-dir (selected-addon-dir)]
     (doseq [installed-addon installed-addon-list]
-      (addon/remove-addon addon-dir installed-addon))
+      (logging/with-addon installed-addon
+        (addon/remove-addon addon-dir installed-addon)))
     (refresh)))
-
-(defn-spec remove-addon nil?
-  "removes given installed addon"
-  [installed-addon :addon/installed]
-  (addon/remove-addon (selected-addon-dir) installed-addon)
-  (refresh))
 
 ;;
 

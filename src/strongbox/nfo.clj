@@ -97,10 +97,10 @@
   [install-dir ::sp/extant-dir, dirname ::sp/dirname]
   (let [path (nfo-path install-dir dirname)
         bad-data (fn []
-                   (warn "bad nfo data, deleting file:" path)
+                   (warn "bad nfo data, deleting file:" path) ;;todo
                    (rm-nfo-file path))
         invalid-data (fn []
-                       (warn "invalid nfo data, deleting file:" path)
+                       (warn "invalid nfo data, deleting file:" path) ;;todo
                        (rm-nfo-file path))
         opts {:bad-data? bad-data
               :invalid-data? invalid-data,
@@ -161,7 +161,7 @@
   [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, new-nfo-data :addon/nfo]
   (let [user-warning (fn [nfo-data-list]
                        (when-not (empty? nfo-data-list)
-                         (warn (format "addon '%s' is overwriting '%s'" (:name new-nfo-data) (:name (last nfo-data-list)))))
+                         (warn (format "addon '%s' is overwriting '%s'" (:name new-nfo-data) (:name (last nfo-data-list))))) ;;todo
                        nfo-data-list)]
     (-> (read-nfo-file install-dir addon-dirname)
         (rm-nfo* (:group-id new-nfo-data))
