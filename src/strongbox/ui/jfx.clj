@@ -2,7 +2,7 @@
   (:require
    [me.raynes.fs :as fs]
    [clojure.string :refer [lower-case join capitalize replace] :rename {replace str-replace}]
-   [taoensso.timbre :as timbre :refer [spy info debug]] ;; debug info warn error spy]] 
+   [taoensso.timbre :as timbre :refer [spy info debug warn error]] ;; debug info warn error spy]] 
    [cljfx.ext.table-view :as fx.ext.table-view]
    [cljfx.lifecycle :as fx.lifecycle]
    [cljfx.component :as fx.component]
@@ -18,7 +18,7 @@
     [utils :as utils :refer [no-new-lines]]
     [core :as core]])
   (:import
-   [java.util List]
+   [java.util List Calendar]
    [javafx.util Callback]
    [javafx.scene.control TableRow TextInputDialog Alert Alert$AlertType ButtonType]
    [javafx.scene.input KeyCode]
@@ -302,9 +302,11 @@
                 {:-fx-padding 0
                  :-fx-spacing 0}}
 
+
                ;;
                ;; notice-logger
                ;;
+
 
                ".table-view#notice-logger "
                {:-fx-font-family "monospace"
@@ -330,7 +332,16 @@
                 {:-fx-alignment "center"}
 
                 "#message"
-                {:-fx-padding "0 0 0 .5em"}}
+                {:-fx-padding "0 0 0 .5em"}
+
+                "#message.column-header .label"
+                {:-fx-alignment "center-left"}}
+
+
+               ;;
+               ;; notice-logger-nav
+               ;;
+
 
                "#notice-logger-nav"
                {:-fx-padding "1.1em .75em" ;; 1.1em so installed, search and log pane tables all start at the same height
@@ -411,7 +422,7 @@
                  :-fx-padding "0 0 0 1em"}
 
                 ;; hide 'source' column in notice-logger in addon-detail pane
-                "#notice-logger#source"
+                ".table-view#notice-logger#source"
                 {:-fx-max-width 0
                  :-fx-pref-width 0
                  :-fx-min-width 0}
@@ -1158,7 +1169,6 @@
 
     {:fx/type fx.ext.table-view/with-selection-props
      :props {:selection-mode :multiple
-             ;; unlike gui.clj, we have access to the original data here. no need to re-select addons.
              :on-selected-items-changed cli/select-addons*}
      :desc {:fx/type :table-view
             :id "installed-addons"
@@ -1245,8 +1255,22 @@
               :selection-mode :multiple
               :row-factory {:fx/cell-type :table-row
                             :describe (fn [row]
-                                        (when row ;; we get a nil rows when going up the severity level and some rows get filtered out ... weird.
-                                          {:style-class ["table-row-cell" (name (:level row))]}))}
+                                        ;; we get a nil row when going up the severity level and some rows get filtered out ... weird.
+                                        (when row
+                                          {:style-class ["table-row-cell" (name (:level row))]
+                                           :on-mouse-clicked
+                                           (fn [e]
+                                             ;; double click handler https://github.com/cljfx/cljfx/issues/118
+                                             (when (and (= javafx.scene.input.MouseButton/PRIMARY (.getButton e))
+                                                        (= 2 (.getClickCount e)))
+                                               (if (or (contains? (:source row) :dirname)
+                                                       (contains? (:source row) :source-id))
+                                                 (do (cli/add-addon-tab (:source row))
+                                                     (switch-tab-latest))
+                                                 (let [remaining-seconds (- 60 (-> (Calendar/getInstance) (.get Calendar/SECOND)))]
+                                                   (if (> remaining-seconds 1)
+                                                     (warn (format "self destruction in T-minus %s seconds" remaining-seconds))
+                                                     (error "fah-wooosh ... BOOOOOM ... /oh the humanity/ ... OOOOOOHHHMMM"))))))}))}
               :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
               :columns (mapv table-column column-list)
               :items (or log-message-list [])}}))
@@ -1407,8 +1431,7 @@
 
         notice-pane-filter (fn [log-line]
                              (or (= preferred-match (select-keys (:source log-line) [:install-dir :dirname]))
-                                 (= alt-match (select-keys (:source log-line) [:install-dir :source :source-id]))))
-        ]
+                                 (= alt-match (select-keys (:source log-line) [:install-dir :source :source-id]))))]
     {:fx/type :v-box
      :id "addon-detail-pane"
      :style-class ["addon-detail"]
@@ -1446,9 +1469,9 @@
                  {:fx/type addon-detail-button-menu
                   :addon addon}
 
-                   {:fx/type notice-logger
-                    :tab-idx tab-idx
-                    :filter-fn notice-pane-filter}
+                 {:fx/type notice-logger
+                  :tab-idx tab-idx
+                  :filter-fn notice-pane-filter}
 
                  ;; ----
 

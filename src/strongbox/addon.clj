@@ -78,7 +78,7 @@
         unknown-grouping (get addon-groups nil)
         addon-groups (dissoc addon-groups nil)
 
-        expand (fn [[group-id addons]]
+        expand (fn [[_ addons]]
                  (if (= 1 (count addons))
                    ;; perfect case, no grouping.
                    (first addons)
@@ -135,7 +135,7 @@
   [install-dir ::sp/addon-dir]
   (let [addon-dir-list (->> install-dir fs/list-dir (filter fs/directory?) (map str))
         parse-toc (fn [addon-dir]
-                    (logging/with-addon {:dirname addon-dir}
+                    (logging/with-addon {:dirname (-> addon-dir fs/file fs/base-name str)}
                       (toc/parse-addon-toc-guard addon-dir)))]
     (->> addon-dir-list (map parse-toc) (remove nil?) vec)))
 

@@ -352,7 +352,7 @@
   (let [tab-id (utils/unique-id)
         closable? true
         addon-id (utils/extract-addon-id addon)]
-    (add-tab tab-id (:label addon) closable? addon-id)))
+    (add-tab tab-id (or (:dirname addon) (:label addon) (:name addon) "[bug: missing tab name!]") closable? addon-id)))
 
 
 ;; debug

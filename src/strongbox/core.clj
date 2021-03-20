@@ -653,11 +653,11 @@
                   (info "not matched to catalogue, addon is being ignored")
 
                   (do ;; todo: replace these with a :help level and a less scary colour
-                      (info "if this is part of a bundle, try \"File -> Re-install all\"")
-                      (info "try searching for this addon by name or description")
-                      (warn (format "failed to find %s in the '%s' catalogue"
-                                    (:dirname addon)
-                                    (name (get-state :cfg :selected-catalogue))))))))
+                    (info "if this is part of a bundle, try \"File -> Re-install all\"")
+                    (info "try searching for this addon by name or description")
+                    (warn (format "failed to find %s in the '%s' catalogue"
+                                  (:dirname addon)
+                                  (name (get-state :cfg :selected-catalogue))))))))
 
             unmatched))
 
@@ -974,7 +974,7 @@
    ;; also in `set-addon-dir!`.
    ;; it needs to be updated as the addon dir changes.
    ;; todo: fix this duplication
-   (logging/add-atom-appender! state (selected-addon-dir)) 
+   (logging/add-atom-appender! state (selected-addon-dir))
 
    ;; parse toc files in install-dir. do this first so we see *something* while catalogue downloads (next)
    (load-installed-addons)
