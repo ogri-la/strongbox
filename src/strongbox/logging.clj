@@ -36,23 +36,51 @@
   (and (-> timbre/*config* :level (= :debug))
        (not (-> timbre/*config* :testing?))))
 
+(def colour-log-map
+  {:warn :yellow
+   :error :red
+   :fatal :purple
+   :report :blue})
+
 (defn anon-println-appender
   "removes the hostname from the output format string"
   [data]
-  (let [{:keys [timestamp_ msg_ level ?ns-str ?line]} data]
-    ;; looks like: "2019-03-10 02:17:22.372 :info [strongbox.curseforge:89] downloading summary data for ..." 
-    (println (format "%s %s [%s:%s] %s"
-                     (force timestamp_) level (force ?ns-str) (force ?line) (force msg_)))))
+  (let [{:keys [?err timestamp_ msg_ level ?ns-str ?line]} data
+        level-colour (colour-log-map level)
+        addon (some-> data :context :addon)
+        label (or (:dirname addon)
+                  (:name addon)
+                  "app")
+        pattern "%s [%s] [%s] %s"
+        msg (force msg_)]
+    (when ?err
+      (println (timbre/stacktrace ?err)))
+
+    (when-not (empty? msg)
+      ;; looks like: "11:17:57.009 [info] [app] checking for updates"
+      (println
+       (timbre/color-str level-colour 
+                         (format
+                          pattern
+                          (force timestamp_)
+                          (name level)
+                          label
+                          msg))))))
 
 (def default-logging-config
   {:level default-log-level
-   :timestamp-opts {:pattern "yyyy-MM-dd HH:mm:ss.SSS"}
-   ;;:output-fn (anon-println-appender)
+
+   :timestamp-opts {;;:pattern "yyyy-MM-dd HH:mm:ss.SSS"
+                    :pattern "HH:mm:ss.SSS"
+                    ;; default is :utc apparently. documented fucking nowhere.
+                    ;; nil will set tz to current locale.
+                    :timezone nil
+                    }
+
    :appenders {:println {:enabled? true
                          :async? false
                          :output-fn :inherit
-                         ;;:fn anon-println-appender ;; not printing out the exception as the first arg!
-                         }}})
+                         :fn anon-println-appender}}})
 
 (timbre/merge-config! default-logging-config)
 

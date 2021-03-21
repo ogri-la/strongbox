@@ -105,7 +105,8 @@ Running strongbox with `--debug` will generate a file called "debug.log" that I 
 bug. *Some* of the details it contains are:
 
 * addons detected in the currently selected addon directory
-* your machine's `hostname`
+* ~your machine's `hostname`~
+    - removed in 4.0
 * paths to strongbox configuration and data:
     - `/home/torkus/.local/share/strongbox`
     - `/home/torkus/.config/strongbox`

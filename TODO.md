@@ -19,21 +19,51 @@ see CHANGELOG.md for a more formal list of changes by release
     - log level should have number of instances against it
         - warn (2)
         - error (1)
+    - done
 * per-addon logging
     - I want the user to see a list of messages regarding a *specific* addon
     - when emitting a log line about a particular addon, capture that addon's source and source-id somehow
         - and addon directory
-        - and events? like changing game track
+            - install-dir, dirname, source, source-id are all captured and used.
+                - it got a bit clunky but we got there
+    - done
+
+* remove 'hostname' from log output
+    - done
+    - update privacy section in readme
+        - done
+
+* coloured warnings/errors on console output
+    - when running with :debug on the wall of text is difficult to read
+    - I'm thinking about switching away from timbre to something more traditional
+        - he's not addressing tickets
+            - eh
+        - it may have been simpler to use in 3.x.x but in 4.x.x it's gotten a bit archaic
+            - still trie
+        - I can't drop hostname without leaving pretty-printed stacktraces behind
+            - fixed
+    - despite everything I stick with timbre and it's quite integrated now so it won't be disappearing anytime soon
+    - we now have console colours!
+        - they'll probably be tweakd in future after the logging frenzy has calmed down
+    - done
 
 ## todo
+
+* logging, app level 'help'
+    - messages to the user that are not informational, or debug or warnings or errors, but simple helpful messages
+    - it should stand out from the other messages, look friendly, etc
+
+* logging, app level 'events'
+    - now that the log has been pushed out of the way, it's free to be a bit more verbose
+    - some events like refreshing or changing the game track should be logged
+    - some of these events should be surfaced in an addon's notice logger
 
 * 4.0 styling
     - dark theme styling for addon-detail
         - use derived colours rather than hardcode
     - bug, addon detail, description box may grow or shrink after finding a match in the catalogue, bumping the content below up or down
 * highlight new log pane or status bar when there is an non-addon error or warning
-* remove 'hostname' from log output
-    - update privacy section in readme
+
 * uber-button
     - new column that displays overall health of addon
         - clicking whatever is in there takes you to a detail pane for that addon
@@ -225,12 +255,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - if we make an effort to scrape everyday, we can generate this popularity graph ourselves
 * add a 'tabula rasa' option that wipes *everything* 
     - cache, catalog, config, downloaded zip files
-* coloured warnings/errors on console output
-    - when running with :debug on the wall of text is difficult to read
-    - I'm thinking about switching away from timbre to something more traditional
-        - he's not addressing tickets
-        - it may have been simpler to use in 3.x.x but in 4.x.x it's gotten a bit archaic
-        - I can't drop hostname without leaving pretty-printed stacktraces behind
 * cache, make caching opt-out and remove all those ugly binding calls
     - bind the value at core app start
     - this may not be possible. 
