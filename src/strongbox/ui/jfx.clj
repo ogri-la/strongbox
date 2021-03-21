@@ -578,6 +578,10 @@
                        :text ((or label-coercer str) option)
                        :on-action (partial on-action option)})}})
 
+(defn component-instance
+  [desc]
+  (-> desc fx/create-component fx/instance))
+
 ;;
 
 (def INSTALLED-TAB 0)
@@ -806,7 +810,7 @@
 (defn about-strongbox-dialog
   "displays an informational dialog to the user about strongbox"
   [event]
-  (alert :info "" {:content (-> (-about-strongbox-dialog) fx/create-component fx/instance)})
+  (alert :info "" {:content (component-instance (-about-strongbox-dialog))})
   nil)
 
 (defn delete-selected-confirmation-handler
@@ -819,10 +823,10 @@
       (let [label-list (mapv (fn [row]
                                {:fx/type :text
                                 :text (str " - " (:name row))}) selected)
-            content (fx/create-component {:fx/type :v-box
-                                          :children (into [{:fx/type :text
-                                                            :text (format "Deleting %s:" (count selected))}] label-list)})
-            result (alert :confirm "" {:content (fx/instance content)})]
+            content {:fx/type :v-box
+                     :children (into [{:fx/type :text
+                                       :text (format "Deleting %s:" (count selected))}] label-list)}
+            result (alert :confirm "" {:content (component-instance content)})]
         (when (= (.get result) ButtonType/OK)
           (cli/delete-selected)))))
   nil)
@@ -1056,7 +1060,7 @@
 (defn href-to-hyperlink
   "returns a hyperlink instance or empty text"
   [row]
-  (-> row -href-to-hyperlink fx/create-component fx/instance))
+  (component-instance (-href-to-hyperlink row)))
 
 (defn-spec available-versions (s/or :ok string? :no-version-available nil?)
   "formats the 'available version' string depending on the state of the addon.
@@ -1147,7 +1151,7 @@
             :on-action (fn [_]
                          (cli/add-addon-tab row)
                          (switch-tab-latest))}]
-    (-> ub fx/create-component fx/instance)))
+    (component-instance ub)))
 
 (defn installed-addons-table
   [{:keys [fx/context]}]
@@ -1270,7 +1274,7 @@
                                                  (let [remaining-seconds (- 60 (-> (Calendar/getInstance) (.get Calendar/SECOND)))]
                                                    (if (> remaining-seconds 1)
                                                      (warn (format "self destruction in T-minus %s seconds" remaining-seconds))
-                                                     (error "fah-wooosh ... BOOOOOM ... /oh the humanity/ ... OOOOOOHHHMMM"))))))}))}
+                                                     (error "fah-wooosh ... BOOOOOO ... /oh the humanity/ ... OOOOOOHHHMMM"))))))}))}
               :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
               :columns (mapv table-column column-list)
               :items (or log-message-list [])}}))
@@ -1417,68 +1421,95 @@
   [{:keys [fx/context addon-id tab-idx]}]
   (let [installed-addons (fx/sub-val context get-in [:app-state :installed-addon-list])
         catalogue (fx/sub-val context get-in [:app-state :db]) ;; worst case is actually not so bad ...
-        addon-id-keys (keys addon-id) ;; [source source-id] or [dirname]
+        addon-id-keys (keys addon-id) ;; [dirname] [source source-id], [source source-id dirname]
+
+        -id-dirname (:dirname addon-id)
+        -id-dirname? (not (nil? -id-dirname))
+        dirname-matcher (fn [addon]
+                          (= -id-dirname (:dirname addon)))
+        -id-source (select-keys addon-id [:source :source-id])
+        -id-source? (not (empty? -id-source))
+        source-matcher (fn [addon]
+                         (= -id-source (select-keys addon [:source :source-id])))
+
         matcher (fn [addon]
-                  (= addon-id (select-keys addon addon-id-keys)))
+                  (or (when -id-dirname?
+                        (dirname-matcher addon))
+                      (when -id-source?
+                        (source-matcher addon))))
+
         ;; we may be given an installed addon, an ignored and unmatched addon, a catalogue entry so look in the installed
         ;; addon list first because it's smaller than the catalogue.
         addon (or (->> installed-addons (filter matcher) first)
                   (->> catalogue (filter matcher) first))
 
-        addon-source {:install-dir (core/selected-addon-dir)}
-        preferred-match (merge addon-source {:dirname (:dirname addon)})
-        alt-match (merge addon-source {:source (:source addon) :source-id (:source-id addon)})
+        ;; at this point addon may still be nil!
+        ;; for example, an unmatched addon in the install dir is double clicked. we have a :dirname and that is all.
+        ;; we can open the addon-detail pane but if we then delete the addon there is no longer any way to tie this addon detail pane
+        ;; to addon data in the installed-addon-list (deleted) or the catalogue (no match).
+        ;; we're forced to commit harikiri and close ourselves.
 
-        notice-pane-filter (fn [log-line]
-                             (or (= preferred-match (select-keys (:source log-line) [:install-dir :dirname]))
-                                 (= alt-match (select-keys (:source log-line) [:install-dir :source :source-id]))))]
-    {:fx/type :v-box
-     :id "addon-detail-pane"
-     :style-class ["addon-detail"]
-     :children (utils/items
-                [{:fx/type :label
-                  :style-class ["title"]
-                  :text (:label addon)}
+        ]
+    (if (nil? addon)
+      ;; this dodgy logic can be pushed back up the stack but we ultimately need to check for an addon and remove/exclude a tab if it exists.
+      ;; deleting an addon doesn't affect the :tab-list, so we can't push this into #tabber, but perhaps we should re-check the open tabs when an addon is deleted?
+      ;; todo: more thought required. for now it doesn't crash.
+      (do (cli/remove-tab-at-idx tab-idx)
+          {:fx/type :label :text "goodbye"})
 
-                 {:fx/type :h-box
-                  :style-class ["ext-links"]
-                  :children (utils/items
-                             [{:fx/type :label
-                               :style-class ["subtitle"]
-                               :text (cond
-                                       (:update? addon)
-                                       (format "%s (%s available)" (:installed-version addon) (:version addon))
+      (let [addon-source {:install-dir (core/selected-addon-dir)}
+            preferred-match (merge addon-source {:dirname (:dirname addon)})
+            alt-match (merge addon-source {:source (:source addon) :source-id (:source-id addon)})
+            notice-pane-filter (fn [log-line]
+                                 (or (= preferred-match (select-keys (:source log-line) [:install-dir :dirname]))
+                                     (= alt-match (select-keys (:source log-line) [:install-dir :source :source-id]))))]
+        {:fx/type :v-box
+         :id "addon-detail-pane"
+         :style-class ["addon-detail"]
+         :children (utils/items
+                    [{:fx/type :label
+                      :style-class ["title"]
+                      :text (:label addon)}
 
-                                       (:installed-version addon)
-                                       (format "%s" (:installed-version addon))
+                     {:fx/type :h-box
+                      :style-class ["ext-links"]
+                      :children (utils/items
+                                 [{:fx/type :label
+                                   :style-class ["subtitle"]
+                                   :text (cond
+                                           (:update? addon)
+                                           (format "%s (%s available)" (:installed-version addon) (:version addon))
 
-                                       (:version addon)
-                                       (format "%s" (:version addon)))}
+                                           (:installed-version addon)
+                                           (format "%s" (:installed-version addon))
 
-                              ;; if installed, path to addon directory, clicking it opens file browser
-                              (addon-fs-link (:dirname addon))
+                                           (:version addon)
+                                           (format "%s" (:version addon)))}
 
-                               ;; order is important, a hyperlink may not exist, can't have nav jumping around
-                              (-href-to-hyperlink addon)])}
+                                  ;; if installed, path to addon directory, clicking it opens file browser
+                                  (addon-fs-link (:dirname addon))
 
-                 (when-not (empty? (:description addon))
-                   {:fx/type :label
-                    :style-class ["description"]
-                    :text (:description addon)})
+                                  ;; order is important, a hyperlink may not exist, can't have nav jumping around.
+                                  (-href-to-hyperlink addon)])}
 
-                 {:fx/type addon-detail-button-menu
-                  :addon addon}
+                     (when-not (empty? (:description addon))
+                       {:fx/type :label
+                        :style-class ["description"]
+                        :text (:description addon)})
 
-                 {:fx/type notice-logger
-                  :tab-idx tab-idx
-                  :filter-fn notice-pane-filter}
+                     {:fx/type addon-detail-button-menu
+                      :addon addon}
 
-                 ;; ----
+                     {:fx/type notice-logger
+                      :tab-idx tab-idx
+                      :filter-fn notice-pane-filter}
+
+                     ;; ----
 
 
-                 {:fx/type :text-area
-                  :text (str addon)
-                  :wrap-text true}])}))
+                     {:fx/type :text-area
+                      :text (str addon)
+                      :wrap-text true}])}))))
 
 (defn addon-detail-tab
   [{:keys [tab tab-idx]}]
