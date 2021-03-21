@@ -422,7 +422,7 @@
                  :-fx-padding "0 0 0 1em"}
 
                 ;; hide 'source' column in notice-logger in addon-detail pane
-                ".table-view#notice-logger#source"
+                ".table-view#notice-logger #source"
                 {:-fx-max-width 0
                  :-fx-pref-width 0
                  :-fx-min-width 0}
@@ -1421,7 +1421,7 @@
   [{:keys [fx/context addon-id tab-idx]}]
   (let [installed-addons (fx/sub-val context get-in [:app-state :installed-addon-list])
         catalogue (fx/sub-val context get-in [:app-state :db]) ;; worst case is actually not so bad ...
-        addon-id-keys (keys addon-id) ;; [dirname] [source source-id], [source source-id dirname]
+        ;;addon-id-keys (keys addon-id) ;; [dirname] [source source-id], [source source-id dirname]
 
         -id-dirname (:dirname addon-id)
         -id-dirname? (not (nil? -id-dirname))
@@ -1448,7 +1448,6 @@
         ;; we can open the addon-detail pane but if we then delete the addon there is no longer any way to tie this addon detail pane
         ;; to addon data in the installed-addon-list (deleted) or the catalogue (no match).
         ;; we're forced to commit harikiri and close ourselves.
-
         ]
     (if (nil? addon)
       ;; this dodgy logic can be pushed back up the stack but we ultimately need to check for an addon and remove/exclude a tab if it exists.
