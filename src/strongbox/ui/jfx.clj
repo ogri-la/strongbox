@@ -1523,6 +1523,21 @@
              :tab-idx tab-idx
              :addon-id (:tab-data tab)}})
 
+(defn log-tab
+  [{:keys [fx/context]}]
+  (let [level-set (->> (fx/sub-val context get-in [:app-state :log-lines])
+                       (map :level)
+                       set)
+        lbl (cond
+              (some #{:error} level-set) " (errors)"
+              (some #{:warn} level-set) " (warnings)"
+              :else "")]
+    {:fx/type :tab
+     :text (str "log" lbl)
+     :id "log-tab"
+     :closable false
+     :content {:fx/type notice-logger}}))
+
 (defn tabber
   [{:keys [fx/context]}]
   (let [dynamic-tab-list (fx/sub-val context get-in [:app-state :tab-list])
@@ -1544,11 +1559,7 @@
                                        (fn []
                                          (-> text-field .requestFocus))))))
           :content {:fx/type search-addons-pane}}
-         {:fx/type :tab
-          :text "log"
-          :id "log-tab"
-          :closable false
-          :content {:fx/type notice-logger}}]
+         {:fx/type log-tab}]
         dynamic-tabs (map-indexed (fn [idx tab] {:fx/type addon-detail-tab :tab tab :tab-idx idx}) dynamic-tab-list)]
     {:fx/type :tab-pane
      :id "tabber"

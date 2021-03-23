@@ -36,8 +36,11 @@
   (and (-> timbre/*config* :level (= :debug))
        (not (-> timbre/*config* :testing?))))
 
+;; https://github.com/ptaoussanis/timbre/blob/56d67dd274d7d11ab31624a70b4b5ae194c03acd/src/taoensso/timbre.cljc#L856-L858
 (def colour-log-map
-  {:warn :yellow
+  {:debug :blue
+   :info nil
+   :warn :yellow
    :error :red
    :fatal :purple
    :report :blue})
@@ -45,7 +48,7 @@
 (defn anon-println-appender
   "removes the hostname from the output format string"
   [data]
-  (let [{:keys [?err timestamp_ msg_ level ?ns-str ?line]} data
+  (let [{:keys [?err timestamp_ msg_ level]} data
         level-colour (colour-log-map level)
         addon (some-> data :context :addon)
         label (or (:dirname addon)
@@ -59,7 +62,7 @@
     (when-not (empty? msg)
       ;; looks like: "11:17:57.009 [info] [app] checking for updates"
       (println
-       (timbre/color-str level-colour 
+       (timbre/color-str level-colour
                          (format
                           pattern
                           (force timestamp_)
@@ -74,8 +77,7 @@
                     :pattern "HH:mm:ss.SSS"
                     ;; default is :utc apparently. documented fucking nowhere.
                     ;; nil will set tz to current locale.
-                    :timezone nil
-                    }
+                    :timezone nil}
 
    :appenders {:println {:enabled? true
                          :async? false
