@@ -215,23 +215,41 @@
                ".table-view .table-row-cell"
                {:-fx-border-insets "-1 -1 0 -1"
                 :-fx-border-color (colour :table-border)
-                " .table-cell" {:-fx-text-fill (colour :table-font-colour)}
+
+                " .table-cell"
+                {:-fx-text-fill (colour :table-font-colour)}
 
                 ;; even
                 :-fx-background-color (colour :row)
-                ":hover" {:-fx-background-color (colour :row-hover)}
-                ":selected" {:-fx-background-color (colour :row-selected)
-                             " .table-cell" {:-fx-text-fill "-fx-focused-text-base-color"}
-                             :-fx-table-cell-border-color (colour :table-border)}
-                ":selected:hover" {:-fx-background-color (colour :row-hover)}
 
-                ":odd" {:-fx-background-color (colour :row)}
-                ":odd:hover" {:-fx-background-color (colour :row-hover)}
-                ":odd:selected" {:-fx-background-color (colour :row-selected)}
-                ":odd:selected:hover" {:-fx-background-color (colour :row-hover)}
+                ":hover"
+                {:-fx-background-color (colour :row-hover)}
 
-                ".unsteady" {;; '!important' so that it takes precedence over .updateable addons
-                             :-fx-background-color (str (colour :unsteady) " !important")}}
+                ":selected"
+                {:-fx-background-color (colour :row-selected)
+
+                 " .table-cell"
+                 {:-fx-text-fill "-fx-focused-text-base-color"}
+                 :-fx-table-cell-border-color (colour :table-border)}
+
+                ":selected:hover"
+                {:-fx-background-color (colour :row-hover)}
+
+                ":odd"
+                {:-fx-background-color (colour :row)}
+
+                ":odd:hover"
+                {:-fx-background-color (colour :row-hover)}
+
+                ":odd:selected"
+                {:-fx-background-color (colour :row-selected)}
+
+                ":odd:selected:hover"
+                {:-fx-background-color (colour :row-hover)}
+
+                ".unsteady"
+                {;; '!important' so that it takes precedence over .updateable addons
+                 :-fx-background-color (str (colour :unsteady) " !important")}}
 
 
                ;;
@@ -346,12 +364,6 @@
                "#notice-logger-nav"
                {:-fx-padding "1.1em .75em" ;; 1.1em so installed, search and log pane tables all start at the same height
                 :-fx-font-size ".9em"
-
-                " .label"
-                {:-fx-padding ".25em 1em"
-                 :-fx-border-width "1px"
-                 :-fx-border-color "black"
-                 :-fx-border-radius "30"}
 
                 " .radio-button"
                 {:-fx-padding "0 .5em"}}

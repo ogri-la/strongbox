@@ -49,6 +49,10 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+ - [ ] bug, I should be able to re-install a pinned addon if the pinned release is available, but I'm getting an error
+     - "refusing to install addon that will overwrite a pinned addon"
+     - this is actually a bit more involved than it first looks. shifting to it's own ticket
+
 * logging, app level 'help'
     - messages to the user that are not informational, or debug or warnings or errors, but simple helpful messages
     - it should stand out from the other messages, look friendly, etc
