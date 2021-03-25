@@ -397,7 +397,7 @@
    (cond
      ;; do some pre-installation checks
      (:ignore? addon) (error "refusing to install addon, addon is being ignored:" (:name addon))
-     (not (fs/writeable? install-dir)) (error "refusing to install addon, directory not writeable:" install-dir)
+     (not (fs/writeable? install-dir)) (error "failed to install addon, directory not writeable:" install-dir)
 
      :else ;; attempt downloading and installing addon
 
