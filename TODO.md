@@ -46,6 +46,8 @@ see CHANGELOG.md for a more formal list of changes by release
     - we now have console colours!
         - they'll probably be tweakd in future after the logging frenzy has calmed down
     - done
+* highlight new log pane or status bar when there is an non-addon error or warning
+    - done
 
 ## todo
 
@@ -57,7 +59,7 @@ see CHANGELOG.md for a more formal list of changes by release
     - dark theme styling for addon-detail
         - use derived colours rather than hardcode
     - bug, addon detail, description box may grow or shrink after finding a match in the catalogue, bumping the content below up or down
-* highlight new log pane or status bar when there is an non-addon error or warning
+
 
 * uber-button
     - new column that displays overall health of addon

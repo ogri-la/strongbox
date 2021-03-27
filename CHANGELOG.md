@@ -14,6 +14,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## 4.0.0
+
+### Added
+
+* an addon detail tab accessible by double clicking on either an installed addon or a search result.
+    - addon detail tabs can be closed.
+    - shortcut `ctrl-w` also closes an open tab *except* the installed, search and log tabs.
+    - has a new option `browse local files` if addon is installed locally
+    - has its own menu of buttons to install/re-install, update, remove, pin and ignore.
+    - has its own logging widget with per-addon logging and adjustable severity level.
+* dedicated log tab.
+    - will display `(warnings)` or `(errors)` if any warnings or errors present in log.
+* `View` menu has a menu option for open addon detail tabs with an additional `close all` button.
+* a column on the `installed` tab that shows the status of an addon.
+    - a tick if everything is ok
+    - an arrow if an update is available
+    - 
+
+### Changed
+
+* console logging is now colour coded
+* console log line now excludes a number of fields including the machine's 'hostname'
+* many error messages have been truncated or made less verbose now they have that context built-in
+* switched from Travis CI to Circle CI
+    - I can't package an `AppImage` from Circle CI however, something to do with their Docker config.
+
+### Fixed
+
+* errant debug statement I accidentally left in that may have been confusing
+    - https://github.com/ogri-la/strongbox/issues/240
+* looks like the the gap between the `File` menu labels and their submenus is now gone with the update to JavaFX 15
+
+### Removed
+
+* original Swing GUI
+* window split with tab pane in one half and the log in the other half
+
 ## 3.3.0
 
 ### Added
