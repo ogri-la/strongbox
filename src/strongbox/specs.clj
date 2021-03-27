@@ -23,6 +23,8 @@
         normalise (comp keyword name)]
     (->> spec clojure.spec.alpha/form extract (apply concat) (mapv normalise))))
 
+(s/def ::atom #(instance? clojure.lang.Atom %))
+
 (s/def ::list-of-strings (s/coll-of string?))
 (s/def ::list-of-maps (s/coll-of map?))
 (s/def ::list-of-keywords (s/coll-of keyword?))
@@ -342,6 +344,7 @@
 ;; javafx, cljfx, gui
 ;; no references to cljfx or javafx please!
 ;; requiring cljfx or anything in javafx.scene.control starts the javafx application thread
+(s/def :javafx/node #(instance? javafx.scene.Node %))
 
 (s/def :gui/column-data (s/keys :opt-un [:gui/text :gui/cell-value-factory :gui/style-class]))
 

@@ -219,16 +219,6 @@
           (cli/add-addon-tab addon))
         (is (= expected (core/get-state :tab-list)))))))
 
-(deftest remove-tab
-  (testing "a single tab can be removed by its `id`"
-    (let [tab [{:tab-id "foo" :label "Foo!" :closable? false :log-level :info :tab-data {:dirname "EveryAddon"}}]
-          expected []]
-      (with-running-app
-        (cli/add-tab "foo" "Foo!" false {:dirname "EveryAddon"})
-        (is (= tab (core/get-state :tab-list)))
-        (cli/remove-tab "foo")
-        (is (= expected (core/get-state :tab-list)))))))
-
 (deftest remove-all-tabs
   (testing "all tabs can be removed at once"
     (let [tab-list [{:tab-id "foo" :label "Foo!" :closable? false :log-level :info :tab-data {:dirname "EveryAddon"}}

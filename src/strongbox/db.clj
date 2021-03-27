@@ -73,7 +73,7 @@
         ;; most -> least desirable match
         ;; nest to search across multiple parameters
         match-on-list [[[:source :source-id] [:source :source-id]] ;; source+source-id, perfect case
-                       [:source :name] ;; source+name, we have a source but no source-id (nfo-v1 files)
+                       [:source :name] ;; source+name, we have a source but no source-id (nfo v1 files)
                        [:name :name]
                        [:label :label]
                        [:dirname :label]] ;; dirname = label, eg ./AdiBags = AdiBags

@@ -2,7 +2,7 @@
   (:require
    [me.raynes.fs :as fs]
    [clojure.string :refer [lower-case join capitalize replace] :rename {replace str-replace}]
-   [taoensso.timbre :as timbre :refer [spy info debug warn error]] ;; debug info warn error spy]] 
+   [taoensso.timbre :as timbre :refer [spy info debug warn error]]
    [cljfx.ext.table-view :as fx.ext.table-view]
    [cljfx.lifecycle :as fx.lifecycle]
    [cljfx.component :as fx.component]
@@ -260,10 +260,14 @@
                ".table-view .source-column"
                {:-fx-alignment "center-left"
                 :-fx-padding "-2 0 0 0" ;; hyperlinks are just a little bit off .. weird.
-                " .hyperlink:visited" {:-fx-underline "false"}
-                " .hyperlink, .hyperlink:hover" {:-fx-underline "false"
-                                                 :-fx-text-fill (colour :jfx-hyperlink)
-                                                 :-fx-font-weight (colour :jfx-hyperlink-weight)}}
+
+                " .hyperlink:visited"
+                {:-fx-underline "false"}
+
+                " .hyperlink, .hyperlink:hover"
+                {:-fx-underline "false"
+                 :-fx-text-fill (colour :jfx-hyperlink)
+                 :-fx-font-weight (colour :jfx-hyperlink-weight)}}
 
 
                ;;
@@ -282,8 +286,11 @@
                {" .updateable"
                 {:-fx-background-color (colour :row-updateable)
 
-                 " .table-cell" {:-fx-text-fill (colour :row-updateable-text)}
-                 " .hyperlink, .hyperlink:hover" {:-fx-text-fill (colour :jfx-hyperlink-updateable)}
+                 " .table-cell"
+                 {:-fx-text-fill (colour :row-updateable-text)}
+
+                 " .hyperlink, .hyperlink:hover"
+                 {:-fx-text-fill (colour :jfx-hyperlink-updateable)}
 
                  ;; selected updateable addons are do not look any different
                  ;; todo: make selected+updateable addons use slightly brighter versions of themselves
@@ -291,7 +298,8 @@
                  {;; !important so that hovering over a selected+updateable row doesn't change it's colour
                   :-fx-background-color (str (colour :row-updateable-selected) " !important")}
 
-                 ":hover" {:-fx-background-color (colour :row-updateable-hover)}}
+                 ":hover"
+                 {:-fx-background-color (colour :row-updateable-hover)}}
 
                 " .ignored .table-cell"
                 {:-fx-text-fill (colour :installed/ignored-fg)}
@@ -392,8 +400,10 @@
 
                ".table-view#search-addons"
                {" .downloads-column" {:-fx-alignment "center-right"}
-                " .installed" {" > .table-cell" {} ;;:-fx-text-fill "black"
-                               :-fx-background-color (colour :already-installed-row-colour)}}
+
+                " .installed"
+                {" > .table-cell" {} ;;:-fx-text-fill "black"
+                 :-fx-background-color (colour :already-installed-row-colour)}}
 
                "#status-bar"
                {:-fx-font-size ".9em"
@@ -457,9 +467,13 @@
      (into {} (for [[theme-key _] themes]
                 (generate-style theme-key))))))
 
-;;
+(def INSTALLED-TAB 0)
+(def SEARCH-TAB 1)
+(def LOG-TAB 2)
 
-(def num-static-tabs 3)
+(def NUM-STATIC-TABS 3)
+
+;;
 
 (defn get-window
   "returns the application `Window` object."
@@ -485,7 +499,7 @@
 (defn-spec tab-list-tab-index int?
   "returns the index of the currently selected tab within `:tab-list`, which doesn't include the static tabs"
   []
-  (- (tab-index) num-static-tabs))
+  (- (tab-index) NUM-STATIC-TABS))
 
 (defn extension-filter
   [x]
@@ -590,21 +604,12 @@
                        :text ((or label-coercer str) option)
                        :on-action (partial on-action option)})}})
 
-(defn component-instance
-  [desc]
-  (-> desc fx/create-component fx/instance))
+(defn-spec component-instance :javafx/node
+  "given a cljfx component `description` map, returns a JavaFX instance of it."
+  [description map?]
+  (-> description fx/create-component fx/instance))
 
 ;;
-
-(def INSTALLED-TAB 0)
-(def SEARCH-TAB 1)
-(def LOG-TAB 2)
-
-(defn label
-  [label & [{:keys [disabled?]}]]
-  {:fx/type :label
-   :text label
-   :disable (boolean disabled?)})
 
 (defn button
   "generates a simple button with a means to check to see if it should be disabled and an optional tooltip"
@@ -741,7 +746,7 @@
 (defn-spec switch-tab-latest nil?
   "switches the tab-pan to the furthest-right tab"
   []
-  (switch-tab-idx (-> (core/get-state :tab-list) count (+ num-static-tabs) dec)))
+  (switch-tab-idx (-> (core/get-state :tab-list) count (+ NUM-STATIC-TABS) dec)))
 
 (defn-spec switch-tab-event-handler fn?
   "returns an event handler that switches to the given `tab-idx` when called."
@@ -908,7 +913,7 @@
   [tab-list :ui/tab-list]
   (let [addon-detail-menuitem
         (fn [idx tab]
-          (let [tab-idx (+ idx num-static-tabs)]
+          (let [tab-idx (+ idx NUM-STATIC-TABS)]
             (menu-item (:label tab) (async-handler #(switch-tab tab-idx)))))
         close-all (menu-item "Close all" (async-handler cli/remove-all-tabs))]
     (concat (map-indexed addon-detail-menuitem tab-list)
@@ -1214,6 +1219,9 @@
             :items (or row-list [])}}))
 
 (defn notice-logger
+  "a log widget that displays a list of log lines.
+  used by itself as well as embedded into the addon detail page.
+  pass it a `filter-fn` to remove entries in the `:log-lines` list."
   [{:keys [fx/context tab-idx filter-fn]}]
   (let [filter-fn (or filter-fn identity)
         level-map {:debug 0 :info 1 :warn 2 :error 3}
@@ -1248,7 +1256,7 @@
                                                         [:app-state :tab-list tab-idx :log-level]
                                                         [:app-state :gui-log-level]))
         log-level-changed-handler (fn [log-level _]
-                                    (cli/change-notice-logger-level tab-idx (keyword log-level)))
+                                    (cli/change-notice-logger-level (keyword log-level) tab-idx))
 
         label-coercer (fn [log-level]
                         (let [num-occurances (level-occurances log-level)]
@@ -1430,6 +1438,7 @@
                        :tooltip "Permanently delete"})]})
 
 (defn addon-detail-pane
+  "a place to elaborate on what we know about an addon as well somewhere we can put lots of buttons and widgets."
   [{:keys [fx/context addon-id tab-idx]}]
   (let [installed-addons (fx/sub-val context get-in [:app-state :installed-addon-list])
         catalogue (fx/sub-val context get-in [:app-state :db]) ;; worst case is actually not so bad ...
@@ -1629,7 +1638,7 @@
                                        ;; UNLESS that previous tab is the last of the static tabs
                                        ;; then select the first of the static tabs
                                        prev-tab (dec (tab-index))
-                                       prev-tab (if (= prev-tab (dec num-static-tabs)) 0 prev-tab)]
+                                       prev-tab (if (= prev-tab (dec NUM-STATIC-TABS)) 0 prev-tab)]
                                    (cli/remove-tab-at-idx (tab-list-tab-index))
                                    (switch-tab prev-tab)))
                                nil)

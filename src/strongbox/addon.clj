@@ -40,7 +40,7 @@
       (nfo/mutual-dependency? install-dir addon-dirname)
       (let [updated-nfo-data (nfo/rm-nfo install-dir addon-dirname group-id)]
         (nfo/write-nfo install-dir addon-dirname updated-nfo-data)
-        (debug (format "removed '%s' as mutual dependency" addon-dirname)))
+        (debug (format "removed \"%s\" as mutual dependency" addon-dirname)))
 
       ;; all good, remove addon
       :else (do (fs/delete-dir addon-path)
@@ -49,7 +49,7 @@
 (defn-spec remove-addon nil?
   "removes the given addon. if addon is part of a group, all addons in group are removed"
   [install-dir ::sp/extant-dir, addon :addon/installed]
-  (info (format "removing '%s' version '%s'" (:label addon) (:installed-version addon)))
+  (info (format "removing \"%s\" version \"%s'" (:label addon) (:installed-version addon)))
   (cond
     ;; if addon is being ignored, refuse to remove addon.
     ;; note: `group-addons` will add a top level `:ignore?` flag if any addon in a bundle is being ignored.
@@ -109,8 +109,7 @@
 
                          addon-str (clojure.string/join ", " (map :dirname addons))]
 
-                     (logging/addon-log addon :info (format "'%s' contains %s addons: %s"
-                                                            (:label addon) (count addons) addon-str))
+                     (logging/addon-log addon :info (format "contains %s addons: %s" (count addons) addon-str))
                      addon)))
 
         ;; this flattens the newly grouped addons from a map into a list and joins the unknowns
@@ -141,7 +140,7 @@
 
 (defn-spec load-installed-addons :addon/toc-list
   "reads the .toc files from the given addon dir, reads any nfo data for 
-  these addons, groups them, returns the mooshed data."
+  these addons, groups them and returns the mooshed data."
   [install-dir ::sp/extant-dir]
   (let [addon-list (-load-installed-addons install-dir)
 
@@ -238,7 +237,7 @@
     (when (s/valid? :addon/toc addon)
       (remove-addon install-dir addon))
 
-    (info (format "installing '%s' version '%s'" (:label addon) (:version addon)))
+    (info (format "installing \"%s\" version \"%s\"" (:label addon) (:version addon)))
     (unzip-addon)
     (update-nfo-files)))
 

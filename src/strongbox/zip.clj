@@ -11,7 +11,6 @@
     [utils :as utils]
     [specs :as sp]]))
 
-;; todo
 (defn-spec valid-zip-file? boolean?
   "returns true if there are no apparent problems opening+reading+closing the given zip file."
   [zipfile-path ::sp/extant-archive-file]
@@ -32,7 +31,6 @@
       (debug "failed to open/read/close zip file (IllegalArgumentException):" zipfile-path)
       false)))
 
-;; todo
 (defn-spec unzip-file (s/or :ok ::sp/extant-dir, :failed nil?)
   "unzips the zip file at the `zipfile-path` to the directory `output-dir-path`."
   [zipfile-path ::sp/extant-archive-file, output-dir-path ::sp/extant-dir]

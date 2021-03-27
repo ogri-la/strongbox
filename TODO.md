@@ -53,15 +53,6 @@ see CHANGELOG.md for a more formal list of changes by release
      - "refusing to install addon that will overwrite a pinned addon"
      - this is actually a bit more involved than it first looks. shifting to it's own ticket
 
-* logging, app level 'help'
-    - messages to the user that are not informational, or debug or warnings or errors, but simple helpful messages
-    - it should stand out from the other messages, look friendly, etc
-
-* logging, app level 'events'
-    - now that the log has been pushed out of the way, it's free to be a bit more verbose
-    - some events like refreshing or changing the game track should be logged
-    - some of these events should be surfaced in an addon's notice logger
-
 * 4.0 styling
     - dark theme styling for addon-detail
         - use derived colours rather than hardcode
@@ -75,9 +66,26 @@ see CHANGELOG.md for a more formal list of changes by release
         - if addon is up-to-date, it shows a happy green tick
             - if there is something to be concerned about (and that the user can fix), show a warning or error
 
+* get log window scrolling in other direction
+ 
 * bug, 'strongbox.version' in debug output is null when run as a binary
 
 ## todo bucket (no particular order)
+
+* nfo, spend some time futzing with nfo files on disk and how they can break the UI
+    - I've managed to get some weird error messages by changing 'source' to an int, to a catalogue that doesn't exist, etc
+
+* search, replace 'install selected' with 'install' button on the right
+
+* logging, app level 'events'
+    - now that the log has been pushed out of the way, it's free to be a bit more verbose
+    - some events like refreshing or changing the game track should be logged
+    - some of these events should be surfaced in an addon's notice logger
+
+
+* logging, app level 'help'
+    - messages to the user that are not informational, or debug or warnings or errors, but simple helpful messages
+    - it should stand out from the other messages, look friendly, etc
 
 * zip, better errors for failing to decompress .rar files
     - see !FREEZING from wowinterface

@@ -118,6 +118,7 @@
    :gui-showing? false
 
    ;; log-level for the gui dedicated notice-logger
+   ;; per-tab log-levels are attached to each tab in the `:tab-list`
    :gui-log-level :info
 
    ;; addons in an unsteady state (data being updated, addon being installed, etc)
@@ -179,18 +180,16 @@
   "executes given callback function when value at path in state map changes. 
   trigger is discarded if old and new values are identical"
   [path ::sp/list-of-keywords, callback fn?]
-  (let [postfn identity
-        prefn identity
-        has-changed (fn [old-state new-state]
-                      (not= (postfn (get-in (prefn old-state) path))
-                            (postfn (get-in (prefn new-state) path))))
+  (let [has-changed (fn [old-state new-state]
+                      (not= (get-in old-state path)
+                            (get-in new-state path)))
         wid (keyword (gensym callback)) ;; :foo.bar$baz@123456789
         rmwatch #(remove-watch state wid)]
 
     (add-watch state wid
                (fn [_ _ old-state new-state] ;; key, atom, old-state, new-state
                  (when (has-changed old-state new-state)
-                   ;; prevents infinite recursion
+                   ;; avoids infinite recursion
                    (when (= :debug (:level timbre/*config*))
                      ;; this would cause the gui to receive a :debug of "path [] triggered a ..."
                      ;; this would update the :log-lines in the state
@@ -236,7 +235,7 @@
      (add-addon-dir! addon-dir default-game-track)
      (swap! state assoc-in [:cfg :selected-addon-dir] addon-dir)
      (swap! state assoc :tab-list [])
-     (logging/add-atom-appender! state (selected-addon-dir))))
+     (logging/add-ui-appender! state (selected-addon-dir))))
   nil)
 
 (defn-spec remove-addon-dir! nil?
@@ -524,7 +523,7 @@
   (let [;; nil fields are removed from the catalogue item because they might override good values in the .toc or .nfo
         db-catalogue-addon (utils/drop-nils db-catalogue-addon [:description])]
     ;; merges left->right. catalogue-addon overwrites installed-addon, ':matched' overwrites catalogue-addon, etc
-    (logging/addon-log installed-addon :info (format "found in catalogue with source '%s' and id '%s'" (:source installed-addon) (:source-id installed-addon)))
+    (logging/addon-log installed-addon :info (format "found in catalogue with source \"%s\" and id \"%s\"" (:source installed-addon) (:source-id installed-addon)))
     (merge installed-addon db-catalogue-addon {:matched? true})))
 
 ;;
@@ -709,11 +708,8 @@
                            (expand-summary-wrapper addon))
           addon (or expanded-addon addon) ;; expanded addon may still be nil
           has-update? (addon/updateable? addon)]
-      ;; bit noisy
-      ;;(when (> (count (:release-list addon)) 1)
-      ;;  (info (format "%s previous releases available" (count (:release-list addon)))))
       (when has-update?
-        (info (format "update available: %s" (:version addon))))
+        (info (format "update available \"%s\"" (:version addon))))
       (assoc addon :update? has-update?))))
 
 (defn-spec check-for-updates nil?
@@ -971,10 +967,9 @@
   (profile
    {:when (get-state :profile?)}
 
-   ;; also in `set-addon-dir!`.
-   ;; it needs to be updated as the addon dir changes.
-   ;; todo: fix this duplication
-   (logging/add-atom-appender! state (selected-addon-dir))
+   ;; also in `set-addon-dir!` as it needs to be updated when the selected addon dir changes.
+   ;; `:selected-addon-dir` may not be set at this point but we still need to see logs in the UI
+   (logging/add-ui-appender! state (selected-addon-dir))
 
    ;; parse toc files in install-dir. do this first so we see *something* while catalogue downloads (next)
    (load-installed-addons)

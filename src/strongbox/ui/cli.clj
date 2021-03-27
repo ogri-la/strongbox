@@ -155,7 +155,7 @@
   ([addon-list :addon/installed-list]
    (run! (fn [addon]
            (logging/with-addon addon
-             (info (format "pinning addon '%s' to version %s" (:label addon) (:installed-version addon)))
+             (info (format "pinning to \"%s\"" (:installed-version addon)))
              (addon/pin (core/selected-addon-dir) addon)))
          addon-list)
    (core/refresh)))
@@ -167,7 +167,7 @@
    (unpin (get-state :selected-addon-list)))
   ([addon-list :addon/installed-list]
    (run! (fn [addon]
-           (logging/addon-log addon :info (format "unpinning addon '%s' from %s" (:label addon) (:pinned-version addon)))
+           (logging/addon-log addon :info (format "unpinning from \"%s\"" (:pinned-version addon)))
            (addon/unpin (core/selected-addon-dir) addon))
          addon-list)
    (core/refresh)))
@@ -178,8 +178,8 @@
   [addon :addon/expanded]
   (if-let [matching-release (addon/find-release addon)]
     (merge addon matching-release)
-    (logging/with-addon addon ;; can this replace the previous `do` ?
-      (warn (format "%s '%s' not found in known releases. Using latest release instead." (:label addon) (:installed-version addon)))
+    (logging/with-addon addon
+      (warn (format "release \"%s\" not found, using latest instead." (:installed-version addon)))
       addon)))
 
 ;;
@@ -256,7 +256,7 @@
         (filter addon/ignorable?)
         (run! (fn [addon]
                 (logging/with-addon addon
-                  (info (format "ignoring addon '%s'" (:label addon)))
+                  (info "ignoring")
                   (addon/ignore (core/selected-addon-dir) addon)))))
    (core/refresh)))
 
@@ -269,7 +269,7 @@
    (run! (fn [addon]
            (logging/with-addon addon
              (addon/clear-ignore (core/selected-addon-dir) addon)
-             (info (format "stopped ignoring addon '%s'" (:label addon)))))
+             (info "stopped ignoring")))
          addon-list)
    (core/refresh)))
 
@@ -303,23 +303,20 @@
 ;; tabs
 
 (defn-spec change-notice-logger-level nil?
-  [tab-idx (s/nilable int?), new-log-level ::sp/log-level]
-  (if tab-idx
-    (swap! core/state assoc-in [:tab-list tab-idx :log-level] new-log-level)
-    (swap! core/state assoc :gui-log-level new-log-level))
-  nil)
+  "changes the log level on the UI notice-logger widget.
+  changes the log level for a tab in `:tab-list` when `tab-idx` is also given."
+  ([new-log-level ::sp/log-level]
+   (change-notice-logger-level new-log-level nil))
+  ([new-log-level ::sp/log-level, tab-idx (s/nilable int?)]
+   (if tab-idx
+     (swap! core/state assoc-in [:tab-list tab-idx :log-level] new-log-level)
+     (swap! core/state assoc :gui-log-level new-log-level))
+   nil))
 
 (defn-spec remove-all-tabs nil?
   "removes all dynamic addon detail tabs leaving only the static tabs"
   []
   (swap! core/state assoc :tab-list [])
-  nil)
-
-;; todo: still being used?
-(defn-spec remove-tab nil?
-  "removes a specific tab from the `:tab-list` using that tab's `:tab-id`"
-  [tab-id string?]
-  (swap! core/state update-in [:tab-list] (partial (comp vec remove) #(= tab-id (:tab-id %))))
   nil)
 
 (defn-spec remove-tab-at-idx nil?

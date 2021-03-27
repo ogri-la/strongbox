@@ -909,7 +909,7 @@
                      :source "curseforge" :source-id 2
                      :download-url "https://path/to/remote/addon.zip" :game-track :retail
                      :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}
-            expected ["addon 'everyotheraddon' is overwriting 'everyaddon'"]]
+            expected ["addon \"everyotheraddon\" is overwriting \"everyaddon\""]]
         (helper/install-dir)
         (core/install-addon addon-1)
         (core/load-installed-addons) ;; refresh our knowledge of what is installed

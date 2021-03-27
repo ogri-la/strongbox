@@ -208,7 +208,7 @@
           updates {:installed-game-track :foo}
 
           expected nfo-data
-          expected-log ["new nfo data is invalid and won't be written to file"]]
+          expected-log ["new \".strongbox.json\" data is invalid and won't be written to file"]]
 
       (nfo/write-nfo (install-dir) addon-dir nfo-data)
       (is (= expected-log

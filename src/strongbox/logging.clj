@@ -4,6 +4,7 @@
    [taoensso.timbre.appenders.core :refer [spit-appender]]
    [taoensso.tufte :as tufte :refer [p profile]]
    [orchestra.core :refer [defn-spec]]
+   [clojure.spec.alpha :as s]
    [strongbox
     [specs :as sp]
     [utils :refer [join]]]))
@@ -75,8 +76,7 @@
 
    :timestamp-opts {;;:pattern "yyyy-MM-dd HH:mm:ss.SSS"
                     :pattern "HH:mm:ss.SSS"
-                    ;; default is :utc apparently. documented fucking nowhere.
-                    ;; nil will set tz to current locale.
+                    ;; default is `:utc`, `nil` sets tz to current locale.
                     :timezone nil}
 
    :appenders {:println {:enabled? true
@@ -103,22 +103,6 @@
     (add-appender! :spit func))
   nil)
 
-(defn add-atom-appender!
-  [atm install-dir]
-  (let [path [:log-lines]
-        func (fn [data]
-               (let [addon (some-> data :context :addon)
-                     addon-id (select-keys addon [:dirname :source :source-id :name])
-                     source (merge {:install-dir install-dir} addon-id)
-                     log-line {:time (force (:timestamp_ data))
-                               :message (force (:msg_ data))
-                               :level (force (:level data))
-                               :source source}]
-                 (when atm
-                   (swap! atm update-in path into [log-line]))))]
-    (add-appender! :atom func {:timestamp-opts {:pattern "HH:mm:ss"}}))
-  nil)
-
 (defn-spec rm-appender! nil?
   "removes appender at `key` from logging config"
   [key keyword?]
@@ -137,13 +121,32 @@
        ~@form)
      (deref stateful-buffer#)))
 
+(defn-spec add-ui-appender! nil?
+  "adds a logger intended for the UI to interact with.
+  if an addon is passed as `:context` then an identifier can be pulled from it and the UI can use that to
+  associate log events with addons. see `addon-log`, `with-addon` and `with-label`."
+  [atm ::sp/atom, install-dir (s/nilable ::sp/install-dir)]
+  (let [path [:log-lines]
+        func (fn [data]
+               (let [addon (some-> data :context :addon)
+                     addon-id (select-keys addon [:dirname :source :source-id :name])
+                     ;; {:install-dir "/path/to/addons/dir" :dirname "some-addon" :name "SomeAddon"}
+                     source (merge {:install-dir install-dir} addon-id)
+                     log-line {:time (force (:timestamp_ data))
+                               :message (force (:msg_ data))
+                               :level (force (:level data))
+                               :source source}]
+                 (when atm
+                   (swap! atm update-in path into [log-line]))))]
+    (add-appender! :atom func {:timestamp-opts {:pattern "HH:mm:ss"}}))
+  nil)
+
 ;; => (logging/addon-log :info {...} "installed!")
 (defmacro addon-log
   "once-off addon logging message"
   [addon level & form]
   `(timbre/with-context
-     {;;:install-dir (selected-addon-dir)
-      :addon ~addon}
+     {:addon ~addon}
      (timbre/log ~level ~@form)))
 
 ;; => (logging/with-addon {...} (info "installed!"))
@@ -152,8 +155,7 @@
   app-level logging will have to futz with the logging context"
   [addon & form]
   `(timbre/with-context
-     {;;:install-dir (selected-addon-dir)
-      :addon ~addon}
+     {:addon ~addon}
      ~@form))
 
 (defmacro with-label
