@@ -369,9 +369,14 @@
                ;;
 
 
+               ".notice-logger-nav-box"
+               {;;:-fx-background-color "pink"
+                }
+               
                "#notice-logger-nav"
                {:-fx-padding "1.1em .75em" ;; 1.1em so installed, search and log pane tables all start at the same height
                 :-fx-font-size ".9em"
+
 
                 " .radio-button"
                 {:-fx-padding "0 .5em"}}
@@ -430,6 +435,12 @@
                 {;;:-fx-padding "0 0 0 1em"
                  :-fx-font-size "1.1em"}
 
+                ".section-title"
+                {:-fx-font-size "1.3em"
+                 :-fx-padding "1em 0 .5em 1em"
+                 :-fx-min-width "200px"
+                 }
+
                 ".description"
                 {:-fx-font-size "1.4em"
                  :-fx-padding "0 0 1.5em 1em"
@@ -457,7 +468,13 @@
 
                 "#notice-logger-nav"
                 {:-fx-padding "0 0 .5em 0"
-                 :-fx-alignment "top-right"}} ;; ends .addon-detail
+                 :-fx-alignment "bottom-right"
+                 :-fx-pref-width 9999.0
+                 
+                 ;;:-fx-background-color "yellow"
+
+
+                 }} ;; ends .addon-detail
 
                 ;; ---
                }}))]
@@ -1264,12 +1281,18 @@
 
         log-message-list (filter log-level-filter log-message-list)]
     {:fx/type :border-pane
-     :top {:fx/type radio-group
-           :options log-level-list
-           :value selected-log-level
-           :label-coercer label-coercer
-           :container-id "notice-logger-nav"
-           :on-action log-level-changed-handler}
+     :top {:fx/type :h-box
+           :style-class ["notice-logger-nav-box"]
+           :children [{:fx/type :label
+                       :style-class ["section-title"]
+                       :text "Notices"
+                       }
+                      {:fx/type radio-group
+                       :options log-level-list
+                       :value selected-log-level
+                       :label-coercer label-coercer
+                       :container-id "notice-logger-nav"
+                       :on-action log-level-changed-handler}]}
 
      :center {:fx/type :table-view
               :id "notice-logger"
@@ -1437,6 +1460,26 @@
                       {:disabled? (not (addon/deletable? addon))
                        :tooltip "Permanently delete"})]})
 
+(defn addon-detail-release-widget
+  [{:keys [fx/context addon tab-idx]}]
+  (let [column-list [{:text "name" :min-width 150 :pref-width 300 :max-width 500 :cell-value-factory :release-label}
+                     {:text "version" :cell-value-factory :version}
+                     {:text "" :cell-value-factory (constantly "install")}]
+        row-list (:release-list addon)
+        ]
+    {:fx/type :border-pane
+     :top {:fx/type :label
+           :style-class ["section-title"]
+           :text "Releases"}
+     :center {:fx/type :table-view
+              :id "release-list"
+              :placeholder {:fx/type :text
+                            :style-class ["table-placeholder-text"]
+                            :text "No releases found."}
+              :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
+              :columns (mapv table-column column-list)
+              :items (or row-list [])}}))
+
 (defn addon-detail-pane
   "a place to elaborate on what we know about an addon as well somewhere we can put lots of buttons and widgets."
   [{:keys [fx/context addon-id tab-idx]}]
@@ -1515,11 +1558,17 @@
                      (when-not (empty? (:description addon))
                        {:fx/type :label
                         :style-class ["description"]
+                        :wrap-text true
                         :text (:description addon)})
 
                      {:fx/type addon-detail-button-menu
                       :addon addon}
 
+                     {:fx/type addon-detail-release-widget
+                      :addon addon}
+
+                     
+                     
                      {:fx/type notice-logger
                       :tab-idx tab-idx
                       :filter-fn notice-pane-filter}
