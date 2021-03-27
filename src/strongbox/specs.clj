@@ -23,6 +23,8 @@
         normalise (comp keyword name)]
     (->> spec clojure.spec.alpha/form extract (apply concat) (mapv normalise))))
 
+(s/def ::atom #(instance? clojure.lang.Atom %))
+
 (s/def ::list-of-strings (s/coll-of string?))
 (s/def ::list-of-maps (s/coll-of map?))
 (s/def ::list-of-keywords (s/coll-of keyword?))
@@ -58,6 +60,7 @@
 (s/def ::selected? boolean?)
 (s/def ::gui-theme #{:light :dark :dark-green :dark-orange})
 (s/def ::closable? boolean?)
+(s/def ::log-level #{:debug :info :warn :error})
 
 ;; preserve order, used in GUI
 (def game-track-labels [[:retail "retail"]
@@ -341,6 +344,7 @@
 ;; javafx, cljfx, gui
 ;; no references to cljfx or javafx please!
 ;; requiring cljfx or anything in javafx.scene.control starts the javafx application thread
+(s/def :javafx/node #(instance? javafx.scene.Node %))
 
 (s/def :gui/column-data (s/keys :opt-un [:gui/text :gui/cell-value-factory :gui/style-class]))
 
@@ -348,5 +352,5 @@
                        :edge (s/keys :req-in [::dirname]))) ;; unmatched and ignored addons
 (s/def :ui/tab-data :addon/id) ;; for now
 (s/def :ui/tab-id string?)
-(s/def :ui/tab (s/keys :req-un [:ui/tab-id ::label ::closable? :ui/tab-data]))
+(s/def :ui/tab (s/keys :req-un [:ui/tab-id ::label ::closable? :ui/tab-data ::log-level]))
 (s/def :ui/tab-list (s/coll-of :ui/tab))

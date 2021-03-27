@@ -6,6 +6,7 @@
    [orchestra.core :refer [defn-spec]]
    [me.raynes.fs :as fs]
    [strongbox
+    [logging :as logging]
     [toc :as toc]
     [utils :as utils]
     [nfo :as nfo]
@@ -39,7 +40,7 @@
       (nfo/mutual-dependency? install-dir addon-dirname)
       (let [updated-nfo-data (nfo/rm-nfo install-dir addon-dirname group-id)]
         (nfo/write-nfo install-dir addon-dirname updated-nfo-data)
-        (debug (format "removed '%s' as mutual dependency" addon-dirname)))
+        (debug (format "removed \"%s\" as mutual dependency" addon-dirname)))
 
       ;; all good, remove addon
       :else (do (fs/delete-dir addon-path)
@@ -48,7 +49,7 @@
 (defn-spec remove-addon nil?
   "removes the given addon. if addon is part of a group, all addons in group are removed"
   [install-dir ::sp/extant-dir, addon :addon/installed]
-  (info (format "removing '%s' version '%s'" (:label addon) (:installed-version addon)))
+  (info (format "removing \"%s\" version \"%s'" (:label addon) (:installed-version addon)))
   (cond
     ;; if addon is being ignored, refuse to remove addon.
     ;; note: `group-addons` will add a top level `:ignore?` flag if any addon in a bundle is being ignored.
@@ -77,14 +78,13 @@
         unknown-grouping (get addon-groups nil)
         addon-groups (dissoc addon-groups nil)
 
-        expand (fn [[group-id addons]]
+        expand (fn [[_ addons]]
                  (if (= 1 (count addons))
                    ;; perfect case, no grouping.
                    (first addons)
 
                    ;; multiple addons in group
-                   (let [_ (debug (format "grouping '%s', %s addons in group" group-id (count addons)))
-                         ;; `addons` comes from `toc/installed-addon-list` fed by `fs/list-dir` that wraps `java.io.File/listFiles`:
+                   (let [;; `addons` comes from `toc/installed-addon-list` fed by `fs/list-dir` that wraps `java.io.File/listFiles`:
                          ;; "There is no guarantee that the name strings in the resulting array will appear in any specific order"
                          ;;   - https://docs.oracle.com/javase/7/docs/api/java/io/File.html#listFiles()
                          addons (vec (sort-by :dirname addons))
@@ -96,14 +96,21 @@
                          ;; add a group-level ignore flag if any bundled addon is being ignored
                          ;; todo: test for this
                          ignore-group? (when (utils/any (map :ignore? addons))
-                                         {:ignore? true})]
-                     (if primary
-                       ;; best, easiest case
-                       (merge primary new-data ignore-group?)
-                       ;; when we can't determine the primary addon, add a shitty synthetic one
-                       (merge next-best new-data ignore-group?
-                              {:label (format "%s (group)" next-best-label)
-                               :description (format "group record for the %s addon" next-best-label)})))))
+                                         {:ignore? true})
+
+                         addon
+                         (if primary
+                           ;; best, easiest case
+                           (merge primary new-data ignore-group?)
+                           ;; when we can't determine the primary addon, add a shitty synthetic one
+                           (merge next-best new-data ignore-group?
+                                  {:label (format "%s (group)" next-best-label)
+                                   :description (format "group record for the %s addon" next-best-label)}))
+
+                         addon-str (clojure.string/join ", " (map :dirname addons))]
+
+                     (logging/addon-log addon :info (format "contains %s addons: %s" (count addons) addon-str))
+                     addon)))
 
         ;; this flattens the newly grouped addons from a map into a list and joins the unknowns
         addon-list (apply conj (mapv expand addon-groups) unknown-grouping)]
@@ -122,11 +129,20 @@
   [toc nfo]
   (merge toc nfo))
 
+(defn-spec -load-installed-addons (s/or :ok :addon/toc-list, :error nil?)
+  "returns a list of addon data scraped from the .toc files of all addons in given `install-dir`"
+  [install-dir ::sp/addon-dir]
+  (let [addon-dir-list (->> install-dir fs/list-dir (filter fs/directory?) (map str))
+        parse-toc (fn [addon-dir]
+                    (logging/with-addon {:dirname (-> addon-dir fs/file fs/base-name str)}
+                      (toc/parse-addon-toc-guard addon-dir)))]
+    (->> addon-dir-list (map parse-toc) (remove nil?) vec)))
+
 (defn-spec load-installed-addons :addon/toc-list
   "reads the .toc files from the given addon dir, reads any nfo data for 
-  these addons, groups them, returns the mooshed data"
+  these addons, groups them and returns the mooshed data."
   [install-dir ::sp/extant-dir]
-  (let [addon-list (strongbox.toc/installed-addons install-dir)
+  (let [addon-list (-load-installed-addons install-dir)
 
         ;; at this point we have a list of the 'top level' addons, with
         ;; any bundled addons grouped within each one.
@@ -135,10 +151,11 @@
         ;; data we store alongside each addon when it is installed/updated
 
         merge-nfo-data (fn [addon]
-                         (let [nfo-data (nfo/read-nfo install-dir (:dirname addon))]
-                           ;; merge the addon with the nfo data.
-                           ;; when `ignore?` flag in addon is `true` but `false` in nfo-data, nfo-data will take precedence.
-                           (merge-toc-nfo addon nfo-data)))
+                         (logging/with-addon addon
+                           (let [nfo-data (nfo/read-nfo install-dir (:dirname addon))]
+                             ;; merge the addon with the nfo data.
+                             ;; when `ignore?` flag in addon is `true` but `false` in nfo-data, nfo-data will take precedence.
+                             (merge-toc-nfo addon nfo-data))))
 
         addon-list (mapv merge-nfo-data addon-list)]
 
@@ -220,7 +237,7 @@
     (when (s/valid? :addon/toc addon)
       (remove-addon install-dir addon))
 
-    (info (format "installing '%s' version '%s'" (:label addon) (:version addon)))
+    (info (format "installing \"%s\" version \"%s\"" (:label addon) (:version addon)))
     (unzip-addon)
     (update-nfo-files)))
 

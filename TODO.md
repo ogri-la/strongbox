@@ -14,22 +14,52 @@ see CHANGELOG.md for a more formal list of changes by release
     - done
 * addon detail pane
     - clicking an addon row opens a new tab with as much detail as we can about that addon
-    - done
-
-## todo
-
-* per-addon logging
-    - I want the user to see a list of messages regarding a *specific* addon
-    - when emitting a log line about a particular addon, capture that addon's source and source-id somehow
-        - and addon directory
-        - and events? like changing game track
-* highlight new log pane or status bar when there is an non-addon error or warning
+    - done  
 * log pane, filter by log level
     - log level should have number of instances against it
         - warn (2)
         - error (1)
+    - done
+* per-addon logging
+    - I want the user to see a list of messages regarding a *specific* addon
+    - when emitting a log line about a particular addon, capture that addon's source and source-id somehow
+        - and addon directory
+            - install-dir, dirname, source, source-id are all captured and used.
+                - it got a bit clunky but we got there
+    - done
+
 * remove 'hostname' from log output
+    - done
     - update privacy section in readme
+        - done
+
+* coloured warnings/errors on console output
+    - when running with :debug on the wall of text is difficult to read
+    - I'm thinking about switching away from timbre to something more traditional
+        - he's not addressing tickets
+            - eh
+        - it may have been simpler to use in 3.x.x but in 4.x.x it's gotten a bit archaic
+            - still trie
+        - I can't drop hostname without leaving pretty-printed stacktraces behind
+            - fixed
+    - despite everything I stick with timbre and it's quite integrated now so it won't be disappearing anytime soon
+    - we now have console colours!
+        - they'll probably be tweakd in future after the logging frenzy has calmed down
+    - done
+* highlight new log pane or status bar when there is an non-addon error or warning
+    - done
+
+## todo
+
+ - [ ] bug, I should be able to re-install a pinned addon if the pinned release is available, but I'm getting an error
+     - "refusing to install addon that will overwrite a pinned addon"
+     - this is actually a bit more involved than it first looks. shifting to it's own ticket
+
+* 4.0 styling
+    - dark theme styling for addon-detail
+        - use derived colours rather than hardcode
+    - bug, addon detail, description box may grow or shrink after finding a match in the catalogue, bumping the content below up or down
+
 
 * uber-button
     - new column that displays overall health of addon
@@ -38,12 +68,42 @@ see CHANGELOG.md for a more formal list of changes by release
         - if addon is up-to-date, it shows a happy green tick
             - if there is something to be concerned about (and that the user can fix), show a warning or error
 
+* get log window scrolling in other direction
+ 
+* bug, 'strongbox.version' in debug output is null when run as a binary
+
+## todo bucket (no particular order)
+
+* nfo, spend some time futzing with nfo files on disk and how they can break the UI
+    - I've managed to get some weird error messages by changing 'source' to an int, to a catalogue that doesn't exist, etc
+
+* search, replace 'install selected' with 'install' button on the right
+
+* logging, app level 'events'
+    - now that the log has been pushed out of the way, it's free to be a bit more verbose
+    - some events like refreshing or changing the game track should be logged
+    - some of these events should be surfaced in an addon's notice logger
+
+
+* logging, app level 'help'
+    - messages to the user that are not informational, or debug or warnings or errors, but simple helpful messages
+    - it should stand out from the other messages, look friendly, etc
+
+* zip, better errors for failing to decompress .rar files
+    - see !FREEZING from wowinterface
+        - it's a .rar addon
+        - the full path is emitted in the error, which is impossible to fully read
+        - the extension has been replaced with .zip
+            - if the extension were preserved we could dismiss it immediately as unsupported
+
+        2021-03-20 01:35:58.026 DEBUG [strongbox.zip:23] - failed to open+close zip file: /home/torkus/path/to/wine/dir/drive_c/program files/World of Warcraft/_retail_/Interface/Addons/-freezing--1-04.zip
+        path [] triggered :strongbox.ui.jfx$start$update_gui_state__39204@608569a040151
+        2021-03-20 01:35:58.027 ERROR [strongbox.core:419] - failed to read zip file '/home/torkus/path/to/wine/dir/drive_c/program files/World of Warcraft/_retail_/Interface/Addons/-freezing--1-04.zip', could not install -freezing
+
+
 * gui, download progress bar *inside* the grid ...?
     - pure fantasy?
     - defer until after job queue
-
---
-
 * greater parallelism
     - internal job queue
     - replace log at bottom of screen with a list of jobs being processed and how far along they are
@@ -61,11 +121,6 @@ see CHANGELOG.md for a more formal list of changes by release
             - we already have a match!
         - this might fit in with the greater-parallelism/queue based infrastructure
 
---
-
-* bug, 'strongbox.version' in debug output is null when run as a binary
-
-## todo bucket (no particular order)
 
 * keep a list of previously installed addons
 
@@ -214,12 +269,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - if we make an effort to scrape everyday, we can generate this popularity graph ourselves
 * add a 'tabula rasa' option that wipes *everything* 
     - cache, catalog, config, downloaded zip files
-* coloured warnings/errors on console output
-    - when running with :debug on the wall of text is difficult to read
-    - I'm thinking about switching away from timbre to something more traditional
-        - he's not addressing tickets
-        - it may have been simpler to use in 3.x.x but in 4.x.x it's gotten a bit archaic
-        - I can't drop hostname without leaving pretty-printed stacktraces behind
 * cache, make caching opt-out and remove all those ugly binding calls
     - bind the value at core app start
     - this may not be possible. 

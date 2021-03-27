@@ -107,6 +107,8 @@
    ;; the list of addons from the catalogue
    :db nil
 
+   :log-lines []
+
    ;; a map of paths whose location may vary according to the cwd and envvars.
    :paths nil
 
@@ -115,6 +117,10 @@
    ;; jfx ui showing?
    :gui-showing? false
 
+   ;; log-level for the gui dedicated notice-logger
+   ;; per-tab log-levels are attached to each tab in the `:tab-list`
+   :gui-log-level :info
+
    ;; addons in an unsteady state (data being updated, addon being installed, etc)
    ;; allows a UI to watch and update with progress
    :unsteady-addon-list #{}
@@ -122,6 +128,7 @@
    ;; a sublist of merged toc+addon that are selected
    :selected-addon-list []
 
+   ;; dynamic tabs
    :tab-list []
 
    :search {:term nil
@@ -173,17 +180,23 @@
   "executes given callback function when value at path in state map changes. 
   trigger is discarded if old and new values are identical"
   [path ::sp/list-of-keywords, callback fn?]
-  (let [prefn identity
-        has-changed (fn [old-state new-state]
-                      (not= (prefn (get-in old-state path))
-                            (prefn (get-in new-state path))))
+  (let [has-changed (fn [old-state new-state]
+                      (not= (get-in old-state path)
+                            (get-in new-state path)))
         wid (keyword (gensym callback)) ;; :foo.bar$baz@123456789
         rmwatch #(remove-watch state wid)]
 
     (add-watch state wid
                (fn [_ _ old-state new-state] ;; key, atom, old-state, new-state
                  (when (has-changed old-state new-state)
-                   (debug (format "path %s triggered %s" path wid))
+                   ;; avoids infinite recursion
+                   (when (= :debug (:level timbre/*config*))
+                     ;; this would cause the gui to receive a :debug of "path [] triggered a ..."
+                     ;; this would update the :log-lines in the state
+                     ;; this would cause the gui to receive a :debug of "path [] triggered a ..." ...
+                     ;;(debug (format "path %s triggered %s" path wid)))
+                     ;; instead, if :debug is the log level, print this to stdout
+                     (println (format "path %s triggered %s" path wid)))
                    (try
                      (callback new-state)
                      (catch Exception e
@@ -192,6 +205,11 @@
     nil))
 
 ;; addon dirs
+
+(defn-spec selected-addon-dir (s/or :ok ::sp/addon-dir, :no-selection nil?)
+  "returns the currently selected addon directory or nil if no directories exist to select from"
+  []
+  (get-state :cfg :selected-addon-dir))
 
 (defn-spec addon-dir-exists? boolean?
   ([addon-dir ::sp/addon-dir]
@@ -216,13 +234,9 @@
     (dosync ;; necessary? makes me feel better
      (add-addon-dir! addon-dir default-game-track)
      (swap! state assoc-in [:cfg :selected-addon-dir] addon-dir)
-     (swap! state assoc :tab-list [])))
+     (swap! state assoc :tab-list [])
+     (logging/add-ui-appender! state (selected-addon-dir))))
   nil)
-
-(defn-spec selected-addon-dir (s/or :ok ::sp/addon-dir, :no-selection nil?)
-  "returns the currently selected addon directory or nil if no directories exist to select from"
-  []
-  (get-state :cfg :selected-addon-dir))
 
 (defn-spec remove-addon-dir! nil?
   "removes the directory from user configuration, does not alter the directory or it's contents at all"
@@ -284,7 +298,7 @@
     :classic :classic-retail
     :retail-classic))
 
-;; settings
+;; stateful logging
 
 (defn-spec change-log-level! nil?
   "changes the effective log level from `logging/default-log-level` to `new-level`.
@@ -300,6 +314,8 @@
         (logging/add-file-appender! (paths :log-file))
         (info "writing logs to:" (paths :log-file)))))
   nil)
+
+;; settings
 
 (defn save-settings
   "writes user configuration to the filesystem"
@@ -347,11 +363,12 @@
 (defn affects-addon-wrapper
   [wrapped-fn]
   (fn [addon & args]
-    (try
-      (start-affecting-addon addon)
-      (apply wrapped-fn addon args)
-      (finally
-        (stop-affecting-addon addon)))))
+    (logging/with-addon addon
+      (try
+        (start-affecting-addon addon)
+        (apply wrapped-fn addon args)
+        (finally
+          (stop-affecting-addon addon))))))
 
 ;; downloading and installing and updating
 
@@ -379,7 +396,7 @@
    (cond
      ;; do some pre-installation checks
      (:ignore? addon) (error "refusing to install addon, addon is being ignored:" (:name addon))
-     (not (fs/writeable? install-dir)) (error "refusing to install addon, directory not writeable:" install-dir)
+     (not (fs/writeable? install-dir)) (error "failed to install addon, directory not writeable:" install-dir)
 
      :else ;; attempt downloading and installing addon
 
@@ -506,6 +523,7 @@
   (let [;; nil fields are removed from the catalogue item because they might override good values in the .toc or .nfo
         db-catalogue-addon (utils/drop-nils db-catalogue-addon [:description])]
     ;; merges left->right. catalogue-addon overwrites installed-addon, ':matched' overwrites catalogue-addon, etc
+    (logging/addon-log installed-addon :info (format "found in catalogue with source \"%s\" and id \"%s\"" (:source installed-addon) (:source-id installed-addon)))
     (merge installed-addon db-catalogue-addon {:matched? true})))
 
 ;;
@@ -600,8 +618,10 @@
   "compare the list of addons installed with the database of known addons and try to match the two up.
   when a match is found (see `db/-db-match-installed-addons-with-catalogue`), merge it into the addon data."
   [database :addon/summary-list, installed-addon-list :addon/toc-list]
-  (info (format "matching %s addons to catalogue" (count installed-addon-list)))
-  (let [match-results (db/-db-match-installed-addons-with-catalogue database installed-addon-list)
+  (let [num-installed (count installed-addon-list)
+        _ (when (> num-installed 0)
+            (info (format "matching %s addons to catalogue" (count installed-addon-list))))
+        match-results (db/-db-match-installed-addons-with-catalogue database installed-addon-list)
         [matched unmatched] (utils/split-filter :matched? match-results)
 
         ;; for those that *did* match, merge the installed addon data together with the catalogue data
@@ -611,7 +631,7 @@
 
         ;; todo: metrics gathering is good, but this is a little adhoc. shift into parent wrapper somehow.
         ;; some metrics we'll emit for the user.
-        [num-installed num-matched] [(count installed-addon-list) (count matched)]
+        num-matched (count matched)
         ;; we don't match ignored addons, we shouldn't report we couldn't find them either
         unmatched-names (->> unmatched (remove :ignore?) (map :name) set)]
 
@@ -624,6 +644,21 @@
                     (count unmatched-names)
                     (name (get-state :cfg :selected-catalogue))
                     (clojure.string/join ", " unmatched-names))))
+
+    (when-not (empty? unmatched)
+      (run! (fn [addon]
+              (logging/with-addon addon
+                (if (:ignore? addon)
+                  (info "not matched to catalogue, addon is being ignored")
+
+                  (do ;; todo: replace these with a :help level and a less scary colour
+                    (info "if this is part of a bundle, try \"File -> Re-install all\"")
+                    (info "try searching for this addon by name or description")
+                    (warn (format "failed to find %s in the '%s' catalogue"
+                                  (:dirname addon)
+                                  (name (get-state :cfg :selected-catalogue))))))))
+
+            unmatched))
 
     expanded-installed-addon-list))
 
@@ -668,21 +703,28 @@
   If addon is pinned to a specific version, `update?` will only be true if pinned version is different from installed version."
   [addon (s/or :unmatched :addon/toc
                :matched :addon/toc+summary+match)]
-  (let [expanded-addon (when (:matched? addon)
-                         (expand-summary-wrapper addon))
-        addon (or expanded-addon addon)] ;; expanded addon may still be nil
-    (assoc addon :update? (addon/updateable? addon))))
+  (logging/with-addon addon
+    (let [expanded-addon (when (:matched? addon)
+                           (expand-summary-wrapper addon))
+          addon (or expanded-addon addon) ;; expanded addon may still be nil
+          has-update? (addon/updateable? addon)]
+      (when has-update?
+        (info (format "update available \"%s\"" (:version addon))))
+      (assoc addon :update? has-update?))))
 
 (defn-spec check-for-updates nil?
   "downloads full details for all installed addons that can be found in summary list"
   []
   (when (selected-addon-dir)
-    (info "checking for updates")
-    (let [improved-addon-list (mapv check-for-update (get-state :installed-addon-list))
-          num-matched (->> improved-addon-list (filterv :matched?) count)
-          num-updates (->> improved-addon-list (filterv :update?) count)]
-      (update-installed-addon-list! improved-addon-list)
-      (info (format "%s addons checked, %s updates available" num-matched num-updates)))))
+    (let [installed-addon-list (get-state :installed-addon-list)
+          num-installed (count installed-addon-list)]
+      (when (> num-installed 0)
+        (info "checking for updates")
+        (let [improved-addon-list (mapv check-for-update installed-addon-list)
+              num-matched (->> improved-addon-list (filterv :matched?) count)
+              num-updates (->> improved-addon-list (filterv :update?) count)]
+          (update-installed-addon-list! improved-addon-list)
+          (info (format "%s addons checked, %s updates available" num-matched num-updates)))))))
 
 ;; ui interface
 
@@ -812,7 +854,8 @@
 
     ;; target any unmatched addons with no `:source` from the addon list and emit a warning
     (doseq [addon (remove :source addon-list)]
-      (warn (format "Addon '%s' has no match in the catalogue and may be skipped durlng import. It's best all addons match before doing an export." (:name addon))))
+      (logging/with-label "export"
+        (warn (format "Addon '%s' has no match in the catalogue and may be skipped during import. It's best all addons match before doing an export." (:name addon)))))
 
     (utils/dump-json-file output-file export)
     (info "wrote:" output-file)
@@ -871,11 +914,13 @@
         padding {:label ""
                  :description ""
                  ;; 2020-06: dirname must be a non-empty string
+                 ;; todo: why is dirname needed here?
                  :dirname addon/dummy-dirname
                  :interface-version 0
                  :installed-version "0"}
         addon-list (map #(merge padding %) addon-list)
 
+        ;; todo: why aren't we just calling `expand-summary-wrapper` ?
         ;; match each of these padded addon maps to entries in the catalogue database
         ;; afterwards this will call `update-installed-addon-list!` that will trigger a refresh in the gui
         matching-addon-list (-match-installed-addons-with-catalogue (get-state :db) addon-list)
@@ -922,6 +967,10 @@
   (profile
    {:when (get-state :profile?)}
 
+   ;; also in `set-addon-dir!` as it needs to be updated when the selected addon dir changes.
+   ;; `:selected-addon-dir` may not be set at this point but we still need to see logs in the UI
+   (logging/add-ui-appender! state (selected-addon-dir))
+
    ;; parse toc files in install-dir. do this first so we see *something* while catalogue downloads (next)
    (load-installed-addons)
 
@@ -945,19 +994,23 @@
 
    nil))
 
+;; todo: move to ui.cli
+(defn-spec remove-addon nil?
+  "removes given installed addon"
+  [installed-addon :addon/installed]
+  (logging/with-addon installed-addon
+    (addon/remove-addon (selected-addon-dir) installed-addon))
+  (refresh))
+
+;; todo: move to ui.cli
 (defn-spec remove-many-addons nil?
   "deletes each of the addons in the given `toc-list` and then calls `refresh`"
   [installed-addon-list :addon/toc-list]
   (let [addon-dir (selected-addon-dir)]
     (doseq [installed-addon installed-addon-list]
-      (addon/remove-addon addon-dir installed-addon))
+      (logging/with-addon installed-addon
+        (addon/remove-addon addon-dir installed-addon)))
     (refresh)))
-
-(defn-spec remove-addon nil?
-  "removes given installed addon"
-  [installed-addon :addon/installed]
-  (addon/remove-addon (selected-addon-dir) installed-addon)
-  (refresh))
 
 ;;
 

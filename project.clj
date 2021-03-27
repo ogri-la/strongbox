@@ -53,8 +53,9 @@
                        ;; - https://github.com/cljfx/cljfx/issues/17
                        :injections [(javafx.application.Platform/exit)]}}
 
-  :jvm-opts ["-Djdk.gtk.verbose=true" ;; debug output from JavaFX about which GTK it is looking for
-             ]
+  ;; debug output from JavaFX about which GTK it is looking for. 
+  ;; was useful in figuring out why javafx was failing to initialise even with xvfb.
+  ;;:jvm-opts ["-Djdk.gtk.verbose=true"]
 
   :main strongbox.main
 

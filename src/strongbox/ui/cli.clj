@@ -4,6 +4,7 @@
    [taoensso.timbre :as timbre :refer [spy info warn error debug]]
    [clojure.spec.alpha :as s]
    [strongbox
+    [logging :as logging]
     [addon :as addon]
     [constants :as constants]
     [specs :as sp]
@@ -152,7 +153,10 @@
   ([]
    (pin (get-state :selected-addon-list)))
   ([addon-list :addon/installed-list]
-   (run! #(addon/pin (core/selected-addon-dir) %)
+   (run! (fn [addon]
+           (logging/with-addon addon
+             (info (format "pinning to \"%s\"" (:installed-version addon)))
+             (addon/pin (core/selected-addon-dir) addon)))
          addon-list)
    (core/refresh)))
 
@@ -162,17 +166,21 @@
   ([]
    (unpin (get-state :selected-addon-list)))
   ([addon-list :addon/installed-list]
-   (run! #(addon/unpin (core/selected-addon-dir) %)
+   (run! (fn [addon]
+           (logging/addon-log addon :info (format "unpinning from \"%s\"" (:pinned-version addon)))
+           (addon/unpin (core/selected-addon-dir) addon))
          addon-list)
    (core/refresh)))
 
 (defn-spec -find-replace-release (s/or :ok :addon/expanded, :release-not-found nil?)
-  "looks for the `:installed-version` in the list of available releases and, if found, updates the addon."
+  "looks for the `:installed-version` in the `:release-list` and, if found, updates the addon.
+  this is an intermediate step before pinning or installing a previous release."
   [addon :addon/expanded]
   (if-let [matching-release (addon/find-release addon)]
     (merge addon matching-release)
-    (do (warn (format "%s '%s' not found in known releases. Using latest release instead." (:label addon) (:installed-version addon)))
-        addon)))
+    (logging/with-addon addon
+      (warn (format "release \"%s\" not found, using latest instead." (:installed-version addon)))
+      addon)))
 
 ;;
 
@@ -246,7 +254,10 @@
   ([addon-list :addon/installed-list]
    (->> addon-list
         (filter addon/ignorable?)
-        (run! (partial addon/ignore (core/selected-addon-dir))))
+        (run! (fn [addon]
+                (logging/with-addon addon
+                  (info "ignoring")
+                  (addon/ignore (core/selected-addon-dir) addon)))))
    (core/refresh)))
 
 (defn-spec clear-ignore-selected nil?
@@ -255,7 +266,11 @@
   ([]
    (clear-ignore-selected (get-state :selected-addon-list)))
   ([addon-list :addon/installed-list]
-   (run! (partial addon/clear-ignore (core/selected-addon-dir)) addon-list)
+   (run! (fn [addon]
+           (logging/with-addon addon
+             (addon/clear-ignore (core/selected-addon-dir) addon)
+             (info "stopped ignoring")))
+         addon-list)
    (core/refresh)))
 
 ;; selecting addons
@@ -287,16 +302,21 @@
 
 ;; tabs
 
+(defn-spec change-notice-logger-level nil?
+  "changes the log level on the UI notice-logger widget.
+  changes the log level for a tab in `:tab-list` when `tab-idx` is also given."
+  ([new-log-level ::sp/log-level]
+   (change-notice-logger-level new-log-level nil))
+  ([new-log-level ::sp/log-level, tab-idx (s/nilable int?)]
+   (if tab-idx
+     (swap! core/state assoc-in [:tab-list tab-idx :log-level] new-log-level)
+     (swap! core/state assoc :gui-log-level new-log-level))
+   nil))
+
 (defn-spec remove-all-tabs nil?
   "removes all dynamic addon detail tabs leaving only the static tabs"
   []
   (swap! core/state assoc :tab-list [])
-  nil)
-
-(defn-spec remove-tab nil?
-  "removes a specific tab from the `:tab-list` using that tab's `:tab-id`"
-  [tab-id string?]
-  (swap! core/state update-in [:tab-list] (partial (comp vec remove) #(= tab-id (:tab-id %))))
   nil)
 
 (defn-spec remove-tab-at-idx nil?
@@ -313,6 +333,7 @@
   (let [new-tab {:tab-id tab-id
                  :label tab-label
                  :closable? closable?
+                 :log-level :info
                  :tab-data tab-data}
         tab-list (remove (fn [tab]
                            (= (dissoc tab :tab-id)
@@ -328,7 +349,7 @@
   (let [tab-id (utils/unique-id)
         closable? true
         addon-id (utils/extract-addon-id addon)]
-    (add-tab tab-id (:label addon) closable? addon-id)))
+    (add-tab tab-id (or (:dirname addon) (:label addon) (:name addon) "[bug: missing tab name!]") closable? addon-id)))
 
 
 ;; debug

@@ -604,3 +604,10 @@
   "returns a UUID as a string that is guaranteed to always be unique."
   []
   (str (java.util.UUID/randomUUID)))
+
+(defn count-occurances
+  ;; {"Foo-v1.zip" 1, "Foo-v2.zip 1, "Foo.zip" 5}
+  [my-list my-key]
+  (let [-count-occurances (fn [accumulator-m m]
+                            (update accumulator-m (get m my-key) (fn [n] (inc (or n 0)))))]
+    (reduce -count-occurances {} my-list)))

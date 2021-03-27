@@ -2,7 +2,7 @@
   (:require
    [me.raynes.fs :as fs]
    [clojure.string :refer [lower-case join capitalize replace] :rename {replace str-replace}]
-   [taoensso.timbre :as timbre :refer [spy info]] ;; debug info warn error spy]] 
+   [taoensso.timbre :as timbre :refer [spy info debug warn error]]
    [cljfx.ext.table-view :as fx.ext.table-view]
    [cljfx.lifecycle :as fx.lifecycle]
    [cljfx.component :as fx.component]
@@ -15,11 +15,10 @@
    [strongbox
     [addon :as addon]
     [specs :as sp]
-    [logging :as logging]
     [utils :as utils :refer [no-new-lines]]
     [core :as core]])
   (:import
-   [java.util List]
+   [java.util List Calendar]
    [javafx.util Callback]
    [javafx.scene.control TableRow TextInputDialog Alert Alert$AlertType ButtonType]
    [javafx.scene.input KeyCode]
@@ -129,94 +128,78 @@
          (fn [theme-kw]
            (let [colour-map (get themes theme-kw)
                  colour #(name (get colour-map % "pink"))]
-             {"#about-dialog "
+             {;;
+              ;; 'about' dialog
+              ;; lives outside of main styling for some reason
+              ;;
 
+              "#about-dialog "
               {:-fx-spacing "3"
 
                "#about-pane-hyperlink"
                {:-fx-font-size "1.1em"
-                :-fx-padding "0 0 4 -1"
+                :-fx-padding "0 0 4 -1"}
 
-                ":hover" {:-fx-text-fill "blue"}}
+               "#about-pane-hyperlink:hover"
+               {:-fx-text-fill "blue"}
 
                "#about-pane-title"
                {:-fx-font-size "1.5em"
                 :-fx-padding "10em"}}
 
+              ;;
+              ;; main app styling
+              ;; 
+
               (format "#%s.root " (name theme-kw))
               {:-fx-padding 0
                :-fx-base (colour :base)
-
-
-               ;; backgrounds
-
-
                :-fx-accent (colour :accent) ;; selection colour of backgrounds
+
+               ;; removes gradient from 'File' menu
+               "#main-menu"
+               {:-fx-background-color (colour :base)}
+
+               ;; todo: what did this do again?
+               ;;".context-menu"
+               ;;{:-fx-effect "None"}
+
+               ".combo-box-base"
+               {:-fx-background-radius "0"
+                ;; truncation now happens from the left. thanks to:
+                ;; https://stackoverflow.com/questions/36264656/scalafx-javafx-how-can-i-change-the-overrun-style-of-a-combobox
+                " > .list-cell" {:-fx-text-overrun "leading-ellipsis"}}
+
+               ".button"
+               {:-fx-background-radius "0"
+                :-fx-padding "5px 17px" ;; makes buttons same height as dropdowns
+                ":hover" {:-fx-text-fill (colour :button-text-hovering)}}
+
+               ;;
+               ;; tabber
+               ;;
+
+               ".tab-pane > .tab-header-area"
+               {:-fx-padding ".65em 0 0 .6em"
+                :-fx-background-color "green"}
+
+               ;; tabs
+               ".tab-pane > .tab-header-area > .headers-region > .tab"
+               {:-fx-background-radius "0"
+                :-fx-padding ".25em 1em"
+                :-fx-focus-color "transparent" ;; it's a tab, why gild the lilly
+                :-fx-faint-focus-color "transparent" ;; literally, a very faint box remains
+                }
+
+
+               ;;
+               ;; common tables
+               ;;
+
 
                ".table-placeholder-text"
                {:-fx-font-size "1.5em"
                 :-fx-fill (colour :table-font-colour)}
-
-               "#main-menu"
-               {:-fx-background-color (colour :base)}
-
-               "#addon-dir-dropdown"
-               {:-fx-max-width "600px"}
-
-               ".context-menu"
-               {:-fx-effect "None"}
-
-               ".combo-box-base"
-               {:-fx-padding "1px"
-                :-fx-background-radius "0"
-                ;; truncation happens from the left. thanks to:
-                ;; https://stackoverflow.com/questions/36264656/scalafx-javafx-how-can-i-change-the-overrun-style-of-a-combobox
-                " > .list-cell" {:-fx-text-overrun "leading-ellipsis"}}
-
-               ".button" {:-fx-background-radius "0"
-                          :-fx-padding ["6px" "17px"]
-                          ":hover" {:-fx-text-fill (colour :button-text-hovering)}}
-
-               ;; tabber
-               ".tab-pane > .tab-header-area > .headers-region > .tab"
-               {:-fx-background-radius "0"}
-
-
-               ;;
-               ;; addon-detail
-               ;;
-
-
-               ".addon-detail "
-               {".title"
-                {:-fx-font-size "2em"
-                 :-fx-padding "1em 0 .25em 1em"
-                 ;;:-fx-background-color "green"
-                 :-fx-alignment "center"}
-
-                ".subtitle"
-                {;;:-fx-background-color "green"
-                 ;;:-fx-padding "0 0 0 1em"
-                 :-fx-font-size "1.1em"}
-
-                ".description"
-                {:-fx-font-size "1.4em"
-                 :-fx-padding "0 0 1.5em 1em"
-                 :-fx-wrap-text true
-                 :-fx-font-style "italic"}
-
-                ".ext-links "
-                {;;:-fx-background-color "gray"
-                 :-fx-padding "0 0 1em 1.75em"
-
-                 ".hyperlink"
-                 {;;:-fx-background-color "green"
-                  :-fx-text-fill "blue"
-                  :-fx-padding "0 0 0 1em"}}} ;; ends .addon-detail
-
-
-               ;; common tables
-
 
                ".table-view"
                {:-fx-table-cell-border-color (colour :table-border)
@@ -232,46 +215,82 @@
                ".table-view .table-row-cell"
                {:-fx-border-insets "-1 -1 0 -1"
                 :-fx-border-color (colour :table-border)
-                " .table-cell" {:-fx-text-fill (colour :table-font-colour)}
+
+                " .table-cell"
+                {:-fx-text-fill (colour :table-font-colour)}
 
                 ;; even
                 :-fx-background-color (colour :row)
-                ":hover" {:-fx-background-color (colour :row-hover)}
-                ":selected" {:-fx-background-color (colour :row-selected)
-                             " .table-cell" {:-fx-text-fill "-fx-focused-text-base-color"}
-                             :-fx-table-cell-border-color (colour :table-border)}
-                ":selected:hover" {:-fx-background-color (colour :row-hover)}
 
-                ":odd" {:-fx-background-color (colour :row)}
-                ":odd:hover" {:-fx-background-color (colour :row-hover)}
-                ":odd:selected" {:-fx-background-color (colour :row-selected)}
-                ":odd:selected:hover" {:-fx-background-color (colour :row-hover)}
+                ":hover"
+                {:-fx-background-color (colour :row-hover)}
 
-                ".unsteady" {;; '!important' so that it takes precedence over .updateable addons
-                             :-fx-background-color (str (colour :unsteady) " !important")}}
+                ":selected"
+                {:-fx-background-color (colour :row-selected)
+
+                 " .table-cell"
+                 {:-fx-text-fill "-fx-focused-text-base-color"}
+                 :-fx-table-cell-border-color (colour :table-border)}
+
+                ":selected:hover"
+                {:-fx-background-color (colour :row-hover)}
+
+                ":odd"
+                {:-fx-background-color (colour :row)}
+
+                ":odd:hover"
+                {:-fx-background-color (colour :row-hover)}
+
+                ":odd:selected"
+                {:-fx-background-color (colour :row-selected)}
+
+                ":odd:selected:hover"
+                {:-fx-background-color (colour :row-hover)}
+
+                ".unsteady"
+                {;; '!important' so that it takes precedence over .updateable addons
+                 :-fx-background-color (str (colour :unsteady) " !important")}}
 
 
-               ;; installed-addons menu
+               ;;
+               ;; common table fields
+               ;;
 
-               ;; prevent truncation and ellipses
+
+               ".table-view .source-column"
+               {:-fx-alignment "center-left"
+                :-fx-padding "-2 0 0 0" ;; hyperlinks are just a little bit off .. weird.
+
+                " .hyperlink:visited"
+                {:-fx-underline "false"}
+
+                " .hyperlink, .hyperlink:hover"
+                {:-fx-underline "false"
+                 :-fx-text-fill (colour :jfx-hyperlink)
+                 :-fx-font-weight (colour :jfx-hyperlink-weight)}}
 
 
-               "#update-all-button "
+               ;;
+               ;; installed-addons tab
+               ;;
+
+
+               "#update-all-button"
                {:-fx-min-width "101px"}
 
-               "#game-track-combo-box "
+               "#game-track-combo-box"
                {:-fx-min-width "100px"}
 
-
                ;; installed-addons table
-
-
                ".table-view#installed-addons"
                {" .updateable"
                 {:-fx-background-color (colour :row-updateable)
 
-                 " .table-cell" {:-fx-text-fill (colour :row-updateable-text)}
-                 " .hyperlink, .hyperlink:hover" {:-fx-text-fill (colour :jfx-hyperlink-updateable)}
+                 " .table-cell"
+                 {:-fx-text-fill (colour :row-updateable-text)}
+
+                 " .hyperlink, .hyperlink:hover"
+                 {:-fx-text-fill (colour :jfx-hyperlink-updateable)}
 
                  ;; selected updateable addons are do not look any different
                  ;; todo: make selected+updateable addons use slightly brighter versions of themselves
@@ -279,7 +298,8 @@
                  {;; !important so that hovering over a selected+updateable row doesn't change it's colour
                   :-fx-background-color (str (colour :row-updateable-selected) " !important")}
 
-                 ":hover" {:-fx-background-color (colour :row-updateable-hover)}}
+                 ":hover"
+                 {:-fx-background-color (colour :row-updateable-hover)}}
 
                 " .ignored .table-cell"
                 {:-fx-text-fill (colour :installed/ignored-fg)}
@@ -309,33 +329,58 @@
                  :-fx-spacing 0}}
 
 
+               ;;
                ;; notice-logger
+               ;;
 
 
-               ".table-view#notice-logger"
-               {" .warn" {:-fx-background-color (colour :row-warning)
-                          ":selected" {:-fx-background-color "-fx-selection-bar"}}
+               ".table-view#notice-logger "
+               {:-fx-font-family "monospace"
 
-                " .error" {:-fx-background-color (colour :row-error)
-                           ":selected" {:-fx-background-color "-fx-selection-bar"}}
+                ".warn"
+                {:-fx-background-color (colour :row-warning)}
+                ".warn:selected"
+                {:-fx-background-color "-fx-selection-bar"}
 
-                " #level" {:-fx-alignment "center"
-                           :-fx-border-width "0"}
+                ".error"
+                {:-fx-background-color (colour :row-error)}
+                ".error:selected"
+                {:-fx-background-color "-fx-selection-bar"}
 
-                ;; hide column headers
+                "#level"
+                {:-fx-alignment "center"}
+
+                "#source"
+                {:-fx-alignment "center"
+                 :-fx-pref-width 150}
+
+                "#time"
+                {:-fx-alignment "center"}
+
+                "#message"
+                {:-fx-padding "0 0 0 .5em"}
+
+                "#message.column-header .label"
+                {:-fx-alignment "center-left"}}
 
 
-                " > .column-header-background"
-                {:-fx-max-height 0
-                 :-fx-pref-height 0
-                 :-fx-min-height 0}
+               ;;
+               ;; notice-logger-nav
+               ;;
 
-                :-fx-font-family "monospace"}
 
-               "#splitter .split-pane-divider"
-               {:-fx-padding "8px"}
+               "#notice-logger-nav"
+               {:-fx-padding "1.1em .75em" ;; 1.1em so installed, search and log pane tables all start at the same height
+                :-fx-font-size ".9em"
 
+                " .radio-button"
+                {:-fx-padding "0 .5em"}}
+
+
+               ;;
                ;; search
+               ;;
+
 
                "#search-install-button"
                {:-fx-min-width "90px"}
@@ -355,8 +400,10 @@
 
                ".table-view#search-addons"
                {" .downloads-column" {:-fx-alignment "center-right"}
-                " .installed" {" > .table-cell" {} ;;:-fx-text-fill "black"
-                               :-fx-background-color (colour :already-installed-row-colour)}}
+
+                " .installed"
+                {" > .table-cell" {} ;;:-fx-text-fill "black"
+                 :-fx-background-color (colour :already-installed-row-colour)}}
 
                "#status-bar"
                {:-fx-font-size ".9em"
@@ -367,24 +414,66 @@
                  :-fx-fill (colour :table-font-colour)}}
 
 
-               ;; common table fields
+               ;;
+               ;; addon-detail
+               ;;
 
 
-               ".table-view .source-column"
-               {:-fx-alignment "center-left"
-                :-fx-padding "-2 0 0 0" ;; hyperlinks are just a little bit off .. weird.
-                " .hyperlink:visited" {:-fx-underline "false"}
-                " .hyperlink, .hyperlink:hover" {:-fx-underline "false"
-                                                 :-fx-text-fill (colour :jfx-hyperlink)
-                                                 :-fx-font-weight (colour :jfx-hyperlink-weight)}}}}))]
+               ".addon-detail "
+               {".title"
+                {:-fx-font-size "2em"
+                 :-fx-padding "1em 0 .25em 1em"
+                 ;;:-fx-background-color "green"
+                 :-fx-alignment "center"}
+
+                ".subtitle"
+                {;;:-fx-padding "0 0 0 1em"
+                 :-fx-font-size "1.1em"}
+
+                ".description"
+                {:-fx-font-size "1.4em"
+                 :-fx-padding "0 0 1.5em 1em"
+                 :-fx-wrap-text true
+                 :-fx-font-style "italic"}
+
+                ".ext-links"
+                {:-fx-padding "0 0 1em 1.75em"}
+
+                ".ext-links .hyperlink"
+                {:-fx-text-fill "blue"
+                 :-fx-padding "0 0 0 1em"}
+
+                ;; hide 'source' column in notice-logger in addon-detail pane
+                ".table-view#notice-logger #source"
+                {:-fx-max-width 0
+                 :-fx-pref-width 0
+                 :-fx-min-width 0}
+
+                ;; hide column headers in notice-logger in addon-detail pane
+                ".table-view#notice-logger .column-header-background"
+                {:-fx-max-height 0
+                 :-fx-pref-height 0
+                 :-fx-min-height 0}
+
+                "#notice-logger-nav"
+                {:-fx-padding "0 0 .5em 0"
+                 :-fx-alignment "top-right"}} ;; ends .addon-detail
+
+                ;; ---
+               }}))]
 
      ;; return a single map with all themes in it.
      ;; themes are separated by their top-level 'root' key.
      (into {} (for [[theme-key _] themes]
                 (generate-style theme-key))))))
 
-;;
+(def INSTALLED-TAB 0)
+(def SEARCH-TAB 1)
+(def LOG-TAB 2)
 
+(def NUM-STATIC-TABS 3)
+
+;;
 
 (defn get-window
   "returns the application `Window` object."
@@ -401,6 +490,16 @@
 (defn select
   [node-id]
   (-> (get-window) .getScene .getRoot (.lookupAll node-id)))
+
+(defn-spec tab-index int?
+  "returns the index of the currently selected tab"
+  []
+  (-> (select "#tabber") first .getSelectionModel .getSelectedIndex))
+
+(defn-spec tab-list-tab-index int?
+  "returns the index of the currently selected tab within `:tab-list`, which doesn't include the static tabs"
+  []
+  (- (tab-index) NUM-STATIC-TABS))
 
 (defn extension-filter
   [x]
@@ -490,11 +589,27 @@
     (callback)
     nil))
 
-;;
+;; https://github.com/cljfx/cljfx/blob/babc2f09e4827efb29f859a442a1658d82169a62/examples/e25_radio_buttons.clj
+(defn radio-group
+  [{:keys [options value on-action label-coercer container-id container-type]}]
+  {:fx/type fx/ext-let-refs
+   :refs {::toggle-group {:fx/type :toggle-group}}
+   :desc {:fx/type (or container-type :h-box)
+          :id (or container-id (utils/unique-id))
+          :children (for [option options]
+                      {:fx/type :radio-button
+                       :toggle-group {:fx/type fx/ext-get-ref
+                                      :ref ::toggle-group}
+                       :selected (= option value)
+                       :text ((or label-coercer str) option)
+                       :on-action (partial on-action option)})}})
 
-(def INSTALLED-TAB 0)
-(def SEARCH-TAB 1)
-(def LOG-TAB 2)
+(defn-spec component-instance :javafx/node
+  "given a cljfx component `description` map, returns a JavaFX instance of it."
+  [description map?]
+  (-> description fx/create-component fx/instance))
+
+;;
 
 (defn button
   "generates a simple button with a means to check to see if it should be disabled and an optional tooltip"
@@ -631,7 +746,7 @@
 (defn-spec switch-tab-latest nil?
   "switches the tab-pan to the furthest-right tab"
   []
-  (switch-tab-idx (-> (core/get-state :tab-list) count (+ 3) dec)))
+  (switch-tab-idx (-> (core/get-state :tab-list) count (+ NUM-STATIC-TABS) dec)))
 
 (defn-spec switch-tab-event-handler fn?
   "returns an event handler that switches to the given `tab-idx` when called."
@@ -712,7 +827,7 @@
 (defn about-strongbox-dialog
   "displays an informational dialog to the user about strongbox"
   [event]
-  (alert :info "" {:content (-> (-about-strongbox-dialog) fx/create-component fx/instance)})
+  (alert :info "" {:content (component-instance (-about-strongbox-dialog))})
   nil)
 
 (defn delete-selected-confirmation-handler
@@ -725,10 +840,10 @@
       (let [label-list (mapv (fn [row]
                                {:fx/type :text
                                 :text (str " - " (:name row))}) selected)
-            content (fx/create-component {:fx/type :v-box
-                                          :children (into [{:fx/type :text
-                                                            :text (format "Deleting %s:" (count selected))}] label-list)})
-            result (alert :confirm "" {:content (fx/instance content)})]
+            content {:fx/type :v-box
+                     :children (into [{:fx/type :text
+                                       :text (format "Deleting %s:" (count selected))}] label-list)}
+            result (alert :confirm "" {:content (component-instance content)})]
         (when (= (.get result) ButtonType/OK)
           (cli/delete-selected)))))
   nil)
@@ -798,8 +913,7 @@
   [tab-list :ui/tab-list]
   (let [addon-detail-menuitem
         (fn [idx tab]
-          (let [num-static-tabs 3
-                tab-idx (+ idx num-static-tabs)]
+          (let [tab-idx (+ idx NUM-STATIC-TABS)]
             (menu-item (:label tab) (async-handler #(switch-tab tab-idx)))))
         close-all (menu-item "Close all" (async-handler cli/remove-all-tabs))]
     (concat (map-indexed addon-detail-menuitem tab-list)
@@ -963,7 +1077,7 @@
 (defn href-to-hyperlink
   "returns a hyperlink instance or empty text"
   [row]
-  (-> row -href-to-hyperlink fx/create-component fx/instance))
+  (component-instance (-href-to-hyperlink row)))
 
 (defn-spec available-versions (s/or :ok string? :no-version-available nil?)
   "formats the 'available version' string depending on the state of the addon.
@@ -1054,7 +1168,7 @@
             :on-action (fn [_]
                          (cli/add-addon-tab row)
                          (switch-tab-latest))}]
-    (-> ub fx/create-component fx/instance)))
+    (component-instance ub)))
 
 (defn installed-addons-table
   [{:keys [fx/context]}]
@@ -1076,7 +1190,6 @@
 
     {:fx/type fx.ext.table-view/with-selection-props
      :props {:selection-mode :multiple
-             ;; unlike gui.clj, we have access to the original data here. no need to re-select addons.
              :on-selected-items-changed cli/select-addons*}
      :desc {:fx/type :table-view
             :id "installed-addons"
@@ -1106,21 +1219,85 @@
             :items (or row-list [])}}))
 
 (defn notice-logger
-  [{:keys [fx/context]}]
-  (let [log-message-list (fx/sub-val context :log-message-list)
-        log-message-list (reverse log-message-list) ;; nfi how to programmatically change column sort order
-        column-list [{:id "level" :text "level" :max-width 100 :cell-value-factory (comp name :level)}
+  "a log widget that displays a list of log lines.
+  used by itself as well as embedded into the addon detail page.
+  pass it a `filter-fn` to remove entries in the `:log-lines` list."
+  [{:keys [fx/context tab-idx filter-fn]}]
+  (let [filter-fn (or filter-fn identity)
+        level-map {:debug 0 :info 1 :warn 2 :error 3}
+        current-log-level (if tab-idx
+                            (fx/sub-val context get-in [:app-state :tab-list tab-idx :log-level])
+                            (fx/sub-val context get-in [:app-state :gui-log-level]))
+        log-level-filter (fn [log-line]
+                           (>= (-> log-line :level level-map) (level-map current-log-level)))
+
+        log-message-list (->> (fx/sub-val context get-in [:app-state :log-lines])
+                              (filter filter-fn)
+                              ;; nfi how to programmatically change column sort order
+                              reverse)
+
+        level-occurances (utils/count-occurances log-message-list :level)
+
+        source-label (fn [row]
+                       (or (some-> row :source :dirname)
+                           (some-> row :source :name)
+                           "app"))
+
+        column-list [{:id "source" :text "source" :max-width 120 :cell-value-factory source-label}
+                     {:id "level" :text "level" :max-width 80 :cell-value-factory (comp name :level)}
                      {:id "time" :text "time" :max-width 100 :cell-value-factory :time}
-                     {:text "message" :pref-width 500 :cell-value-factory :message}]]
-    {:fx/type :table-view
-     :id "notice-logger"
-     :selection-mode :multiple
-     :row-factory {:fx/cell-type :table-row
-                   :describe (fn [row]
-                               {:style-class ["table-row-cell" (name (:level row))]})}
-     :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
-     :columns (mapv table-column column-list)
-     :items (or log-message-list [])}))
+                     {:id "message" :text "message" :pref-width 500 :cell-value-factory :message}]
+
+        log-level-list [:debug :info :warn :error]
+        log-level-list (if-not (contains? level-occurances :debug)
+                         (rest log-level-list)
+                         log-level-list)
+        selected-log-level (fx/sub-val context get-in (if tab-idx
+                                                        [:app-state :tab-list tab-idx :log-level]
+                                                        [:app-state :gui-log-level]))
+        log-level-changed-handler (fn [log-level _]
+                                    (cli/change-notice-logger-level (keyword log-level) tab-idx))
+
+        label-coercer (fn [log-level]
+                        (let [num-occurances (level-occurances log-level)]
+                          (format "%s (%s)" (name log-level) (or num-occurances 0))))
+
+        log-message-list (filter log-level-filter log-message-list)]
+    {:fx/type :border-pane
+     :top {:fx/type radio-group
+           :options log-level-list
+           :value selected-log-level
+           :label-coercer label-coercer
+           :container-id "notice-logger-nav"
+           :on-action log-level-changed-handler}
+
+     :center {:fx/type :table-view
+              :id "notice-logger"
+              :placeholder {:fx/type :text
+                            :style-class ["table-placeholder-text"]
+                            :text ""}
+              :selection-mode :multiple
+              :row-factory {:fx/cell-type :table-row
+                            :describe (fn [row]
+                                        ;; we get a nil row when going up the severity level and some rows get filtered out ... weird.
+                                        (when row
+                                          {:style-class ["table-row-cell" (name (:level row))]
+                                           :on-mouse-clicked
+                                           (fn [e]
+                                             ;; double click handler https://github.com/cljfx/cljfx/issues/118
+                                             (when (and (= javafx.scene.input.MouseButton/PRIMARY (.getButton e))
+                                                        (= 2 (.getClickCount e)))
+                                               (if (or (contains? (:source row) :dirname)
+                                                       (contains? (:source row) :source-id))
+                                                 (do (cli/add-addon-tab (:source row))
+                                                     (switch-tab-latest))
+                                                 (let [remaining-seconds (- 60 (-> (Calendar/getInstance) (.get Calendar/SECOND)))]
+                                                   (if (> remaining-seconds 1)
+                                                     (warn (format "self destruction in T-minus %s seconds" remaining-seconds))
+                                                     (error "fah-wooosh ... BOOOOOO ... /oh the humanity/ ... OOOOOOHHHMMM"))))))}))}
+              :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
+              :columns (mapv table-column column-list)
+              :items (or log-message-list [])}}))
 
 (defn installed-addons-pane
   [_]
@@ -1261,72 +1438,131 @@
                        :tooltip "Permanently delete"})]})
 
 (defn addon-detail-pane
-  [{:keys [fx/context addon-id]}]
+  "a place to elaborate on what we know about an addon as well somewhere we can put lots of buttons and widgets."
+  [{:keys [fx/context addon-id tab-idx]}]
   (let [installed-addons (fx/sub-val context get-in [:app-state :installed-addon-list])
         catalogue (fx/sub-val context get-in [:app-state :db]) ;; worst case is actually not so bad ...
-        addon-id-keys (keys addon-id)
+        ;;addon-id-keys (keys addon-id) ;; [dirname] [source source-id], [source source-id dirname]
+
+        -id-dirname (:dirname addon-id)
+        -id-dirname? (not (nil? -id-dirname))
+        dirname-matcher (fn [addon]
+                          (= -id-dirname (:dirname addon)))
+        -id-source (select-keys addon-id [:source :source-id])
+        -id-source? (not (empty? -id-source))
+        source-matcher (fn [addon]
+                         (= -id-source (select-keys addon [:source :source-id])))
+
         matcher (fn [addon]
-                  (= addon-id (select-keys addon addon-id-keys)))
+                  (or (when -id-dirname?
+                        (dirname-matcher addon))
+                      (when -id-source?
+                        (source-matcher addon))))
+
         ;; we may be given an installed addon, an ignored and unmatched addon, a catalogue entry so look in the installed
         ;; addon list first because it's smaller than the catalogue.
         addon (or (->> installed-addons (filter matcher) first)
-                  (->> catalogue (filter matcher) first))]
-    {:fx/type :v-box
-     :id "addon-detail-pane"
-     :style-class ["addon-detail"]
-     :children (utils/items
-                [{:fx/type :label
-                  :style-class ["title"]
-                  :text (:label addon)}
+                  (->> catalogue (filter matcher) first))
 
-                 {:fx/type :h-box
-                  :style-class ["ext-links"]
-                  :children (utils/items
-                             [{:fx/type :label
-                               :style-class ["subtitle"]
-                               :text (cond
-                                       (:update? addon)
-                                       (format "%s (%s available)" (:installed-version addon) (:version addon))
+        ;; at this point addon may still be nil!
+        ;; for example, an unmatched addon in the install dir is double clicked. we have a :dirname and that is all.
+        ;; we can open the addon-detail pane but if we then delete the addon there is no longer any way to tie this addon detail pane
+        ;; to addon data in the installed-addon-list (deleted) or the catalogue (no match).
+        ;; we're forced to commit harikiri and close ourselves.
+        ]
+    (if (nil? addon)
+      ;; this dodgy logic can be pushed back up the stack but we ultimately need to check for an addon and remove/exclude a tab if it exists.
+      ;; deleting an addon doesn't affect the :tab-list, so we can't push this into #tabber, but perhaps we should re-check the open tabs when an addon is deleted?
+      ;; todo: more thought required. for now it doesn't crash.
+      (do (cli/remove-tab-at-idx tab-idx)
+          {:fx/type :label :text "goodbye"})
 
-                                       (:installed-version addon)
-                                       (format "%s" (:installed-version addon))
+      (let [addon-source {:install-dir (core/selected-addon-dir)}
+            preferred-match (merge addon-source {:dirname (:dirname addon)})
+            alt-match (merge addon-source {:source (:source addon) :source-id (:source-id addon)})
+            notice-pane-filter (fn [log-line]
+                                 (or (= preferred-match (select-keys (:source log-line) [:install-dir :dirname]))
+                                     (= alt-match (select-keys (:source log-line) [:install-dir :source :source-id]))))]
+        {:fx/type :v-box
+         :id "addon-detail-pane"
+         :style-class ["addon-detail"]
+         :children (utils/items
+                    [{:fx/type :label
+                      :style-class ["title"]
+                      :text (:label addon)}
 
-                                       (:version addon)
-                                       (format "%s" (:version addon)))}
+                     {:fx/type :h-box
+                      :style-class ["ext-links"]
+                      :children (utils/items
+                                 [{:fx/type :label
+                                   :style-class ["subtitle"]
+                                   :text (cond
+                                           (:update? addon)
+                                           (format "%s (%s available)" (:installed-version addon) (:version addon))
 
-                              ;; if installed, path to addon directory, clicking it opens file browser
-                              (addon-fs-link (:dirname addon))
+                                           (:installed-version addon)
+                                           (format "%s" (:installed-version addon))
 
-                               ;; order is important, a hyperlink may not exist, can't have nav jumping around
-                              (-href-to-hyperlink addon)])}
+                                           (:version addon)
+                                           (format "%s" (:version addon)))}
 
-                 (when-not (empty? (:description addon))
-                   {:fx/type :label
-                    :style-class ["description"]
-                    :text (:description addon)})
+                                  ;; if installed, path to addon directory, clicking it opens file browser
+                                  (addon-fs-link (:dirname addon))
 
-                 {:fx/type addon-detail-button-menu
-                  :addon addon}
+                                  ;; order is important, a hyperlink may not exist, can't have nav jumping around.
+                                  (-href-to-hyperlink addon)])}
 
-                 {:fx/type :text-area
-                  :text (str addon)
-                  :wrap-text true}])}))
+                     (when-not (empty? (:description addon))
+                       {:fx/type :label
+                        :style-class ["description"]
+                        :text (:description addon)})
+
+                     {:fx/type addon-detail-button-menu
+                      :addon addon}
+
+                     {:fx/type notice-logger
+                      :tab-idx tab-idx
+                      :filter-fn notice-pane-filter}
+
+                     ;; ----
+
+
+                     {:fx/type :text-area
+                      :text (str addon)
+                      :wrap-text true}])}))))
 
 (defn addon-detail-tab
-  [{:keys [tab]}]
+  [{:keys [tab tab-idx]}]
   {:fx/type :tab
    :id (:tab-id tab)
    :text (:label tab)
    :closable (:closable? tab)
    :on-closed (fn [_]
-                (cli/remove-tab (:tab-id tab))
+                (cli/remove-tab-at-idx tab-idx)
                 (switch-tab INSTALLED-TAB))
    :content {:fx/type addon-detail-pane
+             :tab-idx tab-idx
              :addon-id (:tab-data tab)}})
+
+(defn log-tab
+  [{:keys [fx/context]}]
+  (let [level-set (->> (fx/sub-val context get-in [:app-state :log-lines])
+                       (map :level)
+                       set)
+        lbl (cond
+              (some #{:error} level-set) " (errors)"
+              (some #{:warn} level-set) " (warnings)"
+              :else "")]
+    {:fx/type :tab
+     :text (str "log" lbl)
+     :id "log-tab"
+     :closable false
+     :content {:fx/type notice-logger}}))
 
 (defn tabber
   [{:keys [fx/context]}]
-  (let [static-tabs
+  (let [dynamic-tab-list (fx/sub-val context get-in [:app-state :tab-list])
+        static-tabs
         [{:fx/type :tab
           :text "installed"
           :id "installed-tab"
@@ -1344,15 +1580,8 @@
                                        (fn []
                                          (-> text-field .requestFocus))))))
           :content {:fx/type search-addons-pane}}
-         {:fx/type :tab
-          :text "log"
-          :id "log-tab"
-          :closable false
-          :content {:fx/type notice-logger}}]
-
-        dynamic-tabs (mapv (fn [tab]
-                             {:fx/type addon-detail-tab :tab tab})
-                           (fx/sub-val context get-in [:app-state :tab-list]))]
+         {:fx/type log-tab}]
+        dynamic-tabs (map-indexed (fn [idx tab] {:fx/type addon-detail-tab :tab tab :tab-idx idx}) dynamic-tab-list)]
     {:fx/type :tab-pane
      :id "tabber"
      :tab-closing-policy javafx.scene.control.TabPane$TabClosingPolicy/ALL_TABS
@@ -1386,17 +1615,6 @@
 
 ;;
 
-(defn-spec tab-index int?
-  "returns the index of the currently selected tab"
-  []
-  (-> (select "#tabber") first .getSelectionModel .getSelectedIndex))
-
-(defn-spec tab-list-tab-index int?
-  "returns the index of the currently selected tab within `:tab-list`, which doesn't include the static tabs"
-  []
-  (let [num-static-tabs 3]
-    (- (tab-index) num-static-tabs)))
-
 (defn app
   "returns a description of the javafx Stage, Scene and the 'root' node.
   the root node is the top-most node from which all others are descendents of."
@@ -1420,8 +1638,7 @@
                                        ;; UNLESS that previous tab is the last of the static tabs
                                        ;; then select the first of the static tabs
                                        prev-tab (dec (tab-index))
-                                       num-static-tabs 3
-                                       prev-tab (if (= prev-tab (dec num-static-tabs)) 0 prev-tab)]
+                                       prev-tab (if (= prev-tab (dec NUM-STATIC-TABS)) 0 prev-tab)]
                                    (cli/remove-tab-at-idx (tab-list-tab-index))
                                    (switch-tab prev-tab)))
                                nil)
@@ -1432,47 +1649,22 @@
                     :center {:fx/type tabber}
                     :bottom {:fx/type status-bar}}}}))
 
-;; absolutely no logging in here
-(defn init-notice-logger!
-  "log handler for the gui. incoming log messages update the gui"
-  [gui-state]
-  (let [gui-logger (fn [log-data]
-                     (let [{:keys [timestamp_ msg_ level]} log-data
-                           this-msg (force msg_)
-                           prev-msg (-> (fx/sub-val @gui-state :log-message-list) last :message)
-                           log-line {:level level :time (force timestamp_) :message this-msg}]
-                       ;; infinite recursion protection.
-                       ;; logging updates the `log-message-list` ->
-                       ;;   that causes the notice-logger to update it's rows ->
-                       ;;   that requires re-rendering the GUI ->
-                       ;;   that calls *all* of the component functions ->
-                       ;;   that may trigger log messages ->
-                       ;;   that causes the notice-logger to update it's rows ->
-                       ;;   ...
-                       ;; the trade off is duplicate messages are not displayed
-                       (when-not (= prev-msg this-msg)
-                         (swap! gui-state fx/swap-context update-in [:log-message-list] conj log-line))))]
-    (logging/add-appender! :gui gui-logger {:timestamp-opts {:pattern "HH:mm:ss"}})))
-
 (defn start
   []
   (info "starting gui")
   (let [;; the gui uses a copy of the application state because the state atom needs to be wrapped
         state-template {:app-state nil,
-                        :log-message-list []
                         :style (style)}
         gui-state (atom (fx/create-context state-template)) ;; cache/lru-cache-factory))
         update-gui-state (fn [new-state]
                            (swap! gui-state fx/swap-context assoc :app-state new-state))
         _ (core/state-bind [] update-gui-state)
 
-        _ (init-notice-logger! gui-state)
-
         ;; css watcher for live coding
         _ (doseq [rf [#'style #'major-theme-map #'sub-theme-map #'themes]
                   :let [key (str rf)]]
             (add-watch rf key (fn [_ _ _ _]
-                                (info "updating gui state")
+                                (debug "updating gui state")
                                 (swap! gui-state fx/swap-context assoc :style (style))))
             (core/add-cleanup-fn #(remove-watch rf key)))
 
