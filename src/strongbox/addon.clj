@@ -447,3 +447,8 @@
   [addon map?]
   (and (installed? addon)
        (not (ignored? addon))))
+
+(defn-spec releases-available? boolean?
+  [addon map?]
+  (and (not (empty? (:release-list addon)))
+       (not (pinned? addon))))

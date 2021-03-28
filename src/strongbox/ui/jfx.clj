@@ -454,6 +454,18 @@
                 {:-fx-text-fill "blue"
                  :-fx-padding "0 0 0 1em"}
 
+                ".split-pane"
+                {;; https://stackoverflow.com/questions/16856359/how-do-i-get-rid-of-the-border-around-a-split-pane-in-javafx
+                 ;;:-fx-box-border "transparent, -fx-background"
+                 :-fx-background-insets 0
+                 :-fx-padding 0
+                 }
+
+                ".split-pane > .split-pane-divider"
+                {:-fx-padding "4px"
+                 :-fx-background-color "transparent"
+                 }
+
                 ;; hide 'source' column in notice-logger in addon-detail pane
                 ".table-view#notice-logger #source"
                 {:-fx-max-width 0
@@ -1465,7 +1477,7 @@
   (let [column-list [{:text "name" :min-width 150 :pref-width 300 :max-width 500 :cell-value-factory :release-label}
                      {:text "version" :cell-value-factory :version}
                      {:text "" :cell-value-factory (constantly "install")}]
-        row-list (:release-list addon)
+        row-list (rest (:release-list addon))
         ]
     {:fx/type :border-pane
      :top {:fx/type :label
@@ -1475,10 +1487,34 @@
               :id "release-list"
               :placeholder {:fx/type :text
                             :style-class ["table-placeholder-text"]
-                            :text "No releases found."}
+                            :text "(no releases)"}
               :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
               :columns (mapv table-column column-list)
-              :items (or row-list [])}}))
+              :items (or row-list [])
+              :disable (not (addon/releases-available? addon))
+              }}))
+
+(defn addon-detail-group-addons
+  [{:keys [fx/context addon tab-idx]}]
+  (let [column-list [{:text "name" :min-width 150 :pref-width 300 :max-width 500 :cell-value-factory :dirname}
+                     ;;{:text "version" :cell-value-factory :version}
+                     {:text "" :cell-value-factory (constantly "open")}]
+        row-list (:group-addons addon)
+        ]
+    {:fx/type :border-pane
+     :top {:fx/type :label
+           :style-class ["section-title"]
+           :text "Grouped addons"}
+     :center {:fx/type :table-view
+              :id "group-addons"
+              :placeholder {:fx/type :text
+                            :style-class ["table-placeholder-text"]
+                            :text "(not grouped)"}
+              :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
+              :columns (mapv table-column column-list)
+              :items (or row-list [])
+              :disable (empty? row-list)
+              }}))
 
 (defn addon-detail-pane
   "a place to elaborate on what we know about an addon as well somewhere we can put lots of buttons and widgets."
@@ -1564,11 +1600,17 @@
                      {:fx/type addon-detail-button-menu
                       :addon addon}
 
-                     {:fx/type addon-detail-release-widget
-                      :addon addon}
+                     ;; ---
 
                      
-                     
+                     {:fx/type :split-pane
+                      :divider-positions [0.6]
+                      :style-class ["split-pane"]
+                      :items[{:fx/type addon-detail-release-widget
+                              :addon addon}
+                             {:fx/type addon-detail-group-addons
+                              :addon addon}]}
+
                      {:fx/type notice-logger
                       :tab-idx tab-idx
                       :filter-fn notice-pane-filter}
