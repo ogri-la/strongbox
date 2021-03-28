@@ -611,3 +611,9 @@
   (let [-count-occurances (fn [accumulator-m m]
                             (update accumulator-m (get m my-key) (fn [n] (inc (or n 0)))))]
     (reduce -count-occurances {} my-list)))
+
+;; https://clojuredocs.org/clojure.core/zipmap#example-56fbf77de4b069b77203b858
+(defn csv-map
+  "ZipMaps header as keys and values from lines."
+  [head & lines]
+  (map #(zipmap (map keyword head) %1) lines))

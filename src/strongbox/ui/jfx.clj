@@ -372,11 +372,10 @@
                ".notice-logger-nav-box"
                {;;:-fx-background-color "pink"
                 }
-               
+
                "#notice-logger-nav"
                {:-fx-padding "1.1em .75em" ;; 1.1em so installed, search and log pane tables all start at the same height
                 :-fx-font-size ".9em"
-
 
                 " .radio-button"
                 {:-fx-padding "0 .5em"}}
@@ -438,8 +437,7 @@
                 ".section-title"
                 {:-fx-font-size "1.3em"
                  :-fx-padding "1em 0 .5em 1em"
-                 :-fx-min-width "200px"
-                 }
+                 :-fx-min-width "200px"}
 
                 ".description"
                 {:-fx-font-size "1.4em"
@@ -458,13 +456,11 @@
                 {;; https://stackoverflow.com/questions/16856359/how-do-i-get-rid-of-the-border-around-a-split-pane-in-javafx
                  ;;:-fx-box-border "transparent, -fx-background"
                  :-fx-background-insets 0
-                 :-fx-padding 0
-                 }
+                 :-fx-padding 0}
 
                 ".split-pane > .split-pane-divider"
                 {:-fx-padding "4px"
-                 :-fx-background-color "transparent"
-                 }
+                 :-fx-background-color "transparent"}
 
                 ;; hide 'source' column in notice-logger in addon-detail pane
                 ".table-view#notice-logger #source"
@@ -481,12 +477,7 @@
                 "#notice-logger-nav"
                 {:-fx-padding "0 0 .5em 0"
                  :-fx-alignment "bottom-right"
-                 :-fx-pref-width 9999.0
-                 
-                 ;;:-fx-background-color "yellow"
-
-
-                 }} ;; ends .addon-detail
+                 :-fx-pref-width 9999.0}} ;; ends .addon-detail
 
                 ;; ---
                }}))]
@@ -1297,8 +1288,7 @@
            :style-class ["notice-logger-nav-box"]
            :children [{:fx/type :label
                        :style-class ["section-title"]
-                       :text "Notices"
-                       }
+                       :text "Notices"}
                       {:fx/type radio-group
                        :options log-level-list
                        :value selected-log-level
@@ -1473,12 +1463,10 @@
                        :tooltip "Permanently delete"})]})
 
 (defn addon-detail-release-widget
-  [{:keys [fx/context addon tab-idx]}]
-  (let [column-list [{:text "name" :min-width 150 :pref-width 300 :max-width 500 :cell-value-factory :release-label}
-                     {:text "version" :cell-value-factory :version}
+  [{:keys [addon]}]
+  (let [column-list [{:text "name" :cell-value-factory #(or (:release-label %) (:version %))}
                      {:text "" :cell-value-factory (constantly "install")}]
-        row-list (rest (:release-list addon))
-        ]
+        row-list (rest (:release-list addon))]
     {:fx/type :border-pane
      :top {:fx/type :label
            :style-class ["section-title"]
@@ -1491,16 +1479,36 @@
               :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
               :columns (mapv table-column column-list)
               :items (or row-list [])
-              :disable (not (addon/releases-available? addon))
-              }}))
+              :disable (not (addon/releases-available? addon))}}))
+
+(defn addon-detail-key-vals
+  [{:keys [addon]}]
+  (let [column-list [{:text "key" :cell-value-factory (comp name :key)}
+                     {:text "val" :cell-value-factory :val}]
+
+        blacklist [:group-addons :release-list]
+        sanitised (apply dissoc addon blacklist)
+
+        row-list (apply utils/csv-map [:key :val] (vec sanitised))]
+    {:fx/type :border-pane
+     :top {:fx/type :label
+           :style-class ["section-title"]
+           :text "Raw Data"}
+     :center {:fx/type :table-view
+              :id "key-vals"
+              :placeholder {:fx/type :text
+                            :style-class ["table-placeholder-text"]
+                            :text "(not installed)"}
+              :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
+              :columns (mapv table-column column-list)
+              :items (or row-list [])}}))
 
 (defn addon-detail-group-addons
-  [{:keys [fx/context addon tab-idx]}]
+  [{:keys [addon]}]
   (let [column-list [{:text "name" :min-width 150 :pref-width 300 :max-width 500 :cell-value-factory :dirname}
                      ;;{:text "version" :cell-value-factory :version}
                      {:text "" :cell-value-factory (constantly "open")}]
-        row-list (:group-addons addon)
-        ]
+        row-list (:group-addons addon)]
     {:fx/type :border-pane
      :top {:fx/type :label
            :style-class ["section-title"]
@@ -1513,8 +1521,7 @@
               :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
               :columns (mapv table-column column-list)
               :items (or row-list [])
-              :disable (empty? row-list)
-              }}))
+              :disable (empty? row-list)}}))
 
 (defn addon-detail-pane
   "a place to elaborate on what we know about an addon as well somewhere we can put lots of buttons and widgets."
@@ -1602,25 +1609,27 @@
 
                      ;; ---
 
-                     
-                     {:fx/type :split-pane
-                      :divider-positions [0.6]
-                      :style-class ["split-pane"]
-                      :items[{:fx/type addon-detail-release-widget
-                              :addon addon}
-                             {:fx/type addon-detail-group-addons
-                              :addon addon}]}
+
+                     {:fx/type :grid-pane
+                      :children [{:fx/type addon-detail-key-vals
+                                  :addon addon
+                                  :grid-pane/column 1
+                                  :grid-pane/hgrow :always}
+                                 {:fx/type addon-detail-group-addons
+                                  :addon addon
+                                  :grid-pane/column 2
+                                  ;;:grid-pane/hgrow :always
+                                  }
+                                 {:fx/type addon-detail-release-widget
+                                  :addon addon
+                                  :grid-pane/column 3
+                                  :grid-pane/hgrow :always}]}
 
                      {:fx/type notice-logger
                       :tab-idx tab-idx
                       :filter-fn notice-pane-filter}
 
-                     ;; ----
-
-
-                     {:fx/type :text-area
-                      :text (str addon)
-                      :wrap-text true}])}))))
+                     ])}))))
 
 (defn addon-detail-tab
   [{:keys [tab tab-idx]}]
