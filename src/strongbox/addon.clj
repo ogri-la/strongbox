@@ -452,3 +452,7 @@
   [addon map?]
   (and (not (empty? (:release-list addon)))
        (not (pinned? addon))))
+
+(defn-spec releases-visible? boolean?
+  [addon map?]
+  (releases-available? (update-in addon [:release-list] rest)))
