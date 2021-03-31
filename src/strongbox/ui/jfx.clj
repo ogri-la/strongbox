@@ -1261,7 +1261,7 @@
   "a log widget that displays a list of log lines.
   used by itself as well as embedded into the addon detail page.
   pass it a `filter-fn` to remove entries in the `:log-lines` list."
-  [{:keys [fx/context tab-idx filter-fn]}]
+  [{:keys [fx/context tab-idx filter-fn section-title]}]
   (let [filter-fn (or filter-fn identity)
         level-map {:debug 0 :info 1 :warn 2 :error 3}
         current-log-level (if tab-idx
@@ -1305,15 +1305,18 @@
     {:fx/type :border-pane
      :top {:fx/type :h-box
            :style-class ["notice-logger-nav-box"]
-           :children [{:fx/type :label
-                       :style-class ["section-title"]
-                       :text "notices"}
-                      {:fx/type radio-group
-                       :options log-level-list
-                       :value selected-log-level
-                       :label-coercer label-coercer
-                       :container-id "notice-logger-nav"
-                       :on-action log-level-changed-handler}]}
+           :children (utils/items
+                      [(when section-title
+                         {:fx/type :label
+                          :style-class ["section-title"]
+                          :text section-title})
+                       
+                       {:fx/type radio-group
+                        :options log-level-list
+                        :value selected-log-level
+                        :label-coercer label-coercer
+                        :container-id "notice-logger-nav"
+                        :on-action log-level-changed-handler}])}
 
      :center {:fx/type :table-view
               :id "notice-logger"
@@ -1651,6 +1654,7 @@
 
          :bottom {:fx/type notice-logger
                   :tab-idx tab-idx
+                  :section-title "notices"
                   :filter-fn notice-pane-filter}}))))
 
 (defn addon-detail-tab
