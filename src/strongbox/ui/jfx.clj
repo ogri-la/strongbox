@@ -487,6 +487,14 @@
                 {:-fx-alignment "center"
                  :-fx-pref-width 120}
 
+                ".table-view#release-list .install-button-column.table-cell"
+                {:-fx-padding "-2"
+                 }
+                
+                ".table-view#release-list .install-button-column .button"
+                {:-fx-pref-width 120
+                 }
+
                 ".table-view#notice-logger"
                 {:-fx-pref-height "250px"}
 
@@ -1486,7 +1494,10 @@
 
 (defn addon-detail-release-widget
   [{:keys [addon]}]
-  (let [column-list [{:text "" :style-class ["install-button-column"] :pref-width 100 :cell-value-factory (constantly "install")}
+  (let [install-button (fn [release]
+                         (component-instance
+                          (button "install" (async-handler #(cli/set-version addon release)))))
+        column-list [{:text "" :style-class ["install-button-column"] :pref-width 100 :cell-value-factory install-button}
                      {:text "name" :cell-value-factory #(or (:release-label %) (:version %))}]
         row-list (rest (:release-list addon))]
     {:fx/type :border-pane
