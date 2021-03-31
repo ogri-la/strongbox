@@ -1081,15 +1081,14 @@
 (defn-spec table-column map?
   "returns a description of a table column that lives within a table"
   [column-data :gui/column-data]
-  (let [column-id (some utils/nilable [(:id column-data) (:text column-data) "noid"])
+  (let [column-class (if-let [column-id (some utils/nilable [(:id column-data) (:text column-data)])]
+                       (lower-case (str column-id "-column"))
+                       "column")
         column-name (:text column-data)
         default-cvf (fn [row] (get row (keyword column-name)))
         final-cvf {:cell-value-factory (get column-data :cell-value-factory default-cvf)}
 
-        final-style {:style-class (into ["table-cell"
-                                         "column"
-                                         (lower-case (str column-id "-column"))]
-                                        (get column-data :style-class))}
+        final-style {:style-class (into ["table-cell" column-class] (get column-data :style-class))}
 
         default {:fx/type :table-column
                  :min-width 80}]
