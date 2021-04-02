@@ -496,7 +496,7 @@
                  }
 
                 ".table-view#notice-logger"
-                {:-fx-pref-height "250px"}
+                {:-fx-pref-height "12pc"}
 
                 ".table-view#group-addons .open-link-column"
                 {:-fx-pref-width 140}
