@@ -58,7 +58,7 @@
 
   :plugins [[lein-cljfmt "0.6.4"]
             [jonase/eastwood "0.3.13"]
-            [lein-cloverage "1.1.1"]]
+            [lein-cloverage "1.2.2"]]
   :eastwood {:exclude-linters [:constant-test]
              ;; linters that are otherwise disabled
              :add-linters [:unused-namespaces
