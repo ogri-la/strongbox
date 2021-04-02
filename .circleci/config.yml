@@ -29,7 +29,7 @@ jobs:
           keys:
             - v1-dependencies-{{ checksum "project.clj" }}
             # fallback to using the latest cache if no exact match is found
-            - v1-dependencies-
+            #- v1-dependencies-
 
       - run: |
             sudo apt install libgtk-3-0 libxtst6 --no-install-recommends -y
