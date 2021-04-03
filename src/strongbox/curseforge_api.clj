@@ -78,6 +78,9 @@
   [release map?]
   (let [;; "wow_retail", "wow_classic" => :retail, :classic
         fallback (if (= (:gameVersionFlavor release) "wow_classic") :classic :retail)
+
+        ;; if the `:gameVersion` value is missing we assume this addon supports the latest version of `:retail`
+        ;; if we know the `gameVersionFlavor` we can switch that assumption to the latest version of `:classic`
         release (if (empty? (:gameVersion release))
                   (assoc release :gameVersion [(utils/game-track-to-latest-game-version fallback)])
                   release)
@@ -94,8 +97,15 @@
                                 :version (:displayName release)
                                 :release-label (format "[WoW %s] %s" (first (:gameVersion release)) name)
                                 :game-track (utils/game-version-to-game-track game-version)}
-                               interface-version)))]
-    (mapv pad-release (:gameVersion release))))
+                               interface-version)))
+
+        padded-release-list (mapv pad-release (:gameVersion release))
+
+        ;; 2021-04-02: curseforge is using a `:gameVersionFlavor` of `null` and `2.5.1` as the `:gameVersion` for WoW Classic (BC).
+        ;; this fn must return a valid `:addon/release-list` and that means `:game-track` cannot be anything other than `:classic` or `:retail`.
+        ;; so lets remove these releases until we can support them.
+        unknown-game-track (comp nil? :game-track)]
+    (vec (remove unknown-game-track padded-release-list))))
 
 (defn-spec prune-leading-duplicates (s/or :ok :addon/release-list, :garbage-in nil?)
   "curseforge may produce the same release under `:latestFiles` and `:gameVersionLatestFiles`.
@@ -109,8 +119,7 @@
       (if (= (:download-url latest-release)
              (:download-url latest-release-by-game-version))
         (concat [latest-release] (rest (rest release-list)))
-        (do (info "no match!" latest-release latest-release-by-game-version)
-            release-list)))))
+        release-list))))
 
 (defn-spec group-releases map?
   "given a curseforge api result, returns a map of release data keyed by `game-track`."
