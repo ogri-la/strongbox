@@ -46,8 +46,11 @@
              vals)
          (map utils/interface-version-to-game-version)
          (map utils/game-version-to-game-track)
+         ;; 2021-04-02: game versions of 2.x are now considered "Classic (BC)" and return `nil` as the game track.
+         ;; classic-bc is not yet supported.
+         (remove nil?)
          set
-         vec ;; do I need this ..?
+         vec
          utils/nilable)))
 
 (defn-spec find-gametracks-toc-data (s/or :ok ::sp/game-track-list, :error nil?)

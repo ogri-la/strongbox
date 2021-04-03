@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-## 4.0.0
+## 4.0.0 - unreleased
 
 ### Added
 
@@ -51,7 +51,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * original Swing GUI
 * window split with tab pane in one half and the log in the other half
 
-## 3.3.0
+## 3.3.1 - 2021-04-03
+
+### Fixed
+
+* added a fix for addons supporting Classic (BC) appearing in the retail game track.
+    - affects only curseforge addons
+* removed debug statement left in the 3.3.0 release
+
+## 3.3.0 - 2021-02-19
 
 ### Added
 
@@ -79,7 +87,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-## 3.2.1
+## 3.2.1 - 2021-01-31
 
 ### Fixed
 
@@ -87,7 +95,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - https://github.com/dakrone/clj-http/issues/582
     - thanks to @rymndhng of dakrone/clj-http for all the help
 
-## 3.2.0
+## 3.2.0 - 2020-12-30
 
 ### Added
 
@@ -121,13 +129,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * a theoretical case when an entire addon directory may be deleted when importing a list of addons.
     - not as bad as it sounds, I could only recreate it under test conditions.
 
-## 3.1.1
+## 3.1.1 - 2020-12-02
 
 ### Fixed
 
 * tukui, changes to accommodate their change in API
 
-## 3.1.0
+## 3.1.0 - 2020-11-28
 
 ### Added
 
