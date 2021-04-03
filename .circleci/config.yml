@@ -31,10 +31,9 @@ jobs:
       #      # fallback to using the latest cache if no exact match is found
       #      #- v1-dependencies-
 
+      # 'lein cloverage -h' will pull down further deps for the plugin without actually running it
       - run: |
-            sudo apt install libgtk-3-0 libxtst6 --no-install-recommends -y
-            # 'lein cloverage -h' will pull down further deps for the plugin without actually running it
-            lein deps && lein cloverage -h > /dev/null
+            sudo apt install libgtk-3-0 libxtst6 --no-install-recommends -y && lein deps && lein cloverage -h > /dev/null
 
       #- save_cache:
       #    paths:
