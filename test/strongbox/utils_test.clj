@@ -224,3 +224,30 @@
 
     (doseq [[v idx expected] cases]
       (is (= expected (utils/drop-idx v idx))))))
+
+(deftest game-version-to-game-track
+  (let [cases [;; defaults for bad values
+               ["" :retail]
+               ["1" :retail]
+               ["2" :retail]
+               ["foo" :retail]
+
+               ;; classic
+               ["1." :classic]
+               ["1.13.0" :classic]
+               ["1.100.100" :classic]
+
+               ;; classic-bc (unimplemented)
+               ["2." nil]
+               ["2.5.1" nil]
+               ["2.foo.bar" nil]
+
+               ;; everything else
+               ["3.0.2" :retail]
+               ["4.3.0" :retail]
+               ["5.0.4" :retail]
+               ;; ...etc
+               ["9.0.1" :retail]]]
+
+    (doseq [[given expected] cases]
+      (is (= expected (utils/game-version-to-game-track given))))))

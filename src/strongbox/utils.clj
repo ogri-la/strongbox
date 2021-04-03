@@ -288,13 +288,16 @@
     (when (and major minor)
       (+ (* 10000 major) (* 100 minor)))))
 
-(defn-spec game-version-to-game-track ::sp/game-track
+(defn-spec game-version-to-game-track (s/nilable ::sp/game-track)
   "'1.13.2' => ':classic', '8.2.0' => 'retail'"
   [game-version string?]
-  (if (= "1." (subs game-version 0 2))
-    ;; 1.x.x == classic (for now)
-    :classic
-    :retail))
+  (let [prefix (safe-subs game-version 2)]
+    (case prefix
+      ;; 1.x.x == classic (vanilla)
+      "1." :classic
+      ;; 2.x.x == classic (burning crusade) (probably)
+      "2." nil ;; todo
+      :retail)))
 
 (defn-spec interface-version-to-game-track (s/or :ok ::sp/game-track, :err nil?)
   "converts an interface version like '80000' to a game track like ':retail'"

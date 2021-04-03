@@ -52,9 +52,10 @@ Just for my own reference
 * commit+push
 
 
-* download release sum file to /tmp
+* cd to strongbox-pkgbuild
+* download strongbox.sha256 to /tmp
     - cat sumfile
-* update strongbox-pkgbuild/PKGBUILD
+* update PKGBUILD
     - change 'pkgver'
     - change 'sha256sums'
 * run `makepkg --printsrcinfo > .SRCINFO`
