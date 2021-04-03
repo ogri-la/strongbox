@@ -478,38 +478,38 @@
                  :-fx-alignment "bottom-right"
                  :-fx-pref-width 9999.0}
 
+                ".table-view#key-vals .column-header .label"
+                {:-fx-font-style "normal" ;; column values except the header should be italic
+                 }
+
                 ".table-view#key-vals .key-column"
                 {:-fx-alignment "center-right"
                  :-fx-padding "0 1em 0 0"
                  :-fx-font-style "italic"}
 
                 ".table-view#release-list .install-button-column"
-                {:-fx-alignment "center"
-                 :-fx-pref-width 120}
+                {:-fx-alignment "center"}
 
                 ".table-view#release-list .install-button-column.table-cell"
-                {:-fx-padding "-2"
-                 }
-                
+                {:-fx-padding "-2"}
+
                 ".table-view#release-list .install-button-column .button"
-                {:-fx-pref-width 120
-                 }
+                {:-fx-pref-width 120}
 
                 ".table-view#notice-logger"
                 {:-fx-pref-height "12pc"}
 
-                ".table-view#group-addons .open-link-column"
-                {:-fx-pref-width 140}
 
                 ;; ---
-
-                } ;; ends .addon-detail
+} ;; ends .addon-detail
 
                 ;; ---
                }}))]
 
      ;; return a single map with all themes in it.
      ;; themes are separated by their top-level 'root' key.
+
+
      (into {} (for [[theme-key _] themes]
                 (generate-style theme-key))))))
 
@@ -1318,7 +1318,7 @@
                          {:fx/type :label
                           :style-class ["section-title"]
                           :text section-title})
-                       
+
                        {:fx/type radio-group
                         :options log-level-list
                         :value selected-log-level
@@ -1497,7 +1497,7 @@
   (let [install-button (fn [release]
                          (component-instance
                           (button "install" (async-handler #(cli/set-version addon release)))))
-        column-list [{:text "" :style-class ["install-button-column"] :pref-width 100 :cell-value-factory install-button}
+        column-list [{:text "" :style-class ["install-button-column"] :min-width 120 :pref-width 120 :max-width 120 :cell-value-factory install-button}
                      {:text "name" :cell-value-factory #(or (:release-label %) (:version %))}]
         row-list (rest (:release-list addon))]
     {:fx/type :border-pane
@@ -1516,13 +1516,14 @@
 
 (defn addon-detail-key-vals
   [{:keys [addon]}]
-  (let [column-list [{:text "key" :min-width 150 :max-width 250 :cell-value-factory (comp name :key)}
+  (let [column-list [{:text "key" :min-width 150 :pref-width 150 :max-width 200 :cell-value-factory (comp name :key)}
                      {:text "val" :cell-value-factory :val}]
 
         blacklist [:group-addons :release-list]
         sanitised (apply dissoc addon blacklist)
 
-        row-list (apply utils/csv-map [:key :val] (vec sanitised))]
+        row-list (apply utils/csv-map [:key :val] (vec sanitised))
+        row-list (sort-by :key row-list)]
     {:fx/type :border-pane
      :top {:fx/type :label
            :style-class ["section-title"]
@@ -1540,7 +1541,7 @@
   [{:keys [addon]}]
   (let [opener (fn [row]
                  (component-instance (addon-fs-link (:dirname row))))
-        column-list [{:text "" :style-class ["open-link-column"] :cell-value-factory opener}
+        column-list [{:text "" :style-class ["open-link-column"] :min-width 80 :pref-width 150 :max-width 150 :cell-value-factory opener}
                      {:text "name" :cell-value-factory :dirname}]
 
         row-list (:group-addons addon)]
