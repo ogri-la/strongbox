@@ -56,7 +56,7 @@
 
   ;; debug output from JavaFX about which GTK it is looking for. 
   ;; was useful in figuring out why javafx was failing to initialise even with xvfb.
-  ;;:jvm-opts ["-Djdk.gtk.verbose=true"]
+  :jvm-opts ["-Djdk.gtk.verbose=true"]
 
   :main strongbox.main
 
