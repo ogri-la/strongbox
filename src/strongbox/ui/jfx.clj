@@ -205,6 +205,9 @@
                {:-fx-table-cell-border-color (colour :table-border)
                 :-fx-font-size ".9em"}
 
+               ".table-view .hyperlink"
+               {:-fx-padding "-2 0 0 0"} ;; hyperlinks are just a little bit off .. weird.
+
                ".table-view .table-placeholder-text"
                {:-fx-font-size "3em"}
 
@@ -251,22 +254,28 @@
                 {;; '!important' so that it takes precedence over .updateable addons
                  :-fx-background-color (str (colour :unsteady) " !important")}}
 
+               ;;
+               ;; hyperlinks
+               ;;
+
+               
+               
+               ".hyperlink:visited"
+               {:-fx-underline "false"}
+
+               ".hyperlink, .hyperlink:hover"
+               {:-fx-underline "false"
+                ;;:-fx-text-fill (colour :jfx-hyperlink)
+                :-fx-font-weight (colour :jfx-hyperlink-weight)}
+               
+               " .hyperlink, .hyperlink:hover"
+               {:-fx-text-fill (colour :jfx-hyperlink-updateable)}
+
+               
 
                ;;
                ;; common table fields
                ;;
-
-
-               ".table-view .hyperlink"
-               {:-fx-padding "-2 0 0 0"} ;; hyperlinks are just a little bit off .. weird.
-
-               ".table-view .hyperlink:visited"
-               {:-fx-underline "false"}
-
-               ".table-view .hyperlink, .table-view .hyperlink:hover"
-               {:-fx-underline "false"
-                :-fx-text-fill (colour :jfx-hyperlink)
-                :-fx-font-weight (colour :jfx-hyperlink-weight)}
 
 
                ;;
@@ -288,8 +297,7 @@
                  " .table-cell"
                  {:-fx-text-fill (colour :row-updateable-text)}
 
-                 " .hyperlink, .hyperlink:hover"
-                 {:-fx-text-fill (colour :jfx-hyperlink-updateable)}
+                 
 
                  ;; selected updateable addons are do not look any different
                  ;; todo: make selected+updateable addons use slightly brighter versions of themselves
@@ -422,28 +430,54 @@
                {".title"
                 {:-fx-font-size "2em"
                  :-fx-padding "1em 0 .25em 1em"
-                 :-fx-alignment "center"}
+:-fx-text-fill (colour :row-updateable-text)
+                 
+                 }
 
                 ".subtitle"
-                {:-fx-font-size "1.1em"}
+                {:-fx-font-size "1.1em"
+                 :-fx-text-fill (colour :row-updateable-text)
+
+                 :-fx-padding "0 0 1em 1.75em"
+
+
+                 }
+
+                ".subtitle .installed-version"
+                {:-fx-text-fill (colour :row-updateable-text)
+                 :-fx-padding "0 1em 0 0"
+                 
+
+                 }
+
+                ".subtitle .version"
+                {:-fx-text-fill (colour :row-updateable-text)
+                 :-fx-background-color (colour :row-updateable-selected)
+                 :-fx-padding "0 .75em"
+                 :-fx-background-radius ".4em"
+
+                 
+                 }
 
                 ".section-title"
                 {:-fx-font-size "1.3em"
                  :-fx-padding "1em 0 .5em 1em"
-                 :-fx-min-width "200px"}
+                 :-fx-min-width "200px"
+                 :-fx-text-fill "white"
+                 }
 
                 ".description"
                 {:-fx-font-size "1.4em"
                  :-fx-padding "0 0 1.5em 1em"
                  :-fx-wrap-text true
-                 :-fx-font-style "italic"}
+                 :-fx-font-style "italic"
+:-fx-text-fill (colour :row-updateable-text)
+                 }
 
-                ".ext-links"
-                {:-fx-padding "0 0 1em 1.75em"}
-
-                ".ext-links .hyperlink"
-                {:-fx-text-fill "blue"
-                 :-fx-padding "0 0 0 1em"}
+                ".subtitle .hyperlink"
+                {;;:-fx-text-fill "blue"
+                 :-fx-padding "0 0 0 1em"
+                 }
 
                 ".table-view#notice-logger"
                 {:-fx-pref-height "12pc"}
@@ -1598,19 +1632,18 @@
                   :text (:label addon)}
 
                  {:fx/type :h-box
-                  :style-class ["ext-links"]
+                  :style-class ["subtitle"]
                   :children (utils/items
-                             [{:fx/type :label
-                               :style-class ["subtitle"]
-                               :text (cond
-                                       (:update? addon)
-                                       (format "%s (%s available)" (:installed-version addon) (:version addon))
+                             [
+                              (when (:installed-version addon)
+                                {:fx/type :label
+                                 :style-class ["installed-version"]
+                                 :text (:installed-version addon)})
 
-                                       (:installed-version addon)
-                                       (format "%s" (:installed-version addon))
-
-                                       (:version addon)
-                                       (format "%s" (:version addon)))}
+                              (when (:update? addon)
+                                {:fx/type :label
+                                 :style-class ["version"]
+                                 :text (format "%s available" (:version addon))})
 
                               ;; if installed, path to addon directory, clicking it opens file browser
                               (addon-fs-link (:dirname addon))

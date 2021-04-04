@@ -51,10 +51,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
- - [ ] bug, I should be able to re-install a pinned addon if the pinned release is available, but I'm getting an error
-     - "refusing to install addon that will overwrite a pinned addon"
-     - this is actually a bit more involved than it first looks. shifting to it's own ticket
-
 * 4.0 styling
     - dark theme styling for addon-detail
         - use derived colours rather than hardcode
@@ -68,11 +64,15 @@ see CHANGELOG.md for a more formal list of changes by release
         - if addon is up-to-date, it shows a happy green tick
             - if there is something to be concerned about (and that the user can fix), show a warning or error
 
-* get log window scrolling in other direction
- 
 * bug, 'strongbox.version' in debug output is null when run as a binary
 
 ## todo bucket (no particular order)
+
+* bug, I should be able to re-install a pinned addon if the pinned release is available, but I'm getting an error
+ - "refusing to install addon that will overwrite a pinned addon"
+ - this is actually a bit more involved than it first looks. shifting to it's own ticket
+
+* get log window scrolling in other direction
 
 * nfo, spend some time futzing with nfo files on disk and how they can break the UI
     - I've managed to get some weird error messages by changing 'source' to an int, to a catalogue that doesn't exist, etc
