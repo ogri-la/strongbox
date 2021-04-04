@@ -21,9 +21,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * an addon detail tab accessible by double clicking on either an installed addon or a search result.
     - addon detail tabs can be closed.
     - shortcut `ctrl-w` also closes an open tab *except* the installed, search and log tabs.
-    - has a new option `browse local files` if addon is installed locally
+    - has a new option `browse local files` if addon is installed locally.
     - has its own menu of buttons to install/re-install, update, remove, pin and ignore.
-    - has its own logging widget with per-addon logging and adjustable severity level.
+    - a 'raw data' widget with the fields used within the application.
+    - a 'releases' widget that lists all available releases with an install button.
+    ' a 'grouped addons' widget that displays the other addons that came with this addon and a filebrowser link.
+    - a logging widget with per-addon logging and adjustable severity level.
 * dedicated log tab.
     - will display `(warnings)` or `(errors)` if any warnings or errors present in log.
 * `View` menu has a menu option for open addon detail tabs with an additional `close all` button.
