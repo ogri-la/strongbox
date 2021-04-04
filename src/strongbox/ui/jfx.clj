@@ -257,17 +257,16 @@
                ;;
 
 
-               ".table-view .source-column"
-               {:-fx-alignment "center-left"
-                :-fx-padding "-2 0 0 0" ;; hyperlinks are just a little bit off .. weird.
+               ".table-view .hyperlink"
+               {:-fx-padding "-2 0 0 0"} ;; hyperlinks are just a little bit off .. weird.
 
-                " .hyperlink:visited"
-                {:-fx-underline "false"}
+               ".table-view .hyperlink:visited"
+               {:-fx-underline "false"}
 
-                " .hyperlink, .hyperlink:hover"
-                {:-fx-underline "false"
-                 :-fx-text-fill (colour :jfx-hyperlink)
-                 :-fx-font-weight (colour :jfx-hyperlink-weight)}}
+               ".table-view .hyperlink, .table-view .hyperlink:hover"
+               {:-fx-underline "false"
+                :-fx-text-fill (colour :jfx-hyperlink)
+                :-fx-font-weight (colour :jfx-hyperlink-weight)}
 
 
                ;;
@@ -423,12 +422,15 @@
                {".title"
                 {:-fx-font-size "2em"
                  :-fx-padding "1em 0 .25em 1em"
-                 ;;:-fx-background-color "green"
                  :-fx-alignment "center"}
 
                 ".subtitle"
-                {;;:-fx-padding "0 0 0 1em"
-                 :-fx-font-size "1.1em"}
+                {:-fx-font-size "1.1em"}
+
+                ".section-title"
+                {:-fx-font-size "1.3em"
+                 :-fx-padding "1em 0 .5em 1em"
+                 :-fx-min-width "200px"}
 
                 ".description"
                 {:-fx-font-size "1.4em"
@@ -442,6 +444,9 @@
                 ".ext-links .hyperlink"
                 {:-fx-text-fill "blue"
                  :-fx-padding "0 0 0 1em"}
+
+                ".table-view#notice-logger"
+                {:-fx-pref-height "12pc"}
 
                 ;; hide 'source' column in notice-logger in addon-detail pane
                 ".table-view#notice-logger #source"
@@ -457,13 +462,34 @@
 
                 "#notice-logger-nav"
                 {:-fx-padding "0 0 .5em 0"
-                 :-fx-alignment "top-right"}} ;; ends .addon-detail
+                 :-fx-alignment "bottom-right"
+                 :-fx-pref-width 9999.0}
 
-                ;; ---
+                ".table-view#key-vals .column-header .label"
+                {:-fx-font-style "normal" ;; column values except the header should be italic
+                 }
+
+                ".table-view#key-vals .key-column"
+                {:-fx-alignment "center-right"
+                 :-fx-padding "0 1em 0 0"
+                 :-fx-font-style "italic"}
+
+                ".table-view#release-list .install-button-column"
+                {:-fx-alignment "center"}
+
+                ".table-view#release-list .install-button-column.table-cell"
+                {:-fx-padding "-2"}
+
+                ".table-view#release-list .install-button-column .button"
+                {:-fx-pref-width 120}} ;; ends .addon-detail
+
+               ;; ---
                }}))]
 
      ;; return a single map with all themes in it.
      ;; themes are separated by their top-level 'root' key.
+
+
      (into {} (for [[theme-key _] themes]
                 (generate-style theme-key))))))
 
@@ -1043,13 +1069,14 @@
 (defn-spec table-column map?
   "returns a description of a table column that lives within a table"
   [column-data :gui/column-data]
-  (let [column-name (:text column-data)
+  (let [column-class (if-let [column-id (some utils/nilable [(:id column-data) (:text column-data)])]
+                       (lower-case (str column-id "-column"))
+                       "column")
+        column-name (:text column-data)
         default-cvf (fn [row] (get row (keyword column-name)))
         final-cvf {:cell-value-factory (get column-data :cell-value-factory default-cvf)}
 
-        final-style {:style-class (into ["table-cell"
-                                         (lower-case (str column-name "-column"))]
-                                        (get column-data :style-class))}
+        final-style {:style-class (into ["table-cell" column-class] (get column-data :style-class))}
 
         default {:fx/type :table-column
                  :min-width 80}]
@@ -1222,7 +1249,7 @@
   "a log widget that displays a list of log lines.
   used by itself as well as embedded into the addon detail page.
   pass it a `filter-fn` to remove entries in the `:log-lines` list."
-  [{:keys [fx/context tab-idx filter-fn]}]
+  [{:keys [fx/context tab-idx filter-fn section-title]}]
   (let [filter-fn (or filter-fn identity)
         level-map {:debug 0 :info 1 :warn 2 :error 3}
         current-log-level (if tab-idx
@@ -1264,12 +1291,20 @@
 
         log-message-list (filter log-level-filter log-message-list)]
     {:fx/type :border-pane
-     :top {:fx/type radio-group
-           :options log-level-list
-           :value selected-log-level
-           :label-coercer label-coercer
-           :container-id "notice-logger-nav"
-           :on-action log-level-changed-handler}
+     :top {:fx/type :h-box
+           :style-class ["notice-logger-nav-box"]
+           :children (utils/items
+                      [(when section-title
+                         {:fx/type :label
+                          :style-class ["section-title"]
+                          :text section-title})
+
+                       {:fx/type radio-group
+                        :options log-level-list
+                        :value selected-log-level
+                        :label-coercer label-coercer
+                        :container-id "notice-logger-nav"
+                        :on-action log-level-changed-handler}])}
 
      :center {:fx/type :table-view
               :id "notice-logger"
@@ -1437,6 +1472,75 @@
                       {:disabled? (not (addon/deletable? addon))
                        :tooltip "Permanently delete"})]})
 
+(defn addon-detail-release-widget
+  "displays a list of installable releases for the given addon"
+  [{:keys [addon]}]
+  (let [install-button (fn [release]
+                         (component-instance
+                          (button "install" (async-handler #(cli/set-version addon release)))))
+        column-list [{:text "" :style-class ["install-button-column"] :min-width 120 :pref-width 120 :max-width 120 :cell-value-factory install-button}
+                     {:text "name" :cell-value-factory #(or (:release-label %) (:version %))}]
+        row-list (or (rest (:release-list addon)) [])]
+    {:fx/type :border-pane
+     :top {:fx/type :label
+           :style-class ["section-title"]
+           :text "releases"}
+     :center {:fx/type :table-view
+              :id "release-list"
+              :placeholder {:fx/type :text
+                            :style-class ["table-placeholder-text"]
+                            :text "(no releases)"}
+              :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
+              :columns (mapv table-column column-list)
+              :items row-list
+              :disable (not (addon/releases-visible? addon))}}))
+
+(defn addon-detail-key-vals
+  "displays a two-column table of `key: val` fields for what we know about an addon."
+  [{:keys [addon]}]
+  (let [column-list [{:text "key" :min-width 150 :pref-width 150 :max-width 200 :cell-value-factory (comp name :key)}
+                     {:text "val" :cell-value-factory :val}]
+
+        blacklist [:group-addons :release-list]
+        sanitised (apply dissoc addon blacklist)
+
+        row-list (apply utils/csv-map [:key :val] (vec sanitised))
+        row-list (sort-by :key row-list)]
+    {:fx/type :border-pane
+     :top {:fx/type :label
+           :style-class ["section-title"]
+           :text "raw data"}
+     :center {:fx/type :table-view
+              :id "key-vals"
+              :placeholder {:fx/type :text
+                            :style-class ["table-placeholder-text"]
+                            :text "(not installed)"}
+              :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
+              :columns (mapv table-column column-list)
+              :items (or row-list [])}}))
+
+(defn addon-detail-group-addons
+  "displays a list of other addons that came grouped with this addon"
+  [{:keys [addon]}]
+  (let [opener #(component-instance (addon-fs-link (:dirname %)))
+        column-list [{:text "" :style-class ["open-link-column"] :min-width 80 :pref-width 150 :max-width 150 :cell-value-factory opener}
+                     {:text "name" :cell-value-factory :dirname}]
+
+        row-list (:group-addons addon)]
+    {:fx/type :border-pane
+     :top {:fx/type :label
+           :style-class ["section-title"]
+           :text "grouped addons"}
+     :center {:fx/type :table-view
+              :id "group-addons"
+              :placeholder {:fx/type :text
+                            :style-class ["table-placeholder-text"]
+                            :text "(not grouped)"}
+              :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
+              :columns (mapv table-column column-list)
+              :items (or row-list [])
+              :disable (empty? row-list)}}))
+
 (defn addon-detail-pane
   "a place to elaborate on what we know about an addon as well somewhere we can put lots of buttons and widgets."
   [{:keys [fx/context addon-id tab-idx]}]
@@ -1483,53 +1587,69 @@
             notice-pane-filter (fn [log-line]
                                  (or (= preferred-match (select-keys (:source log-line) [:install-dir :dirname]))
                                      (= alt-match (select-keys (:source log-line) [:install-dir :source :source-id]))))]
-        {:fx/type :v-box
+        {:fx/type :border-pane
          :id "addon-detail-pane"
          :style-class ["addon-detail"]
-         :children (utils/items
-                    [{:fx/type :label
-                      :style-class ["title"]
-                      :text (:label addon)}
+         :top {:fx/type :v-box
+               :children
+               (utils/items
+                [{:fx/type :label
+                  :style-class ["title"]
+                  :text (:label addon)}
 
-                     {:fx/type :h-box
-                      :style-class ["ext-links"]
-                      :children (utils/items
-                                 [{:fx/type :label
-                                   :style-class ["subtitle"]
-                                   :text (cond
-                                           (:update? addon)
-                                           (format "%s (%s available)" (:installed-version addon) (:version addon))
+                 {:fx/type :h-box
+                  :style-class ["ext-links"]
+                  :children (utils/items
+                             [{:fx/type :label
+                               :style-class ["subtitle"]
+                               :text (cond
+                                       (:update? addon)
+                                       (format "%s (%s available)" (:installed-version addon) (:version addon))
 
-                                           (:installed-version addon)
-                                           (format "%s" (:installed-version addon))
+                                       (:installed-version addon)
+                                       (format "%s" (:installed-version addon))
 
-                                           (:version addon)
-                                           (format "%s" (:version addon)))}
+                                       (:version addon)
+                                       (format "%s" (:version addon)))}
 
-                                  ;; if installed, path to addon directory, clicking it opens file browser
-                                  (addon-fs-link (:dirname addon))
+                              ;; if installed, path to addon directory, clicking it opens file browser
+                              (addon-fs-link (:dirname addon))
 
-                                  ;; order is important, a hyperlink may not exist, can't have nav jumping around.
-                                  (-href-to-hyperlink addon)])}
+                              ;; order is important, a hyperlink may not exist, can't have nav jumping around.
+                              (-href-to-hyperlink addon)])}
 
-                     (when-not (empty? (:description addon))
-                       {:fx/type :label
-                        :style-class ["description"]
-                        :text (:description addon)})
+                 (when-not (empty? (:description addon))
+                   {:fx/type :label
+                    :style-class ["description"]
+                    :wrap-text true
+                    :text (:description addon)})
 
-                     {:fx/type addon-detail-button-menu
-                      :addon addon}
+                 {:fx/type addon-detail-button-menu
+                  :addon addon}])}
 
-                     {:fx/type notice-logger
-                      :tab-idx tab-idx
-                      :filter-fn notice-pane-filter}
+         :center {:fx/type :grid-pane
+                  :children [{:fx/type addon-detail-key-vals
+                              :addon addon
+                              :grid-pane/column 1
+                              :grid-pane/hgrow :always
+                              :grid-pane/vgrow :always}
 
-                     ;; ----
+                             {:fx/type addon-detail-release-widget
+                              :addon addon
+                              :grid-pane/column 2
+                              :grid-pane/hgrow :always
+                              :grid-pane/vgrow :always}
 
+                             {:fx/type addon-detail-group-addons
+                              :addon addon
+                              :grid-pane/column 3
+                              :grid-pane/hgrow :always
+                              :grid-pane/vgrow :always}]}
 
-                     {:fx/type :text-area
-                      :text (str addon)
-                      :wrap-text true}])}))))
+         :bottom {:fx/type notice-logger
+                  :tab-idx tab-idx
+                  :section-title "notices"
+                  :filter-fn notice-pane-filter}}))))
 
 (defn addon-detail-tab
   [{:keys [tab tab-idx]}]

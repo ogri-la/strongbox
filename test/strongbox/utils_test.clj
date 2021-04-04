@@ -221,7 +221,6 @@
                ;; error cases
                ;;[[] -1 []]
                ]]
-
     (doseq [[v idx expected] cases]
       (is (= expected (utils/drop-idx v idx))))))
 
@@ -248,6 +247,19 @@
                ["5.0.4" :retail]
                ;; ...etc
                ["9.0.1" :retail]]]
-
     (doseq [[given expected] cases]
       (is (= expected (utils/game-version-to-game-track given))))))
+
+(deftest csv-map
+  (testing "singular"
+    (let [header [:key :val]
+          row ["foo" "bar"]
+          expected [{:key "foo" :val "bar"}]]
+      (is (= expected (utils/csv-map header row)))))
+
+  (testing "asfd"
+    (let [header [:key :val]
+          row-list [["foo" "bar"] ["baz" "bup"]]
+          expected [{:key "foo" :val "bar"} {:key "baz" :val "bup"}]]
+      (is (= expected (apply utils/csv-map header row-list))))))
+

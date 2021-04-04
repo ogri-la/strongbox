@@ -447,3 +447,15 @@
   [addon map?]
   (and (installed? addon)
        (not (ignored? addon))))
+
+(defn-spec releases-available? boolean?
+  "returns `true` if *any* addons are available, including the currently installed version, and the addon isn't pinned.
+  ignored addons shouldn't have a `:release-list`."
+  [addon map?]
+  (and (not (empty? (:release-list addon)))
+       (not (pinned? addon))))
+
+(defn-spec releases-visible? boolean?
+  "returns `true` if there is more than 1 release available and the addon isn't pinned"
+  [addon map?]
+  (releases-available? (update-in addon [:release-list] rest)))
