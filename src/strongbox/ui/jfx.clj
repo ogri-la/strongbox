@@ -368,10 +368,6 @@
                ;;
 
 
-               ".notice-logger-nav-box"
-               {;;:-fx-background-color "pink"
-                }
-
                "#notice-logger-nav"
                {:-fx-padding "1.1em .75em" ;; 1.1em so installed, search and log pane tables all start at the same height
                 :-fx-font-size ".9em"
@@ -426,12 +422,10 @@
                {".title"
                 {:-fx-font-size "2em"
                  :-fx-padding "1em 0 .25em 1em"
-                 ;;:-fx-background-color "green"
                  :-fx-alignment "center"}
 
                 ".subtitle"
-                {;;:-fx-padding "0 0 0 1em"
-                 :-fx-font-size "1.1em"}
+                {:-fx-font-size "1.1em"}
 
                 ".section-title"
                 {:-fx-font-size "1.3em"
@@ -451,15 +445,8 @@
                 {:-fx-text-fill "blue"
                  :-fx-padding "0 0 0 1em"}
 
-                ".split-pane"
-                {;; https://stackoverflow.com/questions/16856359/how-do-i-get-rid-of-the-border-around-a-split-pane-in-javafx
-                 ;;:-fx-box-border "transparent, -fx-background"
-                 :-fx-background-insets 0
-                 :-fx-padding 0}
-
-                ".split-pane > .split-pane-divider"
-                {:-fx-padding "4px"
-                 :-fx-background-color "transparent"}
+                ".table-view#notice-logger"
+                {:-fx-pref-height "12pc"}
 
                 ;; hide 'source' column in notice-logger in addon-detail pane
                 ".table-view#notice-logger #source"
@@ -494,16 +481,9 @@
                 {:-fx-padding "-2"}
 
                 ".table-view#release-list .install-button-column .button"
-                {:-fx-pref-width 120}
+                {:-fx-pref-width 120}} ;; ends .addon-detail
 
-                ".table-view#notice-logger"
-                {:-fx-pref-height "12pc"}
-
-
-                ;; ---
-} ;; ends .addon-detail
-
-                ;; ---
+               ;; ---
                }}))]
 
      ;; return a single map with all themes in it.
@@ -1493,13 +1473,14 @@
                        :tooltip "Permanently delete"})]})
 
 (defn addon-detail-release-widget
+  "displays a list of installable releases for the given addon"
   [{:keys [addon]}]
   (let [install-button (fn [release]
                          (component-instance
                           (button "install" (async-handler #(cli/set-version addon release)))))
         column-list [{:text "" :style-class ["install-button-column"] :min-width 120 :pref-width 120 :max-width 120 :cell-value-factory install-button}
                      {:text "name" :cell-value-factory #(or (:release-label %) (:version %))}]
-        row-list (rest (:release-list addon))]
+        row-list (or (rest (:release-list addon)) [])]
     {:fx/type :border-pane
      :top {:fx/type :label
            :style-class ["section-title"]
@@ -1511,10 +1492,11 @@
                             :text "(no releases)"}
               :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
               :columns (mapv table-column column-list)
-              :items (or row-list [])
+              :items row-list
               :disable (not (addon/releases-visible? addon))}}))
 
 (defn addon-detail-key-vals
+  "displays a two-column table of `key: val` fields for what we know about an addon."
   [{:keys [addon]}]
   (let [column-list [{:text "key" :min-width 150 :pref-width 150 :max-width 200 :cell-value-factory (comp name :key)}
                      {:text "val" :cell-value-factory :val}]
@@ -1538,9 +1520,9 @@
               :items (or row-list [])}}))
 
 (defn addon-detail-group-addons
+  "displays a list of other addons that came grouped with this addon"
   [{:keys [addon]}]
-  (let [opener (fn [row]
-                 (component-instance (addon-fs-link (:dirname row))))
+  (let [opener #(component-instance (addon-fs-link (:dirname %)))
         column-list [{:text "" :style-class ["open-link-column"] :min-width 80 :pref-width 150 :max-width 150 :cell-value-factory opener}
                      {:text "name" :cell-value-factory :dirname}]
 
