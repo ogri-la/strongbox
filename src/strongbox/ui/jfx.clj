@@ -168,20 +168,16 @@
                 :-fx-padding "5px 17px" ;; makes buttons same height as dropdowns
                 ":hover" {:-fx-text-fill (colour :button-text-hovering)}}
 
+
                ;;
-               ;; tabber
+               ;; hyperlinks
                ;;
 
-               ".tab-pane > .tab-header-area"
-               {:-fx-padding ".7em 0 0 .6em"}
 
-               ;; tabs
-               ".tab-pane > .tab-header-area > .headers-region > .tab"
-               {:-fx-background-radius "0"
-                :-fx-padding ".25em 1em"
-                :-fx-focus-color "transparent" ;; disables the 'blue box' of selected widgets
-                :-fx-faint-focus-color "transparent" ;; literally, a very faint box remains
-                }
+               ".hyperlink"
+               {:-fx-underline "false"
+                :-fx-font-weight (colour :jfx-hyperlink-weight)
+                :-fx-text-fill (colour :jfx-hyperlink-updateable)}
 
 
                ;;
@@ -198,7 +194,7 @@
                 :-fx-font-size ".9em"}
 
                ".table-view .hyperlink"
-               {:-fx-padding "-2 0 0 0"} ;; hyperlinks are just a little bit off .. weird.
+               {:-fx-padding "-2 0 0 0"}
 
                ".table-view .table-placeholder-text"
                {:-fx-font-size "3em"}
@@ -246,22 +242,22 @@
                 {;; '!important' so that it takes precedence over .updateable addons
                  :-fx-background-color (str (colour :unsteady) " !important")}}
 
+
                ;;
-               ;; hyperlinks
+               ;; tabber
                ;;
 
-               
-               
-               ".hyperlink:visited"
-               {:-fx-underline "false"}
 
-               ".hyperlink, .hyperlink:hover"
-               {:-fx-underline "false"
-                ;;:-fx-text-fill (colour :jfx-hyperlink)
-                :-fx-font-weight (colour :jfx-hyperlink-weight)}
-               
-               " .hyperlink, .hyperlink:hover"
-               {:-fx-text-fill (colour :jfx-hyperlink-updateable)}
+               ".tab-pane > .tab-header-area"
+               {:-fx-padding ".7em 0 0 .6em"}
+
+               ;; tabs
+               ".tab-pane > .tab-header-area > .headers-region > .tab"
+               {:-fx-background-radius "0"
+                :-fx-padding ".25em 1em"
+                :-fx-focus-color "transparent" ;; disables the 'blue box' of selected widgets
+                :-fx-faint-focus-color "transparent" ;; literally, a very faint box remains
+                }
 
 
                ;;
@@ -282,8 +278,6 @@
 
                  " .table-cell"
                  {:-fx-text-fill (colour :row-updateable-text)}
-
-                 
 
                  ;; selected updateable addons are do not look any different
                  ;; todo: make selected+updateable addons use slightly brighter versions of themselves
@@ -314,8 +308,7 @@
                 " .column-header.more-column .table-cell"
                 {:-fx-fill "green"
                  ;;:-fx-padding 10
-                 :-fx-text-fill "green"
-                 }
+                 :-fx-text-fill "green"}
 
                 " .more-column"
                 {:-fx-padding 0
@@ -381,8 +374,7 @@
                {:-fx-min-width "80px"}
 
                "#search-prev-button"
-               {:-fx-min-width "80px"
-                }
+               {:-fx-min-width "80px"}
 
                "#search-next-button"
                {:-fx-min-width "70px"}
@@ -403,6 +395,7 @@
                ;; status bar (bottom of app)
                ;; 
 
+
                "#status-bar"
                {:-fx-font-size ".9em"
                 :-fx-padding "5px"
@@ -421,41 +414,33 @@
                {".title"
                 {:-fx-font-size "2em"
                  :-fx-padding "1em 0 .25em 1em"
-:-fx-text-fill (colour :row-updateable-text)
-                 
-                 }
+                 :-fx-text-fill (colour :row-updateable-text)}
 
                 ".subtitle"
                 {:-fx-font-size "1.1em"
                  :-fx-text-fill (colour :row-updateable-text)
 
-                 :-fx-padding "0 0 1em 1.75em"
-
-
-                 }
+                 :-fx-padding "0 0 1em 1.75em"}
 
                 ".subtitle .installed-version"
                 {:-fx-text-fill (colour :row-updateable-text)
-                 :-fx-padding "0 1em 0 0"
-                 
-
-                 }
+                 :-fx-padding "0 1em 0 0"}
 
                 ".subtitle .version"
                 {:-fx-text-fill (colour :row-updateable-text)
                  :-fx-background-color (colour :row-updateable-selected)
                  :-fx-padding "0 .75em"
-                 :-fx-background-radius ".4em"
+                 :-fx-background-radius ".4em"}
 
-                 
-                 }
+                ".subtitle .hyperlink"
+                {:-fx-padding "0 .5em .1em .5em"
+                 :-fx-font-size ".9em"}
 
                 ".section-title"
                 {:-fx-font-size "1.3em"
                  :-fx-padding "1em 0 .5em 1em"
                  :-fx-min-width "200px"
-                 :-fx-text-fill "-fx-text-base-color" ;; todo
-                 }
+                 :-fx-text-fill "-fx-text-base-color"}
 
                 ".disabled-text"
                 {:-fx-opacity "0.3"}
@@ -465,13 +450,11 @@
                  :-fx-padding "0 0 1.5em 1em"
                  :-fx-wrap-text true
                  :-fx-font-style "italic"
-                 :-fx-text-fill (colour :row-updateable-text)
-                 }
+                 :-fx-text-fill "-fx-text-base-color"}
 
-                ".subtitle .hyperlink"
-                {;;:-fx-text-fill "blue"
-                 :-fx-padding "0 0 0 1em"
-                 }
+                ;; keep the ignore and delete buttons very separate from the others
+                ".separator"
+                {:-fx-padding "0 1em"}
 
                 ".table-view#notice-logger"
                 {:-fx-pref-height "12pc"}
@@ -1531,8 +1514,7 @@
         column-list [{:text "" :style-class ["open-link-column"] :min-width 80 :pref-width 150 :max-width 150 :cell-value-factory opener}
                      {:text "name" :cell-value-factory :dirname}]
         row-list (:group-addons addon)
-        disabled? (empty? row-list)
-        ]
+        disabled? (empty? row-list)]
     {:fx/type :border-pane
      :top {:fx/type :label
            :style-class (if disabled? ["section-title", "disabled-text"] ["section-title"])
@@ -1556,13 +1538,11 @@
         column-list [{:text "" :style-class ["install-button-column"] :min-width 120 :pref-width 120 :max-width 120 :cell-value-factory install-button}
                      {:text "name" :cell-value-factory #(or (:release-label %) (:version %))}]
         row-list (or (rest (:release-list addon)) [])
-        disabled? (not (addon/releases-visible? addon))
-        ]
+        disabled? (not (addon/releases-visible? addon))]
     {:fx/type :border-pane
      :top {:fx/type :label
            :style-class (if disabled? ["section-title", "disabled-text"] ["section-title"])
-           :text "releases"
-           }
+           :text "releases"}
      :center {:fx/type :table-view
               :id "release-list"
               :placeholder {:fx/type :text
@@ -1571,9 +1551,7 @@
               :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
               :columns (mapv table-column column-list)
               :items row-list
-              :disable disabled?
-              }}))
-
+              :disable disabled?}}))
 
 (defn addon-detail-pane
   "a place to elaborate on what we know about an addon as well somewhere we can put lots of buttons and widgets."
@@ -1634,8 +1612,7 @@
                  {:fx/type :h-box
                   :style-class ["subtitle"]
                   :children (utils/items
-                             [
-                              (when (:installed-version addon)
+                             [(when (:installed-version addon)
                                 {:fx/type :label
                                  :style-class ["installed-version"]
                                  :text (:installed-version addon)})
