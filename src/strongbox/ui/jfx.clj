@@ -61,12 +61,15 @@
     :row-updateable-selected "#fdfd96" ;; "Lemon Meringue" (brighter yellow)
     :row-updateable-text "black"
     :row-warning "lemonchiffon"
+    :row-warning-text "black"
     :row-error "tomato"
+    :row-error-text "black"
     :hyperlink "blue"
     :hyperlink-updateable "blue"
     :hyperlink-weight "normal"
     :table-font-colour "-fx-text-base-color"
-    :already-installed-row-colour "#99bc6b"}
+    :already-installed-row-colour "#99bc6b"
+    :row-alt "-fx-control-inner-background-alt"}
 
    :dark ;; "'dracula' theme: https://github.com/dracula/dracula-theme"
    {:base "#1e1f29"
@@ -80,13 +83,16 @@
     :row-updateable "#6272a4" ;; (blue)
     :row-updateable-selected "#6272c3" ;; (brighter blue) ;; todo: can this be derived from :row-updateable?
     :row-updateable-text "white"
-    :row-warning "#6272a4"
-    :row-error "#ce2828"
+    :row-warning "#f1fa8c"
+    :row-warning-text "black"
+    :row-error "#ff5555"
+    :row-error-text "black"
     :hyperlink "#f8f8f2"
     :hyperlink-updateable "white"
     :hyperlink-weight "bold"
     :table-font-colour "-fx-text-base-color"
-    :already-installed-row-colour "#99bc6b"}})
+    :already-installed-row-colour "#99bc6b"
+    :row-alt "#111"}})
 
 (def sub-theme-map
   {:dark
@@ -240,6 +246,25 @@
 
 
                ;;
+               ;; tables with alternating row colours (just add the '.odd-rows' class)
+               ;; 
+
+
+               ".table-view.odd-rows .table-row-cell:odd"
+               {:-fx-background-color (colour :row-alt)
+                ":hover"
+                {:-fx-background-color (colour :row-hover)}}
+
+               ;; 'the above overwrites the pseudo class as well apparently.
+               ;; this 'resets' it so we don't get selected rows with alternating blanks
+               ".table-view.odd-rows .table-row-cell:odd:selected"
+               {:-fx-background-color (colour :row-selected)
+                ":hover"
+                {:-fx-background-color (colour :row-hover)}}
+
+
+
+               ;;
                ;; tabber
                ;;
 
@@ -311,13 +336,17 @@
                ".table-view#notice-logger "
                {:-fx-font-family "monospace"
 
-                ".warn"
-                {:-fx-background-color (colour :row-warning)}
+                ".warn .table-cell"
+                {:-fx-text-fill (colour :row-warning-text)
+                 :-fx-background-color (colour :row-warning)}
+
                 ".warn:selected"
                 {:-fx-background-color "-fx-selection-bar"}
 
-                ".error"
-                {:-fx-background-color (colour :row-error)}
+                ".error .table-cell"
+                {:-fx-text-fill (colour :row-error-text)
+                 :-fx-background-color (colour :row-error)}
+
                 ".error:selected"
                 {:-fx-background-color "-fx-selection-bar"}
 
@@ -402,16 +431,15 @@
                {".title"
                 {:-fx-font-size "2em"
                  :-fx-padding "1em 0 .25em 1em"
-                 :-fx-text-fill (colour :row-updateable-text)}
+                 :-fx-text-fill "-fx-text-base-color"}
 
                 ".subtitle"
                 {:-fx-font-size "1.1em"
-                 :-fx-text-fill (colour :row-updateable-text)
-
+                 :-fx-text-fill "-fx-text-base-color"
                  :-fx-padding "0 0 1em 1.75em"}
 
                 ".subtitle .installed-version"
-                {:-fx-text-fill (colour :row-updateable-text)
+                {:-fx-text-fill "-fx-text-base-color"
                  :-fx-padding "0 1em 0 0"}
 
                 ".subtitle .version"
@@ -465,8 +493,7 @@
                  :-fx-pref-width 9999.0}
 
                 ".table-view#key-vals .column-header .label"
-                {:-fx-font-style "normal" ;; column values except the header should be italic
-                 }
+                {:-fx-font-style "normal"} ;; column values except the header should be italic
 
                 ".table-view#key-vals .key-column"
                 {:-fx-alignment "center-right"
@@ -480,7 +507,7 @@
                 {:-fx-padding "-2"}
 
                 ".table-view#release-list .install-button-column .button"
-                {:-fx-pref-width 120}} ;; ends .addon-detail
+                {:-fx-pref-width 110}} ;; ends .addon-detail
 
                ;; ---
                }}))]
@@ -1307,6 +1334,7 @@
 
      :center {:fx/type :table-view
               :id "notice-logger"
+              :style-class ["table-view" "odd-rows"]
               :placeholder {:fx/type :text
                             :style-class ["table-placeholder-text"]
                             :text ""}
@@ -1474,7 +1502,7 @@
 (defn addon-detail-key-vals
   "displays a two-column table of `key: val` fields for what we know about an addon."
   [{:keys [addon]}]
-  (let [column-list [{:text "key" :min-width 150 :pref-width 150 :max-width 200 :cell-value-factory (comp name :key)}
+  (let [column-list [{:text "key" :min-width 150 :pref-width 150 :max-width 150 :cell-value-factory (comp name :key)}
                      {:text "val" :cell-value-factory :val}]
 
         blacklist [:group-addons :release-list]
@@ -1488,6 +1516,7 @@
            :text "raw data"}
      :center {:fx/type :table-view
               :id "key-vals"
+              :style-class ["table-view" "odd-rows"]
               :placeholder {:fx/type :text
                             :style-class ["table-placeholder-text"]
                             :text "(not installed)"}
@@ -1499,7 +1528,7 @@
   "displays a list of other addons that came grouped with this addon"
   [{:keys [addon]}]
   (let [opener #(component-instance (addon-fs-link (:dirname %)))
-        column-list [{:text "" :style-class ["open-link-column"] :min-width 80 :pref-width 150 :max-width 150 :cell-value-factory opener}
+        column-list [{:text "" :style-class ["open-link-column"] :min-width 150 :pref-width 150 :max-width 150 :cell-value-factory opener}
                      {:text "name" :cell-value-factory :dirname}]
         row-list (:group-addons addon)
         disabled? (empty? row-list)]
@@ -1509,6 +1538,7 @@
            :text "grouped addons"}
      :center {:fx/type :table-view
               :id "group-addons"
+              :style-class ["table-view" "odd-rows"]
               :placeholder {:fx/type :text
                             :style-class ["table-placeholder-text"]
                             :text "(not grouped)"}
@@ -1533,6 +1563,7 @@
            :text "releases"}
      :center {:fx/type :table-view
               :id "release-list"
+              :style-class ["table-view" "odd-rows"]
               :placeholder {:fx/type :text
                             :style-class ["table-placeholder-text"]
                             :text "(no releases)"}
