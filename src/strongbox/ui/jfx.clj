@@ -58,14 +58,13 @@
     :row-selected "lightsteelblue"
     :unsteady "lightsteelblue"
     :row-updateable "lemonchiffon"
-    :row-updateable-hover "lemonchiffon"
     :row-updateable-selected "#fdfd96" ;; "Lemon Meringue" (brighter yellow)
     :row-updateable-text "black"
     :row-warning "lemonchiffon"
     :row-error "tomato"
-    :jfx-hyperlink "blue"
-    :jfx-hyperlink-updateable "blue"
-    :jfx-hyperlink-weight "normal"
+    :hyperlink "blue"
+    :hyperlink-updateable "blue"
+    :hyperlink-weight "normal"
     :table-font-colour "-fx-text-base-color"
     :already-installed-row-colour "#99bc6b"}
 
@@ -79,14 +78,13 @@
     :row-selected "derive(-fx-control-inner-background,-30%)"
     :unsteady "#bbb"
     :row-updateable "#6272a4" ;; (blue)
-    :row-updateable-hover "#6272a4"
     :row-updateable-selected "#6272c3" ;; (brighter blue) ;; todo: can this be derived from :row-updateable?
     :row-updateable-text "white"
     :row-warning "#6272a4"
     :row-error "#ce2828"
-    :jfx-hyperlink "#f8f8f2"
-    :jfx-hyperlink-updateable "white"
-    :jfx-hyperlink-weight "bold"
+    :hyperlink "#f8f8f2"
+    :hyperlink-updateable "white"
+    :hyperlink-weight "bold"
     :table-font-colour "-fx-text-base-color"
     :already-installed-row-colour "#99bc6b"}})
 
@@ -94,17 +92,15 @@
   {:dark
    {:green
     {:row-updateable "#50a67b" ;; (green)
-     :row-updateable-hover "#50a67b"
      :row-updateable-selected "#40c762" ;; (brighter green)
      :row-updateable-text "black"
-     :jfx-hyperlink-updateable "black"}
+     :hyperlink-updateable "black"}
 
     :orange
     {:row-updateable "#df8750" ;; (orange)
-     :row-updateable-hover "#df8750"
      :row-updateable-selected "#df722e" ;; (brigher orange)
      :row-updateable-text "black"
-     :jfx-hyperlink-updateable "black"}}})
+     :hyperlink-updateable "black"}}})
 
 (def themes
   (into major-theme-map
@@ -176,8 +172,8 @@
 
                ".hyperlink"
                {:-fx-underline "false"
-                :-fx-font-weight (colour :jfx-hyperlink-weight)
-                :-fx-text-fill (colour :jfx-hyperlink-updateable)}
+                :-fx-font-weight (colour :hyperlink-weight)
+                :-fx-text-fill (colour :hyperlink)}
 
 
                ;;
@@ -271,30 +267,18 @@
                "#game-track-combo-box"
                {:-fx-min-width "100px"}
 
-               ;; installed-addons table
-               ".table-view#installed-addons"
-               {" .updateable"
-                {:-fx-background-color (colour :row-updateable)
-
-                 " .table-cell"
-                 {:-fx-text-fill (colour :row-updateable-text)}
-
-                 ;; selected updateable addons are do not look any different
-                 ;; todo: make selected+updateable addons use slightly brighter versions of themselves
-                 ":selected"
-                 {;; !important so that hovering over a selected+updateable row doesn't change it's colour
-                  :-fx-background-color (str (colour :row-updateable-selected) " !important")}
-
-                 ":hover"
-                 {:-fx-background-color (colour :row-updateable-hover)}}
-
-                " .ignored .table-cell"
+               ".table-view#installed-addons "
+               {".ignored .table-cell"
                 {:-fx-opacity "0.4"}
 
-                " .wow-column"
+                ".wow-column"
                 {:-fx-alignment "center"}
 
-                " .button"
+                ;; todo: rename
+                ".more-column"
+                {:-fx-padding 0}
+
+                ".more-column > .button"
                 {:-fx-padding 0
                  :-fx-pref-width 100
                  :-fx-pref-height "20" ;; awfully specific :(
@@ -302,17 +286,21 @@
                  :-fx-font-size "1.5em"
                  ;;:-fx-text-fill "aquamarine" ;; good for dark theme
                  :-fx-text-fill "darkseagreen" ;; good for light
-                 }
+                 }}
 
-                ;; can this whole thing go?
-                " .column-header.more-column .table-cell"
-                {:-fx-fill "green"
-                 ;;:-fx-padding 10
-                 :-fx-text-fill "green"}
+               ".table-view#installed-addons .updateable"
+               {:-fx-background-color (colour :row-updateable)
 
-                " .more-column"
-                {:-fx-padding 0
-                 :-fx-spacing 0}}
+                " .table-cell"
+                {:-fx-text-fill (colour :row-updateable-text)}
+
+                " .hyperlink"
+                {:-fx-text-fill (colour :hyperlink-updateable)}
+
+                ;; selected+updateable addons look *slightly* different
+                ":selected"
+                {;; !important so that hovering over a selected+updateable row doesn't change it's colour
+                 :-fx-background-color (str (colour :row-updateable-selected) " !important")}}
 
 
                ;;
