@@ -49,8 +49,7 @@
 
 (def major-theme-map
   {:light
-   {:installed/ignored-fg :darkgray
-    :base "#ececec"
+   {:base "#ececec"
     :accent "lightsteelblue"
     :button-text-hovering "black"
     :table-border "#bbb"
@@ -67,12 +66,11 @@
     :jfx-hyperlink "blue"
     :jfx-hyperlink-updateable "blue"
     :jfx-hyperlink-weight "normal"
-    :table-font-colour "derive(-fx-background,-80%)"
+    :table-font-colour "-fx-text-base-color"
     :already-installed-row-colour "#99bc6b"}
 
    :dark ;; "'dracula' theme: https://github.com/dracula/dracula-theme"
-   {:installed/ignored-fg "#666666"
-    :base "#1e1f29"
+   {:base "#1e1f29"
     :accent "#44475a"
     :button-text-hovering "white"
     :table-border "#333"
@@ -89,7 +87,7 @@
     :jfx-hyperlink "#f8f8f2"
     :jfx-hyperlink-updateable "white"
     :jfx-hyperlink-weight "bold"
-    :table-font-colour "white"
+    :table-font-colour "-fx-text-base-color"
     :already-installed-row-colour "#99bc6b"}})
 
 (def sub-theme-map
@@ -156,13 +154,8 @@
                :-fx-base (colour :base)
                :-fx-accent (colour :accent) ;; selection colour of backgrounds
 
-               ;; removes gradient from 'File' menu
                "#main-menu"
-               {:-fx-background-color (colour :base)}
-
-               ;; todo: what did this do again?
-               ;;".context-menu"
-               ;;{:-fx-effect "None"}
+               {:-fx-background-color (colour :base)} ;; removes gradient from 'File' menu
 
                ".combo-box-base"
                {:-fx-background-radius "0"
@@ -180,14 +173,13 @@
                ;;
 
                ".tab-pane > .tab-header-area"
-               {:-fx-padding ".65em 0 0 .6em"
-                :-fx-background-color "green"}
+               {:-fx-padding ".7em 0 0 .6em"}
 
                ;; tabs
                ".tab-pane > .tab-header-area > .headers-region > .tab"
                {:-fx-background-radius "0"
                 :-fx-padding ".25em 1em"
-                :-fx-focus-color "transparent" ;; it's a tab, why gild the lilly
+                :-fx-focus-color "transparent" ;; disables the 'blue box' of selected widgets
                 :-fx-faint-focus-color "transparent" ;; literally, a very faint box remains
                 }
 
@@ -271,12 +263,6 @@
                " .hyperlink, .hyperlink:hover"
                {:-fx-text-fill (colour :jfx-hyperlink-updateable)}
 
-               
-
-               ;;
-               ;; common table fields
-               ;;
-
 
                ;;
                ;; installed-addons tab
@@ -309,7 +295,7 @@
                  {:-fx-background-color (colour :row-updateable-hover)}}
 
                 " .ignored .table-cell"
-                {:-fx-text-fill (colour :installed/ignored-fg)}
+                {:-fx-opacity "0.4"}
 
                 " .wow-column"
                 {:-fx-alignment "center"}
@@ -324,11 +310,11 @@
                  :-fx-text-fill "darkseagreen" ;; good for light
                  }
 
+                ;; can this whole thing go?
                 " .column-header.more-column .table-cell"
                 {:-fx-fill "green"
                  ;;:-fx-padding 10
                  :-fx-text-fill "green"
-                 ;;:-fx-background-color "green"
                  }
 
                 " .more-column"
@@ -358,8 +344,7 @@
                 {:-fx-alignment "center"}
 
                 "#source"
-                {:-fx-alignment "center"
-                 :-fx-pref-width 150}
+                {:-fx-alignment "center"}
 
                 "#time"
                 {:-fx-alignment "center"}
@@ -396,7 +381,8 @@
                {:-fx-min-width "80px"}
 
                "#search-prev-button"
-               {:-fx-min-width "80px"}
+               {:-fx-min-width "80px"
+                }
 
                "#search-next-button"
                {:-fx-min-width "70px"}
@@ -411,6 +397,11 @@
                 " .installed"
                 {" > .table-cell" {} ;;:-fx-text-fill "black"
                  :-fx-background-color (colour :already-installed-row-colour)}}
+
+
+               ;;
+               ;; status bar (bottom of app)
+               ;; 
 
                "#status-bar"
                {:-fx-font-size ".9em"
@@ -463,15 +454,18 @@
                 {:-fx-font-size "1.3em"
                  :-fx-padding "1em 0 .5em 1em"
                  :-fx-min-width "200px"
-                 :-fx-text-fill "white"
+                 :-fx-text-fill "-fx-text-base-color" ;; todo
                  }
+
+                ".disabled-text"
+                {:-fx-opacity "0.3"}
 
                 ".description"
                 {:-fx-font-size "1.4em"
                  :-fx-padding "0 0 1.5em 1em"
                  :-fx-wrap-text true
                  :-fx-font-style "italic"
-:-fx-text-fill (colour :row-updateable-text)
+                 :-fx-text-fill (colour :row-updateable-text)
                  }
 
                 ".subtitle .hyperlink"
@@ -1304,7 +1298,7 @@
                            (some-> row :source :name)
                            "app"))
 
-        column-list [{:id "source" :text "source" :max-width 120 :cell-value-factory source-label}
+        column-list [{:id "source" :text "source" :pref-width 150 :max-width 150 :min-width 150 :cell-value-factory source-label}
                      {:id "level" :text "level" :max-width 80 :cell-value-factory (comp name :level)}
                      {:id "time" :text "time" :max-width 100 :cell-value-factory :time}
                      {:id "message" :text "message" :pref-width 500 :cell-value-factory :message}]
@@ -1506,29 +1500,6 @@
                       {:disabled? (not (addon/deletable? addon))
                        :tooltip "Permanently delete"})]})
 
-(defn addon-detail-release-widget
-  "displays a list of installable releases for the given addon"
-  [{:keys [addon]}]
-  (let [install-button (fn [release]
-                         (component-instance
-                          (button "install" (async-handler #(cli/set-version addon release)))))
-        column-list [{:text "" :style-class ["install-button-column"] :min-width 120 :pref-width 120 :max-width 120 :cell-value-factory install-button}
-                     {:text "name" :cell-value-factory #(or (:release-label %) (:version %))}]
-        row-list (or (rest (:release-list addon)) [])]
-    {:fx/type :border-pane
-     :top {:fx/type :label
-           :style-class ["section-title"]
-           :text "releases"}
-     :center {:fx/type :table-view
-              :id "release-list"
-              :placeholder {:fx/type :text
-                            :style-class ["table-placeholder-text"]
-                            :text "(no releases)"}
-              :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
-              :columns (mapv table-column column-list)
-              :items row-list
-              :disable (not (addon/releases-visible? addon))}}))
-
 (defn addon-detail-key-vals
   "displays a two-column table of `key: val` fields for what we know about an addon."
   [{:keys [addon]}]
@@ -1559,11 +1530,12 @@
   (let [opener #(component-instance (addon-fs-link (:dirname %)))
         column-list [{:text "" :style-class ["open-link-column"] :min-width 80 :pref-width 150 :max-width 150 :cell-value-factory opener}
                      {:text "name" :cell-value-factory :dirname}]
-
-        row-list (:group-addons addon)]
+        row-list (:group-addons addon)
+        disabled? (empty? row-list)
+        ]
     {:fx/type :border-pane
      :top {:fx/type :label
-           :style-class ["section-title"]
+           :style-class (if disabled? ["section-title", "disabled-text"] ["section-title"])
            :text "grouped addons"}
      :center {:fx/type :table-view
               :id "group-addons"
@@ -1573,7 +1545,35 @@
               :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
               :columns (mapv table-column column-list)
               :items (or row-list [])
-              :disable (empty? row-list)}}))
+              :disable disabled?}}))
+
+(defn addon-detail-release-widget
+  "displays a list of installable releases for the given addon"
+  [{:keys [addon]}]
+  (let [install-button (fn [release]
+                         (component-instance
+                          (button "install" (async-handler #(cli/set-version addon release)))))
+        column-list [{:text "" :style-class ["install-button-column"] :min-width 120 :pref-width 120 :max-width 120 :cell-value-factory install-button}
+                     {:text "name" :cell-value-factory #(or (:release-label %) (:version %))}]
+        row-list (or (rest (:release-list addon)) [])
+        disabled? (not (addon/releases-visible? addon))
+        ]
+    {:fx/type :border-pane
+     :top {:fx/type :label
+           :style-class (if disabled? ["section-title", "disabled-text"] ["section-title"])
+           :text "releases"
+           }
+     :center {:fx/type :table-view
+              :id "release-list"
+              :placeholder {:fx/type :text
+                            :style-class ["table-placeholder-text"]
+                            :text "(no releases)"}
+              :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
+              :columns (mapv table-column column-list)
+              :items row-list
+              :disable disabled?
+              }}))
+
 
 (defn addon-detail-pane
   "a place to elaborate on what we know about an addon as well somewhere we can put lots of buttons and widgets."
