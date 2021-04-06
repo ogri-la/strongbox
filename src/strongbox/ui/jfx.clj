@@ -51,7 +51,6 @@
   {:light
    {:base "#ececec"
     :accent "lightsteelblue"
-    :button-text-hovering "black"
     :table-border "#bbb"
     :row "-fx-control-inner-background"
     :row-hover "derive(-fx-control-inner-background,-10%)"
@@ -74,7 +73,6 @@
    :dark ;; "'dracula' theme: https://github.com/dracula/dracula-theme"
    {:base "#1e1f29"
     :accent "#44475a"
-    :button-text-hovering "white"
     :table-border "#333"
     :row "#1e1f29" ;; same as :base
     :row-hover "derive(-fx-control-inner-background,-50%)"
@@ -168,7 +166,7 @@
                ".button"
                {:-fx-background-radius "0"
                 :-fx-padding "5px 17px" ;; makes buttons same height as dropdowns
-                ":hover" {:-fx-text-fill (colour :button-text-hovering)}}
+                }
 
 
                ;;
@@ -429,14 +427,14 @@
 
                ".addon-detail "
                {".title"
-                {:-fx-font-size "2em"
-                 :-fx-padding "1em 0 .25em 1em"
+                {:-fx-font-size "2.5em"
+                 :-fx-padding "1em 0 .5em 1em"
                  :-fx-text-fill "-fx-text-base-color"}
 
                 ".subtitle"
                 {:-fx-font-size "1.1em"
                  :-fx-text-fill "-fx-text-base-color"
-                 :-fx-padding "0 0 1em 1.75em"}
+                 :-fx-padding "0 0 .5em 1.75em"}
 
                 ".subtitle .installed-version"
                 {:-fx-text-fill "-fx-text-base-color"
@@ -1233,7 +1231,7 @@
         iface-version (fn [row]
                         (some-> row :interface-version str utils/interface-version-to-game-version))
 
-        column-list [{:text "source" :min-width 115 :pref-width 120 :max-width 160 :cell-value-factory href-to-hyperlink}
+        column-list [{:text "source" :min-width 115 :pref-width 115 :max-width 115 :cell-value-factory href-to-hyperlink}
                      {:text "name" :min-width 150 :pref-width 300 :max-width 500 :cell-value-factory (comp no-new-lines :label)}
                      {:text "description" :pref-width 400 :cell-value-factory (comp no-new-lines :description)}
                      {:text "installed" :max-width 250 :cell-value-factory :installed-version}
@@ -1379,7 +1377,7 @@
         empty-next-page (and (= 0 (count addon-list))
                              (> (-> search-state :page) 0))
 
-        column-list [{:text "source" :min-width 110 :pref-width 120 :max-width 160 :cell-value-factory href-to-hyperlink}
+        column-list [{:text "source" :min-width 115 :pref-width 115 :max-width 115 :cell-value-factory href-to-hyperlink}
                      {:text "name" :min-width 150 :pref-width 300 :max-width 450 :cell-value-factory (comp no-new-lines :label)}
                      {:text "description" :pref-width 700 :cell-value-factory (comp no-new-lines :description)}
                      {:text "tags" :pref-width 380 :min-width 230 :max-width 450 :cell-value-factory (comp str :tag-list)}
