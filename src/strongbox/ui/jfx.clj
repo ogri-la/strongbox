@@ -92,7 +92,7 @@
     :hyperlink-weight "bold"
     :table-font-colour "-fx-text-base-color"
     :already-installed-row-colour "#99bc6b"
-    :row-alt "#111"}})
+    :row-alt "#22232e"}})
 
 (def sub-theme-map
   {:dark
@@ -473,7 +473,7 @@
                 {:-fx-padding "0 1em"}
 
                 ".table-view#notice-logger"
-                {:-fx-pref-height "12pc"}
+                {:-fx-pref-height "10pc"}
 
                 ;; hide 'source' column in notice-logger in addon-detail pane
                 ".table-view#notice-logger #source"
