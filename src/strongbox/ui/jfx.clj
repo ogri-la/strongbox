@@ -68,7 +68,10 @@
     :hyperlink-weight "normal"
     :table-font-colour "-fx-text-base-color"
     :already-installed-row-colour "#99bc6b"
-    :row-alt "-fx-control-inner-background-alt"}
+    :row-alt "-fx-control-inner-background-alt"
+    :uber-button-tick "darkseagreen"
+    :uber-button-warn "orange"
+    :uber-button-error "red"}
 
    :dark ;; "'dracula' theme: https://github.com/dracula/dracula-theme"
    {:base "#1e1f29"
@@ -90,7 +93,10 @@
     :hyperlink-weight "bold"
     :table-font-colour "-fx-text-base-color"
     :already-installed-row-colour "#99bc6b"
-    :row-alt "#22232e"}})
+    :row-alt "#22232e"
+    :uber-button-tick "aquamarine"
+    :uber-button-warn "yellow"
+    :uber-button-error "red"}})
 
 (def sub-theme-map
   {:dark
@@ -104,7 +110,8 @@
     {:row-updateable "#df8750" ;; (orange)
      :row-updateable-selected "#df722e" ;; (brigher orange)
      :row-updateable-text "black"
-     :hyperlink-updateable "black"}}})
+     :hyperlink-updateable "black"
+     :uber-button-error "brown"}}})
 
 (def themes
   (into major-theme-map
@@ -308,17 +315,16 @@
                  :-fx-pref-height "20" ;; awfully specific :(
                  :-fx-background-color nil
                  :-fx-font-size "1.5em"
-                 ;;:-fx-text-fill "aquamarine" ;; good for dark theme
-                 :-fx-text-fill "darkseagreen" ;; good for light
-                 }
+                 ;; green tick
+                 :-fx-text-fill (colour :uber-button-tick)}
 
-                ;; orange bar
                 ".table-row-cell.warnings .more-column > .button"
-                {:-fx-text-fill "orange"}
+                {;; orange bar
+                 :-fx-text-fill (colour :uber-button-warn)}
 
-                ;; red cross
                 ".table-row-cell.errors .more-column > .button"
-                {:-fx-text-fill "red" ;; sort of a red-y colour
+                {;; red cross
+                 :-fx-text-fill (colour :uber-button-error)
                  :-fx-font-weight "bold"}}
 
                ".table-view#installed-addons .updateable"
