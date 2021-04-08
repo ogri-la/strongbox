@@ -1106,7 +1106,7 @@
                  :min-width 80}]
     (merge default column-data final-cvf final-style)))
 
-(defn-spec -href-to-hyperlink map?
+(defn-spec href-to-hyperlink map?
   "returns a hyperlink description or an empty text description"
   [row (s/keys :opt-un [::sp/url])]
   (if-let [label (utils/source-to-href-label-fn (:url row))]
@@ -1123,12 +1123,6 @@
     {:fx/type :hyperlink
      :on-action (handler #(utils/browse-to (format "%s/%s" (core/selected-addon-dir) dirname)))
      :text "↪ browse local files"}))
-
-;;(defn-spec href-to-hyperlink (s/or :ok :javafx/hyperlink-component, :noop :javafx/text-component)
-(defn href-to-hyperlink
-  "returns a hyperlink instance or empty text"
-  [row]
-  (component-instance (-href-to-hyperlink row)))
 
 (defn-spec available-versions (s/or :ok string? :no-version-available nil?)
   "formats the 'available version' string depending on the state of the addon.
@@ -1210,16 +1204,16 @@
   (let [tick "\u2714" ;; ✔
         update "\u21A6" ;; ↦
         unsteady "\u2941" ;; ⥁ CLOCKWISE CLOSED CIRCLE ARROW
-        ub {:fx/type :button
-            :text (cond
-                    (:ignore? row) ""
-                    (core/unsteady? (:name row)) unsteady
-                    (:update? row) update
-                    :else tick)
-            :on-action (fn [_]
-                         (cli/add-addon-tab row)
-                         (switch-tab-latest))}]
-    (component-instance ub)))
+        ]
+    {:fx/type :button
+     :text (cond
+             (:ignore? row) ""
+             (core/unsteady? (:name row)) unsteady
+             (:update? row) update
+             :else tick)
+     :on-action (fn [_]
+                  (cli/add-addon-tab row)
+                  (switch-tab-latest))}))
 
 (defn installed-addons-table
   [{:keys [fx/context]}]
@@ -1231,13 +1225,25 @@
         iface-version (fn [row]
                         (some-> row :interface-version str utils/interface-version-to-game-version))
 
-        column-list [{:text "source" :min-width 115 :pref-width 115 :max-width 115 :cell-value-factory href-to-hyperlink}
+        column-list [{:text "source" :min-width 115 :pref-width 115 :max-width 115
+                      :cell-factory {:fx/cell-type :table-cell
+                                     :describe (fn [row]
+                                                 (if row
+                                                   {:graphic (href-to-hyperlink row)}
+                                                   {:text ""}))}
+                      :cell-value-factory identity}
                      {:text "name" :min-width 150 :pref-width 300 :max-width 500 :cell-value-factory (comp no-new-lines :label)}
                      {:text "description" :pref-width 400 :cell-value-factory (comp no-new-lines :description)}
                      {:text "installed" :max-width 250 :cell-value-factory :installed-version}
                      {:text "available" :max-width 250 :cell-value-factory available-versions}
                      {:text "WoW" :max-width 100 :cell-value-factory iface-version}
-                     {:text "" :style-class ["more-column"] :max-width 100 :cell-value-factory uber-button}]]
+                     {:text "" :style-class ["more-column"] :max-width 100
+                      :cell-factory {:fx/cell-type :table-cell
+                                     :describe (fn [row]
+                                                 (if row
+                                                   {:graphic (uber-button row)}
+                                                   {:text ""}))}
+                      :cell-value-factory identity}]]
 
     {:fx/type fx.ext.table-view/with-selection-props
      :props {:selection-mode :multiple
@@ -1377,7 +1383,13 @@
         empty-next-page (and (= 0 (count addon-list))
                              (> (-> search-state :page) 0))
 
-        column-list [{:text "source" :min-width 115 :pref-width 115 :max-width 115 :cell-value-factory href-to-hyperlink}
+        column-list [{:text "source" :min-width 115 :pref-width 115 :max-width 115
+                      :cell-factory {:fx/cell-type :table-cell
+                                     :describe (fn [row]
+                                                 (if row
+                                                   {:graphic (href-to-hyperlink row)}
+                                                   {:text ""}))}
+                      :cell-value-factory identity}
                      {:text "name" :min-width 150 :pref-width 300 :max-width 450 :cell-value-factory (comp no-new-lines :label)}
                      {:text "description" :pref-width 700 :cell-value-factory (comp no-new-lines :description)}
                      {:text "tags" :pref-width 380 :min-width 230 :max-width 450 :cell-value-factory (comp str :tag-list)}
@@ -1643,7 +1655,7 @@
                               (addon-fs-link (:dirname addon))
 
                               ;; order is important, a hyperlink may not exist, can't have nav jumping around.
-                              (-href-to-hyperlink addon)])}
+                              (href-to-hyperlink addon)])}
 
                  (when-not (empty? (:description addon))
                    {:fx/type :label

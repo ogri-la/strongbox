@@ -444,7 +444,8 @@
 (defn update-installed-addon-list!
   [installed-addon-list]
   (let [asc compare
-        installed-addon-list (sort-by :name asc installed-addon-list)]
+        ;; `vec` so we can use `update-in` and `assoc-in` on `:installed-addon-list`
+        installed-addon-list (vec (sort-by :name asc installed-addon-list))]
     (swap! state assoc :installed-addon-list installed-addon-list)
     nil))
 

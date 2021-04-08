@@ -360,10 +360,10 @@
   []
   (let [touch (fn [a]
                 (core/start-affecting-addon a)
-                (Thread/sleep 200)
+                (Thread/sleep 400)
                 (core/stop-affecting-addon a))]
     (->> (get-state :installed-addon-list)
-         (filter addon/updateable?)
+         ;;(filter addon/updateable?)
          (run! touch))))
 
 ;;
