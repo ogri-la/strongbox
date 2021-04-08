@@ -489,12 +489,6 @@
                 ".table-view#notice-logger"
                 {:-fx-pref-height "10pc"}
 
-                ;; hide 'source' column in notice-logger in addon-detail pane
-                ".table-view#notice-logger #source"
-                {:-fx-max-width 0
-                 :-fx-pref-width 0
-                 :-fx-min-width 0}
-
                 ;; hide column headers in notice-logger in addon-detail pane
                 ".table-view#notice-logger .column-header-background"
                 {:-fx-max-height 0
@@ -1336,7 +1330,10 @@
                            (some-> row :source :name)
                            "app"))
 
-        column-list [{:id "source" :text "source" :pref-width 150 :max-width 150 :min-width 150 :cell-value-factory source-label}
+        ;; hide 'source' column in notice-logger in addon-detail pane
+        source-width (if section-title 0 150) ;; bit of a hack
+
+        column-list [{:id "source" :text "source" :pref-width source-width :max-width source-width :min-width source-width :cell-value-factory source-label}
                      {:id "level" :text "level" :max-width 80 :cell-value-factory (comp name :level)}
                      {:id "time" :text "time" :max-width 100 :cell-value-factory :time}
                      {:id "message" :text "message" :pref-width 500 :cell-value-factory :message}]
