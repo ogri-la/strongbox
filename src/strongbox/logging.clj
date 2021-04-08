@@ -126,18 +126,24 @@
   if an addon is passed as `:context` then an identifier can be pulled from it and the UI can use that to
   associate log events with addons. see `addon-log`, `with-addon` and `with-label`."
   [atm ::sp/atom, install-dir (s/nilable ::sp/install-dir)]
-  (let [path [:log-lines]
+  (let [level-map {:debug 0 :info 1 :warn 2 :error 3}
+        inc* #(inc (or % 0))
         func (fn [data]
                (let [addon (some-> data :context :addon)
                      addon-id (select-keys addon [:dirname :source :source-id :name])
                      ;; {:install-dir "/path/to/addons/dir" :dirname "some-addon" :name "SomeAddon"}
                      source (merge {:install-dir install-dir} addon-id)
+                     level (force (:level data))
                      log-line {:time (force (:timestamp_ data))
                                :message (force (:msg_ data))
-                               :level (force (:level data))
+                               :level level
+                               :level-int (level level-map)
                                :source source}]
                  (when atm
-                   (swap! atm update-in path into [log-line]))))]
+                   (swap! atm update-in [:log-lines] into [log-line])
+                   (when-let [dirname (:dirname addon)]
+                     (swap! atm update-in [:log-stats dirname level] inc*)))))]
+
     (add-appender! :atom func {:timestamp-opts {:pattern "HH:mm:ss"}}))
   nil)
 

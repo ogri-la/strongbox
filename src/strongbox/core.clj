@@ -108,6 +108,7 @@
    :db nil
 
    :log-lines []
+   :log-stats {}
 
    ;; a map of paths whose location may vary according to the cwd and envvars.
    :paths nil

@@ -351,6 +351,17 @@
         addon-id (utils/extract-addon-id addon)]
     (add-tab tab-id (or (:dirname addon) (:label addon) (:name addon) "[bug: missing tab name!]") closable? addon-id)))
 
+(defn-spec addon-has-log-level? boolean?
+  [log-level ::sp/log-level, dirname ::sp/dirname]
+  (boolean (some-> (core/get-state) :log-stats (get dirname) log-level (> 0))))
+
+(defn-spec addon-has-warnings? boolean?
+  [addon map?]
+  (addon-has-log-level? :warn (:dirname addon)))
+
+(defn-spec addon-has-errors? boolean?
+  [addon map?]
+  (addon-has-log-level? :error (:dirname addon)))
 
 ;; debug
 
@@ -360,7 +371,7 @@
   []
   (let [touch (fn [a]
                 (core/start-affecting-addon a)
-                (Thread/sleep 400)
+                (Thread/sleep 200)
                 (core/stop-affecting-addon a))]
     (->> (get-state :installed-addon-list)
          ;;(filter addon/updateable?)

@@ -299,7 +299,8 @@
 
                 ;; todo: rename
                 ".more-column"
-                {:-fx-padding 0}
+                {:-fx-padding 0
+                 :-fx-alignment "top-center"}
 
                 ".more-column > .button"
                 {:-fx-padding 0
@@ -309,7 +310,16 @@
                  :-fx-font-size "1.5em"
                  ;;:-fx-text-fill "aquamarine" ;; good for dark theme
                  :-fx-text-fill "darkseagreen" ;; good for light
-                 }}
+                 }
+
+                ;; orange bar
+                ".table-row-cell.warnings .more-column > .button"
+                {:-fx-text-fill "orange"}
+
+                ;; red cross
+                ".table-row-cell.errors .more-column > .button"
+                {:-fx-text-fill "red" ;; sort of a red-y colour
+                 :-fx-font-weight "bold"}}
 
                ".table-view#installed-addons .updateable"
                {:-fx-background-color (colour :row-updateable)
@@ -1201,16 +1211,24 @@
 (defn uber-button
   "returns a widget describing the current state of the given addon"
   [row]
-  (let [tick "\u2714" ;; ✔
-        update "\u21A6" ;; ↦
-        unsteady "\u2941" ;; ⥁ CLOCKWISE CLOSED CIRCLE ARROW
-        ]
+  (let [tick "\u2714" ;; '✔'
+        update "\u21A6" ;; '↦'
+        unsteady "\u2941" ;; '⥁' CLOCKWISE CLOSED CIRCLE ARROW
+        warnings "\u2501" ;; '━' heavy horizontal
+        errors "\u2A2F" ;; '⨯'
+
+        state (cond
+                (:ignore? row) ""
+                (core/unsteady? (:name row)) unsteady
+                (cli/addon-has-errors? row) errors
+                (cli/addon-has-warnings? row) warnings
+                ;; an addon may have updates AND errors/warnings ...
+                ;;(:update? row) update
+                :else tick)
+
+        state (if (:update? row) (str state " " update) state)]
     {:fx/type :button
-     :text (cond
-             (:ignore? row) ""
-             (core/unsteady? (:name row)) unsteady
-             (:update? row) update
-             :else tick)
+     :text state
      :on-action (fn [_]
                   (cli/add-addon-tab row)
                   (switch-tab-latest))}))
@@ -1219,6 +1237,7 @@
   [{:keys [fx/context]}]
   ;; subscribe to re-render table when addons become unsteady
   (fx/sub-val context get-in [:app-state :unsteady-addon-list])
+  (fx/sub-val context get-in [:app-state :log-stats])
   (let [row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
         selected (fx/sub-val context get-in [:app-state :selected-addon-list])
 
@@ -1268,7 +1287,11 @@
                                                ["table-row-cell" ;; `:style-class` will actually *replace* the list of classes
                                                 (when (:update? row) "updateable")
                                                 (when (:ignore? row) "ignored")
-                                                (when (and row (core/unsteady? (:name row))) "unsteady")])})}
+                                                (when (and row (core/unsteady? (:name row))) "unsteady")
+                                                (cond
+                                                  (cli/addon-has-errors? row) "errors"
+                                                  (cli/addon-has-warnings? row) "warnings")])})}
+
             :columns (mapv table-column column-list)
             :context-menu (if (= 1 (count selected))
                             (singular-context-menu (first selected))
