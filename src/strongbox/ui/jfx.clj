@@ -316,7 +316,8 @@
                  :-fx-background-color nil
                  :-fx-font-size "1.5em"
                  ;; green tick
-                 :-fx-text-fill (colour :uber-button-tick)}
+                 :-fx-text-fill (colour :uber-button-tick)
+                 :-fx-font-weight "bold"}
 
                 ".table-row-cell.warnings .more-column > .button"
                 {;; orange bar
@@ -324,8 +325,7 @@
 
                 ".table-row-cell.errors .more-column > .button"
                 {;; red cross
-                 :-fx-text-fill (colour :uber-button-error)
-                 :-fx-font-weight "bold"}}
+                 :-fx-text-fill (colour :uber-button-error)}}
 
                ".table-view#installed-addons .updateable"
                {:-fx-background-color (colour :row-updateable)
@@ -1218,26 +1218,33 @@
   "returns a widget describing the current state of the given addon"
   [row]
   (let [tick "\u2714" ;; '✔'
-        update "\u21A6" ;; '↦'
         unsteady "\u2941" ;; '⥁' CLOCKWISE CLOSED CIRCLE ARROW
         warnings "\u2501" ;; '━' heavy horizontal
         errors "\u2A2F" ;; '⨯'
+        update "\u21A6" ;; '↦'
 
-        state (cond
-                (:ignore? row) ""
-                (core/unsteady? (:name row)) unsteady
-                (cli/addon-has-errors? row) errors
-                (cli/addon-has-warnings? row) warnings
-                ;; an addon may have updates AND errors/warnings ...
-                ;;(:update? row) update
-                :else tick)
+        [text, tooltip]
+        (cond
+          (:ignore? row) ["", "ignoring"]
+          (core/unsteady? (:name row)) [unsteady "in flux"]
+          (cli/addon-has-errors? row) [errors (format "%s error(s)" (cli/addon-num-errors row))]
+          (cli/addon-has-warnings? row) [warnings (format "%s warning(s)" (cli/addon-num-warnings row))]
+          ;; an addon may have updates AND errors/warnings ...
+          ;;(:update? row) update
+          :else [tick "no problems"])
 
-        state (if (:update? row) (str state " " update) state)]
-    {:fx/type :button
-     :text state
-     :on-action (fn [_]
-                  (cli/add-addon-tab row)
-                  (switch-tab-latest))}))
+        text (if (:update? row) (str text " " update) text)
+        tooltip (if (:update? row) (str tooltip ", updates pending") tooltip)]
+
+    {:fx/type fx.ext.node/with-tooltip-props
+     :props {:tooltip {:fx/type :tooltip
+                       :text tooltip
+                       :show-delay 200}}
+     :desc {:fx/type :button
+            :text text
+            :on-action (fn [_]
+                         (cli/add-addon-tab row)
+                         (switch-tab-latest))}}))
 
 (defn installed-addons-table
   [{:keys [fx/context]}]

@@ -363,6 +363,21 @@
   [addon map?]
   (addon-has-log-level? :error (:dirname addon)))
 
+(defn-spec addon-num-log-level int?
+  [log-level ::sp/log-level, dirname ::sp/dirname]
+  (or
+   (some-> (core/get-state) :log-stats (get dirname) log-level)
+   0))
+
+(defn-spec addon-num-warnings int?
+  [addon map?]
+  (addon-num-log-level :warn (:dirname addon)))
+
+(defn-spec addon-num-errors int?
+  [addon map?]
+  (addon-num-log-level :error (:dirname addon)))
+
+
 ;; debug
 
 
