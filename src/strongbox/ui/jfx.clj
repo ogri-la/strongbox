@@ -67,7 +67,6 @@
     :hyperlink-updateable "blue"
     :hyperlink-weight "normal"
     :table-font-colour "-fx-text-base-color"
-    :already-installed-row-colour "#99bc6b"
     :row-alt "-fx-control-inner-background-alt"
     :uber-button-tick "darkseagreen"
     :uber-button-warn "orange"
@@ -92,7 +91,6 @@
     :hyperlink-updateable "white"
     :hyperlink-weight "bold"
     :table-font-colour "-fx-text-base-color"
-    :already-installed-row-colour "#99bc6b"
     :row-alt "#22232e"
     :uber-button-tick "aquamarine"
     :uber-button-warn "yellow"
@@ -249,6 +247,11 @@
                 {;; '!important' so that it takes precedence over .updateable addons
                  :-fx-background-color (str (colour :unsteady) " !important")}}
 
+               ;; ignored 
+               ".table-view .ignored .table-cell"
+               {:-fx-opacity "0.5"
+                :-fx-font-style "italic"}
+
 
                ;;
                ;; tables with alternating row colours (just add the '.odd-rows' class)
@@ -298,10 +301,7 @@
                {:-fx-min-width "100px"}
 
                ".table-view#installed-addons "
-               {".ignored .table-cell"
-                {:-fx-opacity "0.4"}
-
-                ".wow-column"
+               {".wow-column"
                 {:-fx-alignment "center"}
 
                 ;; todo: rename
@@ -414,12 +414,8 @@
                {:-fx-min-width "100px"
                 :-fx-text-fill (colour :table-font-colour)}
 
-               ".table-view#search-addons"
-               {" .downloads-column" {:-fx-alignment "center-right"}
-
-                " .installed"
-                {" > .table-cell" {} ;;:-fx-text-fill "black"
-                 :-fx-background-color (colour :already-installed-row-colour)}}
+               ".table-view#search-addons .downloads-column"
+               {:-fx-alignment "center-right"}
 
 
                ;;
@@ -1257,13 +1253,14 @@
                                                  (if row
                                                    {:graphic (href-to-hyperlink row)}
                                                    {:text ""}))}
-                      :cell-value-factory identity}
-                     {:text "name" :min-width 150 :pref-width 300 :max-width 500 :cell-value-factory (comp no-new-lines :label)}
-                     {:text "description" :pref-width 400 :cell-value-factory (comp no-new-lines :description)}
-                     {:text "installed" :max-width 250 :cell-value-factory :installed-version}
-                     {:text "available" :max-width 250 :cell-value-factory available-versions}
-                     {:text "WoW" :max-width 100 :cell-value-factory iface-version}
-                     {:text "" :style-class ["more-column"] :max-width 100
+                      :cell-value-factory identity
+                      :resizable false}
+                     {:text "name" :min-width 150 :pref-width 250 :cell-value-factory (comp no-new-lines :label)}
+                     {:text "description" :min-width 150 :pref-width 300 :cell-value-factory (comp no-new-lines :description)}
+                     {:text "installed" :min-width 100 :pref-width 170 :cell-value-factory :installed-version}
+                     {:text "available" :min-width 100 :pref-width 170 :cell-value-factory available-versions}
+                     {:text "WoW" :min-width 70 :pref-width 70 :max-width 70 :cell-value-factory iface-version :resizable false}
+                     {:text "" :style-class ["more-column"] :min-width 80 :max-width 80 :resizable false
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [row]
                                                  (if row
@@ -1416,18 +1413,18 @@
         empty-next-page (and (= 0 (count addon-list))
                              (> (-> search-state :page) 0))
 
-        column-list [{:text "source" :min-width 115 :pref-width 115 :max-width 115
+        column-list [{:text "source" :min-width 115 :pref-width 115 :max-width 115 :resizable false
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [row]
                                                  (if row
                                                    {:graphic (href-to-hyperlink row)}
                                                    {:text ""}))}
                       :cell-value-factory identity}
-                     {:text "name" :min-width 150 :pref-width 300 :max-width 450 :cell-value-factory (comp no-new-lines :label)}
-                     {:text "description" :pref-width 700 :cell-value-factory (comp no-new-lines :description)}
-                     {:text "tags" :pref-width 380 :min-width 230 :max-width 450 :cell-value-factory (comp str :tag-list)}
-                     {:text "updated" :min-width 85 :max-width 120 :pref-width 100 :cell-value-factory (comp #(utils/safe-subs % 10)  :updated-date)}
-                     {:text "downloads" :min-width 100 :max-width 120 :cell-value-factory :download-count}]]
+                     {:text "name" :min-width 150 :pref-width 250 :cell-value-factory (comp no-new-lines :label)}
+                     {:text "description" :min-width 200 :pref-width 400 :cell-value-factory (comp no-new-lines :description)}
+                     {:text "tags" :min-width 200 :pref-width 250 :cell-value-factory (comp str :tag-list)}
+                     {:text "updated" :min-width 85 :max-width 85 :pref-width 85 :resizable false :cell-value-factory (comp #(utils/safe-subs % 10) :updated-date)}
+                     {:text "downloads" :min-width 120 :pref-width 120 :max-width 120 :resizable false :cell-value-factory :download-count}]]
 
     {:fx/type fx.ext.table-view/with-selection-props
      :props {:selection-mode :multiple
@@ -1450,7 +1447,7 @@
                                                              (switch-tab-latest)))
                                        :style-class ["table-row-cell"
                                                      (when (utils/in? (idx-key row) installed-addon-idx)
-                                                       "installed")]})}
+                                                       "ignored")]})}
             :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
             :pref-height 999.0
             :columns (mapv table-column column-list)
