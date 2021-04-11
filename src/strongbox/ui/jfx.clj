@@ -295,7 +295,7 @@
 
 
                "#update-all-button"
-               {:-fx-min-width "101px"}
+               {:-fx-min-width "100px"}
 
                "#game-track-combo-box"
                {:-fx-min-width "100px"}
@@ -304,7 +304,6 @@
                {".wow-column"
                 {:-fx-alignment "center"}
 
-                ;; todo: rename
                 ".more-column"
                 {:-fx-padding 0
                  :-fx-alignment "top-center"}
@@ -312,7 +311,6 @@
                 ".more-column > .button"
                 {:-fx-padding 0
                  :-fx-pref-width 100
-                 :-fx-pref-height "20" ;; awfully specific :(
                  :-fx-background-color nil
                  :-fx-font-size "1.5em"
                  ;; green tick
@@ -497,7 +495,7 @@
                  :-fx-pref-width 9999.0}
 
                 ".table-view#key-vals .column-header .label"
-                {:-fx-font-style "normal"} ;; column values except the header should be italic
+                {:-fx-font-style "normal"} ;; column *values*, not the column *header* should be italic
 
                 ".table-view#key-vals .key-column"
                 {:-fx-alignment "center-right"
@@ -1114,8 +1112,8 @@
 
 (defn-spec href-to-hyperlink map?
   "returns a hyperlink description or an empty text description"
-  [row (s/keys :opt-un [::sp/url])]
-  (if-let [label (utils/source-to-href-label-fn (:url row))]
+  [row (s/nilable (s/keys :opt-un [::sp/url]))]
+  (if-let [label (some-> row :url utils/source-to-href-label-fn)]
     {:fx/type :hyperlink
      :on-action (handler #(utils/browse-to (:url row)))
      :text (str "↪ " label)}
@@ -1240,6 +1238,7 @@
   [{:keys [fx/context]}]
   ;; subscribe to re-render table when addons become unsteady
   (fx/sub-val context get-in [:app-state :unsteady-addon-list])
+  ;; subscribe to re-render rows when addons emit warnings or errors
   (fx/sub-val context get-in [:app-state :log-stats])
   (let [row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
         selected (fx/sub-val context get-in [:app-state :selected-addon-list])
@@ -1250,15 +1249,13 @@
         column-list [{:text "source" :min-width 115 :pref-width 115 :max-width 115
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [row]
-                                                 (if row
-                                                   {:graphic (href-to-hyperlink row)}
-                                                   {:text ""}))}
+                                                 {:graphic (href-to-hyperlink row)})}
                       :cell-value-factory identity
                       :resizable false}
-                     {:text "name" :min-width 150 :pref-width 250 :cell-value-factory (comp no-new-lines :label)}
+                     {:text "name" :min-width 150 :pref-width 200 :max-width 500 :cell-value-factory (comp no-new-lines :label)}
                      {:text "description" :min-width 150 :pref-width 300 :cell-value-factory (comp no-new-lines :description)}
-                     {:text "installed" :min-width 100 :pref-width 170 :cell-value-factory :installed-version}
-                     {:text "available" :min-width 100 :pref-width 170 :cell-value-factory available-versions}
+                     {:text "installed" :pref-width 150 :max-width 250 :cell-value-factory :installed-version}
+                     {:text "available" :pref-width 150 :max-width 250 :cell-value-factory available-versions}
                      {:text "WoW" :min-width 70 :pref-width 70 :max-width 70 :cell-value-factory iface-version :resizable false}
                      {:text "" :style-class ["more-column"] :min-width 80 :max-width 80 :resizable false
                       :cell-factory {:fx/cell-type :table-cell
@@ -1327,7 +1324,7 @@
                            (some-> row :source :name)
                            "app"))
 
-        ;; hide 'source' column in notice-logger in addon-detail pane
+        ;; hide 'source' column in notice-logger when embedded in addon-detail pane
         source-width (if section-title 0 150) ;; bit of a hack
 
         column-list [{:id "source" :text "source" :pref-width source-width :max-width source-width :min-width source-width :cell-value-factory source-label}
@@ -1416,9 +1413,7 @@
         column-list [{:text "source" :min-width 115 :pref-width 115 :max-width 115 :resizable false
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [row]
-                                                 (if row
-                                                   {:graphic (href-to-hyperlink row)}
-                                                   {:text ""}))}
+                                                 {:graphic (href-to-hyperlink row)})}
                       :cell-value-factory identity}
                      {:text "name" :min-width 150 :pref-width 250 :cell-value-factory (comp no-new-lines :label)}
                      {:text "description" :min-width 200 :pref-width 400 :cell-value-factory (comp no-new-lines :description)}
@@ -1542,7 +1537,7 @@
 (defn addon-detail-key-vals
   "displays a two-column table of `key: val` fields for what we know about an addon."
   [{:keys [addon]}]
-  (let [column-list [{:text "key" :min-width 150 :pref-width 150 :max-width 150 :cell-value-factory (comp name :key)}
+  (let [column-list [{:text "key" :min-width 150 :pref-width 150 :max-width 150 :resizable false :cell-value-factory (comp name :key)}
                      {:text "val" :cell-value-factory :val}]
 
         blacklist [:group-addons :release-list]
@@ -1568,7 +1563,7 @@
   "displays a list of other addons that came grouped with this addon"
   [{:keys [addon]}]
   (let [opener #(component-instance (addon-fs-link (:dirname %)))
-        column-list [{:text "" :style-class ["open-link-column"] :min-width 150 :pref-width 150 :max-width 150 :cell-value-factory opener}
+        column-list [{:text "" :style-class ["open-link-column"] :min-width 150 :pref-width 150 :max-width 150 :resizable false :cell-value-factory opener}
                      {:text "name" :cell-value-factory :dirname}]
         row-list (:group-addons addon)
         disabled? (empty? row-list)]
@@ -1588,12 +1583,12 @@
               :disable disabled?}}))
 
 (defn addon-detail-release-widget
-  "displays a list of installable releases for the given addon"
+  "displays a list of available releases for the given addon"
   [{:keys [addon]}]
   (let [install-button (fn [release]
                          (component-instance
                           (button "install" (async-handler #(cli/set-version addon release)))))
-        column-list [{:text "" :style-class ["install-button-column"] :min-width 120 :pref-width 120 :max-width 120 :cell-value-factory install-button}
+        column-list [{:text "" :style-class ["install-button-column"] :min-width 120 :pref-width 120 :max-width 120 :resizable false :cell-value-factory install-button}
                      {:text "name" :cell-value-factory #(or (:release-label %) (:version %))}]
         row-list (or (rest (:release-list addon)) [])
         disabled? (not (addon/releases-visible? addon))]

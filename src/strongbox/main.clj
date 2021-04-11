@@ -91,26 +91,31 @@
   (clojure.tools.namespace.repl/refresh) ;; reloads all namespaces, including strongbox.whatever-test ones
   (utils/instrument true) ;; always test with spec checking ON
 
-  (with-redefs [core/testing? true
-                ;;main/profile? true
-                ;;main/spec? true
-                ]
+  (try
+    (with-redefs [core/testing? true
+                  ;;main/profile? true
+                  ;;main/spec? true
+                  ]
+      (logging/reset-logging! core/testing?)
 
-    (logging/reset-logging! core/testing?)
-
-    (if ns-kw
-      (if (some #{ns-kw} [:main :utils :http :tags
-                          :core :toc :nfo :zip :config :catalogue :db :addon :logging
-                          :cli :gui :jfx
-                          :curseforge-api :wowinterface :wowinterface-api :github-api :tukui-api])
-        (with-gui-diff
-          (if fn-kw
-            ;; `test-vars` will run the test but not give feedback if test passes OR test not found
-            ;; slightly better than nothing
-            (clojure.test/test-vars [(resolve (symbol (str "strongbox." (name ns-kw) "-test") (name fn-kw)))])
-            (clojure.test/run-all-tests (re-pattern (str "strongbox." (name ns-kw) "-test")))))
-        (error "unknown test file:" ns-kw))
-      (clojure.test/run-all-tests #"strongbox\..*-test"))))
+      (if ns-kw
+        (if (some #{ns-kw} [:main :utils :http :tags
+                            :core :toc :nfo :zip :config :catalogue :db :addon :logging
+                            :cli :gui :jfx
+                            :curseforge-api :wowinterface :wowinterface-api :github-api :tukui-api])
+          (with-gui-diff
+            (if fn-kw
+              ;; `test-vars` will run the test but not give feedback if test passes OR test not found
+              ;; slightly better than nothing
+              (clojure.test/test-vars [(resolve (symbol (str "strongbox." (name ns-kw) "-test") (name fn-kw)))])
+              (clojure.test/run-all-tests (re-pattern (str "strongbox." (name ns-kw) "-test")))))
+          (error "unknown test file:" ns-kw))
+        (clojure.test/run-all-tests #"strongbox\..*-test")))
+    (finally
+      ;; use case: we run the tests from the repl and afterwards we call `restart` to start the app.
+      ;; `stop` inside `restart` will be outside of `with-redefs` and still have logging `:min-level` set to `:debug`
+      ;; it will dump a file and yadda yadda.
+      (logging/reset-logging! core/testing?))))
 
 ;;
 

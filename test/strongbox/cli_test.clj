@@ -247,7 +247,7 @@
         (cli/remove-tab-at-idx 1)
         (is (= expected (core/get-state :tab-list)))))))
 
-(deftest addon-num-log-level--no-logs-for-given-addon
+(deftest addon-num-log-level
   (with-running-app
     (is (zero? (cli/addon-num-log-level :warn "EveryAddon")))
     (is (zero? (cli/addon-num-log-level :error "EveryAddon")))
@@ -263,3 +263,10 @@
     (logging/addon-log {:dirname "EveryAddon"} :error "AWOOGA!")
     (is (= 2 (cli/addon-num-log-level :warn "EveryAddon")))
     (is (= 1 (cli/addon-num-log-level :error "EveryAddon")))))
+
+(deftest addon-has-log-level
+  (with-running-app
+    (is (false? (cli/addon-has-log-level? :warn "EveryAddon")))
+    (logging/addon-log {:dirname "EveryAddon"} :warn "warning message")
+    (is (true? (cli/addon-has-log-level? :warn "EveryAddon")))
+    (is (false? (cli/addon-has-log-level? :error "EveryAddon")))))
