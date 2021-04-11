@@ -108,6 +108,7 @@
    :db nil
 
    :log-lines []
+   :log-stats {}
 
    ;; a map of paths whose location may vary according to the cwd and envvars.
    :paths nil
@@ -151,6 +152,18 @@
   [& path]
   (nav-map (get-state :paths) path))
 
+(def testing? false)
+
+(defn-spec debug-mode? boolean?
+  "debug mode is when the log level has been set to `:debug` and we're *not* running tests.
+  the intent is to collect as much information around a problem as possible.
+  the log level may be changed through REPL usage.
+  the log level may be changed by using a `--verbosity` flag at runtime.
+  `main/test` and `cloverage.clj` alter the `main/testing?` flag while running tests and resets it afterwards."
+  []
+  (and (-> timbre/*config* :min-level (= :debug))
+       (not testing?)))
+
 ;;
 
 (defn set-etag
@@ -190,7 +203,7 @@
                (fn [_ _ old-state new-state] ;; key, atom, old-state, new-state
                  (when (has-changed old-state new-state)
                    ;; avoids infinite recursion
-                   (when (= :debug (:level timbre/*config*))
+                   (when (= :debug (:min-level timbre/*config*))
                      ;; this would cause the gui to receive a :debug of "path [] triggered a ..."
                      ;; this would update the :log-lines in the state
                      ;; this would cause the gui to receive a :debug of "path [] triggered a ..." ...
@@ -208,8 +221,10 @@
 
 (defn-spec selected-addon-dir (s/or :ok ::sp/addon-dir, :no-selection nil?)
   "returns the currently selected addon directory or nil if no directories exist to select from"
-  []
-  (get-state :cfg :selected-addon-dir))
+  ([]
+   (selected-addon-dir (get-state)))
+  ([state map?]
+   (-> state :cfg :selected-addon-dir)))
 
 (defn-spec addon-dir-exists? boolean?
   ([addon-dir ::sp/addon-dir]
@@ -233,9 +248,9 @@
         default-game-track (if (clojure.string/index-of addon-dir "_classic_") :classic :retail)]
     (dosync ;; necessary? makes me feel better
      (add-addon-dir! addon-dir default-game-track)
+     ;; todo: this is UI logic ... consider moving to ui.cli
      (swap! state assoc-in [:cfg :selected-addon-dir] addon-dir)
-     (swap! state assoc :tab-list [])
-     (logging/add-ui-appender! state (selected-addon-dir))))
+     (swap! state assoc :tab-list []))) ;; todo: consider adding a watch for this as well
   nil)
 
 (defn-spec remove-addon-dir! nil?
@@ -305,8 +320,8 @@
   The `:debug` log level outside of unit tests will write a log file to the data directory and 
   enables the profiling of certain sections of code."
   [new-level keyword?]
-  (timbre/merge-config! {:level new-level})
-  (when (logging/debug-mode?) ;; debug level + not-testing
+  (timbre/merge-config! {:min-level new-level})
+  (when (debug-mode?) ;; `:debug` level + not running tests
     (if-not @state
       (warn "application has not been started, no location to write log or profile data")
       (do
@@ -444,7 +459,8 @@
 (defn update-installed-addon-list!
   [installed-addon-list]
   (let [asc compare
-        installed-addon-list (sort-by :name asc installed-addon-list)]
+        ;; `vec` so we can use `update-in` and `assoc-in` on `:installed-addon-list`
+        installed-addon-list (vec (sort-by :name asc installed-addon-list))]
     (swap! state assoc :installed-addon-list installed-addon-list)
     nil))
 
@@ -967,10 +983,6 @@
   (profile
    {:when (get-state :profile?)}
 
-   ;; also in `set-addon-dir!` as it needs to be updated when the selected addon dir changes.
-   ;; `:selected-addon-dir` may not be set at this point but we still need to see logs in the UI
-   (logging/add-ui-appender! state (selected-addon-dir))
-
    ;; parse toc files in install-dir. do this first so we see *something* while catalogue downloads (next)
    (load-installed-addons)
 
@@ -1053,6 +1065,10 @@
 
 ;; init
 
+(defn init-logging
+  []
+  (add-cleanup-fn (logging/reset-logging! testing? state (selected-addon-dir))))
+
 (defn-spec set-paths! nil?
   []
   (swap! state assoc :paths (generate-path-map))
@@ -1093,6 +1109,7 @@
 (defn start
   [& [cli-opts]]
   (-start)
+  (init-logging)
   (info "starting app")
   (set-paths!)
   (detect-repl!)
@@ -1109,8 +1126,7 @@
   (doseq [f (:cleanup @state)]
     (debug "calling" f)
     (f))
-  (when (and @state
-             (logging/debug-mode?))
+  (when (and @state (debug-mode?))
     (dump-useful-log-info)
     (info "wrote logs to:" (paths :log-file)))
   (reset! state nil))

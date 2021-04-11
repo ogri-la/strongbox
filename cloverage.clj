@@ -1,7 +1,9 @@
 (ns strongbox.cloverage
   (:require
-   [taoensso.timbre :as timbre]
-   [strongbox.main :as main]
+   [strongbox
+    [main :as main]
+    [logging :as logging]
+    [core :as core]]
    [clojure.test :as test]
    [cloverage.coverage :as c]))
 
@@ -12,11 +14,10 @@
 (defmethod c/runner-fn :strongbox
   [_]
   (fn [ns-list]
-    (with-redefs [main/profile? true
+    (with-redefs [core/testing? true
+                  main/profile? true
                   main/spec? true]
-      (timbre/with-merged-config {:level :debug, :testing? true
-                                  ;; ensure we're not writing logs to files
-                                  :appenders {:spit nil}}
-        (apply require (map symbol ns-list))
-        {:errors (reduce + ((juxt :error :fail)
-                            (apply test/run-tests ns-list)))}))))
+      (logging/reset-logging! core/testing?)
+      (apply require (map symbol ns-list))
+      {:errors (reduce + ((juxt :error :fail)
+                          (apply test/run-tests ns-list)))})))

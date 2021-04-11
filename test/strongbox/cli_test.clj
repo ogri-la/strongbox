@@ -4,11 +4,12 @@
    [strongbox.ui.cli :as cli]
    [clj-http.fake :refer [with-global-fake-routes-in-isolation]]
    [strongbox
+    [logging :as logging]
     [main :as main]
     [catalogue :as catalogue]
     [core :as core]]
    [me.raynes.fs :as fs :refer [with-cwd]]
-   ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
+   [taoensso.timbre :as timbre :refer [debug info warn error spy]]
    [strongbox.test-helper :as helper :refer [with-running-app fixture-path]]))
 
 (use-fixtures :each helper/fixture-tempcwd)
@@ -245,3 +246,27 @@
         (is (= tab-list (core/get-state :tab-list)))
         (cli/remove-tab-at-idx 1)
         (is (= expected (core/get-state :tab-list)))))))
+
+(deftest addon-num-log-level
+  (with-running-app
+    (is (zero? (cli/addon-num-log-level :warn "EveryAddon")))
+    (is (zero? (cli/addon-num-log-level :error "EveryAddon")))
+
+    (logging/addon-log {:dirname "EveryAddon"} :warn "awooga") ;; warn #1
+    (logging/with-addon {:dirname "EveryAddon"}
+      (timbre/warn "wooooooga")) ;; warn #2
+
+    (is (= {"EveryAddon" {:warn 2}} (core/get-state :log-stats)))
+    (is (= 2 (cli/addon-num-log-level :warn "EveryAddon")))
+    (is (zero? (cli/addon-num-log-level :error "EveryAddon")))
+
+    (logging/addon-log {:dirname "EveryAddon"} :error "AWOOGA!")
+    (is (= 2 (cli/addon-num-log-level :warn "EveryAddon")))
+    (is (= 1 (cli/addon-num-log-level :error "EveryAddon")))))
+
+(deftest addon-has-log-level
+  (with-running-app
+    (is (false? (cli/addon-has-log-level? :warn "EveryAddon")))
+    (logging/addon-log {:dirname "EveryAddon"} :warn "warning message")
+    (is (true? (cli/addon-has-log-level? :warn "EveryAddon")))
+    (is (false? (cli/addon-has-log-level? :error "EveryAddon")))))

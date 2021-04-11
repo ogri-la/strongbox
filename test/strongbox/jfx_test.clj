@@ -34,7 +34,7 @@
                  [{:url "https://www.tukui.org/foo/bar"} {:fx/type :hyperlink :text "↪ tukui"}]
                  [{:url "https://www.tukui.org/classic-addons.php"} {:fx/type :hyperlink :text "↪ tukui-classic"}]]]
       (doseq [[given expected] cases]
-        (is (= expected (dissoc (jfx/-href-to-hyperlink given) :on-action)))))))
+        (is (= expected (dissoc (jfx/href-to-hyperlink given) :on-action)))))))
 
 (deftest table-column
   (testing "table-column data is converted to component descriptions"

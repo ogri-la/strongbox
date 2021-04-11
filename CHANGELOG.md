@@ -31,23 +31,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - will display `(warnings)` or `(errors)` if any warnings or errors present in log.
 * `View` menu has a menu option for open addon detail tabs with an additional `close all` button.
 * a column on the `installed` tab that shows the status of an addon.
-    - a tick if everything is ok
-    - an arrow if an update is available
-    - 
+    - a happy green tick if everything is ok.
+    - an unhappy red cross if the addon has errors.
+    - a stern yellow bar if the addon has warnings.
+    - an arrow if an update is available.
+    - single-clicking (rather than double-clicking) in this column takes you to the addon detail pane.
 
 ### Changed
 
-* console logging is now colour coded
-* console log line now excludes a number of fields including the machine's 'hostname'
-* many error messages have been truncated or made less verbose now they have that context built-in
-* switched from Travis CI to Circle CI
-    - I can't package an `AppImage` from Circle CI however, something to do with their Docker config.
+* console logging is now colour coded.
+* console log line now excludes a number of fields including the machine's 'hostname'.
+* many error messages have been truncated or made less verbose now they have that context built-in.
+* switched from Travis CI to Circle CI.
+    - I can't package an `AppImage` from Circle CI however, so this is happening manually for now.
+* search pane, styling of the 'already installed' addons now shares the same styling as ignored addons.
 
 ### Fixed
 
-* errant debug statement I accidentally left in that may have been confusing
-    - https://github.com/ogri-la/strongbox/issues/240
-* looks like the the gap between the `File` menu labels and their submenus is now gone with the update to JavaFX 15
+* looks like the the gap between the `File` menu labels and their submenus is now gone with an update to JavaFX 15.
+* truncated 'source' column in the search results when in dark mode.
 
 ### Removed
 
@@ -61,6 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * added a fix for addons supporting Classic (BC) appearing in the retail game track.
     - affects only curseforge addons
 * removed debug statement left in the 3.3.0 release
+    - https://github.com/ogri-la/strongbox/issues/240
 
 ## 3.3.0 - 2021-02-19
 

@@ -49,64 +49,67 @@
 
 (def major-theme-map
   {:light
-   {:installed/ignored-fg :darkgray
-    :base "#ececec"
+   {:base "#ececec"
     :accent "lightsteelblue"
-    :button-text-hovering "black"
     :table-border "#bbb"
     :row "-fx-control-inner-background"
     :row-hover "derive(-fx-control-inner-background,-10%)"
     :row-selected "lightsteelblue"
     :unsteady "lightsteelblue"
     :row-updateable "lemonchiffon"
-    :row-updateable-hover "lemonchiffon"
     :row-updateable-selected "#fdfd96" ;; "Lemon Meringue" (brighter yellow)
     :row-updateable-text "black"
     :row-warning "lemonchiffon"
+    :row-warning-text "black"
     :row-error "tomato"
-    :jfx-hyperlink "blue"
-    :jfx-hyperlink-updateable "blue"
-    :jfx-hyperlink-weight "normal"
-    :table-font-colour "derive(-fx-background,-80%)"
-    :already-installed-row-colour "#99bc6b"}
+    :row-error-text "black"
+    :hyperlink "blue"
+    :hyperlink-updateable "blue"
+    :hyperlink-weight "normal"
+    :table-font-colour "-fx-text-base-color"
+    :row-alt "-fx-control-inner-background-alt"
+    :uber-button-tick "darkseagreen"
+    :uber-button-warn "orange"
+    :uber-button-error "red"}
 
    :dark ;; "'dracula' theme: https://github.com/dracula/dracula-theme"
-   {:installed/ignored-fg "#666666"
-    :base "#1e1f29"
+   {:base "#1e1f29"
     :accent "#44475a"
-    :button-text-hovering "white"
     :table-border "#333"
     :row "#1e1f29" ;; same as :base
     :row-hover "derive(-fx-control-inner-background,-50%)"
     :row-selected "derive(-fx-control-inner-background,-30%)"
     :unsteady "#bbb"
     :row-updateable "#6272a4" ;; (blue)
-    :row-updateable-hover "#6272a4"
     :row-updateable-selected "#6272c3" ;; (brighter blue) ;; todo: can this be derived from :row-updateable?
     :row-updateable-text "white"
-    :row-warning "#6272a4"
-    :row-error "#ce2828"
-    :jfx-hyperlink "#f8f8f2"
-    :jfx-hyperlink-updateable "white"
-    :jfx-hyperlink-weight "bold"
-    :table-font-colour "white"
-    :already-installed-row-colour "#99bc6b"}})
+    :row-warning "#f1fa8c"
+    :row-warning-text "black"
+    :row-error "#ff5555"
+    :row-error-text "black"
+    :hyperlink "#f8f8f2"
+    :hyperlink-updateable "white"
+    :hyperlink-weight "bold"
+    :table-font-colour "-fx-text-base-color"
+    :row-alt "#22232e"
+    :uber-button-tick "aquamarine"
+    :uber-button-warn "yellow"
+    :uber-button-error "red"}})
 
 (def sub-theme-map
   {:dark
    {:green
     {:row-updateable "#50a67b" ;; (green)
-     :row-updateable-hover "#50a67b"
      :row-updateable-selected "#40c762" ;; (brighter green)
      :row-updateable-text "black"
-     :jfx-hyperlink-updateable "black"}
+     :hyperlink-updateable "black"}
 
     :orange
     {:row-updateable "#df8750" ;; (orange)
-     :row-updateable-hover "#df8750"
      :row-updateable-selected "#df722e" ;; (brigher orange)
      :row-updateable-text "black"
-     :jfx-hyperlink-updateable "black"}}})
+     :hyperlink-updateable "black"
+     :uber-button-error "brown"}}})
 
 (def themes
   (into major-theme-map
@@ -156,13 +159,8 @@
                :-fx-base (colour :base)
                :-fx-accent (colour :accent) ;; selection colour of backgrounds
 
-               ;; removes gradient from 'File' menu
                "#main-menu"
-               {:-fx-background-color (colour :base)}
-
-               ;; todo: what did this do again?
-               ;;".context-menu"
-               ;;{:-fx-effect "None"}
+               {:-fx-background-color (colour :base)} ;; removes gradient from 'File' menu
 
                ".combo-box-base"
                {:-fx-background-radius "0"
@@ -173,23 +171,18 @@
                ".button"
                {:-fx-background-radius "0"
                 :-fx-padding "5px 17px" ;; makes buttons same height as dropdowns
-                ":hover" {:-fx-text-fill (colour :button-text-hovering)}}
-
-               ;;
-               ;; tabber
-               ;;
-
-               ".tab-pane > .tab-header-area"
-               {:-fx-padding ".65em 0 0 .6em"
-                :-fx-background-color "green"}
-
-               ;; tabs
-               ".tab-pane > .tab-header-area > .headers-region > .tab"
-               {:-fx-background-radius "0"
-                :-fx-padding ".25em 1em"
-                :-fx-focus-color "transparent" ;; it's a tab, why gild the lilly
-                :-fx-faint-focus-color "transparent" ;; literally, a very faint box remains
                 }
+
+
+               ;;
+               ;; hyperlinks
+               ;;
+
+
+               ".hyperlink"
+               {:-fx-underline "false"
+                :-fx-font-weight (colour :hyperlink-weight)
+                :-fx-text-fill (colour :hyperlink)}
 
 
                ;;
@@ -204,6 +197,9 @@
                ".table-view"
                {:-fx-table-cell-border-color (colour :table-border)
                 :-fx-font-size ".9em"}
+
+               ".table-view .hyperlink"
+               {:-fx-padding "-2 0 0 0"}
 
                ".table-view .table-placeholder-text"
                {:-fx-font-size "3em"}
@@ -251,22 +247,46 @@
                 {;; '!important' so that it takes precedence over .updateable addons
                  :-fx-background-color (str (colour :unsteady) " !important")}}
 
+               ;; ignored 
+               ".table-view .ignored .table-cell"
+               {:-fx-opacity "0.5"
+                :-fx-font-style "italic"}
+
 
                ;;
-               ;; common table fields
+               ;; tables with alternating row colours (just add the '.odd-rows' class)
+               ;; 
+
+
+               ".table-view.odd-rows .table-row-cell:odd"
+               {:-fx-background-color (colour :row-alt)
+                ":hover"
+                {:-fx-background-color (colour :row-hover)}}
+
+               ;; 'the above overwrites the pseudo class as well apparently.
+               ;; this 'resets' it so we don't get selected rows with alternating blanks
+               ".table-view.odd-rows .table-row-cell:odd:selected"
+               {:-fx-background-color (colour :row-selected)
+                ":hover"
+                {:-fx-background-color (colour :row-hover)}}
+
+
+
+               ;;
+               ;; tabber
                ;;
 
 
-               ".table-view .hyperlink"
-               {:-fx-padding "-2 0 0 0"} ;; hyperlinks are just a little bit off .. weird.
+               ".tab-pane > .tab-header-area"
+               {:-fx-padding ".7em 0 0 .6em"}
 
-               ".table-view .hyperlink:visited"
-               {:-fx-underline "false"}
-
-               ".table-view .hyperlink, .table-view .hyperlink:hover"
-               {:-fx-underline "false"
-                :-fx-text-fill (colour :jfx-hyperlink)
-                :-fx-font-weight (colour :jfx-hyperlink-weight)}
+               ;; tabs
+               ".tab-pane > .tab-header-area > .headers-region > .tab"
+               {:-fx-background-radius "0"
+                :-fx-padding ".25em 1em"
+                :-fx-focus-color "transparent" ;; disables the 'blue box' of selected widgets
+                :-fx-faint-focus-color "transparent" ;; literally, a very faint box remains
+                }
 
 
                ;;
@@ -275,57 +295,49 @@
 
 
                "#update-all-button"
-               {:-fx-min-width "101px"}
+               {:-fx-min-width "100px"}
 
                "#game-track-combo-box"
                {:-fx-min-width "100px"}
 
-               ;; installed-addons table
-               ".table-view#installed-addons"
-               {" .updateable"
-                {:-fx-background-color (colour :row-updateable)
-
-                 " .table-cell"
-                 {:-fx-text-fill (colour :row-updateable-text)}
-
-                 " .hyperlink, .hyperlink:hover"
-                 {:-fx-text-fill (colour :jfx-hyperlink-updateable)}
-
-                 ;; selected updateable addons are do not look any different
-                 ;; todo: make selected+updateable addons use slightly brighter versions of themselves
-                 ":selected"
-                 {;; !important so that hovering over a selected+updateable row doesn't change it's colour
-                  :-fx-background-color (str (colour :row-updateable-selected) " !important")}
-
-                 ":hover"
-                 {:-fx-background-color (colour :row-updateable-hover)}}
-
-                " .ignored .table-cell"
-                {:-fx-text-fill (colour :installed/ignored-fg)}
-
-                " .wow-column"
+               ".table-view#installed-addons "
+               {".wow-column"
                 {:-fx-alignment "center"}
 
-                " .button"
+                ".more-column"
+                {:-fx-padding 0
+                 :-fx-alignment "top-center"}
+
+                ".more-column > .button"
                 {:-fx-padding 0
                  :-fx-pref-width 100
-                 :-fx-pref-height "20" ;; awfully specific :(
                  :-fx-background-color nil
                  :-fx-font-size "1.5em"
-                 ;;:-fx-text-fill "aquamarine" ;; good for dark theme
-                 :-fx-text-fill "darkseagreen" ;; good for light
-                 }
+                 ;; green tick
+                 :-fx-text-fill (colour :uber-button-tick)
+                 :-fx-font-weight "bold"}
 
-                " .column-header.more-column .table-cell"
-                {:-fx-fill "green"
-                 ;;:-fx-padding 10
-                 :-fx-text-fill "green"
-                 ;;:-fx-background-color "green"
-                 }
+                ".table-row-cell.warnings .more-column > .button"
+                {;; orange bar
+                 :-fx-text-fill (colour :uber-button-warn)}
 
-                " .more-column"
-                {:-fx-padding 0
-                 :-fx-spacing 0}}
+                ".table-row-cell.errors .more-column > .button"
+                {;; red cross
+                 :-fx-text-fill (colour :uber-button-error)}}
+
+               ".table-view#installed-addons .updateable"
+               {:-fx-background-color (colour :row-updateable)
+
+                " .table-cell"
+                {:-fx-text-fill (colour :row-updateable-text)}
+
+                " .hyperlink"
+                {:-fx-text-fill (colour :hyperlink-updateable)}
+
+                ;; selected+updateable addons look *slightly* different
+                ":selected"
+                {;; !important so that hovering over a selected+updateable row doesn't change it's colour
+                 :-fx-background-color (str (colour :row-updateable-selected) " !important")}}
 
 
                ;;
@@ -336,13 +348,17 @@
                ".table-view#notice-logger "
                {:-fx-font-family "monospace"
 
-                ".warn"
-                {:-fx-background-color (colour :row-warning)}
+                ".warn .table-cell"
+                {:-fx-text-fill (colour :row-warning-text)
+                 :-fx-background-color (colour :row-warning)}
+
                 ".warn:selected"
                 {:-fx-background-color "-fx-selection-bar"}
 
-                ".error"
-                {:-fx-background-color (colour :row-error)}
+                ".error .table-cell"
+                {:-fx-text-fill (colour :row-error-text)
+                 :-fx-background-color (colour :row-error)}
+
                 ".error:selected"
                 {:-fx-background-color "-fx-selection-bar"}
 
@@ -350,8 +366,7 @@
                 {:-fx-alignment "center"}
 
                 "#source"
-                {:-fx-alignment "center"
-                 :-fx-pref-width 150}
+                {:-fx-alignment "center"}
 
                 "#time"
                 {:-fx-alignment "center"}
@@ -397,12 +412,14 @@
                {:-fx-min-width "100px"
                 :-fx-text-fill (colour :table-font-colour)}
 
-               ".table-view#search-addons"
-               {" .downloads-column" {:-fx-alignment "center-right"}
+               ".table-view#search-addons .downloads-column"
+               {:-fx-alignment "center-right"}
 
-                " .installed"
-                {" > .table-cell" {} ;;:-fx-text-fill "black"
-                 :-fx-background-color (colour :already-installed-row-colour)}}
+
+               ;;
+               ;; status bar (bottom of app)
+               ;; 
+
 
                "#status-bar"
                {:-fx-font-size ".9em"
@@ -420,39 +437,51 @@
 
                ".addon-detail "
                {".title"
-                {:-fx-font-size "2em"
-                 :-fx-padding "1em 0 .25em 1em"
-                 :-fx-alignment "center"}
+                {:-fx-font-size "2.5em"
+                 :-fx-padding "1em 0 .5em 1em"
+                 :-fx-text-fill "-fx-text-base-color"}
 
                 ".subtitle"
-                {:-fx-font-size "1.1em"}
+                {:-fx-font-size "1.1em"
+                 :-fx-text-fill "-fx-text-base-color"
+                 :-fx-padding "0 0 .5em 1.75em"}
+
+                ".subtitle .installed-version"
+                {:-fx-text-fill "-fx-text-base-color"
+                 :-fx-padding "0 1em 0 0"}
+
+                ".subtitle .version"
+                {:-fx-text-fill (colour :row-updateable-text)
+                 :-fx-background-color (colour :row-updateable-selected)
+                 :-fx-padding "0 .75em"
+                 :-fx-background-radius ".4em"}
+
+                ".subtitle .hyperlink"
+                {:-fx-padding "0 .5em .1em .5em"
+                 :-fx-font-size ".9em"}
 
                 ".section-title"
                 {:-fx-font-size "1.3em"
                  :-fx-padding "1em 0 .5em 1em"
-                 :-fx-min-width "200px"}
+                 :-fx-min-width "200px"
+                 :-fx-text-fill "-fx-text-base-color"}
+
+                ".disabled-text"
+                {:-fx-opacity "0.3"}
 
                 ".description"
                 {:-fx-font-size "1.4em"
                  :-fx-padding "0 0 1.5em 1em"
                  :-fx-wrap-text true
-                 :-fx-font-style "italic"}
+                 :-fx-font-style "italic"
+                 :-fx-text-fill "-fx-text-base-color"}
 
-                ".ext-links"
-                {:-fx-padding "0 0 1em 1.75em"}
-
-                ".ext-links .hyperlink"
-                {:-fx-text-fill "blue"
-                 :-fx-padding "0 0 0 1em"}
+                ;; keep the ignore and delete buttons very separate from the others
+                ".separator"
+                {:-fx-padding "0 1em"}
 
                 ".table-view#notice-logger"
-                {:-fx-pref-height "12pc"}
-
-                ;; hide 'source' column in notice-logger in addon-detail pane
-                ".table-view#notice-logger #source"
-                {:-fx-max-width 0
-                 :-fx-pref-width 0
-                 :-fx-min-width 0}
+                {:-fx-pref-height "10pc"}
 
                 ;; hide column headers in notice-logger in addon-detail pane
                 ".table-view#notice-logger .column-header-background"
@@ -466,8 +495,7 @@
                  :-fx-pref-width 9999.0}
 
                 ".table-view#key-vals .column-header .label"
-                {:-fx-font-style "normal" ;; column values except the header should be italic
-                 }
+                {:-fx-font-style "normal"} ;; column *values*, not the column *header* should be italic
 
                 ".table-view#key-vals .key-column"
                 {:-fx-alignment "center-right"
@@ -481,7 +509,7 @@
                 {:-fx-padding "-2"}
 
                 ".table-view#release-list .install-button-column .button"
-                {:-fx-pref-width 120}} ;; ends .addon-detail
+                {:-fx-pref-width 110}} ;; ends .addon-detail
 
                ;; ---
                }}))]
@@ -745,7 +773,7 @@
     ;; and so will exit again there :( the double-check here seems to work though.
     (or (:in-repl? @core/state)
         (utils/in-repl?)) (swap! core/state assoc :gui-showing? false)
-    (-> timbre/*config* :testing?) (swap! core/state assoc :gui-showing? false)
+    core/testing? (swap! core/state assoc :gui-showing? false)
     ;; 2020-08-08: `ss/invoke-later` was keeping the old window around when running outside of repl.
     ;; `ss/invoke-soon` seems to fix that.
     ;;  - http://daveray.github.io/seesaw/seesaw.invoke-api.html
@@ -1082,10 +1110,10 @@
                  :min-width 80}]
     (merge default column-data final-cvf final-style)))
 
-(defn-spec -href-to-hyperlink map?
+(defn-spec href-to-hyperlink map?
   "returns a hyperlink description or an empty text description"
-  [row (s/keys :opt-un [::sp/url])]
-  (if-let [label (utils/source-to-href-label-fn (:url row))]
+  [row (s/nilable (s/keys :opt-un [::sp/url]))]
+  (if-let [label (some-> row :url utils/source-to-href-label-fn)]
     {:fx/type :hyperlink
      :on-action (handler #(utils/browse-to (:url row)))
      :text (str "↪ " label)}
@@ -1099,12 +1127,6 @@
     {:fx/type :hyperlink
      :on-action (handler #(utils/browse-to (format "%s/%s" (core/selected-addon-dir) dirname)))
      :text "↪ browse local files"}))
-
-;;(defn-spec href-to-hyperlink (s/or :ok :javafx/hyperlink-component, :noop :javafx/text-component)
-(defn href-to-hyperlink
-  "returns a hyperlink instance or empty text"
-  [row]
-  (component-instance (-href-to-hyperlink row)))
 
 (defn-spec available-versions (s/or :ok string? :no-version-available nil?)
   "formats the 'available version' string depending on the state of the addon.
@@ -1183,37 +1205,65 @@
 (defn uber-button
   "returns a widget describing the current state of the given addon"
   [row]
-  (let [tick "\u2714" ;; ✔
-        update "\u21A6" ;; ↦
-        unsteady "\u2941" ;; ⥁ CLOCKWISE CLOSED CIRCLE ARROW
-        ub {:fx/type :button
-            :text (cond
-                    (:ignore? row) ""
-                    (core/unsteady? (:name row)) unsteady
-                    (:update? row) update
-                    :else tick)
+  (let [tick "\u2714" ;; '✔'
+        unsteady "\u2941" ;; '⥁' CLOCKWISE CLOSED CIRCLE ARROW
+        warnings "\u2501" ;; '━' heavy horizontal
+        errors "\u2A2F" ;; '⨯'
+        update "\u21A6" ;; '↦'
+
+        [text, tooltip]
+        (cond
+          (:ignore? row) ["", "ignoring"]
+          (core/unsteady? (:name row)) [unsteady "in flux"]
+          (cli/addon-has-errors? row) [errors (format "%s error(s)" (cli/addon-num-errors row))]
+          (cli/addon-has-warnings? row) [warnings (format "%s warning(s)" (cli/addon-num-warnings row))]
+          ;; an addon may have updates AND errors/warnings ...
+          ;;(:update? row) update
+          :else [tick "no problems"])
+
+        text (if (:update? row) (str text " " update) text)
+        tooltip (if (:update? row) (str tooltip ", updates pending") tooltip)]
+
+    {:fx/type fx.ext.node/with-tooltip-props
+     :props {:tooltip {:fx/type :tooltip
+                       :text tooltip
+                       :show-delay 200}}
+     :desc {:fx/type :button
+            :text text
             :on-action (fn [_]
                          (cli/add-addon-tab row)
-                         (switch-tab-latest))}]
-    (component-instance ub)))
+                         (switch-tab-latest))}}))
 
 (defn installed-addons-table
   [{:keys [fx/context]}]
   ;; subscribe to re-render table when addons become unsteady
   (fx/sub-val context get-in [:app-state :unsteady-addon-list])
+  ;; subscribe to re-render rows when addons emit warnings or errors
+  (fx/sub-val context get-in [:app-state :log-stats])
   (let [row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
         selected (fx/sub-val context get-in [:app-state :selected-addon-list])
 
         iface-version (fn [row]
                         (some-> row :interface-version str utils/interface-version-to-game-version))
 
-        column-list [{:text "source" :min-width 115 :pref-width 120 :max-width 160 :cell-value-factory href-to-hyperlink}
-                     {:text "name" :min-width 150 :pref-width 300 :max-width 500 :cell-value-factory (comp no-new-lines :label)}
-                     {:text "description" :pref-width 400 :cell-value-factory (comp no-new-lines :description)}
-                     {:text "installed" :max-width 250 :cell-value-factory :installed-version}
-                     {:text "available" :max-width 250 :cell-value-factory available-versions}
-                     {:text "WoW" :max-width 100 :cell-value-factory iface-version}
-                     {:text "" :style-class ["more-column"] :max-width 100 :cell-value-factory uber-button}]]
+        column-list [{:text "source" :min-width 115 :pref-width 115 :max-width 115
+                      :cell-factory {:fx/cell-type :table-cell
+                                     :describe (fn [row]
+                                                 {:graphic (href-to-hyperlink row)})}
+                      :cell-value-factory identity
+                      :resizable false}
+                     {:text "name" :min-width 150 :pref-width 200 :max-width 500 :cell-value-factory (comp no-new-lines :label)}
+                     {:text "description" :min-width 150 :pref-width 300 :cell-value-factory (comp no-new-lines :description)}
+                     {:text "installed" :pref-width 150 :max-width 250 :cell-value-factory :installed-version}
+                     {:text "available" :pref-width 150 :max-width 250 :cell-value-factory available-versions}
+                     {:text "WoW" :min-width 70 :pref-width 70 :max-width 70 :cell-value-factory iface-version :resizable false}
+                     {:text "" :style-class ["more-column"] :min-width 80 :max-width 80 :resizable false
+                      :cell-factory {:fx/cell-type :table-cell
+                                     :describe (fn [row]
+                                                 (if row
+                                                   {:graphic (uber-button row)}
+                                                   {:text ""}))}
+                      :cell-value-factory identity}]]
 
     {:fx/type fx.ext.table-view/with-selection-props
      :props {:selection-mode :multiple
@@ -1238,7 +1288,11 @@
                                                ["table-row-cell" ;; `:style-class` will actually *replace* the list of classes
                                                 (when (:update? row) "updateable")
                                                 (when (:ignore? row) "ignored")
-                                                (when (and row (core/unsteady? (:name row))) "unsteady")])})}
+                                                (when (and row (core/unsteady? (:name row))) "unsteady")
+                                                (cond
+                                                  (and row (cli/addon-has-errors? row)) "errors"
+                                                  (and row (cli/addon-has-warnings? row)) "warnings")])})}
+
             :columns (mapv table-column column-list)
             :context-menu (if (= 1 (count selected))
                             (singular-context-menu (first selected))
@@ -1270,7 +1324,10 @@
                            (some-> row :source :name)
                            "app"))
 
-        column-list [{:id "source" :text "source" :max-width 120 :cell-value-factory source-label}
+        ;; hide 'source' column in notice-logger when embedded in addon-detail pane
+        source-width (if section-title 0 150) ;; bit of a hack
+
+        column-list [{:id "source" :text "source" :pref-width source-width :max-width source-width :min-width source-width :cell-value-factory source-label}
                      {:id "level" :text "level" :max-width 80 :cell-value-factory (comp name :level)}
                      {:id "time" :text "time" :max-width 100 :cell-value-factory :time}
                      {:id "message" :text "message" :pref-width 500 :cell-value-factory :message}]
@@ -1308,6 +1365,7 @@
 
      :center {:fx/type :table-view
               :id "notice-logger"
+              :style-class ["table-view" "odd-rows"]
               :placeholder {:fx/type :text
                             :style-class ["table-placeholder-text"]
                             :text ""}
@@ -1352,12 +1410,16 @@
         empty-next-page (and (= 0 (count addon-list))
                              (> (-> search-state :page) 0))
 
-        column-list [{:text "source" :min-width 110 :pref-width 120 :max-width 160 :cell-value-factory href-to-hyperlink}
-                     {:text "name" :min-width 150 :pref-width 300 :max-width 450 :cell-value-factory (comp no-new-lines :label)}
-                     {:text "description" :pref-width 700 :cell-value-factory (comp no-new-lines :description)}
-                     {:text "tags" :pref-width 380 :min-width 230 :max-width 450 :cell-value-factory (comp str :tag-list)}
-                     {:text "updated" :min-width 85 :max-width 120 :pref-width 100 :cell-value-factory (comp #(utils/safe-subs % 10)  :updated-date)}
-                     {:text "downloads" :min-width 100 :max-width 120 :cell-value-factory :download-count}]]
+        column-list [{:text "source" :min-width 115 :pref-width 115 :max-width 115 :resizable false
+                      :cell-factory {:fx/cell-type :table-cell
+                                     :describe (fn [row]
+                                                 {:graphic (href-to-hyperlink row)})}
+                      :cell-value-factory identity}
+                     {:text "name" :min-width 150 :pref-width 250 :cell-value-factory (comp no-new-lines :label)}
+                     {:text "description" :min-width 200 :pref-width 400 :cell-value-factory (comp no-new-lines :description)}
+                     {:text "tags" :min-width 200 :pref-width 250 :cell-value-factory (comp str :tag-list)}
+                     {:text "updated" :min-width 85 :max-width 85 :pref-width 85 :resizable false :cell-value-factory (comp #(utils/safe-subs % 10) :updated-date)}
+                     {:text "downloads" :min-width 120 :pref-width 120 :max-width 120 :resizable false :cell-value-factory :download-count}]]
 
     {:fx/type fx.ext.table-view/with-selection-props
      :props {:selection-mode :multiple
@@ -1380,7 +1442,7 @@
                                                              (switch-tab-latest)))
                                        :style-class ["table-row-cell"
                                                      (when (utils/in? (idx-key row) installed-addon-idx)
-                                                       "installed")]})}
+                                                       "ignored")]})}
             :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
             :pref-height 999.0
             :columns (mapv table-column column-list)
@@ -1472,33 +1534,10 @@
                       {:disabled? (not (addon/deletable? addon))
                        :tooltip "Permanently delete"})]})
 
-(defn addon-detail-release-widget
-  "displays a list of installable releases for the given addon"
-  [{:keys [addon]}]
-  (let [install-button (fn [release]
-                         (component-instance
-                          (button "install" (async-handler #(cli/set-version addon release)))))
-        column-list [{:text "" :style-class ["install-button-column"] :min-width 120 :pref-width 120 :max-width 120 :cell-value-factory install-button}
-                     {:text "name" :cell-value-factory #(or (:release-label %) (:version %))}]
-        row-list (or (rest (:release-list addon)) [])]
-    {:fx/type :border-pane
-     :top {:fx/type :label
-           :style-class ["section-title"]
-           :text "releases"}
-     :center {:fx/type :table-view
-              :id "release-list"
-              :placeholder {:fx/type :text
-                            :style-class ["table-placeholder-text"]
-                            :text "(no releases)"}
-              :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
-              :columns (mapv table-column column-list)
-              :items row-list
-              :disable (not (addon/releases-visible? addon))}}))
-
 (defn addon-detail-key-vals
   "displays a two-column table of `key: val` fields for what we know about an addon."
   [{:keys [addon]}]
-  (let [column-list [{:text "key" :min-width 150 :pref-width 150 :max-width 200 :cell-value-factory (comp name :key)}
+  (let [column-list [{:text "key" :min-width 150 :pref-width 150 :max-width 150 :resizable false :cell-value-factory (comp name :key)}
                      {:text "val" :cell-value-factory :val}]
 
         blacklist [:group-addons :release-list]
@@ -1512,6 +1551,7 @@
            :text "raw data"}
      :center {:fx/type :table-view
               :id "key-vals"
+              :style-class ["table-view" "odd-rows"]
               :placeholder {:fx/type :text
                             :style-class ["table-placeholder-text"]
                             :text "(not installed)"}
@@ -1523,23 +1563,49 @@
   "displays a list of other addons that came grouped with this addon"
   [{:keys [addon]}]
   (let [opener #(component-instance (addon-fs-link (:dirname %)))
-        column-list [{:text "" :style-class ["open-link-column"] :min-width 80 :pref-width 150 :max-width 150 :cell-value-factory opener}
+        column-list [{:text "" :style-class ["open-link-column"] :min-width 150 :pref-width 150 :max-width 150 :resizable false :cell-value-factory opener}
                      {:text "name" :cell-value-factory :dirname}]
-
-        row-list (:group-addons addon)]
+        row-list (:group-addons addon)
+        disabled? (empty? row-list)]
     {:fx/type :border-pane
      :top {:fx/type :label
-           :style-class ["section-title"]
+           :style-class (if disabled? ["section-title", "disabled-text"] ["section-title"])
            :text "grouped addons"}
      :center {:fx/type :table-view
               :id "group-addons"
+              :style-class ["table-view" "odd-rows"]
               :placeholder {:fx/type :text
                             :style-class ["table-placeholder-text"]
                             :text "(not grouped)"}
               :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
               :columns (mapv table-column column-list)
               :items (or row-list [])
-              :disable (empty? row-list)}}))
+              :disable disabled?}}))
+
+(defn addon-detail-release-widget
+  "displays a list of available releases for the given addon"
+  [{:keys [addon]}]
+  (let [install-button (fn [release]
+                         (component-instance
+                          (button "install" (async-handler #(cli/set-version addon release)))))
+        column-list [{:text "" :style-class ["install-button-column"] :min-width 120 :pref-width 120 :max-width 120 :resizable false :cell-value-factory install-button}
+                     {:text "name" :cell-value-factory #(or (:release-label %) (:version %))}]
+        row-list (or (rest (:release-list addon)) [])
+        disabled? (not (addon/releases-visible? addon))]
+    {:fx/type :border-pane
+     :top {:fx/type :label
+           :style-class (if disabled? ["section-title", "disabled-text"] ["section-title"])
+           :text "releases"}
+     :center {:fx/type :table-view
+              :id "release-list"
+              :style-class ["table-view" "odd-rows"]
+              :placeholder {:fx/type :text
+                            :style-class ["table-placeholder-text"]
+                            :text "(no releases)"}
+              :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
+              :columns (mapv table-column column-list)
+              :items row-list
+              :disable disabled?}}))
 
 (defn addon-detail-pane
   "a place to elaborate on what we know about an addon as well somewhere we can put lots of buttons and widgets."
@@ -1598,25 +1664,23 @@
                   :text (:label addon)}
 
                  {:fx/type :h-box
-                  :style-class ["ext-links"]
+                  :style-class ["subtitle"]
                   :children (utils/items
-                             [{:fx/type :label
-                               :style-class ["subtitle"]
-                               :text (cond
-                                       (:update? addon)
-                                       (format "%s (%s available)" (:installed-version addon) (:version addon))
+                             [(when (:installed-version addon)
+                                {:fx/type :label
+                                 :style-class ["installed-version"]
+                                 :text (:installed-version addon)})
 
-                                       (:installed-version addon)
-                                       (format "%s" (:installed-version addon))
-
-                                       (:version addon)
-                                       (format "%s" (:version addon)))}
+                              (when (:update? addon)
+                                {:fx/type :label
+                                 :style-class ["version"]
+                                 :text (format "%s available" (:version addon))})
 
                               ;; if installed, path to addon directory, clicking it opens file browser
                               (addon-fs-link (:dirname addon))
 
                               ;; order is important, a hyperlink may not exist, can't have nav jumping around.
-                              (-href-to-hyperlink addon)])}
+                              (href-to-hyperlink addon)])}
 
                  (when-not (empty? (:description addon))
                    {:fx/type :label
@@ -1787,6 +1851,9 @@
                                 (debug "updating gui state")
                                 (swap! gui-state fx/swap-context assoc :style (style))))
             (core/add-cleanup-fn #(remove-watch rf key)))
+
+        ;; logging to app state for use in the UI
+        _ (cli/init-ui-logger)
 
         ;; asynchronous searching. as the user types, update the state with search results asynchronously
         _ (cli/-init-search-listener)
