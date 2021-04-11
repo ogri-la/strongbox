@@ -48,14 +48,12 @@ see CHANGELOG.md for a more formal list of changes by release
     - done
 * highlight new log pane or status bar when there is an non-addon error or warning
     - done
-
-## todo
-
 * 4.0 styling
     - dark theme styling for addon-detail
         - use derived colours rather than hardcode
+        - done
     - bug, addon detail, description box may grow or shrink after finding a match in the catalogue, bumping the content below up or down
-
+        - done
 
 * uber-button
     - new column that displays overall health of addon
@@ -63,10 +61,19 @@ see CHANGELOG.md for a more formal list of changes by release
         - if a task is being performed for that addon, it shows a progress meter
         - if addon is up-to-date, it shows a happy green tick
             - if there is something to be concerned about (and that the user can fix), show a warning or error
+    - done
+
+## todo
 
 * bug, 'strongbox.version' in debug output is null when run as a binary
 
 ## todo bucket (no particular order)
+
+* game tracks, add warning if installed addon's interface version deviates from addon directory's game track
+    - for example, if classic is installed in retail, or classic-bc is installed in classic
+
+* installed, right align version columns and make elipses start at left
+    - we're typically interested in comparing the last part of the version
 
 * tabber, double clicking a tab closes it
 

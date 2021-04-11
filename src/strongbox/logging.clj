@@ -27,16 +27,6 @@
 
 (def default-log-level :info)
 
-(defn-spec debug-mode? boolean?
-  "debug mode is when the log level has been set to `:debug` and we're *not* running tests.
-  the intent is to collect as much information around a problem as possible.
-  the log level may change during REPL usage.
-  the log level may change by using a `--verbosity` flag at runtime.
-  `main.clj` adds an adhoc `testing?` flag to the logging configuration and removes it afterwards."
-  []
-  (and (-> timbre/*config* :level (= :debug))
-       (not (-> timbre/*config* :testing?))))
-
 ;; https://github.com/ptaoussanis/timbre/blob/56d67dd274d7d11ab31624a70b4b5ae194c03acd/src/taoensso/timbre.cljc#L856-L858
 (def colour-log-map
   {:debug :blue
@@ -71,8 +61,8 @@
                           label
                           msg))))))
 
-(def default-logging-config
-  {:level default-log-level
+(def -default-logging-config
+  {:min-level default-log-level
 
    :timestamp-opts {;;:pattern "yyyy-MM-dd HH:mm:ss.SSS"
                     :pattern "HH:mm:ss.SSS"
@@ -84,15 +74,13 @@
                          :output-fn :inherit
                          :fn anon-println-appender}}})
 
-(timbre/merge-config! default-logging-config)
-
 (defn-spec add-appender! nil?
   "adds appender at `key` to logging config"
   ([key keyword?, f fn?]
    (add-appender! key f {}))
   ([key keyword?, f fn?, config map?]
-   (timbre/debug "adding appender" key config)
    (let [appender-config (merge {:fn f, :enabled? true} config)]
+     (timbre/debug "adding appender" key)
      (timbre/merge-config! {:appenders {key appender-config}})
      nil)))
 
@@ -106,6 +94,7 @@
 (defn-spec rm-appender! nil?
   "removes appender at `key` from logging config"
   [key keyword?]
+  (timbre/debug "removing appender" key)
   (timbre/merge-config! {:appenders {key nil}})
   nil)
 
@@ -115,19 +104,18 @@
   `(let [stateful-buffer# (atom [])
          appender# (fn [data#]
                      (swap! stateful-buffer# into [(force (:msg_ data#))]))]
-     (timbre/with-merged-config {:level ~level,
+     (timbre/with-merged-config {:min-level ~level,
                                  :appenders {:-temp {:fn appender#
                                                      :enabled? true}}}
        ~@form)
      (deref stateful-buffer#)))
 
-(defn-spec add-ui-appender! nil?
+(defn-spec add-ui-appender! fn?
   "adds a logger intended for the UI to interact with.
   if an addon is passed as `:context` then an identifier can be pulled from it and the UI can use that to
   associate log events with addons. see `addon-log`, `with-addon` and `with-label`."
   [atm ::sp/atom, install-dir (s/nilable ::sp/install-dir)]
-  (let [level-map {:debug 0 :info 1 :warn 2 :error 3}
-        inc* #(inc (or % 0))
+  (let [inc* #(inc (or % 0))
         func (fn [data]
                (let [addon (some-> data :context :addon)
                      addon-id (select-keys addon [:dirname :source :source-id :name])
@@ -137,15 +125,14 @@
                      log-line {:time (force (:timestamp_ data))
                                :message (force (:msg_ data))
                                :level level
-                               :level-int (level level-map)
                                :source source}]
                  (when atm
                    (swap! atm update-in [:log-lines] into [log-line])
                    (when-let [dirname (:dirname addon)]
                      (swap! atm update-in [:log-stats dirname level] inc*)))))]
-
-    (add-appender! :atom func {:timestamp-opts {:pattern "HH:mm:ss"}}))
-  nil)
+    (add-appender! :atom func {:timestamp-opts {:pattern "HH:mm:ss"} :atm atm}))
+  (fn []
+    (rm-appender! :atom)))
 
 ;; => (logging/addon-log :info {...} "installed!")
 (defmacro addon-log
@@ -168,3 +155,23 @@
   [label & form]
   `(with-addon {:name ~label}
      ~@form))
+
+;;
+
+;; worked for a good long time:
+;;  (timbre/merge-config! -default-logging-config)
+;; now I need tighter control over the logging configuration as the UI appender modifies the application state
+
+(defn-spec reset-logging! fn?
+  ([testing? boolean?]
+   (reset-logging! testing? nil nil))
+  ([testing? boolean?, atm (s/nilable ::sp/atom), addon-dir (s/nilable ::sp/install-dir)]
+   ;; reset logging configuration to whatever it should be. it's global mutable state and it's fucking us.
+   (timbre/swap-config! timbre/default-config)
+   (timbre/merge-config! -default-logging-config) ;; layer in our own config
+   (let [rm-atm-appender (if atm
+                           (add-ui-appender! atm addon-dir)
+                           (constantly nil))]
+     (when testing?
+       (timbre/merge-config! {:testing? true, :min-level :debug, :appenders {:spit nil}}))
+     rm-atm-appender)))

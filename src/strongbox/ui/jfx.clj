@@ -775,7 +775,7 @@
     ;; and so will exit again there :( the double-check here seems to work though.
     (or (:in-repl? @core/state)
         (utils/in-repl?)) (swap! core/state assoc :gui-showing? false)
-    (-> timbre/*config* :testing?) (swap! core/state assoc :gui-showing? false)
+    core/testing? (swap! core/state assoc :gui-showing? false)
     ;; 2020-08-08: `ss/invoke-later` was keeping the old window around when running outside of repl.
     ;; `ss/invoke-soon` seems to fix that.
     ;;  - http://daveray.github.io/seesaw/seesaw.invoke-api.html
@@ -1293,8 +1293,8 @@
                                                 (when (:ignore? row) "ignored")
                                                 (when (and row (core/unsteady? (:name row))) "unsteady")
                                                 (cond
-                                                  (cli/addon-has-errors? row) "errors"
-                                                  (cli/addon-has-warnings? row) "warnings")])})}
+                                                  (and row (cli/addon-has-errors? row)) "errors"
+                                                  (and row (cli/addon-has-warnings? row)) "warnings")])})}
 
             :columns (mapv table-column column-list)
             :context-menu (if (= 1 (count selected))
@@ -1856,6 +1856,9 @@
                                 (debug "updating gui state")
                                 (swap! gui-state fx/swap-context assoc :style (style))))
             (core/add-cleanup-fn #(remove-watch rf key)))
+
+        ;; logging to app state for use in the UI
+        _ (cli/init-ui-logger)
 
         ;; asynchronous searching. as the user types, update the state with search results asynchronously
         _ (cli/-init-search-listener)

@@ -11,7 +11,7 @@
                  [org.clojure/data.json "1.0.0"] ;; json handling
                  [orchestra "2018.12.06-2"] ;; improved clojure.spec instrumentation
                  ;; see lein deps :tree
-                 [com.taoensso/timbre "4.10.0"] ;; logging
+                 [com.taoensso/timbre "5.1.2"] ;; logging
                  [enlive "1.1.6"] ;; html parsing
                  [clj-http "3.12.1"] ;; better http slurping
                  [clj-commons/fs "1.5.2"] ;; file system wrangling

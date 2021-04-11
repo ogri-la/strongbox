@@ -8,6 +8,7 @@
    [clojure.string :refer [lower-case]]
    [me.raynes.fs :as fs]
    [strongbox
+    [logging :as logging]
     [core :as core]
     [utils :as utils :refer [in?]]]
    [gui.diff :refer [with-gui-diff]]
@@ -31,6 +32,10 @@
 ;; spec checking is enabled during repl development and *any* testing unless explicitly turned off.
 ;; spec checking is disabled upon release
 (def spec? (utils/in-repl?))
+
+;; initial logging setup.
+;; default log level should be :info before anything starts logging.
+(logging/reset-logging! core/testing?)
 
 (defn jfx
   "dynamically resolve the `strongbox.ui.jfx` ns and call the requisite `action`.
@@ -85,12 +90,17 @@
   (stop)
   (clojure.tools.namespace.repl/refresh) ;; reloads all namespaces, including strongbox.whatever-test ones
   (utils/instrument true) ;; always test with spec checking ON
-  (timbre/with-merged-config {:level :debug, :testing? true
-                              ;; ensure we're not writing logs to files
-                              :appenders {:spit nil}}
+
+  (with-redefs [core/testing? true
+                ;;main/profile? true
+                ;;main/spec? true
+                ]
+
+    (logging/reset-logging! core/testing?)
+
     (if ns-kw
       (if (some #{ns-kw} [:main :utils :http :tags
-                          :core :toc :nfo :zip :config :catalogue :db :addon
+                          :core :toc :nfo :zip :config :catalogue :db :addon :logging
                           :cli :gui :jfx
                           :curseforge-api :wowinterface :wowinterface-api :github-api :tukui-api])
         (with-gui-diff

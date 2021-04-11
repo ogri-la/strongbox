@@ -132,6 +132,14 @@
        (let [results (core/db-search (-> new-state :search :term))]
          (swap! core/state assoc-in [:search :results] results))))))
 
+(defn init-ui-logger
+  []
+  (logging/reset-logging! core/testing? core/state (core/selected-addon-dir))
+  (core/state-bind
+   [:cfg :selected-addon-dir]
+   (fn [new-state]
+     (logging/reset-logging! core/testing? core/state (core/selected-addon-dir new-state)))))
+
 (defn-spec set-preference nil?
   "updates a user preference `preference-key` with given `preference-val` and saves the settings"
   [preference-key keyword?, preference-val any?]
@@ -351,31 +359,37 @@
         addon-id (utils/extract-addon-id addon)]
     (add-tab tab-id (or (:dirname addon) (:label addon) (:name addon) "[bug: missing tab name!]") closable? addon-id)))
 
-(defn-spec addon-has-log-level? boolean?
-  [log-level ::sp/log-level, dirname ::sp/dirname]
-  (boolean (some-> (core/get-state) :log-stats (get dirname) log-level (> 0))))
-
-(defn-spec addon-has-warnings? boolean?
-  [addon map?]
-  (addon-has-log-level? :warn (:dirname addon)))
-
-(defn-spec addon-has-errors? boolean?
-  [addon map?]
-  (addon-has-log-level? :error (:dirname addon)))
-
 (defn-spec addon-num-log-level int?
+  "returns the number of log entries given `dirname` has for given `log-level` or 0 if not present"
   [log-level ::sp/log-level, dirname ::sp/dirname]
   (or
    (some-> (core/get-state) :log-stats (get dirname) log-level)
    0))
 
 (defn-spec addon-num-warnings int?
+  "returns the number of warnings present for the given `addon` in the log."
   [addon map?]
   (addon-num-log-level :warn (:dirname addon)))
 
 (defn-spec addon-num-errors int?
+  "returns the number of errors present for the given `addon` in the log."
   [addon map?]
   (addon-num-log-level :error (:dirname addon)))
+
+(defn-spec addon-has-log-level? boolean?
+  "returns `true` if the given `addon` has any log entries of the given log `level`."
+  [log-level ::sp/log-level, dirname ::sp/dirname]
+  (> (addon-num-log-level log-level dirname) 0))
+
+(defn-spec addon-has-warnings? boolean?
+  "returns `true` if the given `addon` has any warnings in the log."
+  [addon map?]
+  (addon-has-log-level? :warn (:dirname addon)))
+
+(defn-spec addon-has-errors? boolean?
+  "returns `true` if the given `addon` has any errors in the log."
+  [addon map?]
+  (addon-has-log-level? :error (:dirname addon)))
 
 
 ;; debug
@@ -487,7 +501,9 @@
 (defn start
   [opts]
   (info "starting cli")
+  (init-ui-logger)
   (-init-search-listener)
+
   (core/refresh)
   (action opts))
 
