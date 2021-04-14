@@ -66,9 +66,10 @@ see CHANGELOG.md for a more formal list of changes by release
 * bug, regression, --verbosity cli option is reset
     - done
 
+* bug, 'strongbox.version' in debug output is null when run as a binary
+
 ## todo
 
-* bug, 'strongbox.version' in debug output is null when run as a binary
 
 ## todo bucket (no particular order)
 
