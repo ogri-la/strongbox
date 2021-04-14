@@ -1119,21 +1119,29 @@
   "writes selected system properties to the log.
   mostly concerned with OS, Java and JavaFX versions."
   []
-  (let [useful-keys ["strongbox.version"
-                     "os.name"
-                     "os.version"
-                     "os.arch"
-                     "java.runtime.name"
-                     "java.vm.name"
-                     "java.version"
-                     "java.runtime.version"
-                     "java.vendor.url"
-                     "java.version.date"
-                     "java.awt.graphicsenv"
-                     "javafx.version"
-                     "javafx.runtime.version"]
-        props (System/getProperties)]
-    (run! #(info (format "%s=%s" % (get props %))) useful-keys)))
+  (let [useful-props
+        ["javafx.version" ;; "15.0.1"
+         "javafx.runtime.version" ;; "15.0.1+1"
+         ]
+
+        useful-envvars
+        [:strongbox-version ;; "4.0.0"
+         :os-name ;; "Linux"
+         :os-version ;; "5.11.6-arch1-1"
+         :os-arch ;; "amd64"
+         :java-runtime-name ;; "OpenJDK Runtime Environment"
+         :java-vm-name ;; "OpenJDK 64-Bit Server VM"
+         :java-version ;; "11.0.10"
+         :java-vendor-url ;; "https://openjdk.java.net/"
+         :java-version-date ;; "2021-01-19"
+         :java-awt-graphicsenv ;; "sun.awt.X11GraphicsEnvironment"
+         :gtk-modules ;; "canberra-gtk-module"
+         :xdg-session-desktop ;; "notion"
+         ]
+
+        adhoc-vars {:strongbox-version (strongbox-version)}
+        vars (merge adhoc-vars (System/getProperties) @envvar.core/env)]
+    (run! #(info (format "%s=%s" (name %) (get vars %))) (into useful-envvars useful-props))))
 
 ;;
 
