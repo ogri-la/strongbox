@@ -63,6 +63,9 @@ see CHANGELOG.md for a more formal list of changes by release
             - if there is something to be concerned about (and that the user can fix), show a warning or error
     - done
 
+* bug, regression, --verbosity cli option is reset
+    - done
+
 ## todo
 
 * bug, 'strongbox.version' in debug output is null when run as a binary

@@ -2,7 +2,7 @@
   (:require
    [me.raynes.fs :as fs]
    [clojure.string :refer [lower-case join capitalize replace] :rename {replace str-replace}]
-   [taoensso.timbre :as timbre :refer [spy info debug warn error]]
+   [taoensso.timbre :as timbre :refer [spy]] ;; info debug warn error]]
    [cljfx.ext.table-view :as fx.ext.table-view]
    [cljfx.lifecycle :as fx.lifecycle]
    [cljfx.component :as fx.component]
@@ -1386,8 +1386,8 @@
                                                      (switch-tab-latest))
                                                  (let [remaining-seconds (- 60 (-> (Calendar/getInstance) (.get Calendar/SECOND)))]
                                                    (if (> remaining-seconds 1)
-                                                     (warn (format "self destruction in T-minus %s seconds" remaining-seconds))
-                                                     (error "fah-wooosh ... BOOOOOO ... /oh the humanity/ ... OOOOOOHHHMMM"))))))}))}
+                                                     (timbre/warn (format "self destruction in T-minus %s seconds" remaining-seconds))
+                                                     (timbre/error "fah-wooosh ... BOOOOOO ... /oh the humanity/ ... OOOOOOHHHMMM"))))))}))}
               :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
               :columns (mapv table-column column-list)
               :items (or log-message-list [])}}))
@@ -1835,7 +1835,7 @@
 
 (defn start
   []
-  (info "starting gui")
+  (timbre/info "starting gui")
   (let [;; the gui uses a copy of the application state because the state atom needs to be wrapped
         state-template {:app-state nil,
                         :style (style)}
@@ -1848,7 +1848,6 @@
         _ (doseq [rf [#'style #'major-theme-map #'sub-theme-map #'themes]
                   :let [key (str rf)]]
             (add-watch rf key (fn [_ _ _ _]
-                                (debug "updating gui state")
                                 (swap! gui-state fx/swap-context assoc :style (style))))
             (core/add-cleanup-fn #(remove-watch rf key)))
 
@@ -1905,7 +1904,7 @@
 
 (defn stop
   []
-  (info "stopping gui")
+  (timbre/info "stopping gui")
   (when-let [unmount-renderer (:disable-gui @core/state)]
     ;; only affects tests running from repl apparently
     (unmount-renderer))

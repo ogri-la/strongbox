@@ -15,13 +15,7 @@
       (helper/install-dir) ;; sets the addon dir and the UI appender
       (let [expected {:log-lines [{:foo :bar}] :log-stats {:bar {:baz :bup}}}]
         (timbre/log :warn "warning message")
-        (is (= expected (core/get-state :log-lines)))
-        (is (= expected (-> timbre/*config*
-                            :appenders
-                            :atom
-                            :atm
-                            deref
-                            (select-keys [:log-lines :log-stats])))))))
+        (is (= expected (core/get-state :log-lines))))))
 
   ;;(is (= expected (select-keys (core/get-state) [:log-lines :log-stats]))))))
   )

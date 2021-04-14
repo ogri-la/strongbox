@@ -203,7 +203,8 @@
                (fn [_ _ old-state new-state] ;; key, atom, old-state, new-state
                  (when (has-changed old-state new-state)
                    ;; avoids infinite recursion
-                   (when (= :debug (:min-level timbre/*config*))
+                   (when (and (= :debug (:min-level timbre/*config*))
+                              (not (empty? path)))
                      ;; this would cause the gui to receive a :debug of "path [] triggered a ..."
                      ;; this would update the :log-lines in the state
                      ;; this would cause the gui to receive a :debug of "path [] triggered a ..." ...
@@ -315,6 +316,44 @@
 
 ;; stateful logging
 
+
+;; worked for a good long time:
+;;  (timbre/merge-config! -default-logging-config)
+;; now I need tighter control over the logging configuration as the UI appender modifies the application state
+
+(defn-spec reset-logging! nil?
+  ([]
+   (reset-logging! testing? state (and @state (selected-addon-dir))))
+
+  ([testing? boolean?, state-atm (s/nilable ::sp/atom), addon-dir (s/nilable ::sp/install-dir)]
+   ;; reset logging configuration to timbre's default.
+   (timbre/swap-config! timbre/default-config)
+
+   ;; layer in our own default config
+   (timbre/merge-config! logging/-default-logging-config)
+
+   ;; layer in any user config
+   (when-let [user-level (some-> @state-atm :cli-opts :verbosity)]
+     (timbre/merge-config! {:min-level user-level}))
+
+   ;; if we're in debug mode, turn profiling on and write log to file
+   (when (debug-mode?) ;; `:debug` level + not running tests
+     (if-not @state-atm
+       (warn "application has not been started, no location to write log or profile data")
+       (do
+         (logging/add-profiling-handler! (paths :profile-data-dir))
+         (logging/add-file-appender! (paths :log-file))
+         (info "writing logs to:" (paths :log-file)))))
+
+   ;; ensure we're storing log lines in app state
+   (add-cleanup-fn (logging/add-ui-appender! state-atm addon-dir))
+
+   ;; and finally, if we're running tests, drop the logging level to :debug and ensure nothing is emitting to a file
+   (when testing?
+     (timbre/merge-config! {:testing? true, :min-level :debug, :appenders {:spit nil}}))
+
+   nil))
+
 (defn-spec change-log-level! nil?
   "changes the effective log level from `logging/default-log-level` to `new-level`.
   The `:debug` log level outside of unit tests will write a log file to the data directory and 
@@ -347,7 +386,7 @@
   [cli-opts]
   (let [final-config (config/load-settings cli-opts (paths :cfg-file) (paths :etag-db-file))]
     (swap! state merge final-config)
-    (change-log-level! (or (:verbosity cli-opts) logging/default-log-level))
+    (reset-logging!)
     (when (contains? cli-opts :profile?)
       (swap! state assoc :profile? (:profile? cli-opts)))
     (when (contains? cli-opts :spec?)
@@ -1065,10 +1104,6 @@
 
 ;; init
 
-(defn init-logging
-  []
-  (add-cleanup-fn (logging/reset-logging! testing? state (selected-addon-dir))))
-
 (defn-spec set-paths! nil?
   []
   (swap! state assoc :paths (generate-path-map))
@@ -1109,7 +1144,7 @@
 (defn start
   [& [cli-opts]]
   (-start)
-  (init-logging)
+  (reset-logging!)
   (info "starting app")
   (set-paths!)
   (detect-repl!)

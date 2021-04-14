@@ -17,7 +17,7 @@
     (with-redefs [core/testing? true
                   main/profile? true
                   main/spec? true]
-      (logging/reset-logging! core/testing?)
+      (core/reset-logging!)
       (apply require (map symbol ns-list))
       {:errors (reduce + ((juxt :error :fail)
                           (apply test/run-tests ns-list)))})))

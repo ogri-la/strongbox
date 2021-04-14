@@ -80,7 +80,6 @@
    (add-appender! key f {}))
   ([key keyword?, f fn?, config map?]
    (let [appender-config (merge {:fn f, :enabled? true} config)]
-     (timbre/debug "adding appender" key)
      (timbre/merge-config! {:appenders {key appender-config}})
      nil)))
 
@@ -94,7 +93,6 @@
 (defn-spec rm-appender! nil?
   "removes appender at `key` from logging config"
   [key keyword?]
-  (timbre/debug "removing appender" key)
   (timbre/merge-config! {:appenders {key nil}})
   nil)
 
@@ -114,7 +112,7 @@
   "adds a logger intended for the UI to interact with.
   if an addon is passed as `:context` then an identifier can be pulled from it and the UI can use that to
   associate log events with addons. see `addon-log`, `with-addon` and `with-label`."
-  [atm ::sp/atom, install-dir (s/nilable ::sp/install-dir)]
+  [state-atm ::sp/atom, install-dir (s/nilable ::sp/install-dir)]
   (let [inc* #(inc (or % 0))
         func (fn [data]
                (let [addon (some-> data :context :addon)
@@ -122,15 +120,19 @@
                      ;; {:install-dir "/path/to/addons/dir" :dirname "some-addon" :name "SomeAddon"}
                      source (merge {:install-dir install-dir} addon-id)
                      level (force (:level data))
+                     msg (force (:msg_ data))
                      log-line {:time (force (:timestamp_ data))
-                               :message (force (:msg_ data))
+                               :message msg
                                :level level
                                :source source}]
-                 (when atm
-                   (swap! atm update-in [:log-lines] into [log-line])
-                   (when-let [dirname (:dirname addon)]
-                     (swap! atm update-in [:log-stats dirname level] inc*)))))]
-    (add-appender! :atom func {:timestamp-opts {:pattern "HH:mm:ss"} :atm atm}))
+                 (if (= msg (-> @state-atm :log-lines last :message))
+                   ;; purely to stop infinite feedback loop. not sure how this one is happening but urgh.
+                   (println "[dropping duplicate message]")
+                   (when state-atm
+                     (swap! state-atm update-in [:log-lines] into [log-line])
+                     (when-let [dirname (:dirname addon)]
+                       (swap! state-atm update-in [:log-stats dirname level] inc*))))))]
+    (add-appender! :atom func {:timestamp-opts {:pattern "HH:mm:ss"}}))
   (fn []
     (rm-appender! :atom)))
 
@@ -157,21 +159,3 @@
      ~@form))
 
 ;;
-
-;; worked for a good long time:
-;;  (timbre/merge-config! -default-logging-config)
-;; now I need tighter control over the logging configuration as the UI appender modifies the application state
-
-(defn-spec reset-logging! fn?
-  ([testing? boolean?]
-   (reset-logging! testing? nil nil))
-  ([testing? boolean?, atm (s/nilable ::sp/atom), addon-dir (s/nilable ::sp/install-dir)]
-   ;; reset logging configuration to whatever it should be. it's global mutable state and it's fucking us.
-   (timbre/swap-config! timbre/default-config)
-   (timbre/merge-config! -default-logging-config) ;; layer in our own config
-   (let [rm-atm-appender (if atm
-                           (add-ui-appender! atm addon-dir)
-                           (constantly nil))]
-     (when testing?
-       (timbre/merge-config! {:testing? true, :min-level :debug, :appenders {:spit nil}}))
-     rm-atm-appender)))

@@ -134,11 +134,11 @@
 
 (defn init-ui-logger
   []
-  (logging/reset-logging! core/testing? core/state (core/selected-addon-dir))
+  (core/reset-logging!)
   (core/state-bind
    [:cfg :selected-addon-dir]
    (fn [new-state]
-     (logging/reset-logging! core/testing? core/state (core/selected-addon-dir new-state)))))
+     (core/reset-logging!))))
 
 (defn-spec set-preference nil?
   "updates a user preference `preference-key` with given `preference-val` and saves the settings"
