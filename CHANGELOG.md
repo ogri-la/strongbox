@@ -50,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * looks like the the gap between the `File` menu labels and their submenus is now gone with an update to JavaFX 15.
 * truncated 'source' column in the search results when in dark mode.
+* fixed missing `strongbox.version` value from debug output when run as a binary.
 
 ### Removed
 
