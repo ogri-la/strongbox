@@ -314,36 +314,38 @@
     :classic :classic-retail
     :retail-classic))
 
+
 ;; stateful logging
 
 
-;; worked for a good long time:
-;;  (timbre/merge-config! -default-logging-config)
-;; now I need tighter control over the logging configuration as the UI appender modifies the application state
+(defn-spec -debug-logging nil?
+  "if we're in debug mode, turn profiling on and write log to file"
+  [state-atm ::sp/atom]
+  (when (debug-mode?)
+    (if-not @state-atm
+      (warn "application has not been started, no location to write log or profile data")
+      (do
+        (logging/add-profiling-handler! (paths :profile-data-dir))
+        (logging/add-file-appender! (paths :log-file))
+        (info "writing logs to:" (paths :log-file))))))
 
 (defn-spec reset-logging! nil?
+  "the logging configuration in timbre may become unpredictable during testing and this resets it to what it should be."
   ([]
    (reset-logging! testing? state (and @state (selected-addon-dir))))
 
-  ([testing? boolean?, state-atm (s/nilable ::sp/atom), addon-dir (s/nilable ::sp/install-dir)]
+  ([testing? boolean?, state-atm ::sp/atom, addon-dir ::sp/install-dir]
    ;; reset logging configuration to timbre's default.
    (timbre/swap-config! timbre/default-config)
 
    ;; layer in our own default config
    (timbre/merge-config! logging/-default-logging-config)
 
-   ;; layer in any user config
+   ;; layer in any runtime config
    (when-let [user-level (some-> @state-atm :cli-opts :verbosity)]
      (timbre/merge-config! {:min-level user-level}))
 
-   ;; if we're in debug mode, turn profiling on and write log to file
-   (when (debug-mode?) ;; `:debug` level + not running tests
-     (if-not @state-atm
-       (warn "application has not been started, no location to write log or profile data")
-       (do
-         (logging/add-profiling-handler! (paths :profile-data-dir))
-         (logging/add-file-appender! (paths :log-file))
-         (info "writing logs to:" (paths :log-file)))))
+   (-debug-logging state-atm)
 
    ;; ensure we're storing log lines in app state
    (add-cleanup-fn (logging/add-ui-appender! state-atm addon-dir))
@@ -360,14 +362,7 @@
   enables the profiling of certain sections of code."
   [new-level keyword?]
   (timbre/merge-config! {:min-level new-level})
-  (when (debug-mode?) ;; `:debug` level + not running tests
-    (if-not @state
-      (warn "application has not been started, no location to write log or profile data")
-      (do
-        (logging/add-profiling-handler! (paths :profile-data-dir))
-        (logging/add-file-appender! (paths :log-file))
-        (info "writing logs to:" (paths :log-file)))))
-  nil)
+  (-debug-logging state))
 
 ;; settings
 
@@ -376,10 +371,12 @@
   []
   ;; warning: this will preserve any once-off command line parameters as well
   ;; this might make sense within the gui but be careful about auto-saving elsewhere
-  (debug "saving settings to:" (paths :cfg-file))
-  (utils/dump-json-file (paths :cfg-file) (get-state :cfg))
-  (debug "saving etag-db to:" (paths :etag-db-file))
-  (utils/dump-json-file (paths :etag-db-file) (get-state :etag-db)))
+  (when-let [cfg-file (paths :cfg-file)]
+    (debug "saving settings to:" cfg-file)
+    (utils/dump-json-file cfg-file (get-state :cfg)))
+  (when-let [etag-db (paths :etag-db-file)]
+    (debug "saving etag-db to:" etag-db)
+    (utils/dump-json-file etag-db (get-state :etag-db))))
 
 (defn load-settings!
   "pulls together configuration from the fs and cli, merges it and sets application state"

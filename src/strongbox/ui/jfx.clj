@@ -2,7 +2,8 @@
   (:require
    [me.raynes.fs :as fs]
    [clojure.string :refer [lower-case join capitalize replace] :rename {replace str-replace}]
-   [taoensso.timbre :as timbre :refer [spy]] ;; info debug warn error]]
+   ;; logging in the gui should be avoided as it can lead to infinite loops
+   [taoensso.timbre :as timbre :refer [spy]] ;; info debug warn error]] 
    [cljfx.ext.table-view :as fx.ext.table-view]
    [cljfx.lifecycle :as fx.lifecycle]
    [cljfx.component :as fx.component]

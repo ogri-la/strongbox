@@ -70,8 +70,16 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
-
 ## todo bucket (no particular order)
+
+* disable addon update if it's unsteady
+    - interesting stuff happens when you pump that update button!
+    - roll this into the action queue work
+        - no more than one update request pending per-addon
+
+* classic addon dir detection
+    - also check for 
+        - '_classic_' '_classic_beta_' '_classic_ptr_'
 
 * game tracks, add warning if installed addon's interface version deviates from addon directory's game track
     - for example, if classic is installed in retail, or classic-bc is installed in classic
