@@ -8,7 +8,6 @@
    [clojure.string :refer [lower-case]]
    [me.raynes.fs :as fs]
    [strongbox
-    [logging :as logging]
     [core :as core]
     [utils :as utils :refer [in?]]]
    [gui.diff :refer [with-gui-diff]]
@@ -35,7 +34,7 @@
 
 ;; initial logging setup.
 ;; default log level should be :info before anything starts logging.
-(logging/reset-logging! core/testing?)
+(core/reset-logging!)
 
 (defn jfx
   "dynamically resolve the `strongbox.ui.jfx` ns and call the requisite `action`.
@@ -96,7 +95,7 @@
                   ;;main/profile? true
                   ;;main/spec? true
                   ]
-      (logging/reset-logging! core/testing?)
+      (core/reset-logging!)
 
       (if ns-kw
         (if (some #{ns-kw} [:main :utils :http :tags
@@ -115,7 +114,7 @@
       ;; use case: we run the tests from the repl and afterwards we call `restart` to start the app.
       ;; `stop` inside `restart` will be outside of `with-redefs` and still have logging `:min-level` set to `:debug`
       ;; it will dump a file and yadda yadda.
-      (logging/reset-logging! core/testing?))))
+      (core/reset-logging!))))
 
 ;;
 

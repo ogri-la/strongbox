@@ -203,7 +203,8 @@
                (fn [_ _ old-state new-state] ;; key, atom, old-state, new-state
                  (when (has-changed old-state new-state)
                    ;; avoids infinite recursion
-                   (when (= :debug (:min-level timbre/*config*))
+                   (when (and (= :debug (:min-level timbre/*config*))
+                              (not (empty? path)))
                      ;; this would cause the gui to receive a :debug of "path [] triggered a ..."
                      ;; this would update the :log-lines in the state
                      ;; this would cause the gui to receive a :debug of "path [] triggered a ..." ...
@@ -313,7 +314,47 @@
     :classic :classic-retail
     :retail-classic))
 
+
 ;; stateful logging
+
+
+(defn-spec -debug-logging nil?
+  "if we're in debug mode, turn profiling on and write log to file"
+  [state-atm ::sp/atom]
+  (when (debug-mode?)
+    (if-not @state-atm
+      (warn "application has not been started, no location to write log or profile data")
+      (do
+        (logging/add-profiling-handler! (paths :profile-data-dir))
+        (logging/add-file-appender! (paths :log-file))
+        (info "writing logs to:" (paths :log-file))))))
+
+(defn-spec reset-logging! nil?
+  "the logging configuration in timbre may become unpredictable during testing and this resets it to what it should be."
+  ([]
+   (reset-logging! testing? state (and @state (selected-addon-dir))))
+
+  ([testing? boolean?, state-atm ::sp/atom, addon-dir ::sp/install-dir]
+   ;; reset logging configuration to timbre's default.
+   (timbre/swap-config! timbre/default-config)
+
+   ;; layer in our own default config
+   (timbre/merge-config! logging/-default-logging-config)
+
+   ;; layer in any runtime config
+   (when-let [user-level (some-> @state-atm :cli-opts :verbosity)]
+     (timbre/merge-config! {:min-level user-level}))
+
+   (-debug-logging state-atm)
+
+   ;; ensure we're storing log lines in app state
+   (add-cleanup-fn (logging/add-ui-appender! state-atm addon-dir))
+
+   ;; and finally, if we're running tests, drop the logging level to :debug and ensure nothing is emitting to a file
+   (when testing?
+     (timbre/merge-config! {:testing? true, :min-level :debug, :appenders {:spit nil}}))
+
+   nil))
 
 (defn-spec change-log-level! nil?
   "changes the effective log level from `logging/default-log-level` to `new-level`.
@@ -321,14 +362,7 @@
   enables the profiling of certain sections of code."
   [new-level keyword?]
   (timbre/merge-config! {:min-level new-level})
-  (when (debug-mode?) ;; `:debug` level + not running tests
-    (if-not @state
-      (warn "application has not been started, no location to write log or profile data")
-      (do
-        (logging/add-profiling-handler! (paths :profile-data-dir))
-        (logging/add-file-appender! (paths :log-file))
-        (info "writing logs to:" (paths :log-file)))))
-  nil)
+  (-debug-logging state))
 
 ;; settings
 
@@ -337,17 +371,19 @@
   []
   ;; warning: this will preserve any once-off command line parameters as well
   ;; this might make sense within the gui but be careful about auto-saving elsewhere
-  (debug "saving settings to:" (paths :cfg-file))
-  (utils/dump-json-file (paths :cfg-file) (get-state :cfg))
-  (debug "saving etag-db to:" (paths :etag-db-file))
-  (utils/dump-json-file (paths :etag-db-file) (get-state :etag-db)))
+  (when-let [cfg-file (paths :cfg-file)]
+    (debug "saving settings to:" cfg-file)
+    (utils/dump-json-file cfg-file (get-state :cfg)))
+  (when-let [etag-db (paths :etag-db-file)]
+    (debug "saving etag-db to:" etag-db)
+    (utils/dump-json-file etag-db (get-state :etag-db))))
 
 (defn load-settings!
   "pulls together configuration from the fs and cli, merges it and sets application state"
   [cli-opts]
   (let [final-config (config/load-settings cli-opts (paths :cfg-file) (paths :etag-db-file))]
     (swap! state merge final-config)
-    (change-log-level! (or (:verbosity cli-opts) logging/default-log-level))
+    (reset-logging!)
     (when (contains? cli-opts :profile?)
       (swap! state assoc :profile? (:profile? cli-opts)))
     (when (contains? cli-opts :spec?)
@@ -1065,10 +1101,6 @@
 
 ;; init
 
-(defn init-logging
-  []
-  (add-cleanup-fn (logging/reset-logging! testing? state (selected-addon-dir))))
-
 (defn-spec set-paths! nil?
   []
   (swap! state assoc :paths (generate-path-map))
@@ -1084,21 +1116,29 @@
   "writes selected system properties to the log.
   mostly concerned with OS, Java and JavaFX versions."
   []
-  (let [useful-keys ["strongbox.version"
-                     "os.name"
-                     "os.version"
-                     "os.arch"
-                     "java.runtime.name"
-                     "java.vm.name"
-                     "java.version"
-                     "java.runtime.version"
-                     "java.vendor.url"
-                     "java.version.date"
-                     "java.awt.graphicsenv"
-                     "javafx.version"
-                     "javafx.runtime.version"]
-        props (System/getProperties)]
-    (run! #(info (format "%s=%s" % (get props %))) useful-keys)))
+  (let [useful-props
+        ["javafx.version" ;; "15.0.1"
+         "javafx.runtime.version" ;; "15.0.1+1"
+         ]
+
+        useful-envvars
+        [:strongbox-version ;; "4.0.0"
+         :os-name ;; "Linux"
+         :os-version ;; "5.11.6-arch1-1"
+         :os-arch ;; "amd64"
+         :java-runtime-name ;; "OpenJDK Runtime Environment"
+         :java-vm-name ;; "OpenJDK 64-Bit Server VM"
+         :java-version ;; "11.0.10"
+         :java-vendor-url ;; "https://openjdk.java.net/"
+         :java-version-date ;; "2021-01-19"
+         :java-awt-graphicsenv ;; "sun.awt.X11GraphicsEnvironment"
+         :gtk-modules ;; "canberra-gtk-module"
+         :xdg-session-desktop ;; "notion"
+         ]
+
+        adhoc-vars {:strongbox-version (strongbox-version)}
+        vars (merge adhoc-vars (System/getProperties) @envvar.core/env)]
+    (run! #(info (format "%s=%s" (name %) (get vars %))) (into useful-envvars useful-props))))
 
 ;;
 
@@ -1109,7 +1149,7 @@
 (defn start
   [& [cli-opts]]
   (-start)
-  (init-logging)
+  (reset-logging!)
   (info "starting app")
   (set-paths!)
   (detect-repl!)
