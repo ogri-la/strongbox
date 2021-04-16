@@ -6,68 +6,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* remove gui1
-    - done
-    - remove original db-search
-        - done
-* gui, new tab for dedicated log
-    - done
-* addon detail pane
-    - clicking an addon row opens a new tab with as much detail as we can about that addon
-    - done  
-* log pane, filter by log level
-    - log level should have number of instances against it
-        - warn (2)
-        - error (1)
-    - done
-* per-addon logging
-    - I want the user to see a list of messages regarding a *specific* addon
-    - when emitting a log line about a particular addon, capture that addon's source and source-id somehow
-        - and addon directory
-            - install-dir, dirname, source, source-id are all captured and used.
-                - it got a bit clunky but we got there
-    - done
-
-* remove 'hostname' from log output
-    - done
-    - update privacy section in readme
-        - done
-
-* coloured warnings/errors on console output
-    - when running with :debug on the wall of text is difficult to read
-    - I'm thinking about switching away from timbre to something more traditional
-        - he's not addressing tickets
-            - eh
-        - it may have been simpler to use in 3.x.x but in 4.x.x it's gotten a bit archaic
-            - still trie
-        - I can't drop hostname without leaving pretty-printed stacktraces behind
-            - fixed
-    - despite everything I stick with timbre and it's quite integrated now so it won't be disappearing anytime soon
-    - we now have console colours!
-        - they'll probably be tweakd in future after the logging frenzy has calmed down
-    - done
-* highlight new log pane or status bar when there is an non-addon error or warning
-    - done
-* 4.0 styling
-    - dark theme styling for addon-detail
-        - use derived colours rather than hardcode
-        - done
-    - bug, addon detail, description box may grow or shrink after finding a match in the catalogue, bumping the content below up or down
-        - done
-
-* uber-button
-    - new column that displays overall health of addon
-        - clicking whatever is in there takes you to a detail pane for that addon
-        - if a task is being performed for that addon, it shows a progress meter
-        - if addon is up-to-date, it shows a happy green tick
-            - if there is something to be concerned about (and that the user can fix), show a warning or error
-    - done
-
-* bug, regression, --verbosity cli option is reset
-    - done
-
-* bug, 'strongbox.version' in debug output is null when run as a binary
-
 ## todo
 
 ## todo bucket (no particular order)
