@@ -13,7 +13,7 @@
 
 (deftest gui-init
   (testing "the gui can be started and stopped"
-    (with-running-app+opts {:ui :gui2}
+    (with-running-app+opts {:ui :gui}
       (is (core/get-state :gui-showing?))
       ;; give time for the init to finish
       (Thread/sleep 1000))))
@@ -34,13 +34,13 @@
                  [{:url "https://www.tukui.org/foo/bar"} {:fx/type :hyperlink :text "↪ tukui"}]
                  [{:url "https://www.tukui.org/classic-addons.php"} {:fx/type :hyperlink :text "↪ tukui-classic"}]]]
       (doseq [[given expected] cases]
-        (is (= expected (dissoc (jfx/-href-to-hyperlink given) :on-action)))))))
+        (is (= expected (dissoc (jfx/href-to-hyperlink given) :on-action)))))))
 
 (deftest table-column
   (testing "table-column data is converted to component descriptions"
-    (let [cases [[{} {:fx/type :table-column, :min-width 80, :style-class ["table-cell" "-column"]}]
+    (let [cases [[{} {:fx/type :table-column, :min-width 80, :style-class ["table-cell" "column"]}]
                  [{:text "foo"} {:fx/type :table-column, :text "foo", :min-width 80, :style-class ["table-cell" "foo-column"]}]
-                 [{:style-class ["foo"]} {:fx/type :table-column, :min-width 80, :style-class ["table-cell" "-column" "foo"]}]]]
+                 [{:style-class ["foo"]} {:fx/type :table-column, :min-width 80, :style-class ["table-cell" "column" "foo"]}]]]
       (doseq [[given expected] cases]
         (is (= expected (dissoc (jfx/table-column given) :cell-value-factory)))))))
 

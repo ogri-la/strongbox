@@ -4,8 +4,8 @@
    [taoensso.timbre :as timbre :refer [spy info warn error debug]]
    [clojure.spec.alpha :as s]
    [strongbox
+    [logging :as logging]
     [addon :as addon]
-    [nfo :as nfo]
     [constants :as constants]
     [specs :as sp]
     [tukui-api :as tukui-api]
@@ -114,7 +114,7 @@
       (:results-per-page search-state))))
 
 (defn-spec search-has-prev? boolean?
-  "true if we've navigated forwards"
+  "returns `true` if we've navigated forwards and previous pages of search results exist"
   ([]
    (search-has-prev? (get-state :search)))
   ([search-state map?]
@@ -129,8 +129,16 @@
    [:search :term]
    (fn [new-state]
      (future
-       (let [results (core/db-search-2 (-> new-state :search :term))]
+       (let [results (core/db-search (-> new-state :search :term))]
          (swap! core/state assoc-in [:search :results] results))))))
+
+(defn init-ui-logger
+  []
+  (core/reset-logging!)
+  (core/state-bind
+   [:cfg :selected-addon-dir]
+   (fn [new-state]
+     (core/reset-logging!))))
 
 (defn-spec set-preference nil?
   "updates a user preference `preference-key` with given `preference-val` and saves the settings"
@@ -148,24 +156,39 @@
 ;;
 
 (defn-spec pin nil?
-  "pins the currently selected addons to their current `:installed-version` versions."
-  []
-  (run! #(addon/pin (core/selected-addon-dir) %) (get-state :selected-installed))
-  (core/refresh))
+  "pins the addons in given `addon-list` to their current `:installed-version` versions.
+  defaults to all addons in `:selected-addon-list` when called without parameters."
+  ([]
+   (pin (get-state :selected-addon-list)))
+  ([addon-list :addon/installed-list]
+   (run! (fn [addon]
+           (logging/with-addon addon
+             (info (format "pinning to \"%s\"" (:installed-version addon)))
+             (addon/pin (core/selected-addon-dir) addon)))
+         addon-list)
+   (core/refresh)))
 
 (defn-spec unpin nil?
-  "unpins the currently selected addons, regardless of whether they are pinned or not."
-  []
-  (run! #(addon/unpin (core/selected-addon-dir) %) (get-state :selected-installed))
-  (core/refresh))
+  "unpins the addons in given `addon-list` regardless of whether they are pinned or not.
+  defaults to all addons in `:selected-addon-list` when called without parameters."
+  ([]
+   (unpin (get-state :selected-addon-list)))
+  ([addon-list :addon/installed-list]
+   (run! (fn [addon]
+           (logging/addon-log addon :info (format "unpinning from \"%s\"" (:pinned-version addon)))
+           (addon/unpin (core/selected-addon-dir) addon))
+         addon-list)
+   (core/refresh)))
 
 (defn-spec -find-replace-release (s/or :ok :addon/expanded, :release-not-found nil?)
-  "looks for the `:installed-version` in the list of available releases and, if found, updates the addon."
+  "looks for the `:installed-version` in the `:release-list` and, if found, updates the addon.
+  this is an intermediate step before pinning or installing a previous release."
   [addon :addon/expanded]
   (if-let [matching-release (addon/find-release addon)]
     (merge addon matching-release)
-    (do (warn (format "%s '%s' not found in known releases. Using latest release instead." (:label addon) (:installed-version addon)))
-        addon)))
+    (logging/with-addon addon
+      (warn (format "release \"%s\" not found, using latest instead." (:installed-version addon)))
+      addon)))
 
 ;;
 
@@ -174,13 +197,16 @@
   (run! core/install-addon updateable-addon-list))
 
 (defn-spec re-install-or-update-selected nil?
-  "re-installs (if possible) or updates all selected addons"
-  []
-  (->> (get-state :selected-installed)
-       (filter core/expanded?)
-       (map -find-replace-release)
-       -install-update-these)
-  (core/refresh))
+  "re-installs (if possible) or updates all addons in given `addon-list`.
+  defaults to all addons in `:selected-addon-list` when called without parameters."
+  ([]
+   (re-install-or-update-selected (get-state :selected-addon-list)))
+  ([addon-list :addon/installed-list]
+   (->> addon-list
+        (filter core/expanded?)
+        (map -find-replace-release)
+        -install-update-these)
+   (core/refresh)))
 
 (defn-spec re-install-or-update-all nil?
   "re-installs (if possible) or updates all installed addons"
@@ -191,13 +217,26 @@
        -install-update-these)
   (core/refresh))
 
-(defn-spec update-selected nil?
-  "updates all selected addons that have updates available"
-  []
-  (->> (get-state :selected-installed)
-       (filter addon/updateable?)
-       -install-update-these)
+(defn-spec install-addon nil?
+  "install an addon from the catalogue.
+  should work on expanded addons as well, but those are already installed ...?"
+  [addon :addon/summary]
+  (-> addon
+      core/expand-summary-wrapper
+      vector
+      -install-update-these)
   (core/refresh))
+
+(defn-spec update-selected nil?
+  "updates all addons in given `addon-list` that have updates available.
+  defaults to all addons in `:selected-addon-list` when called without parameters."
+  ([]
+   (update-selected (get-state :selected-addon-list)))
+  ([addon-list :addon/installed-list]
+   (->> addon-list
+        (filter addon/updateable?)
+        -install-update-these)
+   (core/refresh)))
 
 (defn-spec update-all nil?
   "updates all installed addons with updates available"
@@ -208,43 +247,52 @@
   (core/refresh))
 
 (defn-spec delete-selected nil?
-  "deletes all selected addons. 
-  GUI should have popped up a confirmation beforehand ;)"
-  []
-  (core/remove-many-addons (get-state :selected-installed)))
+  "deletes all addons in given `addon-list`.
+  defaults to all addons in `:selected-addon-list` when called without parameters."
+  ([]
+   (delete-selected (get-state :selected-addon-list)))
+  ([addon-list :addon/installed-list]
+   (core/remove-many-addons addon-list)))
 
-;; todo: shift this to addon.clj
 (defn-spec ignore-selected nil?
-  "marks each of the selected addons as being 'ignored'"
-  []
-  (->> (get-state :selected-installed)
-       (map :dirname)
-       (run! (partial nfo/ignore (core/selected-addon-dir))))
-  (core/refresh))
+  "marks each addon in given `addon-list` as being 'ignored'.
+  defaults to all addons in `:selected-addon-list` when called without parameters."
+  ([]
+   (ignore-selected (get-state :selected-addon-list)))
+  ([addon-list :addon/installed-list]
+   (->> addon-list
+        (filter addon/ignorable?)
+        (run! (fn [addon]
+                (logging/with-addon addon
+                  (info "ignoring")
+                  (addon/ignore (core/selected-addon-dir) addon)))))
+   (core/refresh)))
 
-;; todo: shift this to addon.clj
 (defn-spec clear-ignore-selected nil?
-  "removes the 'ignore' flag from each of the selected addons."
-  []
-  (->> (get-state :selected-installed)
-       (mapv addon/ungroup-addon)
-       flatten
-       (mapv :dirname)
-       (run! (partial addon/clear-ignore (core/selected-addon-dir))))
-  (core/refresh))
+  "removes the 'ignore' flag from each addon in given `addon-list`.
+  defaults to all addons in `:selected-addon-list` when called without parameters."
+  ([]
+   (clear-ignore-selected (get-state :selected-addon-list)))
+  ([addon-list :addon/installed-list]
+   (run! (fn [addon]
+           (logging/with-addon addon
+             (addon/clear-ignore (core/selected-addon-dir) addon)
+             (info "stopped ignoring")))
+         addon-list)
+   (core/refresh)))
 
 ;; selecting addons
 
 (defn-spec select-addons-search* nil?
   "sets the selected list of addons in application state for a later action"
   [selected-addons :addon/summary-list]
-  (swap! core/state assoc :selected-search selected-addons)
+  (swap! core/state assoc-in [:search :selected-result-list] selected-addons)
   nil)
 
 (defn-spec select-addons* nil?
   "sets the selected list of addons to the given `selected-addons` for bulk operations like 'update', 'delete', 'ignore', etc"
   [selected-addons :addon/installed-list]
-  (swap! core/state assoc :selected-installed selected-addons)
+  (swap! core/state assoc :selected-addon-list selected-addons)
   nil)
 
 (defn-spec select-addons nil?
@@ -260,7 +308,92 @@
         vec
         select-addons*)))
 
+;; tabs
+
+(defn-spec change-notice-logger-level nil?
+  "changes the log level on the UI notice-logger widget.
+  changes the log level for a tab in `:tab-list` when `tab-idx` is also given."
+  ([new-log-level ::sp/log-level]
+   (change-notice-logger-level new-log-level nil))
+  ([new-log-level ::sp/log-level, tab-idx (s/nilable int?)]
+   (if tab-idx
+     (swap! core/state assoc-in [:tab-list tab-idx :log-level] new-log-level)
+     (swap! core/state assoc :gui-log-level new-log-level))
+   nil))
+
+(defn-spec remove-all-tabs nil?
+  "removes all dynamic addon detail tabs leaving only the static tabs"
+  []
+  (swap! core/state assoc :tab-list [])
+  nil)
+
+(defn-spec remove-tab-at-idx nil?
+  "removes a tab from the `:tab-list` at a specific given `idx`."
+  [idx int?]
+  (swap! core/state update-in [:tab-list] utils/drop-idx idx)
+  nil)
+
+(defn-spec add-tab nil?
+  "adds a tab to `:tab-list`.
+  if tab already exists then it is removed from list and the new one is appeneded to the end.
+  this is purely so the latest tab can be selected without index wrangling."
+  [tab-id :ui/tab-id, tab-label ::sp/label, closable? ::sp/closable?, tab-data :ui/tab-data]
+  (let [new-tab {:tab-id tab-id
+                 :label tab-label
+                 :closable? closable?
+                 :log-level :info
+                 :tab-data tab-data}
+        tab-list (remove (fn [tab]
+                           (= (dissoc tab :tab-id)
+                              (dissoc new-tab :tab-id)))
+                         (core/get-state :tab-list))
+        tab-list (vec (concat tab-list [new-tab]))]
+    (swap! core/state assoc :tab-list tab-list))
+  nil)
+
+(defn-spec add-addon-tab nil?
+  "convenience, adds a tab using given the `addon` data"
+  [addon map?]
+  (let [tab-id (utils/unique-id)
+        closable? true
+        addon-id (utils/extract-addon-id addon)]
+    (add-tab tab-id (or (:dirname addon) (:label addon) (:name addon) "[bug: missing tab name!]") closable? addon-id)))
+
+(defn-spec addon-num-log-level int?
+  "returns the number of log entries given `dirname` has for given `log-level` or 0 if not present"
+  [log-level ::sp/log-level, dirname ::sp/dirname]
+  (or
+   (some-> (core/get-state) :log-stats (get dirname) log-level)
+   0))
+
+(defn-spec addon-num-warnings int?
+  "returns the number of warnings present for the given `addon` in the log."
+  [addon map?]
+  (addon-num-log-level :warn (:dirname addon)))
+
+(defn-spec addon-num-errors int?
+  "returns the number of errors present for the given `addon` in the log."
+  [addon map?]
+  (addon-num-log-level :error (:dirname addon)))
+
+(defn-spec addon-has-log-level? boolean?
+  "returns `true` if the given `addon` has any log entries of the given log `level`."
+  [log-level ::sp/log-level, dirname ::sp/dirname]
+  (> (addon-num-log-level log-level dirname) 0))
+
+(defn-spec addon-has-warnings? boolean?
+  "returns `true` if the given `addon` has any warnings in the log."
+  [addon map?]
+  (addon-has-log-level? :warn (:dirname addon)))
+
+(defn-spec addon-has-errors? boolean?
+  "returns `true` if the given `addon` has any errors in the log."
+  [addon map?]
+  (addon-has-log-level? :error (:dirname addon)))
+
+
 ;; debug
+
 
 (defn-spec touch nil?
   "used to select each addon in the GUI so the 'unsteady' colour can be tested."
@@ -270,7 +403,7 @@
                 (Thread/sleep 200)
                 (core/stop-affecting-addon a))]
     (->> (get-state :installed-addon-list)
-         (filter addon/updateable?)
+         ;;(filter addon/updateable?)
          (run! touch))))
 
 ;;
@@ -368,7 +501,9 @@
 (defn start
   [opts]
   (info "starting cli")
+  (init-ui-logger)
   (-init-search-listener)
+
   (core/refresh)
   (action opts))
 

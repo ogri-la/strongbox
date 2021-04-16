@@ -6,6 +6,7 @@
    [orchestra.core :refer [defn-spec]]
    [me.raynes.fs :as fs]
    [strongbox
+    [logging :as logging]
     [toc :as toc]
     [utils :as utils]
     [nfo :as nfo]
@@ -35,11 +36,11 @@
           (= addon-path install-dir))
       (error (format "directory is outside the current installation dir, not removing: %s" addon-path))
 
-      ;; other addons depend on this addon, just remove the nfo file
+      ;; other addons depend on this addon, just remove the nfo file entry
       (nfo/mutual-dependency? install-dir addon-dirname)
       (let [updated-nfo-data (nfo/rm-nfo install-dir addon-dirname group-id)]
         (nfo/write-nfo install-dir addon-dirname updated-nfo-data)
-        (debug (format "removed '%s' as mutual dependency" addon-dirname)))
+        (debug (format "removed \"%s\" as mutual dependency" addon-dirname)))
 
       ;; all good, remove addon
       :else (do (fs/delete-dir addon-path)
@@ -48,7 +49,7 @@
 (defn-spec remove-addon nil?
   "removes the given addon. if addon is part of a group, all addons in group are removed"
   [install-dir ::sp/extant-dir, addon :addon/installed]
-  (info (format "removing '%s' version '%s'" (:label addon) (:installed-version addon)))
+  (info (format "removing \"%s\" version \"%s'" (:label addon) (:installed-version addon)))
   (cond
     ;; if addon is being ignored, refuse to remove addon.
     ;; note: `group-addons` will add a top level `:ignore?` flag if any addon in a bundle is being ignored.
@@ -77,14 +78,13 @@
         unknown-grouping (get addon-groups nil)
         addon-groups (dissoc addon-groups nil)
 
-        expand (fn [[group-id addons]]
+        expand (fn [[_ addons]]
                  (if (= 1 (count addons))
                    ;; perfect case, no grouping.
                    (first addons)
 
                    ;; multiple addons in group
-                   (let [_ (debug (format "grouping '%s', %s addons in group" group-id (count addons)))
-                         ;; `addons` comes from `toc/installed-addon-list` fed by `fs/list-dir` that wraps `java.io.File/listFiles`:
+                   (let [;; `addons` comes from `toc/installed-addon-list` fed by `fs/list-dir` that wraps `java.io.File/listFiles`:
                          ;; "There is no guarantee that the name strings in the resulting array will appear in any specific order"
                          ;;   - https://docs.oracle.com/javase/7/docs/api/java/io/File.html#listFiles()
                          addons (vec (sort-by :dirname addons))
@@ -96,14 +96,21 @@
                          ;; add a group-level ignore flag if any bundled addon is being ignored
                          ;; todo: test for this
                          ignore-group? (when (utils/any (map :ignore? addons))
-                                         {:ignore? true})]
-                     (if primary
-                       ;; best, easiest case
-                       (merge primary new-data ignore-group?)
-                       ;; when we can't determine the primary addon, add a shitty synthetic one
-                       (merge next-best new-data ignore-group?
-                              {:label (format "%s (group)" next-best-label)
-                               :description (format "group record for the %s addon" next-best-label)})))))
+                                         {:ignore? true})
+
+                         addon
+                         (if primary
+                           ;; best, easiest case
+                           (merge primary new-data ignore-group?)
+                           ;; when we can't determine the primary addon, add a shitty synthetic one
+                           (merge next-best new-data ignore-group?
+                                  {:label (format "%s (group)" next-best-label)
+                                   :description (format "group record for the %s addon" next-best-label)}))
+
+                         addon-str (clojure.string/join ", " (map :dirname addons))]
+
+                     (logging/addon-log addon :info (format "contains %s addons: %s" (count addons) addon-str))
+                     addon)))
 
         ;; this flattens the newly grouped addons from a map into a list and joins the unknowns
         addon-list (apply conj (mapv expand addon-groups) unknown-grouping)]
@@ -122,11 +129,20 @@
   [toc nfo]
   (merge toc nfo))
 
+(defn-spec -load-installed-addons (s/or :ok :addon/toc-list, :error nil?)
+  "returns a list of addon data scraped from the .toc files of all addons in given `install-dir`"
+  [install-dir ::sp/addon-dir]
+  (let [addon-dir-list (->> install-dir fs/list-dir (filter fs/directory?) (map str))
+        parse-toc (fn [addon-dir]
+                    (logging/with-addon {:dirname (-> addon-dir fs/file fs/base-name str)}
+                      (toc/parse-addon-toc-guard addon-dir)))]
+    (->> addon-dir-list (map parse-toc) (remove nil?) vec)))
+
 (defn-spec load-installed-addons :addon/toc-list
   "reads the .toc files from the given addon dir, reads any nfo data for 
-  these addons, groups them, returns the mooshed data"
+  these addons, groups them and returns the mooshed data."
   [install-dir ::sp/extant-dir]
-  (let [addon-list (strongbox.toc/installed-addons install-dir)
+  (let [addon-list (-load-installed-addons install-dir)
 
         ;; at this point we have a list of the 'top level' addons, with
         ;; any bundled addons grouped within each one.
@@ -135,10 +151,11 @@
         ;; data we store alongside each addon when it is installed/updated
 
         merge-nfo-data (fn [addon]
-                         (let [nfo-data (nfo/read-nfo install-dir (:dirname addon))]
-                           ;; merge the addon with the nfo data.
-                           ;; when `ignore?` flag in addon is `true` but `false` in nfo-data, nfo-data will take precedence.
-                           (merge-toc-nfo addon nfo-data)))
+                         (logging/with-addon addon
+                           (let [nfo-data (nfo/read-nfo install-dir (:dirname addon))]
+                             ;; merge the addon with the nfo data.
+                             ;; when `ignore?` flag in addon is `true` but `false` in nfo-data, nfo-data will take precedence.
+                             (merge-toc-nfo addon nfo-data))))
 
         addon-list (mapv merge-nfo-data addon-list)]
 
@@ -220,7 +237,7 @@
     (when (s/valid? :addon/toc addon)
       (remove-addon install-dir addon))
 
-    (info (format "installing '%s' version '%s'" (:label addon) (:version addon)))
+    (info (format "installing \"%s\" version \"%s\"" (:label addon) (:version addon)))
     (unzip-addon)
     (update-nfo-files)))
 
@@ -253,7 +270,7 @@
   (when n-zips-to-keep
     (remove-zip-files! install-dir (:name addon) n-zips-to-keep)))
 
-;;
+;; ignore
 
 ;; todo: does this have tests? is it flawed like pinned-dir-list is?
 (defn-spec ignored-dir-list (s/coll-of ::sp/dirname)
@@ -283,13 +300,27 @@
     (or (contains? toc-data :ignore?)
         (nfo/version-controlled? path))))
 
+(defn-spec ignore nil?
+  "marks the given `addon` and all of it's group members (if any) as 'ignored'"
+  [install-dir ::sp/extant-dir, addon :addon/installed]
+  (->> addon
+       ungroup-addon
+       flatten
+       (map :dirname)
+       (run! (partial nfo/ignore install-dir))))
+
 (defn-spec clear-ignore nil?
   "clears the `ignore?` flag on an addon, either by removing it from the nfo or setting it in the nfo to `false`.
   Has to happen here so we can distinguish between 'toc-ignores' and 'nfo-ignores'."
-  [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname]
-  (if (implicitly-ignored? install-dir addon-dirname)
-    (nfo/stop-ignoring install-dir addon-dirname)
-    (nfo/clear-ignore install-dir addon-dirname)))
+  [install-dir ::sp/extant-dir, addon :addon/installed]
+  (let [addon-dirname (:dirname addon)
+        ignore-fn (if (implicitly-ignored? install-dir addon-dirname)
+                    nfo/stop-ignoring
+                    nfo/clear-ignore)]
+    (->> addon
+         ungroup-addon
+         (mapv :dirname)
+         (run! (partial ignore-fn install-dir)))))
 
 ;;
 
@@ -351,9 +382,27 @@
   (when-let [{:keys [pinned-version]} addon]
     (some->> addon :release-list (filter #(= pinned-version (:version %))) first)))
 
+;;
+
+(defn-spec installed? boolean?
+  "returns `true` if given `addon` is present on filesystem."
+  [addon map?] ;; deliberately lenient
+  (contains? addon :dirname))
+
+(defn-spec ignored? boolean?
+  "returns `true` if given `addon` is being ignored."
+  [addon map?]
+  (get addon :ignore? false))
+
+(defn-spec ignorable? boolean?
+  "returns `true` if given `addon` can be ignored."
+  [addon map?]
+  (and (installed? addon)
+       (not (ignored? addon))))
+
 (defn-spec updateable? boolean?
-  "returns `true` when given `addon` can be updated to a newer version"
-  [addon map?] ;; deliberately lenient. called from all over
+  "returns `true` when given `addon` can be updated to a newer version."
+  [addon map?] ;; deliberately lenient
   (let [{:keys [installed-version pinned-version version]} addon]
     (boolean
      (and version
@@ -368,7 +417,45 @@
 
 (defn-spec re-installable? boolean?
   "returns `true` if given `addon` can be re-installed to its current `:installed-version`."
-  [addon map?] ;; deliberately lenient. it's called directly from the gui
+  [addon map?] ;; deliberately lenient
   (boolean
-   (when (contains? addon :release-list)
-     (some? (find-release addon)))))
+   (and (installed? addon)
+        (contains? addon :release-list)
+        (some? (find-release addon)))))
+
+(defn-spec pinned? boolean?
+  "returns `true` if given `addon` is pinned to a specific version."
+  [addon map?]
+  (some? (:pinned-version addon)))
+
+(defn-spec pinnable? boolean?
+  "returns `true` if given `addon` can be pinned."
+  [addon map?]
+  (and (installed? addon)
+       (contains? addon :installed-version) ;; could this live in `installed?`
+       (not (pinned? addon))
+       (not (ignored? addon))))
+
+(defn-spec unpinnable? boolean?
+  "returns `true` if given `addon` can be un-pinned."
+  [addon map?]
+  (and (pinned? addon)
+       (not (ignored? addon))))
+
+(defn-spec deletable? boolean?
+  "returns `true` if the given `addon` can be deleted."
+  [addon map?]
+  (and (installed? addon)
+       (not (ignored? addon))))
+
+(defn-spec releases-available? boolean?
+  "returns `true` if *any* addons are available, including the currently installed version, and the addon isn't pinned.
+  ignored addons shouldn't have a `:release-list`."
+  [addon map?]
+  (and (not (empty? (:release-list addon)))
+       (not (pinned? addon))))
+
+(defn-spec releases-visible? boolean?
+  "returns `true` if there is more than 1 release available and the addon isn't pinned"
+  [addon map?]
+  (releases-available? (update-in addon [:release-list] rest)))

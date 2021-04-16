@@ -97,10 +97,10 @@
   [install-dir ::sp/extant-dir, dirname ::sp/dirname]
   (let [path (nfo-path install-dir dirname)
         bad-data (fn []
-                   (warn "bad nfo data, deleting file:" path)
+                   (warn (format "bad \"%s\" file, deleting: %s" nfo-filename path))
                    (rm-nfo-file path))
         invalid-data (fn []
-                       (warn "invalid nfo data, deleting file:" path)
+                       (warn (format "invalid \"%s\" file, deleting:" nfo-filename path))
                        (rm-nfo-file path))
         opts {:bad-data? bad-data
               :invalid-data? invalid-data,
@@ -126,11 +126,11 @@
         user-ignored (contains? nfo-file-contents :ignore?)
         _ (when (and user-ignored
                      (:ignore? nfo-file-contents))
-            (warn (format "ignoring '%s'" dirname)))
+            (debug (format "ignoring \"%s\"" dirname)))
 
         ignore-flag (when (and (not user-ignored)
                                (version-controlled? (join install-dir dirname)))
-                      (warn (format "ignoring '%s': addon directory contains a .git/.hg/.svn folder" dirname))
+                      (warn (format "ignoring \"%s\": addon directory contains a .git/.hg/.svn folder" dirname))
                       {:ignore? true})]
     (merge nfo-file-contents ignore-flag)))
 
@@ -161,7 +161,7 @@
   [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, new-nfo-data :addon/nfo]
   (let [user-warning (fn [nfo-data-list]
                        (when-not (empty? nfo-data-list)
-                         (warn (format "addon '%s' is overwriting '%s'" (:name new-nfo-data) (:name (last nfo-data-list)))))
+                         (warn (format "addon \"%s\" is overwriting \"%s\"" (:name new-nfo-data) (:name (last nfo-data-list)))))
                        nfo-data-list)]
     (-> (read-nfo-file install-dir addon-dirname)
         (rm-nfo* (:group-id new-nfo-data))
@@ -176,7 +176,7 @@
   [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, addon ::sp/map-or-list-of-maps]
   (let [path (nfo-path install-dir addon-dirname)]
     (if-not (s/valid? :addon/nfo addon)
-      (error "new nfo data is invalid and won't be written to file")
+      (error (format "new \"%s\" data is invalid and won't be written to file" nfo-filename))
       (utils/dump-json-file path (prune addon)))))
 
 ;; this function could definitely do with a second pass, but not right now.

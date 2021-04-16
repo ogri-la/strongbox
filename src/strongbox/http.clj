@@ -99,7 +99,7 @@
     ;; use the file on disk if it's not too old ...
     (if (fresh-cache-file-exists? output-file)
       (do
-        (debug "cache hit for:" url "(" output-file ")")
+        (debug (format "cache hit for: %s (%s)" url output-file))
         output-file)
 
       ;; ... otherwise, we must sing and dance

@@ -204,6 +204,26 @@
     (doseq [[given expected] cases]
       (is (= expected (utils/no-new-lines given)) (format "failed given '%s'" given)))))
 
+(deftest drop-idx
+  (let [cases [[nil 0 nil]
+               [[] nil []]
+
+               [[] 0 []]
+               [[] 1 []]
+               [[] 1000000000000 []]
+
+               [[1 2 3] 0 [2 3]]
+               [[1 2 3] 1 [1 3]]
+               [[1 2 3] 2 [1 2]]
+               [[1 2 3] 3 [1 2 3]]
+               [[1 2 3] 4 [1 2 3]]
+
+               ;; error cases
+               ;;[[] -1 []]
+               ]]
+    (doseq [[v idx expected] cases]
+      (is (= expected (utils/drop-idx v idx))))))
+
 (deftest game-version-to-game-track
   (let [cases [;; defaults for bad values
                ["" :retail]
@@ -227,6 +247,19 @@
                ["5.0.4" :retail]
                ;; ...etc
                ["9.0.1" :retail]]]
-
     (doseq [[given expected] cases]
       (is (= expected (utils/game-version-to-game-track given))))))
+
+(deftest csv-map
+  (testing "singular"
+    (let [header [:key :val]
+          row ["foo" "bar"]
+          expected [{:key "foo" :val "bar"}]]
+      (is (= expected (utils/csv-map header row)))))
+
+  (testing "asfd"
+    (let [header [:key :val]
+          row-list [["foo" "bar"] ["baz" "bup"]]
+          expected [{:key "foo" :val "bar"} {:key "baz" :val "bup"}]]
+      (is (= expected (apply utils/csv-map header row-list))))))
+

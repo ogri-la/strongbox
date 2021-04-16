@@ -2,6 +2,9 @@
   (:refer-clojure :rename {replace clj-replace})
   (:require
    [strongbox
+    ;; I want to keep higher level logging concerns out of toc.clj and nfo.clj.
+    ;; addon.clj and higher is ok.
+    ;;[logging :as logging] 
     [specs :as sp]
     [utils :as utils]]
    [clojure.spec.alpha :as s]
@@ -195,10 +198,3 @@
       ;; this addon failed somehow. don't propagate the exception, just report it and return nil
       (error "please report this! https://github.com/ogri-la/strongbox/issues")
       (error e (format "unhandled error parsing addon in directory '%s': %s" addon-dir (.getMessage e))))))
-
-(defn-spec installed-addons (s/or :ok :addon/toc-list, :error nil?)
-  "returns a list of addon data scraped from the .toc files of all addons in given `addon-dir`"
-  [addon-dir ::sp/addon-dir]
-  (let [addon-dir-list (->> addon-dir fs/list-dir (filter fs/directory?) (map str))
-        addon-list (->> addon-dir-list (map parse-addon-toc-guard) (remove nil?) vec)]
-    addon-list))

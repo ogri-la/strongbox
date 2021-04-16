@@ -20,36 +20,6 @@
     [catalogue :as catalogue]
     [specs :as sp]]))
 
-;; todo: remove when old gui is removed
-(def game-tracks [:retail :classic])
-
-(def -colour-map
-  {:notice/error :tomato
-   :notice/warning :lemonchiffon
-   ;;:installed/unmatched :tomato
-   :installed/ignored-bg nil
-   :installed/ignored-fg :darkgray
-   :installed/needs-updating :lemonchiffon
-   :installed/hovering "#e6e6e6" ;; light grey
-   :search/already-installed "#99bc6b" ;; greenish
-   :hyperlink :blue})
-
-;; inverse colours of -colour-map
-(def -dark-colour-map
-  {:notice/error "#009CB8"
-   :notice/warning "#000532"
-   ;;:installed/unmatched :tomato
-   :installed/ignored-bg nil
-   :installed/ignored-fg "#666666"
-   :installed/needs-updating "#000532"
-   :installed/hovering "#191919"
-   :search/already-installed "#664394"
-   :hyperlink :yellow})
-
-(def themes
-  {:light -colour-map
-   :dark -dark-colour-map})
-
 (def default-config-dir "~/.config/strongbox")
 (def default-data-dir "~/.local/share/strongbox")
 
@@ -137,44 +107,35 @@
    ;; the list of addons from the catalogue
    :db nil
 
+   :log-lines []
+   :log-stats {}
+
    ;; a map of paths whose location may vary according to the cwd and envvars.
    :paths nil
 
    ;; ui
 
-   ;; the root swing window
-   :gui nil
-
    ;; jfx ui showing?
    :gui-showing? false
 
-   ;; set to anything other than `nil` to have `main.clj` restart the gui
-   ;;:gui-restart-flag nil ;; 2020-12: disabled, swing gui can't switch themes anymore.
-
-   ;; which of the addon directories is currently selected
-   ;;:selected-addon-dir nil ;; moved to [:cfg :selected-addon-dir]
+   ;; log-level for the gui dedicated notice-logger
+   ;; per-tab log-levels are attached to each tab in the `:tab-list`
+   :gui-log-level :info
 
    ;; addons in an unsteady state (data being updated, addon being installed, etc)
    ;; allows a UI to watch and update with progress
-   :unsteady-addons #{}
+   :unsteady-addon-list #{}
 
    ;; a sublist of merged toc+addon that are selected
-   :selected-installed []
+   :selected-addon-list []
 
-   :search-field-input nil
-
-   ;; results of searching db for `:search-field-input`
-   :search-results []
-
-   :selected-search []
-   ;; number of results to display in search results pane.
-   ;; adjust to whatever performs the best
-   :search-results-cap 80
+   ;; dynamic tabs
+   :tab-list []
 
    :search {:term nil
             :page 0
             :results []
-            :selected-results []
+            :selected-result-list []
             :results-per-page 60}})
 
 (def state (atom nil))
@@ -191,10 +152,17 @@
   [& path]
   (nav-map (get-state :paths) path))
 
-(defn colours
-  "like `get-in` but for the currently selected colour theme. requires running app"
-  [& path]
-  (nav-map (get themes (get-state :cfg :gui-theme)) path))
+(def testing? false)
+
+(defn-spec debug-mode? boolean?
+  "debug mode is when the log level has been set to `:debug` and we're *not* running tests.
+  the intent is to collect as much information around a problem as possible.
+  the log level may be changed through REPL usage.
+  the log level may be changed by using a `--verbosity` flag at runtime.
+  `main/test` and `cloverage.clj` alter the `main/testing?` flag while running tests and resets it afterwards."
+  []
+  (and (-> timbre/*config* :min-level (= :debug))
+       (not testing?)))
 
 ;;
 
@@ -225,17 +193,24 @@
   "executes given callback function when value at path in state map changes. 
   trigger is discarded if old and new values are identical"
   [path ::sp/list-of-keywords, callback fn?]
-  (let [prefn identity
-        has-changed (fn [old-state new-state]
-                      (not= (prefn (get-in old-state path))
-                            (prefn (get-in new-state path))))
+  (let [has-changed (fn [old-state new-state]
+                      (not= (get-in old-state path)
+                            (get-in new-state path)))
         wid (keyword (gensym callback)) ;; :foo.bar$baz@123456789
         rmwatch #(remove-watch state wid)]
 
     (add-watch state wid
                (fn [_ _ old-state new-state] ;; key, atom, old-state, new-state
                  (when (has-changed old-state new-state)
-                   (debug (format "path %s triggered %s" path wid))
+                   ;; avoids infinite recursion
+                   (when (and (= :debug (:min-level timbre/*config*))
+                              (not (empty? path)))
+                     ;; this would cause the gui to receive a :debug of "path [] triggered a ..."
+                     ;; this would update the :log-lines in the state
+                     ;; this would cause the gui to receive a :debug of "path [] triggered a ..." ...
+                     ;;(debug (format "path %s triggered %s" path wid)))
+                     ;; instead, if :debug is the log level, print this to stdout
+                     (println (format "path %s triggered %s" path wid)))
                    (try
                      (callback new-state)
                      (catch Exception e
@@ -244,6 +219,13 @@
     nil))
 
 ;; addon dirs
+
+(defn-spec selected-addon-dir (s/or :ok ::sp/addon-dir, :no-selection nil?)
+  "returns the currently selected addon directory or nil if no directories exist to select from"
+  ([]
+   (selected-addon-dir (get-state)))
+  ([state map?]
+   (-> state :cfg :selected-addon-dir)))
 
 (defn-spec addon-dir-exists? boolean?
   ([addon-dir ::sp/addon-dir]
@@ -265,14 +247,12 @@
   (let [addon-dir (-> addon-dir fs/absolute fs/normalized str)
         ;; if '_classic_' is in given path, use the classic game track
         default-game-track (if (clojure.string/index-of addon-dir "_classic_") :classic :retail)]
-    (add-addon-dir! addon-dir default-game-track)
-    (swap! state assoc-in [:cfg :selected-addon-dir] addon-dir))
+    (dosync ;; necessary? makes me feel better
+     (add-addon-dir! addon-dir default-game-track)
+     ;; todo: this is UI logic ... consider moving to ui.cli
+     (swap! state assoc-in [:cfg :selected-addon-dir] addon-dir)
+     (swap! state assoc :tab-list []))) ;; todo: consider adding a watch for this as well
   nil)
-
-(defn-spec selected-addon-dir (s/or :ok ::sp/addon-dir, :no-selection nil?)
-  "returns the currently selected addon directory or nil if no directories exist to select from"
-  []
-  (get-state :cfg :selected-addon-dir))
 
 (defn-spec remove-addon-dir! nil?
   "removes the directory from user configuration, does not alter the directory or it's contents at all"
@@ -334,39 +314,76 @@
     :classic :classic-retail
     :retail-classic))
 
-;; settings
+
+;; stateful logging
+
+
+(defn-spec -debug-logging nil?
+  "if we're in debug mode, turn profiling on and write log to file"
+  [state-atm ::sp/atom]
+  (when (debug-mode?)
+    (if-not @state-atm
+      (warn "application has not been started, no location to write log or profile data")
+      (do
+        (logging/add-profiling-handler! (paths :profile-data-dir))
+        (logging/add-file-appender! (paths :log-file))
+        (info "writing logs to:" (paths :log-file))))))
+
+(defn-spec reset-logging! nil?
+  "the logging configuration in timbre may become unpredictable during testing and this resets it to what it should be."
+  ([]
+   (reset-logging! testing? state (and @state (selected-addon-dir))))
+
+  ([testing? boolean?, state-atm ::sp/atom, addon-dir ::sp/install-dir]
+   ;; reset logging configuration to timbre's default.
+   (timbre/swap-config! timbre/default-config)
+
+   ;; layer in our own default config
+   (timbre/merge-config! logging/-default-logging-config)
+
+   ;; layer in any runtime config
+   (when-let [user-level (some-> @state-atm :cli-opts :verbosity)]
+     (timbre/merge-config! {:min-level user-level}))
+
+   (-debug-logging state-atm)
+
+   ;; ensure we're storing log lines in app state
+   (add-cleanup-fn (logging/add-ui-appender! state-atm addon-dir))
+
+   ;; and finally, if we're running tests, drop the logging level to :debug and ensure nothing is emitting to a file
+   (when testing?
+     (timbre/merge-config! {:testing? true, :min-level :debug, :appenders {:spit nil}}))
+
+   nil))
 
 (defn-spec change-log-level! nil?
   "changes the effective log level from `logging/default-log-level` to `new-level`.
   The `:debug` log level outside of unit tests will write a log file to the data directory and 
   enables the profiling of certain sections of code."
   [new-level keyword?]
-  (timbre/merge-config! {:level new-level})
-  (when (logging/debug-mode?) ;; debug level + not-testing
-    (if-not @state
-      (warn "application has not been started, no location to write log or profile data")
-      (do
-        (logging/add-profiling-handler! (paths :profile-data-dir))
-        (logging/add-file-appender! (paths :log-file))
-        (info "writing logs to:" (paths :log-file)))))
-  nil)
+  (timbre/merge-config! {:min-level new-level})
+  (-debug-logging state))
+
+;; settings
 
 (defn save-settings
   "writes user configuration to the filesystem"
   []
   ;; warning: this will preserve any once-off command line parameters as well
   ;; this might make sense within the gui but be careful about auto-saving elsewhere
-  (debug "saving settings to:" (paths :cfg-file))
-  (utils/dump-json-file (paths :cfg-file) (get-state :cfg))
-  (debug "saving etag-db to:" (paths :etag-db-file))
-  (utils/dump-json-file (paths :etag-db-file) (get-state :etag-db)))
+  (when-let [cfg-file (paths :cfg-file)]
+    (debug "saving settings to:" cfg-file)
+    (utils/dump-json-file cfg-file (get-state :cfg)))
+  (when-let [etag-db (paths :etag-db-file)]
+    (debug "saving etag-db to:" etag-db)
+    (utils/dump-json-file etag-db (get-state :etag-db))))
 
 (defn load-settings!
   "pulls together configuration from the fs and cli, merges it and sets application state"
   [cli-opts]
   (let [final-config (config/load-settings cli-opts (paths :cfg-file) (paths :etag-db-file))]
     (swap! state merge final-config)
-    (change-log-level! (or (:verbosity cli-opts) logging/default-log-level))
+    (reset-logging!)
     (when (contains? cli-opts :profile?)
       (swap! state assoc :profile? (:profile? cli-opts)))
     (when (contains? cli-opts :spec?)
@@ -383,25 +400,26 @@
 
 (defn start-affecting-addon
   [addon]
-  (swap! state update-in [:unsteady-addons] clojure.set/union #{(:name addon)}))
+  (swap! state update-in [:unsteady-addon-list] clojure.set/union #{(:name addon)}))
 
 (defn stop-affecting-addon
   [addon]
-  (swap! state update-in [:unsteady-addons] clojure.set/difference #{(:name addon)}))
+  (swap! state update-in [:unsteady-addon-list] clojure.set/difference #{(:name addon)}))
 
 (defn-spec unsteady? boolean?
   "returns `true` if given `addon` is being updated"
   [addon-name ::sp/name]
-  (utils/in? addon-name (get-state :unsteady-addons)))
+  (utils/in? addon-name (get-state :unsteady-addon-list)))
 
 (defn affects-addon-wrapper
   [wrapped-fn]
   (fn [addon & args]
-    (try
-      (start-affecting-addon addon)
-      (apply wrapped-fn addon args)
-      (finally
-        (stop-affecting-addon addon)))))
+    (logging/with-addon addon
+      (try
+        (start-affecting-addon addon)
+        (apply wrapped-fn addon args)
+        (finally
+          (stop-affecting-addon addon))))))
 
 ;; downloading and installing and updating
 
@@ -429,7 +447,7 @@
    (cond
      ;; do some pre-installation checks
      (:ignore? addon) (error "refusing to install addon, addon is being ignored:" (:name addon))
-     (not (fs/writeable? install-dir)) (error "refusing to install addon, directory not writeable:" install-dir)
+     (not (fs/writeable? install-dir)) (error "failed to install addon, directory not writeable:" install-dir)
 
      :else ;; attempt downloading and installing addon
 
@@ -477,7 +495,8 @@
 (defn update-installed-addon-list!
   [installed-addon-list]
   (let [asc compare
-        installed-addon-list (sort-by :name asc installed-addon-list)]
+        ;; `vec` so we can use `update-in` and `assoc-in` on `:installed-addon-list`
+        installed-addon-list (vec (sort-by :name asc installed-addon-list))]
     (swap! state assoc :installed-addon-list installed-addon-list)
     nil))
 
@@ -556,6 +575,7 @@
   (let [;; nil fields are removed from the catalogue item because they might override good values in the .toc or .nfo
         db-catalogue-addon (utils/drop-nils db-catalogue-addon [:description])]
     ;; merges left->right. catalogue-addon overwrites installed-addon, ':matched' overwrites catalogue-addon, etc
+    (logging/addon-log installed-addon :info (format "found in catalogue with source \"%s\" and id \"%s\"" (:source installed-addon) (:source-id installed-addon)))
     (merge installed-addon db-catalogue-addon {:matched? true})))
 
 ;;
@@ -599,26 +619,12 @@
   []
   (-> (get-state :db) nil? not))
 
-(defn-spec db-search :addon/summary-list
+(defn db-search
   "searches database for addons whose name or description contains given user input.
   if no user input, returns a list of randomly ordered results"
-  ([]
-   ;; random list of addons, no preference
-   (db-search nil))
-  ([uin (s/nilable string?)]
-   (let [empty-results []
-         args [(utils/nilable uin) (get-state :search-results-cap)]]
-     (or (query-db :search args) empty-results))))
-
-(defn db-search-2
-  "searches database for addons whose name or description contains given user input.
-  if no user input, returns a list of randomly ordered results"
-  ([]
-   ;; random list of addons, no preference
-   (db-search nil))
-  ([search-term]
-   (let [args [(utils/nilable search-term) (get-state :search :results-per-page)]]
-     (query-db :search-2 args))))
+  [search-term]
+  (let [args [(utils/nilable search-term) (get-state :search :results-per-page)]]
+    (query-db :search args)))
 
 (defn-spec load-current-catalogue (s/or :ok :catalogue/catalogue, :error nil?)
   "merges the currently selected catalogue with the user-catalogue and returns the definitive list of addons 
@@ -664,8 +670,10 @@
   "compare the list of addons installed with the database of known addons and try to match the two up.
   when a match is found (see `db/-db-match-installed-addons-with-catalogue`), merge it into the addon data."
   [database :addon/summary-list, installed-addon-list :addon/toc-list]
-  (info (format "matching %s addons to catalogue" (count installed-addon-list)))
-  (let [match-results (db/-db-match-installed-addons-with-catalogue database installed-addon-list)
+  (let [num-installed (count installed-addon-list)
+        _ (when (> num-installed 0)
+            (info (format "matching %s addons to catalogue" (count installed-addon-list))))
+        match-results (db/-db-match-installed-addons-with-catalogue database installed-addon-list)
         [matched unmatched] (utils/split-filter :matched? match-results)
 
         ;; for those that *did* match, merge the installed addon data together with the catalogue data
@@ -675,7 +683,7 @@
 
         ;; todo: metrics gathering is good, but this is a little adhoc. shift into parent wrapper somehow.
         ;; some metrics we'll emit for the user.
-        [num-installed num-matched] [(count installed-addon-list) (count matched)]
+        num-matched (count matched)
         ;; we don't match ignored addons, we shouldn't report we couldn't find them either
         unmatched-names (->> unmatched (remove :ignore?) (map :name) set)]
 
@@ -688,6 +696,21 @@
                     (count unmatched-names)
                     (name (get-state :cfg :selected-catalogue))
                     (clojure.string/join ", " unmatched-names))))
+
+    (when-not (empty? unmatched)
+      (run! (fn [addon]
+              (logging/with-addon addon
+                (if (:ignore? addon)
+                  (info "not matched to catalogue, addon is being ignored")
+
+                  (do ;; todo: replace these with a :help level and a less scary colour
+                    (info "if this is part of a bundle, try \"File -> Re-install all\"")
+                    (info "try searching for this addon by name or description")
+                    (warn (format "failed to find %s in the '%s' catalogue"
+                                  (:dirname addon)
+                                  (name (get-state :cfg :selected-catalogue))))))))
+
+            unmatched))
 
     expanded-installed-addon-list))
 
@@ -732,21 +755,28 @@
   If addon is pinned to a specific version, `update?` will only be true if pinned version is different from installed version."
   [addon (s/or :unmatched :addon/toc
                :matched :addon/toc+summary+match)]
-  (let [expanded-addon (when (:matched? addon)
-                         (expand-summary-wrapper addon))
-        addon (or expanded-addon addon)] ;; expanded addon may still be nil
-    (assoc addon :update? (addon/updateable? addon))))
+  (logging/with-addon addon
+    (let [expanded-addon (when (:matched? addon)
+                           (expand-summary-wrapper addon))
+          addon (or expanded-addon addon) ;; expanded addon may still be nil
+          has-update? (addon/updateable? addon)]
+      (when has-update?
+        (info (format "update available \"%s\"" (:version addon))))
+      (assoc addon :update? has-update?))))
 
 (defn-spec check-for-updates nil?
   "downloads full details for all installed addons that can be found in summary list"
   []
   (when (selected-addon-dir)
-    (info "checking for updates")
-    (let [improved-addon-list (mapv check-for-update (get-state :installed-addon-list))
-          num-matched (->> improved-addon-list (filterv :matched?) count)
-          num-updates (->> improved-addon-list (filterv :update?) count)]
-      (update-installed-addon-list! improved-addon-list)
-      (info (format "%s addons checked, %s updates available" num-matched num-updates)))))
+    (let [installed-addon-list (get-state :installed-addon-list)
+          num-installed (count installed-addon-list)]
+      (when (> num-installed 0)
+        (info "checking for updates")
+        (let [improved-addon-list (mapv check-for-update installed-addon-list)
+              num-matched (->> improved-addon-list (filterv :matched?) count)
+              num-updates (->> improved-addon-list (filterv :update?) count)]
+          (update-installed-addon-list! improved-addon-list)
+          (info (format "%s addons checked, %s updates available" num-matched num-updates)))))))
 
 ;; ui interface
 
@@ -876,7 +906,8 @@
 
     ;; target any unmatched addons with no `:source` from the addon list and emit a warning
     (doseq [addon (remove :source addon-list)]
-      (warn (format "Addon '%s' has no match in the catalogue and may be skipped durlng import. It's best all addons match before doing an export." (:name addon))))
+      (logging/with-label "export"
+        (warn (format "Addon '%s' has no match in the catalogue and may be skipped during import. It's best all addons match before doing an export." (:name addon)))))
 
     (utils/dump-json-file output-file export)
     (info "wrote:" output-file)
@@ -935,11 +966,13 @@
         padding {:label ""
                  :description ""
                  ;; 2020-06: dirname must be a non-empty string
+                 ;; todo: why is dirname needed here?
                  :dirname addon/dummy-dirname
                  :interface-version 0
                  :installed-version "0"}
         addon-list (map #(merge padding %) addon-list)
 
+        ;; todo: why aren't we just calling `expand-summary-wrapper` ?
         ;; match each of these padded addon maps to entries in the catalogue database
         ;; afterwards this will call `update-installed-addon-list!` that will trigger a refresh in the gui
         matching-addon-list (-match-installed-addons-with-catalogue (get-state :db) addon-list)
@@ -981,8 +1014,8 @@
 
 ;;
 
-(defn refresh
-  [& _] ;; todo: remove args with swing gui + spec
+(defn-spec refresh nil?
+  []
   (profile
    {:when (get-state :profile?)}
 
@@ -1009,19 +1042,23 @@
 
    nil))
 
+;; todo: move to ui.cli
+(defn-spec remove-addon nil?
+  "removes given installed addon"
+  [installed-addon :addon/installed]
+  (logging/with-addon installed-addon
+    (addon/remove-addon (selected-addon-dir) installed-addon))
+  (refresh))
+
+;; todo: move to ui.cli
 (defn-spec remove-many-addons nil?
   "deletes each of the addons in the given `toc-list` and then calls `refresh`"
   [installed-addon-list :addon/toc-list]
   (let [addon-dir (selected-addon-dir)]
     (doseq [installed-addon installed-addon-list]
-      (addon/remove-addon addon-dir installed-addon))
+      (logging/with-addon installed-addon
+        (addon/remove-addon addon-dir installed-addon)))
     (refresh)))
-
-(defn-spec remove-addon nil?
-  "removes given installed addon"
-  [installed-addon :addon/installed]
-  (addon/remove-addon (selected-addon-dir) installed-addon)
-  (refresh))
 
 ;;
 
@@ -1079,21 +1116,29 @@
   "writes selected system properties to the log.
   mostly concerned with OS, Java and JavaFX versions."
   []
-  (let [useful-keys ["strongbox.version"
-                     "os.name"
-                     "os.version"
-                     "os.arch"
-                     "java.runtime.name"
-                     "java.vm.name"
-                     "java.version"
-                     "java.runtime.version"
-                     "java.vendor.url"
-                     "java.version.date"
-                     "java.awt.graphicsenv"
-                     "javafx.version"
-                     "javafx.runtime.version"]
-        props (System/getProperties)]
-    (run! #(info (format "%s=%s" % (get props %))) useful-keys)))
+  (let [useful-props
+        ["javafx.version" ;; "15.0.1"
+         "javafx.runtime.version" ;; "15.0.1+1"
+         ]
+
+        useful-envvars
+        [:strongbox-version ;; "4.0.0"
+         :os-name ;; "Linux"
+         :os-version ;; "5.11.6-arch1-1"
+         :os-arch ;; "amd64"
+         :java-runtime-name ;; "OpenJDK Runtime Environment"
+         :java-vm-name ;; "OpenJDK 64-Bit Server VM"
+         :java-version ;; "11.0.10"
+         :java-vendor-url ;; "https://openjdk.java.net/"
+         :java-version-date ;; "2021-01-19"
+         :java-awt-graphicsenv ;; "sun.awt.X11GraphicsEnvironment"
+         :gtk-modules ;; "canberra-gtk-module"
+         :xdg-session-desktop ;; "notion"
+         ]
+
+        adhoc-vars {:strongbox-version (strongbox-version)}
+        vars (merge adhoc-vars (System/getProperties) @envvar.core/env)]
+    (run! #(info (format "%s=%s" (name %) (get vars %))) (into useful-envvars useful-props))))
 
 ;;
 
@@ -1104,6 +1149,7 @@
 (defn start
   [& [cli-opts]]
   (-start)
+  (reset-logging!)
   (info "starting app")
   (set-paths!)
   (detect-repl!)
@@ -1120,8 +1166,7 @@
   (doseq [f (:cleanup @state)]
     (debug "calling" f)
     (f))
-  (when (and @state
-             (logging/debug-mode?))
+  (when (and @state (debug-mode?))
     (dump-useful-log-info)
     (info "wrote logs to:" (paths :log-file)))
   (reset! state nil))

@@ -6,24 +6,149 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* version pinning
-    - user can opt to install a specific release of an addon
-    - automatic updates for that addon are thereafter blocked
+* remove gui1
+    - done
+    - remove original db-search
+        - done
+* gui, new tab for dedicated log
+    - done
+* addon detail pane
+    - clicking an addon row opens a new tab with as much detail as we can about that addon
+    - done  
+* log pane, filter by log level
+    - log level should have number of instances against it
+        - warn (2)
+        - error (1)
+    - done
+* per-addon logging
+    - I want the user to see a list of messages regarding a *specific* addon
+    - when emitting a log line about a particular addon, capture that addon's source and source-id somehow
+        - and addon directory
+            - install-dir, dirname, source, source-id are all captured and used.
+                - it got a bit clunky but we got there
     - done
 
-* gui, 're-install' for an addon that has an update available will update the addon
-    - it implies the same version would be installed
-    - strongbox doesn't support version pinning yet either
-        - it does now!
+* remove 'hostname' from log output
+    - done
+    - update privacy section in readme
+        - done
+
+* coloured warnings/errors on console output
+    - when running with :debug on the wall of text is difficult to read
+    - I'm thinking about switching away from timbre to something more traditional
+        - he's not addressing tickets
+            - eh
+        - it may have been simpler to use in 3.x.x but in 4.x.x it's gotten a bit archaic
+            - still trie
+        - I can't drop hostname without leaving pretty-printed stacktraces behind
+            - fixed
+    - despite everything I stick with timbre and it's quite integrated now so it won't be disappearing anytime soon
+    - we now have console colours!
+        - they'll probably be tweakd in future after the logging frenzy has calmed down
+    - done
+* highlight new log pane or status bar when there is an non-addon error or warning
+    - done
+* 4.0 styling
+    - dark theme styling for addon-detail
+        - use derived colours rather than hardcode
+        - done
+    - bug, addon detail, description box may grow or shrink after finding a match in the catalogue, bumping the content below up or down
+        - done
+
+* uber-button
+    - new column that displays overall health of addon
+        - clicking whatever is in there takes you to a detail pane for that addon
+        - if a task is being performed for that addon, it shows a progress meter
+        - if addon is up-to-date, it shows a happy green tick
+            - if there is something to be concerned about (and that the user can fix), show a warning or error
     - done
 
-* issue #229, pane not resizing properly at larger resolutions
-    - https://github.com/ogri-la/strongbox/issues/229
+* bug, regression, --verbosity cli option is reset
     - done
+
+* bug, 'strongbox.version' in debug output is null when run as a binary
 
 ## todo
 
 ## todo bucket (no particular order)
+
+* disable addon update if it's unsteady
+    - interesting stuff happens when you pump that update button!
+    - roll this into the action queue work
+        - no more than one update request pending per-addon
+
+* classic addon dir detection
+    - also check for 
+        - '_classic_' '_classic_beta_' '_classic_ptr_'
+
+* game tracks, add warning if installed addon's interface version deviates from addon directory's game track
+    - for example, if classic is installed in retail, or classic-bc is installed in classic
+
+* installed, right align version columns and make elipses start at left
+    - we're typically interested in comparing the last part of the version
+
+* tabber, double clicking a tab closes it
+
+* bug, I should be able to re-install a pinned addon if the pinned release is available, but I'm getting an error
+ - "refusing to install addon that will overwrite a pinned addon"
+ - this is actually a bit more involved than it first looks. shifting to it's own ticket
+
+* get log window scrolling in other direction
+
+* nfo, spend some time futzing with nfo files on disk and how they can break the UI
+    - I've managed to get some weird error messages by changing 'source' to an int, to a catalogue that doesn't exist, etc
+
+* search, replace 'install selected' with 'install' button on the right
+
+* logging, app level 'events'
+    - now that the log has been pushed out of the way, it's free to be a bit more verbose
+    - some events like refreshing or changing the game track should be logged
+    - some of these events should be surfaced in an addon's notice logger
+
+
+* logging, app level 'help'
+    - messages to the user that are not informational, or debug or warnings or errors, but simple helpful messages
+    - it should stand out from the other messages, look friendly, etc
+
+* zip, better errors for failing to decompress .rar files
+    - see !FREEZING from wowinterface
+        - it's a .rar addon
+        - the full path is emitted in the error, which is impossible to fully read
+        - the extension has been replaced with .zip
+            - if the extension were preserved we could dismiss it immediately as unsupported
+
+        2021-03-20 01:35:58.026 DEBUG [strongbox.zip:23] - failed to open+close zip file: /home/torkus/path/to/wine/dir/drive_c/program files/World of Warcraft/_retail_/Interface/Addons/-freezing--1-04.zip
+        path [] triggered :strongbox.ui.jfx$start$update_gui_state__39204@608569a040151
+        2021-03-20 01:35:58.027 ERROR [strongbox.core:419] - failed to read zip file '/home/torkus/path/to/wine/dir/drive_c/program files/World of Warcraft/_retail_/Interface/Addons/-freezing--1-04.zip', could not install -freezing
+
+
+* gui, download progress bar *inside* the grid ...?
+    - pure fantasy?
+    - defer until after job queue
+* greater parallelism
+    - internal job queue
+    - replace log at bottom of screen with a list of jobs being processed and how far along they are
+        - each job can be cancelled/stopped/discarded
+    - separate tab for log
+        - that scrolls the other way
+* a 'stop' button to stop updates would be nice
+* download addon details in parallel
+    - speed benefits, mostly
+    - share a pool of connections between threads
+        - N connections serving M threads
+* performance, check addons for updates immediately after loading
+    - if after we've read the nfo data and we have everything we need, check the addon for updates immediately
+        - don't wait for db loading and addon matching
+            - we already have a match!
+        - this might fit in with the greater-parallelism/queue based infrastructure
+
+
+* keep a list of previously installed addons
+
+* logs, persistent addon events
+    - installed, updated, pin, ignore events
+
+* cli, exports
 
 * alpha/beta opt-in
     - user can opt to install alpha/beta/no-lib releases per-addon
@@ -41,15 +166,9 @@ see CHANGELOG.md for a more formal list of changes by release
 * dedicated tab for "user-catalogue" ?
     - add, delete, update github addons
     - see accumulating release history for addons?
-        - 
 
 * preferences, "update all addons automatically"
-
-* gui, new tab for dedicated log
-
-* per-addon logging
-    - I want the user to see a list of messages regarding that *specific* addon
-    - when emitting a log line about a particular addon, capture that addon's source and source-id somehow
+    - update README features
 
 * import, skip importing an addon if addon already exists in addon dir
 
@@ -70,7 +189,7 @@ see CHANGELOG.md for a more formal list of changes by release
         - nothing wrong with that, but ...
 
 * http, add a timeout for requests
-    - I have tukui API taking a looooong time``s
+    - I have tukui API taking a looooong time
 
 * add support for finding addons by url for other hosts
     - wowinterface
@@ -154,7 +273,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - investigate just what is being downloaded when a classic version of a wowi addon is downloaded
     - see 'LagBar'
 
-
 * bug, changing sort order during refresh doesn't reflect which addon is being updated
     - I think changing column ordering and moving columns should be disabled while updates happen
         - just freeze or disable them or something.
@@ -172,12 +290,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - if we make an effort to scrape everyday, we can generate this popularity graph ourselves
 * add a 'tabula rasa' option that wipes *everything* 
     - cache, catalog, config, downloaded zip files
-* coloured warnings/errors on console output
-    - when running with :debug on the wall of text is difficult to read
-    - I'm thinking about switching away from timbre to something more traditional
-        - he's not addressing tickets
-        - it may have been simpler to use in 3.x.x but in 4.x.x it's gotten a bit archaic
-        - I can't drop hostname without leaving pretty-printed stacktraces behind
 * cache, make caching opt-out and remove all those ugly binding calls
     - bind the value at core app start
     - this may not be possible. 
@@ -210,9 +322,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - Akitools has no english description but it does have a "Notes-zhCN" in the toc file that could be used
     - wowman was mentioned on a french forum the other day ..
 
-* gui, download progress bar *inside* the grid ...?
-    - pure fantasy?
-    - defer until after job queue
 * gui, toggleable highlighers as a menuitem
     - highlight unmatched
     - highlight updates
@@ -257,25 +366,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * cli, replace with a repl
     - lein --cli gives you access to the code directly
 
-## job queue
-
-* greater parallelism
-    - internal job queue
-    - replace log at bottom of screen with a list of jobs being processed and how far along they are
-        - each job can be cancelled/stopped/discarded
-    - separate tab for log
-        - that scrolls the other way
-* a 'stop' button to stop updates would be nice
-* download addon details in parallel
-    - speed benefits, mostly
-    - share a pool of connections between threads
-        - N connections serving M threads
-* performance, check addons for updates immediately after loading
-    - if after we've read the nfo data and we have everything we need, check the addon for updates immediately
-        - don't wait for db loading and addon matching
-            - we already have a match!
-        - this might fit in with the greater-parallelism/queue based infrastructure
-
 ## unified UI
 
 * remove log split
@@ -285,11 +375,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - installed
     - updates
     - category ...
-
-## 4.0 major release
-
-* remove gui1
-    - remove original db-search
 
 ## wontfix
 

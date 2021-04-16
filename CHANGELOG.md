@@ -14,7 +14,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-## 3.3.0
+## 4.0.0 - unreleased
+
+### Added
+
+* an addon detail tab accessible by double clicking on either an installed addon or a search result.
+    - addon detail tabs can be closed.
+    - shortcut `ctrl-w` also closes an open tab *except* the installed, search and log tabs.
+    - has a new option `browse local files` if addon is installed locally.
+    - has its own menu of buttons to install/re-install, update, remove, pin and ignore.
+    - a 'raw data' widget with the fields used within the application.
+    - a 'releases' widget that lists all available releases with an install button.
+    ' a 'grouped addons' widget that displays the other addons that came with this addon and a file browser link.
+    - a logging widget with per-addon logging and adjustable severity level.
+* dedicated log tab.
+    - will display `(warnings)` or `(errors)` if any warnings or errors present in log.
+* `View` menu has a menu option for open addon detail tabs with an additional `close all` button.
+* a column on the `installed` tab that shows the status of an addon.
+    - a happy green tick if everything is ok.
+    - an unhappy red cross if the addon has errors.
+    - a stern yellow bar if the addon has warnings.
+    - an arrow if an update is available.
+    - single-clicking (rather than double-clicking) in this column takes you to the addon detail pane.
+
+### Changed
+
+* console logging is now colour coded.
+* console log line now excludes a number of fields including the machine's 'hostname'.
+* many error messages have been truncated or made less verbose now they have that context built-in.
+* switched from Travis CI to Circle CI.
+    - I can't package an `AppImage` from Circle CI however, so this is happening manually for now.
+* search pane, styling of the 'already installed' addons now shares the same styling as ignored addons.
+
+### Fixed
+
+* looks like the the gap between the `File` menu labels and their submenus is now gone with an update to JavaFX 15.
+    - this only affected some window managers (like mine).
+* truncated 'source' column in the search results when in dark mode.
+* fixed missing `strongbox.version` value from debug output when run as a binary.
+
+### Removed
+
+* original Swing GUI
+* the split window with the tab pane in one half and the notice logger in the other.
+
+## 3.3.1 - 2021-04-03
+
+### Fixed
+
+* added a fix for addons supporting Classic (BC) appearing in the retail game track.
+    - affects only curseforge addons
+* removed debug statement left in the 3.3.0 release
+    - https://github.com/ogri-la/strongbox/issues/240
+
+## 3.3.0 - 2021-02-19
 
 ### Added
 
@@ -42,7 +95,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-## 3.2.1
+## 3.2.1 - 2021-01-31
 
 ### Fixed
 
@@ -50,7 +103,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - https://github.com/dakrone/clj-http/issues/582
     - thanks to @rymndhng of dakrone/clj-http for all the help
 
-## 3.2.0
+## 3.2.0 - 2020-12-30
 
 ### Added
 
@@ -84,13 +137,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * a theoretical case when an entire addon directory may be deleted when importing a list of addons.
     - not as bad as it sounds, I could only recreate it under test conditions.
 
-## 3.1.1
+## 3.1.1 - 2020-12-02
 
 ### Fixed
 
 * tukui, changes to accommodate their change in API
 
-## 3.1.0
+## 3.1.0 - 2020-11-28
 
 ### Added
 

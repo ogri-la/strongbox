@@ -4,11 +4,12 @@
    [strongbox.ui.cli :as cli]
    [clj-http.fake :refer [with-global-fake-routes-in-isolation]]
    [strongbox
+    [logging :as logging]
     [main :as main]
     [catalogue :as catalogue]
     [core :as core]]
    [me.raynes.fs :as fs :refer [with-cwd]]
-   ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
+   [taoensso.timbre :as timbre :refer [debug info warn error spy]]
    [strongbox.test-helper :as helper :refer [with-running-app fixture-path]]))
 
 (use-fixtures :each helper/fixture-tempcwd)
@@ -171,7 +172,7 @@
           (is (not (contains? addon :pinned-version))))
 
         (cli/select-addons)
-        (is (= 1 (count (core/get-state :selected-installed))))
+        (is (= 1 (count (core/get-state :selected-addon-list))))
         (cli/pin)
 
         (let [addon (first (core/get-state :installed-addon-list))]
@@ -196,8 +197,76 @@
           (is (= "1.2.3" (:pinned-version addon))))
 
         (cli/select-addons)
-        (is (= 1 (count (core/get-state :selected-installed))))
+        (is (= 1 (count (core/get-state :selected-addon-list))))
         (cli/unpin)
 
         (let [addon (first (core/get-state :installed-addon-list))]
           (is (not (contains? addon :pinned-version))))))))
+
+(deftest add-tab
+  (testing "a generic tab can be created"
+    (let [expected [{:tab-id "foo" :label "Foo!" :closable? false :log-level :info :tab-data {:dirname "EveryAddon"}}]]
+      (with-running-app
+        (is (= [] (core/get-state :tab-list)))
+        (cli/add-tab "foo" "Foo!" false {:dirname "EveryAddon"})
+        (is (= expected (core/get-state :tab-list)))))))
+
+(deftest add-addon-tab
+  (testing "an addon can be used to create a tab"
+    (let [addon {:source "curseforge" :source-id 123 :label "Foo"}
+          expected [{:closable? true, :label "Foo", :tab-data {:source "curseforge", :source-id 123}, :tab-id "foobar" :log-level :info}]]
+      (with-running-app
+        (with-redefs [strongbox.utils/unique-id (constantly "foobar")]
+          (cli/add-addon-tab addon))
+        (is (= expected (core/get-state :tab-list)))))))
+
+(deftest remove-all-tabs
+  (testing "all tabs can be removed at once"
+    (let [tab-list [{:tab-id "foo" :label "Foo!" :closable? false :log-level :info :tab-data {:dirname "EveryAddon"}}
+                    {:tab-id "bar" :label "Bar!" :closable? true :log-level :info :tab-data {:dirname "EveryOtherAddon"}}]
+          expected []]
+      (with-running-app
+        (cli/add-tab "foo" "Foo!" false {:dirname "EveryAddon"})
+        (cli/add-tab "bar" "Bar!" true {:dirname "EveryOtherAddon"})
+        (is (= tab-list (core/get-state :tab-list)))
+        (cli/remove-all-tabs)
+        (is (= expected (core/get-state :tab-list)))))))
+
+(deftest remove-tab-at-idx
+  (testing "all tabs can be removed at once"
+    (let [tab-list [{:tab-id "foo" :label "Foo!" :closable? false :log-level :info :tab-data {:dirname "EveryAddon"}}
+                    {:tab-id "bar" :label "Bar!" :closable? true :log-level :info :tab-data {:dirname "EveryOtherAddon"}}
+                    {:tab-id "baz" :label "Baz!" :closable? false :log-level :info :tab-data {:dirname "EveryAddonClassic"}}]
+          expected [(first tab-list)
+                    (last tab-list)]]
+      (with-running-app
+        (cli/add-tab "foo" "Foo!" false {:dirname "EveryAddon"})
+        (cli/add-tab "bar" "Bar!" true {:dirname "EveryOtherAddon"})
+        (cli/add-tab "baz" "Baz!" false {:dirname "EveryAddonClassic"})
+        (is (= tab-list (core/get-state :tab-list)))
+        (cli/remove-tab-at-idx 1)
+        (is (= expected (core/get-state :tab-list)))))))
+
+(deftest addon-num-log-level
+  (with-running-app
+    (is (zero? (cli/addon-num-log-level :warn "EveryAddon")))
+    (is (zero? (cli/addon-num-log-level :error "EveryAddon")))
+
+    (logging/addon-log {:dirname "EveryAddon"} :warn "awooga") ;; warn #1
+    (logging/with-addon {:dirname "EveryAddon"}
+      (timbre/warn "wooooooga")) ;; warn #2
+
+    (is (= {"EveryAddon" {:warn 2}} (core/get-state :log-stats)))
+    (is (= 2 (cli/addon-num-log-level :warn "EveryAddon")))
+    (is (zero? (cli/addon-num-log-level :error "EveryAddon")))
+
+    (logging/addon-log {:dirname "EveryAddon"} :error "AWOOGA!")
+    (is (= 2 (cli/addon-num-log-level :warn "EveryAddon")))
+    (is (= 1 (cli/addon-num-log-level :error "EveryAddon")))))
+
+(deftest addon-has-log-level
+  (with-running-app
+    (is (false? (cli/addon-has-log-level? :warn "EveryAddon")))
+    (logging/addon-log {:dirname "EveryAddon"} :warn "warning message")
+    (is (true? (cli/addon-has-log-level? :warn "EveryAddon")))
+    (is (false? (cli/addon-has-log-level? :error "EveryAddon")))))
