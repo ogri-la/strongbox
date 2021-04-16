@@ -8,9 +8,15 @@ It supports Linux and macOS.
 
 It supports addons hosted by Curseforge, wowinterface, Tukui and Github.
 
-[![strongbox version 3.2.0](./screenshots/screenshot-3.2.0-installed-thumbnail.jpg)](./screenshots/screenshot-3.2.0-installed.png?raw=true) 
-[![strongbox version 3.2.0](./screenshots/screenshot-3.2.0-dark-installed-thumbnail.jpg)](./screenshots/screenshot-3.2.0-dark-installed.png?raw=true)
-[![strongbox version 3.2.0](./screenshots/screenshot-3.2.0-dark-search-thumbnail.jpg)](./screenshots/screenshot-3.2.0-dark-search.png?raw=true)
+[![strongbox version 4.0.0](./screenshots/screenshot-4.0.0-installed-thumbnail.jpg)](./screenshots/screenshot-4.0.0-installed.png?raw=true)
+[![strongbox version 4.0.0](./screenshots/screenshot-4.0.0-search-thumbnail.jpg)](./screenshots/screenshot-4.0.0-search.png?raw=true)
+[![strongbox version 4.0.0](./screenshots/screenshot-4.0.0-log-thumbnail.jpg)](./screenshots/screenshot-4.0.0-log.png?raw=true)
+[![strongbox version 4.0.0](./screenshots/screenshot-4.0.0-detail-thumbnail.jpg)](./screenshots/screenshot-4.0.0-detail.png?raw=true)
+
+[![strongbox version 4.0.0](./screenshots/screenshot-4.0.0-dark-installed-thumbnail.jpg)](./screenshots/screenshot-4.0.0-dark-installed.png?raw=true)
+[![strongbox version 4.0.0](./screenshots/screenshot-4.0.0-dark-search-thumbnail.jpg)](./screenshots/screenshot-4.0.0-dark-search.png?raw=true)
+[![strongbox version 4.0.0](./screenshots/screenshot-4.0.0-dark-log-thumbnail.jpg)](./screenshots/screenshot-4.0.0-dark-log.png?raw=true)
+[![strongbox version 4.0.0](./screenshots/screenshot-4.0.0-dark-detail-thumbnail.jpg)](./screenshots/screenshot-4.0.0-dark-detail.png?raw=true)
 
 ## Installation
 
@@ -18,14 +24,14 @@ Arch Linux users can install `strongbox` from the [AUR](https://aur.archlinux.or
 
 For other Linux users:
 
-1. download: [./releases/strongbox](https://github.com/ogri-la/strongbox/releases/download/3.3.1/strongbox)
+1. download: [./releases/strongbox](https://github.com/ogri-la/strongbox/releases/download/4.0.0/strongbox)
 2. make executable: `chmod +x strongbox`
 3. run: `./strongbox`
 
 If you're on macOS or just prefer Java `.jar` files (requires Java 11+):
 
-1. download: [./releases/strongbox-3.3.1-standalone.jar](https://github.com/ogri-la/strongbox/releases/download/3.3.1/strongbox-3.3.1-standalone.jar)
-2. run: `java -jar strongbox-3.3.1-standalone.jar`
+1. download: [./releases/strongbox-4.0.0-standalone.jar](https://github.com/ogri-la/strongbox/releases/download/4.0.0/strongbox-4.0.0-standalone.jar)
+2. run: `java -jar strongbox-4.0.0-standalone.jar`
 
 ## Usage
 

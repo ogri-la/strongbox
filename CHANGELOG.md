@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - has its own menu of buttons to install/re-install, update, remove, pin and ignore.
     - a 'raw data' widget with the fields used within the application.
     - a 'releases' widget that lists all available releases with an install button.
-    ' a 'grouped addons' widget that displays the other addons that came with this addon and a filebrowser link.
+    ' a 'grouped addons' widget that displays the other addons that came with this addon and a file browser link.
     - a logging widget with per-addon logging and adjustable severity level.
 * dedicated log tab.
     - will display `(warnings)` or `(errors)` if any warnings or errors present in log.
@@ -49,13 +49,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 * looks like the the gap between the `File` menu labels and their submenus is now gone with an update to JavaFX 15.
+    - this only affected some window managers (like mine).
 * truncated 'source' column in the search results when in dark mode.
 * fixed missing `strongbox.version` value from debug output when run as a binary.
 
 ### Removed
 
 * original Swing GUI
-* window split with tab pane in one half and the log in the other half
+* the split window with the tab pane in one half and the notice logger in the other.
 
 ## 3.3.1 - 2021-04-03
 
