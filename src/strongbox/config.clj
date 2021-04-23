@@ -46,6 +46,19 @@
     ;; finally, ensure :install-dir is absent from whatever we return
     (dissoc cfg :install-dir)))
 
+(defn handle-lenient-game-tracks
+  "addon game track leniency is now handled through a flag rather than encoded into the game track.
+  default is `False`.
+  `:classic-retail` becomes `:classic` and lenient.
+  `:retail-classic` becomes `:retail` and lenient, etc."
+  [cfg]
+  (if-let [addon-dir-list (:addon-dir-list cfg)]
+    (let [updater (fn [addon-dir-map]
+                    (assoc addon-dir-map :lenient? (get addon-dir-map :lenient? false)))]
+      ;;(update cfg :addon-dir-list (mapv updater)) ;; would this work?
+      (assoc cfg :addon-dir-list (mapv updater addon-dir-list)))
+    cfg))
+
 (defn-spec valid-catalogue-location? boolean?
   "returns true if given `catalogue-location` is a valid `:catalogue/location`"
   [catalogue-location any?]
@@ -110,6 +123,7 @@
   (let [cfg (-> cfg-a
                 (merge cfg-b)
                 handle-install-dir
+                handle-lenient-game-tracks
                 remove-invalid-addon-dirs
                 handle-selected-addon-dir
                 remove-invalid-catalogue-location-entries

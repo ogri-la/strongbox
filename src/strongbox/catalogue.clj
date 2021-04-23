@@ -49,20 +49,36 @@
   "fetches updates from the addon host for the given `addon` and `game-track`.
   supports compound game tracks like `:retail-classic` and `:classic-retail`.
   emits warnings to user when no release found."
-  [addon :addon/expandable, game-track :addon-dir/game-track]
+  [addon :addon/expandable, game-track :addon-dir/game-track, lenient? boolean?]
   (if-let [source-updates
-           (case game-track
-             :retail (-expand-summary addon :retail)
-             :classic (-expand-summary addon :classic)
-             :retail-classic (or
-                              (-expand-summary addon :retail)
-                              (-expand-summary addon :classic))
-             :classic-retail (or
-                              (-expand-summary addon :classic)
-                              (-expand-summary addon :retail)))]
+           (case [game-track lenient?]
+             [:retail false] (-expand-summary addon :retail)
+             [:classic false] (-expand-summary addon :classic)
+             [:classic-tbc false] (-expand-summary addon :classic-tbc)
+
+             [:retail true]
+             (or
+              (-expand-summary addon :retail)
+              (-expand-summary addon :classic)
+              (-expand-summary addon :classic-tbc))
+             
+             [:classic true]
+             (or
+              (-expand-summary addon :classic)
+              (-expand-summary addon :classic-tbc)
+              (-expand-summary addon :retail))
+
+             [:classic-tbc true]
+             (or
+              (-expand-summary addon :classic-tbc)
+              (-expand-summary addon :classic)
+              (-expand-summary addon :retail))
+             
+             )]
     source-updates
 
-    (let [;; "no release found for 'adibags' (retail) on github"
+    (let [;; todo: revisit this error message
+          ;; "no release found for 'adibags' (retail) on github"
           ;; "no release found for 'adibags' (retail or classic) on github"
           track-list (-> game-track name (clojure.string/split #"-"))
           track-list (clojure.string/join " or " track-list)]

@@ -62,24 +62,30 @@
 (s/def ::closable? boolean?)
 (s/def ::log-level #{:debug :info :warn :error})
 
-;; preserve order, used in GUI
-(def game-track-labels [[:retail "retail"]
-                        [:classic "classic"]])
-(def selectable-game-track-labels (into game-track-labels
-                                        [[:retail-classic "any, prefer retail"]
-                                         [:classic-retail "any, prefer classic"]]))
+;; preserve order here
+(def game-track-labels [[:retail "WoW Retail"]
+                        [:classic "WoW Classic"]
+                        [:classic-tbc "WoW Classic - The Burning Crusade"]
+                        ;;[:classic-wotlk "WoW Classic - Wrath of the Lich King"]
+                        ])
 
-(def selectable-game-track-labels-map (into {} selectable-game-track-labels))
-(def selectable-game-track-labels-map-inv (map-invert selectable-game-track-labels))
+(def game-track-labels-map (into {} game-track-labels)) ;; {:retail "WoW Retail", ...}
+(def game-track-labels-map-inv (map-invert game-track-labels)) ;; {"WoW Retail" :retail, ...}
+(def game-tracks (->> game-track-labels-map keys set)) ;; #{:retail, :classic, ...}
 
-(def game-tracks (->> game-track-labels (into {}) keys set))
-(def selectable-game-tracks (->> selectable-game-track-labels (into {}) keys set))
-(def lenient-game-tracks #{:retail-classic :classic-retail})
+;; needed to update config
+(def old-game-tracks (into game-tracks #{:retail-classic, :classic-retail}))
+
+
 
 (s/def ::game-track game-tracks)
 (s/def ::installed-game-track ::game-track) ;; alias
-(s/def ::lenient-game-track lenient-game-tracks)
 (s/def ::game-track-list (s/coll-of ::game-track :kind vector? :distinct true))
+
+(s/def ::lenient? boolean?)
+
+;; ---
+
 (s/def ::download-count (s/and int? #(>= % 0)))
 (s/def ::ignore? boolean?)
 (s/def ::ignore-flag (s/keys :req-un [::ignore?]))
@@ -112,10 +118,9 @@
 
 ;; user config
 
-;; the game tracks *selectable by the user* are mapped to a simpler set internally
-(s/def :addon-dir/game-track selectable-game-tracks)
+(s/def :addon-dir/game-track game-tracks)
 (s/def ::addon-dir ::extant-dir)
-(s/def ::addon-dir-map (s/keys :req-un [::addon-dir :addon-dir/game-track]))
+(s/def ::addon-dir-map (s/keys :req-un [::addon-dir :addon-dir/game-track ::lenient?]))
 (s/def ::addon-dir-list (s/coll-of ::addon-dir-map))
 (s/def ::selected-catalogue keyword?)
 

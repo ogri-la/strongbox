@@ -305,7 +305,8 @@
    (when addon-dir
      (-> addon-dir addon-dir-map :game-track))))
 
-(defn-spec get-lenient-game-track ::sp/lenient-game-track
+;;(defn-spec get-lenient-game-track ::sp/lenient-game-track
+(defn get-lenient-game-track
   "returns the lenient/compound version of the currently selected game track. 
   if `:retail` then `:retail-classic`, etc"
   []
@@ -983,7 +984,11 @@
         ;; when no game-track is present in the export record, use the more lenient
         ;; version of the currently selected game track.
         ;; it's better to have an addon installed with the incorrect game track then missing addons.
-        default-game-track (get-lenient-game-track)]
+        ;;default-game-track (get-lenient-game-track)
+
+        ;; todo: set leniency flag to true
+        default-game-track :retail
+        ]
 
     (binding [http/*cache* (cache)]
       (doseq [addon matching-addon-list

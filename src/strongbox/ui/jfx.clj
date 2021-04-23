@@ -298,8 +298,14 @@
                "#update-all-button"
                {:-fx-min-width "100px"}
 
-               "#game-track-combo-box"
-               {:-fx-min-width "100px"}
+               "#game-track-container "
+               {:-fx-alignment "center"
+
+                "#game-track-check-box"
+                {:-fx-padding "0 0 0 1em"}
+               
+                "#game-track-combo-box"
+                {:-fx-min-width "100px"}}
 
                ".table-view#installed-addons "
                {".wow-column"
@@ -1066,16 +1072,29 @@
 (defn game-track-dropdown
   [{:keys [fx/context]}]
   (let [selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])
-        key (-> selected-addon-dir core/get-game-track)]
-    {:fx/type :combo-box
-     :id "game-track-combo-box"
-     :value (get sp/selectable-game-track-labels-map key)
-     :on-value-changed (async-event-handler
-                        (fn [new-game-track]
-                          ;; todo: push to cli
-                          (core/set-game-track! (get sp/selectable-game-track-labels-map-inv new-game-track))
-                          (core/refresh)))
-     :items (mapv second sp/selectable-game-track-labels)}))
+        key (-> selected-addon-dir core/get-game-track)
+        
+
+        ]
+    {:fx/type :h-box
+     :id "game-track-container"
+     :children [
+             {:fx/type :combo-box
+              :id "game-track-combo-box"
+              :value (get sp/game-track-labels-map key)
+              :on-value-changed (async-event-handler
+                                 (fn [new-game-track]
+                                   ;; todo: push to cli
+                                   (core/set-game-track! (get sp/game-track-labels-map-inv new-game-track))
+                                   (core/refresh)))
+              :items (mapv second sp/game-track-labels)}
+
+                {:fx/type :check-box
+                 :id "game-track-check-box"
+                 :text "Any"
+
+                 }]}))
+              
 
 (defn installed-addons-menu-bar
   "returns a description of the installed-addons tab-pane menu"
