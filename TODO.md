@@ -6,11 +6,22 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
+
 ## todo
+
+* ux, installing (not updating) an addon for an incompatible game track shouldn't fail silently or get lost in log noise
+    - https://github.com/ogri-la/strongbox/issues/231
+
+* add support for classic TBC and classic WOTLK and classic Cataclysm
+    - really, just figure out a way to support N game tracks with strict/relaxed installation rules
 
 ## todo bucket (no particular order)
 
-* disable addon update if it's unsteady
+* search, comma separate download numbers
+    - or figure out the locale-specific separator
+    - 1234567890 downloads is less readable than 1,234,567,890
+
+* disable addon update button if it's unsteady
     - interesting stuff happens when you pump that update button!
     - roll this into the action queue work
         - no more than one update request pending per-addon
