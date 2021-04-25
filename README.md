@@ -131,17 +131,21 @@ bug. *Some* of the details it contains are:
 
 ### classic and retail addon support
 
-Addon developers, addon hosts and addon managers all scrambled to accommodate 'classic' WoW when it was released.
+Classic, Classic (The Burning Crusade) and Retail versions of WoW are all distinct addon systems.
 
-Addons for 'classic' WoW are not the same as very old addons for vanilla WoW. 
+Some addons support all versions in a single download, some support classic as an alternate release of the same addon, some addons support classic only, some addons have been split up into multiple addons.
 
-Some addons support both retail and classic in a single download, some support classic as an 'alternate' download, some support classic only or vice versa, some addons have been split into two.
-
-Click the drop-down next to your addon directory and select either `retail` or `classic` or `any, prefer retail` or `any, prefer classic`.
+Click the drop-down next to your addon directory and select either `retail`, `classic` or `classic (TBC)`.
 
 This will restrict the types of addons that can be installed in the current addon directory. 
 
-The last two options allow you to mix classic and retail addons together in the same addon directory. If an addon is available for both retail and classic it will prefer one over the other.
+The `Strict` checkbox allows you to relax restrictions and mix addons means for different addon systems together in the same addon directory. If an addon is available for multiple addon systems it will prefer one over the other:
+
+* `retail` will prefer `retail` addons, then `classic`, then `classic (TBC)`
+* `classic` will prefer `classic` addons, then `classic (TBC)` then `retail`
+* `classic (TBC)` will prefer `classic (TBC)` addons, then `classic`, then `retail`
+
+If in doubt which addon system an installed addon supports, look at the value in `WoW` column on the `installed` tab and compare it to the `Version` value in the list of WoW [public client builds](https://wowpedia.fandom.com/wiki/Public_client_builds).
 
 ### catalogue search
 

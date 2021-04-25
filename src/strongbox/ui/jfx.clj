@@ -302,11 +302,11 @@
                {:-fx-alignment "center"
 
                 "#game-track-check-box"
-                {:-fx-padding "0 0 0 .6em"
-                 :-fx-min-width "60px"}
+                {:-fx-padding "0 0 0 .65em"
+                 :-fx-min-width "70px"}
 
                 "#game-track-combo-box"
-                {:-fx-min-width "150px"}}
+                {:-fx-min-width "121px"}}
 
                ".table-view#installed-addons "
                {".wow-column"

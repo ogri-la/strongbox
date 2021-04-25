@@ -63,9 +63,9 @@
 (s/def ::log-level #{:debug :info :warn :error})
 
 ;; preserve order here
-(def game-track-labels [[:retail "WoW Retail"]
-                        [:classic "WoW Classic"]
-                        [:classic-tbc "WoW Classic - The Burning Crusade"]
+(def game-track-labels [[:retail "Retail"]
+                        [:classic "Classic"]
+                        [:classic-tbc "Classic (TBC)"]
                         ;;[:classic-wotlk "WoW Classic - Wrath of the Lich King"]
                         ])
 
