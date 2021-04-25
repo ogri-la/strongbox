@@ -17,7 +17,11 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * wowi, add classic-tbc detection
 
+* tukui, add classic-tbc detection
+
 ## todo bucket (no particular order)
+
+* bug, uber button, identical addons in different addon dirs are causing the warn/error-free version to show warns/errors
 
 * search, comma separate download numbers
     - or figure out the locale-specific separator

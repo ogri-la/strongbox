@@ -4,6 +4,7 @@
    [clojure.set]
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :as timbre :refer [debug info warn error spy]]
+   [clojure.string]
    [strongbox
     [specs :as sp]
     [utils :as utils]]))
@@ -46,9 +47,11 @@
     ;; finally, ensure :install-dir is absent from whatever we return
     (dissoc cfg :install-dir)))
 
-(defn split-compound-game-track
+(defn convert-compound-game-track
   [game-track]
-  (-> game-track name (clojure.string/split #"\-") first keyword))
+  (if (some #{game-track} sp/old-game-tracks)
+    (-> game-track name (clojure.string/split #"\-") first keyword)
+    game-track))
 
 (defn handle-compound-game-tracks
   "addon game track leniency is now handled through a flag rather than encoded into the game track.
@@ -61,7 +64,7 @@
     ;; we have addon dirs
     (let [updater (fn [addon-dir-map]
                     (merge addon-dir-map
-                           {:game-track (split-compound-game-track (:game-track addon-dir-map))
+                           {:game-track (convert-compound-game-track (:game-track addon-dir-map))
                             :strict? (get addon-dir-map :strict?
                                           (not (utils/in? (:game-track addon-dir-map) sp/old-game-tracks)))}))]
       ;;(update cfg :addon-dir-list (mapv updater)) ;; would this work?

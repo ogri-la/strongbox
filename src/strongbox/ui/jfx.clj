@@ -996,7 +996,7 @@
 (defn menu-bar
   "returns a description of the menu at the top of the application"
   [{:keys [fx/context]}]
-  (let [file-menu [(menu-item "_New addon directory" (event-handler wow-dir-picker) {:key "Ctrl+N"})
+  (let [file-menu [(menu-item "_New addon directory" (async-event-handler wow-dir-picker) {:key "Ctrl+N"})
                    (menu-item "Remove addon directory" (async-handler remove-addon-dir))
                    separator
                    (menu-item "_Update all" (async-handler cli/update-all) {:key "Ctrl+U"})
@@ -1073,7 +1073,7 @@
 (defn game-track-dropdown
   [{:keys [fx/context]}]
   (let [selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])
-        key (-> selected-addon-dir core/get-game-track)]
+        key (core/get-game-track selected-addon-dir)]
 
     {:fx/type :h-box
      :id "game-track-container"
@@ -1090,7 +1090,8 @@
                 {:fx/type :check-box
                  :id "game-track-check-box"
                  :text "Strict" ;; we need a tooltip to explain this
-                 }]}))
+                 :selected (core/get-game-track-strictness)
+                 :on-selected-changed (async-event-handler cli/set-game-track-strictness!)}]}))
 
 (defn installed-addons-menu-bar
   "returns a description of the installed-addons tab-pane menu"
