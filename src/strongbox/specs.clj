@@ -74,15 +74,13 @@
 (def game-tracks (->> game-track-labels-map keys set)) ;; #{:retail, :classic, ...}
 
 ;; needed to update config
-(def old-game-tracks (into game-tracks #{:retail-classic, :classic-retail}))
-
-
+(def old-game-tracks #{:retail-classic, :classic-retail})
 
 (s/def ::game-track game-tracks)
 (s/def ::installed-game-track ::game-track) ;; alias
 (s/def ::game-track-list (s/coll-of ::game-track :kind vector? :distinct true))
 
-(s/def ::lenient? boolean?)
+(s/def ::strict? boolean?)
 
 ;; ---
 
@@ -120,7 +118,7 @@
 
 (s/def :addon-dir/game-track game-tracks)
 (s/def ::addon-dir ::extant-dir)
-(s/def ::addon-dir-map (s/keys :req-un [::addon-dir :addon-dir/game-track ::lenient?]))
+(s/def ::addon-dir-map (s/keys :req-un [::addon-dir :addon-dir/game-track ::strict?]))
 (s/def ::addon-dir-list (s/coll-of ::addon-dir-map))
 (s/def ::selected-catalogue keyword?)
 

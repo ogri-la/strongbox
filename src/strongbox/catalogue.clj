@@ -47,34 +47,34 @@
 
 (defn-spec expand-summary (s/or :ok :addon/expanded, :error nil?)
   "fetches updates from the addon host for the given `addon` and `game-track`.
-  supports compound game tracks like `:retail-classic` and `:classic-retail`.
+  when `:strict?` is false, classic game tracks prefer themselves then each other before retail. 
+  retail prefers retail, then classic then classic-tbc etc.
   emits warnings to user when no release found."
-  [addon :addon/expandable, game-track :addon-dir/game-track, lenient? boolean?]
+  [addon :addon/expandable, game-track :addon-dir/game-track, strict? boolean?]
   (if-let [source-updates
-           (case [game-track lenient?]
-             [:retail false] (-expand-summary addon :retail)
-             [:classic false] (-expand-summary addon :classic)
-             [:classic-tbc false] (-expand-summary addon :classic-tbc)
+           (case [game-track strict?]
+             [:retail true] (-expand-summary addon :retail)
+             [:classic true] (-expand-summary addon :classic)
+             [:classic-tbc true] (-expand-summary addon :classic-tbc)
 
-             [:retail true]
+             [:retail false]
              (or
               (-expand-summary addon :retail)
               (-expand-summary addon :classic)
               (-expand-summary addon :classic-tbc))
-             
-             [:classic true]
+
+             [:classic false]
              (or
               (-expand-summary addon :classic)
               (-expand-summary addon :classic-tbc)
               (-expand-summary addon :retail))
 
-             [:classic-tbc true]
+             [:classic-tbc false]
              (or
               (-expand-summary addon :classic-tbc)
               (-expand-summary addon :classic)
-              (-expand-summary addon :retail))
-             
-             )]
+              (-expand-summary addon :retail)))]
+
     source-updates
 
     (let [;; todo: revisit this error message

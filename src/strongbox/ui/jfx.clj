@@ -296,16 +296,17 @@
 
 
                "#update-all-button"
-               {:-fx-min-width "100px"}
+               {:-fx-min-width "110px"}
 
                "#game-track-container "
                {:-fx-alignment "center"
 
                 "#game-track-check-box"
-                {:-fx-padding "0 0 0 1em"}
-               
+                {:-fx-padding "0 0 0 .6em"
+                 :-fx-min-width "60px"}
+
                 "#game-track-combo-box"
-                {:-fx-min-width "100px"}}
+                {:-fx-min-width "150px"}}
 
                ".table-view#installed-addons "
                {".wow-column"
@@ -1072,29 +1073,24 @@
 (defn game-track-dropdown
   [{:keys [fx/context]}]
   (let [selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])
-        key (-> selected-addon-dir core/get-game-track)
-        
+        key (-> selected-addon-dir core/get-game-track)]
 
-        ]
     {:fx/type :h-box
      :id "game-track-container"
-     :children [
-             {:fx/type :combo-box
-              :id "game-track-combo-box"
-              :value (get sp/game-track-labels-map key)
-              :on-value-changed (async-event-handler
-                                 (fn [new-game-track]
+     :children [{:fx/type :combo-box
+                 :id "game-track-combo-box"
+                 :value (get sp/game-track-labels-map key)
+                 :on-value-changed (async-event-handler
+                                    (fn [new-game-track]
                                    ;; todo: push to cli
-                                   (core/set-game-track! (get sp/game-track-labels-map-inv new-game-track))
-                                   (core/refresh)))
-              :items (mapv second sp/game-track-labels)}
+                                      (core/set-game-track! (get sp/game-track-labels-map-inv new-game-track))
+                                      (core/refresh)))
+                 :items (mapv second sp/game-track-labels)}
 
                 {:fx/type :check-box
                  :id "game-track-check-box"
-                 :text "Any"
-
+                 :text "Strict" ;; we need a tooltip to explain this
                  }]}))
-              
 
 (defn installed-addons-menu-bar
   "returns a description of the installed-addons tab-pane menu"

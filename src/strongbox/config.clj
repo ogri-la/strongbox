@@ -46,15 +46,24 @@
     ;; finally, ensure :install-dir is absent from whatever we return
     (dissoc cfg :install-dir)))
 
-(defn handle-lenient-game-tracks
+(defn split-compound-game-track
+  [game-track]
+  (-> game-track name (clojure.string/split #"\-") first keyword))
+
+(defn handle-compound-game-tracks
   "addon game track leniency is now handled through a flag rather than encoded into the game track.
   default is `False`.
+  `:classic` stays `:classic` but gets a strict flag.
   `:classic-retail` becomes `:classic` and lenient.
   `:retail-classic` becomes `:retail` and lenient, etc."
   [cfg]
   (if-let [addon-dir-list (:addon-dir-list cfg)]
+    ;; we have addon dirs
     (let [updater (fn [addon-dir-map]
-                    (assoc addon-dir-map :lenient? (get addon-dir-map :lenient? false)))]
+                    (merge addon-dir-map
+                           {:game-track (split-compound-game-track (:game-track addon-dir-map))
+                            :strict? (get addon-dir-map :strict?
+                                          (not (utils/in? (:game-track addon-dir-map) sp/old-game-tracks)))}))]
       ;;(update cfg :addon-dir-list (mapv updater)) ;; would this work?
       (assoc cfg :addon-dir-list (mapv updater addon-dir-list)))
     cfg))
@@ -123,7 +132,7 @@
   (let [cfg (-> cfg-a
                 (merge cfg-b)
                 handle-install-dir
-                handle-lenient-game-tracks
+                handle-compound-game-tracks
                 remove-invalid-addon-dirs
                 handle-selected-addon-dir
                 remove-invalid-catalogue-location-entries

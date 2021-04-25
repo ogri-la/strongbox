@@ -122,7 +122,8 @@
                                        :game-track :classic}]}
           expected (assoc config/default-cfg
                           :addon-dir-list [{:addon-dir (str fs/*cwd*)
-                                            :game-track :classic}]
+                                            :game-track :classic
+                                            :strict? true}]
                           :selected-addon-dir (str fs/*cwd*))]
       (is (= expected (config/merge-config file-opts cli-opts))))))
 
@@ -170,8 +171,8 @@
                           :selected-catalogue :short ;; new in 0.10
                           ;; :debug? true ;; removed in 0.12
                           ;; new in 0.12
-                          :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail}
-                                           {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]
+                          :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail, :strict? true}
+                                           {:addon-dir "/tmp/.strongbox-foo", :game-track :classic, :strict? true}]
                           ;; new in 1.0
                           :catalogue-location-list (:catalogue-location-list config/default-cfg)
 
@@ -199,8 +200,8 @@
           expected {:cfg {:gui-theme :light ;; new in 0.11
                           :selected-catalogue :full ;; new in 0.10
                           ;; :debug? true ;; removed in 0.12
-                          :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail}
-                                           {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]
+                          :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail, :strict? true}
+                                           {:addon-dir "/tmp/.strongbox-foo", :game-track :classic, :strict? true}]
                           ;; new in 1.0
                           :catalogue-location-list (:catalogue-location-list config/default-cfg)
 
@@ -229,8 +230,8 @@
           expected {:cfg {:gui-theme :dark ;; new in 0.11
                           :selected-catalogue :full ;; new in 0.10
                           ;;:debug? true ;; removed in 0.12
-                          :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail}
-                                           {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]
+                          :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail, :strict? true}
+                                           {:addon-dir "/tmp/.strongbox-foo", :game-track :classic, :strict? true}]
                           ;; new in 1.0
                           :catalogue-location-list (:catalogue-location-list config/default-cfg)
 
@@ -245,6 +246,7 @@
                     :file-opts {:gui-theme :dark
                                 :selected-catalogue :full
                                 :debug? true
+                                ;; todo: shouldn't these have `:strict?` in them?
                                 :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail}
                                                  {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]}
                     :etag-db {}}]
@@ -259,8 +261,8 @@
           expected {:cfg {:gui-theme :dark ;; new in 0.11
                           :selected-catalogue :full ;; new in 0.10
                           ;;:debug? true ;; removed in 0.12
-                          :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail}
-                                           {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]
+                          :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail, :strict? true}
+                                           {:addon-dir "/tmp/.strongbox-foo", :game-track :classic, :strict? true}]
                           ;; new in 1.0
                           :catalogue-location-list (:catalogue-location-list config/default-cfg)
 
@@ -288,8 +290,8 @@
           expected {:cfg {:gui-theme :dark ;; new in 0.11
                           :selected-catalogue :full ;; new in 0.10
                           ;;:debug? true ;; removed in 0.12
-                          :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail}
-                                           {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]
+                          :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail, :strict? true}
+                                           {:addon-dir "/tmp/.strongbox-foo", :game-track :classic, :strict? true}]
 
                           ;; new in 1.0
                           :catalogue-location-list (:catalogue-location-list config/default-cfg)
@@ -323,8 +325,9 @@
           expected {:cfg {:gui-theme :dark ;; new in 0.11
                           :selected-catalogue :full ;; new in 0.10
                           ;;:debug? true ;; removed in 0.12
-                          :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail-classic} ;; compound game tracks added in 3.1
-                                           {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]
+                          :addon-dir-list [;;{:addon-dir "/tmp/.strongbox-bar", :game-track :retail-classic} ;; compound game tracks added in 3.1
+                                           {:addon-dir "/tmp/.strongbox-bar", :game-track :retail :strict? false} ;; compound game tracks removed in 4.1
+                                           {:addon-dir "/tmp/.strongbox-foo", :game-track :classic :strict? true}]
 
                           ;; new in 1.0
                           :catalogue-location-list (:catalogue-location-list config/default-cfg)
@@ -360,8 +363,9 @@
           expected {:cfg {:gui-theme :dark-green ;; new in 0.11, `:dark-green` new in 3.2.0
                           :selected-catalogue :full ;; new in 0.10
                           ;;:debug? true ;; removed in 0.12
-                          :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail-classic} ;; compound game tracks added in 3.1
-                                           {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]
+                          :addon-dir-list [;;{:addon-dir "/tmp/.strongbox-bar", :game-track :retail-classic} ;; compound game tracks added in 3.1
+                                           {:addon-dir "/tmp/.strongbox-bar", :game-track :retail :strict? false} ;; compound game tracks removed in 4.1
+                                           {:addon-dir "/tmp/.strongbox-foo", :game-track :classic :strict? true}]
 
                           ;; new in 1.0
                           :catalogue-location-list (:catalogue-location-list config/default-cfg)

@@ -44,18 +44,18 @@
 
       (testing "add-addon-dir! adds an addon dir with a default game track of 'retail'"
         (core/add-addon-dir! dir1 :retail)
-        (is (= [{:addon-dir dir1 :game-track :retail}] (core/get-state :cfg :addon-dir-list))))
+        (is (= [{:addon-dir dir1 :game-track :retail :strict? true}] (core/get-state :cfg :addon-dir-list))))
 
       (testing "add-addon-dir! idempotence"
         (core/add-addon-dir! dir1 :retail)
-        (is (= [{:addon-dir dir1 :game-track :retail}] (core/get-state :cfg :addon-dir-list))))
+        (is (= [{:addon-dir dir1 :game-track :retail :strict? true}] (core/get-state :cfg :addon-dir-list))))
 
       (testing "add-addon-dir! just adds the dir, doesn't set it as selected"
         (is (= nil (core/selected-addon-dir))))
 
       (testing "set-addon-dir! sets the addon directory as selected and is also idempotent"
         (core/set-addon-dir! dir1)
-        (is (= [{:addon-dir dir1 :game-track :retail}] (core/get-state :cfg :addon-dir-list)))
+        (is (= [{:addon-dir dir1 :game-track :retail :strict? true}] (core/get-state :cfg :addon-dir-list)))
         (is (= dir1 (core/selected-addon-dir))))
 
       (testing "remove-addon-dir! without args removes the currently selected addon-dir and ensures it's no longer selected"
@@ -72,32 +72,28 @@
         (core/remove-addon-dir! dir2)
         (core/remove-addon-dir! dir2) ;; repeat
         (is (= dir1 (core/selected-addon-dir)))
-        (is (= [{:addon-dir dir1 :game-track :retail}] (core/get-state :cfg :addon-dir-list))))
+        (is (= [{:addon-dir dir1 :game-track :retail :strict? true}] (core/get-state :cfg :addon-dir-list))))
 
       (testing "addon-dir-map, without args, returns the currently selected addon-dir"
-        (is (= {:addon-dir dir1 :game-track :retail} (core/addon-dir-map)))
+        (is (= {:addon-dir dir1 :game-track :retail :strict? true} (core/addon-dir-map)))
         (core/set-addon-dir! dir2)
-        (is (= {:addon-dir dir2 :game-track :retail} (core/addon-dir-map)))
-        (is (= {:addon-dir dir1 :game-track :retail} (core/addon-dir-map dir1))))
+        (is (= {:addon-dir dir2 :game-track :retail :strict? true} (core/addon-dir-map)))
+        (is (= {:addon-dir dir1 :game-track :retail :strict? true} (core/addon-dir-map dir1))))
 
       (testing "addon-dir-map returns nil if map cannot be found"
         (is (= nil (core/addon-dir-map dir3))))
 
       (testing "set-game-track! changes the game track of the given addon dir"
         (core/set-game-track! :classic dir1)
-        (is (= {:addon-dir dir1 :game-track :classic} (core/addon-dir-map dir1))))
+        (is (= {:addon-dir dir1 :game-track :classic :strict? true} (core/addon-dir-map dir1))))
 
       (testing "set-game-track! without addon-dir, changes the game track of the currently selected addon dir"
         (core/set-game-track! :classic)
-        (is (= {:addon-dir dir2 :game-track :classic} (core/addon-dir-map dir2))))
-
-      (testing "set-game-track! can change the game track to a compound game track"
-        (core/set-game-track! :classic-retail)
-        (is (= {:addon-dir dir2 :game-track :classic-retail} (core/addon-dir-map dir2))))
+        (is (= {:addon-dir dir2 :game-track :classic :strict? true} (core/addon-dir-map dir2))))
 
       (testing "set-addon-dir! changes default game-track to 'classic' if '_classic_' detected in addon dir name"
         (core/set-addon-dir! dir4)
-        (is (= {:addon-dir dir4 :game-track :classic} (core/addon-dir-map dir4)))))))
+        (is (= {:addon-dir dir4 :game-track :classic :strict? true} (core/addon-dir-map dir4)))))))
 
 (deftest catalogue
   (let [[short-catalogue full-catalogue] (take 2 config/-default-catalogue-list)]
@@ -323,7 +319,7 @@
           (let [;; our list of addons to import
                 output-path (fixture-path "import-export--export-v2.json")
 
-                game-track :retail-classic
+                strict? false
 
                 expected [{:created-date "2010-05-07T18:48:16Z",
                            :description "Does what no other addon does, slightly differently",
@@ -361,7 +357,7 @@
                            :installed-version "v8.2.0-v1.13.2-7135.139",
                            :installed-game-track :classic
                            ;; significant! differs from above because addon directory's `:game-track`
-                           ;; is set to the compound `:retail-classic`
+                           ;; is set to `:retail` and `strict?` is `false`
                            :game-track :classic
                            :name "everyotheraddon",
                            :source "curseforge",
@@ -382,7 +378,8 @@
                                            :version "v8.2.0-v1.13.2-7135.139"}]}]]
 
             (core/import-exported-file output-path)
-            (core/set-game-track! game-track)
+            ;; so both retail and classic are picked up on refresh
+            (core/set-game-track-strictness! strict?)
             (core/refresh) ;; re-read the installation directory
             (is (= expected (core/get-state :installed-addon-list)))))))))
 
@@ -693,11 +690,12 @@
         (core/install-addon addon2)
         (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))))))
 
-(deftest install-addon--compound-game-track
-  (testing "a classic addon can be installed into an addon directory using a compound game track with retail preferred"
+(deftest install-addon--lenient-game-track
+  (testing "a classic addon can be installed into an addon directory by setting the non-strict (lenient) flag"
     (with-running-app
       (let [install-dir (helper/install-dir)
-            _ (core/set-game-track! :retail-classic)
+            strict? false
+            _ (core/set-game-track-strictness! strict? install-dir)
 
             addon {:name "everyaddon-classic" :label "EveryAddon (Classic)" :version "1.2.3" :url "https://group.id/never/fetched"
                    :source "curseforge" :source-id 1

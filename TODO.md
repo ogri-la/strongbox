@@ -15,6 +15,8 @@ see CHANGELOG.md for a more formal list of changes by release
 * add support for classic TBC and classic WOTLK and classic Cataclysm
     - really, just figure out a way to support N game tracks with strict/relaxed installation rules
 
+* wowi, add classic-tbc detection
+
 ## todo bucket (no particular order)
 
 * search, comma separate download numbers
