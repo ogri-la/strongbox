@@ -54,14 +54,10 @@
     game-track))
 
 (defn handle-compound-game-tracks
-  "addon game track leniency is now handled through a flag rather than encoded into the game track.
-  default is `False`.
-  `:classic` stays `:classic` but gets a strict flag.
-  `:classic-retail` becomes `:classic` and lenient.
-  `:retail-classic` becomes `:retail` and lenient, etc."
+  "addon game track leniency is now handled through the flag `strict?` rather than encoded into the game track.
+  default strictness is `true`."
   [cfg]
   (if-let [addon-dir-list (:addon-dir-list cfg)]
-    ;; we have addon dirs
     (let [updater (fn [addon-dir-map]
                     (merge addon-dir-map
                            {:game-track (convert-compound-game-track (:game-track addon-dir-map))

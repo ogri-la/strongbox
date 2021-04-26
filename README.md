@@ -131,21 +131,24 @@ bug. *Some* of the details it contains are:
 
 ### classic and retail addon support
 
-Classic, Classic (The Burning Crusade) and Retail versions of WoW are all distinct addon systems.
+"Classic", "Classic (The Burning Crusade)" and "Retail" versions of WoW are all distinct addon systems.
 
-Some addons support all versions in a single download, some support classic as an alternate release of the same addon, some addons support classic only, some addons have been split up into multiple addons.
+Some addons support all systems in a single download, some support classic as an alternate release of the same addon, 
+some addons support classic only, some addons have been split up into multiple addons. There is a lot of variation.
 
 Click the drop-down next to your addon directory and select either `retail`, `classic` or `classic (TBC)`.
 
 This will restrict the types of addons that can be installed in the current addon directory. 
 
-The `Strict` checkbox allows you to relax restrictions and mix addons means for different addon systems together in the same addon directory. If an addon is available for multiple addon systems it will prefer one over the other:
+The `Strict` checkbox allows you to enforce or relax restrictions and mix together addons meant for different systems in 
+the same addon directory. If an addon is available for multiple addon systems it will prefer one over another:
 
 * `retail` will prefer `retail` addons, then `classic`, then `classic (TBC)`
 * `classic` will prefer `classic` addons, then `classic (TBC)` then `retail`
 * `classic (TBC)` will prefer `classic (TBC)` addons, then `classic`, then `retail`
 
-If in doubt which addon system an installed addon supports, look at the value in `WoW` column on the `installed` tab and compare it to the `Version` value in the list of WoW [public client builds](https://wowpedia.fandom.com/wiki/Public_client_builds).
+If in doubt which addon system an installed addon supports, look at the value in `WoW` column on the `installed` tab and 
+compare it to the `Version` value in the list of WoW [public client builds](https://wowpedia.fandom.com/wiki/Public_client_builds).
 
 ### catalogue search
 
@@ -161,15 +164,20 @@ When you search for an addon you are searching a list of thousands of addons tha
 
 Click `Catalogue` from the top menu and choose your preferred catalogue.
 
-The default catalogue is the 'short' catalogue. It contains all addons from all supported hosts that have been *updated* since *the beginning of the previous expansion*. This is currently Battle For Azeroth, released 2018-08-14 and the catalogue has approximately 7.5k addons.
+The default catalogue is the 'short' catalogue. It contains all addons from all supported hosts that have been *updated* 
+since *the beginning of the previous expansion*. This is currently Battle For Azeroth, released 2018-08-14 and the 
+catalogue has approximately 7.5k addons.
 
-The 'full' catalogue contains all addons from all supported hosts, ever, and is approximately 15.3k addons large. It contains many addons that haven't been updated in years.
+The 'full' catalogue contains all addons from all supported hosts, ever, and is approximately 15.3k addons large. It 
+contains many addons that haven't been updated in years.
 
 There are also per-host catalogues, like a 'curseforge' catalogue, and strongbox supports selecting between all of them.
 
 Catalogues are updated weekly.
 
-The 'user' catalogue is a little different. It's initially empty but grows as addons are imported from hosts like Github. These addons also appear in search results. Individual addons from the user catalogue are checked for new releases normally, but the catalogue itself can only be updated manually.
+The 'user' catalogue is a little different. It's initially empty but grows as addons are imported from hosts like Github. 
+These addons also appear in search results. Individual addons from the user catalogue are checked for new releases 
+normally, but the catalogue itself can only be updated manually.
 
 Click `Catalogue` from the top menu and select `Refresh user catalogue`.
 
@@ -225,7 +233,8 @@ It is up to the user to decide if this is OK or not.
 
 ### ignore addons to prevent accidental changes
 
-When an addon is ignored strongbox will not attempt to find that addon in the catalogue, look for or download updates or even allow the installation of other addons that may alter the ignored addon or any of its files.
+When an addon is ignored strongbox will not attempt to find that addon in the catalogue, look for or download updates or 
+even allow the installation of other addons that may alter the ignored addon or any of its files.
 
 Right-click an addon and select `Ignore` or `Stop ignoring`.
 
@@ -233,15 +242,18 @@ Addons under development are automatically ('implicitly') ignored.
 
 ### mutual dependency tracking
 
-A 'mutual dependency' in strongbox is when 'Addon A' installs an addon called 'Addon Z' and 'Addon B' *also* installs 'Addon Z'.
+A 'mutual dependency' in strongbox is when 'Addon A' installs an addon called 'Addon Z' and 'Addon B' *also* installs 
+'Addon Z'.
 
 Both 'Addon A' and 'Addon B' depend on 'Addon Z' and if 'Addon A' were uninstalled it would (probably) break 'Addon B'.
 
-In this scenario strongbox allows 'Addon B' to overwrite 'Addon Z' but keeps track of the fact that 'Addon A' is also using it. When either 'Addon A' or 'Addon B' are uninstalled, 'Addon Z' is preserved.
+In this scenario strongbox allows 'Addon B' to overwrite 'Addon Z' but keeps track of the fact that 'Addon A' is also 
+using it. When either 'Addon A' or 'Addon B' are uninstalled, 'Addon Z' is preserved.
 
 The state of 'Addon Z' isn't guaranteed however. 
 
-'Addon A' may install a very old 'Addon Z' while 'Addon B' overwrites that with a brand new version. 'Addon A' is now using a different version of 'Addon Z' than it expects. Or vice versa. 
+'Addon A' may install a very old 'Addon Z' while 'Addon B' overwrites that with a brand new version. 'Addon A' is now 
+using a different version of 'Addon Z' than it expects. Or vice versa. 
 
 It's messy but only one 'Addon Z' can exist at a time.
 
@@ -262,13 +274,15 @@ Once an addon has been installed it can be 'pinned' to that specific release lik
 
 Right-click an addon and select `Pin release`.
 
-Pinned addons won't be marked as having updates available and other addons won't be able to overwrite the files of a pinned addon.
+Pinned addons won't be marked as having updates available and other addons won't be able to overwrite the files of a 
+pinned addon.
 
 ## Misc
 
-Original Swing GUI was last available in v3 using: `./strongbox --ui gui1`
+Original Swing GUI was last available in version 3.x using: `./strongbox --ui gui1`
 
-Prior to `1.0.0`, `strongbox` was known as `wowman`. The [AUR package](https://aur.archlinux.org/packages/wowman) for `wowman` is obsolete.
+Prior to `1.0.0`, `strongbox` was known as `wowman`. The [AUR package](https://aur.archlinux.org/packages/wowman) for 
+`wowman` is obsolete.
 
 User configuration is stored in `~/.config/strongbox` unless run with the envvar `$XDG_CONFIG_HOME` set.
 

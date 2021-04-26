@@ -47,10 +47,9 @@
 
 (defn-spec expand-summary (s/or :ok :addon/expanded, :error nil?)
   "fetches updates from the addon host for the given `addon` and `game-track`.
-  when `:strict?` is false, classic game tracks prefer themselves then each other before retail. 
-  retail prefers retail, then classic then classic-tbc etc.
+  when `strict?` is `false` and an addon fails to match for the given `game-track`, other game tracks will be checked.
   emits warnings to user when no release found."
-  [addon :addon/expandable, game-track :addon-dir/game-track, strict? boolean?]
+  [addon :addon/expandable, game-track :addon-dir/game-track, strict? ::sp/strict?]
   (if-let [source-updates
            (case [game-track strict?]
              [:retail true] (-expand-summary addon :retail)

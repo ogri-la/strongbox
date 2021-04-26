@@ -220,6 +220,8 @@
 
 ;; addon dirs
 
+(def default-game-track-strictness true) ;; strict
+
 (defn-spec selected-addon-dir (s/or :ok ::sp/addon-dir, :no-selection nil?)
   "returns the currently selected addon directory or nil if no directories exist to select from"
   ([]
@@ -234,8 +236,9 @@
    (->> addon-dir-list (map :addon-dir) (some #{addon-dir}) nil? not)))
 
 (defn-spec add-addon-dir! nil?
+  "creates and adds an addon directory entry in the user's `:addon-dir-list`, if it doesn't already exist."
   ([addon-dir ::sp/addon-dir, game-track ::sp/game-track]
-   (add-addon-dir! addon-dir game-track true))
+   (add-addon-dir! addon-dir game-track default-game-track-strictness))
   ([addon-dir ::sp/addon-dir, game-track ::sp/game-track, strict? ::sp/strict?]
    (let [stub {:addon-dir addon-dir :game-track game-track :strict? strict?}]
      (when-not (addon-dir-exists? addon-dir)
@@ -248,9 +251,7 @@
   [addon-dir ::sp/addon-dir]
   (let [addon-dir (-> addon-dir fs/absolute fs/normalized str)
         ;; if '_classic_' is in given path, use the classic game track
-        default-game-track (if (clojure.string/index-of addon-dir "_classic_") :classic :retail)
-        default-game-track-strictness true ;; strict
-        ]
+        default-game-track (if (clojure.string/index-of addon-dir "_classic_") :classic :retail)]
     (dosync ;; necessary? makes me feel better
      (add-addon-dir! addon-dir default-game-track default-game-track-strictness)
      ;; todo: this is UI logic ... consider moving to ui.cli
@@ -313,7 +314,10 @@
   []
   (get (addon-dir-map) :strict? true))
 
+;; todo: this is almost identical with `get-game-track`.
+;; come up with a better solution if we repeat ourselves again.
 (defn-spec set-game-track-strictness! nil?
+  "fetches the strictness level for the given `addon-dir` or the currently selected addon directory if not given."
   ([new-strictness-level ::sp/strict?]
    (when-let [addon-dir (selected-addon-dir)]
      (set-game-track-strictness! new-strictness-level addon-dir)))
