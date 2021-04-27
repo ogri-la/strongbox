@@ -55,7 +55,6 @@
              [:retail true] (-expand-summary addon :retail)
              [:classic true] (-expand-summary addon :classic)
              [:classic-tbc true] (-expand-summary addon :classic-tbc)
-
              [:retail false]
              (or
               (-expand-summary addon :retail)
@@ -79,12 +78,14 @@
     (let [;; todo: revisit this error message
           ;; "no release found for 'adibags' (retail) on github"
           ;; "no release found for 'adibags' (retail or classic) on github"
-          track-list (-> game-track name (clojure.string/split #"-"))
-          track-list (clojure.string/join " or " track-list)]
-      (warn (format "no release found for '%s' (%s) on %s"
-                    (:name addon)
-                    track-list
-                    (:source addon))))))
+          msg (case [game-track strict?]
+                [:retail true] "no release found for '%s' (retail) on %s"
+                [:classic true] "no release found for '%s' (classic) on %s"
+                [:classic-tbc true] "no release found for '%s' (classic - TBC) on %s"
+                [:retail false] "no release found for '%s' (retail, classic or classic -TBC) on %s"
+                [:classic false] "no release found for '%s' (classic, classic - TBC or retail) on %s"
+                [:classic-tbc false] "no release found for '%s' (classic - TBC, classic or retail) on %s")]
+      (warn (format msg (:name addon) (:source addon))))))
 
 
 ;;

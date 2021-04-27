@@ -310,9 +310,10 @@
    (when addon-dir
      (-> addon-dir addon-dir-map :game-track))))
 
-(defn-spec get-game-track-strictness ::sp/strict?
+(defn-spec get-game-track-strictness (s/or :addon-dir ::sp/strict?, :no-addon-dir nil?)
   []
-  (get (addon-dir-map) :strict? true))
+  (when-let [addon-dir-map (addon-dir-map)]
+    (get addon-dir-map :strict? default-game-track-strictness)))
 
 ;; todo: this is almost identical with `get-game-track`.
 ;; come up with a better solution if we repeat ourselves again.

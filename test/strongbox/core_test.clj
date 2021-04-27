@@ -95,6 +95,26 @@
         (core/set-addon-dir! dir4)
         (is (= {:addon-dir dir4 :game-track :classic :strict? true} (core/addon-dir-map dir4)))))))
 
+(deftest game-strictness
+  (with-running-app
+    (testing "default strictness for a running app with no addon directory selected is nil"
+      (is (nil? (core/get-game-track-strictness))))
+
+    (testing "setting strictness with no addon directory selected doesn't change a thing"
+      (core/set-game-track-strictness! false)
+      (is (nil? (core/get-game-track-strictness))))
+
+    (helper/install-dir) ;; adds and selects an addon dir
+
+    (testing "default strictness for new addon directories is 'strict' (true)"
+      (is (true? (core/get-game-track-strictness))))
+
+    (testing "strictness can be toggled to 'lenient' (false)"
+      (core/set-game-track-strictness! false)
+      (is (false? (core/get-game-track-strictness)))
+      (core/set-game-track-strictness! true)
+      (is (true? (core/get-game-track-strictness))))))
+
 (deftest catalogue
   (let [[short-catalogue full-catalogue] (take 2 config/-default-catalogue-list)]
     (with-running-app

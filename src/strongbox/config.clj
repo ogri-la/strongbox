@@ -47,8 +47,10 @@
     ;; finally, ensure :install-dir is absent from whatever we return
     (dissoc cfg :install-dir)))
 
-(defn convert-compound-game-track
-  [game-track]
+(defn-spec convert-compound-game-track ::sp/game-track
+  "takes any game track, new or old, and returns the new version.
+  for example: `:classic` => `:classic` and `:classic-retail` => `:classic`"
+  [game-track (s/or :new-game-track ::sp/game-track, :old-game-track ::sp/old-game-track)]
   (if (some #{game-track} sp/old-game-tracks)
     (-> game-track name (clojure.string/split #"\-") first keyword)
     game-track))
@@ -60,10 +62,10 @@
   (if-let [addon-dir-list (:addon-dir-list cfg)]
     (let [updater (fn [addon-dir-map]
                     (merge addon-dir-map
+                           ;; a :game-track will always be present. see `handle-install-dir`
                            {:game-track (convert-compound-game-track (:game-track addon-dir-map))
                             :strict? (get addon-dir-map :strict?
                                           (not (utils/in? (:game-track addon-dir-map) sp/old-game-tracks)))}))]
-      ;;(update cfg :addon-dir-list (mapv updater)) ;; would this work?
       (assoc cfg :addon-dir-list (mapv updater addon-dir-list)))
     cfg))
 

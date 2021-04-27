@@ -74,6 +74,7 @@
 ;; needed to update config
 (def old-game-tracks #{:retail-classic, :classic-retail})
 
+(s/def ::old-game-track old-game-tracks)
 (s/def ::game-track game-tracks)
 (s/def ::installed-game-track ::game-track) ;; alias
 (s/def ::game-track-list (s/coll-of ::game-track :kind vector? :distinct true))
