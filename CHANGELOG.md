@@ -14,6 +14,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## 4.1.0
+
+### Added
+
+* a 'welcome' screen for instances of strongbox with no addon directories selected.
+* 'Classic (TBC)' game track
+
+### Changed
+
+* replaced the 'any, prefer retail' and 'any, prefer classic' in the game track list with a 'strict' checkbox.
+    - 'any, prefer retail' is now just 'retail' and 'not strict'
+    - 'any, prefer classic' is now just 'classic' and 'not strict'
+* the follow widgets and featuers are now disabled if no addon directory is selected:
+    - the search tab
+    - the game track drop down
+    - the addon directory drop down
+    - 
+
+### Fixed
+
+### Removed
+
 ## 4.0.0
 
 ### Added
