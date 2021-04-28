@@ -10,8 +10,9 @@
     [utils :as utils]
     [specs :as sp]]))
 
-(def summary-list-url "https://www.tukui.org/api.php?addons=all")
-(def classic-summary-list-url "https://www.tukui.org/api.php?classic-addons=all")
+(def summary-list-url "https://www.tukui.org/api.php?addons")
+(def classic-summary-list-url "https://www.tukui.org/api.php?classic-addons")
+(def classic-tbc-summary-list-url "https://www.tukui.org/api.php?classic-tbc-addons")
 
 (def proper-url "https://www.tukui.org/api.php?ui=%s")
 (def tukui-proper-url (format proper-url "tukui"))
@@ -25,8 +26,9 @@
 
         url (cond
               (neg? source-id) (format proper-url (:name addon))
+              (= game-track :retail) summary-list-url
               (= game-track :classic) classic-summary-list-url
-              (= game-track :retail) summary-list-url)
+              (= game-track :classic-tbc) classic-tbc-summary-list-url)
 
         ;; tukui addons do not share IDs across game tracks like curseforge does.
         ;; 2020-12-02: Tukui has dropped the per-addon endpoint, all results are now lists of items
@@ -57,20 +59,23 @@
 
 (defn-spec process-tukui-item :addon/summary
   "process an item from a tukui catalogue into an addon-summary. slightly different values by game-track."
-  [tukui-item map?, classic? boolean?]
+  [tukui-item map?, game-track ::sp/game-track]
   (let [ti tukui-item
         ;; single case of an addon with no category :(
         ;; 'SkullFlower UI', source-id 143
         category-list (if-let [cat (:category ti)] [cat] [])
         addon-summary
-        {:source (if classic? "tukui-classic" "tukui")
+        {:source (case game-track
+                   :retail "tukui"
+                   :classic "tukui-classic"
+                   :classic-tbc "tukui-classic-tbc")
          :source-id (-> ti :id Integer/valueOf)
 
          ;; 2020-03: disabled in favour of :tag-list
          ;;:category-list category-list
          :tag-list (tags/category-list-to-tag-list "tukui" category-list)
          :download-count (-> ti :downloads Integer/valueOf)
-         :game-track-list [(if classic? :classic :retail)]
+         :game-track-list [game-track]
          :label (:name ti)
          :name (slugify (:name ti))
          :description (:small_desc ti)
@@ -90,8 +95,8 @@
 (defn-spec -download-proper-summary :addon/summary
   "downloads either the elvui or tukui addon that exists separately and outside of the catalogue"
   [url ::sp/url]
-  (let [classic? false ;; retail catalogue
-        addon-summary (-> url http/download utils/from-json (process-tukui-item classic?))]
+  (let [game-track :retail ;; use retail catalogue
+        addon-summary (-> url http/download utils/from-json (process-tukui-item game-track))]
     (assoc addon-summary :game-track-list [:classic :retail])))
 
 (defn-spec download-elvui-summary :addon/summary
@@ -107,17 +112,23 @@
 (defn-spec download-retail-summaries :addon/summary-list
   "downloads and processes all items in the tukui 'live' (retail) catalogue"
   []
-  (mapv #(process-tukui-item % false) (-> summary-list-url http/download utils/from-json)))
+  (mapv #(process-tukui-item % :retail) (-> summary-list-url http/download utils/from-json)))
 
 (defn-spec download-classic-summaries :addon/summary-list
   "downloads and processes all items in the tukui classic catalogue"
   []
-  (mapv #(process-tukui-item % true) (-> classic-summary-list-url http/download utils/from-json)))
+  (mapv #(process-tukui-item % :classic) (-> classic-summary-list-url http/download utils/from-json)))
+
+(defn-spec download-classic-tbc-summaries :addon/summary-list
+  "downloads and processes all items in the tukui classic catalogue"
+  []
+  (mapv #(process-tukui-item % :classic-tbc) (-> classic-tbc-summary-list-url http/download utils/from-json)))
 
 (defn-spec download-all-summaries :addon/summary-list
   "downloads and process all items from the tukui 'live' (retail) and classic catalogues"
   []
   (vec (concat (download-retail-summaries)
                (download-classic-summaries)
+               (download-classic-tbc-summaries)
                [(download-tukui-summary)]
                [(download-elvui-summary)])))
