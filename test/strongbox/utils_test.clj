@@ -236,10 +236,10 @@
                ["1.13.0" :classic]
                ["1.100.100" :classic]
 
-               ;; classic-bc (unimplemented)
-               ["2." nil]
-               ["2.5.1" nil]
-               ["2.foo.bar" nil]
+               ;; classic-bc
+               ["2." :classic-tbc]
+               ["2.5.1" :classic-tbc]
+               ["2.foo.bar" :classic-tbc]
 
                ;; everything else
                ["3.0.2" :retail]

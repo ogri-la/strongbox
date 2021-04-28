@@ -11,3 +11,4 @@
 ;; don't fret too much about patch versions
 (def latest-retail-game-version "9.0.3")
 (def latest-classic-game-version "1.13.5")
+(def latest-classic-tbc-game-version "2.5.1")

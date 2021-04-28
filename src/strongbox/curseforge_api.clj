@@ -51,6 +51,13 @@
         ]
     (mapv rename-release release-list)))
 
+(defn game-version-flavor-to-game-track
+  [game-version-flavor]
+  (case game-version-flavor
+    "wow_retail" :retail
+    "wow_classic" :classic
+    "wow_burning_crusade" :classic-tbc))
+
 (defn-spec older-releases :addon/release-list
   "these are releases under `:gameVersionLatestFiles` that that are the most recent release by game/interface version (8.0.3 etc).
   returns only stable releases."
@@ -63,7 +70,8 @@
                          :version (:-unique-name release) ;; see `rename-identical-releases`
                          :release-label (format "[WoW %s] %s" (:gameVersion release) (:-unique-name release))
                          :interface-version (utils/game-version-to-interface-version (:gameVersion release))
-                         :game-track (if (= (:gameVersionFlavor release) "wow_classic") :classic :retail)}))]
+                         :game-track (game-version-flavor-to-game-track (:gameVersionFlavor release))}))]
+
     (->> gameVersionLatestFiles
          (filter stable-releases)
          rename-identical-releases
@@ -77,7 +85,7 @@
   return multiple instances of the release if necessary."
   [release map?]
   (let [;; "wow_retail", "wow_classic" => :retail, :classic
-        fallback (if (= (:gameVersionFlavor release) "wow_classic") :classic :retail)
+        fallback (game-version-flavor-to-game-track (:gameVersionFlavor release))
 
         ;; if the `:gameVersion` value is missing we assume this addon supports the latest version of `:retail`
         ;; if we know the `gameVersionFlavor` we can switch that assumption to the latest version of `:classic`

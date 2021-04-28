@@ -6,18 +6,24 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
+* add support for classic TBC and classic WOTLK and classic Cataclysm
+    - really, just figure out a way to support N game tracks with strict/relaxed installation rules
+    - done
+        - won't prevent me from having to filter and group addon host results into game tracks however
+
+* curseforge, add classic-tbc support
+    - done
 
 ## todo
 
 * ux, installing (not updating) an addon for an incompatible game track shouldn't fail silently or get lost in log noise
     - https://github.com/ogri-la/strongbox/issues/231
 
-* add support for classic TBC and classic WOTLK and classic Cataclysm
-    - really, just figure out a way to support N game tracks with strict/relaxed installation rules
 
-* wowi, add classic-tbc detection
 
-* tukui, add classic-tbc detection
+* wowi, add classic-tbc support
+
+* tukui, add classic-tbc support
 
 ## todo bucket (no particular order)
 
