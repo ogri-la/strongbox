@@ -1084,13 +1084,16 @@
 (defn game-track-dropdown
   [{:keys [fx/context]}]
   (let [selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])
-        key (core/get-game-track selected-addon-dir)]
+        addon-dir-map (core/addon-dir-map selected-addon-dir)
+        game-track (:game-track addon-dir-map)
+        strict? (get addon-dir-map :strict? core/default-game-track-strictness)
+        tooltip "restrict or relax the installation of addons for specific WoW versions"]
 
     {:fx/type :h-box
      :id "game-track-container"
      :children [{:fx/type :combo-box
                  :id "game-track-combo-box"
-                 :value (get sp/game-track-labels-map key)
+                 :value (get sp/game-track-labels-map game-track)
                  :on-value-changed (async-event-handler
                                     (fn [new-game-track]
                                       ;; todo: push to cli
@@ -1099,14 +1102,16 @@
                  :items (mapv second sp/game-track-labels)
                  :disable (nil? selected-addon-dir)}
 
-                {:fx/type :check-box
-                 :id "game-track-check-box"
-                 :text "Strict" ;; we need a tooltip to explain this
-                 :selected (or (core/get-game-track-strictness)
-                               ;; we need a value regardless of whether an addon directory is selected
-                               core/default-game-track-strictness)
-                 :disable (nil? (core/get-game-track-strictness))
-                 :on-selected-changed (async-event-handler cli/set-game-track-strictness!)}]}))
+                {:fx/type fx.ext.node/with-tooltip-props
+                 :props {:tooltip {:fx/type :tooltip
+                                   :text tooltip
+                                   :show-delay 200}}
+                 :desc {:fx/type :check-box
+                        :id "game-track-check-box"
+                        :text "Strict"
+                        :selected strict?
+                        :disable (nil? (core/get-game-track-strictness))
+                        :on-selected-changed (async-event-handler cli/set-game-track-strictness!)}}]}))
 
 (defn installed-addons-menu-bar
   "returns a description of the installed-addons tab-pane menu"

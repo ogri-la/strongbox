@@ -31,36 +31,33 @@
   (core/delete-http-cache!)
   (core/check-for-updates))
 
-(defn-spec set-addon-dir! nil?
-  "adds/sets an addon-dir, partial refresh of application state"
-  [addon-dir ::sp/addon-dir]
-  (core/set-addon-dir! addon-dir)
+(defn-spec half-refresh nil?
+  "like core/refresh but focuses on loading+matching+checking for updates"
+  []
   (core/load-installed-addons)
   (core/match-installed-addons-with-catalogue)
   (core/check-for-updates)
   (core/save-settings)
   nil)
 
+(defn-spec set-addon-dir! nil?
+  "adds/sets an addon-dir, partial refresh of application state"
+  [addon-dir ::sp/addon-dir]
+  (core/set-addon-dir! addon-dir)
+  (half-refresh))
+
 (defn-spec set-game-track-strictness! nil?
   "toggles the 'strict' flag for the current addon directory and reloads addons"
   [new-strictness-level ::sp/strict?]
   (core/set-game-track-strictness! new-strictness-level)
-  (core/load-installed-addons)
-  (core/match-installed-addons-with-catalogue)
-  (core/check-for-updates)
-  (core/save-settings)
-  nil)
+  (half-refresh))
 
 (defn-spec remove-addon-dir! nil?
   "deletes an addon-dir, selects first available addon dir, partial refresh of application state"
   []
   (core/remove-addon-dir!)
   ;; the next addon dir is selected, if any
-  (core/load-installed-addons)
-  (core/match-installed-addons-with-catalogue)
-  (core/check-for-updates)
-  (core/save-settings)
-  nil)
+  (half-refresh))
 
 (defn-spec set-catalogue-location! nil?
   "changes the catalogue and refreshes application state.

@@ -282,9 +282,10 @@
   ([]
    (when-let [addon-dir (selected-addon-dir)]
      (addon-dir-map addon-dir)))
-  ([addon-dir ::sp/addon-dir]
+  ([addon-dir (s/nilable ::sp/addon-dir)]
    (let [addon-dir-list (get-state :cfg :addon-dir-list)]
-     (when-not (empty? addon-dir-list)
+     (when (and addon-dir
+                (not (empty? addon-dir-list)))
        (first (filter #(= addon-dir (:addon-dir %)) addon-dir-list))))))
 
 (defn-spec set-game-track! nil?
