@@ -570,8 +570,10 @@
         "www.curseforge.com" "curseforge"
         "www.wowinterface.com" "wowinterface"
         "github.com" "github"
-        "www.tukui.org" (if (= (.getPath url-obj) "/classic-addons.php")
-                          "tukui-classic"
+        "www.tukui.org" (case (.getPath url-obj)
+                          ;;"/addons.php" "tukui" ;; redundant
+                          "/classic-addons.php" "tukui-classic"
+                          "/classic-tbc-addons.php" "tukui-classic-tbc"
                           "tukui")
         nil))))
 

@@ -31,8 +31,13 @@
                  [{:url "https://www.curseforge.com/foo/bar"} {:fx/type :hyperlink :text "↪ curseforge"}]
                  [{:url "https://www.wowinterface.com/foo/bar"} {:fx/type :hyperlink :text "↪ wowinterface"}]
                  [{:url "https://github.com/teelolws/Altoholic-Classic"} {:fx/type :hyperlink :text "↪ github"}]
-                 [{:url "https://www.tukui.org/foo/bar"} {:fx/type :hyperlink :text "↪ tukui"}]
-                 [{:url "https://www.tukui.org/classic-addons.php"} {:fx/type :hyperlink :text "↪ tukui-classic"}]]]
+
+                 [{:url "https://www.tukui.org/addons.php"} {:fx/type :hyperlink :text "↪ tukui"}]
+                 [{:url "https://www.tukui.org/classic-addons.php"} {:fx/type :hyperlink :text "↪ tukui-classic"}]
+                 [{:url "https://www.tukui.org/classic-tbc-addons.php"} {:fx/type :hyperlink :text "↪ tukui-classic-tbc"}]
+
+                 [{:url "https://www.tukui.org/foo/bar"} {:fx/type :hyperlink :text "↪ tukui"}]]]
+
       (doseq [[given expected] cases]
         (is (= expected (dissoc (jfx/href-to-hyperlink given) :on-action)))))))
 
