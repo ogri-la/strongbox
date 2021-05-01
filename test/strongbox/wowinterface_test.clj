@@ -65,3 +65,46 @@
           (is (= num-addons (count results)))
           (is (= first-addon (first results)))
           (is (= last-addon (last results))))))))
+
+(deftest classic-addons-detected
+  (testing "retail, classic and classic-tbc are successfully detected"
+    (let [filelist {24876 [{:UIDownloadTotal "1223",
+                            :UID 24876,
+                            :UIDir ["TSM_StringConverter"],
+                            :UIName "TradeSkillMaster String Converter",
+                            :UISiblings nil,
+                            :UIFileInfoURL "https://www.wowinterface.com/downloads/info24876-TradeSkillMasterStringConverter.html",
+                            :UIDate 1619013116000,
+                            :UIDonationLink "https://www.wowinterface.com/downloads/info24876#donate",
+                            :UIIMGs ["https://cdn-wow.mmoui.com/preview/pvw70766.jpg" "https://cdn-wow.mmoui.com/preview/pvw70767.jpg" "https://cdn-wow.mmoui.com/preview/pvw70768.jpg"],
+                            :UIDownloadMonthly "30",
+                            :UICompatibility [{:version "2.5.1", :name "The Burning Crusade Classic"}
+                                              {:version "9.0.5", :name "Shadowlands patch"}
+                                              {:version "1.13.7", :name "Classic Patch"}],
+                            :UIAuthorName "myrroddin",
+                            :UIVersion "2.0.7",
+                            :UIIMG_Thumbs ["https://cdn-wow.mmoui.com/preview/tiny/pvw70766.jpg" "https://cdn-wow.mmoui.com/preview/tiny/pvw70767.jpg" "https://cdn-wow.mmoui.com/preview/tiny/pvw70768.jpg"],
+                            :UICATID "40",
+                            :UIFavoriteTotal "1"}]}
+
+          addon  {:url "https://www.wowinterface.com/downloads/info24876",
+                  :name "tradeskillmaster-string-converter",
+                  :label "TradeSkillMaster String Converter",
+                  :source "wowinterface",
+                  :source-id 24876,
+                  :updated-date "2021-04-21T07:51:00Z",
+                  :download-count 1223,
+                  :category-list #{"Bags, Bank, Inventory"}}
+
+          expected {:game-track-list #{:retail :classic :classic-tbc},
+                    :url "https://www.wowinterface.com/downloads/info24876"
+                    :name "tradeskillmaster-string-converter",
+                    :label "TradeSkillMaster String Converter",
+                    :source "wowinterface",
+                    :source-id 24876,
+                    :updated-date "2021-04-21T07:51:00Z",
+                    :download-count 1223,
+                    :category-list #{"Bags, Bank, Inventory"}}]
+
+      (is (= expected (wowinterface/expand-addon-with-filelist filelist addon))))))
+

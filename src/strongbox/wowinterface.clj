@@ -20,7 +20,8 @@
   {"cat23.html" "Stand-Alone addons"
    "cat39.html" "Class & Role Specific"
    "cat109.html" "Info, Plug-in Bars"
-   "cat158.html" "Classic - General"})
+   "cat158.html" "Classic - General"
+   "cat161.html" "The Burning Crusade Classic"})
 
 (defn-spec -format-wowinterface-dt string?
   "formats a shitty US-style m/d/y date with a shitty 12 hour time component and no timezone
@@ -145,17 +146,12 @@
         ;; wowinterface conflates the two (or am I splitting hairs?)
         ;; if 'WoW Classic' is found, then the 'classic' game track is supported
         ;; if more results are found, retail is supported as well
-        compatibility (->> filelist-addon :UICompatibility (map :name) set)
-        many-results? (> (count compatibility) 1)
-        wowi-classic "WoW Classic"
-
-        mapping {[wowi-classic true]  #{:classic :retail}
-                 [wowi-classic false] #{:classic}
-                 [nil true] #{:retail}
-                 [nil false] #{:retail}}
-
-        key [(some #{wowi-classic} compatibility) many-results?]]
-    (assoc addon :game-track-list (get mapping key))))
+        compatibility (->> filelist-addon
+                           :UICompatibility
+                           (map :version)
+                           (map utils/game-version-to-game-track)
+                           set)]
+    (assoc addon :game-track-list compatibility)))
 
 (defn scrape
   "wowinterface uses 'groups of categories'.
