@@ -1152,12 +1152,14 @@
 (defn-spec href-to-hyperlink map?
   "returns a hyperlink description or an empty text description"
   [row (s/nilable (s/keys :opt-un [::sp/url]))]
-  (if-let [label (some-> row :url utils/source-to-href-label-fn)]
-    {:fx/type :hyperlink
-     :on-action (handler #(utils/browse-to (:url row)))
-     :text (str "↪ " label)}
-    {:fx/type :text
-     :text ""}))
+  (let [url (:url row)
+        label (:source row)]
+    (if (and url label)
+      {:fx/type :hyperlink
+       :on-action (handler #(utils/browse-to url))
+       :text (str "↪ " label)}
+      {:fx/type :text
+       :text ""})))
 
 (defn-spec addon-fs-link (s/or :hyperlink map?, :nothing nil?)
   "returns a hyperlink that opens a file browser to a path on the filesystem."
@@ -1286,7 +1288,7 @@
         iface-version (fn [row]
                         (some-> row :interface-version str utils/interface-version-to-game-version))
 
-        column-list [{:text "source" :min-width 115 :pref-width 115 :max-width 115
+        column-list [{:text "source" :min-width 125 :pref-width 125 :max-width 125
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [row]
                                                  {:graphic (href-to-hyperlink row)})}
@@ -1459,7 +1461,7 @@
         empty-next-page (and (= 0 (count addon-list))
                              (> (-> search-state :page) 0))
 
-        column-list [{:text "source" :min-width 115 :pref-width 115 :max-width 115 :resizable false
+        column-list [{:text "source" :min-width 125 :pref-width 125 :max-width 125 :resizable false
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [row]
                                                  {:graphic (href-to-hyperlink row)})}

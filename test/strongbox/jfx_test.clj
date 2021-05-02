@@ -28,15 +28,18 @@
                  [{:url "http://foo"} bad-text]
                  [{:url "http://foo.bar"} bad-text]
 
-                 [{:url "https://www.curseforge.com/foo/bar"} {:fx/type :hyperlink :text "↪ curseforge"}]
-                 [{:url "https://www.wowinterface.com/foo/bar"} {:fx/type :hyperlink :text "↪ wowinterface"}]
-                 [{:url "https://github.com/teelolws/Altoholic-Classic"} {:fx/type :hyperlink :text "↪ github"}]
+                 ;; needs both a `:url` (destination) and a `:source` (label)
+                 [{:url "https://www.curseforge.com/foo/bar"} bad-text]
 
-                 [{:url "https://www.tukui.org/addons.php"} {:fx/type :hyperlink :text "↪ tukui"}]
-                 [{:url "https://www.tukui.org/classic-addons.php"} {:fx/type :hyperlink :text "↪ tukui-classic"}]
-                 [{:url "https://www.tukui.org/classic-tbc-addons.php"} {:fx/type :hyperlink :text "↪ tukui-classic-tbc"}]
+                 [{:url "https://www.curseforge.com/foo/bar" :source "curseforge"} {:fx/type :hyperlink :text "↪ curseforge"}]
+                 [{:url "https://www.wowinterface.com/foo/bar" :source "wowinterface"} {:fx/type :hyperlink :text "↪ wowinterface"}]
+                 [{:url "https://github.com/teelolws/Altoholic-Classic" :source "github"} {:fx/type :hyperlink :text "↪ github"}]
 
-                 [{:url "https://www.tukui.org/foo/bar"} {:fx/type :hyperlink :text "↪ tukui"}]]]
+                 [{:url "https://www.tukui.org/addons.php" :source "tukui"} {:fx/type :hyperlink :text "↪ tukui"}]
+                 [{:url "https://www.tukui.org/classic-addons.php" :source "tukui-classic"} {:fx/type :hyperlink :text "↪ tukui-classic"}]
+                 [{:url "https://www.tukui.org/classic-tbc-addons.php" :source "tukui-classic-tbc"} {:fx/type :hyperlink :text "↪ tukui-classic-tbc"}]
+
+                 [{:url "https://www.tukui.org/foo/bar" :source "tukui"} {:fx/type :hyperlink :text "↪ tukui"}]]]
 
       (doseq [[given expected] cases]
         (is (= expected (dissoc (jfx/href-to-hyperlink given) :on-action)))))))

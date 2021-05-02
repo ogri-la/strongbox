@@ -556,27 +556,6 @@
     ((find-browser) x))
   nil)
 
-(defn-spec source-to-href-label-fn (s/or :ok string? :bad-url nil?)
-  "if a source for the addon can be derived, return a label suitable for the link"
-  [url (s/nilable string?)]
-  (let [url-obj (try
-                  (java.net.URL. url)
-                  (catch NullPointerException _
-                    nil)
-                  (catch java.net.MalformedURLException _
-                    nil))]
-    (when url-obj
-      (case (.getHost url-obj)
-        "www.curseforge.com" "curseforge"
-        "www.wowinterface.com" "wowinterface"
-        "github.com" "github"
-        "www.tukui.org" (case (.getPath url-obj)
-                          ;;"/addons.php" "tukui" ;; redundant
-                          "/classic-addons.php" "tukui-classic"
-                          "/classic-tbc-addons.php" "tukui-classic-tbc"
-                          "tukui")
-        nil))))
-
 (defn-spec no-new-lines (s/or :ok string? :also-ok nil?)
   "removes all \n and \r\n from a string"
   [string (s/nilable string?)]
