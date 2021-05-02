@@ -2,7 +2,9 @@
   (:require
    ;;[taoensso.timbre :refer [debug info warn error spy]]
    [clojure.test :refer [deftest testing is use-fixtures]]
-   [strongbox.utils :as utils :refer [join]]
+   [strongbox
+    [utils :as utils :refer [join]]
+    [constants :as constants]]
    [me.raynes.fs :as fs]))
 
 (def ^:dynamic *temp-dir-path* "")
@@ -235,18 +237,21 @@
                ["1." :classic]
                ["1.13.0" :classic]
                ["1.100.100" :classic]
+               [constants/latest-classic-game-version :classic]
 
-               ;; classic-bc (unimplemented)
-               ["2." nil]
-               ["2.5.1" nil]
-               ["2.foo.bar" nil]
+               ;; classic-bc
+               ["2." :classic-tbc]
+               ["2.5.1" :classic-tbc]
+               ["2.foo.bar" :classic-tbc]
+               [constants/latest-classic-tbc-game-version :classic-tbc]
 
                ;; everything else
                ["3.0.2" :retail]
                ["4.3.0" :retail]
                ["5.0.4" :retail]
                ;; ...etc
-               ["9.0.1" :retail]]]
+               ["9.0.1" :retail]
+               [constants/latest-retail-game-version :retail]]]
     (doseq [[given expected] cases]
       (is (= expected (utils/game-version-to-game-track given))))))
 

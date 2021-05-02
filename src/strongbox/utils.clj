@@ -295,8 +295,9 @@
     (case prefix
       ;; 1.x.x == classic (vanilla)
       "1." :classic
-      ;; 2.x.x == classic (burning crusade) (probably)
-      "2." nil ;; todo
+      ;; 2.x.x == classic (burning crusade)
+      "2." :classic-tbc
+      ;; 3.x.x == classic (wrath of the lich king) (probably)
       :retail)))
 
 (defn-spec interface-version-to-game-track (s/or :ok ::sp/game-track, :err nil?)
@@ -312,7 +313,8 @@
   [game-track ::sp/game-track]
   (case game-track
     :retail constants/latest-retail-game-version
-    :classic constants/latest-classic-game-version))
+    :classic constants/latest-classic-game-version
+    :classic-tbc constants/latest-classic-tbc-game-version))
 
 ;; https://stackoverflow.com/questions/13789092/length-of-the-first-line-in-an-utf-8-file-with-bom
 (defn debomify
@@ -553,25 +555,6 @@
   (future
     ((find-browser) x))
   nil)
-
-(defn-spec source-to-href-label-fn (s/or :ok string? :bad-url nil?)
-  "if a source for the addon can be derived, return a label suitable for the link"
-  [url (s/nilable string?)]
-  (let [url-obj (try
-                  (java.net.URL. url)
-                  (catch NullPointerException _
-                    nil)
-                  (catch java.net.MalformedURLException _
-                    nil))]
-    (when url-obj
-      (case (.getHost url-obj)
-        "www.curseforge.com" "curseforge"
-        "www.wowinterface.com" "wowinterface"
-        "github.com" "github"
-        "www.tukui.org" (if (= (.getPath url-obj) "/classic-addons.php")
-                          "tukui-classic"
-                          "tukui")
-        nil))))
 
 (defn-spec no-new-lines (s/or :ok string? :also-ok nil?)
   "removes all \n and \r\n from a string"

@@ -26,6 +26,7 @@
                       "github" github-api/expand-summary
                       "tukui" tukui-api/expand-summary
                       "tukui-classic" tukui-api/expand-summary
+                      "tukui-classic-tbc" tukui-api/expand-summary
                       nil (fn [_ _] (error "malformed addon:" (utils/pprint addon)))}
         key (:source addon)]
     (try

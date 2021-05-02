@@ -6,20 +6,39 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
+* add support for classic TBC and classic WOTLK and classic Cataclysm
+    - really, just figure out a way to support N game tracks with strict/relaxed installation rules
+    - done
+        - won't prevent me from having to filter and group addon host results into game tracks however
+
+* curseforge, add classic-tbc support
+    - done
+
+* wowi, add classic-tbc support
+    - done
+
+* tukui, add classic-tbc support
+    - done
 
 ## todo
+
+* github, add classic-tbc support
 
 * ux, installing (not updating) an addon for an incompatible game track shouldn't fail silently or get lost in log noise
     - https://github.com/ogri-la/strongbox/issues/231
 
-* add support for classic TBC and classic WOTLK and classic Cataclysm
-    - really, just figure out a way to support N game tracks with strict/relaxed installation rules
-
-* wowi, add classic-tbc detection
-
-* tukui, add classic-tbc detection
-
 ## todo bucket (no particular order)
+
+* bug, I can see github addons when using wowi catalogue
+    - user catalogue should be selectable
+
+* bug, catalogue loading
+    - while updating the catalogue with the new tukui addons I discovered a case where the catalogue *should* be failing validation but it wasn't.
+        - it came down to an :opt vs :opt-un in the spec
+            - the key in question wasn't qualified and thus not matched for validation
+    - the catalogue should always be loadable by previous versions of strongbox that support the given spec version
+        - ...
+    - when the catalogue fails validation it shouldn't freeze the app while the reason is printed in the console
 
 * bug, uber button, identical addons in different addon dirs are causing the warn/error-free version to show warns/errors
 

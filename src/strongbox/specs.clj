@@ -176,7 +176,7 @@
 (s/def :addon/category string?)
 (s/def :addon/category-list (s/coll-of :addon/category))
 
-(s/def :addon/source (s/or :known #{"curseforge" "wowinterface" "github" "tukui" "tukui-classic"}
+(s/def :addon/source (s/or :known #{"curseforge" "wowinterface" "github" "tukui" "tukui-classic" "tukui-classic-tbc"}
                            :unknown string?))
 (s/def :addon/source-id (s/or ::integer-id? int? ;; tukui has negative ids
                               ::string-id? string?))
@@ -246,7 +246,7 @@
                    :addon/source ;; for host resolver dispatch
                    :addon/source-id ;; unique identifier for host resolver
                    ]
-          :opt-un [::game-track-list ;; wowinterface only
+          :opt-un [::game-track-list ;; wowinterface, tukui
                    ]))
 
 ;; the set of per-addon values provided by the remote host on each check
