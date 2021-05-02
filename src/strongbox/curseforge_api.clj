@@ -51,12 +51,17 @@
         ]
     (mapv rename-release release-list)))
 
-(defn game-version-flavor-to-game-track
-  [game-version-flavor]
+(defn-spec game-version-flavor-to-game-track ::sp/game-track
+  "given a curseforge 'gameVersionFlavor' value, returns the equivalent strongbox game track"
+  [game-version-flavor (s/nilable string?)]
   (case game-version-flavor
     "wow_retail" :retail
     "wow_classic" :classic
-    "wow_burning_crusade" :classic-tbc))
+    "wow_burning_crusade" :classic-tbc
+
+    ;; else
+    (do (warn "unhandled game track '%s', falling back to 'retail'")
+        :retail)))
 
 (defn-spec older-releases :addon/release-list
   "these are releases under `:gameVersionLatestFiles` that that are the most recent release by game/interface version (8.0.3 etc).

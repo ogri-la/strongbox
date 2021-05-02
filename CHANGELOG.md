@@ -19,7 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 * a 'welcome' screen for instances of strongbox with no addon directories selected.
-* 'Classic (TBC)' game track
+* `Classic (TBC)` to selectable game tracks and the `Strict` checkbox to toggle game track strictness.
+* support for Classic (TBC) for wowinterface, curseforge, tukui, ...
 
 ### Changed
 
@@ -30,9 +31,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - the search tab
     - the game track drop down
     - the addon directory drop down
-    - 
 
 ### Fixed
+
+* a bug in wowinterface catalogue generation. 
+    - wowinterface changed a label from "Classic" to other things and it broke classic support detection.
+    - I don't know how long this has been happening for.
 
 ### Removed
 

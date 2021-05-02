@@ -22,6 +22,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+* github, add classic-tbc support
+
 * ux, installing (not updating) an addon for an incompatible game track shouldn't fail silently or get lost in log noise
     - https://github.com/ogri-la/strongbox/issues/231
 
