@@ -99,8 +99,12 @@
            :game-track-list []
            :tag-list []}
 
-          expected-classic 45
-          expected-retail 2]
+          ;; 2021-05-08: release name checking added. The two defaulting to retail were two assets both named "Altoholic.zip",
+          ;; from two releases both named "Teelo's Altoholic Classic Fork". These two assets are now correctly labelled classic.
+          ;;expected-classic 45
+          ;;expected-retail 2
+          expected-classic 47
+          expected-retail 0]
       (with-fake-routes-in-isolation {} ;; necessary?
         (is (= expected-classic (count (github-api/parse-github-release-data fixture addon-summary :classic))))
         (is (= expected-retail (count (github-api/parse-github-release-data fixture addon-summary :retail))))))))
@@ -241,7 +245,10 @@
 
           game-track :classic
 
-          expected [{:game-track :classic
+          expected [{:download-url "https://github.com/teelolws/Altoholic-Classic/releases/download/v1.13.2-009/Altoholic.zip",
+                     :game-track :classic,
+                     :version "Teelo's Altoholic Classic Fork-classic"}
+                    {:game-track :classic
                      :version "Classic-v1.13.6-057-classic"
                      :download-url "https://github.com/teelolws/Altoholic-Classic/releases/download/Classic-v1.13.6-057/Altoholic-Classic-v1.13.6-057.zip"}]
 
@@ -287,9 +294,11 @@
 
           cases [;; addon-summary updates, latest-release updates, expected
 
+                 ;; case: todo: track in release name
+
                  ;; case: asset has 'classic' in it's name
                  [{} [[:assets 0 :name] "1.2.3-Classic"]
-                  {:classic [{:content_type "application/zip", :state "uploaded", :name "1.2.3-Classic", :game-track :classic, :version "Release 1.2.3-classic" :-mo :classic-in-name}]}]
+                  {:classic [{:content_type "application/zip", :state "uploaded", :name "1.2.3-Classic", :game-track :classic, :version "Release 1.2.3-classic" :-mo :track-in-asset-name}]}]
 
                  ;; case: single asset, no game track present in file name, no known game tracks. default to :retail
                  [{} {}
@@ -351,10 +360,13 @@
 
                  ;; case: multiple assets, no game track present in file name, multiple known game tracks. default to :retail
                  [{:game-track-list [:classic :retail]} {}
-                  ;;{:retail [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track :retail, :version "Release 1.2.3" :-mo :ma--Ngt}
-                  ;;           {:content_type "application/zip", :state "uploaded", :name "1.2.3-nolib", :game-track :retail, :version "Release 1.2.3" :-mo :ma--Ngt}]}]]]
                   ;; 2019-11-21: changed my mind, refusing to install in very ambiguous caseses
-                  nil]]]
+                  ;; 2021-05-08: changed my mind again, ambiguous cases are neatly dealt with in decision matrix.
+                  ;;             better to have superflous assets to choose from than have them excluded.
+                  {:classic [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track :classic, :-mo :ma--Ngt, :version "Release 1.2.3-classic"}
+                             {:content_type "application/zip", :state "uploaded", :name "1.2.3-nolib", :game-track :classic, :version "Release 1.2.3-classic" :-mo :ma--Ngt}]
+                   :retail [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track :retail, :version "Release 1.2.3" :-mo :ma--Ngt}
+                            {:content_type "application/zip", :state "uploaded", :name "1.2.3-nolib", :game-track :retail, :version "Release 1.2.3" :-mo :ma--Ngt}]}]]]
 
       (doseq [[addon-summary-updates, release-updates, expected] cases
               :let [summary (merge addon-summary addon-summary-updates)
@@ -427,3 +439,51 @@
           asset {:name "LunaUnitFrames-classic.zip"}
           expected "LunaUnitFrames-classic.zip"]
       (is (= expected (github-api/pick-version-name release asset))))))
+
+(deftest guess-game-track
+  (testing ""
+    (let [cases [[nil nil]
+                 ["" nil]
+                 ["foo" nil]
+                 ["foo-tbc" nil]
+                 ["1.2.3" nil]
+
+                 ;; classic-tbc
+                 ["classic-tbc" :classic-tbc]
+                 ["1.2.3-classic-tbc" :classic-tbc]
+                 ["1.2.3-classic-tbc-no-lib" :classic-tbc]
+                 ["classic-tbc-no-lib" :classic-tbc]
+                 ["classic-tbc.no-lib" :classic-tbc]
+                 ["classic_tbc" :classic-tbc]
+                 ["1.2.3_classic_tbc_no-lib" :classic-tbc]
+
+                 ;; classic
+                 ["classic" :classic]
+                 ["1.2.3-classic" :classic]
+                 ["1.2.3-classic-no-lib" :classic]
+                 ["classic-no-lib" :classic]
+                 ["classic.no-lib" :classic]
+                 ["1.2.3_classic_no-lib" :classic]
+
+                 ;; retail
+                 ["retail" :retail]
+                 ["1.2.3-retail" :retail]
+                 ["1.2.3-retail-no-lib" :retail]
+                 ["retail-no-lib" :retail]
+                 ["retail.no-lib" :retail]
+                 ["1.2.3_retail_no-lib" :retail]
+
+                 ;; case insensitivity
+                 ["Retail" :retail]
+                 ["Classic" :classic]
+                 ["Classic-TBC" :classic-tbc]
+
+                 ;; priority (classic-tbc > classic > retail)
+                 ["retail-classic-tbc-classic" :classic-tbc]
+                 ["retail-classic-classic-tbc" :classic-tbc]
+                 ["classic-classic-tbc" :classic-tbc]
+                 ["retail-classic" :classic]]]
+
+      (doseq [[given expected] cases]
+        (is (= expected (github-api/guess-game-track given)))))))
+
