@@ -239,7 +239,7 @@
                ["1.100.100" :classic]
                [constants/latest-classic-game-version :classic]
 
-               ;; classic-bc
+               ;; classic-tbc
                ["2." :classic-tbc]
                ["2.5.1" :classic-tbc]
                ["2.foo.bar" :classic-tbc]
@@ -267,4 +267,59 @@
           row-list [["foo" "bar"] ["baz" "bup"]]
           expected [{:key "foo" :val "bar"} {:key "baz" :val "bup"}]]
       (is (= expected (apply utils/csv-map header row-list))))))
+
+(deftest guess-game-track
+  (testing ""
+    (let [cases [[nil nil]
+                 ["" nil]
+                 ["foo" nil]
+                 ["1.2.3" nil]
+
+                 ;; classic-tbc
+                 ["classic-tbc" :classic-tbc]
+                 ["1.2.3-classic-tbc" :classic-tbc]
+                 ["1.2.3-classic-tbc-no-lib" :classic-tbc]
+                 ["classic-tbc-no-lib" :classic-tbc]
+                 ["classic-tbc.no-lib" :classic-tbc]
+                 ["classic_tbc" :classic-tbc]
+                 ["1.2.3_classic_tbc_no-lib" :classic-tbc]
+
+                 ;; classic-tbc (edge cases)
+                 ["beta-tbc" :classic-tbc]
+                 ["beta-bc" :classic-tbc]
+                 ["beta_tbc" :classic-tbc]
+                 ["beta bc" :classic-tbc]
+                 ["beta (tbc)" :classic-tbc]
+                 ["beta (bc)" :classic-tbc]
+                 ["beta (tbc) 2.13" nil]
+
+                 ;; classic
+                 ["classic" :classic]
+                 ["1.2.3-classic" :classic]
+                 ["1.2.3-classic-no-lib" :classic]
+                 ["classic-no-lib" :classic]
+                 ["classic.no-lib" :classic]
+                 ["1.2.3_classic_no-lib" :classic]
+
+                 ;; retail
+                 ["retail" :retail]
+                 ["1.2.3-retail" :retail]
+                 ["1.2.3-retail-no-lib" :retail]
+                 ["retail-no-lib" :retail]
+                 ["retail.no-lib" :retail]
+                 ["1.2.3_retail_no-lib" :retail]
+
+                 ;; case insensitivity
+                 ["Retail" :retail]
+                 ["Classic" :classic]
+                 ["Classic-TBC" :classic-tbc]
+
+                 ;; priority (classic-tbc > classic > retail)
+                 ["retail-classic-tbc-classic" :classic-tbc]
+                 ["retail-classic-classic-tbc" :classic-tbc]
+                 ["classic-classic-tbc" :classic-tbc]
+                 ["retail-classic" :classic]]]
+
+      (doseq [[given expected] cases]
+        (is (= expected (utils/guess-game-track given)))))))
 
