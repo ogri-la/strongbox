@@ -4,7 +4,9 @@
    [clojure.string :refer [trim lower-case upper-case]]
    [clojure.set]
    [slugify.core :refer [slugify]]
+   [clojure.spec.alpha :as s]
    [strongbox
+    [specs :as sp]
     [tags :as tags]
     [utils :as utils]
     [http :as http]]
@@ -139,19 +141,27 @@
                              (update addon :UID #(Integer/parseInt %))) file-details)]
     (group-by :UID file-details)))
 
-(defn expand-addon-with-filelist
-  [filelist addon]
-  (let [filelist-addon (->> addon :source-id (get filelist) first)
-        ;; supported game version is not the same as game track ('classic' or 'retail')
+(defn-spec ui-compatibility-to-gametrack-list ::sp/game-track-list
+  [ui-compatability (s/nilable ::sp/list-of-maps)]
+  (let [;; supported game version is not the same as game track ('classic' or 'retail')
         ;; wowinterface conflates the two (or am I splitting hairs?)
         ;; if 'WoW Classic' is found, then the 'classic' game track is supported
         ;; if more results are found, retail is supported as well
-        compatibility (->> filelist-addon
-                           :UICompatibility
-                           (map :version)
-                           (map utils/game-version-to-game-track)
-                           set)]
-    (assoc addon :game-track-list compatibility)))
+        default [:retail]
+        compatibility (some->> ui-compatability
+                               (map :version)
+                               (map utils/game-version-to-game-track)
+                               set
+                               sort ;; deterministic order for tests
+                               vec)]
+    (if (empty? compatibility)
+      default
+      compatibility)))
+
+(defn expand-addon-with-filelist
+  [filelist addon]
+  (let [ui-compatibility (->> addon :source-id (get filelist) first :UICompatibility)]
+    (assoc addon :game-track-list (ui-compatibility-to-gametrack-list ui-compatibility))))
 
 (defn scrape
   "wowinterface uses 'groups of categories'.

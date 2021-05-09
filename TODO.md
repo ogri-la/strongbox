@@ -31,6 +31,9 @@ see CHANGELOG.md for a more formal list of changes by release
 * ux, installing (not updating) an addon for an incompatible game track shouldn't fail silently or get lost in log noise
     - https://github.com/ogri-la/strongbox/issues/231
 
+* github, revisit the "-classic" suffix naming
+    - this was solved more elegantly in curseforge-api
+
 ## todo bucket (no particular order)
 
 * bug, I can see github addons when using wowi catalogue
@@ -137,9 +140,6 @@ see CHANGELOG.md for a more formal list of changes by release
         - or drop the pin it and display updates?
     - we can now export addons at specific versions
         - I think we already have this though ... called :version
-
-* github, revisit the "-classic" suffix naming
-    - this was solved more elegantly in curseforge-api
 
 * dedicated tab for "user-catalogue" ?
     - add, delete, update github addons
