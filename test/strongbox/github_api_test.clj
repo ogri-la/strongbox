@@ -189,11 +189,11 @@
           game-track :classic
 
           expected [{:download-url "https://github.com/Ravendwyr/Chinchilla/releases/download/v2.10.0/Chinchilla-v2.10.0-classic.zip"
-                     :version "v2.10.0-classic"
-                     :game-track game-track}
+                     :game-track game-track
+                     :version "v2.10.0"}
                     {:download-url "https://github.com/Ravendwyr/Chinchilla/releases/download/v2.10.0-beta3/Chinchilla-v2.10.0-beta3-classic.zip",
-                     :game-track :classic,
-                     :version "v2.10.0-beta3-classic"}]
+                     :game-track game-track,
+                     :version "v2.10.0-beta3"}]
 
           fixture (slurp (fixture-path "github-repo-releases--mixed-game-tracks.json"))
           fake-routes {"https://api.github.com/repos/Ravendwyr/Chinchilla/releases"
@@ -217,10 +217,10 @@
 
           expected [{:download-url "https://github.com/Ravendwyr/Chinchilla/releases/download/v2.10.0/Chinchilla-v2.10.0-classic-tbc.zip",
                      :game-track :classic-tbc,
-                     :version "v2.10.0-classic-tbc"}
+                     :version "v2.10.0"}
                     {:download-url "https://github.com/Ravendwyr/Chinchilla/releases/download/v2.10.0-beta3/Chinchilla-v2.10.0-beta3-classic-tbc.zip",
                      :game-track :classic-tbc,
-                     :version "v2.10.0-beta3-classic-tbc"}]
+                     :version "v2.10.0-beta3"}]
 
           fixture (slurp (fixture-path "github-repo-releases--mixed-game-tracks.json"))
           fake-routes {"https://api.github.com/repos/Foo/Bar/releases"
@@ -290,11 +290,11 @@
 
           game-track :classic
 
-          expected [{:download-url "https://github.com/teelolws/Altoholic-Classic/releases/download/v1.13.2-009/Altoholic.zip",
-                     :game-track :classic,
-                     :version "Teelo's Altoholic Classic Fork-classic"}
-                    {:game-track :classic
-                     :version "Classic-v1.13.6-057-classic"
+          expected [{:game-track game-track
+                     :download-url "https://github.com/teelolws/Altoholic-Classic/releases/download/v1.13.2-009/Altoholic.zip",
+                     :version "Teelo's Altoholic Classic Fork"}
+                    {:game-track game-track
+                     :version "Classic-v1.13.6-057"
                      :download-url "https://github.com/teelolws/Altoholic-Classic/releases/download/Classic-v1.13.6-057/Altoholic-Classic-v1.13.6-057.zip"}]
 
           fake-routes {"https://api.github.com/repos/Bar/Foo/releases"
@@ -341,28 +341,36 @@
 
                  ;; case: game track present in file name, prefer that over `:game-track-list` and any game-track in release name
                  [{} [[:assets 0 :name] "1.2.3-Classic"]
-                  {:classic [{:content_type "application/zip", :state "uploaded", :name "1.2.3-Classic", :game-track :classic, :version "Release 1.2.3-classic" :-mo :track-in-asset-name}]}]
+                  {:classic [{:content_type "application/zip", :state "uploaded", :name "1.2.3-Classic",
+                              :game-track :classic, :version "Release 1.2.3" :-mo :track-in-asset-name}]}]
 
                  ;; case: game track present in release name, prefer that over `:game-track-list`
                  [{} [[:name] "Foo 1.2.3-Classic TBC"]
-                  {:classic-tbc [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track :classic-tbc, :version "Foo 1.2.3-Classic TBC-classic-tbc" :-mo :track-in-release-name}]}]
+                  {:classic-tbc [{:content_type "application/zip", :state "uploaded", :name "1.2.3",
+                                  :game-track :classic-tbc, :version "Foo 1.2.3-Classic TBC" :-mo :track-in-release-name}]}]
 
                  ;; case: no game track present in asset name or release name and no `:game-track-list`. assume `:retail`
                  [{} {}
-                  {:retail [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track :retail, :version "Release 1.2.3" :-mo :sa--ngt}]}]
+                  {:retail [{:content_type "application/zip", :state "uploaded", :name "1.2.3",
+                             :game-track :retail, :version "Release 1.2.3" :-mo :sa--ngt}]}]
 
                  ;; case: no game track present in asset name or release name and just a single entry in `:game-track-list`. use that.
                  [{:game-track-list [:retail]} {}
-                  {:retail [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track :retail, :version "Release 1.2.3" :-mo :sa--1gt}]}]
+                  {:retail [{:content_type "application/zip", :state "uploaded", :name "1.2.3",
+                             :game-track :retail, :version "Release 1.2.3" :-mo :sa--1gt}]}]
                  [{:game-track-list [:classic]} {}
-                  {:classic [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track :classic, :version "Release 1.2.3-classic" :-mo :sa--1gt}]}]
+                  {:classic [{:content_type "application/zip", :state "uploaded", :name "1.2.3",
+                              :game-track :classic, :version "Release 1.2.3" :-mo :sa--1gt}]}]
 
                  ;; case: no game track present in asset name or release name with multiple entries in `:game-track-list`.
                  ;; assume all entries in `:game-track-list` supported.
                  [{:game-track-list [:classic-tbc :classic :retail]} {}
-                  {:retail [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track :retail, :version "Release 1.2.3" :-mo :sa--Ngt}]
-                   :classic-tbc [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track :classic-tbc, :version "Release 1.2.3-classic-tbc" :-mo :sa--Ngt}]
-                   :classic [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track :classic, :version "Release 1.2.3-classic" :-mo :sa--Ngt}]}]]]
+                  {:retail [{:content_type "application/zip", :state "uploaded", :name "1.2.3",
+                             :game-track :retail, :version "Release 1.2.3" :-mo :sa--Ngt}]
+                   :classic-tbc [{:content_type "application/zip", :state "uploaded", :name "1.2.3",
+                                  :game-track :classic-tbc, :version "Release 1.2.3" :-mo :sa--Ngt}]
+                   :classic [{:content_type "application/zip", :state "uploaded", :name "1.2.3",
+                              :game-track :classic, :version "Release 1.2.3" :-mo :sa--Ngt}]}]]]
 
       (doseq [[addon-summary-updates, release-updates, expected] cases
               :let [summary (merge addon-summary addon-summary-updates)
