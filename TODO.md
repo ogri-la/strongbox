@@ -6,28 +6,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* add support for classic TBC and classic WOTLK and classic Cataclysm
-    - really, just figure out a way to support N game tracks with strict/relaxed installation rules
-    - done
-        - won't prevent me from having to filter and group addon host results into game tracks however
-
-* curseforge, add classic-tbc support
-    - done
-
-* wowi, add classic-tbc support
-    - done
-
-* tukui, add classic-tbc support
-    - done
-
-* github, add classic-tbc support
-    - done
-
-* update classic/retail 'features' list of readme
-    - done
-
 ## todo
-
 
 ## todo bucket (no particular order)
 
