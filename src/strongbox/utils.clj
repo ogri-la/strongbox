@@ -288,7 +288,7 @@
     (when (and major minor)
       (+ (* 10000 major) (* 100 minor)))))
 
-(defn-spec game-version-to-game-track (s/nilable ::sp/game-track)
+(defn-spec game-version-to-game-track ::sp/game-track
   "'1.13.2' => ':classic', '8.2.0' => 'retail'"
   [game-version string?]
   (let [prefix (safe-subs game-version 2)]

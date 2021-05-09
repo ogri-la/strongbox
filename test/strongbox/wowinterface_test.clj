@@ -66,7 +66,7 @@
           (is (= first-addon (first results)))
           (is (= last-addon (last results))))))))
 
-(deftest classic-addons-detected
+(deftest addon-game-tracks-detected
   (testing "retail, classic and classic-tbc are successfully detected"
     (let [filelist {24876 [{:UIDownloadTotal "1223",
                             :UID 24876,
@@ -96,7 +96,7 @@
                   :download-count 1223,
                   :category-list #{"Bags, Bank, Inventory"}}
 
-          expected {:game-track-list #{:retail :classic :classic-tbc},
+          expected {:game-track-list [:classic :classic-tbc :retail],
                     :url "https://www.wowinterface.com/downloads/info24876"
                     :name "tradeskillmaster-string-converter",
                     :label "TradeSkillMaster String Converter",
@@ -108,3 +108,7 @@
 
       (is (= expected (wowinterface/expand-addon-with-filelist filelist addon))))))
 
+(deftest addon-game-tracks-detected--null-compatibility
+  (testing "when 'UICompatibility' is `null` we default to `:retail`."
+    (let [expected [:retail]]
+      (is (= expected (wowinterface/ui-compatibility-to-gametrack-list nil))))))
