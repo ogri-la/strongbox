@@ -264,7 +264,7 @@
   (sluglib/slugify string))
 
 (defn-spec interface-version-to-game-version (s/or :ok string?, :no-match nil?)
-  [iface-version string?] ;; this should be ::sp/interface-version
+  [iface-version (s/or :deprecated string?, :preferred ::sp/interface-version)]
   ;; warning! there is no way to convert *unambiguously* between the 'patch level' and the 'interface version'
   ;; for example, patch "1.2.0" => "10200", but so does "1.20.0" => "10200"
   ;; there haven't been any minor versions >4 since MOP
@@ -273,7 +273,7 @@
   ;; (and 9.x if that series follows the behaviour of all other patch levels since 2.x)
   ;; see: https://wow.gamepedia.com/Patches
   (let [iface-regex #"(?<major>\d{1})\d(?<minor>\d{1})\d(?<patch>\d{1}\w?)"
-        matcher (re-matcher iface-regex iface-version)
+        matcher (re-matcher iface-regex (str iface-version))
         major-minor-patch (rest (re-find matcher))]
     (when-not (empty? major-minor-patch)
       (clojure.string/join "." major-minor-patch))))
@@ -288,22 +288,22 @@
     (when (and major minor)
       (+ (* 10000 major) (* 100 minor)))))
 
-(defn-spec game-version-to-game-track (s/nilable ::sp/game-track)
+(defn-spec game-version-to-game-track ::sp/game-track
   "'1.13.2' => ':classic', '8.2.0' => 'retail'"
   [game-version string?]
   (let [prefix (safe-subs game-version 2)]
     (case prefix
       ;; 1.x.x == classic (vanilla)
       "1." :classic
-      ;; 2.x.x == classic (burning crusade) (probably)
-      "2." nil ;; todo
+      ;; 2.x.x == classic (burning crusade)
+      "2." :classic-tbc
+      ;; 3.x.x == classic (wrath of the lich king) (probably)
       :retail)))
 
 (defn-spec interface-version-to-game-track (s/or :ok ::sp/game-track, :err nil?)
   "converts an interface version like '80000' to a game track like ':retail'"
   [interface-version ::sp/interface-version]
   (-> interface-version
-      str ;; aru?
       interface-version-to-game-version
       game-version-to-game-track))
 
@@ -312,7 +312,8 @@
   [game-track ::sp/game-track]
   (case game-track
     :retail constants/latest-retail-game-version
-    :classic constants/latest-classic-game-version))
+    :classic constants/latest-classic-game-version
+    :classic-tbc constants/latest-classic-tbc-game-version))
 
 ;; https://stackoverflow.com/questions/13789092/length-of-the-first-line-in-an-utf-8-file-with-bom
 (defn debomify
@@ -554,25 +555,6 @@
     ((find-browser) x))
   nil)
 
-(defn-spec source-to-href-label-fn (s/or :ok string? :bad-url nil?)
-  "if a source for the addon can be derived, return a label suitable for the link"
-  [url (s/nilable string?)]
-  (let [url-obj (try
-                  (java.net.URL. url)
-                  (catch NullPointerException _
-                    nil)
-                  (catch java.net.MalformedURLException _
-                    nil))]
-    (when url-obj
-      (case (.getHost url-obj)
-        "www.curseforge.com" "curseforge"
-        "www.wowinterface.com" "wowinterface"
-        "github.com" "github"
-        "www.tukui.org" (if (= (.getPath url-obj) "/classic-addons.php")
-                          "tukui-classic"
-                          "tukui")
-        nil))))
-
 (defn-spec no-new-lines (s/or :ok string? :also-ok nil?)
   "removes all \n and \r\n from a string"
   [string (s/nilable string?)]
@@ -620,3 +602,18 @@
   "ZipMaps header as keys and values from lines."
   [head & lines]
   (map #(zipmap (map keyword head) %1) lines))
+
+(defn-spec guess-game-track (s/nilable ::sp/game-track)
+  "returns the first game track it finds in the given string, preferring `:classic-tbc`, then `:classic`, then `:retail`.
+  returns `nil` if no game track found."
+  [string (s/nilable string?)]
+  (when string
+    (let [;; matches 'classic-tbc', 'classic-bc', 'classic_tbc', 'classic_bc', 'tbc', 'bc' but not 'classictbc' or 'classicbc'.
+          ;; see tests.
+          classic-tbc-regex #"(?i)classic[\W_]t?bc|[\W_]t?bc\W?$"
+          classic-regex #"(?i)classic"
+          retail-regex #"(?i)retail"]
+      (cond
+        (re-find classic-tbc-regex string) :classic-tbc
+        (re-find classic-regex string) :classic
+        (re-find retail-regex string) :retail))))

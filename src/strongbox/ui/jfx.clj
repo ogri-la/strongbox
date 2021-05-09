@@ -191,10 +191,6 @@
                ;;
 
 
-               ".table-placeholder-text"
-               {:-fx-font-size "1.5em"
-                :-fx-fill (colour :table-font-colour)}
-
                ".table-view"
                {:-fx-table-cell-border-color (colour :table-border)
                 :-fx-font-size ".9em"}
@@ -295,11 +291,32 @@
                ;;
 
 
-               "#update-all-button"
-               {:-fx-min-width "100px"}
+               ".table-view #welcome-screen "
+               {:-fx-alignment "center"
 
-               "#game-track-combo-box"
-               {:-fx-min-width "100px"}
+                ".big-welcome-text"
+                {:-fx-font-size "5em"
+                 :-fx-font-weight "bold"
+                 :-fx-padding ".3em 1em"
+                 :-fx-spacing "1em"}
+
+                ".big-welcome-subtext"
+                {:-fx-font-size "1.8em"
+                 :-fx-font-family "monospace"
+                 :-fx-padding ".8em 0 1em 0"}}
+
+               "#update-all-button"
+               {:-fx-min-width "110px"}
+
+               "#game-track-container "
+               {:-fx-alignment "center"
+
+                "#game-track-check-box"
+                {:-fx-padding "0 0 0 .65em"
+                 :-fx-min-width "70px"}
+
+                "#game-track-combo-box"
+                {:-fx-min-width "121px"}}
 
                ".table-view#installed-addons "
                {".wow-column"
@@ -989,7 +1006,7 @@
 (defn menu-bar
   "returns a description of the menu at the top of the application"
   [{:keys [fx/context]}]
-  (let [file-menu [(menu-item "_New addon directory" (event-handler wow-dir-picker) {:key "Ctrl+N"})
+  (let [file-menu [(menu-item "_New addon directory" (async-event-handler wow-dir-picker) {:key "Ctrl+N"})
                    (menu-item "Remove addon directory" (async-handler remove-addon-dir))
                    separator
                    (menu-item "_Update all" (async-handler cli/update-all) {:key "Ctrl+U"})
@@ -1061,39 +1078,60 @@
             :on-value-changed (async-event-handler
                                (fn [new-addon-dir]
                                  (cli/set-addon-dir! new-addon-dir)))
-            :items (mapv :addon-dir addon-dir-map-list)}}))
+            :items (mapv :addon-dir addon-dir-map-list)
+            :disable (empty? addon-dir-map-list)}}))
 
 (defn game-track-dropdown
   [{:keys [fx/context]}]
   (let [selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])
-        key (-> selected-addon-dir core/get-game-track)]
-    {:fx/type :combo-box
-     :id "game-track-combo-box"
-     :value (get sp/selectable-game-track-labels-map key)
-     :on-value-changed (async-event-handler
-                        (fn [new-game-track]
-                          ;; todo: push to cli
-                          (core/set-game-track! (get sp/selectable-game-track-labels-map-inv new-game-track))
-                          (core/refresh)))
-     :items (mapv second sp/selectable-game-track-labels)}))
+        addon-dir-map (core/addon-dir-map selected-addon-dir)
+        game-track (:game-track addon-dir-map)
+        strict? (get addon-dir-map :strict? core/default-game-track-strictness)
+        tooltip "restrict or relax the installation of addons for specific WoW versions"]
+
+    {:fx/type :h-box
+     :id "game-track-container"
+     :children [{:fx/type :combo-box
+                 :id "game-track-combo-box"
+                 :value (get sp/game-track-labels-map game-track)
+                 :on-value-changed (async-event-handler
+                                    (fn [new-game-track]
+                                      ;; todo: push to cli
+                                      (core/set-game-track! (get sp/game-track-labels-map-inv new-game-track))
+                                      (core/refresh)))
+                 :items (mapv second sp/game-track-labels)
+                 :disable (nil? selected-addon-dir)}
+
+                {:fx/type fx.ext.node/with-tooltip-props
+                 :props {:tooltip {:fx/type :tooltip
+                                   :text tooltip
+                                   :show-delay 200}}
+                 :desc {:fx/type :check-box
+                        :id "game-track-check-box"
+                        :text "Strict"
+                        :selected strict?
+                        :disable (nil? (core/get-game-track-strictness))
+                        :on-selected-changed (async-event-handler cli/set-game-track-strictness!)}}]}))
 
 (defn installed-addons-menu-bar
   "returns a description of the installed-addons tab-pane menu"
-  [_]
-  {:fx/type :h-box
-   :padding 10
-   :spacing 10
-   :children [{:fx/type :button
-               :text "Update all"
-               :id "update-all-button"
-               :on-action (async-handler cli/update-all)}
-              {:fx/type wow-dir-dropdown}
-              {:fx/type game-track-dropdown}
-              {:fx/type :button
-               :text (str "Update Available: " (core/latest-strongbox-release))
-               :on-action (handler #(utils/browse-to "https://github.com/ogri-la/strongbox/releases"))
-               :visible (not (core/latest-strongbox-version?))
-               :managed (not (core/latest-strongbox-version?))}]})
+  [{:keys [fx/context]}]
+  (let [selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])]
+    {:fx/type :h-box
+     :padding 10
+     :spacing 10
+     :children [{:fx/type :button
+                 :text "Update all"
+                 :id "update-all-button"
+                 :on-action (async-handler cli/update-all)
+                 :disable (nil? selected-addon-dir)}
+                {:fx/type wow-dir-dropdown}
+                {:fx/type game-track-dropdown}
+                {:fx/type :button
+                 :text (str "Update Available: " (core/latest-strongbox-release))
+                 :on-action (handler #(utils/browse-to "https://github.com/ogri-la/strongbox/releases"))
+                 :visible (not (core/latest-strongbox-version?))
+                 :managed (not (core/latest-strongbox-version?))}]}))
 
 (defn-spec table-column map?
   "returns a description of a table column that lives within a table"
@@ -1114,12 +1152,14 @@
 (defn-spec href-to-hyperlink map?
   "returns a hyperlink description or an empty text description"
   [row (s/nilable (s/keys :opt-un [::sp/url]))]
-  (if-let [label (some-> row :url utils/source-to-href-label-fn)]
-    {:fx/type :hyperlink
-     :on-action (handler #(utils/browse-to (:url row)))
-     :text (str "↪ " label)}
-    {:fx/type :text
-     :text ""}))
+  (let [url (:url row)
+        label (:source row)]
+    (if (and url label)
+      {:fx/type :hyperlink
+       :on-action (handler #(utils/browse-to url))
+       :text (str "↪ " label)}
+      {:fx/type :text
+       :text ""})))
 
 (defn-spec addon-fs-link (s/or :hyperlink map?, :nothing nil?)
   "returns a hyperlink that opens a file browser to a path on the filesystem."
@@ -1243,11 +1283,12 @@
   (fx/sub-val context get-in [:app-state :log-stats])
   (let [row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
         selected (fx/sub-val context get-in [:app-state :selected-addon-list])
+        selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])
 
         iface-version (fn [row]
                         (some-> row :interface-version str utils/interface-version-to-game-version))
 
-        column-list [{:text "source" :min-width 115 :pref-width 115 :max-width 115
+        column-list [{:text "source" :min-width 125 :pref-width 125 :max-width 125
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [row]
                                                  {:graphic (href-to-hyperlink row)})}
@@ -1271,9 +1312,18 @@
              :on-selected-items-changed cli/select-addons*}
      :desc {:fx/type :table-view
             :id "installed-addons"
-            :placeholder {:fx/type :text
-                          :style-class ["table-placeholder-text"]
-                          :text "No addons found."}
+            :placeholder (if (nil? selected-addon-dir)
+                           {:fx/type :v-box
+                            :id "welcome-screen"
+                            :children [{:fx/type :label
+                                        :style-class ["big-welcome-text"]
+                                        :text "STRONGBOX"}
+                                       {:fx/type :label
+                                        :style-class ["big-welcome-subtext"]
+                                        :text "\"File\" \u2794 \"New addon directory\""}]}
+                           {:fx/type :text
+                            :style-class ["table-placeholder-text"]
+                            :text "No addons found."})
             :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
             :pref-height 999.0
             :row-factory {:fx/cell-type :table-row
@@ -1411,7 +1461,7 @@
         empty-next-page (and (= 0 (count addon-list))
                              (> (-> search-state :page) 0))
 
-        column-list [{:text "source" :min-width 115 :pref-width 115 :max-width 115 :resizable false
+        column-list [{:text "source" :min-width 125 :pref-width 125 :max-width 125 :resizable false
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [row]
                                                  {:graphic (href-to-hyperlink row)})}
@@ -1428,7 +1478,7 @@
              :on-selected-items-changed cli/select-addons-search*}
      :desc {:fx/type :table-view
             :id "search-addons"
-            :placeholder {:fx/type :text
+            :placeholder {:fx/type :label
                           :style-class ["table-placeholder-text"]
                           :text (if empty-next-page
                                   "ᕙ(`▿´)ᕗ"
@@ -1746,7 +1796,8 @@
 
 (defn tabber
   [{:keys [fx/context]}]
-  (let [dynamic-tab-list (fx/sub-val context get-in [:app-state :tab-list])
+  (let [selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])
+        dynamic-tab-list (fx/sub-val context get-in [:app-state :tab-list])
         static-tabs
         [{:fx/type :tab
           :text "installed"
@@ -1756,6 +1807,7 @@
          {:fx/type :tab
           :text "search"
           :id "search-tab"
+          :disable (nil? selected-addon-dir)
           :closable false
           ;; when the 'search' tab is selected, ensure the search field is focused so the user can just start typing
           :on-selection-changed (fn [ev]

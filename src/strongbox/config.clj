@@ -4,6 +4,7 @@
    [clojure.set]
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :as timbre :refer [debug info warn error spy]]
+   [clojure.string]
    [strongbox
     [specs :as sp]
     [utils :as utils]]))
@@ -45,6 +46,28 @@
               cfg)]
     ;; finally, ensure :install-dir is absent from whatever we return
     (dissoc cfg :install-dir)))
+
+(defn-spec convert-compound-game-track ::sp/game-track
+  "takes any game track, new or old, and returns the new version.
+  for example: `:classic` => `:classic` and `:classic-retail` => `:classic`"
+  [game-track (s/or :new-game-track ::sp/game-track, :old-game-track ::sp/old-game-track)]
+  (if (some #{game-track} sp/old-game-tracks)
+    (-> game-track name (clojure.string/split #"\-") first keyword)
+    game-track))
+
+(defn handle-compound-game-tracks
+  "addon game track leniency is now handled through the flag `strict?` rather than encoded into the game track.
+  default strictness is `true`."
+  [cfg]
+  (if-let [addon-dir-list (:addon-dir-list cfg)]
+    (let [updater (fn [addon-dir-map]
+                    (merge addon-dir-map
+                           ;; a :game-track will always be present. see `handle-install-dir`
+                           {:game-track (convert-compound-game-track (:game-track addon-dir-map))
+                            :strict? (get addon-dir-map :strict?
+                                          (not (utils/in? (:game-track addon-dir-map) sp/old-game-tracks)))}))]
+      (assoc cfg :addon-dir-list (mapv updater addon-dir-list)))
+    cfg))
 
 (defn-spec valid-catalogue-location? boolean?
   "returns true if given `catalogue-location` is a valid `:catalogue/location`"
@@ -110,6 +133,7 @@
   (let [cfg (-> cfg-a
                 (merge cfg-b)
                 handle-install-dir
+                handle-compound-game-tracks
                 remove-invalid-addon-dirs
                 handle-selected-addon-dir
                 remove-invalid-catalogue-location-entries

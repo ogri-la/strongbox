@@ -2,7 +2,9 @@
   (:require
    ;;[taoensso.timbre :refer [debug info warn error spy]]
    [clojure.test :refer [deftest testing is use-fixtures]]
-   [strongbox.utils :as utils :refer [join]]
+   [strongbox
+    [utils :as utils :refer [join]]
+    [constants :as constants]]
    [me.raynes.fs :as fs]))
 
 (def ^:dynamic *temp-dir-path* "")
@@ -235,18 +237,21 @@
                ["1." :classic]
                ["1.13.0" :classic]
                ["1.100.100" :classic]
+               [constants/latest-classic-game-version :classic]
 
-               ;; classic-bc (unimplemented)
-               ["2." nil]
-               ["2.5.1" nil]
-               ["2.foo.bar" nil]
+               ;; classic-tbc
+               ["2." :classic-tbc]
+               ["2.5.1" :classic-tbc]
+               ["2.foo.bar" :classic-tbc]
+               [constants/latest-classic-tbc-game-version :classic-tbc]
 
                ;; everything else
                ["3.0.2" :retail]
                ["4.3.0" :retail]
                ["5.0.4" :retail]
                ;; ...etc
-               ["9.0.1" :retail]]]
+               ["9.0.1" :retail]
+               [constants/latest-retail-game-version :retail]]]
     (doseq [[given expected] cases]
       (is (= expected (utils/game-version-to-game-track given))))))
 
@@ -262,4 +267,59 @@
           row-list [["foo" "bar"] ["baz" "bup"]]
           expected [{:key "foo" :val "bar"} {:key "baz" :val "bup"}]]
       (is (= expected (apply utils/csv-map header row-list))))))
+
+(deftest guess-game-track
+  (testing ""
+    (let [cases [[nil nil]
+                 ["" nil]
+                 ["foo" nil]
+                 ["1.2.3" nil]
+
+                 ;; classic-tbc
+                 ["classic-tbc" :classic-tbc]
+                 ["1.2.3-classic-tbc" :classic-tbc]
+                 ["1.2.3-classic-tbc-no-lib" :classic-tbc]
+                 ["classic-tbc-no-lib" :classic-tbc]
+                 ["classic-tbc.no-lib" :classic-tbc]
+                 ["classic_tbc" :classic-tbc]
+                 ["1.2.3_classic_tbc_no-lib" :classic-tbc]
+
+                 ;; classic-tbc (edge cases)
+                 ["beta-tbc" :classic-tbc]
+                 ["beta-bc" :classic-tbc]
+                 ["beta_tbc" :classic-tbc]
+                 ["beta bc" :classic-tbc]
+                 ["beta (tbc)" :classic-tbc]
+                 ["beta (bc)" :classic-tbc]
+                 ["beta (tbc) 2.13" nil]
+
+                 ;; classic
+                 ["classic" :classic]
+                 ["1.2.3-classic" :classic]
+                 ["1.2.3-classic-no-lib" :classic]
+                 ["classic-no-lib" :classic]
+                 ["classic.no-lib" :classic]
+                 ["1.2.3_classic_no-lib" :classic]
+
+                 ;; retail
+                 ["retail" :retail]
+                 ["1.2.3-retail" :retail]
+                 ["1.2.3-retail-no-lib" :retail]
+                 ["retail-no-lib" :retail]
+                 ["retail.no-lib" :retail]
+                 ["1.2.3_retail_no-lib" :retail]
+
+                 ;; case insensitivity
+                 ["Retail" :retail]
+                 ["Classic" :classic]
+                 ["Classic-TBC" :classic-tbc]
+
+                 ;; priority (classic-tbc > classic > retail)
+                 ["retail-classic-tbc-classic" :classic-tbc]
+                 ["retail-classic-classic-tbc" :classic-tbc]
+                 ["classic-classic-tbc" :classic-tbc]
+                 ["retail-classic" :classic]]]
+
+      (doseq [[given expected] cases]
+        (is (= expected (utils/guess-game-track given)))))))
 

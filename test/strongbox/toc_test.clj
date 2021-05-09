@@ -2,6 +2,7 @@
   (:require
    [clojure.test :refer [deftest testing is use-fixtures]]
    [strongbox
+    [constants :as constants]
     [utils :as utils :refer [join]]
     [toc :as toc]
     [test-helper :as helper]]
@@ -99,7 +100,7 @@ SomeAddon.lua")
                      :dirname "EveryAddon"
                      :label "EveryAddon *"
                      :description nil
-                     :interface-version toc/default-interface-version
+                     :interface-version constants/default-interface-version
                      :installed-version nil}
 
           cases [;; empty/no title
@@ -119,7 +120,7 @@ SomeAddon.lua")
 (deftest parse-addon-toc--aliased
   (testing "addons whose toc files have a `:title` value that matches an alias get a hardcoded source and source-id value"
     (let [addon-dir (utils/join (helper/install-dir) "dirname")
-          defaults {:dirname "dirname" :description nil :installed-version nil :interface-version toc/default-interface-version}
+          defaults {:dirname "dirname" :description nil :installed-version nil :interface-version constants/default-interface-version}
           cases [[{:title "Plater"} {:label "Plater" :name "plater" :source "curseforge" :source-id 100547}]
                  [{:title "|cffffd200Deadly Boss Mods|r |cff69ccf0Core|r"}
                   {:label "|cffffd200Deadly Boss Mods|r |cff69ccf0Core|r"
@@ -133,7 +134,7 @@ SomeAddon.lua")
 (deftest parse-addon-toc--x-source
   (testing "addons whose toc files have a 'x-$host-id=val' will use those as `:source` and `:source-id`"
     (let [addon-dir (utils/join (helper/install-dir) "dirname")
-          defaults {:dirname "dirname" :description nil :installed-version nil :interface-version toc/default-interface-version}
+          defaults {:dirname "dirname" :description nil :installed-version nil :interface-version constants/default-interface-version}
           cases [[{:x-wowi-id "123"} {:label "dirname *" :name "dirname-*" :source "wowinterface" :source-id 123}]
                  [{:x-wowi-id 123} {:label "dirname *" :name "dirname-*" :source "wowinterface" :source-id 123}]
                  [{:x-wowi-id "abc"} {:label "dirname *" :name "dirname-*"}] ;; bad case, non-numeric wowi ID

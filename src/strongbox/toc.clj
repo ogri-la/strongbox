@@ -2,6 +2,7 @@
   (:refer-clojure :rename {replace clj-replace})
   (:require
    [strongbox
+    [constants :as constants]
     ;; I want to keep higher level logging concerns out of toc.clj and nfo.clj.
     ;; addon.clj and higher is ok.
     ;;[logging :as logging] 
@@ -12,10 +13,6 @@
    [taoensso.timbre :as log :refer [debug info warn error spy]]
    [me.raynes.fs :as fs]
    [clojure.string :refer [lower-case ends-with?]]))
-
-;; interface version to use if .toc file is missing theirs
-;; assume addon is compatible with the most recent version
-(def default-interface-version 90100)
 
 ;; matches a tocfile's 'Title' (label) to a catalogue's name
 ;; aliases are maintained for the top-50 downloaded addons (ever) only, and only for those that need it
@@ -163,7 +160,7 @@
                ;; :notes is preferred but we'll fall back to :description
                :description (or (:notes keyvals) (:description keyvals))
                :interface-version (or (some-> keyvals :interface utils/to-int)
-                                      default-interface-version)
+                                      constants/default-interface-version)
                :installed-version (:version keyvals)
 
                ;; toc file dependency values describe *load order*, not *packaging*

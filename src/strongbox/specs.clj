@@ -62,24 +62,27 @@
 (s/def ::closable? boolean?)
 (s/def ::log-level #{:debug :info :warn :error})
 
-;; preserve order, used in GUI
-(def game-track-labels [[:retail "retail"]
-                        [:classic "classic"]])
-(def selectable-game-track-labels (into game-track-labels
-                                        [[:retail-classic "any, prefer retail"]
-                                         [:classic-retail "any, prefer classic"]]))
+;; preserve order here
+(def game-track-labels [[:retail "Retail"]
+                        [:classic "Classic"]
+                        [:classic-tbc "Classic (TBC)"]])
 
-(def selectable-game-track-labels-map (into {} selectable-game-track-labels))
-(def selectable-game-track-labels-map-inv (map-invert selectable-game-track-labels))
+(def game-track-labels-map (into {} game-track-labels)) ;; {:retail "WoW Retail", ...}
+(def game-track-labels-map-inv (map-invert game-track-labels)) ;; {"WoW Retail" :retail, ...}
+(def game-tracks (->> game-track-labels-map keys set)) ;; #{:retail, :classic, ...}
 
-(def game-tracks (->> game-track-labels (into {}) keys set))
-(def selectable-game-tracks (->> selectable-game-track-labels (into {}) keys set))
-(def lenient-game-tracks #{:retail-classic :classic-retail})
+;; needed to update config
+(def old-game-tracks #{:retail-classic, :classic-retail})
 
+(s/def ::old-game-track old-game-tracks)
 (s/def ::game-track game-tracks)
 (s/def ::installed-game-track ::game-track) ;; alias
-(s/def ::lenient-game-track lenient-game-tracks)
 (s/def ::game-track-list (s/coll-of ::game-track :kind vector? :distinct true))
+
+(s/def ::strict? boolean?)
+
+;; ---
+
 (s/def ::download-count (s/and int? #(>= % 0)))
 (s/def ::ignore? boolean?)
 (s/def ::ignore-flag (s/keys :req-un [::ignore?]))
@@ -92,7 +95,7 @@
 (s/def ::version string?)
 (s/def ::installed-version (s/nilable ::version))
 (s/def ::update? boolean?)
-(s/def ::interface-version int?)
+(s/def ::interface-version int?) ;; 90005, 11307, 20501
 (s/def ::name string?) ;; normalised name of the addon, shared between toc file and curseforge
 (s/def ::label string?) ;; name of the addon without normalisation
 (s/def ::release-label ::label)
@@ -112,10 +115,9 @@
 
 ;; user config
 
-;; the game tracks *selectable by the user* are mapped to a simpler set internally
-(s/def :addon-dir/game-track selectable-game-tracks)
+(s/def :addon-dir/game-track game-tracks)
 (s/def ::addon-dir ::extant-dir)
-(s/def ::addon-dir-map (s/keys :req-un [::addon-dir :addon-dir/game-track]))
+(s/def ::addon-dir-map (s/keys :req-un [::addon-dir :addon-dir/game-track ::strict?]))
 (s/def ::addon-dir-list (s/coll-of ::addon-dir-map))
 (s/def ::selected-catalogue keyword?)
 
@@ -174,7 +176,7 @@
 (s/def :addon/category string?)
 (s/def :addon/category-list (s/coll-of :addon/category))
 
-(s/def :addon/source (s/or :known #{"curseforge" "wowinterface" "github" "tukui" "tukui-classic"}
+(s/def :addon/source (s/or :known #{"curseforge" "wowinterface" "github" "tukui" "tukui-classic" "tukui-classic-tbc"}
                            :unknown string?))
 (s/def :addon/source-id (s/or ::integer-id? int? ;; tukui has negative ids
                               ::string-id? string?))
@@ -244,7 +246,7 @@
                    :addon/source ;; for host resolver dispatch
                    :addon/source-id ;; unique identifier for host resolver
                    ]
-          :opt-un [::game-track-list ;; wowinterface only
+          :opt-un [::game-track-list ;; wowinterface, tukui
                    ]))
 
 ;; the set of per-addon values provided by the remote host on each check

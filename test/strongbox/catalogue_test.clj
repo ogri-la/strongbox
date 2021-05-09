@@ -216,49 +216,53 @@
   (testing "a github 500 (internal server error) response gets a custom message"
     (let [addon {:name "foo" :label "Foo" :source "github" :source-id "1"}
           game-track :retail
+          strict? true
           fake-routes {"https://api.github.com/repos/1/releases"
                        {:get (fn [req] {:status 500 :reason-phrase "Internal Server Error"})}}
           expected ["failed to download file 'https://api.github.com/repos/1/releases': Internal Server Error (HTTP 500)"
                     "Github: api is down. Check www.githubstatus.com and try again later."
                     "no release found for 'foo' (retail) on github"]]
       (with-fake-routes-in-isolation fake-routes
-        (is (= expected (logging/buffered-log :info (catalogue/expand-summary addon game-track))))))))
+        (is (= expected (logging/buffered-log :info (catalogue/expand-summary addon game-track strict?))))))))
 
 (deftest github-api-500-error
   (testing "a github api 500 (internal server error) response gets a custom message"
     (let [addon {:name "foo" :label "Foo" :source "github" :source-id "1"}
           game-track :retail
+          strict? true
           fake-routes {"https://api.github.com/repos/1/releases"
                        {:get (fn [req] {:status 500 :reason-phrase "Internal Server Error"})}}
           expected ["failed to download file 'https://api.github.com/repos/1/releases': Internal Server Error (HTTP 500)"
                     "Github: api is down. Check www.githubstatus.com and try again later."
                     "no release found for 'foo' (retail) on github"]]
       (with-fake-routes-in-isolation fake-routes
-        (is (= expected (logging/buffered-log :info (catalogue/expand-summary addon game-track))))))))
+        (is (= expected (logging/buffered-log :info (catalogue/expand-summary addon game-track strict?))))))))
 
 (deftest curseforge-502-bad-gateway
   (testing "a curseforge 502 (bad gateway) response gets a custom message"
     (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "281321"}
           game-track :retail
+          strict? true
           fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/281321"
                        {:get (fn [req] {:status 502 :reason-phrase "Gateway Time-out (HTTP 502)"})}}
           expected ["failed to download file 'https://addons-ecs.forgesvc.net/api/v2/addon/281321': Gateway Time-out (HTTP 502) (HTTP 502)"
                     "Curseforge: the API is having problems right now. Try again later."
                     "no release found for 'foo' (retail) on curseforge"]]
       (with-fake-routes-in-isolation fake-routes
-        (is (= expected (logging/buffered-log :info (catalogue/expand-summary addon game-track))))))))
+        (is (= expected (logging/buffered-log :info (catalogue/expand-summary addon game-track strict?))))))))
 
 (deftest curseforge-504-gateway-timeout
   (testing "a 504 (gateway timeout) response gets a custom message"
     (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "281321"}
           game-track :retail
+          strict? true
           fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/281321"
                        {:get (fn [req] {:status 504 :reason-phrase "Gateway Time-out (HTTP 504)"})}}
           expected ["failed to download file 'https://addons-ecs.forgesvc.net/api/v2/addon/281321': Gateway Time-out (HTTP 504) (HTTP 504)"
                     "Curseforge: the API is having problems right now. Try again later."
                     "no release found for 'foo' (retail) on curseforge"]]
       (with-fake-routes-in-isolation fake-routes
-        (is (= expected (logging/buffered-log :info (catalogue/expand-summary addon game-track))))))))
+        (is (= expected (logging/buffered-log :info (catalogue/expand-summary addon game-track strict?))))))))
 
 ;; retail
 
@@ -266,6 +270,7 @@
   (testing "when just retail is available, use it"
     (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"}
           game-track :retail
+          strict? true
           response (slurp (fixture-path "curseforge-api-addon--retail.json"))
           fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/4646"
                        {:get (fn [req] {:status 200 :body response})}}
@@ -280,21 +285,23 @@
                                     :version "2.4.5"}]}
           expected (merge addon expected)]
       (with-fake-routes-in-isolation fake-routes
-        (is (= expected (catalogue/expand-summary addon game-track))))))
+        (is (= expected (catalogue/expand-summary addon game-track strict?))))))
 
   (testing "when just classic is available, use nothing"
     (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"}
           game-track :retail
+          strict? true
           response (slurp (fixture-path "curseforge-api-addon--classic.json"))
           fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/4646"
                        {:get (fn [req] {:status 200 :body response})}}
           expected nil]
       (with-fake-routes-in-isolation fake-routes
-        (is (= expected (catalogue/expand-summary addon game-track))))))
+        (is (= expected (catalogue/expand-summary addon game-track strict?))))))
 
   (testing "when both retail and classic are available, use retail"
     (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"}
           game-track :retail
+          strict? true
           response (slurp (fixture-path "curseforge-api-addon--retail-AND-classic.json"))
           fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/4646"
                        {:get (fn [req] {:status 200 :body response})}}
@@ -309,12 +316,13 @@
                                     :version "2.4.5"}]}
           expected (merge addon expected)]
       (with-fake-routes-in-isolation fake-routes
-        (is (= expected (catalogue/expand-summary addon game-track)))))))
+        (is (= expected (catalogue/expand-summary addon game-track strict?)))))))
 
 (deftest expand-summary--retail-then-classic
   (testing "when just classic is available, use it"
     (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"}
-          game-track :retail-classic
+          game-track :retail
+          strict? false
           response (slurp (fixture-path "curseforge-api-addon--classic.json"))
           fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/4646"
                        {:get (fn [req] {:status 200 :body response})}}
@@ -329,7 +337,7 @@
                                     :version "2.4.5 (Classic)"}]}
           expected (merge addon expected)]
       (with-fake-routes-in-isolation fake-routes
-        (is (= expected (catalogue/expand-summary addon game-track)))))))
+        (is (= expected (catalogue/expand-summary addon game-track strict?)))))))
 
 ;; classic
 
@@ -337,6 +345,7 @@
   (testing "when just classic is available, use it"
     (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"}
           game-track :classic
+          strict? true
           response (slurp (fixture-path "curseforge-api-addon--classic.json"))
           fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/4646"
                        {:get (fn [req] {:status 200 :body response})}}
@@ -351,21 +360,23 @@
                                     :version "2.4.5 (Classic)"}]}
           expected (merge addon expected)]
       (with-fake-routes-in-isolation fake-routes
-        (is (= expected (catalogue/expand-summary addon game-track))))))
+        (is (= expected (catalogue/expand-summary addon game-track strict?))))))
 
   (testing "when just retail is available, use nothing"
     (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"}
           game-track :classic
+          strict? true
           response (slurp (fixture-path "curseforge-api-addon--retail.json"))
           fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/4646"
                        {:get (fn [req] {:status 200 :body response})}}
           expected nil]
       (with-fake-routes-in-isolation fake-routes
-        (is (= expected (catalogue/expand-summary addon game-track))))))
+        (is (= expected (catalogue/expand-summary addon game-track strict?))))))
 
   (testing "when both retail and classic are available, use classic"
     (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"}
           game-track :classic
+          strict? true
           response (slurp (fixture-path "curseforge-api-addon--retail-AND-classic.json"))
           fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/4646"
                        {:get (fn [req] {:status 200 :body response})}}
@@ -380,12 +391,13 @@
                                     :version "2.4.5 (Classic)"}]}
           expected (merge addon expected)]
       (with-fake-routes-in-isolation fake-routes
-        (is (= expected (catalogue/expand-summary addon game-track)))))))
+        (is (= expected (catalogue/expand-summary addon game-track strict?)))))))
 
 (deftest expand-summary--classic-then-retail
   (testing "when just retail is available, use it"
     (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"}
-          game-track :classic-retail
+          game-track :classic
+          strict? false
           response (slurp (fixture-path "curseforge-api-addon--retail.json"))
           fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/4646"
                        {:get (fn [req] {:status 200 :body response})}}
@@ -400,13 +412,14 @@
                                     :version "2.4.5"}]}
           expected (merge addon expected)]
       (with-fake-routes-in-isolation fake-routes
-        (is (= expected (catalogue/expand-summary addon game-track)))))))
+        (is (= expected (catalogue/expand-summary addon game-track strict?)))))))
 
 (deftest expand-summary--pinned
   (testing "when an addon is pinned, look for it's release in the list of releases returned from the host"
     (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"
                  :installed-version "1.2.3" :pinned-version "1.2.0"}
           game-track :retail
+          strict? true
           fixture [{:download-url "https://edge.forgecdn.net/files/3104/62/Pawn-2.4.5.zip",
                     :game-track :retail,
                     :interface-version 90000,
@@ -425,12 +438,13 @@
       (with-fake-routes-in-isolation {}
         ;; omg, with-redefs is fantastic
         (with-redefs [strongbox.curseforge-api/expand-summary (constantly fixture)]
-          (is (= expected (catalogue/expand-summary addon game-track)))))))
+          (is (= expected (catalogue/expand-summary addon game-track strict?)))))))
 
   (testing "when a pinned addon cannot find it's pinned release, use the latest release available"
     (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"
                  :installed-version "0.9.9" :pinned-version "0.9.9"}
           game-track :retail
+          strict? true
           fixture [{:download-url "https://edge.forgecdn.net/files/3104/62/Pawn-2.4.5.zip",
                     :game-track :retail,
                     :interface-version 90000,
@@ -448,4 +462,4 @@
       (with-fake-routes-in-isolation {}
         ;; omg, with-redefs is fantastic
         (with-redefs [strongbox.curseforge-api/expand-summary (constantly fixture)]
-          (is (= expected (catalogue/expand-summary addon game-track))))))))
+          (is (= expected (catalogue/expand-summary addon game-track strict?))))))))

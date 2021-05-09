@@ -46,6 +46,25 @@
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (tukui-api/download-classic-summaries)))))))
 
+(deftest parse-addons--classic-tbc
+  (testing "parsing classic (the burning crusade) addons"
+    (let [fixture (slurp (fixture-path "tukui--classic-tbc-addon-details.json"))
+          fake-routes {tukui-api/classic-tbc-summary-list-url
+                       {:get (fn [req] {:status 200 :body fixture})}}
+
+          expected [{:description "A visual interface replacement. It restyles the default interface, while adding many useful features.",
+                     :download-count 15,
+                     :game-track-list [:classic-tbc],
+                     :label "vUI",
+                     :name "vui",
+                     :source "tukui-classic-tbc",
+                     :source-id 6,
+                     :tag-list [:interfaces],
+                     :updated-date "2021-04-26T19:18:02Z",
+                     :url "https://www.tukui.org/classic-tbc-addons.php?id=6"}]]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (tukui-api/download-classic-tbc-summaries)))))))
+
 (deftest parse-addons--proper
   (testing "parsing tukui/elvui addons proper"
     (let [fixture (slurp (fixture-path "tukui--elvui-addon-proper.json"))

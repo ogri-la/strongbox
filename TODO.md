@@ -6,73 +6,55 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* remove gui1
+* add support for classic TBC and classic WOTLK and classic Cataclysm
+    - really, just figure out a way to support N game tracks with strict/relaxed installation rules
     - done
-    - remove original db-search
-        - done
-* gui, new tab for dedicated log
-    - done
-* addon detail pane
-    - clicking an addon row opens a new tab with as much detail as we can about that addon
-    - done  
-* log pane, filter by log level
-    - log level should have number of instances against it
-        - warn (2)
-        - error (1)
-    - done
-* per-addon logging
-    - I want the user to see a list of messages regarding a *specific* addon
-    - when emitting a log line about a particular addon, capture that addon's source and source-id somehow
-        - and addon directory
-            - install-dir, dirname, source, source-id are all captured and used.
-                - it got a bit clunky but we got there
+        - won't prevent me from having to filter and group addon host results into game tracks however
+
+* curseforge, add classic-tbc support
     - done
 
-* remove 'hostname' from log output
-    - done
-    - update privacy section in readme
-        - done
-
-* coloured warnings/errors on console output
-    - when running with :debug on the wall of text is difficult to read
-    - I'm thinking about switching away from timbre to something more traditional
-        - he's not addressing tickets
-            - eh
-        - it may have been simpler to use in 3.x.x but in 4.x.x it's gotten a bit archaic
-            - still trie
-        - I can't drop hostname without leaving pretty-printed stacktraces behind
-            - fixed
-    - despite everything I stick with timbre and it's quite integrated now so it won't be disappearing anytime soon
-    - we now have console colours!
-        - they'll probably be tweakd in future after the logging frenzy has calmed down
-    - done
-* highlight new log pane or status bar when there is an non-addon error or warning
-    - done
-* 4.0 styling
-    - dark theme styling for addon-detail
-        - use derived colours rather than hardcode
-        - done
-    - bug, addon detail, description box may grow or shrink after finding a match in the catalogue, bumping the content below up or down
-        - done
-
-* uber-button
-    - new column that displays overall health of addon
-        - clicking whatever is in there takes you to a detail pane for that addon
-        - if a task is being performed for that addon, it shows a progress meter
-        - if addon is up-to-date, it shows a happy green tick
-            - if there is something to be concerned about (and that the user can fix), show a warning or error
+* wowi, add classic-tbc support
     - done
 
-* bug, regression, --verbosity cli option is reset
+* tukui, add classic-tbc support
     - done
 
-* bug, 'strongbox.version' in debug output is null when run as a binary
+* github, add classic-tbc support
+    - done
+
+* update classic/retail 'features' list of readme
+    - done
 
 ## todo
 
+
 ## todo bucket (no particular order)
 
-* disable addon update if it's unsteady
+* ux, installing (not updating) an addon for an incompatible game track shouldn't fail silently or get lost in log noise
+    - https://github.com/ogri-la/strongbox/issues/231
+
+* github, revisit the "-classic" suffix naming
+    - this was solved more elegantly in curseforge-api
+
+* bug, I can see github addons when using wowi catalogue
+    - user catalogue should be selectable
+
+* bug, catalogue loading
+    - while updating the catalogue with the new tukui addons I discovered a case where the catalogue *should* be failing validation but it wasn't.
+        - it came down to an :opt vs :opt-un in the spec
+            - the key in question wasn't qualified and thus not matched for validation
+    - the catalogue should always be loadable by previous versions of strongbox that support the given spec version
+        - ...
+    - when the catalogue fails validation it shouldn't freeze the app while the reason is printed in the console
+
+* bug, uber button, identical addons in different addon dirs are causing the warn/error-free version to show warns/errors
+
+* search, comma separate download numbers
+    - or figure out the locale-specific separator
+    - 1234567890 downloads is less readable than 1,234,567,890
+
+* disable addon update button if it's unsteady
     - interesting stuff happens when you pump that update button!
     - roll this into the action queue work
         - no more than one update request pending per-addon
@@ -159,9 +141,6 @@ see CHANGELOG.md for a more formal list of changes by release
         - or drop the pin it and display updates?
     - we can now export addons at specific versions
         - I think we already have this though ... called :version
-
-* github, revisit the "-classic" suffix naming
-    - this was solved more elegantly in curseforge-api
 
 * dedicated tab for "user-catalogue" ?
     - add, delete, update github addons

@@ -86,13 +86,13 @@
           expected {:retail [{:download-url "https://example.org/path/to/1.2.3.zip"
                               :version "1.2.3"
                               :game-track :retail
-                              :release-label "[WoW 9.0.3] Foo",
+                              :release-label "[WoW 9.0.5] Foo",
                               ;; synthetic, we had to guess using `:gameVersionFlavor`
                               :interface-version 90000}]
                     :classic [{:download-url "https://example.org/path/to/a.b.c.zip"
                                :version "a.b.c"
                                :game-track :classic
-                               :release-label "[WoW 1.13.5] Foo"
+                               :release-label "[WoW 1.13.7] Foo"
                                ;; synthetic, we had to guess using `:gameVersionFlavor`
                                :interface-version 11300}]}]
       (is (= expected (curseforge-api/group-releases fixture)))))
@@ -167,7 +167,7 @@
                     :classic [{:download-url "https://example.org/path/to/1.2.4.zip"
                                :version "1.2.4"
                                :game-track :classic
-                               :release-label "[WoW 1.13.5] Foo",
+                               :release-label "[WoW 1.13.7] Foo",
                                :interface-version 11300}
                               {:download-url "https://example.org/path/to/1.2.3.zip"
                                :version "1.2.3"
@@ -323,3 +323,11 @@
       (doseq [[given expected] cases]
         (is (= expected (curseforge-api/prune-leading-duplicates given)))))))
 
+(deftest game-version-flavor-to-game-track
+  (let [cases [["wow_classic" :classic]
+               ["wow_burning_crusade" :classic-tbc]
+               ["wow_retail" :retail]
+               ["foo" :retail]
+               [nil :retail]]]
+    (doseq [[given expected] cases]
+      (is (= expected (curseforge-api/game-version-flavor-to-game-track given))))))

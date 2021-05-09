@@ -26,6 +26,7 @@
                       "github" github-api/expand-summary
                       "tukui" tukui-api/expand-summary
                       "tukui-classic" tukui-api/expand-summary
+                      "tukui-classic-tbc" tukui-api/expand-summary
                       nil (fn [_ _] (error "malformed addon:" (utils/pprint addon)))}
         key (:source addon)]
     (try
@@ -47,29 +48,45 @@
 
 (defn-spec expand-summary (s/or :ok :addon/expanded, :error nil?)
   "fetches updates from the addon host for the given `addon` and `game-track`.
-  supports compound game tracks like `:retail-classic` and `:classic-retail`.
+  when `strict?` is `false` and an addon fails to match for the given `game-track`, other game tracks will be checked.
   emits warnings to user when no release found."
-  [addon :addon/expandable, game-track :addon-dir/game-track]
+  [addon :addon/expandable, game-track :addon-dir/game-track, strict? ::sp/strict?]
   (if-let [source-updates
-           (case game-track
-             :retail (-expand-summary addon :retail)
-             :classic (-expand-summary addon :classic)
-             :retail-classic (or
-                              (-expand-summary addon :retail)
-                              (-expand-summary addon :classic))
-             :classic-retail (or
-                              (-expand-summary addon :classic)
-                              (-expand-summary addon :retail)))]
+           (case [game-track strict?]
+             [:retail true] (-expand-summary addon :retail)
+             [:classic true] (-expand-summary addon :classic)
+             [:classic-tbc true] (-expand-summary addon :classic-tbc)
+             [:retail false]
+             (or
+              (-expand-summary addon :retail)
+              (-expand-summary addon :classic)
+              (-expand-summary addon :classic-tbc))
+
+             [:classic false]
+             (or
+              (-expand-summary addon :classic)
+              (-expand-summary addon :classic-tbc)
+              (-expand-summary addon :retail))
+
+             [:classic-tbc false]
+             (or
+              (-expand-summary addon :classic-tbc)
+              (-expand-summary addon :classic)
+              (-expand-summary addon :retail)))]
+
     source-updates
 
-    (let [;; "no release found for 'adibags' (retail) on github"
+    (let [;; todo: revisit this error message
+          ;; "no release found for 'adibags' (retail) on github"
           ;; "no release found for 'adibags' (retail or classic) on github"
-          track-list (-> game-track name (clojure.string/split #"-"))
-          track-list (clojure.string/join " or " track-list)]
-      (warn (format "no release found for '%s' (%s) on %s"
-                    (:name addon)
-                    track-list
-                    (:source addon))))))
+          msg (case [game-track strict?]
+                [:retail true] "no release found for '%s' (retail) on %s"
+                [:classic true] "no release found for '%s' (classic) on %s"
+                [:classic-tbc true] "no release found for '%s' (classic - TBC) on %s"
+                [:retail false] "no release found for '%s' (retail, classic or classic -TBC) on %s"
+                [:classic false] "no release found for '%s' (classic, classic - TBC or retail) on %s"
+                [:classic-tbc false] "no release found for '%s' (classic - TBC, classic or retail) on %s")]
+      (warn (format msg (:name addon) (:source addon))))))
 
 
 ;;
