@@ -3,6 +3,7 @@
    [clojure.test :refer [deftest testing is use-fixtures]]
    ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [strongbox
+    [constants :as constants]
     [logging :as logging]
     [github-api :as github-api]
     [test-helper :refer [fixture-path slurp-fixture]]]
@@ -109,7 +110,18 @@
         (is (= expected-classic (count (github-api/parse-github-release-data fixture addon-summary :classic))))
         (is (= expected-retail (count (github-api/parse-github-release-data fixture addon-summary :retail))))))))
 
-(deftest expand-addon-summary
+(deftest find-gametracks-toc-data
+  (testing "games tracks are correctly detected from toc data"
+    (let [cases [[{} nil]
+                 [{:interface constants/default-interface-version} [:retail]]
+                 [{:interface constants/default-interface-version
+                   :#interface constants/default-interface-version-classic} [:retail :classic]]
+                 [{:interface 20501 :#interface 90000} [:retail :classic-tbc]]]]
+
+      (doseq [[given expected] cases]
+        (is (= expected (github-api/-find-gametracks-toc-data given)))))))
+
+(deftest expand-addon-summary--retail
   (testing "expand-summary correctly extracts and adds additional properties"
     (let [given {:url "https://github.com/Aviana/HealComm"
                  :updated-date "2019-10-09T17:40:04Z"
@@ -161,8 +173,9 @@
                        {:get (fn [_] {:status 200 :body fixture})}}]
 
       (with-fake-routes-in-isolation fake-routes
-        (is (= expected (github-api/expand-summary given game-track))))))
+        (is (= expected (github-api/expand-summary given game-track)))))))
 
+(deftest expand-addon-summary--classic
   (testing "classic addons are correctly detected"
     (let [given {:url "https://github.com/Ravendwyr/Chinchilla"
                  :updated-date "2019-10-09T17:40:04Z"
@@ -182,14 +195,42 @@
                      :game-track :classic,
                      :version "v2.10.0-beta3-classic"}]
 
-          fixture (slurp (fixture-path "github-repo-releases--many-assets-many-gametracks.json"))
+          fixture (slurp (fixture-path "github-repo-releases--mixed-game-tracks.json"))
           fake-routes {"https://api.github.com/repos/Ravendwyr/Chinchilla/releases"
                        {:get (fn [_] {:status 200 :body fixture})}}]
 
       (with-fake-routes-in-isolation fake-routes
-        (is (= expected (github-api/expand-summary given game-track))))))
+        (is (= expected (github-api/expand-summary given game-track)))))))
 
-  (testing "addons that have no assets (and no right to be in the catalogue) are not downloaded and no errors occur"
+(deftest expand-addon-summary--classic-tbc
+  (testing "classic-tbc addons are correctly detected"
+    (let [given {:url "https://github.com/Foo/Bar"
+                 :updated-date "2019-10-09T17:40:04Z"
+                 :source "github"
+                 :source-id "Foo/Bar"
+                 :label "Bar"
+                 :name "bar"
+                 :download-count 30946
+                 :tag-list []}
+
+          game-track :classic-tbc
+
+          expected [{:download-url "https://github.com/Ravendwyr/Chinchilla/releases/download/v2.10.0/Chinchilla-v2.10.0-classic-tbc.zip",
+                     :game-track :classic-tbc,
+                     :version "v2.10.0-classic-tbc"}
+                    {:download-url "https://github.com/Ravendwyr/Chinchilla/releases/download/v2.10.0-beta3/Chinchilla-v2.10.0-beta3-classic-tbc.zip",
+                     :game-track :classic-tbc,
+                     :version "v2.10.0-beta3-classic-tbc"}]
+
+          fixture (slurp (fixture-path "github-repo-releases--mixed-game-tracks.json"))
+          fake-routes {"https://api.github.com/repos/Foo/Bar/releases"
+                       {:get (fn [_] {:status 200 :body fixture})}}]
+
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (github-api/expand-summary given game-track)))))))
+
+(deftest expand-addon-summary--missing-assets
+  (testing "releases that have no assets are not considered and no errors occur"
     (let [given {:url "https://github.com/Robert388/Necrosis-classic"
                  :updated-date "2019-10-09T17:40:04Z"
                  :source "github"
@@ -206,10 +247,13 @@
                        {:get (fn [_] {:status 200 :body fixture})}}]
 
       (with-fake-routes-in-isolation fake-routes
+        ;; testing each game track isn't really neccessary but can't hurt
+        (is (= expected (github-api/expand-summary given :classic-tbc)))
         (is (= expected (github-api/expand-summary given :classic)))
-        (is (= expected (github-api/expand-summary given :retail))))))
+        (is (= expected (github-api/expand-summary given :retail)))))))
 
-  (testing "releases whose assets are only partially uploaded due to an upload failure are ignored"
+(deftest expand-addon-summary--partial-assets
+  (testing "releases whose assets are only partially uploaded are ignored"
     (let [given {:url "https://github.com/jsb/RingMenu"
                  :updated-date "2019-10-09T17:40:04Z"
                  :source "github"
@@ -228,8 +272,9 @@
                        {:get (fn [_] {:status 200 :body fixture})}}]
 
       (with-fake-routes-in-isolation fake-routes
-        (is (= expected (github-api/expand-summary given game-track))))))
+        (is (= expected (github-api/expand-summary given game-track)))))))
 
+(deftest expand-addon-summary--matching-game-tracks-only
   (testing "releases whose assets do not match the given `:game-track` are skipped"
     (let [fixture (slurp (fixture-path "github-repo-releases--altoholic-classic--leading-bad-assets.json"))
           addon-summary
@@ -275,7 +320,7 @@
           (is (= expected (github-api/extract-source-id given))))))))
 
 (deftest gametrack-detection
-  (testing "detecting github addon game track, single asset cases"
+  (testing "detecting github addon game track"
     (let [addon-summary
           {:url "https://github.com/Aviana/HealComm"
            :updated-date "2019-10-09T17:40:04Z"
@@ -294,79 +339,30 @@
 
           cases [;; addon-summary updates, latest-release updates, expected
 
-                 ;; case: todo: track in release name
-
-                 ;; case: asset has 'classic' in it's name
+                 ;; case: game track present in file name, prefer that over `:game-track-list` and any game-track in release name
                  [{} [[:assets 0 :name] "1.2.3-Classic"]
                   {:classic [{:content_type "application/zip", :state "uploaded", :name "1.2.3-Classic", :game-track :classic, :version "Release 1.2.3-classic" :-mo :track-in-asset-name}]}]
 
-                 ;; case: single asset, no game track present in file name, no known game tracks. default to :retail
+                 ;; case: game track present in release name, prefer that over `:game-track-list`
+                 [{} [[:name] "Foo 1.2.3-Classic TBC"]
+                  {:classic-tbc [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track :classic-tbc, :version "Foo 1.2.3-Classic TBC-classic-tbc" :-mo :track-in-release-name}]}]
+
+                 ;; case: no game track present in asset name or release name and no `:game-track-list`. assume `:retail`
                  [{} {}
                   {:retail [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track :retail, :version "Release 1.2.3" :-mo :sa--ngt}]}]
 
-                 ;; case: single asset, no game track present in file name, single known game track. use that
+                 ;; case: no game track present in asset name or release name and just a single entry in `:game-track-list`. use that.
                  [{:game-track-list [:retail]} {}
                   {:retail [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track :retail, :version "Release 1.2.3" :-mo :sa--1gt}]}]
                  [{:game-track-list [:classic]} {}
                   {:classic [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track :classic, :version "Release 1.2.3-classic" :-mo :sa--1gt}]}]
 
-                 ;; case: single asset, no game track present in file name, multiple known game tracks. assume all game tracks supported
-                 [{:game-track-list [:classic :retail]} {}
+                 ;; case: no game track present in asset name or release name with multiple entries in `:game-track-list`.
+                 ;; assume all entries in `:game-track-list` supported.
+                 [{:game-track-list [:classic-tbc :classic :retail]} {}
                   {:retail [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track :retail, :version "Release 1.2.3" :-mo :sa--Ngt}]
+                   :classic-tbc [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track :classic-tbc, :version "Release 1.2.3-classic-tbc" :-mo :sa--Ngt}]
                    :classic [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track :classic, :version "Release 1.2.3-classic" :-mo :sa--Ngt}]}]]]
-
-      (doseq [[addon-summary-updates, release-updates, expected] cases
-              :let [summary (merge addon-summary addon-summary-updates)
-                    release (if (vector? release-updates)
-                              (assoc-in latest-release (first release-updates) (second release-updates))
-                              (merge latest-release release-updates))]]
-        (is (= expected (github-api/group-assets summary release))))))
-
-  (testing "detecting github addon game track, multiple asset cases"
-    (let [addon-summary
-          {:url "https://github.com/Aviana/HealComm"
-           :updated-date "2019-10-09T17:40:04Z"
-           :source "github"
-           :source-id "Aviana/HealComm"
-           :label "HealComm"
-           :name "healcomm"
-           :download-count 30946
-           :game-track-list [] ;; 'no game tracks'
-           :tag-list []}
-
-          latest-release {:name "Release 1.2.3"
-                          :assets [{:content_type "application/zip"
-                                    :state "uploaded"
-                                    :name "1.2.3"}
-
-                                   {:content_type "application/zip"
-                                    :state "uploaded"
-                                    :name "1.2.3-nolib"}]}
-
-          cases [;; addon-summary updates, latest-release updates, expected
-
-                 ;; case: multiple assets, no game track present in file name, no known game tracks. default to :retail
-                 [{} {}
-                  {:retail [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track :retail, :version "Release 1.2.3" :-mo :ma--ngt}
-                            {:content_type "application/zip", :state "uploaded", :name "1.2.3-nolib", :game-track :retail, :version "Release 1.2.3" :-mo :ma--ngt}]}]
-
-                 ;; case: multiple assets, no game track present in file name, single known game track. use that.
-                 [{:game-track-list [:retail]} {}
-                  {:retail [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track :retail, :version "Release 1.2.3" :-mo :ma--1gt}
-                            {:content_type "application/zip", :state "uploaded", :name "1.2.3-nolib", :game-track :retail, :version "Release 1.2.3" :-mo :ma--1gt}]}]
-                 [{:game-track-list [:classic]} {}
-                  {:classic [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track :classic, :version "Release 1.2.3-classic" :-mo :ma--1gt}
-                             {:content_type "application/zip", :state "uploaded", :name "1.2.3-nolib", :game-track :classic, :version "Release 1.2.3-classic" :-mo :ma--1gt}]}]
-
-                 ;; case: multiple assets, no game track present in file name, multiple known game tracks. default to :retail
-                 [{:game-track-list [:classic :retail]} {}
-                  ;; 2019-11-21: changed my mind, refusing to install in very ambiguous caseses
-                  ;; 2021-05-08: changed my mind again, ambiguous cases are neatly dealt with in decision matrix.
-                  ;;             better to have superflous assets to choose from than have them excluded.
-                  {:classic [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track :classic, :-mo :ma--Ngt, :version "Release 1.2.3-classic"}
-                             {:content_type "application/zip", :state "uploaded", :name "1.2.3-nolib", :game-track :classic, :version "Release 1.2.3-classic" :-mo :ma--Ngt}]
-                   :retail [{:content_type "application/zip", :state "uploaded", :name "1.2.3", :game-track :retail, :version "Release 1.2.3" :-mo :ma--Ngt}
-                            {:content_type "application/zip", :state "uploaded", :name "1.2.3-nolib", :game-track :retail, :version "Release 1.2.3" :-mo :ma--Ngt}]}]]]
 
       (doseq [[addon-summary-updates, release-updates, expected] cases
               :let [summary (merge addon-summary addon-summary-updates)
@@ -439,51 +435,3 @@
           asset {:name "LunaUnitFrames-classic.zip"}
           expected "LunaUnitFrames-classic.zip"]
       (is (= expected (github-api/pick-version-name release asset))))))
-
-(deftest guess-game-track
-  (testing ""
-    (let [cases [[nil nil]
-                 ["" nil]
-                 ["foo" nil]
-                 ["foo-tbc" nil]
-                 ["1.2.3" nil]
-
-                 ;; classic-tbc
-                 ["classic-tbc" :classic-tbc]
-                 ["1.2.3-classic-tbc" :classic-tbc]
-                 ["1.2.3-classic-tbc-no-lib" :classic-tbc]
-                 ["classic-tbc-no-lib" :classic-tbc]
-                 ["classic-tbc.no-lib" :classic-tbc]
-                 ["classic_tbc" :classic-tbc]
-                 ["1.2.3_classic_tbc_no-lib" :classic-tbc]
-
-                 ;; classic
-                 ["classic" :classic]
-                 ["1.2.3-classic" :classic]
-                 ["1.2.3-classic-no-lib" :classic]
-                 ["classic-no-lib" :classic]
-                 ["classic.no-lib" :classic]
-                 ["1.2.3_classic_no-lib" :classic]
-
-                 ;; retail
-                 ["retail" :retail]
-                 ["1.2.3-retail" :retail]
-                 ["1.2.3-retail-no-lib" :retail]
-                 ["retail-no-lib" :retail]
-                 ["retail.no-lib" :retail]
-                 ["1.2.3_retail_no-lib" :retail]
-
-                 ;; case insensitivity
-                 ["Retail" :retail]
-                 ["Classic" :classic]
-                 ["Classic-TBC" :classic-tbc]
-
-                 ;; priority (classic-tbc > classic > retail)
-                 ["retail-classic-tbc-classic" :classic-tbc]
-                 ["retail-classic-classic-tbc" :classic-tbc]
-                 ["classic-classic-tbc" :classic-tbc]
-                 ["retail-classic" :classic]]]
-
-      (doseq [[given expected] cases]
-        (is (= expected (github-api/guess-game-track given)))))))
-

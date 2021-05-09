@@ -20,9 +20,13 @@ see CHANGELOG.md for a more formal list of changes by release
 * tukui, add classic-tbc support
     - done
 
+* github, add classic-tbc support
+    - done
+
+
 ## todo
 
-* github, add classic-tbc support
+* update classic/retail 'features' list of readme
 
 * ux, installing (not updating) an addon for an incompatible game track shouldn't fail silently or get lost in log noise
     - https://github.com/ogri-la/strongbox/issues/231

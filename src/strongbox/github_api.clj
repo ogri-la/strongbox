@@ -37,42 +37,27 @@
            (some-> toc-file :download_url http/download toc/-parse-toc-file)
            (warn (format "failed to find/download/parse remote github '.toc' file for '%s'" source-id))))
 
-(defn-spec -find-gametracks-toc-data (s/or :ok ::sp/game-track-list, :empty nil?, :error nil?)
-  "returns a set of 'retail' and/or 'classic' after inspecting .toc file contents"
-  [toc-data (s/nilable map?)]
-  (when toc-data
-    (->> (-> toc-data
-             (select-keys [:interface :#interface])
-             vals)
-         (map utils/interface-version-to-game-version)
-         (map utils/game-version-to-game-track)
-         ;; 2021-05-02: unknown game versions of 2.x are now considered "Classic (TBC)" and return `nil` as the game track.
-         ;; classic-bc is not yet supported.
-         (remove nil?)
-         set
-         vec
-         utils/nilable)))
+(defn-spec -find-gametracks-toc-data (s/or :ok ::sp/game-track-list, :not-tracks-found nil?)
+  "returns a set of game tracks after inspecting .toc file contents"
+  [toc-data map?]
+  (->> (-> toc-data
+           ;; hrm: this only allows for two possible game tracks, one normal and one hiding in the template area
+           (select-keys [:interface :#interface])
+           vals)
+       (map utils/interface-version-to-game-track)
 
-(defn-spec find-gametracks-toc-data (s/or :ok ::sp/game-track-list, :error nil?)
+       ;; 2021-05-02: unknown game versions of 2.x (that are now considered "Classic (TBC)") were returning `nil` as the game track.
+       (remove nil?)
+       set
+       vec
+       utils/nilable))
+
+(defn-spec find-gametracks-toc-data (s/or :ok ::sp/game-track-list, :no-tracks-found nil?)
   "returns a set of 'retail' and/or 'classic' after inspecting .toc file contents"
   [source-id string?]
-  (-> source-id find-remote-toc-file -find-gametracks-toc-data))
+  (some-> source-id find-remote-toc-file -find-gametracks-toc-data))
 
 (def supported-zip-mimes #{"application/zip"  "application/x-zip-compressed"})
-
-(defn-spec guess-game-track (s/nilable ::sp/game-track)
-  "returns the first game track it finds in the given string, preferring `:classic-tbc`, then `:classic`, then `:retail`.
-  returns `nil` if no game track found."
-  [string (s/nilable string?)]
-  (when string
-    (let [;; matches 'classic-tbc', 'classic-bc', 'classic_tbc' and 'classic_bc', but not 'classictbc' or 'classicbc'. see tests
-          classic-tbc-regex #"(?i)classic[\W_]{1}t?bc"
-          classic-regex #"(?i)classic"
-          retail-regex #"(?i)retail"]
-      (cond
-        (re-find classic-tbc-regex string) :classic-tbc
-        (re-find classic-regex string) :classic
-        (re-find retail-regex string) :retail))))
 
 (defn-spec pick-version-name (s/or :ok string? :failed nil?)
   "returns the first non-nil value that can be used as a 'version' from a list of good candidates.
@@ -84,12 +69,11 @@
         candidates [(:name release) (:tag_name release) (:name asset)]]
     (->> candidates (map utils/nilable) (remove nil?) first)))
 
-(defn-spec group-assets (s/or :ok map? :too-ambiguous? nil?)
+(defn-spec group-assets map?
   "filters, groups and classifies a release's assets.
   a release may have many assets, however we're only interested in fully uploaded zip files.
-  an asset may contain 'classic-tbc', 'classic' and/or 'retail' that will help to classify which game track the
-  asset lives in.
-  it may ultimately be too ambiguous classifying the asset and we fall back to sensible defaults and guessing."
+  an asset may contain 'classic-tbc', 'classic' or 'retail' that will help to classify which 
+  game track the asset lives in."
   [addon :addon/expandable, release map?]
   (let [;; ignore assets whose :content_type is *not* a known zip type
         supported-zips #(-> % :content_type vector set (some supported-zip-mimes))
@@ -99,9 +83,6 @@
         fully-uploaded #(-> % :state (= "uploaded"))
         asset-list (->> release :assets (filter supported-zips) (filter fully-uploaded))
 
-        single-asset? (-> asset-list count (= 1))
-        many-assets? (-> asset-list count (> 1))
-
         ;; releases with zero assets don't seem to appear in api results for /releases
 
         known-game-tracks (-> addon :game-track-list (or []))
@@ -110,14 +91,14 @@
         many-game-tracks? (-> known-game-tracks count (> 1))
 
         ;; returns the first game track it can find in the release name or nil
-        release-game-track (guess-game-track (:name release))
+        release-game-track (utils/guess-game-track (:name release))
 
         track-version (fn [version gametrack]
                         ;; why am I doing this?
                         ;; iirc it's to differentiate between identically named releases for different game tracks.
                         ;; we could do what we did with curseforge and ensure all releases get a unique name
                         (case gametrack
-                          :classic-bc (str version "-classic-tbc")
+                          :classic-tbc (str version "-classic-tbc")
                           :classic (str version "-classic")
                           ;; retail
                           version))
@@ -129,49 +110,30 @@
                 ;; so, "FooAddon-retail" or "BarAddon-classic"
                 ;; no known cases but it would be forward proof
 
-                asset-game-track (guess-game-track (:name asset))
+                asset-game-track (utils/guess-game-track (:name asset))
 
                 update-list ;; is either a map or a list of maps
                 (cond
 
-                  ;; game track present in file name, prefer that over `:known-game-tracks` and `:release-game-track`
+                  ;; game track present in file name, prefer that over `:game-track-list` and any game-track in release name
                   asset-game-track {:game-track asset-game-track, :version (track-version version asset-game-track) :-mo :track-in-asset-name}
 
-                  ;; game track present in release name, prefer that over `:known-game-tracks`
-                  release-game-track {:game-track release-game-track, :version (track-version version release-game-track) :-mo :release-in-asset-name}
+                  ;; game track present in release name, prefer that over `:game-track-list`
+                  release-game-track {:game-track release-game-track, :version (track-version version release-game-track) :-mo :track-in-release-name}
 
-                  ;; single asset, no game track present in asset name or release name and no `:game-track-list`. assume `:retail`
-                  (and single-asset? no-known-game-tracks?) (do (debug (format "no game track detected for release '%s' and asset '%s', assuming 'retail'"
-                                                                               (:name release) (:name asset)))
-                                                                {:game-track :retail :version version :-mo :sa--ngt})
+                  ;; no game track present in asset name or release name and no `:game-track-list`. assume `:retail`
+                  no-known-game-tracks? (do (debug (format "no game track detected for release '%s' and asset '%s', assuming 'retail'"
+                                                           (:name release) (:name asset)))
+                                            {:game-track :retail :version version :-mo :sa--ngt})
 
-                  ;; single asset, no game track present in asset name or release name and just a single entry in `:game-track-list`. use that.
-                  (and single-asset? single-game-track?) {:game-track (first known-game-tracks)
-                                                          :version (track-version version (first known-game-tracks))  :-mo :sa--1gt}
+                  ;; no game track present in asset name or release name and just a single entry in `:game-track-list`. use that.
+                  single-game-track? {:game-track (first known-game-tracks)
+                                      :version (track-version version (first known-game-tracks))  :-mo :sa--1gt}
 
-                  ;; single asset, no game track present in asset name or release name with multiple entries in `:game-track-list`.
+                  ;; no game track present in asset name or release name with multiple entries in `:game-track-list`.
                   ;; assume all entries in `:game-track-list` supported.
-                  (and single-asset? many-game-tracks?) (vec (for [game-track known-game-tracks]
-                                                               {:game-track game-track, :version (track-version version game-track) :-mo :sa--Ngt}))
-
-                  ;; multiple assets, no game track present in asset name or release name, and no `:game-track-list`.
-                  ;; default to `:retail` and make a note that we're guessing in the face of ambiguity.
-                  ;; other assets may have a game track in their asset name.
-                  (and many-assets? no-known-game-tracks?) (do (debug (format "no game track detected for release '%s' and asset '%s', assuming 'retail'"
-                                                                              (:name release) (:name asset)))
-                                                               {:game-track :retail :version version :-mo :ma--ngt})
-
-                  ;; multiple assets, no game track present in asset name or release name with a single entry in `:game-track-list`. use that.
-                  ;; other assets may have a game track in their asset name.
-                  ;; this or other assets may be variations of the 'main' addon, like `-nolib`.
-                  (and many-assets? single-game-track?) {:game-track (first known-game-tracks)
-                                                         :version (track-version version (first known-game-tracks)) :-mo :ma--1gt}
-
-                  ;; multiple assets, no game track present in asset name or release name with multiple entries in `game-track-list`.
-                  ;; treat the same as single-asset+many-game-tracks and assume all entries in `:game-track-list` are supported.
-                  ;; other assets may have game track in their file name.
-                  (and many-assets? many-game-tracks?) (vec (for [game-track known-game-tracks]
-                                                              {:game-track game-track, :version (track-version version game-track), :-mo :ma--Ngt}))
+                  many-game-tracks? (vec (for [game-track known-game-tracks]
+                                           {:game-track game-track, :version (track-version version game-track) :-mo :sa--Ngt}))
 
                   :else (error (format "unhandled state attempting to determine game track(s) for asset '%s' in release of '%s'"
                                        asset addon)))

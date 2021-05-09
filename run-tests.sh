@@ -8,25 +8,27 @@ fail_threshold=80
 # so we copy it in and destroy it afterwards
 cp cloverage.clj src/strongbox/cloverage.clj
 
+# any coverage reports from previous run
+rm -rf ./coverage/
+
 function finish {
-  rm src/strongbox/cloverage.clj
-  lein clean
+    rm src/strongbox/cloverage.clj
+
+    # 'lein clean' wipes out the 'target' directory, including the Cloverage report
+    if [ -d target/coverage ]; then
+        echo
+        echo "wrote coverage/index.html"
+        mv target/coverage coverage
+    fi
+
+    lein clean
 }
 trap finish EXIT
 
 if which xvfb-run; then
     # CI
-    xvfb-run lein cloverage --runner "strongbox" --fail-threshold "$fail_threshold" --html
+    xvfb-run lein cloverage --runner "strongbox"
 else
-    lein cloverage --runner "strongbox" --fail-threshold "$fail_threshold" --html || {
-        retval="$?"
-        # 1 for failed tests
-        # 253 for failed coverage
-        if [ "$retval" = "253" ]; then
-            if which otter-browser; then
-                otter-browser "file://$(pwd)/target/coverage/index.html" &
-            fi
-        fi
-        exit "$retval"
-    }
+    # dev
+    lein cloverage --runner "strongbox" --fail-threshold "$fail_threshold" --html
 fi
