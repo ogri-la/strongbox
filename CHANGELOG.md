@@ -19,17 +19,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 * a 'welcome' screen for instances of strongbox with no addon directories selected.
-* `Classic (TBC)` to selectable game tracks and the `Strict` checkbox to toggle game track strictness.
-* support for Classic (TBC) for wowinterface, curseforge, tukui and github.
-* github api now considers the name of the release when attempting to detect the game track of an asset.
-    - priority is now: asset name, release name and any game tracks detected in .toc file
+* added `Classic (TBC)` to selectable game tracks and the `Strict` checkbox to toggle between strictness
+* support for `Classic (TBC)` for wowinterface, curseforge, tukui and github.
+* github api now considers the name of the *release* when attempting to detect the game track of an asset.
+    - priority is now: asset name, release name and then any game tracks detected in .toc file
 
 ### Changed
 
 * replaced the 'any, prefer retail' and 'any, prefer classic' in the game track list with a 'strict' checkbox.
     - 'any, prefer retail' is now just 'retail' and 'not strict'
     - 'any, prefer classic' is now just 'classic' and 'not strict'
-* the follow widgets and features are now disabled if no addon directory is selected:
+    - see [README](https://github.com/ogri-la/strongbox#classic-and-retail-addon-support) for priorities
+* the follow widgets and features are now disabled if no addon directory is selected (more to follow):
     - the search tab
     - the game track drop down
     - the addon directory drop down
@@ -37,10 +38,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 * a bug in wowinterface catalogue generation. 
-    - wowinterface changed a label from "Classic" to several other things and it broke classic support detection.
+    - wowinterface.com changed a label from "Classic" to several other things and it broke classic support detection.
         - I don't know how long this has been happening for.
-
-### Removed
 
 ## 4.0.0
 
