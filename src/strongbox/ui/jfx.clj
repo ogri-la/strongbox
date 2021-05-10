@@ -1006,16 +1006,25 @@
 (defn menu-bar
   "returns a description of the menu at the top of the application"
   [{:keys [fx/context]}]
-  (let [file-menu [(menu-item "_New addon directory" (async-event-handler wow-dir-picker) {:key "Ctrl+N"})
-                   (menu-item "Remove addon directory" (async-handler remove-addon-dir))
+
+  (let [no-addon-dir? (nil? (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir]))
+        file-menu [(menu-item "_New addon directory" (async-event-handler wow-dir-picker) {:key "Ctrl+N"})
+                   (menu-item "Remove addon directory" (async-handler remove-addon-dir)
+                              {:disable no-addon-dir?})
                    separator
-                   (menu-item "_Update all" (async-handler cli/update-all) {:key "Ctrl+U"})
-                   (menu-item "Re-install all" (async-handler cli/re-install-or-update-all))
+                   (menu-item "_Update all" (async-handler cli/update-all)
+                              {:key "Ctrl+U", :disable no-addon-dir?})
+                   (menu-item "Re-install all" (async-handler cli/re-install-or-update-all)
+                              {:disable no-addon-dir?})
                    separator
-                   (menu-item "Import list of addons" (async-event-handler import-addon-list-handler))
-                   (menu-item "Export list of addons" (async-event-handler export-addon-list-handler))
-                   (menu-item "Import addon from Github" (async-event-handler import-addon-handler))
-                   (menu-item "Export Github addon list" (async-event-handler export-user-catalogue-handler))
+                   (menu-item "Import list of addons" (async-event-handler import-addon-list-handler)
+                              {:disable no-addon-dir?})
+                   (menu-item "Export list of addons" (async-event-handler export-addon-list-handler)
+                              {:disable no-addon-dir?})
+                   (menu-item "Import addon from Github" (async-event-handler import-addon-handler)
+                              {:disable no-addon-dir?})
+                   (menu-item "Export Github addon list" (async-event-handler export-user-catalogue-handler)
+                              {:disable no-addon-dir?})
                    separator
                    (menu-item "E_xit" exit-handler {:key "Ctrl+Q"})]
 
@@ -1025,7 +1034,8 @@
                    [(menu-item "Refresh" (async-handler cli/hard-refresh) {:key "F5"})
                     separator
                     (menu-item "_Installed" (switch-tab-event-handler INSTALLED-TAB) {:key "Ctrl+I"})
-                    (menu-item "Searc_h" (switch-tab-event-handler SEARCH-TAB) {:key "Ctrl+H"})
+                    (menu-item "Searc_h" (switch-tab-event-handler SEARCH-TAB)
+                               {:key "Ctrl+H" :disable no-addon-dir?})
                     (menu-item "_Log" (switch-tab-event-handler LOG-TAB) {:key "Ctrl+L"})
                     (let [tab-list (fx/sub-val context get-in [:app-state :tab-list])]
                       (menu "Ad_don detail" (build-addon-detail-menu tab-list)
@@ -1042,14 +1052,18 @@
                               (menu-item "Refresh user catalogue" (async-handler core/refresh-user-catalogue))])
 
         cache-menu [(menu-item "Clear http cache" (async-handler core/delete-http-cache!))
-                    (menu-item "Clear addon zips" (async-handler core/delete-downloaded-addon-zips!))
+                    (menu-item "Clear addon zips" (async-handler core/delete-downloaded-addon-zips!)
+                               {:disable no-addon-dir?})
                     (menu-item "Clear catalogues" (async-handler (juxt core/db-reload-catalogue core/delete-catalogue-files!)))
                     (menu-item "Clear log files" (async-handler core/delete-log-files!))
                     (menu-item "Clear all" (async-handler core/clear-all-temp-files!))
                     separator
-                    (menu-item "Delete WowMatrix.dat files" (async-handler core/delete-wowmatrix-dat-files!))
-                    (menu-item "Delete .wowman.json files" (async-handler (juxt core/delete-wowman-json-files! core/refresh)))
-                    (menu-item "Delete .strongbox.json files" (async-handler (juxt core/delete-strongbox-json-files! core/refresh)))]
+                    (menu-item "Delete WowMatrix.dat files" (async-handler core/delete-wowmatrix-dat-files!)
+                               {:disable no-addon-dir?})
+                    (menu-item "Delete .wowman.json files" (async-handler (juxt core/delete-wowman-json-files! core/refresh))
+                               {:disable no-addon-dir?})
+                    (menu-item "Delete .strongbox.json files" (async-handler (juxt core/delete-strongbox-json-files! core/refresh))
+                               {:disable no-addon-dir?})]
 
         help-menu [(menu-item "About strongbox" about-strongbox-dialog)]]
 
