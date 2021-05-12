@@ -14,6 +14,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## 4.2.0
+
+### Added
+
+### Changed
+
+* GUI now disables some actions when no addon directory is selected.
+
+### Fixed
+
+### Removed
+
 ## 4.1.0
 
 ### Added
