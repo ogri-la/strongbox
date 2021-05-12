@@ -6,6 +6,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
+* gui, disable anything that can't be used when no addon dir selected
+    - done
+
 ## todo
 
 ux and polish
@@ -51,8 +54,6 @@ ux and polish
 
 * preferences, "update all addons automatically"
     - update README features
-    
-* gui, disable anything that can't be used when no addon dir selected
 
 ## todo bucket (no particular order)
 
