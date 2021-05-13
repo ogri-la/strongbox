@@ -403,17 +403,24 @@
 (defn-spec updateable? boolean?
   "returns `true` when given `addon` can be updated to a newer version."
   [addon map?] ;; deliberately lenient
-  (let [{:keys [installed-version pinned-version version]} addon]
-    (boolean
-     (and version
-          (not (:ignore? addon))
-          (if pinned-version
-            ;; a pinned addon can only be *updated* if its installed version doesn't match its pinned version and it's pinned version matches the available version.
-            (and
-             (not= installed-version pinned-version)
-             (= pinned-version version))
+  (let [{:keys [installed-version pinned-version version
+                game-track installed-game-track]} addon]
+    (cond
+      ;; not expanded
+      (not version) false
 
-            (not= version installed-version))))))
+      ;; ignored
+      (:ignore? addon) false
+
+      ;; pinned
+      ;; a pinned addon can only be *updated* if the version installed doesn't match its pinned version and it's pinned version matches the available version.
+      pinned-version (and (not= pinned-version installed-version)
+                          (= pinned-version version))
+
+      (and game-track installed-game-track) (not= [version game-track]
+                                                  [installed-version installed-game-track])
+
+      :else (not= version installed-version))))
 
 (defn-spec re-installable? boolean?
   "returns `true` if given `addon` can be re-installed to its current `:installed-version`."
