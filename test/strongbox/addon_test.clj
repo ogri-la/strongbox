@@ -324,7 +324,10 @@
                  ;; update available, explicitly not being ignored
                  {:installed-version "1.2.0" :version "1.2.3" :ignore? false}
                  ;; update available and pinned version matches available version
-                 {:installed-version "1.2.3" :version "1.2.4" :pinned-version "1.2.4"}]]
+                 {:installed-version "1.2.3" :version "1.2.4" :pinned-version "1.2.4"}
+                 ;; update available with same version but different game track
+                 {:installed-version "1.2.3", :installed-game-track :classic
+                  :version "1.2.3" :game-track :retail}]]
 
       (doseq [addon cases]
         (is (addon/updateable? addon)))))
@@ -341,7 +344,9 @@
                  ;; or `:projectFileId` synthetic `:-unique-name` that we set is changed,
                  ;; or the release is simply deleted I suppose.
                  ;; `catalogue.clj` won't be able to find the pinned release and will use the latest release instead.
-                 {:installed-version "1.2.3" :version "1.2.4" :pinned-version "1.2.3"}]]
+                 {:installed-version "1.2.3" :version "1.2.4" :pinned-version "1.2.3"}
+                 ;; update possibly available but no `:installed-game-track` present
+                 {:installed-version "1.2.3", :version "1.2.3" :game-track :retail}]]
 
       (doseq [addon cases]
         (is (not (addon/updateable? addon)))))))
