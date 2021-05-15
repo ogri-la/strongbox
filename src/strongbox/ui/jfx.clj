@@ -383,8 +383,10 @@
                 {:-fx-background-color "-fx-selection-bar"}
 
                 ".report .table-cell"
-                {:-fx-text-fill (colour :row-report-text)
-                 :-fx-font-style "italic"}
+                {:-fx-text-fill (colour :row-report-text)}
+
+                ".report #message"
+                {:-fx-font-style "italic"}
 
                 "#level"
                 {:-fx-alignment "center"}

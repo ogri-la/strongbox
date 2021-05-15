@@ -109,9 +109,11 @@
      (deref stateful-buffer#)))
 
 (defn-spec add-ui-appender! fn?
-  "adds a logger intended for the UI to interact with.
-  if an addon is passed as `:context` then an identifier can be pulled from it and the UI can use that to
-  associate log events with addons. see `addon-log`, `with-addon` and `with-label`."
+  "adds an appender intended for the UI to interact with.
+  If an addon is passed as `:context` then an identifier can be pulled from it and the UI can use that to
+  associate log events with addons. 
+  'report' level logs have no addon information attached to them.
+  see `addon-log`, `with-addon` and `with-label`."
   [state-atm ::sp/atom, install-dir (s/nilable ::sp/install-dir)]
   (let [inc* #(inc (or % 0))
         func (fn [data]
@@ -124,7 +126,13 @@
                      log-line {:time (force (:timestamp_ data))
                                :message msg
                                :level level
-                               :source source}]
+                               :source source}
+
+                     ;; report-level logs are addon agnostic
+                     log-line (if (= :report level)
+                                (dissoc log-line :source)
+                                log-line)]
+
                  (if (= msg (-> @state-atm :log-lines last :message))
                    ;; purely to stop infinite feedback loop. not sure how this one is happening but urgh.
                    (println "[dropping duplicate message]")
