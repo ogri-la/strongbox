@@ -9,15 +9,17 @@ see CHANGELOG.md for a more formal list of changes by release
 * gui, disable anything that can't be used when no addon dir selected
     - done
 
+* github, revisit the "-classic" suffix naming
+    - this was solved more elegantly in curseforge-api
+        - actually, this is slightly different
+    - done
+
 ## todo
 
 ux and polish
 
 * ux, installing (not updating) an addon for an incompatible game track shouldn't fail silently or get lost in log noise
     - https://github.com/ogri-la/strongbox/issues/231
-
-* github, revisit the "-classic" suffix naming
-    - this was solved more elegantly in curseforge-api
 
 * bug, uber button, identical addons in different addon dirs are causing the warn/error-free version to show warns/errors
 
@@ -56,6 +58,10 @@ ux and polish
     - update README features
 
 ## todo bucket (no particular order)
+
+* addon detail, 'releases' widget, including *all* possible releases to download and install
+    - add an 'WoW' column to know which game-track/interface
+    - disable releases excluded by selected game-track/strictness setting
 
 * logging, app level 'help'
     - messages to the user that are not informational, or debug or warnings or errors, but simple helpful messages

@@ -21,10 +21,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * GUI now disables some actions when no addon directory is selected.
+* the game track (retail, classic, classic-tbc) + version (1.2.3) is now used to determine if an addon is updateable.
 
 ### Fixed
 
 ### Removed
+
+* github addons will no longer have a `-classic` or `-classic-tbc` suffix.
+    - this was added to differentiate two releases using the same name and version but different game tracks.
+    - strongbox will mark affected addons as being updateable because the versions no longer match. The same version will be re-installed.
 
 ## 4.1.0
 
