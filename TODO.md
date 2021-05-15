@@ -14,15 +14,16 @@ see CHANGELOG.md for a more formal list of changes by release
         - actually, this is slightly different
     - done
 
-## todo
-
-ux and polish
-
 * logging, app level 'events' or notices
     - now that the log has been pushed out of the way, it's free to be a bit more verbose
     - some events like refreshing or changing the game track should be logged
     - some of these events should be surfaced in an addon's notice logger
     - should get a different colour in the log
+    - done
+
+## todo
+
+ux and polish
 
 * ux, installing (not updating) an addon for an incompatible game track shouldn't fail silently or get lost in log noise
     - https://github.com/ogri-la/strongbox/issues/231

@@ -18,10 +18,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* 'report' level log messages.
+    - used to break up and give context to repetitive blocks of log messages.
+    - just 'refresh' for now, logged whenever the list of addons are re-read.
+
 ### Changed
 
 * GUI now disables some actions when no addon directory is selected.
 * the game track (retail, classic, classic-tbc) + version (1.2.3) is now used to determine if an addon is updateable.
+* 'report' level log messages now appear in an addon's notice logger.
+    - used to break up and give context to repetitive blocks of log messages.
 
 ### Fixed
 
