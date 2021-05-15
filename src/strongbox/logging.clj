@@ -157,5 +157,3 @@
   [label & form]
   `(with-addon {:name ~label}
      ~@form))
-
-;;

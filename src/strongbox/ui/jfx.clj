@@ -1370,7 +1370,7 @@
   pass it a `filter-fn` to remove entries in the `:log-lines` list."
   [{:keys [fx/context tab-idx filter-fn section-title]}]
   (let [filter-fn (or filter-fn identity)
-        level-map {:debug 0 :info 1 :warn 2 :error 3}
+        level-map {:debug 0 :info 1 :warn 2 :error 3 :report 4}
         current-log-level (if tab-idx
                             (fx/sub-val context get-in [:app-state :tab-list tab-idx :log-level])
                             (fx/sub-val context get-in [:app-state :gui-log-level]))
@@ -1397,7 +1397,7 @@
                      {:id "time" :text "time" :max-width 100 :cell-value-factory :time}
                      {:id "message" :text "message" :pref-width 500 :cell-value-factory :message}]
 
-        log-level-list [:debug :info :warn :error]
+        log-level-list [:debug :info :warn :error] ;; :report] ;; 'reports' won't be interesting, no need to filter by them right now.
         log-level-list (if-not (contains? level-occurances :debug)
                          (rest log-level-list)
                          log-level-list)

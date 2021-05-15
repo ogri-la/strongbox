@@ -2,7 +2,7 @@
   (:require
    [clojure.set :refer [rename-keys]]
    [clojure.string :refer [lower-case starts-with? ends-with? trim]]
-   [taoensso.timbre :as timbre :refer [debug info warn error spy]]
+   [taoensso.timbre :as timbre :refer [debug info warn error report spy]]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
    [taoensso.tufte :as tufte :refer [p profile]]
@@ -1038,6 +1038,8 @@
   []
   (profile
    {:when (get-state :profile?)}
+
+   (report "refresh")
 
    ;; parse toc files in install-dir. do this first so we see *something* while catalogue downloads (next)
    (load-installed-addons)
