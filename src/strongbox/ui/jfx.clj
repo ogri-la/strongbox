@@ -14,6 +14,7 @@
    [orchestra.core :refer [defn-spec]]
    [strongbox.ui.cli :as cli]
    [strongbox
+    [logging :as logging]
     [addon :as addon]
     [specs :as sp]
     [utils :as utils :refer [no-new-lines]]
@@ -935,22 +936,17 @@
   "this switches to the 'installed' tab, then, for each addon selected, expands summary, installs addon, calls load-installed-addons and finally refreshes;
   this presents as a plodding step-wise update but is better than a blank screen and apparent hang"
   [event]
-  ;; original approach. efficient but no feedback for user
-  ;; note: still true as of 2020-09?
-  ;; todo: stick this in `cli.clj`
-  ;;(core/-install-update-these (map curseforge/expand-summary (get-state :search :selected-result-list))) 
   ((switch-tab-event-handler INSTALLED-TAB) event)
   (doseq [selected (core/get-state :search :selected-result-list)]
-    (let [addon (core/expand-summary-wrapper selected)]
-      (println "-------" selected)
-      (if addon
-        (do (cli/-install-update-these [addon])
-            (core/load-installed-addons))
-        (let [msg "no release found for '%s' (%s) on %s."
-              msg (format msg (:label selected) (name (core/get-game-track)) (:source selected))]
-
-          (alert :warning msg {:wait? false})))))
-  (core/refresh))
+    (let [error-messages
+          (logging/buffered-log :warn
+                                (some-> selected core/expand-summary-wrapper vector cli/-install-update-these))]
+      (if (empty? error-messages)
+        (core/load-installed-addons)
+        (let [msg (str (format "Warnings/errors generated during installation of \"%s\":\n* " (:label selected))
+                       (clojure.string/join "\n* " error-messages))]
+          (alert :warning msg {:wait? false}))))
+    (core/refresh)))
 
 ;;
 
