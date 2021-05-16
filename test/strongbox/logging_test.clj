@@ -72,3 +72,13 @@
             actual (->> (core/get-state :log-lines) (filter #(= :warn (:level %))) last)
             actual (dissoc actual :time)]
         (is (= expected actual))))))
+
+(deftest stateful-logging--report-level
+  (testing "addon logging at the `:report` is stripped of addon context"
+    (with-running-app
+      (helper/install-dir)
+      (let [expected {:level :report, :message "some test message"}
+            _ (logging/addon-log {:dirname "EveryAddon"} :report "some test message")
+            actual (->> (core/get-state :log-lines) (filter #(= :report (:level %))) last)
+            actual (dissoc actual :time)]
+        (is (= expected actual))))))

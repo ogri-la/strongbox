@@ -1,7 +1,7 @@
 (ns strongbox.ui.cli
   (:require
    [orchestra.core :refer [defn-spec]]
-   [taoensso.timbre :as timbre :refer [spy info warn error debug]]
+   [taoensso.timbre :as timbre :refer [debug info warn error report spy]]
    [clojure.spec.alpha :as s]
    [strongbox
     [logging :as logging]
@@ -29,11 +29,13 @@
   ;; this is also removing the etag cache.
   ;; the etag db is pretty worthless and only applies to catalogues and downloaded zip files.
   (core/delete-http-cache!)
+  (report "refresh")
   (core/check-for-updates))
 
 (defn-spec half-refresh nil?
   "like core/refresh but focuses on loading+matching+checking for updates"
   []
+  (report "refresh")
   (core/load-installed-addons)
   (core/match-installed-addons-with-catalogue)
   (core/check-for-updates)

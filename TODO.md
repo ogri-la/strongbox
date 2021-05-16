@@ -14,6 +14,13 @@ see CHANGELOG.md for a more formal list of changes by release
         - actually, this is slightly different
     - done
 
+* logging, app level 'events' or notices
+    - now that the log has been pushed out of the way, it's free to be a bit more verbose
+    - some events like refreshing or changing the game track should be logged
+    - some of these events should be surfaced in an addon's notice logger
+    - should get a different colour in the log
+    - done
+
 ## todo
 
 ux and polish
@@ -21,16 +28,27 @@ ux and polish
 * ux, installing (not updating) an addon for an incompatible game track shouldn't fail silently or get lost in log noise
     - https://github.com/ogri-la/strongbox/issues/231
 
-* bug, uber button, identical addons in different addon dirs are causing the warn/error-free version to show warns/errors
+* button at bottom of UI to re-add split-pane
+    - it's label is the total number of info/warn/errors (whatever is highest) since last notice
 
-* search, comma separate download numbers
-    - or figure out the locale-specific separator
-    - 1234567890 downloads is less readable than 1,234,567,890
+* preferences, "update all addons automatically"
+    - update README features
+
+* uber-button, limit status to just those events since the last refresh
+    - and make 'refresh' an app-wide 'notice' to distinguish it from ino/debug/etc
 
 * disable addon update button if it's unsteady
     - interesting stuff happens when you pump that update button!
     - roll this into the action queue work
         - no more than one update request pending per-addon
+
+* search, replace 'install selected' with 'install' button on the right
+
+* bug, uber button, identical addons in different addon dirs are causing the warn/error-free version to show warns/errors
+
+* search, comma separate download numbers
+    - or figure out the locale-specific separator
+    - 1234567890 downloads is less readable than 1,234,567,890
 
 * tabber, double clicking a tab closes it
 
@@ -39,23 +57,6 @@ ux and polish
 
 * installed, right align version columns and make elipses start at left
     - we're typically interested in comparing the last part of the version
-
-* search, replace 'install selected' with 'install' button on the right
-
-* logging, app level 'events' or notices
-    - now that the log has been pushed out of the way, it's free to be a bit more verbose
-    - some events like refreshing or changing the game track should be logged
-    - some of these events should be surfaced in an addon's notice logger
-    - should get a different colour in the log
-
-* uber-button, limit status to just those events since the last refresh
-    - and make 'refresh' an app-wide 'notice' to distinguish it from ino/debug/etc
-
-* button at bottom of UI to re-add split-pane
-    - it's label is the total number of info/warn/errors (whatever is highest) since last notice
-
-* preferences, "update all addons automatically"
-    - update README features
 
 ## todo bucket (no particular order)
 

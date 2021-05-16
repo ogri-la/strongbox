@@ -64,6 +64,7 @@
     :row-warning-text "black"
     :row-error "tomato"
     :row-error-text "black"
+    :row-report-text "blue"
     :hyperlink "blue"
     :hyperlink-updateable "blue"
     :hyperlink-weight "normal"
@@ -88,6 +89,7 @@
     :row-warning-text "black"
     :row-error "#ff5555"
     :row-error-text "black"
+    :row-report-text "#bd93f9"
     :hyperlink "#f8f8f2"
     :hyperlink-updateable "white"
     :hyperlink-weight "bold"
@@ -379,6 +381,12 @@
 
                 ".error:selected"
                 {:-fx-background-color "-fx-selection-bar"}
+
+                ".report .table-cell"
+                {:-fx-text-fill (colour :row-report-text)}
+
+                ".report #message"
+                {:-fx-font-style "italic"}
 
                 "#level"
                 {:-fx-alignment "center"}
@@ -1370,7 +1378,7 @@
   pass it a `filter-fn` to remove entries in the `:log-lines` list."
   [{:keys [fx/context tab-idx filter-fn section-title]}]
   (let [filter-fn (or filter-fn identity)
-        level-map {:debug 0 :info 1 :warn 2 :error 3}
+        level-map {:debug 0 :info 1 :warn 2 :error 3 :report 4}
         current-log-level (if tab-idx
                             (fx/sub-val context get-in [:app-state :tab-list tab-idx :log-level])
                             (fx/sub-val context get-in [:app-state :gui-log-level]))
@@ -1397,7 +1405,7 @@
                      {:id "time" :text "time" :max-width 100 :cell-value-factory :time}
                      {:id "message" :text "message" :pref-width 500 :cell-value-factory :message}]
 
-        log-level-list [:debug :info :warn :error]
+        log-level-list [:debug :info :warn :error] ;; :report] ;; 'reports' won't be interesting, no need to filter by them right now.
         log-level-list (if-not (contains? level-occurances :debug)
                          (rest log-level-list)
                          log-level-list)
@@ -1716,7 +1724,8 @@
             preferred-match (merge addon-source {:dirname (:dirname addon)})
             alt-match (merge addon-source {:source (:source addon) :source-id (:source-id addon)})
             notice-pane-filter (fn [log-line]
-                                 (or (= preferred-match (select-keys (:source log-line) [:install-dir :dirname]))
+                                 (or (-> log-line :level (= :report))
+                                     (= preferred-match (select-keys (:source log-line) [:install-dir :dirname]))
                                      (= alt-match (select-keys (:source log-line) [:install-dir :source :source-id]))))]
         {:fx/type :border-pane
          :id "addon-detail-pane"
