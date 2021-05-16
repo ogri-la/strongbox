@@ -649,10 +649,13 @@
                    (.setTitle (:title opt-map))
                    (.setHeaderText (:header opt-map))
                    (.setContentText msg)
-                   (.initOwner (get-window)))]
+                   (.initOwner (get-window)))
+          wait? (get opt-map :wait? true)]
       (when (:content opt-map)
         (.setContent (.getDialogPane widget) (:content opt-map)))
-      (.showAndWait widget))))
+      (if wait?
+        (.showAndWait widget)
+        (.show widget)))))
 
 (defn-spec confirm boolean?
   "displays a confirmation prompt with the given `heading` and `message`.
@@ -938,11 +941,15 @@
   ;;(core/-install-update-these (map curseforge/expand-summary (get-state :search :selected-result-list))) 
   ((switch-tab-event-handler INSTALLED-TAB) event)
   (doseq [selected (core/get-state :search :selected-result-list)]
-    (some-> selected core/expand-summary-wrapper vector cli/-install-update-these)
-    (core/load-installed-addons))
-  ;; deselect rows in search table
-  ;; note: don't know how to do this in jfx
-  ;;(ss/selection! (select-ui :#tbl-search-addons) nil) 
+    (let [addon (core/expand-summary-wrapper selected)]
+      (println "-------" selected)
+      (if addon
+        (do (cli/-install-update-these [addon])
+            (core/load-installed-addons))
+        (let [msg "no release found for '%s' (%s) on %s."
+              msg (format msg (:label selected) (name (core/get-game-track)) (:source selected))]
+
+          (alert :warning msg {:wait? false})))))
   (core/refresh))
 
 ;;

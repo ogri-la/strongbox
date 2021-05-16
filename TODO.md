@@ -21,12 +21,14 @@ see CHANGELOG.md for a more formal list of changes by release
     - should get a different colour in the log
     - done
 
+* ux, installing (not updating) an addon for an incompatible game track shouldn't fail silently or get lost in log noise
+    - https://github.com/ogri-la/strongbox/issues/231
+    - done
+        - addons that fail to expand get an error after switching back to the installed pane
+
 ## todo
 
 ux and polish
-
-* ux, installing (not updating) an addon for an incompatible game track shouldn't fail silently or get lost in log noise
-    - https://github.com/ogri-la/strongbox/issues/231
 
 * button at bottom of UI to re-add split-pane
     - it's label is the total number of info/warn/errors (whatever is highest) since last notice
