@@ -481,12 +481,12 @@
          (not (zip/valid-zip-file? downloaded-file))
          (do (error "failed to read addon zip file, possibly corrupt or not a zip file.")
              (fs/delete downloaded-file)
-             (warn "removed bad zip file" downloaded-file))
+             (warn "removed bad zip file"))
 
          (not (zip/valid-addon-zip-file? downloaded-file))
          (do (error "refusing to install, addon zip file contains top-level files or a top-level directory missing a .toc file.")
              (fs/delete downloaded-file)
-             (warn "removed bad addon" downloaded-file))
+             (warn "removed bad addon"))
 
          (not (s/valid? ::sp/writeable-dir install-dir))
          (error (format "addon directory is not writable: %s" install-dir))

@@ -939,8 +939,9 @@
   ((switch-tab-event-handler INSTALLED-TAB) event)
   (doseq [selected (core/get-state :search :selected-result-list)]
     (let [error-messages
-          (logging/buffered-log :warn
-                                (some-> selected core/expand-summary-wrapper vector cli/-install-update-these))]
+          (logging/buffered-log
+           :warn
+           (some-> selected core/expand-summary-wrapper vector cli/-install-update-these))]
       (if (empty? error-messages)
         (core/load-installed-addons)
         (let [msg (str (format "warnings/errors while installing \"%s\":\n* " (:label selected))
