@@ -76,17 +76,16 @@
 
     source-updates
 
-    (let [;; todo: revisit this error message
-          ;; "no release found for 'adibags' (retail) on github"
-          ;; "no release found for 'adibags' (retail or classic) on github"
+    (let [;; "no retail release found on github"
+          ;; "no classic release found on wowinterface"
           msg (case [game-track strict?]
-                [:retail true] "no release found for '%s' (retail) on %s"
-                [:classic true] "no release found for '%s' (classic) on %s"
-                [:classic-tbc true] "no release found for '%s' (classic - TBC) on %s"
-                [:retail false] "no release found for '%s' (retail, classic or classic -TBC) on %s"
-                [:classic false] "no release found for '%s' (classic, classic - TBC or retail) on %s"
-                [:classic-tbc false] "no release found for '%s' (classic - TBC, classic or retail) on %s")]
-      (warn (format msg (:name addon) (:source addon))))))
+                [:retail true] "no retail release found on %s."
+                [:classic true] "no classic release found on %s."
+                [:classic-tbc true] "no classic (TBC) release found on %s."
+                [:retail false] "no retail, classic or classic (TBC) release found on %s."
+                [:classic false] "no classic, classic (TBC) or retail release found on %s."
+                [:classic-tbc false] "no classic (TBC), classic or retail release found on %s.")]
+      (warn (format msg (:source addon))))))
 
 
 ;;

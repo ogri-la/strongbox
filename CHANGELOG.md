@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * 'report' level log messages.
     - used to break up and give context to repetitive blocks of log messages.
     - just 'refresh' for now, logged whenever the list of addons are re-read.
+* warnings and errors generated while installing an addon are now captured and displayed in a dialog box.
+    - partially addresses points raised in https://github.com/ogri-la/strongbox/issues/231
 
 ### Changed
 
@@ -28,6 +30,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * the game track (retail, classic, classic-tbc) + version (1.2.3) is now used to determine if an addon is updateable.
 * 'report' level log messages now appear in an addon's notice logger.
     - used to break up and give context to repetitive blocks of log messages.
+* tweaks to error/information dialog panes so messages are easier to read
+    - asterisks `*` have been replaced with a round black dot `•`
+    - line spacing increased
+    - fixed minimum width of dialog pane
 
 ### Fixed
 
