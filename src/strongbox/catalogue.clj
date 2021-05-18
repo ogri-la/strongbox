@@ -79,12 +79,12 @@
     (let [;; "no retail release found on github"
           ;; "no classic release found on wowinterface"
           msg (case [game-track strict?]
-                [:retail true] "no retail release found on %s"
-                [:classic true] "no classic release found on %s"
-                [:classic-tbc true] "no classic (TBC) release found on %s"
-                [:retail false] "no retail, classic or classic (TBC) release found on %s"
-                [:classic false] "no classic, classic (TBC) or retail release found on %s"
-                [:classic-tbc false] "no classic (TBC), classic or retail release found on %s")]
+                [:retail true] "no retail release found on %s."
+                [:classic true] "no classic release found on %s."
+                [:classic-tbc true] "no classic (TBC) release found on %s."
+                [:retail false] "no retail, classic or classic (TBC) release found on %s."
+                [:classic false] "no classic, classic (TBC) or retail release found on %s."
+                [:classic-tbc false] "no classic (TBC), classic or retail release found on %s.")]
       (warn (format msg (:source addon))))))
 
 

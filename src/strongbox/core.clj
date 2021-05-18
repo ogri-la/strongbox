@@ -481,21 +481,21 @@
          (not (zip/valid-zip-file? downloaded-file))
          (do (error "failed to read addon zip file, possibly corrupt or not a zip file.")
              (fs/delete downloaded-file)
-             (warn "removed bad zip file"))
+             (warn "removed bad zip file."))
 
          (not (zip/valid-addon-zip-file? downloaded-file))
          (do (error "refusing to install, addon zip file contains top-level files or a top-level directory missing a .toc file.")
              (fs/delete downloaded-file)
-             (warn "removed bad addon"))
+             (warn "removed bad addon."))
 
          (not (s/valid? ::sp/writeable-dir install-dir))
          (error (format "addon directory is not writable: %s" install-dir))
 
          (addon/overwrites-ignored? downloaded-file (get-state :installed-addon-list))
-         (error "refusing to install addon that will overwrite an ignored addon")
+         (error "refusing to install addon that will overwrite an ignored addon.")
 
          (addon/overwrites-pinned? downloaded-file (get-state :installed-addon-list))
-         (error "refusing to install addon that will overwrite a pinned addon")
+         (error "refusing to install addon that will overwrite a pinned addon.")
 
          test-only? true ;; addon was successfully downloaded and verified as being sound
 

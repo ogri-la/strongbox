@@ -49,6 +49,8 @@
     (delete [_ component opts]
       (fx.lifecycle/delete fx.lifecycle/dynamic (:child component) opts))))
 
+(def blt "\u2022") ;; • bullet
+
 (def major-theme-map
   {:light
    {:base "#ececec"
@@ -140,19 +142,23 @@
               ;; lives outside of main styling for some reason
               ;;
 
-              "#about-dialog "
-              {:-fx-spacing "3"
+              ".dialog-pane"
+              {:-fx-min-width "500px"}
 
-               "#about-pane-hyperlink"
-               {:-fx-font-size "1.1em"
-                :-fx-padding "0 0 4 -1"}
+              ".dialog-pane .content"
+              {:-fx-line-spacing "3"}
 
-               "#about-pane-hyperlink:hover"
-               {:-fx-text-fill "blue"}
+              "#about-dialog #about-pane-hyperlink"
+              {:-fx-font-size "1.1em"
+               :-fx-padding "0 0 4 -1"}
 
-               "#about-pane-title"
-               {:-fx-font-size "1.5em"
-                :-fx-padding "10em"}}
+              "#about-dialog #about-pane-hyperlink:hover"
+              {:-fx-text-fill "blue"}
+
+              "#about-dialog #about-pane-title"
+              {:-fx-font-size "1.6em"
+               :-fx-font-weight "bold"
+               :-fx-padding ".5em 0"}
 
               ;;
               ;; main app styling
@@ -842,13 +848,16 @@
   "imports an addon by parsing a URL"
   [event]
   (let [addon-url (text-input "Enter URL of addon")
-        fail-msg "Failed. URL must be:
-  * valid
-  * originate from github.com
-  * addon uses 'releases'
-  * latest release has a packaged 'asset'
-  * asset must be a .zip file
-  * zip file must be structured like an addon"
+
+        fail-msg ["Failed. URL must be:"
+                  "valid"
+                  "originate from github.com"
+                  "addon uses 'releases'"
+                  "latest release has a packaged 'asset'"
+                  "asset must be a .zip file"
+                  "zip file must be structured like an addon"]
+        fail-msg (clojure.string/join (format "\n %s " blt) fail-msg)
+
         failure #(alert :error fail-msg)
         warn-msg "Failed. Addon successfully added to catalogue but could not be installed."
         warning #(alert :warning warn-msg)]
@@ -892,7 +901,7 @@
   []
   {:fx/type :v-box
    :id "about-dialog"
-   :children [{:fx/type :text
+   :children [{:fx/type :label
                :id "about-pane-title"
                :text "strongbox"}
               {:fx/type :text
@@ -944,8 +953,8 @@
            (some-> selected core/expand-summary-wrapper vector cli/-install-update-these))]
       (if (empty? error-messages)
         (core/load-installed-addons)
-        (let [msg (str (format "warnings/errors while installing \"%s\":\n* " (:label selected))
-                       (clojure.string/join "\n* " error-messages))]
+        (let [msg (str (format "warnings/errors while installing \"%s\":\n %s " (:label selected) blt)
+                       (clojure.string/join (format "\n %s " blt) error-messages))]
           (alert :warning msg {:wait? false}))))
     (core/refresh)))
 

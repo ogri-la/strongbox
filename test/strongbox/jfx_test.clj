@@ -57,7 +57,7 @@
     (with-running-app
       (let [expected
             {:id "about-dialog"
-             :children [{:text "strongbox", :fx/type :text, :id "about-pane-title"}
+             :children [{:text "strongbox", :fx/type :label, :id "about-pane-title"}
                         {:text (str "version " (core/strongbox-version)), :fx/type :text}
                         {:text "version 0.0.0 is now available to download!",
                          :visible false,
