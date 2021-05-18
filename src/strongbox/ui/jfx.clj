@@ -943,7 +943,7 @@
                                 (some-> selected core/expand-summary-wrapper vector cli/-install-update-these))]
       (if (empty? error-messages)
         (core/load-installed-addons)
-        (let [msg (str (format "Warnings/errors generated during installation of \"%s\":\n* " (:label selected))
+        (let [msg (str (format "warnings/errors while installing \"%s\":\n* " (:label selected))
                        (clojure.string/join "\n* " error-messages))]
           (alert :warning msg {:wait? false}))))
     (core/refresh)))

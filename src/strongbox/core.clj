@@ -472,25 +472,21 @@
      (let [;; todo: if -testing-zipfile, move zipfile into download dir
            ;; this will help the zipfile pruning tests
            downloaded-file (or (:-testing-zipfile addon) ;; don't download, install from this file (testing only right now)
-                               (download-addon addon install-dir))
-           bad-zipfile-msg (format "failed to read zip file '%s', could not install %s" downloaded-file (:name addon))
-           bad-addon-msg (format "refusing to install '%s'. It contains top-level files or top-level directories missing .toc files."  (:name addon))]
+                               (download-addon addon install-dir))]
        (cond
-         (map? downloaded-file) (error "failed to download addon, could not install" (:name addon))
+         (map? downloaded-file) (error "failed to download addon.")
 
-         (nil? downloaded-file) (error "non-http error downloading addon, could not install" (:name addon)) ;; I dunno. /shrug
+         (nil? downloaded-file) (error "non-HTTP error downloading addon.") ;; I dunno. /shrug
 
          (not (zip/valid-zip-file? downloaded-file))
-         (do
-           (error bad-zipfile-msg)
-           (fs/delete downloaded-file)
-           (warn "removed bad zip file" downloaded-file))
+         (do (error "failed to read addon zip file, possibly corrupt or not a zip file.")
+             (fs/delete downloaded-file)
+             (warn "removed bad zip file" downloaded-file))
 
          (not (zip/valid-addon-zip-file? downloaded-file))
-         (do
-           (error bad-addon-msg)
-           (fs/delete downloaded-file) ;; I could be more lenient
-           (warn "removed bad addon" downloaded-file))
+         (do (error "refusing to install, addon zip file contains top-level files or a top-level directory missing a .toc file.")
+             (fs/delete downloaded-file)
+             (warn "removed bad addon" downloaded-file))
 
          (not (s/valid? ::sp/writeable-dir install-dir))
          (error (format "addon directory is not writable: %s" install-dir))

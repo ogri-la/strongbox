@@ -30,6 +30,10 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ux and polish
 
+* bug, 'browse local files' is giving me a spec error
+
+* bug, 'refresh user catalogue' is giving me a spec error
+
 * button at bottom of UI to re-add split-pane
     - it's label is the total number of info/warn/errors (whatever is highest) since last notice
 
