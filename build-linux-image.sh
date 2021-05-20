@@ -13,6 +13,11 @@ jlink \
     --no-man-pages \
     --no-header-files \
     --compress=2
+
+# needed when built using Ubuntu as libjvm.so is *huge*
+# doesn't seem to hurt to strip the other .so files.
+find -name "*.so" | xargs strip -p --strip-unneeded
+
 du -sh "$output_dir"
 
 if [ ! -f ./target/*-standalone.jar ]; then
