@@ -37,6 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+* a bug where refreshing the 'user' catalogue would throw an error if a repository no longer existed.
+
 ### Removed
 
 * github addons will no longer have a `-classic` or `-classic-tbc` suffix.

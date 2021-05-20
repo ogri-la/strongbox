@@ -751,6 +751,7 @@
          :addon-summary-list
          (map :url)
          (map catalogue/parse-user-string)
+         (remove nil?)
          add-user-addon!)))
 
 ;;

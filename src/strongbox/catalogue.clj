@@ -189,7 +189,11 @@
   (let [dispatch-map {"github.com" github-api/parse-user-string
                       "www.github.com" github-api/parse-user-string}] ;; alias
     (try
-      (when-let [f (some->> uin utils/unmangle-https-url java.net.URL. .getHost (get dispatch-map))]
+      (when-let [f (some->> uin
+                            utils/unmangle-https-url
+                            java.net.URL.
+                            .getHost
+                            (get dispatch-map))]
         (info "inspecting:" uin)
         (f uin))
       (catch java.net.MalformedURLException mue

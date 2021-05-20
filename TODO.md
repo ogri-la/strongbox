@@ -26,13 +26,16 @@ see CHANGELOG.md for a more formal list of changes by release
     - done
         - addons that fail to expand get an error after switching back to the installed pane
 
+* bug, 'refresh user catalogue' is giving me a spec error
+    - nil values
+        - we have github addons that no longer exist
+        - https://api.github.com/repos/teelolws/Altoholic-Classic
+        - https://api.github.com/repos/teelolws/Altoholic-Retail
+    - done
+
 ## todo
 
 ux and polish
-
-* bug, 'browse local files' is giving me a spec error
-
-* bug, 'refresh user catalogue' is giving me a spec error
 
 * button at bottom of UI to re-add split-pane
     - it's label is the total number of info/warn/errors (whatever is highest) since last notice
@@ -65,6 +68,12 @@ ux and polish
     - we're typically interested in comparing the last part of the version
 
 ## todo bucket (no particular order)
+
+* update check
+    - ignore pre-releases
+
+* add a timeout for downloads
+    - tukui.org is up but it's being reaaaaalllllly slow and updates appear to have hanged when they haven't
 
 * addon detail, 'releases' widget, including *all* possible releases to download and install
     - add an 'WoW' column to know which game-track/interface
