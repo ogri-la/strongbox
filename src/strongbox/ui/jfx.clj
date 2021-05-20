@@ -1027,14 +1027,14 @@
 (defn menu-bar
   "returns a description of the menu at the top of the application"
   [{:keys [fx/context]}]
-
   (let [no-addon-dir? (nil? (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir]))
+        unsteady-addons? (not (empty? (fx/sub-val context get-in [:app-state :unsteady-addon-list])))
         file-menu [(menu-item "_New addon directory" (async-event-handler wow-dir-picker) {:key "Ctrl+N"})
                    (menu-item "Remove addon directory" (async-handler remove-addon-dir)
                               {:disable no-addon-dir?})
                    separator
                    (menu-item "_Update all" (async-handler cli/update-all)
-                              {:key "Ctrl+U", :disable no-addon-dir?})
+                              {:key "Ctrl+U", :disable (or no-addon-dir? unsteady-addons?)})
                    (menu-item "Re-install all" (async-handler cli/re-install-or-update-all)
                               {:disable no-addon-dir?})
                    separator
@@ -1104,7 +1104,8 @@
   [{:keys [fx/context]}]
   (let [config (fx/sub-val context get-in [:app-state :cfg])
         selected-addon-dir (:selected-addon-dir config)
-        addon-dir-map-list (get config :addon-dir-list [])]
+        addon-dir-map-list (get config :addon-dir-list [])
+        unsteady-addons? (not (empty? (fx/sub-val context get-in [:app-state :unsteady-addon-list])))]
     {:fx/type ext-recreate-on-key-changed
      :key (sort-by :addon-dir addon-dir-map-list)
      :desc {:fx/type :combo-box
@@ -1114,16 +1115,16 @@
                                (fn [new-addon-dir]
                                  (cli/set-addon-dir! new-addon-dir)))
             :items (mapv :addon-dir addon-dir-map-list)
-            :disable (empty? addon-dir-map-list)}}))
+            :disable (or unsteady-addons? (empty? addon-dir-map-list))}}))
 
 (defn game-track-dropdown
   [{:keys [fx/context]}]
   (let [selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])
+        unsteady-addons? (not (empty? (fx/sub-val context get-in [:app-state :unsteady-addon-list])))
         addon-dir-map (core/addon-dir-map selected-addon-dir)
         game-track (:game-track addon-dir-map)
         strict? (get addon-dir-map :strict? core/default-game-track-strictness)
         tooltip "restrict or relax the installation of addons for specific WoW versions"]
-
     {:fx/type :h-box
      :id "game-track-container"
      :children [{:fx/type :combo-box
@@ -1135,7 +1136,7 @@
                                       (core/set-game-track! (get sp/game-track-labels-map-inv new-game-track))
                                       (core/refresh)))
                  :items (mapv second sp/game-track-labels)
-                 :disable (nil? selected-addon-dir)}
+                 :disable (or unsteady-addons? (nil? selected-addon-dir))}
 
                 {:fx/type fx.ext.node/with-tooltip-props
                  :props {:tooltip {:fx/type :tooltip
@@ -1145,13 +1146,14 @@
                         :id "game-track-check-box"
                         :text "Strict"
                         :selected strict?
-                        :disable (nil? (core/get-game-track-strictness))
+                        :disable (or unsteady-addons? (nil? (core/get-game-track-strictness)))
                         :on-selected-changed (async-event-handler cli/set-game-track-strictness!)}}]}))
 
 (defn installed-addons-menu-bar
   "returns a description of the installed-addons tab-pane menu"
   [{:keys [fx/context]}]
-  (let [selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])]
+  (let [selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])
+        unsteady-addons? (not (empty? (fx/sub-val context get-in [:app-state :unsteady-addon-list])))]
     {:fx/type :h-box
      :padding 10
      :spacing 10
@@ -1159,7 +1161,7 @@
                  :text "Update all"
                  :id "update-all-button"
                  :on-action (async-handler cli/update-all)
-                 :disable (nil? selected-addon-dir)}
+                 :disable (or unsteady-addons? (nil? selected-addon-dir))}
                 {:fx/type wow-dir-dropdown}
                 {:fx/type game-track-dropdown}
                 {:fx/type :button
