@@ -368,6 +368,19 @@
         addon-id (utils/extract-addon-id addon)]
     (add-tab tab-id (or (:dirname addon) (:label addon) (:name addon) "[bug: missing tab name!]") closable? addon-id)))
 
+(defn-spec addon-log-entries ::sp/list-of-maps
+  "returns a list of addon entries for the given `:dirname` since last refresh"
+  [addon map?]
+  (let [not-report #(-> % :level (= :report) not)
+        filter-fn (utils/log-line-filter-with-reports (core/selected-addon-dir) addon)]
+    (->> (core/get-state)
+         :log-lines
+         reverse
+         (filter filter-fn)
+         (take-while not-report)
+         reverse
+         vec)))
+
 (defn-spec addon-num-log-level int?
   "returns the number of log entries given `dirname` has for given `log-level` or 0 if not present"
   [log-level ::sp/log-level, dirname ::sp/dirname]
@@ -388,7 +401,11 @@
 (defn-spec addon-has-log-level? boolean?
   "returns `true` if the given `addon` has any log entries of the given log `level`."
   [log-level ::sp/log-level, dirname ::sp/dirname]
-  (> (addon-num-log-level log-level dirname) 0))
+  ;;(> (addon-num-log-level log-level dirname) 0))
+  (->> (addon-log-entries {:dirname dirname})
+       (filter #(= (:level %) log-level))
+       empty?
+       not))
 
 (defn-spec addon-has-warnings? boolean?
   "returns `true` if the given `addon` has any warnings in the log."

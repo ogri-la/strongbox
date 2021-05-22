@@ -617,3 +617,21 @@
         (re-find classic-tbc-regex string) :classic-tbc
         (re-find classic-regex string) :classic
         (re-find retail-regex string) :retail))))
+
+(defn log-line-filter
+  "returns a function that matches a log entry to the given `install-dir` + `addon`"
+  [install-dir addon]
+  (let [;; installed addon
+        preferred-match {:install-dir install-dir, :dirname (:dirname addon)}
+        ;; addons from the catalogue
+        alt-match {:install-dir install-dir, :source (:source addon), :source-id (:source-id addon)}]
+    (fn [log-line]
+      (or (= preferred-match (select-keys (:source log-line) [:install-dir :dirname]))
+          (= alt-match (select-keys (:source log-line) [:install-dir :source :source-id]))))))
+
+(defn log-line-filter-with-reports
+  [install-dir addon]
+  (let [filter-fn (log-line-filter install-dir addon)]
+    (fn [log-line]
+      (or (-> log-line :level (= :report))
+          (filter-fn log-line)))))

@@ -1733,13 +1733,7 @@
       (do (cli/remove-tab-at-idx tab-idx)
           {:fx/type :label :text "goodbye"})
 
-      (let [addon-source {:install-dir (core/selected-addon-dir)}
-            preferred-match (merge addon-source {:dirname (:dirname addon)})
-            alt-match (merge addon-source {:source (:source addon) :source-id (:source-id addon)})
-            notice-pane-filter (fn [log-line]
-                                 (or (-> log-line :level (= :report))
-                                     (= preferred-match (select-keys (:source log-line) [:install-dir :dirname]))
-                                     (= alt-match (select-keys (:source log-line) [:install-dir :source :source-id]))))]
+      (let [notice-pane-filter (utils/log-line-filter-with-reports (core/selected-addon-dir) addon)]
         {:fx/type :border-pane
          :id "addon-detail-pane"
          :style-class ["addon-detail"]
