@@ -18,6 +18,11 @@
 
 (comment "the UIs pool their logic here, which calls core.clj.")
 
+(defn-spec toggle-split-pane nil?
+  []
+  (swap! core/state update-in [:gui-split-pane] not)
+  nil)
+
 (defn-spec hard-refresh nil?
   "unlike `core/refresh`, `cli/hard-refresh` clears the http cache before checking for addon updates."
   []

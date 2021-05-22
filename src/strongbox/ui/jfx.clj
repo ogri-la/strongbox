@@ -456,11 +456,29 @@
 
                "#status-bar"
                {:-fx-font-size ".9em"
-                :-fx-padding "5px"
+                :-fx-padding "0 5px"
+                :-fx-alignment "center-left"
+                ;;:-fx-background-color "pink"
+                }
 
-                " > .text"
-                {;; omg, wtf does 'fx-fill' work and not 'fx-text-fill' ???
-                 :-fx-fill (colour :table-font-colour)}}
+               "#status-bar > .text"
+               {;; omg, wtf does 'fx-fill' work and not 'fx-text-fill' ???
+                :-fx-fill (colour :table-font-colour)}
+
+               "#status-bar-left"
+               {;;:-fx-background-color "orange"
+                :-fx-alignment "center-left"
+                :-fx-pref-width 9999.0}
+
+               "#status-bar-right"
+               {:-fx-min-width "100px" ;; about the width of a button for now
+                ;;:-fx-background-color "blue"
+                :-fx-padding "5px 0"
+                :-fx-alignment "center-right"}
+
+               "#status-bar-right .button"
+               {;;:-fx-background-color "green"
+                }
 
 
                ;;
@@ -789,6 +807,7 @@
   "accepts any args, does nothing, returns nil.
   good for placeholder event handlers."
   (constantly nil))
+(def do-nothing donothing)
 
 (defn wow-dir-picker
   "prompts the user to select an addon dir. 
@@ -1882,11 +1901,18 @@
 
     {:fx/type :h-box
      :id "status-bar"
-     :children [{:fx/type :text
-                 :style-class ["text"]
-                 :text (join " " strings)}]}))
+     :children [{:fx/type :h-box
+                 :id "status-bar-left"
+                 :children [{:fx/type :text
+                             :style-class ["text"]
+                             :text (join " " strings)}]}
+                {:fx/type :h-box
+                 :id "status-bar-right"
+                 :children [(button "split" (fn [_]
+                                              (cli/toggle-split-pane)))]}]}))
 
 ;;
+
 
 (defn app
   "returns a description of the javafx Stage, Scene and the 'root' node.
@@ -1895,7 +1921,8 @@
   (let [;; re-render gui whenever style state changes
         style (fx/sub-val context get :style)
         showing? (fx/sub-val context get-in [:app-state :gui-showing?])
-        theme (fx/sub-val context get-in [:app-state :cfg :gui-theme])]
+        theme (fx/sub-val context get-in [:app-state :cfg :gui-theme])
+        split-pane-on? (fx/sub-val context get-in [:app-state :gui-split-pane])]
     {:fx/type :stage
      :showing showing?
      :on-close-request exit-handler
@@ -1919,7 +1946,13 @@
              :root {:fx/type :border-pane
                     :id (name theme)
                     :top {:fx/type menu-bar}
-                    :center {:fx/type tabber}
+                    :center (if split-pane-on?
+                              {:fx/type :split-pane
+                               :orientation :vertical
+                               :divider-positions [0.6]
+                               :items [{:fx/type tabber}
+                                       {:fx/type notice-logger}]}
+                              {:fx/type tabber})
                     :bottom {:fx/type status-bar}}}}))
 
 (defn start
