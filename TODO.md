@@ -36,6 +36,11 @@ see CHANGELOG.md for a more formal list of changes by release
 * tabber, double clicking a tab closes it
     - total ballache, decided not to
 
+* search, comma separate download numbers
+    - or figure out the locale-specific separator
+    - 1234567890 downloads is less readable than 1,234,567,890
+    - done
+
 ## todo
 
 ux and polish
@@ -58,16 +63,13 @@ ux and polish
 
 * bug, uber button, identical addons in different addon dirs are causing the warn/error-free version to show warns/errors
 
-* search, comma separate download numbers
-    - or figure out the locale-specific separator
-    - 1234567890 downloads is less readable than 1,234,567,890
 
-
-* game tracks, add warning if installed addon's interface version deviates from addon directory's game track
-    - for example, if classic is installed in retail, or classic-bc is installed in classic
 
 * installed, right align version columns and make elipses start at left
     - we're typically interested in comparing the last part of the version
+
+* game tracks, add warning if installed addon's interface version deviates from addon directory's game track
+    - for example, if classic is installed in retail, or classic-bc is installed in classic
 
 ## todo bucket (no particular order)
 
