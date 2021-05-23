@@ -276,7 +276,14 @@
                 ":hover"
                 {:-fx-background-color (colour :row-hover)}}
 
+               ".table-view .install-button-column"
+               {:-fx-alignment "center"}
 
+               ".table-view .install-button-column.table-cell"
+               {:-fx-padding "-2"}
+
+               ".table-view .install-button-column .button"
+               {:-fx-pref-width 110}
 
                ;;
                ;; tabber
@@ -533,16 +540,7 @@
                 ".table-view#key-vals .key-column"
                 {:-fx-alignment "center-right"
                  :-fx-padding "0 1em 0 0"
-                 :-fx-font-style "italic"}
-
-                ".table-view#release-list .install-button-column"
-                {:-fx-alignment "center"}
-
-                ".table-view#release-list .install-button-column.table-cell"
-                {:-fx-padding "-2"}
-
-                ".table-view#release-list .install-button-column .button"
-                {:-fx-pref-width 110}} ;; ends .addon-detail
+                 :-fx-font-style "italic"}} ;; ends .addon-detail
 
                ;; ---
                }}))]
@@ -944,9 +942,9 @@
 (defn search-results-install-handler
   "this switches to the 'installed' tab, then, for each addon selected, expands summary, installs addon, calls load-installed-addons and finally refreshes;
   this presents as a plodding step-wise update but is better than a blank screen and apparent hang"
-  [event]
-  ((switch-tab-event-handler INSTALLED-TAB) event)
-  (doseq [selected (core/get-state :search :selected-result-list)]
+  [addon-list]
+  (switch-tab INSTALLED-TAB)
+  (doseq [selected addon-list]
     (let [error-messages
           (logging/buffered-log
            :warn
@@ -1488,6 +1486,7 @@
   [{:keys [fx/context]}]
   (let [idx-key #(select-keys % [:source :source-id])
         installed-addon-idx (mapv idx-key (fx/sub-val context get-in [:app-state :installed-addon-list]))
+        installed? #(utils/in? (idx-key %) installed-addon-idx)
 
         search-state (fx/sub-val context get-in [:app-state :search])
         addon-list (cli/search-results search-state)
@@ -1505,7 +1504,13 @@
                      {:text "description" :min-width 200 :pref-width 400 :cell-value-factory (comp no-new-lines :description)}
                      {:text "tags" :min-width 200 :pref-width 250 :cell-value-factory (comp str :tag-list)}
                      {:text "updated" :min-width 85 :max-width 85 :pref-width 85 :resizable false :cell-value-factory (comp #(utils/safe-subs % 10) :updated-date)}
-                     {:text "downloads" :min-width 120 :pref-width 120 :max-width 120 :resizable false :cell-value-factory :download-count}]]
+                     {:text "downloads" :min-width 120 :pref-width 120 :max-width 120 :resizable false :cell-value-factory :download-count}
+                     {:text "" :style-class ["install-button-column"] :min-width 120 :pref-width 120 :max-width 120 :resizable false
+                      :cell-factory {:fx/cell-type :table-cell
+                                     :describe (fn [addon]
+                                                 {:graphic (button "install" (async-handler #(search-results-install-handler [addon]))
+                                                                   {:disabled? (installed? addon)})})}
+                      :cell-value-factory identity}]]
 
     {:fx/type fx.ext.table-view/with-selection-props
      :props {:selection-mode :multiple
@@ -1527,7 +1532,7 @@
                                                              (cli/add-addon-tab row)
                                                              (switch-tab-latest)))
                                        :style-class ["table-row-cell"
-                                                     (when (utils/in? (idx-key row) installed-addon-idx)
+                                                     (when (installed? row)
                                                        "ignored")]})}
             :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
             :pref-height 999.0
@@ -1549,7 +1554,7 @@
       {:fx/type :button
        :id "search-install-button"
        :text "install selected"
-       :on-action (async-event-handler search-results-install-handler)}
+       :on-action (async-handler #(search-results-install-handler (core/get-state :search :selected-result-list)))}
 
       {:fx/type :button
        :id "search-random-button"
