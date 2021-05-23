@@ -370,6 +370,16 @@
                 {;; !important so that hovering over a selected+updateable row doesn't change it's colour
                  :-fx-background-color (str (colour :row-updateable-selected) " !important")}}
 
+               ".table-view#installed-addons .installed-column"
+               {;;:-fx-background-color "green"
+                :-fx-alignment "center-right"
+                :-fx-text-overrun "leading-ellipsis"}
+
+               ".table-view#installed-addons .available-column"
+               {;;:-fx-background-color "green"
+                :-fx-alignment "center-right"
+                :-fx-text-overrun "leading-ellipsis"}
+
 
                ;;
                ;; notice-logger
@@ -451,6 +461,9 @@
 
                ".table-view#search-addons .downloads-column"
                {:-fx-alignment "center-right"}
+
+               ".table-view#search-addons .updated-column"
+               {:-fx-alignment "center"}
 
 
                ;;

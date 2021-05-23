@@ -41,6 +41,10 @@ see CHANGELOG.md for a more formal list of changes by release
     - 1234567890 downloads is less readable than 1,234,567,890
     - done
 
+* installed, right align version columns and make elipses start at left
+    - we're typically interested in comparing the last part of the version
+    - done
+
 ## todo
 
 ux and polish
@@ -62,11 +66,6 @@ ux and polish
 * search, replace 'install selected' with 'install' button on the right
 
 * bug, uber button, identical addons in different addon dirs are causing the warn/error-free version to show warns/errors
-
-
-
-* installed, right align version columns and make elipses start at left
-    - we're typically interested in comparing the last part of the version
 
 * game tracks, add warning if installed addon's interface version deviates from addon directory's game track
     - for example, if classic is installed in retail, or classic-bc is installed in classic
