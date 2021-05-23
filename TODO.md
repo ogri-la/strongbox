@@ -33,6 +33,9 @@ see CHANGELOG.md for a more formal list of changes by release
         - https://api.github.com/repos/teelolws/Altoholic-Retail
     - done
 
+* tabber, double clicking a tab closes it
+    - total ballache, decided not to
+
 ## todo
 
 ux and polish
@@ -59,7 +62,6 @@ ux and polish
     - or figure out the locale-specific separator
     - 1234567890 downloads is less readable than 1,234,567,890
 
-* tabber, double clicking a tab closes it
 
 * game tracks, add warning if installed addon's interface version deviates from addon directory's game track
     - for example, if classic is installed in retail, or classic-bc is installed in classic
