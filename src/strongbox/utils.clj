@@ -618,9 +618,9 @@
         (re-find classic-regex string) :classic
         (re-find retail-regex string) :retail))))
 
-(defn log-line-filter
+(defn-spec log-line-filter fn?
   "returns a function that matches a log entry to the given `install-dir` + `addon`"
-  [install-dir addon]
+  [install-dir ::sp/install-dir, addon map?]
   (let [;; installed addon
         preferred-match {:install-dir install-dir, :dirname (:dirname addon)}
         ;; addons from the catalogue
@@ -629,8 +629,9 @@
       (or (= preferred-match (select-keys (:source log-line) [:install-dir :dirname]))
           (= alt-match (select-keys (:source log-line) [:install-dir :source :source-id]))))))
 
-(defn log-line-filter-with-reports
-  [install-dir addon]
+(defn-spec log-line-filter-with-reports fn?
+  "like `log-line-filter`, but conveniently includes 'report' level log lines as well."
+  [install-dir ::sp/install-dir, addon map?]
   (let [filter-fn (log-line-filter install-dir addon)]
     (fn [log-line]
       (or (-> log-line :level (= :report))
