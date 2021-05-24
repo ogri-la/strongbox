@@ -221,7 +221,7 @@
                        {:get (fn [req] {:status 500 :reason-phrase "Internal Server Error"})}}
           expected ["failed to download file 'https://api.github.com/repos/1/releases': Internal Server Error (HTTP 500)"
                     "Github: api is down. Check www.githubstatus.com and try again later."
-                    "no retail release found on github."]]
+                    "no 'Retail' release found on github."]]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (logging/buffered-log :info (catalogue/expand-summary addon game-track strict?))))))))
 
@@ -234,7 +234,7 @@
                        {:get (fn [req] {:status 500 :reason-phrase "Internal Server Error"})}}
           expected ["failed to download file 'https://api.github.com/repos/1/releases': Internal Server Error (HTTP 500)"
                     "Github: api is down. Check www.githubstatus.com and try again later."
-                    "no retail release found on github."]]
+                    "no 'Retail' release found on github."]]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (logging/buffered-log :info (catalogue/expand-summary addon game-track strict?))))))))
 
@@ -247,7 +247,7 @@
                        {:get (fn [req] {:status 502 :reason-phrase "Gateway Time-out (HTTP 502)"})}}
           expected ["failed to download file 'https://addons-ecs.forgesvc.net/api/v2/addon/281321': Gateway Time-out (HTTP 502) (HTTP 502)"
                     "Curseforge: the API is having problems right now. Try again later."
-                    "no retail release found on curseforge."]]
+                    "no 'Retail' release found on curseforge."]]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (logging/buffered-log :info (catalogue/expand-summary addon game-track strict?))))))))
 
@@ -260,7 +260,7 @@
                        {:get (fn [req] {:status 504 :reason-phrase "Gateway Time-out (HTTP 504)"})}}
           expected ["failed to download file 'https://addons-ecs.forgesvc.net/api/v2/addon/281321': Gateway Time-out (HTTP 504) (HTTP 504)"
                     "Curseforge: the API is having problems right now. Try again later."
-                    "no retail release found on curseforge."]]
+                    "no 'Retail' release found on curseforge."]]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (logging/buffered-log :info (catalogue/expand-summary addon game-track strict?))))))))
 
