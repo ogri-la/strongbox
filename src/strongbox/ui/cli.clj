@@ -374,19 +374,20 @@
   (let [not-report #(-> % :level (= :report) not)
         filter-fn (utils/log-line-filter-with-reports (core/selected-addon-dir) addon)]
     (->> (core/get-state)
-         :log-lines
-         reverse
+         :log-lines ;; oldest first
+         reverse ;; newest first
          (filter filter-fn)
          (take-while not-report)
-         reverse
+         reverse ;; oldest first again, but truncated
          vec)))
 
 (defn-spec addon-num-log-level int?
   "returns the number of log entries given `dirname` has for given `log-level` or 0 if not present"
   [log-level ::sp/log-level, dirname ::sp/dirname]
-  (or
-   (some-> (core/get-state) :log-stats (get dirname) log-level)
-   0))
+  (->> {:dirname dirname}
+       addon-log-entries
+       (filter #(= (:level %) log-level))
+       count))
 
 (defn-spec addon-num-warnings int?
   "returns the number of warnings present for the given `addon` in the log."
@@ -401,11 +402,7 @@
 (defn-spec addon-has-log-level? boolean?
   "returns `true` if the given `addon` has any log entries of the given log `level`."
   [log-level ::sp/log-level, dirname ::sp/dirname]
-  ;;(> (addon-num-log-level log-level dirname) 0))
-  (->> (addon-log-entries {:dirname dirname})
-       (filter #(= (:level %) log-level))
-       empty?
-       not))
+  (> (addon-num-log-level log-level dirname) 0))
 
 (defn-spec addon-has-warnings? boolean?
   "returns `true` if the given `addon` has any warnings in the log."

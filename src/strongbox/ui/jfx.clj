@@ -1315,7 +1315,7 @@
   ;; subscribe to re-render table when addons become unsteady
   (fx/sub-val context get-in [:app-state :unsteady-addon-list])
   ;; subscribe to re-render rows when addons emit warnings or errors
-  (fx/sub-val context get-in [:app-state :log-stats])
+  (fx/sub-val context get-in [:app-state :log-lines])
   (let [row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
         selected (fx/sub-val context get-in [:app-state :selected-addon-list])
         selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])

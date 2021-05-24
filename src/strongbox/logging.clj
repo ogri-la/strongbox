@@ -115,8 +115,7 @@
   'report' level logs have no addon information attached to them.
   see `addon-log`, `with-addon` and `with-label`."
   [state-atm ::sp/atom, install-dir (s/nilable ::sp/install-dir)]
-  (let [inc* #(inc (or % 0))
-        func (fn [data]
+  (let [func (fn [data]
                (let [addon (some-> data :context :addon)
                      addon-id (select-keys addon [:dirname :source :source-id :name])
                      ;; {:install-dir "/path/to/addons/dir" :dirname "some-addon" :name "SomeAddon"}
@@ -137,9 +136,8 @@
                    ;; purely to stop infinite feedback loop. not sure how this one is happening but urgh.
                    (println "[dropping duplicate message]")
                    (when state-atm
-                     (swap! state-atm update-in [:log-lines] into [log-line])
-                     (when-let [dirname (:dirname addon)]
-                       (swap! state-atm update-in [:log-stats dirname level] inc*))))))]
+                     (swap! state-atm update-in [:log-lines] into [log-line])))))]
+
     (add-appender! :atom func {:timestamp-opts {:pattern "HH:mm:ss"}}))
   (fn []
     (rm-appender! :atom)))
