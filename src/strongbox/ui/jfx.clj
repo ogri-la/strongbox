@@ -371,13 +371,11 @@
                  :-fx-background-color (str (colour :row-updateable-selected) " !important")}}
 
                ".table-view#installed-addons .installed-column"
-               {;;:-fx-background-color "green"
-                :-fx-alignment "center-right"
+               {:-fx-alignment "center-right"
                 :-fx-text-overrun "leading-ellipsis"}
 
                ".table-view#installed-addons .available-column"
-               {;;:-fx-background-color "green"
-                :-fx-alignment "center-right"
+               {:-fx-alignment "center-right"
                 :-fx-text-overrun "leading-ellipsis"}
 
 
