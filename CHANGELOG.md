@@ -34,6 +34,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - asterisks `*` have been replaced with a round black dot `•`
     - line spacing increased
     - fixed minimum width of dialog pane
+* the 'downloads' column on the search tab are now formatted according to your locale
+    - for me, this means long numbers are now comma separated
+* the 'updated' column on the search tab is now centred
+* the 'installed' and 'available' columns are now right aligned with ellipses appearing on the left when truncated
 
 ### Fixed
 
