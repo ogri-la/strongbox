@@ -53,6 +53,9 @@ see CHANGELOG.md for a more formal list of changes by release
     - for example, if classic is installed in retail, or classic-bc is installed in classic
     - done
 
+* search, replace 'install selected' with 'install' button on the right
+    - done
+
 
 ## todo
 
@@ -69,9 +72,8 @@ ux and polish
     - roll this into the action queue work
         - no more than one update request pending per-addon
 
-* search, replace 'install selected' with 'install' button on the right
-
 * bug, uber button, identical addons in different addon dirs are causing the warn/error-free version to show warns/errors
+    - I think this may be 'fixed' now with the limited log filter 
 
 ## todo bucket (no particular order)
 
