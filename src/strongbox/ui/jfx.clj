@@ -262,6 +262,11 @@
                {:-fx-opacity "0.5"
                 :-fx-font-style "italic"}
 
+               ;; ignored 'install' button get slightly different styling
+               ".table-view .ignored .install-button-column.table-cell"
+               {:-fx-opacity "1" ;; a disable button already has some greying effect applied
+                :-fx-font-style "normal"}
+
 
                ;;
                ;; tables with alternating row colours (just add the '.odd-rows' class)
@@ -284,10 +289,14 @@
                {:-fx-alignment "center"}
 
                ".table-view .install-button-column.table-cell"
-               {:-fx-padding "-2"}
+               {:-fx-padding "0px"
+                :-fx-alignment "center"}
 
                ".table-view .install-button-column .button"
-               {:-fx-pref-width 110}
+               {:-fx-pref-width 100
+                :-fx-padding "2px 0"
+                :-fx-background-radius "4"}
+
 
                ;;
                ;; tabber
