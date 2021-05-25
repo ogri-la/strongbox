@@ -262,9 +262,9 @@
                {:-fx-opacity "0.5"
                 :-fx-font-style "italic"}
 
-               ;; ignored 'install' button get slightly different styling
+               ;; ignored 'install' button gets slightly different styling
                ".table-view .ignored .install-button-column.table-cell"
-               {:-fx-opacity "1" ;; a disable button already has some greying effect applied
+               {:-fx-opacity "1" ;; a disabled button already has some greying effect applied
                 :-fx-font-style "normal"}
 
 
@@ -284,9 +284,6 @@
                {:-fx-background-color (colour :row-selected)
                 ":hover"
                 {:-fx-background-color (colour :row-hover)}}
-
-               ".table-view .install-button-column"
-               {:-fx-alignment "center"}
 
                ".table-view .install-button-column.table-cell"
                {:-fx-padding "0px"
@@ -951,14 +948,9 @@
   (when-let [selected (core/get-state :selected-addon-list)]
     (if (utils/any (mapv :ignore? selected))
       (alert :error "Selection contains ignored addons. Stop ignoring them and then delete.")
-
-      (let [label-list (mapv (fn [row]
-                               {:fx/type :text
-                                :text (str " - " (:name row))}) selected)
-            content {:fx/type :v-box
-                     :children (into [{:fx/type :text
-                                       :text (format "Deleting %s:" (count selected))}] label-list)}
-            result (alert :confirm "" {:content (component-instance content)})]
+      (let [msg (str (format "Deleting %s:\n %s " (count selected) blt)
+                     (clojure.string/join (format "\n %s " blt) (map :label selected)))
+            result (alert :confirm msg)]
         (when (= (.get result) ButtonType/OK)
           (cli/delete-selected)))))
   nil)
@@ -1550,15 +1542,15 @@
                                   "ᕙ(`▿´)ᕗ"
                                   "No search results.")}
             :row-factory {:fx/cell-type :table-row
-                          :describe (fn [row]
+                          :describe (fn [addon]
                                       {:on-mouse-clicked (fn [e]
                                                            ;; double click handler https://github.com/cljfx/cljfx/issues/118
                                                            (when (and (= javafx.scene.input.MouseButton/PRIMARY (.getButton e))
                                                                       (= 2 (.getClickCount e)))
-                                                             (cli/add-addon-tab row)
+                                                             (cli/add-addon-tab addon)
                                                              (switch-tab-latest)))
                                        :style-class ["table-row-cell"
-                                                     (when (installed? row)
+                                                     (when (installed? addon)
                                                        "ignored")]})}
             :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
             :pref-height 999.0
