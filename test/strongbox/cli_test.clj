@@ -256,7 +256,6 @@
     (logging/with-addon {:dirname "EveryAddon"}
       (timbre/warn "wooooooga")) ;; warn #2
 
-    (is (= {"EveryAddon" {:warn 2}} (core/get-state :log-stats)))
     (is (= 2 (cli/addon-num-log-level :warn "EveryAddon")))
     (is (zero? (cli/addon-num-log-level :error "EveryAddon")))
 

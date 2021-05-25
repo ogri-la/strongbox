@@ -45,6 +45,15 @@ see CHANGELOG.md for a more formal list of changes by release
     - we're typically interested in comparing the last part of the version
     - done
 
+* uber-button, limit status to just those events since the last refresh
+    - and make 'refresh' an app-wide 'notice' to distinguish it from ino/debug/etc
+    - done
+
+* game tracks, add warning if installed addon's interface version deviates from addon directory's game track
+    - for example, if classic is installed in retail, or classic-bc is installed in classic
+    - done
+
+
 ## todo
 
 ux and polish
@@ -55,9 +64,6 @@ ux and polish
 * preferences, "update all addons automatically"
     - update README features
 
-* uber-button, limit status to just those events since the last refresh
-    - and make 'refresh' an app-wide 'notice' to distinguish it from ino/debug/etc
-
 * disable addon update button if it's unsteady
     - interesting stuff happens when you pump that update button!
     - roll this into the action queue work
@@ -66,9 +72,6 @@ ux and polish
 * search, replace 'install selected' with 'install' button on the right
 
 * bug, uber button, identical addons in different addon dirs are causing the warn/error-free version to show warns/errors
-
-* game tracks, add warning if installed addon's interface version deviates from addon directory's game track
-    - for example, if classic is installed in retail, or classic-bc is installed in classic
 
 ## todo bucket (no particular order)
 

@@ -1330,7 +1330,7 @@
   ;; subscribe to re-render table when addons become unsteady
   (fx/sub-val context get-in [:app-state :unsteady-addon-list])
   ;; subscribe to re-render rows when addons emit warnings or errors
-  (fx/sub-val context get-in [:app-state :log-stats])
+  (fx/sub-val context get-in [:app-state :log-lines])
   (let [row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
         selected (fx/sub-val context get-in [:app-state :selected-addon-list])
         selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])
@@ -1750,13 +1750,7 @@
       (do (cli/remove-tab-at-idx tab-idx)
           {:fx/type :label :text "goodbye"})
 
-      (let [addon-source {:install-dir (core/selected-addon-dir)}
-            preferred-match (merge addon-source {:dirname (:dirname addon)})
-            alt-match (merge addon-source {:source (:source addon) :source-id (:source-id addon)})
-            notice-pane-filter (fn [log-line]
-                                 (or (-> log-line :level (= :report))
-                                     (= preferred-match (select-keys (:source log-line) [:install-dir :dirname]))
-                                     (= alt-match (select-keys (:source log-line) [:install-dir :source :source-id]))))]
+      (let [notice-pane-filter (logging/log-line-filter-with-reports (core/selected-addon-dir) addon)]
         {:fx/type :border-pane
          :id "addon-detail-pane"
          :style-class ["addon-detail"]
