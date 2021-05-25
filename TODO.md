@@ -33,6 +33,18 @@ see CHANGELOG.md for a more formal list of changes by release
         - https://api.github.com/repos/teelolws/Altoholic-Retail
     - done
 
+* tabber, double clicking a tab closes it
+    - total ballache, decided not to
+
+* search, comma separate download numbers
+    - or figure out the locale-specific separator
+    - 1234567890 downloads is less readable than 1,234,567,890
+    - done
+
+* installed, right align version columns and make elipses start at left
+    - we're typically interested in comparing the last part of the version
+    - done
+
 * uber-button, limit status to just those events since the last refresh
     - and make 'refresh' an app-wide 'notice' to distinguish it from ino/debug/etc
     - done
@@ -40,6 +52,7 @@ see CHANGELOG.md for a more formal list of changes by release
 * game tracks, add warning if installed addon's interface version deviates from addon directory's game track
     - for example, if classic is installed in retail, or classic-bc is installed in classic
     - done
+
 
 ## todo
 
@@ -59,16 +72,6 @@ ux and polish
 * search, replace 'install selected' with 'install' button on the right
 
 * bug, uber button, identical addons in different addon dirs are causing the warn/error-free version to show warns/errors
-
-* search, comma separate download numbers
-    - or figure out the locale-specific separator
-    - 1234567890 downloads is less readable than 1,234,567,890
-
-* tabber, double clicking a tab closes it
-
-
-* installed, right align version columns and make elipses start at left
-    - we're typically interested in comparing the last part of the version
 
 ## todo bucket (no particular order)
 
