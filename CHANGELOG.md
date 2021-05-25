@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - just 'refresh' for now, logged whenever the list of addons are re-read.
 * warnings and errors generated while installing an addon are now captured and displayed in a dialog box.
     - partially addresses points raised in https://github.com/ogri-la/strongbox/issues/231
+* a warning when 'strict' is unticked and an update is available for a mismatched game track
+    - for example, a 'classic' release is available for an addon but the addon directory is set to 'retail'
 
 ### Changed
 
@@ -34,6 +36,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - asterisks `*` have been replaced with a round black dot `•`
     - line spacing increased
     - fixed minimum width of dialog pane
+* the 'downloads' column on the search tab are now formatted according to your locale
+    - for me, this means long numbers are now comma separated
+* the 'updated' column on the search tab is now centred
+* the 'installed' and 'available' columns are now right aligned with ellipses appearing on the left when truncated
+* an addon's status (green tick, yellow line, red cross, etc) is limited to just events since the last refresh.
 
 ### Fixed
 

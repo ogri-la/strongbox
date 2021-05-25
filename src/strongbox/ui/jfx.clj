@@ -20,13 +20,14 @@
     [utils :as utils :refer [no-new-lines]]
     [core :as core]])
   (:import
-   [java.util List Calendar]
+   [java.util List Calendar Locale]
    [javafx.util Callback]
    [javafx.scene.control TableRow TextInputDialog Alert Alert$AlertType ButtonType]
    [javafx.scene.input KeyCode]
    [javafx.stage FileChooser FileChooser$ExtensionFilter DirectoryChooser Window WindowEvent]
    [javafx.application Platform]
-   [javafx.scene Node]))
+   [javafx.scene Node]
+   [java.text NumberFormat]))
 
 ;; javafx hack, fixes combobox that sometimes goes blank:
 ;; https://github.com/cljfx/cljfx/issues/76#issuecomment-645563116
@@ -48,6 +49,9 @@
             (fx.lifecycle/create this this-desc opts))))
     (delete [_ component opts]
       (fx.lifecycle/delete fx.lifecycle/dynamic (:child component) opts))))
+
+(def user-locale (Locale/getDefault))
+(def number-formatter (NumberFormat/getNumberInstance user-locale))
 
 (def blt "\u2022") ;; • bullet
 
@@ -373,6 +377,14 @@
                 {;; !important so that hovering over a selected+updateable row doesn't change it's colour
                  :-fx-background-color (str (colour :row-updateable-selected) " !important")}}
 
+               ".table-view#installed-addons .installed-column"
+               {:-fx-alignment "center-right"
+                :-fx-text-overrun "leading-ellipsis"}
+
+               ".table-view#installed-addons .available-column"
+               {:-fx-alignment "center-right"
+                :-fx-text-overrun "leading-ellipsis"}
+
 
                ;;
                ;; notice-logger
@@ -454,6 +466,9 @@
 
                ".table-view#search-addons .downloads-column"
                {:-fx-alignment "center-right"}
+
+               ".table-view#search-addons .updated-column"
+               {:-fx-alignment "center"}
 
 
                ;;
@@ -1313,7 +1328,7 @@
   ;; subscribe to re-render table when addons become unsteady
   (fx/sub-val context get-in [:app-state :unsteady-addon-list])
   ;; subscribe to re-render rows when addons emit warnings or errors
-  (fx/sub-val context get-in [:app-state :log-stats])
+  (fx/sub-val context get-in [:app-state :log-lines])
   (let [row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
         selected (fx/sub-val context get-in [:app-state :selected-addon-list])
         selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])
@@ -1495,6 +1510,8 @@
         empty-next-page (and (= 0 (count addon-list))
                              (> (-> search-state :page) 0))
 
+        number-format #(.format number-formatter %)
+
         column-list [{:text "source" :min-width 125 :pref-width 125 :max-width 125 :resizable false
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [row]
@@ -1504,7 +1521,7 @@
                      {:text "description" :min-width 200 :pref-width 400 :cell-value-factory (comp no-new-lines :description)}
                      {:text "tags" :min-width 200 :pref-width 250 :cell-value-factory (comp str :tag-list)}
                      {:text "updated" :min-width 85 :max-width 85 :pref-width 85 :resizable false :cell-value-factory (comp #(utils/safe-subs % 10) :updated-date)}
-                     {:text "downloads" :min-width 120 :pref-width 120 :max-width 120 :resizable false :cell-value-factory :download-count}
+                     {:text "downloads" :min-width 120 :pref-width 120 :max-width 120 :resizable false :cell-value-factory (comp number-format :download-count)}
                      {:text "" :style-class ["install-button-column"] :min-width 120 :pref-width 120 :max-width 120 :resizable false
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [addon]
@@ -1738,13 +1755,7 @@
       (do (cli/remove-tab-at-idx tab-idx)
           {:fx/type :label :text "goodbye"})
 
-      (let [addon-source {:install-dir (core/selected-addon-dir)}
-            preferred-match (merge addon-source {:dirname (:dirname addon)})
-            alt-match (merge addon-source {:source (:source addon) :source-id (:source-id addon)})
-            notice-pane-filter (fn [log-line]
-                                 (or (-> log-line :level (= :report))
-                                     (= preferred-match (select-keys (:source log-line) [:install-dir :dirname]))
-                                     (= alt-match (select-keys (:source log-line) [:install-dir :source :source-id]))))]
+      (let [notice-pane-filter (logging/log-line-filter-with-reports (core/selected-addon-dir) addon)]
         {:fx/type :border-pane
          :id "addon-detail-pane"
          :style-class ["addon-detail"]
