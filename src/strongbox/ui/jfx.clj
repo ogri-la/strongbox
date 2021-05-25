@@ -1733,7 +1733,7 @@
       (do (cli/remove-tab-at-idx tab-idx)
           {:fx/type :label :text "goodbye"})
 
-      (let [notice-pane-filter (utils/log-line-filter-with-reports (core/selected-addon-dir) addon)]
+      (let [notice-pane-filter (logging/log-line-filter-with-reports (core/selected-addon-dir) addon)]
         {:fx/type :border-pane
          :id "addon-detail-pane"
          :style-class ["addon-detail"]

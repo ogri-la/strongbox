@@ -372,7 +372,7 @@
   "returns a list of addon entries for the given `:dirname` since last refresh"
   [addon map?]
   (let [not-report #(-> % :level (= :report) not)
-        filter-fn (utils/log-line-filter-with-reports (core/selected-addon-dir) addon)]
+        filter-fn (logging/log-line-filter-with-reports (core/selected-addon-dir) addon)]
     (->> (core/get-state)
          :log-lines ;; oldest first
          reverse ;; newest first

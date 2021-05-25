@@ -108,6 +108,25 @@
        ~@form)
      (deref stateful-buffer#)))
 
+(defn-spec log-line-filter fn?
+  "returns a function that matches a log entry to the given `install-dir` + `addon`"
+  [install-dir ::sp/install-dir, addon map?]
+  (let [;; installed addon
+        preferred-match {:install-dir install-dir, :dirname (:dirname addon)}
+        ;; addons from the catalogue
+        alt-match {:install-dir install-dir, :source (:source addon), :source-id (:source-id addon)}]
+    (fn [log-line]
+      (or (= preferred-match (select-keys (:source log-line) [:install-dir :dirname]))
+          (= alt-match (select-keys (:source log-line) [:install-dir :source :source-id]))))))
+
+(defn-spec log-line-filter-with-reports fn?
+  "like `log-line-filter`, but conveniently includes 'report' level log lines as well."
+  [install-dir ::sp/install-dir, addon map?]
+  (let [filter-fn (log-line-filter install-dir addon)]
+    (fn [log-line]
+      (or (-> log-line :level (= :report))
+          (filter-fn log-line)))))
+
 (defn-spec add-ui-appender! fn?
   "adds an appender intended for the UI to interact with.
   If an addon is passed as `:context` then an identifier can be pulled from it and the UI can use that to

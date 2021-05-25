@@ -33,6 +33,14 @@ see CHANGELOG.md for a more formal list of changes by release
         - https://api.github.com/repos/teelolws/Altoholic-Retail
     - done
 
+* uber-button, limit status to just those events since the last refresh
+    - and make 'refresh' an app-wide 'notice' to distinguish it from ino/debug/etc
+    - done
+
+* game tracks, add warning if installed addon's interface version deviates from addon directory's game track
+    - for example, if classic is installed in retail, or classic-bc is installed in classic
+    - done
+
 ## todo
 
 ux and polish
@@ -42,9 +50,6 @@ ux and polish
 
 * preferences, "update all addons automatically"
     - update README features
-
-* uber-button, limit status to just those events since the last refresh
-    - and make 'refresh' an app-wide 'notice' to distinguish it from ino/debug/etc
 
 * disable addon update button if it's unsteady
     - interesting stuff happens when you pump that update button!
@@ -61,8 +66,6 @@ ux and polish
 
 * tabber, double clicking a tab closes it
 
-* game tracks, add warning if installed addon's interface version deviates from addon directory's game track
-    - for example, if classic is installed in retail, or classic-bc is installed in classic
 
 * installed, right align version columns and make elipses start at left
     - we're typically interested in comparing the last part of the version
