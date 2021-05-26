@@ -503,7 +503,7 @@
                "#status-bar-right"
                {:-fx-min-width "130px" ;; long enough to render "warnings (999)"
                 ;;:-fx-background-color "blue"
-                :-fx-padding "5px 5 5px 0"
+                :-fx-padding "5px 5px 5px 0"
                 :-fx-alignment "center-right"}
 
                "#status-bar-right .button"
@@ -1427,12 +1427,12 @@
   pass it a `filter-fn` to remove entries in the `:log-lines` list."
   [{:keys [fx/context tab-idx filter-fn section-title]}]
   (let [filter-fn (or filter-fn identity)
-        level-map {:debug 0 :info 1 :warn 2 :error 3 :report 4}
         current-log-level (if tab-idx
                             (fx/sub-val context get-in [:app-state :tab-list tab-idx :log-level])
                             (fx/sub-val context get-in [:app-state :gui-log-level]))
         log-level-filter (fn [log-line]
-                           (>= (-> log-line :level level-map) (level-map current-log-level)))
+                           (>= (-> log-line :level logging/level-map)
+                               (logging/level-map current-log-level)))
 
         log-message-list (->> (fx/sub-val context get-in [:app-state :log-lines])
                               (filter filter-fn)
@@ -1900,16 +1900,25 @@
         ;; {:warn 1, :info 20}
         stats (utils/count-occurances log-lines :level)
 
-        clf (partial clojure.pprint/cl-format nil)
+        cmp (fn [kv1 kv2]
+              (compare (get logging/level-map (first kv1))
+                       (get logging/level-map (first kv2))))
 
+        max-level (or (->> stats (sort cmp) last first)
+                      logging/default-log-level)
+
+        clf (partial clojure.pprint/cl-format nil)
         lbl (cond
               ;; '~:p' to pluralise using 's'
               ;; '~:*' to 'go back' a consumed argument
-              ;; '~d' to format digit as a decimal (rather than binary, hex, etc)
+              ;; '~d' to format digit as a decimal (vs binary, hex, etc)
               (contains? stats :error) (clf "error~:p (~:*~d)" (:error stats)) ;; "error (1)", "errors (2)"
               (contains? stats :warn) (clf "warning~:p (~:*~d)" (:warn stats))
               :else "split")]
-    (button lbl (async-handler cli/toggle-split-pane))))
+
+    (button lbl (async-handler (fn []
+                                 (cli/toggle-split-pane)
+                                 (cli/change-notice-logger-level max-level))))))
 
 (defn status-bar
   "this is the litle strip of text at the bottom of the application."
