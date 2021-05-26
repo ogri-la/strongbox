@@ -1,6 +1,7 @@
 (ns strongbox.ui.jfx
   (:require
    [me.raynes.fs :as fs]
+   [clojure.pprint]
    [clojure.string :refer [lower-case join capitalize replace] :rename {replace str-replace}]
    ;; logging in the gui should be avoided as it can lead to infinite loops
    [taoensso.timbre :as timbre :refer [spy]] ;; info debug warn error]] 
@@ -484,7 +485,7 @@
 
                "#status-bar"
                {:-fx-font-size ".9em"
-                :-fx-padding "0 5px"
+                :-fx-padding "0"
                 :-fx-alignment "center-left"
                 ;;:-fx-background-color "pink"
                 }
@@ -495,18 +496,20 @@
 
                "#status-bar-left"
                {;;:-fx-background-color "orange"
+                :-fx-padding "0 10"
                 :-fx-alignment "center-left"
                 :-fx-pref-width 9999.0}
 
                "#status-bar-right"
-               {:-fx-min-width "100px" ;; about the width of a button for now
+               {:-fx-min-width "130px" ;; long enough to render "warnings (999)"
                 ;;:-fx-background-color "blue"
-                :-fx-padding "5px 0"
+                :-fx-padding "5px 5 5px 0"
                 :-fx-alignment "center-right"}
 
                "#status-bar-right .button"
                {;;:-fx-background-color "green"
-                }
+                :-fx-padding "4 10"
+                :-fx-background-radius "4"}
 
 
                ;;
@@ -1852,19 +1855,12 @@
              :addon-id (:tab-data tab)}})
 
 (defn log-tab
-  [{:keys [fx/context]}]
-  (let [level-set (->> (fx/sub-val context get-in [:app-state :log-lines])
-                       (map :level)
-                       set)
-        lbl (cond
-              (some #{:error} level-set) " (errors)"
-              (some #{:warn} level-set) " (warnings)"
-              :else "")]
-    {:fx/type :tab
-     :text (str "log" lbl)
-     :id "log-tab"
-     :closable false
-     :content {:fx/type notice-logger}}))
+  [_]
+  {:fx/type :tab
+   :text "log"
+   :id "log-tab"
+   :closable false
+   :content {:fx/type notice-logger}})
 
 (defn tabber
   [{:keys [fx/context]}]
@@ -1896,6 +1892,25 @@
      :tab-closing-policy javafx.scene.control.TabPane$TabClosingPolicy/ALL_TABS
      :tabs (into static-tabs dynamic-tabs)}))
 
+(defn split-pane-button
+  [{:keys [fx/context]}]
+  (let [log-lines (fx/sub-val context get-in [:app-state :log-lines])
+        log-lines (cli/log-entries-since-last-refresh log-lines)
+
+        ;; {:warn 1, :info 20}
+        stats (utils/count-occurances log-lines :level)
+
+        clf (partial clojure.pprint/cl-format nil)
+
+        lbl (cond
+              ;; '~:p' to pluralise using 's'
+              ;; '~:*' to 'go back' a consumed argument
+              ;; '~d' to format digit as a decimal (rather than binary, hex, etc)
+              (contains? stats :error) (clf "error~:p (~:*~d)" (:error stats)) ;; "error (1)", "errors (2)"
+              (contains? stats :warn) (clf "warning~:p (~:*~d)" (:warn stats))
+              :else "split")]
+    (button lbl (async-handler cli/toggle-split-pane))))
+
 (defn status-bar
   "this is the litle strip of text at the bottom of the application."
   [{:keys [fx/context]}]
@@ -1925,8 +1940,7 @@
                              :text (join " " strings)}]}
                 {:fx/type :h-box
                  :id "status-bar-right"
-                 :children [(button "split" (fn [_]
-                                              (cli/toggle-split-pane)))]}]}))
+                 :children [{:fx/type split-pane-button}]}]}))
 
 ;;
 

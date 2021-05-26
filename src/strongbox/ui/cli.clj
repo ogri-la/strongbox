@@ -373,6 +373,18 @@
         addon-id (utils/extract-addon-id addon)]
     (add-tab tab-id (or (:dirname addon) (:label addon) (:name addon) "[bug: missing tab name!]") closable? addon-id)))
 
+(defn-spec log-entries-since-last-refresh ::sp/list-of-maps
+  "returns a list of log entries since last refresh"
+  ([]
+   (log-entries-since-last-refresh (core/get-state :log-lines)))
+  ([log-lines ::sp/list-of-maps]
+   (let [not-report #(-> % :level (= :report) not)]
+     (->> log-lines ;; old->new
+          reverse ;; new->old
+          (take-while not-report)
+          reverse ;; old->new again, but truncated
+          vec))))
+
 (defn-spec addon-log-entries ::sp/list-of-maps
   "returns a list of addon entries for the given `:dirname` since last refresh"
   [addon map?]
