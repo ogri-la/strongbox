@@ -108,7 +108,6 @@
    :db nil
 
    :log-lines []
-   :log-stats {}
 
    ;; a map of paths whose location may vary according to the cwd and envvars.
    :paths nil
@@ -779,7 +778,11 @@
           addon (or expanded-addon addon) ;; expanded addon may still be nil
           has-update? (addon/updateable? addon)]
       (when has-update?
-        (info (format "update available \"%s\"" (:version addon))))
+        (info (format "update available \"%s\"" (:version addon)))
+        (when-not (= (get-game-track) (:game-track addon))
+          (warn (format "update is for '%s' and the addon directory is set to '%s'"
+                        (-> addon :game-track sp/game-track-labels-map)
+                        (-> (get-game-track) sp/game-track-labels-map)))))
       (assoc addon :update? has-update?))))
 
 (defn-spec check-for-updates nil?

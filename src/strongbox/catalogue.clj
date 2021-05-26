@@ -76,16 +76,27 @@
 
     source-updates
 
-    (let [;; "no retail release found on github"
-          ;; "no classic release found on wowinterface"
+    (let [;; "no 'Retail' release found on github"
+          ;; "no 'Classic' release found on wowinterface"
+          ;; "no 'Classic (TBC)', 'Classic' or 'Retail' release found on curseforge"
+
+          retail-lbl (sp/game-track-labels-map :retail)
+          classic-lbl (sp/game-track-labels-map :classic)
+          classic-tbc-lbl (sp/game-track-labels-map :classic-tbc)
+          source (:source addon)
+
+          single-template "no '%s' release found on %s."
+          multi-template "no '%s', '%s' or '%s' release found on %s."
+
           msg (case [game-track strict?]
-                [:retail true] "no retail release found on %s."
-                [:classic true] "no classic release found on %s."
-                [:classic-tbc true] "no classic (TBC) release found on %s."
-                [:retail false] "no retail, classic or classic (TBC) release found on %s."
-                [:classic false] "no classic, classic (TBC) or retail release found on %s."
-                [:classic-tbc false] "no classic (TBC), classic or retail release found on %s.")]
-      (warn (format msg (:source addon))))))
+                [:retail true] (format single-template retail-lbl source)
+                [:classic true] (format single-template classic-lbl source)
+                [:classic-tbc true] (format single-template classic-tbc-lbl source)
+
+                [:retail false] (format multi-template retail-lbl classic-lbl source)
+                [:classic false] (format multi-template classic-lbl classic-tbc-lbl retail-lbl source)
+                [:classic-tbc false] (format multi-template classic-tbc-lbl classic-lbl retail-lbl source))]
+      (warn msg))))
 
 
 ;;

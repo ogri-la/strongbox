@@ -20,13 +20,14 @@
     [utils :as utils :refer [no-new-lines]]
     [core :as core]])
   (:import
-   [java.util List Calendar]
+   [java.util List Calendar Locale]
    [javafx.util Callback]
    [javafx.scene.control TableRow TextInputDialog Alert Alert$AlertType ButtonType]
    [javafx.scene.input KeyCode]
    [javafx.stage FileChooser FileChooser$ExtensionFilter DirectoryChooser Window WindowEvent]
    [javafx.application Platform]
-   [javafx.scene Node]))
+   [javafx.scene Node]
+   [java.text NumberFormat]))
 
 ;; javafx hack, fixes combobox that sometimes goes blank:
 ;; https://github.com/cljfx/cljfx/issues/76#issuecomment-645563116
@@ -48,6 +49,9 @@
             (fx.lifecycle/create this this-desc opts))))
     (delete [_ component opts]
       (fx.lifecycle/delete fx.lifecycle/dynamic (:child component) opts))))
+
+(def user-locale (Locale/getDefault))
+(def number-formatter (NumberFormat/getNumberInstance user-locale))
 
 (def blt "\u2022") ;; • bullet
 
@@ -258,6 +262,11 @@
                {:-fx-opacity "0.5"
                 :-fx-font-style "italic"}
 
+               ;; ignored 'install' button gets slightly different styling
+               ".table-view .ignored .install-button-column.table-cell"
+               {:-fx-opacity "1" ;; a disabled button already has some greying effect applied
+                :-fx-font-style "normal"}
+
 
                ;;
                ;; tables with alternating row colours (just add the '.odd-rows' class)
@@ -276,6 +285,14 @@
                 ":hover"
                 {:-fx-background-color (colour :row-hover)}}
 
+               ".table-view .install-button-column.table-cell"
+               {:-fx-padding "0px"
+                :-fx-alignment "center"}
+
+               ".table-view .install-button-column .button"
+               {:-fx-pref-width 100
+                :-fx-padding "2px 0"
+                :-fx-background-radius "4"}
 
 
                ;;
@@ -366,6 +383,14 @@
                 {;; !important so that hovering over a selected+updateable row doesn't change it's colour
                  :-fx-background-color (str (colour :row-updateable-selected) " !important")}}
 
+               ".table-view#installed-addons .installed-column"
+               {:-fx-alignment "center-right"
+                :-fx-text-overrun "leading-ellipsis"}
+
+               ".table-view#installed-addons .available-column"
+               {:-fx-alignment "center-right"
+                :-fx-text-overrun "leading-ellipsis"}
+
 
                ;;
                ;; notice-logger
@@ -447,6 +472,9 @@
 
                ".table-view#search-addons .downloads-column"
                {:-fx-alignment "center-right"}
+
+               ".table-view#search-addons .updated-column"
+               {:-fx-alignment "center"}
 
 
                ;;
@@ -551,16 +579,7 @@
                 ".table-view#key-vals .key-column"
                 {:-fx-alignment "center-right"
                  :-fx-padding "0 1em 0 0"
-                 :-fx-font-style "italic"}
-
-                ".table-view#release-list .install-button-column"
-                {:-fx-alignment "center"}
-
-                ".table-view#release-list .install-button-column.table-cell"
-                {:-fx-padding "-2"}
-
-                ".table-view#release-list .install-button-column .button"
-                {:-fx-pref-width 110}} ;; ends .addon-detail
+                 :-fx-font-style "italic"}} ;; ends .addon-detail
 
                ;; ---
                }}))]
@@ -948,14 +967,9 @@
   (when-let [selected (core/get-state :selected-addon-list)]
     (if (utils/any (mapv :ignore? selected))
       (alert :error "Selection contains ignored addons. Stop ignoring them and then delete.")
-
-      (let [label-list (mapv (fn [row]
-                               {:fx/type :text
-                                :text (str " - " (:name row))}) selected)
-            content {:fx/type :v-box
-                     :children (into [{:fx/type :text
-                                       :text (format "Deleting %s:" (count selected))}] label-list)}
-            result (alert :confirm "" {:content (component-instance content)})]
+      (let [msg (str (format "Deleting %s:\n %s " (count selected) blt)
+                     (clojure.string/join (format "\n %s " blt) (map :label selected)))
+            result (alert :confirm msg)]
         (when (= (.get result) ButtonType/OK)
           (cli/delete-selected)))))
   nil)
@@ -963,9 +977,9 @@
 (defn search-results-install-handler
   "this switches to the 'installed' tab, then, for each addon selected, expands summary, installs addon, calls load-installed-addons and finally refreshes;
   this presents as a plodding step-wise update but is better than a blank screen and apparent hang"
-  [event]
-  ((switch-tab-event-handler INSTALLED-TAB) event)
-  (doseq [selected (core/get-state :search :selected-result-list)]
+  [addon-list]
+  (switch-tab INSTALLED-TAB)
+  (doseq [selected addon-list]
     (let [error-messages
           (logging/buffered-log
            :warn
@@ -1334,7 +1348,7 @@
   ;; subscribe to re-render table when addons become unsteady
   (fx/sub-val context get-in [:app-state :unsteady-addon-list])
   ;; subscribe to re-render rows when addons emit warnings or errors
-  (fx/sub-val context get-in [:app-state :log-stats])
+  (fx/sub-val context get-in [:app-state :log-lines])
   (let [row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
         selected (fx/sub-val context get-in [:app-state :selected-addon-list])
         selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])
@@ -1507,6 +1521,7 @@
   [{:keys [fx/context]}]
   (let [idx-key #(select-keys % [:source :source-id])
         installed-addon-idx (mapv idx-key (fx/sub-val context get-in [:app-state :installed-addon-list]))
+        installed? #(utils/in? (idx-key %) installed-addon-idx)
 
         search-state (fx/sub-val context get-in [:app-state :search])
         addon-list (cli/search-results search-state)
@@ -1514,6 +1529,8 @@
         ;; rare case when there are precisely $cap results, the next page is empty
         empty-next-page (and (= 0 (count addon-list))
                              (> (-> search-state :page) 0))
+
+        number-format #(.format number-formatter %)
 
         column-list [{:text "source" :min-width 125 :pref-width 125 :max-width 125 :resizable false
                       :cell-factory {:fx/cell-type :table-cell
@@ -1524,7 +1541,13 @@
                      {:text "description" :min-width 200 :pref-width 400 :cell-value-factory (comp no-new-lines :description)}
                      {:text "tags" :min-width 200 :pref-width 250 :cell-value-factory (comp str :tag-list)}
                      {:text "updated" :min-width 85 :max-width 85 :pref-width 85 :resizable false :cell-value-factory (comp #(utils/safe-subs % 10) :updated-date)}
-                     {:text "downloads" :min-width 120 :pref-width 120 :max-width 120 :resizable false :cell-value-factory :download-count}]]
+                     {:text "downloads" :min-width 120 :pref-width 120 :max-width 120 :resizable false :cell-value-factory (comp number-format :download-count)}
+                     {:text "" :style-class ["install-button-column"] :min-width 120 :pref-width 120 :max-width 120 :resizable false
+                      :cell-factory {:fx/cell-type :table-cell
+                                     :describe (fn [addon]
+                                                 {:graphic (button "install" (async-handler #(search-results-install-handler [addon]))
+                                                                   {:disabled? (installed? addon)})})}
+                      :cell-value-factory identity}]]
 
     {:fx/type fx.ext.table-view/with-selection-props
      :props {:selection-mode :multiple
@@ -1538,15 +1561,15 @@
                                   "ᕙ(`▿´)ᕗ"
                                   "No search results.")}
             :row-factory {:fx/cell-type :table-row
-                          :describe (fn [row]
+                          :describe (fn [addon]
                                       {:on-mouse-clicked (fn [e]
                                                            ;; double click handler https://github.com/cljfx/cljfx/issues/118
                                                            (when (and (= javafx.scene.input.MouseButton/PRIMARY (.getButton e))
                                                                       (= 2 (.getClickCount e)))
-                                                             (cli/add-addon-tab row)
+                                                             (cli/add-addon-tab addon)
                                                              (switch-tab-latest)))
                                        :style-class ["table-row-cell"
-                                                     (when (utils/in? (idx-key row) installed-addon-idx)
+                                                     (when (installed? addon)
                                                        "ignored")]})}
             :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
             :pref-height 999.0
@@ -1568,7 +1591,7 @@
       {:fx/type :button
        :id "search-install-button"
        :text "install selected"
-       :on-action (async-event-handler search-results-install-handler)}
+       :on-action (async-handler #(search-results-install-handler (core/get-state :search :selected-result-list)))}
 
       {:fx/type :button
        :id "search-random-button"
@@ -1752,13 +1775,7 @@
       (do (cli/remove-tab-at-idx tab-idx)
           {:fx/type :label :text "goodbye"})
 
-      (let [addon-source {:install-dir (core/selected-addon-dir)}
-            preferred-match (merge addon-source {:dirname (:dirname addon)})
-            alt-match (merge addon-source {:source (:source addon) :source-id (:source-id addon)})
-            notice-pane-filter (fn [log-line]
-                                 (or (-> log-line :level (= :report))
-                                     (= preferred-match (select-keys (:source log-line) [:install-dir :dirname]))
-                                     (= alt-match (select-keys (:source log-line) [:install-dir :source :source-id]))))]
+      (let [notice-pane-filter (logging/log-line-filter-with-reports (core/selected-addon-dir) addon)]
         {:fx/type :border-pane
          :id "addon-detail-pane"
          :style-class ["addon-detail"]
