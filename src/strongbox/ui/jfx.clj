@@ -93,7 +93,7 @@
     :row-updateable "#6272a4" ;; (blue)
     :row-updateable-selected "#6272c3" ;; (brighter blue) ;; todo: can this be derived from :row-updateable?
     :row-updateable-text "white"
-    :row-warning "#f1fa8c"
+    :row-warning "#ffb86c"
     :row-warning-text "black"
     :row-error "#ff5555"
     :row-error-text "black"
@@ -104,7 +104,7 @@
     :table-font-colour "-fx-text-base-color"
     :row-alt "#22232e"
     :uber-button-tick "aquamarine"
-    :uber-button-warn "yellow"
+    :uber-button-warn "#ffb86c"
     :uber-button-error "red"}})
 
 (def sub-theme-map
@@ -490,27 +490,38 @@
                 ;;:-fx-background-color "pink"
                 }
 
-               "#status-bar > .text"
-               {;; omg, wtf does 'fx-fill' work and not 'fx-text-fill' ???
-                :-fx-fill (colour :table-font-colour)}
-
                "#status-bar-left"
                {;;:-fx-background-color "orange"
                 :-fx-padding "0 10"
                 :-fx-alignment "center-left"
-                :-fx-pref-width 9999.0}
+                :-fx-pref-width 9999.0
+
+                " > .text"
+                {;; omg, wtf does 'fx-fill' work and not 'fx-text-fill' ???
+                 :-fx-fill (colour :table-font-colour)}}
 
                "#status-bar-right"
                {:-fx-min-width "130px" ;; long enough to render "warnings (999)"
                 ;;:-fx-background-color "blue"
-                :-fx-padding "5px 5px 5px 0"
+                :-fx-padding "5px 12px 5px 0"
                 :-fx-alignment "center-right"}
 
                "#status-bar-right .button"
                {;;:-fx-background-color "green"
                 :-fx-padding "4 10"
-                :-fx-background-radius "4"}
+                ;; doesn't look right when button is coloured.
+                ;;:-fx-background-radius "4"
+                :-fx-font-size "11px"}
 
+               ".button.with-warning"
+               {:-fx-background-insets "0 0 -1 0,  0,  1,  2"
+                :-fx-background-color (str "-fx-shadow-highlight-color, -fx-outer-border, " (colour :row-warning))
+                :-fx-text-fill (colour :row-warning-text)}
+
+               ".button.with-error"
+               {:-fx-background-insets "0 0 -1 0,  0"
+                :-fx-background-color (str "-fx-shadow-highlight-color, -fx-inner-border, " (colour :row-error))
+                :-fx-text-fill (colour :row-error-text)}
 
                ;;
                ;; addon-detail
@@ -743,14 +754,17 @@
 
 (defn button
   "generates a simple button with a means to check to see if it should be disabled and an optional tooltip"
-  [label on-action & [{:keys [disabled? tooltip]}]]
+  [label on-action & [{:keys [disabled? tooltip style-class]}]]
   (let [btn (cond->
              {:fx/type :button
               :text label
               :on-action on-action}
 
               (boolean? disabled?)
-              (merge {:disable disabled?}))]
+              (merge {:disable disabled?})
+
+              (some? style-class)
+              (merge {:style-class ["button" style-class]}))]
 
     (if (some? tooltip)
       {:fx/type fx.ext.node/with-tooltip-props
@@ -1907,18 +1921,24 @@
         max-level (or (->> stats (sort cmp) last first)
                       logging/default-log-level)
 
+        has-errors? (contains? stats :error)
+        has-warnings? (contains? stats :warn)
+
         clf (partial clojure.pprint/cl-format nil)
         lbl (cond
               ;; '~:p' to pluralise using 's'
               ;; '~:*' to 'go back' a consumed argument
               ;; '~d' to format digit as a decimal (vs binary, hex, etc)
-              (contains? stats :error) (clf "error~:p (~:*~d)" (:error stats)) ;; "error (1)", "errors (2)"
-              (contains? stats :warn) (clf "warning~:p (~:*~d)" (:warn stats))
+              has-errors? (clf "error~:p (~:*~d)" (:error stats)) ;; "error (1)", "errors (2)"
+              has-warnings? (clf "warning~:p (~:*~d)" (:warn stats))
               :else "split")]
 
     (button lbl (async-handler (fn []
                                  (cli/toggle-split-pane)
-                                 (cli/change-notice-logger-level max-level))))))
+                                 (cli/change-notice-logger-level max-level)))
+            {:style-class (cond
+                            has-errors? "with-error"
+                            has-warnings? "with-warning")})))
 
 (defn status-bar
   "this is the litle strip of text at the bottom of the application."
