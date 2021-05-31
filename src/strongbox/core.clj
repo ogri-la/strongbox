@@ -108,7 +108,6 @@
    :db nil
 
    :log-lines []
-   :log-stats {}
 
    ;; a map of paths whose location may vary according to the cwd and envvars.
    :paths nil
@@ -121,6 +120,9 @@
    ;; log-level for the gui dedicated notice-logger
    ;; per-tab log-levels are attached to each tab in the `:tab-list`
    :gui-log-level :info
+
+   ;; split the gui in two with the notice logger down the bottom
+   :gui-split-pane false
 
    ;; addons in an unsteady state (data being updated, addon being installed, etc)
    ;; allows a UI to watch and update with progress
@@ -702,7 +704,7 @@
         unmatched-names (->> unmatched (remove :ignore?) (map :name) set)]
 
     (when-not (= num-installed num-matched)
-      (info "num installed" num-installed ", num matched" num-matched))
+      (info (format "num installed %s, num matched %s" num-installed num-matched)))
 
     (when-not (empty? unmatched-names)
       (warn "you need to manually search for them and then re-install them")
@@ -777,7 +779,11 @@
           addon (or expanded-addon addon) ;; expanded addon may still be nil
           has-update? (addon/updateable? addon)]
       (when has-update?
-        (info (format "update available \"%s\"" (:version addon))))
+        (info (format "update available \"%s\"" (:version addon)))
+        (when-not (= (get-game-track) (:game-track addon))
+          (warn (format "update is for '%s' and the addon directory is set to '%s'"
+                        (-> addon :game-track sp/game-track-labels-map)
+                        (-> (get-game-track) sp/game-track-labels-map)))))
       (assoc addon :update? has-update?))))
 
 (defn-spec check-for-updates nil?

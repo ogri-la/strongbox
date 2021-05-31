@@ -33,6 +33,30 @@ see CHANGELOG.md for a more formal list of changes by release
         - https://api.github.com/repos/teelolws/Altoholic-Retail
     - done
 
+* tabber, double clicking a tab closes it
+    - total ballache, decided not to
+
+* search, comma separate download numbers
+    - or figure out the locale-specific separator
+    - 1234567890 downloads is less readable than 1,234,567,890
+    - done
+
+* installed, right align version columns and make elipses start at left
+    - we're typically interested in comparing the last part of the version
+    - done
+
+* uber-button, limit status to just those events since the last refresh
+    - and make 'refresh' an app-wide 'notice' to distinguish it from ino/debug/etc
+    - done
+
+* game tracks, add warning if installed addon's interface version deviates from addon directory's game track
+    - for example, if classic is installed in retail, or classic-bc is installed in classic
+    - done
+
+* search, replace 'install selected' with 'install' button on the right
+    - done
+
+
 ## todo
 
 ux and polish
@@ -43,29 +67,13 @@ ux and polish
 * preferences, "update all addons automatically"
     - update README features
 
-* uber-button, limit status to just those events since the last refresh
-    - and make 'refresh' an app-wide 'notice' to distinguish it from ino/debug/etc
-
 * disable addon update button if it's unsteady
     - interesting stuff happens when you pump that update button!
     - roll this into the action queue work
         - no more than one update request pending per-addon
 
-* search, replace 'install selected' with 'install' button on the right
-
 * bug, uber button, identical addons in different addon dirs are causing the warn/error-free version to show warns/errors
-
-* search, comma separate download numbers
-    - or figure out the locale-specific separator
-    - 1234567890 downloads is less readable than 1,234,567,890
-
-* tabber, double clicking a tab closes it
-
-* game tracks, add warning if installed addon's interface version deviates from addon directory's game track
-    - for example, if classic is installed in retail, or classic-bc is installed in classic
-
-* installed, right align version columns and make elipses start at left
-    - we're typically interested in comparing the last part of the version
+    - I think this may be 'fixed' now with the limited log filter 
 
 ## todo bucket (no particular order)
 

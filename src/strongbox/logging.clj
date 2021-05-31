@@ -26,6 +26,7 @@
 ;; logging
 
 (def default-log-level :info)
+(def level-map {:debug 0 :info 1 :warn 2 :error 3 :report 4})
 
 ;; https://github.com/ptaoussanis/timbre/blob/56d67dd274d7d11ab31624a70b4b5ae194c03acd/src/taoensso/timbre.cljc#L856-L858
 (def colour-log-map
@@ -108,6 +109,25 @@
        ~@form)
      (deref stateful-buffer#)))
 
+(defn-spec log-line-filter fn?
+  "returns a function that matches a log entry to the given `install-dir` + `addon`"
+  [install-dir ::sp/install-dir, addon map?]
+  (let [;; installed addon
+        preferred-match {:install-dir install-dir, :dirname (:dirname addon)}
+        ;; addons from the catalogue
+        alt-match {:install-dir install-dir, :source (:source addon), :source-id (:source-id addon)}]
+    (fn [log-line]
+      (or (= preferred-match (select-keys (:source log-line) [:install-dir :dirname]))
+          (= alt-match (select-keys (:source log-line) [:install-dir :source :source-id]))))))
+
+(defn-spec log-line-filter-with-reports fn?
+  "like `log-line-filter`, but conveniently includes 'report' level log lines as well."
+  [install-dir ::sp/install-dir, addon map?]
+  (let [filter-fn (log-line-filter install-dir addon)]
+    (fn [log-line]
+      (or (-> log-line :level (= :report))
+          (filter-fn log-line)))))
+
 (defn-spec add-ui-appender! fn?
   "adds an appender intended for the UI to interact with.
   If an addon is passed as `:context` then an identifier can be pulled from it and the UI can use that to
@@ -115,8 +135,7 @@
   'report' level logs have no addon information attached to them.
   see `addon-log`, `with-addon` and `with-label`."
   [state-atm ::sp/atom, install-dir (s/nilable ::sp/install-dir)]
-  (let [inc* #(inc (or % 0))
-        func (fn [data]
+  (let [func (fn [data]
                (let [addon (some-> data :context :addon)
                      addon-id (select-keys addon [:dirname :source :source-id :name])
                      ;; {:install-dir "/path/to/addons/dir" :dirname "some-addon" :name "SomeAddon"}
@@ -137,9 +156,8 @@
                    ;; purely to stop infinite feedback loop. not sure how this one is happening but urgh.
                    (println "[dropping duplicate message]")
                    (when state-atm
-                     (swap! state-atm update-in [:log-lines] into [log-line])
-                     (when-let [dirname (:dirname addon)]
-                       (swap! state-atm update-in [:log-stats dirname level] inc*))))))]
+                     (swap! state-atm update-in [:log-lines] into [log-line])))))]
+
     (add-appender! :atom func {:timestamp-opts {:pattern "HH:mm:ss"}}))
   (fn []
     (rm-appender! :atom)))
