@@ -486,13 +486,10 @@
                "#status-bar"
                {:-fx-font-size ".9em"
                 :-fx-padding "0"
-                :-fx-alignment "center-left"
-                ;;:-fx-background-color "pink"
-                }
+                :-fx-alignment "center-left"}
 
                "#status-bar-left"
-               {;;:-fx-background-color "orange"
-                :-fx-padding "0 10"
+               {:-fx-padding "0 10"
                 :-fx-alignment "center-left"
                 :-fx-pref-width 9999.0
 
@@ -502,20 +499,23 @@
 
                "#status-bar-right"
                {:-fx-min-width "130px" ;; long enough to render "warnings (999)"
-                ;;:-fx-background-color "blue"
+
                 :-fx-padding "5px 12px 5px 0"
                 :-fx-alignment "center-right"}
 
                "#status-bar-right .button"
-               {;;:-fx-background-color "green"
-                :-fx-padding "4 10"
+               {:-fx-padding "4 10"
                 ;; doesn't look right when button is coloured.
                 ;;:-fx-background-radius "4"
-                :-fx-font-size "11px"}
+                :-fx-font-size "11px"
+
+                ;; this isn't great but it's better than nothing. revisit when it makes more sense.
+                ":armed"
+                {:-fx-background-insets "1 1 0 0,  1,  2,  3"}}
 
                ".button.with-warning"
                {:-fx-background-insets "0 0 -1 0,  0,  1,  2"
-                :-fx-background-color (str "-fx-shadow-highlight-color, -fx-outer-border, " (colour :row-warning))
+                :-fx-background-color (str "-fx-shadow-highlight-color, -fx-outer-border, -fx-inner-border, " (colour :row-warning))
                 :-fx-text-fill (colour :row-warning-text)}
 
                ".button.with-error"
@@ -754,7 +754,7 @@
 
 (defn button
   "generates a simple button with a means to check to see if it should be disabled and an optional tooltip"
-  [label on-action & [{:keys [disabled? tooltip style-class]}]]
+  [label on-action & [{:keys [disabled? tooltip tooltip-delay style-class]}]]
   (let [btn (cond->
              {:fx/type :button
               :text label
@@ -770,7 +770,7 @@
       {:fx/type fx.ext.node/with-tooltip-props
        :props {:tooltip {:fx/type :tooltip
                          :text tooltip
-                         :show-delay 200}}
+                         :show-delay (or tooltip-delay 200)}}
        :desc btn}
 
       btn)))
@@ -1868,14 +1868,6 @@
              :tab-idx tab-idx
              :addon-id (:tab-data tab)}})
 
-(defn log-tab
-  [_]
-  {:fx/type :tab
-   :text "log"
-   :id "log-tab"
-   :closable false
-   :content {:fx/type notice-logger}})
-
 (defn tabber
   [{:keys [fx/context]}]
   (let [selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])
@@ -1899,7 +1891,12 @@
                                        (fn []
                                          (-> text-field .requestFocus))))))
           :content {:fx/type search-addons-pane}}
-         {:fx/type log-tab}]
+         {:fx/type :tab
+          :text "log"
+          :id "log-tab"
+          :closable false
+          :content {:fx/type notice-logger}}]
+
         dynamic-tabs (map-indexed (fn [idx tab] {:fx/type addon-detail-tab :tab tab :tab-idx idx}) dynamic-tab-list)]
     {:fx/type :tab-pane
      :id "tabber"
@@ -1907,6 +1904,7 @@
      :tabs (into static-tabs dynamic-tabs)}))
 
 (defn split-pane-button
+  "the little button in the bottom right of the screen that toggles the split gui feature"
   [{:keys [fx/context]}]
   (let [log-lines (fx/sub-val context get-in [:app-state :log-lines])
         log-lines (cli/log-entries-since-last-refresh log-lines)
@@ -1931,14 +1929,18 @@
               ;; '~d' to format digit as a decimal (vs binary, hex, etc)
               has-errors? (clf "error~:p (~:*~d)" (:error stats)) ;; "error (1)", "errors (2)"
               has-warnings? (clf "warning~:p (~:*~d)" (:warn stats))
-              :else "split")]
+              :else "split")
+
+        tooltip (when (or has-errors? has-warnings?) "since last refresh")]
 
     (button lbl (async-handler (fn []
                                  (cli/toggle-split-pane)
                                  (cli/change-notice-logger-level max-level)))
             {:style-class (cond
                             has-errors? "with-error"
-                            has-warnings? "with-warning")})))
+                            has-warnings? "with-warning")
+             :tooltip tooltip
+             :tooltip-delay 400})))
 
 (defn status-bar
   "this is the litle strip of text at the bottom of the application."

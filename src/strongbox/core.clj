@@ -121,6 +121,7 @@
    ;; per-tab log-levels are attached to each tab in the `:tab-list`
    :gui-log-level :info
 
+   ;; split the gui in two with the notice logger down the bottom
    :gui-split-pane false
 
    ;; addons in an unsteady state (data being updated, addon being installed, etc)
