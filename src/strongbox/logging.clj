@@ -26,6 +26,7 @@
 ;; logging
 
 (def default-log-level :info)
+(def level-map {:debug 0 :info 1 :warn 2 :error 3 :report 4})
 
 ;; https://github.com/ptaoussanis/timbre/blob/56d67dd274d7d11ab31624a70b4b5ae194c03acd/src/taoensso/timbre.cljc#L856-L858
 (def colour-log-map

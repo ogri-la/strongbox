@@ -4,17 +4,7 @@ All notable changes to this project will be documented in this file. This change
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-### Added
-
-### Changed
-
-### Fixed
-
-### Removed
-
-## 4.2.0
+## 4.2.0 - unreleased
 
 ### Added
 
@@ -27,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - for example, a 'classic' release is available for an addon but the addon directory is set to 'retail'
 * an 'install' button on the search pane to install addons individually
     - ... which is probably what *most* of us want *most* of the time
+* a 'split' button that brings up the notice logger at the highest current log level
+    - I missed the old split pane layout and decided the "(warnings)" suffix in the log tab title wasn't good enough
+    - it's yellow with warnings, red when errors. 
+    - split doesn't persist between app restarts. If you want to see this let me know.
 
 ### Changed
 
@@ -805,3 +799,13 @@ curseforge if an addon appears in multiple sources.
 - a notice logger for operations that are happening
 - logic to do the occasional large curseforge.com update and smaller incremental updates more regularly
 - CI and releases with Travis-CI
+
+## [Unreleased]
+
+### Added
+
+### Changed
+
+### Fixed
+
+### Removed

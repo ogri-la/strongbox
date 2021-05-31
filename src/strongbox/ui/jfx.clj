@@ -1,6 +1,7 @@
 (ns strongbox.ui.jfx
   (:require
    [me.raynes.fs :as fs]
+   [clojure.pprint]
    [clojure.string :refer [lower-case join capitalize replace] :rename {replace str-replace}]
    ;; logging in the gui should be avoided as it can lead to infinite loops
    [taoensso.timbre :as timbre :refer [spy]] ;; info debug warn error]] 
@@ -92,7 +93,7 @@
     :row-updateable "#6272a4" ;; (blue)
     :row-updateable-selected "#6272c3" ;; (brighter blue) ;; todo: can this be derived from :row-updateable?
     :row-updateable-text "white"
-    :row-warning "#f1fa8c"
+    :row-warning "#ffb86c"
     :row-warning-text "black"
     :row-error "#ff5555"
     :row-error-text "black"
@@ -103,7 +104,7 @@
     :table-font-colour "-fx-text-base-color"
     :row-alt "#22232e"
     :uber-button-tick "aquamarine"
-    :uber-button-warn "yellow"
+    :uber-button-warn "#ffb86c"
     :uber-button-error "red"}})
 
 (def sub-theme-map
@@ -484,12 +485,43 @@
 
                "#status-bar"
                {:-fx-font-size ".9em"
-                :-fx-padding "5px"
+                :-fx-padding "0"
+                :-fx-alignment "center-left"}
+
+               "#status-bar-left"
+               {:-fx-padding "0 10"
+                :-fx-alignment "center-left"
+                :-fx-pref-width 9999.0
 
                 " > .text"
                 {;; omg, wtf does 'fx-fill' work and not 'fx-text-fill' ???
                  :-fx-fill (colour :table-font-colour)}}
 
+               "#status-bar-right"
+               {:-fx-min-width "130px" ;; long enough to render "warnings (999)"
+
+                :-fx-padding "5px 12px 5px 0"
+                :-fx-alignment "center-right"}
+
+               "#status-bar-right .button"
+               {:-fx-padding "4 10"
+                ;; doesn't look right when button is coloured.
+                ;;:-fx-background-radius "4"
+                :-fx-font-size "11px"
+
+                ;; this isn't great but it's better than nothing. revisit when it makes more sense.
+                ":armed"
+                {:-fx-background-insets "1 1 0 0,  1,  2,  3"}}
+
+               ".button.with-warning"
+               {:-fx-background-insets "0 0 -1 0,  0,  1,  2"
+                :-fx-background-color (str "-fx-shadow-highlight-color, -fx-outer-border, -fx-inner-border, " (colour :row-warning))
+                :-fx-text-fill (colour :row-warning-text)}
+
+               ".button.with-error"
+               {:-fx-background-insets "0 0 -1 0,  0"
+                :-fx-background-color (str "-fx-shadow-highlight-color, -fx-inner-border, " (colour :row-error))
+                :-fx-text-fill (colour :row-error-text)}
 
                ;;
                ;; addon-detail
@@ -722,20 +754,23 @@
 
 (defn button
   "generates a simple button with a means to check to see if it should be disabled and an optional tooltip"
-  [label on-action & [{:keys [disabled? tooltip]}]]
+  [label on-action & [{:keys [disabled? tooltip tooltip-delay style-class]}]]
   (let [btn (cond->
              {:fx/type :button
               :text label
               :on-action on-action}
 
               (boolean? disabled?)
-              (merge {:disable disabled?}))]
+              (merge {:disable disabled?})
+
+              (some? style-class)
+              (merge {:style-class ["button" style-class]}))]
 
     (if (some? tooltip)
       {:fx/type fx.ext.node/with-tooltip-props
        :props {:tooltip {:fx/type :tooltip
                          :text tooltip
-                         :show-delay 200}}
+                         :show-delay (or tooltip-delay 200)}}
        :desc btn}
 
       btn)))
@@ -808,6 +843,7 @@
   "accepts any args, does nothing, returns nil.
   good for placeholder event handlers."
   (constantly nil))
+(def do-nothing donothing)
 
 (defn wow-dir-picker
   "prompts the user to select an addon dir. 
@@ -1405,12 +1441,12 @@
   pass it a `filter-fn` to remove entries in the `:log-lines` list."
   [{:keys [fx/context tab-idx filter-fn section-title]}]
   (let [filter-fn (or filter-fn identity)
-        level-map {:debug 0 :info 1 :warn 2 :error 3 :report 4}
         current-log-level (if tab-idx
                             (fx/sub-val context get-in [:app-state :tab-list tab-idx :log-level])
                             (fx/sub-val context get-in [:app-state :gui-log-level]))
         log-level-filter (fn [log-line]
-                           (>= (-> log-line :level level-map) (level-map current-log-level)))
+                           (>= (-> log-line :level logging/level-map)
+                               (logging/level-map current-log-level)))
 
         log-message-list (->> (fx/sub-val context get-in [:app-state :log-lines])
                               (filter filter-fn)
@@ -1832,21 +1868,6 @@
              :tab-idx tab-idx
              :addon-id (:tab-data tab)}})
 
-(defn log-tab
-  [{:keys [fx/context]}]
-  (let [level-set (->> (fx/sub-val context get-in [:app-state :log-lines])
-                       (map :level)
-                       set)
-        lbl (cond
-              (some #{:error} level-set) " (errors)"
-              (some #{:warn} level-set) " (warnings)"
-              :else "")]
-    {:fx/type :tab
-     :text (str "log" lbl)
-     :id "log-tab"
-     :closable false
-     :content {:fx/type notice-logger}}))
-
 (defn tabber
   [{:keys [fx/context]}]
   (let [selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])
@@ -1870,12 +1891,56 @@
                                        (fn []
                                          (-> text-field .requestFocus))))))
           :content {:fx/type search-addons-pane}}
-         {:fx/type log-tab}]
+         {:fx/type :tab
+          :text "log"
+          :id "log-tab"
+          :closable false
+          :content {:fx/type notice-logger}}]
+
         dynamic-tabs (map-indexed (fn [idx tab] {:fx/type addon-detail-tab :tab tab :tab-idx idx}) dynamic-tab-list)]
     {:fx/type :tab-pane
      :id "tabber"
      :tab-closing-policy javafx.scene.control.TabPane$TabClosingPolicy/ALL_TABS
      :tabs (into static-tabs dynamic-tabs)}))
+
+(defn split-pane-button
+  "the little button in the bottom right of the screen that toggles the split gui feature"
+  [{:keys [fx/context]}]
+  (let [log-lines (fx/sub-val context get-in [:app-state :log-lines])
+        log-lines (cli/log-entries-since-last-refresh log-lines)
+
+        ;; {:warn 1, :info 20}
+        stats (utils/count-occurances log-lines :level)
+
+        cmp (fn [kv1 kv2]
+              (compare (get logging/level-map (first kv1))
+                       (get logging/level-map (first kv2))))
+
+        max-level (or (->> stats (sort cmp) last first)
+                      logging/default-log-level)
+
+        has-errors? (contains? stats :error)
+        has-warnings? (contains? stats :warn)
+
+        clf (partial clojure.pprint/cl-format nil)
+        lbl (cond
+              ;; '~:p' to pluralise using 's'
+              ;; '~:*' to 'go back' a consumed argument
+              ;; '~d' to format digit as a decimal (vs binary, hex, etc)
+              has-errors? (clf "error~:p (~:*~d)" (:error stats)) ;; "error (1)", "errors (2)"
+              has-warnings? (clf "warning~:p (~:*~d)" (:warn stats))
+              :else "split")
+
+        tooltip (when (or has-errors? has-warnings?) "since last refresh")]
+
+    (button lbl (async-handler (fn []
+                                 (cli/toggle-split-pane)
+                                 (cli/change-notice-logger-level max-level)))
+            {:style-class (cond
+                            has-errors? "with-error"
+                            has-warnings? "with-warning")
+             :tooltip tooltip
+             :tooltip-delay 400})))
 
 (defn status-bar
   "this is the litle strip of text at the bottom of the application."
@@ -1899,11 +1964,17 @@
 
     {:fx/type :h-box
      :id "status-bar"
-     :children [{:fx/type :text
-                 :style-class ["text"]
-                 :text (join " " strings)}]}))
+     :children [{:fx/type :h-box
+                 :id "status-bar-left"
+                 :children [{:fx/type :text
+                             :style-class ["text"]
+                             :text (join " " strings)}]}
+                {:fx/type :h-box
+                 :id "status-bar-right"
+                 :children [{:fx/type split-pane-button}]}]}))
 
 ;;
+
 
 (defn app
   "returns a description of the javafx Stage, Scene and the 'root' node.
@@ -1912,7 +1983,8 @@
   (let [;; re-render gui whenever style state changes
         style (fx/sub-val context get :style)
         showing? (fx/sub-val context get-in [:app-state :gui-showing?])
-        theme (fx/sub-val context get-in [:app-state :cfg :gui-theme])]
+        theme (fx/sub-val context get-in [:app-state :cfg :gui-theme])
+        split-pane-on? (fx/sub-val context get-in [:app-state :gui-split-pane])]
     {:fx/type :stage
      :showing showing?
      :on-close-request exit-handler
@@ -1936,7 +2008,13 @@
              :root {:fx/type :border-pane
                     :id (name theme)
                     :top {:fx/type menu-bar}
-                    :center {:fx/type tabber}
+                    :center (if split-pane-on?
+                              {:fx/type :split-pane
+                               :orientation :vertical
+                               :divider-positions [0.6]
+                               :items [{:fx/type tabber}
+                                       {:fx/type notice-logger}]}
+                              {:fx/type tabber})
                     :bottom {:fx/type status-bar}}}}))
 
 (defn start

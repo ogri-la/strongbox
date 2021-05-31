@@ -121,6 +121,9 @@
    ;; per-tab log-levels are attached to each tab in the `:tab-list`
    :gui-log-level :info
 
+   ;; split the gui in two with the notice logger down the bottom
+   :gui-split-pane false
+
    ;; addons in an unsteady state (data being updated, addon being installed, etc)
    ;; allows a UI to watch and update with progress
    :unsteady-addon-list #{}
@@ -701,7 +704,7 @@
         unmatched-names (->> unmatched (remove :ignore?) (map :name) set)]
 
     (when-not (= num-installed num-matched)
-      (info "num installed" num-installed ", num matched" num-matched))
+      (info (format "num installed %s, num matched %s" num-installed num-matched)))
 
     (when-not (empty? unmatched-names)
       (warn "you need to manually search for them and then re-install them")
