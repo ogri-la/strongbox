@@ -64,13 +64,14 @@ see CHANGELOG.md for a more formal list of changes by release
     - interesting stuff happens when you pump that update button!
     - done
 
-## todo
-
 * add "-bcc" to list of prefixes for github
     - see https://github.com/ogri-la/strongbox/issues/268
+    - done
+
+## todo
 
 * bug, uber button, identical addons in different addon dirs are causing the warn/error-free version to show warns/errors
-    - I think this may be 'fixed' now with the limited log filter 
+    - I think this may be 'fixed' now with the limited log filter
 
 ## todo bucket (no particular order)
 

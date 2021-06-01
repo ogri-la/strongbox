@@ -608,9 +608,10 @@
   returns `nil` if no game track found."
   [string (s/nilable string?)]
   (when string
-    (let [;; matches 'classic-tbc', 'classic-bc', 'classic_tbc', 'classic_bc', 'tbc', 'bc' but not 'classictbc' or 'classicbc'.
+    (let [;; matches 'classic-tbc', 'classic-bc', 'classic-bcc', 'classic_tbc', 'classic_bc', 'classic_bcc', 'tbc', 'bc', 'bcc'
+          ;; but not 'classictbc' or 'classicbc' or 'classicbcc'
           ;; see tests.
-          classic-tbc-regex #"(?i)classic[\W_]t?bc|[\W_]t?bc\W?$"
+          classic-tbc-regex #"(?i)classic[\W_]t?bcc?|[\W_]t?bcc?\W?"
           classic-regex #"(?i)classic"
           retail-regex #"(?i)retail"]
       (cond

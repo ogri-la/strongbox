@@ -13,14 +13,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - just 'refresh' for now, logged whenever the list of addons are re-read.
 * warnings and errors generated while installing an addon are now captured and displayed in a dialog box.
     - partially addresses points raised in https://github.com/ogri-la/strongbox/issues/231
-* a warning when 'strict' is unticked and an update is available for a mismatched game track
-    - for example, a 'classic' release is available for an addon but the addon directory is set to 'retail'
-* an 'install' button on the search pane to install addons individually
-    - ... which is probably what *most* of us want *most* of the time
-* a 'split' button that brings up the notice logger at the highest current log level
+* a warning when 'strict' is unticked and an update is available for a mismatched game track.
+    - for example, a 'classic' release is available for an addon but the addon directory is set to 'retail'.
+* an 'install' button on the search pane to install addons individually.
+    - ... which is probably what *most* of us want *most* of the time.
+* a 'split' button that brings up the notice logger at the highest current log level.
     - I missed the old split pane layout and decided the "(warnings)" suffix in the log tab title wasn't good enough
     - it's yellow with warnings, red when errors. 
     - split doesn't persist between app restarts. If you want to see this let me know.
+* another variation of the burning crusade abbreviation 'bcc' for the github game track guesser to look for.
+    - it seems to be gaining traction thanks to BigWigs packager but was non-existant a month or so ago.
 
 ### Changed
 
@@ -41,8 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 * a bug where refreshing the 'user' catalogue would throw an error if a repository no longer existed.
-* a case where hitting 'update all' many times quickly could cause unexpected behaviour and errors
-    - it will now issue a warning that addons are being updated
+* a case where hitting 'update all' many times quickly could cause unexpected behaviour and errors.
+    - it will now issue a warning that addons are being updated.
 
 ### Removed
 
