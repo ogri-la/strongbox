@@ -291,7 +291,21 @@
                  ["beta bc" :classic-tbc]
                  ["beta (tbc)" :classic-tbc]
                  ["beta (bc)" :classic-tbc]
-                 ["beta (tbc) 2.13" nil]
+                 ["beta (bcc)" :classic-tbc]
+                 ["beta (tbc) 2.13" :classic-tbc]
+                 ["beta (bcc) 3.24" :classic-tbc]
+
+                 ;; 2021-06-02 `-bcc` appears to have been adopted by BigWigs packager
+                 ;; we'll probably see much more use of it now
+                 ;; classic-bcc
+                 ["WeakAuras-3.4.2-bcc.zip" :classic-tbc]
+                 ["classic-bcc" :classic-tbc]
+                 ["1.2.3-classic-bcc" :classic-tbc]
+                 ["1.2.3-classic-bcc-no-lib" :classic-tbc]
+                 ["classic-bcc-no-lib" :classic-tbc]
+                 ["classic-bcc.no-lib" :classic-tbc]
+                 ["classic_bcc" :classic-tbc]
+                 ["1.2.3_classic_bcc_no-lib" :classic-tbc]
 
                  ;; classic
                  ["classic" :classic]
@@ -321,5 +335,5 @@
                  ["retail-classic" :classic]]]
 
       (doseq [[given expected] cases]
-        (is (= expected (utils/guess-game-track given)))))))
+        (is (= expected (utils/guess-game-track given)) (format "failed case: %s" given))))))
 
