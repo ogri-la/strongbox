@@ -56,26 +56,27 @@ see CHANGELOG.md for a more formal list of changes by release
 * search, replace 'install selected' with 'install' button on the right
     - done
 
-
-## todo
-
-ux and polish
-
 * button at bottom of UI to re-add split-pane
     - it's label is the total number of info/warn/errors (whatever is highest) since last notice
-
-* preferences, "update all addons automatically"
-    - update README features
+    - done
 
 * disable addon update button if it's unsteady
     - interesting stuff happens when you pump that update button!
-    - roll this into the action queue work
-        - no more than one update request pending per-addon
+    - done
+
+## todo
+
+* add "-bcc" to list of prefixes for github
+    - see https://github.com/ogri-la/strongbox/issues/268
 
 * bug, uber button, identical addons in different addon dirs are causing the warn/error-free version to show warns/errors
     - I think this may be 'fixed' now with the limited log filter 
 
 ## todo bucket (no particular order)
+
+* preferences, "update all addons automatically"
+    - update README features
+    - punted back to bucket 2021-06-02
 
 * update check
     - ignore pre-releases
@@ -137,6 +138,8 @@ ux and polish
     - separate tab for log
         - that scrolls the other way
 * a 'stop' button to stop updates would be nice
+* only unique jobs in queue
+    - pumping the update all button won't do much
 * download addon details in parallel
     - speed benefits, mostly
     - share a pool of connections between threads

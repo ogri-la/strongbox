@@ -253,12 +253,15 @@
    (core/refresh)))
 
 (defn-spec update-all nil?
-  "updates all installed addons with updates available"
+  "updates all installed addons with any new releases.
+  command is ignored if any addons are unsteady"
   []
-  (->> (get-state :installed-addon-list)
-       (filter addon/updateable?)
-       -install-update-these)
-  (core/refresh))
+  (if (empty? (get-state :unsteady-addon-list))
+    (do (->> (get-state :installed-addon-list)
+             (filter addon/updateable?)
+             -install-update-these)
+        (core/refresh))
+    (warn "updates in progress, 'update all' command ignored")))
 
 (defn-spec delete-selected nil?
   "deletes all addons in given `addon-list`.
