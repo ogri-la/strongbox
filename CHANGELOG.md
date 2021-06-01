@@ -41,6 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 * a bug where refreshing the 'user' catalogue would throw an error if a repository no longer existed.
+* a case where hitting 'update all' many times quickly could cause unexpected behaviour and errors
+    - it will now issue a warning that addons are being updated
 
 ### Removed
 
