@@ -14,9 +14,9 @@ Just for my own reference
     - SECURITY.md
 * update version in project.clj to the new version
     - remove the '-unreleased' extension
-* update CHANGELOG
+* update/review CHANGELOG
     - ensure contents of TODO are captured succintly
-    - include new empty sections
+    - remove 'unreleased'
 * update README with expected path to download release
 * if UI has changed significantly, add a screenshot
     - update README with link to new screenshot
@@ -46,6 +46,7 @@ Just for my own reference
 * merge changes from master
     - resolve conflicts etc
 * update TODO, truncating old DONE
+* update CHANGELOG, adding new sections
 * update project.clj
     - change version to next version 
     - add "-unreleased" after it
