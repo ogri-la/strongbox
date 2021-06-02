@@ -388,18 +388,19 @@
           reverse ;; old->new again, but truncated
           vec))))
 
-(defn-spec addon-log-entries ::sp/list-of-maps
+(defn-spec addon-log-entries (s/or :ok ::sp/list-of-maps, :app-not-started nil?)
   "returns a list of addon entries for the given `:dirname` since last refresh"
   [addon map?]
-  (let [not-report #(-> % :level (= :report) not)
-        filter-fn (logging/log-line-filter-with-reports (core/selected-addon-dir) addon)]
-    (->> (core/get-state)
-         :log-lines ;; oldest first
-         reverse ;; newest first
-         (filter filter-fn)
-         (take-while not-report)
-         reverse ;; oldest first again, but truncated
-         vec)))
+  (when @core/state
+    (let [not-report #(-> % :level (= :report) not)
+          filter-fn (logging/log-line-filter-with-reports (core/selected-addon-dir) addon)]
+      (->> (core/get-state)
+           :log-lines ;; oldest first
+           reverse ;; newest first
+           (filter filter-fn)
+           (take-while not-report)
+           reverse ;; oldest first again, but truncated
+           vec))))
 
 (defn-spec addon-num-log-level int?
   "returns the number of log entries given `dirname` has for given `log-level` or 0 if not present"
