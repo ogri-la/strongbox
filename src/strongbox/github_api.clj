@@ -93,16 +93,6 @@
         ;; returns the first game track it can find in the release name or nil
         release-game-track (utils/guess-game-track (:name release))
 
-        track-version (fn [version gametrack]
-                        ;; why am I doing this?
-                        ;; iirc it's to differentiate between identically named releases for different game tracks.
-                        ;; we could do what we did with curseforge and ensure all releases get a unique name
-                        (case gametrack
-                          :classic-tbc (str version "-classic-tbc")
-                          :classic (str version "-classic")
-                          ;; retail
-                          version))
-
         updater ;; returns a list of updated versions of this asset. if the asset supports multiple game tracks, two versions are returned
         (fn [asset]
           (let [version (pick-version-name release asset)
@@ -116,24 +106,23 @@
                 (cond
 
                   ;; game track present in file name, prefer that over `:game-track-list` and any game-track in release name
-                  asset-game-track {:game-track asset-game-track, :version (track-version version asset-game-track) :-mo :track-in-asset-name}
+                  asset-game-track {:game-track asset-game-track, :version version, :-mo :track-in-asset-name}
 
                   ;; game track present in release name, prefer that over `:game-track-list`
-                  release-game-track {:game-track release-game-track, :version (track-version version release-game-track) :-mo :track-in-release-name}
+                  release-game-track {:game-track release-game-track, :version version, :-mo :track-in-release-name}
 
                   ;; no game track present in asset name or release name and no `:game-track-list`. assume `:retail`
                   no-known-game-tracks? (do (debug (format "no game track detected for release '%s' and asset '%s', assuming 'retail'"
                                                            (:name release) (:name asset)))
-                                            {:game-track :retail :version version :-mo :sa--ngt})
+                                            {:game-track :retail, :version version :-mo :sa--ngt})
 
                   ;; no game track present in asset name or release name and just a single entry in `:game-track-list`. use that.
-                  single-game-track? {:game-track (first known-game-tracks)
-                                      :version (track-version version (first known-game-tracks))  :-mo :sa--1gt}
+                  single-game-track? {:game-track (first known-game-tracks), :version version,  :-mo :sa--1gt}
 
                   ;; no game track present in asset name or release name with multiple entries in `:game-track-list`.
                   ;; assume all entries in `:game-track-list` supported.
                   many-game-tracks? (vec (for [game-track known-game-tracks]
-                                           {:game-track game-track, :version (track-version version game-track) :-mo :sa--Ngt}))
+                                           {:game-track game-track, :version version, :-mo :sa--Ngt}))
 
                   :else (error (format "unhandled state attempting to determine game track(s) for asset '%s' in release of '%s'"
                                        asset addon)))

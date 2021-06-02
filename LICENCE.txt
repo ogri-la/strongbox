@@ -667,7 +667,6 @@ Additional permission under GNU GPL version 3 section 7
 If you modify this Program, or any covered work, by linking or combining it with any of the below libraries (or a modified version of that library), containing parts covered by the terms of any of the below libraries, the licensors of this Program grant you additional permission to convey the resulting work.
 
 * org.clojure/clojure
-* org.clojure/spec.alpha
 * org.clojure/tools.cli
 * org.clojure/tools.namespace
 * org.clojure/data.json

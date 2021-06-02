@@ -1,7 +1,7 @@
 (ns strongbox.main
   (:refer-clojure :rename {test clj-test})
   (:require
-   [taoensso.timbre :as timbre :refer [spy info warn error]]
+   [taoensso.timbre :as timbre :refer [spy info warn error report]]
    [clojure.test]
    [clojure.tools.cli]
    [clojure.tools.namespace.repl :as tn :refer [refresh]]

@@ -6,38 +6,95 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* add support for classic TBC and classic WOTLK and classic Cataclysm
-    - really, just figure out a way to support N game tracks with strict/relaxed installation rules
+* gui, disable anything that can't be used when no addon dir selected
     - done
-        - won't prevent me from having to filter and group addon host results into game tracks however
-
-* curseforge, add classic-tbc support
-    - done
-
-* wowi, add classic-tbc support
-    - done
-
-* tukui, add classic-tbc support
-    - done
-
-* github, add classic-tbc support
-    - done
-
-* update classic/retail 'features' list of readme
-    - done
-
-## todo
-
-
-## todo bucket (no particular order)
-
-* ux, installing (not updating) an addon for an incompatible game track shouldn't fail silently or get lost in log noise
-    - https://github.com/ogri-la/strongbox/issues/231
 
 * github, revisit the "-classic" suffix naming
     - this was solved more elegantly in curseforge-api
+        - actually, this is slightly different
+    - done
 
-* bug, I can see github addons when using wowi catalogue
+* logging, app level 'events' or notices
+    - now that the log has been pushed out of the way, it's free to be a bit more verbose
+    - some events like refreshing or changing the game track should be logged
+    - some of these events should be surfaced in an addon's notice logger
+    - should get a different colour in the log
+    - done
+
+* ux, installing (not updating) an addon for an incompatible game track shouldn't fail silently or get lost in log noise
+    - https://github.com/ogri-la/strongbox/issues/231
+    - done
+        - addons that fail to expand get an error after switching back to the installed pane
+
+* bug, 'refresh user catalogue' is giving me a spec error
+    - nil values
+        - we have github addons that no longer exist
+        - https://api.github.com/repos/teelolws/Altoholic-Classic
+        - https://api.github.com/repos/teelolws/Altoholic-Retail
+    - done
+
+* tabber, double clicking a tab closes it
+    - total ballache, decided not to
+
+* search, comma separate download numbers
+    - or figure out the locale-specific separator
+    - 1234567890 downloads is less readable than 1,234,567,890
+    - done
+
+* installed, right align version columns and make elipses start at left
+    - we're typically interested in comparing the last part of the version
+    - done
+
+* uber-button, limit status to just those events since the last refresh
+    - and make 'refresh' an app-wide 'notice' to distinguish it from ino/debug/etc
+    - done
+
+* game tracks, add warning if installed addon's interface version deviates from addon directory's game track
+    - for example, if classic is installed in retail, or classic-bc is installed in classic
+    - done
+
+* search, replace 'install selected' with 'install' button on the right
+    - done
+
+* button at bottom of UI to re-add split-pane
+    - it's label is the total number of info/warn/errors (whatever is highest) since last notice
+    - done
+
+* disable addon update button if it's unsteady
+    - interesting stuff happens when you pump that update button!
+    - done
+
+* add "-bcc" to list of prefixes for github
+    - see https://github.com/ogri-la/strongbox/issues/268
+    - done
+
+* bug, uber button, identical addons in different addon dirs are causing the warn/error-free version to show warns/errors
+    - I think this may be 'fixed' now with the limited log filter
+    - can't replicate, will keep an eye out though
+
+## todo
+
+## todo bucket (no particular order)
+
+* preferences, "update all addons automatically"
+    - update README features
+    - punted back to bucket 2021-06-02
+
+* update check
+    - ignore pre-releases
+
+* add a timeout for downloads
+    - tukui.org is up but it's being reaaaaalllllly slow and updates appear to have hanged when they haven't
+
+* addon detail, 'releases' widget, including *all* possible releases to download and install
+    - add an 'WoW' column to know which game-track/interface
+    - disable releases excluded by selected game-track/strictness setting
+
+* logging, app level 'help'
+    - messages to the user that are not informational, or debug or warnings or errors, but simple helpful messages
+    - it should stand out from the other messages, look friendly, etc
+
+* bug, sortof, I can see github addons when using wowi catalogue
     - user catalogue should be selectable
 
 * bug, catalogue loading
@@ -48,49 +105,18 @@ see CHANGELOG.md for a more formal list of changes by release
         - ...
     - when the catalogue fails validation it shouldn't freeze the app while the reason is printed in the console
 
-* bug, uber button, identical addons in different addon dirs are causing the warn/error-free version to show warns/errors
-
-* search, comma separate download numbers
-    - or figure out the locale-specific separator
-    - 1234567890 downloads is less readable than 1,234,567,890
-
-* disable addon update button if it's unsteady
-    - interesting stuff happens when you pump that update button!
-    - roll this into the action queue work
-        - no more than one update request pending per-addon
-
 * classic addon dir detection
     - also check for 
         - '_classic_' '_classic_beta_' '_classic_ptr_'
 
-* game tracks, add warning if installed addon's interface version deviates from addon directory's game track
-    - for example, if classic is installed in retail, or classic-bc is installed in classic
-
-* installed, right align version columns and make elipses start at left
-    - we're typically interested in comparing the last part of the version
-
-* tabber, double clicking a tab closes it
-
 * bug, I should be able to re-install a pinned addon if the pinned release is available, but I'm getting an error
- - "refusing to install addon that will overwrite a pinned addon"
- - this is actually a bit more involved than it first looks. shifting to it's own ticket
+    - "refusing to install addon that will overwrite a pinned addon"
+    - this is actually a bit more involved than it first looks. shifting to it's own ticket
 
 * get log window scrolling in other direction
 
 * nfo, spend some time futzing with nfo files on disk and how they can break the UI
     - I've managed to get some weird error messages by changing 'source' to an int, to a catalogue that doesn't exist, etc
-
-* search, replace 'install selected' with 'install' button on the right
-
-* logging, app level 'events'
-    - now that the log has been pushed out of the way, it's free to be a bit more verbose
-    - some events like refreshing or changing the game track should be logged
-    - some of these events should be surfaced in an addon's notice logger
-
-
-* logging, app level 'help'
-    - messages to the user that are not informational, or debug or warnings or errors, but simple helpful messages
-    - it should stand out from the other messages, look friendly, etc
 
 * zip, better errors for failing to decompress .rar files
     - see !FREEZING from wowinterface
@@ -114,6 +140,8 @@ see CHANGELOG.md for a more formal list of changes by release
     - separate tab for log
         - that scrolls the other way
 * a 'stop' button to stop updates would be nice
+* only unique jobs in queue
+    - pumping the update all button won't do much
 * download addon details in parallel
     - speed benefits, mostly
     - share a pool of connections between threads
@@ -145,9 +173,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * dedicated tab for "user-catalogue" ?
     - add, delete, update github addons
     - see accumulating release history for addons?
-
-* preferences, "update all addons automatically"
-    - update README features
 
 * import, skip importing an addon if addon already exists in addon dir
 

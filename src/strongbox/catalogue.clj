@@ -76,17 +76,27 @@
 
     source-updates
 
-    (let [;; todo: revisit this error message
-          ;; "no release found for 'adibags' (retail) on github"
-          ;; "no release found for 'adibags' (retail or classic) on github"
+    (let [;; "no 'Retail' release found on github"
+          ;; "no 'Classic' release found on wowinterface"
+          ;; "no 'Classic (TBC)', 'Classic' or 'Retail' release found on curseforge"
+
+          retail-lbl (sp/game-track-labels-map :retail)
+          classic-lbl (sp/game-track-labels-map :classic)
+          classic-tbc-lbl (sp/game-track-labels-map :classic-tbc)
+          source (:source addon)
+
+          single-template "no '%s' release found on %s."
+          multi-template "no '%s', '%s' or '%s' release found on %s."
+
           msg (case [game-track strict?]
-                [:retail true] "no release found for '%s' (retail) on %s"
-                [:classic true] "no release found for '%s' (classic) on %s"
-                [:classic-tbc true] "no release found for '%s' (classic - TBC) on %s"
-                [:retail false] "no release found for '%s' (retail, classic or classic -TBC) on %s"
-                [:classic false] "no release found for '%s' (classic, classic - TBC or retail) on %s"
-                [:classic-tbc false] "no release found for '%s' (classic - TBC, classic or retail) on %s")]
-      (warn (format msg (:name addon) (:source addon))))))
+                [:retail true] (format single-template retail-lbl source)
+                [:classic true] (format single-template classic-lbl source)
+                [:classic-tbc true] (format single-template classic-tbc-lbl source)
+
+                [:retail false] (format multi-template retail-lbl classic-lbl source)
+                [:classic false] (format multi-template classic-lbl classic-tbc-lbl retail-lbl source)
+                [:classic-tbc false] (format multi-template classic-tbc-lbl classic-lbl retail-lbl source))]
+      (warn msg))))
 
 
 ;;
@@ -190,7 +200,11 @@
   (let [dispatch-map {"github.com" github-api/parse-user-string
                       "www.github.com" github-api/parse-user-string}] ;; alias
     (try
-      (when-let [f (some->> uin utils/unmangle-https-url java.net.URL. .getHost (get dispatch-map))]
+      (when-let [f (some->> uin
+                            utils/unmangle-https-url
+                            java.net.URL.
+                            .getHost
+                            (get dispatch-map))]
         (info "inspecting:" uin)
         (f uin))
       (catch java.net.MalformedURLException mue

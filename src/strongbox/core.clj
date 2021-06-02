@@ -2,7 +2,7 @@
   (:require
    [clojure.set :refer [rename-keys]]
    [clojure.string :refer [lower-case starts-with? ends-with? trim]]
-   [taoensso.timbre :as timbre :refer [debug info warn error spy]]
+   [taoensso.timbre :as timbre :refer [debug info warn error report spy]]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
    [taoensso.tufte :as tufte :refer [p profile]]
@@ -108,7 +108,6 @@
    :db nil
 
    :log-lines []
-   :log-stats {}
 
    ;; a map of paths whose location may vary according to the cwd and envvars.
    :paths nil
@@ -121,6 +120,9 @@
    ;; log-level for the gui dedicated notice-logger
    ;; per-tab log-levels are attached to each tab in the `:tab-list`
    :gui-log-level :info
+
+   ;; split the gui in two with the notice logger down the bottom
+   :gui-split-pane false
 
    ;; addons in an unsteady state (data being updated, addon being installed, etc)
    ;; allows a UI to watch and update with progress
@@ -472,34 +474,30 @@
      (let [;; todo: if -testing-zipfile, move zipfile into download dir
            ;; this will help the zipfile pruning tests
            downloaded-file (or (:-testing-zipfile addon) ;; don't download, install from this file (testing only right now)
-                               (download-addon addon install-dir))
-           bad-zipfile-msg (format "failed to read zip file '%s', could not install %s" downloaded-file (:name addon))
-           bad-addon-msg (format "refusing to install '%s'. It contains top-level files or top-level directories missing .toc files."  (:name addon))]
+                               (download-addon addon install-dir))]
        (cond
-         (map? downloaded-file) (error "failed to download addon, could not install" (:name addon))
+         (map? downloaded-file) (error "failed to download addon.")
 
-         (nil? downloaded-file) (error "non-http error downloading addon, could not install" (:name addon)) ;; I dunno. /shrug
+         (nil? downloaded-file) (error "non-HTTP error downloading addon.") ;; I dunno. /shrug
 
          (not (zip/valid-zip-file? downloaded-file))
-         (do
-           (error bad-zipfile-msg)
-           (fs/delete downloaded-file)
-           (warn "removed bad zip file" downloaded-file))
+         (do (error "failed to read addon zip file, possibly corrupt or not a zip file.")
+             (fs/delete downloaded-file)
+             (warn "removed bad zip file."))
 
          (not (zip/valid-addon-zip-file? downloaded-file))
-         (do
-           (error bad-addon-msg)
-           (fs/delete downloaded-file) ;; I could be more lenient
-           (warn "removed bad addon" downloaded-file))
+         (do (error "refusing to install, addon zip file contains top-level files or a top-level directory missing a .toc file.")
+             (fs/delete downloaded-file)
+             (warn "removed bad addon."))
 
          (not (s/valid? ::sp/writeable-dir install-dir))
          (error (format "addon directory is not writable: %s" install-dir))
 
          (addon/overwrites-ignored? downloaded-file (get-state :installed-addon-list))
-         (error "refusing to install addon that will overwrite an ignored addon")
+         (error "refusing to install addon that will overwrite an ignored addon.")
 
          (addon/overwrites-pinned? downloaded-file (get-state :installed-addon-list))
-         (error "refusing to install addon that will overwrite a pinned addon")
+         (error "refusing to install addon that will overwrite a pinned addon.")
 
          test-only? true ;; addon was successfully downloaded and verified as being sound
 
@@ -706,7 +704,7 @@
         unmatched-names (->> unmatched (remove :ignore?) (map :name) set)]
 
     (when-not (= num-installed num-matched)
-      (info "num installed" num-installed ", num matched" num-matched))
+      (info (format "num installed %s, num matched %s" num-installed num-matched)))
 
     (when-not (empty? unmatched-names)
       (warn "you need to manually search for them and then re-install them")
@@ -755,6 +753,7 @@
          :addon-summary-list
          (map :url)
          (map catalogue/parse-user-string)
+         (remove nil?)
          add-user-addon!)))
 
 ;;
@@ -780,7 +779,11 @@
           addon (or expanded-addon addon) ;; expanded addon may still be nil
           has-update? (addon/updateable? addon)]
       (when has-update?
-        (info (format "update available \"%s\"" (:version addon))))
+        (info (format "update available \"%s\"" (:version addon)))
+        (when-not (= (get-game-track) (:game-track addon))
+          (warn (format "update is for '%s' and the addon directory is set to '%s'"
+                        (-> addon :game-track sp/game-track-labels-map)
+                        (-> (get-game-track) sp/game-track-labels-map)))))
       (assoc addon :update? has-update?))))
 
 (defn-spec check-for-updates nil?
@@ -1038,6 +1041,8 @@
   []
   (profile
    {:when (get-state :profile?)}
+
+   (report "refresh")
 
    ;; parse toc files in install-dir. do this first so we see *something* while catalogue downloads (next)
    (load-installed-addons)

@@ -1,13 +1,12 @@
-(defproject ogri-la/strongbox "4.1.0"
+(defproject ogri-la/strongbox "4.2.0"
   :description "World Of Warcraft Addon Manager"
   :url "https://github.com/ogri-la/strongbox"
   :license {:name "GNU Affero General Public License (AGPL)"
             :url "https://www.gnu.org/licenses/agpl-3.0.en.html"}
 
-  :dependencies [[org.clojure/clojure "1.10.1"]
-                 [org.clojure/spec.alpha "0.2.176"]
+  :dependencies [[org.clojure/clojure "1.10.3"]
                  [org.clojure/tools.cli "1.0.194"] ;; cli arg parsing
-                 [org.clojure/tools.namespace "1.0.0"] ;; reload code
+                 [org.clojure/tools.namespace "1.1.0"] ;; reload code
                  [org.clojure/data.json "1.0.0"] ;; json handling
                  [orchestra "2018.12.06-2"] ;; improved clojure.spec instrumentation
                  ;; see lein deps :tree

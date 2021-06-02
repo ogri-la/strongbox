@@ -60,7 +60,7 @@
 (s/def ::selected? boolean?)
 (s/def ::gui-theme #{:light :dark :dark-green :dark-orange})
 (s/def ::closable? boolean?)
-(s/def ::log-level #{:debug :info :warn :error})
+(s/def ::log-level #{:debug :info :warn :error :report})
 
 ;; preserve order here
 (def game-track-labels [[:retail "Retail"]

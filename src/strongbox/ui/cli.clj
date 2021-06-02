@@ -1,7 +1,7 @@
 (ns strongbox.ui.cli
   (:require
    [orchestra.core :refer [defn-spec]]
-   [taoensso.timbre :as timbre :refer [spy info warn error debug]]
+   [taoensso.timbre :as timbre :refer [debug info warn error report spy]]
    [clojure.spec.alpha :as s]
    [strongbox
     [logging :as logging]
@@ -18,6 +18,11 @@
 
 (comment "the UIs pool their logic here, which calls core.clj.")
 
+(defn-spec toggle-split-pane nil?
+  []
+  (swap! core/state update-in [:gui-split-pane] not)
+  nil)
+
 (defn-spec hard-refresh nil?
   "unlike `core/refresh`, `cli/hard-refresh` clears the http cache before checking for addon updates."
   []
@@ -29,11 +34,13 @@
   ;; this is also removing the etag cache.
   ;; the etag db is pretty worthless and only applies to catalogues and downloaded zip files.
   (core/delete-http-cache!)
+  (report "refresh")
   (core/check-for-updates))
 
 (defn-spec half-refresh nil?
   "like core/refresh but focuses on loading+matching+checking for updates"
   []
+  (report "refresh")
   (core/load-installed-addons)
   (core/match-installed-addons-with-catalogue)
   (core/check-for-updates)
@@ -246,12 +253,15 @@
    (core/refresh)))
 
 (defn-spec update-all nil?
-  "updates all installed addons with updates available"
+  "updates all installed addons with any new releases.
+  command is ignored if any addons are unsteady"
   []
-  (->> (get-state :installed-addon-list)
-       (filter addon/updateable?)
-       -install-update-these)
-  (core/refresh))
+  (if (empty? (get-state :unsteady-addon-list))
+    (do (->> (get-state :installed-addon-list)
+             (filter addon/updateable?)
+             -install-update-these)
+        (core/refresh))
+    (warn "updates in progress, 'update all' command ignored")))
 
 (defn-spec delete-selected nil?
   "deletes all addons in given `addon-list`.
@@ -366,12 +376,39 @@
         addon-id (utils/extract-addon-id addon)]
     (add-tab tab-id (or (:dirname addon) (:label addon) (:name addon) "[bug: missing tab name!]") closable? addon-id)))
 
+(defn-spec log-entries-since-last-refresh ::sp/list-of-maps
+  "returns a list of log entries since last refresh"
+  ([]
+   (log-entries-since-last-refresh (core/get-state :log-lines)))
+  ([log-lines ::sp/list-of-maps]
+   (let [not-report #(-> % :level (= :report) not)]
+     (->> log-lines ;; old->new
+          reverse ;; new->old
+          (take-while not-report)
+          reverse ;; old->new again, but truncated
+          vec))))
+
+(defn-spec addon-log-entries (s/or :ok ::sp/list-of-maps, :app-not-started nil?)
+  "returns a list of addon entries for the given `:dirname` since last refresh"
+  [addon map?]
+  (when @core/state
+    (let [not-report #(-> % :level (= :report) not)
+          filter-fn (logging/log-line-filter-with-reports (core/selected-addon-dir) addon)]
+      (->> (core/get-state)
+           :log-lines ;; oldest first
+           reverse ;; newest first
+           (filter filter-fn)
+           (take-while not-report)
+           reverse ;; oldest first again, but truncated
+           vec))))
+
 (defn-spec addon-num-log-level int?
   "returns the number of log entries given `dirname` has for given `log-level` or 0 if not present"
   [log-level ::sp/log-level, dirname ::sp/dirname]
-  (or
-   (some-> (core/get-state) :log-stats (get dirname) log-level)
-   0))
+  (->> {:dirname dirname}
+       addon-log-entries
+       (filter #(= (:level %) log-level))
+       count))
 
 (defn-spec addon-num-warnings int?
   "returns the number of warnings present for the given `addon` in the log."
