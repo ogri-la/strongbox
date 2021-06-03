@@ -8,6 +8,43 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+* add release.json support for github addons
+
+* github, add support for user supplied github token
+    - necessary if they want a large number of github addons without hassles
+    - implemented in strongbox-comrades
+        - really easy
+    - use GITHUB_TOKEN envvar
+        - dont even think about storing this raw in config
+
+* http, add a timeout for requests
+    - I have tukui API taking a looooong time
+* add a timeout for downloads
+    - tukui.org is up but it's being reaaaaalllllly slow and updates appear to have hanged when they haven't
+
+* bug, search, results not updated when catalogue is changed
+
+* add support for finding addons by url for other hosts
+    - wowinterface
+        - https://www.wowinterface.com/downloads/info19037
+            - source: wowinterface
+            - source-id: 19037
+    - curseforge
+        - https://www.curseforge.com/wow/addons/autorepair
+            - url: https://www.curseforge.com/wow/addons/autorepair
+    - github
+        - already happening with 'import'
+        - https://github.com/Aviana/LunaUnitFrames
+            - source: github
+            - source-id: Aviana/LunaUnitFrames
+    - tukui
+        - https://www.tukui.org/addons.php?id=6
+            - source: tukui
+            - source-id: 6
+    - so what happens if addon not found in catalogue?
+        - add to user catalogue?
+        - switch to full catalogue then switch back to original?
+
 ## todo bucket (no particular order)
 
 * preferences, "update all addons automatically"
@@ -17,16 +54,16 @@ see CHANGELOG.md for a more formal list of changes by release
 * update check
     - ignore pre-releases
 
-* add a timeout for downloads
-    - tukui.org is up but it's being reaaaaalllllly slow and updates appear to have hanged when they haven't
-
 * addon detail, 'releases' widget, including *all* possible releases to download and install
     - add an 'WoW' column to know which game-track/interface
     - disable releases excluded by selected game-track/strictness setting
 
 * logging, app level 'help'
     - messages to the user that are not informational, or debug or warnings or errors, but simple helpful messages
+        - 'help' messages strike me now as being 'info' level
+        - perhaps attach 'detail' metadata to info messages that elaborate on the message and what can be done about it
     - it should stand out from the other messages, look friendly, etc
+        - going with the further 'detail' metadata idea, adding an info icon would make it stand out
 
 * bug, sortof, I can see github addons when using wowi catalogue
     - user catalogue should be selectable
@@ -42,15 +79,20 @@ see CHANGELOG.md for a more formal list of changes by release
 * classic addon dir detection
     - also check for 
         - '_classic_' '_classic_beta_' '_classic_ptr_'
+    - is there an official source on these somewhere?
 
 * bug, I should be able to re-install a pinned addon if the pinned release is available, but I'm getting an error
     - "refusing to install addon that will overwrite a pinned addon"
     - this is actually a bit more involved than it first looks. shifting to it's own ticket
 
-* get log window scrolling in other direction
-
 * nfo, spend some time futzing with nfo files on disk and how they can break the UI
     - I've managed to get some weird error messages by changing 'source' to an int, to a catalogue that doesn't exist, etc
+
+* zip, switch to apache commons compress for decompressing
+    - https://commons.apache.org/proper/commons-compress/
+    - .tar.gz and 7z support would be interesting
+    - rar should just die already
+    - this would fix a major showstopper in porting to windows
 
 * zip, better errors for failing to decompress .rar files
     - see !FREEZING from wowinterface
@@ -63,6 +105,14 @@ see CHANGELOG.md for a more formal list of changes by release
         path [] triggered :strongbox.ui.jfx$start$update_gui_state__39204@608569a040151
         2021-03-20 01:35:58.027 ERROR [strongbox.core:419] - failed to read zip file '/home/torkus/path/to/wine/dir/drive_c/program files/World of Warcraft/_retail_/Interface/Addons/-freezing--1-04.zip', could not install -freezing
 
+* investigate *warn-on-reflections*
+    - I think there may be some solid performance gains by turning this on
+        - remember to profile first
+
+* test, can gui-diff and main/test be pushed back into the testing namespace and elided from release somehow?
+
+
+# job queue
 
 * gui, download progress bar *inside* the grid ...?
     - pure fantasy?
@@ -71,8 +121,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - internal job queue
     - replace log at bottom of screen with a list of jobs being processed and how far along they are
         - each job can be cancelled/stopped/discarded
-    - separate tab for log
-        - that scrolls the other way
 * a 'stop' button to stop updates would be nice
 * only unique jobs in queue
     - pumping the update all button won't do much
@@ -87,15 +135,19 @@ see CHANGELOG.md for a more formal list of changes by release
         - this might fit in with the greater-parallelism/queue based infrastructure
 
 
-* keep a list of previously installed addons
-
-* logs, persistent addon events
-    - installed, updated, pin, ignore events
-
-* cli, exports
+# releases
 
 * alpha/beta opt-in
     - user can opt to install alpha/beta/no-lib releases per-addon
+
+* keep a list of previously installed addons
+    - eh. tie it in with downloading more release information
+    - defer until after job queue
+        - very large downloads are possible. just see curseforge dbm
+
+# import/exports
+
+* cli, exports
 
 * import, export, capture 'pinned' information
     - we can now import addons at a specific version
@@ -104,9 +156,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - we can now export addons at specific versions
         - I think we already have this though ... called :version
 
-* dedicated tab for "user-catalogue" ?
-    - add, delete, update github addons
-    - see accumulating release history for addons?
 
 * import, skip importing an addon if addon already exists in addon dir
 
@@ -114,8 +163,25 @@ see CHANGELOG.md for a more formal list of changes by release
     - no need for padding and dummy dirnames then
     - installing normally would also include the mutual dependency handling
 
+# github 
+
 * toc, add support for x-github key
     - X-Github: https://github.com/teelolws/Altoholic-Retail 
+        - repo no longer exists
+        - github search:
+            - https://github.com/search?q=%22X-Github%22++extension%3Atoc&type=Code&ref=advsearch&l=&l=
+    - and what would it do?
+        - I could switch between sources I suppose ...
+
+* github, importing an exported addon list with a github addon won't see that addon installed
+    - unless that addon is present in the user catalogue
+        - which in a fresh install where a list of addons are being restored is unlikely...
+    - this is interesting actually. the exported addon list has become a mini-catalogue
+        - some addons require the larger catalogue to resolve
+        - github addons are resolved and installed by a different means...
+
+
+# addon
 
 * create a parser for that shit markup that is preventing reconcilation
     - see aliases
@@ -125,37 +191,6 @@ see CHANGELOG.md for a more formal list of changes by release
         - we have the source and source-id, even the group-id to some extent
     - switching catalogues may see the addon matched against another host
         - nothing wrong with that, but ...
-
-* http, add a timeout for requests
-    - I have tukui API taking a looooong time
-
-* add support for finding addons by url for other hosts
-    - wowinterface
-    - curseforge
-    - but these addons already exist in the main catalog ...
-        - should they be taken to a search results page?
-        - because what is presumably happening is the user can't find their addon in the search results (or can't be arsed to) and is saying "just install this please"
-            - but wowman uses catalogs as a source of data, so if it can't find the addon in the catalog, then what? 
-                - fail? but the user just gave us a URL (UNIVERSAL RESOURCE LOCATOR) ! what is the fucking problem here?
-    - the problem is expectations. wowman doesn't scrape addon host website HTML if it can avoid it
-        - and user enters addon host website URL
-    - this should be solved with more sophisticated catalogue searching
-        - parse identifiers from URL, like source and source ID, then display search results
-            - again, by encouraging the copying+pasting of URLs and then failing to find results when the URL IS RIGHT THERE AND WORKING we set ourselves up for failure and the user for disappointment/frustration
-    - parking this
-        - 2020-11-28: unparking this
-        - since this was parked I've added source-id and source as standard across all addons
-            - user just needs to copy and paste a url, strongbox matches it against catalogue, and installs it.
-
-* gui, feature, install addon from local zipfile
-    - *not* the 'reinstallation' feature, but literally selecting a zipfile from somewhere and installing it
-    - would be good for installing older versions of an addon?
-    - would be good for installing addons from unsupported sources
-        - wouldn't be able to update it however :(
-        - I think I'll stick with supporting sources of addons 
-            - rather than enabling ad-hoc installation of unsupported addons
-
-* search, results not updated when catalogue is changed
 
 * gitlab as addon host
     - https://gitlab.com/search?search=wow+addon
@@ -169,10 +204,6 @@ see CHANGELOG.md for a more formal list of changes by release
         - https://gitlab.com/explore/projects?tag=World+of+Warcraft
         - https://gitlab.com/shrugal/PersoLootRoll
         - any others ...?
-
-* investigate *warn-on-reflections*
-    - I think there may be some solid performance gains by turning this on
-        - remember to profile first
 
 * EOL planning, robustness, only download/update the catalogue *after* an existing catalogue has been confirmed
     - github is down, wowman is erroring with a 500
@@ -194,8 +225,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - wowinterface checksum is hidden behind a javascript tabber but still available
         - wowinterface do have a md5sum in results! score
 
-* test, can gui-diff and main/test be pushed back into the testing namespace and elided from release somehow?
-
 * EOL planning
     - I'm not going away and neither is strongbox, but! *should* I or my free time disappear will strongbox continue being useful?
         - what can I do to ensure it is the most useful if I just give up on it tomorrow?
@@ -205,36 +234,33 @@ see CHANGELOG.md for a more formal list of changes by release
             - addon hosts
                 - our interface with them is their API or in wowi's case, their API and website
 
+# ---
+
 * reconciliation, add dirname support
     - not sure which hosts support these
-* wowinterface, multiple game tracks 
+
+* wowinterface, multiple game tracks
     - investigate just what is being downloaded when a classic version of a wowi addon is downloaded
     - see 'LagBar'
 
-* bug, changing sort order during refresh doesn't reflect which addon is being updated
-    - I think changing column ordering and moving columns should be disabled while updates happen
-        - just freeze or disable them or something.
 * when curseforge api is down users get a wall of red error messages with very little useful information
     - see issue 91: https://github.com/ogri-la/wowman/issues/91
         - the error message has been improved but we still get a red wall of text
         - aggregate error messages?
+
 * reconciliation, rename 'reinstall all' to 'reconcile'
     - steal from the best
     - make the reconcile automatic
         - if a nfo file isn't found
     - remove the 'first time instructions' from the readme
         - it should just fucking do it
+
 * investigate better popularity metric than 'downloads'
     - if we make an effort to scrape everyday, we can generate this popularity graph ourselves
+
 * add a 'tabula rasa' option that wipes *everything* 
     - cache, catalog, config, downloaded zip files
-* cache, make caching opt-out and remove all those ugly binding calls
-    - bind the value at core app start
-    - this may not be possible. 
-        - binding happens at the thread level
-        - if we start doing download concurrently, we need to pass our binds to the threads
-            - which I'm not sure if is possible
-        - moving back into bucket until I get around to doing parallel downloads
+
 * testing, capture metrics with an eye to improving performance and speed
     - we have coverage metrics now
     - would like some timing around certain operations
@@ -246,6 +272,27 @@ see CHANGELOG.md for a more formal list of changes by release
                 - could be tied in with backups/exports
                     - got to have backups+imports happening first
         - identify slow things and measure their improvement
+
+# ui/gui
+
+
+* gui, feature, install addon from local zipfile
+    - *not* the 'reinstallation' feature, but literally selecting a zipfile from somewhere and installing it
+    - would be good for installing older versions of an addon?
+    - would be good for installing addons from unsupported sources
+        - wouldn't be able to update it however :(
+        - I think I'll stick with supporting sources of addons
+            - rather than enabling ad-hoc installation of unsupported addons
+
+* dedicated tab for "user-catalogue" ?
+    - add, delete, update github addons
+    - see accumulating release history for addons?
+
+* bug, changing sort order during refresh doesn't reflect which addon is being updated
+    - I think changing column ordering and moving columns should be disabled while updates happen
+        - just freeze or disable them or something.
+
+
 
 * gui 'wow' column is inconsistent
     - for curseforge, it's pulling it's value from :gameVersion, which may be empty
@@ -264,20 +311,9 @@ see CHANGELOG.md for a more formal list of changes by release
     - highlight unmatched
     - highlight updates
     - touch of colour against each menuitem would serve as a legend
-* gui, have the log scroll the other direction
 
-## github
 
-* github, add support for user supplied github token
-    - necessary if they want a large number of github addons without hassles
-* github, add a github catalogue
-    - just a simple list of wow addons on github that can be installed with strongbox
-* github, importing an exported addon list with a github addon won't see that addon installed
-    - unless that addon is present in the user catalogue
-        - which in a fresh install where a list of addons are being restored is unlikely...
-    - this is interesting actually. the exported addon list has become a mini-catalogue
-        - some addons require the larger catalogue to resolve
-        - github addons are resolved and installed by a different means...
+* gui, get log window scrolling in other direction
 
 ## import/export
 
@@ -306,6 +342,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## unified UI
 
+this is still an interesting idea
+
 * remove log split
 * remove tabs
 * gui, both panes, filter by categories
@@ -314,8 +352,19 @@ see CHANGELOG.md for a more formal list of changes by release
     - updates
     - category ...
 
+
+
 ## wontfix
 
+* github, add a github catalogue
+    - just a simple list of wow addons on github that can be installed with strongbox
+    - yeah, nah
+        - I don't want that responsibility
+* logs, persistent addon events
+    - installed, updated, pin, ignore events
+    - like ... stored in addon history?
+        - possible, but why? to please data freaks like me?
+    - going to need a better reason than 'just cos' for this
 * add a 'Delete all' option to cache menu
     - we don't really want legitimate nfo files to be accidentally deleted
 * nightly unstable builds
@@ -334,13 +383,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * windows support
     - windows is just the worst, most awful dystopian software I've ever seen and it hurts my soul every time I try to use it
     - I just plain hate it, it epitomises the very opposite of what I stand for and I refuse to work on it ever again
-* addon 'detail' tab
-    - link to curseforge
-    - donation url
-    - other addons by author ?
-    - list the hidden/sub dependencies
-    - too vague, too open ended, too much effort
-        - just send them to the official addon page
 * .rar/.tar.gz addons
     - !BeautyLoot on wowinterface is an example of this
         - https://www.wowinterface.com/downloads/info20212
