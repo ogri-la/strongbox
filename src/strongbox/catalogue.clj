@@ -194,21 +194,22 @@
 
 ;;
 
-(defn-spec parse-user-string (s/or :ok :addon/summary, :error nil?)
+(defn-spec parse-user-string (s/or :ok (s/keys :req-un [:addon/source :addon/source-id]), :error nil?)
   "given a string, figures out the addon source (github, etc) and dispatches accordingly."
   [uin string?]
   (let [dispatch-map {"github.com" github-api/parse-user-string
                       "www.github.com" github-api/parse-user-string}] ;; alias
     (try
-      (when-let [f (some->> uin
-                            utils/unmangle-https-url
-                            java.net.URL.
-                            .getHost
-                            (get dispatch-map))]
-        (info "inspecting:" uin)
-        (f uin))
+      (let [url-obj (some-> uin utils/unmangle-https-url java.net.URL.)
+            host (and url-obj (.getHost url-obj))]
+        (if-not (contains? dispatch-map host)
+          (warn "unsupported URL")
+          ((get dispatch-map host) (str url-obj))))
+      ;; todo: when would this get raised?
       (catch java.net.MalformedURLException mue
-        (debug "not a url")))))
+        (warn "failed to parse URL")))))
+
+;;
 
 (defn-spec merge-catalogues (s/or :ok :catalogue/catalogue, :error nil?)
   "merges catalogue `cat-b` over catalogue `cat-a`.

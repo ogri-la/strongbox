@@ -4,6 +4,8 @@
    [taoensso.timbre :as timbre :refer [debug info warn error report spy]]
    [clojure.spec.alpha :as s]
    [strongbox
+    [github-api :as github-api]
+    [db :as db]
     [logging :as logging]
     [addon :as addon]
     [constants :as constants]
@@ -11,7 +13,7 @@
     [tukui-api :as tukui-api]
     [catalogue :as catalogue]
     [http :as http]
-    [utils :as utils]
+    [utils :as utils :refer [if-let*]]
     [curseforge-api :as curseforge-api]
     [wowinterface :as wowinterface]
     [core :as core :refer [get-state paths find-catalogue-local-path]]]))
@@ -376,6 +378,9 @@
         addon-id (utils/extract-addon-id addon)]
     (add-tab tab-id (or (:dirname addon) (:label addon) (:name addon) "[bug: missing tab name!]") closable? addon-id)))
 
+;; log entries
+;; todo: how much of this can be moved into logging.clj?
+
 (defn-spec log-entries-since-last-refresh ::sp/list-of-maps
   "returns a list of log entries since last refresh"
   ([]
@@ -434,6 +439,54 @@
   "returns `true` if the given `addon` has any errors in the log."
   [addon map?]
   (addon-has-log-level? :error (:dirname addon)))
+
+;; importing addons
+
+(defn-spec import-addon nil?
+  "given a URL of a support addon host, expands addon, adds it to the user-catalogue and installs it, if possible"
+  [addon-url string?]
+  (binding [http/*cache* (core/cache)]
+    (if-let* [[source source-id] (catalogue/parse-user-string addon-url)
+              _ (or (and source source-id) (error "couldn't find a source or a source-id in the given URL"))
+
+              addon-summary-stub {:source source :source-id source-id}
+              match-on-list [[:source :source-id]]
+              addon-summary (if (= "github" source)
+                              ;; look on github. let the github addon finder emit any errors it needs.
+                              (github-api/find-addon source-id)
+                              ;; look in the current catalogue. emit an error if we fail
+                              (or (-> (db/-find-first-in-db (core/get-state :db) addon-summary-stub match-on-list)
+                                      :catalogue-match)
+                                  (error (format "couldn't find addon in catalogue '%s'"
+                                                 (name (core/get-state :cfg :selected-catalogue))))))
+
+              ;; game track doesn't matter when adding it to the user catalogue.
+              ;; prefer retail though, it's the most common, and `strict` is `false`
+              addon (or (catalogue/expand-summary addon-summary :retail false)
+                        (error "failed to expand summary"))
+
+              test-only? true
+              _ (or (core/install-addon-guard addon (core/selected-addon-dir) test-only?)
+                    (error "failed to install addon"))]
+
+      ;; if-let* was successful! add the summary to the user-catalogue
+      (do (core/add-user-addon! addon-summary)
+          ;; and then attempt to install it. game track matters now, so re-parse addon data.
+          ;; todo: maybe use `cli/install-addon` ...?
+          (if-let [addon (core/expand-summary-wrapper addon-summary)]
+            (do (core/install-addon addon (core/selected-addon-dir))
+                (core/db-reload-catalogue) ;; todo: enough of a refresh?
+                addon)
+
+            ;; failed to expand summary, probably because of selected game track.
+            ;; GUI depends on difference between an addon and addon summary to know
+            ;; what error message to display.
+            ;; todo: generate the error here via log messages
+            ;;(or addon addon-summary)))
+            nil))
+
+      ;; failed if-let* (failed to parse url/expand summary/trial installation)
+      nil)))
 
 
 ;; debug

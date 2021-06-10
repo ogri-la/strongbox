@@ -37,7 +37,7 @@
 
         results (if missing-args?
                   [] ;; don't look for 'nil', just skip with no results
-                  (into [] (filter match?) db))
+                  (into [] (filter match?) db)) ;; todo: I think the `xform` parameter in this `into` form needs to be comped with `first`
         match (-> results first)]
     (when match
       {;; the relationship the match was made on: [[:source :source-id] [:source :source_id]]
@@ -45,7 +45,7 @@
        ;; the values of the match: ["curseforge" "deadly-boss-mods"]
        :key arg-vals
        :installed-addon installed-addon
-       :matched? (not (nil? match))
+       :matched? (not (nil? match)) ;; todo: still used?
        :catalogue-match match})))
 
 ;; todo: can we do better than 'map?' now?
@@ -53,7 +53,7 @@
   "find a match for the given `installed-addon` in the database using a list of attributes in `match-on-list`.
   returns immediately when first match is found (does not check other joins in `match-on-list`)."
   [db :addon/summary-list, installed-addon :addon/installed, match-on-list vector?]
-  (if (or (:ignore? installed-addon)
+  (if (or (:ignore? installed-addon) ;; todo: should this check be done? db is a bit low level for this
           (empty? match-on-list))
     ;; either addon is being ignored, or,
     ;; we have exhausted all possibilities. not finding a match is ok.

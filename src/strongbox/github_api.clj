@@ -42,6 +42,7 @@
   [toc-data map?]
   (->> (-> toc-data
            ;; hrm: this only allows for two possible game tracks, one normal and one hiding in the template area
+           ;; 2021-06-10: see release.json
            (select-keys [:interface :#interface])
            vals)
        (map utils/interface-version-to-game-track)
@@ -165,38 +166,46 @@
   [url ::sp/url]
   (->> url java.net.URL. .getPath (re-matches #"^/([^/]+/[^/]+)[/]?.*") rest first))
 
-(defn-spec parse-user-string (s/or :ok :addon/summary, :error nil?)
-  [uin string?]
-  (if-let* [;; if *all* of these conditions succeed (non-nil), return a catalogue entry
-            obj (some-> uin utils/unmangle-https-url java.net.URL.)
-            path (when-not (empty? (.getPath obj)) (.getPath obj))
+(defn-spec parse-user-string (s/or :ok :addon/source-id)
+  [url ::sp/url]
+  (let [path (some-> url java.net.URL. .getPath nilable)
+        ;; values here are tentative because given URL may eventually resolve to a different URL.
+        [-owner -repo] (-> path (subs 1) (split #"/") (pad 2))]
+    (when (and -owner -repo)
+      (format "%s/%s" -owner -repo))))
 
-            ;; values here are tentative because given URL may resolve to a different URL
-            [-owner -repo] (-> path (subs 1) (split #"/") (pad 2))
-            -source-id (when (and -owner -repo)
-                         (format "%s/%s" -owner -repo))
-            release-list (download-releases -source-id)
+(defn-spec find-addon (s/or :ok :addon/summary, :error nil?)
+  [source-id :addon/source-id]
+  (if-let* [release-list (download-releases source-id)
             latest-release (first release-list) ;; releases must be used
-            _ (-> latest-release :assets nilable) ;; releases must be using uploaded assets
 
-            ;; these are the values we want to be using
-            source-id (-> latest-release :html_url extract-source-id)
+            ;; releases must be using uploaded assets
+            ;; todo: revisit this logic. the latest release may not be a good representative
+            _ (-> latest-release :assets nilable)
+
             [owner repo] (split source-id #"/")
-
             download-count (->> release-list (map :assets) flatten (map :download_count) (apply +))]
 
-           {:url (str "https://github.com/" source-id)
-            :updated-date (-> latest-release :published_at)
-            :source "github"
-            :source-id source-id
-            :label repo
-            :name (slugify repo "")
-            :download-count download-count
-            :game-track-list (or (find-gametracks-toc-data source-id) [])
-            ;; 2020-03: disabled in favour of :tag-list
-            ;;:category-list []
-            :tag-list []}
+    {:url (str "https://github.com/" source-id)
+     :updated-date (-> latest-release :published_at)
+     :source "github"
+     :source-id source-id
+     :label repo
+     :name (slugify repo "")
+     :download-count download-count
+     :game-track-list (or (find-gametracks-toc-data source-id) [])
+     ;; 2020-03: disabled in favour of :tag-list
+     ;;:category-list []
+     :tag-list []}
 
-           ;; 'something' failed to parse :(
-           ;; would love a way to pass back a more specific error
-           nil))
+    ;; 'something' failed to parse :(
+    ;; any warnings or errors are captured and raised in a dialog box if using the GUI
+    (warn (clojure.string/join
+           "\n - "
+           ["Failed. URL must be:"
+            "valid"
+            "originate from github.com"
+            "addon uses 'releases'"
+            "latest release has a packaged 'asset'"
+            "asset must be a .zip file"
+            "zip file must be structured like an addon"]))))
