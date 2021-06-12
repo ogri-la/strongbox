@@ -6,6 +6,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
+* gui, deleting addons seems a little slow because the confirmation dialog pauses until the job is done
+    - done
+
 ## todo
 
 * add release.json support for github addons
@@ -46,6 +49,9 @@ see CHANGELOG.md for a more formal list of changes by release
         - switch to full catalogue then switch back to original?
 
 ## todo bucket (no particular order)
+
+* addon detail, add 'x-website' / 'x-url' alongside 'browse local files' and addon host
+
 
 * preferences, "update all addons automatically"
     - update README features
