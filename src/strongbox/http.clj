@@ -108,7 +108,10 @@
         (debug (format "downloading %s to %s" (fs/base-name url) output-file))
         (client/with-additional-middleware [client/wrap-lower-case-headers (etag-middleware etag-key)]
           (let [params {:cookie-policy :ignore ;; completely ignore cookies. doesn't stop HttpComponents warning
-                        :http-request-config (clj-http.core/request-config {:normalize-uri false})}
+                        :http-request-config (clj-http.core/request-config {:normalize-uri false})
+                        :connection-timeout 3000 ;; allow 3s to connect to host
+                        :socket-timeout 5000 ;; allow stalls of up to 5s
+                        }
                 use-anon-useragent? false
                 params (merge params (user-agent use-anon-useragent?) extra-params)
                 _ (debug "requesting" url "with params" params)
