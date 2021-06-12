@@ -18,7 +18,7 @@
     [logging :as logging]
     [addon :as addon]
     [specs :as sp]
-    [utils :as utils :refer [no-new-lines]]
+    [utils :as utils :refer [no-new-lines message-list]]
     [core :as core]])
   (:import
    [java.util List Calendar Locale]
@@ -53,8 +53,6 @@
 
 (def user-locale (Locale/getDefault))
 (def number-formatter (NumberFormat/getNumberInstance user-locale))
-
-(def blt "\u2022") ;; • bullet
 
 (def major-theme-map
   {:light
@@ -750,11 +748,9 @@
   [description map?]
   (-> description fx/create-component fx/instance))
 
-(defn-spec message-list string?
-  [msg string?, msg-list ::sp/list-of-strings]
-  (clojure.string/join (format "\n %s " blt) (into [msg] msg-list)))
 
 ;;
+
 
 (defn button
   "generates a simple button with a means to check to see if it should be disabled and an optional tooltip"

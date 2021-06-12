@@ -13,7 +13,7 @@
     [tukui-api :as tukui-api]
     [catalogue :as catalogue]
     [http :as http]
-    [utils :as utils :refer [if-let*]]
+    [utils :as utils :refer [if-let* message-list]]
     [curseforge-api :as curseforge-api]
     [wowinterface :as wowinterface]
     [core :as core :refer [get-state paths find-catalogue-local-path]]]))
@@ -452,7 +452,15 @@
                              [[:source :source-id] [:source :source-id]]]
               addon-summary (if (= source "github")
                               ;; special case for github
-                              (github-api/find-addon (:source-id addon-summary-stub))
+                              (or (github-api/find-addon (:source-id addon-summary-stub))
+                                  (error (message-list
+                                          "Failed. URL must be:"
+                                          ["valid"
+                                           "originate from github.com"
+                                           "addon uses 'releases'"
+                                           "latest release has a packaged 'asset'"
+                                           "asset must be a .zip file"
+                                           "zip file must be structured like an addon"])))
 
                               ;; look in the current catalogue. emit an error if we fail
                               (or (:catalogue-match (db/-find-first-in-db (core/get-state :db) addon-summary-stub match-on-list))

@@ -10,6 +10,7 @@
    [trptcolin.versioneer.core :as versioneer]
    [envvar.core :refer [env]]
    [strongbox
+    [github-api :as github-api]
     [addon :as addon]
     [db :as db]
     [config :as config]
@@ -751,8 +752,8 @@
     (info "refreshing \"user-catalogue.json\", this may take a minute ...")
     (->> (get-create-user-catalogue)
          :addon-summary-list
-         (map :url)
-         (map catalogue/parse-user-string)
+         (map :source-id)
+         (map github-api/find-addon)
          (remove nil?)
          add-user-addon!)))
 
@@ -1092,37 +1093,6 @@
   []
   (swap! state assoc :db nil)
   (refresh))
-
-;; installing addons from strings
-
-(defn-spec add+install-user-addon! (s/or :ok :addon/addon, :less-ok :addon/summary, :failed nil?)
-  "convenience. parses string, adds to user catalogue, installs addon then reloads database.
-  relies on UI to call refresh (or not)"
-  [addon-url string?]
-  (binding [http/*cache* (cache)]
-    (if-let* [addon-summary (catalogue/parse-user-string addon-url)
-              ;; game track doesn't matter when adding it to the user catalogue. prefer retail though.
-              addon (catalogue/expand-summary addon-summary :retail false)
-              test-only? true
-              _ (install-addon-guard addon (selected-addon-dir) test-only?)]
-
-             ;; ... but does matter when installing it in to the current addon directory
-             (let [addon (expand-summary-wrapper addon-summary)]
-
-               (add-user-addon! addon-summary)
-
-               (when addon
-                 (install-addon addon (selected-addon-dir))
-                 (db-reload-catalogue)
-                 addon)
-
-               ;; failed to expand summary, probably because of selected game track.
-               ;; gui depends on difference between an addon and addon summary to know
-               ;; what error message to display.
-               (or addon addon-summary))
-
-             ;; failed to parse url, or expand summary, or trial installation
-             nil)))
 
 ;; init
 

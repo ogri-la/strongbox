@@ -4,6 +4,7 @@
    [strongbox.ui.cli :as cli]
    [clj-http.fake :refer [with-global-fake-routes-in-isolation]]
    [strongbox
+    [utils :as utils]
     [logging :as logging]
     [main :as main]
     [catalogue :as catalogue]
@@ -269,3 +270,43 @@
     (logging/addon-log {:dirname "EveryAddon"} :warn "warning message")
     (is (true? (cli/addon-has-log-level? :warn "EveryAddon")))
     (is (false? (cli/addon-has-log-level? :error "EveryAddon")))))
+
+(deftest import-addon
+  (testing "user addon is successfully added to the user catalogue from just a github url"
+    (let [every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
+
+          fake-routes {"https://api.github.com/repos/Aviana/HealComm/releases"
+                       {:get (fn [req] {:status 200 :body (slurp (fixture-path "github-repo-releases--aviana-healcomm.json"))})}
+
+                       "https://api.github.com/repos/Aviana/HealComm/contents"
+                       {:get (fn [req] {:status 200 :body "[]"})}
+
+                       "https://github.com/Aviana/HealComm/releases/download/2.04/HealComm.zip"
+                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-addon-zip-file)})}}
+
+          user-url "https://github.com/Aviana/HealComm"
+
+          install-dir (helper/install-dir)
+
+          expected-addon-dir (utils/join install-dir "EveryAddon")
+
+          expected-user-catalogue [{:tag-list [],
+                                    :game-track-list [],
+                                    :updated-date "2019-10-09T17:40:04Z",
+                                    :name "healcomm",
+                                    :source "github",
+                                    :label "HealComm",
+                                    :download-count 30946,
+                                    :source-id "Aviana/HealComm",
+                                    :url "https://github.com/Aviana/HealComm"}]]
+      (with-running-app
+        (core/set-addon-dir! install-dir)
+        (with-global-fake-routes-in-isolation fake-routes
+          (cli/import-addon user-url)
+
+          ;; addon was found and added to user catalogue
+          (is (= expected-user-catalogue
+                 (:addon-summary-list (catalogue/read-catalogue (core/paths :user-catalogue-file)))))
+
+          ;; addon was successfully download and installed
+          (is (fs/exists? expected-addon-dir)))))))

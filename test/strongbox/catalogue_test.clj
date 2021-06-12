@@ -94,30 +94,34 @@
       (is (= merged (catalogue/merge-catalogues cat-a cat-b))))))
 
 (deftest parse-user-string-router
-  (let [fake-routes {"https://api.github.com/repos/Aviana/HealComm/releases"
-                     {:get (fn [req] {:status 200 :body (slurp (fixture-path "github-repo-releases--aviana-healcomm.json"))})}
+  (testing "standard urls get routed and their results are turned into maps properly"
+    (let [cases [["https://github.com/Aviana/HealComm" {:source "github" :source-id "Aviana/HealComm"}]
+                 ["https://www.wowinterface.com/downloads/info8882" {:source "wowinterface" :source-id 8882}]
 
-                     "https://api.github.com/repos/Aviana/HealComm/contents"
-                     {:get (fn [req] {:status 200 :body "[]"})}}]
-    (with-fake-routes-in-isolation fake-routes
-      (let [github-api {:url "https://github.com/Aviana/HealComm"
-                        :updated-date "2019-10-09T17:40:04Z"
-                        :source "github"
-                        :source-id "Aviana/HealComm"
-                        :label "HealComm"
-                        :name "healcomm"
-                        :download-count 30946
-                        :game-track-list []
-                        :tag-list []}
+                 ["https://www.tukui.org/download.php?ui=tukui" {:source "tukui" :source-id -1}]
+                 ["https://www.tukui.org/addons.php?id=38" {:source "tukui" :source-id 38}]
+                 ["https://www.tukui.org/classic-addons.php?id=3" {:source "tukui-classic" :source-id 3}]
+                 ["https://www.tukui.org/classic-tbc-addons.php?id=21" {:source "tukui-classic-tbc" :source-id 21}]
 
-            cases [["https://github.com/Aviana/HealComm" github-api]]]
-        (doseq [[given expected] cases]
-          (testing (str "user input is routed to the correct parser")
-            (is (= expected (catalogue/parse-user-string given)))))))))
+                 ;; edge cases that utils/unmangle-url fix
+                 ["github.com/Aviana/HealComm" {:source "github" :source-id "Aviana/HealComm"}]
+                 ["github.com/Aviana/HealComm/foo/bar/baz" {:source "github" :source-id "Aviana/HealComm"}]
+                 ["github.com/Aviana/HealComm/foo/bar#anc?baz=bup" {:source "github" :source-id "Aviana/HealComm"}]
+
+                 ["//github.com/Aviana/HealComm" {:source "github" :source-id "Aviana/HealComm"}]
+                 ["//github.com/Aviana/HealComm/foo/bar/baz" {:source "github" :source-id "Aviana/HealComm"}]
+                 ["//github.com/Aviana/HealComm/foo/bar/baz#anc?baz=bup" {:source "github" :source-id "Aviana/HealComm"}]]]
+
+      (doseq [[given expected] cases]
+        (is (= expected (catalogue/parse-user-string given)), (str "failed on url " given))))))
 
 (deftest parse-user-string-router--bad-cases
   (let [cases [""
+               "    "
+               " \n "
                "foo"
+               " foo "
+               "213"
                "https"
                "https://"
                "https://foo"

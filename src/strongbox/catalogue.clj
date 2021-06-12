@@ -204,20 +204,19 @@
                       "curseforge" curseforge-api/parse-user-string
                       "tukui" tukui-api/parse-user-string
                       "tukui-classic" tukui-api/parse-user-string
-                      "tukui-classic-tbc" tukui-api/parse-user-string}]
-    (try
-      (let [url (some-> uin utils/unmangle-https-url java.net.URL. str)
-            source (utils/url-to-addon-source url)]
+                      "tukui-classic-tbc" tukui-api/parse-user-string}
+        url (some-> uin utils/unmangle-https-url java.net.URL. str)]
+    (if-not url
+      (error "bad url")
+      (let [source (utils/url-to-addon-source url)]
         (if-let [f (get dispatch-map source)]
           (when-let [result (f url)]
             (merge {:source source} (if (= source "curseforge") {:url result} {:source-id result})))
-          (warn "unsupported URL")))
+          (warn "unsupported URL"))))))
 
-      ;; todo: when would this get raised? unmangle-https-url -> java.net.URL ? ensure test
-      (catch java.net.MalformedURLException mue
-        (warn "failed to parse URL")))))
 
 ;;
+
 
 (defn-spec merge-catalogues (s/or :ok :catalogue/catalogue, :error nil?)
   "merges catalogue `cat-b` over catalogue `cat-a`.

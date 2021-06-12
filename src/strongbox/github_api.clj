@@ -162,6 +162,7 @@
 
 ;;
 
+;; todo: keep this and discard parse-user-string or vice versa?
 (defn-spec extract-source-id (s/or :ok string?, :error nil?)
   [url ::sp/url]
   (->> url java.net.URL. .getPath (re-matches #"^/([^/]+/[^/]+)[/]?.*") rest first))
@@ -183,7 +184,10 @@
             ;; todo: revisit this logic. the latest release may not be a good representative
             _ (-> latest-release :assets nilable)
 
+            ;; will correct any case problems. see tests.
+            source-id (-> latest-release :html_url extract-source-id)
             [owner repo] (split source-id #"/")
+
             download-count (->> release-list (map :assets) flatten (map :download_count) (apply +))]
 
            {:url (str "https://github.com/" source-id)
@@ -194,18 +198,9 @@
             :name (slugify repo "")
             :download-count download-count
             :game-track-list (or (find-gametracks-toc-data source-id) [])
-     ;; 2020-03: disabled in favour of :tag-list
-     ;;:category-list []
+            ;; 2020-03: disabled in favour of :tag-list
+            ;;:category-list []
             :tag-list []}
 
-    ;; 'something' failed to parse :(
-    ;; any warnings or errors are captured and raised in a dialog box if using the GUI
-           (warn (clojure.string/join
-                  "\n - "
-                  ["Failed. URL must be:"
-                   "valid"
-                   "originate from github.com"
-                   "addon uses 'releases'"
-                   "latest release has a packaged 'asset'"
-                   "asset must be a .zip file"
-                   "zip file must be structured like an addon"]))))
+           ;; 'something' failed to parse :(
+           nil))

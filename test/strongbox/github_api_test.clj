@@ -10,6 +10,28 @@
    [clj-http.fake :refer [with-fake-routes-in-isolation]]))
 
 (deftest parse-user-string
+  (let [;; all of these should yield the above
+        cases ["https://github.com/Aviana/HealComm" ;; perfect case
+
+               ;; all valid variations of the above
+               "http://github.com/Aviana/HealComm"
+               "https://github.com/Aviana/HealComm/"
+               "https://user:name@github.com/Aviana/HealComm"
+               "https://github.com/Aviana/HealComm?foo=bar"
+               "https://github.com/Aviana/HealComm#foo/bar"
+               "https://github.com/Aviana/HealComm?foo=bar&baz=bup"
+
+               ;; looser matching we can support
+               "https://github.com/Aviana/HealComm/foo/bar/baz"
+
+               ;; leading 'www'
+               "https://www.github.com/Aviana/HealComm"]
+        expected "Aviana/HealComm"]
+    (doseq [given cases]
+      (testing (str "case: " given)
+        (is (= expected (github-api/parse-user-string given)))))))
+
+(deftest find-addon--1
   (testing "user input can be parsed and turned into a catalogue item."
     (let [fixture (slurp (fixture-path "github-repo-releases--aviana-healcomm.json"))
 
@@ -20,6 +42,9 @@
                        {:get (fn [req] {:status 200 :body fixture})}
 
                        "https://api.github.com/repos/Aviana/HealComm/contents"
+                       {:get (fn [req] {:status 200 :body "[]"})}
+
+                       "https://api.github.com/repos/aviana/healcomm/contents"
                        {:get (fn [req] {:status 200 :body "[]"})}}
 
           expected {:url "https://github.com/Aviana/HealComm"
@@ -33,58 +58,23 @@
                     :tag-list []}
 
           ;; all of these should yield the above
-          cases ["https://github.com/Aviana/HealComm" ;; perfect case
-
-                 ;; all valid variations of the above
-                 "http://github.com/Aviana/HealComm"
-                 "https://github.com/Aviana/HealComm/"
-                 "https://user:name@github.com/Aviana/HealComm"
-                 "https://github.com/Aviana/HealComm?foo=bar"
-                 "https://github.com/Aviana/HealComm#foo/bar"
-                 "https://github.com/Aviana/HealComm?foo=bar&baz=bup"
-
-                 ;; valid, for github
-                 "https://github.com/aviana/healcomm" ;; no redirect for lowercase :(
-
-                 ;; looser matching we can support
-                 "https://github.com/Aviana/HealComm/foo/bar/baz"
-                 "//github.com/Aviana/HealComm"
-                 "//github.com/Aviana/HealComm/foo/bar/baz"
-                 "//github.com/Aviana/HealComm/foo/bar/baz#anc?baz=bup"
-                 "github.com/Aviana/HealComm"
-                 "github.com/Aviana/HealComm/foo/bar/baz"
-                 "github.com/Aviana/HealComm/foo/bar#anc?baz=bup"
-
-                 ;; bad/invalid urls we shouldn't support but do
-                 "https://www.github.com/Aviana/HealComm"]]
+          cases ["Aviana/HealComm" ;; perfect case
+                 "aviana/healcomm"]]
 
       (with-fake-routes-in-isolation fake-routes
         (doseq [given cases]
           (testing (str "case: " given)
-            (is (= expected (github-api/parse-user-string given))))))))
+            (is (= expected (github-api/find-addon given)))))))))
 
-  (testing "bad URLs return nil. these *should* be caught in the dispatcher."
-    (let [cases [""
-                 "    "
-                 " \n "
-                 "asdf"
-                 " asdf "
-                 "213"]
-          expected nil]
-      (doseq [given cases]
-        (testing (str "case: " given)
-          (is (= expected (github-api/parse-user-string given)))))))
-
-  (testing "valid looking URLs with invalid release structure return nil"
-    (let [reasonable-looking-url "https://github.com/Robert388/Necrosis-classic"
+(deftest find-addon--2
+  (testing "addons with no uploaded assets return `nil`"
+    (let [source-id "Robert388/Necrosis-classic"
           expected nil
-
-          ;; (fixture is missing uploaded assets)
           fixture (slurp (fixture-path "github-repo-releases--no-assets.json"))
           fake-routes {"https://api.github.com/repos/Robert388/Necrosis-classic/releases"
                        {:get (fn [_] {:status 200 :body fixture})}}]
       (with-fake-routes-in-isolation fake-routes
-        (is (= expected (github-api/parse-user-string reasonable-looking-url)))))))
+        (is (= expected (github-api/find-addon source-id)))))))
 
 (deftest parse-github-release-data
   (testing "a complete list of release data can be parsed and filtered"
@@ -387,7 +377,7 @@
                        "https://api.github.com/repos/Aviana/HealComm/contents"
                        {:get (fn [req] {:status 403 :host "api.github.com" :reason-phrase "Forbidden"})}}
 
-          given "https://github.com/Aviana/HealComm"
+          source-id "Aviana/HealComm"
 
           ;; I don't like testing for log messages, but in this case it's the only indication the error has been handled properly
           expected ["failed to download file 'https://api.github.com/repos/Aviana/HealComm/releases': Forbidden (HTTP 403)"
@@ -395,7 +385,7 @@
 
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (logging/buffered-log
-                         :info (github-api/parse-user-string given)))))))
+                         :info (github-api/find-addon source-id)))))))
 
   (testing "403 while expanding addon is handled"
     (let [fake-routes {"https://api.github.com/repos/Aviana/HealComm/releases"
