@@ -618,3 +618,17 @@
         (re-find classic-tbc-regex string) :classic-tbc
         (re-find classic-regex string) :classic
         (re-find retail-regex string) :retail))))
+
+(defn-spec url-to-addon-source (s/or :known-source :addon/source, :unknown-source nil?)
+  [url-str ::sp/url]
+  (let [host (-> url-str java.net.URL. .getHost)
+        host-map {"github.com" "github"
+                  "www.github.com" "github"
+
+                  "www.curseforge.com" "curseforge"
+                  "www.wowinterface.com" "wowinterface"
+
+                  "tukui.org" "tukui"}]
+
+    (get host-map host)))
+

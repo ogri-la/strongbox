@@ -194,18 +194,26 @@
 
 ;;
 
-(defn-spec parse-user-string (s/or :ok (s/keys :req-un [:addon/source :addon/source-id]), :error nil?)
+(defn-spec parse-user-string (s/or :by-source (s/keys :req-un [:addon/source :addon/source-id]),
+                                   :by-url (s/keys :req-un [:addon/source ::sp/url])
+                                   :error nil?)
   "given a string, figures out the addon source (github, etc) and dispatches accordingly."
   [uin string?]
-  (let [dispatch-map {"github.com" github-api/parse-user-string
-                      "www.github.com" github-api/parse-user-string}] ;; alias
+  (let [dispatch-map {"github" github-api/parse-user-string
+                      "wowinterface" wowinterface-api/parse-user-string
+                      "curseforge" curseforge-api/parse-user-string
+                      "tukui" tukui-api/parse-user-string
+                      "tukui-classic" tukui-api/parse-user-string
+                      "tukui-classic-tbc" tukui-api/parse-user-string}]
     (try
-      (let [url-obj (some-> uin utils/unmangle-https-url java.net.URL.)
-            host (and url-obj (.getHost url-obj))]
-        (if-not (contains? dispatch-map host)
-          (warn "unsupported URL")
-          ((get dispatch-map host) (str url-obj))))
-      ;; todo: when would this get raised?
+      (let [url (some-> uin utils/unmangle-https-url java.net.URL. str)
+            source (utils/url-to-addon-source url)]
+        (if-let [f (get dispatch-map source)]
+          (when-let [result (f url)]
+            (merge {:source source} (if (= source "curseforge") {:url result} {:source-id result})))
+          (warn "unsupported URL")))
+
+      ;; todo: when would this get raised? unmangle-https-url -> java.net.URL ? ensure test
       (catch java.net.MalformedURLException mue
         (warn "failed to parse URL")))))
 

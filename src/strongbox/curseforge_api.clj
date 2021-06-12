@@ -60,7 +60,7 @@
     "wow_burning_crusade" :classic-tbc
 
     ;; else
-    (do (warn "unhandled game track '%s', falling back to 'retail'")
+    (do (warn (format "unhandled game track '%s', falling back to 'retail'" game-version-flavor))
         :retail)))
 
 (defn-spec older-releases :addon/release-list
@@ -216,3 +216,8 @@
         (into accumulator results) ;; short page, exit loop
         (recur (inc page)
                (into accumulator results))))))
+
+(defn-spec parse-user-string (s/or :ok ::sp/url, :error nil?)
+  [url ::sp/url]
+  (when-let [nom (some->> url java.net.URL. .getPath (re-find #"^/wow/addons/(.[\w-]+)") rest first)]
+    (str "https://www.curseforge.com/wow/addons/" nom)))

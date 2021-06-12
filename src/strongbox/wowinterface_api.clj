@@ -28,3 +28,7 @@
         [{:download-url (str "https://cdn.wowinterface.com/downloads/getfile.php?id=" (:source-id addon-summary))
           :version (:UIVersion result)
           :game-track game-track}]))))
+
+(defn-spec parse-user-string (s/or :ok :addon/source-id :error nil?)
+  [url ::sp/url]
+  (some->> url java.net.URL. .getPath (re-find #"/(?:info|download){1}(\d+)") second Integer/valueOf))

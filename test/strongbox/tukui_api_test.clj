@@ -187,3 +187,34 @@
                      :game-track game-track}]]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (tukui-api/expand-summary addon-summary game-track)))))))
+
+(deftest parse-user-string
+  (testing ""
+    (let [cases [;; retail
+                 ["https://www.tukui.org/download.php?ui=tukui" -1] ;; tukui retail download
+                 ["https://www.tukui.org/download.php?ui=elvui" -2] ;; elvui retail download
+                 ["https://www.tukui.org/addons.php?id=38" 38]
+
+                 ;; classic
+                 ["https://www.tukui.org/classic-addons.php?id=1" 1] ;; tukui classic download
+                 ["https://www.tukui.org/classic-addons.php?id=2" 2] ;; elvui classic download
+                 ["https://www.tukui.org/classic-addons.php?id=14" 14]
+
+                 ;; classic tbc
+                 ["https://www.tukui.org/classic-tbc-addons.php?id=1" 1] ;; tukui tbc download
+                 ["https://www.tukui.org/classic-tbc-addons.php?id=2" 2] ;; elvui tbc download
+                 ["https://www.tukui.org/classic-tbc-addons.php?id=21" 21]
+
+                 ;; contrived cases
+                 ["https://www.tukui.org/download.php?ui=TUKUI" -1] ;; case insensitive
+                 ["https://www.tukui.org/classic-tbc-addons.php?id=1&id=2&id=3" 1] ;; multiple identical params (use first)
+                 ["https://www.tukui.org/classic-tbc-addons.php?foo=bar&id=21&baz=bup" 21] ;; multiple params
+                 ["https://tukui.org/classic-tbc-addons.php?id=21" 21] ;; no 'www'
+
+                 ;; invalid cases
+                 ["https://www.tukui.org/addons.php?id=foo" nil]
+                 ["https://www.tukui.org/classic-addons.php?id=foo" nil]
+                 ["https://www.tukui.org/classic-tbc-addons.php?id=foo" nil]]]
+
+      (doseq [[given expected] cases]
+        (is (= expected (tukui-api/parse-user-string given)))))))

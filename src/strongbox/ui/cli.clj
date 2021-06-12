@@ -446,17 +446,16 @@
   "given a URL of a support addon host, expands addon, adds it to the user-catalogue and installs it, if possible"
   [addon-url string?]
   (binding [http/*cache* (core/cache)]
-    (if-let* [[source source-id] (catalogue/parse-user-string addon-url)
-              _ (or (and source source-id) (error "couldn't find a source or a source-id in the given URL"))
+    (if-let* [addon-summary-stub (catalogue/parse-user-string addon-url)
+              source (:source addon-summary-stub)
+              match-on-list [[[:source :url] [:source :url]]
+                             [[:source :source-id] [:source :source-id]]]
+              addon-summary (if (= source "github")
+                              ;; special case for github
+                              (github-api/find-addon (:source-id addon-summary-stub))
 
-              addon-summary-stub {:source source :source-id source-id}
-              match-on-list [[:source :source-id]]
-              addon-summary (if (= "github" source)
-                              ;; look on github. let the github addon finder emit any errors it needs.
-                              (github-api/find-addon source-id)
                               ;; look in the current catalogue. emit an error if we fail
-                              (or (-> (db/-find-first-in-db (core/get-state :db) addon-summary-stub match-on-list)
-                                      :catalogue-match)
+                              (or (:catalogue-match (db/-find-first-in-db (core/get-state :db) addon-summary-stub match-on-list))
                                   (error (format "couldn't find addon in catalogue '%s'"
                                                  (name (core/get-state :cfg :selected-catalogue))))))
 
@@ -470,23 +469,23 @@
                     (error "failed to install addon"))]
 
       ;; if-let* was successful! add the summary to the user-catalogue
-      (do (core/add-user-addon! addon-summary)
+             (do (core/add-user-addon! addon-summary)
           ;; and then attempt to install it. game track matters now, so re-parse addon data.
           ;; todo: maybe use `cli/install-addon` ...?
-          (if-let [addon (core/expand-summary-wrapper addon-summary)]
-            (do (core/install-addon addon (core/selected-addon-dir))
-                (core/db-reload-catalogue) ;; todo: enough of a refresh?
-                addon)
+                 (if-let [addon (core/expand-summary-wrapper addon-summary)]
+                   (do (core/install-addon addon (core/selected-addon-dir))
+                       (core/db-reload-catalogue) ;; todo: enough of a refresh?
+                       addon)
 
             ;; failed to expand summary, probably because of selected game track.
             ;; GUI depends on difference between an addon and addon summary to know
             ;; what error message to display.
             ;; todo: generate the error here via log messages
             ;;(or addon addon-summary)))
-            nil))
+                   nil))
 
       ;; failed if-let* (failed to parse url/expand summary/trial installation)
-      nil)))
+             nil)))
 
 
 ;; debug

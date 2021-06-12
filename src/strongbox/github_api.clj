@@ -166,7 +166,7 @@
   [url ::sp/url]
   (->> url java.net.URL. .getPath (re-matches #"^/([^/]+/[^/]+)[/]?.*") rest first))
 
-(defn-spec parse-user-string (s/or :ok :addon/source-id)
+(defn-spec parse-user-string (s/or :ok :addon/source-id :error nil?)
   [url ::sp/url]
   (let [path (some-> url java.net.URL. .getPath nilable)
         ;; values here are tentative because given URL may eventually resolve to a different URL.
@@ -186,26 +186,26 @@
             [owner repo] (split source-id #"/")
             download-count (->> release-list (map :assets) flatten (map :download_count) (apply +))]
 
-    {:url (str "https://github.com/" source-id)
-     :updated-date (-> latest-release :published_at)
-     :source "github"
-     :source-id source-id
-     :label repo
-     :name (slugify repo "")
-     :download-count download-count
-     :game-track-list (or (find-gametracks-toc-data source-id) [])
+           {:url (str "https://github.com/" source-id)
+            :updated-date (-> latest-release :published_at)
+            :source "github"
+            :source-id source-id
+            :label repo
+            :name (slugify repo "")
+            :download-count download-count
+            :game-track-list (or (find-gametracks-toc-data source-id) [])
      ;; 2020-03: disabled in favour of :tag-list
      ;;:category-list []
-     :tag-list []}
+            :tag-list []}
 
     ;; 'something' failed to parse :(
     ;; any warnings or errors are captured and raised in a dialog box if using the GUI
-    (warn (clojure.string/join
-           "\n - "
-           ["Failed. URL must be:"
-            "valid"
-            "originate from github.com"
-            "addon uses 'releases'"
-            "latest release has a packaged 'asset'"
-            "asset must be a .zip file"
-            "zip file must be structured like an addon"]))))
+           (warn (clojure.string/join
+                  "\n - "
+                  ["Failed. URL must be:"
+                   "valid"
+                   "originate from github.com"
+                   "addon uses 'releases'"
+                   "latest release has a packaged 'asset'"
+                   "asset must be a .zip file"
+                   "zip file must be structured like an addon"]))))

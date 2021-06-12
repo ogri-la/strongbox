@@ -47,6 +47,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* import and export addons using addon urls
+
 * preferences, "update all addons automatically"
     - update README features
     - punted back to bucket 2021-06-02
