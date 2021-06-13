@@ -477,23 +477,24 @@
                     (error "failed to install addon"))]
 
       ;; if-let* was successful! add the summary to the user-catalogue
-             (do (core/add-user-addon! addon-summary)
+      (do (core/add-user-addon! addon-summary)
           ;; and then attempt to install it. game track matters now, so re-parse addon data.
           ;; todo: maybe use `cli/install-addon` ...?
-                 (if-let [addon (core/expand-summary-wrapper addon-summary)]
-                   (do (core/install-addon addon (core/selected-addon-dir))
-                       (core/db-reload-catalogue) ;; todo: enough of a refresh?
-                       addon)
+          (if-let [addon (core/expand-summary-wrapper addon-summary)]
+            (do (core/install-addon addon (core/selected-addon-dir))
+                (core/db-reload-catalogue) ;; todo: enough of a refresh?
+                ;;addon)
+                nil)
 
             ;; failed to expand summary, probably because of selected game track.
             ;; GUI depends on difference between an addon and addon summary to know
             ;; what error message to display.
             ;; todo: generate the error here via log messages
             ;;(or addon addon-summary)))
-                   nil))
+            nil))
 
       ;; failed if-let* (failed to parse url/expand summary/trial installation)
-             nil)))
+      nil)))
 
 
 ;; debug
