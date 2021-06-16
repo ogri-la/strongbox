@@ -482,7 +482,8 @@
           ;; todo: maybe use `cli/install-addon` ...?
           (if-let [addon (core/expand-summary-wrapper addon-summary)]
             (do (core/install-addon addon (core/selected-addon-dir))
-                (core/db-reload-catalogue) ;; todo: enough of a refresh?
+                ;;(core/db-reload-catalogue) ;; todo: enough of a refresh?
+                (swap! core/state assoc :db nil) ;; forces a reload of db
                 ;;addon)
                 nil)
 

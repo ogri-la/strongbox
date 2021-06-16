@@ -272,7 +272,7 @@
     (is (false? (cli/addon-has-log-level? :error "EveryAddon")))))
 
 (deftest import-addon--github
-  (testing "user addon is successfully added to the user catalogue from just a github url"
+  (testing "user addon is successfully added to the user catalogue from a github url"
     (let [every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
 
           fake-routes {"https://api.github.com/repos/Aviana/HealComm/releases"
@@ -312,7 +312,7 @@
           (is (fs/exists? expected-addon-dir)))))))
 
 (deftest import-addon--wowinterface
-  (testing "user addon is successfully added to the user catalogue from just a github url"
+  (testing "user addon is successfully added to the user catalogue from a wowinterface url"
     (let [install-dir (helper/install-dir)
 
           match {:url "https://www.wowinterface.com/downloads/info25079",
@@ -351,6 +351,142 @@
                        {:get (fn [req] {:status 200 :body (slurp (fixture-path "wowinterface-api--addon-details.json"))})}
 
                        "https://cdn.wowinterface.com/downloads/getfile.php?id=25079"
+                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-addon-zip-file)})}}
+
+          user-url (:url match)]
+
+      (with-global-fake-routes-in-isolation fake-routes
+        (with-running-app
+          (core/set-addon-dir! install-dir)
+
+          ;; one addon in the database
+          (is (= [match] (core/get-state :db)))
+
+          ;; user gives us this url, we find it and install it
+          (cli/import-addon user-url)
+
+          ;; addon was successfully download and installed
+          (is (fs/exists? expected-addon-dir))
+
+          ;; re-read install dir
+          (core/load-installed-addons)
+
+          ;; we expect our mushy set of .nfo and .toc data
+          (is (= [expected] (core/get-state :installed-addon-list)))
+
+          ;; and that the addon was added to the user catalogue
+          (is (= expected-user-catalogue
+                 (:addon-summary-list (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))))
+
+(deftest import-addon--curseforge
+  (testing "user addon is successfully added to the user catalogue from a curseforge url"
+    (let [install-dir (helper/install-dir)
+
+          match {:created-date "2010-05-07T18:48:16Z",
+                 :description "Does what no other addon does, slightly differently",
+                 :tag-list [:bags :inventory]
+                 :updated-date "2019-06-26T01:21:39Z",
+                 :name "everyaddon",
+                 :source "curseforge",
+                 :label "EveryAddon",
+                 :download-count 3000000,
+                 :source-id 1,
+                 :url "https://www.curseforge.com/wow/addons/everyaddon"}
+
+          ;; a mush of the above (.nfo written during install) and the EveryAddon .toc file
+          expected {:description "Does what no other addon does, slightly differently",
+                    :dirname "EveryAddon",
+                    :group-id "https://www.curseforge.com/wow/addons/everyaddon",
+                    :installed-game-track :retail,
+                    :installed-version "v8.2.0-v1.13.2-7135.139",
+                    :interface-version 70000,
+                    :label "EveryAddon 1.2.3",
+                    :name "everyaddon",
+                    :primary? true,
+                    :source "curseforge",
+                    :source-id 1}
+          
+          expected-addon-dir (utils/join install-dir "EveryAddon")
+          expected-user-catalogue [match]
+
+          catalogue (utils/to-json (catalogue/new-catalogue [match]))
+
+          every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
+          fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
+                       {:get (fn [req] {:status 200 :body catalogue})}
+
+                       "https://addons-ecs.forgesvc.net/api/v2/addon/1"
+                       {:get (fn [req] {:status 200 :body (slurp (fixture-path "curseforge-api-addon--everyaddon.json"))})}
+
+                       "https://edge.forgecdn.net/files/1/1/EveryAddon.zip"
+                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-addon-zip-file)})}}
+
+          user-url (:url match)]
+
+      (with-global-fake-routes-in-isolation fake-routes
+        (with-running-app
+          (core/set-addon-dir! install-dir)
+
+          ;; one addon in the database
+          (is (= [match] (core/get-state :db)))
+
+          ;; user gives us this url, we find it and install it
+          (cli/import-addon user-url)
+
+          ;; addon was successfully download and installed
+          (is (fs/exists? expected-addon-dir))
+
+          ;; re-read install dir
+          (core/load-installed-addons)
+
+          ;; we expect our mushy set of .nfo and .toc data
+          (is (= [expected] (core/get-state :installed-addon-list)))
+
+          ;; and that the addon was added to the user catalogue
+          (is (= expected-user-catalogue
+                 (:addon-summary-list (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))))
+
+(deftest import-addon--tukui
+  (testing "user addon is successfully added to the user catalogue from a tukui url"
+    (let [install-dir (helper/install-dir)
+
+          match {:description "Add roleplaying fields to ElvUI to create RP UIs.",
+                 :tag-list [:roleplay]
+                 :game-track-list [:retail],
+                 :updated-date "2019-07-29T20:48:25Z",
+                 :name "-rp-tags",
+                 :source "tukui",
+                 :label "[rp:tags]",
+                 :download-count 2838,
+                 :source-id 98,
+                 :url "https://www.tukui.org/addons.php?id=98"}
+          
+          ;; a mush of the above (.nfo written during install) and the EveryAddon .toc file
+          expected {:description "Does what no other addon does, slightly differently",
+                    :dirname "EveryAddon",
+                    :group-id "https://www.tukui.org/addons.php?id=98",
+                    :installed-game-track :retail,
+                    :installed-version "0.960",
+                    :interface-version 70000,
+                    :label "EveryAddon 1.2.3",
+                    :name "-rp-tags",
+                    :primary? true,
+                    :source "tukui",
+                    :source-id 98}
+          
+          expected-addon-dir (utils/join install-dir "EveryAddon")
+          expected-user-catalogue [match]
+
+          catalogue (utils/to-json (catalogue/new-catalogue [match]))
+
+          every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
+          fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
+                       {:get (fn [req] {:status 200 :body catalogue})}
+
+                       "https://www.tukui.org/api.php?addons"
+                       {:get (fn [req] {:status 200 :body (slurp (fixture-path "tukui--addon-details.json"))})}
+
+                       "https://www.tukui.org/addons.php?download=98"
                        {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-addon-zip-file)})}}
 
           user-url (:url match)]

@@ -909,10 +909,11 @@
              :warn
              (cli/import-addon addon-url))]
 
-        (if (empty? error-messages)
-          (cli/half-refresh)
+        (when-not (empty? error-messages)
           (let [msg (message-list "warnings/errors while importing addon:" error-messages)]
-            (alert :warning msg {:wait? true})))))))
+            (alert :warning msg {:wait? true})))
+
+        (core/refresh)))))
 
 (def json-files-extension-filters
   [{:description "JSON files" :extensions ["*.json"]}])
