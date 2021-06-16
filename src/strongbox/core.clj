@@ -522,7 +522,7 @@
   []
   (if-let [addon-dir (selected-addon-dir)]
     (let [addon-list (addon/load-installed-addons addon-dir)]
-      (info "loading installed addons:" addon-dir)
+      (info (format "loading (%s) installed addons in: %s" (count addon-list) addon-dir))
       (update-installed-addon-list! addon-list))
 
     ;; otherwise, ensure list of installed addons is cleared

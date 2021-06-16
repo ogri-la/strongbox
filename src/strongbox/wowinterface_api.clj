@@ -17,6 +17,9 @@
   ;; the `game-track-list` is stored in the catalogue for wowinterface because it's available at creation time.
   ;; however! we know this information isn't good and doesn't always match what we see on the website.
   ;; until wowinterface improve, and short of doing more scraping of html, this is the best we can do.
+  (when-not (:game-track-list addon-summary)
+    (error "given addon-summary has no game track list! please report this if you're not a developer.")
+    (error addon-summary))
   (if (some #{game-track} (:game-track-list addon-summary))
     (let [url (str wowinterface-api "/filedetails/" (:source-id addon-summary) ".json")
           result-list (some-> url http/download http/sink-error utils/from-json)

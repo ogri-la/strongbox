@@ -271,7 +271,7 @@
     (is (true? (cli/addon-has-log-level? :warn "EveryAddon")))
     (is (false? (cli/addon-has-log-level? :error "EveryAddon")))))
 
-(deftest import-addon
+(deftest import-addon--github
   (testing "user addon is successfully added to the user catalogue from just a github url"
     (let [every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
 
@@ -310,3 +310,70 @@
 
           ;; addon was successfully download and installed
           (is (fs/exists? expected-addon-dir)))))))
+
+(deftest import-addon--wowinterface
+  (testing "user addon is successfully added to the user catalogue from just a github url"
+    (let [install-dir (helper/install-dir)
+
+          match {:url "https://www.wowinterface.com/downloads/info25079",
+                 :name "rotation-master",
+                 :label "Rotation Master",
+                 :updated-date "2019-07-29T21:37:00Z",
+                 :download-count 80,
+                 :source "wowinterface"
+                 :source-id 25079
+                 :game-track-list [:retail]
+                 :tag-list []}
+
+          ;; a mush of the above (.nfo written during install) and the EveryAddon .toc file
+          expected {:description "Does what no other addon does, slightly differently",
+                    :dirname "EveryAddon",
+                    :group-id "https://www.wowinterface.com/downloads/info25079",
+                    :installed-game-track :retail,
+                    :installed-version "1.2.3",
+                    :interface-version 70000,
+                    :label "EveryAddon 1.2.3",
+                    :name "rotation-master",
+                    :primary? true,
+                    :source "wowinterface",
+                    :source-id 25079}
+
+          expected-addon-dir (utils/join install-dir "EveryAddon")
+          expected-user-catalogue [match]
+
+          catalogue (utils/to-json (catalogue/new-catalogue [match]))
+
+          every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
+          fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
+                       {:get (fn [req] {:status 200 :body catalogue})}
+
+                       "https://api.mmoui.com/v3/game/WOW/filedetails/25079.json"
+                       {:get (fn [req] {:status 200 :body (slurp (fixture-path "wowinterface-api--addon-details.json"))})}
+
+                       "https://cdn.wowinterface.com/downloads/getfile.php?id=25079"
+                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-addon-zip-file)})}}
+
+          user-url (:url match)]
+
+      (with-global-fake-routes-in-isolation fake-routes
+        (with-running-app
+          (core/set-addon-dir! install-dir)
+
+          ;; one addon in the database
+          (is (= [match] (core/get-state :db)))
+
+          ;; user gives us this url, we find it and install it
+          (cli/import-addon user-url)
+
+          ;; addon was successfully download and installed
+          (is (fs/exists? expected-addon-dir))
+
+          ;; re-read install dir
+          (core/load-installed-addons)
+
+          ;; we expect our mushy set of .nfo and .toc data
+          (is (= [expected] (core/get-state :installed-addon-list)))
+
+          ;; and that the addon was added to the user catalogue
+          (is (= expected-user-catalogue
+                 (:addon-summary-list (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))))

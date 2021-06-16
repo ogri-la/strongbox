@@ -93,7 +93,7 @@
                 [:classic true] (format single-template classic-lbl source)
                 [:classic-tbc true] (format single-template classic-tbc-lbl source)
 
-                [:retail false] (format multi-template retail-lbl classic-lbl source)
+                [:retail false] (format multi-template retail-lbl classic-lbl classic-tbc-lbl source)
                 [:classic false] (format multi-template classic-lbl classic-tbc-lbl retail-lbl source)
                 [:classic-tbc false] (format multi-template classic-tbc-lbl classic-lbl retail-lbl source))]
       (warn msg))))
