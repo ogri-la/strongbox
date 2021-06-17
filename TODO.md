@@ -52,7 +52,10 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * addon detail, add 'x-website' / 'x-url' alongside 'browse local files' and addon host
 
-
+* tags, make clickable in search results, 
+    - adds a filter that can be removed
+    - add clickable tags to addon detail page
+`
 * preferences, "update all addons automatically"
     - update README features
     - punted back to bucket 2021-06-02
