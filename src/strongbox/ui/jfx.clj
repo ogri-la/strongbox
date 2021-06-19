@@ -1603,7 +1603,7 @@
      [{:fx/type :text-field
        :id "search-text-field"
        :prompt-text "search"
-       :text (:term search-state)
+       ;;:text (:term search-state) ;; don't do this
        :on-text-changed cli/search}
 
       {:fx/type :button
@@ -2066,9 +2066,7 @@
         ;; and because the search-field-input doesn't change,
         ;; and because the search component isn't re-rendered,
         ;; fake a change to get something to appear
-        bump-search (fn []
-                      (when-not (-> @core/state :search :term)
-                        (cli/search "")))]
+        bump-search cli/bump-search]
 
     (swap! core/state assoc :gui-showing? true)
     (fx/mount-renderer gui-state renderer)
