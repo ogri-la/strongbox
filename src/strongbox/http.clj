@@ -54,12 +54,12 @@
         v (zipmap [:major :minor :patch :qualifier] (rest (re-find regex strongbox-version)))]
     (format "strongbox/%s.%s%s (https://github.com/ogri-la/strongbox)" (:major v) (:minor v) (:qualifier v))))
 
-(defn-spec user-agent map?
+(defn-spec user-agent string?
   [use-anon-useragent? boolean?]
   (let [;; https://techblog.willshouse.com/2012/01/03/most-common-user-agents/ (last updated 2019-09-14)
         anon-useragent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36"
         useragent (strongbox-user-agent (versioneer/get-version "ogri-la" "strongbox"))]
-    {"http.useragent" (if use-anon-useragent? anon-useragent useragent)}))
+    (if use-anon-useragent? anon-useragent useragent)))
 
 (defn fresh-cache-file-exists?
   "returns `true` if the last modification time on given file is before the expiry date of +N hours"
@@ -107,13 +107,27 @@
         (when message (info message)) ;; always show the message that was explicitly passed in
         (debug (format "downloading %s to %s" (fs/base-name url) output-file))
         (client/with-additional-middleware [client/wrap-lower-case-headers (etag-middleware etag-key)]
-          (let [params {:cookie-policy :ignore ;; completely ignore cookies. doesn't stop HttpComponents warning
-                        :http-request-config (clj-http.core/request-config {:normalize-uri false})}
-                use-anon-useragent? false
-                params (merge params (user-agent use-anon-useragent?) extra-params)
+          (let [use-anon-useragent? false
+                params {:cookie-policy :ignore ;; completely ignore cookies. doesn't stop HttpComponents warning
+                        :http-request-config (clj-http.core/request-config {:normalize-uri false})
+                        ;; todo: should this be "User-Agent" ?
+                        "http.useragent" (user-agent use-anon-useragent?)}
+                params (merge params extra-params)
+
+                github-request? (.startsWith url "https://api.github.com")
+                github-auth-token (System/getenv "GITHUB_TOKEN")
+
+                params (cond-> params
+                         (and github-request? github-auth-token)
+                         (assoc :basic-auth github-auth-token))
+
                 _ (debug "requesting" url "with params" params)
                 resp (client/get url params)
                 _ (debug "response status" (:status resp))
+                _ (clojure.pprint/pprint (select-keys (:headers resp) ["x-ratelimit-limit"
+                                                                       "x-ratelimit-remaining"
+                                                                       "x-ratelimit-reset"
+                                                                       "x-ratelimit-used"]))
 
                 not-modified (= 304 (:status resp)) ;; 304 is "not modified" (local file is still fresh). only happens when caching
                 modified (not not-modified)
