@@ -72,13 +72,15 @@
           (is (= expected-good (http/download url))))))))
 
 (deftest socket-timeout
-  (testing ""
+  (testing "timeouts are caught and a 500 http response is returned"
     (let [url "http://foo.bar/"
           fake-routes {url {:get (fn [req]
                                    (throw (java.net.SocketTimeoutException. "Read timed out")))}}
           output-file nil
           message nil
-          extra-params {}]
+          extra-params {}
+          expected {:host "foo.bar", :reason-phrase "Connection timed out", :status 500}
+          ]
       (with-fake-routes-in-isolation fake-routes
-        (http/-download url output-file message extra-params)))))
+        (is (= expected (http/-download url output-file message extra-params)))))))
 

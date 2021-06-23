@@ -171,7 +171,7 @@
         (catch java.net.SocketTimeoutException ste
           (when streaming-response?
             (close-stream ste))
-          ;; synthetic 5xx error
+          ;; return a synthetic 5xx error
           (let [request-obj (java.net.URL. url)
                 http-error {:status 500
                             :host (.getHost request-obj)
