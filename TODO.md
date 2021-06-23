@@ -9,6 +9,12 @@ see CHANGELOG.md for a more formal list of changes by release
 * gui, deleting addons seems a little slow because the confirmation dialog pauses until the job is done
     - done
 
+* http, add a timeout for requests
+    - I have tukui API taking a looooong time
+* add a timeout for downloads
+    - tukui.org is up but it's being reaaaaalllllly slow and updates appear to have hanged when they haven't
+    - done
+
 ## todo
 
 * add release.json support for github addons
@@ -19,11 +25,6 @@ see CHANGELOG.md for a more formal list of changes by release
         - really easy
     - use GITHUB_TOKEN envvar
         - dont even think about storing this raw in config
-
-* http, add a timeout for requests
-    - I have tukui API taking a looooong time
-* add a timeout for downloads
-    - tukui.org is up but it's being reaaaaalllllly slow and updates appear to have hanged when they haven't
 
 * bug, search, results not updated when catalogue is changed
 

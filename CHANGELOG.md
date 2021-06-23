@@ -28,8 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * an 'install' button on the search pane to install addons individually.
     - ... which is probably what *most* of us want *most* of the time.
 * a 'split' button that brings up the notice logger at the highest current log level.
-    - I missed the old split pane layout and decided the "(warnings)" suffix in the log tab title wasn't good enough
-    - it's yellow with warnings, red when errors. 
+    - I missed the old split pane layout and decided the "(warnings)" suffix in the log tab title wasn't good enough.
+    - it's yellow with warnings, red when errors.
     - split doesn't persist between app restarts. If you want to see this let me know.
 * another variation of the burning crusade abbreviation 'bcc' for the github game track guesser to look for.
     - it seems to be gaining traction thanks to BigWigs packager but was non-existant a month or so ago.
@@ -49,6 +49,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - I'm 50/50 on this, let me know if you feel strongly one way or the other.
 * an addon's status (green tick, yellow line, red cross, etc) is limited to just events since the last refresh.
 * 'install' buttons in the search and addon detail panes are slightly less Weird looking.
+* HTTP requests now have a 5s timeout.
+    - if it takes longer than 5s to make a connection or receive data, then the request is cancelled and an error logged.
 
 ### Fixed
 
