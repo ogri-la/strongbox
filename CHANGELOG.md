@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* HTTP requests now have a 5s timeout.
+    - if it takes longer than 5s to make a connection or receive data, then the request is cancelled and an error logged.
+
 ### Fixed
 
 ### Removed
@@ -49,8 +52,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - I'm 50/50 on this, let me know if you feel strongly one way or the other.
 * an addon's status (green tick, yellow line, red cross, etc) is limited to just events since the last refresh.
 * 'install' buttons in the search and addon detail panes are slightly less Weird looking.
-* HTTP requests now have a 5s timeout.
-    - if it takes longer than 5s to make a connection or receive data, then the request is cancelled and an error logged.
 
 ### Fixed
 
