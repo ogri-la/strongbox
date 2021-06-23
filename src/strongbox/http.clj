@@ -1,6 +1,7 @@
 (ns strongbox.http
   (:require
    [strongbox
+    [logging :as logging]
     [specs :as sp]
     [utils :as utils :refer [join]]]
    [clojure.java.io]
@@ -124,10 +125,11 @@
                 _ (debug "requesting" url "with params" params)
                 resp (client/get url params)
                 _ (debug "response status" (:status resp))
-                _ (clojure.pprint/pprint (select-keys (:headers resp) ["x-ratelimit-limit"
-                                                                       "x-ratelimit-remaining"
-                                                                       "x-ratelimit-reset"
-                                                                       "x-ratelimit-used"]))
+
+                _ (when (and github-request? github-auth-token)
+                    (logging/without-addon
+                     (info (apply format "%s of %s Github API requests remaining."
+                                  (map (:headers resp) ["x-ratelimit-remaining" "x-ratelimit-limit"])))))
 
                 not-modified (= 304 (:status resp)) ;; 304 is "not modified" (local file is still fresh). only happens when caching
                 modified (not not-modified)

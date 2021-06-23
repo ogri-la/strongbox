@@ -179,6 +179,10 @@
      {:addon ~addon}
      ~@form))
 
+(defmacro without-addon
+  [& form]
+  `(with-addon nil ~@form))
+
 (defmacro with-label
   [label & form]
   `(with-addon {:name ~label}
