@@ -180,6 +180,7 @@
      ~@form))
 
 (defmacro without-addon
+  "an explicit opt-out of addon logging for log events nested within a `with-addon`"
   [& form]
   `(with-addon nil ~@form))
 

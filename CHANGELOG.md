@@ -8,12 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Github authentication using Github Personal Access Tokens
+    - if the environment variable `GITHUB_TOKEN` is present, it is used to authenticate with Github for API calls.
+    - remaining number of API calls available can be seen in the strongbox log tab.
+
 ### Changed
 
 * HTTP requests now have a 5s timeout.
     - if it takes longer than 5s to make a connection or receive data, then the request is cancelled and an error logged.
 
 ### Fixed
+
+* HTTP "User-Agent" is now set correctly.
+    - I don't think it's ever been working correctly. Total failure.
 
 ### Removed
 

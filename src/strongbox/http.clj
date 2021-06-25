@@ -118,13 +118,11 @@
           (let [use-anon-useragent? false
                 params {:cookie-policy :ignore ;; completely ignore cookies. doesn't stop HttpComponents warning
                         :http-request-config (clj-http.core/request-config {:normalize-uri false})
-                        ;; todo: should this be "User-Agent" ?
-                        "http.useragent" (user-agent use-anon-useragent?)
                         ;; both of these throw a SocketTimeoutException:
                         ;; - https://docs.oracle.com/javase/8/docs/api/java/net/URLConnection.html
                         :connection-timeout 5000 ;; allow 5s to connect to host
                         :socket-timeout 5000 ;; allow 5s stall reading from a host
-                        }
+                        :headers {"User-Agent" (user-agent use-anon-useragent?)}}
                 params (merge params extra-params)
 
                 github-request? (.startsWith url "https://api.github.com")
@@ -138,11 +136,6 @@
                 resp (client/get url params)
                 _ (debug "response status" (:status resp))
 
-                _ (when (and github-request? github-auth-token)
-                    (logging/without-addon
-                     (info (apply format "%s of %s Github API requests remaining."
-                                  (map (:headers resp) ["x-ratelimit-remaining" "x-ratelimit-limit"])))))
-
                 not-modified (= 304 (:status resp)) ;; 304 is "not modified" (local file is still fresh). only happens when caching
                 modified (not not-modified)
 
@@ -154,6 +147,11 @@
                 ;; the intended output file as a lock.
                 partial-output-file (when output-file
                                       (join (fs/parent output-file) (fs/temp-name "strongbox-" ".part")))]
+
+            (when (and github-request? github-auth-token)
+              (logging/without-addon
+               (info (apply format "%s of %s Github API requests remaining."
+                            (map (:headers resp) ["x-ratelimit-remaining" "x-ratelimit-limit"])))))
 
             (when not-modified
               (debug "not modified, contents will be read from cache:" output-file))
