@@ -14,17 +14,17 @@ see CHANGELOG.md for a more formal list of changes by release
 * add a timeout for downloads
     - tukui.org is up but it's being reaaaaalllllly slow and updates appear to have hanged when they haven't
     - done
-
-## todo
-
-* add release.json support for github addons
-
 * github, add support for user supplied github token
     - necessary if they want a large number of github addons without hassles
     - implemented in strongbox-comrades
         - really easy
     - use GITHUB_TOKEN envvar
         - dont even think about storing this raw in config
+    - done
+
+## todo
+
+* add release.json support for github addons
 
 * bug, search, results not updated when catalogue is changed
 
@@ -52,6 +52,9 @@ see CHANGELOG.md for a more formal list of changes by release
 ## todo bucket (no particular order)
 
 * addon detail, add 'x-website' / 'x-url' alongside 'browse local files' and addon host
+
+* change split button 'outdent' to 'indent'
+    - and if split, keep it 'pressed in'
 
 * tags, make clickable in search results, 
     - adds a filter that can be removed
