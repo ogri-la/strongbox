@@ -1371,7 +1371,7 @@
         (with-running-app
           (cli/search search-term)
            ;; searching happens in the background
-          (Thread/sleep 10)
+          (Thread/sleep 50)
           ;; we have one search result from a catalogue of 4 addons
           (is (= 1 (-> (core/get-state :search) :results count)))
           ;; empty the stale search state
@@ -1379,5 +1379,5 @@
           (is (= expected-empty-search-state (core/get-state :search)))
           ;; do the search again without specifying a search term
           (cli/bump-search)
-          (Thread/sleep 10)
+          (Thread/sleep 50)
           (is (= 1 (-> (core/get-state :search) :results count))))))))

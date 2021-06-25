@@ -16,11 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * HTTP requests now have a 5s timeout.
     - if it takes longer than 5s to make a connection or receive data, then the request is cancelled and an error logged.
+* search, very minor, but trailing whitespace in a search term is now ignored.
 
 ### Fixed
 
 * HTTP "User-Agent" is now set correctly.
     - I don't think it's ever been working correctly. Total failure.
+* search results are now updated when the catalogue is switched and the search term, if any, is re-searched for.
 
 ### Removed
 

@@ -22,11 +22,12 @@ see CHANGELOG.md for a more formal list of changes by release
         - dont even think about storing this raw in config
     - done
 
+* bug, search, results not updated when catalogue is changed
+    - done
+
 ## todo
 
 * add release.json support for github addons
-
-* bug, search, results not updated when catalogue is changed
 
 * add support for finding addons by url for other hosts
     - wowinterface
