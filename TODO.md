@@ -53,6 +53,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * addon detail, add 'x-website' / 'x-url' alongside 'browse local files' and addon host
 
+* change split button 'outdent' to 'indent'
+    - and if split, keep it 'pressed in'
+
 * tags, make clickable in search results, 
     - adds a filter that can be removed
     - add clickable tags to addon detail page
