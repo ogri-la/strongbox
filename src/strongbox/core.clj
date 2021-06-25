@@ -645,8 +645,9 @@
   (let [args [(utils/nilable search-term) (get-state :search :results-per-page)]]
     (query-db :search args)))
 
-(defn empty-search-results
-  "empties the search state of results."
+(defn-spec empty-search-results nil?
+  "empties the search state of results.
+  this is to clear out anything between catalogue reloads."
   []
   (swap! state update-in [:search] merge (select-keys -search-state-template [:page :results :selected-results-list]))
   nil)
