@@ -54,7 +54,6 @@
   (testing "user agent is present on outgoing requests"
     (let [url "http://localhost/"
           fake-routes {url {:get (fn [req]
-                                   (println "--->" req)
                                    {:status 200 :body "" :headers (:headers req)})}}
           output-file nil
           message nil

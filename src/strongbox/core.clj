@@ -80,6 +80,13 @@
                   :old-user-catalogue-file (join old-data-dir "user-catalog.json")}]
     path-map))
 
+(def -search-state-template
+  {:term nil
+   :page 0
+   :results []
+   :selected-result-list []
+   :results-per-page 60})
+
 (def -state-template
   {:cleanup []
 
@@ -134,11 +141,7 @@
    ;; dynamic tabs
    :tab-list []
 
-   :search {:term nil
-            :page 0
-            :results []
-            :selected-result-list []
-            :results-per-page 60}})
+   :search -search-state-template})
 
 (def state (atom nil))
 
@@ -641,6 +644,13 @@
   [search-term]
   (let [args [(utils/nilable search-term) (get-state :search :results-per-page)]]
     (query-db :search args)))
+
+(defn-spec empty-search-results nil?
+  "empties the search state of results.
+  this is to clear out anything between catalogue reloads."
+  []
+  (swap! state update-in [:search] merge (select-keys -search-state-template [:page :results :selected-results-list]))
+  nil)
 
 (defn-spec load-current-catalogue (s/or :ok :catalogue/catalogue, :error nil?)
   "merges the currently selected catalogue with the user-catalogue and returns the definitive list of addons 

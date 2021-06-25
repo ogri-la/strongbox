@@ -1,5 +1,6 @@
 (ns strongbox.db
   (:require
+   [clojure.string]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :refer [log debug info warn error spy]]
@@ -113,7 +114,8 @@
 
     ;; we should see if a non-regex solution may be faster:
     ;; - https://www.baeldung.com/java-case-insensitive-string-matching
-    (let [label-regex (re-pattern (str "(?i)^" uin ".*"))
+    (let [uin (clojure.string/trim uin)
+          label-regex (re-pattern (str "(?i)^" uin ".*"))
           desc-regex (re-pattern (str "(?i).*" uin ".*"))
           slow-fn (fn [row]
                     (or

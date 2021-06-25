@@ -1033,7 +1033,7 @@
                 :selected (= selected-catalogue name)
                 :toggle-group {:fx/type fx/ext-get-ref
                                :ref ::catalogue-toggle-group}
-                :on-action (async-handler #(cli/set-catalogue-location! name))})]
+                :on-action (async-handler #(cli/change-catalogue name))})]
       (mapv rb catalogue-location-list))))
 
 (defn-spec build-theme-menu ::sp/list-of-maps
@@ -1603,6 +1603,7 @@
      [{:fx/type :text-field
        :id "search-text-field"
        :prompt-text "search"
+       ;;:text (:term search-state) ;; don't do this
        :on-text-changed cli/search}
 
       {:fx/type :button
@@ -2065,9 +2066,7 @@
         ;; and because the search-field-input doesn't change,
         ;; and because the search component isn't re-rendered,
         ;; fake a change to get something to appear
-        bump-search (fn []
-                      (when-not (-> @core/state :search :term)
-                        (cli/search "")))]
+        bump-search cli/bump-search]
 
     (swap! core/state assoc :gui-showing? true)
     (fx/mount-renderer gui-state renderer)

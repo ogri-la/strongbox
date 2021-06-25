@@ -97,6 +97,21 @@
           (is (= (core/get-state :db)
                  (cli/search-results))))))))
 
+(deftest search-db--empty-term
+  (testing "a populated database can be randomly searched from the CLI by passing in empty values"
+    (let [catalogue (slurp (fixture-path "catalogue--v2.json"))
+          fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
+                       {:get (fn [req] {:status 200 :body catalogue})}}]
+      (with-global-fake-routes-in-isolation fake-routes
+        (with-running-app
+          ;; any catalogue with less than 60 (a magic number) items has >100% probability of being included.
+          (cli/search nil)
+          (Thread/sleep 10)
+          (is (= "" (core/get-state :search :term)))
+          (cli/search "")
+          (Thread/sleep 10)
+          (is (= nil (core/get-state :search :term))))))))
+
 (deftest search-db--navigate
   (testing "a populated database can be searched forwards and backwards from the CLI"
     (let [catalogue (slurp (fixture-path "catalogue--v2.json"))

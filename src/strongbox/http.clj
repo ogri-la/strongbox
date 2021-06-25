@@ -150,8 +150,9 @@
 
             (when (and github-request? github-auth-token)
               (logging/without-addon
-               (info (apply format "%s of %s Github API requests remaining."
-                            (map (:headers resp) ["x-ratelimit-remaining" "x-ratelimit-limit"])))))
+               (info (format "%s of %s Github API requests remaining."
+                             (-> resp :headers (get "x-ratelimit-remaining"))
+                             (-> resp :headers (get "x-ratelimit-limit"))))))
 
             (when not-modified
               (debug "not modified, contents will be read from cache:" output-file))
