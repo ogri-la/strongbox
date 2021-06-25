@@ -972,7 +972,7 @@
 
 (defn delete-selected-confirmation-handler
   "prompts the user to confirm if they *really* want to delete those addons they just selected and clicked 'delete' on"
-  [event]
+  []
   (when-let [selected (core/get-state :selected-addon-list)]
     (if (utils/any (mapv :ignore? selected))
       (alert :error "Selection contains ignored addons. Stop ignoring them and then delete.")
@@ -1023,7 +1023,7 @@
                 :selected (= selected-catalogue name)
                 :toggle-group {:fx/type fx/ext-get-ref
                                :ref ::catalogue-toggle-group}
-                :on-action (async-handler #(cli/set-catalogue-location! name))})]
+                :on-action (async-handler #(cli/change-catalogue name))})]
       (mapv rb catalogue-location-list))))
 
 (defn-spec build-theme-menu ::sp/list-of-maps
@@ -1293,7 +1293,7 @@
                (menu-item "Stop ignoring" (async-handler cli/clear-ignore-selected))
                (menu-item "Ignore" (async-handler cli/ignore-selected)))
              separator
-             (menu-item "Delete" delete-selected-confirmation-handler
+             (menu-item "Delete" (async-handler delete-selected-confirmation-handler)
                         {:disable ignored?})]}))
 
 (defn-spec multiple-context-menu map?
@@ -1317,7 +1317,7 @@
                (menu-item "Stop ignoring" (async-handler cli/clear-ignore-selected))
                (menu-item "Ignore" (async-handler cli/ignore-selected)))
              separator
-             (menu-item "Delete" delete-selected-confirmation-handler)]}))
+             (menu-item "Delete" (async-handler delete-selected-confirmation-handler))]}))
 
 (defn uber-button
   "returns a widget describing the current state of the given addon"
@@ -1594,6 +1594,7 @@
      [{:fx/type :text-field
        :id "search-text-field"
        :prompt-text "search"
+       ;;:text (:term search-state) ;; don't do this
        :on-text-changed cli/search}
 
       {:fx/type :button
@@ -2056,9 +2057,7 @@
         ;; and because the search-field-input doesn't change,
         ;; and because the search component isn't re-rendered,
         ;; fake a change to get something to appear
-        bump-search (fn []
-                      (when-not (-> @core/state :search :term)
-                        (cli/search "")))]
+        bump-search cli/bump-search]
 
     (swap! core/state assoc :gui-showing? true)
     (fx/mount-renderer gui-state renderer)

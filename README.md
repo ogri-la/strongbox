@@ -202,6 +202,22 @@ Click the `search` tab and begin typing. Select the addon you wish to install an
 
 Addons hosted on Github must meet [certain requirements](./github-addons.md) before they can be installed.
 
+#### Github API authentication
+
+Installing and updating addons from Github uses the Github API.
+
+Anonymous usage of the Github API allows 60 requests/hr before your requests are blocked.
+
+Strongbox can authenticate with the Github API by specifying the `GITHUB_TOKEN` *environment variable* using 
+a [Personal Access Token](https://docs.github.com/en/github/authenticating-to-github/keeping-your-account-and-data-secure/creating-a-personal-access-token).
+
+Environment variables can be set in many different ways:
+
+* from the shell like: `$ GITHUB_TOKEN=my-secret-token strongbox`
+* by modifying `~/.config/plasma-workspace/env` [for KDE](https://userbase.kde.org/Session_Environment_Variables/en) and setting `GITHUB_TOKEN=my-secret-token`
+* by modifying `~/.profile` [for Gnome](https://help.ubuntu.com/community/EnvironmentVariables) and setting `GITHUB_TOKEN=my-secret-token`
+* system-wide (affecting all users) by modifying `/etc/environment` and setting `GITHUB_TOKEN=my-secret-token`
+
 ### import and export lists of addons
 
 Your list of addons can be *exported* to a simple format that allows them to be *imported* again later.

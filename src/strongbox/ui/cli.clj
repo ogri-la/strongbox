@@ -68,14 +68,6 @@
   ;; the next addon dir is selected, if any
   (half-refresh))
 
-(defn-spec set-catalogue-location! nil?
-  "changes the catalogue and refreshes application state.
-  a complete refresh is necessary for this action as addons accumulate keys like `:matched?` and `:update?`"
-  [catalogue-name keyword?]
-  (core/set-catalogue-location! catalogue-name)
-  (core/db-reload-catalogue)
-  nil)
-
 ;; search
 
 (defn-spec search-results-next-page nil?
@@ -94,16 +86,27 @@
   nil)
 
 (defn-spec search nil?
-  "updates the search `term` and resets the current page of results to `0`.
+  "updates the `[:search :term]` and resets the current page of results to `0`.
   does not actually do any searching, that is up to the interface"
   [search-term (s/nilable string?)]
-  (swap! core/state update-in [:search] merge {:term search-term :page 0})
+  (let [;; if the given search term is empty (nil, "") and the *current* search term is empty, switch empty values.
+        ;; this lets us hit the 'random' button many times for different results.
+        search-term (if (empty? search-term)
+                      (if (-> @core/state :search :term nil?) "" nil)
+                      search-term)]
+    (swap! core/state update-in [:search] merge {:term search-term :page 0}))
   nil)
 
 (defn-spec random-search nil?
   "trigger a random sample of addons"
   []
-  (search (if (-> @core/state :search :term nil?) "" nil)))
+  (search nil))
+
+(defn-spec bump-search nil?
+  "search for the `[:search :term]`, if one exists, and adds some whitespace to jog the GUI into forcing an empty.
+  the db search function trims whitespace so there won't be any change to results"
+  []
+  (search (some-> @core/state :search :term (str " "))))
 
 (defn-spec search-results ::sp/list-of-maps
   "returns the current page of results"
@@ -147,6 +150,20 @@
      (future
        (let [results (core/db-search (-> new-state :search :term))]
          (swap! core/state assoc-in [:search :results] results))))))
+
+;;
+
+(defn-spec change-catalogue nil?
+  "changes the catalogue and refreshes application state.
+  a complete refresh (see `core/db-reload-catalogue`) is necessary for this action as
+  addons accumulate keys like `:matched?` and `:update?`"
+  [catalogue-name (s/nilable (s/or :simple string?, :named keyword?))]
+  (when catalogue-name
+    (core/set-catalogue-location! (keyword catalogue-name))
+    (core/db-reload-catalogue)
+    (core/empty-search-results)
+    (bump-search))
+  nil)
 
 (defn init-ui-logger
   []

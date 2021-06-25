@@ -1319,3 +1319,25 @@
         (cli/clear-ignore-selected)
         (is (= expected (first (core/get-state :installed-addon-list))))))))
 
+(deftest empty-search-state
+  (testing "temporary search state can be emptied of potentially stale catalogue data, preserving the search term."
+    (let [dummy-catalogue (slurp (fixture-path "catalogue--v2.json"))
+          fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
+                       {:get (fn [req] {:status 200 :body dummy-catalogue})}}
+          search-term "a"
+          ;; the buffers are emptied, the search term is preserved
+          expected-empty-search-state (assoc core/-search-state-template :term search-term)]
+      (with-fake-routes-in-isolation fake-routes
+        (with-running-app
+          (cli/search search-term)
+           ;; searching happens in the background
+          (Thread/sleep 50)
+          ;; we have one search result from a catalogue of 4 addons
+          (is (= 1 (-> (core/get-state :search) :results count)))
+          ;; empty the stale search state
+          (core/empty-search-results)
+          (is (= expected-empty-search-state (core/get-state :search)))
+          ;; do the search again without specifying a search term
+          (cli/bump-search)
+          (Thread/sleep 50)
+          (is (= 1 (-> (core/get-state :search) :results count))))))))
