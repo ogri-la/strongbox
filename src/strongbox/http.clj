@@ -57,8 +57,8 @@
 
 (defn-spec user-agent string?
   [use-anon-useragent? boolean?]
-  (let [;; https://techblog.willshouse.com/2012/01/03/most-common-user-agents/ (last updated 2019-09-14)
-        anon-useragent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36"
+  (let [;; https://techblog.willshouse.com/2012/01/03/most-common-user-agents/ (last updated 2021-06-25)
+        anon-useragent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36"
         useragent (strongbox-user-agent (versioneer/get-version "ogri-la" "strongbox"))]
     (if use-anon-useragent? anon-useragent useragent)))
 
