@@ -8,9 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Github authentication using Github Personal Access Tokens
+    - if the environment variable `GITHUB_TOKEN` is present, it is used to authenticate with Github for API calls.
+    - remaining number of API calls available can be seen in the strongbox log tab.
+
 ### Changed
 
+* HTTP requests now have a 5s timeout.
+    - if it takes longer than 5s to make a connection or receive data, then the request is cancelled and an error logged.
+
 ### Fixed
+
+* HTTP "User-Agent" is now set correctly.
+    - I don't think it's ever been working correctly. Total failure.
 
 ### Removed
 
@@ -28,8 +38,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * an 'install' button on the search pane to install addons individually.
     - ... which is probably what *most* of us want *most* of the time.
 * a 'split' button that brings up the notice logger at the highest current log level.
-    - I missed the old split pane layout and decided the "(warnings)" suffix in the log tab title wasn't good enough
-    - it's yellow with warnings, red when errors. 
+    - I missed the old split pane layout and decided the "(warnings)" suffix in the log tab title wasn't good enough.
+    - it's yellow with warnings, red when errors.
     - split doesn't persist between app restarts. If you want to see this let me know.
 * another variation of the burning crusade abbreviation 'bcc' for the github game track guesser to look for.
     - it seems to be gaining traction thanks to BigWigs packager but was non-existant a month or so ago.

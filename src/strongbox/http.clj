@@ -1,6 +1,7 @@
 (ns strongbox.http
   (:require
    [strongbox
+    [logging :as logging]
     [specs :as sp]
     [utils :as utils :refer [join]]]
    [clojure.java.io]
@@ -54,12 +55,12 @@
         v (zipmap [:major :minor :patch :qualifier] (rest (re-find regex strongbox-version)))]
     (format "strongbox/%s.%s%s (https://github.com/ogri-la/strongbox)" (:major v) (:minor v) (:qualifier v))))
 
-(defn-spec user-agent map?
+(defn-spec user-agent string?
   [use-anon-useragent? boolean?]
-  (let [;; https://techblog.willshouse.com/2012/01/03/most-common-user-agents/ (last updated 2019-09-14)
-        anon-useragent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36"
+  (let [;; https://techblog.willshouse.com/2012/01/03/most-common-user-agents/ (last updated 2021-06-25)
+        anon-useragent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36"
         useragent (strongbox-user-agent (versioneer/get-version "ogri-la" "strongbox"))]
-    {"http.useragent" (if use-anon-useragent? anon-useragent useragent)}))
+    (if use-anon-useragent? anon-useragent useragent)))
 
 (defn fresh-cache-file-exists?
   "returns `true` if the last modification time on given file is before the expiry date of +N hours"
@@ -76,6 +77,13 @@
         enc (java.util.Base64/getUrlEncoder)]
     (as-> url x
       (str x) (.getBytes x) (.encodeToString enc x) (str x ext))))
+
+(defn close-stream
+  [ex]
+  (when (-> ex ex-data :status)
+    ;; "Note that the connection to the server will NOT be closed until the stream has been read"
+    ;;  - https://github.com/dakrone/clj-http
+    (some-> ex ex-data :body .close)))
 
 (defn-spec -download (s/or :file ::sp/extant-file, :raw :http/resp, :error :http/error)
   "if writing to a file is possible then the output file is returned, else the raw http response.
@@ -107,10 +115,23 @@
         (when message (info message)) ;; always show the message that was explicitly passed in
         (debug (format "downloading %s to %s" (fs/base-name url) output-file))
         (client/with-additional-middleware [client/wrap-lower-case-headers (etag-middleware etag-key)]
-          (let [params {:cookie-policy :ignore ;; completely ignore cookies. doesn't stop HttpComponents warning
-                        :http-request-config (clj-http.core/request-config {:normalize-uri false})}
-                use-anon-useragent? false
-                params (merge params (user-agent use-anon-useragent?) extra-params)
+          (let [use-anon-useragent? false
+                params {:cookie-policy :ignore ;; completely ignore cookies. doesn't stop HttpComponents warning
+                        :http-request-config (clj-http.core/request-config {:normalize-uri false})
+                        ;; both of these throw a SocketTimeoutException:
+                        ;; - https://docs.oracle.com/javase/8/docs/api/java/net/URLConnection.html
+                        :connection-timeout 5000 ;; allow 5s to connect to host
+                        :socket-timeout 5000 ;; allow 5s stall reading from a host
+                        :headers {"User-Agent" (user-agent use-anon-useragent?)}}
+                params (merge params extra-params)
+
+                github-request? (.startsWith url "https://api.github.com")
+                github-auth-token (System/getenv "GITHUB_TOKEN")
+
+                params (cond-> params
+                         (and github-request? github-auth-token)
+                         (assoc :basic-auth github-auth-token))
+
                 _ (debug "requesting" url "with params" params)
                 resp (client/get url params)
                 _ (debug "response status" (:status resp))
@@ -126,6 +147,11 @@
                 ;; the intended output file as a lock.
                 partial-output-file (when output-file
                                       (join (fs/parent output-file) (fs/temp-name "strongbox-" ".part")))]
+
+            (when (and github-request? github-auth-token)
+              (logging/without-addon
+               (info (apply format "%s of %s Github API requests remaining."
+                            (map (:headers resp) ["x-ratelimit-remaining" "x-ratelimit-limit"])))))
 
             (when not-modified
               (debug "not modified, contents will be read from cache:" output-file))
@@ -156,14 +182,23 @@
 
               :else resp)))
 
+        (catch java.net.SocketTimeoutException ste
+          (when streaming-response?
+            (close-stream ste))
+          ;; return a synthetic 5xx error
+          (let [request-obj (java.net.URL. url)
+                http-error {:status 500
+                            :host (.getHost request-obj)
+                            :reason-phrase "Connection timed out"}]
+            (warn (format "failed to fetch '%s': connection timed out" url))
+            http-error))
+
         (catch Exception ex
+          (when streaming-response?
+            (close-stream ex))
           (if (-> ex ex-data :status)
             ;; http error (status >=400)
-            (let [_ (when streaming-response?
-                      ;; "Note that the connection to the server will NOT be closed until the stream has been read"
-                      ;;  - https://github.com/dakrone/clj-http
-                      (some-> ex ex-data :body .close))
-                  request-obj (java.net.URL. url)
+            (let [request-obj (java.net.URL. url)
                   http-error (merge (select-keys (ex-data ex) [:reason-phrase :status])
                                     {:host (.getHost request-obj)})]
               (warn (format "failed to download file '%s': %s (HTTP %s)"
