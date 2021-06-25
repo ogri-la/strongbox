@@ -78,6 +78,13 @@
     (as-> url x
       (str x) (.getBytes x) (.encodeToString enc x) (str x ext))))
 
+(defn close-stream
+  [ex]
+  (when (-> ex ex-data :status)
+    ;; "Note that the connection to the server will NOT be closed until the stream has been read"
+    ;;  - https://github.com/dakrone/clj-http
+    (some-> ex ex-data :body .close)))
+
 (defn-spec -download (s/or :file ::sp/extant-file, :raw :http/resp, :error :http/error)
   "if writing to a file is possible then the output file is returned, else the raw http response.
    writing response body to a file is possible when caching is available or `output-file` provided."
@@ -112,7 +119,12 @@
                 params {:cookie-policy :ignore ;; completely ignore cookies. doesn't stop HttpComponents warning
                         :http-request-config (clj-http.core/request-config {:normalize-uri false})
                         ;; todo: should this be "User-Agent" ?
-                        "http.useragent" (user-agent use-anon-useragent?)}
+                        "http.useragent" (user-agent use-anon-useragent?)
+                        ;; both of these throw a SocketTimeoutException:
+                        ;; - https://docs.oracle.com/javase/8/docs/api/java/net/URLConnection.html
+                        :connection-timeout 5000 ;; allow 5s to connect to host
+                        :socket-timeout 5000 ;; allow 5s stall reading from a host
+                        }
                 params (merge params extra-params)
 
                 github-request? (.startsWith url "https://api.github.com")
@@ -172,14 +184,23 @@
 
               :else resp)))
 
+        (catch java.net.SocketTimeoutException ste
+          (when streaming-response?
+            (close-stream ste))
+          ;; return a synthetic 5xx error
+          (let [request-obj (java.net.URL. url)
+                http-error {:status 500
+                            :host (.getHost request-obj)
+                            :reason-phrase "Connection timed out"}]
+            (warn (format "failed to fetch '%s': connection timed out" url))
+            http-error))
+
         (catch Exception ex
+          (when streaming-response?
+            (close-stream ex))
           (if (-> ex ex-data :status)
             ;; http error (status >=400)
-            (let [_ (when streaming-response?
-                      ;; "Note that the connection to the server will NOT be closed until the stream has been read"
-                      ;;  - https://github.com/dakrone/clj-http
-                      (some-> ex ex-data :body .close))
-                  request-obj (java.net.URL. url)
+            (let [request-obj (java.net.URL. url)
                   http-error (merge (select-keys (ex-data ex) [:reason-phrase :status])
                                     {:host (.getHost request-obj)})]
               (warn (format "failed to download file '%s': %s (HTTP %s)"
