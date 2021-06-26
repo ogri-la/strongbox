@@ -52,6 +52,10 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* importing addons, skip db lookup for addon urls that don't need it
+    - if we can 'expand it' then we can download it and install it.
+    - I think tukui, wowi can, github obs, curseforge could not
+
 * import and export addons using addon urls
 
 * addon detail, add 'x-website' / 'x-url' alongside 'browse local files' and addon host

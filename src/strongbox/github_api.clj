@@ -45,7 +45,9 @@
            ;; 2021-06-10: see release.json
            (select-keys [:interface :#interface])
            vals)
-       (map utils/interface-version-to-game-track)
+
+       ;; todo: test this! I think I've been feeding it good values only, I just got a real-life string back
+       (map (comp utils/interface-version-to-game-track utils/to-int))
 
        ;; 2021-05-02: unknown game versions of 2.x (that are now considered "Classic (TBC)") were returning `nil` as the game track.
        (remove nil?)

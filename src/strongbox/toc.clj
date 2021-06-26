@@ -159,6 +159,8 @@
                :label label
                ;; :notes is preferred but we'll fall back to :description
                :description (or (:notes keyvals) (:description keyvals))
+
+               ;; todo: how is it possible this was returning a string??
                :interface-version (or (some-> keyvals :interface utils/to-int)
                                       constants/default-interface-version)
                :installed-version (:version keyvals)
