@@ -209,7 +209,7 @@
   []
   (loop [page 0
          accumulator []]
-    (let [page-size 255
+    (let [page-size 50 ;; used to be quite a bit larger
           results (download-summary-page-alphabetically page page-size)
           num-results (count results)]
       (if (< num-results page-size)
