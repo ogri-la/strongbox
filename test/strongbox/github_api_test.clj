@@ -31,6 +31,16 @@
       (testing (str "case: " given)
         (is (= expected (github-api/parse-user-string given)))))))
 
+(deftest parse-user-string--empty-cases
+  (testing "a source-id can be extracted from a github URL"
+    (let [cases ["https://github.com"
+                 "https://github.com/"
+                 "https://github.com/Aviana"
+                 "https://github.com/Aviana/"]]
+      (doseq [given cases]
+        (testing (str "a source-id can be extracted from a github URL, case:" given)
+          (is (nil? (github-api/parse-user-string given)), (str "failed case: " given)))))))
+
 (deftest find-addon--1
   (testing "user input can be parsed and turned into a catalogue item."
     (let [fixture (slurp (fixture-path "github-repo-releases--aviana-healcomm.json"))
@@ -292,22 +302,6 @@
 
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (github-api/expand-summary addon-summary game-track)))))))
-
-(deftest extract-source-id
-  (testing "a source-id can be extracted from a github URL"
-    (let [cases [["https://github.com/Aviana/HealComm" "Aviana/HealComm"] ;; perfect case
-                 ["https://github.com/Aviana/HealComm/foo/bar" "Aviana/HealComm"]
-                 ["https://github.com/Aviana/HealComm?foo=bar" "Aviana/HealComm"]
-                 ["https://github.com/Aviana/HealComm#foo=bar" "Aviana/HealComm"]
-
-                 ;; fail cases
-                 ["https://github.com" nil]
-                 ["https://github.com/" nil]
-                 ["https://github.com/Aviana" nil]
-                 ["https://github.com/Aviana/" nil]]]
-      (doseq [[given expected] cases]
-        (testing (str "a source-id can be extracted from a github URL, case:" given)
-          (is (= expected (github-api/extract-source-id given))))))))
 
 (deftest gametrack-detection
   (testing "detecting github addon game track"

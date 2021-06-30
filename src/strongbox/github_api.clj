@@ -46,8 +46,8 @@
            (select-keys [:interface :#interface])
            vals)
 
-       ;; todo: test this! I think I've been feeding it good values only, I just got a real-life string back
-       (map (comp utils/interface-version-to-game-track utils/to-int))
+       (map utils/to-int)
+       (map utils/interface-version-to-game-track)
 
        ;; 2021-05-02: unknown game versions of 2.x (that are now considered "Classic (TBC)") were returning `nil` as the game track.
        (remove nil?)
@@ -164,19 +164,10 @@
 
 ;;
 
-;; todo: keep this and discard parse-user-string or vice versa?
-(defn-spec extract-source-id (s/or :ok string?, :error nil?)
-  [url ::sp/url]
-  (->> url java.net.URL. .getPath (re-matches #"^/([^/]+/[^/]+)[/]?.*") rest first))
-
 (defn-spec parse-user-string (s/or :ok :addon/source-id :error nil?)
   "extracts the addon ID from the given `url`."
   [url ::sp/url]
-  (let [path (some-> url java.net.URL. .getPath nilable)
-        ;; values here are tentative because given URL may eventually resolve to a different URL.
-        [-owner -repo] (-> path (subs 1) (split #"/") (pad 2))]
-    (when (and -owner -repo)
-      (format "%s/%s" -owner -repo))))
+  (->> url java.net.URL. .getPath (re-matches #"^/([^/]+/[^/]+)[/]?.*") rest first))
 
 (defn-spec find-addon (s/or :ok :addon/summary, :error nil?)
   [source-id :addon/source-id]
@@ -188,7 +179,7 @@
             _ (-> latest-release :assets nilable)
 
             ;; will correct any case problems. see tests.
-            source-id (-> latest-release :html_url extract-source-id)
+            source-id (-> latest-release :html_url parse-user-string)
             [owner repo] (split source-id #"/")
 
             download-count (->> release-list (map :assets) flatten (map :download_count) (apply +))]

@@ -552,6 +552,7 @@
             github-fixture (slurp (fixture-path "user-catalogue--github.json"))
             github-contents-fixture (slurp (fixture-path "user-catalogue--github-contents.json"))
             github-toc-fixture (slurp (fixture-path "user-catalogue--github-toc.json"))
+
             fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                          {:get (fn [req] {:status 200 :body short-catalogue})}
 
@@ -583,6 +584,8 @@
         (fs/copy user-catalogue-fixture (core/paths :user-catalogue-file))
         (with-global-fake-routes-in-isolation fake-routes
           (cli/start {})
+          ;; prevents the `*/stop` functions from skipping out on cleaning up (I think)
+          (swap! core/state assoc :cli-opts {:ui :cli})
 
           ;; sanity check, ensure user-catalogue loaded
           (is (= 6 (count (core/get-state :db))))
