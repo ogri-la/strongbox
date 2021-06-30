@@ -49,7 +49,7 @@ Afterwards, use the `Update all` button to update all addons with new versions a
 ## Features
 
 * [classic and retail addon support](#classic-and-retail-addon-support)
-* [install addons from URL](#install-from-url)
+* [install addons from URL](#install-addons-from-url)
 * [catalogue search](#catalogue-search)
 * [bulk update](#bulk-update)
 * [install addons from multiple sources](#install-addons-from-multiple-sources):
