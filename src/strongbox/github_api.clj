@@ -170,6 +170,7 @@
   (->> url java.net.URL. .getPath (re-matches #"^/([^/]+/[^/]+)[/]?.*") rest first))
 
 (defn-spec parse-user-string (s/or :ok :addon/source-id :error nil?)
+  "extracts the addon ID from the given `url`."
   [url ::sp/url]
   (let [path (some-> url java.net.URL. .getPath nilable)
         ;; values here are tentative because given URL may eventually resolve to a different URL.

@@ -18,8 +18,7 @@
 (defn-spec find-in-db :db/addon-catalogue-match
   "looks for `installed-addon` in the given `db`, matching `toc-key` to a `catalogue-key`.
   if a `toc-key` and `catalogue-key` are actually lists, then all the `toc-keys` must match the `catalogue-keys`"
-  ;;[db :addon/summary-list, installed-addon :addon/installed, toc-keys :db/toc-keys catalogue-keys :db/catalogue-keys]
-  [db :addon/summary-list, installed-addon map?, toc-keys :db/toc-keys catalogue-keys :db/catalogue-keys]
+  [db :addon/summary-list, installed-addon :db/installed-addon-or-import-stub, toc-keys :db/toc-keys, catalogue-keys :db/catalogue-keys]
   (let [;; [:source :source-id] => [:source :source-id], :name => [:name]
         catalogue-keys (if (vector? catalogue-keys) catalogue-keys [catalogue-keys])
         toc-keys (if (vector? toc-keys) toc-keys [toc-keys])
@@ -54,8 +53,7 @@
 (defn-spec -find-first-in-db (s/or :match map?, :no-match nil?)
   "find a match for the given `installed-addon` in the database using a list of attributes in `match-on-list`.
   returns immediately when first match is found (does not check other joins in `match-on-list`)."
-  ;;[db :addon/summary-list, installed-addon :addon/installed, match-on-list vector?]
-  [db :addon/summary-list, installed-addon map?, match-on-list sequential?]
+  [db :addon/summary-list, installed-addon :db/installed-addon-or-import-stub, match-on-list sequential?]
   (if (or (:ignore? installed-addon) ;; todo: should this check be done? db is a bit low level for this
           (empty? match-on-list))
     ;; either addon is being ignored, or,

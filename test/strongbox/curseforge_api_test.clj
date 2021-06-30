@@ -333,25 +333,24 @@
       (is (= expected (curseforge-api/game-version-flavor-to-game-track given))))))
 
 (deftest parse-user-string
-  (testing ""
-    (let [cases [["https://www.curseforge.com/wow/addons/deadly-boss-mods"
-                  "https://www.curseforge.com/wow/addons/deadly-boss-mods"]
+  (let [cases [["https://www.curseforge.com/wow/addons/deadly-boss-mods"
+                "https://www.curseforge.com/wow/addons/deadly-boss-mods"]
 
-                 ["https://www.curseforge.com/wow/addons/deadly-boss-mods/files"
-                  "https://www.curseforge.com/wow/addons/deadly-boss-mods"]
+               ["https://www.curseforge.com/wow/addons/deadly-boss-mods/files"
+                "https://www.curseforge.com/wow/addons/deadly-boss-mods"]
 
-                 ["https://www.curseforge.com/wow/addons/deadly-boss-mods/relations/dependencies"
-                  "https://www.curseforge.com/wow/addons/deadly-boss-mods"]
+               ["https://www.curseforge.com/wow/addons/deadly-boss-mods/relations/dependencies"
+                "https://www.curseforge.com/wow/addons/deadly-boss-mods"]
 
-                 ["https://www.curseforge.com/wow/addons/deadly-boss-mods/files/3345671"
-                  "https://www.curseforge.com/wow/addons/deadly-boss-mods"]
+               ["https://www.curseforge.com/wow/addons/deadly-boss-mods/files/3345671"
+                "https://www.curseforge.com/wow/addons/deadly-boss-mods"]
 
-                 ;; invalid cases
-                 ["https://www.curseforge.com" nil]
-                 ["https://www.curseforge.com/wow" nil]
-                 ["https://www.curseforge.com/wow/addons" nil]
-                 ["https://www.curseforge.com" nil]
-                 ["https://www.curseforge.com/wowee/hoo/boy" nil]]]
+               ;; invalid cases
+               ["https://www.curseforge.com" nil]
+               ["https://www.curseforge.com/wow" nil]
+               ["https://www.curseforge.com/wow/addons" nil]
+               ["https://www.curseforge.com" nil]
+               ["https://www.curseforge.com/wowee/hoo/boy" nil]]]
 
-      (doseq [[given expected] cases]
-        (is (= expected (curseforge-api/parse-user-string given)))))))
+    (doseq [[given expected] cases]
+      (is (= expected (curseforge-api/parse-user-string given))))))

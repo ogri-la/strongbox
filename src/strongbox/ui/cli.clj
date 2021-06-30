@@ -483,8 +483,8 @@
 
                               ;; look in the current catalogue. emit an error if we fail
                               (or (:catalogue-match (db/-find-first-in-db (core/get-state :db) addon-summary-stub match-on-list))
-                                  (error (format "couldn't find addon in catalogue '%s'"
-                                                 (name (core/get-state :cfg :selected-catalogue))))))
+                                  (warn (format "couldn't find addon in catalogue '%s'"
+                                                (name (core/get-state :cfg :selected-catalogue))))))
 
               ;; game track doesn't matter when adding it to the user catalogue.
               ;; prefer retail though, it's the most common, and `strict` is `false`

@@ -620,6 +620,7 @@
         (re-find retail-regex string) :retail))))
 
 (defn-spec url-to-addon-source (s/or :known-source :addon/source, :unknown-source nil?)
+  "returns the source of an addon for a given `url`"
   [url-str ::sp/url]
   (let [url-obj (-> url-str java.net.URL.)
         host (.getHost url-obj)
@@ -639,5 +640,6 @@
       nil)))
 
 (defn-spec message-list string?
+  "returns a multi-line string with the given `msg` on top and each message in `msg-list` bulleted beneath it"
   [msg string?, msg-list ::sp/list-of-strings]
   (clojure.string/join (format "\n %s " constants/bullet) (into [msg] msg-list)))
