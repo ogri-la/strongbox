@@ -1082,14 +1082,15 @@
                       :tag-list []}
 
           expected (merge (catalogue/new-catalogue [])
-                          {;; hack, catalogue/format-catalogue-data orders the addon summary make them uncomparable
+                          {;; hack, catalogue/format-catalogue-data orders the addon summary making them uncomparable
                            :total 1
                            :addon-summary-list [user-addon]})]
 
       (with-running-app
         (core/add-user-addon! user-addon)
-        (is (= expected (catalogue/read-catalogue (core/paths :user-catalogue-file)))))))
+        (is (= expected (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))
 
+(deftest add-user-addon-to-user-catalogue--idempotence
   (testing "adding addons to the user catalogue is idempotent"
     (let [user-addon {:url "https://github.com/Aviana/HealComm"
                       :updated-date "2019-10-09T17:40:01Z"
@@ -1101,7 +1102,7 @@
                       :tag-list []}
 
           expected (merge (catalogue/new-catalogue [])
-                          {;; hack, catalogue/format-catalogue-data orders the addon summary make them uncomparable
+                          {;; hack, catalogue/format-catalogue-data orders the addon summary making them uncomparable
                            :total 1
                            :addon-summary-list [user-addon]})]
 
@@ -1110,46 +1111,6 @@
         (core/add-user-addon! user-addon)
         (core/add-user-addon! user-addon)
         (is (= expected (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))
-
-(deftest add+install-user-addon!
-  (testing "user addon is successfully added to the user catalogue from just a github url"
-    (let [every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
-
-          fake-routes {"https://api.github.com/repos/Aviana/HealComm/releases"
-                       {:get (fn [req] {:status 200 :body (slurp (fixture-path "github-repo-releases--aviana-healcomm.json"))})}
-
-                       "https://api.github.com/repos/Aviana/HealComm/contents"
-                       {:get (fn [req] {:status 200 :body "[]"})}
-
-                       "https://github.com/Aviana/HealComm/releases/download/2.04/HealComm.zip"
-                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-addon-zip-file)})}}
-
-          user-url "https://github.com/Aviana/HealComm"
-
-          install-dir (helper/install-dir)
-
-          expected-addon-dir (utils/join install-dir "EveryAddon")
-
-          expected-user-catalogue [{:tag-list [],
-                                    :game-track-list [],
-                                    :updated-date "2019-10-09T17:40:04Z",
-                                    :name "healcomm",
-                                    :source "github",
-                                    :label "HealComm",
-                                    :download-count 30946,
-                                    :source-id "Aviana/HealComm",
-                                    :url "https://github.com/Aviana/HealComm"}]]
-      (with-running-app
-        (core/set-addon-dir! install-dir)
-        (with-fake-routes-in-isolation fake-routes
-          (core/add+install-user-addon! user-url)
-
-          ;; addon was found and added to user catalogue
-          (is (= expected-user-catalogue
-                 (:addon-summary-list (catalogue/read-catalogue (core/paths :user-catalogue-file)))))
-
-          ;; addon was successfully download and installed
-          (is (fs/exists? expected-addon-dir)))))))
 
 (deftest moosh-addons
   (testing "addons are mooshed correctly when a match is found in the db"

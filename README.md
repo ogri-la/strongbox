@@ -49,13 +49,14 @@ Afterwards, use the `Update all` button to update all addons with new versions a
 ## Features
 
 * [classic and retail addon support](#classic-and-retail-addon-support)
+* [install addons from URL](#install-from-url)
 * [catalogue search](#catalogue-search)
 * [bulk update](#bulk-update)
 * [install addons from multiple sources](#install-addons-from-multiple-sources):
     - curseforge
     - wowinterface
     - tukui
-    - github using *releases*
+    - github (using *releases*)
 * [import and export lists of addons](#import-and-export-lists-of-addons)
 * [safeguards against bad addons](#safeguards-against-bad-addons)
 * [warnings when addons install other bundled addons](#warnings-when-addons-install-other-bundled-addons)
@@ -149,6 +150,16 @@ the same addon directory. If an addon is available for multiple addon systems it
 
 If in doubt which addon system an installed addon supports, look at the value in `WoW` column on the `installed` tab and 
 compare it to the `Version` value in the list of WoW [public client builds](https://wowpedia.fandom.com/wiki/Public_client_builds).
+
+### install addons from URL
+
+Strongbox supports installing addons using URLs from addon hosts.
+
+Addons installed this way are always available regardless of the catalogue you've selected. 
+
+For example, an addon imported from Github will be available even if you otherwise use Curseforge addons exclusively.
+
+Click `File` from the top menu and select `Import addon` and paste the URL of the addon you want to install.
 
 ### catalogue search
 

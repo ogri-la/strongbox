@@ -17,3 +17,5 @@
 ;; assume addon is compatible with the most recent version of retail (see above).
 (def default-interface-version 90500)
 (def default-interface-version-classic 11300)
+
+(def bullet "\u2022") ;; •

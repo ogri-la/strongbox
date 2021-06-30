@@ -45,3 +45,7 @@ dl "https://www.tukui.org/api.php?addon=98" "tukui--addon-details.json"
 dl "https://www.tukui.org/api.php?classic-addon=13" "tukui--classic-addon-details.json"
 dl "https://www.tukui.org/api.php?ui=tukui" "tukui--tukui-addon-proper.json"
 dl "https://www.tukui.org/api.php?ui=elvui" "tukui--elvui-addon-proper.json"
+
+# user-catalogue
+dl "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/releases" "user-catalogue--github.json"
+

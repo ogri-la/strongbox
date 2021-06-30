@@ -25,10 +25,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * bug, search, results not updated when catalogue is changed
     - done
 
-## todo
-
-* add release.json support for github addons
-
 * add support for finding addons by url for other hosts
     - wowinterface
         - https://www.wowinterface.com/downloads/info19037
@@ -49,8 +45,19 @@ see CHANGELOG.md for a more formal list of changes by release
     - so what happens if addon not found in catalogue?
         - add to user catalogue?
         - switch to full catalogue then switch back to original?
+    - done
+
+## todo
+
+* add release.json support for github addons
 
 ## todo bucket (no particular order)
+
+* importing addons, skip db lookup for addon urls that don't need it
+    - if we can 'expand it' then we can download it and install it.
+    - I think tukui, wowi can, github obs, curseforge could not
+
+* import and export addons using addon urls
 
 * addon detail, add 'x-website' / 'x-url' alongside 'browse local files' and addon host
 
@@ -78,9 +85,6 @@ see CHANGELOG.md for a more formal list of changes by release
         - perhaps attach 'detail' metadata to info messages that elaborate on the message and what can be done about it
     - it should stand out from the other messages, look friendly, etc
         - going with the further 'detail' metadata idea, adding an info icon would make it stand out
-
-* bug, sortof, I can see github addons when using wowi catalogue
-    - user catalogue should be selectable
 
 * bug, catalogue loading
     - while updating the catalogue with the new tukui addons I discovered a case where the catalogue *should* be failing validation but it wasn't.
@@ -194,6 +198,7 @@ see CHANGELOG.md for a more formal list of changes by release
         - some addons require the larger catalogue to resolve
         - github addons are resolved and installed by a different means...
 
+* add any tags, if they exist
 
 # addon
 

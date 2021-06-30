@@ -3,7 +3,10 @@
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :as timbre :refer [debug info warn error report spy]]
    [clojure.spec.alpha :as s]
+   [me.raynes.fs :as fs]
    [strongbox
+    [github-api :as github-api]
+    [db :as db]
     [logging :as logging]
     [addon :as addon]
     [constants :as constants]
@@ -11,7 +14,7 @@
     [tukui-api :as tukui-api]
     [catalogue :as catalogue]
     [http :as http]
-    [utils :as utils]
+    [utils :as utils :refer [if-let* message-list]]
     [curseforge-api :as curseforge-api]
     [wowinterface :as wowinterface]
     [core :as core :refer [get-state paths find-catalogue-local-path]]]))
@@ -393,6 +396,9 @@
         addon-id (utils/extract-addon-id addon)]
     (add-tab tab-id (or (:dirname addon) (:label addon) (:name addon) "[bug: missing tab name!]") closable? addon-id)))
 
+;; log entries
+;; todo: how much of this can be moved into logging.clj?
+
 (defn-spec log-entries-since-last-refresh ::sp/list-of-maps
   "returns a list of log entries since last refresh"
   ([]
@@ -408,10 +414,10 @@
 (defn-spec addon-log-entries (s/or :ok ::sp/list-of-maps, :app-not-started nil?)
   "returns a list of addon entries for the given `:dirname` since last refresh"
   [addon map?]
-  (when @core/state
+  (when-let [state @core/state]
     (let [not-report #(-> % :level (= :report) not)
           filter-fn (logging/log-line-filter-with-reports (core/selected-addon-dir) addon)]
-      (->> (core/get-state)
+      (->> state
            :log-lines ;; oldest first
            reverse ;; newest first
            (filter filter-fn)
@@ -451,6 +457,82 @@
   "returns `true` if the given `addon` has any errors in the log."
   [addon map?]
   (addon-has-log-level? :error (:dirname addon)))
+
+;; importing addons
+
+(defn-spec find-addon (s/or :ok :addon/summary, :error nil?)
+  "given a URL of a support addon host, parses it, looks for it in the catalogue, expands addon and attempts a dry run installation.
+  if successful, returns the addon-summary."
+  [addon-url string?, dry-run? boolean?]
+  (binding [http/*cache* (core/cache)]
+    (if-let* [addon-summary-stub (catalogue/parse-user-string addon-url)
+              source (:source addon-summary-stub)
+              match-on-list [[[:source :url] [:source :url]]
+                             [[:source :source-id] [:source :source-id]]]
+              addon-summary (if (= source "github")
+                              ;; special case for github
+                              (or (github-api/find-addon (:source-id addon-summary-stub))
+                                  (error (message-list
+                                          "Failed. URL must be:"
+                                          ["valid"
+                                           "originate from github.com"
+                                           "addon uses 'releases'"
+                                           "latest release has a packaged 'asset'"
+                                           "asset must be a .zip file"
+                                           "zip file must be structured like an addon"])))
+
+                              ;; look in the current catalogue. emit an error if we fail
+                              (or (:catalogue-match (db/-find-first-in-db (core/get-state :db) addon-summary-stub match-on-list))
+                                  (error (format "couldn't find addon in catalogue '%s'"
+                                                 (name (core/get-state :cfg :selected-catalogue))))))
+
+              ;; game track doesn't matter when adding it to the user catalogue.
+              ;; prefer retail though, it's the most common, and `strict` is `false`
+              addon (or (catalogue/expand-summary addon-summary :retail false)
+                        (error "failed to fetch details of addon"))
+
+              ;; a dry-run is good when importing an addon for the first time but
+              ;; not necessary when refreshing the user-catalogue
+              _ (if-not dry-run?
+                  true
+                  (or (core/install-addon-guard addon (core/selected-addon-dir) true)
+                      (error "failed dry-run installation")))]
+
+             ;; if-let* was successful!
+             addon-summary
+
+             ;; failed if-let* :(
+             nil)))
+
+(defn-spec import-addon nil?
+  "goes looking for given url and if found adds it to the user catalogue and then installs it."
+  [addon-url string?]
+  (if-let* [dry-run? true
+            addon-summary (find-addon addon-url dry-run?)
+            addon (core/expand-summary-wrapper addon-summary)]
+           ;; success! add to user-catalogue and proceed to install
+           (do (core/add-user-addon! addon-summary)
+               (core/install-addon addon (core/selected-addon-dir))
+               ;;(core/db-reload-catalogue) ;; db-reload-catalogue will call `refresh` which we want to trigger in the gui instead
+               (swap! core/state assoc :db nil) ;; will force a reload of db
+               nil)
+
+           ;; failed to find or expand summary, probably because of selected game track.
+           nil))
+
+(defn-spec refresh-user-catalogue nil?
+  "re-fetch each item in user catalogue using the URI and replace old entry with any updated details"
+  []
+  (binding [http/*cache* (core/cache)]
+    (info (format "refreshing \"%s\", this may take a minute ..."
+                  (-> (core/paths :user-catalogue-file) fs/base-name)))
+    (->> (core/get-create-user-catalogue)
+         :addon-summary-list
+         (map :url)
+         (map #(find-addon % false))
+         vec
+         core/add-user-addon!))
+  nil)
 
 
 ;; debug

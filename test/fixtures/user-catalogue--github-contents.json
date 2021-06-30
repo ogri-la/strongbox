@@ -1,0 +1,210 @@
+[
+  {
+    "name": ".editorconfig",
+    "path": ".editorconfig",
+    "sha": "dab7106adede09b7db8de6f70b84ecfa986f7958",
+    "size": 156,
+    "url": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/contents/.editorconfig?ref=master",
+    "html_url": "https://github.com/Stanzilla/AdvancedInterfaceOptions/blob/master/.editorconfig",
+    "git_url": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/git/blobs/dab7106adede09b7db8de6f70b84ecfa986f7958",
+    "download_url": "https://raw.githubusercontent.com/Stanzilla/AdvancedInterfaceOptions/master/.editorconfig",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/contents/.editorconfig?ref=master",
+      "git": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/git/blobs/dab7106adede09b7db8de6f70b84ecfa986f7958",
+      "html": "https://github.com/Stanzilla/AdvancedInterfaceOptions/blob/master/.editorconfig"
+    }
+  },
+  {
+    "name": ".github",
+    "path": ".github",
+    "sha": "76d8f69264298a2bde29f329a657cbe50850af22",
+    "size": 0,
+    "url": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/contents/.github?ref=master",
+    "html_url": "https://github.com/Stanzilla/AdvancedInterfaceOptions/tree/master/.github",
+    "git_url": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/git/trees/76d8f69264298a2bde29f329a657cbe50850af22",
+    "download_url": null,
+    "type": "dir",
+    "_links": {
+      "self": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/contents/.github?ref=master",
+      "git": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/git/trees/76d8f69264298a2bde29f329a657cbe50850af22",
+      "html": "https://github.com/Stanzilla/AdvancedInterfaceOptions/tree/master/.github"
+    }
+  },
+  {
+    "name": ".gitignore",
+    "path": ".gitignore",
+    "sha": "37d0e49940cfe1b2c631979e52cc5ce1287b5805",
+    "size": 21,
+    "url": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/contents/.gitignore?ref=master",
+    "html_url": "https://github.com/Stanzilla/AdvancedInterfaceOptions/blob/master/.gitignore",
+    "git_url": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/git/blobs/37d0e49940cfe1b2c631979e52cc5ce1287b5805",
+    "download_url": "https://raw.githubusercontent.com/Stanzilla/AdvancedInterfaceOptions/master/.gitignore",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/contents/.gitignore?ref=master",
+      "git": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/git/blobs/37d0e49940cfe1b2c631979e52cc5ce1287b5805",
+      "html": "https://github.com/Stanzilla/AdvancedInterfaceOptions/blob/master/.gitignore"
+    }
+  },
+  {
+    "name": ".luacheckrc",
+    "path": ".luacheckrc",
+    "sha": "9f9c3688683679768fd419a98395dc0f8aeaf438",
+    "size": 556313,
+    "url": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/contents/.luacheckrc?ref=master",
+    "html_url": "https://github.com/Stanzilla/AdvancedInterfaceOptions/blob/master/.luacheckrc",
+    "git_url": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/git/blobs/9f9c3688683679768fd419a98395dc0f8aeaf438",
+    "download_url": "https://raw.githubusercontent.com/Stanzilla/AdvancedInterfaceOptions/master/.luacheckrc",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/contents/.luacheckrc?ref=master",
+      "git": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/git/blobs/9f9c3688683679768fd419a98395dc0f8aeaf438",
+      "html": "https://github.com/Stanzilla/AdvancedInterfaceOptions/blob/master/.luacheckrc"
+    }
+  },
+  {
+    "name": ".pkgmeta",
+    "path": ".pkgmeta",
+    "sha": "3fcdcac117dfe26caf41b4204ac66047ee58babe",
+    "size": 74,
+    "url": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/contents/.pkgmeta?ref=master",
+    "html_url": "https://github.com/Stanzilla/AdvancedInterfaceOptions/blob/master/.pkgmeta",
+    "git_url": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/git/blobs/3fcdcac117dfe26caf41b4204ac66047ee58babe",
+    "download_url": "https://raw.githubusercontent.com/Stanzilla/AdvancedInterfaceOptions/master/.pkgmeta",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/contents/.pkgmeta?ref=master",
+      "git": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/git/blobs/3fcdcac117dfe26caf41b4204ac66047ee58babe",
+      "html": "https://github.com/Stanzilla/AdvancedInterfaceOptions/blob/master/.pkgmeta"
+    }
+  },
+  {
+    "name": "AdvancedInterfaceOptions.toc",
+    "path": "AdvancedInterfaceOptions.toc",
+    "sha": "72ab4275304e66b57e1f4c07a1a37e64ed3daa05",
+    "size": 606,
+    "url": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/contents/AdvancedInterfaceOptions.toc?ref=master",
+    "html_url": "https://github.com/Stanzilla/AdvancedInterfaceOptions/blob/master/AdvancedInterfaceOptions.toc",
+    "git_url": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/git/blobs/72ab4275304e66b57e1f4c07a1a37e64ed3daa05",
+    "download_url": "https://raw.githubusercontent.com/Stanzilla/AdvancedInterfaceOptions/master/AdvancedInterfaceOptions.toc",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/contents/AdvancedInterfaceOptions.toc?ref=master",
+      "git": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/git/blobs/72ab4275304e66b57e1f4c07a1a37e64ed3daa05",
+      "html": "https://github.com/Stanzilla/AdvancedInterfaceOptions/blob/master/AdvancedInterfaceOptions.toc"
+    }
+  },
+  {
+    "name": "README.md",
+    "path": "README.md",
+    "sha": "85f89ba1ea8d2f7c3c37c6ec9b0b69542ccba30e",
+    "size": 1174,
+    "url": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/contents/README.md?ref=master",
+    "html_url": "https://github.com/Stanzilla/AdvancedInterfaceOptions/blob/master/README.md",
+    "git_url": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/git/blobs/85f89ba1ea8d2f7c3c37c6ec9b0b69542ccba30e",
+    "download_url": "https://raw.githubusercontent.com/Stanzilla/AdvancedInterfaceOptions/master/README.md",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/contents/README.md?ref=master",
+      "git": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/git/blobs/85f89ba1ea8d2f7c3c37c6ec9b0b69542ccba30e",
+      "html": "https://github.com/Stanzilla/AdvancedInterfaceOptions/blob/master/README.md"
+    }
+  },
+  {
+    "name": "basicOptions.lua",
+    "path": "basicOptions.lua",
+    "sha": "63b44d1bdf0966bccf5b64c93d10a7aa203748fd",
+    "size": 41157,
+    "url": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/contents/basicOptions.lua?ref=master",
+    "html_url": "https://github.com/Stanzilla/AdvancedInterfaceOptions/blob/master/basicOptions.lua",
+    "git_url": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/git/blobs/63b44d1bdf0966bccf5b64c93d10a7aa203748fd",
+    "download_url": "https://raw.githubusercontent.com/Stanzilla/AdvancedInterfaceOptions/master/basicOptions.lua",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/contents/basicOptions.lua?ref=master",
+      "git": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/git/blobs/63b44d1bdf0966bccf5b64c93d10a7aa203748fd",
+      "html": "https://github.com/Stanzilla/AdvancedInterfaceOptions/blob/master/basicOptions.lua"
+    }
+  },
+  {
+    "name": "browser.lua",
+    "path": "browser.lua",
+    "sha": "6ad22622e20fa62a996213fcffbf8e75cf1fa216",
+    "size": 12395,
+    "url": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/contents/browser.lua?ref=master",
+    "html_url": "https://github.com/Stanzilla/AdvancedInterfaceOptions/blob/master/browser.lua",
+    "git_url": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/git/blobs/6ad22622e20fa62a996213fcffbf8e75cf1fa216",
+    "download_url": "https://raw.githubusercontent.com/Stanzilla/AdvancedInterfaceOptions/master/browser.lua",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/contents/browser.lua?ref=master",
+      "git": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/git/blobs/6ad22622e20fa62a996213fcffbf8e75cf1fa216",
+      "html": "https://github.com/Stanzilla/AdvancedInterfaceOptions/blob/master/browser.lua"
+    }
+  },
+  {
+    "name": "cvars.dump",
+    "path": "cvars.dump",
+    "sha": "1c4338df1311d16e5cbaeabdd889f3512daaf865",
+    "size": 76000,
+    "url": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/contents/cvars.dump?ref=master",
+    "html_url": "https://github.com/Stanzilla/AdvancedInterfaceOptions/blob/master/cvars.dump",
+    "git_url": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/git/blobs/1c4338df1311d16e5cbaeabdd889f3512daaf865",
+    "download_url": "https://raw.githubusercontent.com/Stanzilla/AdvancedInterfaceOptions/master/cvars.dump",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/contents/cvars.dump?ref=master",
+      "git": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/git/blobs/1c4338df1311d16e5cbaeabdd889f3512daaf865",
+      "html": "https://github.com/Stanzilla/AdvancedInterfaceOptions/blob/master/cvars.dump"
+    }
+  },
+  {
+    "name": "cvars.lua",
+    "path": "cvars.lua",
+    "sha": "aaaa70900c062a7a36399a5227854075282fa1a0",
+    "size": 91652,
+    "url": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/contents/cvars.lua?ref=master",
+    "html_url": "https://github.com/Stanzilla/AdvancedInterfaceOptions/blob/master/cvars.lua",
+    "git_url": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/git/blobs/aaaa70900c062a7a36399a5227854075282fa1a0",
+    "download_url": "https://raw.githubusercontent.com/Stanzilla/AdvancedInterfaceOptions/master/cvars.lua",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/contents/cvars.lua?ref=master",
+      "git": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/git/blobs/aaaa70900c062a7a36399a5227854075282fa1a0",
+      "html": "https://github.com/Stanzilla/AdvancedInterfaceOptions/blob/master/cvars.lua"
+    }
+  },
+  {
+    "name": "semlib",
+    "path": "semlib",
+    "sha": "ba679e41582d524ae96571362812843e09868204",
+    "size": 0,
+    "url": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/contents/semlib?ref=master",
+    "html_url": "https://github.com/Stanzilla/AdvancedInterfaceOptions/tree/master/semlib",
+    "git_url": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/git/trees/ba679e41582d524ae96571362812843e09868204",
+    "download_url": null,
+    "type": "dir",
+    "_links": {
+      "self": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/contents/semlib?ref=master",
+      "git": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/git/trees/ba679e41582d524ae96571362812843e09868204",
+      "html": "https://github.com/Stanzilla/AdvancedInterfaceOptions/tree/master/semlib"
+    }
+  },
+  {
+    "name": "tempfix.lua",
+    "path": "tempfix.lua",
+    "sha": "5af52030940c9e19d0f7f5f97048382915793e3d",
+    "size": 2363,
+    "url": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/contents/tempfix.lua?ref=master",
+    "html_url": "https://github.com/Stanzilla/AdvancedInterfaceOptions/blob/master/tempfix.lua",
+    "git_url": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/git/blobs/5af52030940c9e19d0f7f5f97048382915793e3d",
+    "download_url": "https://raw.githubusercontent.com/Stanzilla/AdvancedInterfaceOptions/master/tempfix.lua",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/contents/tempfix.lua?ref=master",
+      "git": "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/git/blobs/5af52030940c9e19d0f7f5f97048382915793e3d",
+      "html": "https://github.com/Stanzilla/AdvancedInterfaceOptions/blob/master/tempfix.lua"
+    }
+  }
+]

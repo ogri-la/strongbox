@@ -432,7 +432,9 @@
 (defn-spec unsteady? boolean?
   "returns `true` if given `addon` is being updated"
   [addon-name ::sp/name]
-  (utils/in? addon-name (get-state :unsteady-addon-list)))
+  (if @state
+    (utils/in? addon-name (get-state :unsteady-addon-list))
+    false))
 
 (defn affects-addon-wrapper
   [wrapped-fn]
@@ -524,7 +526,7 @@
   []
   (if-let [addon-dir (selected-addon-dir)]
     (let [addon-list (addon/load-installed-addons addon-dir)]
-      (info "loading installed addons:" addon-dir)
+      (info (format "loading (%s) installed addons in: %s" (count addon-list) addon-dir))
       (update-installed-addon-list! addon-list))
 
     ;; otherwise, ensure list of installed addons is cleared
@@ -674,7 +676,9 @@
 
           catalogue-data (p :p2/db:catalogue:read-catalogue (catalogue/read-catalogue catalogue-path {:bad-data? bad-json-file-handler}))
           user-catalogue-data (p :p2/db:catalogue:read-user-catalogue (catalogue/read-catalogue (paths :user-catalogue-file) {:bad-data? nil}))
-          final-catalogue (p :p2/db:catalogue:merge-catalogues (catalogue/merge-catalogues catalogue-data user-catalogue-data))]
+          ;; 2021-06-30: merge order changed. catalogue data is now merged over the top of the user-catalogue.
+          ;; this is because the user-catalogue may now contain addons from all hosts and is likely to be out of date.
+          final-catalogue (p :p2/db:catalogue:merge-catalogues (catalogue/merge-catalogues user-catalogue-data catalogue-data))]
       (-> final-catalogue :addon-summary-list count (str " addons in final catalogue") info)
       final-catalogue)))
 
@@ -752,23 +756,9 @@
 
 
 ;;
-
-
-(defn-spec refresh-user-catalogue nil?
-  "re-fetch each item in user catalogue using the URI and replace old entry with any updated details"
-  []
-  (binding [http/*cache* (cache)]
-    (info "refreshing \"user-catalogue.json\", this may take a minute ...")
-    (->> (get-create-user-catalogue)
-         :addon-summary-list
-         (map :url)
-         (map catalogue/parse-user-string)
-         (remove nil?)
-         add-user-addon!)))
-
-;;
 ;; addon summary and toc merging
 ;;
+
 
 (defn expand-summary-wrapper
   [addon-summary]
@@ -1102,37 +1092,6 @@
   []
   (swap! state assoc :db nil)
   (refresh))
-
-;; installing addons from strings
-
-(defn-spec add+install-user-addon! (s/or :ok :addon/addon, :less-ok :addon/summary, :failed nil?)
-  "convenience. parses string, adds to user catalogue, installs addon then reloads database.
-  relies on UI to call refresh (or not)"
-  [addon-url string?]
-  (binding [http/*cache* (cache)]
-    (if-let* [addon-summary (catalogue/parse-user-string addon-url)
-              ;; game track doesn't matter when adding it to the user catalogue. prefer retail though.
-              addon (catalogue/expand-summary addon-summary :retail false)
-              test-only? true
-              _ (install-addon-guard addon (selected-addon-dir) test-only?)]
-
-             ;; ... but does matter when installing it in to the current addon directory
-             (let [addon (expand-summary-wrapper addon-summary)]
-
-               (add-user-addon! addon-summary)
-
-               (when addon
-                 (install-addon addon (selected-addon-dir))
-                 (db-reload-catalogue)
-                 addon)
-
-               ;; failed to expand summary, probably because of selected game track.
-               ;; gui depends on difference between an addon and addon summary to know
-               ;; what error message to display.
-               (or addon addon-summary))
-
-             ;; failed to parse url, or expand summary, or trial installation
-             nil)))
 
 ;; init
 

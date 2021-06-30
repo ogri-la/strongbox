@@ -50,3 +50,17 @@
                        {:get (fn [req] {:status 404 :reason-phrase "Not Found" :body "<h1>Not Found</h1>"})}}]
       (with-fake-routes-in-isolation fake-routes
         (is (nil? (wowinterface-api/expand-summary given game-track)))))))
+
+(deftest parse-user-string
+  (testing "parsing wowinterface urls extracts the source-id"
+    (let [cases [["https://www.wowinterface.com/downloads/info8882" 8882]
+                 ["https://www.wowinterface.com/downloads/info8882-MasqueLiteStep.html" 8882]
+                 ["https://www.wowinterface.com/downloads/download8882-MasqueLiteStep" 8882]
+
+                 ["https://www.wowinterface.com/downloads/info23921-GSEGnomeSequencer-Enhanced-Advanc....html" 23921]
+
+                 ;; path to an alternate download.
+                 ;; would be nice to support but has nothing linking it to the catalogue
+                 ["https://www.wowinterface.com/downloads/dlfile1536/Masque_LiteStep-9.0.6-bcc.zip?1621368578" nil]]]
+      (doseq [[given expected] cases]
+        (is (= expected (wowinterface-api/parse-user-string given)))))))

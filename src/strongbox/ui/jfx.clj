@@ -18,7 +18,7 @@
     [logging :as logging]
     [addon :as addon]
     [specs :as sp]
-    [utils :as utils :refer [no-new-lines]]
+    [utils :as utils :refer [no-new-lines message-list]]
     [core :as core]])
   (:import
    [java.util List Calendar Locale]
@@ -53,8 +53,6 @@
 
 (def user-locale (Locale/getDefault))
 (def number-formatter (NumberFormat/getNumberInstance user-locale))
-
-(def blt "\u2022") ;; • bullet
 
 (def major-theme-map
   {:light
@@ -750,7 +748,9 @@
   [description map?]
   (-> description fx/create-component fx/instance))
 
+
 ;;
+
 
 (defn button
   "generates a simple button with a means to check to see if it should be disabled and an optional tooltip"
@@ -901,27 +901,19 @@
 
 (defn import-addon-handler
   "imports an addon by parsing a URL"
-  [event]
-  (let [addon-url (text-input "Enter URL of addon")
-
-        fail-msg ["Failed. URL must be:"
-                  "valid"
-                  "originate from github.com"
-                  "addon uses 'releases'"
-                  "latest release has a packaged 'asset'"
-                  "asset must be a .zip file"
-                  "zip file must be structured like an addon"]
-        fail-msg (clojure.string/join (format "\n %s " blt) fail-msg)
-
-        failure #(alert :error fail-msg)
-        warn-msg "Failed. Addon successfully added to catalogue but could not be installed."
-        warning #(alert :warning warn-msg)]
+  []
+  (let [addon-url (text-input "URL of addon:")]
     (when addon-url
-      (if-let [result (core/add+install-user-addon! addon-url)]
-        (when-not (contains? result :download-url)
-          (warning))
-        (failure))))
-  nil)
+      (let [error-messages
+            (logging/buffered-log
+             :warn
+             (cli/import-addon addon-url))]
+
+        (when-not (empty? error-messages)
+          (let [msg (message-list "warnings/errors while importing addon:" error-messages)]
+            (alert :warning msg {:wait? true})))
+
+        (core/refresh)))))
 
 (def json-files-extension-filters
   [{:description "JSON files" :extensions ["*.json"]}])
@@ -984,8 +976,7 @@
   (when-let [selected (core/get-state :selected-addon-list)]
     (if (utils/any (mapv :ignore? selected))
       (alert :error "Selection contains ignored addons. Stop ignoring them and then delete.")
-      (let [msg (str (format "Deleting %s:\n %s " (count selected) blt)
-                     (clojure.string/join (format "\n %s " blt) (map :label selected)))
+      (let [msg (message-list (format "Deleting %s:" (count selected)) (map :label selected))
             result (alert :confirm msg)]
         (when (= (.get result) ButtonType/OK)
           (cli/delete-selected)))))
@@ -1003,8 +994,7 @@
            (some-> selected core/expand-summary-wrapper vector cli/-install-update-these))]
       (if (empty? error-messages)
         (core/load-installed-addons)
-        (let [msg (str (format "warnings/errors while installing \"%s\":\n %s " (:label selected) blt)
-                       (clojure.string/join (format "\n %s " blt) error-messages))]
+        (let [msg (message-list (format "warnings/errors while installing \"%s\"" (:label selected)) error-messages)]
           (alert :warning msg {:wait? false}))))
     (core/refresh)))
 
@@ -1079,7 +1069,10 @@
   [{:keys [fx/context]}]
 
   (let [no-addon-dir? (nil? (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir]))
-        file-menu [(menu-item "_New addon directory" (async-event-handler wow-dir-picker) {:key "Ctrl+N"})
+        file-menu [(menu-item "Import addon" (async-handler import-addon-handler)
+                              {:disable no-addon-dir?})
+                   separator
+                   (menu-item "_New addon directory" (async-event-handler wow-dir-picker) {:key "Ctrl+N"})
                    (menu-item "Remove addon directory" (async-handler remove-addon-dir)
                               {:disable no-addon-dir?})
                    separator
@@ -1091,8 +1084,6 @@
                    (menu-item "Import list of addons" (async-event-handler import-addon-list-handler)
                               {:disable no-addon-dir?})
                    (menu-item "Export list of addons" (async-event-handler export-addon-list-handler)
-                              {:disable no-addon-dir?})
-                   (menu-item "Import addon from Github" (async-event-handler import-addon-handler)
                               {:disable no-addon-dir?})
                    (menu-item "Export Github addon list" (async-event-handler export-user-catalogue-handler)
                               {:disable no-addon-dir?})
@@ -1120,7 +1111,7 @@
                               (fx/sub-val context get-in [:app-state :cfg :selected-catalogue])
                               (fx/sub-val context get-in [:app-state :cfg :catalogue-location-list]))
                              [separator
-                              (menu-item "Refresh user catalogue" (async-handler core/refresh-user-catalogue))])
+                              (menu-item "Refresh user catalogue" (async-handler cli/refresh-user-catalogue))])
 
         cache-menu [(menu-item "Clear http cache" (async-handler core/delete-http-cache!))
                     (menu-item "Clear addon zips" (async-handler core/delete-downloaded-addon-zips!)

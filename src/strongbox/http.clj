@@ -120,8 +120,8 @@
                         :http-request-config (clj-http.core/request-config {:normalize-uri false})
                         ;; both of these throw a SocketTimeoutException:
                         ;; - https://docs.oracle.com/javase/8/docs/api/java/net/URLConnection.html
-                        :connection-timeout 5000 ;; allow 5s to connect to host
-                        :socket-timeout 5000 ;; allow 5s stall reading from a host
+                        :connection-timeout 8000 ;; allow 8s to connect to host
+                        :socket-timeout 8000 ;; allow 8s stall reading from a host
                         :headers {"User-Agent" (user-agent use-anon-useragent?)}}
                 params (merge params extra-params)
 
