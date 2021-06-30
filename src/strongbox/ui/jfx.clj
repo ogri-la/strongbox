@@ -902,7 +902,7 @@
 (defn import-addon-handler
   "imports an addon by parsing a URL"
   []
-  (let [addon-url (text-input "Enter URL of addon")]
+  (let [addon-url (text-input "URL of addon:")]
     (when addon-url
       (let [error-messages
             (logging/buffered-log

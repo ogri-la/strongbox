@@ -8,14 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* addons from Curseforge, wowinterface.com, Tukui and Github can now be imported from URLs rather than the catalogue.
+    - `File` -> `Import addon`
+    - imported addons are added to the 'user-catalogue' and available for installation regardless of selected catalogue.
+        - the user-catalogue lives here: `~/.config/strongbox/user-catalogue`
 * Github authentication using Github Personal Access Tokens
     - if the environment variable `GITHUB_TOKEN` is present, it is used to authenticate with Github for API calls.
     - remaining number of API calls available can be seen in the strongbox log tab.
 
 ### Changed
 
-* HTTP requests now have a 5s timeout.
-    - if it takes longer than 5s to make a connection or receive data, then the request is cancelled and an error logged.
+* `Import addon from Github` from the `File` menu has been renamed `Import addon` and is now the first entry.
+* `Catalogue` -> `Refresh user catalogue` will now refresh addons in the user-catalogue from all addon hosts.
+    - for non-Github addons, updated addon data is pulled from the currently selected catalogue.
+* HTTP requests now have an 8s timeout.
+    - if it takes longer than 8s to make a connection or receive data, then the request is cancelled and an error logged.
 * search, very minor, but trailing whitespace in a search term is now ignored.
 
 ### Fixed
@@ -23,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * HTTP "User-Agent" is now set correctly.
     - I don't think it's ever been working correctly. Total failure.
 * search results are now updated when the catalogue is switched and the search term, if any, is re-searched for.
+* Curseforge API has capped the number of results per-request to a max of 50
 
 ### Removed
 

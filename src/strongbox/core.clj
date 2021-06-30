@@ -432,7 +432,9 @@
 (defn-spec unsteady? boolean?
   "returns `true` if given `addon` is being updated"
   [addon-name ::sp/name]
-  (utils/in? addon-name (get-state :unsteady-addon-list)))
+  (if @state
+    (utils/in? addon-name (get-state :unsteady-addon-list))
+    false))
 
 (defn affects-addon-wrapper
   [wrapped-fn]
@@ -675,7 +677,7 @@
           catalogue-data (p :p2/db:catalogue:read-catalogue (catalogue/read-catalogue catalogue-path {:bad-data? bad-json-file-handler}))
           user-catalogue-data (p :p2/db:catalogue:read-user-catalogue (catalogue/read-catalogue (paths :user-catalogue-file) {:bad-data? nil}))
           ;; 2021-06-30: merge order changed. catalogue data is now merged over the top of the user-catalogue.
-          ;; this is because the user-catalogue may now contain addons from all hosts and is probably out of date.
+          ;; this is because the user-catalogue may now contain addons from all hosts and is likely to be out of date.
           final-catalogue (p :p2/db:catalogue:merge-catalogues (catalogue/merge-catalogues user-catalogue-data catalogue-data))]
       (-> final-catalogue :addon-summary-list count (str " addons in final catalogue") info)
       final-catalogue)))

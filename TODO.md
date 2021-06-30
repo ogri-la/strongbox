@@ -25,10 +25,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * bug, search, results not updated when catalogue is changed
     - done
 
-## todo
-
-* add release.json support for github addons
-
 * add support for finding addons by url for other hosts
     - wowinterface
         - https://www.wowinterface.com/downloads/info19037
@@ -49,6 +45,11 @@ see CHANGELOG.md for a more formal list of changes by release
     - so what happens if addon not found in catalogue?
         - add to user catalogue?
         - switch to full catalogue then switch back to original?
+    - done
+
+## todo
+
+* add release.json support for github addons
 
 ## todo bucket (no particular order)
 

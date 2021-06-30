@@ -414,10 +414,10 @@
 (defn-spec addon-log-entries (s/or :ok ::sp/list-of-maps, :app-not-started nil?)
   "returns a list of addon entries for the given `:dirname` since last refresh"
   [addon map?]
-  (when @core/state
+  (when-let [state @core/state]
     (let [not-report #(-> % :level (= :report) not)
           filter-fn (logging/log-line-filter-with-reports (core/selected-addon-dir) addon)]
-      (->> (core/get-state)
+      (->> state
            :log-lines ;; oldest first
            reverse ;; newest first
            (filter filter-fn)
@@ -483,8 +483,8 @@
 
                               ;; look in the current catalogue. emit an error if we fail
                               (or (:catalogue-match (db/-find-first-in-db (core/get-state :db) addon-summary-stub match-on-list))
-                                  (warn (format "couldn't find addon in catalogue '%s'"
-                                                (name (core/get-state :cfg :selected-catalogue))))))
+                                  (error (format "couldn't find addon in catalogue '%s'"
+                                                 (name (core/get-state :cfg :selected-catalogue))))))
 
               ;; game track doesn't matter when adding it to the user catalogue.
               ;; prefer retail though, it's the most common, and `strict` is `false`
@@ -505,6 +505,7 @@
              nil)))
 
 (defn-spec import-addon nil?
+  "goes looking for given url and if found adds it to the user catalogue and then installs it."
   [addon-url string?]
   (if-let* [dry-run? true
             addon-summary (find-addon addon-url dry-run?)

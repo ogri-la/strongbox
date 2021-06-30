@@ -159,7 +159,6 @@
                :label label
                ;; :notes is preferred but we'll fall back to :description
                :description (or (:notes keyvals) (:description keyvals))
-
                :interface-version (or (some-> keyvals :interface utils/to-int)
                                       constants/default-interface-version)
                :installed-version (:version keyvals)
