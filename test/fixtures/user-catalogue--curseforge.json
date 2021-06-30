@@ -1,0 +1,1397 @@
+{
+  "id": 13501,
+  "name": "Bartender4",
+  "authors": [
+    {
+      "name": "nevcairiel",
+      "url": "https://www.curseforge.com/members/32560-nevcairiel?username=nevcairiel",
+      "projectId": 13501,
+      "id": 77778,
+      "projectTitleId": null,
+      "projectTitleTitle": null,
+      "userId": 32560,
+      "twitchId": 62321014
+    }
+  ],
+  "attachments": [
+    {
+      "id": 64267,
+      "projectId": 13501,
+      "description": "",
+      "isDefault": true,
+      "thumbnailUrl": "https://media.forgecdn.net/avatars/thumbnails/64/267/256/256/636151513516385958.png",
+      "title": "636151513516385958.png",
+      "url": "https://media.forgecdn.net/avatars/64/267/636151513516385958.png",
+      "status": 1
+    }
+  ],
+  "websiteUrl": "https://www.curseforge.com/wow/addons/bartender4",
+  "gameId": 1,
+  "summary": "Simple and Advanced combined - Bartender4 ActionBar AddOn",
+  "defaultFileId": 3317600,
+  "downloadCount": 49487178,
+  "latestFiles": [
+    {
+      "id": 3317600,
+      "displayName": "4.10.9-classic",
+      "fileName": "Bartender4-4.10.9-classic.zip",
+      "fileDate": "2021-05-21T07:52:57.627Z",
+      "fileLength": 321240,
+      "releaseType": 1,
+      "fileStatus": 4,
+      "downloadUrl": "https://edge.forgecdn.net/files/3317/600/Bartender4-4.10.9-classic.zip",
+      "isAlternate": false,
+      "alternateFileId": 0,
+      "dependencies": [
+        {
+          "id": 64315838,
+          "addonId": 26499,
+          "type": 1,
+          "fileId": 3317600
+        },
+        {
+          "id": 64315832,
+          "addonId": 16386,
+          "type": 1,
+          "fileId": 3317600
+        },
+        {
+          "id": 64315833,
+          "addonId": 13376,
+          "type": 1,
+          "fileId": 3317600
+        },
+        {
+          "id": 64315835,
+          "addonId": 14295,
+          "type": 1,
+          "fileId": 3317600
+        },
+        {
+          "id": 64315834,
+          "addonId": 14328,
+          "type": 1,
+          "fileId": 3317600
+        },
+        {
+          "id": 64315836,
+          "addonId": 15049,
+          "type": 1,
+          "fileId": 3317600
+        },
+        {
+          "id": 64315831,
+          "addonId": 15552,
+          "type": 1,
+          "fileId": 3317600
+        },
+        {
+          "id": 64315837,
+          "addonId": 88673,
+          "type": 1,
+          "fileId": 3317600
+        }
+      ],
+      "isAvailable": true,
+      "modules": [
+        {
+          "foldername": "Bartender4",
+          "fingerprint": 1505448636,
+          "type": 3
+        }
+      ],
+      "packageFingerprint": 2226290539,
+      "gameVersion": [
+        "1.13.7"
+      ],
+      "sortableGameVersion": [
+        {
+          "gameVersionPadded": "0000000001.0000000013.0000000007",
+          "gameVersion": "1.13.7",
+          "gameVersionReleaseDate": "2021-04-20T00:00:00Z",
+          "gameVersionName": "1.13.7"
+        }
+      ],
+      "installMetadata": null,
+      "changelog": null,
+      "hasInstallScript": false,
+      "isCompatibleWithClient": true,
+      "categorySectionPackageType": 1,
+      "restrictProjectFileAccess": 1,
+      "projectStatus": 4,
+      "renderCacheId": 2319650,
+      "fileLegacyMappingId": null,
+      "projectId": 13501,
+      "parentProjectFileId": null,
+      "parentFileLegacyMappingId": null,
+      "fileTypeId": null,
+      "exposeAsAlternative": null,
+      "packageFingerprintId": 666480391,
+      "gameVersionDateReleased": "2021-04-20T00:00:00Z",
+      "gameVersionMappingId": 2959196,
+      "gameVersionId": 8292,
+      "gameId": 1,
+      "isServerPack": false,
+      "serverPackFileId": null,
+      "gameVersionFlavor": "wow_classic"
+    },
+    {
+      "id": 3317601,
+      "displayName": "4.10.9-bcc",
+      "fileName": "Bartender4-4.10.9-bcc.zip",
+      "fileDate": "2021-05-21T07:53:19.033Z",
+      "fileLength": 315107,
+      "releaseType": 1,
+      "fileStatus": 4,
+      "downloadUrl": "https://edge.forgecdn.net/files/3317/601/Bartender4-4.10.9-bcc.zip",
+      "isAlternate": false,
+      "alternateFileId": 0,
+      "dependencies": [
+        {
+          "id": 64315843,
+          "addonId": 14295,
+          "type": 1,
+          "fileId": 3317601
+        },
+        {
+          "id": 64315845,
+          "addonId": 88673,
+          "type": 1,
+          "fileId": 3317601
+        },
+        {
+          "id": 64315842,
+          "addonId": 14328,
+          "type": 1,
+          "fileId": 3317601
+        },
+        {
+          "id": 64315840,
+          "addonId": 16386,
+          "type": 1,
+          "fileId": 3317601
+        },
+        {
+          "id": 64315839,
+          "addonId": 15552,
+          "type": 1,
+          "fileId": 3317601
+        },
+        {
+          "id": 64315846,
+          "addonId": 26499,
+          "type": 1,
+          "fileId": 3317601
+        },
+        {
+          "id": 64315844,
+          "addonId": 15049,
+          "type": 1,
+          "fileId": 3317601
+        },
+        {
+          "id": 64315841,
+          "addonId": 13376,
+          "type": 1,
+          "fileId": 3317601
+        }
+      ],
+      "isAvailable": true,
+      "modules": [
+        {
+          "foldername": "Bartender4",
+          "fingerprint": 2631765186,
+          "type": 3
+        }
+      ],
+      "packageFingerprint": 131770765,
+      "gameVersion": [
+        "2.5.1"
+      ],
+      "sortableGameVersion": [
+        {
+          "gameVersionPadded": "0000000002.0000000005.0000000001",
+          "gameVersion": "2.5.1",
+          "gameVersionReleaseDate": "2021-03-31T00:00:00Z",
+          "gameVersionName": "2.5.1"
+        }
+      ],
+      "installMetadata": null,
+      "changelog": null,
+      "hasInstallScript": false,
+      "isCompatibleWithClient": true,
+      "categorySectionPackageType": 1,
+      "restrictProjectFileAccess": 1,
+      "projectStatus": 4,
+      "renderCacheId": 2319651,
+      "fileLegacyMappingId": null,
+      "projectId": 13501,
+      "parentProjectFileId": null,
+      "parentFileLegacyMappingId": null,
+      "fileTypeId": null,
+      "exposeAsAlternative": null,
+      "packageFingerprintId": 666480515,
+      "gameVersionDateReleased": "2021-03-31T00:00:00Z",
+      "gameVersionMappingId": 2959197,
+      "gameVersionId": 8287,
+      "gameId": 1,
+      "isServerPack": false,
+      "serverPackFileId": null,
+      "gameVersionFlavor": "wow_burning_crusade"
+    },
+    {
+      "id": 3317602,
+      "displayName": "4.10.9",
+      "fileName": "Bartender4-4.10.9.zip",
+      "fileDate": "2021-05-21T07:53:39.97Z",
+      "fileLength": 321679,
+      "releaseType": 1,
+      "fileStatus": 4,
+      "downloadUrl": "https://edge.forgecdn.net/files/3317/602/Bartender4-4.10.9.zip",
+      "isAlternate": false,
+      "alternateFileId": 0,
+      "dependencies": [
+        {
+          "id": 64315852,
+          "addonId": 14295,
+          "type": 1,
+          "fileId": 3317602
+        },
+        {
+          "id": 64315855,
+          "addonId": 26499,
+          "type": 1,
+          "fileId": 3317602
+        },
+        {
+          "id": 64315850,
+          "addonId": 13376,
+          "type": 1,
+          "fileId": 3317602
+        },
+        {
+          "id": 64315848,
+          "addonId": 16386,
+          "type": 1,
+          "fileId": 3317602
+        },
+        {
+          "id": 64315851,
+          "addonId": 14328,
+          "type": 1,
+          "fileId": 3317602
+        },
+        {
+          "id": 64315854,
+          "addonId": 88673,
+          "type": 1,
+          "fileId": 3317602
+        },
+        {
+          "id": 64315847,
+          "addonId": 15552,
+          "type": 1,
+          "fileId": 3317602
+        },
+        {
+          "id": 64315853,
+          "addonId": 15049,
+          "type": 1,
+          "fileId": 3317602
+        },
+        {
+          "id": 64315849,
+          "addonId": 19651,
+          "type": 1,
+          "fileId": 3317602
+        }
+      ],
+      "isAvailable": true,
+      "modules": [
+        {
+          "foldername": "Bartender4",
+          "fingerprint": 1895300554,
+          "type": 3
+        }
+      ],
+      "packageFingerprint": 3521037772,
+      "gameVersion": [
+        "9.0.5"
+      ],
+      "sortableGameVersion": [
+        {
+          "gameVersionPadded": "0000000009.0000000000.0000000005",
+          "gameVersion": "9.0.5",
+          "gameVersionReleaseDate": "2021-03-09T00:00:00Z",
+          "gameVersionName": "9.0.5"
+        }
+      ],
+      "installMetadata": null,
+      "changelog": null,
+      "hasInstallScript": false,
+      "isCompatibleWithClient": true,
+      "categorySectionPackageType": 1,
+      "restrictProjectFileAccess": 1,
+      "projectStatus": 4,
+      "renderCacheId": 2319652,
+      "fileLegacyMappingId": null,
+      "projectId": 13501,
+      "parentProjectFileId": null,
+      "parentFileLegacyMappingId": null,
+      "fileTypeId": null,
+      "exposeAsAlternative": null,
+      "packageFingerprintId": 666480633,
+      "gameVersionDateReleased": "2021-03-09T00:00:00Z",
+      "gameVersionMappingId": 2959198,
+      "gameVersionId": 8267,
+      "gameId": 1,
+      "isServerPack": false,
+      "serverPackFileId": null,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "id": 3317611,
+      "displayName": "4.10.9-1-gab2e00f-classic",
+      "fileName": "Bartender4-4.10.9-1-gab2e00f-classic.zip",
+      "fileDate": "2021-05-21T08:04:26.6Z",
+      "fileLength": 321415,
+      "releaseType": 3,
+      "fileStatus": 4,
+      "downloadUrl": "https://edge.forgecdn.net/files/3317/611/Bartender4-4.10.9-1-gab2e00f-classic.zip",
+      "isAlternate": false,
+      "alternateFileId": 0,
+      "dependencies": [
+        {
+          "id": 64316911,
+          "addonId": 88673,
+          "type": 1,
+          "fileId": 3317611
+        },
+        {
+          "id": 64316909,
+          "addonId": 14295,
+          "type": 1,
+          "fileId": 3317611
+        },
+        {
+          "id": 64316907,
+          "addonId": 13376,
+          "type": 1,
+          "fileId": 3317611
+        },
+        {
+          "id": 64316905,
+          "addonId": 15552,
+          "type": 1,
+          "fileId": 3317611
+        },
+        {
+          "id": 64316910,
+          "addonId": 15049,
+          "type": 1,
+          "fileId": 3317611
+        },
+        {
+          "id": 64316906,
+          "addonId": 16386,
+          "type": 1,
+          "fileId": 3317611
+        },
+        {
+          "id": 64316912,
+          "addonId": 26499,
+          "type": 1,
+          "fileId": 3317611
+        },
+        {
+          "id": 64316908,
+          "addonId": 14328,
+          "type": 1,
+          "fileId": 3317611
+        }
+      ],
+      "isAvailable": true,
+      "modules": [
+        {
+          "foldername": "Bartender4",
+          "fingerprint": 252935292,
+          "type": 3
+        }
+      ],
+      "packageFingerprint": 456899979,
+      "gameVersion": [
+        "1.13.7"
+      ],
+      "sortableGameVersion": [
+        {
+          "gameVersionPadded": "0000000001.0000000013.0000000007",
+          "gameVersion": "1.13.7",
+          "gameVersionReleaseDate": "2021-04-20T00:00:00Z",
+          "gameVersionName": "1.13.7"
+        }
+      ],
+      "installMetadata": null,
+      "changelog": null,
+      "hasInstallScript": false,
+      "isCompatibleWithClient": true,
+      "categorySectionPackageType": 1,
+      "restrictProjectFileAccess": 1,
+      "projectStatus": 4,
+      "renderCacheId": 2319661,
+      "fileLegacyMappingId": null,
+      "projectId": 13501,
+      "parentProjectFileId": null,
+      "parentFileLegacyMappingId": null,
+      "fileTypeId": null,
+      "exposeAsAlternative": null,
+      "packageFingerprintId": 666485462,
+      "gameVersionDateReleased": "2021-04-20T00:00:00Z",
+      "gameVersionMappingId": 2959216,
+      "gameVersionId": 8292,
+      "gameId": 1,
+      "isServerPack": false,
+      "serverPackFileId": null,
+      "gameVersionFlavor": "wow_classic"
+    },
+    {
+      "id": 3317612,
+      "displayName": "4.10.9-1-gab2e00f-bcc",
+      "fileName": "Bartender4-4.10.9-1-gab2e00f-bcc.zip",
+      "fileDate": "2021-05-21T08:04:50.93Z",
+      "fileLength": 315282,
+      "releaseType": 3,
+      "fileStatus": 4,
+      "downloadUrl": "https://edge.forgecdn.net/files/3317/612/Bartender4-4.10.9-1-gab2e00f-bcc.zip",
+      "isAlternate": false,
+      "alternateFileId": 0,
+      "dependencies": [
+        {
+          "id": 64316920,
+          "addonId": 26499,
+          "type": 1,
+          "fileId": 3317612
+        },
+        {
+          "id": 64316914,
+          "addonId": 16386,
+          "type": 1,
+          "fileId": 3317612
+        },
+        {
+          "id": 64316919,
+          "addonId": 88673,
+          "type": 1,
+          "fileId": 3317612
+        },
+        {
+          "id": 64316917,
+          "addonId": 14295,
+          "type": 1,
+          "fileId": 3317612
+        },
+        {
+          "id": 64316915,
+          "addonId": 13376,
+          "type": 1,
+          "fileId": 3317612
+        },
+        {
+          "id": 64316918,
+          "addonId": 15049,
+          "type": 1,
+          "fileId": 3317612
+        },
+        {
+          "id": 64316916,
+          "addonId": 14328,
+          "type": 1,
+          "fileId": 3317612
+        },
+        {
+          "id": 64316913,
+          "addonId": 15552,
+          "type": 1,
+          "fileId": 3317612
+        }
+      ],
+      "isAvailable": true,
+      "modules": [
+        {
+          "foldername": "Bartender4",
+          "fingerprint": 3530971563,
+          "type": 3
+        }
+      ],
+      "packageFingerprint": 2826594191,
+      "gameVersion": [
+        "2.5.1"
+      ],
+      "sortableGameVersion": [
+        {
+          "gameVersionPadded": "0000000002.0000000005.0000000001",
+          "gameVersion": "2.5.1",
+          "gameVersionReleaseDate": "2021-03-31T00:00:00Z",
+          "gameVersionName": "2.5.1"
+        }
+      ],
+      "installMetadata": null,
+      "changelog": null,
+      "hasInstallScript": false,
+      "isCompatibleWithClient": true,
+      "categorySectionPackageType": 1,
+      "restrictProjectFileAccess": 1,
+      "projectStatus": 4,
+      "renderCacheId": 2319662,
+      "fileLegacyMappingId": null,
+      "projectId": 13501,
+      "parentProjectFileId": null,
+      "parentFileLegacyMappingId": null,
+      "fileTypeId": null,
+      "exposeAsAlternative": null,
+      "packageFingerprintId": 666485586,
+      "gameVersionDateReleased": "2021-03-31T00:00:00Z",
+      "gameVersionMappingId": 2959217,
+      "gameVersionId": 8287,
+      "gameId": 1,
+      "isServerPack": false,
+      "serverPackFileId": null,
+      "gameVersionFlavor": "wow_burning_crusade"
+    },
+    {
+      "id": 3317613,
+      "displayName": "4.10.9-1-gab2e00f",
+      "fileName": "Bartender4-4.10.9-1-gab2e00f.zip",
+      "fileDate": "2021-05-21T08:05:15.833Z",
+      "fileLength": 321853,
+      "releaseType": 3,
+      "fileStatus": 4,
+      "downloadUrl": "https://edge.forgecdn.net/files/3317/613/Bartender4-4.10.9-1-gab2e00f.zip",
+      "isAlternate": false,
+      "alternateFileId": 0,
+      "dependencies": [
+        {
+          "id": 64316926,
+          "addonId": 14295,
+          "type": 1,
+          "fileId": 3317613
+        },
+        {
+          "id": 64316929,
+          "addonId": 26499,
+          "type": 1,
+          "fileId": 3317613
+        },
+        {
+          "id": 64316923,
+          "addonId": 19651,
+          "type": 1,
+          "fileId": 3317613
+        },
+        {
+          "id": 64316925,
+          "addonId": 14328,
+          "type": 1,
+          "fileId": 3317613
+        },
+        {
+          "id": 64316924,
+          "addonId": 13376,
+          "type": 1,
+          "fileId": 3317613
+        },
+        {
+          "id": 64316927,
+          "addonId": 15049,
+          "type": 1,
+          "fileId": 3317613
+        },
+        {
+          "id": 64316921,
+          "addonId": 15552,
+          "type": 1,
+          "fileId": 3317613
+        },
+        {
+          "id": 64316922,
+          "addonId": 16386,
+          "type": 1,
+          "fileId": 3317613
+        },
+        {
+          "id": 64316928,
+          "addonId": 88673,
+          "type": 1,
+          "fileId": 3317613
+        }
+      ],
+      "isAvailable": true,
+      "modules": [
+        {
+          "foldername": "Bartender4",
+          "fingerprint": 2717353747,
+          "type": 3
+        }
+      ],
+      "packageFingerprint": 361309172,
+      "gameVersion": [
+        "9.0.5"
+      ],
+      "sortableGameVersion": [
+        {
+          "gameVersionPadded": "0000000009.0000000000.0000000005",
+          "gameVersion": "9.0.5",
+          "gameVersionReleaseDate": "2021-03-09T00:00:00Z",
+          "gameVersionName": "9.0.5"
+        }
+      ],
+      "installMetadata": null,
+      "changelog": null,
+      "hasInstallScript": false,
+      "isCompatibleWithClient": true,
+      "categorySectionPackageType": 1,
+      "restrictProjectFileAccess": 1,
+      "projectStatus": 4,
+      "renderCacheId": 2319663,
+      "fileLegacyMappingId": null,
+      "projectId": 13501,
+      "parentProjectFileId": null,
+      "parentFileLegacyMappingId": null,
+      "fileTypeId": null,
+      "exposeAsAlternative": null,
+      "packageFingerprintId": 666485704,
+      "gameVersionDateReleased": "2021-03-09T00:00:00Z",
+      "gameVersionMappingId": 2959218,
+      "gameVersionId": 8267,
+      "gameId": 1,
+      "isServerPack": false,
+      "serverPackFileId": null,
+      "gameVersionFlavor": "wow_retail"
+    }
+  ],
+  "categories": [
+    {
+      "categoryId": 1018,
+      "name": "Action Bars",
+      "url": "https://www.curseforge.com/wow/addons/action-bars",
+      "avatarUrl": "https://media.forgecdn.net/avatars/54/454/636135209718137182.png",
+      "parentId": 1,
+      "rootId": 1,
+      "projectId": 13501,
+      "avatarId": 54454,
+      "gameId": 1
+    }
+  ],
+  "status": 4,
+  "primaryCategoryId": 1018,
+  "categorySection": {
+    "id": 1,
+    "gameId": 1,
+    "name": "Addons",
+    "packageType": 1,
+    "path": "Interface\\Addons",
+    "initialInclusionPattern": "(?i)^([^/]+)[\\\\/]\\1\\.toc$",
+    "extraIncludePattern": "(?i)^[^/\\\\]+[/\\\\]Bindings\\.xml$",
+    "gameCategoryId": 1
+  },
+  "slug": "bartender4",
+  "gameVersionLatestFiles": [
+    {
+      "gameVersion": "9.0.5",
+      "projectFileId": 3317613,
+      "projectFileName": "Bartender4-4.10.9-1-gab2e00f.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "2.5.1",
+      "projectFileId": 3317612,
+      "projectFileName": "Bartender4-4.10.9-1-gab2e00f-bcc.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_burning_crusade"
+    },
+    {
+      "gameVersion": "1.13.7",
+      "projectFileId": 3317611,
+      "projectFileName": "Bartender4-4.10.9-1-gab2e00f-classic.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_classic"
+    },
+    {
+      "gameVersion": "9.0.5",
+      "projectFileId": 3317602,
+      "projectFileName": "Bartender4-4.10.9.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "2.5.1",
+      "projectFileId": 3317601,
+      "projectFileName": "Bartender4-4.10.9-bcc.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_burning_crusade"
+    },
+    {
+      "gameVersion": "1.13.7",
+      "projectFileId": 3317600,
+      "projectFileName": "Bartender4-4.10.9-classic.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_classic"
+    },
+    {
+      "gameVersion": "1.13.5",
+      "projectFileId": 3240044,
+      "projectFileName": "Bartender4-4.10.7-classic.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_classic"
+    },
+    {
+      "gameVersion": "9.0.2",
+      "projectFileId": 3116677,
+      "projectFileName": "Bartender4-4.10.6.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "9.0.1",
+      "projectFileId": 3103586,
+      "projectFileName": "Bartender4-4.10.5-1-gaea0bea.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "1.13.5",
+      "projectFileId": 3103585,
+      "projectFileName": "Bartender4-4.10.5-1-gaea0bea-classic.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_classic"
+    },
+    {
+      "gameVersion": "9.0.1",
+      "projectFileId": 3086953,
+      "projectFileName": "Bartender4-4.10.5.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "8.3.0",
+      "projectFileId": 3078613,
+      "projectFileName": "Bartender4-4.9.0-16-g5a871a9.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "1.13.3",
+      "projectFileId": 3044583,
+      "projectFileName": "Bartender4-4.9.0-4-ge5bfd09-classic.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_classic"
+    },
+    {
+      "gameVersion": "8.3.0",
+      "projectFileId": 2870199,
+      "projectFileName": "Bartender4-4.9.0.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "1.13.3",
+      "projectFileId": 2870198,
+      "projectFileName": "Bartender4-4.9.0-classic.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_classic"
+    },
+    {
+      "gameVersion": "8.2.5",
+      "projectFileId": 2843094,
+      "projectFileName": "Bartender4-4.8.9-2-gc5bd6e2.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "8.2.5",
+      "projectFileId": 2843080,
+      "projectFileName": "Bartender4-4.8.9.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "1.13.2",
+      "projectFileId": 2843055,
+      "projectFileName": "Bartender4-4.8.8-2-gd43d3ab-classic.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_classic"
+    },
+    {
+      "gameVersion": "1.13.2",
+      "projectFileId": 2794702,
+      "projectFileName": "Bartender4-4.8.8-classic.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_classic"
+    },
+    {
+      "gameVersion": "8.2.0",
+      "projectFileId": 2784179,
+      "projectFileName": "Bartender4-4.8.7-2-gb6977ae.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "8.2.0",
+      "projectFileId": 2780888,
+      "projectFileName": "Bartender4-4.8.7.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "8.1.5",
+      "projectFileId": 2724523,
+      "projectFileName": "Bartender4-4.8.2-19-g086a5b3.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "8.1.0",
+      "projectFileId": 2664289,
+      "projectFileName": "Bartender4-4.8.2.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "8.1.0",
+      "projectFileId": 2664274,
+      "projectFileName": "Bartender4-4.8.1-4-g1b1195b-alpha.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "8.0.1",
+      "projectFileId": 2585279,
+      "projectFileName": "Bartender4-4.8.1.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "8.0.1",
+      "projectFileId": 2585252,
+      "projectFileName": "Bartender4-4.8.0-2-g03ef1a8-alpha.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "7.3.5",
+      "projectFileId": 2575890,
+      "projectFileName": "Bartender4-4.7.10-14-g0dede90-alpha.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "7.3.0",
+      "projectFileId": 2498143,
+      "projectFileName": "Bartender4-4.7.10-1-g5c05e08-alpha.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "7.3.0",
+      "projectFileId": 2471453,
+      "projectFileName": "Bartender4-4.7.10.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "7.2.5",
+      "projectFileId": 2449589,
+      "projectFileName": "Bartender4-4.7.9.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "7.2.5",
+      "projectFileId": 2449586,
+      "projectFileName": "Bartender4-4.7.8-1-g862369f-alpha.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "7.2.0",
+      "projectFileId": 2398602,
+      "projectFileName": "Bartender4-4.7.7.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "7.2.0",
+      "projectFileId": 2398600,
+      "projectFileName": "Bartender4-74bfd21-alpha.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "7.1.5",
+      "projectFileId": 2383564,
+      "projectFileName": "Bartender4-233e1c3-alpha.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "7.1.5",
+      "projectFileId": 2376511,
+      "projectFileName": "Bartender4-4.7.6.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "7.1.0",
+      "projectFileId": 2351456,
+      "projectFileName": "Bartender4-4.7.5.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "7.1.0",
+      "projectFileId": 2351453,
+      "projectFileName": "Bartender4-f236276-alpha.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "7.0.3",
+      "projectFileId": 950885,
+      "projectFileName": "Bartender4-4.7.3.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "7.0.3",
+      "projectFileId": 947179,
+      "projectFileName": "Bartender4-4.7.2-4-g396325a.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "6.2.4",
+      "projectFileId": 924847,
+      "projectFileName": "Bartender4-4.6.14-10-g67293dd.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "6.2.3",
+      "projectFileId": 912951,
+      "projectFileName": "Bartender4-4.6.14-1-gb264f8d.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "6.2.3",
+      "projectFileId": 911904,
+      "projectFileName": "Bartender4-4.6.14.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "6.2.2",
+      "projectFileId": 898712,
+      "projectFileName": "Bartender4-4.6.11.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "6.2.2",
+      "projectFileId": 897886,
+      "projectFileName": "Bartender4-4.6.10-2-ge46e8cf.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "6.2.0",
+      "projectFileId": 886361,
+      "projectFileName": "Bartender4-4.6.10.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "6.2.0",
+      "projectFileId": 885628,
+      "projectFileName": "Bartender4-4.6.9-1-g4d76161.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "6.1.0",
+      "projectFileId": 871356,
+      "projectFileName": "Bartender4-4.6.8.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "6.1.0",
+      "projectFileId": 871354,
+      "projectFileName": "Bartender4-4.6.7-3-g3bf0410.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "6.0.3",
+      "projectFileId": 862745,
+      "projectFileName": "Bartender4-4.6.6-2-g4905fdf.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "6.0.3",
+      "projectFileId": 855382,
+      "projectFileName": "Bartender4-4.6.6.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "6.0.2",
+      "projectFileId": 826271,
+      "projectFileName": "Bartender4-4.6.3-1-gf6c7890.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "6.0.2",
+      "projectFileId": 826244,
+      "projectFileName": "Bartender4-4.6.3.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "5.4.8",
+      "projectFileId": 814698,
+      "projectFileName": "Bartender4-4.5.13.2-10-g430843a.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "5.4.7",
+      "projectFileId": 790340,
+      "projectFileName": "Bartender4-4.5.13.2-8-gdbd8c46.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "5.4.1",
+      "projectFileId": 755334,
+      "projectFileName": "Bartender4-4.5.13.2-4-g26c7a85.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "5.4.0",
+      "projectFileId": 749972,
+      "projectFileName": "Bartender4-4.5.13.2.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "5.4.0",
+      "projectFileId": 749970,
+      "projectFileName": "Bartender4-4.5.13.1-1-gee6fa4b.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "5.3.0",
+      "projectFileId": 707060,
+      "projectFileName": "Bartender4-4.5.10.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "5.3.0",
+      "projectFileId": 707051,
+      "projectFileName": "Bartender4-4.5.9-1-g4d98fdf.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "5.2.0",
+      "projectFileId": 687109,
+      "projectFileName": "Bartender4-4.5.9.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "5.2.0",
+      "projectFileId": 687096,
+      "projectFileName": "Bartender4-4.5.6-1-g8e6e8e9.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "5.1.0",
+      "projectFileId": 651834,
+      "projectFileName": "Bartender4-4.5.8.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "5.0.5",
+      "projectFileId": 630379,
+      "projectFileName": "Bartender4-4.5.5.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "5.0.5",
+      "projectFileId": 628961,
+      "projectFileName": "Bartender4-4.5.4-1-g764fc96.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "5.0.4",
+      "projectFileId": 621674,
+      "projectFileName": "Bartender4-4.5.3-7-gabdfcec.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "5.0.4",
+      "projectFileId": 620790,
+      "projectFileName": "Bartender4-4.5.3.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "4.3.4",
+      "projectFileId": 602937,
+      "projectFileName": "Bartender4-4.4.20-3-g688c5a8.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "4.3.4",
+      "projectFileId": 601940,
+      "projectFileName": "Bartender4-mop-fixes-4.4.20.1-nolib.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "4.2.0",
+      "projectFileId": 601938,
+      "projectFileName": "Bartender4-mop-fixes-4.4.19-nolib.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "4.1.0",
+      "projectFileId": 601937,
+      "projectFileName": "Bartender4-mop-fixes-4.4.18-nolib.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "4.0.6",
+      "projectFileId": 601936,
+      "projectFileName": "Bartender4-mop-fixes-4.4.17-nolib.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "3.3.5",
+      "projectFileId": 601927,
+      "projectFileName": "Bartender4-mop-fixes-4.4.2-nolib.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "3.2.0",
+      "projectFileId": 601926,
+      "projectFileName": "Bartender4-mop-fixes-4.4.1-nolib.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "3.1.0",
+      "projectFileId": 601924,
+      "projectFileName": "Bartender4-mop-fixes-4.3.3-nolib.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "3.1.0",
+      "projectFileId": 601920,
+      "projectFileName": "Bartender4-mop-fixes-4.3.0-beta2-nolib.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "3.0.9",
+      "projectFileId": 601917,
+      "projectFileName": "Bartender4-mop-fixes-4.2.6-nolib.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "3.0.9",
+      "projectFileId": 601910,
+      "projectFileName": "Bartender4-mop-fixes-4.2.0-beta3-nolib.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "2.4.3",
+      "projectFileId": 601805,
+      "projectFileName": "Bartender4-mop-fixes-4.0.1.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "4.3.0",
+      "projectFileId": 560493,
+      "projectFileName": "Bartender4-4.4.20-2-g04cabae.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "4.3.0",
+      "projectFileId": 555596,
+      "projectFileName": "Bartender4-4.4.20.1.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "4.2.0",
+      "projectFileId": 548704,
+      "projectFileName": "Bartender4-4.4.19-5-g3ec39e4.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "4.1.0",
+      "projectFileId": 527925,
+      "projectFileName": "Bartender4-4.4.18-1-g8e40ddc.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "4.0.6",
+      "projectFileId": 504195,
+      "projectFileName": "Bartender4-4.4.16-1-gd79a65d.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "4.0.3",
+      "projectFileId": 480845,
+      "projectFileName": "Bartender4-4.4.14-5-g2d49a36.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "4.0.3",
+      "projectFileId": 480424,
+      "projectFileName": "Bartender4-4.4.14.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "4.0.1",
+      "projectFileId": 478936,
+      "projectFileName": "Bartender4-4.4.13-7-g2f970dc.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "4.0.1",
+      "projectFileId": 470217,
+      "projectFileName": "Bartender4-4.4.13.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "3.3.5",
+      "projectFileId": 439962,
+      "projectFileName": "Bartender4-4.4.2-12-g94f3b58.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "3.2.0",
+      "projectFileId": 399997,
+      "projectFileName": "Bartender4-blizzardart-alpha1-7-ga4d3c23.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "3.3.0",
+      "projectFileId": 399065,
+      "projectFileName": "Bartender4-4.4.2.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "3.3.0",
+      "projectFileId": 399052,
+      "projectFileName": "Bartender4-4.4.1-6-gfb3b048.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "3.0.8",
+      "projectFileId": 328738,
+      "projectFileName": "Bartender4-4.2.5-2-g53cf1e1.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "3.0.8",
+      "projectFileId": 327005,
+      "projectFileName": "Bartender4-4.2.5.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "3.0.3",
+      "projectFileId": 325296,
+      "projectFileName": "Bartender4-4.2.3-6-g4f7c46a.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "3.0.3",
+      "projectFileId": 322001,
+      "projectFileName": "Bartender4-4.2.3.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "3.0.2",
+      "projectFileId": 306123,
+      "projectFileName": "Bartender4-4.1.2-25-g94b3dec.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "3.0.2",
+      "projectFileId": 298025,
+      "projectFileName": "Bartender4-4.1.2.zip",
+      "fileType": 1,
+      "gameVersionFlavor": "wow_retail"
+    },
+    {
+      "gameVersion": "2.4.3",
+      "projectFileId": 146284,
+      "projectFileName": "Bartender4-4.0.1-1-g9d6bc2b.zip",
+      "fileType": 3,
+      "gameVersionFlavor": "wow_retail"
+    }
+  ],
+  "isFeatured": false,
+  "popularityScore": 81166.796875,
+  "gamePopularityRank": 10,
+  "primaryLanguage": "enUS",
+  "gameSlug": "wow",
+  "gameName": "World of Warcraft",
+  "portalName": "www.curseforge.com",
+  "dateModified": "2021-05-21T08:06:47.507Z",
+  "dateCreated": "2008-09-14T11:33:16Z",
+  "dateReleased": "2021-05-21T08:05:15.833Z",
+  "isAvailable": true,
+  "isExperiemental": false
+}

@@ -11,7 +11,7 @@
     [core :as core]]
    [me.raynes.fs :as fs :refer [with-cwd]]
    [taoensso.timbre :as timbre :refer [debug info warn error spy]]
-   [strongbox.test-helper :as helper :refer [with-running-app fixture-path]]))
+   [strongbox.test-helper :as helper :refer [with-running-app with-running-app+opts fixture-path]]))
 
 (use-fixtures :each helper/fixture-tempcwd)
 
@@ -420,7 +420,7 @@
                     :primary? true,
                     :source "curseforge",
                     :source-id 1}
-          
+
           expected-addon-dir (utils/join install-dir "EveryAddon")
           expected-user-catalogue [match]
 
@@ -475,7 +475,7 @@
                  :download-count 2838,
                  :source-id 98,
                  :url "https://www.tukui.org/addons.php?id=98"}
-          
+
           ;; a mush of the above (.nfo written during install) and the EveryAddon .toc file
           expected {:description "Does what no other addon does, slightly differently",
                     :dirname "EveryAddon",
@@ -488,7 +488,7 @@
                     :primary? true,
                     :source "tukui",
                     :source-id 98}
-          
+
           expected-addon-dir (utils/join install-dir "EveryAddon")
           expected-user-catalogue [match]
 
@@ -528,3 +528,75 @@
           ;; and that the addon was added to the user catalogue
           (is (= expected-user-catalogue
                  (:addon-summary-list (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))))
+
+(deftest refresh-user-catalogue
+  (testing "the user catalogue can be 'refreshed', pulling in updated information from github and the current catalogue"
+    (with-running-app+opts {:ui nil}
+      ;; start with an up-to-date catalogue and 'old' user catalogue
+      ;; call `cli/refresh-user-catalogue`
+      ;; provide dummy updates
+      ;; expect new values
+
+      (let [;; user-catalogue with a bunch of addons across all hosts that the user has added.
+            user-catalogue-fixture (fixture-path "user-catalogue--populated.json")
+
+            ;; default app catalogue, contains newer versions of the addon summaries in the user-catalogue.
+            ;; this is because the catalogue is updated periodically and the user-catalogue is not.
+            short-catalogue (slurp (fixture-path "user-catalogue--short-catalogue.json"))
+
+            tukui-fixture (slurp (fixture-path "user-catalogue--tukui.json"))
+            tukui-classic-fixture (slurp (fixture-path "user-catalogue--tukui-classic.json"))
+            tukui-classic-tbc-fixture (slurp (fixture-path "user-catalogue--tukui-classic-tbc.json"))
+            curseforge-fixture (slurp (fixture-path "user-catalogue--curseforge.json"))
+            wowinterface-fixture (slurp (fixture-path "user-catalogue--wowinterface.json"))
+            github-fixture (slurp (fixture-path "user-catalogue--github.json"))
+            github-contents-fixture (slurp (fixture-path "user-catalogue--github-contents.json"))
+            github-toc-fixture (slurp (fixture-path "user-catalogue--github-toc.json"))
+            fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
+                         {:get (fn [req] {:status 200 :body short-catalogue})}
+
+                         "https://www.tukui.org/api.php?addons"
+                         {:get (fn [req] {:status 200 :body tukui-fixture})}
+
+                         "https://www.tukui.org/api.php?classic-addons"
+                         {:get (fn [req] {:status 200 :body tukui-classic-fixture})}
+
+                         "https://www.tukui.org/api.php?classic-tbc-addons"
+                         {:get (fn [req] {:status 200 :body tukui-classic-tbc-fixture})}
+
+                         "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/releases"
+                         {:get (fn [req] {:status 200 :body github-fixture})}
+
+                         "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/contents"
+                         {:get (fn [req] {:status 200 :body github-contents-fixture})}
+
+                         "https://raw.githubusercontent.com/Stanzilla/AdvancedInterfaceOptions/master/AdvancedInterfaceOptions.toc"
+                         {:get (fn [req] {:status 200 :body github-toc-fixture})}
+
+                         "https://api.mmoui.com/v3/game/WOW/filedetails/24566.json"
+                         {:get (fn [req] {:status 200 :body wowinterface-fixture})}
+
+                         "https://addons-ecs.forgesvc.net/api/v2/addon/13501"
+                         {:get (fn [req] {:status 200 :body curseforge-fixture})}}]
+
+        (helper/install-dir)
+        (fs/copy user-catalogue-fixture (core/paths :user-catalogue-file))
+        (with-global-fake-routes-in-isolation fake-routes
+          (cli/start {})
+
+          ;; sanity check, ensure user-catalogue loaded
+          (is (= 6 (count (core/get-state :db))))
+
+          ;; we need to load the short-catalogue using newer versions of what is in the user-catalogue
+          ;; the user-catalogue is then matched against db, the newer summary returned and written to the user catalogue
+
+          (let [;; I've modified the user-catalogue--populated.json fixture to be 'older' that the short-catalogue fixture by
+                ;; decrementing the download counts by 1. when the user-catalogue is refreshed we expect 
+                inc-downloads #(update % :download-count inc)
+                today (utils/datestamp-now-ymd)
+                expected-user-catalogue (-> (core/get-create-user-catalogue)
+                                            (update-in [:addon-summary-list] #(mapv inc-downloads %))
+                                            (assoc :datestamp today))]
+            (cli/refresh-user-catalogue)
+            ;; ensure new user-catalogue matches expectations
+            (is (= expected-user-catalogue (core/get-create-user-catalogue)))))))))

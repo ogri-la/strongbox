@@ -3,6 +3,7 @@
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :as timbre :refer [debug info warn error report spy]]
    [clojure.spec.alpha :as s]
+   [me.raynes.fs :as fs]
    [strongbox
     [github-api :as github-api]
     [db :as db]
@@ -459,9 +460,10 @@
 
 ;; importing addons
 
-(defn-spec import-addon nil?
-  "given a URL of a support addon host, expands addon, adds it to the user-catalogue and installs it, if possible"
-  [addon-url string?]
+(defn-spec find-addon (s/or :ok :addon/summary, :error nil?)
+  "given a URL of a support addon host, parses it, looks for it in the catalogue, expands addon and attempts a dry run installation.
+  if successful, returns the addon-summary."
+  [addon-url string?, dry-run? boolean?]
   (binding [http/*cache* (core/cache)]
     (if-let* [addon-summary-stub (catalogue/parse-user-string addon-url)
               source (:source addon-summary-stub)
@@ -487,32 +489,49 @@
               ;; game track doesn't matter when adding it to the user catalogue.
               ;; prefer retail though, it's the most common, and `strict` is `false`
               addon (or (catalogue/expand-summary addon-summary :retail false)
-                        (error "failed to expand summary"))
+                        (error "failed to fetch details of addon"))
 
-              test-only? true
-              _ (or (core/install-addon-guard addon (core/selected-addon-dir) test-only?)
-                    (error "failed to install addon"))]
+              ;; a dry-run is good when importing an addon for the first time but
+              ;; not necessary when refreshing the user-catalogue
+              _ (if-not dry-run?
+                  true
+                  (or (core/install-addon-guard addon (core/selected-addon-dir) true)
+                      (error "failed dry-run installation")))]
 
-      ;; if-let* was successful! add the summary to the user-catalogue
-      (do (core/add-user-addon! addon-summary)
-          ;; and then attempt to install it. game track matters now, so re-parse addon data.
-          ;; todo: maybe use `cli/install-addon` ...?
-          (if-let [addon (core/expand-summary-wrapper addon-summary)]
-            (do (core/install-addon addon (core/selected-addon-dir))
-                ;;(core/db-reload-catalogue) ;; todo: enough of a refresh?
-                (swap! core/state assoc :db nil) ;; forces a reload of db
-                ;;addon)
-                nil)
+             ;; if-let* was successful!
+             addon-summary
 
-            ;; failed to expand summary, probably because of selected game track.
-            ;; GUI depends on difference between an addon and addon summary to know
-            ;; what error message to display.
-            ;; todo: generate the error here via log messages
-            ;;(or addon addon-summary)))
-            nil))
+             ;; failed if-let* :(
+             nil)))
 
-      ;; failed if-let* (failed to parse url/expand summary/trial installation)
-      nil)))
+(defn-spec import-addon nil?
+  [addon-url string?]
+  (if-let* [dry-run? true
+            addon-summary (find-addon addon-url dry-run?)
+            addon (core/expand-summary-wrapper addon-summary)]
+           ;; success! add to user-catalogue and proceed to install
+           (do (core/add-user-addon! addon-summary)
+               (core/install-addon addon (core/selected-addon-dir))
+               ;;(core/db-reload-catalogue) ;; db-reload-catalogue will call `refresh` which we want to trigger in the gui instead
+               (swap! core/state assoc :db nil) ;; will force a reload of db
+               nil)
+
+           ;; failed to find or expand summary, probably because of selected game track.
+           nil))
+
+(defn-spec refresh-user-catalogue nil?
+  "re-fetch each item in user catalogue using the URI and replace old entry with any updated details"
+  []
+  (binding [http/*cache* (core/cache)]
+    (info (format "refreshing \"%s\", this may take a minute ..."
+                  (-> (core/paths :user-catalogue-file) fs/base-name)))
+    (->> (core/get-create-user-catalogue)
+         :addon-summary-list
+         (map :url)
+         (map #(find-addon % false))
+         vec
+         core/add-user-addon!))
+  nil)
 
 
 ;; debug

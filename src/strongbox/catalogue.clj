@@ -103,12 +103,12 @@
 
 
 (defn-spec format-catalogue-data :catalogue/catalogue
-  "returns a correctly formatted catalogue given a list of addons and a created and updated date"
-  [addon-list :addon/summary-list, created-date ::sp/ymd-dt]
+  "returns a correctly formatted catalogue given a list of addons and a datestamp"
+  [addon-list :addon/summary-list, datestamp ::sp/ymd-dt]
   (let [addon-list (mapv #(into (omap/ordered-map) (sort %))
                          (sort-by :name addon-list))]
     {:spec {:version 2}
-     :datestamp created-date
+     :datestamp datestamp
      :total (count addon-list)
      :addon-summary-list addon-list}))
 
@@ -197,7 +197,7 @@
 (defn-spec parse-user-string (s/or :by-source (s/keys :req-un [:addon/source :addon/source-id]),
                                    :by-url (s/keys :req-un [:addon/source ::sp/url])
                                    :error nil?)
-  "given a string, figures out the addon source (github, etc) and dispatches accordingly."
+  "given a string from the user, figures out the addon source (github, etc), calls the right module and returns a stub"
   [uin string?]
   (let [dispatch-map {"github" github-api/parse-user-string
                       "wowinterface" wowinterface-api/parse-user-string
@@ -211,6 +211,7 @@
       (let [source (utils/url-to-addon-source url)]
         (if-let [f (get dispatch-map source)]
           (when-let [result (f url)]
+            ;; special handling for curseforge, that returns a URL to be matched against catalogue.
             (merge {:source source} (if (= source "curseforge") {:url result} {:source-id result})))
           (warn "unsupported URL"))))))
 
@@ -220,8 +221,7 @@
 
 (defn-spec merge-catalogues (s/or :ok :catalogue/catalogue, :error nil?)
   "merges catalogue `cat-b` over catalogue `cat-a`.
-  earliest creation date preserved.
-  latest updated date preserved.
+  latest datestamp preserved.
   addon-summary-list is unique by `:source` and `:source-id` with differing values replaced by those in `cat-b`"
   [cat-a (s/nilable :catalogue/catalogue), cat-b (s/nilable :catalogue/catalogue)]
   (let [matrix {;;[true true] ;; two non-empty catalogues, ideal case
@@ -232,7 +232,7 @@
         key [(not-empty? cat-a) (not-empty? cat-b)]]
     (if (contains? matrix key)
       (get matrix key)
-      (let [created-date (first (sort [(:datestamp cat-a) (:datestamp cat-b)])) ;; earliest wins
+      (let [datestamp (last (sort [(:datestamp cat-a) (:datestamp cat-b)])) ;; latest wins
             addons-a (:addon-summary-list cat-a)
             addons-b (:addon-summary-list cat-b)
             addon-summary-list (->> (concat addons-a addons-b) ;; join the two lists
@@ -240,7 +240,7 @@
                                     vals ;; drop the map
                                     (map (partial apply merge))) ;; merge (not replace) the groups into single maps
             ]
-        (format-catalogue-data addon-summary-list created-date)))))
+        (format-catalogue-data addon-summary-list datestamp)))))
 
 ;; 
 

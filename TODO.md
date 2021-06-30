@@ -85,9 +85,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - it should stand out from the other messages, look friendly, etc
         - going with the further 'detail' metadata idea, adding an info icon would make it stand out
 
-* bug, sortof, I can see github addons when using wowi catalogue
-    - user catalogue should be selectable
-
 * bug, catalogue loading
     - while updating the catalogue with the new tukui addons I discovered a case where the catalogue *should* be failing validation but it wasn't.
         - it came down to an :opt vs :opt-un in the spec
@@ -200,6 +197,7 @@ see CHANGELOG.md for a more formal list of changes by release
         - some addons require the larger catalogue to resolve
         - github addons are resolved and installed by a different means...
 
+* add any tags, if they exist
 
 # addon
 

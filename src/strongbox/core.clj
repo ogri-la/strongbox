@@ -10,7 +10,6 @@
    [trptcolin.versioneer.core :as versioneer]
    [envvar.core :refer [env]]
    [strongbox
-    [github-api :as github-api]
     [addon :as addon]
     [db :as db]
     [config :as config]
@@ -675,7 +674,9 @@
 
           catalogue-data (p :p2/db:catalogue:read-catalogue (catalogue/read-catalogue catalogue-path {:bad-data? bad-json-file-handler}))
           user-catalogue-data (p :p2/db:catalogue:read-user-catalogue (catalogue/read-catalogue (paths :user-catalogue-file) {:bad-data? nil}))
-          final-catalogue (p :p2/db:catalogue:merge-catalogues (catalogue/merge-catalogues catalogue-data user-catalogue-data))]
+          ;; 2021-06-30: merge order changed. catalogue data is now merged over the top of the user-catalogue.
+          ;; this is because the user-catalogue may now contain addons from all hosts and is probably out of date.
+          final-catalogue (p :p2/db:catalogue:merge-catalogues (catalogue/merge-catalogues user-catalogue-data catalogue-data))]
       (-> final-catalogue :addon-summary-list count (str " addons in final catalogue") info)
       final-catalogue)))
 
@@ -753,23 +754,9 @@
 
 
 ;;
-
-
-(defn-spec refresh-user-catalogue nil?
-  "re-fetch each item in user catalogue using the URI and replace old entry with any updated details"
-  []
-  (binding [http/*cache* (cache)]
-    (info "refreshing \"user-catalogue.json\", this may take a minute ...")
-    (->> (get-create-user-catalogue)
-         :addon-summary-list
-         (map :source-id)
-         (map github-api/find-addon)
-         (remove nil?)
-         add-user-addon!)))
-
-;;
 ;; addon summary and toc merging
 ;;
+
 
 (defn expand-summary-wrapper
   [addon-summary]

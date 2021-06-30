@@ -1082,14 +1082,15 @@
                       :tag-list []}
 
           expected (merge (catalogue/new-catalogue [])
-                          {;; hack, catalogue/format-catalogue-data orders the addon summary make them uncomparable
+                          {;; hack, catalogue/format-catalogue-data orders the addon summary making them uncomparable
                            :total 1
                            :addon-summary-list [user-addon]})]
 
       (with-running-app
         (core/add-user-addon! user-addon)
-        (is (= expected (catalogue/read-catalogue (core/paths :user-catalogue-file)))))))
+        (is (= expected (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))
 
+(deftest add-user-addon-to-user-catalogue--idempotence
   (testing "adding addons to the user catalogue is idempotent"
     (let [user-addon {:url "https://github.com/Aviana/HealComm"
                       :updated-date "2019-10-09T17:40:01Z"
@@ -1101,7 +1102,7 @@
                       :tag-list []}
 
           expected (merge (catalogue/new-catalogue [])
-                          {;; hack, catalogue/format-catalogue-data orders the addon summary make them uncomparable
+                          {;; hack, catalogue/format-catalogue-data orders the addon summary making them uncomparable
                            :total 1
                            :addon-summary-list [user-addon]})]
 

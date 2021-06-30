@@ -1,0 +1,19 @@
+[
+  {
+    "UID": "24566",
+    "UICATID": "27",
+    "UIVersion": "v9.0.5-1",
+    "UIDate": 1624443558000,
+    "UIMD5": "95de258a3ede44542d109f0cca63948e",
+    "UIFileName": "WQAchievements-v9.0.5-1.zip",
+    "UIDownload": "https://cdn.wowinterface.com/downloads/getfile.php?id=24566&d=1624443558&minion",
+    "UIPending": "0",
+    "UIName": "WQAchievements",
+    "UIAuthorName": "Urtgard",
+    "UIDescription": "Would you like to be alerted when a certain world quest is available?\r\n\r\nThis addon can alert you when a world quest is up that is needed for an achievement.\r\nBut wait - there's more! It can also let you know about world quests that award mounts, pets, reputation, currency, toys, item upgrades... You can even enter in a custom world quest or reward to watch for that might not be in the settings. It watches for both Legion and Battle for Azeroth world quests.\r\n\r\nAdditionally it tracks emissaries and mission tables from Warlords of Draenor, Legion and Battle for Azeroth.\r\n\r\nYou'll get notifications either in your chat or as a separate window.\r\n\r\n[URL=\"https://github.com/Urtgard/WQAchievements/blob/master/credits.md\"]Credits[/URL]",
+    "UIChangeLog": "[size=5]WQAchievements[/size]\r\n[size=4][url=https://github.com/Urtgard/WQAchievements/tree/v9.0.5-1]v9.0.5-1[/url] (2021-04-05)[/size]\r\n[url=https://github.com/Urtgard/WQAchievements/compare/v9.0.2-2...v9.0.5-1]Full Changelog[/url] [url=https://github.com/Urtgard/WQAchievements/releases]Previous Releases[/url]\r\n[list]\r\n[*]Interface version bumped\r\n[*]Tithe Collector's Vessel fixed\r\n[*]Animated Ulna for Carpal pet\r\n[*]What Bastion Remembered fixed\r\n[*]Impressing Zo'Sorg\r\n[/list]",
+    "UIHitCount": "27450",
+    "UIHitCountMonthly": "40",
+    "UIFavoriteTotal": "27"
+  }
+]
