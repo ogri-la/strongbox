@@ -6,47 +6,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* gui, deleting addons seems a little slow because the confirmation dialog pauses until the job is done
-    - done
-
-* http, add a timeout for requests
-    - I have tukui API taking a looooong time
-* add a timeout for downloads
-    - tukui.org is up but it's being reaaaaalllllly slow and updates appear to have hanged when they haven't
-    - done
-* github, add support for user supplied github token
-    - necessary if they want a large number of github addons without hassles
-    - implemented in strongbox-comrades
-        - really easy
-    - use GITHUB_TOKEN envvar
-        - dont even think about storing this raw in config
-    - done
-
-* bug, search, results not updated when catalogue is changed
-    - done
-
-* add support for finding addons by url for other hosts
-    - wowinterface
-        - https://www.wowinterface.com/downloads/info19037
-            - source: wowinterface
-            - source-id: 19037
-    - curseforge
-        - https://www.curseforge.com/wow/addons/autorepair
-            - url: https://www.curseforge.com/wow/addons/autorepair
-    - github
-        - already happening with 'import'
-        - https://github.com/Aviana/LunaUnitFrames
-            - source: github
-            - source-id: Aviana/LunaUnitFrames
-    - tukui
-        - https://www.tukui.org/addons.php?id=6
-            - source: tukui
-            - source-id: 6
-    - so what happens if addon not found in catalogue?
-        - add to user catalogue?
-        - switch to full catalogue then switch back to original?
-    - done
-
 ## todo
 
 ## todo bucket (no particular order)
