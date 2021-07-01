@@ -37,9 +37,19 @@ Just for my own reference
     git tag 0.6.0
 * push
     git push --tags
-* wait for release to appear
-    - https://travis-ci.org/ogri-la/strongbox
-* update github release information with that from changelog
+
+* vagrant up
+* cd strongbox
+* rm -rf ./release/ strongbox ./target/ /vagrant/release/
+* ./build-linux-image.sh
+* mv ./strongbox ./target/*-standalone.jar ./release/
+* cd release
+* sha256sum strongbox > strongbox.sha256
+* sha256sum strongbox-4.3.0-standalone.jar > strongbox-4.3.0-standalone.jar.sha256
+* mv ./release /vagrant/
+* update github release information
+    - with changelog
+    - with release files
 
 
 * checkout develop
@@ -59,6 +69,7 @@ Just for my own reference
 * update PKGBUILD
     - change 'pkgver'
     - change 'sha256sums'
+    - set pkgrel = 1
 * run `makepkg --printsrcinfo > .SRCINFO`
 * commit 
 * push to github
