@@ -20,14 +20,14 @@ Arch Linux users can install `strongbox` from the [AUR](https://aur.archlinux.or
 
 For other Linux users:
 
-1. download: [./releases/strongbox](https://github.com/ogri-la/strongbox/releases/download/4.2.0/strongbox)
+1. download: [./releases/strongbox](https://github.com/ogri-la/strongbox/releases/download/4.3.0/strongbox)
 2. make executable: `chmod +x strongbox`
 3. run: `./strongbox`
 
 If you're on macOS or having a problem with the binary or just prefer Java `.jar` files (requires Java 11+):
 
-1. download: [./releases/strongbox-4.2.0-standalone.jar](https://github.com/ogri-la/strongbox/releases/download/4.2.0/strongbox-4.2.0-standalone.jar)
-2. run: `java -jar strongbox-4.2.0-standalone.jar`
+1. download: [./releases/strongbox-4.3.0-standalone.jar](https://github.com/ogri-la/strongbox/releases/download/4.3.0/strongbox-4.3.0-standalone.jar)
+2. run: `java -jar strongbox-4.3.0-standalone.jar`
 
 ## Usage
 
@@ -49,13 +49,14 @@ Afterwards, use the `Update all` button to update all addons with new versions a
 ## Features
 
 * [classic and retail addon support](#classic-and-retail-addon-support)
+* [install addons from URL](#install-addons-from-url)
 * [catalogue search](#catalogue-search)
 * [bulk update](#bulk-update)
 * [install addons from multiple sources](#install-addons-from-multiple-sources):
     - curseforge
     - wowinterface
     - tukui
-    - github using *releases*
+    - github (using *releases*)
 * [import and export lists of addons](#import-and-export-lists-of-addons)
 * [safeguards against bad addons](#safeguards-against-bad-addons)
 * [warnings when addons install other bundled addons](#warnings-when-addons-install-other-bundled-addons)
@@ -150,6 +151,16 @@ the same addon directory. If an addon is available for multiple addon systems it
 If in doubt which addon system an installed addon supports, look at the value in `WoW` column on the `installed` tab and 
 compare it to the `Version` value in the list of WoW [public client builds](https://wowpedia.fandom.com/wiki/Public_client_builds).
 
+### install addons from URL
+
+Strongbox supports installing addons using URLs from addon hosts.
+
+Addons installed this way are always available regardless of the catalogue you've selected. 
+
+For example, an addon imported from Github will be available even if you otherwise use Curseforge addons exclusively.
+
+Click `File` from the top menu and select `Import addon` and paste the URL of the addon you want to install.
+
 ### catalogue search
 
 Strongbox supports searching for addons from the following addon hosts:
@@ -201,6 +212,22 @@ Strongbox supports installing addons from the following addon hosts:
 Click the `search` tab and begin typing. Select the addon you wish to install and click the `install selected` button.
 
 Addons hosted on Github must meet [certain requirements](./github-addons.md) before they can be installed.
+
+#### Github API authentication
+
+Installing and updating addons from Github uses the Github API.
+
+Anonymous usage of the Github API allows 60 requests/hr before your requests are blocked.
+
+Strongbox can authenticate with the Github API by specifying the `GITHUB_TOKEN` *environment variable* using 
+a [Personal Access Token](https://docs.github.com/en/github/authenticating-to-github/keeping-your-account-and-data-secure/creating-a-personal-access-token).
+
+Environment variables can be set in many different ways:
+
+* from the shell like: `$ GITHUB_TOKEN=my-secret-token strongbox`
+* by modifying `~/.config/plasma-workspace/env` [for KDE](https://userbase.kde.org/Session_Environment_Variables/en) and setting `GITHUB_TOKEN=my-secret-token`
+* by modifying `~/.profile` [for Gnome](https://help.ubuntu.com/community/EnvironmentVariables) and setting `GITHUB_TOKEN=my-secret-token`
+* system-wide (affecting all users) by modifying `/etc/environment` and setting `GITHUB_TOKEN=my-secret-token`
 
 ### import and export lists of addons
 

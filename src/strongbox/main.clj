@@ -54,7 +54,10 @@
     (case (:ui opts)
       :cli (cli/stop)
       :gui (jfx :stop)
-      (jfx :stop))
+
+      ;; allows us to start the app without starting a UI during testing.
+      (when (not core/testing?)
+        (jfx :stop)))
     (core/stop core/state)))
 
 (defn shutdown-hook
@@ -69,7 +72,10 @@
   (case (:ui cli-opts)
     :cli (cli/start cli-opts)
     :gui (jfx :start)
-    (jfx :start))
+
+    ;; allows us to start the app without starting a UI during testing.
+    (when (not core/testing?)
+      (jfx :start)))
   nil)
 
 (defn restart

@@ -1,5 +1,6 @@
 (ns strongbox.db
   (:require
+   [clojure.string]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :refer [log debug info warn error spy]]
@@ -17,7 +18,7 @@
 (defn-spec find-in-db :db/addon-catalogue-match
   "looks for `installed-addon` in the given `db`, matching `toc-key` to a `catalogue-key`.
   if a `toc-key` and `catalogue-key` are actually lists, then all the `toc-keys` must match the `catalogue-keys`"
-  [db :addon/summary-list, installed-addon :addon/installed, toc-keys :db/toc-keys catalogue-keys :db/catalogue-keys]
+  [db :addon/summary-list, installed-addon :db/installed-addon-or-import-stub, toc-keys :db/toc-keys, catalogue-keys :db/catalogue-keys]
   (let [;; [:source :source-id] => [:source :source-id], :name => [:name]
         catalogue-keys (if (vector? catalogue-keys) catalogue-keys [catalogue-keys])
         toc-keys (if (vector? toc-keys) toc-keys [toc-keys])
@@ -37,7 +38,7 @@
 
         results (if missing-args?
                   [] ;; don't look for 'nil', just skip with no results
-                  (into [] (filter match?) db))
+                  (into [] (filter match?) db)) ;; todo: I think the `xform` parameter in this `into` form needs to be comped with `first`
         match (-> results first)]
     (when match
       {;; the relationship the match was made on: [[:source :source-id] [:source :source_id]]
@@ -45,15 +46,15 @@
        ;; the values of the match: ["curseforge" "deadly-boss-mods"]
        :key arg-vals
        :installed-addon installed-addon
-       :matched? (not (nil? match))
+       :matched? (not (nil? match)) ;; todo: still used?
        :catalogue-match match})))
 
 ;; todo: can we do better than 'map?' now?
 (defn-spec -find-first-in-db (s/or :match map?, :no-match nil?)
   "find a match for the given `installed-addon` in the database using a list of attributes in `match-on-list`.
   returns immediately when first match is found (does not check other joins in `match-on-list`)."
-  [db :addon/summary-list, installed-addon :addon/installed, match-on-list vector?]
-  (if (or (:ignore? installed-addon)
+  [db :addon/summary-list, installed-addon :db/installed-addon-or-import-stub, match-on-list sequential?]
+  (if (or (:ignore? installed-addon) ;; todo: should this check be done? db is a bit low level for this
           (empty? match-on-list))
     ;; either addon is being ignored, or,
     ;; we have exhausted all possibilities. not finding a match is ok.
@@ -113,7 +114,8 @@
 
     ;; we should see if a non-regex solution may be faster:
     ;; - https://www.baeldung.com/java-case-insensitive-string-matching
-    (let [label-regex (re-pattern (str "(?i)^" uin ".*"))
+    (let [uin (clojure.string/trim uin)
+          label-regex (re-pattern (str "(?i)^" uin ".*"))
           desc-regex (re-pattern (str "(?i).*" uin ".*"))
           slow-fn (fn [row]
                     (or

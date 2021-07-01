@@ -2,6 +2,7 @@
   (:require
    [slugify.core :refer [slugify]]
    [clojure.spec.alpha :as s]
+   [clojure.string :refer [lower-case]]
    [orchestra.core :refer [defn-spec]]
    ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [strongbox
@@ -132,3 +133,14 @@
                (download-classic-tbc-summaries)
                [(download-tukui-summary)]
                [(download-elvui-summary)])))
+
+(defn-spec parse-user-string (s/or :ok :addon/source-id, :error nil?)
+  "extracts the addon ID from the given `url`, handling the edge cases of for retail tukui and elvui"
+  [url ::sp/url]
+  (let [[numeral string] (some->> url java.net.URL. .getQuery (re-find #"(?i)(?:id=(\d+)|ui=(tukui|elvui))") rest)]
+    (if numeral
+      (Integer/valueOf numeral)
+      (case (-> string (or "") lower-case)
+        "tukui" -1
+        "elvui" -2
+        nil))))

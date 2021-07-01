@@ -618,3 +618,28 @@
         (re-find classic-tbc-regex string) :classic-tbc
         (re-find classic-regex string) :classic
         (re-find retail-regex string) :retail))))
+
+(defn-spec url-to-addon-source (s/or :known-source :addon/source, :unknown-source nil?)
+  "returns the source of an addon for a given `url`"
+  [url-str ::sp/url]
+  (let [url-obj (-> url-str java.net.URL.)
+        host (.getHost url-obj)
+        host-sans-www (if (clojure.string/starts-with? host "www.")
+                        (subs host 4)
+                        host)]
+    (case host-sans-www
+      "github.com" "github"
+      "wowinterface.com" "wowinterface"
+      "curseforge.com" "curseforge"
+      "tukui.org" (case (.getPath url-obj)
+                    "/download.php" "tukui"
+                    "/addons.php" "tukui"
+                    "/classic-addons.php" "tukui-classic"
+                    "/classic-tbc-addons.php" "tukui-classic-tbc"
+                    nil)
+      nil)))
+
+(defn-spec message-list string?
+  "returns a multi-line string with the given `msg` on top and each message in `msg-list` bulleted beneath it"
+  [msg string?, msg-list ::sp/list-of-strings]
+  (clojure.string/join (format "\n %s " constants/bullet) (into [msg] msg-list)))

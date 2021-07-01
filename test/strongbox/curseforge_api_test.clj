@@ -179,7 +179,7 @@
 (deftest extract-addon-summary
   (testing "data extracted from curseforge api 'search' results is correct"
     (let [fixture (slurp (fixture-path "curseforge-api-search--truncated.json"))
-          fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/search?gameId=1&index=0&pageSize=255&searchFilter=&sort=3"
+          fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/search?gameId=1&index=0&pageSize=50&searchFilter=&sort=3"
                        {:get (fn [req] {:status 200 :body fixture})}}
           expected [{:created-date "2016-05-09T17:21:30.1Z",
                      :description "Restores access to removed interface options in Legion",
@@ -331,3 +331,26 @@
                [nil :retail]]]
     (doseq [[given expected] cases]
       (is (= expected (curseforge-api/game-version-flavor-to-game-track given))))))
+
+(deftest parse-user-string
+  (let [cases [["https://www.curseforge.com/wow/addons/deadly-boss-mods"
+                "https://www.curseforge.com/wow/addons/deadly-boss-mods"]
+
+               ["https://www.curseforge.com/wow/addons/deadly-boss-mods/files"
+                "https://www.curseforge.com/wow/addons/deadly-boss-mods"]
+
+               ["https://www.curseforge.com/wow/addons/deadly-boss-mods/relations/dependencies"
+                "https://www.curseforge.com/wow/addons/deadly-boss-mods"]
+
+               ["https://www.curseforge.com/wow/addons/deadly-boss-mods/files/3345671"
+                "https://www.curseforge.com/wow/addons/deadly-boss-mods"]
+
+               ;; invalid cases
+               ["https://www.curseforge.com" nil]
+               ["https://www.curseforge.com/wow" nil]
+               ["https://www.curseforge.com/wow/addons" nil]
+               ["https://www.curseforge.com" nil]
+               ["https://www.curseforge.com/wowee/hoo/boy" nil]]]
+
+    (doseq [[given expected] cases]
+      (is (= expected (curseforge-api/parse-user-string given))))))

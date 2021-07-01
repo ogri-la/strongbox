@@ -4,7 +4,7 @@
   <groupId>ogri-la</groupId>
   <artifactId>strongbox</artifactId>
   <packaging>jar</packaging>
-  <version>4.2.0</version>
+  <version>4.3.0</version>
   <name>strongbox</name>
   <description>World Of Warcraft Addon Manager</description>
   <url>https://github.com/ogri-la/strongbox</url>
@@ -18,7 +18,7 @@
     <url>https://github.com/ogri-la/strongbox</url>
     <connection>scm:git:git://github.com/ogri-la/strongbox.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/ogri-la/strongbox.git</developerConnection>
-    <tag>b2e8fe098f9f8948c29469ca063d2fe31fad8493</tag>
+    <tag>987a989bda3752d8c049c1300ee2df0d54ba7602</tag>
   </scm>
   <build>
     <sourceDirectory>src</sourceDirectory>

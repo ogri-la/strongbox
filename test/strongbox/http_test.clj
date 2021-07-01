@@ -50,6 +50,22 @@
       (doseq [[given expected] cases]
         (is (= expected (http/strongbox-user-agent given)))))))
 
+(deftest user-agent-present
+  (testing "user agent is present on outgoing requests"
+    (let [url "http://localhost/"
+          fake-routes {url {:get (fn [req]
+                                   {:status 200 :body "" :headers (:headers req)})}}
+          output-file nil
+          message nil
+          params {}
+          use-anon? false
+          expected (http/user-agent use-anon?)]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (-> url
+                            (http/-download output-file message params)
+                            :headers
+                            (get "user-agent"))))))))
+
 (comment
   "doesn't work as expected. The fake response doesn't trigger a redirect. Not sure why."
   (deftest http-redirect
@@ -70,3 +86,16 @@
         (with-fake-routes-in-isolation fake-routes
           (is (= expected-bad (http/-download url nil "message" default-request-config)))
           (is (= expected-good (http/download url))))))))
+
+(deftest socket-timeout
+  (testing "timeouts are caught and a 500 http response is returned"
+    (let [url "http://foo.bar/"
+          fake-routes {url {:get (fn [req]
+                                   (throw (java.net.SocketTimeoutException. "Read timed out")))}}
+          output-file nil
+          message nil
+          extra-params {}
+          expected {:host "foo.bar", :reason-phrase "Connection timed out", :status 500}]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (http/-download url output-file message extra-params)))))))
+

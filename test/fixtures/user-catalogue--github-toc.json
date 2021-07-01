@@ -1,0 +1,22 @@
+## Interface: 90005
+## Interface-Classic: 11306
+## Interface-BCC: 20501
+## Title: Advanced Interface Options
+## Author: Stanzilla, Semlar
+## Version: @project-version@
+## Notes: Restores access to removed interface options in Legion
+## X-Category: Interface Enhancements
+## X-Website: https://www.curseforge.com/wow/addons/advancedinterfaceoptions
+## X-Curse-Project-ID: 99982
+## X-WoWI-ID: 25002
+## X-Wago-ID: ZQ6aPNW7
+## DefaultState: Enabled
+## LoadOnDemand: 0
+## SavedVariables: AdvancedInterfaceOptionsSaved
+
+semlib\semlib.xml
+cvars.lua
+basicOptions.lua
+browser.lua
+
+tempfix.lua

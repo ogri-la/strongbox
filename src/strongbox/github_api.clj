@@ -42,8 +42,11 @@
   [toc-data map?]
   (->> (-> toc-data
            ;; hrm: this only allows for two possible game tracks, one normal and one hiding in the template area
+           ;; 2021-06-10: see release.json
            (select-keys [:interface :#interface])
            vals)
+
+       (map utils/to-int)
        (map utils/interface-version-to-game-track)
 
        ;; 2021-05-02: unknown game versions of 2.x (that are now considered "Classic (TBC)") were returning `nil` as the game track.
@@ -161,26 +164,22 @@
 
 ;;
 
-(defn-spec extract-source-id (s/or :ok string?, :error nil?)
+(defn-spec parse-user-string (s/or :ok :addon/source-id :error nil?)
+  "extracts the addon ID from the given `url`."
   [url ::sp/url]
   (->> url java.net.URL. .getPath (re-matches #"^/([^/]+/[^/]+)[/]?.*") rest first))
 
-(defn-spec parse-user-string (s/or :ok :addon/summary, :error nil?)
-  [uin string?]
-  (if-let* [;; if *all* of these conditions succeed (non-nil), return a catalogue entry
-            obj (some-> uin utils/unmangle-https-url java.net.URL.)
-            path (when-not (empty? (.getPath obj)) (.getPath obj))
-
-            ;; values here are tentative because given URL may resolve to a different URL
-            [-owner -repo] (-> path (subs 1) (split #"/") (pad 2))
-            -source-id (when (and -owner -repo)
-                         (format "%s/%s" -owner -repo))
-            release-list (download-releases -source-id)
+(defn-spec find-addon (s/or :ok :addon/summary, :error nil?)
+  [source-id :addon/source-id]
+  (if-let* [release-list (download-releases source-id)
             latest-release (first release-list) ;; releases must be used
-            _ (-> latest-release :assets nilable) ;; releases must be using uploaded assets
 
-            ;; these are the values we want to be using
-            source-id (-> latest-release :html_url extract-source-id)
+            ;; releases must be using uploaded assets
+            ;; todo: revisit this logic. the latest release may not be a good representative
+            _ (-> latest-release :assets nilable)
+
+            ;; will correct any case problems. see tests.
+            source-id (-> latest-release :html_url parse-user-string)
             [owner repo] (split source-id #"/")
 
             download-count (->> release-list (map :assets) flatten (map :download_count) (apply +))]
@@ -198,5 +197,4 @@
             :tag-list []}
 
            ;; 'something' failed to parse :(
-           ;; would love a way to pass back a more specific error
            nil))

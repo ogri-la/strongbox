@@ -321,6 +321,9 @@
                                    (fn [data]
                                      (= (:total data) (count (:addon-summary-list data))))))
 
+;; the snippet of keys used to do a db lookup during an import-addon
+(s/def :catalogue/import-stub (s/keys :opt-un [::url :addon/source :addon/source-id]))
+
 ;; catalogue locations
 
 (s/def :catalogue/name keyword?)
@@ -337,10 +340,14 @@
 (s/def :db/toc-keys (s/or :keyword keyword? :list-of-keywords ::list-of-keywords))
 (s/def :db/catalogue-keys :db/toc-keys)
 
-(s/def :db/idx (s/coll-of keyword?))
+(s/def :db/-idx (s/coll-of keyword?))
+(s/def :db/idx (s/or :single :db/-idx, :compound (s/coll-of :db/-idx)))
 (s/def :db/key vector?) ;; coll of any
 (s/def :db/catalogue-match :addon/summary)
-(s/def :db/installed-addon :addon/installed) ;; alias :(
+
+(s/def :db/installed-addon-or-import-stub (s/or :installed-addon :addon/installed,
+                                                :import-stub :catalogue/import-stub))
+(s/def :db/installed-addon :db/installed-addon-or-import-stub) ;; alias :(
 (s/def :db/addon-catalogue-match (s/or :no-match nil?
                                        :match (s/keys :req-un [:db/idx :db/key :db/installed-addon ::matched? :db/catalogue-match])))
 ;; javafx, cljfx, gui
