@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file. This change
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 4.3.0 - unreleased
+## 4.3.0
 
 ### Added
 
@@ -31,8 +31,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - I don't think it's ever been working correctly. Total failure.
 * search results are now updated when the catalogue is switched and the search term, if any, is re-searched for.
 * Curseforge API has capped the number of results per-request to a max of 50
-
-### Removed
 
 ## 4.2.0
 
