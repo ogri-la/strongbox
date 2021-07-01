@@ -49,9 +49,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
-* add release.json support for github addons
-
 ## todo bucket (no particular order)
+
+* add release.json support for github addons
 
 * importing addons, skip db lookup for addon urls that don't need it
     - if we can 'expand it' then we can download it and install it.
