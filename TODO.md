@@ -8,6 +8,25 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+* gui, download progress bar *inside* the grid ...?
+    - pure fantasy?
+    - defer until after job queue
+
+* greater parallelism
+    - internal job queue
+    - replace log at bottom of screen with a list of jobs being processed and how far along they are
+        - each job can be cancelled/stopped/discarded
+
+* a 'stop' button to stop updates would be nice
+
+* only unique jobs in queue
+    - pumping the update all button won't do much
+
+* download addon details in parallel
+    - speed benefits, mostly
+    - share a pool of connections between threads
+        - N connections serving M threads
+
 ## todo bucket (no particular order)
 
 * add release.json support for github addons
@@ -18,7 +37,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * import and export addons using addon urls
 
-* addon detail, add 'x-website' / 'x-url' alongside 'browse local files' and addon host
+* toc, addon detail, add 'x-website' / 'x-url' alongside 'browse local files' and addon host
 
 * change split button 'outdent' to 'indent'
     - and if split, keep it 'pressed in'
@@ -91,20 +110,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 # job queue
 
-* gui, download progress bar *inside* the grid ...?
-    - pure fantasy?
-    - defer until after job queue
-* greater parallelism
-    - internal job queue
-    - replace log at bottom of screen with a list of jobs being processed and how far along they are
-        - each job can be cancelled/stopped/discarded
-* a 'stop' button to stop updates would be nice
-* only unique jobs in queue
-    - pumping the update all button won't do much
-* download addon details in parallel
-    - speed benefits, mostly
-    - share a pool of connections between threads
-        - N connections serving M threads
+
 * performance, check addons for updates immediately after loading
     - if after we've read the nfo data and we have everything we need, check the addon for updates immediately
         - don't wait for db loading and addon matching
