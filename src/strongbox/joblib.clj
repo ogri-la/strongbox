@@ -74,22 +74,18 @@
   [queue-atm f]
   (add-to-queue! queue-atm (job-info (job f))))
 
-(defn get-job
-  "fetches the job from the queue"
-  [queue job-id]
-  (:job (get queue job-id)))
+(defn job-not-started?
+  "returns `true` if the job hasn't been started yet."
+  [job]
+  (fn? job))
 
 (defn job-started?
   "returns `true` if the job has been started. It may even be done."
   [job]
   (future? job))
 
-(defn job-not-started?
-  [job]
-  (fn? job))
-
 (defn job-running?
-  "returns `true` if job was found and isn't finished or cancelled yet, else `false`."
+  "returns `true` if job has been started and isn't finished or cancelled yet."
   [job]
   (and (future? job)
        (not (future-done? job))))
@@ -110,50 +106,46 @@
   "starts a job, updates the job-info with the new `future` and returns it."
   [queue-atm job-id]
   (dosync
-   (let [ji (get @queue-atm job-id)
-         j-fn (:job ji)]
-     (when (and ji
-                (job-not-started? j-fn))
+   (let [job-info (get @queue-atm job-id)
+         job-fn (:job job-info)]
+     (when (and job-info
+                (job-not-started? job-fn))
        (let [;; `tick` updates the job's progress in the queue
              tick-fn (make-ticker queue-atm job-id)
-             running-job (j-fn tick-fn)]
+             running-job (job-fn tick-fn)]
          ;; replace the job fn with the future object
          (swap! queue-atm assoc-in [job-id :job] running-job)
          running-job)))))
 
-(defn cancel-job!
-  "returns `true` if job was found and successfully cancelled. cancelled and completed jobs cannot be cancelled."
-  [queue job-id]
-  (let [job (get-job queue job-id)]
-    (and (future? job)
-         (future-cancel job))))
+(defn cancel-job
+  "returns `true` if job was found and successfully cancelled. Already-cancelled and completed jobs cannot be cancelled."
+  [job]
+  (and (future? job)
+       (future-cancel job)))
 
 (defn job-results
-  "returns the results of the job with the given `job-id`.
+  "returns the results of the given `job`.
+  if the job is still running the operation will block!
   if an exception was thrown during the job, the exception is returned.
   if the job was cancelled, the cancellation exception is returned."
-  [queue job-id]
+  [job]
   (try
-    (let [future-obj (get-job queue job-id)]
-      ;; job may not be started yet and is still a fn! if it's a future, deref it
-      (if (future? future-obj)
-        @future-obj
-        future-obj))
+    (if (job-started? job) @job job)
     (catch java.util.concurrent.CancellationException ce
       ;; deref'ing a cancelled job raises a cancellation exception.
       ce)))
 
 (defn all-job-results
   [queue]
-  (->> queue keys (mapv job-results)))
+  (->> queue vals (map :job) (mapv job-results)))
 
 (defn pop-job!
   "removes the job info from the queue and returns the derefable future, regardless of whether the job has been started, cancelled, completed etc"
   [queue-atm job-id]
   (dosync
-   (when-let [ji (get @queue-atm job-id)]
+   (when-let [job-info (get @queue-atm job-id)]
      (swap! queue-atm dissoc job-id)
-     ji)))
+     job-info)))
 
 (defn pop-all-jobs!
   [queue-atm]
@@ -208,16 +200,15 @@
   "attaches a watch to the queue that calls `start-jobs-in-queue!` every time the queue changes.
   returns a function that accepts no arguments and stops the monitor when called."
   [queue-atm n-jobs-running]
-  (let [key (unique-id)
-        watch-fn (fn [key queue-atm-ref old-queue new-queue]
+  (let [watch-key (unique-id)
+        watch-fn (fn [_ queue-atm-ref old-queue new-queue]
                    (let [queue-stats (queue-info new-queue)]
                      ;; number of jobs running is less than desired AND there are jobs outstanding
                      (when (and (< (:running queue-stats) n-jobs-running)
                                 (> (:not-started queue-stats) 0))
-                       ;;(println (format "thread %s tiggering start-jobs %s" (.getId (Thread/currentThread)) queue-stats))
                        ;; we're just using changes to the atm as a trigger,
                        ;; we're not really interested in what has changed
                        (start-jobs-in-queue! queue-atm-ref n-jobs-running))))]
-    (add-watch queue-atm key watch-fn)
+    (add-watch queue-atm watch-key watch-fn)
     (fn []
-      (remove-watch queue-atm key))))
+      (remove-watch queue-atm watch-key))))
