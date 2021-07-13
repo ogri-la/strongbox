@@ -18,7 +18,8 @@
     [logging :as logging]
     [utils :as utils :refer [join nav-map nav-map-fn delete-many-files! static-slurp expand-path if-let*]]
     [catalogue :as catalogue]
-    [specs :as sp]]))
+    [specs :as sp]
+    [joblib :as joblib]]))
 
 (def default-config-dir "~/.config/strongbox")
 (def default-data-dir "~/.local/share/strongbox")
@@ -118,6 +119,9 @@
 
    ;; a map of paths whose location may vary according to the cwd and envvars.
    :paths nil
+
+   ;; a (stateful) ordered map of running jobs
+   :job-queue (atom (joblib/make-queue))
 
    ;; ui
 
