@@ -5,6 +5,7 @@
    [clojure.spec.alpha :as s]
    [me.raynes.fs :as fs]
    [strongbox
+    [joblib :as joblib]
     [github-api :as github-api]
     [db :as db]
     [logging :as logging]
@@ -226,9 +227,23 @@
 
 ;;
 
-(defn-spec -install-update-these nil?
+(defn-spec -install-update-these-1 nil?
   [updateable-addon-list :addon/installable-list]
   (run! core/install-addon updateable-addon-list))
+
+(defn-spec -install-update-these-in-parallel nil?
+  [updateable-addon-list :addon/installable-list]
+  (let [queue-atm (core/get-state :job-queue)]
+    (run! (fn [addon]
+            (joblib/create-job-add-to-queue! queue-atm #(core/install-addon addon)))
+          updateable-addon-list)
+    (try
+      (joblib/run-jobs queue-atm core/num-concurrent-downloads)
+      nil
+      (finally
+        (joblib/pop-all-jobs! queue-atm)))))
+
+(def -install-update-these -install-update-these-in-parallel)
 
 (defn-spec re-install-or-update-selected nil?
   "re-installs (if possible) or updates all addons in given `addon-list`.

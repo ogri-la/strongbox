@@ -24,8 +24,8 @@
 (def default-config-dir "~/.config/strongbox")
 (def default-data-dir "~/.local/share/strongbox")
 
-;; there may be a better number depending on the type of job being processed.
-(def num-concurrent-jobs (.. Runtime getRuntime availableProcessors))
+;; pretty arbitrary
+(def num-concurrent-downloads 10)
 
 (defn generate-path-map
   "generates filesystem paths whose location may vary based on the current working directory and environment variables.
@@ -828,7 +828,7 @@
               _ (run! check-for-update-job installed-addon-list)
               
               expanded-addon-list (try
-                                    (joblib/run-jobs queue-atm num-concurrent-jobs)
+                                    (joblib/run-jobs queue-atm num-concurrent-downloads)
                                     (catch Exception e
                                       (error e "uncaught exception checking for updates in parallel!"))
                                     (finally
