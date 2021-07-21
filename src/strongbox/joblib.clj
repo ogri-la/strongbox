@@ -1,14 +1,31 @@
 (ns strongbox.joblib
   (:require
+   [lasync.core :as lasync]
    [flatland.ordered.map :refer [ordered-map]]
    [strongbox.utils :as utils]))
 
-(comment "simple one job per thread queue manager. 
-    keep module uncoupled from core and ui.")
+(comment "Simple one job per thread queue manager. Keep module uncoupled from core and ui.")
 
 (def ^:dynamic tick
   "per-thread binding to a function that updates progress of running job"
   (constantly nil))
+
+(defn deref*
+  [future-obj]
+  (try
+    (deref future-obj)
+    (catch java.util.concurrent.CancellationException ce
+      ;; deref'ing a cancelled job raises a cancellation exception.
+      ce)))
+
+(defn pmap*
+  [queue-atm pool f xs]
+  (->> xs
+       (mapv (fn [[job-id job-info]]
+                  (let [future-obj (lasync/submit pool #(f [job-id job-info]))]
+                    (swap! queue-atm assoc-in [job-id :job] future-obj)
+                    future-obj)))
+       (mapv deref*)))
 
 ;; utils
 
@@ -41,18 +58,6 @@
       (swap! queue-atm assoc-in [job-id :progress] pct))
     (:progress (get @queue-atm job-id))))
 
-(defn job
-  "given a function `f`, returns a 'job' (fn) that accepts an atom to be used as a progress meter.
-  'starting' this job returns a future that can be deref'ed to retrieve the result or cancelled with `future-cancel`."
-  [f]
-  (fn [tick-fn]
-    (future
-      (binding [tick tick-fn]
-        (try
-          (f)
-          (catch Exception uncaught-exc
-            uncaught-exc))))))
-
 (defn job-info
   "given a job `j` and optional map with keys :job-id, return a struct that can be added to a queue"
   [j & [{:keys [job-id]}]]
@@ -72,7 +77,7 @@
   "convenience, takes a function `f`, wraps it in a `job`, gives it a tick function and adds it to the queue.
   returns the job ID"
   [queue-atm f]
-  (add-to-queue! queue-atm (job-info (job f))))
+  (add-to-queue! queue-atm (job-info f)))
 
 (defn job-not-started?
   "returns `true` if the job hasn't been started yet."
@@ -122,6 +127,19 @@
   [job]
   (and (future? job)
        (future-cancel job)))
+
+(defn run-jobs
+  [queue-atm n-jobs-running]
+  (let [start-job (fn [[job-id {:keys [job]}]]
+                    (binding [tick (make-ticker queue-atm job-id)]
+                      (try
+                        (job)
+                        (catch Exception uncaught-exc
+                          uncaught-exc))))
+        pool (lasync/pool {:threads n-jobs-running})
+        
+        ]
+    (pmap* queue-atm pool start-job @queue-atm)))
 
 (defn job-results
   "returns the results of the given `job`.
@@ -202,7 +220,8 @@
   [queue-atm n-jobs-running]
   (let [watch-key (unique-id)
         watch-fn (fn [_ queue-atm-ref old-queue new-queue]
-                   (let [queue-stats (queue-info new-queue)]
+                   (let [;;n-jobs-running (or n-jobs-running (count new-queue))
+                         queue-stats (queue-info new-queue)]
                      ;; number of jobs running is less than desired AND there are jobs outstanding
                      (when (and (< (:running queue-stats) n-jobs-running)
                                 (> (:not-started queue-stats) 0))
@@ -212,3 +231,4 @@
     (add-watch queue-atm watch-key watch-fn)
     (fn []
       (remove-watch queue-atm watch-key))))
+

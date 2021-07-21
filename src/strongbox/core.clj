@@ -24,6 +24,9 @@
 (def default-config-dir "~/.config/strongbox")
 (def default-data-dir "~/.local/share/strongbox")
 
+;; there may be a better number depending on the type of job being processed.
+(def num-concurrent-jobs (.. Runtime getRuntime availableProcessors))
+
 (defn generate-path-map
   "generates filesystem paths whose location may vary based on the current working directory and environment variables.
   this map of paths is generated during `init-dirs` and is then fixed in application state.
@@ -782,6 +785,7 @@
                            (expand-summary-wrapper addon))
           addon (or expanded-addon addon) ;; expanded addon may still be nil
           has-update? (addon/updateable? addon)]
+      ;;(joblib/tick 0.5)
       (when has-update?
         (info (format "update available \"%s\"" (:version addon)))
         (when-not (= (get-game-track) (:game-track addon))
@@ -790,7 +794,7 @@
                         (-> (get-game-track) sp/game-track-labels-map)))))
       (assoc addon :update? has-update?))))
 
-(defn-spec check-for-updates nil?
+(defn-spec check-for-updates-1 nil?
   "downloads full details for all installed addons that can be found in summary list"
   []
   (when (selected-addon-dir)
@@ -803,6 +807,49 @@
               num-updates (->> improved-addon-list (filterv :update?) count)]
           (update-installed-addon-list! improved-addon-list)
           (info (format "%s addons checked, %s updates available" num-matched num-updates)))))))
+
+(defn-spec check-for-updates-in-parallel nil?
+  "downloads full details for all installed addons that can be found in summary list"
+  []
+  (when (selected-addon-dir)
+    (let [installed-addon-list (get-state :installed-addon-list)]
+      (when-not (empty? installed-addon-list)
+        (info "checking for updates")
+        (let [queue-atm (get-state :job-queue)
+              check-for-update-job (fn [installed-addon]
+                                     (joblib/create-job-add-to-queue!
+                                      queue-atm (fn []
+                                                  (joblib/tick 0.0)
+                                                  (let [result (check-for-update installed-addon)]
+                                                    (joblib/tick 1.0)
+                                                    result))))
+
+              ;; create jobs and add them to the queue
+              _ (run! check-for-update-job installed-addon-list)
+              
+              expanded-addon-list (try
+                                    (joblib/run-jobs queue-atm num-concurrent-jobs)
+                                    (catch Exception e
+                                      (error e "uncaught exception checking for updates in parallel!"))
+                                    (finally
+                                      (joblib/pop-all-jobs! queue-atm)
+                                      (warn "done?")))
+
+              _ (try
+                  (doseq [a expanded-addon-list]
+                    (assert (not (fn? a))))
+                  (catch Exception e
+                    (error e "uncaught exception")))
+
+              _ (info "finished checking for updates")
+              
+              num-matched (->> expanded-addon-list (filterv :matched?) count)
+              num-updates (->> expanded-addon-list (filterv :update?) count)]
+          
+          (update-installed-addon-list! expanded-addon-list)
+          (info (format "%s addons checked, %s updates available" num-matched num-updates)))))))
+
+(def check-for-updates check-for-updates-in-parallel)
 
 ;; ui interface
 
@@ -1061,7 +1108,8 @@
    (match-installed-addons-with-catalogue)
 
    ;; for those addons that have matches, download their details
-   (check-for-updates)
+   ;;(check-for-updates)
+   (check-for-updates-in-parallel)
 
    ;; 2019-06-30, travis is failing with 403: Forbidden. Moved to gui init
    ;;(latest-strongbox-release) ;; check for updates after everything else is done 

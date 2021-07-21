@@ -40,6 +40,8 @@
                  ;; remember to update the LICENCE.txt
                  ;; remember to update pom file (`lein pom`)
 
+                 [tolitius/lasync "0.1.23"]
+                 
                  ]
 
   :resource-paths ["resources"]
