@@ -265,7 +265,8 @@
 
 (defn-spec post-install nil?
   "does any final cleanup tasks.
-  executed immediately after `install-addon`, coordinated by `core.clj`"
+  executed immediately after `install-addon`, coordinated by `core.clj`.
+  executed regardless of success of installation."
   [addon :addon/installable, install-dir ::sp/install-dir, n-zips-to-keep :config/addon-zips-to-keep]
   (when n-zips-to-keep
     (remove-zip-files! install-dir (:name addon) n-zips-to-keep)))

@@ -65,6 +65,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* handle no internet connection more gracefully
+
 * add release.json support for github addons
 
 * importing addons, skip db lookup for addon urls that don't need it

@@ -22,9 +22,9 @@
   [queue-atm pool f xs]
   (->> xs
        (mapv (fn [[job-id job-info]]
-                  (let [future-obj (lasync/submit pool #(f [job-id job-info]))]
-                    (swap! queue-atm assoc-in [job-id :job] future-obj)
-                    future-obj)))
+               (let [future-obj (lasync/submit pool #(f [job-id job-info]))]
+                 (swap! queue-atm assoc-in [job-id :job] future-obj)
+                 future-obj)))
        (mapv deref*)))
 
 ;; utils
@@ -136,9 +136,7 @@
                         (job)
                         (catch Exception uncaught-exc
                           uncaught-exc))))
-        pool (lasync/pool {:threads n-jobs-running})
-        
-        ]
+        pool (lasync/pool {:threads n-jobs-running})]
     (pmap* queue-atm pool start-job @queue-atm)))
 
 (defn job-results

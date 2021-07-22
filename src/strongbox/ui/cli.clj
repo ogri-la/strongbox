@@ -227,19 +227,24 @@
 
 ;;
 
-(defn-spec -install-update-these-1 nil?
+(defn-spec -install-update-these-serially nil?
   [updateable-addon-list :addon/installable-list]
   (run! core/install-addon updateable-addon-list))
 
 (defn-spec -install-update-these-in-parallel nil?
   [updateable-addon-list :addon/installable-list]
-  (let [queue-atm (core/get-state :job-queue)]
-    (run! (fn [addon]
-            (joblib/create-job-add-to-queue! queue-atm #(core/install-addon addon)))
-          updateable-addon-list)
+  (let [queue-atm (core/get-state :job-queue)
+        install-dir (core/selected-addon-dir)
+        add-download-job! (fn [addon]
+                            (joblib/create-job-add-to-queue! queue-atm (partial core/download-addon addon install-dir)))]
     (try
+      ;; download addons in parallel.
+      (run! add-download-job! updateable-addon-list)
       (joblib/run-jobs queue-atm core/num-concurrent-downloads)
-      nil
+
+      ;; install addons serially.
+      (-install-update-these-serially updateable-addon-list)
+
       (finally
         (joblib/pop-all-jobs! queue-atm)))))
 
