@@ -983,20 +983,15 @@
   nil)
 
 (defn search-results-install-handler
-  "this switches to the 'installed' tab, then, for each addon selected, expands summary, installs addon, calls load-installed-addons and finally refreshes;
-  this presents as a plodding step-wise update but is better than a blank screen and apparent hang"
+  "this switches to the 'installed' tab then installs each of the selected addons in parallel."
   [addon-list]
   (switch-tab INSTALLED-TAB)
-  (doseq [selected addon-list]
-    (let [error-messages
-          (logging/buffered-log
-           :warn
-           (some-> selected core/expand-summary-wrapper vector cli/-install-update-these))]
-      (if (empty? error-messages)
-        (core/load-installed-addons)
-        (let [msg (message-list (format "warnings/errors while installing \"%s\"" (:label selected)) error-messages)]
+  (let [results-list (cli/install-many addon-list)]
+    (doseq [{:keys [error-messages label]} results-list]
+      (when-not (empty? error-messages)
+        (let [msg (message-list (format "warnings/errors while installing \"%s\"" label) error-messages)]
           (alert :warning msg {:wait? false}))))
-    (core/refresh)))
+    (cli/half-refresh)))
 
 ;;
 

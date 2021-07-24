@@ -152,12 +152,22 @@
 
 (def state (atom nil))
 
+(defn started?
+  "`true` if app has been started."
+  []
+  (-> @state nil? not))
+
+(defn assert-started
+  "raises a `RuntimeException` if app has not been started"
+  []
+  (when-not (started?)
+    (throw (RuntimeException. "application must be `start`ed before state may be accessed."))))
+
 (defn get-state
   "returns the state map of the value at the given path within the map, if path provided"
   [& path]
-  (if-let [state @state]
-    (nav-map state path)
-    (throw (RuntimeException. "application must be `start`ed before state may be accessed."))))
+  (assert-started)
+  (nav-map @state path))
 
 (defn paths
   "like `get-in` and `get-state` but for the map of paths being used. requires running app"
@@ -446,6 +456,7 @@
 (defn affects-addon-wrapper
   [wrapped-fn]
   (fn [addon & args]
+    (assert-started)
     (logging/with-addon addon
       (try
         (start-affecting-addon addon)
@@ -455,7 +466,9 @@
 
 ;; downloading and installing and updating
 
-(defn-spec -download-addon (s/or :ok ::sp/archive-file, :http-error :http/error, :error nil?)
+(defn-spec download-addon (s/or :ok ::sp/archive-file, :http-error :http/error, :error nil?)
+  "downloads `addon` to the given `install-dir`.
+  see `download-addon-guard` for a version with checks."
   [addon :addon/installable, install-dir ::sp/writeable-dir]
   (info (format "downloading '%s' version '%s'" (:label addon) (:version addon)))
   (when (expanded? addon)
@@ -464,53 +477,69 @@
       (binding [http/*cache* (cache)]
         (http/download-file (:download-url addon) output-path)))))
 
-(def download-addon
-  (affects-addon-wrapper -download-addon))
+(def download-addon-affective
+  (affects-addon-wrapper download-addon))
 
 (defn-spec download-addon-guard (s/or :ok ::sp/archive-file, :error nil?)
   "downloads an addon, handling http and non-http errors, bad zip files, bad addons, bad directories."
-  [addon :addon/installable, install-dir ::sp/extant-dir]
-  (cond
-    ;; do some pre-installation checks
-    (:ignore? addon) (error "refusing to install addon, addon is being ignored:" (:name addon))
-    (not (fs/writeable? install-dir)) (error "failed to install addon, directory not writeable:" install-dir)
+  ([addon :addon/installable]
+   (download-addon-guard addon (selected-addon-dir)))
+  ([addon :addon/installable, install-dir ::sp/extant-dir]
+   (cond
+     ;; do some pre-installation checks
+     (:ignore? addon) (error "refusing to install addon, addon is being ignored:" (:name addon))
+     (not (fs/writeable? install-dir)) (error "failed to install addon, directory not writeable:" install-dir)
 
-    :else ;; attempt downloading and installing addon
+     :else ;; attempt downloading and installing addon
 
-    (let [;; todo: if -testing-zipfile, move zipfile into download dir
-          ;; this will help the zipfile pruning tests
-          downloaded-file (or (:-testing-zipfile addon) ;; don't download, install from this file (testing only right now)
-                              (-download-addon addon install-dir))]
-      (cond
-        (map? downloaded-file) (error "failed to download addon.")
+     (let [;; todo: if -testing-zipfile, move zipfile into download dir
+           ;; this will help the zipfile pruning tests
+           downloaded-file (or (:-testing-zipfile addon) ;; don't download, install from this file (testing only right now)
+                               (download-addon addon install-dir))]
+       (cond
+         (map? downloaded-file) (error "failed to download addon.")
 
-        (nil? downloaded-file) (error "non-HTTP error downloading addon.") ;; I dunno. /shrug
+         (nil? downloaded-file) (error "non-HTTP error downloading addon.") ;; I dunno. /shrug
 
-        (not (zip/valid-zip-file? downloaded-file))
-        (do (error "failed to read addon zip file, possibly corrupt or not a zip file.")
-            (fs/delete downloaded-file)
-            (warn "removed bad zip file."))
+         (not (zip/valid-zip-file? downloaded-file))
+         (do (error "failed to read addon zip file, possibly corrupt or not a zip file.")
+             (fs/delete downloaded-file)
+             (warn "removed bad zip file."))
 
-        (not (zip/valid-addon-zip-file? downloaded-file))
-        (do (error "refusing to install, addon zip file contains top-level files or a top-level directory missing a .toc file.")
-            (fs/delete downloaded-file)
-            (warn "removed bad addon."))
+         (not (zip/valid-addon-zip-file? downloaded-file))
+         (do (error "refusing to install, addon zip file contains top-level files or a top-level directory missing a .toc file.")
+             (fs/delete downloaded-file)
+             (warn "removed bad addon."))
 
-        (not (s/valid? ::sp/writeable-dir install-dir))
-        (error (format "addon directory is not writable: %s" install-dir))
+         (not (s/valid? ::sp/writeable-dir install-dir))
+         (error (format "addon directory is not writable: %s" install-dir))
 
-        (addon/overwrites-ignored? downloaded-file (get-state :installed-addon-list))
-        (error "refusing to install addon that will overwrite an ignored addon.")
+         (addon/overwrites-ignored? downloaded-file (get-state :installed-addon-list))
+         (error "refusing to install addon that will overwrite an ignored addon.")
 
-        (addon/overwrites-pinned? downloaded-file (get-state :installed-addon-list))
-        (error "refusing to install addon that will overwrite a pinned addon.")
+         (addon/overwrites-pinned? downloaded-file (get-state :installed-addon-list))
+         (error "refusing to install addon that will overwrite a pinned addon.")
 
-        :else downloaded-file))))
+         :else downloaded-file)))))
+
+(def download-addon-guard-affective
+  (affects-addon-wrapper download-addon-guard))
+
+(defn-spec install-addon (s/or :ok (s/coll-of ::sp/extant-file), :passed-tests true?, :error nil?)
+  "downloads an addon and installs it, bypassing checks"
+  [addon :addon/installable, install-dir ::sp/extant-dir, downloaded-file ::sp/extant-archive-file]
+  (try
+    (addon/install-addon addon install-dir downloaded-file)
+    (finally
+      (addon/post-install addon install-dir (get-state :cfg :preferences :addon-zips-to-keep)))))
+
+(def install-addon-affective
+  (affects-addon-wrapper install-addon))
 
 (defn-spec install-addon-guard (s/or :ok (s/coll-of ::sp/extant-file), :passed-tests true?, :error nil?)
   "downloads an addon and installs it, handling http and non-http errors, bad zip files, bad addons, bad directories."
   ([addon :addon/installable]
-   (install-addon-guard addon (selected-addon-dir)))
+   (install-addon-guard addon (selected-addon-dir) false))
   ([addon :addon/installable, install-dir ::sp/extant-dir]
    (install-addon-guard addon install-dir false))
   ([addon :addon/installable, install-dir ::sp/extant-dir, test-only? boolean?]
@@ -520,12 +549,9 @@
        ;; todo: deprecate `test-only?`, logic has moved to `download-addon`
        true
        ;; else, install addon
-       (try
-         (addon/install-addon addon install-dir downloaded-file)
-         (finally
-           (addon/post-install addon install-dir (get-state :cfg :preferences :addon-zips-to-keep))))))))
+       (install-addon addon install-dir downloaded-file)))))
 
-(def install-addon
+(def install-addon-guard-affective
   (affects-addon-wrapper install-addon-guard))
 
 (defn update-installed-addon-list!
@@ -838,16 +864,7 @@
               expanded-addon-list (try
                                     (joblib/run-jobs queue-atm num-concurrent-downloads)
                                     (catch Exception e
-                                      (error e "uncaught exception checking for updates in parallel!"))
-                                    (finally
-                                      (joblib/pop-all-jobs! queue-atm)
-                                      (warn "done?")))
-
-              _ (try
-                  (doseq [a expanded-addon-list]
-                    (assert (not (fn? a))))
-                  (catch Exception e
-                    (error e "uncaught exception")))
+                                      (error e "uncaught exception checking for updates in parallel!")))
 
               _ (info "finished checking for updates")
 
@@ -1035,7 +1052,7 @@
   [addon-list] ;; todo: spec
   (info (format "attempting to import %s addons. this may take a minute" (count addon-list)))
   (let [matching-addon-list (-import-addon-list-v1 addon-list)]
-    (run! install-addon matching-addon-list)))
+    (run! install-addon-guard matching-addon-list)))
 
 ;; v2 uses the same mechanism to match addons as the rest of the app does
 (defn import-addon-list-v2
@@ -1071,7 +1088,7 @@
       (doseq [addon matching-addon-list
               :let [game-track (get addon :game-track default-game-track)]]
         (when-let [expanded-addon (catalogue/expand-summary addon game-track strict?)]
-          (install-addon expanded-addon))))))
+          (install-addon-guard expanded-addon))))))
 
 (defn-spec import-exported-file nil?
   "imports a file at given `path` created with the export function.
@@ -1208,7 +1225,7 @@
   (set-paths!)
   (detect-repl!)
   (init-dirs)
-  (prune-http-cache!)
+  (prune-http-cache!) ;; move to refresh?
   (load-settings! cli-opts)
 
   state)

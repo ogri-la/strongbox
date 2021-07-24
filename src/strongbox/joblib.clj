@@ -128,17 +128,6 @@
   (and (future? job)
        (future-cancel job)))
 
-(defn run-jobs
-  [queue-atm n-jobs-running]
-  (let [start-job (fn [[job-id {:keys [job]}]]
-                    (binding [tick (make-ticker queue-atm job-id)]
-                      (try
-                        (job)
-                        (catch Exception uncaught-exc
-                          uncaught-exc))))
-        pool (lasync/pool {:threads n-jobs-running})]
-    (pmap* queue-atm pool start-job @queue-atm)))
-
 (defn job-results
   "returns the results of the given `job`.
   if the job is still running the operation will block!
@@ -167,6 +156,20 @@
   [queue-atm]
   (dosync
    (some->> @queue-atm keys (mapv (partial pop-job! queue-atm)))))
+
+(defn run-jobs
+  [queue-atm n-jobs-running]
+  (let [start-job (fn [[job-id {:keys [job]}]]
+                    (binding [tick (make-ticker queue-atm job-id)]
+                      (try
+                        (job)
+                        (catch Exception uncaught-exc
+                          uncaught-exc))))
+        pool (lasync/pool {:threads n-jobs-running})]
+    (try
+      (pmap* queue-atm pool start-job @queue-atm)
+      (finally
+        (pop-all-jobs! queue-atm)))))
 
 (defn queue-progress
   "returns the total progress of all jobs in given queue"

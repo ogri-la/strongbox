@@ -180,7 +180,7 @@
                  :-testing-zipfile (fixture-path "everyaddon-classic--1-2-3.zip")}]
       (with-running-app
         (cli/set-addon-dir! (helper/install-dir))
-        (core/install-addon addon)
+        (core/install-addon-guard addon)
         (core/load-installed-addons)
 
         (let [addon (first (core/get-state :installed-addon-list))]
@@ -205,7 +205,7 @@
                  :pinned-version "1.2.3"}]
       (with-running-app
         (cli/set-addon-dir! (helper/install-dir))
-        (core/install-addon addon)
+        (core/install-addon-guard addon)
         (core/load-installed-addons)
 
         (let [addon (first (core/get-state :installed-addon-list))]

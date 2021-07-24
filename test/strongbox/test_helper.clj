@@ -98,6 +98,10 @@
   [& form]
   `(with-running-app+opts {:ui :cli} ~@form))
 
+(defmacro with-running-app*
+  [& form]
+  `(with-running-app+opts {:ui nil} ~@form))
+
 (defn-spec select-addon (s/nilable :addon/installed)
   "returns the first installed addon matching the given `group-id`"
   [group-id ::sp/group-id]

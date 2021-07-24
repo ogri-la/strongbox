@@ -65,6 +65,12 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* localisation, status bar
+    '123456' addons in catalogue
+
+* regression, search, sorting on 'downloads' column broken
+    - probably because of localisation
+
 * handle no internet connection more gracefully
 
 * add release.json support for github addons
