@@ -446,13 +446,6 @@
   [addon]
   (swap! state update-in [:unsteady-addon-list] clojure.set/difference #{(:name addon)}))
 
-(defn-spec unsteady? boolean?
-  "returns `true` if given `addon` is being updated"
-  [addon-name ::sp/name]
-  (if @state
-    (utils/in? addon-name (get-state :unsteady-addon-list))
-    false))
-
 (defn affects-addon-wrapper
   [wrapped-fn]
   (fn [addon & args]
@@ -463,6 +456,16 @@
         (apply wrapped-fn addon args)
         (finally
           (stop-affecting-addon addon))))))
+
+(defn-spec unsteady? boolean?
+  "returns `true` if given `addon` is being updated"
+  [addon-name ::sp/name]
+  (if @state
+    (utils/in? addon-name (get-state :unsteady-addon-list))
+    false))
+
+;; 
+
 
 ;; downloading and installing and updating
 
@@ -806,8 +809,10 @@
   (binding [http/*cache* (cache)]
     (let [game-track (get-game-track) ;; scope creep, but it fits so nicely
           strict? (get-game-track-strictness)
-          wrapper (affects-addon-wrapper catalogue/expand-summary)]
-      (wrapper addon-summary game-track strict?))))
+          ;;wrapper (affects-addon-wrapper catalogue/expand-summary)
+          ]
+      ;;(wrapper addon-summary game-track strict?))))
+      (catalogue/expand-summary addon-summary game-track strict?))))
 
 (defn-spec check-for-update :addon/toc
   "Returns given `addon` with source updates, if any, and sets an `update?` property if a different version is available.
@@ -816,17 +821,21 @@
                :matched :addon/toc+summary+match)]
   (logging/with-addon addon
     (let [expanded-addon (when (:matched? addon)
+                           (joblib/tick-delay 0.25) ;; todo: interleave form?
                            (expand-summary-wrapper addon))
           addon (or expanded-addon addon) ;; expanded addon may still be nil
           has-update? (addon/updateable? addon)]
-      ;;(joblib/tick 0.5)
+      (joblib/tick-delay 0.5)
       (when has-update?
         (info (format "update available \"%s\"" (:version addon)))
         (when-not (= (get-game-track) (:game-track addon))
           (warn (format "update is for '%s' and the addon directory is set to '%s'"
                         (-> addon :game-track sp/game-track-labels-map)
                         (-> (get-game-track) sp/game-track-labels-map)))))
+      (joblib/tick-delay 0.75)
       (assoc addon :update? has-update?))))
+
+(def check-for-update-affective (affects-addon-wrapper check-for-update))
 
 (defn-spec check-for-updates-1 nil?
   "downloads full details for all installed addons that can be found in summary list"
@@ -851,12 +860,11 @@
         (info "checking for updates")
         (let [queue-atm (get-state :job-queue)
               check-for-update-job (fn [installed-addon]
-                                     (joblib/create-job-add-to-queue!
-                                      queue-atm (fn []
-                                                  (joblib/tick 0.0)
-                                                  (let [result (check-for-update installed-addon)]
-                                                    (joblib/tick 1.0)
-                                                    result))))
+                                     (let [job-id (joblib/addon-id installed-addon)]
+                                       (joblib/create-job-add-to-queue!
+                                        queue-atm 
+                                        (partial check-for-update-affective installed-addon)
+                                        {:job-id job-id})))
 
               ;; create jobs and add them to the queue
               _ (run! check-for-update-job installed-addon-list)
@@ -962,20 +970,20 @@
   []
   (versioneer/get-version "ogri-la" "strongbox"))
 
-(defn-spec latest-strongbox-release string?
-  "returns the most recently released version of strongbox it can find"
+(defn-spec latest-strongbox-release (s/nilable string?)
+  "returns the most recently released version of strongbox it can find."
   []
   (binding [http/*cache* (cache)]
     (let [message "downloading strongbox version data"
-          url "https://api.github.com/repos/ogri-la/strongbox/releases/latest"
-          resp (utils/from-json (http/download url message))]
-      (-> resp :tag_name))))
+          url "https://api.github.com/repos/ogri-la/strongbox/releases/latest"]
+      (some-> url (http/download message) http/sink-error utils/from-json :tag_name))))
 
 (defn-spec latest-strongbox-version? boolean?
   "returns true if the *running instance* of strongbox is the *most recent known* version of strongbox."
   []
-  (let [latest-release (latest-strongbox-release)
-        version-running (strongbox-version)
+  (let [version-running (strongbox-version)
+        ;;latest-release (or (latest-strongbox-release) version-running)
+        latest-release version-running ;; infinite loop bug here
         sorted-asc (utils/sort-semver-strings [latest-release version-running])]
     (= version-running (last sorted-asc))))
 
@@ -1133,8 +1141,7 @@
    (match-installed-addons-with-catalogue)
 
    ;; for those addons that have matches, download their details
-   ;;(check-for-updates)
-   (check-for-updates-in-parallel)
+   (check-for-updates)
 
    ;; 2019-06-30, travis is failing with 403: Forbidden. Moved to gui init
    ;;(latest-strongbox-release) ;; check for updates after everything else is done 
@@ -1225,7 +1232,7 @@
   (set-paths!)
   (detect-repl!)
   (init-dirs)
-  (prune-http-cache!) ;; move to refresh?
+  (prune-http-cache!)
   (load-settings! cli-opts)
 
   state)

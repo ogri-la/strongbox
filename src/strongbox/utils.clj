@@ -643,3 +643,7 @@
   "returns a multi-line string with the given `msg` on top and each message in `msg-list` bulleted beneath it"
   [msg string?, msg-list ::sp/list-of-strings]
   (clojure.string/join (format "\n %s " constants/bullet) (into [msg] msg-list)))
+
+(defn select-vals
+  [m ks]
+  (map #(get m %) ks))

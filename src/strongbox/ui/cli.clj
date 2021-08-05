@@ -228,7 +228,7 @@
 ;;
 
 (defn-spec install-update-these-serially nil?
-  "install/supdates a list of addons serially"
+  "installs/updates a list of addons serially"
   [updateable-addon-list :addon/installable-list]
   (run! core/install-addon-guard-affective updateable-addon-list))
 
@@ -238,16 +238,16 @@
   (let [queue-atm (core/get-state :job-queue)
         install-dir (core/selected-addon-dir)
         add-download-job! (fn [addon]
-                            (let [job-fn (partial core/download-addon-guard-affective addon install-dir)]
-                              (joblib/create-job-add-to-queue! queue-atm job-fn)))
-
+                            (let [job-fn (fn []
+                                           [addon (core/download-addon-guard-affective addon install-dir)])
+                                  job-id (joblib/addon-job-id addon :download-addon)]
+                              (joblib/create-job-add-to-queue! queue-atm job-fn {:job-id job-id})))
         ;; download addons in parallel.
         _ (run! add-download-job! updateable-addon-list)
-        downloaded-file-list (joblib/run-jobs queue-atm core/num-concurrent-downloads)]
+        addon+downloaded-file-list (joblib/run-jobs queue-atm core/num-concurrent-downloads)]
 
     ;; install addons serially, skip download checks, mark addons as unsteady
-    (doseq [addon updateable-addon-list
-            downloaded-file downloaded-file-list]
+    (doseq [[addon downloaded-file] addon+downloaded-file-list]
       (core/install-addon-affective addon install-dir downloaded-file))))
 
 (defn-spec re-install-or-update-selected nil?
@@ -280,7 +280,8 @@
   "install many addons from the catalogue. a bit different from the other installation functions, 
   this one returns a list of maps with the installation results."
   [addon-list :addon/summary-list]
-  (let [job (fn [addon]
+  (let [queue-atm (core/get-state :job-queue)
+        job (fn [addon]
               (fn []
                 (let [error-messages
                       (logging/buffered-log
@@ -290,7 +291,7 @@
                                core/install-addon-guard-affective))]
                   {:label (:label addon)
                    :error-messages error-messages})))]
-    (run! #(joblib/create-job-add-to-queue! (core/get-state :job-queue) %) (mapv job addon-list))
+    (run! (partial joblib/create-job-add-to-queue! queue-atm) (mapv job addon-list))
     (joblib/run-jobs (core/get-state :job-queue) core/num-concurrent-downloads)))
 
 (defn-spec update-selected nil?
@@ -581,6 +582,31 @@
     (->> (get-state :installed-addon-list)
          ;;(filter addon/updateable?)
          (run! touch))))
+
+(defn-spec touch-bar nil?
+  "used to select each addon in the GUI so the progress-bar can be tested"
+  []
+  (let [touch (fn [addon]
+                (core/start-affecting-addon addon)
+                (let [total 2
+                      pieces 100]
+                  (doseq [pos (range 1 (* total pieces))]
+                    (joblib/tick (double (/ 1 (/ (* total pieces)
+                                                 pos))))
+                    (Thread/sleep 10)))
+
+                (core/stop-affecting-addon addon))
+
+        queue-atm (get-state :job-queue)
+
+        add-job! (fn [addon]
+                   (joblib/create-addon-job-add-to-queue!
+                    queue-atm addon
+                    (partial touch addon)))]
+
+    (run! add-job! (get-state :installed-addon-list))
+    (joblib/run-jobs queue-atm core/num-concurrent-downloads)
+    nil))
 
 ;;
 

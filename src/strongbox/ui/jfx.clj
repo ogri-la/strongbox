@@ -2,6 +2,7 @@
   (:require
    [me.raynes.fs :as fs]
    [clojure.pprint]
+   ;;[clojure.core.cache :as cache]
    [clojure.string :refer [lower-case join capitalize replace] :rename {replace str-replace}]
    ;; logging in the gui should be avoided as it can lead to infinite loops
    [taoensso.timbre :as timbre :refer [spy]] ;; info debug warn error]] 
@@ -15,6 +16,7 @@
    [orchestra.core :refer [defn-spec]]
    [strongbox.ui.cli :as cli]
    [strongbox
+    [joblib :as joblib]
     [logging :as logging]
     [addon :as addon]
     [specs :as sp]
@@ -254,7 +256,8 @@
 
                 ".unsteady"
                 {;; '!important' so that it takes precedence over .updateable addons
-                 :-fx-background-color (str (colour :unsteady) " !important")}}
+                 ;;:-fx-background-color (str (colour :unsteady) " !important")
+                 }}
 
                ;; ignored 
                ".table-view .ignored .table-cell"
@@ -1346,13 +1349,25 @@
                          (cli/add-addon-tab row)
                          (switch-tab-latest))}}))
 
+(defn addon-progress-bar
+  [row queue keyset]
+  (let [sub-queue (filter (joblib/by-keyset keyset) queue)
+        progress (:progress (joblib/queue-info sub-queue))]
+    {:fx/type :progress-bar
+     :progress progress}))
+
+(defn has-job?
+  [queue keyset]
+  (->> queue (filter (joblib/by-keyset keyset)) empty? not))
+
 (defn installed-addons-table
   [{:keys [fx/context]}]
   ;; subscribe to re-render table when addons become unsteady
   (fx/sub-val context get-in [:app-state :unsteady-addon-list])
   ;; subscribe to re-render rows when addons emit warnings or errors
   (fx/sub-val context get-in [:app-state :log-lines])
-  (let [row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
+  (let [queue (fx/sub-val context get-in [:app-state :job-queue])
+        row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
         selected (fx/sub-val context get-in [:app-state :selected-addon-list])
         selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])
 
@@ -1373,9 +1388,14 @@
                      {:text "" :style-class ["more-column"] :min-width 80 :max-width 80 :resizable false
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [row]
-                                                 (if row
-                                                   {:graphic (uber-button row)}
-                                                   {:text ""}))}
+                                                 (if-not row
+                                                   {:text ""}
+
+                                                   (let [key (joblib/addon-id row)]
+                                                     {:graphic (if (and (core/unsteady? (:name row))
+                                                                        (has-job? queue key))
+                                                                 (addon-progress-bar row queue key)
+                                                                 (uber-button row))})))}
                       :cell-value-factory identity}]]
 
     {:fx/type fx.ext.table-view/with-selection-props
@@ -2012,8 +2032,13 @@
                         :style (style)}
         gui-state (atom (fx/create-context state-template)) ;; cache/lru-cache-factory))
         update-gui-state (fn [new-state]
-                           (swap! gui-state fx/swap-context assoc :app-state new-state))
+                           (let [new-state (update-in new-state [:job-queue] deref)]
+                             (swap! gui-state fx/swap-context assoc :app-state new-state)))
         _ (core/state-bind [] update-gui-state)
+
+        update-job-state (fn [_ _ _ new-state]
+                           (swap! gui-state fx/swap-context assoc-in [:app-state :job-queue] new-state))
+        _ (add-watch (core/get-state :job-queue) :job update-job-state)
 
         ;; css watcher for live coding
         _ (doseq [rf [#'style #'major-theme-map #'sub-theme-map #'themes]

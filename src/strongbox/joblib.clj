@@ -1,6 +1,8 @@
 (ns strongbox.joblib
   (:require
    [lasync.core :as lasync]
+   [clojure.set]
+   ;;[taoensso.timbre :as timbre :refer [debug info warn error report spy]]
    [flatland.ordered.map :refer [ordered-map]]
    [strongbox.utils :as utils]))
 
@@ -9,6 +11,13 @@
 (def ^:dynamic tick
   "per-thread binding to a function that updates progress of running job"
   (constantly nil))
+
+(defn tick-delay
+  "does a tick, but then pauses for a random period no more than 200ms.
+  this gives the illusion something is happening more than a progress bar flickering on and off again."
+  [pct]
+  (tick pct)
+  (Thread/sleep (-> (rand-int 100) (* 2))))
 
 (defn deref*
   [future-obj]
@@ -34,12 +43,22 @@
   (if (or (zero? pos)
           (zero? total))
     0.0
-    (float (* pos (/ 1 total)))))
+    (double (* pos (/ 1 total)))))
 
 (defn unique-id
   "same as `utils/unique-id` but coerced to a keyword."
   []
   (keyword (utils/unique-id)))
+
+(defn addon-id
+  [addon]
+  ;; todo: add a warning if less than 2 vals in set and switch to unique-id
+  ;; otherwise filtering jobs could get weird
+  (set (utils/select-vals addon [:source :source-id :dirname])))
+
+(defn addon-job-id
+  [addon job-id]
+  (conj (addon-id addon) job-id))
 
 ;;
 
@@ -49,12 +68,13 @@
   (ordered-map))
 
 (defn make-ticker
-  "returns a fn that accepts a float value between 0.0 and 1.0 inclusive.
-  called with a float will update the job's progress in the queue.
+  "returns a fn that accepts a double value between 0.0 and 1.0 inclusive.
+  called with a double will update the job's progress in the queue.
   called without arguments returns the job's current progress."
   [queue-atm job-id]
   (fn [& [pct]]
     (when pct
+      ;;(println (format "thread %s goes tick! (%s)" (.getId (Thread/currentThread)) pct))
       (swap! queue-atm assoc-in [job-id :progress] pct))
     (:progress (get @queue-atm job-id))))
 
@@ -76,8 +96,12 @@
 (defn create-job-add-to-queue!
   "convenience, takes a function `f`, wraps it in a `job`, gives it a tick function and adds it to the queue.
   returns the job ID"
-  [queue-atm f]
-  (add-to-queue! queue-atm (job-info f)))
+  [queue-atm f & [opt-map]]
+  (add-to-queue! queue-atm (job-info f opt-map)))
+
+(defn create-addon-job-add-to-queue!
+  [queue-atm addon f & [opt-map]]
+  (create-job-add-to-queue! queue-atm f (merge opt-map {:job-id (addon-id addon)})))
 
 (defn job-not-started?
   "returns `true` if the job hasn't been started yet."
@@ -162,9 +186,12 @@
   (let [start-job (fn [[job-id {:keys [job]}]]
                     (binding [tick (make-ticker queue-atm job-id)]
                       (try
+                        (tick 0.0)
                         (job)
                         (catch Exception uncaught-exc
-                          uncaught-exc))))
+                          uncaught-exc)
+                        (finally
+                          (tick 1.0)))))
         pool (lasync/pool {:threads n-jobs-running})]
     (try
       (pmap* queue-atm pool start-job @queue-atm)
@@ -232,4 +259,11 @@
     (add-watch queue-atm watch-key watch-fn)
     (fn []
       (remove-watch queue-atm watch-key))))
+
+(defn by-keyset
+  "returns a function that can filter a queue by the given `key` set"
+  [key]
+  (fn [[queue-key _]]
+    (and (set? queue-key)
+         (clojure.set/subset? key queue-key))))
 

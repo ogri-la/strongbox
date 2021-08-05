@@ -40,6 +40,7 @@
                  ;; remember to update the LICENCE.txt
                  ;; remember to update pom file (`lein pom`)
 
+                 ;;[org.clojure/core.cache "1.0.207"] ;; jfx context caching
                  [tolitius/lasync "0.1.23"]
                  
                  ]
