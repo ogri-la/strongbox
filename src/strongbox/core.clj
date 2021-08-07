@@ -862,7 +862,7 @@
               check-for-update-job (fn [installed-addon]
                                      (let [job-id (joblib/addon-id installed-addon)]
                                        (joblib/create-job-add-to-queue!
-                                        queue-atm 
+                                        queue-atm
                                         (partial check-for-update-affective installed-addon)
                                         {:job-id job-id})))
 
@@ -970,20 +970,33 @@
   []
   (versioneer/get-version "ogri-la" "strongbox"))
 
-(defn-spec latest-strongbox-release (s/nilable string?)
-  "returns the most recently released version of strongbox it can find."
+(defn-spec -latest-strongbox-release (s/or :ok string?, :failed? keyword)
+  "returns the most recently released version of strongbox on github.
+  returns `:failed` if an error occurred while downloading/decoding/extracting the version name, rather than `nil`.
+  `nil` is used to mean 'not set' in the app state."
   []
   (binding [http/*cache* (cache)]
     (let [message "downloading strongbox version data"
           url "https://api.github.com/repos/ogri-la/strongbox/releases/latest"]
-      (some-> url (http/download message) http/sink-error utils/from-json :tag_name))))
+      (or (some-> url (http/download message) http/sink-error utils/from-json :tag_name)
+          :failed))))
+
+(defn-spec latest-strongbox-release (s/nilable string?)
+  "returns the most recently released version of strongbox on github or `nil` if it can't."
+  []
+  (let [lsr (get-state :latest-strongbox-release)]
+    (case lsr
+      nil (let [lsr (-latest-strongbox-release)]
+            (swap! state assoc :latest-strongbox-release lsr)
+            (latest-strongbox-release)) ;; recurse
+      :failed nil
+      lsr)))
 
 (defn-spec latest-strongbox-version? boolean?
   "returns true if the *running instance* of strongbox is the *most recent known* version of strongbox."
   []
   (let [version-running (strongbox-version)
-        ;;latest-release (or (latest-strongbox-release) version-running)
-        latest-release version-running ;; infinite loop bug here
+        latest-release (or (latest-strongbox-release) version-running)
         sorted-asc (utils/sort-semver-strings [latest-release version-running])]
     (= version-running (last sorted-asc))))
 
