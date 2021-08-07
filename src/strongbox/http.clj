@@ -15,6 +15,7 @@
     [core]
     [client :as client]])
   (:import
+   ;; from clj-commons/fs
    [org.apache.commons.io.input CountingInputStream]))
 
 ;; todo: revisit this value
@@ -51,17 +52,30 @@
       ([req resp raise]
        (write-etag etag-key (client (add-etag-or-not etag-key req) resp raise))))))
 
+;; https://github.com/unrelentingtech/clj-http-fake/blob/920630d21bbd9b3203c07bc458d4da1070fd6113/src/clj_http/fake.clj#L136
+(let [byte-array-type (Class/forName "[B")]
+  (defn byte-array?
+    "Is `obj` a java byte array?"
+    [obj]
+    (instance? byte-array-type obj)))
+
 ;; https://github.com/dakrone/clj-http/blob/3.x/examples/progress_download.clj
 (defn wrap-downloaded-bytes-counter-middleware
   "Middleware that provides an CountingInputStream wrapping the stream output"
   [client]
   (fn [req]
-    (if (= (:as req) :stream)
-      (let [resp (client req)
-            counter (CountingInputStream. (:body resp))]
-        (merge resp {:body counter
-                     :downloaded-bytes-counter counter}))
-      (client req))))
+    (let [resp (client req)]
+      (if (= (:as req) :stream)
+        ;; file downloads and clj-fake responses (bytes coerced to input-streams)
+        (let [body (:body resp)
+              counter (CountingInputStream. (if (byte-array? body)
+                                              ;; clj-fake response, probably
+                                              (clojure.java.io/input-stream body)
+                                              body))]
+          (merge resp {:body counter
+                       :downloaded-bytes-counter counter}))
+        ;; text/html/json downloads
+        resp))))
 
 (defn-spec strongbox-user-agent string?
   [strongbox-version string?]

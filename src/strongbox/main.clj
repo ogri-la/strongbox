@@ -8,6 +8,7 @@
    [clojure.string :refer [lower-case]]
    [me.raynes.fs :as fs]
    [strongbox
+    [joblib :as joblib]
     [core :as core]
     [utils :as utils :refer [in?]]]
    [gui.diff :refer [with-gui-diff]]
@@ -98,6 +99,8 @@
 
   (try
     (with-redefs [core/testing? true
+                  ;; don't pause while testing, it's for users to get a nice warm fuzzy feeling from the progress bars
+                  joblib/tick-delay joblib/tick
                   ;;main/profile? true
                   ;;main/spec? true
                   ]

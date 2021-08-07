@@ -70,7 +70,8 @@
 (defn make-ticker
   "returns a fn that accepts a double value between 0.0 and 1.0 inclusive.
   called with a double will update the job's progress in the queue.
-  called without arguments returns the job's current progress."
+  called without arguments returns the job's current progress.
+  called without arguments AND not bound to a thread, will return `nil` - see `tick`."
   [queue-atm job-id]
   (fn [& [pct]]
     (when pct
