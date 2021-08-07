@@ -1257,12 +1257,10 @@
   "returns a list of `:menu-item` maps that will update the given `addon` with 
   the release data for a selected release in `release-list`."
   [addon :addon/expanded]
-  (let [pin (fn [release _]
-              (cli/set-version addon release))]
-    (mapv (fn [release]
-            (menu-item (or (:release-label release) (:version release))
-                       (partial pin release)))
-          (:release-list addon))))
+  (mapv (fn [release]
+          (menu-item (or (:release-label release) (:version release))
+                     (async-handler (partial cli/set-version addon release))))
+        (:release-list addon)))
 
 (defn-spec singular-context-menu map?
   "context menu when a single addon is selected."
