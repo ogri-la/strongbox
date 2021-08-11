@@ -24,8 +24,7 @@
 (def default-config-dir "~/.config/strongbox")
 (def default-data-dir "~/.local/share/strongbox")
 
-;; pretty arbitrary
-(def num-concurrent-downloads 10)
+(def num-concurrent-downloads (-> (Runtime/getRuntime) .availableProcessors))
 
 (defn generate-path-map
   "generates filesystem paths whose location may vary based on the current working directory and environment variables.
@@ -158,7 +157,7 @@
   (-> @state nil? not))
 
 (defn assert-started
-  "raises a `RuntimeException` if app has not been started"
+  "raises a `RuntimeException` if app has not been started."
   []
   (when-not (started?)
     (throw (RuntimeException. "application must be `start`ed before state may be accessed."))))
@@ -461,7 +460,7 @@
   "returns `true` if given `addon` is being updated"
   [addon-name ::sp/name]
   (if @state
-    (utils/in? addon-name (get-state :unsteady-addon-list))
+    (clojure.set/subset? #{addon-name} (get-state :unsteady-addon-list))
     false))
 
 ;; 
@@ -529,7 +528,7 @@
   (affects-addon-wrapper download-addon-guard))
 
 (defn-spec install-addon (s/or :ok (s/coll-of ::sp/extant-file), :passed-tests true?, :error nil?)
-  "downloads an addon and installs it, bypassing checks"
+  "downloads an addon and installs it, bypassing checks. see `install-addon-guard`."
   [addon :addon/installable, install-dir ::sp/extant-dir, downloaded-file ::sp/extant-archive-file]
   (try
     (addon/install-addon addon install-dir downloaded-file)
@@ -807,11 +806,8 @@
 (defn expand-summary-wrapper
   [addon-summary]
   (binding [http/*cache* (cache)]
-    (let [game-track (get-game-track) ;; scope creep, but it fits so nicely
-          strict? (get-game-track-strictness)
-          ;;wrapper (affects-addon-wrapper catalogue/expand-summary)
-          ]
-      ;;(wrapper addon-summary game-track strict?))))
+    (let [game-track (get-game-track)
+          strict? (get-game-track-strictness)]
       (catalogue/expand-summary addon-summary game-track strict?))))
 
 (defn-spec check-for-update :addon/toc
@@ -856,31 +852,20 @@
   []
   (when (selected-addon-dir)
     (let [installed-addon-list (get-state :installed-addon-list)]
-      (when-not (empty? installed-addon-list)
-        (info "checking for updates")
-        (let [queue-atm (get-state :job-queue)
-              check-for-update-job (fn [installed-addon]
-                                     (let [job-id (joblib/addon-id installed-addon)]
-                                       (joblib/create-job-add-to-queue!
-                                        queue-atm
-                                        (partial check-for-update-affective installed-addon)
-                                        {:job-id job-id})))
+      (info "checking for updates")
+      (let [queue-atm (get-state :job-queue)
+            update-jobs (fn [installed-addon]
+                          (joblib/create-addon-job! queue-atm, installed-addon, check-for-update-affective))
+            _ (run! update-jobs installed-addon-list)
 
-              ;; create jobs and add them to the queue
-              _ (run! check-for-update-job installed-addon-list)
+            expanded-addon-list (joblib/run-jobs! queue-atm num-concurrent-downloads)
 
-              expanded-addon-list (try
-                                    (joblib/run-jobs queue-atm num-concurrent-downloads)
-                                    (catch Exception e
-                                      (error e "uncaught exception checking for updates in parallel!")))
+            num-matched (->> expanded-addon-list (filterv :matched?) count)
+            num-updates (->> expanded-addon-list (filterv :update?) count)]
 
-              _ (info "finished checking for updates")
-
-              num-matched (->> expanded-addon-list (filterv :matched?) count)
-              num-updates (->> expanded-addon-list (filterv :update?) count)]
-
-          (update-installed-addon-list! expanded-addon-list)
-          (info (format "%s addons checked, %s updates available" num-matched num-updates)))))))
+        (info "finished checking for updates")
+        (update-installed-addon-list! expanded-addon-list)
+        (info (format "%s addons checked, %s updates available" num-matched num-updates))))))
 
 (def check-for-updates check-for-updates-in-parallel)
 

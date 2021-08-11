@@ -99,7 +99,7 @@
 
   (try
     (with-redefs [core/testing? true
-                  ;; don't pause while testing, it's for users to get a nice warm fuzzy feeling from the progress bars
+                  ;; don't pause while testing. nothing should depend on that pause happening.
                   joblib/tick-delay joblib/tick
                   ;;main/profile? true
                   ;;main/spec? true

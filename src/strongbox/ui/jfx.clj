@@ -1354,10 +1354,6 @@
     {:fx/type :progress-bar
      :progress progress}))
 
-(defn has-job?
-  [queue keyset]
-  (->> queue (filter (joblib/by-keyset keyset)) empty? not))
-
 (defn installed-addons-table
   [{:keys [fx/context]}]
   ;; subscribe to re-render table when addons become unsteady
@@ -1389,10 +1385,10 @@
                                                  (if-not row
                                                    {:text ""}
 
-                                                   (let [key (joblib/addon-id row)]
+                                                   (let [job-id (joblib/addon-id row)]
                                                      {:graphic (if (and (core/unsteady? (:name row))
-                                                                        (has-job? queue key))
-                                                                 (addon-progress-bar row queue key)
+                                                                        (joblib/has-job? queue job-id))
+                                                                 (addon-progress-bar row queue job-id)
                                                                  (uber-button row))})))}
                       :cell-value-factory identity}]]
 

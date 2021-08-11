@@ -65,6 +65,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* addon detail, 'releases' widget
+    - installed release should be highlighted
+
 * addon detail, mutual dependencies pane
     - for example, I would like to see what is happening when:
         adibags anima & conduits is overwritten by adibags anima filter

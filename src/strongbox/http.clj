@@ -52,12 +52,6 @@
       ([req resp raise]
        (write-etag etag-key (client (add-etag-or-not etag-key req) resp raise))))))
 
-;; https://github.com/unrelentingtech/clj-http-fake/blob/920630d21bbd9b3203c07bc458d4da1070fd6113/src/clj_http/fake.clj#L136
-(let [byte-array-type (Class/forName "[B")]
-  (defn byte-array?
-    "Is `obj` a java byte array?"
-    [obj]
-    (instance? byte-array-type obj)))
 
 ;; https://github.com/dakrone/clj-http/blob/3.x/examples/progress_download.clj
 (defn wrap-downloaded-bytes-counter-middleware
@@ -68,7 +62,7 @@
       (if (= (:as req) :stream)
         ;; file downloads and clj-fake responses (bytes coerced to input-streams)
         (let [body (:body resp)
-              counter (CountingInputStream. (if (byte-array? body)
+              counter (CountingInputStream. (if (utils/byte-array? body)
                                               ;; clj-fake response, probably
                                               (clojure.java.io/input-stream body)
                                               body))]
@@ -198,21 +192,14 @@
                                              ;; doesn't .close on streams
                                              (clojure.java.io/copy (:body resp) (java.io.File. partial-output-file))
 
-                                             ;; interpose ourselves so we can update the job progress (if it exists)
-                                             (let [request resp ;; urgh
-                                                   target partial-output-file
-
-                                                   ;; ---
-
-                                                   length (Integer/valueOf (get-in request [:headers "content-length"] 0))
+                                             ;; count bytes transferred so we can update the job progress (if one exists). taken from:
+                                             ;; - https://github.com/dakrone/clj-http/blob/7aa6d02ad83dff9af6217f39e517cde2ded73a25/examples/progress_download.clj
+                                             (let [length (Integer/valueOf (get-in resp [:headers "content-length"] 0))
                                                    buffer-size (* 1024 10)]
-
-                                               (with-open [input (:body request)
-                                                           output (clojure.java.io/output-stream target)]
-
+                                               (with-open [input (:body resp)
+                                                           output (clojure.java.io/output-stream partial-output-file)]
                                                  (let [buffer (make-array Byte/TYPE buffer-size)
-                                                       counter (:downloaded-bytes-counter request)]
-
+                                                       counter (:downloaded-bytes-counter resp)]
                                                    (loop []
                                                      (let [size (.read input buffer)]
                                                        (when (pos? size)
@@ -221,7 +208,7 @@
                                                          (recur))))))))
 
                                            (when streaming-response?
-                                             ;; stream request responses get written to a file, the stream closed and the path to the output file returned
+                                             ;; stream responses get written to a file, the stream closed and the path to the output file returned
                                              (-> resp :body .close)) ;; not all requests are streams with a :body that needs to be closed
 
                                            ;; lock is held for ~0.11 msecs to ~0.18 msecs

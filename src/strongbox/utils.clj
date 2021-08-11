@@ -644,6 +644,23 @@
   [msg string?, msg-list ::sp/list-of-strings]
   (clojure.string/join (format "\n %s " constants/bullet) (into [msg] msg-list)))
 
-(defn select-vals
-  [m ks]
-  (map #(get m %) ks))
+(defn-spec select-vals coll?
+  "like `get` on `m` but for each key in `ks`. removes nils."
+  [m map?, ks (s/coll-of any?)]
+  (remove nil? (map #(get m %) ks)))
+
+;; https://github.com/unrelentingtech/clj-http-fake/blob/920630d21bbd9b3203c07bc458d4da1070fd6113/src/clj_http/fake.clj#L136
+(let [byte-array-type (Class/forName "[B")]
+  (defn byte-array?
+    "Is `obj` a java byte array?"
+    [obj]
+    (instance? byte-array-type obj)))
+
+(defn atom?
+  "Is `obj` an atom?"
+  [obj]
+  (instance? clojure.lang.Atom obj))
+
+(defn thread-pool-executor?
+  [obj]
+  (instance? java.util.concurrent.ThreadPoolExecutor obj))

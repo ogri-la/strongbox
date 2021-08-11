@@ -99,6 +99,8 @@
   `(with-running-app+opts {:ui :cli} ~@form))
 
 (defmacro with-running-app*
+  "like `with-running-app`, but with no UI at all.
+  I wouldn't say the app is running without a UI attached and it's `start` fn called, though."
   [& form]
   `(with-running-app+opts {:ui nil} ~@form))
 

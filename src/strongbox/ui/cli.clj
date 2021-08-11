@@ -241,10 +241,9 @@
                             (let [job-fn (fn []
                                            [addon (core/download-addon-guard-affective addon install-dir)])
                                   job-id (joblib/addon-job-id addon :download-addon)]
-                              (joblib/create-job-add-to-queue! queue-atm job-fn {:job-id job-id})))
-        ;; download addons in parallel.
+                              (joblib/create-job! queue-atm job-fn job-id)))
         _ (run! add-download-job! updateable-addon-list)
-        addon+downloaded-file-list (joblib/run-jobs queue-atm core/num-concurrent-downloads)]
+        addon+downloaded-file-list (joblib/run-jobs! queue-atm core/num-concurrent-downloads)]
 
     ;; install addons serially, skip download checks, mark addons as unsteady
     (doseq [[addon downloaded-file] addon+downloaded-file-list]
@@ -277,8 +276,8 @@
   (core/refresh))
 
 (defn-spec install-many ::sp/list-of-maps
-  "install many addons from the catalogue. a bit different from the other installation functions, 
-  this one returns a list of maps with the installation results."
+  "install many addons from the catalogue.
+  a bit different from the other installation functions, this one returns a list of maps with the installation results."
   [addon-list :addon/summary-list]
   (let [queue-atm (core/get-state :job-queue)
         job (fn [addon]
@@ -291,8 +290,8 @@
                                core/install-addon-guard-affective))]
                   {:label (:label addon)
                    :error-messages error-messages})))]
-    (run! (partial joblib/create-job-add-to-queue! queue-atm) (mapv job addon-list))
-    (joblib/run-jobs (core/get-state :job-queue) core/num-concurrent-downloads)))
+    (run! (partial joblib/create-job! queue-atm) (mapv job addon-list))
+    (joblib/run-jobs! (core/get-state :job-queue) core/num-concurrent-downloads)))
 
 (defn-spec update-selected nil?
   "updates all addons in given `addon-list` that have updates available.
@@ -600,12 +599,10 @@
         queue-atm (get-state :job-queue)
 
         add-job! (fn [addon]
-                   (joblib/create-addon-job-add-to-queue!
-                    queue-atm addon
-                    (partial touch addon)))]
+                   (joblib/create-addon-job! queue-atm addon touch))]
 
     (run! add-job! (get-state :installed-addon-list))
-    (joblib/run-jobs queue-atm core/num-concurrent-downloads)
+    (joblib/run-jobs! queue-atm core/num-concurrent-downloads)
     nil))
 
 ;;
