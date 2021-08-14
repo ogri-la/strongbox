@@ -1338,3 +1338,63 @@
           (cli/bump-search)
           (Thread/sleep 50)
           (is (= 1 (-> (core/get-state :search) :results count))))))))
+
+(deftest -latest-strongbox-release
+  (testing "standard github response for strongbox release data can be parsed and the release version extracted"
+    (let [fake-routes {"https://api.github.com/repos/ogri-la/strongbox/releases/latest"
+                       {:get (fn [req] {:status 200 :body (slurp (fixture-path "github-strongbox-release.json"))})}}
+          expected "4.3.0"]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (core/-latest-strongbox-release)))))))
+
+(deftest -latest-strongbox-release--throttled
+  (testing "throttled github response status for strongbox release data returns a :failed "
+    (let [fake-routes {"https://api.github.com/repos/ogri-la/strongbox/releases/latest"
+                       {:get (fn [req] {:status 403 :reason-phrase "asdf"})}}
+          expected :failed]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (core/-latest-strongbox-release)))))))
+
+(deftest -latest-strongbox-release--unknown
+  (testing "weird github response statuses for strongbox release data returns a :failed "
+    (let [fake-routes {"https://api.github.com/repos/ogri-la/strongbox/releases/latest"
+                       {:get (fn [req] {:status 999 :reason-phrase "asdf"})}}
+          expected :failed]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (core/-latest-strongbox-release)))))))
+
+(deftest -latest-strongbox-release--malformed
+  (testing "successful but malformed/unparseable github response for strongbox release data returns a :failed "
+    (let [fake-routes {"https://api.github.com/repos/ogri-la/strongbox/releases/latest"
+                       {:get (fn [req] {:status 200 :body "asdf"})}}
+          expected :failed]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (core/-latest-strongbox-release)))))))
+
+(deftest latest-strongbox-release
+  (testing "standard github response for strongbox release data can be parsed and the release version extracted"
+    (let [fake-routes {"https://api.github.com/repos/ogri-la/strongbox/releases/latest"
+                       {:get (fn [req] {:status 200 :body (slurp (fixture-path "github-strongbox-release.json"))})}}
+          expected "4.3.0"]
+      (with-running-app
+        (with-fake-routes-in-isolation fake-routes
+          (is (= expected (core/latest-strongbox-release))))))))
+
+(deftest latest-strongbox-release--throttled
+  (testing "throttled github response status for strongbox release data returns `nil`"
+    (let [fake-routes {"https://api.github.com/repos/ogri-la/strongbox/releases/latest"
+                       {:get (fn [req] {:status 403 :reason-phrase "asdf"})}}]
+      (with-running-app
+        (with-fake-routes-in-isolation fake-routes
+          (is (nil? (core/latest-strongbox-release))))))))
+
+(deftest latest-strongbox-release--subsequent-failure
+  (testing "once discovered, release versions are are stored in app state and not fetched again."
+    (let [fake-routes {"https://api.github.com/repos/ogri-la/strongbox/releases/latest"
+                       {:get (fn [req] {:status 403 :reason-phrase "asdf"})}}
+          expected "foo"]
+      (with-running-app
+        (swap! core/state assoc :latest-strongbox-release expected)
+        (with-fake-routes-in-isolation fake-routes
+          (is (= expected (core/latest-strongbox-release))))))))
+

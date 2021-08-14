@@ -105,6 +105,8 @@
    :cfg nil ;; see config.clj
    ;;:catalogue-source-list [] ;; moved to config.clj and [:cfg :catalogue-location-list]
 
+   :latest-strongbox-version nil
+
    ;; subset of possible data about all INSTALLED addons
    ;; starts as parsed .toc file data
    ;; ... then updated with data from catalogue
@@ -199,10 +201,12 @@
 (defn cache
   "data and a setter that gets bound to http/*cache* when caching http requests"
   []
-  {;;:etag-db (get-state :etag-db) ;; don't do this. encourages stale reads of the etag-db
-   :set-etag set-etag
-   :get-etag #(get-state :etag-db %) ;; do this instead
-   :cache-dir (paths :cache-dir)})
+  (if-not (started?)
+    (warn "http cache disabled, app is not started")
+    {;;:etag-db (get-state :etag-db) ;; don't do this. encourages stale reads of the etag-db
+     :set-etag set-etag
+     :get-etag #(get-state :etag-db %) ;; do this instead
+     :cache-dir (paths :cache-dir)}))
 
 (defn-spec add-cleanup-fn nil?
   "adds a function to a list of functions that are called without arguments when the application is stopped"
@@ -817,7 +821,7 @@
                :matched :addon/toc+summary+match)]
   (logging/with-addon addon
     (let [expanded-addon (when (:matched? addon)
-                           (joblib/tick-delay 0.25) ;; todo: interleave form?
+                           (joblib/tick-delay 0.25)
                            (expand-summary-wrapper addon))
           addon (or expanded-addon addon) ;; expanded addon may still be nil
           has-update? (addon/updateable? addon)]

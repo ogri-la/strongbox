@@ -54,6 +54,8 @@
 
 
 ;; https://github.com/dakrone/clj-http/blob/3.x/examples/progress_download.clj
+
+
 (defn wrap-downloaded-bytes-counter-middleware
   "Middleware that provides an CountingInputStream wrapping the stream output"
   [client]

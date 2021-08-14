@@ -196,9 +196,17 @@
   [x ::sp/anything]
   (with-out-str (clojure.data.json/pprint x :escape-slash false)))
 
-(defn from-json
+(defn from-json*
   [x]
   (some-> x (clojure.data.json/read-str :key-fn keyword)))
+
+(defn from-json
+  [x]
+  (try
+    (from-json* x)
+    (catch Exception exc
+      (error (str "failed to parse json:" exc))
+      nil)))
 
 (defn-spec dump-json-file ::sp/extant-file
   [path ::sp/file, data ::sp/anything]
@@ -647,7 +655,7 @@
 (defn-spec select-vals coll?
   "like `get` on `m` but for each key in `ks`. removes nils."
   [m map?, ks (s/coll-of any?)]
-  (remove nil? (map #(get m %) ks)))
+  (remove #(= % :-missing) (map #(get m % :-missing) ks)))
 
 ;; https://github.com/unrelentingtech/clj-http-fake/blob/920630d21bbd9b3203c07bc458d4da1070fd6113/src/clj_http/fake.clj#L136
 (let [byte-array-type (Class/forName "[B")]

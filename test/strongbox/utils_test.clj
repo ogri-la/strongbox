@@ -337,3 +337,19 @@
       (doseq [[given expected] cases]
         (is (= expected (utils/guess-game-track given)) (format "failed case: %s" given))))))
 
+(deftest select-vals
+  (let [given {:a 1 :b 2 :c 3 :d 4 :e nil}
+
+        cases [[[:a] [1]]
+               [[:a :b] [1 2]]
+               [[:b :a] [2 1]]
+
+               [[:a :b :c :d :e] [1 2 3 4 nil]]
+               [[:a :b :c :d :e :f] [1 2 3 4 nil]]
+
+               [[:foo :bar :baz] []]
+
+               [{} []]]]
+    (doseq [[ks expected] cases]
+      (is (= expected (utils/select-vals given ks))))))
+
