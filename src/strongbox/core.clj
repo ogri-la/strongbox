@@ -441,9 +441,20 @@
   ;; nice and quick but essentially validating addon against `:addon/installable`
   (some? (:download-url addon)))
 
+(defn-spec unsteady? boolean?
+  "returns `true` if given `addon` is being updated"
+  [addon-name ::sp/name]
+  (if @state
+    (clojure.set/subset? #{addon-name} (get-state :unsteady-addon-list))
+    false))
+
 (defn start-affecting-addon
   [addon]
-  (swap! state update-in [:unsteady-addon-list] clojure.set/union #{(:name addon)}))
+  (dosync
+   (if-not (unsteady? (:name addon))
+     (do (swap! state update-in [:unsteady-addon-list] clojure.set/union #{(:name addon)})
+         true)
+     false)))
 
 (defn stop-affecting-addon
   [addon]
@@ -453,19 +464,13 @@
   [wrapped-fn]
   (fn [addon & args]
     (assert-started)
-    (logging/with-addon addon
+    (let [applied? (start-affecting-addon addon)]
       (try
-        (start-affecting-addon addon)
-        (apply wrapped-fn addon args)
+        (logging/with-addon addon
+          (apply wrapped-fn addon args))
         (finally
-          (stop-affecting-addon addon))))))
-
-(defn-spec unsteady? boolean?
-  "returns `true` if given `addon` is being updated"
-  [addon-name ::sp/name]
-  (if @state
-    (clojure.set/subset? #{addon-name} (get-state :unsteady-addon-list))
-    false))
+          (when applied?
+            (stop-affecting-addon addon)))))))
 
 ;; 
 
@@ -860,6 +865,7 @@
       (let [queue-atm (get-state :job-queue)
             update-jobs (fn [installed-addon]
                           (joblib/create-addon-job! queue-atm, installed-addon, check-for-update-affective))
+            _ (info (joblib/queue-info @queue-atm))
             _ (run! update-jobs installed-addon-list)
 
             expanded-addon-list (joblib/run-jobs! queue-atm num-concurrent-downloads)
