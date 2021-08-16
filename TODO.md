@@ -6,8 +6,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-## todo
-
 * greater parallelism
     - internal job queue
     - replace log at bottom of screen with a list of jobs being processed and how far along they are
@@ -51,19 +49,23 @@ see CHANGELOG.md for a more formal list of changes by release
             - https://github.com/dakrone/clj-http/blob/3.x/examples/progress_download.clj
 
 * a 'stop' button to stop updates would be nice
+    - no .. I mean, yes, it would be nice, but the jobs happen too quickly.
+        - even the largest download I could find (The Undermine Journal) only takes a couple of seconds to fetch
 
 * only unique jobs in queue
     - pumping the update all button won't do much
     - each potential job has a deterministic id that can be generated *before* creation/computation
         - and the job queue is an ordered map of id->job
 
+## todo
+
+## todo bucket (no particular order)
+
 * share a pool of connections between jobs
     - https://github.com/dakrone/clj-http#user-content-persistent-connections
     - N connections serving M threads
-    - this implies shared state between jobs (threadpool)
-        - could be controlled using`
-
-## todo bucket (no particular order)
+    - pretty fast just by making requests in parallel
+        - moving this back to the bucket until I start really looking for optimisations
 
 * addon detail, 'releases' widget
     - installed release should be highlighted
