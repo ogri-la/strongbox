@@ -108,7 +108,7 @@
 
       (if ns-kw
         (if (some #{ns-kw} [:main :utils :http :tags
-                            :core :toc :nfo :zip :config :catalogue :db :addon :logging
+                            :core :toc :nfo :zip :config :catalogue :db :addon :logging :joblib
                             :cli :gui :jfx
                             :curseforge-api :wowinterface :wowinterface-api :github-api :tukui-api])
           (with-gui-diff

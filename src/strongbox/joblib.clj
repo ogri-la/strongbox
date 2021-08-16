@@ -58,8 +58,7 @@
 
 (defn-spec addon-id :joblib/job-id
   [addon :joblib/addon]
-  (set (into [(unique-id)]
-             (utils/select-vals addon [:source :source-id :dirname]))))
+  (set (utils/select-vals addon [:source :source-id :dirname])))
 
 (defn-spec addon-job-id :joblib/job-id
   [addon :joblib/addon, job-id :joblib/job-id]
@@ -162,19 +161,27 @@
    (or (some->> @queue-atm keys (mapv (partial pop-job! queue-atm)))
        [])))
 
-(defn-spec run-jobs! (s/coll-of any?, :kind vector?)
+(defn-spec run-jobs!* (s/coll-of any?, :kind vector?)
   "run all of the jobs in the given `queue-atm` in parallel, `n` at a time, until all are done.
   jobs that raised an exception have the exception raised returned."
-  [queue-atm atom?, n pos-int?]
+  [queue-atm atom?, n pos-int?, pool utils/thread-pool-executor?]
   (let [start-job (fn [[job-id {:keys [job]}]]
                     (binding [tick (make-ticker queue-atm job-id)]
                       (try
                         (job)
                         (catch Exception uncaught-exc
-                          uncaught-exc))))
-        pool (lasync/pool {:threads n})]
+                          uncaught-exc))))]
+    (pmap* queue-atm pool start-job @queue-atm)))
+
+(defn-spec run-jobs! (s/coll-of any?, :kind vector?)
+  "convenience. run all of the jobs in the given `queue-atm` in parallel, `n` at a time, until all are done.
+  jobs that raised an exception have the exception raised returned.
+  queue jobs are removed afterwards.
+  threadpool is shutdown afterwards."
+  [queue-atm atom?, n pos-int?]
+  (let [pool (lasync/pool {:threads n})]
     (try
-      (pmap* queue-atm pool start-job @queue-atm)
+      (run-jobs!* queue-atm n pool)
       (finally
         (pop-all-jobs! queue-atm)
         (lasync/shutdown pool)))))
@@ -198,9 +205,11 @@
   "returns a function that can filter a queue by the given `job-id`. 
   only works if `job-id` is a set (see `addon-id`)."
   [job-id :joblib/job-id]
-  (fn [[queue-key _]]
-    (and (set? job-id)
-         (clojure.set/subset? job-id queue-key))))
+  (if (set? job-id)
+    (fn [[queue-key _]]
+      (clojure.set/subset? job-id queue-key))
+    (fn [[queue-key _]]
+      (= queue-key job-id))))
 
 (defn-spec has-job? boolean?
   "returns `true` if the given `queue` contains one or more jobs whose job-id is a *superset* of the given `job-id`.

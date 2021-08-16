@@ -1392,9 +1392,22 @@
   (testing "once discovered, release versions are are stored in app state and not fetched again."
     (let [fake-routes {"https://api.github.com/repos/ogri-la/strongbox/releases/latest"
                        {:get (fn [req] {:status 403 :reason-phrase "asdf"})}}
-          expected "foo"]
+          expected "foo.bar.baz"]
       (with-running-app
         (swap! core/state assoc :latest-strongbox-release expected)
         (with-fake-routes-in-isolation fake-routes
           (is (= expected (core/latest-strongbox-release))))))))
 
+;;
+
+(deftest unsteady?
+  (testing "a function that operates on addons can be wrapped to mark the addon as 'unsteady'"
+    (let [addon {:name "foo"}
+          addon-fn (fn [addon*]
+                     (and (core/unsteady? (:name addon*))
+                          (not (empty? (core/get-state :unsteady-addon-list)))))
+          addon-fn-affective (core/affects-addon-wrapper addon-fn)]
+      (with-running-app
+        (is (empty? (core/get-state :unsteady-addon-list)))
+        (is (true? (addon-fn-affective addon)))
+        (is (empty? (core/get-state :unsteady-addon-list)))))))
