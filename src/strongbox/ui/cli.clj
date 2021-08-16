@@ -182,12 +182,6 @@
   (core/save-settings)
   nil)
 
-(defn-spec set-version nil?
-  "updates `addon` with the given `release` data and then installs it."
-  [addon :addon/installable, release :addon/source-updates]
-  (core/install-addon-guard-affective (merge addon release))
-  (core/refresh))
-
 ;;
 
 (defn-spec pin nil?
@@ -314,6 +308,13 @@
              install-update-these-in-parallel)
         (core/refresh))
     (warn "updates in progress, 'update all' command ignored")))
+
+(defn-spec set-version nil?
+  "updates `addon` with the given `release` data and then installs it."
+  [addon :addon/installable, release :addon/source-updates]
+  ;;(core/install-addon-guard-affective (merge addon release))
+  (install-update-these-in-parallel [(merge addon release)])
+  (core/refresh))
 
 (defn-spec delete-selected nil?
   "deletes all addons in given `addon-list`.
