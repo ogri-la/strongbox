@@ -8,6 +8,7 @@
    [clojure.string :refer [lower-case]]
    [me.raynes.fs :as fs]
    [strongbox
+    [joblib :as joblib]
     [core :as core]
     [utils :as utils :refer [in?]]]
    [gui.diff :refer [with-gui-diff]]
@@ -98,6 +99,8 @@
 
   (try
     (with-redefs [core/testing? true
+                  ;; don't pause while testing. nothing should depend on that pause happening.
+                  joblib/tick-delay joblib/tick
                   ;;main/profile? true
                   ;;main/spec? true
                   ]
@@ -105,7 +108,7 @@
 
       (if ns-kw
         (if (some #{ns-kw} [:main :utils :http :tags
-                            :core :toc :nfo :zip :config :catalogue :db :addon :logging
+                            :core :toc :nfo :zip :config :catalogue :db :addon :logging :joblib
                             :cli :gui :jfx
                             :curseforge-api :wowinterface :wowinterface-api :github-api :tukui-api])
           (with-gui-diff

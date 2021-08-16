@@ -2,6 +2,7 @@
   (:require
    [me.raynes.fs :as fs]
    [clojure.pprint]
+   ;;[clojure.core.cache :as cache]
    [clojure.string :refer [lower-case join capitalize replace] :rename {replace str-replace}]
    ;; logging in the gui should be avoided as it can lead to infinite loops
    [taoensso.timbre :as timbre :refer [spy]] ;; info debug warn error]] 
@@ -15,6 +16,7 @@
    [orchestra.core :refer [defn-spec]]
    [strongbox.ui.cli :as cli]
    [strongbox
+    [joblib :as joblib]
     [logging :as logging]
     [addon :as addon]
     [specs :as sp]
@@ -254,7 +256,8 @@
 
                 ".unsteady"
                 {;; '!important' so that it takes precedence over .updateable addons
-                 :-fx-background-color (str (colour :unsteady) " !important")}}
+                 ;;:-fx-background-color (str (colour :unsteady) " !important")
+                 }}
 
                ;; ignored 
                ".table-view .ignored .table-cell"
@@ -983,20 +986,15 @@
   nil)
 
 (defn search-results-install-handler
-  "this switches to the 'installed' tab, then, for each addon selected, expands summary, installs addon, calls load-installed-addons and finally refreshes;
-  this presents as a plodding step-wise update but is better than a blank screen and apparent hang"
+  "this switches to the 'installed' tab then installs each of the selected addons in parallel."
   [addon-list]
   (switch-tab INSTALLED-TAB)
-  (doseq [selected addon-list]
-    (let [error-messages
-          (logging/buffered-log
-           :warn
-           (some-> selected core/expand-summary-wrapper vector cli/-install-update-these))]
-      (if (empty? error-messages)
-        (core/load-installed-addons)
-        (let [msg (message-list (format "warnings/errors while installing \"%s\"" (:label selected)) error-messages)]
+  (let [results-list (cli/install-many addon-list)]
+    (doseq [{:keys [error-messages label]} results-list]
+      (when-not (empty? error-messages)
+        (let [msg (message-list (format "warnings/errors while installing \"%s\"" label) error-messages)]
           (alert :warning msg {:wait? false}))))
-    (core/refresh)))
+    (cli/half-refresh)))
 
 ;;
 
@@ -1259,12 +1257,10 @@
   "returns a list of `:menu-item` maps that will update the given `addon` with 
   the release data for a selected release in `release-list`."
   [addon :addon/expanded]
-  (let [pin (fn [release _]
-              (cli/set-version addon release))]
-    (mapv (fn [release]
-            (menu-item (or (:release-label release) (:version release))
-                       (partial pin release)))
-          (:release-list addon))))
+  (mapv (fn [release]
+          (menu-item (or (:release-label release) (:version release))
+                     (async-handler (partial cli/set-version addon release))))
+        (:release-list addon)))
 
 (defn-spec singular-context-menu map?
   "context menu when a single addon is selected."
@@ -1351,13 +1347,21 @@
                          (cli/add-addon-tab row)
                          (switch-tab-latest))}}))
 
+(defn addon-progress-bar
+  [row queue keyset]
+  (let [sub-queue (filter (joblib/by-keyset keyset) queue)
+        progress (:progress (joblib/queue-info sub-queue))]
+    {:fx/type :progress-bar
+     :progress progress}))
+
 (defn installed-addons-table
   [{:keys [fx/context]}]
   ;; subscribe to re-render table when addons become unsteady
   (fx/sub-val context get-in [:app-state :unsteady-addon-list])
   ;; subscribe to re-render rows when addons emit warnings or errors
   (fx/sub-val context get-in [:app-state :log-lines])
-  (let [row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
+  (let [queue (fx/sub-val context get-in [:app-state :job-queue])
+        row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
         selected (fx/sub-val context get-in [:app-state :selected-addon-list])
         selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])
 
@@ -1378,9 +1382,14 @@
                      {:text "" :style-class ["more-column"] :min-width 80 :max-width 80 :resizable false
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [row]
-                                                 (if row
-                                                   {:graphic (uber-button row)}
-                                                   {:text ""}))}
+                                                 (if-not row
+                                                   {:text ""}
+
+                                                   (let [job-id (joblib/addon-id row)]
+                                                     {:graphic (if (and (core/unsteady? (:name row))
+                                                                        (joblib/has-job? queue job-id))
+                                                                 (addon-progress-bar row queue job-id)
+                                                                 (uber-button row))})))}
                       :cell-value-factory identity}]]
 
     {:fx/type fx.ext.table-view/with-selection-props
@@ -2017,8 +2026,13 @@
                         :style (style)}
         gui-state (atom (fx/create-context state-template)) ;; cache/lru-cache-factory))
         update-gui-state (fn [new-state]
-                           (swap! gui-state fx/swap-context assoc :app-state new-state))
+                           (let [new-state (update-in new-state [:job-queue] deref)]
+                             (swap! gui-state fx/swap-context assoc :app-state new-state)))
         _ (core/state-bind [] update-gui-state)
+
+        update-job-state (fn [_ _ _ new-state]
+                           (swap! gui-state fx/swap-context assoc-in [:app-state :job-queue] new-state))
+        _ (add-watch (core/get-state :job-queue) :job update-job-state)
 
         ;; css watcher for live coding
         _ (doseq [rf [#'style #'major-theme-map #'sub-theme-map #'themes]

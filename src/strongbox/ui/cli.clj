@@ -5,6 +5,7 @@
    [clojure.spec.alpha :as s]
    [me.raynes.fs :as fs]
    [strongbox
+    [joblib :as joblib]
     [github-api :as github-api]
     [db :as db]
     [logging :as logging]
@@ -181,12 +182,6 @@
   (core/save-settings)
   nil)
 
-(defn-spec set-version nil?
-  "updates `addon` with the given `release` data and then installs it."
-  [addon :addon/installable, release :addon/source-updates]
-  (core/install-addon (merge addon release))
-  (core/refresh))
-
 ;;
 
 (defn-spec pin nil?
@@ -226,9 +221,27 @@
 
 ;;
 
-(defn-spec -install-update-these nil?
+(defn-spec install-update-these-serially nil?
+  "installs/updates a list of addons serially"
   [updateable-addon-list :addon/installable-list]
-  (run! core/install-addon updateable-addon-list))
+  (run! core/install-addon-guard-affective updateable-addon-list))
+
+(defn-spec install-update-these-in-parallel nil?
+  "installs/updates a list of addons in parallel, pushing guard checks into threads and then installing serially."
+  [updateable-addon-list :addon/installable-list]
+  (let [queue-atm (core/get-state :job-queue)
+        install-dir (core/selected-addon-dir)
+        add-download-job! (fn [addon]
+                            (let [job-fn (fn []
+                                           [addon (core/download-addon-guard-affective addon install-dir)])
+                                  job-id (joblib/addon-job-id addon :download-addon)]
+                              (joblib/create-job! queue-atm job-fn job-id)))
+        _ (run! add-download-job! updateable-addon-list)
+        addon+downloaded-file-list (joblib/run-jobs! queue-atm core/num-concurrent-downloads)]
+
+    ;; install addons serially, skip download checks, mark addons as unsteady
+    (doseq [[addon downloaded-file] addon+downloaded-file-list]
+      (core/install-addon-affective addon install-dir downloaded-file))))
 
 (defn-spec re-install-or-update-selected nil?
   "re-installs (if possible) or updates all addons in given `addon-list`.
@@ -239,27 +252,40 @@
    (->> addon-list
         (filter core/expanded?)
         (map -find-replace-release)
-        -install-update-these)
+        install-update-these-in-parallel)
    (core/refresh)))
 
 (defn-spec re-install-or-update-all nil?
   "re-installs (if possible) or updates all installed addons"
   []
-  (->> (get-state :installed-addon-list)
-       (filter core/expanded?)
-       (map -find-replace-release)
-       -install-update-these)
-  (core/refresh))
+  (re-install-or-update-selected (get-state :installed-addon-list)))
 
 (defn-spec install-addon nil?
-  "install an addon from the catalogue.
-  should work on expanded addons as well, but those are already installed ...?"
+  "install an addon from the catalogue. works on expanded addons as well."
   [addon :addon/summary]
   (-> addon
       core/expand-summary-wrapper
       vector
-      -install-update-these)
+      install-update-these-serially)
   (core/refresh))
+
+(defn-spec install-many ::sp/list-of-maps
+  "install many addons from the catalogue.
+  a bit different from the other installation functions, this one returns a list of maps with the installation results."
+  [addon-list :addon/summary-list]
+  (let [queue-atm (core/get-state :job-queue)
+        job (fn [addon]
+              (fn []
+                (let [error-messages
+                      (logging/buffered-log
+                       :warn
+                       (some-> addon
+                               core/expand-summary-wrapper
+                               core/install-addon-guard-affective))]
+                  {:label (:label addon)
+                   :error-messages error-messages})))]
+    (run! (partial joblib/create-job! queue-atm) (mapv job addon-list))
+    (joblib/run-jobs! (core/get-state :job-queue) core/num-concurrent-downloads)))
 
 (defn-spec update-selected nil?
   "updates all addons in given `addon-list` that have updates available.
@@ -269,7 +295,7 @@
   ([addon-list :addon/installed-list]
    (->> addon-list
         (filter addon/updateable?)
-        -install-update-these)
+        install-update-these-in-parallel)
    (core/refresh)))
 
 (defn-spec update-all nil?
@@ -279,9 +305,16 @@
   (if (empty? (get-state :unsteady-addon-list))
     (do (->> (get-state :installed-addon-list)
              (filter addon/updateable?)
-             -install-update-these)
+             install-update-these-in-parallel)
         (core/refresh))
     (warn "updates in progress, 'update all' command ignored")))
+
+(defn-spec set-version nil?
+  "updates `addon` with the given `release` data and then installs it."
+  [addon :addon/installable, release :addon/source-updates]
+  ;;(core/install-addon-guard-affective (merge addon release))
+  (install-update-these-in-parallel [(merge addon release)])
+  (core/refresh))
 
 (defn-spec delete-selected nil?
   "deletes all addons in given `addon-list`.
@@ -460,6 +493,7 @@
 
 ;; importing addons
 
+;; todo: logic might be better off in core.clj
 (defn-spec find-addon (s/or :ok :addon/summary, :error nil?)
   "given a URL of a support addon host, parses it, looks for it in the catalogue, expands addon and attempts a dry run installation.
   if successful, returns the addon-summary."
@@ -492,7 +526,7 @@
                         (error "failed to fetch details of addon"))
 
               ;; a dry-run is good when importing an addon for the first time but
-              ;; not necessary when refreshing the user-catalogue
+              ;; not necessary when updating the *user-catalogue*
               _ (if-not dry-run?
                   true
                   (or (core/install-addon-guard addon (core/selected-addon-dir) true)
@@ -512,7 +546,7 @@
             addon (core/expand-summary-wrapper addon-summary)]
            ;; success! add to user-catalogue and proceed to install
            (do (core/add-user-addon! addon-summary)
-               (core/install-addon addon (core/selected-addon-dir))
+               (core/install-addon-guard addon (core/selected-addon-dir))
                ;;(core/db-reload-catalogue) ;; db-reload-catalogue will call `refresh` which we want to trigger in the gui instead
                (swap! core/state assoc :db nil) ;; will force a reload of db
                nil)
@@ -548,6 +582,29 @@
     (->> (get-state :installed-addon-list)
          ;;(filter addon/updateable?)
          (run! touch))))
+
+(defn-spec touch-bar nil?
+  "used to select each addon in the GUI so the progress-bar can be tested"
+  []
+  (let [touch (fn [addon]
+                (core/start-affecting-addon addon)
+                (let [total 2
+                      pieces 100]
+                  (doseq [pos (range 1 (* total pieces))]
+                    (joblib/tick (double (/ 1 (/ (* total pieces)
+                                                 pos))))
+                    (Thread/sleep 10)))
+
+                (core/stop-affecting-addon addon))
+
+        queue-atm (get-state :job-queue)
+
+        add-job! (fn [addon]
+                   (joblib/create-addon-job! queue-atm addon touch))]
+
+    (run! add-job! (get-state :installed-addon-list))
+    (joblib/run-jobs! queue-atm core/num-concurrent-downloads)
+    nil))
 
 ;;
 

@@ -1,6 +1,7 @@
 (ns strongbox.http
   (:require
    [strongbox
+    [joblib :as joblib]
     [logging :as logging]
     [specs :as sp]
     [utils :as utils :refer [join]]]
@@ -12,10 +13,12 @@
    [trptcolin.versioneer.core :as versioneer]
    [clj-http
     [core]
-    [client :as client]]))
+    [client :as client]])
+  (:import
+   ;; from clj-commons/fs
+   [org.apache.commons.io.input CountingInputStream]))
 
-;; todo: revisit this value
-(def expiry-offset-hours 24) ;; hours
+(def expiry-offset-hours 1) ;; hours
 (def ^:dynamic *cache* nil)
 
 (defn- add-etag-or-not
@@ -48,6 +51,27 @@
       ([req resp raise]
        (write-etag etag-key (client (add-etag-or-not etag-key req) resp raise))))))
 
+
+;; https://github.com/dakrone/clj-http/blob/3.x/examples/progress_download.clj
+
+
+(defn wrap-downloaded-bytes-counter-middleware
+  "Middleware that provides an CountingInputStream wrapping the stream output"
+  [client]
+  (fn [req]
+    (let [resp (client req)]
+      (if (= (:as req) :stream)
+        ;; file downloads and clj-fake responses (bytes coerced to input-streams)
+        (let [body (:body resp)
+              counter (CountingInputStream. (if (utils/byte-array? body)
+                                              ;; clj-fake response, probably
+                                              (clojure.java.io/input-stream body)
+                                              body))]
+          (merge resp {:body counter
+                       :downloaded-bytes-counter counter}))
+        ;; text/html/json downloads
+        resp))))
+
 (defn-spec strongbox-user-agent string?
   [strongbox-version string?]
   (let [regex #"(\d{1,3})\.(\d{1,3})\.(\d{1,3})(.*)?"
@@ -57,8 +81,8 @@
 
 (defn-spec user-agent string?
   [use-anon-useragent? boolean?]
-  (let [;; https://techblog.willshouse.com/2012/01/03/most-common-user-agents/ (last updated 2021-06-25)
-        anon-useragent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36"
+  (let [;; https://techblog.willshouse.com/2012/01/03/most-common-user-agents/ (last updated 2021-07-31)
+        anon-useragent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
         useragent (strongbox-user-agent (versioneer/get-version "ogri-la" "strongbox"))]
     (if use-anon-useragent? anon-useragent useragent)))
 
@@ -114,8 +138,20 @@
       (try
         (when message (info message)) ;; always show the message that was explicitly passed in
         (debug (format "downloading %s to %s" (fs/base-name url) output-file))
-        (client/with-additional-middleware [client/wrap-lower-case-headers (etag-middleware etag-key)]
-          (let [use-anon-useragent? false
+        (client/with-additional-middleware [wrap-downloaded-bytes-counter-middleware
+                                            client/wrap-lower-case-headers
+                                            (etag-middleware etag-key)]
+
+          (let [;; streaming responses are not buffered entirely in memory as their full length cannot be anticipated.
+                ;; instead we open a file handle and pour the response bytes into it as we receive them.
+                ;; if the output file already exists (like a catalogue file) it may be possible another thread is reading
+                ;; this file leading to malformed/invalid data.
+                ;; so we write the incoming bytes to a unique temporary file and then move that file into place, using 
+                ;; the intended output file as a lock.
+                partial-output-file (when output-file
+                                      (join (fs/parent output-file) (fs/temp-name "strongbox-" ".part")))
+
+                use-anon-useragent? false
                 params {:cookie-policy :ignore ;; completely ignore cookies. doesn't stop HttpComponents warning
                         :http-request-config (clj-http.core/request-config {:normalize-uri false})
                         ;; both of these throw a SocketTimeoutException:
@@ -133,20 +169,13 @@
                          (assoc :basic-auth github-auth-token))
 
                 _ (debug "requesting" url "with params" params)
+
                 resp (client/get url params)
+
                 _ (debug "response status" (:status resp))
 
                 not-modified (= 304 (:status resp)) ;; 304 is "not modified" (local file is still fresh). only happens when caching
-                modified (not not-modified)
-
-                ;; streaming responses are not buffered entirely in memory as their full length cannot be anticipated.
-                ;; instead we open a file handle and pour the response bytes into it as we receive them.
-                ;; if the output file already exists (like a catalogue file) it may be possible another thread is reading
-                ;; this file leading to malformed/invalid data.
-                ;; so we write the incoming bytes to a unique temporary file and then move that file into place, using 
-                ;; the intended output file as a lock.
-                partial-output-file (when output-file
-                                      (join (fs/parent output-file) (fs/temp-name "strongbox-" ".part")))]
+                modified (not not-modified)]
 
             (when (and github-request? github-auth-token)
               (logging/without-addon
@@ -158,17 +187,38 @@
               (debug "not modified, contents will be read from cache:" output-file))
 
             (cond
-              ;; remote data has changed, write body to disk
+              ;; remote data has changed, write `:body` bytes to disk
               (and output-file modified) (try
-                                           (clojure.java.io/copy (:body resp) (java.io.File. partial-output-file)) ;; doesn't .close on streams
+                                           (if-not streaming-response?
+                                             ;; doesn't .close on streams
+                                             (clojure.java.io/copy (:body resp) (java.io.File. partial-output-file))
+
+                                             ;; count bytes transferred so we can update the job progress (if one exists). taken from:
+                                             ;; - https://github.com/dakrone/clj-http/blob/7aa6d02ad83dff9af6217f39e517cde2ded73a25/examples/progress_download.clj
+                                             (let [length (Integer/valueOf (get-in resp [:headers "content-length"] 0))
+                                                   buffer-size (* 1024 10)]
+                                               (with-open [input (:body resp)
+                                                           output (clojure.java.io/output-stream partial-output-file)]
+                                                 (let [buffer (make-array Byte/TYPE buffer-size)
+                                                       counter (:downloaded-bytes-counter resp)]
+                                                   (loop []
+                                                     (let [size (.read input buffer)]
+                                                       (when (pos? size)
+                                                         (.write output buffer 0 size)
+                                                         (joblib/tick (joblib/progress length (.getByteCount counter)))
+                                                         (recur))))))))
+
                                            (when streaming-response?
-                                             ;; stream request responses get written to a file, the stream closed and the path to the output file returned
+                                             ;; stream responses get written to a file, the stream closed and the path to the output file returned
                                              (-> resp :body .close)) ;; not all requests are streams with a :body that needs to be closed
+
                                            ;; lock is held for ~0.11 msecs to ~0.18 msecs
                                            ;; much shorter than N seconds to download a file
                                            (locking output-file
                                              (fs/rename partial-output-file output-file))
+
                                            output-file
+
                                            (finally
                                              (if (fs/exists? partial-output-file)
                                                (fs/delete partial-output-file))))

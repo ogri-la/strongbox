@@ -17,7 +17,7 @@
     [catalogue :as catalogue]
     [utils :as utils]
     [config :as config]
-    [test-helper :as helper :refer [fixture-path slurp-fixture helper-data-dir with-running-app]]
+    [test-helper :as helper :refer [fixture-path slurp-fixture helper-data-dir with-running-app with-running-app*]]
     [core :as core]]))
 
 (use-fixtures :each helper/fixture-tempcwd)
@@ -571,48 +571,43 @@
   "final mooshed result"
   (merge toc addon-summary matched? source-updates))
 
-(deftest install-addon
+(deftest install-addon-guard
   (testing "an addon can be installed"
-    (with-fake-routes-in-isolation {}
+    (with-running-app*
       (let [install-dir (str fs/*cwd*)
             ;; move dummy addon file into place so there is no cache miss
             fname (downloaded-addon-fname (:name addon) (:version addon))
             _ (utils/cp (fixture-path fname) install-dir)
             test-only? false
-            ;; without a running app we have no `selected-addon-dir`.
-            ;; pretend to be an export record with a `:game-track` instead
-            addon (assoc addon :game-track :retail)
-            file-list (core/install-addon addon install-dir test-only?)]
-
+            file-list (core/install-addon-guard addon install-dir test-only?)]
         (testing "addon directory created, single file written (.strongbox.json nfo file)"
           (is (= (count file-list) 1))
           (is (fs/exists? (first file-list))))))))
 
-(deftest install-addon--trial-installation
+(deftest install-addon-guard--trial-installation
   (testing "trial installation of a good addon"
-    (with-fake-routes-in-isolation {}
+    (with-running-app*
       (let [install-dir (helper/install-dir)
-            ;; move dummy addon file into place so there is no cache miss
             fname (downloaded-addon-fname (:name addon) (:version addon))
-            _ (utils/cp (fixture-path fname) install-dir)
-
+            dest (utils/cp (fixture-path fname) install-dir)
+            addon (assoc addon :-testing-zipfile dest)
             test-only? true
-            result (core/install-addon addon install-dir test-only?)]
+            result (core/install-addon-guard addon install-dir test-only?)]
         (is result) ;; success
 
         ;; ensure nothing was actually unzipped
         (is (not (fs/exists? (utils/join install-dir "EveryAddon"))))))))
 
-(deftest install-addon--trial-installation-bad-addon
+(deftest install-addon-guard--trial-installation-bad-addon
   (testing "trial installation of a bad addon"
-    (with-fake-routes-in-isolation {}
+    (with-running-app*
       (let [install-dir (helper/install-dir)
             ;; move dummy addon file into place so there is no cache miss
             fname (downloaded-addon-fname (:name addon) (:version addon))
-            _ (fs/copy (fixture-path "bad-truncated.zip") (utils/join install-dir fname)) ;; hoho, so evil
+            _ (fs/copy (fixture-path "bad-truncated.zip") (utils/join install-dir fname))
 
             test-only? true
-            result (core/install-addon addon install-dir test-only?)]
+            result (core/install-addon-guard addon install-dir test-only?)]
         (is (not result)) ;; failure
 
         ;; ensure nothing was actually unzipped
@@ -622,10 +617,11 @@
   (testing "installing a bad addon"
     (with-fake-routes-in-isolation {}
       (let [install-dir (str fs/*cwd*)
-            fname (downloaded-addon-fname (:name addon) (:version addon))]
-        ;; move dummy addon file into place so there is no cache miss
-        (fs/copy (fixture-path "bad-truncated.zip") (utils/join install-dir fname))
-        (is (= (core/install-addon addon install-dir) nil))
+            fname (downloaded-addon-fname (:name addon) (:version addon))
+            dest (utils/join install-dir fname)
+            _ (fs/copy (fixture-path "bad-truncated.zip") dest)
+            addon (assoc addon :-testing-zipfile dest)]
+        (is (nil? (core/install-addon-guard addon install-dir)))
         ;; bad zip file deleted
         (is (= 0 (count (fs/list-dir install-dir))))))))
 
@@ -640,7 +636,7 @@
             fname (downloaded-addon-fname (:name bundled-addon) (:version bundled-addon))
             _ (fs/copy (fixture-path "everyaddon--0-1-2.zip") (utils/join install-dir fname))
 
-            result (core/install-addon bundled-addon)
+            result (core/install-addon-guard bundled-addon)
             directory-list (helper/install-dir-contents)
 
             expected-nfo {;; bundled addon is simply a part of the 'everyaddon' addon.
@@ -665,7 +661,7 @@
                    :download-url "https://path/to/remote/addon.zip" :game-track :retail
                    :-testing-zipfile (fixture-path "everyaddon--0-1-2.zip")}]
 
-        (core/install-addon addon)
+        (core/install-addon-guard addon)
         (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
 
         ;; make newly installed addon implicitly ignored
@@ -676,7 +672,7 @@
                       :source "curseforge" :source-id 2
                       :download-url "https://path/to/remote/addon.zip" :game-track :retail
                       :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}]
-          (core/install-addon addon2)
+          (core/install-addon-guard addon2)
           (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents))))))))
 
 (deftest install-bundled-addon-overwriting-pinned-addon
@@ -693,7 +689,7 @@
                     :download-url "https://path/to/remote/addon.zip" :game-track :retail
                     :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}]
 
-        (core/install-addon addon)
+        (core/install-addon-guard addon)
         (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
 
         ;; refresh our knowledge of what is installed.
@@ -707,7 +703,7 @@
 
         ;; overwrite first addon with addon2.
         ;; this would ordinarily introduce the 'EveryOtherAddon' dirname
-        (core/install-addon addon2)
+        (core/install-addon-guard addon2)
         (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))))))
 
 (deftest install-addon--lenient-game-track
@@ -723,7 +719,7 @@
                    :game-track :classic
                    :-testing-zipfile (fixture-path "everyaddon-classic--1-2-3.zip")}]
 
-        (core/install-addon addon install-dir)))))
+        (core/install-addon-guard addon install-dir)))))
 
 (deftest install-addon--remove-zip
   (testing "installing an addon with the `:addon-zips-to-keep` preference set to `0` will delete the zip afterwards"
@@ -733,7 +729,7 @@
             fname (downloaded-addon-fname (:name addon) (:version addon))
             _ (utils/cp (fixture-path fname) install-dir)]
         (cli/set-preference :addon-zips-to-keep 0)
-        (core/install-addon addon install-dir)
+        (core/install-addon-guard addon install-dir)
         (is (= ["EveryAddon"] (helper/install-dir-contents)))))))
 
 (deftest install-addon--remove-multiple-zips
@@ -762,7 +758,7 @@
                (helper/install-dir-contents)))
 
         (cli/set-preference :addon-zips-to-keep 3)
-        (core/install-addon addon install-dir)
+        (core/install-addon-guard addon install-dir)
         (is (= ["EveryAddon"
                 "everyaddon--0-0-4.zip"
                 "everyaddon--0-0-5.zip"
@@ -804,7 +800,7 @@
                                     (filter fs/directory?) ;; exclude any .zip files
                                     (map fs/base-name) sort)]
 
-        (core/install-addon addon-v0 install-dir)
+        (core/install-addon-guard addon-v0 install-dir)
         (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (install-path-dirs)))
 
         ;; reload the list of addons. this groups the addons up by :group-id
@@ -816,7 +812,7 @@
               addon-v1 (merge addon-v0 source-updates {:url "https://example.org/"}) ;; there is no catalogue so there is no download-url. the version has changed also
               ]
           ;; install the upgrade that gets rid of a directory
-          (core/install-addon addon-v1 install-dir)
+          (core/install-addon-guard addon-v1 install-dir)
           (is (= ["EveryAddon"] (install-path-dirs))))))))
 
 (deftest uninstall-ignored-addon
@@ -839,7 +835,7 @@
             ;; trick here: copying 0.1.2 fixture to 1.2.3 filename. this fixture unpacks two directories
             fname (downloaded-addon-fname (:name addon) (:version addon))
             _ (fs/copy (fixture-path "everyaddon--0-1-2.zip") (utils/join install-dir fname))
-            _ (core/install-addon addon install-dir)
+            _ (core/install-addon-guard addon install-dir)
 
             ;; ensure bundled addon gets ignored
             _ (fs/mkdir (utils/join install-dir "EveryAddon-BundledAddon" ".git"))
@@ -898,21 +894,21 @@
                        :source "curseforge",
                        :source-id 3}]]
 
-        (core/install-addon addon-1)
+        (core/install-addon-guard addon-1)
         (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
         (is (= (first expected) (nfo/read-nfo install-dir bundled-dirname)))
         (is (= (first expected) (nfo/read-nfo-file install-dir bundled-dirname)))
 
         (core/load-installed-addons) ;; refresh our knowledge of what is installed
 
-        (core/install-addon addon-2)
+        (core/install-addon-guard addon-2)
         (is (= ["EveryAddon" "EveryAddon-BundledAddon" "EveryOtherAddon"] (helper/install-dir-contents)))
         (is (= (second expected) (nfo/read-nfo install-dir bundled-dirname)))
         (is (= (subvec expected 0 2) (nfo/read-nfo-file install-dir bundled-dirname)))
 
         (core/load-installed-addons) ;; refresh our knowledge of what is installed
 
-        (core/install-addon addon-3)
+        (core/install-addon-guard addon-3)
         (is (= (last expected) (nfo/read-nfo install-dir bundled-dirname)))
         (is (= expected (nfo/read-nfo-file install-dir bundled-dirname)))))))
 
@@ -929,9 +925,9 @@
                      :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}
             expected ["addon \"everyotheraddon\" is overwriting \"everyaddon\""]]
         (helper/install-dir)
-        (core/install-addon addon-1)
+        (core/install-addon-guard addon-1)
         (core/load-installed-addons) ;; refresh our knowledge of what is installed
-        (is (= expected (logging/buffered-log :warn (core/install-addon addon-2))))))))
+        (is (= expected (logging/buffered-log :warn (core/install-addon-guard addon-2))))))))
 
 (deftest uninstall-addons-with-mutual-dependencies--overwrote
   (testing "uninstalling an addon whose mutual dependency *overwrote another* will see the original one restored"
@@ -957,11 +953,11 @@
                       :source "curseforge"
                       :source-id 1}]
 
-        (core/install-addon addon-1)
+        (core/install-addon-guard addon-1)
         (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
         (core/load-installed-addons) ;; refresh our knowledge of what is installed
 
-        (core/install-addon addon-2)
+        (core/install-addon-guard addon-2)
         (is (= ["EveryAddon" "EveryAddon-BundledAddon" "EveryOtherAddon"] (helper/install-dir-contents)))
         (core/load-installed-addons) ;; refresh our knowledge of what is installed
 
@@ -993,11 +989,11 @@
                       :source "curseforge"
                       :source-id 2}]
 
-        (core/install-addon addon-1)
+        (core/install-addon-guard addon-1)
         (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
         (core/load-installed-addons) ;; refresh our knowledge of what is installed
 
-        (core/install-addon addon-2)
+        (core/install-addon-guard addon-2)
         (is (= ["EveryAddon" "EveryAddon-BundledAddon" "EveryOtherAddon"] (helper/install-dir-contents)))
         (core/load-installed-addons) ;; refresh our knowledge of what is installed
 
@@ -1181,7 +1177,7 @@
                       :source "curseforge",
                       :source-id 1,
                       :update? false}]
-        (core/install-addon addon)
+        (core/install-addon-guard addon)
         (is (= ["EveryAddon"] (helper/install-dir-contents)))
         (core/load-installed-addons)
 
@@ -1212,7 +1208,7 @@
                       :source "curseforge",
                       :source-id 1,
                       :update? false}]
-        (core/install-addon addon)
+        (core/install-addon-guard addon)
         (core/load-installed-addons)
 
         ;; todo: the below makes this a UI test. move test to cli_test.clj
@@ -1277,7 +1273,7 @@
                            (dissoc :ignore?)
                            (assoc :update? false)
                            (update-in [:group-addons target-idx] dissoc :ignore?))]
-        (core/install-addon addon)
+        (core/install-addon-guard addon)
         (nfo/ignore install-dir "EveryAddon-BundledAddon")
         (core/load-installed-addons)
 
@@ -1310,7 +1306,7 @@
                       :source "curseforge",
                       :source-id 1,
                       :update? false}]
-        (core/install-addon addon)
+        (core/install-addon-guard addon)
         (fs/mkdir (utils/join install-dir "EveryAddon" ".git"))
         (core/load-installed-addons)
         (is (:ignore? (first (core/get-state :installed-addon-list)))) ;; implicitly ignored
@@ -1342,3 +1338,76 @@
           (cli/bump-search)
           (Thread/sleep 50)
           (is (= 1 (-> (core/get-state :search) :results count))))))))
+
+(deftest -latest-strongbox-release
+  (testing "standard github response for strongbox release data can be parsed and the release version extracted"
+    (let [fake-routes {"https://api.github.com/repos/ogri-la/strongbox/releases/latest"
+                       {:get (fn [req] {:status 200 :body (slurp (fixture-path "github-strongbox-release.json"))})}}
+          expected "4.3.0"]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (core/-latest-strongbox-release)))))))
+
+(deftest -latest-strongbox-release--throttled
+  (testing "throttled github response status for strongbox release data returns a :failed "
+    (let [fake-routes {"https://api.github.com/repos/ogri-la/strongbox/releases/latest"
+                       {:get (fn [req] {:status 403 :reason-phrase "asdf"})}}
+          expected :failed]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (core/-latest-strongbox-release)))))))
+
+(deftest -latest-strongbox-release--unknown
+  (testing "weird github response statuses for strongbox release data returns a :failed "
+    (let [fake-routes {"https://api.github.com/repos/ogri-la/strongbox/releases/latest"
+                       {:get (fn [req] {:status 999 :reason-phrase "asdf"})}}
+          expected :failed]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (core/-latest-strongbox-release)))))))
+
+(deftest -latest-strongbox-release--malformed
+  (testing "successful but malformed/unparseable github response for strongbox release data returns a :failed "
+    (let [fake-routes {"https://api.github.com/repos/ogri-la/strongbox/releases/latest"
+                       {:get (fn [req] {:status 200 :body "asdf"})}}
+          expected :failed]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (core/-latest-strongbox-release)))))))
+
+(deftest latest-strongbox-release
+  (testing "standard github response for strongbox release data can be parsed and the release version extracted"
+    (let [fake-routes {"https://api.github.com/repos/ogri-la/strongbox/releases/latest"
+                       {:get (fn [req] {:status 200 :body (slurp (fixture-path "github-strongbox-release.json"))})}}
+          expected "4.3.0"]
+      (with-running-app
+        (with-fake-routes-in-isolation fake-routes
+          (is (= expected (core/latest-strongbox-release))))))))
+
+(deftest latest-strongbox-release--throttled
+  (testing "throttled github response status for strongbox release data returns `nil`"
+    (let [fake-routes {"https://api.github.com/repos/ogri-la/strongbox/releases/latest"
+                       {:get (fn [req] {:status 403 :reason-phrase "asdf"})}}]
+      (with-running-app
+        (with-fake-routes-in-isolation fake-routes
+          (is (nil? (core/latest-strongbox-release))))))))
+
+(deftest latest-strongbox-release--subsequent-failure
+  (testing "once discovered, release versions are are stored in app state and not fetched again."
+    (let [fake-routes {"https://api.github.com/repos/ogri-la/strongbox/releases/latest"
+                       {:get (fn [req] {:status 403 :reason-phrase "asdf"})}}
+          expected "foo.bar.baz"]
+      (with-running-app
+        (swap! core/state assoc :latest-strongbox-release expected)
+        (with-fake-routes-in-isolation fake-routes
+          (is (= expected (core/latest-strongbox-release))))))))
+
+;;
+
+(deftest unsteady?
+  (testing "a function that operates on addons can be wrapped to mark the addon as 'unsteady'"
+    (let [addon {:name "foo"}
+          addon-fn (fn [addon*]
+                     (and (core/unsteady? (:name addon*))
+                          (not (empty? (core/get-state :unsteady-addon-list)))))
+          addon-fn-affective (core/affects-addon-wrapper addon-fn)]
+      (with-running-app
+        (is (empty? (core/get-state :unsteady-addon-list)))
+        (is (true? (addon-fn-affective addon)))
+        (is (empty? (core/get-state :unsteady-addon-list)))))))
