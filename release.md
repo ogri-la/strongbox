@@ -38,23 +38,27 @@ Just for my own reference
 * push
     git push --tags
 
-* vagrant up
+* vagrant up && vagrant ssh
 * cd strongbox
-* rm -rf ./release/ strongbox ./target/ /vagrant/release/
+* rm -rf ./release/ strongbox ./target/ /vagrant/release/ /vagrant/strongbox /vagrant/strongbox.sha256
+* git reset --hard && git pull
 * ./build-linux-image.sh
-* mv ./strongbox ./target/*-standalone.jar ./release/
+* mkdir ./release/ && mv ./strongbox ./target/*-standalone.jar ./release/
 * cd release
 * sha256sum strongbox > strongbox.sha256
-* sha256sum strongbox-4.3.0-standalone.jar > strongbox-4.3.0-standalone.jar.sha256
-* mv ./release /vagrant/
+* sha256sum strongbox-4.4.0-standalone.jar > strongbox-4.4.0-standalone.jar.sha256
+* cd .. && mv ./release /vagrant/
+
+* test ./release/strongbox
 * update github release information
     - with changelog
     - with release files
 
-
+* git stash
 * checkout develop
 * merge changes from master
     - resolve conflicts etc
+* git stash pop
 * update TODO, truncating old DONE
 * update CHANGELOG, adding new sections
 * update project.clj

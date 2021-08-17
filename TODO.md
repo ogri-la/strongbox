@@ -6,60 +6,13 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* greater parallelism
-    - internal job queue
-    - replace log at bottom of screen with a list of jobs being processed and how far along they are
-        - each job can be cancelled/stopped/discarded
-            - https://docs.oracle.com/javase/8/javafx/api/javafx/concurrent/Task.html
-            - https://clojuredocs.org/clojure.core/future-cancel
-        - a set of tasks can yield a compound 'job' with it's own progress that is the overall progress of the total
-        - the number of concurrent jobs can be controlled
-            - by default limit it to core count?
-
----
-
-- ordered map of jobs
-- each job is clojure code
-- jobs can be cancelled
-- jobs don't do anything
-    - except wait and fire off progresss updates
-- jobs that are cheap to create and variable
-    - create a thousand jobs
-    - watch the N most jobs complete and disappear until all are gone
-- some kind of job monitor in the gui
-    - so I can see these jobs and what is going on
-    - with a stop button to cancel the task
-- jobs can be selected/composed to give a 'super job' with it's own progress
-    - slicing out part of the job queue?
-    - creation of a new job queue with the given selected jobs?
-        - but isn't the job queue in charge of consuming jobs?
-            - no, something else is. a job executor
-                - if there is just one job executor then it can be combined with any job queue
-        - will the jobs in this queue-slice complete as they are taken and run in another queue?
-
-(-> job-queue progress-count)
-(-> job-queue (take 4) progress-count)
-
----
-
-* gui, progress bar *inside* the grid ...?
-    - clj-http progress monitoring:
-        - https://github.com/dakrone/clj-http/issues/219
-            - https://github.com/Intervox/clj-progress
-            - https://github.com/dakrone/clj-http/blob/3.x/examples/progress_download.clj
-
-* a 'stop' button to stop updates would be nice
-    - no .. I mean, yes, it would be nice, but the jobs happen too quickly.
-        - even the largest download I could find (The Undermine Journal) only takes a couple of seconds to fetch
-
-* only unique jobs in queue
-    - pumping the update all button won't do much
-    - each potential job has a deterministic id that can be generated *before* creation/computation
-        - and the job queue is an ordered map of id->job
-
 ## todo
 
 ## todo bucket (no particular order)
+
+* 404 when talking to curseforge results in fairly useless 'Not Found' error in the log
+
+* submit appimage to https://github.com/AppImage/appimage.github.io
 
 * share a pool of connections between jobs
     - https://github.com/dakrone/clj-http#user-content-persistent-connections
