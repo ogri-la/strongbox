@@ -196,9 +196,17 @@
   [x ::sp/anything]
   (with-out-str (clojure.data.json/pprint x :escape-slash false)))
 
-(defn from-json
+(defn from-json*
   [x]
   (some-> x (clojure.data.json/read-str :key-fn keyword)))
+
+(defn from-json
+  [x]
+  (try
+    (from-json* x)
+    (catch Exception exc
+      (error (str "failed to parse json:" exc))
+      nil)))
 
 (defn-spec dump-json-file ::sp/extant-file
   [path ::sp/file, data ::sp/anything]
@@ -643,3 +651,24 @@
   "returns a multi-line string with the given `msg` on top and each message in `msg-list` bulleted beneath it"
   [msg string?, msg-list ::sp/list-of-strings]
   (clojure.string/join (format "\n %s " constants/bullet) (into [msg] msg-list)))
+
+(defn-spec select-vals coll?
+  "like `get` on `m` but for each key in `ks`. removes nils."
+  [m map?, ks (s/coll-of any?)]
+  (remove #(= % :-missing) (map #(get m % :-missing) ks)))
+
+;; https://github.com/unrelentingtech/clj-http-fake/blob/920630d21bbd9b3203c07bc458d4da1070fd6113/src/clj_http/fake.clj#L136
+(let [byte-array-type (Class/forName "[B")]
+  (defn byte-array?
+    "Is `obj` a java byte array?"
+    [obj]
+    (instance? byte-array-type obj)))
+
+(defn atom?
+  "Is `obj` an atom?"
+  [obj]
+  (instance? clojure.lang.Atom obj))
+
+(defn thread-pool-executor?
+  [obj]
+  (instance? java.util.concurrent.ThreadPoolExecutor obj))

@@ -1,4 +1,4 @@
-(defproject ogri-la/strongbox "4.3.0"
+(defproject ogri-la/strongbox "4.4.0"
   :description "World Of Warcraft Addon Manager"
   :url "https://github.com/ogri-la/strongbox"
   :license {:name "GNU Affero General Public License (AGPL)"
@@ -20,7 +20,7 @@
                  [clojure.java-time "0.3.2"] ;; date/time handling library, https://github.com/dm3/clojure.java-time
                  [envvar "1.1.0"] ;; environment variable wrangling
                  [gui-diff "0.6.7"] ;; pops up a graphical diff for test results
-                 [com.taoensso/tufte "2.1.0"]
+                 [com.taoensso/tufte "2.1.0"] ;; profiling
                  [cljfx "1.7.13" :exclusions [org.openjfx/javafx-web
                                               org.openjfx/javafx-media]]
                  [cljfx/css "1.1.0"]
@@ -37,8 +37,12 @@
                  [org.openjfx/javafx-graphics "15.0.1" :classifier "linux"]
                  [org.openjfx/javafx-graphics "15.0.1" :classifier "mac"]
 
+                 [tolitius/lasync "0.1.23"] ;; better parallel processing
+
                  ;; remember to update the LICENCE.txt
                  ;; remember to update pom file (`lein pom`)
+
+                 ;;[org.clojure/core.cache "1.0.207"] ;; jfx context caching
 
                  ]
 

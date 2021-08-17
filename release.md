@@ -8,15 +8,15 @@ Just for my own reference
     - git pull
 * run
     - lein clean
-* new branch '0.x.0-prep'
+* new branch 'x.x.x'
 * ensure all non-gpl dependencies have an exclusion in LICENCE
 * if major version change, update
     - SECURITY.md
 * update version in project.clj to the new version
     - remove the '-unreleased' extension
 * update/review CHANGELOG
-    - ensure contents of TODO are captured succintly
     - remove 'unreleased'
+    - ensure contents of TODO are captured succintly
 * update README with expected path to download release
 * if UI has changed significantly, add a screenshot
     - update README with link to new screenshot
@@ -37,9 +37,19 @@ Just for my own reference
     git tag 0.6.0
 * push
     git push --tags
-* wait for release to appear
-    - https://travis-ci.org/ogri-la/strongbox
-* update github release information with that from changelog
+
+* vagrant up
+* cd strongbox
+* rm -rf ./release/ strongbox ./target/ /vagrant/release/
+* ./build-linux-image.sh
+* mv ./strongbox ./target/*-standalone.jar ./release/
+* cd release
+* sha256sum strongbox > strongbox.sha256
+* sha256sum strongbox-4.3.0-standalone.jar > strongbox-4.3.0-standalone.jar.sha256
+* mv ./release /vagrant/
+* update github release information
+    - with changelog
+    - with release files
 
 
 * checkout develop
@@ -59,6 +69,7 @@ Just for my own reference
 * update PKGBUILD
     - change 'pkgver'
     - change 'sha256sums'
+    - set pkgrel = 1
 * run `makepkg --printsrcinfo > .SRCINFO`
 * commit 
 * push to github

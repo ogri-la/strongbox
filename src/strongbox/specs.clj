@@ -29,6 +29,7 @@
 (s/def ::list-of-maps (s/coll-of map?))
 (s/def ::list-of-keywords (s/coll-of keyword?))
 (s/def ::list-of-list-of-keywords (s/coll-of ::list-of-keywords))
+(s/def ::list-of-lists (s/coll-of vector?))
 
 (s/def ::map-or-list-of-maps (s/or :map map? :list (s/coll-of map?)))
 
@@ -363,3 +364,14 @@
 (s/def :ui/tab-id string?)
 (s/def :ui/tab (s/keys :req-un [:ui/tab-id ::label ::closable? :ui/tab-data ::log-level]))
 (s/def :ui/tab-list (s/coll-of :ui/tab))
+
+;; joblib
+
+(s/def :joblib/job (s/or :unstarted fn? :started future?))
+(s/def :joblib/job-id (s/or :keyword keyword?
+                            :set set?))
+
+(s/def :joblib/addon (s/keys :opt-un [::name :addon/source :addon/source-id]))
+(s/def :joblib/progress (s/nilable double?))
+(s/def :joblib/job-info (s/keys :req-un [:joblib/job :joblib/job-id :joblib/progress]))
+(s/def :joblib/queue (s/or :keyvals map? :pairs ::list-of-lists))

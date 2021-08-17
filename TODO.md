@@ -6,50 +6,81 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* gui, deleting addons seems a little slow because the confirmation dialog pauses until the job is done
-    - done
+* greater parallelism
+    - internal job queue
+    - replace log at bottom of screen with a list of jobs being processed and how far along they are
+        - each job can be cancelled/stopped/discarded
+            - https://docs.oracle.com/javase/8/javafx/api/javafx/concurrent/Task.html
+            - https://clojuredocs.org/clojure.core/future-cancel
+        - a set of tasks can yield a compound 'job' with it's own progress that is the overall progress of the total
+        - the number of concurrent jobs can be controlled
+            - by default limit it to core count?
 
-* http, add a timeout for requests
-    - I have tukui API taking a looooong time
-* add a timeout for downloads
-    - tukui.org is up but it's being reaaaaalllllly slow and updates appear to have hanged when they haven't
-    - done
-* github, add support for user supplied github token
-    - necessary if they want a large number of github addons without hassles
-    - implemented in strongbox-comrades
-        - really easy
-    - use GITHUB_TOKEN envvar
-        - dont even think about storing this raw in config
-    - done
+---
 
-* bug, search, results not updated when catalogue is changed
-    - done
+- ordered map of jobs
+- each job is clojure code
+- jobs can be cancelled
+- jobs don't do anything
+    - except wait and fire off progresss updates
+- jobs that are cheap to create and variable
+    - create a thousand jobs
+    - watch the N most jobs complete and disappear until all are gone
+- some kind of job monitor in the gui
+    - so I can see these jobs and what is going on
+    - with a stop button to cancel the task
+- jobs can be selected/composed to give a 'super job' with it's own progress
+    - slicing out part of the job queue?
+    - creation of a new job queue with the given selected jobs?
+        - but isn't the job queue in charge of consuming jobs?
+            - no, something else is. a job executor
+                - if there is just one job executor then it can be combined with any job queue
+        - will the jobs in this queue-slice complete as they are taken and run in another queue?
 
-* add support for finding addons by url for other hosts
-    - wowinterface
-        - https://www.wowinterface.com/downloads/info19037
-            - source: wowinterface
-            - source-id: 19037
-    - curseforge
-        - https://www.curseforge.com/wow/addons/autorepair
-            - url: https://www.curseforge.com/wow/addons/autorepair
-    - github
-        - already happening with 'import'
-        - https://github.com/Aviana/LunaUnitFrames
-            - source: github
-            - source-id: Aviana/LunaUnitFrames
-    - tukui
-        - https://www.tukui.org/addons.php?id=6
-            - source: tukui
-            - source-id: 6
-    - so what happens if addon not found in catalogue?
-        - add to user catalogue?
-        - switch to full catalogue then switch back to original?
-    - done
+(-> job-queue progress-count)
+(-> job-queue (take 4) progress-count)
+
+---
+
+* gui, progress bar *inside* the grid ...?
+    - clj-http progress monitoring:
+        - https://github.com/dakrone/clj-http/issues/219
+            - https://github.com/Intervox/clj-progress
+            - https://github.com/dakrone/clj-http/blob/3.x/examples/progress_download.clj
+
+* a 'stop' button to stop updates would be nice
+    - no .. I mean, yes, it would be nice, but the jobs happen too quickly.
+        - even the largest download I could find (The Undermine Journal) only takes a couple of seconds to fetch
+
+* only unique jobs in queue
+    - pumping the update all button won't do much
+    - each potential job has a deterministic id that can be generated *before* creation/computation
+        - and the job queue is an ordered map of id->job
 
 ## todo
 
 ## todo bucket (no particular order)
+
+* share a pool of connections between jobs
+    - https://github.com/dakrone/clj-http#user-content-persistent-connections
+    - N connections serving M threads
+    - pretty fast just by making requests in parallel
+        - moving this back to the bucket until I start really looking for optimisations
+
+* addon detail, 'releases' widget
+    - installed release should be highlighted
+
+* addon detail, mutual dependencies pane
+    - for example, I would like to see what is happening when:
+        adibags anima & conduits is overwritten by adibags anima filter
+
+* localisation, status bar
+    '123456' addons in catalogue
+
+* regression, search, sorting on 'downloads' column broken
+    - probably because of localisation
+
+* handle no internet connection more gracefully
 
 * add release.json support for github addons
 
@@ -59,7 +90,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * import and export addons using addon urls
 
-* addon detail, add 'x-website' / 'x-url' alongside 'browse local files' and addon host
+* toc, addon detail, add 'x-website' / 'x-url' alongside 'browse local files' and addon host
 
 * change split button 'outdent' to 'indent'
     - and if split, keep it 'pressed in'
@@ -132,20 +163,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 # job queue
 
-* gui, download progress bar *inside* the grid ...?
-    - pure fantasy?
-    - defer until after job queue
-* greater parallelism
-    - internal job queue
-    - replace log at bottom of screen with a list of jobs being processed and how far along they are
-        - each job can be cancelled/stopped/discarded
-* a 'stop' button to stop updates would be nice
-* only unique jobs in queue
-    - pumping the update all button won't do much
-* download addon details in parallel
-    - speed benefits, mostly
-    - share a pool of connections between threads
-        - N connections serving M threads
+
 * performance, check addons for updates immediately after loading
     - if after we've read the nfo data and we have everything we need, check the addon for updates immediately
         - don't wait for db loading and addon matching

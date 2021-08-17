@@ -18,10 +18,13 @@
     [logging :as logging]
     [utils :as utils :refer [join nav-map nav-map-fn delete-many-files! static-slurp expand-path if-let*]]
     [catalogue :as catalogue]
-    [specs :as sp]]))
+    [specs :as sp]
+    [joblib :as joblib]]))
 
 (def default-config-dir "~/.config/strongbox")
 (def default-data-dir "~/.local/share/strongbox")
+
+(def num-concurrent-downloads (-> (Runtime/getRuntime) .availableProcessors))
 
 (defn generate-path-map
   "generates filesystem paths whose location may vary based on the current working directory and environment variables.
@@ -102,6 +105,8 @@
    :cfg nil ;; see config.clj
    ;;:catalogue-source-list [] ;; moved to config.clj and [:cfg :catalogue-location-list]
 
+   :latest-strongbox-version nil
+
    ;; subset of possible data about all INSTALLED addons
    ;; starts as parsed .toc file data
    ;; ... then updated with data from catalogue
@@ -118,6 +123,9 @@
 
    ;; a map of paths whose location may vary according to the cwd and envvars.
    :paths nil
+
+   ;; a (stateful) ordered map of running jobs
+   :job-queue (atom (joblib/make-queue))
 
    ;; ui
 
@@ -145,12 +153,22 @@
 
 (def state (atom nil))
 
+(defn started?
+  "`true` if app has been started."
+  []
+  (-> @state nil? not))
+
+(defn assert-started
+  "raises a `RuntimeException` if app has not been started."
+  []
+  (when-not (started?)
+    (throw (RuntimeException. "application must be `start`ed before state may be accessed."))))
+
 (defn get-state
   "returns the state map of the value at the given path within the map, if path provided"
   [& path]
-  (if-let [state @state]
-    (nav-map state path)
-    (throw (RuntimeException. "application must be `start`ed before state may be accessed."))))
+  (assert-started)
+  (nav-map @state path))
 
 (defn paths
   "like `get-in` and `get-state` but for the map of paths being used. requires running app"
@@ -183,10 +201,12 @@
 (defn cache
   "data and a setter that gets bound to http/*cache* when caching http requests"
   []
-  {;;:etag-db (get-state :etag-db) ;; don't do this. encourages stale reads of the etag-db
-   :set-etag set-etag
-   :get-etag #(get-state :etag-db %) ;; do this instead
-   :cache-dir (paths :cache-dir)})
+  (if-not (started?)
+    (warn "http cache disabled, app is not started")
+    {;;:etag-db (get-state :etag-db) ;; don't do this. encourages stale reads of the etag-db
+     :set-etag set-etag
+     :get-etag #(get-state :etag-db %) ;; do this instead
+     :cache-dir (paths :cache-dir)}))
 
 (defn-spec add-cleanup-fn nil?
   "adds a function to a list of functions that are called without arguments when the application is stopped"
@@ -421,54 +441,61 @@
   ;; nice and quick but essentially validating addon against `:addon/installable`
   (some? (:download-url addon)))
 
+(defn-spec unsteady? boolean?
+  "returns `true` if given `addon` is being updated"
+  [addon-name ::sp/name]
+  (if @state
+    (clojure.set/subset? #{addon-name} (get-state :unsteady-addon-list))
+    false))
+
 (defn start-affecting-addon
   [addon]
-  (swap! state update-in [:unsteady-addon-list] clojure.set/union #{(:name addon)}))
+  (dosync
+   (if-not (unsteady? (:name addon))
+     (do (swap! state update-in [:unsteady-addon-list] clojure.set/union #{(:name addon)})
+         true)
+     false)))
 
 (defn stop-affecting-addon
   [addon]
   (swap! state update-in [:unsteady-addon-list] clojure.set/difference #{(:name addon)}))
 
-(defn-spec unsteady? boolean?
-  "returns `true` if given `addon` is being updated"
-  [addon-name ::sp/name]
-  (if @state
-    (utils/in? addon-name (get-state :unsteady-addon-list))
-    false))
-
 (defn affects-addon-wrapper
   [wrapped-fn]
   (fn [addon & args]
-    (logging/with-addon addon
+    (assert-started)
+    (let [applied? (start-affecting-addon addon)]
       (try
-        (start-affecting-addon addon)
-        (apply wrapped-fn addon args)
+        (logging/with-addon addon
+          (apply wrapped-fn addon args))
         (finally
-          (stop-affecting-addon addon))))))
+          (when applied?
+            (stop-affecting-addon addon)))))))
+
+;; 
+
 
 ;; downloading and installing and updating
 
 (defn-spec download-addon (s/or :ok ::sp/archive-file, :http-error :http/error, :error nil?)
-  [addon :addon/installable, download-dir ::sp/writeable-dir]
+  "downloads `addon` to the given `install-dir`.
+  see `download-addon-guard` for a version with checks."
+  [addon :addon/installable, install-dir ::sp/writeable-dir]
   (info (format "downloading '%s' version '%s'" (:label addon) (:version addon)))
   (when (expanded? addon)
     (let [output-fname (addon/downloaded-addon-fname (:name addon) (:version addon)) ;; addonname--1-2-3.zip
-          output-path (join (fs/absolute download-dir) output-fname)] ;; /path/to/installed/addons/addonname--1.2.3.zip
+          output-path (join (fs/absolute install-dir) output-fname)] ;; /path/to/installed/addons/addonname--1.2.3.zip
       (binding [http/*cache* (cache)]
         (http/download-file (:download-url addon) output-path)))))
 
-;; don't do this. `download-addon` is wrapped by `install-addon` that is already affecting the addon
-;;(def download-addon
-;;  (affects-addon-wrapper download-addon))
+(def download-addon-affective
+  (affects-addon-wrapper download-addon))
 
-(defn-spec install-addon-guard (s/or :ok (s/coll-of ::sp/extant-file), :passed-tests true?, :error nil?)
-  "downloads an addon and installs it. 
-  handles http and non-http errors, bad zip files, bad addons, bad directories."
+(defn-spec download-addon-guard (s/or :ok ::sp/archive-file, :error nil?)
+  "downloads an addon, handling http and non-http errors, bad zip files, bad addons, bad directories."
   ([addon :addon/installable]
-   (install-addon-guard addon (selected-addon-dir)))
+   (download-addon-guard addon (selected-addon-dir)))
   ([addon :addon/installable, install-dir ::sp/extant-dir]
-   (install-addon-guard addon install-dir false))
-  ([addon :addon/installable, install-dir ::sp/extant-dir, test-only? boolean?]
    (cond
      ;; do some pre-installation checks
      (:ignore? addon) (error "refusing to install addon, addon is being ignored:" (:name addon))
@@ -504,13 +531,38 @@
          (addon/overwrites-pinned? downloaded-file (get-state :installed-addon-list))
          (error "refusing to install addon that will overwrite a pinned addon.")
 
-         test-only? true ;; addon was successfully downloaded and verified as being sound
+         :else downloaded-file)))))
 
-         :else (let [result (addon/install-addon addon install-dir downloaded-file)]
-                 (addon/post-install addon install-dir (get-state :cfg :preferences :addon-zips-to-keep))
-                 result))))))
+(def download-addon-guard-affective
+  (affects-addon-wrapper download-addon-guard))
 
-(def install-addon
+(defn-spec install-addon (s/or :ok (s/coll-of ::sp/extant-file), :passed-tests true?, :error nil?)
+  "downloads an addon and installs it, bypassing checks. see `install-addon-guard`."
+  [addon :addon/installable, install-dir ::sp/extant-dir, downloaded-file ::sp/extant-archive-file]
+  (try
+    (addon/install-addon addon install-dir downloaded-file)
+    (finally
+      (addon/post-install addon install-dir (get-state :cfg :preferences :addon-zips-to-keep)))))
+
+(def install-addon-affective
+  (affects-addon-wrapper install-addon))
+
+(defn-spec install-addon-guard (s/or :ok (s/coll-of ::sp/extant-file), :passed-tests true?, :error nil?)
+  "downloads an addon and installs it, handling http and non-http errors, bad zip files, bad addons, bad directories."
+  ([addon :addon/installable]
+   (install-addon-guard addon (selected-addon-dir) false))
+  ([addon :addon/installable, install-dir ::sp/extant-dir]
+   (install-addon-guard addon install-dir false))
+  ([addon :addon/installable, install-dir ::sp/extant-dir, test-only? boolean?]
+   (when-let [downloaded-file (download-addon-guard addon install-dir)]
+     (if test-only?
+       ;; addon was successfully downloaded and verified as being sound. stop here.
+       ;; todo: deprecate `test-only?`, logic has moved to `download-addon`
+       true
+       ;; else, install addon
+       (install-addon addon install-dir downloaded-file)))))
+
+(def install-addon-guard-affective
   (affects-addon-wrapper install-addon-guard))
 
 (defn update-installed-addon-list!
@@ -763,10 +815,9 @@
 (defn expand-summary-wrapper
   [addon-summary]
   (binding [http/*cache* (cache)]
-    (let [game-track (get-game-track) ;; scope creep, but it fits so nicely
-          strict? (get-game-track-strictness)
-          wrapper (affects-addon-wrapper catalogue/expand-summary)]
-      (wrapper addon-summary game-track strict?))))
+    (let [game-track (get-game-track)
+          strict? (get-game-track-strictness)]
+      (catalogue/expand-summary addon-summary game-track strict?))))
 
 (defn-spec check-for-update :addon/toc
   "Returns given `addon` with source updates, if any, and sets an `update?` property if a different version is available.
@@ -775,18 +826,23 @@
                :matched :addon/toc+summary+match)]
   (logging/with-addon addon
     (let [expanded-addon (when (:matched? addon)
+                           (joblib/tick-delay 0.25)
                            (expand-summary-wrapper addon))
           addon (or expanded-addon addon) ;; expanded addon may still be nil
           has-update? (addon/updateable? addon)]
+      (joblib/tick-delay 0.5)
       (when has-update?
         (info (format "update available \"%s\"" (:version addon)))
         (when-not (= (get-game-track) (:game-track addon))
           (warn (format "update is for '%s' and the addon directory is set to '%s'"
                         (-> addon :game-track sp/game-track-labels-map)
                         (-> (get-game-track) sp/game-track-labels-map)))))
+      (joblib/tick-delay 0.75)
       (assoc addon :update? has-update?))))
 
-(defn-spec check-for-updates nil?
+(def check-for-update-affective (affects-addon-wrapper check-for-update))
+
+(defn-spec check-for-updates-1 nil?
   "downloads full details for all installed addons that can be found in summary list"
   []
   (when (selected-addon-dir)
@@ -799,6 +855,29 @@
               num-updates (->> improved-addon-list (filterv :update?) count)]
           (update-installed-addon-list! improved-addon-list)
           (info (format "%s addons checked, %s updates available" num-matched num-updates)))))))
+
+(defn-spec check-for-updates-in-parallel nil?
+  "downloads full details for all installed addons that can be found in summary list"
+  []
+  (when (selected-addon-dir)
+    (let [installed-addon-list (get-state :installed-addon-list)]
+      (info "checking for updates")
+      (let [queue-atm (get-state :job-queue)
+            update-jobs (fn [installed-addon]
+                          (joblib/create-addon-job! queue-atm, installed-addon, check-for-update-affective))
+            _ (info (joblib/queue-info @queue-atm))
+            _ (run! update-jobs installed-addon-list)
+
+            expanded-addon-list (joblib/run-jobs! queue-atm num-concurrent-downloads)
+
+            num-matched (->> expanded-addon-list (filterv :matched?) count)
+            num-updates (->> expanded-addon-list (filterv :update?) count)]
+
+        (info "finished checking for updates")
+        (update-installed-addon-list! expanded-addon-list)
+        (info (format "%s addons checked, %s updates available" num-matched num-updates))))))
+
+(def check-for-updates check-for-updates-in-parallel)
 
 ;; ui interface
 
@@ -886,20 +965,33 @@
   []
   (versioneer/get-version "ogri-la" "strongbox"))
 
-(defn-spec latest-strongbox-release string?
-  "returns the most recently released version of strongbox it can find"
+(defn-spec -latest-strongbox-release (s/or :ok string?, :failed? keyword)
+  "returns the most recently released version of strongbox on github.
+  returns `:failed` if an error occurred while downloading/decoding/extracting the version name, rather than `nil`.
+  `nil` is used to mean 'not set' in the app state."
   []
   (binding [http/*cache* (cache)]
     (let [message "downloading strongbox version data"
-          url "https://api.github.com/repos/ogri-la/strongbox/releases/latest"
-          resp (utils/from-json (http/download url message))]
-      (-> resp :tag_name))))
+          url "https://api.github.com/repos/ogri-la/strongbox/releases/latest"]
+      (or (some-> url (http/download message) http/sink-error utils/from-json :tag_name)
+          :failed))))
+
+(defn-spec latest-strongbox-release (s/nilable string?)
+  "returns the most recently released version of strongbox on github or `nil` if it can't."
+  []
+  (let [lsr (get-state :latest-strongbox-release)]
+    (case lsr
+      nil (let [lsr (-latest-strongbox-release)]
+            (swap! state assoc :latest-strongbox-release lsr)
+            (latest-strongbox-release)) ;; recurse
+      :failed nil
+      lsr)))
 
 (defn-spec latest-strongbox-version? boolean?
   "returns true if the *running instance* of strongbox is the *most recent known* version of strongbox."
   []
-  (let [latest-release (latest-strongbox-release)
-        version-running (strongbox-version)
+  (let [version-running (strongbox-version)
+        latest-release (or (latest-strongbox-release) version-running)
         sorted-asc (utils/sort-semver-strings [latest-release version-running])]
     (= version-running (last sorted-asc))))
 
@@ -976,7 +1068,7 @@
   [addon-list] ;; todo: spec
   (info (format "attempting to import %s addons. this may take a minute" (count addon-list)))
   (let [matching-addon-list (-import-addon-list-v1 addon-list)]
-    (run! install-addon matching-addon-list)))
+    (run! install-addon-guard matching-addon-list)))
 
 ;; v2 uses the same mechanism to match addons as the rest of the app does
 (defn import-addon-list-v2
@@ -1012,7 +1104,7 @@
       (doseq [addon matching-addon-list
               :let [game-track (get addon :game-track default-game-track)]]
         (when-let [expanded-addon (catalogue/expand-summary addon game-track strict?)]
-          (install-addon expanded-addon))))))
+          (install-addon-guard expanded-addon))))))
 
 (defn-spec import-exported-file nil?
   "imports a file at given `path` created with the export function.
