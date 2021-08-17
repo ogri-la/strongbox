@@ -8,15 +8,15 @@ Just for my own reference
     - git pull
 * run
     - lein clean
-* new branch '0.x.0-prep'
+* new branch 'x.x.x'
 * ensure all non-gpl dependencies have an exclusion in LICENCE
 * if major version change, update
     - SECURITY.md
 * update version in project.clj to the new version
     - remove the '-unreleased' extension
 * update/review CHANGELOG
-    - ensure contents of TODO are captured succintly
     - remove 'unreleased'
+    - ensure contents of TODO are captured succintly
 * update README with expected path to download release
 * if UI has changed significantly, add a screenshot
     - update README with link to new screenshot

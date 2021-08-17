@@ -1,4 +1,4 @@
-(defproject ogri-la/strongbox "4.4.0-unreleased"
+(defproject ogri-la/strongbox "4.4.0"
   :description "World Of Warcraft Addon Manager"
   :url "https://github.com/ogri-la/strongbox"
   :license {:name "GNU Affero General Public License (AGPL)"
@@ -37,12 +37,13 @@
                  [org.openjfx/javafx-graphics "15.0.1" :classifier "linux"]
                  [org.openjfx/javafx-graphics "15.0.1" :classifier "mac"]
 
+                 [tolitius/lasync "0.1.23"] ;; better parallel processing
+
                  ;; remember to update the LICENCE.txt
                  ;; remember to update pom file (`lein pom`)
 
                  ;;[org.clojure/core.cache "1.0.207"] ;; jfx context caching
-                 [tolitius/lasync "0.1.23"]
-                 
+
                  ]
 
   :resource-paths ["resources"]

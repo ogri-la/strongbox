@@ -4,30 +4,30 @@ All notable changes to this project will be documented in this file. This change
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 4.4.0 - Unreleased
+## 4.4.0
 
 ### Added
 
-* 'check for update' and 'download addon' operations now run in parallel.
+* the operations 'check for update' and 'download addon' now run in parallel.
     - operations run `n` at a time, where `n` is the number of cores your machine has.
-    - 'install addon' still happens serially to preserve mutual dependency checking
+    - the 'install addon' operation still happens serially to preserve mutual dependency checking.
 * a progress bar that (temporarily) replaces the status button when parallel operations are happening.
 
 ### Changed
 
-* installing a specific version no longer blocks the GUI while the addon is downloaded and installed.
-* cache duration of text/json is now 1hr rather than 24hrs.
-    - a 'hard refresh' to clear the cache and re-fetch addon details is possible using alt-F5
+* installing a specific addon version no longer blocks the GUI while the addon is downloaded and installed.
+* cache duration of textual files is now 1hr rather than 24hrs.
+    - a 'hard refresh' to clear the cache and re-fetch addon details is still possible using alt-F5.
     - zip files are still stored indefinitely until manually cleared or the 'Remove addon zip after installation' preference is set.
 
 ### Fixed
 
-* fetching strongbox release data while over-quota no longer results in an infinite log loop.
+* fetching strongbox release data while over (GitHub) quota no longer results in an infinite log loop.
 
 ### Removed
 
-* row background colour for 'unsteady' addons has been removed.
-    - it's far too frenetic when multiple addons are doing things in parallel.
+* row background colour for 'unsteady' addons (updating/downloading/being modified) has been removed.
+    - it's too frenetic when multiple addons are doing things in parallel.
 
 ## 4.3.0
 

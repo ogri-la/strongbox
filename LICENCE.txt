@@ -685,3 +685,4 @@ If you modify this Program, or any covered work, by linking or combining it with
 * cljfx
 * cljfxcss
 * clj-http-fake
+* tolitius/lasync

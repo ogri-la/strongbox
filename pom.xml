@@ -4,7 +4,7 @@
   <groupId>ogri-la</groupId>
   <artifactId>strongbox</artifactId>
   <packaging>jar</packaging>
-  <version>4.3.0</version>
+  <version>4.4.0</version>
   <name>strongbox</name>
   <description>World Of Warcraft Addon Manager</description>
   <url>https://github.com/ogri-la/strongbox</url>
@@ -18,7 +18,7 @@
     <url>https://github.com/ogri-la/strongbox</url>
     <connection>scm:git:git://github.com/ogri-la/strongbox.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/ogri-la/strongbox.git</developerConnection>
-    <tag>987a989bda3752d8c049c1300ee2df0d54ba7602</tag>
+    <tag>150f21cc8215615e22feb83f16b75bcff65f58fe</tag>
   </scm>
   <build>
     <sourceDirectory>src</sourceDirectory>
@@ -213,6 +213,11 @@
       <artifactId>javafx-graphics</artifactId>
       <version>15.0.1</version>
       <classifier>mac</classifier>
+    </dependency>
+    <dependency>
+      <groupId>tolitius</groupId>
+      <artifactId>lasync</artifactId>
+      <version>0.1.23</version>
     </dependency>
     <dependency>
       <groupId>clj-http-fake</groupId>
