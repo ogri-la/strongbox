@@ -6,26 +6,21 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
+* submit appimage to https://github.com/AppImage/appimage.github.io
+    - done
+
 ## todo
 
-## todo bucket (no particular order)
+* release, more automation
+    - clean the environment, update project.clj and readme, run lein pom, open a branch, push, open a PR, create a checklist
+    - merge PR into master, tag, push, upload assets, update PKGBUILD, push to aur
+    - etc
 
-* 404 when talking to curseforge results in fairly useless 'Not Found' error in the log
+* logging, 404 when talking to curseforge results in fairly useless 'Not Found' error in the log
 
-* submit appimage to https://github.com/AppImage/appimage.github.io
-
-* share a pool of connections between jobs
-    - https://github.com/dakrone/clj-http#user-content-persistent-connections
-    - N connections serving M threads
-    - pretty fast just by making requests in parallel
-        - moving this back to the bucket until I start really looking for optimisations
-
-* addon detail, 'releases' widget
-    - installed release should be highlighted
-
-* addon detail, mutual dependencies pane
-    - for example, I would like to see what is happening when:
-        adibags anima & conduits is overwritten by adibags anima filter
+* logging, tweak messages
+    "loading catalogue: full" => "loading 'full' catalogue"
+    "downloading catalogue: full" => "downloading 'full' catalogue"
 
 * localisation, status bar
     '123456' addons in catalogue
@@ -35,13 +30,43 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * handle no internet connection more gracefully
 
+* zip, better errors for failing to decompress .rar files
+    - see !FREEZING from wowinterface
+        - it's a .rar addon
+        - the full path is emitted in the error, which is impossible to fully read
+        - the extension has been replaced with .zip
+            - if the extension were preserved we could dismiss it immediately as unsupported
+
+        2021-03-20 01:35:58.026 DEBUG [strongbox.zip:23] - failed to open+close zip file: /home/torkus/path/to/wine/dir/drive_c/program files/World of Warcraft/_retail_/Interface/Addons/-freezing--1-04.zip
+        path [] triggered :strongbox.ui.jfx$start$update_gui_state__39204@608569a040151
+        2021-03-20 01:35:58.027 ERROR [strongbox.core:419] - failed to read zip file '/home/torkus/path/to/wine/dir/drive_c/program files/World of Warcraft/_retail_/Interface/Addons/-freezing--1-04.zip', could not install -freezing
+
+
+## todo bucket (no particular order)
+
+* gui, can I make column widths dynamic? 
+    - I'd like the 'version' columns to fit exactly, always.
+
+* gui, switch to tree-table-view for installed addons that are grouping other addons
+
+* acquire locks on affected addons during installatinon
+    - this will let us uninstall and install addons in parallel
+
+* share a pool of connections between jobs
+    - https://github.com/dakrone/clj-http#user-content-persistent-connections
+    - N connections serving M threads
+    - pretty fast just by making requests in parallel
+        - moving this back to the bucket until I start really looking for optimisations
+
+* addon detail, mutual dependencies pane
+    - for example, I would like to see what is happening when:
+        adibags anima & conduits is overwritten by adibags anima filter
+
 * add release.json support for github addons
 
 * importing addons, skip db lookup for addon urls that don't need it
     - if we can 'expand it' then we can download it and install it.
     - I think tukui, wowi can, github obs, curseforge could not
-
-* import and export addons using addon urls
 
 * toc, addon detail, add 'x-website' / 'x-url' alongside 'browse local files' and addon host
 
@@ -58,10 +83,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * update check
     - ignore pre-releases
-
-* addon detail, 'releases' widget, including *all* possible releases to download and install
-    - add an 'WoW' column to know which game-track/interface
-    - disable releases excluded by selected game-track/strictness setting
 
 * logging, app level 'help'
     - messages to the user that are not informational, or debug or warnings or errors, but simple helpful messages
@@ -96,82 +117,11 @@ see CHANGELOG.md for a more formal list of changes by release
     - rar should just die already
     - this would fix a major showstopper in porting to windows
 
-* zip, better errors for failing to decompress .rar files
-    - see !FREEZING from wowinterface
-        - it's a .rar addon
-        - the full path is emitted in the error, which is impossible to fully read
-        - the extension has been replaced with .zip
-            - if the extension were preserved we could dismiss it immediately as unsupported
-
-        2021-03-20 01:35:58.026 DEBUG [strongbox.zip:23] - failed to open+close zip file: /home/torkus/path/to/wine/dir/drive_c/program files/World of Warcraft/_retail_/Interface/Addons/-freezing--1-04.zip
-        path [] triggered :strongbox.ui.jfx$start$update_gui_state__39204@608569a040151
-        2021-03-20 01:35:58.027 ERROR [strongbox.core:419] - failed to read zip file '/home/torkus/path/to/wine/dir/drive_c/program files/World of Warcraft/_retail_/Interface/Addons/-freezing--1-04.zip', could not install -freezing
-
 * investigate *warn-on-reflections*
     - I think there may be some solid performance gains by turning this on
         - remember to profile first
 
 * test, can gui-diff and main/test be pushed back into the testing namespace and elided from release somehow?
-
-
-# job queue
-
-
-* performance, check addons for updates immediately after loading
-    - if after we've read the nfo data and we have everything we need, check the addon for updates immediately
-        - don't wait for db loading and addon matching
-            - we already have a match!
-        - this might fit in with the greater-parallelism/queue based infrastructure
-
-
-# releases
-
-* alpha/beta opt-in
-    - user can opt to install alpha/beta/no-lib releases per-addon
-
-* keep a list of previously installed addons
-    - eh. tie it in with downloading more release information
-    - defer until after job queue
-        - very large downloads are possible. just see curseforge dbm
-
-# import/exports
-
-* cli, exports
-
-* import, export, capture 'pinned' information
-    - we can now import addons at a specific version
-        - when importing a pinned addon, should we keep the pin? 
-        - or drop the pin it and display updates?
-    - we can now export addons at specific versions
-        - I think we already have this though ... called :version
-
-
-* import, skip importing an addon if addon already exists in addon dir
-
-* import, why can't an export record be matched to the catalogue and then installed that way?
-    - no need for padding and dummy dirnames then
-    - installing normally would also include the mutual dependency handling
-
-# github 
-
-* toc, add support for x-github key
-    - X-Github: https://github.com/teelolws/Altoholic-Retail 
-        - repo no longer exists
-        - github search:
-            - https://github.com/search?q=%22X-Github%22++extension%3Atoc&type=Code&ref=advsearch&l=&l=
-    - and what would it do?
-        - I could switch between sources I suppose ...
-
-* github, importing an exported addon list with a github addon won't see that addon installed
-    - unless that addon is present in the user catalogue
-        - which in a fresh install where a list of addons are being restored is unlikely...
-    - this is interesting actually. the exported addon list has become a mini-catalogue
-        - some addons require the larger catalogue to resolve
-        - github addons are resolved and installed by a different means...
-
-* add any tags, if they exist
-
-# addon
 
 * create a parser for that shit markup that is preventing reconcilation
     - see aliases
@@ -224,8 +174,6 @@ see CHANGELOG.md for a more formal list of changes by release
             - addon hosts
                 - our interface with them is their API or in wowi's case, their API and website
 
-# ---
-
 * reconciliation, add dirname support
     - not sure which hosts support these
 
@@ -263,16 +211,77 @@ see CHANGELOG.md for a more formal list of changes by release
                     - got to have backups+imports happening first
         - identify slow things and measure their improvement
 
-# ui/gui
+* check addons for updates immediately after loading
+    - if after we've read the nfo data and we have everything we need, check the addon for updates immediately
+        - don't wait for db loading and addon matching
+            - we already have a match stored in the .nfo file
+                - this would break the switching catalogue feature...
+        - this might fit in with the greater-parallelism/queue based infrastructure
 
-
-* gui, feature, install addon from local zipfile
+* install addon from local zipfile
     - *not* the 'reinstallation' feature, but literally selecting a zipfile from somewhere and installing it
     - would be good for installing older versions of an addon?
     - would be good for installing addons from unsupported sources
         - wouldn't be able to update it however :(
         - I think I'll stick with supporting sources of addons
             - rather than enabling ad-hoc installation of unsupported addons
+
+# releases
+
+* addon detail, 'releases' widget, including *all* possible releases to download and install
+    - add an 'WoW' column to know which game-track/interface
+    - disable releases excluded by selected game-track/strictness setting
+
+* alpha/beta opt-in
+    - user can opt to install alpha/beta/no-lib releases per-addon
+
+* keep a list of previously installed addons
+    - eh. tie it in with downloading more release information
+    - defer until after job queue
+        - very large downloads are possible. just see curseforge dbm
+
+* addon detail, 'releases' widget
+    - installed release should be highlighted
+
+# import/exports
+
+* import and export addons using addon urls
+
+* cli, exports
+
+* import, export, capture 'pinned' information
+    - we can now import addons at a specific version
+        - when importing a pinned addon, should we keep the pin? 
+        - or drop the pin it and display updates?
+    - we can now export addons at specific versions
+        - I think we already have this though ... called :version
+
+* import, skip importing an addon if addon already exists in addon dir
+
+* import, why can't an export record be matched to the catalogue and then installed that way?
+    - no need for padding and dummy dirnames then
+    - installing normally would also include the mutual dependency handling
+
+# github 
+
+* toc, add support for x-github key
+    - X-Github: https://github.com/teelolws/Altoholic-Retail 
+        - repo no longer exists
+        - github search:
+            - https://github.com/search?q=%22X-Github%22++extension%3Atoc&type=Code&ref=advsearch&l=&l=
+    - and what would it do?
+        - I could switch between sources I suppose ...
+
+* github, importing an exported addon list with a github addon won't see that addon installed
+    - unless that addon is present in the user catalogue
+        - which in a fresh install where a list of addons are being restored is unlikely...
+    - this is interesting actually. the exported addon list has become a mini-catalogue
+        - some addons require the larger catalogue to resolve
+        - github addons are resolved and installed by a different means...
+
+* github, add any tags if they exist
+
+# ui/gui
 
 * dedicated tab for "user-catalogue" ?
     - add, delete, update github addons
@@ -281,8 +290,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * bug, changing sort order during refresh doesn't reflect which addon is being updated
     - I think changing column ordering and moving columns should be disabled while updates happen
         - just freeze or disable them or something.
-
-
 
 * gui 'wow' column is inconsistent
     - for curseforge, it's pulling it's value from :gameVersion, which may be empty
@@ -293,6 +300,11 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * gui, toggleable columns as a menuitem
 
+* gui, synthetic 'version' column
+    - combines 'installed' and 'available' columns
+        - because most of the time the two columns are the same
+    - displays the available version if it exists
+
 * internationalisation?
     - Akitools has no english description but it does have a "Notes-zhCN" in the toc file that could be used
     - wowman was mentioned on a french forum the other day ..
@@ -301,7 +313,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - highlight unmatched
     - highlight updates
     - touch of colour against each menuitem would serve as a legend
-
 
 * gui, get log window scrolling in other direction
 
