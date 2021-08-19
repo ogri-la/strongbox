@@ -18,18 +18,20 @@ see CHANGELOG.md for a more formal list of changes by release
     "downloading catalogue: full" => "downloading 'full' catalogue"
     - done
 
+* localisation, status bar
+    '123456' addons in catalogue
+    - done
+
+* regression, search, sorting on 'downloads' column broken
+    - probably because of localisation
+    - done
+
 ## todo
 
 * release, more automation
     - clean the environment, update project.clj and readme, run lein pom, open a branch, push, open a PR, create a checklist
     - merge PR into master, tag, push, upload assets, update PKGBUILD, push to aur
     - etc
-
-* localisation, status bar
-    '123456' addons in catalogue
-
-* regression, search, sorting on 'downloads' column broken
-    - probably because of localisation
 
 * handle no internet connection more gracefully
 
