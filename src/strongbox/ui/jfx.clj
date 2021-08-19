@@ -1564,7 +1564,8 @@
                       :cell-value-factory :download-count
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [n]
-                                                 {:text (format-number n)})}}
+                                                 (when n
+                                                   {:text (format-number n)}))}}
                      {:text "" :style-class ["install-button-column"] :min-width 120 :pref-width 120 :max-width 120 :resizable false
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [addon]
