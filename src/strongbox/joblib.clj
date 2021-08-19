@@ -103,8 +103,10 @@
 (defn-spec create-job! :joblib/job-id
   "convenience. takes a function `f`, wraps it in a `job-info`, gives it a tick function and adds it to the queue.
   returns the job ID"
-  [queue-atm atom?, f fn?, job-id :joblib/job-id]
-  (add-to-queue! queue-atm (job-info f job-id)))
+  ([queue-atm atom?, f fn?]
+   (create-job! queue-atm f (unique-id)))
+  ([queue-atm atom?, f fn?, job-id :joblib/job-id]
+   (add-to-queue! queue-atm (job-info f job-id))))
 
 (defn-spec create-addon-job! :joblib/job-id
   "convenience. takes a function `f` whose first argument should be an addon map, wraps it in a `job-info`, etc etc."
