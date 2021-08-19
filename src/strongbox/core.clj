@@ -399,7 +399,7 @@
 
    nil))
 
-(defn-spec change-log-level! nil?
+(defn-spec set-log-level! nil?
   "changes the effective log level from `logging/default-log-level` to `new-level`.
   The `:debug` log level outside of unit tests will write a log file to the data directory and 
   enables the profiling of certain sections of code."
@@ -629,7 +629,7 @@
   (binding [http/*cache* (cache)]
     (let [remote-catalogue (:source catalogue-location)
           local-catalogue (catalogue-local-path catalogue-location)
-          message (format "downloading catalogue: %s" (name (:name catalogue-location)))
+          message (format "downloading '%s' catalogue" (name (:name catalogue-location)))
           resp (http/download-file remote-catalogue local-catalogue message)]
       (when-not (http/http-error? resp)
         resp))))
@@ -712,7 +712,7 @@
   []
   (when-let [catalogue-location (current-catalogue)]
     (let [catalogue-path (catalogue-local-path catalogue-location)
-          _ (info "loading catalogue:" (name (:name catalogue-location)))
+          _ (info (format "loading '%s' catalogue" (name (:name catalogue-location))))
 
           ;; download from remote and try again when json can't be read
           bad-json-file-handler
@@ -865,7 +865,6 @@
       (let [queue-atm (get-state :job-queue)
             update-jobs (fn [installed-addon]
                           (joblib/create-addon-job! queue-atm, installed-addon, check-for-update-affective))
-            _ (info (joblib/queue-info @queue-atm))
             _ (run! update-jobs installed-addon-list)
 
             expanded-addon-list (joblib/run-jobs! queue-atm num-concurrent-downloads)
@@ -873,7 +872,6 @@
             num-matched (->> expanded-addon-list (filterv :matched?) count)
             num-updates (->> expanded-addon-list (filterv :update?) count)]
 
-        (info "finished checking for updates")
         (update-installed-addon-list! expanded-addon-list)
         (info (format "%s addons checked, %s updates available" num-matched num-updates))))))
 
