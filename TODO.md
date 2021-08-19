@@ -6,26 +6,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* submit appimage to https://github.com/AppImage/appimage.github.io
-    - done
-        - https://github.com/AppImage/appimage.github.io/pull/2616
-
-* logging, 404 when talking to curseforge results in fairly useless 'Not Found' error in the log
-    - done
-
-* logging, tweak messages
-    "loading catalogue: full" => "loading 'full' catalogue"
-    "downloading catalogue: full" => "downloading 'full' catalogue"
-    - done
-
-* localisation, status bar
-    '123456' addons in catalogue
-    - done
-
-* regression, search, sorting on 'downloads' column broken
-    - probably because of localisation
-    - done
-
 ## todo
 
 * release, more automation
