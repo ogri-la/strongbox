@@ -20,14 +20,14 @@ Arch Linux users can install `strongbox` from the [AUR](https://aur.archlinux.or
 
 For other Linux users:
 
-1. download: [./releases/strongbox](https://github.com/ogri-la/strongbox/releases/download/4.4.0/strongbox)
+1. download: [./releases/strongbox](https://github.com/ogri-la/strongbox/releases/download/4.4.1/strongbox)
 2. make executable: `chmod +x strongbox`
 3. run: `./strongbox`
 
 If you're on macOS or having a problem with the binary or just prefer Java `.jar` files (requires Java 11+):
 
-1. download: [./releases/strongbox-4.4.0-standalone.jar](https://github.com/ogri-la/strongbox/releases/download/4.4.0/strongbox-4.4.0-standalone.jar)
-2. run: `java -jar strongbox-4.4.0-standalone.jar`
+1. download: [./releases/strongbox-4.4.1-standalone.jar](https://github.com/ogri-la/strongbox/releases/download/4.4.1/strongbox-4.4.1-standalone.jar)
+2. run: `java -jar strongbox-4.4.1-standalone.jar`
 
 ## Usage
 

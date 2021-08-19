@@ -9,12 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * status bar catalogue count is now localised.
-* the 404 error displayed from Curseforge is now more helpful than simply 'not found'
+* the 404 error displayed from Curseforge is now more helpful than simply 'not found'.
 
 ### Fixed
 
 * fixed bug preventing installation of addons from the search pane.
-* sorting by 'downloads' in search now works as expected
+* sorting by 'downloads' in search now works as expected.
 
 ## 4.4.0
 

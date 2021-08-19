@@ -4,6 +4,7 @@ Just for my own reference
 
 * exit emacs
 * make sure nothing is left uncommitted
+    - git checkout develop
     - git reset --hard
     - git pull
 * run
