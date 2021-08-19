@@ -2,9 +2,8 @@
   (:require
    [lasync.core :as lasync]
    [clojure.test :refer [deftest testing is use-fixtures]]
-   [taoensso.timbre :as log :refer [debug info warn error spy]]
+   ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [strongbox
-    [utils :as utils]
     [joblib :as joblib]]))
 
 (deftest run-job!
