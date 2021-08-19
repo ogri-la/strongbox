@@ -8,6 +8,23 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * submit appimage to https://github.com/AppImage/appimage.github.io
     - done
+        - https://github.com/AppImage/appimage.github.io/pull/2616
+
+* logging, 404 when talking to curseforge results in fairly useless 'Not Found' error in the log
+    - done
+
+* logging, tweak messages
+    "loading catalogue: full" => "loading 'full' catalogue"
+    "downloading catalogue: full" => "downloading 'full' catalogue"
+    - done
+
+* localisation, status bar
+    '123456' addons in catalogue
+    - done
+
+* regression, search, sorting on 'downloads' column broken
+    - probably because of localisation
+    - done
 
 ## todo
 
@@ -15,18 +32,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - clean the environment, update project.clj and readme, run lein pom, open a branch, push, open a PR, create a checklist
     - merge PR into master, tag, push, upload assets, update PKGBUILD, push to aur
     - etc
-
-* logging, 404 when talking to curseforge results in fairly useless 'Not Found' error in the log
-
-* logging, tweak messages
-    "loading catalogue: full" => "loading 'full' catalogue"
-    "downloading catalogue: full" => "downloading 'full' catalogue"
-
-* localisation, status bar
-    '123456' addons in catalogue
-
-* regression, search, sorting on 'downloads' column broken
-    - probably because of localisation
 
 * handle no internet connection more gracefully
 

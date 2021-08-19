@@ -278,7 +278,8 @@
       #{"api.github.com" 403} "Github: we've exceeded our request quota and have been blocked for an hour."
       #{"api.github.com" 500} "Github: api is down. Check www.githubstatus.com and try again later."
 
-      ;; issue 91, CDN problems 
+      ;; issue 91, CDN problems
+      #{"addons-ecs.forgesvc.net" 404} "Curseforge: the API can't find that addon (can be temporary or permanent). Try visiting the addon on Curseforge."
       #{"addons-ecs.forgesvc.net" 502} "Curseforge: the API is having problems right now. Try again later."
       #{"addons-ecs.forgesvc.net" 504} "Curseforge: the API is having problems right now. Try again later."
 

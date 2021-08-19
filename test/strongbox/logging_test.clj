@@ -22,20 +22,20 @@
 (deftest changing-log-level-while-testing
   (let [current-log-level #(-> timbre/*config* :min-level)]
     (testing "it is possible to change the log level while testing"
-      (core/change-log-level! :warn)
+      (core/set-log-level! :warn)
       (is (= :warn (current-log-level))))
 
     (testing "it will revert to `:debug` on `start` and `restart` however"
       (is (= :warn (current-log-level)))
       (with-running-app
         (is (= :debug (current-log-level)))
-        (core/change-log-level! :warn)
+        (core/set-log-level! :warn)
         (is (= :warn (current-log-level)))))
 
     (testing "it will also revert when changing the addon dir"
       (with-running-app
         (is (= :debug (current-log-level)))
-        (core/change-log-level! :warn)
+        (core/set-log-level! :warn)
         (is (= :warn (current-log-level)))
         (helper/install-dir)
         (is (= :debug (current-log-level)))))))

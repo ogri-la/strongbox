@@ -56,6 +56,10 @@
 (def user-locale (Locale/getDefault))
 (def number-formatter (NumberFormat/getNumberInstance user-locale))
 
+(defn format-number
+  [n]
+  (.format number-formatter n))
+
 (def major-theme-map
   {:light
    {:base "#ececec"
@@ -1547,8 +1551,6 @@
         empty-next-page (and (= 0 (count addon-list))
                              (> (-> search-state :page) 0))
 
-        number-format #(.format number-formatter %)
-
         column-list [{:text "source" :min-width 125 :pref-width 125 :max-width 125 :resizable false
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [row]
@@ -1558,7 +1560,12 @@
                      {:text "description" :min-width 200 :pref-width 400 :cell-value-factory (comp no-new-lines :description)}
                      {:text "tags" :min-width 200 :pref-width 250 :cell-value-factory (comp str :tag-list)}
                      {:text "updated" :min-width 85 :max-width 85 :pref-width 85 :resizable false :cell-value-factory (comp #(utils/safe-subs % 10) :updated-date)}
-                     {:text "downloads" :min-width 120 :pref-width 120 :max-width 120 :resizable false :cell-value-factory (comp number-format :download-count)}
+                     {:text "downloads" :min-width 120 :pref-width 120 :max-width 120 :resizable false
+                      :cell-value-factory :download-count
+                      :cell-factory {:fx/cell-type :table-cell
+                                     :describe (fn [n]
+                                                 (when n
+                                                   {:text (format-number n)}))}}
                      {:text "" :style-class ["install-button-column"] :min-width 120 :pref-width 120 :max-width 120 :resizable false
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [addon]
@@ -1958,7 +1965,7 @@
         ia-count (count ia)
         uia-count (count uia)
 
-        strings [(format catalogue-count-template a-count)
+        strings [(format catalogue-count-template (format-number a-count))
                  (if (= ia-count uia-count)
                    all-matching-template
                    (format num-matching-template uia-count ia-count))]]

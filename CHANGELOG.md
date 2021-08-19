@@ -4,15 +4,17 @@ All notable changes to this project will be documented in this file. This change
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 4.5.0 [Unreleased]
-
-### Added
+## 4.4.1
 
 ### Changed
 
+* status bar catalogue count is now localised.
+* the 404 error displayed from Curseforge is now more helpful than simply 'not found'
+
 ### Fixed
 
-### Removed
+* fixed bug preventing installation of addons from the search pane.
+* sorting by 'downloads' in search now works as expected
 
 ## 4.4.0
 
