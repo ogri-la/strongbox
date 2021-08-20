@@ -69,8 +69,7 @@ Just for my own reference
 
 
 * cd to strongbox-pkgbuild
-* download strongbox.sha256 to /tmp
-    - cat sumfile
+* cat ../strongbox/release/strongbox.sha256
 * update PKGBUILD
     - change 'pkgver'
     - change 'sha256sums'

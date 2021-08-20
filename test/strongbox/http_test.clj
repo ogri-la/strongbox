@@ -95,7 +95,23 @@
           output-file nil
           message nil
           extra-params {}
-          expected {:host "foo.bar", :reason-phrase "Connection timed out", :status 500}]
+          expected {:host "foo.bar", :reason-phrase "Connection timed out", :status 408}]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (http/-download url output-file message extra-params)))))))
 
+(deftest http-error
+  (let [cases [;; matching host+status
+               [{:host "raw.githubusercontent.com" :status 500 :reason-phrase "Internal server error."}
+                "Github: service is down. Check www.githubstatus.com and try again later."]
+               [{:host "api.github.com" :status 500 :reason-phrase "Internal server error."}
+                "Github: api is down. Check www.githubstatus.com and try again later."]
+
+               ;; match status alone
+               [{:host "example.org" :status 503 :reason-phrase "java.net.UnknownHostException: host 'example.org' not found."}
+                "Not found: the host is down (unlikely) or your connection to the internet is down (more likely)."]
+
+               ;; matches nothing
+               [{:host "example.org" :status 418 :reason-phrase "I'm a teapot"}
+                "I'm a teapot"]]]
+    (doseq [[request expected] cases]
+      (is (= expected (http/http-error request))))))

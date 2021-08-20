@@ -236,12 +236,23 @@
         (catch java.net.SocketTimeoutException ste
           (when streaming-response?
             (close-stream ste))
-          ;; return a synthetic 5xx error
+          ;; return a synthetic HTTP error
           (let [request-obj (java.net.URL. url)
-                http-error {:status 500
+                http-error {:status 408 ;; 'Request Timeout'
                             :host (.getHost request-obj)
                             :reason-phrase "Connection timed out"}]
-            (warn (format "failed to fetch '%s': connection timed out" url))
+            (warn (format "failed to fetch '%s': connection timed out." url))
+            http-error))
+
+        (catch java.net.UnknownHostException uhe
+          (when streaming-response?
+            (close-stream uhe))
+          ;; return a synthetic HTTP error
+          (let [request-obj (java.net.URL. url)
+                http-error {:status 503 ;; 'Service Unavailable'
+                            :host (.getHost request-obj)
+                            :reason-phrase (str "Unknown host: " (.getHost request-obj))}]
+            (warn (format "failed to fetch '%s': unknown host." url))
             http-error))
 
         (catch Exception ex
@@ -252,26 +263,31 @@
             (let [request-obj (java.net.URL. url)
                   http-error (merge (select-keys (ex-data ex) [:reason-phrase :status])
                                     {:host (.getHost request-obj)})]
-              (warn (format "failed to download file '%s': %s (HTTP %s)"
+              ;; "failed to fetch 'https://api.github.com/foo/bar/baz.json': connection timed out (HTTP 401)"
+              (warn (format "failed to fetch '%s': %s (HTTP %s)"
                             url
                             (-> http-error :reason-phrase (utils/safe-subs 150))
                             (:status http-error)))
 
               http-error)
 
-            ;; unhandled non-http exception
+            ;; this is an unhandled exception
             (throw ex)))))))
 
 (defn http-error?
   [http-resp]
   (and (map? http-resp)
-       (<= 400 (:status http-resp))))
+       (>= (:status http-resp) 400)))
 
 (defn-spec http-error string?
-  "returns an error specific to code and host"
+  "returns an error specific to code and host or just a more helpful http error message"
   [http-err :http/error]
-  (let [key (-> http-err (select-keys [:host :status]) vals set)]
-    (condp (comp clojure.set/intersection =) key
+  (let [key (-> http-err (select-keys [:host :status]) vals set)
+        bin-pred (fn [case-set key-set]
+                   ;; `case-set` => #{"api.github.com 404}
+                   ;; `key-set`  => #{"example.org 400}
+                   (= (clojure.set/intersection case-set key-set) case-set))]
+    (condp bin-pred key
       #{"raw.githubusercontent.com" 500} "Github: service is down. Check www.githubstatus.com and try again later."
 
       ;; github api quota exceeded OR github thinks we were making requests too quickly
@@ -283,7 +299,8 @@
       #{"addons-ecs.forgesvc.net" 502} "Curseforge: the API is having problems right now. Try again later."
       #{"addons-ecs.forgesvc.net" 504} "Curseforge: the API is having problems right now. Try again later."
 
-      #{403} "Forbidden: we've been blocked from accessing that (403)"
+      #{403} "Forbidden: we've been blocked from accessing that (403)."
+      #{503} "Not found: the host is down (unlikely) or your connection to the internet is down (more likely)."
 
       (:reason-phrase http-err))))
 
