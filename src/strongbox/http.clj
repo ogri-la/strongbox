@@ -251,7 +251,6 @@
           (let [request-obj (java.net.URL. url)
                 http-error {:status 503 ;; 'Service Unavailable'
                             :host (.getHost request-obj)
-                            ;; "Unknown host: https://api.github.com"
                             :reason-phrase (str "Unknown host: " (.getHost request-obj))}]
             (warn (format "failed to fetch '%s': unknown host." url))
             http-error))
@@ -284,8 +283,10 @@
   "returns an error specific to code and host or just a more helpful http error message"
   [http-err :http/error]
   (let [key (-> http-err (select-keys [:host :status]) vals set)
-        bin-pred (fn [case key]
-                   (= (clojure.set/intersection case key) case))]
+        bin-pred (fn [case-set key-set]
+                   ;; `case-set` => #{"api.github.com 404}
+                   ;; `key-set`  => #{"example.org 400}
+                   (= (clojure.set/intersection case-set key-set) case-set))]
     (condp bin-pred key
       #{"raw.githubusercontent.com" 500} "Github: service is down. Check www.githubstatus.com and try again later."
 
