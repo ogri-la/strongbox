@@ -6,14 +6,19 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
+
+* handle no internet connection more gracefully
+    - it's a bit slow but it doesn't crash as connections ...
+    - literally unplugging the network and restarting I get some 'unknown host' exceptions as the catalogue fails to download
+        - and http/http-error was broken :(
+    - done
+
 ## todo
 
 * release, more automation
     - clean the environment, update project.clj and readme, run lein pom, open a branch, push, open a PR, create a checklist
     - merge PR into master, tag, push, upload assets, update PKGBUILD, push to aur
     - etc
-
-* handle no internet connection more gracefully
 
 * zip, better errors for failing to decompress .rar files
     - see !FREEZING from wowinterface

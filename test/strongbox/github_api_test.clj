@@ -374,7 +374,7 @@
           source-id "Aviana/HealComm"
 
           ;; I don't like testing for log messages, but in this case it's the only indication the error has been handled properly
-          expected ["failed to download file 'https://api.github.com/repos/Aviana/HealComm/releases': Forbidden (HTTP 403)"
+          expected ["failed to fetch 'https://api.github.com/repos/Aviana/HealComm/releases': Forbidden (HTTP 403)"
                     "Github: we've exceeded our request quota and have been blocked for an hour."]]
 
       (with-fake-routes-in-isolation fake-routes
@@ -402,7 +402,7 @@
           game-track :retail
 
           ;; I don't like testing for log messages, but in this case it's the only indication the error has been handled properly
-          expected ["failed to download file 'https://api.github.com/repos/Aviana/HealComm/releases': Forbidden (HTTP 403)"
+          expected ["failed to fetch 'https://api.github.com/repos/Aviana/HealComm/releases': Forbidden (HTTP 403)"
                     "Github: we've exceeded our request quota and have been blocked for an hour."]]
 
       (with-fake-routes-in-isolation fake-routes
