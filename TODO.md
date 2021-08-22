@@ -6,19 +6,11 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-
 * handle no internet connection more gracefully
     - it's a bit slow but it doesn't crash as connections ...
     - literally unplugging the network and restarting I get some 'unknown host' exceptions as the catalogue fails to download
         - and http/http-error was broken :(
     - done
-
-## todo
-
-* release, more automation
-    - clean the environment, update project.clj and readme, run lein pom, open a branch, push, open a PR, create a checklist
-    - merge PR into master, tag, push, upload assets, update PKGBUILD, push to aur
-    - etc
 
 * zip, better errors for failing to decompress .rar files
     - see !FREEZING from wowinterface
@@ -31,8 +23,24 @@ see CHANGELOG.md for a more formal list of changes by release
         path [] triggered :strongbox.ui.jfx$start$update_gui_state__39204@608569a040151
         2021-03-20 01:35:58.027 ERROR [strongbox.core:419] - failed to read zip file '/home/torkus/path/to/wine/dir/drive_c/program files/World of Warcraft/_retail_/Interface/Addons/-freezing--1-04.zip', could not install -freezing
 
+    - I don't see this anymore, I get the sensible "failed to read addon zip file, possibly corrupt or not a zip file." message.
+    - done
+
+* release, more automation
+    - clean the environment, update project.clj and readme, run lein pom, open a branch, push, open a PR, create a checklist
+    - merge PR into master, tag, push, upload assets, update PKGBUILD, push to aur
+    - etc
+    - done
+        - https://github.com/ogri-la/strongbox-release-script
+        - it will get bugfixed and refined as I go along.
+
+## todo
+
+... need to do a minor version release and I have about a week before next month. what small things can I do?
 
 ## todo bucket (no particular order)
+
+* deleting an addon should also remove any of it's zip files
 
 * gui, can I make column widths dynamic? 
     - I'd like the 'version' columns to fit exactly, always.
