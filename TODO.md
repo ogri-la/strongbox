@@ -38,7 +38,25 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ... need to do a minor version release and I have about a week before next month. what small things can I do?
 
+* EOL planning, robustness, only download/update the catalogue *after* an existing catalogue has been confirmed
+    - github is down, wowman is erroring with a 500
+        - 'host not found' errors should be captured
+        - doublecheck behaviour on github 500 responses
+    - failure to download a catalogue shouldn't prevent addons from being displayed
+        - if a catalogue has been downloaded previously, does it still fail?
+    - failure to contact a host shouldn't prevent addons on other hosts from working
+        - done
+
 ## todo bucket (no particular order)
+
+* install addon from local zipfile
+    - *not* the 'reinstallation' feature, but literally selecting a zipfile from somewhere and installing it
+    - would be good for installing older versions of an addon?
+    - would be good for installing addons from unsupported sources
+        - wouldn't be able to update it however :(
+            - we would if it matched against the catalogue, like all the other reconciled addons
+    - 'import addon' dialog could do double time
+        - 'from url' and 'from file'
 
 * deleting an addon should also remove any of it's zip files
 
@@ -143,11 +161,6 @@ see CHANGELOG.md for a more formal list of changes by release
         - https://gitlab.com/shrugal/PersoLootRoll
         - any others ...?
 
-* EOL planning, robustness, only download/update the catalogue *after* an existing catalogue has been confirmed
-    - github is down, wowman is erroring with a 500
-    - failure to download a catalogue shouldn't prevent addons from being displayed
-    - failure to contact a host shouldn't prevent addons on other hosts from working
-
 * EOL planning, bundle a catalogue with the installation
     - load it as a resource with static-slurp, like we do with the sql?
         - also compressed so it's tiny?
@@ -216,13 +229,6 @@ see CHANGELOG.md for a more formal list of changes by release
                 - this would break the switching catalogue feature...
         - this might fit in with the greater-parallelism/queue based infrastructure
 
-* install addon from local zipfile
-    - *not* the 'reinstallation' feature, but literally selecting a zipfile from somewhere and installing it
-    - would be good for installing older versions of an addon?
-    - would be good for installing addons from unsupported sources
-        - wouldn't be able to update it however :(
-        - I think I'll stick with supporting sources of addons
-            - rather than enabling ad-hoc installation of unsupported addons
 
 # releases
 
