@@ -706,6 +706,27 @@
   (swap! state update-in [:search] merge (select-keys -search-state-template [:page :results :selected-results-list]))
   nil)
 
+(defn nfo-catalogue
+  []
+  (let [nfo-list (get-state :installed-addon-list)
+        nfo2summary (fn [nfo]
+                      (let [struct (-> nfo
+                                       (assoc :url "https://foo.bar")
+                                       (assoc :tag-list [])
+                                       (assoc :updated-date "2001-01-01")
+                                       (assoc :download-count 1))
+                            ]
+                        (if (-> struct :source (= "wowinterface"))
+                          (assoc struct :game-track-list [(:installed-game-track struct)])
+                          struct)))
+
+        nfo-data (->> nfo-list
+                      (remove #(not (contains? % :source)))
+                      (map nfo2summary)
+                      vec)
+        ]
+    (catalogue/new-catalogue nfo-data)))
+
 (defn-spec load-current-catalogue (s/or :ok :catalogue/catalogue, :error nil?)
   "merges the currently selected catalogue with the user-catalogue and returns the definitive list of addons 
   available to install. Handles malformed catalogue data by re-downloading catalogue."
@@ -730,7 +751,8 @@
           user-catalogue-data (p :p2/db:catalogue:read-user-catalogue (catalogue/read-catalogue (paths :user-catalogue-file) {:bad-data? nil}))
           ;; 2021-06-30: merge order changed. catalogue data is now merged over the top of the user-catalogue.
           ;; this is because the user-catalogue may now contain addons from all hosts and is likely to be out of date.
-          final-catalogue (p :p2/db:catalogue:merge-catalogues (catalogue/merge-catalogues user-catalogue-data catalogue-data))]
+          final-catalogue (p :p2/db:catalogue:merge-catalogues
+                             (catalogue/merge-catalogues (nfo-catalogue) (catalogue/merge-catalogues user-catalogue-data catalogue-data)))]
       (-> final-catalogue :addon-summary-list count (str " addons in final catalogue") info)
       final-catalogue)))
 

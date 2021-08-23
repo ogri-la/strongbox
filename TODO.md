@@ -41,9 +41,32 @@ see CHANGELOG.md for a more formal list of changes by release
 * EOL planning, robustness, only download/update the catalogue *after* an existing catalogue has been confirmed
     - github is down, wowman is erroring with a 500
         - 'host not found' errors should be captured
-        - doublecheck behaviour on github 500 responses
+        - all other errors are handled fine
+        - done
     - failure to download a catalogue shouldn't prevent addons from being displayed
         - if a catalogue has been downloaded previously, does it still fail?
+            - no, it behaves so perfectly I'm suspicious. investigating ... yeah, cache.
+            - with no available catalogue the addons are still displayed but obviously not matched.
+        - so:
+            - if we have a match via the nfo file we should still be able to fetch updates
+                - those in the user-catalogue still work for example ...
+            - order of precendence:
+                - nfo file, if it exists. down the bottom.
+                - user-catalogue. prefer matches against addons added
+                - regular catalogue, has final say.
+                    - this would allow matches against specialised catalogues, like wowi, curse, tukui
+                    - could we disable the catalogue altogether?
+                        - a 'no catalogue' option
+                        - just nfo files and user-catalogue (imported addons)
+                            - bit of a debugging feature but why not?
+        - create a catalogue from the nfo data?
+            - then we could merge nfo-catalogue with user-catalogue with regular catalogue
+                - nice and simple ...
+                - failure to download a catalogue with nothing cached lets us continue working normally
+                    - still need to test the case if a catalogue exists and an update fails, what happens
+                        - touch catalogue, in the past, expire it.
+                - switching to a catalogue like tukui shows all the old associations
+                
     - failure to contact a host shouldn't prevent addons on other hosts from working
         - done
 
