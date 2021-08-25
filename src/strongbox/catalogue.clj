@@ -225,23 +225,20 @@
   latest datestamp preserved.
   addon-summary-list is unique by `:source` and `:source-id` with differing values replaced by those in `cat-b`"
   [cat-a (s/nilable :catalogue/catalogue), cat-b (s/nilable :catalogue/catalogue)]
-  (let [matrix {;;[true true] ;; two non-empty catalogues, ideal case
-                [true false] cat-a ;; cat-b empty, return cat-a
-                [false true] cat-b ;; vice versa
-                [false false] nil}
-        not-empty? (complement empty?)
-        key [(not-empty? cat-a) (not-empty? cat-b)]]
-    (if (contains? matrix key)
-      (get matrix key)
-      (let [datestamp (last (sort [(:datestamp cat-a) (:datestamp cat-b)])) ;; latest wins
-            addons-a (:addon-summary-list cat-a)
-            addons-b (:addon-summary-list cat-b)
-            addon-summary-list (->> (concat addons-a addons-b) ;; join the two lists
-                                    (group-by (juxt :source-id :source)) ;; group by the key
-                                    vals ;; drop the map
-                                    (map (partial apply merge))) ;; merge (not replace) the groups into single maps
-            ]
-        (format-catalogue-data addon-summary-list datestamp)))))
+  (cond
+    (and (empty? cat-a)
+         (empty? cat-b)) nil
+    (empty? cat-b) cat-a
+    (empty? cat-a) cat-b
+    :else
+    (let [datestamp (last (sort [(:datestamp cat-a) (:datestamp cat-b)])) ;; latest wins
+          addons-a (:addon-summary-list cat-a)
+          addons-b (:addon-summary-list cat-b)
+          addon-summary-list (->> (concat addons-a addons-b) ;; join the two lists
+                                  (group-by (juxt :source-id :source)) ;; group by the key
+                                  vals ;; drop the keys. we now have a list of lists.
+                                  (map (partial apply merge)))] ;; merge the nested lists into single maps
+      (format-catalogue-data addon-summary-list datestamp))))
 
 ;; 
 

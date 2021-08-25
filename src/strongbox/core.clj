@@ -709,22 +709,23 @@
 (defn nfo-catalogue
   []
   (let [nfo-list (get-state :installed-addon-list)
+        sink (constantly nil)
         nfo2summary (fn [nfo]
-                      (let [struct (-> nfo
-                                       (assoc :url "https://foo.bar")
-                                       (assoc :tag-list [])
-                                       (assoc :updated-date "2001-01-01")
-                                       (assoc :download-count 1))
-                            ]
-                        (if (-> struct :source (= "wowinterface"))
-                          (assoc struct :game-track-list [(:installed-game-track struct)])
-                          struct)))
+                      (let [updates {:url (:group-id nfo)
+                                     :tag-list []
+                                     :updated-date "2001-01-01"
+                                     :download-count 1}
+                            nfo (merge nfo updates)]
+                        (cond-> nfo
+                          (= (:source nfo) "wowinterface")
+                          (assoc :game-track-list [(:installed-game-track nfo)])
 
-        nfo-data (->> nfo-list
-                      (remove #(not (contains? % :source)))
-                      (map nfo2summary)
-                      vec)
-        ]
+                          (nil? (:url nfo))
+                          sink
+
+                          (not (contains? nfo :source))
+                          sink)))
+        nfo-data (->> nfo-list (map nfo2summary) (remove nil?) vec)]
     (catalogue/new-catalogue nfo-data)))
 
 (defn-spec load-current-catalogue (s/or :ok :catalogue/catalogue, :error nil?)
@@ -749,10 +750,11 @@
 
           catalogue-data (p :p2/db:catalogue:read-catalogue (catalogue/read-catalogue catalogue-path {:bad-data? bad-json-file-handler}))
           user-catalogue-data (p :p2/db:catalogue:read-user-catalogue (catalogue/read-catalogue (paths :user-catalogue-file) {:bad-data? nil}))
+          nfo-catalogue-data (nfo-catalogue)
           ;; 2021-06-30: merge order changed. catalogue data is now merged over the top of the user-catalogue.
           ;; this is because the user-catalogue may now contain addons from all hosts and is likely to be out of date.
-          final-catalogue (p :p2/db:catalogue:merge-catalogues
-                             (catalogue/merge-catalogues (nfo-catalogue) (catalogue/merge-catalogues user-catalogue-data catalogue-data)))]
+          ;; 2021-08-25: 'nfo-catalogue' is now merged over the top of the user-catalogue.
+          final-catalogue (reduce catalogue/merge-catalogues [user-catalogue-data nfo-catalogue-data catalogue-data])]
       (-> final-catalogue :addon-summary-list count (str " addons in final catalogue") info)
       final-catalogue)))
 
