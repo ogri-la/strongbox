@@ -720,7 +720,7 @@
 
         ]
     (cond-> nfo
-      ;;(= (:source nfo) "wowinterface") (assoc :game-track-list [(:installed-game-track nfo)])
+      (= (:source nfo) "wowinterface") (assoc :game-track-list [(:installed-game-track nfo)])
       (nil? (:url nfo)) sink
       (not (contains? nfo :source)) sink)))
 
@@ -815,8 +815,8 @@
                 (cond
                   (:ignore? addon) (info "not matched to catalogue, addon is being ignored")
 
-                  (and (:source addon)
-                       (:source-id addon)) (info "askdjhfaks;djfskaldjf;ask")
+                  ;;(and (:source addon)
+                  ;;     (:source-id addon)) (info "askdjhfaks;djfskaldjf;ask")
                   
                   :else (do ;; todo: replace these with a :help level and a less scary colour
                           (info "if this is part of a bundle, try \"File -> Re-install all\"")
@@ -852,13 +852,20 @@
           strict? (get-game-track-strictness)]
       (catalogue/expand-summary addon-summary game-track strict?))))
 
+(defn expandable?
+  [addon]
+  (if-not (s/valid? :addon/expandable addon)
+    (do (s/explain :addon/expandable addon)
+        false)
+    true))
+
 (defn-spec check-for-update :addon/toc
   "Returns given `addon` with source updates, if any, and sets an `update?` property if a different version is available.
   If addon is pinned to a specific version, `update?` will only be true if pinned version is different from installed version."
   [addon (s/or :unmatched :addon/toc
                :matched :addon/toc+summary+match)]
   (logging/with-addon addon
-    (let [expanded-addon (when (:matched? addon) ;; todo: `when (expandable? addon)`
+    (let [expanded-addon (when (expandable? addon) ;;(when (:matched? addon)
                            (joblib/tick-delay 0.25)
                            (expand-summary-wrapper addon))
           addon (or expanded-addon addon) ;; expanded addon may still be nil
