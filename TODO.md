@@ -70,6 +70,8 @@ see CHANGELOG.md for a more formal list of changes by release
     - failure to contact a host shouldn't prevent addons on other hosts from working
         - done
 
+* add a --version parameter
+
 ## todo bucket (no particular order)
 
 * install addon from local zipfile

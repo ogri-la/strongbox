@@ -650,7 +650,15 @@
         db-catalogue-addon (utils/drop-nils db-catalogue-addon [:description])]
     ;; merges left->right. catalogue-addon overwrites installed-addon, ':matched' overwrites catalogue-addon, etc
     (logging/addon-log installed-addon :info (format "found in catalogue with source \"%s\" and id \"%s\"" (:source installed-addon) (:source-id installed-addon)))
-    (merge installed-addon db-catalogue-addon {:matched? true})))
+    (merge installed-addon
+           db-catalogue-addon
+           {:matched? true}
+           ;; todo: I really want to disambiguate between where data is coming from.
+           ;; it would mean carrying around the toc, nfo, catalogue, source updates and a merged set data.
+           ;; all we have right now is the merged set (except this new `nfo/source` key)
+           (when-not (= (:source installed-addon)
+                        (:source db-catalogue-addon))
+             {:nfo/source (:source installed-addon)}))))
 
 ;;
 
@@ -716,9 +724,7 @@
                         :updated-date constants/fake-datetime
                         :download-count 0
                         :matched? false})
-                 (select-keys [:source :source-id :url :name :tag-list :label :updated-date :download-count]))
-
-        ]
+                (select-keys [:source :source-id :url :name :tag-list :label :updated-date :download-count]))]
     (cond-> nfo
       (= (:source nfo) "wowinterface") (assoc :game-track-list [(:installed-game-track nfo)])
       (nil? (:url nfo)) sink
@@ -785,14 +791,12 @@
 
         ;; for those that failed to match but have nfo data we can fall back to that
         foo (mapv (fn [addon]
-                        (if-let [synthetic (nfo2summary addon)]
-                          (moosh-addons addon synthetic)
-                          addon)) unmatched)
-        
+                    (if-let [synthetic (nfo2summary addon)]
+                      (moosh-addons addon synthetic)
+                      addon)) unmatched)
+
         expanded-installed-addon-list (into matched foo)
 
-        ;; but! there may still be some addons that are leftover
-        
         ;; todo: metrics gathering is good, but this is a little adhoc. shift into parent wrapper somehow.
         ;; some metrics we'll emit for the user.
         num-matched (count matched)
@@ -815,9 +819,6 @@
                 (cond
                   (:ignore? addon) (info "not matched to catalogue, addon is being ignored")
 
-                  ;;(and (:source addon)
-                  ;;     (:source-id addon)) (info "askdjhfaks;djfskaldjf;ask")
-                  
                   :else (do ;; todo: replace these with a :help level and a less scary colour
                           (info "if this is part of a bundle, try \"File -> Re-install all\"")
                           (info "try searching for this addon by name or description")
@@ -876,7 +877,11 @@
         (when-not (= (get-game-track) (:game-track addon))
           (warn (format "update is for '%s' and the addon directory is set to '%s'"
                         (-> addon :game-track sp/game-track-labels-map)
-                        (-> (get-game-track) sp/game-track-labels-map)))))
+                        (-> (get-game-track) sp/game-track-labels-map))))
+        (when (:nfo/source addon)
+          (warn "this happens when an exact match is not found in the selected catalogue.")
+          (warn (format "update is from a different host (%s) to the one it was installed from (%s)." (:source addon) (:nfo/source addon)))))
+
       (joblib/tick-delay 0.75)
       (assoc addon :update? has-update?))))
 

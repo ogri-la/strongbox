@@ -162,6 +162,7 @@
   [catalogue-name (s/nilable (s/or :simple string?, :named keyword?))]
   (when catalogue-name
     (core/set-catalogue-location! (keyword catalogue-name))
+    (report "switched catalogues")
     (core/db-reload-catalogue)
     (core/empty-search-results)
     (bump-search))

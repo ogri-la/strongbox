@@ -1,6 +1,5 @@
 (ns strongbox.http
   (:require
-   [clj-http.fake :refer [with-global-fake-routes]]
    [strongbox
     [joblib :as joblib]
     [logging :as logging]
@@ -172,11 +171,6 @@
                 _ (debug "requesting" url "with params" params)
 
                 resp (client/get url params)
-                ;;fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/full-catalogue.json"
-                ;;             {:get (fn [req] {:status 500 :reason-phrase "Internal Server Error"})}}
-                ;;resp (with-global-fake-routes fake-routes
-                ;;       (client/get url params))
-
                 _ (debug "response status" (:status resp))
 
                 not-modified (= 304 (:status resp)) ;; 304 is "not modified" (local file is still fresh). only happens when caching
