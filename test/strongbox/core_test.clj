@@ -8,6 +8,7 @@
    [taoensso.timbre :as log :refer [debug info warn error spy]]
    [strongbox.ui.cli :as cli]
    [strongbox
+    [constants :as constants]
     [addon :as addon :refer [downloaded-addon-fname]]
     [db :as db]
     [logging :as logging]
@@ -1460,3 +1461,77 @@
         (is (empty? (core/get-state :unsteady-addon-list)))
         (is (true? (addon-fn-affective addon)))
         (is (empty? (core/get-state :unsteady-addon-list)))))))
+
+;;
+
+(deftest toc2summary--plain
+  (testing "plain toc data with no extras can't be coerced into an addon summary"
+    (is (nil? (core/toc2summary toc)))))
+
+(deftest toc2summary--toc+nfo
+  (testing "toc with extra nfo data *can* be coerced into an addon summary with less guessing"
+    (let [toc+nfo (merge toc {:group-id "https://example.org"
+                              :source "wowinterface"
+                              :source-id 123
+                              :interface-version constants/default-interface-version-classic})
+          expected {:label "EveryAddon 1.2.3",
+                    :name "everyaddon",
+                    :source "wowinterface",
+                    :source-id 123
+
+                    ;; synthetic
+                    :url "https://example.org" ;; url won't be derived from source and id
+                    :download-count 0,
+                    :game-track-list [:classic], ;; classic is used
+                    :tag-list [],
+                    :updated-date "2001-01-01T01:01:01"}]
+      (is (= expected (core/toc2summary toc+nfo))))))
+
+(deftest toc2summary--wowinterface
+  (testing "toc data with a wowinterface source and id *can* be coerced to addon summary without a `:url`"
+    (let [wowinterface-toc (merge toc {:source "wowinterface"
+                                       :source-id 123})
+          expected {:label "EveryAddon 1.2.3",
+                    :name "everyaddon",
+                    :source "wowinterface",
+                    :source-id 123
+
+                    ;; synthetic
+                    :url "https://www.wowinterface.com/downloads/info123"
+                    :download-count 0,
+                    :game-track-list [:retail],
+                    :tag-list [],
+                    :updated-date "2001-01-01T01:01:01"}]
+      (is (= expected (core/toc2summary wowinterface-toc))))))
+
+(deftest toc2summary--tukui
+  (testing "toc data with a tukui source and id can be coerced to an addon summary without a `:url`"
+    (let [tukui-toc (merge toc {:source "tukui"
+                                :source-id 123})
+          expected {:source "tukui",
+                    :source-id 123,
+                    :name "everyaddon",
+                    :label "EveryAddon 1.2.3",
+
+                    ;; synthetic
+                    :tag-list [],
+                    :updated-date "2001-01-01T01:01:01",
+                    :url "https://www.tukui.org/addons.php?id=123",
+                    :download-count 0}]
+      (is (= expected (core/toc2summary tukui-toc))))))
+
+(deftest toc2summary--curseforge
+  (testing "toc data with a curseforge source and id cannot be coerced to an addon summary without a `:url`"
+    (let [curseforge-toc (merge toc {:source "curseforge"
+                                     :source-id 123})]
+      (is (nil? (core/toc2summary curseforge-toc))))))
+
+;;
+
+(deftest expandable?
+  (let [cases [[{} false]
+               [{:foo :bar} false]
+               [{:source "wowinterface" :source-id 123} false]
+               [{:name "foo" :label "Foo" :source "wowinterface" :source-id 123} true]]]
+    (doseq [[given expected] cases]
+      (is (= expected (core/expandable? given))))))

@@ -1675,7 +1675,7 @@
                :orientation :vertical}
 
               (if (addon/ignored? addon)
-                (button "Stop ignoring" (async-handler #(cli/clear-ignore-selected [addon])))
+                (button "Stop ignoring" (async-handler #(cli/clear-ignore-selected [addon] (core/selected-addon-dir))))
                 (button "Ignore" (async-handler #(cli/ignore-selected [addon]))
                         {:tooltip "Prevent all changes"
                          :disabled? (not (addon/ignorable? addon))}))
@@ -1690,7 +1690,7 @@
 (defn addon-detail-key-vals
   "displays a two-column table of `key: val` fields for what we know about an addon."
   [{:keys [addon]}]
-  (let [column-list [{:text "key" :min-width 150 :pref-width 150 :max-width 150 :resizable false :cell-value-factory (comp name :key)}
+  (let [column-list [{:text "key" :min-width 150 :pref-width 150 :max-width 150 :resizable false :cell-value-factory #(-> % :key str (subs 1))}
                      {:text "val" :cell-value-factory :val}]
 
         blacklist [:group-addons :release-list]

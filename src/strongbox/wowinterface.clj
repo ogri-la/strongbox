@@ -77,6 +77,11 @@
   [a]
   (str host "info" (extract-source-id a)))
 
+(defn make-url
+  [{:keys [source-id]}]
+  (when source-id
+    (str host "info" source-id)))
+
 (defn extract-addon-summary
   [snippet]
   (try

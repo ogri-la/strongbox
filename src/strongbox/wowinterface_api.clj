@@ -20,6 +20,8 @@
   (when-not (:game-track-list addon-summary)
     (error "given addon-summary has no game track list! please report this if you're not a developer.")
     (error addon-summary))
+
+  ;; todo: this shouldn't be an 'if' if there is no 'else'
   (if (some #{game-track} (:game-track-list addon-summary))
     (let [url (str wowinterface-api "/filedetails/" (:source-id addon-summary) ".json")
           result-list (some-> url http/download http/sink-error utils/from-json)

@@ -10,6 +10,8 @@
    [trptcolin.versioneer.core :as versioneer]
    [envvar.core :refer [env]]
    [strongbox
+    [wowinterface :as wowinterface]
+    [tukui-api :as tukui-api]
     [constants :as constants]
     [addon :as addon]
     [db :as db]
@@ -646,7 +648,8 @@
 (defn-spec moosh-addons :addon/toc+summary+match
   "merges the data from an installed addon with it's match in the catalogue"
   [installed-addon :addon/toc, db-catalogue-addon :addon/summary]
-  (let [;; nil fields are removed from the catalogue item because they might override good values in the .toc or .nfo
+  (let [;; 2021-09: this may not be the case anymore.
+        ;; nil fields are removed from the catalogue item because they might override good values in the .toc or .nfo
         db-catalogue-addon (utils/drop-nils db-catalogue-addon [:description])
 
         inst-source (:source installed-addon)
@@ -720,20 +723,39 @@
   (swap! state update-in [:search] merge (select-keys -search-state-template [:page :results :selected-results-list]))
   nil)
 
-(defn nfo2summary
-  [nfo]
-  (let [sink (constantly nil)
-        nfo (-> nfo
-                (merge {:url (:group-id nfo)
+(defn-spec toc2summary (s/nilable :addon/summary)
+  "accepts toc or toc+nfo data and emits a version of the data that validates as an `:addon/summary`"
+  [toc (s/or :just-toc :addon/toc, :mixed :addon/toc+nfo)]
+  (let [sink nil
+        syn (-> toc
+                (merge {:url (:group-id toc)
                         :tag-list []
                         :updated-date constants/fake-datetime
                         :download-count 0
                         :matched? false})
-                (select-keys [:source :source-id :url :name :tag-list :label :updated-date :download-count]))]
-    (cond-> nfo
-      (= (:source nfo) "wowinterface") (assoc :game-track-list [(:installed-game-track nfo)])
-      (nil? (:url nfo)) sink
-      (not (contains? nfo :source)) sink)))
+                (select-keys [:source :source-id :url :name :tag-list :label :updated-date :download-count]))
+
+        syn (if (= (:source toc) "wowinterface")
+              (cond
+                (:installed-game-track toc) (assoc syn :game-track-list [(:installed-game-track toc)])
+                (:interface-version toc) (assoc syn :game-track-list [(utils/interface-version-to-game-track (:interface-version toc))])
+                :else sink)
+              syn)
+
+        ;; we might be able to recover from this.
+        ;; wowi and github urls can be reconstructed
+        syn (if (-> syn :url nil?)
+              (case (:source toc)
+                "wowinterface" (assoc syn :url (wowinterface/make-url toc))
+                "tukui" (assoc syn :url (tukui-api/make-url toc))
+                syn)
+              syn)
+
+        ;; url may still be nil at this point, just fail
+        syn (if (-> syn :url nil?) sink syn)
+
+        syn (if (-> syn :source nil?) sink syn)]
+    syn))
 
 (defn-spec load-current-catalogue (s/or :ok :catalogue/catalogue, :error nil?)
   "merges the currently selected catalogue with the user-catalogue and returns the definitive list of addons 
@@ -757,11 +779,9 @@
 
           catalogue-data (p :p2/db:catalogue:read-catalogue (catalogue/read-catalogue catalogue-path {:bad-data? bad-json-file-handler}))
           user-catalogue-data (p :p2/db:catalogue:read-user-catalogue (catalogue/read-catalogue (paths :user-catalogue-file) {:bad-data? nil}))
-          nfo-catalogue-data nil
           ;; 2021-06-30: merge order changed. catalogue data is now merged over the top of the user-catalogue.
           ;; this is because the user-catalogue may now contain addons from all hosts and is likely to be out of date.
-          ;; 2021-08-25: 'nfo-catalogue' is now merged over the top of the user-catalogue.
-          final-catalogue (reduce catalogue/merge-catalogues [user-catalogue-data nfo-catalogue-data catalogue-data])]
+          final-catalogue (p :p2/db:catalogue:merge-catalogues (catalogue/merge-catalogues user-catalogue-data catalogue-data))]
       (-> final-catalogue :addon-summary-list count (str " addons in final catalogue") info)
       final-catalogue)))
 
@@ -792,15 +812,14 @@
         ;; for those that *did* match, merge the installed addon data together with the catalogue data
         matched (mapv #(moosh-addons (:installed-addon %) (:catalogue-match %)) matched)
         ;; and then make them a single list of addons again
-        ;;expanded-installed-addon-list (into matched unmatched)
 
         ;; for those that failed to match but have nfo data we can fall back to that
-        foo (mapv (fn [addon]
-                    (if-let [synthetic (nfo2summary addon)]
-                      (moosh-addons addon synthetic)
-                      addon)) unmatched)
+        polyfilled (mapv (fn [addon]
+                           (if-let [synthetic (spy :info (toc2summary addon))]
+                             (moosh-addons addon synthetic)
+                             addon)) unmatched)
 
-        expanded-installed-addon-list (into matched foo)
+        expanded-installed-addon-list (into matched polyfilled)
 
         ;; todo: metrics gathering is good, but this is a little adhoc. shift into parent wrapper somehow.
         ;; some metrics we'll emit for the user.
@@ -821,15 +840,14 @@
     (when-not (empty? unmatched)
       (run! (fn [addon]
               (logging/with-addon addon
-                (cond
-                  (:ignore? addon) (info "not matched to catalogue, addon is being ignored")
-
-                  :else (do ;; todo: replace these with a :help level and a less scary colour
-                          (info "if this is part of a bundle, try \"File -> Re-install all\"")
-                          (info "try searching for this addon by name or description")
-                          (warn (format "failed to find %s in the '%s' catalogue"
-                                        (:dirname addon)
-                                        (name (get-state :cfg :selected-catalogue))))))))
+                (if (:ignore? addon)
+                  (info "not matched to catalogue, addon is being ignored")
+                  (do ;; todo: replace these with a :help level and a less scary colour
+                    (info "if this is part of a bundle, try \"File -> Re-install all\"")
+                    (info "try searching for this addon by name or description")
+                    (warn (format "failed to find %s in the '%s' catalogue"
+                                  (:dirname addon)
+                                  (name (get-state :cfg :selected-catalogue))))))))
 
             unmatched))
 
@@ -858,13 +876,10 @@
           strict? (get-game-track-strictness)]
       (catalogue/expand-summary addon-summary game-track strict?))))
 
-(defn expandable?
-  [addon]
-  (if-not (s/valid? :addon/expandable addon)
-    ;;(do (s/explain :addon/expandable addon)
-    ;;    false)
-    false
-    true))
+(defn-spec expandable? boolean?
+  "returns `true` if the given addon in whatever form has the requisites to be 'expanded' (checked for updates from host)"
+  [addon map?]
+  (s/valid? :addon/expandable addon))
 
 (defn-spec check-for-update :addon/toc
   "Returns given `addon` with source updates, if any, and sets an `update?` property if a different version is available.
@@ -872,7 +887,7 @@
   [addon (s/or :unmatched :addon/toc
                :matched :addon/toc+summary+match)]
   (logging/with-addon addon
-    (let [expanded-addon (when (expandable? addon) ;;(when (:matched? addon)
+    (let [expanded-addon (when (expandable? addon)
                            (joblib/tick-delay 0.25)
                            (expand-summary-wrapper addon))
           addon (or expanded-addon addon) ;; expanded addon may still be nil

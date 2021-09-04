@@ -19,6 +19,16 @@
 (def tukui-proper-url (format proper-url "tukui"))
 (def elvui-proper-url (format proper-url "elvui"))
 
+(defn make-url
+  [{:keys [name source-id interface-version]}]
+  (if (neg? source-id)
+    (str "https://www.tukui.org/download.php?ui=" name)
+    (case (utils/interface-version-to-game-track interface-version)
+      :retail (str "https://www.tukui.org/addons.php?id=" source-id)
+      :classic (str "https://www.tukui.org/classic-addons.php?id=" source-id)
+      :classic-tbc (str "https://www.tukui.org/classic-tbc-addons.php?id=" source-id)
+      nil)))
+
 (defn-spec expand-summary (s/or :ok :addon/release-list, :error nil?)
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
   [addon :addon/expandable, game-track ::sp/game-track]
