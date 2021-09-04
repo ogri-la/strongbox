@@ -653,8 +653,7 @@
         dbc-source (:source db-catalogue-addon)
         source-mismatch (and inst-source
                              dbc-source
-                             (not (= inst-source dbc-source)))
-        ]
+                             (not (= inst-source dbc-source)))]
     ;; merges left->right. catalogue-addon overwrites installed-addon, ':matched' overwrites catalogue-addon, etc
     (logging/addon-log installed-addon :info (format "found in catalogue with source \"%s\" and id \"%s\"" (:source installed-addon) (:source-id installed-addon)))
     (merge installed-addon
@@ -862,8 +861,9 @@
 (defn expandable?
   [addon]
   (if-not (s/valid? :addon/expandable addon)
-    (do (s/explain :addon/expandable addon)
-        false)
+    ;;(do (s/explain :addon/expandable addon)
+    ;;    false)
+    false
     true))
 
 (defn-spec check-for-update :addon/toc
@@ -893,7 +893,7 @@
 
 (def check-for-update-affective (affects-addon-wrapper check-for-update))
 
-(defn-spec check-for-updates-1 nil?
+(defn-spec check-for-updates-serially nil?
   "downloads full details for all installed addons that can be found in summary list"
   []
   (when (selected-addon-dir)

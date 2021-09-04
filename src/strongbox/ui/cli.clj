@@ -347,6 +347,7 @@
   ([addon-list :addon/installed-list]
    (run! (fn [addon]
            (logging/with-addon addon
+             ;; todo: `core/selected-addon-dir` should be a param to parent fn
              (addon/clear-ignore (core/selected-addon-dir) addon)
              (info "stopped ignoring")))
          addon-list)

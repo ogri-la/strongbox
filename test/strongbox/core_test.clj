@@ -2,7 +2,7 @@
   (:require
    [clojure.string :refer [starts-with? ends-with?]]
    [clojure.test :refer [deftest testing is use-fixtures]]
-   [clj-http.fake :refer [with-fake-routes-in-isolation]]
+   [clj-http.fake :refer [with-global-fake-routes-in-isolation with-fake-routes-in-isolation]]
    [envvar.core :refer [with-env]]
    [me.raynes.fs :as fs]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
@@ -829,20 +829,27 @@
 (deftest uninstall-ignored-bundled-addon
   (testing "uninstalling an addon with a bundled addon that is being ignored isn't possible."
     (with-running-app
-      (let [install-dir (helper/install-dir)
-            install-dir-contents #(->> install-dir fs/list-dir (filter fs/directory?) (map fs/base-name) sort)
+
+      ;; 2021-09-04: change in behaviour. addons that no longer match the catalogue are still checked for
+      ;; updates if the right toc+nfo data is available.
+      (with-global-fake-routes-in-isolation
+        {"https://addons-ecs.forgesvc.net/api/v2/addon/1"
+         {:get (fn [req] {:status 404 :reason-phrase "not found"})}}
+
+        (let [install-dir (helper/install-dir)
+              install-dir-contents #(->> install-dir fs/list-dir (filter fs/directory?) (map fs/base-name) sort)
 
             ;; trick here: copying 0.1.2 fixture to 1.2.3 filename. this fixture unpacks two directories
-            fname (downloaded-addon-fname (:name addon) (:version addon))
-            _ (fs/copy (fixture-path "everyaddon--0-1-2.zip") (utils/join install-dir fname))
-            _ (core/install-addon-guard addon install-dir)
+              fname (downloaded-addon-fname (:name addon) (:version addon))
+              _ (fs/copy (fixture-path "everyaddon--0-1-2.zip") (utils/join install-dir fname))
+              _ (core/install-addon-guard addon install-dir)
 
             ;; ensure bundled addon gets ignored
-            _ (fs/mkdir (utils/join install-dir "EveryAddon-BundledAddon" ".git"))
-            _ (core/load-installed-addons)
-            addon (first (core/get-state :installed-addon-list))]
-        (core/remove-many-addons [addon])
-        (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (install-dir-contents)))))))
+              _ (fs/mkdir (utils/join install-dir "EveryAddon-BundledAddon" ".git"))
+              _ (core/load-installed-addons)
+              addon (first (core/get-state :installed-addon-list))]
+          (core/remove-many-addons [addon])
+          (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (install-dir-contents))))))))
 
 ;; mutual dependencies
 
@@ -932,74 +939,88 @@
 (deftest uninstall-addons-with-mutual-dependencies--overwrote
   (testing "uninstalling an addon whose mutual dependency *overwrote another* will see the original one restored"
     (with-running-app
-      (let [install-dir (helper/install-dir)
-            addon-1 {:name "everyaddon" :label "EveryAddon" :version "0.1.2" :url "https://group.id/never/fetched"
-                     :source "curseforge" :source-id 1
-                     :download-url "https://path/to/remote/addon.zip" :game-track :retail
-                     :-testing-zipfile (fixture-path "everyaddon--0-1-2.zip")}
 
-            addon-2 {:name "everyotheraddon" :label "EveryOtherAddon" :version "5.6.7" :url "https://group.id/also/never/fetched"
-                     :source "curseforge" :source-id 2
-                     :download-url "https://path/to/remote/addon.zip" :game-track :retail
-                     :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}
+      ;; 2021-09-04: change in behaviour. addons that no longer match the catalogue are still checked for
+      ;; updates if the right toc+nfo data is available.
+      (with-global-fake-routes-in-isolation
+        {"https://addons-ecs.forgesvc.net/api/v2/addon/1"
+         {:get (fn [req] {:status 404 :reason-phrase "not found"})}}
 
-            bundled-dirname "EveryAddon-BundledAddon"
+        (let [install-dir (helper/install-dir)
+              addon-1 {:name "everyaddon" :label "EveryAddon" :version "0.1.2" :url "https://group.id/never/fetched"
+                       :source "curseforge" :source-id 1
+                       :download-url "https://path/to/remote/addon.zip" :game-track :retail
+                       :-testing-zipfile (fixture-path "everyaddon--0-1-2.zip")}
 
-            expected {:group-id "https://group.id/never/fetched"
-                      :installed-game-track :retail
-                      :installed-version "0.1.2"
-                      :name "everyaddon"
-                      :primary? false
-                      :source "curseforge"
-                      :source-id 1}]
+              addon-2 {:name "everyotheraddon" :label "EveryOtherAddon" :version "5.6.7" :url "https://group.id/also/never/fetched"
+                       :source "curseforge" :source-id 2
+                       :download-url "https://path/to/remote/addon.zip" :game-track :retail
+                       :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}
 
-        (core/install-addon-guard addon-1)
-        (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
-        (core/load-installed-addons) ;; refresh our knowledge of what is installed
+              bundled-dirname "EveryAddon-BundledAddon"
 
-        (core/install-addon-guard addon-2)
-        (is (= ["EveryAddon" "EveryAddon-BundledAddon" "EveryOtherAddon"] (helper/install-dir-contents)))
-        (core/load-installed-addons) ;; refresh our knowledge of what is installed
+              expected {:group-id "https://group.id/never/fetched"
+                        :installed-game-track :retail
+                        :installed-version "0.1.2"
+                        :name "everyaddon"
+                        :primary? false
+                        :source "curseforge"
+                        :source-id 1}]
 
-        (core/remove-addon (helper/select-addon (:url addon-2)))
-        (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
-        (is (= expected (nfo/read-nfo install-dir bundled-dirname)))))))
+          (core/install-addon-guard addon-1)
+          (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
+          (core/load-installed-addons) ;; refresh our knowledge of what is installed
+
+          (core/install-addon-guard addon-2)
+          (is (= ["EveryAddon" "EveryAddon-BundledAddon" "EveryOtherAddon"] (helper/install-dir-contents)))
+          (core/load-installed-addons) ;; refresh our knowledge of what is installed
+
+          (core/remove-addon (helper/select-addon (:url addon-2)))
+          (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
+          (is (= expected (nfo/read-nfo install-dir bundled-dirname))))))))
 
 (deftest uninstall-addons-with-mutual-dependencies--overwritten
   (testing "uninstalling an addon whose mutual dependency *was overwritten* by another will see it removed from the list"
     (with-running-app
-      (let [install-dir (helper/install-dir)
-            addon-1 {:name "everyaddon" :label "EveryAddon" :version "0.1.2" :url "https://group.id/never/fetched"
-                     :source "curseforge" :source-id 1
-                     :download-url "https://path/to/remote/addon.zip" :game-track :retail
-                     :-testing-zipfile (fixture-path "everyaddon--0-1-2.zip")}
 
-            addon-2 {:name "everyotheraddon" :label "EveryOtherAddon" :version "5.6.7" :url "https://group.id/also/never/fetched"
-                     :source "curseforge" :source-id 2
-                     :download-url "https://path/to/remote/addon.zip" :game-track :retail
-                     :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}
+      ;; 2021-09-04: change in behaviour. addons that no longer match the catalogue are still checked for
+      ;; updates if the right toc+nfo data is available.
+      (with-global-fake-routes-in-isolation
+        {"https://addons-ecs.forgesvc.net/api/v2/addon/2"
+         {:get (fn [req] {:status 404 :reason-phrase "not found"})}}
 
-            bundled-dirname "EveryAddon-BundledAddon"
+        (let [install-dir (helper/install-dir)
+              addon-1 {:name "everyaddon" :label "EveryAddon" :version "0.1.2" :url "https://group.id/never/fetched"
+                       :source "curseforge" :source-id 1
+                       :download-url "https://path/to/remote/addon.zip" :game-track :retail
+                       :-testing-zipfile (fixture-path "everyaddon--0-1-2.zip")}
 
-            expected {:group-id "https://group.id/also/never/fetched"
-                      :installed-game-track :retail
-                      :installed-version "5.6.7"
-                      :name "everyotheraddon"
-                      :primary? false
-                      :source "curseforge"
-                      :source-id 2}]
+              addon-2 {:name "everyotheraddon" :label "EveryOtherAddon" :version "5.6.7" :url "https://group.id/also/never/fetched"
+                       :source "curseforge" :source-id 2
+                       :download-url "https://path/to/remote/addon.zip" :game-track :retail
+                       :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}
 
-        (core/install-addon-guard addon-1)
-        (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
-        (core/load-installed-addons) ;; refresh our knowledge of what is installed
+              bundled-dirname "EveryAddon-BundledAddon"
 
-        (core/install-addon-guard addon-2)
-        (is (= ["EveryAddon" "EveryAddon-BundledAddon" "EveryOtherAddon"] (helper/install-dir-contents)))
-        (core/load-installed-addons) ;; refresh our knowledge of what is installed
+              expected {:group-id "https://group.id/also/never/fetched"
+                        :installed-game-track :retail
+                        :installed-version "5.6.7"
+                        :name "everyotheraddon"
+                        :primary? false
+                        :source "curseforge"
+                        :source-id 2}]
 
-        (core/remove-addon (helper/select-addon (:url addon-1)))
-        (is (= ["EveryAddon-BundledAddon" "EveryOtherAddon"] (helper/install-dir-contents)))
-        (is (= expected (nfo/read-nfo install-dir bundled-dirname)))))))
+          (core/install-addon-guard addon-1)
+          (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
+          (core/load-installed-addons) ;; refresh our knowledge of what is installed
+
+          (core/install-addon-guard addon-2)
+          (is (= ["EveryAddon" "EveryAddon-BundledAddon" "EveryOtherAddon"] (helper/install-dir-contents)))
+          (core/load-installed-addons) ;; refresh our knowledge of what is installed
+
+          (core/remove-addon (helper/select-addon (:url addon-1)))
+          (is (= ["EveryAddon-BundledAddon" "EveryOtherAddon"] (helper/install-dir-contents)))
+          (is (= expected (nfo/read-nfo install-dir bundled-dirname))))))))
 
 ;;
 
@@ -1154,167 +1175,195 @@
 (deftest ignore-addon
   (testing "a regular installed addon can be marked as 'ignored'"
     (with-running-app
-      (helper/install-dir)
-      (let [addon {:name "everyaddon" :label "EveryAddon" :version "1.2.3" :url "https://group.id/never/fetched"
-                   :source "curseforge" :source-id 1
-                   :download-url "https://path/to/remote/addon.zip" :game-track :retail
-                   :-testing-zipfile (fixture-path "everyaddon--1-2-3.zip")}
 
-            expected {:ignore? true,
-                      ;; `catalogue/expand-summary` is never called so the source updates are never added.
-                      ;;:game-track :retail
-                      ;;:download-url ...
-                      ;;:version ...
-                      :description "Does what no other addon does, slightly differently",
-                      :dirname "EveryAddon",
-                      :group-id "https://group.id/never/fetched",
-                      :installed-game-track :retail,
-                      :installed-version "1.2.3",
-                      :interface-version 70000,
-                      :label "EveryAddon 1.2.3",
-                      :name "everyaddon",
-                      :primary? true,
-                      :source "curseforge",
-                      :source-id 1,
-                      :update? false}]
-        (core/install-addon-guard addon)
-        (is (= ["EveryAddon"] (helper/install-dir-contents)))
-        (core/load-installed-addons)
+      ;; 2021-09-04: change in behaviour. addons that no longer match the catalogue are still checked for
+      ;; updates if the right toc+nfo data is available.
+      (with-global-fake-routes-in-isolation
+        {"https://addons-ecs.forgesvc.net/api/v2/addon/1"
+         {:get (fn [req] {:status 404 :reason-phrase "not found"})}}
 
-        ;; todo: the below makes this a UI test. move test to cli_test.clj
-        (cli/select-addons)
-        (cli/ignore-selected) ;; calls `core/refresh`
-        (is (= expected (first (core/get-state :installed-addon-list))))))))
+        (helper/install-dir)
+        (let [addon {:name "everyaddon" :label "EveryAddon" :version "1.2.3" :url "https://group.id/never/fetched"
+                     :source "curseforge" :source-id 1
+                     :download-url "https://path/to/remote/addon.zip" :game-track :retail
+                     :-testing-zipfile (fixture-path "everyaddon--1-2-3.zip")}
+
+              expected {:ignore? true,
+                        ;; `catalogue/expand-summary` is never called so the source updates are never added.
+                        ;;:game-track :retail
+                        ;;:download-url ...
+                        ;;:version ...
+                        :description "Does what no other addon does, slightly differently",
+                        :dirname "EveryAddon",
+                        :group-id "https://group.id/never/fetched",
+                        :installed-game-track :retail,
+                        :installed-version "1.2.3",
+                        :interface-version 70000,
+                        :label "EveryAddon 1.2.3",
+                        :name "everyaddon",
+                        :primary? true,
+                        :source "curseforge",
+                        :source-id 1,
+                        :update? false}]
+          (core/install-addon-guard addon)
+          (is (= ["EveryAddon"] (helper/install-dir-contents)))
+          (core/load-installed-addons)
+
+          ;; todo: the below makes this a UI test. move test to cli_test.clj
+          (cli/select-addons)
+          (cli/ignore-selected) ;; calls `core/refresh`
+          (is (= expected (first (core/get-state :installed-addon-list)))))))))
 
 (deftest clear-addon-ignore-flag
   (testing "an ignored addon can be 'unignored'"
     (with-running-app
-      (helper/install-dir)
-      (let [addon {:name "everyaddon" :label "EveryAddon" :version "1.2.3" :url "https://group.id/never/fetched"
-                   :source "curseforge" :source-id 1
-                   :download-url "https://path/to/remote/addon.zip" :game-track :retail
-                   :-testing-zipfile (fixture-path "everyaddon--1-2-3.zip")}
 
-            expected {;;:ignore? false, ;; removed rather than set to false.
-                      :description "Does what no other addon does, slightly differently",
-                      :dirname "EveryAddon",
-                      :group-id "https://group.id/never/fetched",
-                      :installed-game-track :retail,
-                      :installed-version "1.2.3",
-                      :interface-version 70000,
-                      :label "EveryAddon 1.2.3",
-                      :name "everyaddon",
-                      :primary? true,
-                      :source "curseforge",
-                      :source-id 1,
-                      :update? false}]
-        (core/install-addon-guard addon)
-        (core/load-installed-addons)
+      ;; 2021-09-04: change in behaviour. addons that no longer match the catalogue are still checked for
+      ;; updates if the right toc+nfo data is available.
+      (with-global-fake-routes-in-isolation
+        {"https://addons-ecs.forgesvc.net/api/v2/addon/1"
+         {:get (fn [req] {:status 404 :reason-phrase "not found"})}}
 
-        ;; todo: the below makes this a UI test. move test to cli_test.clj
-        (cli/select-addons)
-        (cli/ignore-selected) ;; calls `core/refresh`
-        (is (:ignore? (first (core/get-state :installed-addon-list))))
+        (helper/install-dir)
+        (let [addon {:name "everyaddon" :label "EveryAddon" :version "1.2.3" :url "https://group.id/never/fetched"
+                     :source "curseforge" :source-id 1
+                     :download-url "https://path/to/remote/addon.zip" :game-track :retail
+                     :-testing-zipfile (fixture-path "everyaddon--1-2-3.zip")}
 
-        (cli/clear-ignore-selected)
-        (is (= expected (first (core/get-state :installed-addon-list))))))))
+              expected {;;:ignore? false, ;; removed rather than set to false.
+                        :description "Does what no other addon does, slightly differently",
+                        :dirname "EveryAddon",
+                        :group-id "https://group.id/never/fetched",
+                        :installed-game-track :retail,
+                        :installed-version "1.2.3",
+                        :interface-version 70000,
+                        :label "EveryAddon 1.2.3",
+                        :name "everyaddon",
+                        :primary? true,
+                        :source "curseforge",
+                        :source-id 1,
+                        :update? false}]
+          (core/install-addon-guard addon)
+          (core/load-installed-addons)
+
+          ;; todo: the below makes this a UI test. move test to cli_test.clj
+          (cli/select-addons)
+          (cli/ignore-selected) ;; calls `core/refresh`
+          (is (:ignore? (first (core/get-state :installed-addon-list))))
+
+          (cli/clear-ignore-selected)
+          (is (= expected (first (core/get-state :installed-addon-list)))))))))
 
 (deftest clear-addon-ignore-flag--group-addons
   (testing "an addon with an ignored group member can be 'unignored'. see issue#193"
     (with-running-app
-      (let [install-dir (helper/install-dir)
-            addon {:name "everyotheraddon" :label "EveryOtherAddon" :version "5.6.7" :url "https://group.id/also/never/fetched"
-                   :source "curseforge" :source-id 2
-                   :download-url "https://path/to/remote/addon.zip" :game-track :retail
-                   :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}
 
-            expected {:description "group record for the fetched addon",
-                      :dirname "EveryAddon-BundledAddon",
-                      :group-addon-count 2,
-                      :group-addons [{:description "A useful addon that everyone bundles with their own.",
-                                      :dirname "EveryAddon-BundledAddon",
-                                      :group-id "https://group.id/also/never/fetched",
+      ;; 2021-09-04: change in behaviour. addons that no longer match the catalogue are still checked for
+      ;; updates if the right toc+nfo data is available.
+      (with-global-fake-routes-in-isolation
+        {"https://addons-ecs.forgesvc.net/api/v2/addon/2"
+         {:get (fn [req] {:status 404 :reason-phrase "not found"})}}
 
-                                      :ignore? true,
+        (let [install-dir (helper/install-dir)
+              addon {:name "everyotheraddon" :label "EveryOtherAddon" :version "5.6.7" :url "https://group.id/also/never/fetched"
+                     :source "curseforge" :source-id 2
+                     :download-url "https://path/to/remote/addon.zip" :game-track :retail
+                     :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}
 
-                                      :installed-game-track :retail,
-                                      :installed-version "5.6.7",
-                                      :interface-version 80000,
-                                      :label "BundledAddon a.b.c",
-                                      :name "everyotheraddon",
-                                      :primary? false,
-                                      :source "curseforge",
-                                      :source-id 2}
+              expected {:description "group record for the fetched addon",
+                        :dirname "EveryAddon-BundledAddon",
+                        :group-addon-count 2,
+                        :group-addons [{:description "A useful addon that everyone bundles with their own.",
+                                        :dirname "EveryAddon-BundledAddon",
+                                        :group-id "https://group.id/also/never/fetched",
 
-                                     {:description "Does what every addon does, just better",
-                                      :dirname "EveryOtherAddon",
-                                      :group-id "https://group.id/also/never/fetched",
-                                      :installed-game-track :retail,
-                                      :installed-version "5.6.7",
-                                      :interface-version 70000,
-                                      :label "EveryOtherAddon 5.6.7",
-                                      :name "everyotheraddon",
-                                      :primary? false,
-                                      :source "curseforge",
-                                      :source-id 2}],
-                      :group-id "https://group.id/also/never/fetched",
-                      :ignore? true,
-                      :installed-game-track :retail,
-                      :installed-version "5.6.7",
-                      :interface-version 80000,
-                      :label "fetched (group)",
-                      :name "everyotheraddon",
-                      :primary? false,
-                      :source "curseforge",
-                      :source-id 2}
+                                        :ignore? true,
 
-            target-idx 0
-            expected-2 (-> expected
-                           (dissoc :ignore?)
-                           (assoc :update? false)
-                           (update-in [:group-addons target-idx] dissoc :ignore?))]
-        (core/install-addon-guard addon)
-        (nfo/ignore install-dir "EveryAddon-BundledAddon")
-        (core/load-installed-addons)
+                                        :installed-game-track :retail,
+                                        :installed-version "5.6.7",
+                                        :interface-version 80000,
+                                        :label "BundledAddon a.b.c",
+                                        :name "everyotheraddon",
+                                        :primary? false,
+                                        :source "curseforge",
+                                        :source-id 2}
 
-        ;; todo: the below makes this a UI test. move test to cli_test.clj
-        (cli/select-addons)
-        (is (= expected (first (core/get-state :installed-addon-list))))
+                                       {:description "Does what every addon does, just better",
+                                        :dirname "EveryOtherAddon",
+                                        :group-id "https://group.id/also/never/fetched",
+                                        :installed-game-track :retail,
+                                        :installed-version "5.6.7",
+                                        :interface-version 70000,
+                                        :label "EveryOtherAddon 5.6.7",
+                                        :name "everyotheraddon",
+                                        :primary? false,
+                                        :source "curseforge",
+                                        :source-id 2}],
+                        :group-id "https://group.id/also/never/fetched",
+                        :ignore? true,
+                        :installed-game-track :retail,
+                        :installed-version "5.6.7",
+                        :interface-version 80000,
+                        :label "fetched (group)",
+                        :name "everyotheraddon",
+                        :primary? false,
+                        :source "curseforge",
+                        :source-id 2}
 
-        (cli/clear-ignore-selected)
-        (is (= expected-2 (first (core/get-state :installed-addon-list))))))))
+              target-idx 0
+              expected-2 (-> expected
+                             (dissoc :ignore?)
+                             (assoc :update? false)
+                             (update-in [:group-addons target-idx] dissoc :ignore?))]
+          (core/install-addon-guard addon)
+          (nfo/ignore install-dir "EveryAddon-BundledAddon")
+          (core/load-installed-addons)
+
+          ;; todo: the below makes this a UI test. move test to cli_test.clj
+          (cli/select-addons)
+          (is (= expected (first (core/get-state :installed-addon-list))))
+
+          (cli/clear-ignore-selected)
+          (is (= expected-2 (first (core/get-state :installed-addon-list)))))))))
 
 (deftest clear-addon-ignore-flag--implicit-ignore
   (testing "an implicitly ignored (vcs) addon can be 'unignored' as well"
     (with-running-app
-      (let [install-dir (helper/install-dir)
-            addon {:name "everyaddon" :label "EveryAddon" :version "1.2.3" :url "https://group.id/never/fetched"
-                   :source "curseforge" :source-id 1
-                   :download-url "https://path/to/remote/addon.zip" :game-track :retail
-                   :-testing-zipfile (fixture-path "everyaddon--1-2-3.zip")}
 
-            expected {:ignore? false, ;; explicit `false` rather than removed
-                      :description "Does what no other addon does, slightly differently",
-                      :dirname "EveryAddon",
-                      :group-id "https://group.id/never/fetched",
-                      :installed-game-track :retail,
-                      :installed-version "1.2.3",
-                      :interface-version 70000,
-                      :label "EveryAddon 1.2.3",
-                      :name "everyaddon",
-                      :primary? true,
-                      :source "curseforge",
-                      :source-id 1,
-                      :update? false}]
-        (core/install-addon-guard addon)
-        (fs/mkdir (utils/join install-dir "EveryAddon" ".git"))
-        (core/load-installed-addons)
-        (is (:ignore? (first (core/get-state :installed-addon-list)))) ;; implicitly ignored
+      ;; 2021-09-04: change in behaviour. addons that no longer match the catalogue are still checked for
+      ;; updates if the right toc+nfo data is available.
+      (with-global-fake-routes-in-isolation
+        {"https://addons-ecs.forgesvc.net/api/v2/addon/1"
+         {:get (fn [req] {:status 404 :reason-phrase "not found"})}}
 
-        ;; todo: the below makes this a UI test. move test to cli_test.clj
-        (cli/select-addons)
-        (cli/clear-ignore-selected)
-        (is (= expected (first (core/get-state :installed-addon-list))))))))
+        (let [install-dir (helper/install-dir)
+              addon {:name "everyaddon" :label "EveryAddon" :version "1.2.3" :url "https://group.id/never/fetched"
+                     :source "curseforge" :source-id 1
+                     :download-url "https://path/to/remote/addon.zip" :game-track :retail
+                     :-testing-zipfile (fixture-path "everyaddon--1-2-3.zip")}
+
+              expected {:ignore? false, ;; explicit `false` rather than removed
+                        :description "Does what no other addon does, slightly differently",
+                        :dirname "EveryAddon",
+                        :group-id "https://group.id/never/fetched",
+                        :installed-game-track :retail,
+                        :installed-version "1.2.3",
+                        :interface-version 70000,
+                        :label "EveryAddon 1.2.3",
+                        :name "everyaddon",
+                        :primary? true,
+                        :source "curseforge",
+                        :source-id 1,
+                        :update? false}]
+          (core/install-addon-guard addon)
+          (fs/mkdir (utils/join install-dir "EveryAddon" ".git"))
+          (core/load-installed-addons)
+          (is (:ignore? (first (core/get-state :installed-addon-list)))) ;; implicitly ignored
+
+          ;; todo: the below makes this a UI test. move test to cli_test.clj
+          (cli/select-addons)
+          (cli/clear-ignore-selected)
+          (is (= expected (first (core/get-state :installed-addon-list)))))))))
 
 (deftest empty-search-state
   (testing "temporary search state can be emptied of potentially stale catalogue data, preserving the search term."

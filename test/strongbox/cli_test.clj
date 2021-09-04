@@ -179,20 +179,27 @@
                  :game-track :classic
                  :-testing-zipfile (fixture-path "everyaddon-classic--1-2-3.zip")}]
       (with-running-app
-        (cli/set-addon-dir! (helper/install-dir))
-        (core/install-addon-guard addon)
-        (core/load-installed-addons)
 
-        (let [addon (first (core/get-state :installed-addon-list))]
-          (is (= "1.2.3" (:installed-version addon)))
-          (is (not (contains? addon :pinned-version))))
+        ;; 2021-09-04: change in behaviour. addons that no longer match the catalogue are still checked for
+        ;; updates if the right toc+nfo data is available.
+        (with-global-fake-routes-in-isolation
+          {"https://addons-ecs.forgesvc.net/api/v2/addon/1"
+           {:get (fn [req] {:status 404 :reason-phrase "not found"})}}
 
-        (cli/select-addons)
-        (is (= 1 (count (core/get-state :selected-addon-list))))
-        (cli/pin)
+          (cli/set-addon-dir! (helper/install-dir))
+          (core/install-addon-guard addon)
+          (core/load-installed-addons)
 
-        (let [addon (first (core/get-state :installed-addon-list))]
-          (is (= "1.2.3" (:pinned-version addon))))))))
+          (let [addon (first (core/get-state :installed-addon-list))]
+            (is (= "1.2.3" (:installed-version addon)))
+            (is (not (contains? addon :pinned-version))))
+
+          (cli/select-addons)
+          (is (= 1 (count (core/get-state :selected-addon-list))))
+          (cli/pin)
+
+          (let [addon (first (core/get-state :installed-addon-list))]
+            (is (= "1.2.3" (:pinned-version addon)))))))))
 
 (deftest unpin-addon
   (testing "an addon can be installed, selected and un-pinned"
@@ -204,20 +211,27 @@
                  ;; yes! we can installed an addon that is pre-pinned.
                  :pinned-version "1.2.3"}]
       (with-running-app
-        (cli/set-addon-dir! (helper/install-dir))
-        (core/install-addon-guard addon)
-        (core/load-installed-addons)
 
-        (let [addon (first (core/get-state :installed-addon-list))]
-          (is (= "1.2.3" (:installed-version addon)))
-          (is (= "1.2.3" (:pinned-version addon))))
+        ;; 2021-09-04: change in behaviour. addons that no longer match the catalogue are still checked for
+        ;; updates if the right toc+nfo data is available.
+        (with-global-fake-routes-in-isolation
+          {"https://addons-ecs.forgesvc.net/api/v2/addon/1"
+           {:get (fn [req] {:status 404 :reason-phrase "not found"})}}
 
-        (cli/select-addons)
-        (is (= 1 (count (core/get-state :selected-addon-list))))
-        (cli/unpin)
+          (cli/set-addon-dir! (helper/install-dir))
+          (core/install-addon-guard addon)
+          (core/load-installed-addons)
 
-        (let [addon (first (core/get-state :installed-addon-list))]
-          (is (not (contains? addon :pinned-version))))))))
+          (let [addon (first (core/get-state :installed-addon-list))]
+            (is (= "1.2.3" (:installed-version addon)))
+            (is (= "1.2.3" (:pinned-version addon))))
+
+          (cli/select-addons)
+          (is (= 1 (count (core/get-state :selected-addon-list))))
+          (cli/unpin)
+
+          (let [addon (first (core/get-state :installed-addon-list))]
+            (is (not (contains? addon :pinned-version)))))))))
 
 (deftest add-tab
   (testing "a generic tab can be created"
