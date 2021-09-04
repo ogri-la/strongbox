@@ -647,7 +647,14 @@
   "merges the data from an installed addon with it's match in the catalogue"
   [installed-addon :addon/toc, db-catalogue-addon :addon/summary]
   (let [;; nil fields are removed from the catalogue item because they might override good values in the .toc or .nfo
-        db-catalogue-addon (utils/drop-nils db-catalogue-addon [:description])]
+        db-catalogue-addon (utils/drop-nils db-catalogue-addon [:description])
+
+        inst-source (:source installed-addon)
+        dbc-source (:source db-catalogue-addon)
+        source-mismatch (and inst-source
+                             dbc-source
+                             (not (= inst-source dbc-source)))
+        ]
     ;; merges left->right. catalogue-addon overwrites installed-addon, ':matched' overwrites catalogue-addon, etc
     (logging/addon-log installed-addon :info (format "found in catalogue with source \"%s\" and id \"%s\"" (:source installed-addon) (:source-id installed-addon)))
     (merge installed-addon
@@ -656,8 +663,7 @@
            ;; todo: I really want to disambiguate between where data is coming from.
            ;; it would mean carrying around the toc, nfo, catalogue, source updates and a merged set data.
            ;; all we have right now is the merged set (except this new `nfo/source` key)
-           (when-not (= (:source installed-addon)
-                        (:source db-catalogue-addon))
+           (when source-mismatch
              {:nfo/source (:source installed-addon)}))))
 
 ;;
