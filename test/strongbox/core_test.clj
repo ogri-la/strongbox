@@ -2,7 +2,7 @@
   (:require
    [clojure.string :refer [starts-with? ends-with?]]
    [clojure.test :refer [deftest testing is use-fixtures]]
-   [clj-http.fake :refer [with-global-fake-routes-in-isolation with-fake-routes-in-isolation]]
+   [clj-http.fake :refer [with-global-fake-routes-in-isolation]]
    [envvar.core :refer [with-env]]
    [me.raynes.fs :as fs]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
@@ -238,7 +238,7 @@
                        ;; ... it's zip file
                        "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip"
                        {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-other-addon-zip-file)})}}]
-      (with-fake-routes-in-isolation fake-routes
+      (with-global-fake-routes-in-isolation fake-routes
         (with-running-app
           (core/set-addon-dir! (str fs/*cwd*))
 
@@ -333,7 +333,7 @@
                        ;; ... it's zip file
                        "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip"
                        {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-other-addon-zip-file)})}}]
-      (with-fake-routes-in-isolation fake-routes
+      (with-global-fake-routes-in-isolation fake-routes
         (with-running-app
           (helper/install-dir)
 
@@ -443,7 +443,7 @@
                        "https://addons-ecs.forgesvc.net/api/v2/addon/1"
                        {:get (fn [req] {:status 200 :body (utils/to-json alt-api-result)})}}]
 
-      (with-fake-routes-in-isolation fake-routes
+      (with-global-fake-routes-in-isolation fake-routes
         (with-running-app
           (core/set-addon-dir! (str fs/*cwd*))
 
@@ -526,7 +526,7 @@
           fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                        {:get (fn [req] {:status 200 :body (utils/to-json dummy-catalogue)})}}]
 
-      (with-fake-routes-in-isolation fake-routes
+      (with-global-fake-routes-in-isolation fake-routes
         (with-running-app
           (is (= expected
                  (:description (first (core/get-state :db))))))))))
@@ -616,7 +616,7 @@
 
 (deftest install-bad-addon
   (testing "installing a bad addon"
-    (with-fake-routes-in-isolation {}
+    (with-global-fake-routes-in-isolation {}
       (let [install-dir (str fs/*cwd*)
             fname (downloaded-addon-fname (:name addon) (:version addon))
             dest (utils/join install-dir fname)
@@ -1033,7 +1033,7 @@
 
           expected ["downloading 'short' catalogue"
                     "failed to fetch 'https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json': 500 Server Error (HTTP 500)"]]
-      (with-fake-routes-in-isolation fake-routes
+      (with-global-fake-routes-in-isolation fake-routes
         (with-running-app
           (is (= expected (logging/buffered-log
                            :info (core/download-catalogue (core/get-catalogue-location :short))))))))))
@@ -1054,7 +1054,7 @@
         (-> (core/get-catalogue-location) core/catalogue-local-path (spit ""))
 
         ;; the catalogue will be re-requested, this time we've swapped out the fixture with one with a single entry
-        (with-fake-routes-in-isolation fake-routes
+        (with-global-fake-routes-in-isolation fake-routes
           ;; this will print a warning with a stacktrace.
           ;; it's being hidden so actual stacktraces don't get overlooked
           (log/with-level :error
@@ -1078,7 +1078,7 @@
         (-> (core/get-catalogue-location) core/catalogue-local-path (spit ""))
 
         ;; the catalogue will be re-requested, this time the remote file is also corrupt
-        (with-fake-routes-in-isolation fake-routes
+        (with-global-fake-routes-in-isolation fake-routes
           ;; this will print a warning with a stacktrace.
           ;; it's being hidden so actual stacktraces don't get overlooked
           (log/with-level :error
@@ -1374,7 +1374,7 @@
           search-term "a"
           ;; the buffers are emptied, the search term is preserved
           expected-empty-search-state (assoc core/-search-state-template :term search-term)]
-      (with-fake-routes-in-isolation fake-routes
+      (with-global-fake-routes-in-isolation fake-routes
         (with-running-app
           (cli/search search-term)
            ;; searching happens in the background
@@ -1394,7 +1394,7 @@
     (let [fake-routes {"https://api.github.com/repos/ogri-la/strongbox/releases/latest"
                        {:get (fn [req] {:status 200 :body (slurp (fixture-path "github-strongbox-release.json"))})}}
           expected "4.3.0"]
-      (with-fake-routes-in-isolation fake-routes
+      (with-global-fake-routes-in-isolation fake-routes
         (is (= expected (core/-latest-strongbox-release)))))))
 
 (deftest -latest-strongbox-release--throttled
@@ -1402,7 +1402,7 @@
     (let [fake-routes {"https://api.github.com/repos/ogri-la/strongbox/releases/latest"
                        {:get (fn [req] {:status 403 :reason-phrase "asdf"})}}
           expected :failed]
-      (with-fake-routes-in-isolation fake-routes
+      (with-global-fake-routes-in-isolation fake-routes
         (is (= expected (core/-latest-strongbox-release)))))))
 
 (deftest -latest-strongbox-release--unknown
@@ -1410,7 +1410,7 @@
     (let [fake-routes {"https://api.github.com/repos/ogri-la/strongbox/releases/latest"
                        {:get (fn [req] {:status 999 :reason-phrase "asdf"})}}
           expected :failed]
-      (with-fake-routes-in-isolation fake-routes
+      (with-global-fake-routes-in-isolation fake-routes
         (is (= expected (core/-latest-strongbox-release)))))))
 
 (deftest -latest-strongbox-release--malformed
@@ -1418,7 +1418,7 @@
     (let [fake-routes {"https://api.github.com/repos/ogri-la/strongbox/releases/latest"
                        {:get (fn [req] {:status 200 :body "asdf"})}}
           expected :failed]
-      (with-fake-routes-in-isolation fake-routes
+      (with-global-fake-routes-in-isolation fake-routes
         (is (= expected (core/-latest-strongbox-release)))))))
 
 (deftest latest-strongbox-release
@@ -1427,7 +1427,7 @@
                        {:get (fn [req] {:status 200 :body (slurp (fixture-path "github-strongbox-release.json"))})}}
           expected "4.3.0"]
       (with-running-app
-        (with-fake-routes-in-isolation fake-routes
+        (with-global-fake-routes-in-isolation fake-routes
           (is (= expected (core/latest-strongbox-release))))))))
 
 (deftest latest-strongbox-release--throttled
@@ -1435,7 +1435,7 @@
     (let [fake-routes {"https://api.github.com/repos/ogri-la/strongbox/releases/latest"
                        {:get (fn [req] {:status 403 :reason-phrase "asdf"})}}]
       (with-running-app
-        (with-fake-routes-in-isolation fake-routes
+        (with-global-fake-routes-in-isolation fake-routes
           (is (nil? (core/latest-strongbox-release))))))))
 
 (deftest latest-strongbox-release--subsequent-failure
@@ -1445,7 +1445,7 @@
           expected "foo.bar.baz"]
       (with-running-app
         (swap! core/state assoc :latest-strongbox-release expected)
-        (with-fake-routes-in-isolation fake-routes
+        (with-global-fake-routes-in-isolation fake-routes
           (is (= expected (core/latest-strongbox-release))))))))
 
 ;;
