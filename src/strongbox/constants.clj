@@ -19,3 +19,7 @@
 (def default-interface-version-classic 11300)
 
 (def bullet "\u2022") ;; •
+
+;; used when a placeholder date/time is needed.
+;; like when we're polyfilling nfo data to create an addon summary.
+(def fake-datetime "2001-01-01T01:01:01")

@@ -77,6 +77,12 @@
   [a]
   (str host "info" (extract-source-id a)))
 
+(defn-spec make-url (s/nilable ::sp/url)
+  "given a map of addon data, returns a URL to the addon's wowinterface page or `nil`"
+  [{:keys [source-id]} map?]
+  (when source-id
+    (str host "info" source-id)))
+
 (defn extract-addon-summary
   [snippet]
   (try

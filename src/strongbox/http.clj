@@ -171,7 +171,6 @@
                 _ (debug "requesting" url "with params" params)
 
                 resp (client/get url params)
-
                 _ (debug "response status" (:status resp))
 
                 not-modified (= 304 (:status resp)) ;; 304 is "not modified" (local file is still fresh). only happens when caching
