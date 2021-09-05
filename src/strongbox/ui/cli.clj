@@ -162,6 +162,7 @@
   [catalogue-name (s/nilable (s/or :simple string?, :named keyword?))]
   (when catalogue-name
     (core/set-catalogue-location! (keyword catalogue-name))
+    (report "switched catalogues")
     (core/db-reload-catalogue)
     (core/empty-search-results)
     (bump-search))
@@ -342,11 +343,11 @@
   "removes the 'ignore' flag from each addon in given `addon-list`.
   defaults to all addons in `:selected-addon-list` when called without parameters."
   ([]
-   (clear-ignore-selected (get-state :selected-addon-list)))
-  ([addon-list :addon/installed-list]
+   (clear-ignore-selected (get-state :selected-addon-list) (core/selected-addon-dir)))
+  ([addon-list :addon/installed-list, addon-dir ::sp/addon-dir]
    (run! (fn [addon]
            (logging/with-addon addon
-             (addon/clear-ignore (core/selected-addon-dir) addon)
+             (addon/clear-ignore addon-dir addon)
              (info "stopped ignoring")))
          addon-list)
    (core/refresh)))

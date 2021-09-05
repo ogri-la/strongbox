@@ -3,9 +3,10 @@
    [clojure.test :refer [deftest testing is use-fixtures]]
    ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [strongbox
+    [constants :as constants]
     [logging :as logging]
     [catalogue :as catalogue]
-    [test-helper :refer [fixture-path]]]
+    [test-helper :refer [fixture-path toc]]]
    [clj-http.fake :refer [with-fake-routes-in-isolation]]))
 
 (deftest de-dupe-wowinterface
@@ -223,7 +224,7 @@
           strict? true
           fake-routes {"https://api.github.com/repos/1/releases"
                        {:get (fn [req] {:status 500 :reason-phrase "Internal Server Error"})}}
-          expected ["failed to download file 'https://api.github.com/repos/1/releases': Internal Server Error (HTTP 500)"
+          expected ["failed to fetch 'https://api.github.com/repos/1/releases': Internal Server Error (HTTP 500)"
                     "Github: api is down. Check www.githubstatus.com and try again later."
                     "no 'Retail' release found on github."]]
       (with-fake-routes-in-isolation fake-routes
@@ -236,7 +237,7 @@
           strict? true
           fake-routes {"https://api.github.com/repos/1/releases"
                        {:get (fn [req] {:status 500 :reason-phrase "Internal Server Error"})}}
-          expected ["failed to download file 'https://api.github.com/repos/1/releases': Internal Server Error (HTTP 500)"
+          expected ["failed to fetch 'https://api.github.com/repos/1/releases': Internal Server Error (HTTP 500)"
                     "Github: api is down. Check www.githubstatus.com and try again later."
                     "no 'Retail' release found on github."]]
       (with-fake-routes-in-isolation fake-routes
@@ -249,7 +250,7 @@
           strict? true
           fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/281321"
                        {:get (fn [req] {:status 502 :reason-phrase "Gateway Time-out (HTTP 502)"})}}
-          expected ["failed to download file 'https://addons-ecs.forgesvc.net/api/v2/addon/281321': Gateway Time-out (HTTP 502) (HTTP 502)"
+          expected ["failed to fetch 'https://addons-ecs.forgesvc.net/api/v2/addon/281321': Gateway Time-out (HTTP 502) (HTTP 502)"
                     "Curseforge: the API is having problems right now. Try again later."
                     "no 'Retail' release found on curseforge."]]
       (with-fake-routes-in-isolation fake-routes
@@ -262,7 +263,7 @@
           strict? true
           fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/281321"
                        {:get (fn [req] {:status 504 :reason-phrase "Gateway Time-out (HTTP 504)"})}}
-          expected ["failed to download file 'https://addons-ecs.forgesvc.net/api/v2/addon/281321': Gateway Time-out (HTTP 504) (HTTP 504)"
+          expected ["failed to fetch 'https://addons-ecs.forgesvc.net/api/v2/addon/281321': Gateway Time-out (HTTP 504) (HTTP 504)"
                     "Curseforge: the API is having problems right now. Try again later."
                     "no 'Retail' release found on curseforge."]]
       (with-fake-routes-in-isolation fake-routes
@@ -467,3 +468,67 @@
         ;; omg, with-redefs is fantastic
         (with-redefs [strongbox.curseforge-api/expand-summary (constantly fixture)]
           (is (= expected (catalogue/expand-summary addon game-track strict?))))))))
+
+;;
+
+(deftest toc2summary--plain
+  (testing "plain toc data with no extras can't be coerced into an addon summary"
+    (is (nil? (catalogue/toc2summary toc)))))
+
+(deftest toc2summary--toc+nfo
+  (testing "toc with extra nfo data *can* be coerced into an addon summary with less guessing"
+    (let [toc+nfo (merge toc {:group-id "https://example.org"
+                              :source "wowinterface"
+                              :source-id 123
+                              :interface-version constants/default-interface-version-classic})
+          expected {:label "EveryAddon 1.2.3",
+                    :name "everyaddon",
+                    :source "wowinterface",
+                    :source-id 123
+
+                    ;; synthetic
+                    :url "https://example.org" ;; url won't be derived from source and id
+                    :download-count 0,
+                    :game-track-list [:classic], ;; classic is used
+                    :tag-list [],
+                    :updated-date "2001-01-01T01:01:01"}]
+      (is (= expected (catalogue/toc2summary toc+nfo))))))
+
+(deftest toc2summary--wowinterface
+  (testing "toc data with a wowinterface source and id *can* be coerced to addon summary without a `:url`"
+    (let [wowinterface-toc (merge toc {:source "wowinterface"
+                                       :source-id 123})
+          expected {:label "EveryAddon 1.2.3",
+                    :name "everyaddon",
+                    :source "wowinterface",
+                    :source-id 123
+
+                    ;; synthetic
+                    :url "https://www.wowinterface.com/downloads/info123"
+                    :download-count 0,
+                    :game-track-list [:retail],
+                    :tag-list [],
+                    :updated-date "2001-01-01T01:01:01"}]
+      (is (= expected (catalogue/toc2summary wowinterface-toc))))))
+
+(deftest toc2summary--tukui
+  (testing "toc data with a tukui source and id can be coerced to an addon summary without a `:url`"
+    (let [tukui-toc (merge toc {:source "tukui"
+                                :source-id 123})
+          expected {:source "tukui",
+                    :source-id 123,
+                    :name "everyaddon",
+                    :label "EveryAddon 1.2.3",
+
+                    ;; synthetic
+                    :tag-list [],
+                    :updated-date "2001-01-01T01:01:01",
+                    :url "https://www.tukui.org/addons.php?id=123",
+                    :download-count 0}]
+      (is (= expected (catalogue/toc2summary tukui-toc))))))
+
+(deftest toc2summary--curseforge
+  (testing "toc data with a curseforge source and id cannot be coerced to an addon summary without a `:url`"
+    (let [curseforge-toc (merge toc {:source "curseforge"
+                                     :source-id 123})]
+      (is (nil? (catalogue/toc2summary curseforge-toc))))))

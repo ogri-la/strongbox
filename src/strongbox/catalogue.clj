@@ -7,12 +7,14 @@
    [taoensso.tufte :as tufte :refer [p profile]]
    [java-time]
    [strongbox
+    [constants :as constants]
     [addon]
     [tags :as tags]
     [utils :as utils :refer [todt]]
     [specs :as sp]
     [tukui-api :as tukui-api]
     [curseforge-api :as curseforge-api]
+    [wowinterface :as wowinterface]
     [wowinterface-api :as wowinterface-api]
     [github-api :as github-api]]))
 
@@ -93,11 +95,47 @@
                 [:classic true] (format single-template classic-lbl source)
                 [:classic-tbc true] (format single-template classic-tbc-lbl source)
 
-                ;; these can happen when alpha/beta and no-lib type releases have been excluded
+                ;; these can happen after alpha/beta/no-lib releases have been excluded and no releases are left
                 [:retail false] (format multi-template retail-lbl classic-lbl classic-tbc-lbl source)
                 [:classic false] (format multi-template classic-lbl classic-tbc-lbl retail-lbl source)
                 [:classic-tbc false] (format multi-template classic-tbc-lbl classic-lbl retail-lbl source))]
       (warn msg))))
+
+;;
+
+(defn-spec toc2summary (s/nilable :addon/summary)
+  "accepts toc or toc+nfo data and emits a version of the data that validates as an `:addon/summary`"
+  [toc (s/or :just-toc :addon/toc, :mixed :addon/toc+nfo)]
+  (let [sink nil
+        syn (-> toc
+                (merge {:url (:group-id toc)
+                        :tag-list []
+                        :updated-date constants/fake-datetime
+                        :download-count 0
+                        :matched? false})
+                (select-keys [:source :source-id :url :name :tag-list :label :updated-date :download-count]))
+
+        syn (if (= (:source toc) "wowinterface")
+              (cond
+                (:installed-game-track toc) (assoc syn :game-track-list [(:installed-game-track toc)])
+                (:interface-version toc) (assoc syn :game-track-list [(utils/interface-version-to-game-track (:interface-version toc))])
+                :else sink)
+              syn)
+
+        ;; we might be able to recover from this.
+        ;; wowi and github urls can be reconstructed
+        syn (if (-> syn :url nil?)
+              (case (:source toc)
+                "wowinterface" (assoc syn :url (wowinterface/make-url toc))
+                "tukui" (assoc syn :url (tukui-api/make-url toc))
+                syn)
+              syn)
+
+        ;; url may still be nil at this point, just fail
+        syn (if (-> syn :url nil?) sink syn)
+
+        syn (if (-> syn :source nil?) sink syn)]
+    syn))
 
 
 ;;
@@ -225,23 +263,20 @@
   latest datestamp preserved.
   addon-summary-list is unique by `:source` and `:source-id` with differing values replaced by those in `cat-b`"
   [cat-a (s/nilable :catalogue/catalogue), cat-b (s/nilable :catalogue/catalogue)]
-  (let [matrix {;;[true true] ;; two non-empty catalogues, ideal case
-                [true false] cat-a ;; cat-b empty, return cat-a
-                [false true] cat-b ;; vice versa
-                [false false] nil}
-        not-empty? (complement empty?)
-        key [(not-empty? cat-a) (not-empty? cat-b)]]
-    (if (contains? matrix key)
-      (get matrix key)
-      (let [datestamp (last (sort [(:datestamp cat-a) (:datestamp cat-b)])) ;; latest wins
-            addons-a (:addon-summary-list cat-a)
-            addons-b (:addon-summary-list cat-b)
-            addon-summary-list (->> (concat addons-a addons-b) ;; join the two lists
-                                    (group-by (juxt :source-id :source)) ;; group by the key
-                                    vals ;; drop the map
-                                    (map (partial apply merge))) ;; merge (not replace) the groups into single maps
-            ]
-        (format-catalogue-data addon-summary-list datestamp)))))
+  (cond
+    (and (empty? cat-a)
+         (empty? cat-b)) nil
+    (empty? cat-b) cat-a
+    (empty? cat-a) cat-b
+    :else
+    (let [datestamp (last (sort [(:datestamp cat-a) (:datestamp cat-b)])) ;; latest wins
+          addons-a (:addon-summary-list cat-a)
+          addons-b (:addon-summary-list cat-b)
+          addon-summary-list (->> (concat addons-a addons-b) ;; join the two lists
+                                  (group-by (juxt :source-id :source)) ;; group by the key
+                                  vals ;; drop the keys. we now have a list of lists.
+                                  (map (partial apply merge)))] ;; merge the nested lists into single maps
+      (format-catalogue-data addon-summary-list datestamp))))
 
 ;; 
 

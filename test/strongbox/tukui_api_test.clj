@@ -217,3 +217,35 @@
 
     (doseq [[given expected] cases]
       (is (= expected (tukui-api/parse-user-string given))))))
+
+(deftest make-url
+  (let [cases [;; retail tukui addon
+               [{:name "foo" :source-id 123 :interface-version 90000} "https://www.tukui.org/addons.php?id=123"]
+               ;; classic tukui addon
+               [{:name "foo" :source-id 123 :interface-version 10000} "https://www.tukui.org/classic-addons.php?id=123"]
+               ;; classic-tbc tukui addon
+               [{:name "foo" :source-id 123 :interface-version 20000} "https://www.tukui.org/classic-tbc-addons.php?id=123"]
+
+               ;; tukui retail proper url
+               [{:name "tukui" :source-id -1 :interface-version 90000} "https://www.tukui.org/download.php?ui=tukui"]
+               ;; elvui retail proper url
+               [{:name "elvui" :source-id -2 :interface-version 90000} "https://www.tukui.org/download.php?ui=elvui"]
+
+               ;; tukui classic url
+               [{:name "tukui" :source-id 1 :interface-version 10000} "https://www.tukui.org/classic-addons.php?id=1"]
+               ;; elvui classic url
+               [{:name "tukui" :source-id 2 :interface-version 10000} "https://www.tukui.org/classic-addons.php?id=2"]
+
+               ;; ..etc
+
+               ;; dodgy url
+               [{:name "foo" :source-id -99 :interface-version 90000} "https://www.tukui.org/download.php?ui=foo"]
+               [{:source-id 1 :interface-version 10000} "https://www.tukui.org/classic-addons.php?id=1"]
+
+               ;; bad urls
+               [{} nil]
+               [{:source-id 1} nil]
+               [{:source-id -1 :interface-version 90000} nil]]]
+
+    (doseq [[given expected] cases]
+      (is (= expected (tukui-api/make-url given)), (str "failed on given: " given)))))

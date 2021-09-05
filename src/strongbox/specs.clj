@@ -132,7 +132,7 @@
 
 ;; http
 
-(s/def :http/reason-phrase (s/and string? #(<= (count %) 50)))
+(s/def :http/reason-phrase (s/and string? #(<= (count %) 150)))
 (s/def :http/status int?) ;; a little too general but ok for now
 (s/def :http/host string?)
 (s/def :http/error (s/keys :req-un [:http/reason-phrase :http/status :http/host]))

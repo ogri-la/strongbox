@@ -645,11 +645,25 @@
 (defn-spec moosh-addons :addon/toc+summary+match
   "merges the data from an installed addon with it's match in the catalogue"
   [installed-addon :addon/toc, db-catalogue-addon :addon/summary]
-  (let [;; nil fields are removed from the catalogue item because they might override good values in the .toc or .nfo
-        db-catalogue-addon (utils/drop-nils db-catalogue-addon [:description])]
+  (let [;; 2021-09: this may not be the case anymore.
+        ;; nil fields are removed from the catalogue item because they might override good values in the .toc or .nfo
+        db-catalogue-addon (utils/drop-nils db-catalogue-addon [:description])
+
+        inst-source (:source installed-addon)
+        dbc-source (:source db-catalogue-addon)
+        source-mismatch (and inst-source
+                             dbc-source
+                             (not (= inst-source dbc-source)))]
     ;; merges left->right. catalogue-addon overwrites installed-addon, ':matched' overwrites catalogue-addon, etc
     (logging/addon-log installed-addon :info (format "found in catalogue with source \"%s\" and id \"%s\"" (:source installed-addon) (:source-id installed-addon)))
-    (merge installed-addon db-catalogue-addon {:matched? true})))
+    (merge installed-addon
+           db-catalogue-addon
+           {:matched? true}
+           ;; todo: I really want to disambiguate between where data is coming from.
+           ;; it would mean carrying around the toc, nfo, catalogue, source updates and a merged set data.
+           ;; all we have right now is the merged set (except this new `nfo/source` key)
+           (when source-mismatch
+             {:nfo/source (:source installed-addon)}))))
 
 ;;
 
@@ -761,7 +775,14 @@
         ;; for those that *did* match, merge the installed addon data together with the catalogue data
         matched (mapv #(moosh-addons (:installed-addon %) (:catalogue-match %)) matched)
         ;; and then make them a single list of addons again
-        expanded-installed-addon-list (into matched unmatched)
+
+        ;; for those that failed to match but have nfo data we can fall back to that
+        polyfilled (mapv (fn [addon]
+                           (if-let [synthetic (catalogue/toc2summary addon)]
+                             (moosh-addons addon synthetic)
+                             addon)) unmatched)
+
+        expanded-installed-addon-list (into matched polyfilled)
 
         ;; todo: metrics gathering is good, but this is a little adhoc. shift into parent wrapper somehow.
         ;; some metrics we'll emit for the user.
@@ -784,7 +805,6 @@
               (logging/with-addon addon
                 (if (:ignore? addon)
                   (info "not matched to catalogue, addon is being ignored")
-
                   (do ;; todo: replace these with a :help level and a less scary colour
                     (info "if this is part of a bundle, try \"File -> Re-install all\"")
                     (info "try searching for this addon by name or description")
@@ -819,13 +839,18 @@
           strict? (get-game-track-strictness)]
       (catalogue/expand-summary addon-summary game-track strict?))))
 
+(defn-spec expandable? boolean?
+  "returns `true` if the given addon in whatever form has the requisites to be 'expanded' (checked for updates from host)"
+  [addon map?]
+  (s/valid? :addon/expandable addon))
+
 (defn-spec check-for-update :addon/toc
   "Returns given `addon` with source updates, if any, and sets an `update?` property if a different version is available.
   If addon is pinned to a specific version, `update?` will only be true if pinned version is different from installed version."
   [addon (s/or :unmatched :addon/toc
                :matched :addon/toc+summary+match)]
   (logging/with-addon addon
-    (let [expanded-addon (when (:matched? addon)
+    (let [expanded-addon (when (expandable? addon)
                            (joblib/tick-delay 0.25)
                            (expand-summary-wrapper addon))
           addon (or expanded-addon addon) ;; expanded addon may still be nil
@@ -836,13 +861,17 @@
         (when-not (= (get-game-track) (:game-track addon))
           (warn (format "update is for '%s' and the addon directory is set to '%s'"
                         (-> addon :game-track sp/game-track-labels-map)
-                        (-> (get-game-track) sp/game-track-labels-map)))))
+                        (-> (get-game-track) sp/game-track-labels-map))))
+        (when (:nfo/source addon)
+          (warn "this happens when an exact match is not found in the selected catalogue.")
+          (warn (format "update is from a different host (%s) to the one it was installed from (%s)." (:source addon) (:nfo/source addon)))))
+
       (joblib/tick-delay 0.75)
       (assoc addon :update? has-update?))))
 
 (def check-for-update-affective (affects-addon-wrapper check-for-update))
 
-(defn-spec check-for-updates-1 nil?
+(defn-spec check-for-updates-serially nil?
   "downloads full details for all installed addons that can be found in summary list"
   []
   (when (selected-addon-dir)
