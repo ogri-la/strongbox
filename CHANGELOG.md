@@ -19,10 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
         - an addon doesn't get updates any more but still works and is eventually removed from the 'short' catalogue.
         - you decide to go curseforge-only and have that one addon from wowinterface you can't live without (or vice-versa)
 
-### Fixed
-
-### Removed
-
 ## 4.4.1
 
 ### Changed
