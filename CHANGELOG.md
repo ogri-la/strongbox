@@ -9,8 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 * better error handling when no network connection is available.
+* a warning when the update available is from a different addon host.
+    - for example, an addon is removed from curseforge and now receives updates on wowinterface exclusively.
 
 ### Changed
+
+* addons that fail to match against the catalogue but have matched against a catalogue previously can now be updated.
+    - for example, addons in these cases are now updateable: 
+        - an addon doesn't get updates any more but still works and is eventually removed from the 'short' catalogue.
+        - you decide to go curseforge-only and have that one addon from wowinterface you can't live without (or vice-versa)
 
 ### Fixed
 

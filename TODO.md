@@ -34,10 +34,6 @@ see CHANGELOG.md for a more formal list of changes by release
         - https://github.com/ogri-la/strongbox-release-script
         - it will get bugfixed and refined as I go along.
 
-## todo
-
-... need to do a minor version release and I have about a week before next month. what small things can I do?
-
 * EOL planning, robustness, only download/update the catalogue *after* an existing catalogue has been confirmed
     - github is down, wowman is erroring with a 500
         - 'host not found' errors should be captured
@@ -66,13 +62,17 @@ see CHANGELOG.md for a more formal list of changes by release
                     - still need to test the case if a catalogue exists and an update fails, what happens
                         - touch catalogue, in the past, expire it.
                 - switching to a catalogue like tukui shows all the old associations
+        - done
                 
     - failure to contact a host shouldn't prevent addons on other hosts from working
         - done
 
-* add a --version parameter
+## todo
+
 
 ## todo bucket (no particular order)
+
+* add a --version parameter
 
 * install addon from local zipfile
     - *not* the 'reinstallation' feature, but literally selecting a zipfile from somewhere and installing it
