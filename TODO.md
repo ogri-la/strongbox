@@ -6,69 +6,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* handle no internet connection more gracefully
-    - it's a bit slow but it doesn't crash as connections ...
-    - literally unplugging the network and restarting I get some 'unknown host' exceptions as the catalogue fails to download
-        - and http/http-error was broken :(
-    - done
-
-* zip, better errors for failing to decompress .rar files
-    - see !FREEZING from wowinterface
-        - it's a .rar addon
-        - the full path is emitted in the error, which is impossible to fully read
-        - the extension has been replaced with .zip
-            - if the extension were preserved we could dismiss it immediately as unsupported
-
-        2021-03-20 01:35:58.026 DEBUG [strongbox.zip:23] - failed to open+close zip file: /home/torkus/path/to/wine/dir/drive_c/program files/World of Warcraft/_retail_/Interface/Addons/-freezing--1-04.zip
-        path [] triggered :strongbox.ui.jfx$start$update_gui_state__39204@608569a040151
-        2021-03-20 01:35:58.027 ERROR [strongbox.core:419] - failed to read zip file '/home/torkus/path/to/wine/dir/drive_c/program files/World of Warcraft/_retail_/Interface/Addons/-freezing--1-04.zip', could not install -freezing
-
-    - I don't see this anymore, I get the sensible "failed to read addon zip file, possibly corrupt or not a zip file." message.
-    - done
-
-* release, more automation
-    - clean the environment, update project.clj and readme, run lein pom, open a branch, push, open a PR, create a checklist
-    - merge PR into master, tag, push, upload assets, update PKGBUILD, push to aur
-    - etc
-    - done
-        - https://github.com/ogri-la/strongbox-release-script
-        - it will get bugfixed and refined as I go along.
-
-* EOL planning, robustness, only download/update the catalogue *after* an existing catalogue has been confirmed
-    - github is down, wowman is erroring with a 500
-        - 'host not found' errors should be captured
-        - all other errors are handled fine
-        - done
-    - failure to download a catalogue shouldn't prevent addons from being displayed
-        - if a catalogue has been downloaded previously, does it still fail?
-            - no, it behaves so perfectly I'm suspicious. investigating ... yeah, cache.
-            - with no available catalogue the addons are still displayed but obviously not matched.
-        - so:
-            - if we have a match via the nfo file we should still be able to fetch updates
-                - those in the user-catalogue still work for example ...
-            - order of precendence:
-                - nfo file, if it exists. down the bottom.
-                - user-catalogue. prefer matches against addons added
-                - regular catalogue, has final say.
-                    - this would allow matches against specialised catalogues, like wowi, curse, tukui
-                    - could we disable the catalogue altogether?
-                        - a 'no catalogue' option
-                        - just nfo files and user-catalogue (imported addons)
-                            - bit of a debugging feature but why not?
-        - create a catalogue from the nfo data?
-            - then we could merge nfo-catalogue with user-catalogue with regular catalogue
-                - nice and simple ...
-                - failure to download a catalogue with nothing cached lets us continue working normally
-                    - still need to test the case if a catalogue exists and an update fails, what happens
-                        - touch catalogue, in the past, expire it.
-                - switching to a catalogue like tukui shows all the old associations
-        - done
-                
-    - failure to contact a host shouldn't prevent addons on other hosts from working
-        - done
-
 ## todo
-
 
 ## todo bucket (no particular order)
 
