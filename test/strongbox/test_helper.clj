@@ -12,6 +12,15 @@
     [core :as core]
     [utils :as utils]]))
 
+(def toc
+  "local addon .toc file"
+  {:name "everyaddon",
+   :description "Does what no other addon does, slightly differently"
+   :dirname "EveryAddon",
+   :label "EveryAddon 1.2.3",
+   :interface-version 70000,
+   :installed-version "1.2.3"})
+
 (def fixture-dir (-> "test/fixtures" fs/absolute fs/normalized str))
 
 (def helper-data-dir "data/strongbox")

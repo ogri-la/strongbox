@@ -19,15 +19,23 @@
 (def tukui-proper-url (format proper-url "tukui"))
 (def elvui-proper-url (format proper-url "elvui"))
 
-(defn make-url
-  [{:keys [name source-id interface-version]}]
-  (if (neg? source-id)
+(defn-spec make-url (s/nilable ::sp/url)
+  "given a map of addon data, returns a URL to the addon's tukui page or `nil`"
+  [{:keys [name source-id interface-version]} map?]
+  (cond
+    (not source-id) nil
+
+    (and (neg? source-id) name)
     (str "https://www.tukui.org/download.php?ui=" name)
+
+    (and (pos? source-id) interface-version)
     (case (utils/interface-version-to-game-track interface-version)
       :retail (str "https://www.tukui.org/addons.php?id=" source-id)
       :classic (str "https://www.tukui.org/classic-addons.php?id=" source-id)
       :classic-tbc (str "https://www.tukui.org/classic-tbc-addons.php?id=" source-id)
-      nil)))
+      nil)
+
+    :else nil))
 
 (defn-spec expand-summary (s/or :ok :addon/release-list, :error nil?)
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"

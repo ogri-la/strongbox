@@ -22,7 +22,7 @@
     (error addon-summary))
 
   ;; todo: this shouldn't be an 'if' if there is no 'else'
-  (if (some #{game-track} (:game-track-list addon-summary))
+  (when (some #{game-track} (:game-track-list addon-summary))
     (let [url (str wowinterface-api "/filedetails/" (:source-id addon-summary) ".json")
           result-list (some-> url http/download http/sink-error utils/from-json)
           result (first result-list)]

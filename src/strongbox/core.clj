@@ -10,9 +10,6 @@
    [trptcolin.versioneer.core :as versioneer]
    [envvar.core :refer [env]]
    [strongbox
-    [wowinterface :as wowinterface]
-    [tukui-api :as tukui-api]
-    [constants :as constants]
     [addon :as addon]
     [db :as db]
     [config :as config]
@@ -723,40 +720,6 @@
   (swap! state update-in [:search] merge (select-keys -search-state-template [:page :results :selected-results-list]))
   nil)
 
-(defn-spec toc2summary (s/nilable :addon/summary)
-  "accepts toc or toc+nfo data and emits a version of the data that validates as an `:addon/summary`"
-  [toc (s/or :just-toc :addon/toc, :mixed :addon/toc+nfo)]
-  (let [sink nil
-        syn (-> toc
-                (merge {:url (:group-id toc)
-                        :tag-list []
-                        :updated-date constants/fake-datetime
-                        :download-count 0
-                        :matched? false})
-                (select-keys [:source :source-id :url :name :tag-list :label :updated-date :download-count]))
-
-        syn (if (= (:source toc) "wowinterface")
-              (cond
-                (:installed-game-track toc) (assoc syn :game-track-list [(:installed-game-track toc)])
-                (:interface-version toc) (assoc syn :game-track-list [(utils/interface-version-to-game-track (:interface-version toc))])
-                :else sink)
-              syn)
-
-        ;; we might be able to recover from this.
-        ;; wowi and github urls can be reconstructed
-        syn (if (-> syn :url nil?)
-              (case (:source toc)
-                "wowinterface" (assoc syn :url (wowinterface/make-url toc))
-                "tukui" (assoc syn :url (tukui-api/make-url toc))
-                syn)
-              syn)
-
-        ;; url may still be nil at this point, just fail
-        syn (if (-> syn :url nil?) sink syn)
-
-        syn (if (-> syn :source nil?) sink syn)]
-    syn))
-
 (defn-spec load-current-catalogue (s/or :ok :catalogue/catalogue, :error nil?)
   "merges the currently selected catalogue with the user-catalogue and returns the definitive list of addons 
   available to install. Handles malformed catalogue data by re-downloading catalogue."
@@ -815,7 +778,7 @@
 
         ;; for those that failed to match but have nfo data we can fall back to that
         polyfilled (mapv (fn [addon]
-                           (if-let [synthetic (spy :info (toc2summary addon))]
+                           (if-let [synthetic (catalogue/toc2summary addon)]
                              (moosh-addons addon synthetic)
                              addon)) unmatched)
 

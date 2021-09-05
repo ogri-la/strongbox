@@ -112,3 +112,10 @@
   (testing "when 'UICompatibility' is `null` we default to `:retail`."
     (let [expected [:retail]]
       (is (= expected (wowinterface/ui-compatibility-to-gametrack-list nil))))))
+
+(deftest make-url
+  (let [cases [[{} nil]
+               [{:source-id nil} nil]
+               [{:source-id 123} "https://www.wowinterface.com/downloads/info123"]]]
+    (doseq [[given expected] cases]
+      (is (= expected (wowinterface/make-url given))))))

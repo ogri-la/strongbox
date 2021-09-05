@@ -1690,7 +1690,10 @@
 (defn addon-detail-key-vals
   "displays a two-column table of `key: val` fields for what we know about an addon."
   [{:keys [addon]}]
-  (let [column-list [{:text "key" :min-width 150 :pref-width 150 :max-width 150 :resizable false :cell-value-factory #(-> % :key str (subs 1))}
+  (let [key-col (fn [keypair]
+                  ;; shouldn't ever be nil but better safe than sorry
+                  (-> keypair :key (or ":nil") str (subs 1)))
+        column-list [{:text "key" :min-width 150 :pref-width 150 :max-width 150 :resizable false :cell-value-factory key-col}
                      {:text "val" :cell-value-factory :val}]
 
         blacklist [:group-addons :release-list]
