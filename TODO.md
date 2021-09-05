@@ -8,9 +8,48 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
-## todo bucket (no particular order)
-
 * add a --version parameter
+
+* bug, catalogue loading
+    - while updating the catalogue with the new tukui addons I discovered a case where the catalogue *should* be failing validation but it wasn't.
+        - it came down to an :opt vs :opt-un in the spec
+            - the key in question wasn't qualified and thus not matched for validation
+    - the catalogue should always be loadable by previous versions of strongbox that support the given spec version
+        - ...
+    - when the catalogue fails validation it shouldn't freeze the app while the reason is printed in the console
+
+* bump dependencies
+    - there are changes to data.json libraries with speed improvements
+        - profile first
+
+* investigate *warn-on-reflections*
+    - I think there may be some solid performance gains by turning this on
+        - remember to profile first
+
+* EOL planning, bundle a catalogue with the installation
+    - load it as a resource with static-slurp, like we do with the sql?
+        - also compressed so it's tiny?
+    - behind the scenes we download and load the full-catalogue
+        - would this block reconciliation?
+            - perhaps if there are unmatched addons after reconciliation we then wait and try again ...?
+        - this ties in with my recent ideas of having the catalogue download in the background but only if a catalogue already exists.
+            - if one is bundled then a catalogue *always* exists
+                - then the short/full/curse/wow catalogues are simply filtered versions of the 'full' catalogue
+                - the user catalogue would need to be merged over the top
+
+### investigate these
+
+* importing addons, skip db lookup for addon urls that don't need it
+    - if we can 'expand it' then we can download it and install it.
+    - I think tukui, wowi can, github obs, curseforge could not
+    - this item may already be done, investigate and if not, send back to bucket with a better description
+
+* check addons for updates immediately after loading
+    - if after we've read the nfo data and we have everything we need, check the addon for updates immediately
+        - don't wait for db loading and addon matching
+            - so we only match the unmatched against the catalogue?
+
+## todo bucket (no particular order)
 
 * install addon from local zipfile
     - *not* the 'reinstallation' feature, but literally selecting a zipfile from somewhere and installing it
@@ -43,10 +82,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * add release.json support for github addons
 
-* importing addons, skip db lookup for addon urls that don't need it
-    - if we can 'expand it' then we can download it and install it.
-    - I think tukui, wowi can, github obs, curseforge could not
-
 * toc, addon detail, add 'x-website' / 'x-url' alongside 'browse local files' and addon host
 
 * change split button 'outdent' to 'indent'
@@ -70,14 +105,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - it should stand out from the other messages, look friendly, etc
         - going with the further 'detail' metadata idea, adding an info icon would make it stand out
 
-* bug, catalogue loading
-    - while updating the catalogue with the new tukui addons I discovered a case where the catalogue *should* be failing validation but it wasn't.
-        - it came down to an :opt vs :opt-un in the spec
-            - the key in question wasn't qualified and thus not matched for validation
-    - the catalogue should always be loadable by previous versions of strongbox that support the given spec version
-        - ...
-    - when the catalogue fails validation it shouldn't freeze the app while the reason is printed in the console
-
 * classic addon dir detection
     - also check for 
         - '_classic_' '_classic_beta_' '_classic_ptr_'
@@ -96,20 +123,10 @@ see CHANGELOG.md for a more formal list of changes by release
     - rar should just die already
     - this would fix a major showstopper in porting to windows
 
-* investigate *warn-on-reflections*
-    - I think there may be some solid performance gains by turning this on
-        - remember to profile first
-
 * test, can gui-diff and main/test be pushed back into the testing namespace and elided from release somehow?
 
 * create a parser for that shit markup that is preventing reconcilation
     - see aliases
-
-* if a match has been made and the addon installed using that match, and then the catalogue changes, addon should still be downloadable
-    - right?
-        - we have the source and source-id, even the group-id to some extent
-    - switching catalogues may see the addon matched against another host
-        - nothing wrong with that, but ...
 
 * gitlab as addon host
     - https://gitlab.com/search?search=wow+addon
@@ -123,13 +140,6 @@ see CHANGELOG.md for a more formal list of changes by release
         - https://gitlab.com/explore/projects?tag=World+of+Warcraft
         - https://gitlab.com/shrugal/PersoLootRoll
         - any others ...?
-
-* EOL planning, bundle a catalogue with the installation
-    - load it as a resource with static-slurp, like we do with the sql?
-        - also compressed so it's tiny?
-    - behind the scenes we download and load the full-catalogue
-        - would this block reconciliation?
-            - perhaps if there are unmatched addons after reconciliation we then wait and try again ...?
 
 * add checksum checks after downloading
     - curseforge have an md5 that can be used
@@ -155,11 +165,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - investigate just what is being downloaded when a classic version of a wowi addon is downloaded
     - see 'LagBar'
 
-* when curseforge api is down users get a wall of red error messages with very little useful information
-    - see issue 91: https://github.com/ogri-la/wowman/issues/91
-        - the error message has been improved but we still get a red wall of text
-        - aggregate error messages?
-
 * reconciliation, rename 'reinstall all' to 'reconcile'
     - steal from the best
     - make the reconcile automatic
@@ -172,25 +177,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * add a 'tabula rasa' option that wipes *everything* 
     - cache, catalog, config, downloaded zip files
-
-* testing, capture metrics with an eye to improving performance and speed
-    - we have coverage metrics now
-    - would like some timing around certain operations
-        - like loading the catalog
-            - done
-        - like downloading and installing the top-10, top-20, top-N addons
-            - this could be a good benchmark actually
-                - how quickly can one go from 'nothing installed' to '20 addons installed' ?
-                - could be tied in with backups/exports
-                    - got to have backups+imports happening first
-        - identify slow things and measure their improvement
-
-* check addons for updates immediately after loading
-    - if after we've read the nfo data and we have everything we need, check the addon for updates immediately
-        - don't wait for db loading and addon matching
-            - we already have a match stored in the .nfo file
-                - this would break the switching catalogue feature...
-        - this might fit in with the greater-parallelism/queue based infrastructure
 
 
 # releases
