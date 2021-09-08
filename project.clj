@@ -8,8 +8,7 @@
                  [org.clojure/tools.cli "1.0.206"] ;; cli arg parsing
                  [org.clojure/tools.namespace "1.1.0"] ;; reload code
                  [org.clojure/data.json "2.4.0"] ;; json handling
-                 ;;[orchestra "2018.12.06-2"] 
-                 [orchestra "2021.01.01-1"] ;; improved clojure.spec instrumentation ;; test this, see: https://github.com/jeaye/orchestra/blob/master/CHANGES.md#20200712-1
+                 [orchestra "2021.01.01-1"] ;; improved clojure.spec instrumentation
                  ;; see lein deps :tree
                  [com.taoensso/timbre "5.1.2"] ;; logging
                  [enlive "1.1.6"] ;; html parsing

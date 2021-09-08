@@ -6,6 +6,12 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
+* bump dependencies
+    - there are changes to data.json libraries with speed improvements
+        - profile first
+    - about an 80ms improvement in json loading
+    - done
+
 ## todo
 
 * add a --version parameter
@@ -17,10 +23,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - the catalogue should always be loadable by previous versions of strongbox that support the given spec version
         - ...
     - when the catalogue fails validation it shouldn't freeze the app while the reason is printed in the console
-
-* bump dependencies
-    - there are changes to data.json libraries with speed improvements
-        - profile first
 
 * investigate *warn-on-reflections*
     - I think there may be some solid performance gains by turning this on
