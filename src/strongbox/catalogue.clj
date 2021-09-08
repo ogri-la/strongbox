@@ -202,7 +202,8 @@
 (defn validate
   "validates the given data as a `:catalogue/catalogue`, returning nil if data is invalid"
   [catalogue]
-  (sp/valid-or-nil :catalogue/catalogue catalogue))
+  (p :catalogue:validate
+     (sp/valid-or-nil :catalogue/catalogue catalogue)))
 
 (defn read-catalogue
   "reads catalogue at given `path` and validates the result, regardless of spec instrumentation.

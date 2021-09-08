@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* bumped dependencies
+    - slight increase in performance loading JSON with a newer version of the `data.json` library.
+
 ### Fixed
 
 ### Removed
