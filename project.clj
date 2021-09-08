@@ -5,23 +5,24 @@
             :url "https://www.gnu.org/licenses/agpl-3.0.en.html"}
 
   :dependencies [[org.clojure/clojure "1.10.3"]
-                 [org.clojure/tools.cli "1.0.194"] ;; cli arg parsing
+                 [org.clojure/tools.cli "1.0.206"] ;; cli arg parsing
                  [org.clojure/tools.namespace "1.1.0"] ;; reload code
-                 [org.clojure/data.json "1.0.0"] ;; json handling
-                 [orchestra "2018.12.06-2"] ;; improved clojure.spec instrumentation
+                 [org.clojure/data.json "2.4.0"] ;; json handling
+                 ;;[orchestra "2018.12.06-2"] 
+                 [orchestra "2021.01.01-1"] ;; improved clojure.spec instrumentation ;; test this, see: https://github.com/jeaye/orchestra/blob/master/CHANGES.md#20200712-1
                  ;; see lein deps :tree
                  [com.taoensso/timbre "5.1.2"] ;; logging
                  [enlive "1.1.6"] ;; html parsing
-                 [clj-http "3.12.1"] ;; better http slurping
-                 [clj-commons/fs "1.5.2"] ;; file system wrangling
+                 [clj-http "3.12.3"] ;; better http slurping
+                 [clj-commons/fs "1.6.307"] ;; file system wrangling
                  [slugify "0.0.1"]
                  [trptcolin/versioneer "0.2.0"] ;; version number wrangling. it's more involved than you might suspect
                  [org.flatland/ordered "1.5.9"] ;; better ordered map
-                 [clojure.java-time "0.3.2"] ;; date/time handling library, https://github.com/dm3/clojure.java-time
-                 [envvar "1.1.0"] ;; environment variable wrangling
+                 [clojure.java-time "0.3.3"] ;; date/time handling library, https://github.com/dm3/clojure.java-time
+                 [envvar "1.1.2"] ;; environment variable wrangling
                  [gui-diff "0.6.7"] ;; pops up a graphical diff for test results
-                 [com.taoensso/tufte "2.1.0"] ;; profiling
-                 [cljfx "1.7.13" :exclusions [org.openjfx/javafx-web
+                 [com.taoensso/tufte "2.2.0"] ;; profiling
+                 [cljfx "1.7.14" :exclusions [org.openjfx/javafx-web
                                               org.openjfx/javafx-media]]
                  [cljfx/css "1.1.0"]
 
@@ -48,7 +49,8 @@
 
   :resource-paths ["resources"]
 
-  :profiles {:dev {:dependencies [;; fake http responses for testing
+  :profiles {:dev {:plugins [[lein-ancient "0.7.0"]]
+                   :dependencies [;; fake http responses for testing
                                   [clj-http-fake "1.0.3"]
                                   ]}
              :uberjar {:aot :all

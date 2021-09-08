@@ -51,6 +51,12 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* 'update all' should be a no-op if nothing has updates available
+    - don't disable the button, just don't do anything
+
+* clear non-catalogue cache after session
+    - it seems reasonable that stopping and starting the app will have it re-fetch addon summaries.
+
 * install addon from local zipfile
     - *not* the 'reinstallation' feature, but literally selecting a zipfile from somewhere and installing it
     - would be good for installing older versions of an addon?
