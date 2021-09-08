@@ -2,7 +2,7 @@
  "datestamp":"2020-02-20",
  "total":4,
  "addon-summary-list":
- [{"tag-list":["auction-house" "vendors"],
+ [{"tag-list":["auction-house", "vendors"],
    "download-count":1077,
    "game-track-list":["retail"],
    "label":"$old!it",
