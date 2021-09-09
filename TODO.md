@@ -12,9 +12,10 @@ see CHANGELOG.md for a more formal list of changes by release
     - about an 80ms improvement in json loading
     - done
 
-## todo
-
 * add a --version parameter
+    -done
+
+## todo
 
 * bug, catalogue loading
     - while updating the catalogue with the new tukui addons I discovered a case where the catalogue *should* be failing validation but it wasn't.

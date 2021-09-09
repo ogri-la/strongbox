@@ -19,7 +19,7 @@
                  [org.flatland/ordered "1.5.9"] ;; better ordered map
                  [clojure.java-time "0.3.3"] ;; date/time handling library, https://github.com/dm3/clojure.java-time
                  [envvar "1.1.2"] ;; environment variable wrangling
-                 [gui-diff "0.6.7"] ;; pops up a graphical diff for test results
+                 [gui-diff "0.6.7" :exclusions [net.cgrant/parsley]] ;; pops up a graphical diff for test results
                  [com.taoensso/tufte "2.2.0"] ;; profiling
                  [cljfx "1.7.14" :exclusions [org.openjfx/javafx-web
                                               org.openjfx/javafx-media]]
@@ -45,6 +45,12 @@
                  ;;[org.clojure/core.cache "1.0.207"] ;; jfx context caching
 
                  ]
+
+  :managed-dependencies [;; fixes the annoying:
+                         ;; "WARNING: cat already refers to: #'clojure.core/cat in namespace: net.cgrand.parsley.fold, being replaced by: #'net.cgrand.parsley.fold/cat"
+                         ;; https://github.com/cgrand/parsley/issues/15
+                         ;; see `gui-diff` exclusion
+                         [net.cgrand/parsley "0.9.3"]]
 
   :resource-paths ["resources"]
 

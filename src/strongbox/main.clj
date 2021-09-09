@@ -33,10 +33,6 @@
 ;; spec checking is disabled upon release
 (def spec? (utils/in-repl?))
 
-;; initial logging setup.
-;; default log level should be :info before anything starts logging.
-(core/reset-logging!)
-
 (defn jfx
   "dynamically resolve the `strongbox.ui.jfx` ns and call the requisite `action`.
   `action` is either `:start` or `:stop`.
@@ -146,6 +142,10 @@
 (def cli-options
   [["-h" "--help"]
 
+   [nil "--version" "print current version of strongbox"
+    :id :version-string
+    :default false]
+
    ["-d" "--addons-dir DIR" "location of addon directory"
     :id :install-dir
     :parse-fn #(-> % fs/expand-home fs/normalized str)
@@ -182,6 +182,8 @@
 
       (:help options) {:ok? true, :exit-message (usage parsed)}
 
+      (:version-string options) {:ok? true :exit-message (str "strongbox " (core/strongbox-version))}
+
       errors {:ok? false, :exit-message (str "The following errors occurred while parsing your command:\n\n"
                                              (clojure.string/join \newline errors))}
       :else parsed)))
@@ -217,14 +219,16 @@
 
 (defn exit
   [status & [msg]]
-  (stop)
-  (when msg (println msg))
+  (when (core/started?)
+    (stop))
+  (when msg
+    (println msg))
   (System/exit status))
 
 (defn -main
   [& args]
   (let [{:keys [options exit-message ok?]} (-> args parse validate)]
-    (shutdown-hook)
     (if exit-message
       (exit (if ok? 0 1) exit-message)
-      (start options))))
+      (do (shutdown-hook)
+          (start options)))))

@@ -8,12 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* a `--version` parameter that prints the name of the app and it's current version.
+
 ### Changed
 
 * bumped dependencies
     - slight increase in performance loading JSON with a newer version of the `data.json` library.
 
 ### Fixed
+
+* fixed warning on startup about `cat` already refering to `clojure.core/cat`.
 
 ### Removed
 
