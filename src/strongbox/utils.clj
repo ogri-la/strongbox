@@ -424,7 +424,7 @@
                 nil))
 
         ;; looser, but still better than a regex
-        ^java.net.URI uri 
+        ^java.net.URI uri
         (try
           (java.net.URI. uin)
           (catch java.net.URISyntaxException _

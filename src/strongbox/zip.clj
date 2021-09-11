@@ -11,8 +11,7 @@
     [utils :as utils]
     [specs :as sp]])
   (:import
-   [java.util.zip ZipFile ZipEntry]
-   ))
+   [java.util.zip ZipFile ZipEntry]))
 
 (defn-spec valid-zip-file? boolean?
   "returns true if there are no apparent problems opening+reading+closing the given zip file."
