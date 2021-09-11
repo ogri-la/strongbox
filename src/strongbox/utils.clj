@@ -177,7 +177,7 @@
 
 (defn-spec safe-subs (s/nilable string?)
   "similar to `subs` but can handle `nil` input and a `max` value larger than (or less than) length of given string `x`."
-  [x (s/nilable string?), maxval int?]
+  [^String x (s/nilable string?), ^Integer maxval int?]
   (when x
     (subs x 0 (min (count x) (if (neg? maxval) 0 maxval)))))
 
@@ -260,12 +260,14 @@
          (not (s/valid? data-spec data))) (call-if-fn invalid-data?)
         :else data))))
 
-(defn-spec to-int (s/or :ok int? :error nil?)
+(defn-spec to-int (s/or :ok int?, :error nil?)
   "given any value `x`, converts it to an integer or returns `nil` if it can't be converted."
   [x any?]
-  (try (Integer/valueOf x)
-       (catch NumberFormatException nfe
-         nil)))
+  (if (int? x)
+    x
+    (try (Integer/valueOf ^String (str x))
+         (catch NumberFormatException nfe
+           nil))))
 
 (defn-spec slugify string?
   [string string?]
@@ -361,7 +363,7 @@
 
 (defn-spec file-to-lazy-byte-array bytes?
   [path ::sp/extant-file]
-  (let [fobj (java.io.File. path)
+  (let [fobj (java.io.File. ^String path)
         ary (byte-array (.length fobj))
         is (java.io.FileInputStream. fobj)]
     (.read is ary)
@@ -422,14 +424,15 @@
                 nil))
 
         ;; looser, but still better than a regex
-        uri (try
-              (java.net.URI. uin)
-              (catch java.net.URISyntaxException _
-                nil))
+        ^java.net.URI uri 
+        (try
+          (java.net.URI. uin)
+          (catch java.net.URISyntaxException _
+            nil))
 
         ;; and finally, if url and uri approaches fail, try a quick and dirty regex
-        regex #"(\w*:)?(\/\/)?(www\.)?(.+\.\w{2,4})(/?.*)?"
         groups [:protocol :lines :sub :host        :path]
+        regex #"(\w*:)?(\/\/)?(www\.)?(.+\.\w{2,4})(/?.*)?"
         parsed (named-regex-groups regex groups uin)]
 
     (cond
@@ -539,7 +542,7 @@
           (s/valid? ::sp/url path) (do (info "opening URL:" path)
                                        (.browse desktop (java.net.URI. path)))
           (s/valid? ::sp/extant-dir path) (do (info "opening directory:" path)
-                                              (.open desktop (java.io.File. path)))
+                                              (.open desktop (java.io.File. ^String path)))
           :else (error "can't open: " path))))))
 
 (defn-spec find-browser fn?

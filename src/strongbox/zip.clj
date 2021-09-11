@@ -9,13 +9,16 @@
    [clojure.string :refer [split ends-with?]]
    [strongbox
     [utils :as utils]
-    [specs :as sp]]))
+    [specs :as sp]])
+  (:import
+   [java.util.zip ZipFile ZipEntry]
+   ))
 
 (defn-spec valid-zip-file? boolean?
   "returns true if there are no apparent problems opening+reading+closing the given zip file."
-  [zipfile-path ::sp/extant-archive-file]
+  [^String zipfile-path ::sp/extant-archive-file]
   (try
-    (with-open [zipfile (java.util.zip.ZipFile. zipfile-path)]
+    (with-open [zipfile (ZipFile. zipfile-path)]
       (vec (enumeration-seq (.entries zipfile))))
     true
     (catch java.util.zip.ZipException ze
@@ -44,8 +47,8 @@
 (defn zipfile-normal-entries
   "not all zip files are created equally. some have explicit entries for directories within them, some do not.
   this function returns all entries within the given zipfile, plus dummy entries for any missing directories"
-  [zipfile-path]
-  (let [mkrow (fn [zipentry]
+  [^String zipfile-path]
+  (let [mkrow (fn [^ZipEntry zipentry]
                 (let [path (.getName zipentry)
                       dir? (.isDirectory zipentry)
                       bits (split path #"/")
@@ -66,7 +69,7 @@
                          :level level
                          :toplevel? (= level 1)
                          :path pp})))]
-    (with-open [zipfile (java.util.zip.ZipFile. zipfile-path)]
+    (with-open [zipfile (ZipFile. zipfile-path)]
       (let [rows (mapv mkrow (enumeration-seq (.entries zipfile)))]
         (->> rows (map fake-rows) flatten (into rows) distinct)))))
 
@@ -145,7 +148,7 @@
 
 (defn-spec valid-addon-zip-file? boolean?
   "returns true if there are no apparent problems reading the given zip file AND the addon isn't smelly"
-  [zipfile-path ::sp/extant-archive-file]
+  [^String zipfile-path ::sp/extant-archive-file]
   (if (valid-zip-file? zipfile-path)
     (let [entries (zipfile-normal-entries zipfile-path)]
       ;; if either check fails, return false
