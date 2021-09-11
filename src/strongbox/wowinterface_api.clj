@@ -13,9 +13,10 @@
 (defn-spec extract-aid (s/nilable string?)
   "not sure what an 'aid' is, but if it's included in the download request it bypasses the 'approval pending' page.
   in fact, even an empty `aid` works ;)
-  but lets only use it if it's present. older wowi test fixture are missing this query parameter."
-  [url string?]
-  (some->> url java.net.URL. .getQuery (re-find #"aid=(\d+)") second))
+  but lets only use it if it's present, most wowi responses are missing this query parameter."
+  [url (s/nilable string?)]
+  (when url
+    (second (re-find #"aid=(\d+)" url))))
 
 (defn-spec expand-summary (s/or :ok :addon/release-list, :error nil?)
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per addon required"
