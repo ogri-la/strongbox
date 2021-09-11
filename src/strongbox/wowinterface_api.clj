@@ -10,6 +10,13 @@
 
 (def wowinterface-api "https://api.mmoui.com/v3/game/WOW")
 
+(defn-spec extract-aid (s/nilable string?)
+  "not sure what an 'aid' is, but if it's included in the download request it bypasses the 'approval pending' page.
+  in fact, even an empty `aid` works ;)
+  but lets only use it if it's present. older wowi test fixture are missing this query parameter."
+  [url string?]
+  (some->> url java.net.URL. .getQuery (re-find #"aid=(\d+)") second))
+
 (defn-spec expand-summary (s/or :ok :addon/release-list, :error nil?)
   "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per addon required"
   [addon-summary :addon/expandable, game-track ::sp/game-track]
@@ -30,9 +37,13 @@
         (when (> (count result-list) 1)
           ;; has this happened before? can we find an example?
           (warn "wowinterface api returned more than one result for addon with id:" (:source-id addon-summary)))
-        [{:download-url (str "https://cdn.wowinterface.com/downloads/getfile.php?id=" (:source-id addon-summary))
-          :version (:UIVersion result)
-          :game-track game-track}]))))
+        (let [sid (:source-id addon-summary)
+              aid (extract-aid (:UIDownload result))]
+          [{:download-url (if aid
+                            (format "https://cdn.wowinterface.com/downloads/getfile.php?id=%s&aid=%s" sid aid)
+                            (format "https://cdn.wowinterface.com/downloads/getfile.php?id=%s" sid))
+            :version (:UIVersion result)
+            :game-track game-track}])))))
 
 (defn-spec parse-user-string (s/or :ok :addon/source-id :error nil?)
   "extracts the addon ID from the given `url`"
