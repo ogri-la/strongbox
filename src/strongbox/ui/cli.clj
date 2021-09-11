@@ -242,10 +242,7 @@
 
     ;; install addons serially, skip download checks, mark addons as unsteady
     (doseq [[addon downloaded-file] addon+downloaded-file-list]
-      ;; exclude failed downloads.
-      ;; typically covered by `core/install-addon-guard` but we're doing something special here
-      (when downloaded-file
-        (core/install-addon-affective addon install-dir downloaded-file)))))
+      (core/install-addon-affective addon install-dir downloaded-file))))
 
 (defn-spec re-install-or-update-selected nil?
   "re-installs (if possible) or updates all addons in given `addon-list`.

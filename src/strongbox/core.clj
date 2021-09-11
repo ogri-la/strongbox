@@ -538,11 +538,12 @@
 
 (defn-spec install-addon (s/or :ok (s/coll-of ::sp/extant-file), :passed-tests true?, :error nil?)
   "downloads an addon and installs it, bypassing checks. see `install-addon-guard`."
-  [addon :addon/installable, install-dir ::sp/extant-dir, downloaded-file ::sp/extant-archive-file]
-  (try
-    (addon/install-addon addon install-dir downloaded-file)
-    (finally
-      (addon/post-install addon install-dir (get-state :cfg :preferences :addon-zips-to-keep)))))
+  [addon :addon/installable, install-dir ::sp/extant-dir, downloaded-file (s/nilable ::sp/extant-archive-file)]
+  (when downloaded-file
+    (try
+      (addon/install-addon addon install-dir downloaded-file)
+      (finally
+        (addon/post-install addon install-dir (get-state :cfg :preferences :addon-zips-to-keep))))))
 
 (def install-addon-affective
   (affects-addon-wrapper install-addon))

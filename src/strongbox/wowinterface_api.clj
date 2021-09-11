@@ -11,9 +11,7 @@
 (def wowinterface-api "https://api.mmoui.com/v3/game/WOW")
 
 (defn-spec extract-aid (s/nilable string?)
-  "not sure what an 'aid' is, but if it's included in the download request it bypasses the 'approval pending' page.
-  in fact, even an empty `aid` works ;)
-  but lets only use it if it's present, most wowi responses are missing this query parameter."
+  "not sure what an 'aid' is, but if it's included in the download request it bypasses the 'approval pending' page."
   [url (s/nilable string?)]
   (when url
     (second (re-find #"aid=(\d+)" url))))
@@ -39,6 +37,7 @@
           ;; has this happened before? can we find an example?
           (warn "wowinterface api returned more than one result for addon with id:" (:source-id addon-summary)))
         (let [sid (:source-id addon-summary)
+              ;; rarely present. use it if found. actual value of `aid` not necessary, it seems to work when empty as well.
               aid (extract-aid (:UIDownload result))]
           [{:download-url (if aid
                             (format "https://cdn.wowinterface.com/downloads/getfile.php?id=%s&aid=%s" sid aid)

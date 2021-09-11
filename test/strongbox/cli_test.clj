@@ -618,14 +618,14 @@
             ;; ensure new user-catalogue matches expectations
             (is (= expected-user-catalogue (core/get-create-user-catalogue)))))))))
 
+;; test doesn't seem to live comfortably in `core_test.clj`
 (deftest install-update-these-in-parallel--bad-download
-  (testing "bad downloads are not passed to core/install-addon"
+  (testing "bad downloads are not passed to `core/install-addon`."
     (with-running-app
-      (let [install-dir (helper/install-dir)
-            fixture (slurp (fixture-path "wowinterface--download-not-approved.html"))
+      (helper/install-dir)
+      (let [fixture (slurp (fixture-path "wowinterface--download-not-approved.html"))
             fake-routes {"https://cdn.wowinterface.com/downloads/getfile.php?id=19662"
                          {:get (fn [req] {:status 200 :body fixture})}}
-            
             addon {:description "Tue, August 31, 2021"
                    :update? true
                    :game-track-list [:retail]
@@ -649,10 +649,8 @@
                    :version "5.6.20210907"
                    :dirname "TheUndermineJournal"
                    :primary? true
-                   :matched? true} 
-            ]
+                   :matched? true}]
         (with-global-fake-routes-in-isolation fake-routes
           (is (nil? (cli/install-update-these-in-parallel [addon])))
 
           (is (empty? (helper/install-dir-contents))))))))
-          
