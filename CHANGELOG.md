@@ -12,14 +12,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-* app, bumped dependencies
+* bumped dependencies
     - slight increase in performance loading JSON with a newer version of the `data.json` library.
 
 ### Fixed
 
-* app, fixed warning on startup about `cat` already refering to `clojure.core/cat`.
-* wowinterface, a case where an addon pending approval couldn't be downloaded because of a missing query parameter.
-* app, fixed case where a bad addon downloaded in parallel would still be passed to the 'install addon' operation.
+* warning on startup about `cat` already refering to `clojure.core/cat`.
+* case where a wowinterface addon pending approval couldn't be downloaded because of a missing query parameter.
+* regression where a bad addon downloaded in parallel would still be passed to the 'install addon' operation.
 
 ### Removed
 
