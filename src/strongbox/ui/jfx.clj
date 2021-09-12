@@ -635,11 +635,14 @@
   [node-id]
   (-> (get-window) .getScene .getRoot (.lookupAll node-id)))
 
+(defn get-tabber
+  []
+  (first (select "#tabber")))
+
 (defn-spec tab-index int?
   "returns the index of the currently selected tab"
   []
-  (let [^javafx.scene.control.TabPane tabber (-> (select "#tabber") first)]
-    (-> tabber .getSelectionModel .getSelectedIndex)))
+  (-> (get-tabber) .getSelectionModel .getSelectedIndex))
 
 (defn-spec tab-list-tab-index int?
   "returns the index of the currently selected tab within `:tab-list`, which doesn't include the static tabs"
@@ -885,8 +888,7 @@
 (defn-spec switch-tab nil?
   "switches the tab-pane to the tab at the given index"
   [tab-idx int?]
-  (let [^javafx.scene.control.TabPane tabber (first (select "#tabber"))]
-    (-> tabber .getSelectionModel (.select tab-idx)))
+  (-> (get-tabber) .getSelectionModel (.select tab-idx))
   nil)
 
 (defn-spec switch-tab-idx nil?

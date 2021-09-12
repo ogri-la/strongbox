@@ -265,7 +265,7 @@
   [x any?]
   (if (int? x)
     x
-    (try (Integer/valueOf ^String (str x))
+    (try (Integer/valueOf (str x))
          (catch NumberFormatException nfe
            nil))))
 

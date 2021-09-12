@@ -4,7 +4,7 @@
   :license {:name "GNU Affero General Public License (AGPL)"
             :url "https://www.gnu.org/licenses/agpl-3.0.en.html"}
 
-  :global-vars {*warn-on-reflection* true}
+  ;;:global-vars {*warn-on-reflection* true}
 
   :dependencies [[org.clojure/clojure "1.10.3"]
                  [org.clojure/tools.cli "1.0.206"] ;; cli arg parsing
