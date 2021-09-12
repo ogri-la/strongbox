@@ -57,7 +57,7 @@
 (s/def ::dir ::file) ;; directory must also be a string and a valid File object, but not necessarily exist (yet)
 (s/def ::extant-dir (s/and ::dir fs/directory?))
 (s/def ::writeable-dir (s/and ::extant-dir fs/writeable?))
-(s/def ::empty-coll (s/and coll? #(empty? %)))
+(s/def ::empty-coll (s/and coll? empty?))
 (s/def ::gui-event #(instance? java.util.EventObject %))
 (s/def ::install-dir (s/nilable ::extant-dir))
 (s/def ::selected? boolean?)
