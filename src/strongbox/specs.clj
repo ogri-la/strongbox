@@ -4,7 +4,9 @@
    [clojure.set :refer [map-invert]]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
-   [me.raynes.fs :as fs]))
+   [me.raynes.fs :as fs])
+  (:import
+   [java.io File]))
 
 (def placeholder "even qualified specs still require `specs.clj` to be included for linting and uberjar")
 
@@ -47,7 +49,7 @@
                             false))))
 
 (s/def ::file (s/and string?
-                     #(try (and % (java.io.File. %))
+                     #(try (and % (java.io.File. ^String %))
                            (catch java.lang.IllegalArgumentException e
                              false))))
 (s/def ::extant-file (s/and ::file fs/exists?))

@@ -26,10 +26,11 @@
    [java.util List Calendar Locale]
    [javafx.util Callback]
    [javafx.scene.control TableRow TextInputDialog Alert Alert$AlertType ButtonType]
-   [javafx.scene.input KeyCode]
-   [javafx.stage FileChooser FileChooser$ExtensionFilter DirectoryChooser Window WindowEvent]
+   [javafx.scene.input MouseEvent KeyEvent KeyCode]
+   [javafx.stage Stage FileChooser FileChooser$ExtensionFilter DirectoryChooser Window WindowEvent]
    [javafx.application Platform]
    [javafx.scene Node]
+   [javafx.event Event]
    [java.text NumberFormat]))
 
 ;; javafx hack, fixes combobox that sometimes goes blank:
@@ -54,10 +55,10 @@
       (fx.lifecycle/delete fx.lifecycle/dynamic (:child component) opts))))
 
 (def user-locale (Locale/getDefault))
-(def number-formatter (NumberFormat/getNumberInstance user-locale))
+(def ^java.text.NumberFormat number-formatter (NumberFormat/getNumberInstance user-locale))
 
 (defn format-number
-  [n]
+  [^Integer n]
   (.format number-formatter n))
 
 (def major-theme-map
@@ -618,7 +619,7 @@
 
 ;;
 
-(defn get-window
+(defn ^Stage get-window
   "returns the application `Window` object."
   []
   (first (Window/getWindows)))
@@ -634,10 +635,14 @@
   [node-id]
   (-> (get-window) .getScene .getRoot (.lookupAll node-id)))
 
+(defn get-tabber
+  []
+  (first (select "#tabber")))
+
 (defn-spec tab-index int?
   "returns the index of the currently selected tab"
   []
-  (-> (select "#tabber") first .getSelectionModel .getSelectedIndex))
+  (-> (get-tabber) .getSelectionModel .getSelectedIndex))
 
 (defn-spec tab-list-tab-index int?
   "returns the index of the currently selected tab within `:tab-list`, which doesn't include the static tabs"
@@ -666,7 +671,8 @@
                   (.setTitle "Open File"))]
     (when-let [ext-filters (:filters opt-map)]
       (-> chooser .getExtensionFilters (.addAll (mapv extension-filter ext-filters))))
-    (when-let [file-obj @(fx/on-fx-thread
+    (when-let [^java.io.File
+               file-obj @(fx/on-fx-thread
                           (case open-type
                             :save (.showSaveDialog chooser window)
                             (.showOpenDialog chooser window)))]
@@ -674,13 +680,12 @@
 
 (defn dir-chooser
   "prompt user to select a directory"
-  [event]
-  (let [;; valid for a menu-item
-        window (-> event .getTarget .getParentPopup .getOwnerWindow .getScene .getWindow)
-        chooser (doto (DirectoryChooser.)
+  []
+  (let [chooser (doto (DirectoryChooser.)
                   (.setTitle "Select Directory"))]
-    (when-let [dir @(fx/on-fx-thread
-                     (.showDialog chooser window))]
+    (when-let [^java.io.File dir @(fx/on-fx-thread
+                                   (.showDialog chooser (get-window)))]
+
       (-> dir .getAbsolutePath str))))
 
 (defn-spec text-input (s/or :ok string? :noop nil?)
@@ -725,7 +730,7 @@
   `heading` may be `nil`.
   returns `true` if the 'ok' button is clicked, else `false`."
   [heading (s/nilable string?), message string?]
-  (let [result (alert :confirm message {:title "confirm" :header heading})]
+  (let [^java.util.Optional result (alert :confirm message {:title "confirm" :header heading})]
     (= (.get result) ButtonType/OK)))
 
 (defn-spec confirm->action nil?
@@ -855,8 +860,8 @@
 (defn wow-dir-picker
   "prompts the user to select an addon dir. 
   if a valid addon directory is selected, calls `cli/set-addon-dir!`"
-  [event]
-  (when-let [dir (dir-chooser event)]
+  []
+  (when-let [dir (dir-chooser)]
     (when (fs/directory? dir)
       ;; unlike swing, it doesn't appear possible to select a non-directory with javafx (good)
       (cli/set-addon-dir! dir))))
@@ -883,7 +888,7 @@
 (defn-spec switch-tab nil?
   "switches the tab-pane to the tab at the given index"
   [tab-idx int?]
-  (-> (select "#tabber") first .getSelectionModel (.select tab-idx))
+  (-> (get-tabber) .getSelectionModel (.select tab-idx))
   nil)
 
 (defn-spec switch-tab-idx nil?
@@ -984,7 +989,7 @@
     (if (utils/any (mapv :ignore? selected))
       (alert :error "Selection contains ignored addons. Stop ignoring them and then delete.")
       (let [msg (message-list (format "Deleting %s:" (count selected)) (map :label selected))
-            result (alert :confirm msg)]
+            ^java.util.Optional result (alert :confirm msg)]
         (when (= (.get result) ButtonType/OK)
           (cli/delete-selected)))))
   nil)
@@ -1063,8 +1068,10 @@
     {:fx/type :check-menu-item
      :text "Remove addon zip after installation (global)"
      :selected selected?
-     :on-action (fn [ev]
-                  (cli/set-preference :addon-zips-to-keep (if (.isSelected (.getSource ev)) 0 nil)))}))
+     :on-action (fn [^Event ev]
+                  (let [^javafx.scene.control.CheckMenuItem menu-item (.getSource ev)]
+                    (cli/set-preference :addon-zips-to-keep (if (.isSelected menu-item)
+                                                              0 nil))))}))
 
 (defn menu-bar
   "returns a description of the menu at the top of the application"
@@ -1074,7 +1081,7 @@
         file-menu [(menu-item "Import addon" (async-handler import-addon-handler)
                               {:disable no-addon-dir?})
                    separator
-                   (menu-item "_New addon directory" (async-event-handler wow-dir-picker) {:key "Ctrl+N"})
+                   (menu-item "_New addon directory" (handler wow-dir-picker) {:key "Ctrl+N"})
                    (menu-item "Remove addon directory" (async-handler remove-addon-dir)
                               {:disable no-addon-dir?})
                    separator
@@ -1417,10 +1424,10 @@
             :pref-height 999.0
             :row-factory {:fx/cell-type :table-row
                           :describe (fn [row]
-                                      {:on-mouse-clicked (fn [e]
+                                      {:on-mouse-clicked (fn [^MouseEvent ev]
                                                            ;; double click handler https://github.com/cljfx/cljfx/issues/118
-                                                           (when (and (= javafx.scene.input.MouseButton/PRIMARY (.getButton e))
-                                                                      (= 2 (.getClickCount e)))
+                                                           (when (and (= javafx.scene.input.MouseButton/PRIMARY (.getButton ev))
+                                                                      (= 2 (.getClickCount ev)))
                                                              (cli/add-addon-tab row)
                                                              (switch-tab-latest)))
                                        :style-class
@@ -1516,10 +1523,10 @@
                                         (when row
                                           {:style-class ["table-row-cell" (name (:level row))]
                                            :on-mouse-clicked
-                                           (fn [e]
+                                           (fn [^MouseEvent ev]
                                              ;; double click handler https://github.com/cljfx/cljfx/issues/118
-                                             (when (and (= javafx.scene.input.MouseButton/PRIMARY (.getButton e))
-                                                        (= 2 (.getClickCount e)))
+                                             (when (and (= javafx.scene.input.MouseButton/PRIMARY (.getButton ev))
+                                                        (= 2 (.getClickCount ev)))
                                                (if (or (contains? (:source row) :dirname)
                                                        (contains? (:source row) :source-id))
                                                  (do (cli/add-addon-tab (:source row))
@@ -1586,10 +1593,10 @@
                                   "No search results.")}
             :row-factory {:fx/cell-type :table-row
                           :describe (fn [addon]
-                                      {:on-mouse-clicked (fn [e]
+                                      {:on-mouse-clicked (fn [^MouseEvent ev]
                                                            ;; double click handler https://github.com/cljfx/cljfx/issues/118
-                                                           (when (and (= javafx.scene.input.MouseButton/PRIMARY (.getButton e))
-                                                                      (= 2 (.getClickCount e)))
+                                                           (when (and (= javafx.scene.input.MouseButton/PRIMARY (.getButton ev))
+                                                                      (= 2 (.getClickCount ev)))
                                                              (cli/add-addon-tab addon)
                                                              (switch-tab-latest)))
                                        :style-class ["table-row-cell"
@@ -1895,12 +1902,14 @@
           :disable (nil? selected-addon-dir)
           :closable false
           ;; when the 'search' tab is selected, ensure the search field is focused so the user can just start typing
-          :on-selection-changed (fn [ev]
-                                  (when (-> ev .getTarget .isSelected)
-                                    (let [text-field (-> ev .getTarget .getTabPane (.lookupAll "#search-text-field") first)]
-                                      (Platform/runLater
-                                       (fn []
-                                         (-> text-field .requestFocus))))))
+          :on-selection-changed (fn [^Event ev]
+                                  (let [^javafx.scene.control.Tab tab (-> ev .getTarget)]
+                                    (when (.isSelected tab)
+                                      (let [^javafx.scene.control.TextField text-field
+                                            (-> tab .getTabPane (.lookupAll "#search-text-field") first)]
+                                        (Platform/runLater
+                                         (fn []
+                                           (-> text-field .requestFocus)))))))
           :content {:fx/type search-addons-pane}}
          {:fx/type :tab
           :text "log"
@@ -2003,10 +2012,10 @@
      :width 1024
      :height 768
      :scene {:fx/type :scene
-             :on-key-pressed (fn [e]
+             :on-key-pressed (fn [^KeyEvent ev]
                                ;; ctrl-w
-                               (when (and (.isControlDown e)
-                                          (= (.getCode e) (KeyCode/W)))
+                               (when (and (.isControlDown ev)
+                                          (= (.getCode ev) (KeyCode/W)))
                                  (let [;; when closing a tab, select the previous tab
                                        ;; UNLESS that previous tab is the last of the static tabs
                                        ;; then select the first of the static tabs

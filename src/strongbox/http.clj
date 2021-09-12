@@ -112,7 +112,7 @@
 (defn-spec -download (s/or :file ::sp/extant-file, :raw :http/resp, :error :http/error)
   "if writing to a file is possible then the output file is returned, else the raw http response.
    writing response body to a file is possible when caching is available or `output-file` provided."
-  [url ::sp/url, output-file (s/nilable ::sp/file), message (s/nilable ::sp/short-string), extra-params map?]
+  [^String url ::sp/url, output-file (s/nilable ::sp/file), message (s/nilable ::sp/short-string), extra-params map?]
   (let [cache? (not (nil? *cache*))
         encoded-path (url-to-filename url)
         alt-output-file (when cache?
@@ -148,8 +148,9 @@
                 ;; this file leading to malformed/invalid data.
                 ;; so we write the incoming bytes to a unique temporary file and then move that file into place, using 
                 ;; the intended output file as a lock.
-                partial-output-file (when output-file
-                                      (join (fs/parent output-file) (fs/temp-name "strongbox-" ".part")))
+                ^String partial-output-file
+                (when output-file
+                  (join (fs/parent output-file) (fs/temp-name "strongbox-" ".part")))
 
                 use-anon-useragent? false
                 params {:cookie-policy :ignore ;; completely ignore cookies. doesn't stop HttpComponents warning
@@ -194,12 +195,12 @@
 
                                              ;; count bytes transferred so we can update the job progress (if one exists). taken from:
                                              ;; - https://github.com/dakrone/clj-http/blob/7aa6d02ad83dff9af6217f39e517cde2ded73a25/examples/progress_download.clj
-                                             (let [length (Integer/valueOf (get-in resp [:headers "content-length"] 0))
+                                             (let [length (-> resp (get-in [:headers "content-length"] 0) utils/to-int)
                                                    buffer-size (* 1024 10)]
-                                               (with-open [input (:body resp)
+                                               (with-open [^java.io.InputStream input (:body resp)
                                                            output (clojure.java.io/output-stream partial-output-file)]
                                                  (let [buffer (make-array Byte/TYPE buffer-size)
-                                                       counter (:downloaded-bytes-counter resp)]
+                                                       ^CountingInputStream counter (:downloaded-bytes-counter resp)]
                                                    (loop []
                                                      (let [size (.read input buffer)]
                                                        (when (pos? size)

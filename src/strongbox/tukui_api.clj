@@ -88,12 +88,12 @@
                    :retail "tukui"
                    :classic "tukui-classic"
                    :classic-tbc "tukui-classic-tbc")
-         :source-id (-> ti :id Integer/valueOf)
+         :source-id (-> ti :id utils/to-int)
 
          ;; 2020-03: disabled in favour of :tag-list
          ;;:category-list category-list
          :tag-list (tags/category-list-to-tag-list "tukui" category-list)
-         :download-count (-> ti :downloads Integer/valueOf)
+         :download-count (-> ti :downloads utils/to-int)
          :game-track-list [game-track]
          :label (:name ti)
          :name (slugify (:name ti))
@@ -157,7 +157,7 @@
   [url ::sp/url]
   (let [[numeral string] (some->> url java.net.URL. .getQuery (re-find #"(?i)(?:id=(\d+)|ui=(tukui|elvui))") rest)]
     (if numeral
-      (Integer/valueOf numeral)
+      (utils/to-int numeral)
       (case (-> string (or "") lower-case)
         "tukui" -1
         "elvui" -2

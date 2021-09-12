@@ -71,7 +71,7 @@
 (defn extract-source-id
   [a]
   ;; fileinfo.php?s=c33edd26881a6a6509fd43e9a871809c&amp;id=23145 => 23145
-  (-> a :attrs :href (clojure.string/split #"&.+=") last Integer/valueOf))
+  (-> a :attrs :href (clojure.string/split #"&.+=") last utils/to-int))
 
 (defn extract-addon-url
   [a]
@@ -99,7 +99,7 @@
        ;;:category-list [] ;; not available in summary, added by caller
        ;;:created-date nil ;; not available in summary
        :updated-date (-> snippet (select [:div.updated html/content]) first extract-updated-date)
-       :download-count (-> snippet (select [:div.downloads html/content]) first (clojure.string/replace #"\D*" "") Integer/valueOf)})
+       :download-count (-> snippet (select [:div.downloads html/content]) first (clojure.string/replace #"\D*" "") utils/to-int)})
     (catch RuntimeException re
       (error re (format "failed to scrape snippet with '%s', excluding from results: %s" (.getMessage re) (utils/pprint snippet)))
       nil)))
@@ -119,8 +119,10 @@
         page-content (-> category :url http/download html-snippet)
         page-nav (-> page-content (select [:.pagenav [:td.alt1 html/last-of-type] :a]))
         ;; just scrape first page when page-nav is empty
-        page-count (if (empty? page-nav) 1 (-> page-nav first :attrs :href
-                                               (clojure.string/split #"=") last Integer/valueOf))
+        page-count (if (empty? page-nav)
+                     1
+                     (-> page-nav first :attrs :href
+                         (clojure.string/split #"=") last utils/to-int))
         page-range (range 1 (inc page-count))]
     page-range))
 
