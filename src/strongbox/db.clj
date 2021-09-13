@@ -1,10 +1,13 @@
 (ns strongbox.db
   (:require
+   [taoensso.tufte :as tufte :refer [p profile]]
    [clojure.string]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :refer [log debug info warn error spy]]
-   [strongbox.specs :as sp]))
+   [strongbox.specs :as sp])
+  (:import
+   [java.util.regex Pattern]))
 
 (defn-spec put-many :addon/summary-list
   "adds all of the items from `doc-list` into the given `db`.
@@ -115,13 +118,21 @@
     ;; we should see if a non-regex solution may be faster:
     ;; - https://www.baeldung.com/java-case-insensitive-string-matching
     (let [uin (clojure.string/trim uin)
-          label-regex (re-pattern (str "(?i)^" uin ".*"))
-          desc-regex (re-pattern (str "(?i).*" uin ".*"))
-          slow-fn (fn [row]
-                    (or
-                     (re-find label-regex (:label row))
-                     (re-find desc-regex (get row :description ""))))]
-      (partition-all cap (seque 100 (filter slow-fn db))))))
+          ;;label-regex (re-pattern (str "(?i)^" uin ".*"))
+          ;;desc-regex (re-pattern (str "(?i).*" uin ".*"))
+          ;;slow-fn (fn [row]
+          ;;          (p :p3/db-search-row
+          ;;             (or
+          ;;              (re-find label-regex (or (:label row) ""))
+          ;;              (re-find desc-regex (or (:description row) "")))))
+          regex (Pattern/compile (Pattern/quote uin) Pattern/CASE_INSENSITIVE)
+          fast-fn (fn [row]
+                    (p :p3/db-search-row
+                       (or
+                        (.find (.matcher regex (or (:label row) "")))
+                        (.find (.matcher regex (or (:description row) ""))))))]
+      (p :p3/db-partition
+         (partition-all cap (seque 100 (filterv fast-fn db)))))))
 
 ;; not specced because the results and argument lists may vary greatly
 (defn stored-query
