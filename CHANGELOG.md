@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * bumped dependencies
     - slight increase in performance loading JSON with a newer version of the `data.json` library.
+* searching for addons is now much much faster.
+    - matching search input against an addon has been improved by two orders of magnitude.
+* searching now searches *within* the addon name rather than from the start of the name.
 
 ### Fixed
 
