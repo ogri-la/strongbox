@@ -858,7 +858,7 @@
           has-update? (addon/updateable? addon)]
       (joblib/tick-delay 0.5)
       (when has-update?
-        (info (format "update available \"%s\"" (:version addon)))
+        (info (format "update \"%s\" available from %s" (:version addon) (:source addon)))
         (when-not (= (get-game-track) (:game-track addon))
           (warn (format "update is for '%s' and the addon directory is set to '%s'"
                         (-> addon :game-track sp/game-track-labels-map)
