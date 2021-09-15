@@ -628,7 +628,7 @@
     (let [output-file (find-catalogue-local-path :wowinterface)
           catalogue-data (wowinterface/scrape)
           created (utils/datestamp-now-ymd)
-          formatted-catalogue-data (catalogue/format-catalogue-data catalogue-data created)]
+          formatted-catalogue-data (catalogue/format-catalogue-data-for-output catalogue-data created)]
       (catalogue/write-catalogue formatted-catalogue-data output-file))))
 
 (defmethod action :scrape-curseforge-catalogue
@@ -637,7 +637,7 @@
     (let [output-file (find-catalogue-local-path :curseforge)
           catalogue-data (curseforge-api/download-all-summaries-alphabetically)
           created (utils/datestamp-now-ymd)
-          formatted-catalogue-data (catalogue/format-catalogue-data catalogue-data created)]
+          formatted-catalogue-data (catalogue/format-catalogue-data-for-output catalogue-data created)]
       (catalogue/write-catalogue formatted-catalogue-data output-file))))
 
 (defmethod action :scrape-tukui-catalogue
@@ -646,7 +646,7 @@
     (let [output-file (find-catalogue-local-path :tukui)
           catalogue-data (tukui-api/download-all-summaries)
           created (utils/datestamp-now-ymd)
-          formatted-catalogue-data (catalogue/format-catalogue-data catalogue-data created)]
+          formatted-catalogue-data (catalogue/format-catalogue-data-for-output catalogue-data created)]
       (catalogue/write-catalogue formatted-catalogue-data output-file))))
 
 (defmethod action :write-catalogue
@@ -657,7 +657,11 @@
 
         catalogue-path-list [curseforge-catalogue wowinterface-catalogue tukui-catalogue]
         catalogue (mapv catalogue/read-catalogue catalogue-path-list)
-        catalogue (reduce catalogue/merge-catalogues catalogue)]
+        catalogue (reduce catalogue/merge-catalogues catalogue)
+        ;; 2021-09: `merge-catalogues` no longer converts an addon to an `ordered-map`.
+        ;; turns out this is very slow and not necessary for regular usage of strongbox, just generating catalogues.
+        catalogue (catalogue/format-catalogue-data-for-output (:addon-summary-list catalogue) (:datestamp catalogue))
+        ]
     (if-not catalogue
       (warn "no catalogue data found, nothing to write")
       (-> catalogue

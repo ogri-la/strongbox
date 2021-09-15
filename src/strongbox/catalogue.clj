@@ -4,7 +4,7 @@
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
-   [taoensso.tufte :as tufte :refer [p profile]]
+   [taoensso.tufte :as tufte :refer [p]]
    [java-time]
    [strongbox
     [constants :as constants]
@@ -144,8 +144,21 @@
 (defn-spec format-catalogue-data :catalogue/catalogue
   "returns a correctly formatted catalogue given a list of addons and a datestamp"
   [addon-list :addon/summary-list, datestamp ::sp/ymd-dt]
-  (let [addon-list (mapv #(into (omap/ordered-map) (sort %))
-                         (sort-by :name addon-list))]
+  (let [addon-list (p :cat/sort-addons
+                      (sort-by :name addon-list))]
+    {:spec {:version 2}
+     :datestamp datestamp
+     :total (count addon-list)
+     :addon-summary-list addon-list}))
+
+(defn-spec format-catalogue-data-for-output :catalogue/catalogue
+  "same as `format-catalogue-data`, but the addon maps are converted to an `ordered-map` for better diffs"
+  [addon-list :addon/summary-list, datestamp ::sp/ymd-dt]
+  (let [addon-list (p :cat/format-catalogue-data
+                      (mapv #(p :cat/format-addon
+                                (into (omap/ordered-map) (sort %)))
+                            (p :cat/sort-addons
+                               (sort-by :name addon-list))))]
     {:spec {:version 2}
      :datestamp datestamp
      :total (count addon-list)
@@ -273,10 +286,22 @@
     (let [datestamp (last (sort [(:datestamp cat-a) (:datestamp cat-b)])) ;; latest wins
           addons-a (:addon-summary-list cat-a)
           addons-b (:addon-summary-list cat-b)
-          addon-summary-list (->> (concat addons-a addons-b) ;; join the two lists
-                                  (group-by (juxt :source-id :source)) ;; group by the key
-                                  vals ;; drop the keys. we now have a list of lists.
-                                  (map (partial apply merge)))] ;; merge the nested lists into single maps
+
+          one (p :cat/concat-addons
+               (concat addons-a addons-b))
+
+          two (p :cat/group-addons
+               (group-by (juxt :source-id :source) one))
+
+          three (p :cat/drop-keys
+               (vals two))
+
+          four (p :cat/merge-addons
+               (map (partial apply merge) three))
+
+          addon-summary-list four
+          
+          ]
       (format-catalogue-data addon-summary-list datestamp))))
 
 ;; 

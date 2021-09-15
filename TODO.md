@@ -15,6 +15,19 @@ see CHANGELOG.md for a more formal list of changes by release
 * add a --version parameter
     -done
 
+* gui, clicking File -> New Addon Directory continues to show the menu in the background
+    - fixed
+
+* investigate *warn-on-reflections*
+    - I think there may be some solid performance gains by turning this on
+        - remember to profile first
+    - turns out there wasn't
+    - done
+
+* wowinterface, bug, text response to binary when download pending:
+    - https://github.com/ogri-la/strongbox/discussions/289
+    - done
+
 ## todo
 
 * bug, catalogue loading
@@ -24,10 +37,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - the catalogue should always be loadable by previous versions of strongbox that support the given spec version
         - ...
     - when the catalogue fails validation it shouldn't freeze the app while the reason is printed in the console
-
-* investigate *warn-on-reflections*
-    - I think there may be some solid performance gains by turning this on
-        - remember to profile first
 
 * EOL planning, bundle a catalogue with the installation
     - load it as a resource with static-slurp, like we do with the sql?
@@ -40,8 +49,6 @@ see CHANGELOG.md for a more formal list of changes by release
                 - then the short/full/curse/wow catalogues are simply filtered versions of the 'full' catalogue
                 - the user catalogue would need to be merged over the top
 
-### investigate these
-
 * importing addons, skip db lookup for addon urls that don't need it
     - if we can 'expand it' then we can download it and install it.
     - I think tukui, wowi can, github obs, curseforge could not
@@ -51,6 +58,9 @@ see CHANGELOG.md for a more formal list of changes by release
     - if after we've read the nfo data and we have everything we need, check the addon for updates immediately
         - don't wait for db loading and addon matching
             - so we only match the unmatched against the catalogue?
+
+* switching catalogues takes ages 
+    - profile to figure out who the culprit is
 
 ## todo bucket (no particular order)
 

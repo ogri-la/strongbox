@@ -1159,9 +1159,6 @@
 
 (defn-spec refresh nil?
   []
-  (profile
-   {:when (get-state :profile?)}
-
    (report "refresh")
 
    ;; parse toc files in install-dir. do this first so we see *something* while catalogue downloads (next)
@@ -1185,7 +1182,7 @@
    ;; seems like a good place to preserve the etag-db
    (save-settings)
 
-   nil))
+  nil)
 
 ;; todo: move to ui.cli
 (defn-spec remove-addon nil?
