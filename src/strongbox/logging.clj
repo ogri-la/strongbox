@@ -2,28 +2,15 @@
   (:require
    [taoensso.timbre :as timbre]
    [taoensso.timbre.appenders.core :refer [spit-appender]]
-   [taoensso.tufte :as tufte :refer [p profile]]
    [orchestra.core :refer [defn-spec]]
    [clojure.spec.alpha :as s]
    [strongbox
-    [specs :as sp]
-    [utils :refer [join]]]))
+    [specs :as sp]]))
 
-;; profiling
+;; set the default log level to :info as soon as possible (default is `:debug`)
+;; `core/debug-mode?` relies on environment having been downgraded to `:debug`
 
-(tufte/add-basic-println-handler! {})
-
-(defn-spec add-profiling-handler! nil?
-  "writes profiling data to a timestamped file in the given `output-dir`"
-  [output-dir ::sp/extant-dir]
-  (let [output-file (join output-dir (str (java-time/instant) ".pstats"))]
-    (tufte/add-handler!
-     :data-dir-logger "*"
-     (fn [data-map]
-       (spit output-file (tufte/format-pstats (:pstats data-map) nil)))))
-  nil)
-
-;; logging
+(timbre/merge-config! {:min-level :info})
 
 (def default-log-level :info)
 (def level-map {:debug 0 :info 1 :warn 2 :error 3 :report 4})

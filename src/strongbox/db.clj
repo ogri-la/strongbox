@@ -1,6 +1,6 @@
 (ns strongbox.db
   (:require
-   [taoensso.tufte :as tufte :refer [p profile]]
+   [taoensso.tufte :as tufte :refer [p]]
    [clojure.string]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]

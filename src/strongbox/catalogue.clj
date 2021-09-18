@@ -4,7 +4,7 @@
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
-   [taoensso.tufte :as tufte :refer [p profile]]
+   [taoensso.tufte :as tufte :refer [p]]
    [java-time]
    [strongbox
     [constants :as constants]
@@ -144,8 +144,21 @@
 (defn-spec format-catalogue-data :catalogue/catalogue
   "returns a correctly formatted catalogue given a list of addons and a datestamp"
   [addon-list :addon/summary-list, datestamp ::sp/ymd-dt]
-  (let [addon-list (mapv #(into (omap/ordered-map) (sort %))
-                         (sort-by :name addon-list))]
+  (let [addon-list (p :cat/sort-addons
+                      (sort-by :name addon-list))]
+    {:spec {:version 2}
+     :datestamp datestamp
+     :total (count addon-list)
+     :addon-summary-list addon-list}))
+
+(defn-spec format-catalogue-data-for-output :catalogue/catalogue
+  "same as `format-catalogue-data`, but the addon maps are converted to an `ordered-map` for better diffs"
+  [addon-list :addon/summary-list, datestamp ::sp/ymd-dt]
+  (let [addon-list (p :cat/format-catalogue-data
+                      (mapv #(p :cat/format-addon
+                                (into (omap/ordered-map) (sort %)))
+                            (p :cat/sort-addons
+                               (sort-by :name addon-list))))]
     {:spec {:version 2}
      :datestamp datestamp
      :total (count addon-list)
@@ -211,7 +224,11 @@
   ([path]
    (read-catalogue path {}))
   ([path opts]
-   (-> path (-read-catalogue opts) validate)))
+   ;; 2021-09-18: validate disabled. too slow and if it ever failed the error would be incomprehensible to
+   ;; read after appearing to hang for minutes.
+   ;; incomplete/corrupt JSON will be detected and re-downloaded.
+   ;;(-> path (-read-catalogue opts) validate)))
+   (-read-catalogue path opts)))
 
 (defn-spec write-catalogue ::sp/extant-file
   "write catalogue to given `output-file` as JSON. returns path to output file"

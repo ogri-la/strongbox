@@ -15,6 +15,48 @@ see CHANGELOG.md for a more formal list of changes by release
 * add a --version parameter
     -done
 
+* gui, clicking File -> New Addon Directory continues to show the menu in the background
+    - fixed
+
+* investigate *warn-on-reflections*
+    - I think there may be some solid performance gains by turning this on
+        - remember to profile first
+    - turns out there wasn't
+    - done
+
+* wowinterface, bug, text response to binary when download pending:
+    - https://github.com/ogri-la/strongbox/discussions/289
+    - done
+
+* bug, catalogue loading
+    - when the catalogue fails validation it shouldn't freeze the app while the reason is printed in the console
+        - removed validation of catalogue
+        - can't get around error message and even then what is the user supposed to do?
+            - catalogue needs to be valid on write
+                - yes
+            - catalogue needs to fail when corrupted
+                - yes
+        - done
+
+* check addons for updates immediately after loading
+    - if after we've read the nfo data and we have everything we need, check the addon for updates immediately
+        - don't wait for db loading and addon matching
+            - so we only match the unmatched against the catalogue?
+    - I think the root cause of this was slowness
+        - what do you mean you're still loading and matching? just let me update already!
+        - speed has been improved by removing validation
+        - app is also faster that I think it is during normal operation when speccing is off
+    - closing this
+        - 'fixing' it would change the behaviour of matching addons to catalogues that I currently quite like
+
+* switching catalogues takes ages 
+    - profile to figure out who the culprit is
+        - the call to `validate` in read-catalogue
+        - sorting keys in addons so they become ordered-maps
+            - not necessary during normal operation, only when generating maps
+    - also, outside of dev environment it's faster than I appreciate
+    - done
+
 ## todo
 
 * bug, catalogue loading
@@ -23,11 +65,6 @@ see CHANGELOG.md for a more formal list of changes by release
             - the key in question wasn't qualified and thus not matched for validation
     - the catalogue should always be loadable by previous versions of strongbox that support the given spec version
         - ...
-    - when the catalogue fails validation it shouldn't freeze the app while the reason is printed in the console
-
-* investigate *warn-on-reflections*
-    - I think there may be some solid performance gains by turning this on
-        - remember to profile first
 
 * EOL planning, bundle a catalogue with the installation
     - load it as a resource with static-slurp, like we do with the sql?
@@ -40,19 +77,26 @@ see CHANGELOG.md for a more formal list of changes by release
                 - then the short/full/curse/wow catalogues are simply filtered versions of the 'full' catalogue
                 - the user catalogue would need to be merged over the top
 
-### investigate these
-
 * importing addons, skip db lookup for addon urls that don't need it
     - if we can 'expand it' then we can download it and install it.
     - I think tukui, wowi can, github obs, curseforge could not
     - this item may already be done, investigate and if not, send back to bucket with a better description
 
-* check addons for updates immediately after loading
-    - if after we've read the nfo data and we have everything we need, check the addon for updates immediately
-        - don't wait for db loading and addon matching
-            - so we only match the unmatched against the catalogue?
-
 ## todo bucket (no particular order)
+
+* export/import addons to/from github
+    - I have a github account, I'd like to push/pull addons to it
+        - use a gist?
+        - dedicated repo?
+    - other targets to publish to?
+        - always keep the base import/export to a *file*
+        - ftp? s3 bucket? ssh? gitlab?
+    - feels a bit like scope creep to me
+        - it would be nice and convenient, but a lot of work to build and maintain
+
+* schedule user catalogue refreshes
+    - ensure the user catalogue doesn't get too stale and perform an update in the background if it looks like it's very old
+        - update README
 
 * 'update all' should be a no-op if nothing has updates available
     - don't disable the button, just don't do anything
