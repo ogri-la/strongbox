@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * searching for addons is now much much faster.
     - matching search input against an addon has been improved by two orders of magnitude.
 * searching now searches *within* the addon name rather than from the start of the name.
+* catalogue is no longer validated on reading.
+    - it was the major cause of slow catalogue loads, switches between catalogues and (probably) overly cautious.
+    - well-formed JSON but an invalid catalogue would cause a freeze printing the validation error to the console.
+* addon maps no longer have their keys ordered on reading.
+    - a minor cause of slow catalogue loading/switching and only necessary when creating catalogues.
 
 ### Fixed
 
@@ -25,6 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * regression where a bad addon downloaded in parallel would still be passed to the 'install addon' operation.
 
 ### Removed
+
+* the `--profile` command line option and the scaffolding around integrating it with the tests and test coverage.
 
 ## 4.5.0 - 2021-09-05
 
