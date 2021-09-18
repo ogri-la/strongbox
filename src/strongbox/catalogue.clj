@@ -228,7 +228,7 @@
    ;; read after appearing to hang for minutes.
    ;; incomplete/corrupt JSON will be detected and re-downloaded.
    ;;(-> path (-read-catalogue opts) validate)))
-   (-> path (-read-catalogue opts))))
+   (-read-catalogue path opts)))
 
 (defn-spec write-catalogue ::sp/extant-file
   "write catalogue to given `output-file` as JSON. returns path to output file"
@@ -290,20 +290,10 @@
     (let [datestamp (last (sort [(:datestamp cat-a) (:datestamp cat-b)])) ;; latest wins
           addons-a (:addon-summary-list cat-a)
           addons-b (:addon-summary-list cat-b)
-
-          one (p :cat/concat-addons
-                 (concat addons-a addons-b))
-
-          two (p :cat/group-addons
-                 (group-by (juxt :source-id :source) one))
-
-          three (p :cat/drop-keys
-                   (vals two))
-
-          four (p :cat/merge-addons
-                  (mapv (partial apply merge) three))
-
-          addon-summary-list four]
+          addon-summary-list (->> (concat addons-a addons-b) ;; join the two lists
+                                  (group-by (juxt :source-id :source)) ;; group by the key
+                                  vals ;; drop the keys. we now have a list of lists.
+                                  (map (partial apply merge)))] ;; merge the nested lists into single maps
       (format-catalogue-data addon-summary-list datestamp))))
 
 ;; 

@@ -56,7 +56,7 @@
                   :data-dir data-dir
                   :catalogue-dir data-dir
 
-                  ;; 2021-09-16: no longer used, exists only for cleanup.
+                  ;; 2021-09-16: no longer used, exists only for cleanup and will be removed in the future.
                   ;; /home/$you/.local/share/strongbox/profile-data
                   :profile-data-dir (join data-dir "profile-data")
 

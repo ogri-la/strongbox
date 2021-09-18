@@ -20,9 +20,9 @@
   "ticks but then pauses for a short random period providing an illusion that something is happening.
   pause only occurs if the `tick` fn is bound."
   [pct :joblib/progress]
-  (when-let [r (tick pct)]
+  (when-let [progress (tick pct)]
     (Thread/sleep (rand-int 150))
-    r))
+    progress))
 
 (defn-spec deref* any?
   [future-obj future?]

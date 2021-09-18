@@ -659,7 +659,8 @@
         catalogue (mapv catalogue/read-catalogue catalogue-path-list)
         catalogue (reduce catalogue/merge-catalogues catalogue)
         ;; 2021-09: `merge-catalogues` no longer converts an addon to an `ordered-map`.
-        ;; turns out this is very slow and not necessary for regular usage of strongbox, just generating catalogues.
+        ;; turns out this is fast individually but slow in aggregate and not necessary for regular usage of strongbox,
+        ;; just generating catalogues.
         catalogue (catalogue/format-catalogue-data-for-output (:addon-summary-list catalogue) (:datestamp catalogue))]
     (if-not catalogue
       (warn "no catalogue data found, nothing to write")
