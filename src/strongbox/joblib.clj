@@ -17,11 +17,12 @@
   (constantly nil))
 
 (defn-spec tick-delay :joblib/progress
-  "ticks but then pauses for a random period between 50 and 200ms providing an illusion that something is happening.
+  "ticks but then pauses for a short random period providing an illusion that something is happening.
   pause only occurs if the `tick` fn is bound."
   [pct :joblib/progress]
-  (when (tick pct)
-    (Thread/sleep (+ 50 (rand-int 150)))))
+  (when-let [r (tick pct)]
+    (Thread/sleep (rand-int 150))
+    r))
 
 (defn-spec deref* any?
   [future-obj future?]
