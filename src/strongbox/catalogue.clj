@@ -224,7 +224,11 @@
   ([path]
    (read-catalogue path {}))
   ([path opts]
-   (-> path (-read-catalogue opts) validate)))
+   ;; 2021-09-18: validate disabled. too slow and if it ever failed the error would be incomprehensible to
+   ;; read after appearing to hang for minutes.
+   ;; incomplete/corrupt JSON will be detected and re-downloaded.
+   ;;(-> path (-read-catalogue opts) validate)))
+   (-> path (-read-catalogue opts))))
 
 (defn-spec write-catalogue ::sp/extant-file
   "write catalogue to given `output-file` as JSON. returns path to output file"
@@ -297,7 +301,7 @@
                (vals two))
 
           four (p :cat/merge-addons
-               (map (partial apply merge) three))
+               (mapv (partial apply merge) three))
 
           addon-summary-list four
           

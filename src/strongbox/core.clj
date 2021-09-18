@@ -741,11 +741,14 @@
                            (error "please report this! https://github.com/ogri-la/strongbox/issues")
                            (error "catalogue *still* corrupted and cannot be loaded. try another catalogue from the 'catalogue' menu"))}))
 
-          catalogue-data (p :p2/db:catalogue:read-catalogue (catalogue/read-catalogue catalogue-path {:bad-data? bad-json-file-handler}))
-          user-catalogue-data (p :p2/db:catalogue:read-user-catalogue (catalogue/read-catalogue (paths :user-catalogue-file) {:bad-data? nil}))
+          catalogue-data (p :p2/db:catalogue:read-catalogue
+                            (catalogue/read-catalogue catalogue-path {:bad-data? bad-json-file-handler}))
+          user-catalogue-data (p :p2/db:catalogue:read-user-catalogue
+                                 (catalogue/read-catalogue (paths :user-catalogue-file) {:bad-data? nil}))
           ;; 2021-06-30: merge order changed. catalogue data is now merged over the top of the user-catalogue.
           ;; this is because the user-catalogue may now contain addons from all hosts and is likely to be out of date.
-          final-catalogue (p :p2/db:catalogue:merge-catalogues (catalogue/merge-catalogues user-catalogue-data catalogue-data))]
+          final-catalogue (p :p2/db:catalogue:merge-catalogues
+                             (catalogue/merge-catalogues user-catalogue-data catalogue-data))]
       (-> final-catalogue :addon-summary-list count (str " addons in final catalogue") info)
       final-catalogue)))
 
@@ -755,7 +758,8 @@
   []
   (if (and (not (db-catalogue-loaded?))
            (current-catalogue))
-    (let [final-catalogue (p :p2/db:catalogue (load-current-catalogue))]
+    (let [final-catalogue (p :p2/db:catalogue
+                             (load-current-catalogue))]
       (when-not (empty? final-catalogue)
         (p :p2/db:load
            (swap! state assoc :db
