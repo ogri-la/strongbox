@@ -292,20 +292,18 @@
           addons-b (:addon-summary-list cat-b)
 
           one (p :cat/concat-addons
-               (concat addons-a addons-b))
+                 (concat addons-a addons-b))
 
           two (p :cat/group-addons
-               (group-by (juxt :source-id :source) one))
+                 (group-by (juxt :source-id :source) one))
 
           three (p :cat/drop-keys
-               (vals two))
+                   (vals two))
 
           four (p :cat/merge-addons
-               (mapv (partial apply merge) three))
+                  (mapv (partial apply merge) three))
 
-          addon-summary-list four
-          
-          ]
+          addon-summary-list four]
       (format-catalogue-data addon-summary-list datestamp))))
 
 ;; 

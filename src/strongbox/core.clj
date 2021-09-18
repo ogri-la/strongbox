@@ -5,7 +5,7 @@
    [taoensso.timbre :as timbre :refer [debug info warn error report spy]]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
-   [taoensso.tufte :as tufte :refer [p profile]]
+   [taoensso.tufte :as tufte :refer [p]]
    [me.raynes.fs :as fs]
    [trptcolin.versioneer.core :as versioneer]
    [envvar.core :refer [env]]
@@ -56,6 +56,7 @@
                   :data-dir data-dir
                   :catalogue-dir data-dir
 
+                  ;; 2021-09-16: no longer used, exists only for cleanup.
                   ;; /home/$you/.local/share/strongbox/profile-data
                   :profile-data-dir (join data-dir "profile-data")
 
@@ -366,9 +367,8 @@
   [state-atm ::sp/atom]
   (when (debug-mode?)
     (if-not @state-atm
-      (warn "application has not been started, no location to write log or profile data")
+      (warn "application has not been started, no location to write log data")
       (do
-        (logging/add-profiling-handler! (paths :profile-data-dir))
         (logging/add-file-appender! (paths :log-file))
         (info "writing logs to:" (paths :log-file))))))
 
@@ -427,8 +427,6 @@
   (let [final-config (config/load-settings cli-opts (paths :cfg-file) (paths :etag-db-file))]
     (swap! state merge final-config)
     (reset-logging!)
-    (when (contains? cli-opts :profile?)
-      (swap! state assoc :profile? (:profile? cli-opts)))
     (when (contains? cli-opts :spec?)
       (utils/instrument (:spec? cli-opts))))
   nil)
@@ -1163,28 +1161,28 @@
 
 (defn-spec refresh nil?
   []
-   (report "refresh")
+  (report "refresh")
 
    ;; parse toc files in install-dir. do this first so we see *something* while catalogue downloads (next)
-   (load-installed-addons)
+  (load-installed-addons)
 
    ;; downloads the big long list of addon information stored on github
-   (download-current-catalogue)
+  (download-current-catalogue)
 
    ;; load the contents of the catalogue into the database
-   (p :p2/db (db-load-catalogue))
+  (p :p2/db (db-load-catalogue))
 
    ;; match installed addons to those in catalogue
-   (match-installed-addons-with-catalogue)
+  (match-installed-addons-with-catalogue)
 
    ;; for those addons that have matches, download their details
-   (check-for-updates)
+  (check-for-updates)
 
    ;; 2019-06-30, travis is failing with 403: Forbidden. Moved to gui init
    ;;(latest-strongbox-release) ;; check for updates after everything else is done 
 
    ;; seems like a good place to preserve the etag-db
-   (save-settings)
+  (save-settings)
 
   nil)
 
