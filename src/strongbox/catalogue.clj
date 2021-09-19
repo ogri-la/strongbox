@@ -33,7 +33,7 @@
         key (:source addon)]
     (try
       (if-not (contains? dispatch-map key)
-        (error (format "addon '%s' is from source '%s' that is unsupported" (:label addon) key))
+        (error (format "addon '%s' is from unsupported source '%s'." (:label addon) key))
         (let [release-list ((get dispatch-map key) addon game-track)
               latest-release (first release-list)
               pinned-release (when (and release-list
@@ -74,7 +74,9 @@
              (or
               (-expand-summary addon :classic-tbc)
               (-expand-summary addon :classic)
-              (-expand-summary addon :retail)))]
+              (-expand-summary addon :retail))
+
+             nil)]
 
     source-updates
 
@@ -98,8 +100,14 @@
                 ;; these can happen after alpha/beta/no-lib releases have been excluded and no releases are left
                 [:retail false] (format multi-template retail-lbl classic-lbl classic-tbc-lbl source)
                 [:classic false] (format multi-template classic-lbl classic-tbc-lbl retail-lbl source)
-                [:classic-tbc false] (format multi-template classic-tbc-lbl classic-lbl retail-lbl source))]
-      (warn msg))))
+                [:classic-tbc false] (format multi-template classic-tbc-lbl classic-lbl retail-lbl source)
+
+                (if (boolean? strict?)
+                  (error (format "unsupported game track '%s'." (str game-track)))
+                  (do (error "this is a programming error, please report this if possible.")
+                      (error (format "unknown strictness value '%s'." (str strict?))))))]
+      (when msg
+        (warn msg)))))
 
 ;;
 

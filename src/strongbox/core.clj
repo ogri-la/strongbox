@@ -330,7 +330,8 @@
      nil)))
 
 (defn-spec get-game-track (s/or :ok :addon-dir/game-track, :missing nil?)
-  "returns the game track for the given `addon-dir` or the currently selected addon-dir if no `addon-dir` given"
+  "returns the game track for the given `addon-dir`.
+  uses the currently selected addon-dir if no `addon-dir` given."
   ([]
    (get-game-track (selected-addon-dir)))
   ([addon-dir (s/nilable ::sp/addon-dir)]
@@ -479,8 +480,8 @@
   "downloads `addon` to the given `install-dir`.
   see `download-addon-guard` for a version with checks."
   [addon :addon/installable, install-dir ::sp/writeable-dir]
-  (info (format "downloading '%s' version '%s'" (:label addon) (:version addon)))
   (when (expanded? addon)
+    (info (format "downloading '%s' version '%s'" (:label addon) (:version addon)))
     (let [output-fname (addon/downloaded-addon-fname (:name addon) (:version addon)) ;; addonname--1-2-3.zip
           output-path (join (fs/absolute install-dir) output-fname)] ;; /path/to/installed/addons/addonname--1.2.3.zip
       (binding [http/*cache* (cache)]

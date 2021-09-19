@@ -264,10 +264,10 @@
 (defn-spec install-addon nil?
   "install an addon from the catalogue. works on expanded addons as well."
   [addon :addon/summary]
-  (-> addon
-      core/expand-summary-wrapper
-      vector
-      install-update-these-serially)
+  (some-> addon
+          core/expand-summary-wrapper
+          vector
+          install-update-these-serially)
   (core/refresh))
 
 (defn-spec install-many ::sp/list-of-maps
