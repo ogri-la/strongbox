@@ -18,7 +18,7 @@
    ;; from clj-commons/fs
    [org.apache.commons.io.input CountingInputStream]))
 
-(def expiry-offset-hours 1) ;; hours
+(def expiry-offset-hours 1000) ;; hours
 (def ^:dynamic *cache* nil)
 
 (defn- add-etag-or-not

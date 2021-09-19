@@ -661,15 +661,12 @@
         ;; 2021-09: `merge-catalogues` no longer converts an addon to an `ordered-map`.
         ;; turns out this is fast individually but slow in aggregate and not necessary for regular usage of strongbox,
         ;; just generating catalogues.
-        catalogue (catalogue/format-catalogue-data-for-output (:addon-summary-list catalogue) (:datestamp catalogue))]
+        catalogue (catalogue/format-catalogue-data-for-output (:addon-summary-list catalogue) (:datestamp catalogue))
+        short-catalogue (catalogue/shorten-catalogue catalogue constants/release-of-previous-expansion)]
     (if-not catalogue
       (warn "no catalogue data found, nothing to write")
-      (-> catalogue
-          (catalogue/write-catalogue (find-catalogue-local-path :full))
-
-          ;; 'short' catalogue is derived from the full catalogue
-          (catalogue/shorten-catalogue constants/release-of-previous-expansion)
-          (catalogue/write-catalogue (find-catalogue-local-path :short))))))
+      (do (catalogue/write-catalogue catalogue (find-catalogue-local-path :full))
+          (catalogue/write-catalogue short-catalogue (find-catalogue-local-path :short))))))
 
 (defmethod action :scrape-catalogue
   [_]
