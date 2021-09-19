@@ -35,7 +35,7 @@
     (do
       (st/instrument)
       ;; https://github.com/bhb/expound/blob/master/doc/faq.md#using-alter-var-root
-      (if (in-repl?) 
+      (if (in-repl?)
         (set! s/*explain-out* expound/printer)
         (alter-var-root #'s/*explain-out* (constantly expound/printer)))
       (info "instrumentation is ON"))

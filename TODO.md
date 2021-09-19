@@ -59,6 +59,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+* wowinterface, revisit the pages that are being scraped, make sure we're not missing any
+
 * bug, catalogue loading
     - while updating the catalogue with the new tukui addons I discovered a case where the catalogue *should* be failing validation but it wasn't.
         - it came down to an :opt vs :opt-un in the spec

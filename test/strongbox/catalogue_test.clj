@@ -2,7 +2,9 @@
   (:require
    [clojure.test :refer [deftest testing is use-fixtures]]
    ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
+   [me.raynes.fs :as fs :refer [with-cwd]]
    [strongbox
+    [utils :as utils]
     [constants :as constants]
     [logging :as logging]
     [catalogue :as catalogue]
@@ -33,65 +35,64 @@
       (is (= (catalogue/format-catalogue-data addon-list created) expected)))))
 
 (deftest merge-catalogues
-  (let [addon1 {:url "https://github.com/Aviana/HealComm"
-                :updated-date "2019-10-09T17:40:04Z"
-                :source "github"
-                :source-id "Aviana/HealComm"
-                :label "HealComm"
-                :name "healcomm"
-                :download-count 30946
-                :tag-list []}
+  (testing "merging of two catalogues"
+    (let [addon1 {:url "https://github.com/Aviana/HealComm"
+                  :updated-date "2019-10-09T17:40:04Z"
+                  :source "github"
+                  :source-id "Aviana/HealComm"
+                  :label "HealComm"
+                  :name "healcomm"
+                  :download-count 30946
+                  :tag-list []}
 
-        addon2 {:url "https://github.com/Ravendwyr/Chinchilla"
-                :updated-date "2019-10-09T17:40:04Z"
-                :source "github"
-                :source-id "Ravendwyr/Chinchilla"
-                :label "Chinchilla"
-                :name "chinchilla"
-                :download-count 30946
-                :tag-list []}
+          addon2 {:url "https://github.com/Ravendwyr/Chinchilla"
+                  :updated-date "2019-10-09T17:40:04Z"
+                  :source "github"
+                  :source-id "Ravendwyr/Chinchilla"
+                  :label "Chinchilla"
+                  :name "chinchilla"
+                  :download-count 30946
+                  :tag-list []}
 
-        cat-a (catalogue/new-catalogue [addon1])
-        cat-b (catalogue/new-catalogue [addon2])
+          cat-a (catalogue/new-catalogue [addon1])
+          cat-b (catalogue/new-catalogue [addon2])
 
-        merged (catalogue/new-catalogue [addon1 addon2])
+          merged (catalogue/new-catalogue [addon1 addon2])
 
-        cases [[[nil nil] nil]
-               [[cat-a nil] cat-a]
-               [[nil cat-b] cat-b]
-               [[cat-a cat-b] merged]]]
+          cases [[[nil nil] nil]
+                 [[cat-a nil] cat-a]
+                 [[nil cat-b] cat-b]
+                 [[cat-a cat-b] merged]]]
 
-    (doseq [[[a b] expected] cases]
-      (testing (format "merging of two catalogues, case '%s'" [a b])
+      (doseq [[[a b] expected] cases]
         (is (= expected (catalogue/merge-catalogues a b))))))
 
-  (let [addon1 {:url "https://github.com/Aviana/HealComm"
-                :updated-date "2001-01-01T00:00:00Z" ;; <=
-                :description "???" ;; <=
-                :source "github"
-                :source-id "Aviana/HealComm"
-                :label "HealComm"
-                :name "healcomm"
-                :download-count 30946
-                :tag-list []}
+  (testing "old catalogue data is replaced by newer catalogue data"
+    (let [addon1 {:url "https://github.com/Aviana/HealComm"
+                  :updated-date "2001-01-01T00:00:00Z" ;; <=
+                  :description "???" ;; <=
+                  :source "github"
+                  :source-id "Aviana/HealComm"
+                  :label "HealComm"
+                  :name "healcomm"
+                  :download-count 30946
+                  :tag-list []}
 
-        addon2 {:url "https://github.com/Aviana/HealComm"
-                :updated-date "2019-10-09T17:40:04Z" ;; <=
-                :source "github"
-                :source-id "Aviana/HealComm"
-                :label "HealComm"
-                :name "healcomm"
-                :download-count 30946
-                :tag-list []}
+          addon2 {:url "https://github.com/Aviana/HealComm"
+                  :updated-date "2019-10-09T17:40:04Z" ;; <=
+                  :source "github"
+                  :source-id "Aviana/HealComm"
+                  :label "HealComm"
+                  :name "healcomm"
+                  :download-count 30946
+                  :tag-list []}
 
-        cat-a (catalogue/new-catalogue [addon1])
-        cat-b (catalogue/new-catalogue [addon2])
+          cat-a (catalogue/new-catalogue [addon1])
+          cat-b (catalogue/new-catalogue [addon2])
 
-        ;; addon1 has been overwritten by data in addon2
-        ;; this means changes will accumulate until the addon summary is refreshed
-        merged (catalogue/new-catalogue [(assoc addon2 :description "???")])]
-
-    (testing "old catalogue data is replaced by newer catalogue data"
+          ;; addon1 has been overwritten by data in addon2
+          ;; this means changes will accumulate until the addon summary is refreshed
+          merged (catalogue/new-catalogue [(assoc addon2 :description "???")])]
       (is (= merged (catalogue/merge-catalogues cat-a cat-b))))))
 
 (deftest parse-user-string-router
@@ -216,6 +217,61 @@
 
     (testing "catalogue with an incorrect total yields `nil`"
       (is (nil? (catalogue/validate catalogue-with-incorrect-total))))))
+
+(deftest write-catalogue
+  (testing "JSON serialised data is ordered and formatted correctly"
+    (let [datestamp "2020-02-20"
+
+          ;; addons are sorted by the `:name` key on output.
+          ;; the fixture is sorted, this list is deliberately *unsorted*.
+          addon-summary-list
+          [{:download-count 9,
+            :game-track-list [:retail :classic],
+            :label "Chinchilla",
+            :name "chinchilla",
+            :source "github",
+            :source-id "Ravendwyr/Chinchilla",
+            :tag-list [],
+            :updated-date "2019-10-19T15:07:07Z",
+            :url "https://github.com/Ravendwyr/Chinchilla"}
+           {:created-date "2019-04-13T15:23:09.397Z",
+            :description "A New Simple Percent",
+            :download-count 1034,
+            :label "A New Simple Percent",
+            :name "a-new-simple-percent",
+            :source "curseforge",
+            :source-id 319346,
+            :tag-list [:unit-frames],
+            :updated-date "2019-10-29T22:47:42.463Z",
+            :url "https://www.curseforge.com/wow/addons/a-new-simple-percent"}
+           {:description "Skins for AddOns",
+            :download-count 1112033,
+            :game-track-list [:retail],
+            :label "AddOnSkins",
+            :name "addonskins",
+            :source "tukui",
+            :source-id 3,
+            :tag-list [:ui],
+            :updated-date "2019-11-17T23:02:23Z",
+            :url "https://www.tukui.org/addons.php?id=3"}
+           {:download-count 1077,
+            :game-track-list [:retail],
+            :label "$old!it",
+            :name "$old-it",
+            :source "wowinterface",
+            :source-id 21651,
+            :tag-list [:auction-house :vendors],
+            :updated-date "2012-09-20T05:32:00Z",
+            :url "https://www.wowinterface.com/downloads/info21651"}
+           ]
+
+          catalogue (catalogue/format-catalogue-data-for-output addon-summary-list datestamp)
+          ;; this test relies on the *exact* JSON formatting of the below fixture
+          expected (slurp (fixture-path "catalogue--v2.json"))
+          actual (slurp (catalogue/write-catalogue catalogue (utils/join fs/*cwd* "catalogue.json")))]
+      (is (= expected actual)))))
+
+;;
 
 (deftest github-500-error
   (testing "a github 500 (internal server error) response gets a custom message"
