@@ -262,13 +262,57 @@
             :source-id 21651,
             :tag-list [:auction-house :vendors],
             :updated-date "2012-09-20T05:32:00Z",
-            :url "https://www.wowinterface.com/downloads/info21651"}
-           ]
+            :url "https://www.wowinterface.com/downloads/info21651"}]
 
           catalogue (catalogue/format-catalogue-data-for-output addon-summary-list datestamp)
           ;; this test relies on the *exact* JSON formatting of the below fixture
           expected (slurp (fixture-path "catalogue--v2.json"))
           actual (slurp (catalogue/write-catalogue catalogue (utils/join fs/*cwd* "catalogue.json")))]
+      (is (= expected actual)))))
+
+(deftest shorten-catalogue
+  (testing "a catalogue can be shortened by removing all addons before a cut off date"
+    (let [catalogue
+          {:spec {:version 2}
+           :datestamp "2020-02-20"
+           :total 3
+           :addon-summary-list
+           [{:updated-date "2019-10-19T01:01:01Z",
+             :download-count 9,
+             :game-track-list [:retail :classic],
+             :label "Chinchilla",
+             :name "chinchilla",
+             :source "github",
+             :source-id "Ravendwyr/Chinchilla",
+             :tag-list [],
+             :url "https://github.com/Ravendwyr/Chinchilla"}
+
+            {:updated-date "2019-10-29T01:01:01Z",
+             :created-date "2019-04-13T15:23:09.397Z",
+             :description "A New Simple Percent",
+             :download-count 1034,
+             :label "A New Simple Percent",
+             :name "a-new-simple-percent",
+             :source "curseforge",
+             :source-id 319346,
+             :tag-list [:unit-frames],
+             :url "https://www.curseforge.com/wow/addons/a-new-simple-percent"}
+
+            {:updated-date "2019-11-19T01:01:01Z",
+             :description "Skins for AddOns",
+             :download-count 1112033,
+             :game-track-list [:retail],
+             :label "AddOnSkins",
+             :name "addonskins",
+             :source "tukui",
+             :source-id 3,
+             :tag-list [:ui],
+             :url "https://www.tukui.org/addons.php?id=3"}]}
+
+          cutoff "2019-11-01T01:01:01Z"
+          expected (update-in catalogue [:addon-summary-list] #(vec (take-last 1 %)))
+          expected (assoc expected :total 1)
+          actual (catalogue/shorten-catalogue catalogue cutoff)]
       (is (= expected actual)))))
 
 ;;
