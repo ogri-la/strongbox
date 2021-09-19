@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * searching for addons is now much much faster.
     - matching search input against an addon has been improved by two orders of magnitude.
 * searching now searches *within* the addon name rather than from the start of the name.
-* catalogue is no longer validated on reading.
+* catalogue is no longer validated when reading the catalogue JSON file.
     - it was the major cause of slow catalogue loads, switches between catalogues and (probably) overly cautious.
     - well-formed JSON but an invalid catalogue would cause a freeze printing the validation error to the console.
 * addon maps no longer have their keys ordered on reading.

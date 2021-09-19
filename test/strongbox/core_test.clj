@@ -201,9 +201,15 @@
                     {:name "carbonite" :source "curseforge" :game-track :retail}]]
       (is (= expected (core/export-installed-addon-list addon-list))))))
 
-(deftest export-catalogue-addon-list
-  (testing "exported addon list data is correct"
-    (let [catalogue (slurp-fixture "import-export--user-catalogue.json")
+(deftest export-catalogue-addon-list--v1
+  (testing "exported addon list data from v1 catalogue data is correct"
+    (let [catalogue (catalogue/read-catalogue (fixture-path "import-export--user-catalogue-v1.json"))
+          expected (slurp-fixture "import-export--user-catalogue-export.json")]
+      (is (= expected (core/export-catalogue-addon-list catalogue))))))
+
+(deftest export-catalogue-addon-list--v2
+  (testing "exported addon list data from v2 catalogue data is correct"
+    (let [catalogue (catalogue/read-catalogue (fixture-path "import-export--user-catalogue-v2.json"))
           expected (slurp-fixture "import-export--user-catalogue-export.json")]
       (is (= expected (core/export-catalogue-addon-list catalogue))))))
 
@@ -1466,3 +1472,9 @@
                [{:name "foo" :label "Foo" :source "wowinterface" :source-id 123} true]]]
     (doseq [[given expected] cases]
       (is (= expected (core/expandable? given))))))
+
+;; ---
+
+;;(deftest read-strange-catalogue
+;;  (testing "strongbox can read a catalogue of strange data and still function"
+;;    (is false)))
