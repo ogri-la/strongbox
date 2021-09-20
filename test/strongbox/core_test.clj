@@ -1496,17 +1496,22 @@
 
           dummy-catalogue (utils/to-json future-data)
           fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
-                       {:get (fn [req] {:status 200 :body dummy-catalogue})}}]
+                       {:get (fn [req] {:status 200 :body dummy-catalogue})}}
+          expected-messages ["addon 'A New Simple Percent' is from an unsupported source 'gitlab'."
+                             "refresh"]]
 
       (with-global-fake-routes-in-isolation fake-routes
         (with-running-app+opts {:spec? false}
           (helper/install-dir)
           (core/refresh)
 
-          (-> (core/db-search "new")
-              first ;; first page of results
-              first ;; first result
-              cli/install-addon)
+          (is (= expected-messages
+                 (logging/buffered-log
+                  :error
+                  (-> (core/db-search "new")
+                      first ;; first page of results
+                      first ;; first result
+                      cli/install-addon))))
 
           (is (= [] (core/get-state :installed-addon-list))))))))
 
@@ -1532,7 +1537,9 @@
 
         fake-routes {;; catalogue
                      "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
-                     {:get (fn [req] {:status 200 :body dummy-catalogue})}}]
+                     {:get (fn [req] {:status 200 :body dummy-catalogue})}}
+        expected-messages ["unsupported game track ':classic-bfa'."
+                           "refresh"]]
 
     (testing "strongbox can attempt to install an addon from an unknown source and not crash"
       (with-global-fake-routes-in-isolation fake-routes
@@ -1544,9 +1551,12 @@
           ;; the game track in the addon is only used to pare down available releases.
           (swap! core/state assoc-in [:cfg :addon-dir-list 0 :game-track] future-game-track)
 
-          (-> (core/db-search "chin")
-              first ;; first page of results
-              first ;; first result
-              cli/install-addon)
+          (is (= expected-messages
+                 (logging/buffered-log
+                  :error
+                  (-> (core/db-search "chin")
+                      first ;; first page of results
+                      first ;; first result
+                      cli/install-addon))))
 
           (is (= [] (core/get-state :installed-addon-list))))))))

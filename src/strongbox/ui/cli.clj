@@ -662,7 +662,8 @@
         ;; turns out this is fast individually but slow in aggregate and not necessary for regular usage of strongbox,
         ;; just generating catalogues.
         catalogue (catalogue/format-catalogue-data-for-output (:addon-summary-list catalogue) (:datestamp catalogue))
-        short-catalogue (catalogue/shorten-catalogue catalogue constants/release-of-previous-expansion)]
+        short-catalogue (when catalogue
+                          (catalogue/shorten-catalogue catalogue constants/release-of-previous-expansion))]
     (if-not catalogue
       (warn "no catalogue data found, nothing to write")
       (do (catalogue/write-catalogue catalogue (find-catalogue-local-path :full))

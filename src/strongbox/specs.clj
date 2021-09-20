@@ -231,7 +231,6 @@
                    ::download-count
                    :addon/source
                    :addon/source-id]
-          ;; here
           :opt-un [::description ;; wowinterface summaries have no description
                    :addon/created-date ;; wowinterface summaries have no created date
                    ::game-track-list ;; more of a set, really

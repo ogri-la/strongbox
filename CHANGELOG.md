@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * bumped dependencies
     - slight increase in performance loading JSON with a newer version of the `data.json` library.
-* searching for addons is now much much faster.
+* searching for addons is now much *much* faster.
     - matching search input against an addon has been improved by two orders of magnitude.
 * searching now searches *within* the addon name rather than from the start of the name.
 * catalogue is no longer validated when reading the catalogue JSON file.
@@ -28,6 +28,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * warning on startup about `cat` already refering to `clojure.core/cat`.
 * case where a wowinterface addon pending approval couldn't be downloaded because of a missing query parameter.
 * regression where a bad addon downloaded in parallel would still be passed to the 'install addon' operation.
+* a typo causing a failure to properly validate the 'created-date' in the catalogue.
+    - this affected both reading and writing catalogues however catalogues are no longer validated on read.
+* case attempting to check an addon from an unknown host would cause an unhelpful error.
+* case attempting to install an addon with an unknown game track would cause an error.
+* case where installing an addon assumed a successful check for updates.
 
 ### Removed
 

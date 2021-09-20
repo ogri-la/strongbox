@@ -45,8 +45,6 @@
                  ;; remember to update pom file (`lein pom`)
 
                  ;;[org.clojure/core.cache "1.0.207"] ;; jfx context caching
-
-                 [expound "0.8.10"]
                  
                  ]
 

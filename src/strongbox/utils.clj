@@ -3,7 +3,6 @@
    [strongbox
     [specs :as sp]
     [constants :as constants]]
-   [expound.alpha :as expound]
    [clojure.java.shell]
    [clojure.string :refer [trim lower-case]]
    [clojure.java.io]
@@ -34,10 +33,6 @@
   (if flag
     (do
       (st/instrument)
-      ;; https://github.com/bhb/expound/blob/master/doc/faq.md#using-alter-var-root
-      (if (in-repl?)
-        (set! s/*explain-out* expound/printer)
-        (alter-var-root #'s/*explain-out* (constantly expound/printer)))
       (info "instrumentation is ON"))
     (do
       (st/unstrument)

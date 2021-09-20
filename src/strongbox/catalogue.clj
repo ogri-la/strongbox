@@ -33,7 +33,7 @@
         key (:source addon)]
     (try
       (if-not (contains? dispatch-map key)
-        (error (format "addon '%s' is from unsupported source '%s'." (:label addon) key))
+        (error (format "addon '%s' is from an unsupported source '%s'." (:label addon) key))
         (let [release-list ((get dispatch-map key) addon game-track)
               latest-release (first release-list)
               pinned-release (when (and release-list
@@ -76,6 +76,8 @@
               (-expand-summary addon :classic)
               (-expand-summary addon :retail))
 
+             ;; rare case, we received a game track or strictness setting that isn't catered for.
+             ;; possibly an older strongbox with newer data. we'll leave an error message below.
              nil)]
 
     source-updates
