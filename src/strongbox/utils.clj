@@ -17,6 +17,16 @@
    [java-time :as jt]
    [java-time.format]))
 
+(defn repl-stack-element?
+  [stack-element]
+  (and (= "clojure.main$repl" (.getClassName  stack-element))
+       (= "doInvoke"          (.getMethodName stack-element))))
+
+(defn in-repl?
+  []
+  (let [current-stack-trace (.getStackTrace (Thread/currentThread))]
+    (some repl-stack-element? current-stack-trace)))
+
 (defn instrument
   "if `flag` is true, enables spec checking instrumentation, otherwise disables it."
   [flag]
@@ -130,16 +140,6 @@
   these are needed to calculate durations"
   [dt ::sp/inst]
   (java-time/zoned-date-time (get java-time.format/predefined-formatters "iso-zoned-date-time") dt))
-
-(defn repl-stack-element?
-  [stack-element]
-  (and (= "clojure.main$repl" (.getClassName  stack-element))
-       (= "doInvoke"          (.getMethodName stack-element))))
-
-(defn in-repl?
-  []
-  (let [current-stack-trace (.getStackTrace (Thread/currentThread))]
-    (some repl-stack-element? current-stack-trace)))
 
 (defn nav-map
   "wrapper around `get-in` that returns the map as-is if given `path` is empty"

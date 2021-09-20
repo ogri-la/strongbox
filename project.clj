@@ -45,7 +45,7 @@
                  ;; remember to update pom file (`lein pom`)
 
                  ;;[org.clojure/core.cache "1.0.207"] ;; jfx context caching
-
+                 
                  ]
 
   :managed-dependencies [;; fixes the annoying:

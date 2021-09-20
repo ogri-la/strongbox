@@ -8,6 +8,7 @@
   (:import
    [java.io File]))
 
+;; todo: explain
 (def placeholder "even qualified specs still require `specs.clj` to be included for linting and uberjar")
 
 (defn valid-or-nil
@@ -230,11 +231,10 @@
                    ::download-count
                    :addon/source
                    :addon/source-id]
-          ;; todo: bug here, `:opt` should be `:opt-un`
-          :opt [::description ;; wowinterface summaries have no description
-                :addon/created-date ;; wowinterface summaries have no created date
-                ::game-track-list ;; more of a set, really
-                ]))
+          :opt-un [::description ;; wowinterface summaries have no description
+                   :addon/created-date ;; wowinterface summaries have no created date
+                   ::game-track-list ;; more of a set, really
+                   ]))
 (s/def :addon/summary-list (s/coll-of :addon/summary))
 
 ;; introduced after finding addon in the catalogue

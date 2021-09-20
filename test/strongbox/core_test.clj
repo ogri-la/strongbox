@@ -17,7 +17,7 @@
     [catalogue :as catalogue]
     [utils :as utils]
     [config :as config]
-    [test-helper :as helper :refer [fixture-path slurp-fixture helper-data-dir with-running-app with-running-app*]]
+    [test-helper :as helper :refer [fixture-path slurp-fixture helper-data-dir with-running-app+opts with-running-app with-running-app*]]
     [core :as core]]))
 
 (use-fixtures :each helper/fixture-tempcwd)
@@ -201,9 +201,15 @@
                     {:name "carbonite" :source "curseforge" :game-track :retail}]]
       (is (= expected (core/export-installed-addon-list addon-list))))))
 
-(deftest export-catalogue-addon-list
-  (testing "exported addon list data is correct"
-    (let [catalogue (slurp-fixture "import-export--user-catalogue.json")
+(deftest export-catalogue-addon-list--v1
+  (testing "exported addon list data from v1 catalogue data is correct"
+    (let [catalogue (catalogue/read-catalogue (fixture-path "import-export--user-catalogue-v1.json"))
+          expected (slurp-fixture "import-export--user-catalogue-export.json")]
+      (is (= expected (core/export-catalogue-addon-list catalogue))))))
+
+(deftest export-catalogue-addon-list--v2
+  (testing "exported addon list data from v2 catalogue data is correct"
+    (let [catalogue (catalogue/read-catalogue (fixture-path "import-export--user-catalogue-v2.json"))
           expected (slurp-fixture "import-export--user-catalogue-export.json")]
       (is (= expected (core/export-catalogue-addon-list catalogue))))))
 
@@ -1466,3 +1472,91 @@
                [{:name "foo" :label "Foo" :source "wowinterface" :source-id 123} true]]]
     (doseq [[given expected] cases]
       (is (= expected (core/expandable? given))))))
+
+;; ---
+
+(deftest read-strange-catalogue--unknown-source
+  (testing "strongbox can try to install an addon from an unknown source and not crash"
+    (let [future-data
+          {:spec {:version 2}
+           :datestamp "2020-02-20"
+           :total 2
+           :addon-summary-list
+           [;; unknown source
+            {:updated-date "2019-10-29T01:01:01Z",
+             :created-date "2019-04-13T15:23:09.397Z",
+             :description "A New Simple Percent",
+             :download-count 1034,
+             :label "A New Simple Percent",
+             :name "a-new-simple-percent",
+             :source "gitlab",
+             :source-id "user/repo",
+             :tag-list [:unit-frames],
+             :url "https://www.gitlab.com/user/repo"}]}
+
+          dummy-catalogue (utils/to-json future-data)
+          fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
+                       {:get (fn [req] {:status 200 :body dummy-catalogue})}}
+          expected-messages ["addon 'A New Simple Percent' is from an unsupported source 'gitlab'."
+                             "refresh"]]
+
+      (with-global-fake-routes-in-isolation fake-routes
+        (with-running-app+opts {:spec? false}
+          (helper/install-dir)
+          (core/refresh)
+
+          (is (= expected-messages
+                 (logging/buffered-log
+                  :error
+                  (-> (core/db-search "new")
+                      first ;; first page of results
+                      first ;; first result
+                      cli/install-addon))))
+
+          (is (= [] (core/get-state :installed-addon-list))))))))
+
+(deftest read-strange-catalogue--unknown-game-track
+  (let [future-game-track :classic-bfa
+        future-data
+        {:spec {:version 2}
+         :datestamp "2020-02-20"
+         :total 2
+         :addon-summary-list
+         [;; unknown game track
+          {:updated-date "2019-10-19T01:01:01Z",
+           :download-count 9,
+           :game-track-list [future-game-track]
+           :label "Chinchilla",
+           :name "chinchilla",
+           :source "github",
+           :source-id "Ravendwyr/Chinchilla",
+           :tag-list [],
+           :url "https://github.com/Ravendwyr/Chinchilla"}]}
+
+        dummy-catalogue (utils/to-json future-data)
+
+        fake-routes {;; catalogue
+                     "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
+                     {:get (fn [req] {:status 200 :body dummy-catalogue})}}
+        expected-messages ["unsupported game track ':classic-bfa'."
+                           "refresh"]]
+
+    (testing "strongbox can attempt to install an addon from an unknown source and not crash"
+      (with-global-fake-routes-in-isolation fake-routes
+        (with-running-app+opts {:spec? false}
+          (helper/install-dir)
+          (core/refresh)
+
+          ;; the game track of the selected addon dir is used.
+          ;; the game track in the addon is only used to pare down available releases.
+          (swap! core/state assoc-in [:cfg :addon-dir-list 0 :game-track] future-game-track)
+
+          (is (= expected-messages
+                 (logging/buffered-log
+                  :error
+                  (-> (core/db-search "chin")
+                      first ;; first page of results
+                      first ;; first result
+                      cli/install-addon))))
+
+          (is (= [] (core/get-state :installed-addon-list))))))))

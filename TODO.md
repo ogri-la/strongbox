@@ -59,12 +59,17 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+* wowinterface, revisit the pages that are being scraped, make sure we're not missing any
+
 * bug, catalogue loading
     - while updating the catalogue with the new tukui addons I discovered a case where the catalogue *should* be failing validation but it wasn't.
         - it came down to an :opt vs :opt-un in the spec
             - the key in question wasn't qualified and thus not matched for validation
     - the catalogue should always be loadable by previous versions of strongbox that support the given spec version
-        - ...
+        - changed. catalogue isn't validated on read anymore, but on write.
+        - this means invalid catalogues can still be read by the application but their behaviour will be unknown
+            - they'll probably mostly work and the bits that are unfamiliar should be ignored.
+            - this should be tested
 
 * EOL planning, bundle a catalogue with the installation
     - load it as a resource with static-slurp, like we do with the sql?
