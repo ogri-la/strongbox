@@ -57,19 +57,27 @@ see CHANGELOG.md for a more formal list of changes by release
     - also, outside of dev environment it's faster than I appreciate
     - done
 
-## todo
-
-* wowinterface, revisit the pages that are being scraped, make sure we're not missing any
-
 * bug, catalogue loading
     - while updating the catalogue with the new tukui addons I discovered a case where the catalogue *should* be failing validation but it wasn't.
         - it came down to an :opt vs :opt-un in the spec
             - the key in question wasn't qualified and thus not matched for validation
+        - done
     - the catalogue should always be loadable by previous versions of strongbox that support the given spec version
         - changed. catalogue isn't validated on read anymore, but on write.
         - this means invalid catalogues can still be read by the application but their behaviour will be unknown
             - they'll probably mostly work and the bits that are unfamiliar should be ignored.
             - this should be tested
+        - done
+
+* gui, stateful buttons
+    - don't allow enabled 'delete selected' buttons if nothing is selected
+    - not going to coddle the user. deleting nothing will see nothing deleted.
+    - resurrecting this from wontfix
+        - we have a new gui now and it is possible to right click and select delete with nothing actually deleted.
+            - which just seems stupid
+    - done!
+
+## todo
 
 * EOL planning, bundle a catalogue with the installation
     - load it as a resource with static-slurp, like we do with the sql?
@@ -82,12 +90,11 @@ see CHANGELOG.md for a more formal list of changes by release
                 - then the short/full/curse/wow catalogues are simply filtered versions of the 'full' catalogue
                 - the user catalogue would need to be merged over the top
 
-* importing addons, skip db lookup for addon urls that don't need it
-    - if we can 'expand it' then we can download it and install it.
-    - I think tukui, wowi can, github obs, curseforge could not
-    - this item may already be done, investigate and if not, send back to bucket with a better description
+* bug, select addon in one dir, change dir, right click and you can delete it - it's still selected
 
 ## todo bucket (no particular order)
+
+* wowinterface, revisit the pages that are being scraped, make sure we're not missing any
 
 * export/import addons to/from github
     - I have a github account, I'd like to push/pull addons to it
@@ -368,6 +375,23 @@ this is still an interesting idea
 
 ## wontfix
 
+* importing addons, skip db lookup for addon urls that don't need it
+    - if we can 'expand it' then we can download it and install it.
+        - yes, and the explicit url should be respected.
+            - if the user imported from wowi or curseforge, that host should be used for installation
+                - after installation, we can match it against the current catalogue and go from there.
+                    - because the addon is added to the user catalogue, it will always be available, there will always be a match.
+                        - but not initially.
+                            - no, but we have the source and source-id (or url) to match against.
+            - we need to find a download url
+                - wowi needs source-id
+                - curse needs a source-id which comes from the db
+                - tukui needs source-id and a name if the id negative
+                    - name could come from the url string to import
+    - I think tukui, wowi can, github obs, curseforge could not
+    - I'm moving this to 'wontfix'
+        - it's possible for wowi and tukui, not curse
+        - the error message is clear (can't find in catalogue)
 * github, add a github catalogue
     - just a simple list of wow addons on github that can be installed with strongbox
     - yeah, nah
@@ -419,9 +443,7 @@ this is still an interesting idea
         - see EOL planning
 * gui, search pane, clear search button
     - I don't think this is necessary anymore
-* gui, stateful buttons
-    - don't allow enabled 'delete selected' buttons if nothing is selected
-    - not going to coddle the user. deleting nothing will see nothing deleted.
+
 * cli, interactive interface when no specific action specified 
     - you have N addons installed. what do you want to do? (list, update, update-all, delete) etc
     - this is a huge amount of hassle

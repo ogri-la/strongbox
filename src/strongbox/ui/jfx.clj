@@ -1307,24 +1307,30 @@
   "context menu when multiple addons are selected."
   [selected-addon-list :addon/toc-list]
   (let [num-selected (count selected-addon-list)
+        none-selected? (= num-selected 0)
         some-pinned? (->> selected-addon-list (map :pinned-version) (some some?) boolean)
         some-ignored? (->> selected-addon-list (filter :ignore?) (some some?) boolean)]
     {:fx/type :context-menu
      :items [(menu-item (str num-selected " addons selected") donothing {:disable true})
              separator
-             (menu-item "Update" (async-handler cli/update-selected))
-             (menu-item "Re-install" (async-handler cli/re-install-or-update-selected))
+             (menu-item "Update" (async-handler cli/update-selected)
+                        {:disable none-selected?})
+             (menu-item "Re-install" (async-handler cli/re-install-or-update-selected)
+                        {:disable none-selected?})
              separator
              (if some-pinned?
                (menu-item "Unpin release" (async-handler cli/unpin))
-               (menu-item "Pin release" (async-handler cli/pin)))
+               (menu-item "Pin release" (async-handler cli/pin)
+                          {:disable none-selected?}))
              (menu "Releases" [] {:disable true})
              separator
              (if some-ignored?
                (menu-item "Stop ignoring" (async-handler cli/clear-ignore-selected))
-               (menu-item "Ignore" (async-handler cli/ignore-selected)))
+               (menu-item "Ignore" (async-handler cli/ignore-selected)
+                          {:disable none-selected?}))
              separator
-             (menu-item "Delete" (async-handler delete-selected-confirmation-handler))]}))
+             (menu-item "Delete" (async-handler delete-selected-confirmation-handler)
+                        {:disable none-selected?})]}))
 
 (defn uber-button
   "returns a widget describing the current state of the given addon"
