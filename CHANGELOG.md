@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - well-formed JSON but an invalid catalogue would cause a freeze printing the validation error to the console.
 * addon maps no longer have their keys ordered on reading.
     - a minor cause of slow catalogue loading/switching and only necessary when creating catalogues.
+* context menu options disabled when no addons selected.
 
 ### Fixed
 
@@ -33,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * case attempting to check an addon from an unknown host would cause an unhelpful error.
 * case attempting to install an addon with an unknown game track would cause an error.
 * case where installing an addon assumed a successful check for updates.
+
 
 ### Removed
 
