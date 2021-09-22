@@ -527,7 +527,7 @@
                         (error "failed to fetch details of addon"))
 
               ;; a dry-run is good when importing an addon for the first time but
-              ;; not necessary when updating the *user-catalogue*
+              ;; not necessary when updating the user-catalogue.
               _ (if-not dry-run?
                   true
                   (or (core/install-addon-guard addon (core/selected-addon-dir) true)
