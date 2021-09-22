@@ -45,6 +45,8 @@
                  ;; remember to update pom file (`lein pom`)
 
                  ;;[org.clojure/core.cache "1.0.207"] ;; jfx context caching
+
+                 [org.apache.commons/commons-compress "1.21"]
                  
                  ]
 

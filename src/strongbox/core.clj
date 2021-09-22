@@ -16,15 +16,35 @@
     [zip :as zip]
     [http :as http]
     [logging :as logging]
-    [utils :as utils :refer [join nav-map nav-map-fn delete-many-files! static-slurp expand-path if-let*]]
+    [utils :as utils :refer [join nav-map nav-map-fn delete-many-files! expand-path if-let*]]
     [catalogue :as catalogue]
     [specs :as sp]
-    [joblib :as joblib]]))
+    [joblib :as joblib]])
+  (:import
+   [org.apache.commons.compress.compressors CompressorStreamFactory]
+   ))
 
 (def default-config-dir "~/.config/strongbox")
 (def default-data-dir "~/.local/share/strongbox")
 
 (def num-concurrent-downloads (-> (Runtime/getRuntime) .availableProcessors))
+
+(defn compressed-slurp
+  [resource]
+  (with-open [out (java.io.ByteArrayOutputStream.)]
+    (with-open [cos (.createCompressorOutputStream (CompressorStreamFactory.) CompressorStreamFactory/BZIP2, out)]
+      (let [input-file (clojure.java.io/resource resource)]
+        (clojure.java.io/copy (clojure.java.io/input-stream input-file) cos)))
+    ;; compressed output stream (cos) needs to be closed to flush any remaining bytes
+    (.toByteArray out)))
+
+(defn decompress-bytes
+  [bytes]
+  (with-open [is (clojure.java.io/input-stream bytes)]
+    (with-open [cin (.createCompressorInputStream (CompressorStreamFactory.) CompressorStreamFactory/BZIP2, is)]
+      (slurp cin))))
+
+(def static-catalogue (compressed-slurp "full-catalogue.json"))
 
 (defn generate-path-map
   "generates filesystem paths whose location may vary based on the current working directory and environment variables.
