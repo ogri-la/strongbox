@@ -1,5 +1,6 @@
 (ns strongbox.core
   (:require
+   [clojure.java.io]
    [clojure.set :refer [rename-keys]]
    [clojure.string :refer [lower-case starts-with? ends-with? trim]]
    [taoensso.timbre :as timbre :refer [debug info warn error report spy]]
@@ -21,8 +22,7 @@
     [specs :as sp]
     [joblib :as joblib]])
   (:import
-   [org.apache.commons.compress.compressors CompressorStreamFactory]
-   ))
+   [org.apache.commons.compress.compressors CompressorStreamFactory]))
 
 (def default-config-dir "~/.config/strongbox")
 (def default-data-dir "~/.local/share/strongbox")
@@ -30,13 +30,16 @@
 (def num-concurrent-downloads (-> (Runtime/getRuntime) .availableProcessors))
 
 (defn compressed-slurp
+  "returns the bz2 compressed bytes of the given resource file `resource`.
+  returns nil if the file can't be found."
   [resource]
-  (with-open [out (java.io.ByteArrayOutputStream.)]
-    (with-open [cos (.createCompressorOutputStream (CompressorStreamFactory.) CompressorStreamFactory/BZIP2, out)]
-      (let [input-file (clojure.java.io/resource resource)]
-        (clojure.java.io/copy (clojure.java.io/input-stream input-file) cos)))
-    ;; compressed output stream (cos) needs to be closed to flush any remaining bytes
-    (.toByteArray out)))
+  (let [input-file (clojure.java.io/resource resource)]
+    (when input-file
+      (with-open [out (java.io.ByteArrayOutputStream.)]
+        (with-open [cos (.createCompressorOutputStream (CompressorStreamFactory.) CompressorStreamFactory/BZIP2, out)]
+          (clojure.java.io/copy (clojure.java.io/input-stream input-file) cos))
+        ;; compressed output stream (cos) needs to be closed to flush any remaining bytes
+        (.toByteArray out)))))
 
 (defn decompress-bytes
   [bytes]
