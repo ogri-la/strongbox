@@ -199,7 +199,7 @@
   (try
     (from-json* x)
     (catch Exception exc
-      (error (str "failed to parse json:" exc))
+      (error (str "failed to parse json: " exc))
       nil)))
 
 (defn-spec dump-json-file ::sp/extant-file
@@ -216,15 +216,16 @@
   if :invalid-data? given, then a :data-spec must also be given else nothing happens and you get nil back"
   ([path ::sp/file]
    (load-json-file-safely path {}))
-  ([path ::sp/file, opts map?]
+  ([path (s/or :fs-file ::sp/file, :bytes bytes?), opts map?]
    (let [{:keys [no-file? bad-data? invalid-data? data-spec value-fn key-fn transform-map]} opts
          default-key-fn keyword
          default-value-fn (fn [key val]
                             ((get transform-map key (constantly val)) val))
-         ;; a given `value-fn`, if any, takes precendence over `transform-map`
+         ;; specific `key-fn` and `value-fn` take precendence over anything in `transform-map`
          value-fn (or value-fn default-value-fn)
          key-fn (or key-fn default-key-fn)]
-     (if-not (fs/file? path)
+     (if (and (not (bytes? path))
+              (not (fs/file? path)))
        (call-if-fn no-file?)
        (let [data (try
                     (with-open [reader (clojure.java.io/reader path)]

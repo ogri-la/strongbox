@@ -115,7 +115,15 @@ see CHANGELOG.md for a more formal list of changes by release
     - 6 seconds for ./strongbox to something appearing
     - too long to be waiting, the mind begins to wonder if it's crashed ...
 
+* update contributing docs
+
 ## todo bucket (no particular order)
+
+* bug, a timeout from curseforge during scraping at page 171 prevent pages 171-182 from being scraped
+    - we should be kinder when scraping. 
+        - add a delay between requests
+    - we should be more robust when scraping.
+        - add retries with exponential backoff
 
 * wowinterface, revisit the pages that are being scraped, make sure we're not missing any
 

@@ -204,7 +204,7 @@
 (defn-spec -read-catalogue (s/or :ok :catalogue/catalogue, :error nil?)
   "reads the catalogue of addon data at the given `catalogue-path`.
   supports reading legacy catalogues by dispatching on the `[:spec :version]` number."
-  [catalogue-path ::sp/file, opts map?]
+  [catalogue-path (s/or :fs-file ::sp/file, :bytes bytes?), opts map?]
   (p :catalogue
      (let [key-fn (fn [k]
                     (case k
@@ -228,12 +228,12 @@
   (p :catalogue:validate
      (sp/valid-or-nil :catalogue/catalogue catalogue)))
 
-(defn read-catalogue
+(defn-spec read-catalogue (s/or :ok :catalogue/catalogue, :error nil?)
   "reads catalogue at given `path` and validates the result, regardless of spec instrumentation.
   returns `nil` if catalogue is invalid."
-  ([path]
+  ([path ::sp/file]
    (read-catalogue path {}))
-  ([path opts]
+  ([path ::sp/file, opts map?]
    ;; 2021-09-18: validate disabled. too slow and if it ever failed the error would be incomprehensible to
    ;; read after appearing to hang for minutes.
    ;; incomplete/corrupt JSON will be detected and re-downloaded.
@@ -327,10 +327,19 @@
 (defn-spec shorten-catalogue (s/or :ok :catalogue/catalogue, :problem nil?)
   "returns a truncated version of `catalogue` where all addons considered unmaintained are removed.
   an addon is considered unmaintained if it hasn't been updated since before the given `cutoff` date."
-  [catalogue :catalogue/catalogue, cutoff ::sp/inst]
-  (let [{:keys [addon-summary-list datestamp]} catalogue
-        unmaintained? (fn [addon]
-                        (let [dtobj (java-time/zoned-date-time (:updated-date addon))]
-                          (java-time/before? dtobj (utils/todt cutoff))))]
-    (when addon-summary-list
-      (format-catalogue-data (remove unmaintained? addon-summary-list) datestamp))))
+  ([catalogue :catalogue/catalogue]
+   (shorten-catalogue catalogue constants/release-of-previous-expansion))
+  ([catalogue :catalogue/catalogue, cutoff ::sp/inst]
+   (let [{:keys [addon-summary-list datestamp]} catalogue
+         unmaintained? (fn [addon]
+                         (let [dtobj (java-time/zoned-date-time (:updated-date addon))]
+                           (java-time/before? dtobj (utils/todt cutoff))))]
+     (when addon-summary-list
+       (format-catalogue-data (remove unmaintained? addon-summary-list) datestamp)))))
+
+(defn-spec filter-catalogue :catalogue/catalogue
+  [catalogue :catalogue/catalogue, source :addon/source]
+  (let [new-addon-summary-list (filterv #(= source (:source %)) (:addon-summary-list catalogue))]
+    (-> catalogue
+        (assoc :addon-summary-list new-addon-summary-list)
+        (assoc :total (count new-addon-summary-list)))))
