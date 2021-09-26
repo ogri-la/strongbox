@@ -22,17 +22,17 @@
     [specs :as sp]
     [joblib :as joblib]])
   (:import
-   [org.apache.commons.compress.compressors CompressorStreamFactory]))
+   [org.apache.commons.compress.compressors CompressorStreamFactory CompressorException]))
 
 (def default-config-dir "~/.config/strongbox")
 (def default-data-dir "~/.local/share/strongbox")
 
 (def num-concurrent-downloads (-> (Runtime/getRuntime) .availableProcessors))
 
-(defn compressed-slurp
+(defn-spec compressed-slurp (s/or :ok bytes?, :no-resource nil?)
   "returns the bz2 compressed bytes of the given resource file `resource`.
-  returns nil if the file can't be found."
-  [resource]
+  returns `nil` if the file can't be found."
+  [resource string?]
   (let [input-file (clojure.java.io/resource resource)]
     (when input-file
       (with-open [out (java.io.ByteArrayOutputStream.)]
@@ -41,13 +41,22 @@
         ;; compressed output stream (cos) needs to be closed to flush any remaining bytes
         (.toByteArray out)))))
 
-(defn decompress-bytes
-  [bytes]
-  (with-open [is (clojure.java.io/input-stream bytes)]
-    (with-open [cin (.createCompressorInputStream (CompressorStreamFactory.) CompressorStreamFactory/BZIP2, is)]
-      (slurp cin))))
+(defn-spec decompress-bytes (s/or :ok string?, :nil-or-empty-bytes nil?)
+  "decompresses the given `bz2-bytes` as bz2, returning a string.
+  if bytes are empty or `nil`, returns `nil`.
+  if bytes are not bz2 compressed, throws an `IOException`."
+  [bz2-bytes (s/nilable bytes?)]
+  (when-not (empty? bz2-bytes)
+    (with-open [is (clojure.java.io/input-stream bz2-bytes)]
+      (try
+        (with-open [cin (.createCompressorInputStream (CompressorStreamFactory.) CompressorStreamFactory/BZIP2, is)]
+          (slurp cin))
+        (catch CompressorException ce
+          (throw (.getCause ce)))))))
 
-(def static-catalogue (compressed-slurp "full-catalogue.json"))
+(def static-catalogue
+  "a bz2 compressed copy of the full catalogue used when the remote catalogue is unavailable or corrupt."
+  (compressed-slurp "full-catalogue.json"))
 
 (defn generate-path-map
   "generates filesystem paths whose location may vary based on the current working directory and environment variables.
@@ -612,7 +621,7 @@
 ;;
 
 (defn-spec get-catalogue-location (s/or :ok :catalogue/location, :not-found nil?)
-  "returns the 'catalogue-location' map for the given `catalogue-name`.
+  "returns the catalogue-location map for the given `catalogue-name`.
   returns the catalogue-location map for the currently selected catalogue by default.
   returns `nil` if catalogue not found or no catalogue selected and no `catalogue-name` given."
   ([]
@@ -675,24 +684,23 @@
     (download-catalogue catalogue-location)
     (warn "failed to find a downloadable catalogue")))
 
-(defn-spec emergency-catalogue (s/or :static-catalogue :catalogue/catalogue, :testing-or-unknown-catalogue nil?)
-  "derives the requested catalogue from the static catalogue"
+(defn-spec emergency-catalogue (s/or :static-catalogue :catalogue/catalogue, :unknown-catalogue nil?)
+  "derives the requested catalogue from the static catalogue."
   [catalogue-location :catalogue/location]
-  (if-not testing?
-    (let [opts {}
-          catalogue (catalogue/-read-catalogue (.getBytes (decompress-bytes static-catalogue)) opts)
-          catalogue (assoc catalogue :emergency? true)]
+  (let [opts {}
+        catalogue (catalogue/read-catalogue (.getBytes (decompress-bytes static-catalogue)) opts)
+        catalogue (assoc catalogue :emergency? true)]
 
-      (warn (str "backup catalogue generated: " (:datestamp catalogue)))
-      (warn (format "remote catalogue unreachable or corrupt: %s" (:source catalogue-location)))
+    (warn (str "backup catalogue generated: " (:datestamp catalogue)))
+    (warn (format "remote catalogue unreachable or corrupt: %s" (:source catalogue-location)))
 
-      (case (:name catalogue-location)
-        :full catalogue
-        :short (catalogue/shorten-catalogue catalogue)
-        :curseforge (catalogue/filter-catalogue catalogue "curseforge")
-        :wowinterface (catalogue/filter-catalogue catalogue "wowinterface")
-        :tukui (catalogue/filter-catalogue catalogue "tukui")
-        nil))))
+    (case (:name catalogue-location)
+      :full catalogue
+      :short (catalogue/shorten-catalogue catalogue)
+      :curseforge (catalogue/filter-catalogue catalogue "curseforge")
+      :wowinterface (catalogue/filter-catalogue catalogue "wowinterface")
+      :tukui (catalogue/filter-catalogue catalogue "tukui")
+      nil)))
 
 ;; --
 
@@ -792,10 +800,11 @@
              catalogue-path
              {:bad-data? (fn []
                            (error "please report this! https://github.com/ogri-la/strongbox/issues")
-                           (error "catalogue failed to load and might be corrupt."))}))
+                           (error "remote catalogue failed to load and might be corrupt."))}))
 
           catalogue-data (or (catalogue/read-catalogue catalogue-path {:bad-data? bad-json-file-handler})
-                             (emergency-catalogue catalogue-location))
+                             (when-not testing?
+                               (emergency-catalogue catalogue-location)))
 
           user-catalogue-data (p :p2/db:catalogue:read-user-catalogue
                                  (catalogue/read-catalogue (paths :user-catalogue-file) {:bad-data? nil}))

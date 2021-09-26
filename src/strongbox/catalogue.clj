@@ -201,44 +201,34 @@
 
     val))
 
-(defn-spec -read-catalogue (s/or :ok :catalogue/catalogue, :error nil?)
+(defn-spec read-catalogue (s/or :ok :catalogue/catalogue, :error nil?)
   "reads the catalogue of addon data at the given `catalogue-path`.
   supports reading legacy catalogues by dispatching on the `[:spec :version]` number."
-  [catalogue-path (s/or :fs-file ::sp/file, :bytes bytes?), opts map?]
-  (p :catalogue
-     (let [key-fn (fn [k]
-                    (case k
-                      "uri" :url
-                      ;;"category-list" :tag-list ;; pushed back into v1 post-processing
-                      (keyword k)))
-           value-fn -read-catalogue-value-fn ;; defined 'outside' so it can reference itself
-           opts (merge opts {:key-fn key-fn :value-fn value-fn})
-           catalogue-data (p :catalogue:load-json-file
-                             (utils/load-json-file-safely catalogue-path opts))]
+  ([catalogue-path (s/or :file ::sp/file, :bytes bytes?)]
+   (read-catalogue catalogue-path {}))
+  ([catalogue-path (s/or :file ::sp/file, :bytes bytes?), opts map?]
+   (p :catalogue
+      (let [key-fn (fn [k]
+                     (case k
+                       "uri" :url
+                       ;;"category-list" :tag-list ;; pushed back into v1 post-processing
+                       (keyword k)))
+            value-fn -read-catalogue-value-fn ;; defined 'outside' so it can reference itself
+            opts (merge opts {:key-fn key-fn :value-fn value-fn})
+            catalogue-data (p :catalogue:load-json-file
+                              (utils/load-json-file-safely catalogue-path opts))]
 
-       (when-not (empty? catalogue-data)
-         (if (-> catalogue-data :spec :version (= 1)) ;; if v1 catalogue, coerce
-           (p :catalogue:v1-coercer
-              (utils/nilable (catalogue-v1-coercer catalogue-data)))
-           catalogue-data)))))
+        (when-not (empty? catalogue-data)
+          (if (-> catalogue-data :spec :version (= 1)) ;; if v1 catalogue, coerce
+            (p :catalogue:v1-coercer
+               (utils/nilable (catalogue-v1-coercer catalogue-data)))
+            catalogue-data))))))
 
 (defn validate
   "validates the given data as a `:catalogue/catalogue`, returning nil if data is invalid"
   [catalogue]
   (p :catalogue:validate
      (sp/valid-or-nil :catalogue/catalogue catalogue)))
-
-(defn-spec read-catalogue (s/or :ok :catalogue/catalogue, :error nil?)
-  "reads catalogue at given `path` and validates the result, regardless of spec instrumentation.
-  returns `nil` if catalogue is invalid."
-  ([path ::sp/file]
-   (read-catalogue path {}))
-  ([path ::sp/file, opts map?]
-   ;; 2021-09-18: validate disabled. too slow and if it ever failed the error would be incomprehensible to
-   ;; read after appearing to hang for minutes.
-   ;; incomplete/corrupt JSON will be detected and re-downloaded.
-   ;;(-> path (-read-catalogue opts) validate)))
-   (-read-catalogue path opts)))
 
 (defn-spec write-catalogue (s/or :ok ::sp/extant-file, :error nil?)
   "write catalogue to given `output-file` as JSON. returns path to output file"
@@ -338,6 +328,7 @@
        (format-catalogue-data (remove unmaintained? addon-summary-list) datestamp)))))
 
 (defn-spec filter-catalogue :catalogue/catalogue
+  "returns a catalogue whose `addon-summary-list` has been filtered against the given `source`."
   [catalogue :catalogue/catalogue, source :addon/source]
   (let [new-addon-summary-list (filterv #(= source (:source %)) (:addon-summary-list catalogue))]
     (-> catalogue

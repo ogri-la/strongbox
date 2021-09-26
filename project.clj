@@ -23,6 +23,8 @@
                  [envvar "1.1.2"] ;; environment variable wrangling
                  [gui-diff "0.6.7" :exclusions [net.cgrant/parsley]] ;; pops up a graphical diff for test results
                  [com.taoensso/tufte "2.2.0"] ;; profiling
+                 [tolitius/lasync "0.1.23"] ;; better parallel processing
+
                  [cljfx "1.7.14" :exclusions [org.openjfx/javafx-web
                                               org.openjfx/javafx-media]]
                  [cljfx/css "1.1.0"]
@@ -39,15 +41,15 @@
                  [org.openjfx/javafx-graphics "15.0.1" :classifier "linux"]
                  [org.openjfx/javafx-graphics "15.0.1" :classifier "mac"]
 
-                 [tolitius/lasync "0.1.23"] ;; better parallel processing
+                 ;; GPLv3 compatible dependencies.
+                 ;; these don't need an exception to be made in LICENCE.txt
+                 [org.apache.commons/commons-compress "1.21"] ;; Apache 2.0 licenced, bz2 compression/decompression of static catalogue
 
                  ;; remember to update the LICENCE.txt
                  ;; remember to update pom file (`lein pom`)
 
                  ;;[org.clojure/core.cache "1.0.207"] ;; jfx context caching
 
-                 [org.apache.commons/commons-compress "1.21"]
-                 
                  ]
 
   :managed-dependencies [;; fixes the annoying:
@@ -59,8 +61,8 @@
   :resource-paths ["resources"]
 
   :profiles {:dev {:plugins [[lein-ancient "0.7.0"]]
-                   :dependencies [;; fake http responses for testing
-                                  [clj-http-fake "1.0.3"]
+                   :resource-paths ["dev-resources" "resources"] ;; dev-resources take priority
+                   :dependencies [[clj-http-fake "1.0.3"] ;; fake http responses for testing
                                   ]}
              :uberjar {:aot :all
                        ;; fixes hanging issue:

@@ -216,7 +216,7 @@
   if :invalid-data? given, then a :data-spec must also be given else nothing happens and you get nil back"
   ([path ::sp/file]
    (load-json-file-safely path {}))
-  ([path (s/or :fs-file ::sp/file, :bytes bytes?), opts map?]
+  ([path (s/or :file ::sp/file, :bytes bytes?), opts map?]
    (let [{:keys [no-file? bad-data? invalid-data? data-spec value-fn key-fn transform-map]} opts
          default-key-fn keyword
          default-value-fn (fn [key val]

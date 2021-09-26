@@ -632,3 +632,68 @@
     (let [curseforge-toc (merge toc {:source "curseforge"
                                      :source-id 123})]
       (is (nil? (catalogue/toc2summary curseforge-toc))))))
+
+(deftest filter-catalogue
+  (testing "a catalogue can have it's addon-summary-list filtered by a specific source"
+    (let [github
+          {:updated-date "2019-10-19T01:01:01Z",
+           :download-count 9,
+           :game-track-list [:retail :classic],
+           :label "Chinchilla",
+           :name "chinchilla",
+           :source "github",
+           :source-id "Ravendwyr/Chinchilla",
+           :tag-list [],
+           :url "https://github.com/Ravendwyr/Chinchilla"}
+
+          curseforge
+          {:updated-date "2019-10-29T01:01:01Z",
+           :created-date "2019-04-13T15:23:09.397Z",
+           :description "A New Simple Percent",
+           :download-count 1034,
+           :label "A New Simple Percent",
+           :name "a-new-simple-percent",
+           :source "curseforge",
+           :source-id 319346,
+           :tag-list [:unit-frames],
+           :url "https://www.curseforge.com/wow/addons/a-new-simple-percent"}
+
+          tukui
+          {:updated-date "2019-11-19T01:01:01Z",
+           :description "Skins for AddOns",
+           :download-count 1112033,
+           :game-track-list [:retail],
+           :label "AddOnSkins",
+           :name "addonskins",
+           :source "tukui",
+           :source-id 3,
+           :tag-list [:ui],
+           :url "https://www.tukui.org/addons.php?id=3"}
+
+          catalogue
+          {:spec {:version 2}
+           :datestamp "2020-02-20"
+           :total 3
+           :addon-summary-list [github curseforge tukui]}
+
+          expected-wowi (-> catalogue
+                            (assoc :total 0)
+                            (assoc :addon-summary-list []))
+
+          expected-github (-> catalogue
+                              (assoc :total 1)
+                              (assoc :addon-summary-list [github]))
+
+          expected-curse (-> catalogue
+                             (assoc :total 1)
+                             (assoc :addon-summary-list [curseforge]))
+
+          expected-tukui (-> catalogue
+                             (assoc :total 1)
+                             (assoc :addon-summary-list [tukui]))]
+
+      (is (= expected-wowi (catalogue/filter-catalogue catalogue "wowinterface")))
+      (is (= expected-github (catalogue/filter-catalogue catalogue "github")))
+      (is (= expected-curse (catalogue/filter-catalogue catalogue "curseforge")))
+      (is (= expected-tukui (catalogue/filter-catalogue catalogue "tukui"))))))
+
