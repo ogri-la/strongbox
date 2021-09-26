@@ -77,8 +77,6 @@ see CHANGELOG.md for a more formal list of changes by release
             - which just seems stupid
     - done!
 
-## todo
-
 * EOL planning, bundle a catalogue with the installation
     - load it as a resource with static-slurp, like we do with the sql?
         - also compressed so it's tiny?
@@ -106,6 +104,9 @@ see CHANGELOG.md for a more formal list of changes by release
     - if github is down, or github blocks us, or the repo goes away, a static catalogue would provide some basic temporary benefits
         1. compress the full catalogue at time of compilation
         2. if catalogue cannot be downloaded and catalogue not present on disk, write catalogue to disk
+    - done
+
+## todo
 
 * bug, select addon in one dir, change dir, right click and you can delete it - it's still selected
 

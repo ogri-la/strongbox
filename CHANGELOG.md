@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 * a `--version` parameter that prints the name of the app and it's current version.
+* an 'emergency' catalogue that strongbox can use if the remote catalogue is not available.
+    - it's a bz2 compressed `full-catalogue.json` that was available at build time.
+    - the trade-offs are it's older, makes strongbox binary a little larger and switching catalogues a little slower.
 
 ### Changed
 
