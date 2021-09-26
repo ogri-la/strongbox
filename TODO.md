@@ -106,6 +106,9 @@ see CHANGELOG.md for a more formal list of changes by release
         2. if catalogue cannot be downloaded and catalogue not present on disk, write catalogue to disk
     - done
 
+* update contributing docs
+    - done
+
 ## todo
 
 * bug, select addon in one dir, change dir, right click and you can delete it - it's still selected
@@ -115,8 +118,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - it takes 8 seconds from 'lein run' to a gui appearing
     - 6 seconds for ./strongbox to something appearing
     - too long to be waiting, the mind begins to wonder if it's crashed ...
-
-* update contributing docs
 
 ## todo bucket (no particular order)
 

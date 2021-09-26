@@ -330,10 +330,9 @@ Addon `.rar` and `.tar.gz` files are not supported. You can find a few of these 
 
 Changes are recorded in the [CHANGELOG.md](CHANGELOG.md) file.
 
-All bugs/questions/feedback should go in [Github Issues](https://github.com/ogri-la/strongbox/issues).
+All bugs/questions/requests/feedback should go in [Github Issues](https://github.com/ogri-la/strongbox/issues).
 
-All code contributions should take the form of a pull request with unit tests.  
-[The licence](LICENCE.txt) is quite strict and all code contributions are subject to it.
+I prefer to **not** receive *code* contributions.
 
 See [CONTRIBUTING](CONTRIBUTING.md) for more detail.
 
