@@ -1,5 +1,6 @@
 (ns strongbox.core
   (:require
+   [clojure.java.io]
    [clojure.set :refer [rename-keys]]
    [clojure.string :refer [lower-case starts-with? ends-with? trim]]
    [taoensso.timbre :as timbre :refer [debug info warn error report spy]]
@@ -16,15 +17,46 @@
     [zip :as zip]
     [http :as http]
     [logging :as logging]
-    [utils :as utils :refer [join nav-map nav-map-fn delete-many-files! static-slurp expand-path if-let*]]
+    [utils :as utils :refer [join nav-map nav-map-fn delete-many-files! expand-path if-let*]]
     [catalogue :as catalogue]
     [specs :as sp]
-    [joblib :as joblib]]))
+    [joblib :as joblib]])
+  (:import
+   [org.apache.commons.compress.compressors CompressorStreamFactory CompressorException]))
 
 (def default-config-dir "~/.config/strongbox")
 (def default-data-dir "~/.local/share/strongbox")
 
 (def num-concurrent-downloads (-> (Runtime/getRuntime) .availableProcessors))
+
+(defn-spec compressed-slurp (s/or :ok bytes?, :no-resource nil?)
+  "returns the bz2 compressed bytes of the given resource file `resource`.
+  returns `nil` if the file can't be found."
+  [resource string?]
+  (let [input-file (clojure.java.io/resource resource)]
+    (when input-file
+      (with-open [out (java.io.ByteArrayOutputStream.)]
+        (with-open [cos (.createCompressorOutputStream (CompressorStreamFactory.) CompressorStreamFactory/BZIP2, out)]
+          (clojure.java.io/copy (clojure.java.io/input-stream input-file) cos))
+        ;; compressed output stream (cos) needs to be closed to flush any remaining bytes
+        (.toByteArray out)))))
+
+(defn-spec decompress-bytes (s/or :ok string?, :nil-or-empty-bytes nil?)
+  "decompresses the given `bz2-bytes` as bz2, returning a string.
+  if bytes are empty or `nil`, returns `nil`.
+  if bytes are not bz2 compressed, throws an `IOException`."
+  [bz2-bytes (s/nilable bytes?)]
+  (when-not (empty? bz2-bytes)
+    (with-open [is (clojure.java.io/input-stream bz2-bytes)]
+      (try
+        (with-open [cin (.createCompressorInputStream (CompressorStreamFactory.) CompressorStreamFactory/BZIP2, is)]
+          (slurp cin))
+        (catch CompressorException ce
+          (throw (.getCause ce)))))))
+
+(def static-catalogue
+  "a bz2 compressed copy of the full catalogue used when the remote catalogue is unavailable or corrupt."
+  (compressed-slurp "full-catalogue.json"))
 
 (defn generate-path-map
   "generates filesystem paths whose location may vary based on the current working directory and environment variables.
@@ -306,8 +338,8 @@
   "returns the addon-dir map for the given `addon-dir`, if it exists in the map.
   when called without args, returns the addon-dir map for the currently selected addon-dir."
   ([]
-   (when-let [addon-dir (selected-addon-dir)]
-     (addon-dir-map addon-dir)))
+   (assert-started)
+   (addon-dir-map (selected-addon-dir)))
   ([addon-dir (s/nilable ::sp/addon-dir)]
    (let [addon-dir-list (get-state :cfg :addon-dir-list)]
      (when (and addon-dir
@@ -589,21 +621,31 @@
 ;;
 
 (defn-spec get-catalogue-location (s/or :ok :catalogue/location, :not-found nil?)
+  "returns the catalogue-location map for the given `catalogue-name`.
+  returns the catalogue-location map for the currently selected catalogue by default.
+  returns `nil` if catalogue not found or no catalogue selected and no `catalogue-name` given."
   ([]
    (get-catalogue-location (get-state :cfg :selected-catalogue)))
   ([catalogue-name keyword?]
-   (->> (get-state :cfg :catalogue-location-list) (filter #(= catalogue-name (:name %))) first)))
+   (->> (get-state :cfg :catalogue-location-list)
+        (filter #(-> % :name (= catalogue-name)))
+        first)))
+
+(defn-spec default-catalogue (s/or :ok :catalogue/location, :not-found nil?)
+  "the 'default' catalogue is the first catalogue in the list of available catalogues.
+  using the original set of catalogues that come with strongbox, this is the 'short' catalogue.
+  user can specify their own (or no) catalogues however."
+  []
+  (-> (get-state :cfg :catalogue-location-list)
+      first
+      :name ;; `:short`, typically
+      get-catalogue-location))
 
 (defn-spec current-catalogue (s/or :ok :catalogue/location, :no-catalogues nil?)
   "returns the currently selected catalogue or the first catalogue it can find.
-  returns `nil` if no catalogues available to choose from."
+  returns `nil` if no catalogues selected or none available to choose from."
   []
-  (if-let* [;; there may be nothing selected
-            catalogue (get-catalogue-location (get-state :cfg :selected-catalogue))
-            ;; there may be no default catalogue available
-            default-catalogue (get-catalogue-location (-> (get-state :cfg :catalogue-location-list) first :name))]
-           (or catalogue default-catalogue)
-           nil))
+  (or (get-catalogue-location) (default-catalogue)))
 
 (defn-spec set-catalogue-location! nil?
   [catalogue-name keyword?]
@@ -638,9 +680,29 @@
   "downloads the currently selected (or default) catalogue. 
   issues a warning if no catalogue can be downloaded"
   []
-  (if-let [catalogue (current-catalogue)]
-    (download-catalogue catalogue)
+  (if-let [catalogue-location (current-catalogue)]
+    (download-catalogue catalogue-location)
     (warn "failed to find a downloadable catalogue")))
+
+(defn-spec emergency-catalogue (s/or :static-catalogue :catalogue/catalogue, :unknown-catalogue nil?)
+  "derives the requested catalogue from the static catalogue."
+  [catalogue-location :catalogue/location]
+  (let [opts {}
+        catalogue (catalogue/read-catalogue (.getBytes (decompress-bytes static-catalogue)) opts)
+        catalogue (assoc catalogue :emergency? true)]
+
+    (warn (str "backup catalogue generated: " (:datestamp catalogue)))
+    (warn (format "remote catalogue unreachable or corrupt: %s" (:source catalogue-location)))
+
+    (case (:name catalogue-location)
+      :full catalogue
+      :short (catalogue/shorten-catalogue catalogue)
+      :curseforge (catalogue/filter-catalogue catalogue "curseforge")
+      :wowinterface (catalogue/filter-catalogue catalogue "wowinterface")
+      :tukui (catalogue/filter-catalogue catalogue "tukui")
+      nil)))
+
+;; --
 
 (defn-spec moosh-addons :addon/toc+summary+match
   "merges the data from an installed addon with it's match in the catalogue"
@@ -738,10 +800,12 @@
              catalogue-path
              {:bad-data? (fn []
                            (error "please report this! https://github.com/ogri-la/strongbox/issues")
-                           (error "catalogue *still* corrupted and cannot be loaded. try another catalogue from the 'catalogue' menu"))}))
+                           (error "remote catalogue failed to load and might be corrupt."))}))
 
-          catalogue-data (p :p2/db:catalogue:read-catalogue
-                            (catalogue/read-catalogue catalogue-path {:bad-data? bad-json-file-handler}))
+          catalogue-data (or (catalogue/read-catalogue catalogue-path {:bad-data? bad-json-file-handler})
+                             (when-not testing?
+                               (emergency-catalogue catalogue-location)))
+
           user-catalogue-data (p :p2/db:catalogue:read-user-catalogue
                                  (catalogue/read-catalogue (paths :user-catalogue-file) {:bad-data? nil}))
           ;; 2021-06-30: merge order changed. catalogue data is now merged over the top of the user-catalogue.

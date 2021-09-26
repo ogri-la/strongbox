@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 * a `--version` parameter that prints the name of the app and it's current version.
+* an 'emergency' catalogue that strongbox can use if the remote catalogue is not available.
+    - it's a bz2 compressed `full-catalogue.json` that was available at build time.
+    - the trade-offs are it's older, makes strongbox binary a little larger and switching catalogues a little slower.
 
 ### Changed
 
@@ -16,25 +19,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - slight increase in performance loading JSON with a newer version of the `data.json` library.
 * searching for addons is now much *much* faster.
     - matching search input against an addon has been improved by two orders of magnitude.
-* searching now searches *within* the addon name rather than from the start of the name.
+* searching now searches within the addon name rather than from the beginning of the name.
 * catalogue is no longer validated when reading the catalogue JSON file.
     - it was the major cause of slow catalogue loads, switches between catalogues and (probably) overly cautious.
-    - well-formed JSON but an invalid catalogue would cause a freeze printing the validation error to the console.
+    - a well-formed but invalid catalogue would cause a freeze printing the validation error to the console.
 * addon maps no longer have their keys ordered on reading.
     - a minor cause of slow catalogue loading/switching and only necessary when creating catalogues.
-* context menu options disabled when no addons selected.
+* gui, context menu options disabled when no addons selected.
 
 ### Fixed
 
 * warning on startup about `cat` already refering to `clojure.core/cat`.
 * case where a wowinterface addon pending approval couldn't be downloaded because of a missing query parameter.
 * regression where a bad addon downloaded in parallel would still be passed to the 'install addon' operation.
-* a typo causing a failure to properly validate the 'created-date' in the catalogue.
+* typo causing a failure to properly validate the 'created-date' in the catalogue.
     - this affected both reading and writing catalogues however catalogues are no longer validated on read.
-* case attempting to check an addon from an unknown host would cause an unhelpful error.
-* case attempting to install an addon with an unknown game track would cause an error.
-* case where installing an addon assumed a successful check for updates.
-
+* attempting to check an addon from an unknown host would cause an unhelpful error.
+* attempting to install an addon with an unknown game track would cause an error.
+* installing an addon in certain circumstances assumed a successful check for updates had been made.
 
 ### Removed
 

@@ -77,8 +77,6 @@ see CHANGELOG.md for a more formal list of changes by release
             - which just seems stupid
     - done!
 
-## todo
-
 * EOL planning, bundle a catalogue with the installation
     - load it as a resource with static-slurp, like we do with the sql?
         - also compressed so it's tiny?
@@ -89,10 +87,44 @@ see CHANGELOG.md for a more formal list of changes by release
             - if one is bundled then a catalogue *always* exists
                 - then the short/full/curse/wow catalogues are simply filtered versions of the 'full' catalogue
                 - the user catalogue would need to be merged over the top
+    - perhaps ... 
+        - bundle with a short catalogue
+        - on first run, write catalogue to disk
+            - this guarantees a catalogue will always exist to be used
+        - thereafter, if a catalogue exists, look for and download a newer version in the background
+            - perhaps do the same with the full catalogue as well
+                - with the individual tukui/wowi/curse catalogues as opt-in
+            - this would prevent the pause waiting for the download 
+                - it takes 1.3seconds to download and validate the full catalogue
+                - it took 349ms to download the full catalogue with spec off.
+    - this is a lot of work for miniscule performance improvements.
+    - in terms of robustness, we would be preventing against the catalogue repository from ever going away.
+        - perhaps a better solution is to make the location of the catalogue configurable
+            - it already is: [:cfg :catalogue-location-list]
+    - if github is down, or github blocks us, or the repo goes away, a static catalogue would provide some basic temporary benefits
+        1. compress the full catalogue at time of compilation
+        2. if catalogue cannot be downloaded and catalogue not present on disk, write catalogue to disk
+    - done
+
+## todo
 
 * bug, select addon in one dir, change dir, right click and you can delete it - it's still selected
 
+* investigate a splash screen. 
+    - https://github.com/cljfx/cljfx/tree/master/example-projects/splash
+    - it takes 8 seconds from 'lein run' to a gui appearing
+    - 6 seconds for ./strongbox to something appearing
+    - too long to be waiting, the mind begins to wonder if it's crashed ...
+
+* update contributing docs
+
 ## todo bucket (no particular order)
+
+* bug, a timeout from curseforge during scraping at page 171 prevent pages 171-182 from being scraped
+    - we should be kinder when scraping. 
+        - add a delay between requests
+    - we should be more robust when scraping.
+        - add retries with exponential backoff
 
 * wowinterface, revisit the pages that are being scraped, make sure we're not missing any
 

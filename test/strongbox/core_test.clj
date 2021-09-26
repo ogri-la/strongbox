@@ -1560,3 +1560,41 @@
                       cli/install-addon))))
 
           (is (= [] (core/get-state :installed-addon-list))))))))
+
+(deftest compressed-slurp
+  (let [expected "foo!"]
+    (is (= expected (core/decompress-bytes (core/compressed-slurp "foo.txt"))))))
+
+(deftest compressed-slurp--not-found
+  (is (nil? (core/compressed-slurp "file-that-definitely-does-not-exist.txt"))))
+
+(deftest decompress-bytes--empty
+  (is (nil? (core/decompress-bytes (.getBytes ""))))
+  (is (nil? (core/decompress-bytes nil))))
+
+(deftest decompress-bytes--not-compressed
+  (let [result (try
+                 (core/decompress-bytes (.getBytes "!"))
+                 (catch java.io.IOException ioe
+                   ioe))]
+    (is (instance? java.io.IOException result))
+    (is (= "Stream is not in the BZip2 format" (.getMessage result)))))
+
+;;
+
+(deftest default-catalogue
+  (let [expected (first config/-default-catalogue-list)]
+    (with-running-app*
+      (is (= expected (core/default-catalogue))))))
+
+(deftest emergency-catalogue
+  (let [expected-warnings ["backup catalogue generated: 2021-09-25"
+                           "remote catalogue unreachable or corrupt: https://example.org"]
+        expected-total 3
+
+        catalogue-location {:name :full :label "Full" :source "https://example.org"}
+        warnings (logging/buffered-log
+                  :warn
+                  (is (= expected-total (:total (core/emergency-catalogue catalogue-location)))))]
+    (is (= expected-warnings warnings))))
+

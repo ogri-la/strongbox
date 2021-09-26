@@ -10,7 +10,6 @@
     [db :as db]
     [logging :as logging]
     [addon :as addon]
-    [constants :as constants]
     [specs :as sp]
     [tukui-api :as tukui-api]
     [catalogue :as catalogue]
@@ -663,7 +662,7 @@
         ;; just generating catalogues.
         catalogue (catalogue/format-catalogue-data-for-output (:addon-summary-list catalogue) (:datestamp catalogue))
         short-catalogue (when catalogue
-                          (catalogue/shorten-catalogue catalogue constants/release-of-previous-expansion))]
+                          (catalogue/shorten-catalogue catalogue))]
     (if-not catalogue
       (warn "no catalogue data found, nothing to write")
       (do (catalogue/write-catalogue catalogue (find-catalogue-local-path :full))
