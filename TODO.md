@@ -109,15 +109,16 @@ see CHANGELOG.md for a more formal list of changes by release
 * update contributing docs
     - done
 
-## todo
-
-* bug, select addon in one dir, change dir, right click and you can delete it - it's still selected
-
 * investigate a splash screen. 
     - https://github.com/cljfx/cljfx/tree/master/example-projects/splash
     - it takes 8 seconds from 'lein run' to a gui appearing
     - 6 seconds for ./strongbox to something appearing
     - too long to be waiting, the mind begins to wonder if it's crashed ...
+    - done
+
+## todo
+
+* bug, select addon in one dir, change dir, right click and you can delete it - it's still selected
 
 ## todo bucket (no particular order)
 
