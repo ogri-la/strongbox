@@ -1,3 +1,9 @@
+/*
+  MIT Licensed, see LICENCE.txt for cljfx GPLv3 exclusion.
+  copied from: https://github.com/cljfx/cljfx/tree/master/example-projects/splash
+  specifically: https://github.com/cljfx/cljfx/commit/fff3034bf71a99c959e8c8aa7588bfc12cd0e33e
+*/
+
 package splash;
 
 import com.sun.javafx.application.LauncherImpl;
