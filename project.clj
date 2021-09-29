@@ -58,22 +58,31 @@
                          ;; see `gui-diff` exclusion
                          [net.cgrand/parsley "0.9.3"]]
 
+  :java-source-paths ["java-src"]
+
+  :repl-options {:init-ns splash
+                 :main strongbox.main}
+
   :resource-paths ["resources"]
 
   :profiles {:dev {:plugins [[lein-ancient "0.7.0"]]
+
                    :resource-paths ["dev-resources" "resources"] ;; dev-resources take priority
                    :dependencies [[clj-http-fake "1.0.3"] ;; fake http responses for testing
                                   ]}
              :uberjar {:aot :all
                        ;; fixes hanging issue:
                        ;; - https://github.com/cljfx/cljfx/issues/17
-                       :injections [(javafx.application.Platform/exit)]}}
+                       :injections [(javafx.application.Platform/exit)]
+                       :jvm-opts ["-Dcljfx.skip-javafx-initialization=true"]
+
+                       }}
 
   ;; debug output from JavaFX about which GTK it is looking for. 
   ;; was useful in figuring out why javafx was failing to initialise even with xvfb.
   ;;:jvm-opts ["-Djdk.gtk.verbose=true"]
 
-  :main strongbox.main
+  :main splash.Main
 
   :plugins [[lein-cljfmt "0.6.4"]
             [jonase/eastwood "0.3.13"]
