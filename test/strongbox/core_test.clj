@@ -93,7 +93,13 @@
 
       (testing "set-addon-dir! changes default game-track to 'classic' if '_classic_' detected in addon dir name"
         (core/set-addon-dir! dir4)
-        (is (= {:addon-dir dir4 :game-track :classic :strict? true} (core/addon-dir-map dir4)))))))
+        (is (= {:addon-dir dir4 :game-track :classic :strict? true} (core/addon-dir-map dir4))))
+
+      (testing "set-addon-dir! resets the list of selected addons"
+        (swap! core/state update-in [:selected-addon-list] conj "foo!")
+        (is (= (core/get-state :selected-addon-list) ["foo!"]))
+        (core/set-addon-dir! dir4)
+        (is (= (core/get-state :selected-addon-list) []))))))
 
 (deftest game-strictness
   (with-running-app

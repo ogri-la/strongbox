@@ -116,9 +116,10 @@ see CHANGELOG.md for a more formal list of changes by release
     - too long to be waiting, the mind begins to wonder if it's crashed ...
     - done
 
-## todo
-
 * bug, select addon in one dir, change dir, right click and you can delete it - it's still selected
+    - done
+
+## todo
 
 ## todo bucket (no particular order)
 

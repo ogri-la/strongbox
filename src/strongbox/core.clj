@@ -303,7 +303,6 @@
        (swap! state update-in [:cfg :addon-dir-list] conj stub)))
    nil))
 
-;; see also: strongbox.ui.cli/set-addon-dir! 
 (defn-spec set-addon-dir! nil?
   "adds a new :addon-dir to :addon-dir-list (if it doesn't already exist) and marks it as selected"
   [addon-dir ::sp/addon-dir]
@@ -312,7 +311,7 @@
         default-game-track (if (clojure.string/index-of addon-dir "_classic_") :classic :retail)]
     (dosync ;; necessary? makes me feel better
      (add-addon-dir! addon-dir default-game-track default-game-track-strictness)
-     ;; todo: this is UI logic ... consider moving to ui.cli
+     (swap! state assoc :selected-addon-list [])
      (swap! state assoc-in [:cfg :selected-addon-dir] addon-dir)
      (swap! state assoc :tab-list []))) ;; todo: consider adding a watch for this as well
   nil)

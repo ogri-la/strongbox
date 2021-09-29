@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+* case where selected addons persist across addon directory changes.
 * warning on startup about `cat` already refering to `clojure.core/cat`.
 * case where a wowinterface addon pending approval couldn't be downloaded because of a missing query parameter.
 * regression where a bad addon downloaded in parallel would still be passed to the 'install addon' operation.
