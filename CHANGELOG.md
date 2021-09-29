@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* a very simple 'splash screen' with a progress bar.
+    - Clojure takes ~6 *seconds* to load before it gets to strongbox. The splash screen appears after about 2 seconds.
 * a `--version` parameter that prints the name of the app and it's current version.
 * an 'emergency' catalogue that strongbox can use if the remote catalogue is not available.
     - it's a bz2 compressed `full-catalogue.json` that was available at build time.
