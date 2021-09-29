@@ -20,11 +20,11 @@ public class PreloadingApplication extends Application {
     // UI feedback as early as possible.
     @Override
     public void init() throws Exception {
-	notifyPreloader(new Preloader.ProgressNotification(0.1));
+	notifyPreloader(new Preloader.ProgressNotification(0.3));
 
 	final Class<?> theClojureClass = Class.forName("clojure.java.api.Clojure");
 
-	notifyPreloader(new Preloader.ProgressNotification(0.3));
+	notifyPreloader(new Preloader.ProgressNotification(0.4));
 
 	final Method theVarMethod = theClojureClass.getMethod("var", Object.class);
 	final Method theReadMethod = theClojureClass.getMethod("read", String.class);
@@ -35,12 +35,12 @@ public class PreloadingApplication extends Application {
 
 	final Object theRequiringResolveVar = theVarMethod.invoke(theClojureClass, "clojure.core/requiring-resolve");
 
-	notifyPreloader(new Preloader.ProgressNotification(0.4));
+	notifyPreloader(new Preloader.ProgressNotification(0.6));
 
 	final Object theAppMainVar = theInvokeMethod.invoke(theRequiringResolveVar,
 							    theReadMethod.invoke(theClojureClass, CLJFX_MAIN));
 
-	notifyPreloader(new Preloader.ProgressNotification(0.6));
+	notifyPreloader(new Preloader.ProgressNotification(0.9));
     
 	// start application behind the preloader
 	theInvoke0Method.invoke(theAppMainVar);
