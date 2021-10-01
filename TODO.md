@@ -8,6 +8,54 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+* revisit the 'File -> Export Github addon list' 
+    - is this the user catalogue?
+
+* toc, addon detail, add 'x-website' / 'x-url' alongside 'browse local files' and addon host
+
+* update image thumbnails
+    - they're getting a bit stale
+
+* gui, synthetic 'version' column
+    - combines 'installed' and 'available' columns
+        - because most of the time the two columns are the same
+    - displays the available version if it exists
+    - style the version value if update available?
+
+* gui, any new/synthetic columns?
+    - human friendly update column with "updated x years/months/days/hours/minutes" ago
+    - number of releases?
+    - 'browse local files'
+    - pinned/unpinned
+        - perhaps also remove the (pinned) from the available column and make it an icon next in the uber button
+    - a column that prefers website over addon host?
+
+* gui, toggleable columns as a menuitem
+
+* gui, switch to tree-table-view for installed addons that are grouping other addons
+    - at least investigate how difficult this might be.
+
+* gui, can I make column widths dynamic? 
+    - I'd like the 'version' columns to fit exactly, always.
+
+* gui, toggleable highlighers as a menuitem
+    - highlight unmatched
+    - highlight updates
+    - highlight mismatched game track
+    - highlight mismatched update host
+        - installing addon from a different host
+    - touch of colour against each menuitem would serve as a legend
+    - 2021-10: not sure about this one anymore
+        - investigate and see if it's worthwhile
+
+* gui 'wow' column is inconsistent
+    - for curseforge, it's pulling it's value from :gameVersion, which may be empty
+        - in which case it pulls it's value from the toc file, which may be different from the selected game track
+    - since this is the 'installed addons pane', should the value reflect the value of the installed addon?
+        - (and not the value of the addon to be installed)
+        - and would this be inconsistent with the other fields that are also changing with new catalog information?
+    - this has been open for a long time. would be good to resolve it.
+
 ## todo bucket (no particular order)
 
 * bug, a timeout from curseforge during scraping at page 171 prevent pages 171-182 from being scraped
@@ -49,11 +97,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * deleting an addon should also remove any of it's zip files
 
-* gui, can I make column widths dynamic? 
-    - I'd like the 'version' columns to fit exactly, always.
-
-* gui, switch to tree-table-view for installed addons that are grouping other addons
-
 * acquire locks on affected addons during installatinon
     - this will let us uninstall and install addons in parallel
 
@@ -68,8 +111,6 @@ see CHANGELOG.md for a more formal list of changes by release
         adibags anima & conduits is overwritten by adibags anima filter
 
 * add release.json support for github addons
-
-* toc, addon detail, add 'x-website' / 'x-url' alongside 'browse local files' and addon host
 
 * change split button 'outdent' to 'indent'
     - and if split, keep it 'pressed in'
@@ -231,28 +272,9 @@ see CHANGELOG.md for a more formal list of changes by release
     - I think changing column ordering and moving columns should be disabled while updates happen
         - just freeze or disable them or something.
 
-* gui 'wow' column is inconsistent
-    - for curseforge, it's pulling it's value from :gameVersion, which may be empty
-        - in which case it pulls it's value from the toc file, which may be different from the selected game track
-    - since this is the 'installed addons pane', should the value reflect the value of the installed addon?
-        - (and not the value of the addon to be installed)
-        - and would this be inconsistent with the other fields that are also changing with new catalog information?
-
-* gui, toggleable columns as a menuitem
-
-* gui, synthetic 'version' column
-    - combines 'installed' and 'available' columns
-        - because most of the time the two columns are the same
-    - displays the available version if it exists
-
 * internationalisation?
     - Akitools has no english description but it does have a "Notes-zhCN" in the toc file that could be used
     - wowman was mentioned on a french forum the other day ..
-
-* gui, toggleable highlighers as a menuitem
-    - highlight unmatched
-    - highlight updates
-    - touch of colour against each menuitem would serve as a legend
 
 * gui, get log window scrolling in other direction
 
