@@ -4,7 +4,7 @@
   <groupId>ogri-la</groupId>
   <artifactId>strongbox</artifactId>
   <packaging>jar</packaging>
-  <version>4.5.0</version>
+  <version>4.6.0</version>
   <name>strongbox</name>
   <description>World Of Warcraft Addon Manager</description>
   <url>https://github.com/ogri-la/strongbox</url>
@@ -18,7 +18,7 @@
     <url>https://github.com/ogri-la/strongbox</url>
     <connection>scm:git:git://github.com/ogri-la/strongbox.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/ogri-la/strongbox.git</developerConnection>
-    <tag>4aaff14560f274413b9d1d8f7c60138625e22d22</tag>
+    <tag>b7f4cc003c551b8e09d4298569cec3b1b068e322</tag>
   </scm>
   <build>
     <sourceDirectory>src</sourceDirectory>
@@ -30,12 +30,38 @@
     </resources>
     <testResources>
       <testResource>
+        <directory>dev-resources</directory>
+      </testResource>
+      <testResource>
+        <directory>resources</directory>
+      </testResource>
+      <testResource>
         <directory>resources</directory>
       </testResource>
     </testResources>
     <directory>target</directory>
     <outputDirectory>target/classes</outputDirectory>
-    <plugins/>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>1.7</version>
+        <executions>
+          <execution>
+            <id>add-source</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>java-src</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
   </build>
   <repositories>
     <repository>
@@ -60,7 +86,13 @@
     </repository>
   </repositories>
   <dependencyManagement>
-    <dependencies/>
+    <dependencies>
+      <dependency>
+        <groupId>net.cgrand</groupId>
+        <artifactId>parsley</artifactId>
+        <version>0.9.3</version>
+      </dependency>
+    </dependencies>
   </dependencyManagement>
   <dependencies>
     <dependency>
@@ -71,7 +103,7 @@
     <dependency>
       <groupId>org.clojure</groupId>
       <artifactId>tools.cli</artifactId>
-      <version>1.0.194</version>
+      <version>1.0.206</version>
     </dependency>
     <dependency>
       <groupId>org.clojure</groupId>
@@ -81,12 +113,12 @@
     <dependency>
       <groupId>org.clojure</groupId>
       <artifactId>data.json</artifactId>
-      <version>1.0.0</version>
+      <version>2.4.0</version>
     </dependency>
     <dependency>
       <groupId>orchestra</groupId>
       <artifactId>orchestra</artifactId>
-      <version>2018.12.06-2</version>
+      <version>2021.01.01-1</version>
     </dependency>
     <dependency>
       <groupId>com.taoensso</groupId>
@@ -101,12 +133,12 @@
     <dependency>
       <groupId>clj-http</groupId>
       <artifactId>clj-http</artifactId>
-      <version>3.12.1</version>
+      <version>3.12.3</version>
     </dependency>
     <dependency>
       <groupId>clj-commons</groupId>
       <artifactId>fs</artifactId>
-      <version>1.5.2</version>
+      <version>1.6.307</version>
     </dependency>
     <dependency>
       <groupId>slugify</groupId>
@@ -126,27 +158,38 @@
     <dependency>
       <groupId>clojure.java-time</groupId>
       <artifactId>clojure.java-time</artifactId>
-      <version>0.3.2</version>
+      <version>0.3.3</version>
     </dependency>
     <dependency>
       <groupId>envvar</groupId>
       <artifactId>envvar</artifactId>
-      <version>1.1.0</version>
+      <version>1.1.2</version>
     </dependency>
     <dependency>
       <groupId>gui-diff</groupId>
       <artifactId>gui-diff</artifactId>
       <version>0.6.7</version>
+      <exclusions>
+        <exclusion>
+          <artifactId>parsley</artifactId>
+          <groupId>net.cgrant</groupId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.taoensso</groupId>
       <artifactId>tufte</artifactId>
-      <version>2.1.0</version>
+      <version>2.2.0</version>
+    </dependency>
+    <dependency>
+      <groupId>tolitius</groupId>
+      <artifactId>lasync</artifactId>
+      <version>0.1.23</version>
     </dependency>
     <dependency>
       <groupId>cljfx</groupId>
       <artifactId>cljfx</artifactId>
-      <version>1.7.13</version>
+      <version>1.7.14</version>
       <exclusions>
         <exclusion>
           <artifactId>javafx-web</artifactId>
@@ -215,9 +258,9 @@
       <classifier>mac</classifier>
     </dependency>
     <dependency>
-      <groupId>tolitius</groupId>
-      <artifactId>lasync</artifactId>
-      <version>0.1.23</version>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-compress</artifactId>
+      <version>1.21</version>
     </dependency>
     <dependency>
       <groupId>clj-http-fake</groupId>
