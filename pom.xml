@@ -18,7 +18,7 @@
     <url>https://github.com/ogri-la/strongbox</url>
     <connection>scm:git:git://github.com/ogri-la/strongbox.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/ogri-la/strongbox.git</developerConnection>
-    <tag>b7f4cc003c551b8e09d4298569cec3b1b068e322</tag>
+    <tag>6d25a8cfea44bcb9811599b86c4e014daf0099c0</tag>
   </scm>
   <build>
     <sourceDirectory>src</sourceDirectory>
@@ -41,27 +41,7 @@
     </testResources>
     <directory>target</directory>
     <outputDirectory>target/classes</outputDirectory>
-    <plugins>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>build-helper-maven-plugin</artifactId>
-        <version>1.7</version>
-        <executions>
-          <execution>
-            <id>add-source</id>
-            <phase>generate-sources</phase>
-            <goals>
-              <goal>add-source</goal>
-            </goals>
-            <configuration>
-              <sources>
-                <source>java-src</source>
-              </sources>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
+    <plugins/>
   </build>
   <repositories>
     <repository>
