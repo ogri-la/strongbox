@@ -10,7 +10,6 @@
     [db :as db]
     [logging :as logging]
     [addon :as addon]
-    [constants :as constants]
     [specs :as sp]
     [tukui-api :as tukui-api]
     [catalogue :as catalogue]
@@ -264,10 +263,10 @@
 (defn-spec install-addon nil?
   "install an addon from the catalogue. works on expanded addons as well."
   [addon :addon/summary]
-  (-> addon
-      core/expand-summary-wrapper
-      vector
-      install-update-these-serially)
+  (some-> addon
+          core/expand-summary-wrapper
+          vector
+          install-update-these-serially)
   (core/refresh))
 
 (defn-spec install-many ::sp/list-of-maps
@@ -527,7 +526,7 @@
                         (error "failed to fetch details of addon"))
 
               ;; a dry-run is good when importing an addon for the first time but
-              ;; not necessary when updating the *user-catalogue*
+              ;; not necessary when updating the user-catalogue.
               _ (if-not dry-run?
                   true
                   (or (core/install-addon-guard addon (core/selected-addon-dir) true)
@@ -628,7 +627,7 @@
     (let [output-file (find-catalogue-local-path :wowinterface)
           catalogue-data (wowinterface/scrape)
           created (utils/datestamp-now-ymd)
-          formatted-catalogue-data (catalogue/format-catalogue-data catalogue-data created)]
+          formatted-catalogue-data (catalogue/format-catalogue-data-for-output catalogue-data created)]
       (catalogue/write-catalogue formatted-catalogue-data output-file))))
 
 (defmethod action :scrape-curseforge-catalogue
@@ -637,7 +636,7 @@
     (let [output-file (find-catalogue-local-path :curseforge)
           catalogue-data (curseforge-api/download-all-summaries-alphabetically)
           created (utils/datestamp-now-ymd)
-          formatted-catalogue-data (catalogue/format-catalogue-data catalogue-data created)]
+          formatted-catalogue-data (catalogue/format-catalogue-data-for-output catalogue-data created)]
       (catalogue/write-catalogue formatted-catalogue-data output-file))))
 
 (defmethod action :scrape-tukui-catalogue
@@ -646,7 +645,7 @@
     (let [output-file (find-catalogue-local-path :tukui)
           catalogue-data (tukui-api/download-all-summaries)
           created (utils/datestamp-now-ymd)
-          formatted-catalogue-data (catalogue/format-catalogue-data catalogue-data created)]
+          formatted-catalogue-data (catalogue/format-catalogue-data-for-output catalogue-data created)]
       (catalogue/write-catalogue formatted-catalogue-data output-file))))
 
 (defmethod action :write-catalogue
@@ -657,15 +656,17 @@
 
         catalogue-path-list [curseforge-catalogue wowinterface-catalogue tukui-catalogue]
         catalogue (mapv catalogue/read-catalogue catalogue-path-list)
-        catalogue (reduce catalogue/merge-catalogues catalogue)]
+        catalogue (reduce catalogue/merge-catalogues catalogue)
+        ;; 2021-09: `merge-catalogues` no longer converts an addon to an `ordered-map`.
+        ;; turns out this is fast individually but slow in aggregate and not necessary for regular usage of strongbox,
+        ;; just generating catalogues.
+        catalogue (catalogue/format-catalogue-data-for-output (:addon-summary-list catalogue) (:datestamp catalogue))
+        short-catalogue (when catalogue
+                          (catalogue/shorten-catalogue catalogue))]
     (if-not catalogue
       (warn "no catalogue data found, nothing to write")
-      (-> catalogue
-          (catalogue/write-catalogue (find-catalogue-local-path :full))
-
-          ;; 'short' catalogue is derived from the full catalogue
-          (catalogue/shorten-catalogue constants/release-of-previous-expansion)
-          (catalogue/write-catalogue (find-catalogue-local-path :short))))))
+      (do (catalogue/write-catalogue catalogue (find-catalogue-local-path :full))
+          (catalogue/write-catalogue short-catalogue (find-catalogue-local-path :short))))))
 
 (defmethod action :scrape-catalogue
   [_]

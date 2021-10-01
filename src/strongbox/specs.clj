@@ -4,8 +4,11 @@
    [clojure.set :refer [map-invert]]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
-   [me.raynes.fs :as fs]))
+   [me.raynes.fs :as fs])
+  (:import
+   [java.io File]))
 
+;; todo: explain
 (def placeholder "even qualified specs still require `specs.clj` to be included for linting and uberjar")
 
 (defn valid-or-nil
@@ -47,7 +50,7 @@
                             false))))
 
 (s/def ::file (s/and string?
-                     #(try (and % (java.io.File. %))
+                     #(try (and % (java.io.File. ^String %))
                            (catch java.lang.IllegalArgumentException e
                              false))))
 (s/def ::extant-file (s/and ::file fs/exists?))
@@ -55,7 +58,7 @@
 (s/def ::dir ::file) ;; directory must also be a string and a valid File object, but not necessarily exist (yet)
 (s/def ::extant-dir (s/and ::dir fs/directory?))
 (s/def ::writeable-dir (s/and ::extant-dir fs/writeable?))
-(s/def ::empty-coll (s/and coll? #(empty? %)))
+(s/def ::empty-coll (s/and coll? empty?))
 (s/def ::gui-event #(instance? java.util.EventObject %))
 (s/def ::install-dir (s/nilable ::extant-dir))
 (s/def ::selected? boolean?)
@@ -228,11 +231,10 @@
                    ::download-count
                    :addon/source
                    :addon/source-id]
-          ;; todo: bug here, `:opt` should be `:opt-un`
-          :opt [::description ;; wowinterface summaries have no description
-                :addon/created-date ;; wowinterface summaries have no created date
-                ::game-track-list ;; more of a set, really
-                ]))
+          :opt-un [::description ;; wowinterface summaries have no description
+                   :addon/created-date ;; wowinterface summaries have no created date
+                   ::game-track-list ;; more of a set, really
+                   ]))
 (s/def :addon/summary-list (s/coll-of :addon/summary))
 
 ;; introduced after finding addon in the catalogue

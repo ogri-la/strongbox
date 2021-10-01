@@ -254,7 +254,7 @@
         file-list (fs/find-files install-dir pattern)
         ;; sort files oldest to newest
         asc >
-        sorted-file-list (mapv str (sort-by #(.lastModified %) asc file-list))
+        sorted-file-list (mapv str (sort-by #(.lastModified ^java.io.File %) asc file-list))
         ;; drop N of the newest files
         to-be-deleted (drop n-zips-to-keep sorted-file-list)
         failed-to-delete (remove nil? (mapv (partial utils/delete-file! install-dir) to-be-deleted))]

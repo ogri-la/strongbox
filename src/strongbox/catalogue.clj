@@ -4,7 +4,7 @@
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
-   [taoensso.tufte :as tufte :refer [p profile]]
+   [taoensso.tufte :as tufte :refer [p]]
    [java-time]
    [strongbox
     [constants :as constants]
@@ -33,7 +33,7 @@
         key (:source addon)]
     (try
       (if-not (contains? dispatch-map key)
-        (error (format "addon '%s' is from source '%s' that is unsupported" (:label addon) key))
+        (error (format "addon '%s' is from an unsupported source '%s'." (:label addon) key))
         (let [release-list ((get dispatch-map key) addon game-track)
               latest-release (first release-list)
               pinned-release (when (and release-list
@@ -74,7 +74,11 @@
              (or
               (-expand-summary addon :classic-tbc)
               (-expand-summary addon :classic)
-              (-expand-summary addon :retail)))]
+              (-expand-summary addon :retail))
+
+             ;; rare case, we received a game track or strictness setting that isn't catered for.
+             ;; possibly an older strongbox with newer data. we'll leave an error message below.
+             nil)]
 
     source-updates
 
@@ -98,8 +102,14 @@
                 ;; these can happen after alpha/beta/no-lib releases have been excluded and no releases are left
                 [:retail false] (format multi-template retail-lbl classic-lbl classic-tbc-lbl source)
                 [:classic false] (format multi-template classic-lbl classic-tbc-lbl retail-lbl source)
-                [:classic-tbc false] (format multi-template classic-tbc-lbl classic-lbl retail-lbl source))]
-      (warn msg))))
+                [:classic-tbc false] (format multi-template classic-tbc-lbl classic-lbl retail-lbl source)
+
+                (if (boolean? strict?)
+                  (error (format "unsupported game track '%s'." (str game-track)))
+                  (do (error "this is a programming error, please report this if possible.")
+                      (error (format "unknown strictness value '%s'." (str strict?))))))]
+      (when msg
+        (warn msg)))))
 
 ;;
 
@@ -144,8 +154,21 @@
 (defn-spec format-catalogue-data :catalogue/catalogue
   "returns a correctly formatted catalogue given a list of addons and a datestamp"
   [addon-list :addon/summary-list, datestamp ::sp/ymd-dt]
-  (let [addon-list (mapv #(into (omap/ordered-map) (sort %))
-                         (sort-by :name addon-list))]
+  (let [addon-list (p :cat/sort-addons
+                      (sort-by :name addon-list))]
+    {:spec {:version 2}
+     :datestamp datestamp
+     :total (count addon-list)
+     :addon-summary-list addon-list}))
+
+(defn-spec format-catalogue-data-for-output :catalogue/catalogue
+  "same as `format-catalogue-data`, but the addon maps are converted to an `ordered-map` for better diffs"
+  [addon-list :addon/summary-list, datestamp ::sp/ymd-dt]
+  (let [addon-list (p :cat/format-catalogue-data
+                      (mapv #(p :cat/format-addon
+                                (into (omap/ordered-map) (sort %)))
+                            (p :cat/sort-addons
+                               (sort-by :name addon-list))))]
     {:spec {:version 2}
      :datestamp datestamp
      :total (count addon-list)
@@ -178,47 +201,41 @@
 
     val))
 
-(defn-spec -read-catalogue (s/or :ok :catalogue/catalogue, :error nil?)
+(defn-spec read-catalogue (s/or :ok :catalogue/catalogue, :error nil?)
   "reads the catalogue of addon data at the given `catalogue-path`.
   supports reading legacy catalogues by dispatching on the `[:spec :version]` number."
-  [catalogue-path ::sp/file, opts map?]
-  (p :catalogue
-     (let [key-fn (fn [k]
-                    (case k
-                      "uri" :url
-                      ;;"category-list" :tag-list ;; pushed back into v1 post-processing
-                      (keyword k)))
-           value-fn -read-catalogue-value-fn ;; defined 'outside' so it can reference itself
-           opts (merge opts {:key-fn key-fn :value-fn value-fn})
-           catalogue-data (p :catalogue:load-json-file
-                             (utils/load-json-file-safely catalogue-path opts))]
+  ([catalogue-path (s/or :file ::sp/file, :bytes bytes?)]
+   (read-catalogue catalogue-path {}))
+  ([catalogue-path (s/or :file ::sp/file, :bytes bytes?), opts map?]
+   (p :catalogue
+      (let [key-fn (fn [k]
+                     (case k
+                       "uri" :url
+                       ;;"category-list" :tag-list ;; pushed back into v1 post-processing
+                       (keyword k)))
+            value-fn -read-catalogue-value-fn ;; defined 'outside' so it can reference itself
+            opts (merge opts {:key-fn key-fn :value-fn value-fn})
+            catalogue-data (p :catalogue:load-json-file
+                              (utils/load-json-file-safely catalogue-path opts))]
 
-       (when-not (empty? catalogue-data)
-         (if (-> catalogue-data :spec :version (= 1)) ;; if v1 catalogue, coerce
-           (p :catalogue:v1-coercer
-              (utils/nilable (catalogue-v1-coercer catalogue-data)))
-           catalogue-data)))))
+        (when-not (empty? catalogue-data)
+          (if (-> catalogue-data :spec :version (= 1)) ;; if v1 catalogue, coerce
+            (p :catalogue:v1-coercer
+               (utils/nilable (catalogue-v1-coercer catalogue-data)))
+            catalogue-data))))))
 
 (defn validate
   "validates the given data as a `:catalogue/catalogue`, returning nil if data is invalid"
   [catalogue]
-  (sp/valid-or-nil :catalogue/catalogue catalogue))
+  (p :catalogue:validate
+     (sp/valid-or-nil :catalogue/catalogue catalogue)))
 
-(defn read-catalogue
-  "reads catalogue at given `path` and validates the result, regardless of spec instrumentation.
-  returns `nil` if catalogue is invalid."
-  ([path]
-   (read-catalogue path {}))
-  ([path opts]
-   (-> path (-read-catalogue opts) validate)))
-
-(defn-spec write-catalogue ::sp/extant-file
+(defn-spec write-catalogue (s/or :ok ::sp/extant-file, :error nil?)
   "write catalogue to given `output-file` as JSON. returns path to output file"
   [catalogue-data :catalogue/catalogue, output-file ::sp/file]
   (if (some->> catalogue-data validate (utils/dump-json-file output-file))
-    (do
-      (info "wrote:" output-file)
-      output-file)
+    (do (info "wrote:" output-file)
+        output-file)
     (error "catalogue data is invalid, refusing to write:" output-file)))
 
 (defn-spec new-catalogue :catalogue/catalogue
@@ -298,12 +315,22 @@
 ;;
 
 (defn-spec shorten-catalogue (s/or :ok :catalogue/catalogue, :problem nil?)
-  "reads the catalogue at the given `path` and returns a truncated version where all addons unmaintained addons are removed.
-  an addon is considered unmaintained if it hasn't been updated since the beginning of the previous expansion"
-  [full-catalogue-path ::sp/extant-file, cutoff ::sp/inst]
-  (let [{:keys [addon-summary-list datestamp]} (read-catalogue full-catalogue-path)
-        unmaintained? (fn [addon]
-                        (let [dtobj (java-time/zoned-date-time (:updated-date addon))]
-                          (java-time/before? dtobj (utils/todt cutoff))))]
-    (when addon-summary-list
-      (format-catalogue-data (remove unmaintained? addon-summary-list) datestamp))))
+  "returns a truncated version of `catalogue` where all addons considered unmaintained are removed.
+  an addon is considered unmaintained if it hasn't been updated since before the given `cutoff` date."
+  ([catalogue :catalogue/catalogue]
+   (shorten-catalogue catalogue constants/release-of-previous-expansion))
+  ([catalogue :catalogue/catalogue, cutoff ::sp/inst]
+   (let [{:keys [addon-summary-list datestamp]} catalogue
+         unmaintained? (fn [addon]
+                         (let [dtobj (java-time/zoned-date-time (:updated-date addon))]
+                           (java-time/before? dtobj (utils/todt cutoff))))]
+     (when addon-summary-list
+       (format-catalogue-data (remove unmaintained? addon-summary-list) datestamp)))))
+
+(defn-spec filter-catalogue :catalogue/catalogue
+  "returns a catalogue whose `addon-summary-list` has been filtered against the given `source`."
+  [catalogue :catalogue/catalogue, source :addon/source]
+  (let [new-addon-summary-list (filterv #(= source (:source %)) (:addon-summary-list catalogue))]
+    (-> catalogue
+        (assoc :addon-summary-list new-addon-summary-list)
+        (assoc :total (count new-addon-summary-list)))))

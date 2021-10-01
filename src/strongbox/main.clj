@@ -25,17 +25,9 @@
    (uncaughtException [_ thread ex]
      (error ex "Uncaught exception on" (.getName thread)))))
 
-;; profiling is disabled by default unless explicitly turned on.
-;; profiling is enabled during testing via Cloverage via `with-redef`, else the forms are not counted properly.
-(def profile? false)
-
 ;; spec checking is enabled during repl development and *any* testing unless explicitly turned off.
 ;; spec checking is disabled upon release
 (def spec? (utils/in-repl?))
-
-;; initial logging setup.
-;; default log level should be :info before anything starts logging.
-(core/reset-logging!)
 
 (defn jfx
   "dynamically resolve the `strongbox.ui.jfx` ns and call the requisite `action`.
@@ -69,7 +61,7 @@
 
 (defn start
   [& [cli-opts]]
-  (core/start (merge {:profile? profile?, :spec? spec?} cli-opts))
+  (core/start (merge {:spec? spec?} cli-opts))
   (case (:ui cli-opts)
     :cli (cli/start cli-opts)
     :gui (jfx :start)
@@ -85,12 +77,6 @@
   (Thread/sleep 750) ;; gives me time to switch panes
   (start cli-opts))
 
-(defn profile
-  "runs the app the same as `start`, but enables profiling output"
-  [& [cli-ops]]
-  (let [default-opts {:verbosity :error, :ui :cli, :spec? false}]
-    (restart (merge default-opts cli-ops {:profile? true}))))
-
 (defn test
   [& [ns-kw fn-kw]]
   (stop)
@@ -103,7 +89,6 @@
                   ;; note! this is different to `joblib/tick-delay` not delaying when `joblib/tick` is unbound.
                   ;; tests still bind `joblib/tick` and run things in parallel.
                   joblib/tick-delay joblib/tick
-                  ;;main/profile? true
                   ;;main/spec? true
                   ;;cli/install-update-these-in-parallel cli/install-update-these-serially
                   ;;core/check-for-updates core/check-for-updates-serially
@@ -146,6 +131,10 @@
 (def cli-options
   [["-h" "--help"]
 
+   [nil "--version" "print current version of strongbox"
+    :id :version-string
+    :default false]
+
    ["-d" "--addons-dir DIR" "location of addon directory"
     :id :install-dir
     :parse-fn #(-> % fs/expand-home fs/normalized str)
@@ -182,6 +171,8 @@
 
       (:help options) {:ok? true, :exit-message (usage parsed)}
 
+      (:version-string options) {:ok? true :exit-message (str "strongbox " (core/strongbox-version))}
+
       errors {:ok? false, :exit-message (str "The following errors occurred while parsing your command:\n\n"
                                              (clojure.string/join \newline errors))}
       :else parsed)))
@@ -217,14 +208,16 @@
 
 (defn exit
   [status & [msg]]
-  (stop)
-  (when msg (println msg))
+  (when (core/started?)
+    (stop))
+  (when msg
+    (println msg))
   (System/exit status))
 
 (defn -main
   [& args]
   (let [{:keys [options exit-message ok?]} (-> args parse validate)]
-    (shutdown-hook)
     (if exit-message
       (exit (if ok? 0 1) exit-message)
-      (start options))))
+      (do (shutdown-hook)
+          (start options)))))

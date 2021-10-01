@@ -6,73 +6,150 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* handle no internet connection more gracefully
-    - it's a bit slow but it doesn't crash as connections ...
-    - literally unplugging the network and restarting I get some 'unknown host' exceptions as the catalogue fails to download
-        - and http/http-error was broken :(
+* bump dependencies
+    - there are changes to data.json libraries with speed improvements
+        - profile first
+    - about an 80ms improvement in json loading
     - done
 
-* zip, better errors for failing to decompress .rar files
-    - see !FREEZING from wowinterface
-        - it's a .rar addon
-        - the full path is emitted in the error, which is impossible to fully read
-        - the extension has been replaced with .zip
-            - if the extension were preserved we could dismiss it immediately as unsupported
+* add a --version parameter
+    -done
 
-        2021-03-20 01:35:58.026 DEBUG [strongbox.zip:23] - failed to open+close zip file: /home/torkus/path/to/wine/dir/drive_c/program files/World of Warcraft/_retail_/Interface/Addons/-freezing--1-04.zip
-        path [] triggered :strongbox.ui.jfx$start$update_gui_state__39204@608569a040151
-        2021-03-20 01:35:58.027 ERROR [strongbox.core:419] - failed to read zip file '/home/torkus/path/to/wine/dir/drive_c/program files/World of Warcraft/_retail_/Interface/Addons/-freezing--1-04.zip', could not install -freezing
+* gui, clicking File -> New Addon Directory continues to show the menu in the background
+    - fixed
 
-    - I don't see this anymore, I get the sensible "failed to read addon zip file, possibly corrupt or not a zip file." message.
+* investigate *warn-on-reflections*
+    - I think there may be some solid performance gains by turning this on
+        - remember to profile first
+    - turns out there wasn't
     - done
 
-* release, more automation
-    - clean the environment, update project.clj and readme, run lein pom, open a branch, push, open a PR, create a checklist
-    - merge PR into master, tag, push, upload assets, update PKGBUILD, push to aur
-    - etc
+* wowinterface, bug, text response to binary when download pending:
+    - https://github.com/ogri-la/strongbox/discussions/289
     - done
-        - https://github.com/ogri-la/strongbox-release-script
-        - it will get bugfixed and refined as I go along.
 
-* EOL planning, robustness, only download/update the catalogue *after* an existing catalogue has been confirmed
-    - github is down, wowman is erroring with a 500
-        - 'host not found' errors should be captured
-        - all other errors are handled fine
+* bug, catalogue loading
+    - when the catalogue fails validation it shouldn't freeze the app while the reason is printed in the console
+        - removed validation of catalogue
+        - can't get around error message and even then what is the user supposed to do?
+            - catalogue needs to be valid on write
+                - yes
+            - catalogue needs to fail when corrupted
+                - yes
         - done
-    - failure to download a catalogue shouldn't prevent addons from being displayed
-        - if a catalogue has been downloaded previously, does it still fail?
-            - no, it behaves so perfectly I'm suspicious. investigating ... yeah, cache.
-            - with no available catalogue the addons are still displayed but obviously not matched.
-        - so:
-            - if we have a match via the nfo file we should still be able to fetch updates
-                - those in the user-catalogue still work for example ...
-            - order of precendence:
-                - nfo file, if it exists. down the bottom.
-                - user-catalogue. prefer matches against addons added
-                - regular catalogue, has final say.
-                    - this would allow matches against specialised catalogues, like wowi, curse, tukui
-                    - could we disable the catalogue altogether?
-                        - a 'no catalogue' option
-                        - just nfo files and user-catalogue (imported addons)
-                            - bit of a debugging feature but why not?
-        - create a catalogue from the nfo data?
-            - then we could merge nfo-catalogue with user-catalogue with regular catalogue
-                - nice and simple ...
-                - failure to download a catalogue with nothing cached lets us continue working normally
-                    - still need to test the case if a catalogue exists and an update fails, what happens
-                        - touch catalogue, in the past, expire it.
-                - switching to a catalogue like tukui shows all the old associations
+
+* check addons for updates immediately after loading
+    - if after we've read the nfo data and we have everything we need, check the addon for updates immediately
+        - don't wait for db loading and addon matching
+            - so we only match the unmatched against the catalogue?
+    - I think the root cause of this was slowness
+        - what do you mean you're still loading and matching? just let me update already!
+        - speed has been improved by removing validation
+        - app is also faster that I think it is during normal operation when speccing is off
+    - closing this
+        - 'fixing' it would change the behaviour of matching addons to catalogues that I currently quite like
+
+* switching catalogues takes ages 
+    - profile to figure out who the culprit is
+        - the call to `validate` in read-catalogue
+        - sorting keys in addons so they become ordered-maps
+            - not necessary during normal operation, only when generating maps
+    - also, outside of dev environment it's faster than I appreciate
+    - done
+
+* bug, catalogue loading
+    - while updating the catalogue with the new tukui addons I discovered a case where the catalogue *should* be failing validation but it wasn't.
+        - it came down to an :opt vs :opt-un in the spec
+            - the key in question wasn't qualified and thus not matched for validation
         - done
-                
-    - failure to contact a host shouldn't prevent addons on other hosts from working
+    - the catalogue should always be loadable by previous versions of strongbox that support the given spec version
+        - changed. catalogue isn't validated on read anymore, but on write.
+        - this means invalid catalogues can still be read by the application but their behaviour will be unknown
+            - they'll probably mostly work and the bits that are unfamiliar should be ignored.
+            - this should be tested
         - done
+
+* gui, stateful buttons
+    - don't allow enabled 'delete selected' buttons if nothing is selected
+    - not going to coddle the user. deleting nothing will see nothing deleted.
+    - resurrecting this from wontfix
+        - we have a new gui now and it is possible to right click and select delete with nothing actually deleted.
+            - which just seems stupid
+    - done!
+
+* EOL planning, bundle a catalogue with the installation
+    - load it as a resource with static-slurp, like we do with the sql?
+        - also compressed so it's tiny?
+    - behind the scenes we download and load the full-catalogue
+        - would this block reconciliation?
+            - perhaps if there are unmatched addons after reconciliation we then wait and try again ...?
+        - this ties in with my recent ideas of having the catalogue download in the background but only if a catalogue already exists.
+            - if one is bundled then a catalogue *always* exists
+                - then the short/full/curse/wow catalogues are simply filtered versions of the 'full' catalogue
+                - the user catalogue would need to be merged over the top
+    - perhaps ... 
+        - bundle with a short catalogue
+        - on first run, write catalogue to disk
+            - this guarantees a catalogue will always exist to be used
+        - thereafter, if a catalogue exists, look for and download a newer version in the background
+            - perhaps do the same with the full catalogue as well
+                - with the individual tukui/wowi/curse catalogues as opt-in
+            - this would prevent the pause waiting for the download 
+                - it takes 1.3seconds to download and validate the full catalogue
+                - it took 349ms to download the full catalogue with spec off.
+    - this is a lot of work for miniscule performance improvements.
+    - in terms of robustness, we would be preventing against the catalogue repository from ever going away.
+        - perhaps a better solution is to make the location of the catalogue configurable
+            - it already is: [:cfg :catalogue-location-list]
+    - if github is down, or github blocks us, or the repo goes away, a static catalogue would provide some basic temporary benefits
+        1. compress the full catalogue at time of compilation
+        2. if catalogue cannot be downloaded and catalogue not present on disk, write catalogue to disk
+    - done
+
+* update contributing docs
+    - done
+
+* investigate a splash screen. 
+    - https://github.com/cljfx/cljfx/tree/master/example-projects/splash
+    - it takes 8 seconds from 'lein run' to a gui appearing
+    - 6 seconds for ./strongbox to something appearing
+    - too long to be waiting, the mind begins to wonder if it's crashed ...
+    - done
+
+* bug, select addon in one dir, change dir, right click and you can delete it - it's still selected
+    - done
 
 ## todo
 
-
 ## todo bucket (no particular order)
 
-* add a --version parameter
+* bug, a timeout from curseforge during scraping at page 171 prevent pages 171-182 from being scraped
+    - we should be kinder when scraping. 
+        - add a delay between requests
+    - we should be more robust when scraping.
+        - add retries with exponential backoff
+
+* wowinterface, revisit the pages that are being scraped, make sure we're not missing any
+
+* export/import addons to/from github
+    - I have a github account, I'd like to push/pull addons to it
+        - use a gist?
+        - dedicated repo?
+    - other targets to publish to?
+        - always keep the base import/export to a *file*
+        - ftp? s3 bucket? ssh? gitlab?
+    - feels a bit like scope creep to me
+        - it would be nice and convenient, but a lot of work to build and maintain
+
+* schedule user catalogue refreshes
+    - ensure the user catalogue doesn't get too stale and perform an update in the background if it looks like it's very old
+        - update README
+
+* 'update all' should be a no-op if nothing has updates available
+    - don't disable the button, just don't do anything
+
+* clear non-catalogue cache after session
+    - it seems reasonable that stopping and starting the app will have it re-fetch addon summaries.
 
 * install addon from local zipfile
     - *not* the 'reinstallation' feature, but literally selecting a zipfile from somewhere and installing it
@@ -105,10 +182,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * add release.json support for github addons
 
-* importing addons, skip db lookup for addon urls that don't need it
-    - if we can 'expand it' then we can download it and install it.
-    - I think tukui, wowi can, github obs, curseforge could not
-
 * toc, addon detail, add 'x-website' / 'x-url' alongside 'browse local files' and addon host
 
 * change split button 'outdent' to 'indent'
@@ -132,14 +205,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - it should stand out from the other messages, look friendly, etc
         - going with the further 'detail' metadata idea, adding an info icon would make it stand out
 
-* bug, catalogue loading
-    - while updating the catalogue with the new tukui addons I discovered a case where the catalogue *should* be failing validation but it wasn't.
-        - it came down to an :opt vs :opt-un in the spec
-            - the key in question wasn't qualified and thus not matched for validation
-    - the catalogue should always be loadable by previous versions of strongbox that support the given spec version
-        - ...
-    - when the catalogue fails validation it shouldn't freeze the app while the reason is printed in the console
-
 * classic addon dir detection
     - also check for 
         - '_classic_' '_classic_beta_' '_classic_ptr_'
@@ -158,20 +223,10 @@ see CHANGELOG.md for a more formal list of changes by release
     - rar should just die already
     - this would fix a major showstopper in porting to windows
 
-* investigate *warn-on-reflections*
-    - I think there may be some solid performance gains by turning this on
-        - remember to profile first
-
 * test, can gui-diff and main/test be pushed back into the testing namespace and elided from release somehow?
 
 * create a parser for that shit markup that is preventing reconcilation
     - see aliases
-
-* if a match has been made and the addon installed using that match, and then the catalogue changes, addon should still be downloadable
-    - right?
-        - we have the source and source-id, even the group-id to some extent
-    - switching catalogues may see the addon matched against another host
-        - nothing wrong with that, but ...
 
 * gitlab as addon host
     - https://gitlab.com/search?search=wow+addon
@@ -185,13 +240,6 @@ see CHANGELOG.md for a more formal list of changes by release
         - https://gitlab.com/explore/projects?tag=World+of+Warcraft
         - https://gitlab.com/shrugal/PersoLootRoll
         - any others ...?
-
-* EOL planning, bundle a catalogue with the installation
-    - load it as a resource with static-slurp, like we do with the sql?
-        - also compressed so it's tiny?
-    - behind the scenes we download and load the full-catalogue
-        - would this block reconciliation?
-            - perhaps if there are unmatched addons after reconciliation we then wait and try again ...?
 
 * add checksum checks after downloading
     - curseforge have an md5 that can be used
@@ -217,11 +265,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - investigate just what is being downloaded when a classic version of a wowi addon is downloaded
     - see 'LagBar'
 
-* when curseforge api is down users get a wall of red error messages with very little useful information
-    - see issue 91: https://github.com/ogri-la/wowman/issues/91
-        - the error message has been improved but we still get a red wall of text
-        - aggregate error messages?
-
 * reconciliation, rename 'reinstall all' to 'reconcile'
     - steal from the best
     - make the reconcile automatic
@@ -234,25 +277,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * add a 'tabula rasa' option that wipes *everything* 
     - cache, catalog, config, downloaded zip files
-
-* testing, capture metrics with an eye to improving performance and speed
-    - we have coverage metrics now
-    - would like some timing around certain operations
-        - like loading the catalog
-            - done
-        - like downloading and installing the top-10, top-20, top-N addons
-            - this could be a good benchmark actually
-                - how quickly can one go from 'nothing installed' to '20 addons installed' ?
-                - could be tied in with backups/exports
-                    - got to have backups+imports happening first
-        - identify slow things and measure their improvement
-
-* check addons for updates immediately after loading
-    - if after we've read the nfo data and we have everything we need, check the addon for updates immediately
-        - don't wait for db loading and addon matching
-            - we already have a match stored in the .nfo file
-                - this would break the switching catalogue feature...
-        - this might fit in with the greater-parallelism/queue based infrastructure
 
 
 # releases
@@ -386,6 +410,23 @@ this is still an interesting idea
 
 ## wontfix
 
+* importing addons, skip db lookup for addon urls that don't need it
+    - if we can 'expand it' then we can download it and install it.
+        - yes, and the explicit url should be respected.
+            - if the user imported from wowi or curseforge, that host should be used for installation
+                - after installation, we can match it against the current catalogue and go from there.
+                    - because the addon is added to the user catalogue, it will always be available, there will always be a match.
+                        - but not initially.
+                            - no, but we have the source and source-id (or url) to match against.
+            - we need to find a download url
+                - wowi needs source-id
+                - curse needs a source-id which comes from the db
+                - tukui needs source-id and a name if the id negative
+                    - name could come from the url string to import
+    - I think tukui, wowi can, github obs, curseforge could not
+    - I'm moving this to 'wontfix'
+        - it's possible for wowi and tukui, not curse
+        - the error message is clear (can't find in catalogue)
 * github, add a github catalogue
     - just a simple list of wow addons on github that can be installed with strongbox
     - yeah, nah
@@ -437,9 +478,7 @@ this is still an interesting idea
         - see EOL planning
 * gui, search pane, clear search button
     - I don't think this is necessary anymore
-* gui, stateful buttons
-    - don't allow enabled 'delete selected' buttons if nothing is selected
-    - not going to coddle the user. deleting nothing will see nothing deleted.
+
 * cli, interactive interface when no specific action specified 
     - you have N addons installed. what do you want to do? (list, update, update-all, delete) etc
     - this is a huge amount of hassle

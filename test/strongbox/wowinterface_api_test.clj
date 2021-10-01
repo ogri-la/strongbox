@@ -64,3 +64,13 @@
                  ["https://www.wowinterface.com/downloads/dlfile1536/Masque_LiteStep-9.0.6-bcc.zip?1621368578" nil]]]
       (doseq [[given expected] cases]
         (is (= expected (wowinterface-api/parse-user-string given)))))))
+
+(deftest extract-aid
+  (testing "the 'aid' query parameter can be extracted from a url if present"
+    (let [cases [[nil nil]
+                 ["" nil]
+                 ["https://cdn.wowinterface.com/downloads/getfile.php?id=19662&d=1631009549&minion" nil]
+                 ["https://cdn.wowinterface.com/downloads/getfile.php?id=19662&aid=119903&d=1631009549&minion" "119903"]
+                 ["&aid=asdf" nil]]]
+      (doseq [[given expected] cases]
+        (is (= expected (wowinterface-api/extract-aid given)))))))

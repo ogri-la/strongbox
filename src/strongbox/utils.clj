@@ -17,6 +17,16 @@
    [java-time :as jt]
    [java-time.format]))
 
+(defn repl-stack-element?
+  [stack-element]
+  (and (= "clojure.main$repl" (.getClassName  stack-element))
+       (= "doInvoke"          (.getMethodName stack-element))))
+
+(defn in-repl?
+  []
+  (let [current-stack-trace (.getStackTrace (Thread/currentThread))]
+    (some repl-stack-element? current-stack-trace)))
+
 (defn instrument
   "if `flag` is true, enables spec checking instrumentation, otherwise disables it."
   [flag]
@@ -51,12 +61,6 @@
   [kw (s/nilable keyword?)]
   (when kw
     (name kw)))
-
-(defmacro static-slurp
-  "just like `slurp`, but file is read at compile time.
-  good for static, unchanging, files. less good during development"
-  [path]
-  (slurp path))
 
 (defn-spec safe-to-delete? boolean?
   "predicate, returns `true` if given file is prefixed with given directory."
@@ -131,16 +135,6 @@
   [dt ::sp/inst]
   (java-time/zoned-date-time (get java-time.format/predefined-formatters "iso-zoned-date-time") dt))
 
-(defn repl-stack-element?
-  [stack-element]
-  (and (= "clojure.main$repl" (.getClassName  stack-element))
-       (= "doInvoke"          (.getMethodName stack-element))))
-
-(defn in-repl?
-  []
-  (let [current-stack-trace (.getStackTrace (Thread/currentThread))]
-    (some repl-stack-element? current-stack-trace)))
-
 (defn nav-map
   "wrapper around `get-in` that returns the map as-is if given `path` is empty"
   [m path]
@@ -177,7 +171,7 @@
 
 (defn-spec safe-subs (s/nilable string?)
   "similar to `subs` but can handle `nil` input and a `max` value larger than (or less than) length of given string `x`."
-  [x (s/nilable string?), maxval int?]
+  [^String x (s/nilable string?), ^Integer maxval int?]
   (when x
     (subs x 0 (min (count x) (if (neg? maxval) 0 maxval)))))
 
@@ -205,7 +199,7 @@
   (try
     (from-json* x)
     (catch Exception exc
-      (error (str "failed to parse json:" exc))
+      (error (str "failed to parse json: " exc))
       nil)))
 
 (defn-spec dump-json-file ::sp/extant-file
@@ -222,15 +216,16 @@
   if :invalid-data? given, then a :data-spec must also be given else nothing happens and you get nil back"
   ([path ::sp/file]
    (load-json-file-safely path {}))
-  ([path ::sp/file, opts map?]
+  ([path (s/or :file ::sp/file, :bytes bytes?), opts map?]
    (let [{:keys [no-file? bad-data? invalid-data? data-spec value-fn key-fn transform-map]} opts
          default-key-fn keyword
          default-value-fn (fn [key val]
                             ((get transform-map key (constantly val)) val))
-         ;; a given `value-fn`, if any, takes precendence over `transform-map`
+         ;; specific `key-fn` and `value-fn` take precendence over anything in `transform-map`
          value-fn (or value-fn default-value-fn)
          key-fn (or key-fn default-key-fn)]
-     (if-not (fs/file? path)
+     (if (and (not (bytes? path))
+              (not (fs/file? path)))
        (call-if-fn no-file?)
        (let [data (try
                     (with-open [reader (clojure.java.io/reader path)]
@@ -260,12 +255,14 @@
          (not (s/valid? data-spec data))) (call-if-fn invalid-data?)
         :else data))))
 
-(defn-spec to-int (s/or :ok int? :error nil?)
+(defn-spec to-int (s/or :ok int?, :error nil?)
   "given any value `x`, converts it to an integer or returns `nil` if it can't be converted."
   [x any?]
-  (try (Integer/valueOf x)
-       (catch NumberFormatException nfe
-         nil)))
+  (if (int? x)
+    x
+    (try (Integer/valueOf (str x))
+         (catch NumberFormatException nfe
+           nil))))
 
 (defn-spec slugify string?
   [string string?]
@@ -361,7 +358,7 @@
 
 (defn-spec file-to-lazy-byte-array bytes?
   [path ::sp/extant-file]
-  (let [fobj (java.io.File. path)
+  (let [fobj (java.io.File. ^String path)
         ary (byte-array (.length fobj))
         is (java.io.FileInputStream. fobj)]
     (.read is ary)
@@ -422,14 +419,15 @@
                 nil))
 
         ;; looser, but still better than a regex
-        uri (try
-              (java.net.URI. uin)
-              (catch java.net.URISyntaxException _
-                nil))
+        ^java.net.URI uri
+        (try
+          (java.net.URI. uin)
+          (catch java.net.URISyntaxException _
+            nil))
 
         ;; and finally, if url and uri approaches fail, try a quick and dirty regex
-        regex #"(\w*:)?(\/\/)?(www\.)?(.+\.\w{2,4})(/?.*)?"
         groups [:protocol :lines :sub :host        :path]
+        regex #"(\w*:)?(\/\/)?(www\.)?(.+\.\w{2,4})(/?.*)?"
         parsed (named-regex-groups regex groups uin)]
 
     (cond
@@ -539,7 +537,7 @@
           (s/valid? ::sp/url path) (do (info "opening URL:" path)
                                        (.browse desktop (java.net.URI. path)))
           (s/valid? ::sp/extant-dir path) (do (info "opening directory:" path)
-                                              (.open desktop (java.io.File. path)))
+                                              (.open desktop (java.io.File. ^String path)))
           :else (error "can't open: " path))))))
 
 (defn-spec find-browser fn?

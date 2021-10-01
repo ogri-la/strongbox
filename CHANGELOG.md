@@ -4,6 +4,45 @@ All notable changes to this project will be documented in this file. This change
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 4.6.0 - 2021-10-01
+
+### Added
+
+* a `--version` parameter that prints the name of the app and it's current version.
+* an 'emergency' catalogue that strongbox can use if the remote catalogue is not available.
+    - it's a bz2 compressed `full-catalogue.json` that was available at build time.
+    - the trade-offs are it's older, makes strongbox binary a little larger and switching catalogues a little slower.
+
+### Changed
+
+* bumped dependencies
+    - slight increase in performance loading JSON with a newer version of the `data.json` library.
+* searching for addons is now much *much* faster.
+    - matching search input against an addon has been improved by two orders of magnitude.
+* searching now searches within the addon name rather than from the beginning of the name.
+* catalogue is no longer validated when reading the catalogue JSON file.
+    - it was the major cause of slow catalogue loads, switches between catalogues and (probably) overly cautious.
+    - a well-formed but invalid catalogue would cause a freeze printing the validation error to the console.
+* addon maps no longer have their keys ordered on reading.
+    - a minor cause of slow catalogue loading/switching and only necessary when creating catalogues.
+* gui, context menu options disabled when no addons selected.
+
+### Fixed
+
+* case where selected addons persist across addon directory changes.
+* warning on startup about `cat` already refering to `clojure.core/cat`.
+* case where a wowinterface addon pending approval couldn't be downloaded because of a missing query parameter.
+* regression where a bad addon downloaded in parallel would still be passed to the 'install addon' operation.
+* typo causing a failure to properly validate the 'created-date' in the catalogue.
+    - this affected both reading and writing catalogues however catalogues are no longer validated on read.
+* attempting to check an addon from an unknown host would cause an unhelpful error.
+* attempting to install an addon with an unknown game track would cause an error.
+* installing an addon in certain circumstances assumed a successful check for updates had been made.
+
+### Removed
+
+* the `--profile` command line option and the scaffolding around integrating it with the tests and test coverage.
+
 ## 4.5.0 - 2021-09-05
 
 ### Added

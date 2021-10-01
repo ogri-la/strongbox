@@ -617,3 +617,40 @@
             (cli/refresh-user-catalogue)
             ;; ensure new user-catalogue matches expectations
             (is (= expected-user-catalogue (core/get-create-user-catalogue)))))))))
+
+;; test doesn't seem to live comfortably in `core_test.clj`
+(deftest install-update-these-in-parallel--bad-download
+  (testing "bad downloads are not passed to `core/install-addon`."
+    (with-running-app
+      (helper/install-dir)
+      (let [fixture (slurp (fixture-path "wowinterface--download-not-approved.html"))
+            fake-routes {"https://cdn.wowinterface.com/downloads/getfile.php?id=19662"
+                         {:get (fn [req] {:status 200 :body fixture})}}
+            addon {:description "Tue, August 31, 2021"
+                   :update? true
+                   :game-track-list [:retail]
+                   :release-list [{:download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=19662"
+                                   :version "5.6.20210907"
+                                   :game-track :retail}]
+                   :updated-date "2021-09-07T04:12:00Z"
+                   :download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=19662"
+                   :tag-list [:tooltip]
+                   :group-id "https://www.wowinterface.com/downloads/info19662"
+                   :installed-version "5.6.20210831"
+                   :name "the-undermine-journal"
+                   :source "wowinterface"
+                   :interface-version 90100
+                   :game-track :retail
+                   :installed-game-track :retail
+                   :label "The Undermine Journal"
+                   :download-count 260258
+                   :url "https://www.wowinterface.com/downloads/info19662"
+                   :source-id 19662
+                   :version "5.6.20210907"
+                   :dirname "TheUndermineJournal"
+                   :primary? true
+                   :matched? true}]
+        (with-global-fake-routes-in-isolation fake-routes
+          (is (nil? (cli/install-update-these-in-parallel [addon])))
+
+          (is (empty? (helper/install-dir-contents))))))))

@@ -3,7 +3,6 @@
    [clojure.string :refer [trim lower-case]]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
-   [taoensso.tufte :as tufte :refer [p profile]]
    ;;[taoensso.timbre :refer [debug info warn error spy]]
    [strongbox.specs :as sp]))
 
@@ -136,21 +135,20 @@ sp/placeholder
 (defn-spec category-to-tag-list (s/or :singluar :addon/tag, :composite :addon/tag-list)
   "given a `category` string, converts it into one or many tags."
   [addon-host :addon/source, category :addon/category]
-  (p :tags/category-to-tag-list
-     (let [replacements (get replacement-map addon-host, general-replacements)
-           supplements (get supplement-map addon-host, general-supplements)
+  (let [replacements (get replacement-map addon-host, general-replacements)
+        supplements (get supplement-map addon-host, general-supplements)
 
-           replacement-tags (get replacements category [])
-           supplementary-tags (get supplements category [])
+        replacement-tags (get replacements category [])
+        supplementary-tags (get supplements category [])
 
-           tag-list (into replacement-tags supplementary-tags)]
-       (if-not (empty? replacement-tags)
-         ;; we found a set of replacement tags so we're done
-         tag-list
+        tag-list (into replacement-tags supplementary-tags)]
+    (if-not (empty? replacement-tags)
+      ;; we found a set of replacement tags so we're done
+      tag-list
 
-         ;; couldn't find a replacement set of tags so parse the category string
-         (let [bits (clojure.string/split category #"( & |, |: )+")]
-           (->> bits (map category-to-tag) (into tag-list) (remove nil?) vec))))))
+      ;; couldn't find a replacement set of tags so parse the category string
+      (let [bits (clojure.string/split category #"( & |, |: )+")]
+        (->> bits (map category-to-tag) (into tag-list) (remove nil?) vec)))))
 
 (defn-spec category-list-to-tag-list :addon/tag-list
   "given a list of category strings, converts them into a distinct list of tags by calling `category-to-tag-list`."

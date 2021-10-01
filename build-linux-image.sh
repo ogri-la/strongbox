@@ -16,15 +16,19 @@ jlink \
 
 # needed when built using Ubuntu as libjvm.so is *huge*
 # doesn't seem to hurt to strip the other .so files.
-find -name "*.so" | xargs strip -p --strip-unneeded
+find -name "*.so" | xargs strip --preserve-dates --strip-unneeded
 
 du -sh "$output_dir"
 
-if [ ! -f ./target/*-standalone.jar ]; then
-    echo
-    echo "--- building app ---"
-    lein uberjar
-fi
+echo
+echo "--- building app ---"
+lein clean
+rm -f resources/full-catalogue.json
+wget https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/full-catalogue.json \
+    --quiet \
+    --directory-prefix resources
+lein uberjar
+
 cp ./target/*-standalone.jar "$output_dir/app.jar"
 
 echo
