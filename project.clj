@@ -58,26 +58,17 @@
                          ;; see `gui-diff` exclusion
                          [net.cgrand/parsley "0.9.3"]]
 
-  :java-source-paths ["java-src"]
-
   :resource-paths ["resources"]
 
-  :profiles {:dev {;;:main splash.Main ;; lein run, but not lein repl
-                   :plugins [[lein-ancient "0.7.0"]]
-
+  :profiles {:dev {:plugins [[lein-ancient "0.7.0"]]
                    :resource-paths ["dev-resources" "resources"] ;; dev-resources take priority
                    :dependencies [[clj-http-fake "1.0.3"] ;; fake http responses for testing
                                   ]}
-
-             ;; `lein with-profile run run`
-             :run {:main splash.Main}
 
              :uberjar {:aot :all
                        ;; fixes hanging issue:
                        ;; - https://github.com/cljfx/cljfx/issues/17
                        :injections [(javafx.application.Platform/exit)]
-                       :jvm-opts ["-Dcljfx.skip-javafx-initialization=true"]
-                       :main splash.Main
                        }}
 
   ;; debug output from JavaFX about which GTK it is looking for. 
