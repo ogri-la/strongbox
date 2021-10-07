@@ -30,7 +30,11 @@
                  ;; 0:   keep no zips
                  ;; 1:   keep 1 zip
                  ;; N:   keep N zips
-                 :addon-zips-to-keep nil}})
+                 :addon-zips-to-keep nil
+                 :ui-selected-columns nil
+                 }
+   })
+
 
 (defn handle-install-dir
   "`:install-dir` was once supported in the user configuration but is now only supported in the command line options.

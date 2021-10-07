@@ -31,6 +31,8 @@ see CHANGELOG.md for a more formal list of changes by release
     - a column that prefers website over addon host?
 
 * gui, toggleable columns as a menuitem
+    - ensure a 'reset' to defaults option
+    - don't change current set of columns until next major release
 
 * gui, switch to tree-table-view for installed addons that are grouping other addons
     - at least investigate how difficult this might be.

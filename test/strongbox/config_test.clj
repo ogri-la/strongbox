@@ -192,7 +192,8 @@
                           :selected-addon-dir "/tmp/.strongbox-bar" ;; defaults to first entry
 
                           ;; new in 3.1.0
-                          :preferences {:addon-zips-to-keep nil}}
+                          :preferences {:addon-zips-to-keep nil
+                                        :ui-selected-columns nil}}
 
                     :cli-opts {}
                     :file-opts {:debug? true
@@ -221,7 +222,8 @@
                           :selected-addon-dir "/tmp/.strongbox-bar"
 
                           ;; new in 3.1.0
-                          :preferences {:addon-zips-to-keep nil}}
+                          :preferences {:addon-zips-to-keep nil
+                                        :ui-selected-columns nil}}
 
                     :cli-opts {}
                     :file-opts {:selected-catalogue :full
@@ -251,7 +253,8 @@
                           :selected-addon-dir "/tmp/.strongbox-bar"
 
                           ;; new in 3.1.0
-                          :preferences {:addon-zips-to-keep nil}}
+                          :preferences {:addon-zips-to-keep nil
+                                        :ui-selected-columns nil}}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark
@@ -282,7 +285,8 @@
                           :selected-addon-dir "/tmp/.strongbox-bar"
 
                           ;; new in 3.1.0
-                          :preferences {:addon-zips-to-keep nil}}
+                          :preferences {:addon-zips-to-keep nil
+                                        :ui-selected-columns nil}}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark
@@ -312,7 +316,8 @@
                           :selected-addon-dir "/tmp/.strongbox-foo"
 
                           ;; new in 3.1.0
-                          :preferences {:addon-zips-to-keep nil}}
+                          :preferences {:addon-zips-to-keep nil
+                                        :ui-selected-columns nil}}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark
@@ -348,7 +353,8 @@
                           :selected-addon-dir "/tmp/.strongbox-foo"
 
                           ;; new in 3.1.0
-                          :preferences {:addon-zips-to-keep 3}}
+                          :preferences {:addon-zips-to-keep 3
+                                        :ui-selected-columns nil}}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark
@@ -386,7 +392,8 @@
                           :selected-addon-dir "/tmp/.strongbox-foo"
 
                           ;; new in 3.1.0
-                          :preferences {:addon-zips-to-keep 3}}
+                          :preferences {:addon-zips-to-keep 3
+                                        :ui-selected-columns nil}}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark-green
@@ -398,7 +405,8 @@
                                 ;; new in 1.0
                                 :catalogue-location-list (:catalogue-location-list config/default-cfg)
 
-                                :preferences {:addon-zips-to-keep 3}}
+                                :preferences {:addon-zips-to-keep 3
+                                              :ui-selected-columns nil}}
 
                     :etag-db {}}]
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))
@@ -423,7 +431,8 @@
                           :selected-addon-dir "/tmp/.strongbox-foo"
 
                           ;; new in 3.1.0
-                          :preferences {:addon-zips-to-keep 3}}
+                          :preferences {:addon-zips-to-keep 3
+                                        :ui-selected-columns nil}}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark-green
@@ -435,7 +444,8 @@
                                 ;; new in 1.0
                                 :catalogue-location-list (:catalogue-location-list config/default-cfg)
 
-                                :preferences {:addon-zips-to-keep 3}}
+                                :preferences {:addon-zips-to-keep 3
+                                              :ui-selected-columns nil}}
 
                     :etag-db {}}]
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))

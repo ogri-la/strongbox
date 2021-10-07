@@ -126,7 +126,9 @@
 (s/def ::selected-catalogue keyword?)
 
 (s/def :config/addon-zips-to-keep (s/nilable int?))
-(s/def :config/preferences (s/keys :req-un [:config/addon-zips-to-keep]))
+(s/def :config/ui-selected-columns ::list-of-keywords)
+(s/def :config/preferences (s/keys :req-un [:config/addon-zips-to-keep
+                                            (s/nilable :config/ui-selected-columns)]))
 
 (s/def ::user-config (s/keys :req-un [::addon-dir-list ::selected-addon-dir
                                       ::catalogue-location-list ::selected-catalogue
@@ -377,3 +379,5 @@
 (s/def :joblib/progress (s/nilable double?))
 (s/def :joblib/job-info (s/keys :req-un [:joblib/job :joblib/job-id :joblib/progress]))
 (s/def :joblib/queue (s/or :keyvals map? :pairs ::list-of-lists))
+
+;;

@@ -5,6 +5,7 @@
    [clojure.spec.alpha :as s]
    [me.raynes.fs :as fs]
    [strongbox
+    [constants :as constants]
     [joblib :as joblib]
     [github-api :as github-api]
     [db :as db]
@@ -566,6 +567,41 @@
          (map #(find-addon % false))
          vec
          core/add-user-addon!))
+  nil)
+
+;;
+
+;; imagine these are being rendered by *anything*
+;; the gui can override the fields as it needs, but the below could be used to render the values in a tui if need be
+;; see config.clj for default columns
+(def column-map
+  {:source {:label "source" :value-fn :source}
+   :name {:label "name" :value-fn (comp utils/no-new-lines :label)}
+   :description {:label "description" :value-fn (comp utils/no-new-lines :description)}
+   :installed-version {:label "installed" :value-fn :installed-version}
+   :available-version {:label "available" :value-fn :version}
+   :uber-button {:label ""
+                 :value-fn (fn [row]
+                             (let [queue (core/get-state :job-queue)
+                                   job-id (joblib/addon-id row)]
+                               (if (and (core/unsteady? (:name row))
+                                        (joblib/has-job? queue job-id))
+                                 ;; parallel job in progress, show a ticker.
+                                 "*"
+                                 (cond
+                                   (:ignore? row) ["", "ignoring"]
+                                   (core/unsteady? (:name row)) (:unsteady constants/glyph-map)
+                                   (addon-has-errors? row) (:errors constants/glyph-map)
+                                   (addon-has-warnings? row) (:warnings constants/glyph-map)
+                                   :else (:tick constants/glyph-map)))))}
+   :game-version {:label "WoW"
+                  :value-fn (fn [row]
+                              (some-> row :interface-version str utils/interface-version-to-game-version))}
+   })
+
+(defn-spec toggle-gui-column nil?
+  [label string?]
+  (println "got" label)
   nil)
 
 

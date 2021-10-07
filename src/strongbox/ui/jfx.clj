@@ -16,6 +16,7 @@
    [orchestra.core :refer [defn-spec]]
    [strongbox.ui.cli :as cli]
    [strongbox
+    [constants :as constants]
     [joblib :as joblib]
     [logging :as logging]
     [addon :as addon]
@@ -1073,11 +1074,26 @@
                     (cli/set-preference :addon-zips-to-keep (if (.isSelected menu-item)
                                                               0 nil))))}))
 
+(defn build-column-menu
+  [selected-columns]
+  (let [column-list ["source" "name" "description" "installed" "available" "WoW" "uberbutton"]
+        check-menu (fn [label]
+                     {:fx/type :check-menu-item
+                      :text label
+                      :selected false
+                      :on-action (handler #(cli/toggle-gui-column label))})
+        ]
+    (utils/items [(mapv check-menu column-list)
+            separator
+            (menu-item "Reset to defaults" donothing)])))
+
 (defn menu-bar
   "returns a description of the menu at the top of the application"
   [{:keys [fx/context]}]
 
   (let [no-addon-dir? (nil? (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir]))
+        selected-theme (fx/sub-val context get-in [:app-state :cfg :gui-theme])
+        selected-columns (fx/sub-val context get-in [:app-state :cfg :gui-columns-installed])
         file-menu [(menu-item "Import addon" (async-handler import-addon-handler)
                               {:disable no-addon-dir?})
                    separator
@@ -1111,10 +1127,11 @@
                     (let [tab-list (fx/sub-val context get-in [:app-state :tab-list])]
                       (menu "Ad_don detail" (build-addon-detail-menu tab-list)
                             {:disable (empty? tab-list)}))
-                    separator]
-                   (build-theme-menu
-                    (fx/sub-val context get-in [:app-state :cfg :gui-theme])
-                    themes))
+                    separator
+                    (menu "Columns" (build-column-menu selected-columns))
+                    separator
+                    ]
+                   (build-theme-menu selected-theme themes))
 
         catalogue-menu (into (build-catalogue-menu
                               (fx/sub-val context get-in [:app-state :cfg :selected-catalogue])
@@ -1335,23 +1352,17 @@
 (defn uber-button
   "returns a widget describing the current state of the given addon"
   [row]
-  (let [tick "\u2714" ;; '✔'
-        unsteady "\u2941" ;; '⥁' CLOCKWISE CLOSED CIRCLE ARROW
-        warnings "\u2501" ;; '━' heavy horizontal
-        errors "\u2A2F" ;; '⨯'
-        update "\u21A6" ;; '↦'
-
-        [text, tooltip]
+  (let [[text, tooltip]
         (cond
           (:ignore? row) ["", "ignoring"]
-          (core/unsteady? (:name row)) [unsteady "in flux"]
-          (cli/addon-has-errors? row) [errors (format "%s error(s)" (cli/addon-num-errors row))]
-          (cli/addon-has-warnings? row) [warnings (format "%s warning(s)" (cli/addon-num-warnings row))]
+          (core/unsteady? (:name row)) [(:unsteady constants/glyph-map) "in flux"]
+          (cli/addon-has-errors? row) [(:errors constants/glyph-map) (format "%s error(s)" (cli/addon-num-errors row))]
+          (cli/addon-has-warnings? row) [(:warnings constants/glyph-map) (format "%s warning(s)" (cli/addon-num-warnings row))]
           ;; an addon may have updates AND errors/warnings ...
-          ;;(:update? row) update
-          :else [tick "no problems"])
+          ;;(:update? row) (:update constants/glyph-map)
+          :else [(:tick constants/glyph-map) "no problems"])
 
-        text (if (:update? row) (str text " " update) text)
+        text (if (:update? row) (str text " " (:update constants/glyph-map)) text)
         tooltip (if (:update? row) (str tooltip ", updates pending") tooltip)]
 
     {:fx/type fx.ext.node/with-tooltip-props
@@ -1382,32 +1393,46 @@
         selected (fx/sub-val context get-in [:app-state :selected-addon-list])
         selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])
 
-        iface-version (fn [row]
-                        (some-> row :interface-version str utils/interface-version-to-game-version))
+        ;; overrides and additional column information for the GUI
+        gui-column-map
+        {:source {:min-width 125 :pref-width 125 :max-width 125
+                  :cell-factory {:fx/cell-type :table-cell
+                                 :describe (fn [row]
+                                             {:graphic (href-to-hyperlink row)})}
+                  :cell-value-factory identity
+                  :resizable false}
+         :name {:min-width 150 :pref-width 200 :max-width 500}
+         :description {:min-width 150 :pref-width 300}
+         :installed-version {:pref-width 150 :max-width 250}
+         :available-version {:pref-width 150 :max-width 250 :cell-value-factory available-versions}
+         :game-version {:min-width 70 :pref-width 70 :max-width 70 :resizable false}
+         :uber-button {:style-class ["more-column"] :min-width 80 :max-width 80 :resizable false
+                       :cell-factory {:fx/cell-type :table-cell
+                                      :describe (fn [row]
+                                                  (if-not row
+                                                    {:text ""}
 
-        column-list [{:text "source" :min-width 125 :pref-width 125 :max-width 125
-                      :cell-factory {:fx/cell-type :table-cell
-                                     :describe (fn [row]
-                                                 {:graphic (href-to-hyperlink row)})}
-                      :cell-value-factory identity
-                      :resizable false}
-                     {:text "name" :min-width 150 :pref-width 200 :max-width 500 :cell-value-factory (comp no-new-lines :label)}
-                     {:text "description" :min-width 150 :pref-width 300 :cell-value-factory (comp no-new-lines :description)}
-                     {:text "installed" :pref-width 150 :max-width 250 :cell-value-factory :installed-version}
-                     {:text "available" :pref-width 150 :max-width 250 :cell-value-factory available-versions}
-                     {:text "WoW" :min-width 70 :pref-width 70 :max-width 70 :cell-value-factory iface-version :resizable false}
-                     {:text "" :style-class ["more-column"] :min-width 80 :max-width 80 :resizable false
-                      :cell-factory {:fx/cell-type :table-cell
-                                     :describe (fn [row]
-                                                 (if-not row
-                                                   {:text ""}
+                                                    (let [job-id (joblib/addon-id row)]
+                                                      {:graphic (if (and (core/unsteady? (:name row))
+                                                                         (joblib/has-job? queue job-id))
+                                                                  (addon-progress-bar row queue job-id)
+                                                                  (uber-button row))})))}
+                       :cell-value-factory identity}}
 
-                                                   (let [job-id (joblib/addon-id row)]
-                                                     {:graphic (if (and (core/unsteady? (:name row))
-                                                                        (joblib/has-job? queue job-id))
-                                                                 (addon-progress-bar row queue job-id)
-                                                                 (uber-button row))})))}
-                      :cell-value-factory identity}]]
+        ;; merge the defaults with the gui-specific
+        column-map (mapv
+                    (fn [[key val]]
+                      [key (merge
+                            (clojure.set/rename-keys val  {:label :text, :value-fn :cell-value-factory})
+                            (get gui-column-map key))])
+                    cli/column-map)
+        column-map (into {} column-map)
+        
+        default-column-list [:source :name :description :installed-version :available-version :game-version :uber-button]
+        user-column-list (fx/sub-val context get-in [:app-state :cfg :preferences :ui-selected-columns])
+        selected-columns (or user-column-list default-column-list)
+        column-list (utils/select-vals column-map selected-columns)
+        ]        
 
     {:fx/type fx.ext.table-view/with-selection-props
      :props {:selection-mode :multiple
