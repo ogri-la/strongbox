@@ -65,7 +65,7 @@ see CHANGELOG.md for a more formal list of changes by release
 ## todo bucket (no particular order)
 
 * gui, "fat rows"
-    - get rid of a table view in favour of fatter rows with more styled data
+    - add option to switch to fatter rows with more styled data
 
 * bug, a timeout from curseforge during scraping at page 171 prevent pages 171-182 from being scraped
     - we should be kinder when scraping. 
