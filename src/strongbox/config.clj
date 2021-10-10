@@ -21,7 +21,7 @@
    {:name :wowinterface :label "WoWInterface" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/wowinterface-catalogue.json"}])
 
 ;; see `cli/column-map` for all known columns
-(def -default-column-list [:source :name :description :installed-version :available-version :game-version :uber-button])
+(def -default-column-list sp/default-column-list)
 
 (def default-cfg
   {:addon-dir-list []
@@ -34,9 +34,7 @@
                  ;; 1:   keep 1 zip
                  ;; N:   keep N zips
                  :addon-zips-to-keep nil
-                 :ui-selected-columns -default-column-list
-                 }
-   })
+                 :ui-selected-columns -default-column-list}})
 
 (defn handle-install-dir
   "`:install-dir` was once supported in the user configuration but is now only supported in the command line options.

@@ -48,8 +48,7 @@
   (core/load-installed-addons)
   (core/match-installed-addons-with-catalogue)
   (core/check-for-updates)
-  (core/save-settings)
-  nil)
+  (core/save-settings!))
 
 (defn-spec set-addon-dir! nil?
   "adds/sets an addon-dir, partial refresh of application state"
@@ -180,8 +179,7 @@
   "updates a user preference `preference-key` with given `preference-val` and saves the settings"
   [preference-key keyword?, preference-val any?]
   (swap! core/state assoc-in [:cfg :preferences preference-key] preference-val)
-  (core/save-settings)
-  nil)
+  (core/save-settings!))
 
 ;;
 
@@ -580,7 +578,7 @@
    :description {:label "description" :value-fn (comp utils/no-new-lines :description)}
    :installed-version {:label "installed" :value-fn :installed-version}
    :available-version {:label "available" :value-fn :version}
-   :uber-button {:label ""
+   :uber-button {:label nil
                  :value-fn (fn [row]
                              (let [queue (core/get-state :job-queue)
                                    job-id (joblib/addon-id row)]
@@ -589,21 +587,32 @@
                                  ;; parallel job in progress, show a ticker.
                                  "*"
                                  (cond
-                                   (:ignore? row) ["", "ignoring"]
+                                   (:ignore? row) ""
                                    (core/unsteady? (:name row)) (:unsteady constants/glyph-map)
                                    (addon-has-errors? row) (:errors constants/glyph-map)
                                    (addon-has-warnings? row) (:warnings constants/glyph-map)
                                    :else (:tick constants/glyph-map)))))}
    :game-version {:label "WoW"
                   :value-fn (fn [row]
-                              (some-> row :interface-version str utils/interface-version-to-game-version))}
-   })
+                              (some-> row :interface-version str utils/interface-version-to-game-version))}})
 
-(defn-spec toggle-gui-column nil?
-  [label keyword?]
-  (println "got" label)
-  nil)
+(defn-spec toggle-ui-column nil?
+  [column-id keyword?, selected? boolean?]
+  (dosync
+   (swap! core/state update-in [:cfg :preferences :ui-selected-columns] (if selected? conj utils/rmv) column-id)
+   (core/save-settings!)))
 
+(defn-spec reset-ui-columns nil?
+  []
+  (dosync
+   (swap! core/state assoc-in [:cfg :preferences :ui-selected-columns] sp/default-column-list)
+   (core/save-settings!)))
+
+(defn-spec sort-column-list :ui/column-list
+  "returns the given `column-list` but in the preferred order"
+  [column-list :ui/column-list]
+  (sort-by (fn [x]
+             (.indexOf sp/known-column-list x)) column-list))
 
 ;; debug
 

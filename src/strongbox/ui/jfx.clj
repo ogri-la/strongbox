@@ -2,6 +2,7 @@
   (:require
    [me.raynes.fs :as fs]
    [clojure.pprint]
+   [clojure.set]
    ;;[clojure.core.cache :as cache]
    [clojure.string :refer [lower-case join capitalize replace] :rename {replace str-replace}]
    ;; logging in the gui should be avoided as it can lead to infinite loops
@@ -1046,7 +1047,8 @@
                              :ref ::theme-toggle-group}
               :on-action (fn [_]
                            (swap! core/state assoc-in [:cfg :gui-theme] theme-key)
-                           (core/save-settings))})]
+                           ;; todo: this belongs in `cli.clj`
+                           (core/save-settings!))})]
     (mapv rb (keys theme-map))))
 
 (defn-spec build-addon-detail-menu ::sp/list-of-maps
@@ -1075,20 +1077,21 @@
                                                               0 nil))))}))
 
 (defn build-column-menu
-  [selected-columns]
+  [selected-column-list]
   (let [column-list (keys cli/column-map)
         check-menu (fn [column-id]
                      (let [;; todo: this should be using the `gui-column-map`
-                           column (column-id cli/column-map)
-                           label (:label column)]
+                           column (column-id cli/column-map)]
                        {:fx/type :check-menu-item
-                        :text (if (empty? label) (name column-id) label)
-                        :selected (utils/in? column-id column-list)
-                        :on-action (handler #(cli/toggle-gui-column column-id))}))
-        ]
+                        :text (or (:label column) (name column-id))
+                        :selected (utils/in? column-id selected-column-list)
+                        :on-action (fn [ev]
+                                     (.consume ev)
+                                     (cli/toggle-ui-column column-id (-> ev .getTarget .isSelected)))}))]
+
     (utils/items [(mapv check-menu column-list)
-            separator
-            (menu-item "Reset to defaults" donothing)])))
+                  separator
+                  (menu-item "Reset to defaults" (handler cli/reset-ui-columns))])))
 
 (defn menu-bar
   "returns a description of the menu at the top of the application"
@@ -1132,8 +1135,7 @@
                             {:disable (empty? tab-list)}))
                     separator
                     (menu "Columns" (build-column-menu selected-columns))
-                    separator
-                    ]
+                    separator]
                    (build-theme-menu selected-theme themes))
 
         catalogue-menu (into (build-catalogue-menu
@@ -1432,10 +1434,10 @@
         column-map (into {} column-map)
 
         default-column-list []
-        user-column-list (fx/sub-val context get-in [:app-state :cfg :preferences :ui-selected-columns])
+        user-column-list (cli/sort-column-list
+                          (fx/sub-val context get-in [:app-state :cfg :preferences :ui-selected-columns]))
         selected-columns (or user-column-list default-column-list)
-        column-list (utils/select-vals column-map selected-columns)
-        ]        
+        column-list (utils/select-vals column-map selected-columns)]
 
     {:fx/type fx.ext.table-view/with-selection-props
      :props {:selection-mode :multiple

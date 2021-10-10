@@ -677,3 +677,7 @@
   (if (map? a)
     (into a (for [[k v] b] [k (deep-merge (a k) v)]))
     b))
+
+(defn rmv
+  [coll x]
+  (into [] (remove #{x} coll)))
