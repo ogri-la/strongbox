@@ -134,7 +134,7 @@
 ;; column lists
 
 ;; all known columns. also constitutes the column order.
-(def known-column-list [:source :name :description :installed-version :available-version :game-version :uber-button])
+(def known-column-list [:browse-local :source :source-id :name :description :tag-list :installed-version :available-version :combined-version :game-version :uber-button])
 
 ;; default set of columns
 (def default-column-list [:source :name :description :installed-version :available-version :game-version :uber-button])

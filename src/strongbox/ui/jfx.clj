@@ -1078,7 +1078,7 @@
 
 (defn build-column-menu
   [selected-column-list]
-  (let [column-list (keys cli/column-map)
+  (let [column-list (cli/sort-column-list (keys cli/column-map))
         check-menu (fn [column-id]
                      (let [;; todo: this should be using the `gui-column-map`
                            column (column-id cli/column-map)]
@@ -1248,7 +1248,10 @@
                        "column")
         column-name (:text column-data)
         default-cvf (fn [row] (get row (keyword column-name)))
-        final-cvf {:cell-value-factory (get column-data :cell-value-factory default-cvf)}
+        value-factory (get column-data :cell-value-factory default-cvf)
+        safe-value-factory (fn [row]
+                             (or (value-factory row) ""))
+        final-cvf {:cell-value-factory safe-value-factory}
 
         final-style {:style-class (into ["table-cell" column-class] (get column-data :style-class))}
 
@@ -1400,7 +1403,13 @@
 
         ;; overrides and additional column information for the GUI
         gui-column-map
-        {:source {:min-width 125 :pref-width 125 :max-width 125
+        {:browse-local {:cell-factory {:fx/cell-type :table-cell
+                                       :describe (fn [row]
+                                                   {:graphic (or (addon-fs-link (:dirname row))
+                                                                 {:fx/type :label
+                                                                  :text (get row :dirname "")})})}
+                        :cell-value-factory identity}
+         :source {:min-width 125 :pref-width 125 :max-width 125
                   :cell-factory {:fx/cell-type :table-cell
                                  :describe (fn [row]
                                              {:graphic (href-to-hyperlink row)})}

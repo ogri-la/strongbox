@@ -6,33 +6,37 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-## todo
-
-* revisit the 'File -> Export Github addon list' 
-    - is this the user catalogue?
-
-* toc, addon detail, add 'x-website' / 'x-url' alongside 'browse local files' and addon host
-
-* update image thumbnails
-    - they're getting a bit stale
-
 * gui, synthetic 'version' column
     - combines 'installed' and 'available' columns
         - because most of the time the two columns are the same
     - displays the available version if it exists
     - style the version value if update available?
-
-* gui, any new/synthetic columns?
-    - human friendly update column with "updated x years/months/days/hours/minutes" ago
-    - number of releases?
-    - 'browse local files'
-    - pinned/unpinned
-        - perhaps also remove the (pinned) from the available column and make it an icon next in the uber button
-    - a column that prefers website over addon host?
+    - done
 
 * gui, toggleable columns as a menuitem
     - ensure a 'reset' to defaults option
     - don't change current set of columns until next major release
+    - done
+
+## todo
+
+* revisit the 'File -> Export Github addon list' 
+    - is this the user catalogue?
+
+* update image thumbnails
+    - they're getting a bit stale
+
+* gui, any new/synthetic columns?
+    - human friendly update column with "updated x years/months/days/hours/minutes" ago
+    - number of releases?
+        - nah, for wowinterface and tukui this will be '1' most of the time
+    - 'browse local files'
+        - done
+    - pinned/unpinned
+        - perhaps also remove the (pinned) from the available column and make it an icon next in the uber button
+        - https://stackoverflow.com/questions/32511405/how-would-time-ago-function-implementation-look-like-in-clojure
+    - tags
+        - done
 
 * gui, switch to tree-table-view for installed addons that are grouping other addons
     - at least investigate how difficult this might be.
@@ -59,6 +63,9 @@ see CHANGELOG.md for a more formal list of changes by release
     - this has been open for a long time. would be good to resolve it.
 
 ## todo bucket (no particular order)
+
+* gui, "fat rows"
+    - get rid of a table view in favour of fatter rows with more styled data
 
 * bug, a timeout from curseforge during scraping at page 171 prevent pages 171-182 from being scraped
     - we should be kinder when scraping. 
@@ -208,8 +215,19 @@ see CHANGELOG.md for a more formal list of changes by release
 * add a 'tabula rasa' option that wipes *everything* 
     - cache, catalog, config, downloaded zip files
 
+## catalogue v3 / capture more addon data
 
-# releases
+* 'website'
+    - 'x-website'/'x-url' in toc
+    - add 'website' to addon-detail pane next to 'browse local files' and addon host
+        - depends on capturing x-website
+    - add a 'website' column to installed-addons
+* 'author'
+    - add an 'author' column to installed-addons
+    - add to addon-detail
+    - search other addons by author
+
+## releases
 
 * addon detail, 'releases' widget, including *all* possible releases to download and install
     - add an 'WoW' column to know which game-track/interface
@@ -226,7 +244,7 @@ see CHANGELOG.md for a more formal list of changes by release
 * addon detail, 'releases' widget
     - installed release should be highlighted
 
-# import/exports
+## import/exports
 
 * import and export addons using addon urls
 
@@ -245,7 +263,7 @@ see CHANGELOG.md for a more formal list of changes by release
     - no need for padding and dummy dirnames then
     - installing normally would also include the mutual dependency handling
 
-# github 
+## github 
 
 * toc, add support for x-github key
     - X-Github: https://github.com/teelolws/Altoholic-Retail 
@@ -264,7 +282,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * github, add any tags if they exist
 
-# ui/gui
+## ui/gui
 
 * dedicated tab for "user-catalogue" ?
     - add, delete, update github addons

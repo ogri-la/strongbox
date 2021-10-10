@@ -573,11 +573,18 @@
 ;; the gui can override the fields as it needs, but the below could be used to render the values in a tui if need be
 ;; see config.clj for default columns
 (def column-map
-  {:source {:label "source" :value-fn :source}
+  {:browse-local {:label "browse" :value-fn :addon-dir}
+   :source {:label "source" :value-fn :source}
+   :source-id {:label "ID" :value-fn :source-id}
    :name {:label "name" :value-fn (comp utils/no-new-lines :label)}
    :description {:label "description" :value-fn (comp utils/no-new-lines :description)}
+   :tag-list {:label "tags" :value-fn (fn [row]
+                                        (when-not (empty? (:tag-list row))
+                                          (str (:tag-list row))))}
    :installed-version {:label "installed" :value-fn :installed-version}
    :available-version {:label "available" :value-fn :version}
+   :combined-version {:label "version" :value-fn (fn [row]
+                                                   (or (:version row) (:installed-version row)))}
    :uber-button {:label nil
                  :value-fn (fn [row]
                              (let [queue (core/get-state :job-queue)
@@ -587,7 +594,7 @@
                                  ;; parallel job in progress, show a ticker.
                                  "*"
                                  (cond
-                                   (:ignore? row) ""
+                                   (:ignore? row) nil
                                    (core/unsteady? (:name row)) (:unsteady constants/glyph-map)
                                    (addon-has-errors? row) (:errors constants/glyph-map)
                                    (addon-has-warnings? row) (:warnings constants/glyph-map)
