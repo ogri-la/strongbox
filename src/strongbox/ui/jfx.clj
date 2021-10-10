@@ -1076,12 +1076,15 @@
 
 (defn build-column-menu
   [selected-columns]
-  (let [column-list ["source" "name" "description" "installed" "available" "WoW" "uberbutton"]
-        check-menu (fn [label]
-                     {:fx/type :check-menu-item
-                      :text label
-                      :selected false
-                      :on-action (handler #(cli/toggle-gui-column label))})
+  (let [column-list (keys cli/column-map)
+        check-menu (fn [column-id]
+                     (let [;; todo: this should be using the `gui-column-map`
+                           column (column-id cli/column-map)
+                           label (:label column)]
+                       {:fx/type :check-menu-item
+                        :text (if (empty? label) (name column-id) label)
+                        :selected (utils/in? column-id column-list)
+                        :on-action (handler #(cli/toggle-gui-column column-id))}))
         ]
     (utils/items [(mapv check-menu column-list)
             separator
@@ -1093,7 +1096,7 @@
 
   (let [no-addon-dir? (nil? (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir]))
         selected-theme (fx/sub-val context get-in [:app-state :cfg :gui-theme])
-        selected-columns (fx/sub-val context get-in [:app-state :cfg :gui-columns-installed])
+        selected-columns (fx/sub-val context get-in [:app-state :cfg :preferences :ui-selected-columns])
         file-menu [(menu-item "Import addon" (async-handler import-addon-handler)
                               {:disable no-addon-dir?})
                    separator
@@ -1427,8 +1430,8 @@
                             (get gui-column-map key))])
                     cli/column-map)
         column-map (into {} column-map)
-        
-        default-column-list [:source :name :description :installed-version :available-version :game-version :uber-button]
+
+        default-column-list []
         user-column-list (fx/sub-val context get-in [:app-state :cfg :preferences :ui-selected-columns])
         selected-columns (or user-column-list default-column-list)
         column-list (utils/select-vals column-map selected-columns)

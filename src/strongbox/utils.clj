@@ -670,3 +670,10 @@
 (defn thread-pool-executor?
   [obj]
   (instance? java.util.concurrent.ThreadPoolExecutor obj))
+
+;; https://gist.github.com/danielpcox/c70a8aa2c36766200a95#gistcomment-2759496-permalink
+(defn deep-merge
+  [a b]
+  (if (map? a)
+    (into a (for [[k v] b] [k (deep-merge (a k) v)]))
+    b))

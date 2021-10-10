@@ -600,7 +600,7 @@
    })
 
 (defn-spec toggle-gui-column nil?
-  [label string?]
+  [label keyword?]
   (println "got" label)
   nil)
 
