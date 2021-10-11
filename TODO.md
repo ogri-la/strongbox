@@ -28,13 +28,14 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * gui, any new/synthetic columns?
     - human friendly update column with "updated x years/months/days/hours/minutes" ago
+        - https://stackoverflow.com/questions/32511405/how-would-time-ago-function-implementation-look-like-in-clojure
     - number of releases?
         - nah, for wowinterface and tukui this will be '1' most of the time
     - 'browse local files'
         - done
     - pinned/unpinned
         - perhaps also remove the (pinned) from the available column and make it an icon next in the uber button
-        - https://stackoverflow.com/questions/32511405/how-would-time-ago-function-implementation-look-like-in-clojure
+
     - tags
         - done
 
@@ -63,6 +64,15 @@ see CHANGELOG.md for a more formal list of changes by release
     - this has been open for a long time. would be good to resolve it.
 
 ## todo bucket (no particular order)
+
+* centralised download location
+
+* centralised addon directory db
+    - install an addon, then 'deactivate' it
+        - essentially uninstalls the addon but it's still available at the tick of a box
+            - see WADM https://github.com/MBODM/WADM
+            - does Nexus Mod Manager do something similar?
+                - that UI is so shit though ... who knows what it is doing.
 
 * gui, "fat rows"
     - add option to switch to fatter rows with more styled data
@@ -281,6 +291,8 @@ see CHANGELOG.md for a more formal list of changes by release
         - github addons are resolved and installed by a different means...
 
 * github, add any tags if they exist
+
+* github, add 'created date'
 
 ## ui/gui
 

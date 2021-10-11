@@ -50,6 +50,8 @@
 
                  ;;[org.clojure/core.cache "1.0.207"] ;; jfx context caching
 
+                 [org.ocpsoft.prettytime/prettytime "5.0.2.Final"]
+
                  ]
 
   :managed-dependencies [;; fixes the annoying:

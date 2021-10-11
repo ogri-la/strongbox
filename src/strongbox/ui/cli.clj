@@ -18,7 +18,10 @@
     [utils :as utils :refer [if-let* message-list]]
     [curseforge-api :as curseforge-api]
     [wowinterface :as wowinterface]
-    [core :as core :refer [get-state paths find-catalogue-local-path]]]))
+    [core :as core :refer [get-state paths find-catalogue-local-path]]])
+  (:import
+   [org.ocpsoft.prettytime.units Decade]
+   [org.ocpsoft.prettytime PrettyTime]))
 
 (comment "the UIs pool their logic here, which calls core.clj.")
 
@@ -569,6 +572,9 @@
 
 ;;
 
+(def pretty-dt-printer (doto (PrettyTime.)
+                         (.removeUnit Decade)))
+
 ;; imagine these are being rendered by *anything*
 ;; the gui can override the fields as it needs, but the below could be used to render the values in a tui if need be
 ;; see config.clj for default columns
@@ -581,6 +587,8 @@
    :tag-list {:label "tags" :value-fn (fn [row]
                                         (when-not (empty? (:tag-list row))
                                           (str (:tag-list row))))}
+   :updated-date {:label "updated" :value-fn #(some->> % :updated-date utils/todt (.format pretty-dt-printer))}
+   :created-date {:label "created" :value-fn #(some->> % :created-date utils/todt (.format pretty-dt-printer))}
    :installed-version {:label "installed" :value-fn :installed-version}
    :available-version {:label "available" :value-fn :version}
    :combined-version {:label "version" :value-fn (fn [row]
