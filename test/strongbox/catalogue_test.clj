@@ -591,7 +591,7 @@
                     :download-count 0,
                     :game-track-list [:classic], ;; classic is used
                     :tag-list [],
-                    :updated-date "2001-01-01T01:01:01"}]
+                    :updated-date "2001-01-01T01:01:01Z"}]
       (is (= expected (catalogue/toc2summary toc+nfo))))))
 
 (deftest toc2summary--wowinterface
@@ -608,7 +608,7 @@
                     :download-count 0,
                     :game-track-list [:retail],
                     :tag-list [],
-                    :updated-date "2001-01-01T01:01:01"}]
+                    :updated-date "2001-01-01T01:01:01Z"}]
       (is (= expected (catalogue/toc2summary wowinterface-toc))))))
 
 (deftest toc2summary--tukui
@@ -622,7 +622,7 @@
 
                     ;; synthetic
                     :tag-list [],
-                    :updated-date "2001-01-01T01:01:01",
+                    :updated-date "2001-01-01T01:01:01Z",
                     :url "https://www.tukui.org/addons.php?id=123",
                     :download-count 0}]
       (is (= expected (catalogue/toc2summary tukui-toc))))))
