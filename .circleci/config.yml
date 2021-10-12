@@ -20,6 +20,7 @@ jobs:
       # LEIN_ROOT: "true" # running as root not cool
       # Customize the JVM maximum heap limit
       JVM_OPTS: -Xmx4096m
+      LEIN_JVM_OPTS: -Xmx4096m
 
     steps:
       - checkout
