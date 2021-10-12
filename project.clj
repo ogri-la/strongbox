@@ -6,6 +6,11 @@
 
   ;;:global-vars {*warn-on-reflection* true}
 
+  ;; https://github.com/technomancy/leiningen/issues/1914
+  ;; https://github.com/technomancy/leiningen/issues/2763
+  ;; https://github.com/technomancy/leiningen/issues/2769
+  :pedantic? false
+
   :dependencies [[org.clojure/clojure "1.10.3"]
                  [org.clojure/tools.cli "1.0.206"] ;; cli arg parsing
                  [org.clojure/tools.namespace "1.1.0"] ;; reload code
