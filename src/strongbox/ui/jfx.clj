@@ -348,10 +348,7 @@
 
                 "#game-track-check-box"
                 {:-fx-padding "0 0 0 .65em"
-                 :-fx-min-width "70px"}
-
-                "#game-track-combo-box"
-                {:-fx-min-width "121px"}}
+                 :-fx-min-width "70px"}}
 
                ".table-view#installed-addons "
                {".wow-column"
@@ -376,7 +373,22 @@
 
                 ".table-row-cell.errors .more-column > .button"
                 {;; red cross
-                 :-fx-text-fill (colour :uber-button-error)}}
+                 :-fx-text-fill (colour :uber-button-error)}
+
+                ;; .installed-column, .available-column, .version-column
+                ".version-column"
+                {:-fx-alignment "center-right"
+                 :-fx-text-overrun "leading-ellipsis"}
+
+                ".id-column"
+                {:-fx-alignment "center"
+                 :-fx-text-overrun "leading-ellipsis"}
+
+                ".created-column"
+                {:-fx-alignment "center"}
+
+                ".updated-column"
+                {:-fx-alignment "center"}}
 
                ".table-view#installed-addons .updateable"
                {:-fx-background-color (colour :row-updateable)
@@ -391,14 +403,6 @@
                 ":selected"
                 {;; !important so that hovering over a selected+updateable row doesn't change it's colour
                  :-fx-background-color (str (colour :row-updateable-selected) " !important")}}
-
-               ".table-view#installed-addons .installed-column"
-               {:-fx-alignment "center-right"
-                :-fx-text-overrun "leading-ellipsis"}
-
-               ".table-view#installed-addons .available-column"
-               {:-fx-alignment "center-right"
-                :-fx-text-overrun "leading-ellipsis"}
 
 
                ;;
@@ -1200,6 +1204,7 @@
      :id "game-track-container"
      :children [{:fx/type :combo-box
                  :id "game-track-combo-box"
+                 :min-width 150
                  :value (get sp/game-track-labels-map game-track)
                  :on-value-changed (async-event-handler
                                     (fn [new-game-track]
@@ -1278,16 +1283,6 @@
     {:fx/type :hyperlink
      :on-action (handler #(utils/browse-to (format "%s/%s" (core/selected-addon-dir) dirname)))
      :text "↪ browse local files"}))
-
-(defn-spec available-versions (s/or :ok string? :no-version-available nil?)
-  "formats the 'available version' string depending on the state of the addon.
-  pinned and ignored addons get a helpful prefix."
-  [row map?]
-  (cond
-    (:ignore? row) "(ignored)"
-    (:pinned-version row) (str "(pinned) " (:pinned-version row))
-    :else
-    (:version row)))
 
 (defn-spec build-release-menu ::sp/list-of-maps
   "returns a list of `:menu-item` maps that will update the given `addon` with 
@@ -1403,24 +1398,29 @@
 
         ;; overrides and additional column information for the GUI
         gui-column-map
-        {:browse-local {:cell-factory {:fx/cell-type :table-cell
+        {:browse-local {:min-width 135 :pref-width 143 :max-width 150
+                        :cell-factory {:fx/cell-type :table-cell
                                        :describe (fn [row]
                                                    {:graphic (or (addon-fs-link (:dirname row))
                                                                  {:fx/type :label
                                                                   :text (get row :dirname "")})})}
                         :cell-value-factory identity}
-         :source {:min-width 125 :pref-width 125 :max-width 125
+         :source {:min-width 125 :pref-width 125 :max-width 135
                   :cell-factory {:fx/cell-type :table-cell
                                  :describe (fn [row]
                                              {:graphic (href-to-hyperlink row)})}
-                  :cell-value-factory identity
-                  :resizable false}
-         :name {:min-width 150 :pref-width 200 :max-width 500}
-         :description {:min-width 150 :pref-width 300}
-         :installed-version {:pref-width 150 :max-width 250}
-         :available-version {:pref-width 150 :max-width 250 :cell-value-factory available-versions}
-         :game-version {:min-width 70 :pref-width 70 :max-width 70 :resizable false}
-         :uber-button {:style-class ["more-column"] :min-width 80 :max-width 80 :resizable false
+                  :cell-value-factory identity}
+         :source-id {:min-width 60 :pref-width 100 :max-width 200}
+         :name {:min-width 100 :pref-width 300}
+         :description {:min-width 150 :pref-width 450}
+         :tag-list {:min-width 200 :pref-width 300}
+         :created-date {:min-width 90 :pref-width 110 :max-width 120}
+         :updated-date {:min-width 90 :pref-width 110 :max-width 120}
+         :installed-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]}
+         :available-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]}
+         :combined-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]}
+         :game-version {:min-width 70 :pref-width 70 :max-width 100}
+         :uber-button {:min-width 80 :pref-width 80 :max-width 120 :style-class ["more-column"]
                        :cell-factory {:fx/cell-type :table-cell
                                       :describe (fn [row]
                                                   (if-not row

@@ -35,7 +35,6 @@ see CHANGELOG.md for a more formal list of changes by release
         - done
     - pinned/unpinned
         - perhaps also remove the (pinned) from the available column and make it an icon next in the uber button
-
     - tags
         - done
 
@@ -44,6 +43,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * gui, can I make column widths dynamic? 
     - I'd like the 'version' columns to fit exactly, always.
+        - sorry, not going to happen. we have min, max and pref widths as always.
 
 * gui, toggleable highlighers as a menuitem
     - highlight unmatched
@@ -65,7 +65,10 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
-* centralised download location
+* centralised download location on filesystem
+    - The Undermine Journal is large (75MB) and it sucks to download it again and again from different dirs
+        - perhaps tie this in with a rename of the downloaded zip file so unambiguous reverse lookups can be done:
+            - source--sourceid--version.zip => curseforge--adibags--1-9-26.zip
 
 * centralised addon directory db
     - install an addon, then 'deactivate' it

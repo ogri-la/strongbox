@@ -572,6 +572,16 @@
 
 ;;
 
+(defn-spec available-versions (s/or :ok string? :no-version-available nil?)
+  "formats the 'available version' string depending on the state of the addon.
+  pinned and ignored addons get a helpful prefix."
+  [row map?]
+  (cond
+    (:ignore? row) "(ignored)"
+    (:pinned-version row) (str "(pinned) " (:pinned-version row))
+    :else
+    (:version row)))
+
 (def pretty-dt-printer (doto (PrettyTime.)
                          (.removeUnit Decade)))
 
@@ -590,7 +600,7 @@
    :updated-date {:label "updated" :value-fn #(some->> % :updated-date utils/todt (.format pretty-dt-printer))}
    :created-date {:label "created" :value-fn #(some->> % :created-date utils/todt (.format pretty-dt-printer))}
    :installed-version {:label "installed" :value-fn :installed-version}
-   :available-version {:label "available" :value-fn :version}
+   :available-version {:label "available" :value-fn available-versions}
    :combined-version {:label "version" :value-fn (fn [row]
                                                    (or (:version row) (:installed-version row)))}
    :uber-button {:label nil
