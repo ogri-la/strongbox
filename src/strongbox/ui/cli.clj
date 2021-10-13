@@ -587,6 +587,8 @@
   pinned and ignored addons get a helpful prefix."
   [row map?]
   (cond
+    ;; when wouldn't we have an `installed-version`? search result?
+    (and (:ignore? row) (:installed-version row)) (str "(ignored) " (:installed-version row))
     (:ignore? row) "(ignored)"
     (:pinned-version row) (str "(pinned) " (:pinned-version row))
     :else

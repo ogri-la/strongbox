@@ -326,7 +326,7 @@
                ;;
 
 
-               ".table-view #welcome-screen "
+               ".table-view #placeholder "
                {:-fx-alignment "center"
 
                 ".big-welcome-text"
@@ -1462,15 +1462,28 @@
              :on-selected-items-changed cli/select-addons*}
      :desc {:fx/type :table-view
             :id "installed-addons"
-            :placeholder (if (nil? selected-addon-dir)
+            :placeholder (cond
+                           (nil? selected-addon-dir)
                            {:fx/type :v-box
-                            :id "welcome-screen"
+                            :id "placeholder"
                             :children [{:fx/type :label
                                         :style-class ["big-welcome-text"]
                                         :text "STRONGBOX"}
                                        {:fx/type :label
                                         :style-class ["big-welcome-subtext"]
                                         :text "\"File\" \u2794 \"New addon directory\""}]}
+
+                           (empty? column-list)
+                           {:fx/type :v-box
+                            :id "placeholder"
+                            :children [{:fx/type :text
+                                        :style-class ["table-placeholder-text"]
+                                        :text "No columns selected!"}
+                                       {:fx/type :text
+                                        :text ""}
+                                       (button "Reset columns to defaults" (handler cli/reset-ui-columns))]}
+
+                           :else
                            {:fx/type :text
                             :style-class ["table-placeholder-text"]
                             :text "No addons found."})
