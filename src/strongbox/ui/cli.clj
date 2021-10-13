@@ -612,7 +612,8 @@
                                  ;; parallel job in progress, show a ticker.
                                  "*"
                                  (cond
-                                   (:ignore? row) nil
+                                   (:ignore? row) (:ignored constants/glyph-map)
+                                   (:pinned-version row) (:pinned constants/glyph-map)
                                    (core/unsteady? (:name row)) (:unsteady constants/glyph-map)
                                    (addon-has-errors? row) (:errors constants/glyph-map)
                                    (addon-has-warnings? row) (:warnings constants/glyph-map)

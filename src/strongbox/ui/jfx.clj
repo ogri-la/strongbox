@@ -390,6 +390,8 @@
                 ".updated-column"
                 {:-fx-alignment "center"}}
 
+               ;; installed, updateable
+
                ".table-view#installed-addons .updateable"
                {:-fx-background-color (colour :row-updateable)
 
@@ -404,6 +406,12 @@
                 {;; !important so that hovering over a selected+updateable row doesn't change it's colour
                  :-fx-background-color (str (colour :row-updateable-selected) " !important")}}
 
+               ;; installed, ignored
+
+               ".table-view#installed-addons .ignored"
+               {" .more-column > .button"
+                ;; !important because an orange warning colour is being inherited from somewhere
+                {:-fx-text-fill "gray !important"}}
 
                ;;
                ;; notice-logger
@@ -1357,7 +1365,8 @@
   [row]
   (let [[text, tooltip]
         (cond
-          (:ignore? row) ["", "ignoring"]
+          (:ignore? row) [(:ignored constants/glyph-map), "ignoring"]
+          (:pinned-version row) [(:pinned constants/glyph-map) (str "pinned to " (:pinned-version row))]
           (core/unsteady? (:name row)) [(:unsteady constants/glyph-map) "in flux"]
           (cli/addon-has-errors? row) [(:errors constants/glyph-map) (format "%s error(s)" (cli/addon-num-errors row))]
           (cli/addon-has-warnings? row) [(:warnings constants/glyph-map) (format "%s warning(s)" (cli/addon-num-warnings row))]

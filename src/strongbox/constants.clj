@@ -30,4 +30,6 @@
    :warnings "\u2501" ;; '━' heavy horizontal
    :errors "\u2A2F" ;; '⨯'
    :update "\u21A6" ;; '↦'
+   :ignored "\u26AA" ;; '⚪' medium white circle
+   :pinned "\u26ab" ;; '⚫' medium black circle
    })

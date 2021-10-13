@@ -20,6 +20,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+* bug, I can reinstall and install a specific release for an explicitly ignored addon
+    - but not an implicitly ignored addon. weird.
+
 * revisit the 'File -> Export Github addon list' 
     - is this the user catalogue?
 
