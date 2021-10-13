@@ -68,6 +68,19 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* gitlab as addon host
+    - https://gitlab.com/search?search=wow+addon
+    - returned to bucket 2019-12-04, notes:
+        - gitlab doesn't handle releases like github does
+            - https://stackoverflow.com/questions/29520905/how-to-create-releases-in-gitlab
+        - there are very few gitlab addons (88)
+            - where did this number come from?
+        - api is quite slow
+    - update: as of Oct 2020 gitlab sucks a little bit less and, like github, you can attach binaries to releases
+        - https://gitlab.com/explore/projects?tag=World+of+Warcraft
+        - https://gitlab.com/shrugal/PersoLootRoll
+        - any others ...?
+
 * centralised download location on filesystem
     - The Undermine Journal is large (75MB) and it sucks to download it again and again from different dirs
         - perhaps tie this in with a rename of the downloaded zip file so unambiguous reverse lookups can be done:
@@ -82,6 +95,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * gui, "fat rows"
     - add option to switch to fatter rows with more styled data
+        - clicking on the row expands it from small to medium
+        - clicking 'more' (or whatever) takes to addon detail page
 
 * bug, a timeout from curseforge during scraping at page 171 prevent pages 171-182 from being scraped
     - we should be kinder when scraping. 
@@ -181,19 +196,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * create a parser for that shit markup that is preventing reconcilation
     - see aliases
 
-* gitlab as addon host
-    - https://gitlab.com/search?search=wow+addon
-    - returned to bucket 2019-12-04, notes:
-        - gitlab doesn't handle releases like github does
-            - https://stackoverflow.com/questions/29520905/how-to-create-releases-in-gitlab
-        - there are very few gitlab addons (88)
-            - where did this number come from?
-        - api is quite slow
-    - update: as of Oct 2020 gitlab sucks a little bit less and, like github, you can attach binaries to releases
-        - https://gitlab.com/explore/projects?tag=World+of+Warcraft
-        - https://gitlab.com/shrugal/PersoLootRoll
-        - any others ...?
-
 * add checksum checks after downloading
     - curseforge have an md5 that can be used
         - unfortunately no checksum in api results
@@ -230,6 +232,11 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * add a 'tabula rasa' option that wipes *everything* 
     - cache, catalog, config, downloaded zip files
+
+## next major version (v5)
+
+* replace 'installed' and 'available' columns with the composite 'version' column
+* remove the (pinned) and (installed) labels from from the 'available' column
 
 ## catalogue v3 / capture more addon data
 
@@ -352,8 +359,6 @@ this is still an interesting idea
     - installed
     - updates
     - category ...
-
-
 
 ## wontfix
 
