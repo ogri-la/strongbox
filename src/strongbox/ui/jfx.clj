@@ -1088,8 +1088,9 @@
                     (cli/set-preference :addon-zips-to-keep (if (.isSelected menu-item)
                                                               0 nil))))}))
 
-(defn build-column-menu
-  [selected-column-list]
+(defn-spec build-column-menu ::sp/list-of-maps
+  "returns a list of columns that are 'selected' if present in `selected-column-list`."
+  [selected-column-list :ui/column-list]
   (let [column-list (cli/sort-column-list (keys cli/column-map))
         check-menu (fn [column-id]
                      (let [;; todo: this should be using the `gui-column-map`
@@ -1370,9 +1371,8 @@
           (core/unsteady? (:name row)) [(:unsteady constants/glyph-map) "in flux"]
           (cli/addon-has-errors? row) [(:errors constants/glyph-map) (format "%s error(s)" (cli/addon-num-errors row))]
           (cli/addon-has-warnings? row) [(:warnings constants/glyph-map) (format "%s warning(s)" (cli/addon-num-warnings row))]
-          ;; an addon may have updates AND errors/warnings ...
-          ;;(:update? row) (:update constants/glyph-map)
-          :else [(:tick constants/glyph-map) "no problems"])
+          :else
+          [(:tick constants/glyph-map) "no problems"])
 
         text (if (:update? row) (str text " " (:update constants/glyph-map)) text)
         tooltip (if (:update? row) (str tooltip ", updates pending") tooltip)]
@@ -1404,6 +1404,8 @@
         row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
         selected (fx/sub-val context get-in [:app-state :selected-addon-list])
         selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])
+        user-selected-column-list (cli/sort-column-list
+                                   (fx/sub-val context get-in [:app-state :cfg :preferences :ui-selected-columns]))
 
         ;; overrides and additional column information for the GUI
         gui-column-map
@@ -1442,19 +1444,14 @@
                                                                   (uber-button row))})))}
                        :cell-value-factory identity}}
 
-        ;; merge the defaults with the gui-specific
-        column-map (mapv
-                    (fn [[key val]]
-                      [key (merge
-                            (clojure.set/rename-keys val  {:label :text, :value-fn :cell-value-factory})
-                            (get gui-column-map key))])
-                    cli/column-map)
-        column-map (into {} column-map)
+        ;; rename some UI column keys and then merge with the gui columns
+        merge-ui-gui-columns (fn [[key val]]
+                               [key (merge
+                                     (clojure.set/rename-keys val  {:label :text, :value-fn :cell-value-factory})
+                                     (get gui-column-map key))])
+        column-map (->> cli/column-map (map merge-ui-gui-columns) (into {}))
 
-        default-column-list []
-        user-column-list (cli/sort-column-list
-                          (fx/sub-val context get-in [:app-state :cfg :preferences :ui-selected-columns]))
-        selected-columns (or user-column-list default-column-list)
+        selected-columns (or user-selected-column-list sp/default-column-list)
         column-list (utils/select-vals column-map selected-columns)]
 
     {:fx/type fx.ext.table-view/with-selection-props

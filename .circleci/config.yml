@@ -19,8 +19,7 @@ jobs:
     environment:
       # LEIN_ROOT: "true" # running as root not cool
       # Customize the JVM maximum heap limit
-      JVM_OPTS: -Xmx4096m
-      LEIN_JVM_OPTS: -Xmx4096m
+      JVM_OPTS: -Xmx3200m # 3.2GB, 2.9GiB
 
     steps:
       - checkout

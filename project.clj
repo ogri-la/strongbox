@@ -49,13 +49,12 @@
                  ;; GPLv3 compatible dependencies.
                  ;; these don't need an exception to be made in LICENCE.txt
                  [org.apache.commons/commons-compress "1.21"] ;; Apache 2.0 licenced, bz2 compression/decompression of static catalogue
+                 [org.ocpsoft.prettytime/prettytime "5.0.2.Final"] ;; Apache 2.0 licenced, pretty date formatting
 
                  ;; remember to update the LICENCE.txt
                  ;; remember to update pom file (`lein pom`)
 
                  ;;[org.clojure/core.cache "1.0.207"] ;; jfx context caching
-
-                 [org.ocpsoft.prettytime/prettytime "5.0.2.Final"]
 
                  ]
 

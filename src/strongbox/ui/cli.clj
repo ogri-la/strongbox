@@ -597,9 +597,6 @@
 (def pretty-dt-printer (doto (PrettyTime.)
                          (.removeUnit Decade)))
 
-;; imagine these are being rendered by *anything*
-;; the gui can override the fields as it needs, but the below could be used to render the values in a tui if need be
-;; see config.clj for default columns
 (def column-map
   {:browse-local {:label "browse" :value-fn :addon-dir}
    :source {:label "source" :value-fn :source}
@@ -614,7 +611,11 @@
    :installed-version {:label "installed" :value-fn :installed-version}
    :available-version {:label "available" :value-fn available-versions-v1}
    :combined-version {:label "version" :value-fn available-versions-v2}
-   :uber-button {:label nil
+   :game-version {:label "WoW"
+                  :value-fn (fn [row]
+                              (some-> row :interface-version str utils/interface-version-to-game-version))}
+
+   :uber-button {:label nil ;; the gui will use the column-id (`:uber-button`) for the column menu when label is `nil`
                  :value-fn (fn [row]
                              (let [queue (core/get-state :job-queue)
                                    job-id (joblib/addon-id row)]
@@ -628,18 +629,17 @@
                                    (core/unsteady? (:name row)) (:unsteady constants/glyph-map)
                                    (addon-has-errors? row) (:errors constants/glyph-map)
                                    (addon-has-warnings? row) (:warnings constants/glyph-map)
-                                   :else (:tick constants/glyph-map)))))}
-   :game-version {:label "WoW"
-                  :value-fn (fn [row]
-                              (some-> row :interface-version str utils/interface-version-to-game-version))}})
+                                   :else (:tick constants/glyph-map)))))}})
 
 (defn-spec toggle-ui-column nil?
+  "toggles the given `column-id` in the user preferences depending on `selected?` boolean"
   [column-id keyword?, selected? boolean?]
   (dosync
    (swap! core/state update-in [:cfg :preferences :ui-selected-columns] (if selected? conj utils/rmv) column-id)
    (core/save-settings!)))
 
 (defn-spec reset-ui-columns nil?
+  "replaces user column preferences with the default set"
   []
   (dosync
    (swap! core/state assoc-in [:cfg :preferences :ui-selected-columns] sp/default-column-list)

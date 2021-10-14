@@ -18,17 +18,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - don't change current set of columns until next major release
     - done
 
-## todo
-
-* bug, I can reinstall and install a specific release for an explicitly ignored addon
-    - but not an implicitly ignored addon. weird.
-
-* revisit the 'File -> Export Github addon list' 
-    - is this the user catalogue?
-
-* update image thumbnails
-    - they're getting a bit stale
-
 * gui, any new/synthetic columns?
     - human friendly update column with "updated x years/months/days/hours/minutes" ago
         - https://stackoverflow.com/questions/32511405/how-would-time-ago-function-implementation-look-like-in-clojure
@@ -40,13 +29,32 @@ see CHANGELOG.md for a more formal list of changes by release
         - perhaps also remove the (pinned) from the available column and make it an icon next in the uber button
     - tags
         - done
-
-* gui, switch to tree-table-view for installed addons that are grouping other addons
-    - at least investigate how difficult this might be.
+    - done
 
 * gui, can I make column widths dynamic? 
     - I'd like the 'version' columns to fit exactly, always.
         - sorry, not going to happen. we have min, max and pref widths as always.
+    - done
+
+## todo
+
+* bug, I can reinstall and install a specific release for an explicitly ignored addon
+    - but not an implicitly ignored addon. weird.
+
+* bug, tukui is dead again and the jobs are just hanging
+    - I thought I put a timeout on this?
+    - put a timeout on http connections and requests???
+    - can jobs be given a timeout as well?
+    - see tukui--stall-crash
+
+* revisit the 'File -> Export Github addon list' 
+    - is this the user catalogue?
+
+* update image thumbnails
+    - they're getting a bit stale
+
+* gui, switch to tree-table-view for installed addons that are grouping other addons
+    - at least investigate how difficult this might be.
 
 * gui, toggleable highlighers as a menuitem
     - highlight unmatched
@@ -57,16 +65,22 @@ see CHANGELOG.md for a more formal list of changes by release
     - touch of colour against each menuitem would serve as a legend
     - 2021-10: not sure about this one anymore
         - investigate and see if it's worthwhile
-
-* gui 'wow' column is inconsistent
-    - for curseforge, it's pulling it's value from :gameVersion, which may be empty
-        - in which case it pulls it's value from the toc file, which may be different from the selected game track
-    - since this is the 'installed addons pane', should the value reflect the value of the installed addon?
-        - (and not the value of the addon to be installed)
-        - and would this be inconsistent with the other fields that are also changing with new catalog information?
-    - this has been open for a long time. would be good to resolve it.
+            - I've just implemented the toggleable gui columns
 
 ## todo bucket (no particular order)
+
+* checkbox column for selecting addon rows
+    - might be nicer than ctrl-click
+
+* gui 'wow' column is inconsistent
+    - curseforge, tukui and github return new `interface-version` values with the update data, wowi stores this in it's `fileList` file.
+    - wowi has `UICompatibility` in v3 of it's `fileList` and `gameVersion` in v4 of it's `fileList`, but nothing when fetching an addon's updates. 
+        - I'd need to combine the catalogue data (which could be a week old already) with the update data.
+    - for curseforge, it's pulling it's value from :gameVersion, which may be empty
+        - in which case it pulls it's value from the toc file, which may be different from the selected game track
+    - the value in the gui should reflect the installed version if no update pending, else the interface version of the pending update.
+    - returning to bucket 2021-10-13
+        - it works well enough for now
 
 * gitlab as addon host
     - https://gitlab.com/search?search=wow+addon
