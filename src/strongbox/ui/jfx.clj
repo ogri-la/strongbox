@@ -1027,6 +1027,127 @@
                  "You can add this directory back at any time.")
     (cli/remove-addon-dir!)))
 
+;; column handling
+
+(defn uber-button
+  "returns a widget describing the current state of the given addon"
+  [row]
+  (let [[text, tooltip]
+        (cond
+          (:ignore? row) [(:ignored constants/glyph-map), "ignoring"]
+          (:pinned-version row) [(:pinned constants/glyph-map) (str "pinned to " (:pinned-version row))]
+          (core/unsteady? (:name row)) [(:unsteady constants/glyph-map) "in flux"]
+          (cli/addon-has-errors? row) [(:errors constants/glyph-map) (format "%s error(s)" (cli/addon-num-errors row))]
+          (cli/addon-has-warnings? row) [(:warnings constants/glyph-map) (format "%s warning(s)" (cli/addon-num-warnings row))]
+          :else
+          [(:tick constants/glyph-map) "no problems"])
+
+        text (if (:update? row) (str text " " (:update constants/glyph-map)) text)
+        tooltip (if (:update? row) (str tooltip ", updates pending") tooltip)]
+
+    {:fx/type fx.ext.node/with-tooltip-props
+     :props {:tooltip {:fx/type :tooltip
+                       :text tooltip
+                       :show-delay 200}}
+     :desc {:fx/type :button
+            :text text
+            :on-action (fn [_]
+                         (cli/add-addon-tab row)
+                         (switch-tab-latest))}}))
+
+(defn addon-progress-bar
+  [row queue keyset]
+  (let [sub-queue (filter (joblib/by-keyset keyset) queue)
+        progress (:progress (joblib/queue-info sub-queue))]
+    {:fx/type :progress-bar
+     :progress progress}))
+
+(defn-spec href-to-hyperlink map?
+  "returns a hyperlink description or an empty text description"
+  [row (s/nilable (s/keys :opt-un [::sp/url]))]
+  (let [url (:url row)
+        label (:source row)]
+    (if (and url label)
+      {:fx/type :hyperlink
+       :on-action (handler #(utils/browse-to url))
+       :text (str "↪ " label)}
+      {:fx/type :text
+       :text ""})))
+
+(defn-spec addon-fs-link (s/or :hyperlink map?, :nothing nil?)
+  "returns a hyperlink that opens a file browser to a path on the filesystem."
+  [dirname (s/nilable ::sp/dirname)]
+  (when dirname
+    {:fx/type :hyperlink
+     :on-action (handler #(utils/browse-to (format "%s/%s" (core/selected-addon-dir) dirname)))
+     :text "↪ browse local files"}))
+
+;; overrides and additional column information for the GUI
+(defn gui-column-map
+  [queue]
+  (let [-gui-column-map
+        {:browse-local {:min-width 135 :pref-width 143 :max-width 150
+                        :cell-factory {:fx/cell-type :table-cell
+                                       :describe (fn [row]
+                                                   {:graphic (or (addon-fs-link (:dirname row))
+                                                                 {:fx/type :label
+                                                                  :text (get row :dirname "")})})}
+                        :cell-value-factory identity}
+         :source {:min-width 125 :pref-width 125 :max-width 135
+                  :cell-factory {:fx/cell-type :table-cell
+                                 :describe (fn [row]
+                                             {:graphic (href-to-hyperlink row)})}
+                  :cell-value-factory identity}
+         :source-id {:min-width 60 :pref-width 100 :max-width 200}
+         :name {:min-width 100 :pref-width 300}
+         :description {:min-width 150 :pref-width 450}
+         :tag-list {:min-width 200 :pref-width 300}
+         :created-date {:min-width 90 :pref-width 110 :max-width 120}
+         :updated-date {:min-width 90 :pref-width 110 :max-width 120}
+         :installed-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]}
+         :available-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]}
+         :combined-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]}
+         :game-version {:min-width 70 :pref-width 70 :max-width 100}
+         :uber-button {:min-width 80 :pref-width 80 :max-width 120 :style-class ["more-column"]
+                       :cell-factory {:fx/cell-type :table-cell
+                                      :describe (fn [row]
+                                                  (if-not row
+                                                    {:text ""}
+
+                                                    (let [job-id (joblib/addon-id row)]
+                                                      {:graphic (if (and (core/unsteady? (:name row))
+                                                                         (joblib/has-job? queue job-id))
+                                                                  (addon-progress-bar row queue job-id)
+                                                                  (uber-button row))})))}
+                       :cell-value-factory identity}}
+
+        ;; rename some UI column keys and then merge with the gui columns
+        merge-ui-gui-columns (fn [[key val]]
+                               [key (merge
+                                     (clojure.set/rename-keys val  {:label :text, :value-fn :cell-value-factory})
+                                     (get -gui-column-map key))])
+        column-map (->> cli/column-map (map merge-ui-gui-columns) (into {}))]
+    column-map))
+
+(defn-spec table-column map?
+  "returns a description of a table column that lives within a table"
+  [column-data :gui/column-data]
+  (let [column-class (if-let [column-id (some utils/nilable [(:id column-data) (:text column-data)])]
+                       (lower-case (str column-id "-column"))
+                       "column")
+        column-name (:text column-data)
+        default-cvf (fn [row] (get row (keyword column-name)))
+        value-factory (get column-data :cell-value-factory default-cvf)
+        safe-value-factory (fn [row]
+                             (or (value-factory row) ""))
+        final-cvf {:cell-value-factory safe-value-factory}
+
+        final-style {:style-class (into ["table-cell" column-class] (get column-data :style-class))}
+
+        default {:fx/type :table-column
+                 :min-width 80}]
+    (merge default column-data final-cvf final-style)))
+
 ;;
 
 (def separator
@@ -1092,11 +1213,13 @@
   "returns a list of columns that are 'selected' if present in `selected-column-list`."
   [selected-column-list :ui/column-list]
   (let [column-list (cli/sort-column-list (keys cli/column-map))
+        queue nil
+        gui-column-map (gui-column-map queue)
         check-menu (fn [column-id]
                      (let [;; todo: this should be using the `gui-column-map`
-                           column (column-id cli/column-map)]
+                           column (column-id gui-column-map)]
                        {:fx/type :check-menu-item
-                        :text (or (:label column) (name column-id))
+                        :text (or (:text column) (name column-id))
                         :selected (utils/in? column-id selected-column-list)
                         :on-action (fn [ev]
                                      (cli/toggle-ui-column column-id (-> ev .getTarget .isSelected)))}))]
@@ -1253,45 +1376,6 @@
                  :visible (not (core/latest-strongbox-version?))
                  :managed (not (core/latest-strongbox-version?))}]}))
 
-(defn-spec table-column map?
-  "returns a description of a table column that lives within a table"
-  [column-data :gui/column-data]
-  (let [column-class (if-let [column-id (some utils/nilable [(:id column-data) (:text column-data)])]
-                       (lower-case (str column-id "-column"))
-                       "column")
-        column-name (:text column-data)
-        default-cvf (fn [row] (get row (keyword column-name)))
-        value-factory (get column-data :cell-value-factory default-cvf)
-        safe-value-factory (fn [row]
-                             (or (value-factory row) ""))
-        final-cvf {:cell-value-factory safe-value-factory}
-
-        final-style {:style-class (into ["table-cell" column-class] (get column-data :style-class))}
-
-        default {:fx/type :table-column
-                 :min-width 80}]
-    (merge default column-data final-cvf final-style)))
-
-(defn-spec href-to-hyperlink map?
-  "returns a hyperlink description or an empty text description"
-  [row (s/nilable (s/keys :opt-un [::sp/url]))]
-  (let [url (:url row)
-        label (:source row)]
-    (if (and url label)
-      {:fx/type :hyperlink
-       :on-action (handler #(utils/browse-to url))
-       :text (str "↪ " label)}
-      {:fx/type :text
-       :text ""})))
-
-(defn-spec addon-fs-link (s/or :hyperlink map?, :nothing nil?)
-  "returns a hyperlink that opens a file browser to a path on the filesystem."
-  [dirname (s/nilable ::sp/dirname)]
-  (when dirname
-    {:fx/type :hyperlink
-     :on-action (handler #(utils/browse-to (format "%s/%s" (core/selected-addon-dir) dirname)))
-     :text "↪ browse local files"}))
-
 (defn-spec build-release-menu ::sp/list-of-maps
   "returns a list of `:menu-item` maps that will update the given `addon` with 
   the release data for a selected release in `release-list`."
@@ -1360,39 +1444,6 @@
              (menu-item "Delete" (async-handler delete-selected-confirmation-handler)
                         {:disable none-selected?})]}))
 
-(defn uber-button
-  "returns a widget describing the current state of the given addon"
-  [row]
-  (let [[text, tooltip]
-        (cond
-          (:ignore? row) [(:ignored constants/glyph-map), "ignoring"]
-          (:pinned-version row) [(:pinned constants/glyph-map) (str "pinned to " (:pinned-version row))]
-          (core/unsteady? (:name row)) [(:unsteady constants/glyph-map) "in flux"]
-          (cli/addon-has-errors? row) [(:errors constants/glyph-map) (format "%s error(s)" (cli/addon-num-errors row))]
-          (cli/addon-has-warnings? row) [(:warnings constants/glyph-map) (format "%s warning(s)" (cli/addon-num-warnings row))]
-          :else
-          [(:tick constants/glyph-map) "no problems"])
-
-        text (if (:update? row) (str text " " (:update constants/glyph-map)) text)
-        tooltip (if (:update? row) (str tooltip ", updates pending") tooltip)]
-
-    {:fx/type fx.ext.node/with-tooltip-props
-     :props {:tooltip {:fx/type :tooltip
-                       :text tooltip
-                       :show-delay 200}}
-     :desc {:fx/type :button
-            :text text
-            :on-action (fn [_]
-                         (cli/add-addon-tab row)
-                         (switch-tab-latest))}}))
-
-(defn addon-progress-bar
-  [row queue keyset]
-  (let [sub-queue (filter (joblib/by-keyset keyset) queue)
-        progress (:progress (joblib/queue-info sub-queue))]
-    {:fx/type :progress-bar
-     :progress progress}))
-
 (defn installed-addons-table
   [{:keys [fx/context]}]
   ;; subscribe to re-render table when addons become unsteady
@@ -1406,52 +1457,8 @@
         user-selected-column-list (cli/sort-column-list
                                    (fx/sub-val context get-in [:app-state :cfg :preferences :ui-selected-columns]))
 
-        ;; overrides and additional column information for the GUI
-        gui-column-map
-        {:browse-local {:min-width 135 :pref-width 143 :max-width 150
-                        :cell-factory {:fx/cell-type :table-cell
-                                       :describe (fn [row]
-                                                   {:graphic (or (addon-fs-link (:dirname row))
-                                                                 {:fx/type :label
-                                                                  :text (get row :dirname "")})})}
-                        :cell-value-factory identity}
-         :source {:min-width 125 :pref-width 125 :max-width 135
-                  :cell-factory {:fx/cell-type :table-cell
-                                 :describe (fn [row]
-                                             {:graphic (href-to-hyperlink row)})}
-                  :cell-value-factory identity}
-         :source-id {:min-width 60 :pref-width 100 :max-width 200}
-         :name {:min-width 100 :pref-width 300}
-         :description {:min-width 150 :pref-width 450}
-         :tag-list {:min-width 200 :pref-width 300}
-         :created-date {:min-width 90 :pref-width 110 :max-width 120}
-         :updated-date {:min-width 90 :pref-width 110 :max-width 120}
-         :installed-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]}
-         :available-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]}
-         :combined-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]}
-         :game-version {:min-width 70 :pref-width 70 :max-width 100}
-         :uber-button {:min-width 80 :pref-width 80 :max-width 120 :style-class ["more-column"]
-                       :cell-factory {:fx/cell-type :table-cell
-                                      :describe (fn [row]
-                                                  (if-not row
-                                                    {:text ""}
-
-                                                    (let [job-id (joblib/addon-id row)]
-                                                      {:graphic (if (and (core/unsteady? (:name row))
-                                                                         (joblib/has-job? queue job-id))
-                                                                  (addon-progress-bar row queue job-id)
-                                                                  (uber-button row))})))}
-                       :cell-value-factory identity}}
-
-        ;; rename some UI column keys and then merge with the gui columns
-        merge-ui-gui-columns (fn [[key val]]
-                               [key (merge
-                                     (clojure.set/rename-keys val  {:label :text, :value-fn :cell-value-factory})
-                                     (get gui-column-map key))])
-        column-map (->> cli/column-map (map merge-ui-gui-columns) (into {}))
-
         selected-columns (or user-selected-column-list sp/default-column-list)
-        column-list (utils/select-vals column-map selected-columns)]
+        column-list (utils/select-vals (gui-column-map queue) selected-columns)]
 
     {:fx/type fx.ext.table-view/with-selection-props
      :props {:selection-mode :multiple
