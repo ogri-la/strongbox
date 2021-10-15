@@ -38,6 +38,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+* multi-toc support
+    - https://github.com/Stanzilla/WoWUIBugs/issues/68#issuecomment-830351390
+
 * bug, I can reinstall and install a specific release for an explicitly ignored addon
     - but not an implicitly ignored addon. weird.
 
@@ -69,18 +72,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
-* checkbox column for selecting addon rows
-    - might be nicer than ctrl-click
-
-* gui 'wow' column is inconsistent
-    - curseforge, tukui and github return new `interface-version` values with the update data, wowi stores this in it's `fileList` file.
-    - wowi has `UICompatibility` in v3 of it's `fileList` and `gameVersion` in v4 of it's `fileList`, but nothing when fetching an addon's updates. 
-        - I'd need to combine the catalogue data (which could be a week old already) with the update data.
-    - for curseforge, it's pulling it's value from :gameVersion, which may be empty
-        - in which case it pulls it's value from the toc file, which may be different from the selected game track
-    - the value in the gui should reflect the installed version if no update pending, else the interface version of the pending update.
-    - returning to bucket 2021-10-13
-        - it works well enough for now
+* add release.json support for github/gitlab addons
 
 * gitlab as addon host
     - https://gitlab.com/search?search=wow+addon
@@ -95,10 +87,23 @@ see CHANGELOG.md for a more formal list of changes by release
         - https://gitlab.com/shrugal/PersoLootRoll
         - any others ...?
 
+* gui 'wow' column is inconsistent
+    - curseforge, tukui and github return new `interface-version` values with the update data, wowi stores this in it's `fileList` file.
+    - wowi has `UICompatibility` in v3 of it's `fileList` and `gameVersion` in v4 of it's `fileList`, but nothing when fetching an addon's updates. 
+        - I'd need to combine the catalogue data (which could be a week old already) with the update data.
+    - for curseforge, it's pulling it's value from :gameVersion, which may be empty
+        - in which case it pulls it's value from the toc file, which may be different from the selected game track
+    - the value in the gui should reflect the installed version if no update pending, else the interface version of the pending update.
+    - returning to bucket 2021-10-13
+        - it works well enough for now
+
+* checkbox column for selecting addon rows
+    - might be nicer than ctrl-click
+
 * centralised download location on filesystem
     - The Undermine Journal is large (75MB) and it sucks to download it again and again from different dirs
         - perhaps tie this in with a rename of the downloaded zip file so unambiguous reverse lookups can be done:
-            - source--sourceid--version.zip => curseforge--adibags--1-9-26.zip
+            - source--sourceid--version.zip => curseforge--543210--1-9-26.zip
 
 * centralised addon directory db
     - install an addon, then 'deactivate' it
@@ -163,8 +168,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * addon detail, mutual dependencies pane
     - for example, I would like to see what is happening when:
         adibags anima & conduits is overwritten by adibags anima filter
-
-* add release.json support for github addons
 
 * change split button 'outdent' to 'indent'
     - and if split, keep it 'pressed in'

@@ -1099,7 +1099,6 @@
                         :text (or (:label column) (name column-id))
                         :selected (utils/in? column-id selected-column-list)
                         :on-action (fn [ev]
-                                     (.consume ev)
                                      (cli/toggle-ui-column column-id (-> ev .getTarget .isSelected)))}))]
 
     (utils/items [(mapv check-menu column-list)

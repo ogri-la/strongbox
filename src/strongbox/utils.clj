@@ -673,11 +673,15 @@
 
 ;; https://gist.github.com/danielpcox/c70a8aa2c36766200a95#gistcomment-2759496-permalink
 (defn deep-merge
+  "merges `b` into `a` when `a` is a map, otherwise returns `b`.
+  other collections are not considered."
   [a b]
   (if (map? a)
-    (into a (for [[k v] b] [k (deep-merge (a k) v)]))
+    (into a (for [[k v] b]
+              [k (deep-merge (a k) v)]))
     b))
 
 (defn rmv
+  "removes element `x` from collection `coll`, returning a vector"
   [coll x]
   (into [] (remove #{x} coll)))

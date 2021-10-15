@@ -4,6 +4,7 @@
    [strongbox.ui.cli :as cli]
    [clj-http.fake :refer [with-global-fake-routes-in-isolation]]
    [strongbox
+    [specs :as specs]
     [utils :as utils]
     [logging :as logging]
     [main :as main]
@@ -654,3 +655,45 @@
           (is (nil? (cli/install-update-these-in-parallel [addon])))
 
           (is (empty? (helper/install-dir-contents))))))))
+
+(deftest toggle-ui-column
+  (testing "columns can be added and removed and the changes reflected in application state"
+    (with-running-app
+      ;; defaults are present
+      (is (= specs/default-column-list (core/get-state :cfg :preferences :ui-selected-columns)))
+      ;; remove everything
+      (run! (fn [column-id]
+              (cli/toggle-ui-column column-id false)) specs/default-column-list)
+      (is (= [] (core/get-state :cfg :preferences :ui-selected-columns)))
+      ;; add them all back
+      (run! (fn [column-id]
+              (cli/toggle-ui-column column-id true)) specs/default-column-list)
+      (is (= specs/default-column-list (core/get-state :cfg :preferences :ui-selected-columns))))))
+
+(deftest reset-ui-columns
+  (testing "columns can be reset back to their original configuration"
+    (with-running-app
+      ;; defaults are present
+      (is (= specs/default-column-list (core/get-state :cfg :preferences :ui-selected-columns)))
+      ;; remove 
+      (swap! core/state assoc-in [:cfg :preferences :ui-selected-columns] [:foo])
+      (is (= [:foo] (core/get-state :cfg :preferences :ui-selected-columns)))
+      ;; reset
+      (cli/reset-ui-columns)
+      (is (= specs/default-column-list (core/get-state :cfg :preferences :ui-selected-columns))))))
+
+(deftest sort-column-list
+  (testing "a list of column-id values can be sorted correctly"
+    (let [given [:uber-button :source-id :combined-version :description :installed-version :created-date :browse-local]
+          expected [:browse-local :source-id :description :created-date :installed-version :combined-version :uber-button]]
+      (is (= expected (cli/sort-column-list given))))))
+
+(deftest sort-column-list--empty-values
+  (testing "a list of column-id values can be sorted correctly"
+    (let [cases [[[] []]
+                 [[:foo] [:foo]]]]
+
+      (doseq [[given expected] cases]
+        (is (= expected (cli/sort-column-list given)))))))
+
+
