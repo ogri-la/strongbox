@@ -353,3 +353,17 @@
     (doseq [[ks expected] cases]
       (is (= expected (utils/select-vals given ks))))))
 
+(deftest deep-merge
+  (let [;; only associatives (`map?`) are merged, other collections are overwritten.
+        expected {:foo {:bar {:baz [4], :bup :boo, :car #{:cadr}}}}
+        m1 {:foo {:bar {:baz [1 2 3], :car #{:cdr}}}}
+        m2 {:foo {:bar {:baz [4] :bup :boo, :car #{:cadr}}}}]
+    (is (= expected (utils/deep-merge m1 m2)))))
+
+(deftest rmv
+  (is (= [] (utils/rmv nil nil)))
+  (is (= [] (utils/rmv [] nil)))
+  (is (= [] (utils/rmv [] :bar)))
+  (is (= [:foo] (utils/rmv [:foo] :bar)))
+  (is (= [] (utils/rmv [:foo] :foo))))
+

@@ -6,37 +6,55 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-## todo
-
-* revisit the 'File -> Export Github addon list' 
-    - is this the user catalogue?
-
-* toc, addon detail, add 'x-website' / 'x-url' alongside 'browse local files' and addon host
-
-* update image thumbnails
-    - they're getting a bit stale
-
 * gui, synthetic 'version' column
     - combines 'installed' and 'available' columns
         - because most of the time the two columns are the same
     - displays the available version if it exists
     - style the version value if update available?
+    - done
+
+* gui, toggleable columns as a menuitem
+    - ensure a 'reset' to defaults option
+    - don't change current set of columns until next major release
+    - done
 
 * gui, any new/synthetic columns?
     - human friendly update column with "updated x years/months/days/hours/minutes" ago
+        - https://stackoverflow.com/questions/32511405/how-would-time-ago-function-implementation-look-like-in-clojure
     - number of releases?
+        - nah, for wowinterface and tukui this will be '1' most of the time
     - 'browse local files'
+        - done
     - pinned/unpinned
         - perhaps also remove the (pinned) from the available column and make it an icon next in the uber button
-    - a column that prefers website over addon host?
-
-* gui, toggleable columns as a menuitem
-
-* gui, switch to tree-table-view for installed addons that are grouping other addons
-    - at least investigate how difficult this might be.
+    - tags
+        - done
+    - done
 
 * gui, can I make column widths dynamic? 
     - I'd like the 'version' columns to fit exactly, always.
+        - sorry, not going to happen. we have min, max and pref widths as always.
+    - done
+
+## todo
+
+* bug, I can reinstall and install a specific release for an explicitly ignored addon
+    - but not an implicitly ignored addon. weird.
+
+* bug, tukui is dead again and the jobs are just hanging
+    - I thought I put a timeout on this?
+    - put a timeout on http connections and requests???
+    - can jobs be given a timeout as well?
+    - see tukui--stall-crash
+
+* revisit the 'File -> Export Github addon list' 
+    - is this the user catalogue?
+
+* update image thumbnails
+    - they're getting a bit stale
+
+* gui, switch to tree-table-view for installed addons that are grouping other addons
+    - at least investigate how difficult this might be.
 
 * gui, toggleable highlighers as a menuitem
     - highlight unmatched
@@ -47,16 +65,57 @@ see CHANGELOG.md for a more formal list of changes by release
     - touch of colour against each menuitem would serve as a legend
     - 2021-10: not sure about this one anymore
         - investigate and see if it's worthwhile
-
-* gui 'wow' column is inconsistent
-    - for curseforge, it's pulling it's value from :gameVersion, which may be empty
-        - in which case it pulls it's value from the toc file, which may be different from the selected game track
-    - since this is the 'installed addons pane', should the value reflect the value of the installed addon?
-        - (and not the value of the addon to be installed)
-        - and would this be inconsistent with the other fields that are also changing with new catalog information?
-    - this has been open for a long time. would be good to resolve it.
+            - I've just implemented the toggleable gui columns
 
 ## todo bucket (no particular order)
+
+* multi-toc support
+    - https://github.com/Stanzilla/WoWUIBugs/issues/68#issuecomment-830351390
+
+* add release.json support for github/gitlab addons
+
+* gitlab as addon host
+    - https://gitlab.com/search?search=wow+addon
+    - returned to bucket 2019-12-04, notes:
+        - gitlab doesn't handle releases like github does
+            - https://stackoverflow.com/questions/29520905/how-to-create-releases-in-gitlab
+        - there are very few gitlab addons (88)
+            - where did this number come from?
+        - api is quite slow
+    - update: as of Oct 2020 gitlab sucks a little bit less and, like github, you can attach binaries to releases
+        - https://gitlab.com/explore/projects?tag=World+of+Warcraft
+        - https://gitlab.com/shrugal/PersoLootRoll
+        - any others ...?
+
+* gui 'wow' column is inconsistent
+    - curseforge, tukui and github return new `interface-version` values with the update data, wowi stores this in it's `fileList` file.
+    - wowi has `UICompatibility` in v3 of it's `fileList` and `gameVersion` in v4 of it's `fileList`, but nothing when fetching an addon's updates. 
+        - I'd need to combine the catalogue data (which could be a week old already) with the update data.
+    - for curseforge, it's pulling it's value from :gameVersion, which may be empty
+        - in which case it pulls it's value from the toc file, which may be different from the selected game track
+    - the value in the gui should reflect the installed version if no update pending, else the interface version of the pending update.
+    - returning to bucket 2021-10-13
+        - it works well enough for now
+
+* checkbox column for selecting addon rows
+    - might be nicer than ctrl-click
+
+* centralised download location on filesystem
+    - The Undermine Journal is large (75MB) and it sucks to download it again and again from different dirs
+        - perhaps tie this in with a rename of the downloaded zip file so unambiguous reverse lookups can be done:
+            - source--sourceid--version.zip => curseforge--543210--1-9-26.zip
+
+* centralised addon directory db
+    - install an addon, then 'deactivate' it
+        - essentially uninstalls the addon but it's still available at the tick of a box
+            - see WADM https://github.com/MBODM/WADM
+            - does Nexus Mod Manager do something similar?
+                - that UI is so shit though ... who knows what it is doing.
+
+* gui, "fat rows"
+    - add option to switch to fatter rows with more styled data
+        - clicking on the row expands it from small to medium
+        - clicking 'more' (or whatever) takes to addon detail page
 
 * bug, a timeout from curseforge during scraping at page 171 prevent pages 171-182 from being scraped
     - we should be kinder when scraping. 
@@ -110,8 +169,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - for example, I would like to see what is happening when:
         adibags anima & conduits is overwritten by adibags anima filter
 
-* add release.json support for github addons
-
 * change split button 'outdent' to 'indent'
     - and if split, keep it 'pressed in'
 
@@ -156,19 +213,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * create a parser for that shit markup that is preventing reconcilation
     - see aliases
 
-* gitlab as addon host
-    - https://gitlab.com/search?search=wow+addon
-    - returned to bucket 2019-12-04, notes:
-        - gitlab doesn't handle releases like github does
-            - https://stackoverflow.com/questions/29520905/how-to-create-releases-in-gitlab
-        - there are very few gitlab addons (88)
-            - where did this number come from?
-        - api is quite slow
-    - update: as of Oct 2020 gitlab sucks a little bit less and, like github, you can attach binaries to releases
-        - https://gitlab.com/explore/projects?tag=World+of+Warcraft
-        - https://gitlab.com/shrugal/PersoLootRoll
-        - any others ...?
-
 * add checksum checks after downloading
     - curseforge have an md5 that can be used
         - unfortunately no checksum in api results
@@ -206,8 +250,24 @@ see CHANGELOG.md for a more formal list of changes by release
 * add a 'tabula rasa' option that wipes *everything* 
     - cache, catalog, config, downloaded zip files
 
+## next major version (v5)
 
-# releases
+* replace 'installed' and 'available' columns with the composite 'version' column
+* remove the (pinned) and (installed) labels from from the 'available' column
+
+## catalogue v3 / capture more addon data
+
+* 'website'
+    - 'x-website'/'x-url' in toc
+    - add 'website' to addon-detail pane next to 'browse local files' and addon host
+        - depends on capturing x-website
+    - add a 'website' column to installed-addons
+* 'author'
+    - add an 'author' column to installed-addons
+    - add to addon-detail
+    - search other addons by author
+
+## releases
 
 * addon detail, 'releases' widget, including *all* possible releases to download and install
     - add an 'WoW' column to know which game-track/interface
@@ -224,7 +284,7 @@ see CHANGELOG.md for a more formal list of changes by release
 * addon detail, 'releases' widget
     - installed release should be highlighted
 
-# import/exports
+## import/exports
 
 * import and export addons using addon urls
 
@@ -243,7 +303,7 @@ see CHANGELOG.md for a more formal list of changes by release
     - no need for padding and dummy dirnames then
     - installing normally would also include the mutual dependency handling
 
-# github 
+## github 
 
 * toc, add support for x-github key
     - X-Github: https://github.com/teelolws/Altoholic-Retail 
@@ -262,7 +322,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * github, add any tags if they exist
 
-# ui/gui
+* github, add 'created date'
+
+## ui/gui
 
 * dedicated tab for "user-catalogue" ?
     - add, delete, update github addons
@@ -314,8 +376,6 @@ this is still an interesting idea
     - installed
     - updates
     - category ...
-
-
 
 ## wontfix
 

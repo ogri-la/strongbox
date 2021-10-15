@@ -72,3 +72,30 @@
             actual (jfx/-about-strongbox-dialog)
             actual (update-in actual [:children 3] dissoc :on-action)]
         (is (= expected actual))))))
+
+(deftest build-column-menu
+  (let [expected [{:fx/type :check-menu-item, :text "browse", :selected false}
+                  {:fx/type :check-menu-item, :text "source", :selected true}
+                  {:fx/type :check-menu-item, :text "ID", :selected true}
+                  {:fx/type :check-menu-item, :text "name", :selected false}
+                  {:fx/type :check-menu-item, :text "description", :selected false}
+                  {:fx/type :check-menu-item, :text "tags", :selected false}
+                  {:fx/type :check-menu-item, :text "created", :selected false}
+                  {:fx/type :check-menu-item, :text "updated", :selected false}
+                  {:fx/type :check-menu-item, :text "installed", :selected false}
+                  {:fx/type :check-menu-item, :text "available", :selected false}
+                  {:fx/type :check-menu-item, :text "version", :selected false}
+                  {:fx/type :check-menu-item, :text "WoW", :selected false}
+                  {:fx/type :check-menu-item, :text "uber-button", :selected false}
+                  ;; separator
+                  ;;{:fx/type [:cljfx.lifecycle/instance-factory], :create #object[strongbox.ui.jfx$fn__42050 0xe7ec3d9 "strongbox.ui.jfx$fn__42050@e7ec3d9"]}
+                  ;; reset button
+                  ;;{:fx/type :menu-item, :text "Reset to defaults", :mnemonic-parsing true}
+                  ]
+
+        selected-columns [:foo :bar :baz :source :source-id]
+
+        actual (jfx/build-column-menu selected-columns)
+        actual (drop-last 2 actual)
+        actual (mapv #(dissoc % :on-action) actual)]
+    (is (= expected actual))))

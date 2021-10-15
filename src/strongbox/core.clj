@@ -441,7 +441,7 @@
 
 ;; settings
 
-(defn save-settings
+(defn-spec save-settings! nil?
   "writes user configuration to the filesystem"
   []
   ;; warning: this will preserve any once-off command line parameters as well
@@ -451,7 +451,8 @@
     (utils/dump-json-file cfg-file (get-state :cfg)))
   (when-let [etag-db (paths :etag-db-file)]
     (debug "saving etag-db to:" etag-db)
-    (utils/dump-json-file etag-db (get-state :etag-db))))
+    (utils/dump-json-file etag-db (get-state :etag-db)))
+  nil)
 
 (defn load-settings!
   "pulls together configuration from the fs and cli, merges it and sets application state"
@@ -1246,7 +1247,7 @@
    ;;(latest-strongbox-release) ;; check for updates after everything else is done 
 
    ;; seems like a good place to preserve the etag-db
-  (save-settings)
+  (save-settings!)
 
   nil)
 

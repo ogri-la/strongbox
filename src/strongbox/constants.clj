@@ -22,4 +22,14 @@
 
 ;; used when a placeholder date/time is needed.
 ;; like when we're polyfilling nfo data to create an addon summary.
-(def fake-datetime "2001-01-01T01:01:01")
+(def fake-datetime "2001-01-01T01:01:01Z")
+
+(def glyph-map
+  {:tick "\u2714" ;; '✔'
+   :unsteady "\u2941" ;; '⥁' CLOCKWISE CLOSED CIRCLE ARROW
+   :warnings "\u2501" ;; '━' heavy horizontal
+   :errors "\u2A2F" ;; '⨯'
+   :update "\u21A6" ;; '↦'
+   :ignored "\u26AA" ;; '⚪' medium white circle
+   :pinned "\u26ab" ;; '⚫' medium black circle
+   })

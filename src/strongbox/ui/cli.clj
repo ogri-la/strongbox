@@ -5,6 +5,7 @@
    [clojure.spec.alpha :as s]
    [me.raynes.fs :as fs]
    [strongbox
+    [constants :as constants]
     [joblib :as joblib]
     [github-api :as github-api]
     [db :as db]
@@ -17,7 +18,10 @@
     [utils :as utils :refer [if-let* message-list]]
     [curseforge-api :as curseforge-api]
     [wowinterface :as wowinterface]
-    [core :as core :refer [get-state paths find-catalogue-local-path]]]))
+    [core :as core :refer [get-state paths find-catalogue-local-path]]])
+  (:import
+   [org.ocpsoft.prettytime.units Decade]
+   [org.ocpsoft.prettytime PrettyTime]))
 
 (comment "the UIs pool their logic here, which calls core.clj.")
 
@@ -47,8 +51,7 @@
   (core/load-installed-addons)
   (core/match-installed-addons-with-catalogue)
   (core/check-for-updates)
-  (core/save-settings)
-  nil)
+  (core/save-settings!))
 
 (defn-spec set-addon-dir! nil?
   "adds/sets an addon-dir, partial refresh of application state"
@@ -179,8 +182,7 @@
   "updates a user preference `preference-key` with given `preference-val` and saves the settings"
   [preference-key keyword?, preference-val any?]
   (swap! core/state assoc-in [:cfg :preferences preference-key] preference-val)
-  (core/save-settings)
-  nil)
+  (core/save-settings!))
 
 ;;
 
@@ -568,6 +570,86 @@
          core/add-user-addon!))
   nil)
 
+;;
+
+(defn-spec available-versions-v1 (s/or :ok string? :no-version-available nil?)
+  "formats the 'available version' string depending on the state of the addon.
+  pinned and ignored addons get a helpful prefix."
+  [row map?]
+  (cond
+    (:ignore? row) "(ignored)"
+    (:pinned-version row) (str "(pinned) " (:pinned-version row))
+    :else
+    (:version row)))
+
+(defn-spec available-versions-v2 (s/or :ok string? :no-version-available nil?)
+  "formats the 'version' or 'available version' string depending on the state of the addon.
+  pinned and ignored addons get a helpful prefix."
+  [row map?]
+  (cond
+    ;; when wouldn't we have an `installed-version`? search result?
+    (and (:ignore? row) (:installed-version row)) (str "(ignored) " (:installed-version row))
+    (:ignore? row) "(ignored)"
+    (:pinned-version row) (str "(pinned) " (:pinned-version row))
+    :else
+    (or (:version row) (:installed-version row))))
+
+(def pretty-dt-printer (doto (PrettyTime.)
+                         (.removeUnit Decade)))
+
+(def column-map
+  {:browse-local {:label "browse" :value-fn :addon-dir}
+   :source {:label "source" :value-fn :source}
+   :source-id {:label "ID" :value-fn :source-id}
+   :name {:label "name" :value-fn (comp utils/no-new-lines :label)}
+   :description {:label "description" :value-fn (comp utils/no-new-lines :description)}
+   :tag-list {:label "tags" :value-fn (fn [row]
+                                        (when-not (empty? (:tag-list row))
+                                          (str (:tag-list row))))}
+   :updated-date {:label "updated" :value-fn #(some->> % :updated-date utils/todt (.format pretty-dt-printer))}
+   :created-date {:label "created" :value-fn #(some->> % :created-date utils/todt (.format pretty-dt-printer))}
+   :installed-version {:label "installed" :value-fn :installed-version}
+   :available-version {:label "available" :value-fn available-versions-v1}
+   :combined-version {:label "version" :value-fn available-versions-v2}
+   :game-version {:label "WoW"
+                  :value-fn (fn [row]
+                              (some-> row :interface-version str utils/interface-version-to-game-version))}
+
+   :uber-button {:label nil ;; the gui will use the column-id (`:uber-button`) for the column menu when label is `nil`
+                 :value-fn (fn [row]
+                             (let [queue (core/get-state :job-queue)
+                                   job-id (joblib/addon-id row)]
+                               (if (and (core/unsteady? (:name row))
+                                        (joblib/has-job? queue job-id))
+                                 ;; parallel job in progress, show a ticker.
+                                 "*"
+                                 (cond
+                                   (:ignore? row) (:ignored constants/glyph-map)
+                                   (:pinned-version row) (:pinned constants/glyph-map)
+                                   (core/unsteady? (:name row)) (:unsteady constants/glyph-map)
+                                   (addon-has-errors? row) (:errors constants/glyph-map)
+                                   (addon-has-warnings? row) (:warnings constants/glyph-map)
+                                   :else (:tick constants/glyph-map)))))}})
+
+(defn-spec toggle-ui-column nil?
+  "toggles the given `column-id` in the user preferences depending on `selected?` boolean"
+  [column-id keyword?, selected? boolean?]
+  (dosync
+   (swap! core/state update-in [:cfg :preferences :ui-selected-columns] (if selected? conj utils/rmv) column-id)
+   (core/save-settings!)))
+
+(defn-spec reset-ui-columns nil?
+  "replaces user column preferences with the default set"
+  []
+  (dosync
+   (swap! core/state assoc-in [:cfg :preferences :ui-selected-columns] sp/default-column-list)
+   (core/save-settings!)))
+
+(defn-spec sort-column-list :ui/column-list
+  "returns the given `column-list` but in the preferred order"
+  [column-list :ui/column-list]
+  (sort-by (fn [x]
+             (.indexOf sp/known-column-list x)) column-list))
 
 ;; debug
 

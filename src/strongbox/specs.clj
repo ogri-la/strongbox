@@ -117,6 +117,30 @@
 
 (s/def ::zoned-dt-obj #(instance? java.time.ZonedDateTime %))
 
+;; javafx, cljfx, gui
+;; no references to cljfx or javafx please!
+;; requiring cljfx or anything in javafx.scene.control starts the javafx application thread
+(s/def :javafx/node #(instance? javafx.scene.Node %))
+
+(s/def :gui/column-data (s/keys :opt-un [:gui/text :gui/cell-value-factory :gui/style-class]))
+
+(s/def :addon/id (s/or :regular (s/keys :req-un [:addon/source :addon/source-id]) ;; installed addons and catalogue addons
+                       :edge (s/keys :req-in [::dirname]))) ;; unmatched and ignored addons
+(s/def :ui/tab-data :addon/id) ;; for now
+(s/def :ui/tab-id string?)
+(s/def :ui/tab (s/keys :req-un [:ui/tab-id ::label ::closable? :ui/tab-data ::log-level]))
+(s/def :ui/tab-list (s/coll-of :ui/tab))
+
+;; column lists
+
+;; all known columns. also constitutes the column order.
+(def known-column-list [:browse-local :source :source-id :name :description :tag-list :created-date :updated-date :installed-version :available-version :combined-version :game-version :uber-button])
+
+;; default set of columns
+(def default-column-list [:source :name :description :installed-version :available-version :game-version :uber-button])
+
+(s/def :ui/column-list ::list-of-keywords)
+
 ;; user config
 
 (s/def :addon-dir/game-track game-tracks)
@@ -126,7 +150,9 @@
 (s/def ::selected-catalogue keyword?)
 
 (s/def :config/addon-zips-to-keep (s/nilable int?))
-(s/def :config/preferences (s/keys :req-un [:config/addon-zips-to-keep]))
+(s/def :config/ui-selected-columns :ui/column-list)
+(s/def :config/preferences (s/keys :req-un [:config/addon-zips-to-keep
+                                            (s/nilable :config/ui-selected-columns)]))
 
 (s/def ::user-config (s/keys :req-un [::addon-dir-list ::selected-addon-dir
                                       ::catalogue-location-list ::selected-catalogue
@@ -353,19 +379,6 @@
 (s/def :db/installed-addon :db/installed-addon-or-import-stub) ;; alias :(
 (s/def :db/addon-catalogue-match (s/or :no-match nil?
                                        :match (s/keys :req-un [:db/idx :db/key :db/installed-addon ::matched? :db/catalogue-match])))
-;; javafx, cljfx, gui
-;; no references to cljfx or javafx please!
-;; requiring cljfx or anything in javafx.scene.control starts the javafx application thread
-(s/def :javafx/node #(instance? javafx.scene.Node %))
-
-(s/def :gui/column-data (s/keys :opt-un [:gui/text :gui/cell-value-factory :gui/style-class]))
-
-(s/def :addon/id (s/or :regular (s/keys :req-un [:addon/source :addon/source-id]) ;; installed addons and catalogue addons
-                       :edge (s/keys :req-in [::dirname]))) ;; unmatched and ignored addons
-(s/def :ui/tab-data :addon/id) ;; for now
-(s/def :ui/tab-id string?)
-(s/def :ui/tab (s/keys :req-un [:ui/tab-id ::label ::closable? :ui/tab-data ::log-level]))
-(s/def :ui/tab-list (s/coll-of :ui/tab))
 
 ;; joblib
 
@@ -377,3 +390,5 @@
 (s/def :joblib/progress (s/nilable double?))
 (s/def :joblib/job-info (s/keys :req-un [:joblib/job :joblib/job-id :joblib/progress]))
 (s/def :joblib/queue (s/or :keyvals map? :pairs ::list-of-lists))
+
+;;
