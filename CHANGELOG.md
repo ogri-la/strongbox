@@ -8,11 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* columns in the GUI can now be toggled on and off and reset back to their defaults.
+    - these preferences are preserved between application restarts.
+* new columns 'source-id', 'tags', combined 'version' column, 'browse local files' and friendly 'created' and 'updated' columns.
+
 ### Changed
+
+* status button now has 'ignored' (empty circle) and 'pinned' (filled circle) icons instead of nothing and a tick respectively.
 
 ### Fixed
 
 ### Removed
+
+* the inability to resize certain columns. All columns can be resized now, although some still have maximum widths.
 
 ## 4.6.0 - 2021-10-01
 

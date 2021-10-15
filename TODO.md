@@ -38,9 +38,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
-* multi-toc support
-    - https://github.com/Stanzilla/WoWUIBugs/issues/68#issuecomment-830351390
-
 * bug, I can reinstall and install a specific release for an explicitly ignored addon
     - but not an implicitly ignored addon. weird.
 
@@ -71,6 +68,9 @@ see CHANGELOG.md for a more formal list of changes by release
             - I've just implemented the toggleable gui columns
 
 ## todo bucket (no particular order)
+
+* multi-toc support
+    - https://github.com/Stanzilla/WoWUIBugs/issues/68#issuecomment-830351390
 
 * add release.json support for github/gitlab addons
 
