@@ -213,75 +213,48 @@
                ;;
 
 
-               ".table-view"
+               ".table-view "
                {:-fx-table-cell-border-color (colour :table-border)
-                :-fx-font-size ".9em"}
+                :-fx-font-size ".9em"
 
-               ".table-view .hyperlink"
-               {:-fx-padding "-2 0 0 0"}
+                ".hyperlink" {:-fx-padding "-2 0 0 0"}
 
-               ".table-view .table-placeholder-text"
-               {:-fx-font-size "3em"}
+                ".table-placeholder-text" {:-fx-font-size "3em"}
 
-               ".table-view .column-header"
-               {;;:-fx-background-color "#ddd" ;; flat colour vs gradient
-                :-fx-font-size "1em"}
+                ".column-header" {;;:-fx-background-color "#ddd" ;; flat colour vs gradient
+                                  :-fx-font-size "1em"}
 
-               ".table-view .table-row-cell"
-               {:-fx-border-insets "-1 -1 0 -1"
-                :-fx-border-color (colour :table-border)
+                ".table-row-cell" {:-fx-border-insets "-1 -1 0 -1"
+                                   :-fx-border-color (colour :table-border)
+                                   :-fx-background-color (colour :row) ;; even
 
-                " .table-cell"
-                {:-fx-text-fill (colour :table-font-colour)}
+                                   " .table-cell" {:-fx-text-fill (colour :table-font-colour)}
+                                   ":hover" {:-fx-background-color (colour :row-hover)}
+                                   ":selected" {:-fx-background-color (colour :row-selected)
+                                                :-fx-table-cell-border-color (colour :table-border)
+                                                " .table-cell" {:-fx-text-fill "-fx-focused-text-base-color"}}
+                                   ":selected:hover" {:-fx-background-color (colour :row-hover)}
 
-                ;; even
-                :-fx-background-color (colour :row)
+                                   ":odd" {:-fx-background-color (colour :row)
+                                           ":hover" {:-fx-background-color (colour :row-hover)}
+                                           ":selected" {:-fx-background-color (colour :row-selected)}
+                                           ":selected:hover" {:-fx-background-color (colour :row-hover)}}
 
-                ":hover"
-                {:-fx-background-color (colour :row-hover)}
+                                   ".unsteady" {;; '!important' so that it takes precedence over .updateable addons
+                                                ;;:-fx-background-color (str (colour :unsteady) " !important")
+                                                }}
 
-                ":selected"
-                {:-fx-background-color (colour :row-selected)
+                ".ignored .table-cell" {:-fx-opacity "0.5"
+                                        :-fx-font-style "italic"}
 
-                 " .table-cell"
-                 {:-fx-text-fill "-fx-focused-text-base-color"}
-                 :-fx-table-cell-border-color (colour :table-border)}
-
-                ":selected:hover"
-                {:-fx-background-color (colour :row-hover)}
-
-                ":odd"
-                {:-fx-background-color (colour :row)}
-
-                ":odd:hover"
-                {:-fx-background-color (colour :row-hover)}
-
-                ":odd:selected"
-                {:-fx-background-color (colour :row-selected)}
-
-                ":odd:selected:hover"
-                {:-fx-background-color (colour :row-hover)}
-
-                ".unsteady"
-                {;; '!important' so that it takes precedence over .updateable addons
-                 ;;:-fx-background-color (str (colour :unsteady) " !important")
-                 }}
-
-               ;; ignored 
-               ".table-view .ignored .table-cell"
-               {:-fx-opacity "0.5"
-                :-fx-font-style "italic"}
-
-               ;; ignored 'install' button gets slightly different styling
-               ".table-view .ignored .install-button-column.table-cell"
-               {:-fx-opacity "1" ;; a disabled button already has some greying effect applied
-                :-fx-font-style "normal"}
-
+                ;; ignored 'install' button gets slightly different styling
+                ".ignored .install-button-column.table-cell"
+                {:-fx-opacity "1" ;; a disabled button already has some greying effect applied
+                 :-fx-font-style "normal"}}
 
                ;;
                ;; tables with alternating row colours (just add the '.odd-rows' class)
                ;; 
-
 
                ".table-view.odd-rows .table-row-cell:odd"
                {:-fx-background-color (colour :row-alt)
@@ -1466,7 +1439,7 @@
         column-list (utils/items
                      [{:fx/type :tree-table-column :cell-value-factory (constantly "")
                        :min-width 25 :max-width 25 :resizable false}]
-                      (mapv table-column column-list))
+                     (mapv table-column column-list))
 
         row-list (mapv (fn [row]
                          (if (:group-addons row)
@@ -1481,6 +1454,7 @@
                                           (cli/select-addons* (mapv #(.getValue %) tree-item-list)))}
      :desc {:fx/type :tree-table-view
             :id "installed-addons"
+            :style-class ["table-view"]
             :show-root false
 
             :placeholder (cond
@@ -1522,7 +1496,7 @@
                                                              (switch-tab-latest)))
                                        :style-class
                                        (remove nil?
-                                               ["tree-table-row-cell" ;; `:style-class` will actually *replace* the list of classes
+                                               ["table-row-cell" "tree-table-row-cell" ;; `:style-class` *replaces* the list of classes
                                                 (when (:update? row) "updateable")
                                                 (when (:ignore? row) "ignored")
                                                 (when (and row (core/unsteady? (:name row))) "unsteady")
