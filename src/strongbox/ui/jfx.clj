@@ -1462,32 +1462,81 @@
         column-list (utils/select-vals (gui-column-map queue) selected-columns)
 
         ;; ---
-        
+
         column-list (mapv (fn [col]
                             (assoc col :fx/type :tree-table-column)) column-list)
 
         row-list (mapv (fn [row]
                          (if (:group-addons row)
                            {:fx/type :tree-item :value row :children (mapv (fn [subrow]
-                                                                             {:fx/type :tree-item :value subrow}) (:group-addons row))}
-                           {:fx/type :tree-item :value row})) row-list)
-        ]
+                                                                             {:fx/type :tree-item :value subrow})
+                                                                           (:group-addons row))}
+                           {:fx/type :tree-item :value row})) row-list)]
 
     {:fx/type fx.ext.tree-table-view/with-selection-props
      :props {:selection-mode :multiple
-             :on-selected-items-changed cli/select-addons*}
+             :on-selected-items-changed (fn [tree-item-list]
+                                          (cli/select-addons* (mapv #(.getValue %) tree-item-list)))}
      :desc {:fx/type :tree-table-view
             :id "installed-addons"
             :show-root false
-            
-            ;;:column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
+
+            :placeholder (cond
+                           (nil? selected-addon-dir)
+                           {:fx/type :v-box
+                            :id "placeholder"
+                            :children [{:fx/type :label
+                                        :style-class ["big-welcome-text"]
+                                        :text "STRONGBOX"}
+                                       {:fx/type :label
+                                        :style-class ["big-welcome-subtext"]
+                                        :text "\"File\" \u2794 \"New addon directory\""}]}
+
+                           (empty? column-list)
+                           {:fx/type :v-box
+                            :id "placeholder"
+                            :children [{:fx/type :text
+                                        :style-class ["table-placeholder-text"]
+                                        :text "No columns selected!"}
+                                       {:fx/type :text
+                                        :text ""}
+                                       (button "Reset columns to defaults" (handler cli/reset-ui-columns))]}
+
+                           :else
+                           {:fx/type :text
+                            :style-class ["table-placeholder-text"]
+                            :text "No addons found."})
+
+            :column-resize-policy javafx.scene.control.TreeTableView/CONSTRAINED_RESIZE_POLICY
             :pref-height 999.0
-            :columns                       (mapv table-column column-list)
 
-            
-            :root {:fx/type :tree-item :expanded true :children row-list}
+            :row-factory {:fx/cell-type :tree-table-row
+                          :describe (fn [row]
+                                      {:on-mouse-clicked (fn [^MouseEvent ev]
+                                                           ;; double click handler https://github.com/cljfx/cljfx/issues/118
+                                                           (when (and (= javafx.scene.input.MouseButton/PRIMARY (.getButton ev))
+                                                                      (= 2 (.getClickCount ev)))
+                                                             (cli/add-addon-tab row)
+                                                             (switch-tab-latest)))
+                                       :style-class
+                                       (remove nil?
+                                               ["tree-table-row-cell" ;; `:style-class` will actually *replace* the list of classes
+                                                (when (:update? row) "updateable")
+                                                (when (:ignore? row) "ignored")
+                                                (when (and row (core/unsteady? (:name row))) "unsteady")
+                                                (cond
+                                                  (and row (cli/addon-has-errors? row)) "errors"
+                                                  (and row (cli/addon-has-warnings? row)) "warnings")])})}
 
-            }}))
+            :columns (utils/items
+                      [{:fx/type :tree-table-column :cell-value-factory (constantly "")}]
+                      (mapv table-column column-list))
+
+            :context-menu (if (= 1 (count selected))
+                            (singular-context-menu (first selected))
+                            (multiple-context-menu selected))
+
+            :root {:fx/type :tree-item :expanded true :children row-list}}}))
 
 (defn notice-logger
   "a log widget that displays a list of log lines.

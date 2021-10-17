@@ -252,6 +252,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## next major version (v5)
 
+* default to keeping last three zip files by default
 * replace 'installed' and 'available' columns with the composite 'version' column
 * remove the (pinned) and (installed) labels from from the 'available' column
 
