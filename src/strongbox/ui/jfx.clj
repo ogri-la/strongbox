@@ -213,25 +213,25 @@
                ;;
 
 
-               ".tree-table-view"
+               ".table-view"
                {:-fx-table-cell-border-color (colour :table-border)
                 :-fx-font-size ".9em"}
 
-               ".tree-table-view .hyperlink"
+               ".table-view .hyperlink"
                {:-fx-padding "-2 0 0 0"}
 
-               ".tree-table-view .table-placeholder-text"
+               ".table-view .table-placeholder-text"
                {:-fx-font-size "3em"}
 
-               ".tree-table-view .column-header"
+               ".table-view .column-header"
                {;;:-fx-background-color "#ddd" ;; flat colour vs gradient
                 :-fx-font-size "1em"}
 
-               ".tree-table-view .tree-table-row-cell"
+               ".table-view .table-row-cell"
                {:-fx-border-insets "-1 -1 0 -1"
                 :-fx-border-color (colour :table-border)
 
-                " .tree-table-cell"
+                " .table-cell"
                 {:-fx-text-fill (colour :table-font-colour)}
 
                 ;; even
@@ -243,7 +243,7 @@
                 ":selected"
                 {:-fx-background-color (colour :row-selected)
 
-                 " .tree-table-cell"
+                 " .table-cell"
                  {:-fx-text-fill "-fx-focused-text-base-color"}
                  :-fx-table-cell-border-color (colour :table-border)}
 
@@ -268,12 +268,12 @@
                  }}
 
                ;; ignored 
-               ".tree-table-view .ignored .table-cell"
+               ".table-view .ignored .table-cell"
                {:-fx-opacity "0.5"
                 :-fx-font-style "italic"}
 
                ;; ignored 'install' button gets slightly different styling
-               ".tree-table-view .ignored .install-button-column.table-cell"
+               ".table-view .ignored .install-button-column.table-cell"
                {:-fx-opacity "1" ;; a disabled button already has some greying effect applied
                 :-fx-font-style "normal"}
 
@@ -283,23 +283,23 @@
                ;; 
 
 
-               ".tree-table-view.odd-rows .table-row-cell:odd"
+               ".table-view.odd-rows .table-row-cell:odd"
                {:-fx-background-color (colour :row-alt)
                 ":hover"
                 {:-fx-background-color (colour :row-hover)}}
 
                ;; 'the above overwrites the pseudo class as well apparently.
                ;; this 'resets' it so we don't get selected rows with alternating blanks
-               ".tree-table-view.odd-rows .table-row-cell:odd:selected"
+               ".table-view.odd-rows .table-row-cell:odd:selected"
                {:-fx-background-color (colour :row-selected)
                 ":hover"
                 {:-fx-background-color (colour :row-hover)}}
 
-               ".tree-table-view .install-button-column.table-cell"
+               ".table-view .install-button-column.table-cell"
                {:-fx-padding "0px"
                 :-fx-alignment "center"}
 
-               ".tree-table-view .install-button-column .button"
+               ".table-view .install-button-column .button"
                {:-fx-pref-width 100
                 :-fx-padding "2px 0"
                 :-fx-background-radius "4"}
@@ -351,7 +351,7 @@
                 {:-fx-padding "0 0 0 .65em"
                  :-fx-min-width "70px"}}
 
-               ".tree-table-view#installed-addons "
+               ".table-view#installed-addons "
                {".wow-column"
                 {:-fx-alignment "center"}
 
@@ -368,7 +368,7 @@
                  :-fx-text-fill (colour :uber-button-tick)
                  :-fx-font-weight "bold"}
 
-                ".tree-table-row-cell.warnings .more-column > .button"
+                ".table-row-cell.warnings .more-column > .button"
                 {;; orange bar
                  :-fx-text-fill (colour :uber-button-warn)}
 
@@ -393,7 +393,7 @@
 
                ;; installed, updateable
 
-               ".tree-table-view#installed-addons .updateable"
+               ".table-view#installed-addons .updateable"
                {:-fx-background-color (colour :row-updateable)
 
                 " .table-cell"
@@ -409,7 +409,7 @@
 
                ;; installed, ignored
 
-               ".tree-table-view#installed-addons .ignored"
+               ".table-view#installed-addons .ignored"
                {" .more-column > .button"
                 ;; !important because an orange warning colour is being inherited from somewhere
                 {:-fx-text-fill "gray !important"}}
@@ -419,7 +419,7 @@
                ;;
 
 
-               ".tree-table-view#notice-logger "
+               ".table-view#notice-logger "
                {:-fx-font-family "monospace"
 
                 ".warn .table-cell"
@@ -1087,7 +1087,8 @@
 (defn gui-column-map
   [queue]
   (let [-gui-column-map
-        {:browse-local {:min-width 135 :pref-width 143 :max-width 150
+        {:expand-group {:label "" :min-width 25 :pref-width 25 :max-width 25 :cell-value-factory (constantly "")}
+         :browse-local {:min-width 135 :pref-width 143 :max-width 150
                         :cell-factory {:fx/cell-type :tree-table-cell
                                        :describe (fn [row]
                                                    {:graphic (or (addon-fs-link (:dirname row))
@@ -1460,11 +1461,12 @@
 
         selected-columns (or user-selected-column-list sp/default-column-list)
         column-list (utils/select-vals (gui-column-map queue) selected-columns)
-
-        ;; ---
-
         column-list (mapv (fn [col]
                             (assoc col :fx/type :tree-table-column)) column-list)
+        column-list (utils/items
+                     [{:fx/type :tree-table-column :cell-value-factory (constantly "")
+                       :min-width 25 :max-width 25 :resizable false}]
+                      (mapv table-column column-list))
 
         row-list (mapv (fn [row]
                          (if (:group-addons row)
@@ -1528,9 +1530,7 @@
                                                   (and row (cli/addon-has-errors? row)) "errors"
                                                   (and row (cli/addon-has-warnings? row)) "warnings")])})}
 
-            :columns (utils/items
-                      [{:fx/type :tree-table-column :cell-value-factory (constantly "")}]
-                      (mapv table-column column-list))
+            :columns column-list
 
             :context-menu (if (= 1 (count selected))
                             (singular-context-menu (first selected))
