@@ -28,8 +28,8 @@
   (:import
    [java.util List Calendar Locale]
    [javafx.util Callback]
-   [javafx.scene.control TableRow TextInputDialog Alert Alert$AlertType ButtonType]
-   [javafx.scene.input MouseEvent KeyEvent KeyCode]
+   [javafx.scene.control TreeTableRow TableRow TextInputDialog Alert Alert$AlertType ButtonType]
+   [javafx.scene.input MouseButton MouseEvent KeyEvent KeyCode]
    [javafx.stage Stage FileChooser FileChooser$ExtensionFilter DirectoryChooser Window WindowEvent]
    [javafx.application Platform]
    [javafx.scene Node]
@@ -1488,12 +1488,19 @@
 
             :row-factory {:fx/cell-type :tree-table-row
                           :describe (fn [row]
-                                      {:on-mouse-clicked (fn [^MouseEvent ev]
-                                                           ;; double click handler https://github.com/cljfx/cljfx/issues/118
-                                                           (when (and (= javafx.scene.input.MouseButton/PRIMARY (.getButton ev))
-                                                                      (= 2 (.getClickCount ev)))
-                                                             (cli/add-addon-tab row)
-                                                             (switch-tab-latest)))
+                                      {:event-filter (fn [ev]
+                                                       (when (and
+                                                              (instance? MouseEvent ev)
+                                                              (= (.getButton ev) MouseButton/PRIMARY)
+                                                              (= (.getClickCount ev) 2))
+
+                                                         (when (= (.getEventType ev) MouseEvent/MOUSE_PRESSED)
+                                                           (.consume ev))
+
+                                                         (when (= (.getEventType ev) MouseEvent/MOUSE_CLICKED)
+                                                           (cli/add-addon-tab row)
+                                                           (switch-tab-latest))))
+
                                        :style-class
                                        (remove nil?
                                                ["table-row-cell" "tree-table-row-cell" ;; `:style-class` *replaces* the list of classes

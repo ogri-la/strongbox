@@ -38,6 +38,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+* bug, possibly, explicitly ignoring an addon gives it a dummy updated-date
+    - if an updated-date doesn't exist we shouldn't require that it does exist ...
+
 * bug, I can reinstall and install a specific release for an explicitly ignored addon
     - but not an implicitly ignored addon. weird.
 
