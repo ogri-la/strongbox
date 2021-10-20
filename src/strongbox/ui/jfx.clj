@@ -279,6 +279,18 @@
 
 
                ;;
+               ;; treetableview
+               ;;
+
+               ".tree-table-row-cell > .tree-disclosure-node"
+               {;; default is "4 6 4 8" but this makes the hitbox a tiny bit easier to hit
+                :-fx-padding "9"
+                " > .arrow" {:-fx-background-color (colour :table-font-colour)}}
+
+               ".table-view .child-row .table-cell"
+               {:-fx-opacity 0.6}
+
+               ;;
                ;; tabber
                ;;
 
@@ -1104,7 +1116,7 @@
         column-map (->> cli/column-map (map merge-ui-gui-columns) (into {}))]
     column-map))
 
-(defn-spec table-column map?
+(defn-spec make-table-column map?
   "returns a description of a table column that lives within a table"
   [column-data :gui/column-data]
   (let [column-class (if-let [column-id (some utils/nilable [(:id column-data) (:text column-data)])]
@@ -1435,18 +1447,25 @@
         selected-columns (or user-selected-column-list sp/default-column-list)
         column-list (utils/select-vals (gui-column-map queue) selected-columns)
         column-list (mapv (fn [col]
-                            (assoc col :fx/type :tree-table-column)) column-list)
+                            (let [col (update-in col [:style-class] conj "tree-table-col")]
+                              (assoc col :fx/type :tree-table-column)))
+                          column-list)
+
         column-list (utils/items
                      [{:fx/type :tree-table-column :cell-value-factory (constantly "")
                        :min-width 25 :max-width 25 :resizable false}]
-                     (mapv table-column column-list))
+                     (mapv make-table-column column-list))
 
         row-list (mapv (fn [row]
                          (if (:group-addons row)
-                           {:fx/type :tree-item :value row :children (mapv (fn [subrow]
-                                                                             {:fx/type :tree-item :value subrow})
-                                                                           (:group-addons row))}
-                           {:fx/type :tree-item :value row})) row-list)]
+                           {:fx/type :tree-item
+                            :value (assoc row :-depth 0)
+                            :children (mapv (fn [subrow]
+                                              {:fx/type :tree-item :value (assoc subrow :-depth 1)})
+                                            (:group-addons row))}
+                           {:fx/type :tree-item
+                            :value row}))
+                       row-list)]
 
     {:fx/type fx.ext.tree-table-view/with-selection-props
      :props {:selection-mode :multiple
@@ -1507,6 +1526,7 @@
                                                 (when (:update? row) "updateable")
                                                 (when (:ignore? row) "ignored")
                                                 (when (and row (core/unsteady? (:name row))) "unsteady")
+                                                (when (= (:-depth row) 1) "child-row")
                                                 (cond
                                                   (and row (cli/addon-has-errors? row)) "errors"
                                                   (and row (cli/addon-has-warnings? row)) "warnings")])})}
@@ -1609,7 +1629,7 @@
                                                      (timbre/warn (format "self destruction in T-minus %s seconds" remaining-seconds))
                                                      (timbre/error "fah-wooosh ... BOOOOOO ... /oh the humanity/ ... OOOOOOHHHMMM"))))))}))}
               :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
-              :columns (mapv table-column column-list)
+              :columns (mapv make-table-column column-list)
               :items (or log-message-list [])}}))
 
 (defn installed-addons-pane
@@ -1677,7 +1697,7 @@
                                                        "ignored")]})}
             :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
             :pref-height 999.0
-            :columns (mapv table-column column-list)
+            :columns (mapv make-table-column column-list)
             :items addon-list}}))
 
 (defn search-addons-search-field
@@ -1792,7 +1812,7 @@
                             :style-class ["table-placeholder-text"]
                             :text "(not installed)"}
               :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
-              :columns (mapv table-column column-list)
+              :columns (mapv make-table-column column-list)
               :items (or row-list [])}}))
 
 (defn addon-detail-group-addons
@@ -1814,7 +1834,7 @@
                             :style-class ["table-placeholder-text"]
                             :text "(not grouped)"}
               :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
-              :columns (mapv table-column column-list)
+              :columns (mapv make-table-column column-list)
               :items (or row-list [])
               :disable disabled?}}))
 
@@ -1839,7 +1859,7 @@
                             :style-class ["table-placeholder-text"]
                             :text "(no releases)"}
               :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
-              :columns (mapv table-column column-list)
+              :columns (mapv make-table-column column-list)
               :items row-list
               :disable disabled?}}))
 
