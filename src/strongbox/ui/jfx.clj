@@ -760,6 +760,9 @@
   [description map?]
   (-> description fx/create-component fx/instance))
 
+(defn-spec child-row? boolean?
+  [addon map?]
+  (= (:-depth addon) 1))
 
 ;;
 
@@ -1379,33 +1382,39 @@
         release-list (:release-list selected-addon)
         releases-available? (and (not (empty? release-list))
                                  (not pinned?))
-        ignored? (addon/ignored? selected-addon)]
+        ignored? (addon/ignored? selected-addon)
+        child? (child-row? selected-addon)]
     {:fx/type :context-menu
      :items [(menu-item "Update" (async-handler cli/update-selected)
-                        {:disable (not (addon/updateable? selected-addon))})
+                        {:disable (or child?
+                                      (not (addon/updateable? selected-addon)))})
+
              (menu-item "Re-install" (async-handler cli/re-install-or-update-selected)
-                        {:disable (not (addon/re-installable? selected-addon))})
+                        {:disable (or child?
+                                      (not (addon/re-installable? selected-addon)))})
              separator
              (if pinned?
                (menu-item "Unpin release" (async-handler cli/unpin)
-                          {:disable ignored?})
+                          {:disable (or child? ignored?)})
                (menu-item "Pin release" (async-handler cli/pin)
-                          {:disable ignored?}))
+                          {:disable (or child? ignored?)}))
              (if releases-available?
                (menu "Releases" (build-release-menu selected-addon))
                (menu "Releases" [] {:disable true})) ;; skips even attempting to build the menu
              separator
              (if ignored?
                (menu-item "Stop ignoring" (async-handler cli/clear-ignore-selected))
-               (menu-item "Ignore" (async-handler cli/ignore-selected)))
+               (menu-item "Ignore" (async-handler cli/ignore-selected)
+                          {:disable child?}))
              separator
              (menu-item "Delete" (async-handler delete-selected-confirmation-handler)
-                        {:disable ignored?})]}))
+                        {:disable (or child? ignored?)})]}))
 
 (defn-spec multiple-context-menu map?
   "context menu when multiple addons are selected."
   [selected-addon-list :addon/toc-list]
-  (let [num-selected (count selected-addon-list)
+  (let [selected-addon-list (remove child-row? selected-addon-list)
+        num-selected (count selected-addon-list)
         none-selected? (= num-selected 0)
         some-pinned? (->> selected-addon-list (map :pinned-version) (some some?) boolean)
         some-ignored? (->> selected-addon-list (filter :ignore?) (some some?) boolean)]
