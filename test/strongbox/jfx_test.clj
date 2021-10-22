@@ -50,7 +50,7 @@
                  [{:text "foo"} {:fx/type :table-column, :text "foo", :min-width 80, :style-class ["table-cell" "foo-column"]}]
                  [{:style-class ["foo"]} {:fx/type :table-column, :min-width 80, :style-class ["table-cell" "column" "foo"]}]]]
       (doseq [[given expected] cases]
-        (is (= expected (dissoc (jfx/table-column given) :cell-value-factory)))))))
+        (is (= expected (dissoc (jfx/make-table-column given) :cell-value-factory)))))))
 
 (deftest about-strongbox
   (testing "'about' dialog is correct and new version text is correctly hidden"

@@ -8,6 +8,7 @@
    ;; logging in the gui should be avoided as it can lead to infinite loops
    [taoensso.timbre :as timbre :refer [spy]] ;; info debug warn error]] 
    [cljfx.ext.table-view :as fx.ext.table-view]
+   [cljfx.ext.tree-table-view :as fx.ext.tree-table-view]
    [cljfx.lifecycle :as fx.lifecycle]
    [cljfx.component :as fx.component]
    [cljfx.api :as fx]
@@ -27,8 +28,8 @@
   (:import
    [java.util List Calendar Locale]
    [javafx.util Callback]
-   [javafx.scene.control TableRow TextInputDialog Alert Alert$AlertType ButtonType]
-   [javafx.scene.input MouseEvent KeyEvent KeyCode]
+   [javafx.scene.control TreeTableRow TableRow TextInputDialog Alert Alert$AlertType ButtonType]
+   [javafx.scene.input MouseButton MouseEvent KeyEvent KeyCode]
    [javafx.stage Stage FileChooser FileChooser$ExtensionFilter DirectoryChooser Window WindowEvent]
    [javafx.application Platform]
    [javafx.scene Node]
@@ -212,75 +213,48 @@
                ;;
 
 
-               ".table-view"
+               ".table-view "
                {:-fx-table-cell-border-color (colour :table-border)
-                :-fx-font-size ".9em"}
+                :-fx-font-size ".9em"
 
-               ".table-view .hyperlink"
-               {:-fx-padding "-2 0 0 0"}
+                ".hyperlink" {:-fx-padding "-2 0 0 0"}
 
-               ".table-view .table-placeholder-text"
-               {:-fx-font-size "3em"}
+                ".table-placeholder-text" {:-fx-font-size "3em"}
 
-               ".table-view .column-header"
-               {;;:-fx-background-color "#ddd" ;; flat colour vs gradient
-                :-fx-font-size "1em"}
+                ".column-header" {;;:-fx-background-color "#ddd" ;; flat colour vs gradient
+                                  :-fx-font-size "1em"}
 
-               ".table-view .table-row-cell"
-               {:-fx-border-insets "-1 -1 0 -1"
-                :-fx-border-color (colour :table-border)
+                ".table-row-cell" {:-fx-border-insets "-1 -1 0 -1"
+                                   :-fx-border-color (colour :table-border)
+                                   :-fx-background-color (colour :row) ;; even
 
-                " .table-cell"
-                {:-fx-text-fill (colour :table-font-colour)}
+                                   " .table-cell" {:-fx-text-fill (colour :table-font-colour)}
+                                   ":hover" {:-fx-background-color (colour :row-hover)}
+                                   ":selected" {:-fx-background-color (colour :row-selected)
+                                                :-fx-table-cell-border-color (colour :table-border)
+                                                " .table-cell" {:-fx-text-fill "-fx-focused-text-base-color"}}
+                                   ":selected:hover" {:-fx-background-color (colour :row-hover)}
 
-                ;; even
-                :-fx-background-color (colour :row)
+                                   ":odd" {:-fx-background-color (colour :row)
+                                           ":hover" {:-fx-background-color (colour :row-hover)}
+                                           ":selected" {:-fx-background-color (colour :row-selected)}
+                                           ":selected:hover" {:-fx-background-color (colour :row-hover)}}
 
-                ":hover"
-                {:-fx-background-color (colour :row-hover)}
+                                   ".unsteady" {;; '!important' so that it takes precedence over .updateable addons
+                                                ;;:-fx-background-color (str (colour :unsteady) " !important")
+                                                }}
 
-                ":selected"
-                {:-fx-background-color (colour :row-selected)
+                ".ignored .table-cell" {:-fx-opacity "0.5"
+                                        :-fx-font-style "italic"}
 
-                 " .table-cell"
-                 {:-fx-text-fill "-fx-focused-text-base-color"}
-                 :-fx-table-cell-border-color (colour :table-border)}
-
-                ":selected:hover"
-                {:-fx-background-color (colour :row-hover)}
-
-                ":odd"
-                {:-fx-background-color (colour :row)}
-
-                ":odd:hover"
-                {:-fx-background-color (colour :row-hover)}
-
-                ":odd:selected"
-                {:-fx-background-color (colour :row-selected)}
-
-                ":odd:selected:hover"
-                {:-fx-background-color (colour :row-hover)}
-
-                ".unsteady"
-                {;; '!important' so that it takes precedence over .updateable addons
-                 ;;:-fx-background-color (str (colour :unsteady) " !important")
-                 }}
-
-               ;; ignored 
-               ".table-view .ignored .table-cell"
-               {:-fx-opacity "0.5"
-                :-fx-font-style "italic"}
-
-               ;; ignored 'install' button gets slightly different styling
-               ".table-view .ignored .install-button-column.table-cell"
-               {:-fx-opacity "1" ;; a disabled button already has some greying effect applied
-                :-fx-font-style "normal"}
-
+                ;; ignored 'install' button gets slightly different styling
+                ".ignored .install-button-column.table-cell"
+                {:-fx-opacity "1" ;; a disabled button already has some greying effect applied
+                 :-fx-font-style "normal"}}
 
                ;;
                ;; tables with alternating row colours (just add the '.odd-rows' class)
                ;; 
-
 
                ".table-view.odd-rows .table-row-cell:odd"
                {:-fx-background-color (colour :row-alt)
@@ -303,6 +277,19 @@
                 :-fx-padding "2px 0"
                 :-fx-background-radius "4"}
 
+
+               ;;
+               ;; treetableview
+               ;;
+
+
+               ".tree-table-row-cell > .tree-disclosure-node"
+               {;; default is "4 6 4 8" but this makes the hitbox a tiny bit easier to hit
+                :-fx-padding "9"
+                " > .arrow" {:-fx-background-color (colour :table-font-colour)}}
+
+               ".table-view .child-row .table-cell"
+               {:-fx-opacity 0.6}
 
                ;;
                ;; tabber
@@ -774,6 +761,15 @@
   [description map?]
   (-> description fx/create-component fx/instance))
 
+(defn parent-row
+  "if given `row` has a parent, return that or just return given `row`."
+  [row]
+  (or (:-parent row) row))
+
+(defn-spec child-row? boolean?
+  "returns `true` if given `row` has a parent."
+  [row map?]
+  (-> row :-parent nil? not))
 
 ;;
 
@@ -1032,7 +1028,8 @@
 (defn uber-button
   "returns a widget describing the current state of the given addon"
   [row]
-  (let [[text, tooltip]
+  (let [row (parent-row row)
+        [text, tooltip]
         (cond
           (:ignore? row) [(:ignored constants/glyph-map), "ignoring"]
           (:pinned-version row) [(:pinned constants/glyph-map) (str "pinned to " (:pinned-version row))]
@@ -1082,19 +1079,20 @@
      :on-action (handler #(utils/browse-to (format "%s/%s" (core/selected-addon-dir) dirname)))
      :text "↪ browse local files"}))
 
-;; overrides and additional column information for the GUI
 (defn gui-column-map
+  "overrides and additional column information for the GUI. see `cli/column-map`."
   [queue]
   (let [-gui-column-map
-        {:browse-local {:min-width 135 :pref-width 143 :max-width 150
-                        :cell-factory {:fx/cell-type :table-cell
+        {:expand-group {:label "" :min-width 25 :pref-width 25 :max-width 25 :cell-value-factory (constantly "")}
+         :browse-local {:min-width 135 :pref-width 143 :max-width 150
+                        :cell-factory {:fx/cell-type :tree-table-cell
                                        :describe (fn [row]
                                                    {:graphic (or (addon-fs-link (:dirname row))
                                                                  {:fx/type :label
                                                                   :text (get row :dirname "")})})}
                         :cell-value-factory identity}
          :source {:min-width 125 :pref-width 125 :max-width 135
-                  :cell-factory {:fx/cell-type :table-cell
+                  :cell-factory {:fx/cell-type :tree-table-cell
                                  :describe (fn [row]
                                              {:graphic (href-to-hyperlink row)})}
                   :cell-value-factory identity}
@@ -1109,7 +1107,7 @@
          :combined-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]}
          :game-version {:min-width 70 :pref-width 70 :max-width 100}
          :uber-button {:min-width 80 :pref-width 80 :max-width 120 :style-class ["more-column"]
-                       :cell-factory {:fx/cell-type :table-cell
+                       :cell-factory {:fx/cell-type :tree-table-cell
                                       :describe (fn [row]
                                                   (if-not row
                                                     {:text ""}
@@ -1129,7 +1127,7 @@
         column-map (->> cli/column-map (map merge-ui-gui-columns) (into {}))]
     column-map))
 
-(defn-spec table-column map?
+(defn-spec make-table-column map?
   "returns a description of a table column that lives within a table"
   [column-data :gui/column-data]
   (let [column-class (if-let [column-id (some utils/nilable [(:id column-data) (:text column-data)])]
@@ -1147,6 +1145,11 @@
         default {:fx/type :table-column
                  :min-width 80}]
     (merge default column-data final-cvf final-style)))
+
+(defn-spec make-tree-table-column map?
+  "like `make-table-column` but returns a `tree-table-column` type"
+  [column-data :gui/column-data]
+  (make-table-column (assoc column-data :fx/type :tree-table-column)))
 
 ;;
 
@@ -1392,33 +1395,39 @@
         release-list (:release-list selected-addon)
         releases-available? (and (not (empty? release-list))
                                  (not pinned?))
-        ignored? (addon/ignored? selected-addon)]
+        ignored? (addon/ignored? selected-addon)
+        child? (child-row? selected-addon)]
     {:fx/type :context-menu
      :items [(menu-item "Update" (async-handler cli/update-selected)
-                        {:disable (not (addon/updateable? selected-addon))})
+                        {:disable (or child?
+                                      (not (addon/updateable? selected-addon)))})
+
              (menu-item "Re-install" (async-handler cli/re-install-or-update-selected)
-                        {:disable (not (addon/re-installable? selected-addon))})
+                        {:disable (or child?
+                                      (not (addon/re-installable? selected-addon)))})
              separator
              (if pinned?
                (menu-item "Unpin release" (async-handler cli/unpin)
-                          {:disable ignored?})
+                          {:disable (or child? ignored?)})
                (menu-item "Pin release" (async-handler cli/pin)
-                          {:disable ignored?}))
+                          {:disable (or child? ignored?)}))
              (if releases-available?
                (menu "Releases" (build-release-menu selected-addon))
                (menu "Releases" [] {:disable true})) ;; skips even attempting to build the menu
              separator
              (if ignored?
                (menu-item "Stop ignoring" (async-handler cli/clear-ignore-selected))
-               (menu-item "Ignore" (async-handler cli/ignore-selected)))
+               (menu-item "Ignore" (async-handler cli/ignore-selected)
+                          {:disable child?}))
              separator
              (menu-item "Delete" (async-handler delete-selected-confirmation-handler)
-                        {:disable ignored?})]}))
+                        {:disable (or child? ignored?)})]}))
 
 (defn-spec multiple-context-menu map?
   "context menu when multiple addons are selected."
   [selected-addon-list :addon/toc-list]
-  (let [num-selected (count selected-addon-list)
+  (let [selected-addon-list (remove child-row? selected-addon-list)
+        num-selected (count selected-addon-list)
         none-selected? (= num-selected 0)
         some-pinned? (->> selected-addon-list (map :pinned-version) (some some?) boolean)
         some-ignored? (->> selected-addon-list (filter :ignore?) (some some?) boolean)]
@@ -1457,14 +1466,38 @@
         user-selected-column-list (cli/sort-column-list
                                    (fx/sub-val context get-in [:app-state :cfg :preferences :ui-selected-columns]))
 
-        selected-columns (or user-selected-column-list sp/default-column-list)
-        column-list (utils/select-vals (gui-column-map queue) selected-columns)]
+        ;; can't be part of the column map because it's actually attached to the row.
+        ;; this is just spacer so the arrow always has room and isn't overlapped by another column's values.
+        arrow-column {:fx/type :tree-table-column :cell-value-factory (constantly "")
+                      :min-width 25 :max-width 25 :resizable false}
 
-    {:fx/type fx.ext.table-view/with-selection-props
+        selected-columns (or user-selected-column-list sp/default-column-list)
+        column-list (utils/select-vals (gui-column-map queue) selected-columns)
+        column-list (into [arrow-column] (mapv make-tree-table-column column-list))
+
+        ;; wraps the list of addons in a :`tree-item` component to model the parent->child relationship.
+        row-list (mapv (fn [row]
+                         (if (:group-addons row)
+                           {:fx/type :tree-item
+                            :value row
+                            :children (mapv (fn [subrow]
+                                              {:fx/type :tree-item :value (assoc subrow :-parent row)})
+                                            (:group-addons row))}
+                           {:fx/type :tree-item
+                            :value row}))
+                       row-list)]
+
+    {:fx/type fx.ext.tree-table-view/with-selection-props
      :props {:selection-mode :multiple
-             :on-selected-items-changed cli/select-addons*}
-     :desc {:fx/type :table-view
+             :on-selected-items-changed (fn [tree-item-list]
+                                          (cli/select-addons* (mapv #(.getValue %) tree-item-list)))}
+     :desc {:fx/type :tree-table-view
             :id "installed-addons"
+            ;; replaces "tree-table-view" class and keeps all styling attached to table-view.
+            :style-class ["table-view"]
+            :show-root false
+            :column-resize-policy javafx.scene.control.TreeTableView/CONSTRAINED_RESIZE_POLICY
+            :pref-height 999.0
             :placeholder (cond
                            (nil? selected-addon-dir)
                            {:fx/type :v-box
@@ -1490,31 +1523,44 @@
                            {:fx/type :text
                             :style-class ["table-placeholder-text"]
                             :text "No addons found."})
-            :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
-            :pref-height 999.0
-            :row-factory {:fx/cell-type :table-row
+
+            :row-factory {:fx/cell-type :tree-table-row
                           :describe (fn [row]
-                                      {:on-mouse-clicked (fn [^MouseEvent ev]
-                                                           ;; double click handler https://github.com/cljfx/cljfx/issues/118
-                                                           (when (and (= javafx.scene.input.MouseButton/PRIMARY (.getButton ev))
-                                                                      (= 2 (.getClickCount ev)))
-                                                             (cli/add-addon-tab row)
-                                                             (switch-tab-latest)))
+                                      {;; double clicking a tree-item will 'expand' it by default.
+                                       ;; this prevents that from happening and opens the addon detail tab instead.
+                                       :event-filter (fn [ev]
+                                                       (when (and
+                                                              (instance? MouseEvent ev)
+                                                              (= (.getButton ev) MouseButton/PRIMARY)
+                                                              (= (.getClickCount ev) 2))
+
+                                                         ;; the 'expand' logic is triggered by the 'pressed' event which happens just before the 'clicked' event.
+                                                         ;; this means the event must be captured with the `:event-filter` and then consumed so it never happens.
+                                                         (when (= (.getEventType ev) MouseEvent/MOUSE_PRESSED)
+                                                           (.consume ev))
+
+                                                         (when (= (.getEventType ev) MouseEvent/MOUSE_CLICKED)
+                                                           (cli/add-addon-tab row)
+                                                           (switch-tab-latest))))
+
                                        :style-class
                                        (remove nil?
-                                               ["table-row-cell" ;; `:style-class` will actually *replace* the list of classes
+                                               ["table-row-cell" "tree-table-row-cell" ;; `:style-class` *replaces* the list of classes
                                                 (when (:update? row) "updateable")
                                                 (when (:ignore? row) "ignored")
                                                 (when (and row (core/unsteady? (:name row))) "unsteady")
+                                                (when (and row (child-row? row)) "child-row")
                                                 (cond
                                                   (and row (cli/addon-has-errors? row)) "errors"
                                                   (and row (cli/addon-has-warnings? row)) "warnings")])})}
 
-            :columns (mapv table-column column-list)
+            :columns column-list
+
             :context-menu (if (= 1 (count selected))
                             (singular-context-menu (first selected))
                             (multiple-context-menu selected))
-            :items (or row-list [])}}))
+
+            :root {:fx/type :tree-item :expanded true :children row-list}}}))
 
 (defn notice-logger
   "a log widget that displays a list of log lines.
@@ -1606,7 +1652,7 @@
                                                      (timbre/warn (format "self destruction in T-minus %s seconds" remaining-seconds))
                                                      (timbre/error "fah-wooosh ... BOOOOOO ... /oh the humanity/ ... OOOOOOHHHMMM"))))))}))}
               :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
-              :columns (mapv table-column column-list)
+              :columns (mapv make-table-column column-list)
               :items (or log-message-list [])}}))
 
 (defn installed-addons-pane
@@ -1674,7 +1720,7 @@
                                                        "ignored")]})}
             :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
             :pref-height 999.0
-            :columns (mapv table-column column-list)
+            :columns (mapv make-table-column column-list)
             :items addon-list}}))
 
 (defn search-addons-search-field
@@ -1789,7 +1835,7 @@
                             :style-class ["table-placeholder-text"]
                             :text "(not installed)"}
               :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
-              :columns (mapv table-column column-list)
+              :columns (mapv make-table-column column-list)
               :items (or row-list [])}}))
 
 (defn addon-detail-group-addons
@@ -1811,7 +1857,7 @@
                             :style-class ["table-placeholder-text"]
                             :text "(not grouped)"}
               :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
-              :columns (mapv table-column column-list)
+              :columns (mapv make-table-column column-list)
               :items (or row-list [])
               :disable disabled?}}))
 
@@ -1836,7 +1882,7 @@
                             :style-class ["table-placeholder-text"]
                             :text "(no releases)"}
               :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
-              :columns (mapv table-column column-list)
+              :columns (mapv make-table-column column-list)
               :items row-list
               :disable disabled?}}))
 

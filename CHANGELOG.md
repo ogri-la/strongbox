@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* expanding rows for grouped addons.
+    - clicking the arrow at the far left of the screen will 'expand' the addon and display the set of grouped addons.
+    - these addons were bundled together with the addon that was installed but are otherwise hidden behind the 'primary' addon.
+        - the 'primary' addon is just a best-guess at which the main addon of the group is.
+    - actions like 'ignore', 'pin', 'uninstall' etc can't be performed against these addons.
 * columns in the GUI can now be toggled on and off and reset back to their defaults.
     - these preferences are preserved between application restarts.
 * new columns 'source-id', 'tags', combined 'version' column, 'browse local files' and friendly 'created' and 'updated' columns.
