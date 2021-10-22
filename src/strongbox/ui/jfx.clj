@@ -282,6 +282,7 @@
                ;; treetableview
                ;;
 
+
                ".tree-table-row-cell > .tree-disclosure-node"
                {;; default is "4 6 4 8" but this makes the hitbox a tiny bit easier to hit
                 :-fx-padding "9"
@@ -760,9 +761,13 @@
   [description map?]
   (-> description fx/create-component fx/instance))
 
+(defn parent-row
+  [row]
+  (or (:-parent row) row))
+
 (defn-spec child-row? boolean?
   [addon map?]
-  (= (:-depth addon) 1))
+  (-> addon :-parent nil? not))
 
 ;;
 
@@ -1021,7 +1026,8 @@
 (defn uber-button
   "returns a widget describing the current state of the given addon"
   [row]
-  (let [[text, tooltip]
+  (let [row (parent-row row)
+        [text, tooltip]
         (cond
           (:ignore? row) [(:ignored constants/glyph-map), "ignoring"]
           (:pinned-version row) [(:pinned constants/glyph-map) (str "pinned to " (:pinned-version row))]
@@ -1468,9 +1474,9 @@
         row-list (mapv (fn [row]
                          (if (:group-addons row)
                            {:fx/type :tree-item
-                            :value (assoc row :-depth 0)
+                            :value row
                             :children (mapv (fn [subrow]
-                                              {:fx/type :tree-item :value (assoc subrow :-depth 1)})
+                                              {:fx/type :tree-item :value (assoc subrow :-parent row)})
                                             (:group-addons row))}
                            {:fx/type :tree-item
                             :value row}))
@@ -1535,7 +1541,7 @@
                                                 (when (:update? row) "updateable")
                                                 (when (:ignore? row) "ignored")
                                                 (when (and row (core/unsteady? (:name row))) "unsteady")
-                                                (when (= (:-depth row) 1) "child-row")
+                                                (when (and row (child-row? row)) "child-row")
                                                 (cond
                                                   (and row (cli/addon-has-errors? row)) "errors"
                                                   (and row (cli/addon-has-warnings? row)) "warnings")])})}
