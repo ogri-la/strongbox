@@ -762,12 +762,14 @@
   (-> description fx/create-component fx/instance))
 
 (defn parent-row
+  "if given `row` has a parent, return that or just return given `row`."
   [row]
   (or (:-parent row) row))
 
 (defn-spec child-row? boolean?
-  [addon map?]
-  (-> addon :-parent nil? not))
+  "returns `true` if given `row` has a parent."
+  [row map?]
+  (-> row :-parent nil? not))
 
 ;;
 
@@ -1077,8 +1079,8 @@
      :on-action (handler #(utils/browse-to (format "%s/%s" (core/selected-addon-dir) dirname)))
      :text "↪ browse local files"}))
 
-;; overrides and additional column information for the GUI
 (defn gui-column-map
+  "overrides and additional column information for the GUI. see `cli/column-map`."
   [queue]
   (let [-gui-column-map
         {:expand-group {:label "" :min-width 25 :pref-width 25 :max-width 25 :cell-value-factory (constantly "")}
@@ -1143,6 +1145,11 @@
         default {:fx/type :table-column
                  :min-width 80}]
     (merge default column-data final-cvf final-style)))
+
+(defn-spec make-tree-table-column map?
+  "like `make-table-column` but returns a `tree-table-column` type"
+  [column-data :gui/column-data]
+  (make-table-column (assoc column-data :fx/type :tree-table-column)))
 
 ;;
 
@@ -1459,18 +1466,16 @@
         user-selected-column-list (cli/sort-column-list
                                    (fx/sub-val context get-in [:app-state :cfg :preferences :ui-selected-columns]))
 
+        ;; can't be part of the column map because it's actually attached to the row.
+        ;; this is just spacer so the arrow always has room and isn't overlapped by another column's values.
+        arrow-column {:fx/type :tree-table-column :cell-value-factory (constantly "")
+                      :min-width 25 :max-width 25 :resizable false}
+
         selected-columns (or user-selected-column-list sp/default-column-list)
         column-list (utils/select-vals (gui-column-map queue) selected-columns)
-        column-list (mapv (fn [col]
-                            (let [col (update-in col [:style-class] conj "tree-table-col")]
-                              (assoc col :fx/type :tree-table-column)))
-                          column-list)
+        column-list (into [arrow-column] (mapv make-tree-table-column column-list))
 
-        column-list (utils/items
-                     [{:fx/type :tree-table-column :cell-value-factory (constantly "")
-                       :min-width 25 :max-width 25 :resizable false}]
-                     (mapv make-table-column column-list))
-
+        ;; wraps the list of addons in a :`tree-item` component to model the parent->child relationship.
         row-list (mapv (fn [row]
                          (if (:group-addons row)
                            {:fx/type :tree-item
@@ -1488,9 +1493,11 @@
                                           (cli/select-addons* (mapv #(.getValue %) tree-item-list)))}
      :desc {:fx/type :tree-table-view
             :id "installed-addons"
+            ;; replaces "tree-table-view" class and keeps all styling attached to table-view.
             :style-class ["table-view"]
             :show-root false
-
+            :column-resize-policy javafx.scene.control.TreeTableView/CONSTRAINED_RESIZE_POLICY
+            :pref-height 999.0
             :placeholder (cond
                            (nil? selected-addon-dir)
                            {:fx/type :v-box
@@ -1517,17 +1524,18 @@
                             :style-class ["table-placeholder-text"]
                             :text "No addons found."})
 
-            :column-resize-policy javafx.scene.control.TreeTableView/CONSTRAINED_RESIZE_POLICY
-            :pref-height 999.0
-
             :row-factory {:fx/cell-type :tree-table-row
                           :describe (fn [row]
-                                      {:event-filter (fn [ev]
+                                      {;; double clicking a tree-item will 'expand' it by default.
+                                       ;; this prevents that from happening and opens the addon detail tab instead.
+                                       :event-filter (fn [ev]
                                                        (when (and
                                                               (instance? MouseEvent ev)
                                                               (= (.getButton ev) MouseButton/PRIMARY)
                                                               (= (.getClickCount ev) 2))
 
+                                                         ;; the 'expand' logic is triggered by the 'pressed' event which happens just before the 'clicked' event.
+                                                         ;; this means the event must be captured with the `:event-filter` and then consumed so it never happens.
                                                          (when (= (.getEventType ev) MouseEvent/MOUSE_PRESSED)
                                                            (.consume ev))
 
