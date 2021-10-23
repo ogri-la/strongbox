@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+* ignored addons had an incorrect 'updated' date.
+    - previously only visible on the addon detail page, a dummy 'polyfilled' date of 2001-01-01 was being used.
+    - the 'updated' date has it's own selectable column now.
+
 ### Removed
 
 * the inability to resize certain columns. All columns can be resized now, although some still have maximum widths.
