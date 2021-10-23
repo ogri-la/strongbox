@@ -116,36 +116,37 @@
 (defn-spec toc2summary (s/nilable :addon/summary)
   "accepts toc or toc+nfo data and emits a version of the data that validates as an `:addon/summary`"
   [toc (s/or :just-toc :addon/toc, :mixed :addon/toc+nfo)]
-  (let [sink nil
-        syn (-> toc
-                (merge {:url (:group-id toc)
-                        :tag-list []
-                        :updated-date constants/fake-datetime
-                        :download-count 0
-                        :matched? false})
-                (select-keys [:source :source-id :url :name :tag-list :label :updated-date :download-count]))
+  (when-not (:ignore? toc)
+    (let [sink nil
+          syn (-> toc
+                  (merge {:url (:group-id toc)
+                          :tag-list []
+                          :updated-date constants/fake-datetime
+                          :download-count 0
+                          :matched? false})
+                  (select-keys [:source :source-id :url :name :tag-list :label :updated-date :download-count]))
 
-        syn (if (= (:source toc) "wowinterface")
-              (cond
-                (:installed-game-track toc) (assoc syn :game-track-list [(:installed-game-track toc)])
-                (:interface-version toc) (assoc syn :game-track-list [(utils/interface-version-to-game-track (:interface-version toc))])
-                :else sink)
-              syn)
-
-        ;; we might be able to recover from this.
-        ;; wowi and github urls can be reconstructed
-        syn (if (-> syn :url nil?)
-              (case (:source toc)
-                "wowinterface" (assoc syn :url (wowinterface/make-url toc))
-                "tukui" (assoc syn :url (tukui-api/make-url toc))
+          syn (if (= (:source toc) "wowinterface")
+                (cond
+                  (:installed-game-track toc) (assoc syn :game-track-list [(:installed-game-track toc)])
+                  (:interface-version toc) (assoc syn :game-track-list [(utils/interface-version-to-game-track (:interface-version toc))])
+                  :else sink)
                 syn)
-              syn)
 
-        ;; url may still be nil at this point, just fail
-        syn (if (-> syn :url nil?) sink syn)
+          ;; we might be able to recover from this.
+          ;; wowi and github urls can be reconstructed
+          syn (if (-> syn :url nil?)
+                (case (:source toc)
+                  "wowinterface" (assoc syn :url (wowinterface/make-url toc))
+                  "tukui" (assoc syn :url (tukui-api/make-url toc))
+                  syn)
+                syn)
 
-        syn (if (-> syn :source nil?) sink syn)]
-    syn))
+          ;; url may still be nil at this point, just fail
+          syn (if (-> syn :url nil?) sink syn)
+
+          syn (if (-> syn :source nil?) sink syn)]
+      syn)))
 
 
 ;;

@@ -1475,7 +1475,8 @@
   (let [cases [[{} false]
                [{:foo :bar} false]
                [{:source "wowinterface" :source-id 123} false]
-               [{:name "foo" :label "Foo" :source "wowinterface" :source-id 123} true]]]
+               [{:name "foo" :label "Foo" :source "wowinterface" :source-id 123} true]
+               [{:name "foo" :label "Foo" :source "wowinterface" :source-id 123 :ignore? true} false]]]
     (doseq [[given expected] cases]
       (is (= expected (core/expandable? given))))))
 

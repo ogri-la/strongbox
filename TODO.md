@@ -36,10 +36,15 @@ see CHANGELOG.md for a more formal list of changes by release
         - sorry, not going to happen. we have min, max and pref widths as always.
     - done
 
-## todo
+* gui, switch to tree-table-view for installed addons that are grouping other addons
+    - at least investigate how difficult this might be.
+    - done
 
-* bug, possibly, explicitly ignoring an addon gives it a dummy updated-date
+* bug, explicitly ignoring an addon gives it a dummy updated-date
     - if an updated-date doesn't exist we shouldn't require that it does exist ...
+    - done. it was being polyfilled when it should have been ignored.
+
+## todo
 
 * bug, I can reinstall and install a specific release for an explicitly ignored addon
     - but not an implicitly ignored addon. weird.
@@ -56,21 +61,16 @@ see CHANGELOG.md for a more formal list of changes by release
 * update image thumbnails
     - they're getting a bit stale
 
-* gui, switch to tree-table-view for installed addons that are grouping other addons
-    - at least investigate how difficult this might be.
-
-* gui, toggleable highlighers as a menuitem
-    - highlight unmatched
-    - highlight updates
-    - highlight mismatched game track
-    - highlight mismatched update host
-        - installing addon from a different host
-    - touch of colour against each menuitem would serve as a legend
-    - 2021-10: not sure about this one anymore
-        - investigate and see if it's worthwhile
-            - I've just implemented the toggleable gui columns
-
 ## todo bucket (no particular order)
+
+* gui, try replacing the auto fit columns with something like this:
+    - https://stackoverflow.com/questions/14650787/javafx-column-in-tableview-auto-fit-size#answer-49134109
+
+* bug, a timeout from curseforge during scraping at page 171 prevent pages 171-182 from being scraped
+    - we should be kinder when scraping. 
+        - add a delay between requests
+    - we should be more robust when scraping.
+        - add retries with exponential backoff
 
 * multi-toc support
     - https://github.com/Stanzilla/WoWUIBugs/issues/68#issuecomment-830351390
@@ -90,6 +90,17 @@ see CHANGELOG.md for a more formal list of changes by release
         - https://gitlab.com/shrugal/PersoLootRoll
         - any others ...?
 
+
+* gui, toggleable highlighers as a menuitem
+    - highlight unmatched
+    - highlight updates
+    - highlight mismatched game track
+    - highlight mismatched update host
+        - installing addon from a different host
+    - touch of colour against each menuitem would serve as a legend
+    - 2021-10: not sure about this one anymore
+        - returned to the bucket.
+
 * gui 'wow' column is inconsistent
     - curseforge, tukui and github return new `interface-version` values with the update data, wowi stores this in it's `fileList` file.
     - wowi has `UICompatibility` in v3 of it's `fileList` and `gameVersion` in v4 of it's `fileList`, but nothing when fetching an addon's updates. 
@@ -97,7 +108,7 @@ see CHANGELOG.md for a more formal list of changes by release
     - for curseforge, it's pulling it's value from :gameVersion, which may be empty
         - in which case it pulls it's value from the toc file, which may be different from the selected game track
     - the value in the gui should reflect the installed version if no update pending, else the interface version of the pending update.
-    - returning to bucket 2021-10-13
+    - returning to bucket 2021-10
         - it works well enough for now
 
 * checkbox column for selecting addon rows
@@ -119,12 +130,9 @@ see CHANGELOG.md for a more formal list of changes by release
     - add option to switch to fatter rows with more styled data
         - clicking on the row expands it from small to medium
         - clicking 'more' (or whatever) takes to addon detail page
+    - perhaps coincide with catalogue v3 with more addon details
 
-* bug, a timeout from curseforge during scraping at page 171 prevent pages 171-182 from being scraped
-    - we should be kinder when scraping. 
-        - add a delay between requests
-    - we should be more robust when scraping.
-        - add retries with exponential backoff
+
 
 * wowinterface, revisit the pages that are being scraped, make sure we're not missing any
 
