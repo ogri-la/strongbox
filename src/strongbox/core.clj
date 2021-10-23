@@ -846,12 +846,9 @@
 
         ;; for those that failed to match but have nfo data we can fall back to that
         polyfilled (mapv (fn [addon]
-                           ;; do not polyfill if we're ignoring addon
-                           (if (:ignore? addon)
-                             addon
-                             (if-let [synthetic (catalogue/toc2summary addon)]
-                               (moosh-addons addon synthetic)
-                               addon)))
+                           (if-let [synthetic (catalogue/toc2summary addon)]
+                             (moosh-addons addon synthetic)
+                             addon))
                          unmatched)
 
         expanded-installed-addon-list (into matched polyfilled)
