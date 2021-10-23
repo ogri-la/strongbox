@@ -636,14 +636,18 @@
   [node-id]
   (-> (get-window) .getScene .getRoot (.lookupAll node-id)))
 
-(defn get-tabber
+(defn find-installed-addons-table
+  []
+  (first (select "#installed-addons")))
+
+(defn find-tabber
   []
   (first (select "#tabber")))
 
 (defn-spec tab-index int?
   "returns the index of the currently selected tab"
   []
-  (-> (get-tabber) .getSelectionModel .getSelectedIndex))
+  (-> (find-tabber) .getSelectionModel .getSelectedIndex))
 
 (defn-spec tab-list-tab-index int?
   "returns the index of the currently selected tab within `:tab-list`, which doesn't include the static tabs"
@@ -898,7 +902,7 @@
 (defn-spec switch-tab nil?
   "switches the tab-pane to the tab at the given index"
   [tab-idx int?]
-  (-> (get-tabber) .getSelectionModel (.select tab-idx))
+  (-> (find-tabber) .getSelectionModel (.select tab-idx))
   nil)
 
 (defn-spec switch-tab-idx nil?
@@ -1388,10 +1392,11 @@
                      (async-handler (partial cli/set-version addon release))))
         (:release-list addon)))
 
-(defn-spec singular-context-menu map?
+(defn singular-context-menu
   "context menu when a single addon is selected."
-  [selected-addon :addon/toc]
-  (let [pinned? (some? (:pinned-version selected-addon))
+  [{:keys [fx/context]}]
+  (let [selected-addon (fx/sub-val context get-in [:app-state :selected-addon-list 0])
+        pinned? (some? (:pinned-version selected-addon))
         release-list (:release-list selected-addon)
         releases-available? (and (not (empty? release-list))
                                  (not pinned?))
@@ -1416,17 +1421,22 @@
                (menu "Releases" [] {:disable true})) ;; skips even attempting to build the menu
              separator
              (if ignored?
-               (menu-item "Stop ignoring" (async-handler cli/clear-ignore-selected))
-               (menu-item "Ignore" (async-handler cli/ignore-selected)
+               (menu-item "Stop ignoring" (async-handler (fn []
+                                                           (cli/clear-ignore-selected)
+                                                           (.clearSelection (.getSelectionModel (find-installed-addons-table))))))
+               (menu-item "Ignore" (async-handler (fn []
+                                                    (cli/ignore-selected)
+                                                    (.clearSelection (.getSelectionModel (find-installed-addons-table)))))
                           {:disable child?}))
              separator
              (menu-item "Delete" (async-handler delete-selected-confirmation-handler)
                         {:disable (or child? ignored?)})]}))
 
-(defn-spec multiple-context-menu map?
+(defn multiple-context-menu
   "context menu when multiple addons are selected."
-  [selected-addon-list :addon/toc-list]
-  (let [selected-addon-list (remove child-row? selected-addon-list)
+  [{:keys [fx/context]}]
+  (let [selected-addon-list (fx/sub-val context get-in [:app-state :selected-addon-list])
+        selected-addon-list (remove child-row? selected-addon-list)
         num-selected (count selected-addon-list)
         none-selected? (= num-selected 0)
         some-pinned? (->> selected-addon-list (map :pinned-version) (some some?) boolean)
@@ -1490,7 +1500,9 @@
     {:fx/type fx.ext.tree-table-view/with-selection-props
      :props {:selection-mode :multiple
              :on-selected-items-changed (fn [tree-item-list]
-                                          (cli/select-addons* (mapv #(.getValue %) tree-item-list)))}
+                                          (cli/select-addons* (mapv (fn [tree-item]
+                                                                      (.getValue tree-item))
+                                                                    tree-item-list)))}
      :desc {:fx/type :tree-table-view
             :id "installed-addons"
             ;; replaces "tree-table-view" class and keeps all styling attached to table-view.
@@ -1557,8 +1569,8 @@
             :columns column-list
 
             :context-menu (if (= 1 (count selected))
-                            (singular-context-menu (first selected))
-                            (multiple-context-menu selected))
+                            {:fx/type singular-context-menu}
+                            {:fx/type multiple-context-menu})
 
             :root {:fx/type :tree-item :expanded true :children row-list}}}))
 

@@ -48,6 +48,15 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * bug, I can reinstall and install a specific release for an explicitly ignored addon
     - but not an implicitly ignored addon. weird.
+    - investigated and it's part of a larger problem:
+        - the context menu isn't being refreshed properly between actions
+            - this is because the state in the :selected-addon-list is different to that in the :installed-addon-list
+                - that was just modified by the action.
+                - selecting and deselecting a thing will update this state so it works
+                    - but right-clicking immediately after performing such an action results in a weird state
+            - this can be overcome by clearing the selected items between actions
+                - clearing :selected-addon-list is not enough however, the gui table needs to have it's selection changed as well
+        - 
 
 * bug, tukui is dead again and the jobs are just hanging
     - I thought I put a timeout on this?
