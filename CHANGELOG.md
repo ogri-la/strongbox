@@ -16,10 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * columns in the GUI can now be toggled on and off and reset back to their defaults.
     - these preferences are preserved between application restarts.
 * new columns 'source-id', 'tags', combined 'version' column, 'browse local files' and friendly 'created' and 'updated' columns.
+* handling for hosts that are refusing connections rather than accepting connections but then timing out.
+    - happened with Tukui the other day.
 
 ### Changed
 
 * status button now has 'ignored' (empty circle) and 'pinned' (filled circle) icons instead of nothing and a tick respectively.
+* connection timeouts are now reduced from 8s to 5s
 
 ### Fixed
 
@@ -28,6 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - the 'updated' date has it's own selectable column now.
 * context menu not refreshed after performing an action and then immediately right clicking the addon again.
     - for example, ignoring an addon and then right clicking you would see the 'ignore' option still available.
+* connection timeout handling (introduced `4.3.0`) has never worked outside of test conditions.
+    - certain configuration is ignored if a more advanced `RequestConfig` is present as the config is pulled from there.
 
 ### Removed
 

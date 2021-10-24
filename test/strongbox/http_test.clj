@@ -88,10 +88,22 @@
           (is (= expected-good (http/download url))))))))
 
 (deftest socket-timeout
-  (testing "timeouts are caught and a 500 http response is returned"
+  (testing "timeouts are caught and a synthetic http response is returned"
     (let [url "http://foo.bar/"
           fake-routes {url {:get (fn [req]
                                    (throw (java.net.SocketTimeoutException. "Read timed out")))}}
+          output-file nil
+          message nil
+          extra-params {}
+          expected {:host "foo.bar", :reason-phrase "Connection timed out", :status 408}]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (http/-download url output-file message extra-params)))))))
+
+(deftest connect-exception
+  (testing "when the server is refusing connections treat case like a read timeout with a synthetic http response"
+    (let [url "http://foo.bar/"
+          fake-routes {url {:get (fn [req]
+                                   (throw (java.net.ConnectException. "Connection timed out")))}}
           output-file nil
           message nil
           extra-params {}

@@ -154,11 +154,12 @@
 
                 use-anon-useragent? false
                 params {:cookie-policy :ignore ;; completely ignore cookies. doesn't stop HttpComponents warning
-                        :http-request-config (clj-http.core/request-config {:normalize-uri false})
-                        ;; both of these throw a SocketTimeoutException:
-                        ;; - https://docs.oracle.com/javase/8/docs/api/java/net/URLConnection.html
-                        :connection-timeout 8000 ;; allow 8s to connect to host
-                        :socket-timeout 8000 ;; allow 8s stall reading from a host
+                        :http-request-config (clj-http.core/request-config
+                                              {:normalize-uri false
+                                               :connection-timeout 5000 ;; allow 5s to connect to host
+                                               :connection-request-timeout 5000 ;; allow 5s to receive bytes
+                                               :socket-timeout 5000 ;; allow 5s stall reading from a host
+                                               })
                         :headers {"User-Agent" (user-agent use-anon-useragent?)}}
                 params (merge params extra-params)
 
@@ -233,6 +234,8 @@
 
               :else resp)))
 
+        ;; "Signals that a timeout has occurred on a socket read or accept."
+        ;; - https://docs.oracle.com/javase/7/docs/api/java/net/SocketTimeoutException.html
         (catch java.net.SocketTimeoutException ste
           (when streaming-response?
             (close-stream ste))
@@ -242,6 +245,18 @@
                             :host (.getHost request-obj)
                             :reason-phrase "Connection timed out"}]
             (warn (format "failed to fetch '%s': connection timed out." url))
+            http-error))
+
+        ;; "Signals that an error occurred while attempting to connect a socket to a remote address and port.
+        ;; Typically, the connection was refused remotely (e.g., no process is listening on the remote address/port)."
+        ;; - https://docs.oracle.com/javase/7/docs/api/java/net/ConnectException.html
+        (catch java.net.ConnectException ce
+          ;; return a synthetic HTTP error
+          (let [request-obj (java.net.URL. url)
+                http-error {:status 408 ;; 'Request Timeout'
+                            :host (.getHost request-obj)
+                            :reason-phrase "Connection timed out"}]
+            (warn (format "failed to connect '%s': connection timed out." url))
             http-error))
 
         (catch java.net.UnknownHostException uhe
