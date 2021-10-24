@@ -30,6 +30,41 @@
   (swap! core/state update-in [:gui-split-pane] not)
   nil)
 
+;; selecting addons
+
+(defn-spec select-addons-search* nil?
+  "sets the selected list of addons in application state for a later action"
+  [selected-addons :addon/summary-list]
+  (swap! core/state assoc-in [:search :selected-result-list] selected-addons)
+  nil)
+
+(defn-spec select-addons* nil?
+  "sets the selected list of addons to the given `selected-addons` for bulk operations like 'update', 'delete', 'ignore', etc"
+  [selected-addons :addon/installed-list]
+  (swap! core/state assoc :selected-addon-list selected-addons)
+  nil)
+
+(defn-spec select-addons nil?
+  "creates a sub-selection of installed addons for bulk operations like 'update', 'delete', 'ignore', etc.
+  called with no args, selects *all* installed addons.
+  called with a function, selects just those where `(filter-fn addon)` is `true`."
+  ([]
+   (select-addons identity))
+  ([filter-fn fn?]
+   (->> (get-state :installed-addon-list)
+        (filter filter-fn)
+        (remove nil?)
+        vec
+        select-addons*)))
+
+;; unselect? https://english.stackexchange.com/questions/18465/unselect-or-deselect
+(defn-spec deselect-addons! nil?
+  "removes all addons from the `:selected-addon-list` list"
+  []
+  (select-addons* []))
+
+;; ui refreshing
+
 (defn-spec hard-refresh nil?
   "unlike `core/refresh`, `cli/hard-refresh` clears the http cache before checking for addon updates."
   []
@@ -352,33 +387,6 @@
              (info "stopped ignoring")))
          addon-list)
    (core/refresh)))
-
-;; selecting addons
-
-(defn-spec select-addons-search* nil?
-  "sets the selected list of addons in application state for a later action"
-  [selected-addons :addon/summary-list]
-  (swap! core/state assoc-in [:search :selected-result-list] selected-addons)
-  nil)
-
-(defn-spec select-addons* nil?
-  "sets the selected list of addons to the given `selected-addons` for bulk operations like 'update', 'delete', 'ignore', etc"
-  [selected-addons :addon/installed-list]
-  (swap! core/state assoc :selected-addon-list selected-addons)
-  nil)
-
-(defn-spec select-addons nil?
-  "creates a sub-selection of installed addons for bulk operations like 'update', 'delete', 'ignore', etc.
-  called with no args, selects *all* installed addons.
-  called with a function, selects just those where `(filter-fn addon)` is `true`."
-  ([]
-   (select-addons identity))
-  ([filter-fn fn?]
-   (->> (get-state :installed-addon-list)
-        (filter filter-fn)
-        (remove nil?)
-        vec
-        select-addons*)))
 
 ;; tabs
 

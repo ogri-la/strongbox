@@ -26,6 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * ignored addons had an incorrect 'updated' date.
     - previously only visible on the addon detail page, a dummy 'polyfilled' date of 2001-01-01 was being used.
     - the 'updated' date has it's own selectable column now.
+* context menu not refreshed after performing an action and then immediately right clicking the addon again.
+    - for example, ignoring an addon and then right clicking you would see the 'ignore' option still available.
 
 ### Removed
 
