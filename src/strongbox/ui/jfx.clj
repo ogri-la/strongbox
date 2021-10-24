@@ -640,6 +640,13 @@
   []
   (first (select "#installed-addons")))
 
+(defn-spec clear-table-selected-items nil?
+  "the context menu isn't being refreshed with new data when selected or installed addons change. 
+  It should be, but isn't. 
+  A way around this is to clear the selected items in the table after a context menu action forcing a re-selection."
+  []
+  (.clearSelection (.getSelectionModel (find-installed-addons-table))))
+
 (defn find-tabber
   []
   (first (select "#tabber")))
@@ -1389,7 +1396,7 @@
   [addon :addon/expanded]
   (mapv (fn [release]
           (menu-item (or (:release-label release) (:version release))
-                     (async-handler (partial cli/set-version addon release))))
+                     (async-handler (juxt (partial cli/set-version addon release) clear-table-selected-items))))
         (:release-list addon)))
 
 (defn singular-context-menu
@@ -1403,33 +1410,29 @@
         ignored? (addon/ignored? selected-addon)
         child? (child-row? selected-addon)]
     {:fx/type :context-menu
-     :items [(menu-item "Update" (async-handler cli/update-selected)
+     :items [(menu-item "Update" (async-handler (juxt cli/update-selected clear-table-selected-items))
                         {:disable (or child?
                                       (not (addon/updateable? selected-addon)))})
 
-             (menu-item "Re-install" (async-handler cli/re-install-or-update-selected)
+             (menu-item "Re-install" (async-handler (juxt cli/re-install-or-update-selected clear-table-selected-items))
                         {:disable (or child?
                                       (not (addon/re-installable? selected-addon)))})
              separator
              (if pinned?
-               (menu-item "Unpin release" (async-handler cli/unpin)
+               (menu-item "Unpin release" (async-handler (juxt cli/unpin clear-table-selected-items))
                           {:disable (or child? ignored?)})
-               (menu-item "Pin release" (async-handler cli/pin)
+               (menu-item "Pin release" (async-handler (juxt cli/pin clear-table-selected-items))
                           {:disable (or child? ignored?)}))
              (if releases-available?
                (menu "Releases" (build-release-menu selected-addon))
                (menu "Releases" [] {:disable true})) ;; skips even attempting to build the menu
              separator
              (if ignored?
-               (menu-item "Stop ignoring" (async-handler (fn []
-                                                           (cli/clear-ignore-selected)
-                                                           (.clearSelection (.getSelectionModel (find-installed-addons-table))))))
-               (menu-item "Ignore" (async-handler (fn []
-                                                    (cli/ignore-selected)
-                                                    (.clearSelection (.getSelectionModel (find-installed-addons-table)))))
+               (menu-item "Stop ignoring" (async-handler (juxt cli/clear-ignore-selected clear-table-selected-items)))
+               (menu-item "Ignore" (async-handler (juxt cli/ignore-selected clear-table-selected-items))
                           {:disable child?}))
              separator
-             (menu-item "Delete" (async-handler delete-selected-confirmation-handler)
+             (menu-item "Delete" (async-handler (juxt delete-selected-confirmation-handler clear-table-selected-items))
                         {:disable (or child? ignored?)})]}))
 
 (defn multiple-context-menu
@@ -1444,23 +1447,23 @@
     {:fx/type :context-menu
      :items [(menu-item (str num-selected " addons selected") donothing {:disable true})
              separator
-             (menu-item "Update" (async-handler cli/update-selected)
+             (menu-item "Update" (async-handler (juxt cli/update-selected clear-table-selected-items))
                         {:disable none-selected?})
-             (menu-item "Re-install" (async-handler cli/re-install-or-update-selected)
+             (menu-item "Re-install" (async-handler (juxt cli/re-install-or-update-selected clear-table-selected-items))
                         {:disable none-selected?})
              separator
              (if some-pinned?
-               (menu-item "Unpin release" (async-handler cli/unpin))
-               (menu-item "Pin release" (async-handler cli/pin)
+               (menu-item "Unpin release" (async-handler (juxt cli/unpin clear-table-selected-items)))
+               (menu-item "Pin release" (async-handler (juxt cli/pin clear-table-selected-items))
                           {:disable none-selected?}))
              (menu "Releases" [] {:disable true})
              separator
              (if some-ignored?
-               (menu-item "Stop ignoring" (async-handler cli/clear-ignore-selected))
-               (menu-item "Ignore" (async-handler cli/ignore-selected)
+               (menu-item "Stop ignoring" (async-handler (juxt cli/clear-ignore-selected clear-table-selected-items)))
+               (menu-item "Ignore" (async-handler (juxt cli/ignore-selected clear-table-selected-items))
                           {:disable none-selected?}))
              separator
-             (menu-item "Delete" (async-handler delete-selected-confirmation-handler)
+             (menu-item "Delete" (async-handler (juxt delete-selected-confirmation-handler clear-table-selected-items))
                         {:disable none-selected?})]}))
 
 (defn installed-addons-table
