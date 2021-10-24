@@ -59,7 +59,7 @@
 
 ;; unselect? https://english.stackexchange.com/questions/18465/unselect-or-deselect
 (defn-spec deselect-addons! nil?
-  ""
+  "removes all addons from the `:selected-addon-list` list"
   []
   (select-addons* []))
 
@@ -373,7 +373,6 @@
                 (logging/with-addon addon
                   (info "ignoring")
                   (addon/ignore (core/selected-addon-dir) addon)))))
-   (deselect-addons!)
    (core/refresh)))
 
 (defn-spec clear-ignore-selected nil?
@@ -387,7 +386,6 @@
              (addon/clear-ignore addon-dir addon)
              (info "stopped ignoring")))
          addon-list)
-   (deselect-addons!)
    (core/refresh)))
 
 ;; tabs

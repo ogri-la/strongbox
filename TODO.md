@@ -44,8 +44,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - if an updated-date doesn't exist we shouldn't require that it does exist ...
     - done. it was being polyfilled when it should have been ignored.
 
-## todo
-
 * bug, I can reinstall and install a specific release for an explicitly ignored addon
     - but not an implicitly ignored addon. weird.
     - investigated and it's part of a larger problem:
@@ -56,7 +54,9 @@ see CHANGELOG.md for a more formal list of changes by release
                     - but right-clicking immediately after performing such an action results in a weird state
             - this can be overcome by clearing the selected items between actions
                 - clearing :selected-addon-list is not enough however, the gui table needs to have it's selection changed as well
-        - 
+    - done
+
+## todo
 
 * bug, tukui is dead again and the jobs are just hanging
     - I thought I put a timeout on this?
@@ -428,12 +428,6 @@ this is still an interesting idea
     - going to need a better reason than 'just cos' for this
 * add a 'Delete all' option to cache menu
     - we don't really want legitimate nfo files to be accidentally deleted
-* nightly unstable builds
-    - building the 'develop' branch once a day
-        - making it available as the 'unstable' release that always gets replaced
-    - project.clj "x.y.z-unreleased" would be changed to "x.y.z-unstable"
-    - development would happen mainly in feature branches
-    - too much effort for what? more user reports? I don't have that sort of time
 * investigate `.csv` as a human-readable but more compact representation
     - might be able to save a MB on extraneous syntax
     - might be able to speed up parsing and loading
@@ -452,22 +446,6 @@ this is still an interesting idea
     - no native support in java/clojure for it
         - library here: https://github.com/junrar/junrar
             - just found it while going through minion source
-* fallback to using :group-id (a uri) if curseforge.json is not available
-    - low priority
-    - curseforge.json will only ever be missing:
-        - fresh install and
-        - your network connection goes down, or
-        - you're a victim of github's 99.999 uptime rating
-    - wontfix because:
-        - group-id is 'group-id' and *not* 'uri'
-            - it may change in the future
-        - there is a really really slim chance of this actually happening
-            - I don't think it justifies the extra complexity tbh
-    - 2020-11-28: I think this was about being able to download catalogues (curseforge.json) when github is down
-        - if a catalogue is embedded then we can always fall back to that
-        - see EOL planning
-* gui, search pane, clear search button
-    - I don't think this is necessary anymore
 
 * cli, interactive interface when no specific action specified 
     - you have N addons installed. what do you want to do? (list, update, update-all, delete) etc
