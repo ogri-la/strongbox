@@ -156,9 +156,11 @@
                 params {:cookie-policy :ignore ;; completely ignore cookies. doesn't stop HttpComponents warning
                         :http-request-config (clj-http.core/request-config
                                               {:normalize-uri false
+                                               ;; both of these throw a SocketTimeoutException:
+                                               ;; - https://docs.oracle.com/javase/8/docs/api/java/net/URLConnection.html
                                                :connection-timeout 5000 ;; allow 5s to connect to host
-                                               :connection-request-timeout 5000 ;; allow 5s to receive bytes
                                                :socket-timeout 5000 ;; allow 5s stall reading from a host
+                                               :connection-request-timeout 5000 ;; allow 5s to receive bytes
                                                })
                         :headers {"User-Agent" (user-agent use-anon-useragent?)}}
                 params (merge params extra-params)
