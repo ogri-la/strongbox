@@ -56,13 +56,16 @@ see CHANGELOG.md for a more formal list of changes by release
                 - clearing :selected-addon-list is not enough however, the gui table needs to have it's selection changed as well
     - done
 
-## todo
-
 * bug, tukui is dead again and the jobs are just hanging
     - I thought I put a timeout on this?
     - put a timeout on http connections and requests???
     - can jobs be given a timeout as well?
     - see tukui--stall-crash
+        - looks like the timeout was working, but after timing out it raises a java.net.ConnectException
+            - I have handling for a SocketTimeoutException which is different
+    - done
+
+## todo
 
 * revisit the 'File -> Export Github addon list' 
     - is this the user catalogue?
@@ -71,6 +74,9 @@ see CHANGELOG.md for a more formal list of changes by release
     - they're getting a bit stale
 
 ## todo bucket (no particular order)
+
+* http, exponential backoff for failing http requests
+    - perhaps the uberbutton could pause and go 'retrying' ?
 
 * gui, try replacing the auto fit columns with something like this:
     - https://stackoverflow.com/questions/14650787/javafx-column-in-tableview-auto-fit-size#answer-49134109
