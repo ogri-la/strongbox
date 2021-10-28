@@ -99,3 +99,15 @@
         actual (drop-last 2 actual)
         actual (mapv #(dissoc % :on-action) actual)]
     (is (= expected actual))))
+
+(deftest expand
+  (let [given {:a :b
+               [:c :d] {:e :f}
+               :g {[:h :i] {:j :k}}}
+
+        expected {:a :b
+                  :c {:e :f}
+                  :d {:e :f}
+                  :g {:h {:j :k}
+                      :i {:j :k}}}]
+    (is (= expected (jfx/expand given)))))

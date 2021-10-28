@@ -281,6 +281,8 @@ see CHANGELOG.md for a more formal list of changes by release
 * default to keeping last three zip files by default
 * replace 'installed' and 'available' columns with the composite 'version' column
 * remove the (pinned) and (installed) labels from from the 'available' column
+* drop support catalogue v1
+    - a prerequisite for v5 then would be introducing a new catalogue
 
 ## catalogue v3 / capture more addon data
 
@@ -301,7 +303,13 @@ see CHANGELOG.md for a more formal list of changes by release
     - disable releases excluded by selected game-track/strictness setting
 
 * alpha/beta opt-in
-    - user can opt to install alpha/beta/no-lib releases per-addon
+    - user can opt to install alpha/beta releases per-addon
+    - make it a simple preference
+
+* no-lib
+    - user can opt to prefer no-lib versions
+        - what if addon only ever released one no-lib then decided not to use them again?
+            - addon would be stuck on a very old version
 
 * keep a list of previously installed addons
     - eh. tie it in with downloading more release information

@@ -139,6 +139,20 @@
                     theme-name (keyword (format "%s-%s" (name major-theme-key) (name sub-theme-key)))]]
           {theme-name (merge major-theme sub-theme)})))
 
+(defn expand*
+  [acc [key val]]
+  (cond
+    (vector? key) (reduce expand* acc (zipmap key (repeat val)))
+    (map? val) (assoc acc key (reduce expand* {} val))
+    :else
+    (assoc acc key val)))
+
+(defn expand
+  "not sure how javafx, css and cljfx-css are handling '.class1, .class2 { ... }' type specifiers, but I can't get them to work.
+  instead, I specify the affected classes as a list and this duplicates the rules."
+  [m]
+  (reduce expand* {} m))
+
 (defn-spec style map?
   "generates javafx css definitions for the different themes.
   if editor is connected to a running repl session then modifying
@@ -224,25 +238,26 @@
                 ".column-header" {;;:-fx-background-color "#ddd" ;; flat colour vs gradient
                                   :-fx-font-size "1em"}
 
-                ".table-row-cell" {:-fx-border-insets "-1 -1 0 -1"
-                                   :-fx-border-color (colour :table-border)
-                                   :-fx-background-color (colour :row) ;; even
+                [".table-row-cell" ".tree-table-row-cell"]
+                {:-fx-border-insets "-1 -1 0 -1"
+                 :-fx-border-color (colour :table-border)
+                 :-fx-background-color (colour :row) ;; even
 
-                                   " .table-cell" {:-fx-text-fill (colour :table-font-colour)}
-                                   ":hover" {:-fx-background-color (colour :row-hover)}
-                                   ":selected" {:-fx-background-color (colour :row-selected)
-                                                :-fx-table-cell-border-color (colour :table-border)
-                                                " .table-cell" {:-fx-text-fill "-fx-focused-text-base-color"}}
-                                   ":selected:hover" {:-fx-background-color (colour :row-hover)}
+                 " .table-cell" {:-fx-text-fill (colour :table-font-colour)}
+                 ":hover" {:-fx-background-color (colour :row-hover)}
+                 ":selected" {:-fx-background-color (colour :row-selected)
+                              :-fx-table-cell-border-color (colour :table-border)
+                              " .table-cell" {:-fx-text-fill "-fx-focused-text-base-color"}}
+                 ":selected:hover" {:-fx-background-color (colour :row-hover)}
 
-                                   ":odd" {:-fx-background-color (colour :row)
-                                           ":hover" {:-fx-background-color (colour :row-hover)}
-                                           ":selected" {:-fx-background-color (colour :row-selected)}
-                                           ":selected:hover" {:-fx-background-color (colour :row-hover)}}
+                 ":odd" {:-fx-background-color (colour :row)
+                         ":hover" {:-fx-background-color (colour :row-hover)}
+                         ":selected" {:-fx-background-color (colour :row-selected)}
+                         ":selected:hover" {:-fx-background-color (colour :row-hover)}}
 
-                                   ".unsteady" {;; '!important' so that it takes precedence over .updateable addons
-                                                ;;:-fx-background-color (str (colour :unsteady) " !important")
-                                                }}
+                 ".unsteady" {;; '!important' so that it takes precedence over .updateable addons
+                              ;;:-fx-background-color (str (colour :unsteady) " !important")
+                              }}
 
                 ".ignored .table-cell" {:-fx-opacity "0.5"
                                         :-fx-font-style "italic"}
@@ -610,7 +625,7 @@
 
 
      (into {} (for [[theme-key _] themes]
-                (generate-style theme-key))))))
+                (expand (generate-style theme-key)))))))
 
 (def INSTALLED-TAB 0)
 (def SEARCH-TAB 1)
