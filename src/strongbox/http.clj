@@ -20,6 +20,7 @@
 
 (def expiry-offset-hours 1) ;; hours
 (def ^:dynamic *cache* nil)
+(def ^:dynamic *default-pause* 1000)
 
 (defn- add-etag-or-not
   [etag-key req]
@@ -357,6 +358,35 @@
      (if-not (http-error? resp)
        output-file
        resp))))
+
+;;
+
+(defn-spec download-with-backoff (s/or :ok-file ::sp/extant-file, :ok-body string?, :error :http/error)
+  "wrapper around `download` that will pause and retry a download several times with an exponentially increasing duration between each attemp"
+  ([url ::sp/url]
+   (download-with-backoff url nil))
+  ([url ::sp/url, message (s/nilable ::sp/short-string)]
+   (loop [attempt 1
+          pause *default-pause*]
+     (let [result (try
+                    (when (> attempt 1)
+                      (warn (format "trying again (attempt %s of 3)" attempt)))
+                    (download url message)
+                    (catch Exception e
+                      e))]
+       (if (or (instance? Exception result)
+               (http-error? result))
+         (if (= attempt 3)
+           ;; tried three times and failed three times. raise the exception or return the error.
+           (if (instance? Exception result)
+             (throw result)
+             result)
+           ;; try again after a pause
+           (do (Thread/sleep pause)
+               (recur (inc attempt) (* pause 2))))
+         result)))))
+
+;;
 
 (defn-spec prune-cache-dir nil?
   "deletes files in the given `cache-dir` that are older than the `expiry-offset-hours`"

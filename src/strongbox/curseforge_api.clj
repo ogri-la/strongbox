@@ -201,7 +201,7 @@
   (let [index (* page-size page)
         game-id 1 ;; WoW
         sort-by 3 ;; alphabetically, asc (a-z)
-        results (http/download (api-url "/addon/search?gameId=%s&index=%s&pageSize=%s&searchFilter=&sort=%s" game-id index page-size sort-by))
+        results (http/download-with-backoff (api-url "/addon/search?gameId=%s&index=%s&pageSize=%s&searchFilter=&sort=%s" game-id index page-size sort-by))
         results (utils/from-json results)]
     (mapv extract-addon-summary results)))
 
@@ -214,8 +214,11 @@
           num-results (count results)]
       (if (< num-results page-size)
         (into accumulator results) ;; short page, exit loop
-        (recur (inc page)
-               (into accumulator results))))))
+        ;; 184 requests with a 500ms pause means a minimum of 368 seconds (~6mins) to scrape curseforge.
+        ;; 184 requests with a 250ms pause means ~3.8min scrape time. this seems reasonable for now.
+        (do (Thread/sleep 250) ;; ms
+            (recur (inc page)
+                   (into accumulator results)))))))
 
 (defn-spec parse-user-string (s/or :ok ::sp/url, :error nil?)
   "extracts the addon name from the given `url` and returns a URL that would match a catalogue addon summary."

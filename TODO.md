@@ -65,6 +65,14 @@ see CHANGELOG.md for a more formal list of changes by release
             - I have handling for a SocketTimeoutException which is different
     - done
 
+* bug, a timeout from curseforge during scraping at page 171 prevent pages 171-182 from being scraped
+    - we should be kinder when scraping. 
+        - add a delay between requests
+        - done
+    - we should be more robust when scraping.
+        - add retries with exponential backoff
+        - done
+
 ## todo
 
 * revisit the 'File -> Export Github addon list' 
@@ -76,16 +84,13 @@ see CHANGELOG.md for a more formal list of changes by release
 ## todo bucket (no particular order)
 
 * http, exponential backoff for failing http requests
-    - perhaps the uberbutton could pause and go 'retrying' ?
+
+* add a 'add to user-catalogue' option to make an addon always available despite selected catalogue
+
+* add a 'catalogue is N days old' somewhere
 
 * gui, try replacing the auto fit columns with something like this:
     - https://stackoverflow.com/questions/14650787/javafx-column-in-tableview-auto-fit-size#answer-49134109
-
-* bug, a timeout from curseforge during scraping at page 171 prevent pages 171-182 from being scraped
-    - we should be kinder when scraping. 
-        - add a delay between requests
-    - we should be more robust when scraping.
-        - add retries with exponential backoff
 
 * multi-toc support
     - https://github.com/Stanzilla/WoWUIBugs/issues/68#issuecomment-830351390

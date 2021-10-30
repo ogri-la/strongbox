@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * new columns 'source-id', 'tags', combined 'version' column, 'browse local files' and friendly 'created' and 'updated' columns.
 * handling for hosts that are refusing connections rather than accepting connections but then timing out.
     - happened with Tukui the other day.
+* exponential backoff when talking to curseforge as well as a pause between requests.
+    - shouldn't affect users this release but a future release may see it used more widely.
 
 ### Changed
 
