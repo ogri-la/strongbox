@@ -73,10 +73,13 @@ see CHANGELOG.md for a more formal list of changes by release
         - add retries with exponential backoff
         - done
 
-## todo
-
 * revisit the 'File -> Export Github addon list' 
     - is this the user catalogue?
+        - it is.
+    - rename
+        - done
+
+## todo
 
 * update image thumbnails
     - they're getting a bit stale

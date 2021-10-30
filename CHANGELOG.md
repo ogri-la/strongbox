@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * status button now has 'ignored' (empty circle) and 'pinned' (filled circle) icons instead of nothing and a tick respectively.
 * connection timeouts are now reduced from 8s to 5s
+* minor, `File -> Export Github addon list` renamed `File -> Export the user-catalogue`.
 
 ### Fixed
 

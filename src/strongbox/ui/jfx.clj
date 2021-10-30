@@ -1126,8 +1126,18 @@
          :name {:min-width 100 :pref-width 300}
          :description {:min-width 150 :pref-width 450}
          :tag-list {:min-width 200 :pref-width 300}
-         :created-date {:min-width 90 :pref-width 110 :max-width 120}
-         :updated-date {:min-width 90 :pref-width 110 :max-width 120}
+         :created-date {:min-width 90 :pref-width 110 :max-width 120
+                        :cell-value-factory :created-date
+                        :cell-factory {:fx/cell-type :tree-table-cell
+                                       :describe (fn [dt]
+                                                   (when dt
+                                                     {:text (cli/format-dt dt)}))}}
+         :updated-date {:min-width 90 :pref-width 110 :max-width 120
+                        :cell-value-factory :updated-date
+                        :cell-factory {:fx/cell-type :tree-table-cell
+                                       :describe (fn [dt]
+                                                   (when dt
+                                                     {:text (cli/format-dt dt)}))}}
          :installed-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]}
          :available-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]}
          :combined-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]}
@@ -1276,11 +1286,11 @@
                    (menu-item "Re-install all" (async-handler cli/re-install-or-update-all)
                               {:disable no-addon-dir?})
                    separator
-                   (menu-item "Import list of addons" (async-event-handler import-addon-list-handler)
+                   (menu-item "Import a list of addons" (async-event-handler import-addon-list-handler)
                               {:disable no-addon-dir?})
-                   (menu-item "Export list of addons" (async-event-handler export-addon-list-handler)
+                   (menu-item "Export a list of addons" (async-event-handler export-addon-list-handler)
                               {:disable no-addon-dir?})
-                   (menu-item "Export Github addon list" (async-event-handler export-user-catalogue-handler)
+                   (menu-item "Export the user-catalogue" (async-event-handler export-user-catalogue-handler)
                               {:disable no-addon-dir?})
                    separator
                    (menu-item "E_xit" exit-handler {:key "Ctrl+Q"})]
