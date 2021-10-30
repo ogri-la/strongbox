@@ -79,12 +79,19 @@ see CHANGELOG.md for a more formal list of changes by release
     - rename
         - done
 
-## todo
-
 * update image thumbnails
     - they're getting a bit stale
+    - done
+
+## todo
+
 
 ## todo bucket (no particular order)
+
+* grouping
+    - I think the tree-table-view allows us to 'group' things now ...
+        - it's 'flat' at the moment, but it could be grouped by 'ignored', 'pinned', 'updates available'
+            - ignored are collapsed
 
 * http, exponential backoff for failing http requests
 
