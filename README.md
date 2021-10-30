@@ -185,7 +185,7 @@ contains many addons that haven't been updated in years.
 There are also per-host catalogues, like a 'curseforge' catalogue, and strongbox supports selecting between all of them.
 
 Catalogues are updated weekly. New addons released during the week will not be present until the next week. Addons can 
-be installed using it's URL in these cases.
+be installed using its URL in these cases.
 
 The 'user' catalogue is a little different. It's initially empty but grows as addons are imported from hosts like Github. 
 These addons also appear in search results. Individual addons from the user catalogue are checked for new releases 

@@ -4,6 +4,7 @@
    [clojure.spec.alpha :as s]
    [clj-http.fake :refer [with-fake-routes-in-isolation]]
    [strongbox
+    [logging :as logging]
     [http :as http]]))
 
 (deftest download-404
@@ -127,3 +128,25 @@
                 "I'm a teapot"]]]
     (doseq [[request expected] cases]
       (is (= expected (http/http-error request))))))
+
+(deftest download-with-backoff
+  (let [expected "finally!"
+        expected-warnings
+        ["failed to fetch 'http://foo.bar/baz': huh? (HTTP 500)"
+         "trying again (attempt 2 of 3)"
+         "failed to fetch 'http://foo.bar/baz': wha? (HTTP 501)"
+         "trying again (attempt 3 of 3)"]
+        attempt (atom 0)
+        url "http://foo.bar/baz"
+        fake-routes {url {:get (fn [req]
+                                 (swap! attempt inc)
+                                 (case @attempt
+                                   1 {:status 500 :reason-phrase "huh?"}
+                                   2 {:status 501 :reason-phrase "wha?"}
+                                   3 {:status 200 :body expected}))}}]
+    (with-fake-routes-in-isolation fake-routes
+      (with-redefs [http/*default-pause* 1]
+        (is (= expected-warnings
+               (logging/buffered-log
+                :warn
+                (is (= expected (http/download-with-backoff url))))))))))

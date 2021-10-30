@@ -20,6 +20,7 @@
 
 (def expiry-offset-hours 1) ;; hours
 (def ^:dynamic *cache* nil)
+(def ^:dynamic *default-pause* 1000)
 
 (defn- add-etag-or-not
   [etag-key req]
@@ -366,8 +367,10 @@
    (download-with-backoff url nil))
   ([url ::sp/url, message (s/nilable ::sp/short-string)]
    (loop [attempt 1
-          pause 1000] ;; ms
+          pause *default-pause*]
      (let [result (try
+                    (when (> attempt 1)
+                      (warn (format "trying again (attempt %s of 3)" attempt)))
                     (download url message)
                     (catch Exception e
                       e))]
