@@ -20,9 +20,13 @@
 
 (def bullet "\u2022") ;; •
 
-;; used when a placeholder date/time is needed.
+;; used when a placeholder datetime is needed.
 ;; like when we're polyfilling nfo data to create an addon summary.
 (def fake-datetime "2001-01-01T01:01:01Z")
+
+;; used when a placeholder date is needed.
+;; like during testing the formatting of date durations.
+(def fake-date "2001-01-01")
 
 (def glyph-map
   {:tick "\u2714" ;; '✔'

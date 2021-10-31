@@ -83,6 +83,9 @@ see CHANGELOG.md for a more formal list of changes by release
     - they're getting a bit stale
     - done
 
+* http, exponential backoff for failing http requests
+    - done
+
 ## todo
 
 
@@ -94,8 +97,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - I think the tree-table-view allows us to 'group' things now ...
         - it's 'flat' at the moment, but it could be grouped by 'ignored', 'pinned', 'updates available'
             - ignored are collapsed
-
-* http, exponential backoff for failing http requests
 
 * add a 'add to user-catalogue' option to make an addon always available despite selected catalogue
 

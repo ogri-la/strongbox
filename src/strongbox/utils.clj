@@ -155,7 +155,7 @@
 
 (def -pretty-dt-printer-dummy (doto (PrettyTime.)
                                 (.removeUnit Decade)
-                                (.setReference (java-time/local-date (java-time/zoned-date-time constants/fake-datetime)))))
+                                (.setReference (java-time/local-date constants/fake-date))))
 
 (def ^:dynamic *pretty-dt-printer* -pretty-dt-printer)
 

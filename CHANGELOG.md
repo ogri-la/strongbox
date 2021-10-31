@@ -18,13 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * new columns 'source-id', 'tags', combined 'version' column, 'browse local files' and friendly 'created' and 'updated' columns.
 * handling for hosts that are refusing connections rather than accepting connections but then timing out.
     - happened with Tukui the other day.
-* exponential backoff when talking to curseforge as well as a pause between requests.
-    - shouldn't affect users this release but a future release may see it used more widely.
+* most http requests now make two more attempts to download html/json before giving up.
+    - curseforge is a bit flaky when making bursts of requests in parallel and we hit the 5sec timeout more often.
 
 ### Changed
 
 * status button now has 'ignored' (empty circle) and 'pinned' (filled circle) icons instead of nothing and a tick respectively.
-* connection timeouts are now reduced from 8s to 5s
+* connection timeouts are now reduced from 8sec to 5sec.
 * minor, `File -> Export Github addon list` renamed `File -> Export the user-catalogue`.
 
 ### Fixed
