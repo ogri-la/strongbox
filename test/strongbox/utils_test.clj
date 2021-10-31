@@ -368,14 +368,16 @@
   (is (= [] (utils/rmv [:foo] :foo))))
 
 (deftest format-dt
-  (let [cases [["2000-12-31T13:00:01Z" "30 minutes ago"]
-               ["2000-12-31T12:01:01Z" "1 hour ago"]
-               ["2000-12-31T01:00:01Z" "12 hours ago"]
-               ["2000-12-30T12:30:01Z" "1 day ago"]
-               ["2000-12-01T01:00:01Z" "1 month ago"]
-               ["2000-01-01T01:00:01Z" "1 year ago"]
+  (let [cases [["2000-12-31T23:30:00Z" "30 minutes ago"]
+               ["2000-12-31T23:00:00Z" "1 hour ago"]
+               ["2000-12-31T12:00:00Z" "12 hours ago"]
+               ["2000-12-31T00:00:00Z" "1 day ago"]
+               ["2000-12-01T00:00:00Z" "1 month ago"]
+               ["2000-01-01T00:00:00Z" "1 year ago"]
 
-               ["2002-01-01T01:00:01Z" "1 year from now"]]]
+               ;; weird that the sixth hour changes '12 months from now' to '1 year from now'
+               ["2002-01-01T05:00:00Z" "12 months from now"]
+               ["2002-01-01T06:00:00Z" "1 year from now"]]]
     (with-redefs [;; default date formatter uses `(now)` as it's reference point.
                   utils/*pretty-dt-printer* utils/-pretty-dt-printer-dummy]
       (doseq [[given expected] cases]
