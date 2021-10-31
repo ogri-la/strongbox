@@ -8,6 +8,7 @@
    [clojure.string :refer [lower-case]]
    [me.raynes.fs :as fs]
    [strongbox
+    [http :as http]
     [joblib :as joblib]
     [core :as core]
     [utils :as utils :refer [in?]]]
@@ -84,7 +85,10 @@
   (utils/instrument true) ;; always test with spec checking ON
 
   (try
+    ;; note! remember to update `cloverage.clj` with any new bindings
     (with-redefs [core/testing? true
+                  http/*default-pause* 1 ;; ms
+                  http/*default-attempts* 1
                   ;; don't pause while testing. nothing should depend on that pause happening.
                   ;; note! this is different to `joblib/tick-delay` not delaying when `joblib/tick` is unbound.
                   ;; tests still bind `joblib/tick` and run things in parallel.

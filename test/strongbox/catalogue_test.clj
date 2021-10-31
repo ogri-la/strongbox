@@ -591,7 +591,7 @@
                     :download-count 0,
                     :game-track-list [:classic], ;; classic is used
                     :tag-list [],
-                    :updated-date "2001-01-01T01:01:01"}]
+                    :updated-date "2001-01-01T01:01:01Z"}]
       (is (= expected (catalogue/toc2summary toc+nfo))))))
 
 (deftest toc2summary--wowinterface
@@ -608,7 +608,7 @@
                     :download-count 0,
                     :game-track-list [:retail],
                     :tag-list [],
-                    :updated-date "2001-01-01T01:01:01"}]
+                    :updated-date "2001-01-01T01:01:01Z"}]
       (is (= expected (catalogue/toc2summary wowinterface-toc))))))
 
 (deftest toc2summary--tukui
@@ -622,7 +622,7 @@
 
                     ;; synthetic
                     :tag-list [],
-                    :updated-date "2001-01-01T01:01:01",
+                    :updated-date "2001-01-01T01:01:01Z",
                     :url "https://www.tukui.org/addons.php?id=123",
                     :download-count 0}]
       (is (= expected (catalogue/toc2summary tukui-toc))))))
@@ -632,6 +632,13 @@
     (let [curseforge-toc (merge toc {:source "curseforge"
                                      :source-id 123})]
       (is (nil? (catalogue/toc2summary curseforge-toc))))))
+
+(deftest toc2summary--ignored
+  (testing "any data that is ignored cannot be coerced to an addon summary, even if all the right data is there."
+    (let [toc (merge toc {:source "wowinterface"
+                          :source-id 123
+                          :ignore? true})]
+      (is (nil? (catalogue/toc2summary toc))))))
 
 (deftest filter-catalogue
   (testing "a catalogue can have it's addon-summary-list filtered by a specific source"

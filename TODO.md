@@ -6,128 +6,166 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* bump dependencies
-    - there are changes to data.json libraries with speed improvements
-        - profile first
-    - about an 80ms improvement in json loading
+* gui, synthetic 'version' column
+    - combines 'installed' and 'available' columns
+        - because most of the time the two columns are the same
+    - displays the available version if it exists
+    - style the version value if update available?
     - done
 
-* add a --version parameter
-    -done
-
-* gui, clicking File -> New Addon Directory continues to show the menu in the background
-    - fixed
-
-* investigate *warn-on-reflections*
-    - I think there may be some solid performance gains by turning this on
-        - remember to profile first
-    - turns out there wasn't
+* gui, toggleable columns as a menuitem
+    - ensure a 'reset' to defaults option
+    - don't change current set of columns until next major release
     - done
 
-* wowinterface, bug, text response to binary when download pending:
-    - https://github.com/ogri-la/strongbox/discussions/289
-    - done
-
-* bug, catalogue loading
-    - when the catalogue fails validation it shouldn't freeze the app while the reason is printed in the console
-        - removed validation of catalogue
-        - can't get around error message and even then what is the user supposed to do?
-            - catalogue needs to be valid on write
-                - yes
-            - catalogue needs to fail when corrupted
-                - yes
+* gui, any new/synthetic columns?
+    - human friendly update column with "updated x years/months/days/hours/minutes" ago
+        - https://stackoverflow.com/questions/32511405/how-would-time-ago-function-implementation-look-like-in-clojure
+    - number of releases?
+        - nah, for wowinterface and tukui this will be '1' most of the time
+    - 'browse local files'
         - done
-
-* check addons for updates immediately after loading
-    - if after we've read the nfo data and we have everything we need, check the addon for updates immediately
-        - don't wait for db loading and addon matching
-            - so we only match the unmatched against the catalogue?
-    - I think the root cause of this was slowness
-        - what do you mean you're still loading and matching? just let me update already!
-        - speed has been improved by removing validation
-        - app is also faster that I think it is during normal operation when speccing is off
-    - closing this
-        - 'fixing' it would change the behaviour of matching addons to catalogues that I currently quite like
-
-* switching catalogues takes ages 
-    - profile to figure out who the culprit is
-        - the call to `validate` in read-catalogue
-        - sorting keys in addons so they become ordered-maps
-            - not necessary during normal operation, only when generating maps
-    - also, outside of dev environment it's faster than I appreciate
-    - done
-
-* bug, catalogue loading
-    - while updating the catalogue with the new tukui addons I discovered a case where the catalogue *should* be failing validation but it wasn't.
-        - it came down to an :opt vs :opt-un in the spec
-            - the key in question wasn't qualified and thus not matched for validation
+    - pinned/unpinned
+        - perhaps also remove the (pinned) from the available column and make it an icon next in the uber button
+    - tags
         - done
-    - the catalogue should always be loadable by previous versions of strongbox that support the given spec version
-        - changed. catalogue isn't validated on read anymore, but on write.
-        - this means invalid catalogues can still be read by the application but their behaviour will be unknown
-            - they'll probably mostly work and the bits that are unfamiliar should be ignored.
-            - this should be tested
-        - done
-
-* gui, stateful buttons
-    - don't allow enabled 'delete selected' buttons if nothing is selected
-    - not going to coddle the user. deleting nothing will see nothing deleted.
-    - resurrecting this from wontfix
-        - we have a new gui now and it is possible to right click and select delete with nothing actually deleted.
-            - which just seems stupid
-    - done!
-
-* EOL planning, bundle a catalogue with the installation
-    - load it as a resource with static-slurp, like we do with the sql?
-        - also compressed so it's tiny?
-    - behind the scenes we download and load the full-catalogue
-        - would this block reconciliation?
-            - perhaps if there are unmatched addons after reconciliation we then wait and try again ...?
-        - this ties in with my recent ideas of having the catalogue download in the background but only if a catalogue already exists.
-            - if one is bundled then a catalogue *always* exists
-                - then the short/full/curse/wow catalogues are simply filtered versions of the 'full' catalogue
-                - the user catalogue would need to be merged over the top
-    - perhaps ... 
-        - bundle with a short catalogue
-        - on first run, write catalogue to disk
-            - this guarantees a catalogue will always exist to be used
-        - thereafter, if a catalogue exists, look for and download a newer version in the background
-            - perhaps do the same with the full catalogue as well
-                - with the individual tukui/wowi/curse catalogues as opt-in
-            - this would prevent the pause waiting for the download 
-                - it takes 1.3seconds to download and validate the full catalogue
-                - it took 349ms to download the full catalogue with spec off.
-    - this is a lot of work for miniscule performance improvements.
-    - in terms of robustness, we would be preventing against the catalogue repository from ever going away.
-        - perhaps a better solution is to make the location of the catalogue configurable
-            - it already is: [:cfg :catalogue-location-list]
-    - if github is down, or github blocks us, or the repo goes away, a static catalogue would provide some basic temporary benefits
-        1. compress the full catalogue at time of compilation
-        2. if catalogue cannot be downloaded and catalogue not present on disk, write catalogue to disk
     - done
 
-* update contributing docs
+* gui, can I make column widths dynamic? 
+    - I'd like the 'version' columns to fit exactly, always.
+        - sorry, not going to happen. we have min, max and pref widths as always.
     - done
 
-* investigate a splash screen. 
-    - https://github.com/cljfx/cljfx/tree/master/example-projects/splash
-    - it takes 8 seconds from 'lein run' to a gui appearing
-    - 6 seconds for ./strongbox to something appearing
-    - too long to be waiting, the mind begins to wonder if it's crashed ...
+* gui, switch to tree-table-view for installed addons that are grouping other addons
+    - at least investigate how difficult this might be.
     - done
 
-* bug, select addon in one dir, change dir, right click and you can delete it - it's still selected
+* bug, explicitly ignoring an addon gives it a dummy updated-date
+    - if an updated-date doesn't exist we shouldn't require that it does exist ...
+    - done. it was being polyfilled when it should have been ignored.
+
+* bug, I can reinstall and install a specific release for an explicitly ignored addon
+    - but not an implicitly ignored addon. weird.
+    - investigated and it's part of a larger problem:
+        - the context menu isn't being refreshed properly between actions
+            - this is because the state in the :selected-addon-list is different to that in the :installed-addon-list
+                - that was just modified by the action.
+                - selecting and deselecting a thing will update this state so it works
+                    - but right-clicking immediately after performing such an action results in a weird state
+            - this can be overcome by clearing the selected items between actions
+                - clearing :selected-addon-list is not enough however, the gui table needs to have it's selection changed as well
     - done
 
-## todo
-
-## todo bucket (no particular order)
+* bug, tukui is dead again and the jobs are just hanging
+    - I thought I put a timeout on this?
+    - put a timeout on http connections and requests???
+    - can jobs be given a timeout as well?
+    - see tukui--stall-crash
+        - looks like the timeout was working, but after timing out it raises a java.net.ConnectException
+            - I have handling for a SocketTimeoutException which is different
+    - done
 
 * bug, a timeout from curseforge during scraping at page 171 prevent pages 171-182 from being scraped
     - we should be kinder when scraping. 
         - add a delay between requests
+        - done
     - we should be more robust when scraping.
         - add retries with exponential backoff
+        - done
+
+* revisit the 'File -> Export Github addon list' 
+    - is this the user catalogue?
+        - it is.
+    - rename
+        - done
+
+* update image thumbnails
+    - they're getting a bit stale
+    - done
+
+* http, exponential backoff for failing http requests
+    - done
+
+## todo
+
+
+## todo bucket (no particular order)
+
+* bug, stacktrace on double refresh
+
+* grouping
+    - I think the tree-table-view allows us to 'group' things now ...
+        - it's 'flat' at the moment, but it could be grouped by 'ignored', 'pinned', 'updates available'
+            - ignored are collapsed
+
+* add a 'add to user-catalogue' option to make an addon always available despite selected catalogue
+
+* add a 'catalogue is N days old' somewhere
+
+* gui, try replacing the auto fit columns with something like this:
+    - https://stackoverflow.com/questions/14650787/javafx-column-in-tableview-auto-fit-size#answer-49134109
+
+* multi-toc support
+    - https://github.com/Stanzilla/WoWUIBugs/issues/68#issuecomment-830351390
+
+* add release.json support for github/gitlab addons
+
+* gitlab as addon host
+    - https://gitlab.com/search?search=wow+addon
+    - returned to bucket 2019-12-04, notes:
+        - gitlab doesn't handle releases like github does
+            - https://stackoverflow.com/questions/29520905/how-to-create-releases-in-gitlab
+        - there are very few gitlab addons (88)
+            - where did this number come from?
+        - api is quite slow
+    - update: as of Oct 2020 gitlab sucks a little bit less and, like github, you can attach binaries to releases
+        - https://gitlab.com/explore/projects?tag=World+of+Warcraft
+        - https://gitlab.com/shrugal/PersoLootRoll
+        - any others ...?
+
+
+* gui, toggleable highlighers as a menuitem
+    - highlight unmatched
+    - highlight updates
+    - highlight mismatched game track
+    - highlight mismatched update host
+        - installing addon from a different host
+    - touch of colour against each menuitem would serve as a legend
+    - 2021-10: not sure about this one anymore
+        - returned to the bucket.
+
+* gui 'wow' column is inconsistent
+    - curseforge, tukui and github return new `interface-version` values with the update data, wowi stores this in it's `fileList` file.
+    - wowi has `UICompatibility` in v3 of it's `fileList` and `gameVersion` in v4 of it's `fileList`, but nothing when fetching an addon's updates. 
+        - I'd need to combine the catalogue data (which could be a week old already) with the update data.
+    - for curseforge, it's pulling it's value from :gameVersion, which may be empty
+        - in which case it pulls it's value from the toc file, which may be different from the selected game track
+    - the value in the gui should reflect the installed version if no update pending, else the interface version of the pending update.
+    - returning to bucket 2021-10
+        - it works well enough for now
+
+* checkbox column for selecting addon rows
+    - might be nicer than ctrl-click
+
+* centralised download location on filesystem
+    - The Undermine Journal is large (75MB) and it sucks to download it again and again from different dirs
+        - perhaps tie this in with a rename of the downloaded zip file so unambiguous reverse lookups can be done:
+            - source--sourceid--version.zip => curseforge--543210--1-9-26.zip
+
+* centralised addon directory db
+    - install an addon, then 'deactivate' it
+        - essentially uninstalls the addon but it's still available at the tick of a box
+            - see WADM https://github.com/MBODM/WADM
+            - does Nexus Mod Manager do something similar?
+                - that UI is so shit though ... who knows what it is doing.
+
+* gui, "fat rows"
+    - add option to switch to fatter rows with more styled data
+        - clicking on the row expands it from small to medium
+        - clicking 'more' (or whatever) takes to addon detail page
+    - perhaps coincide with catalogue v3 with more addon details
+
+
 
 * wowinterface, revisit the pages that are being scraped, make sure we're not missing any
 
@@ -162,11 +200,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * deleting an addon should also remove any of it's zip files
 
-* gui, can I make column widths dynamic? 
-    - I'd like the 'version' columns to fit exactly, always.
-
-* gui, switch to tree-table-view for installed addons that are grouping other addons
-
 * acquire locks on affected addons during installatinon
     - this will let us uninstall and install addons in parallel
 
@@ -179,10 +212,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * addon detail, mutual dependencies pane
     - for example, I would like to see what is happening when:
         adibags anima & conduits is overwritten by adibags anima filter
-
-* add release.json support for github addons
-
-* toc, addon detail, add 'x-website' / 'x-url' alongside 'browse local files' and addon host
 
 * change split button 'outdent' to 'indent'
     - and if split, keep it 'pressed in'
@@ -228,19 +257,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * create a parser for that shit markup that is preventing reconcilation
     - see aliases
 
-* gitlab as addon host
-    - https://gitlab.com/search?search=wow+addon
-    - returned to bucket 2019-12-04, notes:
-        - gitlab doesn't handle releases like github does
-            - https://stackoverflow.com/questions/29520905/how-to-create-releases-in-gitlab
-        - there are very few gitlab addons (88)
-            - where did this number come from?
-        - api is quite slow
-    - update: as of Oct 2020 gitlab sucks a little bit less and, like github, you can attach binaries to releases
-        - https://gitlab.com/explore/projects?tag=World+of+Warcraft
-        - https://gitlab.com/shrugal/PersoLootRoll
-        - any others ...?
-
 * add checksum checks after downloading
     - curseforge have an md5 that can be used
         - unfortunately no checksum in api results
@@ -278,15 +294,40 @@ see CHANGELOG.md for a more formal list of changes by release
 * add a 'tabula rasa' option that wipes *everything* 
     - cache, catalog, config, downloaded zip files
 
+## next major version (v5)
 
-# releases
+* default to keeping last three zip files by default
+* replace 'installed' and 'available' columns with the composite 'version' column
+* remove the (pinned) and (installed) labels from from the 'available' column
+* drop support catalogue v1
+    - a prerequisite for v5 then would be introducing a new catalogue
+
+## catalogue v3 / capture more addon data
+
+* 'website'
+    - 'x-website'/'x-url' in toc
+    - add 'website' to addon-detail pane next to 'browse local files' and addon host
+        - depends on capturing x-website
+    - add a 'website' column to installed-addons
+* 'author'
+    - add an 'author' column to installed-addons
+    - add to addon-detail
+    - search other addons by author
+
+## releases
 
 * addon detail, 'releases' widget, including *all* possible releases to download and install
     - add an 'WoW' column to know which game-track/interface
     - disable releases excluded by selected game-track/strictness setting
 
 * alpha/beta opt-in
-    - user can opt to install alpha/beta/no-lib releases per-addon
+    - user can opt to install alpha/beta releases per-addon
+    - make it a simple preference
+
+* no-lib
+    - user can opt to prefer no-lib versions
+        - what if addon only ever released one no-lib then decided not to use them again?
+            - addon would be stuck on a very old version
 
 * keep a list of previously installed addons
     - eh. tie it in with downloading more release information
@@ -296,7 +337,7 @@ see CHANGELOG.md for a more formal list of changes by release
 * addon detail, 'releases' widget
     - installed release should be highlighted
 
-# import/exports
+## import/exports
 
 * import and export addons using addon urls
 
@@ -315,7 +356,7 @@ see CHANGELOG.md for a more formal list of changes by release
     - no need for padding and dummy dirnames then
     - installing normally would also include the mutual dependency handling
 
-# github 
+## github 
 
 * toc, add support for x-github key
     - X-Github: https://github.com/teelolws/Altoholic-Retail 
@@ -334,7 +375,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * github, add any tags if they exist
 
-# ui/gui
+* github, add 'created date'
+
+## ui/gui
 
 * dedicated tab for "user-catalogue" ?
     - add, delete, update github addons
@@ -344,28 +387,9 @@ see CHANGELOG.md for a more formal list of changes by release
     - I think changing column ordering and moving columns should be disabled while updates happen
         - just freeze or disable them or something.
 
-* gui 'wow' column is inconsistent
-    - for curseforge, it's pulling it's value from :gameVersion, which may be empty
-        - in which case it pulls it's value from the toc file, which may be different from the selected game track
-    - since this is the 'installed addons pane', should the value reflect the value of the installed addon?
-        - (and not the value of the addon to be installed)
-        - and would this be inconsistent with the other fields that are also changing with new catalog information?
-
-* gui, toggleable columns as a menuitem
-
-* gui, synthetic 'version' column
-    - combines 'installed' and 'available' columns
-        - because most of the time the two columns are the same
-    - displays the available version if it exists
-
 * internationalisation?
     - Akitools has no english description but it does have a "Notes-zhCN" in the toc file that could be used
     - wowman was mentioned on a french forum the other day ..
-
-* gui, toggleable highlighers as a menuitem
-    - highlight unmatched
-    - highlight updates
-    - touch of colour against each menuitem would serve as a legend
 
 * gui, get log window scrolling in other direction
 
@@ -406,8 +430,6 @@ this is still an interesting idea
     - updates
     - category ...
 
-
-
 ## wontfix
 
 * importing addons, skip db lookup for addon urls that don't need it
@@ -438,12 +460,6 @@ this is still an interesting idea
     - going to need a better reason than 'just cos' for this
 * add a 'Delete all' option to cache menu
     - we don't really want legitimate nfo files to be accidentally deleted
-* nightly unstable builds
-    - building the 'develop' branch once a day
-        - making it available as the 'unstable' release that always gets replaced
-    - project.clj "x.y.z-unreleased" would be changed to "x.y.z-unstable"
-    - development would happen mainly in feature branches
-    - too much effort for what? more user reports? I don't have that sort of time
 * investigate `.csv` as a human-readable but more compact representation
     - might be able to save a MB on extraneous syntax
     - might be able to speed up parsing and loading
@@ -462,22 +478,6 @@ this is still an interesting idea
     - no native support in java/clojure for it
         - library here: https://github.com/junrar/junrar
             - just found it while going through minion source
-* fallback to using :group-id (a uri) if curseforge.json is not available
-    - low priority
-    - curseforge.json will only ever be missing:
-        - fresh install and
-        - your network connection goes down, or
-        - you're a victim of github's 99.999 uptime rating
-    - wontfix because:
-        - group-id is 'group-id' and *not* 'uri'
-            - it may change in the future
-        - there is a really really slim chance of this actually happening
-            - I don't think it justifies the extra complexity tbh
-    - 2020-11-28: I think this was about being able to download catalogues (curseforge.json) when github is down
-        - if a catalogue is embedded then we can always fall back to that
-        - see EOL planning
-* gui, search pane, clear search button
-    - I don't think this is necessary anymore
 
 * cli, interactive interface when no specific action specified 
     - you have N addons installed. what do you want to do? (list, update, update-all, delete) etc

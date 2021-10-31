@@ -50,7 +50,7 @@
 
 (defn scrape-category-group-page
   [category-page] ;; => "cat23.html"
-  (let [snippet (-> host (str category-page) http/download html-snippet)
+  (let [snippet (-> host (str category-page) http/download-with-backoff html-snippet)
         cat-list (-> snippet (select [:div#colleft :div.subcats :div.subtitle :a]))
         final-url (fn [href]
                     ;; converts the href that looks like '/downloads/cat19.html' to '/downloads/index.php?cid=19"
@@ -107,7 +107,7 @@
 (defn scrape-addon-list
   [category page-num]
   (let [url (clojure.string/replace (:url category) #"page=\d+" (str "page=" page-num))
-        page-content (-> url http/download html-snippet)
+        page-content (-> url http/download-with-backoff html-snippet)
         addon-list (-> page-content (select [:#filepage :div.file]))
         extractor (fn [snippet]
                     (assoc (extract-addon-summary snippet) :category-list #{(:label category)}))]
@@ -116,7 +116,7 @@
 (defn scrape-category-page-range
   [category]
   (let [;; extract the number of results from the page navigation
-        page-content (-> category :url http/download html-snippet)
+        page-content (-> category :url http/download-with-backoff html-snippet)
         page-nav (-> page-content (select [:.pagenav [:td.alt1 html/last-of-type] :a]))
         ;; just scrape first page when page-nav is empty
         page-count (if (empty? page-nav)
@@ -143,7 +143,7 @@
   Instead that data is in this list and must be incorporated in the catalogue."
   []
   (let [url "https://api.mmoui.com/v3/game/WOW/filelist.json"
-        resp (http/download url)
+        resp (http/download-with-backoff url)
         file-details (utils/from-json resp)
         file-details (mapv (fn [addon]
                              (update addon :UID #(Integer/parseInt %))) file-details)]

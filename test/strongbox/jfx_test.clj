@@ -50,7 +50,7 @@
                  [{:text "foo"} {:fx/type :table-column, :text "foo", :min-width 80, :style-class ["table-cell" "foo-column"]}]
                  [{:style-class ["foo"]} {:fx/type :table-column, :min-width 80, :style-class ["table-cell" "column" "foo"]}]]]
       (doseq [[given expected] cases]
-        (is (= expected (dissoc (jfx/table-column given) :cell-value-factory)))))))
+        (is (= expected (dissoc (jfx/make-table-column given) :cell-value-factory)))))))
 
 (deftest about-strongbox
   (testing "'about' dialog is correct and new version text is correctly hidden"
@@ -72,3 +72,42 @@
             actual (jfx/-about-strongbox-dialog)
             actual (update-in actual [:children 3] dissoc :on-action)]
         (is (= expected actual))))))
+
+(deftest build-column-menu
+  (let [expected [{:fx/type :check-menu-item, :text "browse", :selected false}
+                  {:fx/type :check-menu-item, :text "source", :selected true}
+                  {:fx/type :check-menu-item, :text "ID", :selected true}
+                  {:fx/type :check-menu-item, :text "name", :selected false}
+                  {:fx/type :check-menu-item, :text "description", :selected false}
+                  {:fx/type :check-menu-item, :text "tags", :selected false}
+                  {:fx/type :check-menu-item, :text "created", :selected false}
+                  {:fx/type :check-menu-item, :text "updated", :selected false}
+                  {:fx/type :check-menu-item, :text "installed", :selected false}
+                  {:fx/type :check-menu-item, :text "available", :selected false}
+                  {:fx/type :check-menu-item, :text "version", :selected false}
+                  {:fx/type :check-menu-item, :text "WoW", :selected false}
+                  {:fx/type :check-menu-item, :text "uber-button", :selected false}
+                  ;; separator
+                  ;;{:fx/type [:cljfx.lifecycle/instance-factory], :create #object[strongbox.ui.jfx$fn__42050 0xe7ec3d9 "strongbox.ui.jfx$fn__42050@e7ec3d9"]}
+                  ;; reset button
+                  ;;{:fx/type :menu-item, :text "Reset to defaults", :mnemonic-parsing true}
+                  ]
+
+        selected-columns [:foo :bar :baz :source :source-id]
+
+        actual (jfx/build-column-menu selected-columns)
+        actual (drop-last 2 actual)
+        actual (mapv #(dissoc % :on-action) actual)]
+    (is (= expected actual))))
+
+(deftest expand
+  (let [given {:a :b
+               [:c :d] {:e :f}
+               :g {[:h :i] {:j :k}}}
+
+        expected {:a :b
+                  :c {:e :f}
+                  :d {:e :f}
+                  :g {:h {:j :k}
+                      :i {:j :k}}}]
+    (is (= expected (jfx/expand given)))))

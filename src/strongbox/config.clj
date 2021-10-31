@@ -7,7 +7,7 @@
    [clojure.string]
    [strongbox
     [specs :as sp]
-    [utils :as utils]]))
+    [utils :as utils :refer [deep-merge]]]))
 
 ;; if the user provides their own catalogue list in their config file, it will override these defaults entirely
 ;; if the `:catalogue-location-list` entry is *missing* in the user config file, these will be used instead.
@@ -20,6 +20,9 @@
    {:name :curseforge :label "Curseforge" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/curseforge-catalogue.json"}
    {:name :wowinterface :label "WoWInterface" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/wowinterface-catalogue.json"}])
 
+;; see `cli/column-map` for all known columns
+(def -default-column-list sp/default-column-list)
+
 (def default-cfg
   {:addon-dir-list []
    :selected-addon-dir nil
@@ -30,7 +33,8 @@
                  ;; 0:   keep no zips
                  ;; 1:   keep 1 zip
                  ;; N:   keep N zips
-                 :addon-zips-to-keep nil}})
+                 :addon-zips-to-keep nil
+                 :ui-selected-columns -default-column-list}})
 
 (defn handle-install-dir
   "`:install-dir` was once supported in the user configuration but is now only supported in the command line options.
@@ -115,12 +119,6 @@
 (defn strip-unspecced-keys
   "removes any keys from the given configuration that are not in the spec"
   [cfg]
-  ;;(spec-tools/coerce ::sp/user-config cfg spec-tools/strip-extra-keys-transformer))
-  ;; `select-keys` is not as good as the above `spec-tools/coerce` approach, but:
-  ;; * saves about 1.5MB of dependencies
-  ;; * it wasn't doing validation, just stripping extra keys
-  ;; * it wasn't doing any conforming of values (like strings to integers or keywords)
-  ;; * it didn't support :opt(ional) keysets
   (select-keys cfg [:addon-dir-list :selected-addon-dir
                     :gui-theme
                     :catalogue-location-list :selected-catalogue
@@ -131,7 +129,7 @@
   [cfg-a map?, cfg-b map?, msg string?]
   (debug "loading config:" msg)
   (let [cfg (-> cfg-a
-                (merge cfg-b)
+                (deep-merge cfg-b)
                 handle-install-dir
                 handle-compound-game-tracks
                 remove-invalid-addon-dirs
@@ -173,7 +171,9 @@
                               :gui-theme keyword
                               :game-track keyword
                               ;; too general, not great :(
-                              :name keyword}}
+                              :name keyword
+                              ;; convert list of strings to keywords
+                              :ui-selected-columns #(mapv keyword %)}}
         config (utils/load-json-file-safely cfg-file opts)]
     ;; legacy, 0.10 to 0.12 included a key that needs renaming in 1.0
     (clojure.set/rename-keys config {:selected-catalog :selected-catalogue})))

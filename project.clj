@@ -1,10 +1,15 @@
-(defproject ogri-la/strongbox "4.6.0"
+(defproject ogri-la/strongbox "4.7.0"
   :description "World Of Warcraft Addon Manager"
   :url "https://github.com/ogri-la/strongbox"
   :license {:name "GNU Affero General Public License (AGPL)"
             :url "https://www.gnu.org/licenses/agpl-3.0.en.html"}
 
   ;;:global-vars {*warn-on-reflection* true}
+
+  ;; https://github.com/technomancy/leiningen/issues/1914
+  ;; https://github.com/technomancy/leiningen/issues/2763
+  ;; https://github.com/technomancy/leiningen/issues/2769
+  :pedantic? false
 
   :dependencies [[org.clojure/clojure "1.10.3"]
                  [org.clojure/tools.cli "1.0.206"] ;; cli arg parsing
@@ -44,6 +49,7 @@
                  ;; GPLv3 compatible dependencies.
                  ;; these don't need an exception to be made in LICENCE.txt
                  [org.apache.commons/commons-compress "1.21"] ;; Apache 2.0 licenced, bz2 compression/decompression of static catalogue
+                 [org.ocpsoft.prettytime/prettytime "5.0.2.Final"] ;; Apache 2.0 licenced, pretty date formatting
 
                  ;; remember to update the LICENCE.txt
                  ;; remember to update pom file (`lein pom`)
@@ -78,7 +84,7 @@
   :main strongbox.main
 
   :plugins [[lein-cljfmt "0.6.4"]
-            [jonase/eastwood "0.3.13"]
+            [jonase/eastwood "0.9.9"]
             [lein-cloverage "1.2.2"]]
   :eastwood {:exclude-linters [:constant-test]
              ;; linters that are otherwise disabled

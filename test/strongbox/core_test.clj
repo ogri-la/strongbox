@@ -1263,6 +1263,8 @@
           (cli/ignore-selected) ;; calls `core/refresh`
           (is (:ignore? (first (core/get-state :installed-addon-list))))
 
+          ;; addon are deselected after having an action performed on them.
+          (cli/select-addons)
           (cli/clear-ignore-selected)
           (is (= expected (first (core/get-state :installed-addon-list)))))))))
 
@@ -1475,7 +1477,8 @@
   (let [cases [[{} false]
                [{:foo :bar} false]
                [{:source "wowinterface" :source-id 123} false]
-               [{:name "foo" :label "Foo" :source "wowinterface" :source-id 123} true]]]
+               [{:name "foo" :label "Foo" :source "wowinterface" :source-id 123} true]
+               [{:name "foo" :label "Foo" :source "wowinterface" :source-id 123 :ignore? true} false]]]
     (doseq [[given expected] cases]
       (is (= expected (core/expandable? given))))))
 

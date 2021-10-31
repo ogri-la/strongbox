@@ -6,13 +6,15 @@ It supports Linux and macOS.
 
 It supports addons hosted by Curseforge, wowinterface, Tukui and Github.
 
-[![strongbox version 4.0.0](./screenshots/screenshot-4.0.0-installed-thumbnail.jpg)](./screenshots/screenshot-4.0.0-installed.png?raw=true)
-[![strongbox version 4.0.0](./screenshots/screenshot-4.0.0-search-thumbnail.jpg)](./screenshots/screenshot-4.0.0-search.png?raw=true)
-[![strongbox version 4.0.0](./screenshots/screenshot-4.0.0-detail-thumbnail.jpg)](./screenshots/screenshot-4.0.0-detail.png?raw=true)
+[![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-installed-skinny-thumbnail.jpg)](./screenshots/screenshot-4.7.0-installed-skinny.png?raw=true)
+[![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-installed-thumbnail.jpg)](./screenshots/screenshot-4.7.0-installed.png?raw=true)
+[![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-installed-fat-thumbnail.jpg)](./screenshots/screenshot-4.7.0-installed-fat.png?raw=true)
+[![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-detail-thumbnail.jpg)](./screenshots/screenshot-4.7.0-detail.png?raw=true)
 
-[![strongbox version 4.0.0](./screenshots/screenshot-4.0.0-dark-installed-thumbnail.jpg)](./screenshots/screenshot-4.0.0-dark-installed.png?raw=true)
-[![strongbox version 4.0.0](./screenshots/screenshot-4.0.0-dark-search-thumbnail.jpg)](./screenshots/screenshot-4.0.0-dark-search.png?raw=true)
-[![strongbox version 4.0.0](./screenshots/screenshot-4.0.0-dark-detail-thumbnail.jpg)](./screenshots/screenshot-4.0.0-dark-detail.png?raw=true)
+[![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-dark-installed-skinny-thumbnail.jpg)](./screenshots/screenshot-4.7.0-dark-installed-skinny.png?raw=true)
+[![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-dark-installed-thumbnail.jpg)](./screenshots/screenshot-4.7.0-dark-installed.png?raw=true)
+[![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-dark-installed-fat-thumbnail.jpg)](./screenshots/screenshot-4.7.0-dark-installed-fat.png?raw=true)
+[![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-dark-detail-thumbnail.jpg)](./screenshots/screenshot-4.7.0-dark-detail.png?raw=true)
 
 ## Installation
 
@@ -20,14 +22,14 @@ Arch Linux users can install `strongbox` from the [AUR](https://aur.archlinux.or
 
 For other Linux users:
 
-1. download: [./releases/strongbox](https://github.com/ogri-la/strongbox/releases/download/4.6.0/strongbox)
+1. download: [./releases/strongbox](https://github.com/ogri-la/strongbox/releases/download/4.7.0/strongbox)
 2. make executable: `chmod +x strongbox`
 3. run: `./strongbox`
 
 If you're on macOS or having a problem with the binary or just prefer Java `.jar` files (requires Java 11+):
 
-1. download: [./releases/strongbox-4.6.0-standalone.jar](https://github.com/ogri-la/strongbox/releases/download/4.6.0/strongbox-4.6.0-standalone.jar)
-2. run: `java -jar strongbox-4.6.0-standalone.jar`
+1. download: [./releases/strongbox-4.7.0-standalone.jar](https://github.com/ogri-la/strongbox/releases/download/4.7.0/strongbox-4.7.0-standalone.jar)
+2. run: `java -jar strongbox-4.7.0-standalone.jar`
 
 ## Usage
 
@@ -184,7 +186,8 @@ contains many addons that haven't been updated in years.
 
 There are also per-host catalogues, like a 'curseforge' catalogue, and strongbox supports selecting between all of them.
 
-Catalogues are updated weekly.
+Catalogues are updated weekly. New addons released during the week will not be present until the next week. Addons can 
+be installed using its URL in these cases.
 
 The 'user' catalogue is a little different. It's initially empty but grows as addons are imported from hosts like Github. 
 These addons also appear in search results. Individual addons from the user catalogue are checked for new releases 

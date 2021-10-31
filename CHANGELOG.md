@@ -4,6 +4,42 @@ All notable changes to this project will be documented in this file. This change
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 4.7.0 - 2021-10-31
+
+### Added
+
+* expanding rows for grouped addons.
+    - clicking the arrow at the far left of the screen will 'expand' the addon and display the set of grouped addons.
+    - these addons were bundled together with the addon that was installed but are otherwise hidden behind the 'primary' addon.
+        - the 'primary' addon is just a best-guess at which the main addon of the group is.
+    - actions like 'ignore', 'pin', 'uninstall' etc can't be performed against these grouped addons.
+* columns in the GUI can now be toggled on and off and reset back to their defaults.
+    - these preferences are preserved between application restarts.
+* new columns 'source-id', 'tags', a combined 'version' column, 'browse local files' and friendly 'created' and 'updated' columns.
+* handling for hosts that are refusing connections rather than accepting connections but then timing out.
+    - happened with Tukui the other day.
+* most http requests now make two more attempts to download html/json before giving up.
+    - curseforge is a bit flaky when making bursts of requests in parallel and we're hitting the 5sec timeout more often.
+
+### Changed
+
+* status button now has 'ignored' (empty circle) and 'pinned' (filled circle) icons instead of nothing and a tick respectively.
+* connection timeouts are now reduced from 8sec to 5sec.
+* minor, `File -> Export Github addon list` renamed `File -> Export the user-catalogue`.
+
+### Fixed
+
+* ignored addons had an incorrect 'updated' date.
+    - previously only visible on the addon detail page, a dummy 'polyfilled' date of 2001-01-01 was being used.
+* context menu not refreshed after performing an action and then immediately right clicking the addon again.
+    - for example, ignoring an addon and then right clicking you would see the 'ignore' option still available.
+* connection timeout handling (introduced `4.3.0`) has never worked outside of test conditions.
+    - it's because certain configuration is ignored if the more advanced `RequestConfig` is present.
+
+### Removed
+
+* the inability to resize certain columns. All columns can be resized now, although some still have maximum widths.
+
 ## 4.6.0 - 2021-10-01
 
 ### Added

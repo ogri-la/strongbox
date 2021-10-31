@@ -441,7 +441,7 @@
 
 ;; settings
 
-(defn save-settings
+(defn-spec save-settings! nil?
   "writes user configuration to the filesystem"
   []
   ;; warning: this will preserve any once-off command line parameters as well
@@ -451,7 +451,8 @@
     (utils/dump-json-file cfg-file (get-state :cfg)))
   (when-let [etag-db (paths :etag-db-file)]
     (debug "saving etag-db to:" etag-db)
-    (utils/dump-json-file etag-db (get-state :etag-db))))
+    (utils/dump-json-file etag-db (get-state :etag-db)))
+  nil)
 
 (defn load-settings!
   "pulls together configuration from the fs and cli, merges it and sets application state"
@@ -847,7 +848,8 @@
         polyfilled (mapv (fn [addon]
                            (if-let [synthetic (catalogue/toc2summary addon)]
                              (moosh-addons addon synthetic)
-                             addon)) unmatched)
+                             addon))
+                         unmatched)
 
         expanded-installed-addon-list (into matched polyfilled)
 
@@ -909,7 +911,8 @@
 (defn-spec expandable? boolean?
   "returns `true` if the given addon in whatever form has the requisites to be 'expanded' (checked for updates from host)"
   [addon map?]
-  (s/valid? :addon/expandable addon))
+  (and (s/valid? :addon/expandable addon)
+       (not (:ignore? addon))))
 
 (defn-spec check-for-update :addon/toc
   "Returns given `addon` with source updates, if any, and sets an `update?` property if a different version is available.
@@ -1246,7 +1249,7 @@
    ;;(latest-strongbox-release) ;; check for updates after everything else is done 
 
    ;; seems like a good place to preserve the etag-db
-  (save-settings)
+  (save-settings!)
 
   nil)
 

@@ -20,6 +20,8 @@
 
 (def expiry-offset-hours 1) ;; hours
 (def ^:dynamic *cache* nil)
+(def ^:dynamic *default-pause* 1000)
+(def ^:dynamic *default-attempts* 3)
 
 (defn- add-etag-or-not
   [etag-key req]
@@ -154,11 +156,14 @@
 
                 use-anon-useragent? false
                 params {:cookie-policy :ignore ;; completely ignore cookies. doesn't stop HttpComponents warning
-                        :http-request-config (clj-http.core/request-config {:normalize-uri false})
-                        ;; both of these throw a SocketTimeoutException:
-                        ;; - https://docs.oracle.com/javase/8/docs/api/java/net/URLConnection.html
-                        :connection-timeout 8000 ;; allow 8s to connect to host
-                        :socket-timeout 8000 ;; allow 8s stall reading from a host
+                        :http-request-config (clj-http.core/request-config
+                                              {:normalize-uri false
+                                               ;; both of these throw a SocketTimeoutException:
+                                               ;; - https://docs.oracle.com/javase/8/docs/api/java/net/URLConnection.html
+                                               :connection-timeout 5000 ;; allow 5s to connect to host
+                                               :socket-timeout 5000 ;; allow 5s stall reading from a host
+                                               :connection-request-timeout 5000 ;; allow 5s to receive bytes
+                                               })
                         :headers {"User-Agent" (user-agent use-anon-useragent?)}}
                 params (merge params extra-params)
 
@@ -233,6 +238,8 @@
 
               :else resp)))
 
+        ;; "Signals that a timeout has occurred on a socket read or accept."
+        ;; - https://docs.oracle.com/javase/7/docs/api/java/net/SocketTimeoutException.html
         (catch java.net.SocketTimeoutException ste
           (when streaming-response?
             (close-stream ste))
@@ -242,6 +249,18 @@
                             :host (.getHost request-obj)
                             :reason-phrase "Connection timed out"}]
             (warn (format "failed to fetch '%s': connection timed out." url))
+            http-error))
+
+        ;; "Signals that an error occurred while attempting to connect a socket to a remote address and port.
+        ;; Typically, the connection was refused remotely (e.g., no process is listening on the remote address/port)."
+        ;; - https://docs.oracle.com/javase/7/docs/api/java/net/ConnectException.html
+        (catch java.net.ConnectException ce
+          ;; return a synthetic HTTP error
+          (let [request-obj (java.net.URL. url)
+                http-error {:status 408 ;; 'Request Timeout'
+                            :host (.getHost request-obj)
+                            :reason-phrase "Connection timed out"}]
+            (warn (format "failed to connect '%s': connection timed out." url))
             http-error))
 
         (catch java.net.UnknownHostException uhe
@@ -340,6 +359,35 @@
      (if-not (http-error? resp)
        output-file
        resp))))
+
+;;
+
+(defn-spec download-with-backoff (s/or :ok-file ::sp/extant-file, :ok-body string?, :error :http/error)
+  "wrapper around `download` that will pause and retry a download several times with an exponentially increasing duration between each attemp"
+  ([url ::sp/url]
+   (download-with-backoff url nil))
+  ([url ::sp/url, message (s/nilable ::sp/short-string)]
+   (loop [attempt 1
+          pause *default-pause*]
+     (let [result (try
+                    (when (> attempt 1)
+                      (warn (format "trying again (attempt %s of 3)" attempt)))
+                    (download url message)
+                    (catch Exception e
+                      e))]
+       (if (or (instance? Exception result)
+               (http-error? result))
+         (if (= attempt *default-attempts*)
+           ;; tried three times and failed three times. raise the exception or return the error.
+           (if (instance? Exception result)
+             (throw result)
+             result)
+           ;; try again after a pause
+           (do (Thread/sleep pause)
+               (recur (inc attempt) (* pause 2))))
+         result)))))
+
+;;
 
 (defn-spec prune-cache-dir nil?
   "deletes files in the given `cache-dir` that are older than the `expiry-offset-hours`"
