@@ -51,7 +51,7 @@
 
         ;; tukui addons do not share IDs across game tracks like curseforge does.
         ;; 2020-12-02: Tukui has dropped the per-addon endpoint, all results are now lists of items
-        addon-list (some-> url http/download utils/nilable http/sink-error utils/from-json)
+        addon-list (some-> url http/download-with-backoff utils/nilable http/sink-error utils/from-json)
         addon-list (if (sequential? addon-list)
                      addon-list
                      (-> addon-list (update :id str) vector))
@@ -115,7 +115,7 @@
   "downloads either the elvui or tukui addon that exists separately and outside of the catalogue"
   [url ::sp/url]
   (let [game-track :retail ;; use retail catalogue
-        addon-summary (-> url http/download utils/from-json (process-tukui-item game-track))]
+        addon-summary (-> url http/download-with-backoff utils/from-json (process-tukui-item game-track))]
     (assoc addon-summary :game-track-list [:classic :retail])))
 
 (defn-spec download-elvui-summary :addon/summary
@@ -131,17 +131,17 @@
 (defn-spec download-retail-summaries :addon/summary-list
   "downloads and processes all items in the tukui 'live' (retail) catalogue"
   []
-  (mapv #(process-tukui-item % :retail) (-> summary-list-url http/download utils/from-json)))
+  (mapv #(process-tukui-item % :retail) (-> summary-list-url http/download-with-backoff utils/from-json)))
 
 (defn-spec download-classic-summaries :addon/summary-list
   "downloads and processes all items in the tukui classic catalogue"
   []
-  (mapv #(process-tukui-item % :classic) (-> classic-summary-list-url http/download utils/from-json)))
+  (mapv #(process-tukui-item % :classic) (-> classic-summary-list-url http/download-with-backoff utils/from-json)))
 
 (defn-spec download-classic-tbc-summaries :addon/summary-list
   "downloads and processes all items in the tukui classic catalogue"
   []
-  (mapv #(process-tukui-item % :classic-tbc) (-> classic-tbc-summary-list-url http/download utils/from-json)))
+  (mapv #(process-tukui-item % :classic-tbc) (-> classic-tbc-summary-list-url http/download-with-backoff utils/from-json)))
 
 (defn-spec download-all-summaries :addon/summary-list
   "downloads and process all items from the tukui 'live' (retail) and classic catalogues"

@@ -18,10 +18,7 @@
     [utils :as utils :refer [if-let* message-list]]
     [curseforge-api :as curseforge-api]
     [wowinterface :as wowinterface]
-    [core :as core :refer [get-state paths find-catalogue-local-path]]])
-  (:import
-   [org.ocpsoft.prettytime.units Decade]
-   [org.ocpsoft.prettytime PrettyTime]))
+    [core :as core :refer [get-state paths find-catalogue-local-path]]]))
 
 (comment "the UIs pool their logic here, which calls core.clj.")
 
@@ -602,13 +599,6 @@
     :else
     (or (:version row) (:installed-version row))))
 
-(def pretty-dt-printer (doto (PrettyTime.)
-                         (.removeUnit Decade)))
-
-(defn format-dt
-  [val]
-  (some->> val utils/nilable utils/todt (.format pretty-dt-printer)))
-
 (def column-map
   {:browse-local {:label "browse" :value-fn :addon-dir}
    :source {:label "source" :value-fn :source}
@@ -618,8 +608,8 @@
    :tag-list {:label "tags" :value-fn (fn [row]
                                         (when-not (empty? (:tag-list row))
                                           (str (:tag-list row))))}
-   :updated-date {:label "updated" :value-fn (comp format-dt :updated-date)}
-   :created-date {:label "created" :value-fn (comp format-dt :created-date)}
+   :updated-date {:label "updated" :value-fn (comp utils/format-dt :updated-date)}
+   :created-date {:label "created" :value-fn (comp utils/format-dt :created-date)}
    :installed-version {:label "installed" :value-fn :installed-version}
    :available-version {:label "available" :value-fn available-versions-v1}
    :combined-version {:label "version" :value-fn available-versions-v2}

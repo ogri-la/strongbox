@@ -1130,14 +1130,14 @@
                         :cell-value-factory :created-date
                         :cell-factory {:fx/cell-type :tree-table-cell
                                        :describe (fn [dt]
-                                                   (when dt
-                                                     {:text (cli/format-dt dt)}))}}
+                                                   (when-not (empty? dt)
+                                                     {:text (utils/format-dt dt)}))}}
          :updated-date {:min-width 90 :pref-width 110 :max-width 120
                         :cell-value-factory :updated-date
                         :cell-factory {:fx/cell-type :tree-table-cell
                                        :describe (fn [dt]
-                                                   (when dt
-                                                     {:text (cli/format-dt dt)}))}}
+                                                   (when-not (empty? dt)
+                                                     {:text (utils/format-dt dt)}))}}
          :installed-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]}
          :available-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]}
          :combined-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]}

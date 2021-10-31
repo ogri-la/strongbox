@@ -145,7 +145,7 @@
                                    2 {:status 501 :reason-phrase "wha?"}
                                    3 {:status 200 :body expected}))}}]
     (with-fake-routes-in-isolation fake-routes
-      (with-redefs [http/*default-pause* 1]
+      (with-redefs [http/*default-attempts* 3] ;; re-re-defined from main.clj
         (is (= expected-warnings
                (logging/buffered-log
                 :warn

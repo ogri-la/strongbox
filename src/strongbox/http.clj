@@ -21,6 +21,7 @@
 (def expiry-offset-hours 1) ;; hours
 (def ^:dynamic *cache* nil)
 (def ^:dynamic *default-pause* 1000)
+(def ^:dynamic *default-attempts* 3)
 
 (defn- add-etag-or-not
   [etag-key req]
@@ -376,7 +377,7 @@
                       e))]
        (if (or (instance? Exception result)
                (http-error? result))
-         (if (= attempt 3)
+         (if (= attempt *default-attempts*)
            ;; tried three times and failed three times. raise the exception or return the error.
            (if (instance? Exception result)
              (throw result)
