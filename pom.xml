@@ -18,7 +18,7 @@
     <url>https://github.com/ogri-la/strongbox</url>
     <connection>scm:git:git://github.com/ogri-la/strongbox.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/ogri-la/strongbox.git</developerConnection>
-    <tag>51b6a4910bfc9f486a920e6aeeebf9d5bda7372d</tag>
+    <tag>84f8fdfe86731715e5b62b24e1c03cb97fea56a3</tag>
   </scm>
   <build>
     <sourceDirectory>src</sourceDirectory>
