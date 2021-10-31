@@ -85,6 +85,7 @@
   (utils/instrument true) ;; always test with spec checking ON
 
   (try
+    ;; note! remember to update `cloverage.clj` with any new bindings
     (with-redefs [core/testing? true
                   http/*default-pause* 1 ;; ms
                   http/*default-attempts* 1

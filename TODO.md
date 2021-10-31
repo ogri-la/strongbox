@@ -88,6 +88,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* bug, stacktrace on double refresh
+
 * grouping
     - I think the tree-table-view allows us to 'group' things now ...
         - it's 'flat' at the moment, but it could be grouped by 'ignored', 'pinned', 'updates available'

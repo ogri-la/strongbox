@@ -2,6 +2,8 @@
   (:require
    [strongbox
     [main :as main]
+    [http :as http]
+    [joblib :as joblib]
     [logging :as logging]
     [core :as core]]
    [clojure.test :as test]
@@ -15,7 +17,10 @@
   [_]
   (fn [ns-list]
     (with-redefs [core/testing? true
-                  main/spec? true]
+                  main/spec? true
+                  http/*default-pause* 1 ;; ms
+                  http/*default-attempts* 1
+                  joblib/tick-delay joblib/tick]
       (core/reset-logging!)
       (apply require (map symbol ns-list))
       {:errors (reduce + ((juxt :error :fail)
