@@ -6,104 +6,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* gui, synthetic 'version' column
-    - combines 'installed' and 'available' columns
-        - because most of the time the two columns are the same
-    - displays the available version if it exists
-    - style the version value if update available?
-    - done
-
-* gui, toggleable columns as a menuitem
-    - ensure a 'reset' to defaults option
-    - don't change current set of columns until next major release
-    - done
-
-* gui, any new/synthetic columns?
-    - human friendly update column with "updated x years/months/days/hours/minutes" ago
-        - https://stackoverflow.com/questions/32511405/how-would-time-ago-function-implementation-look-like-in-clojure
-    - number of releases?
-        - nah, for wowinterface and tukui this will be '1' most of the time
-    - 'browse local files'
-        - done
-    - pinned/unpinned
-        - perhaps also remove the (pinned) from the available column and make it an icon next in the uber button
-    - tags
-        - done
-    - done
-
-* gui, can I make column widths dynamic? 
-    - I'd like the 'version' columns to fit exactly, always.
-        - sorry, not going to happen. we have min, max and pref widths as always.
-    - done
-
-* gui, switch to tree-table-view for installed addons that are grouping other addons
-    - at least investigate how difficult this might be.
-    - done
-
-* bug, explicitly ignoring an addon gives it a dummy updated-date
-    - if an updated-date doesn't exist we shouldn't require that it does exist ...
-    - done. it was being polyfilled when it should have been ignored.
-
-* bug, I can reinstall and install a specific release for an explicitly ignored addon
-    - but not an implicitly ignored addon. weird.
-    - investigated and it's part of a larger problem:
-        - the context menu isn't being refreshed properly between actions
-            - this is because the state in the :selected-addon-list is different to that in the :installed-addon-list
-                - that was just modified by the action.
-                - selecting and deselecting a thing will update this state so it works
-                    - but right-clicking immediately after performing such an action results in a weird state
-            - this can be overcome by clearing the selected items between actions
-                - clearing :selected-addon-list is not enough however, the gui table needs to have it's selection changed as well
-    - done
-
-* bug, tukui is dead again and the jobs are just hanging
-    - I thought I put a timeout on this?
-    - put a timeout on http connections and requests???
-    - can jobs be given a timeout as well?
-    - see tukui--stall-crash
-        - looks like the timeout was working, but after timing out it raises a java.net.ConnectException
-            - I have handling for a SocketTimeoutException which is different
-    - done
-
-* bug, a timeout from curseforge during scraping at page 171 prevent pages 171-182 from being scraped
-    - we should be kinder when scraping. 
-        - add a delay between requests
-        - done
-    - we should be more robust when scraping.
-        - add retries with exponential backoff
-        - done
-
-* revisit the 'File -> Export Github addon list' 
-    - is this the user catalogue?
-        - it is.
-    - rename
-        - done
-
-* update image thumbnails
-    - they're getting a bit stale
-    - done
-
-* http, exponential backoff for failing http requests
-    - done
-
 ## todo
-
-
-## todo bucket (no particular order)
-
-* bug, stacktrace on double refresh
-
-* grouping
-    - I think the tree-table-view allows us to 'group' things now ...
-        - it's 'flat' at the moment, but it could be grouped by 'ignored', 'pinned', 'updates available'
-            - ignored are collapsed
-
-* add a 'add to user-catalogue' option to make an addon always available despite selected catalogue
-
-* add a 'catalogue is N days old' somewhere
-
-* gui, try replacing the auto fit columns with something like this:
-    - https://stackoverflow.com/questions/14650787/javafx-column-in-tableview-auto-fit-size#answer-49134109
 
 * multi-toc support
     - https://github.com/Stanzilla/WoWUIBugs/issues/68#issuecomment-830351390
@@ -123,6 +26,21 @@ see CHANGELOG.md for a more formal list of changes by release
         - https://gitlab.com/shrugal/PersoLootRoll
         - any others ...?
 
+## todo bucket (no particular order)
+
+* bug, stacktrace on double refresh
+
+* grouping
+    - I think the tree-table-view allows us to 'group' things now ...
+        - it's 'flat' at the moment, but it could be grouped by 'ignored', 'pinned', 'updates available'
+            - ignored are collapsed
+
+* add a 'add to user-catalogue' option to make an addon always available despite selected catalogue
+
+* add a 'catalogue is N days old' somewhere
+
+* gui, try replacing the auto fit columns with something like this:
+    - https://stackoverflow.com/questions/14650787/javafx-column-in-tableview-auto-fit-size#answer-49134109
 
 * gui, toggleable highlighers as a menuitem
     - highlight unmatched
