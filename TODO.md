@@ -73,17 +73,30 @@ see CHANGELOG.md for a more formal list of changes by release
         - add retries with exponential backoff
         - done
 
-## todo
-
 * revisit the 'File -> Export Github addon list' 
     - is this the user catalogue?
+        - it is.
+    - rename
+        - done
 
 * update image thumbnails
     - they're getting a bit stale
+    - done
+
+* http, exponential backoff for failing http requests
+    - done
+
+## todo
+
 
 ## todo bucket (no particular order)
 
-* http, exponential backoff for failing http requests
+* bug, stacktrace on double refresh
+
+* grouping
+    - I think the tree-table-view allows us to 'group' things now ...
+        - it's 'flat' at the moment, but it could be grouped by 'ignored', 'pinned', 'updates available'
+            - ignored are collapsed
 
 * add a 'add to user-catalogue' option to make an addon always available despite selected catalogue
 

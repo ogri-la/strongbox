@@ -695,5 +695,3 @@
 
       (doseq [[given expected] cases]
         (is (= expected (cli/sort-column-list given)))))))
-
-

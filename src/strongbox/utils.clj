@@ -15,7 +15,10 @@
    [slugify.core :as sluglib]
    [taoensso.timbre :refer [debug info warn error spy]]
    [java-time :as jt]
-   [java-time.format]))
+   [java-time.format])
+  (:import
+   [org.ocpsoft.prettytime.units Decade]
+   [org.ocpsoft.prettytime PrettyTime]))
 
 (defn repl-stack-element?
   [stack-element]
@@ -47,6 +50,17 @@
   "false if any item in `lst` is either nil or false"
   [lst sequential?]
   ((complement not-any?) identity lst))
+
+(defn nilable
+  [x]
+  (cond
+    (nil? x) nil
+    (false? x) nil
+    (and (coll? x)
+         (empty? x)) nil
+    (and (string? x)
+         (clojure.string/blank? x)) nil
+    :else x))
 
 (defn-spec pad coll?
   "given a collection, ensures there are at least pad-amt items in result. pad value is nil"
@@ -119,11 +133,12 @@
         now (java-time/local-date)]
     (.getDays (java-time/period then now))))
 
-(defn fmt-date
-  ([dateobj]
-   (fmt-date dateobj "yyyy-MM-dd'T'HH:mm:ss'Z'"))
-  ([dateobj fmt]
-   (.format (java.text.SimpleDateFormat. fmt) dateobj)))
+(comment "unused"
+         (defn fmt-date
+           ([dateobj]
+            (fmt-date dateobj "yyyy-MM-dd'T'HH:mm:ss'Z'"))
+           ([dateobj fmt]
+            (.format (java.text.SimpleDateFormat. fmt) dateobj))))
 
 (defn datestamp-now-ymd
   []
@@ -134,6 +149,19 @@
   these are needed to calculate durations"
   [dt ::sp/inst]
   (java-time/zoned-date-time (get java-time.format/predefined-formatters "iso-zoned-date-time") dt))
+
+(def -pretty-dt-printer (doto (PrettyTime.)
+                          (.removeUnit Decade)))
+
+(def -pretty-dt-printer-dummy (doto (PrettyTime. (java-time/local-date constants/fake-date) (java-time/zone-id "UTC"))
+                                (.removeUnit Decade)))
+
+(def ^:dynamic *pretty-dt-printer* -pretty-dt-printer)
+
+(defn-spec format-dt string?
+  "returns a PrettyTime formatted datetime representation"
+  [val ::sp/inst]
+  (some->> val nilable todt (.format *pretty-dt-printer*)))
 
 (defn nav-map
   "wrapper around `get-in` that returns the map as-is if given `path` is empty"
@@ -149,17 +177,6 @@
   [m map?]
   (fn [& path]
     (nav-map m path)))
-
-(defn nilable
-  [x]
-  (cond
-    (nil? x) nil
-    (false? x) nil
-    (and (coll? x)
-         (empty? x)) nil
-    (and (string? x)
-         (clojure.string/blank? x)) nil
-    :else x))
 
 (defn pprint
   [x]

@@ -6,13 +6,15 @@ It supports Linux and macOS.
 
 It supports addons hosted by Curseforge, wowinterface, Tukui and Github.
 
-[![strongbox version 4.0.0](./screenshots/screenshot-4.0.0-installed-thumbnail.jpg)](./screenshots/screenshot-4.0.0-installed.png?raw=true)
-[![strongbox version 4.0.0](./screenshots/screenshot-4.0.0-search-thumbnail.jpg)](./screenshots/screenshot-4.0.0-search.png?raw=true)
-[![strongbox version 4.0.0](./screenshots/screenshot-4.0.0-detail-thumbnail.jpg)](./screenshots/screenshot-4.0.0-detail.png?raw=true)
+[![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-installed-skinny-thumbnail.jpg)](./screenshots/screenshot-4.7.0-installed-skinny.png?raw=true)
+[![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-installed-thumbnail.jpg)](./screenshots/screenshot-4.7.0-installed.png?raw=true)
+[![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-installed-fat-thumbnail.jpg)](./screenshots/screenshot-4.7.0-installed-fat.png?raw=true)
+[![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-detail-thumbnail.jpg)](./screenshots/screenshot-4.7.0-detail.png?raw=true)
 
-[![strongbox version 4.0.0](./screenshots/screenshot-4.0.0-dark-installed-thumbnail.jpg)](./screenshots/screenshot-4.0.0-dark-installed.png?raw=true)
-[![strongbox version 4.0.0](./screenshots/screenshot-4.0.0-dark-search-thumbnail.jpg)](./screenshots/screenshot-4.0.0-dark-search.png?raw=true)
-[![strongbox version 4.0.0](./screenshots/screenshot-4.0.0-dark-detail-thumbnail.jpg)](./screenshots/screenshot-4.0.0-dark-detail.png?raw=true)
+[![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-dark-installed-skinny-thumbnail.jpg)](./screenshots/screenshot-4.7.0-dark-installed-skinny.png?raw=true)
+[![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-dark-installed-thumbnail.jpg)](./screenshots/screenshot-4.7.0-dark-installed.png?raw=true)
+[![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-dark-installed-fat-thumbnail.jpg)](./screenshots/screenshot-4.7.0-dark-installed-fat.png?raw=true)
+[![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-dark-detail-thumbnail.jpg)](./screenshots/screenshot-4.7.0-dark-detail.png?raw=true)
 
 ## Installation
 

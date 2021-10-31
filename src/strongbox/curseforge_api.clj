@@ -169,7 +169,7 @@
   one additional HTTP call per addon required."
   [addon-summary :addon/expandable, game-track ::sp/game-track]
   (let [url (api-url "/addon/%s" (:source-id addon-summary))
-        result (some-> url http/download http/sink-error utils/from-json)]
+        result (some-> url http/download-with-backoff http/sink-error utils/from-json)]
     (-> result group-releases (get game-track) prune-leading-duplicates)))
 
 ;; catalogue building
