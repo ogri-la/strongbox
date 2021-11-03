@@ -26,6 +26,7 @@
   [addon :addon/expandable, game-track ::sp/game-track]
   (let [dispatch-map {"curseforge" curseforge-api/expand-summary
                       "wowinterface" wowinterface-api/expand-summary
+                      "gitlab" gitlab-api/expand-summary
                       "github" github-api/expand-summary
                       "tukui" tukui-api/expand-summary
                       "tukui-classic" tukui-api/expand-summary

@@ -651,6 +651,7 @@
                         (subs host 4)
                         host)]
     (case host-sans-www
+      "gitlab.com" "gitlab"
       "github.com" "github"
       "wowinterface.com" "wowinterface"
       "curseforge.com" "curseforge"

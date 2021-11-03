@@ -541,7 +541,7 @@
                                                  (name (core/get-state :cfg :selected-catalogue))))))
 
               ;; game track doesn't matter when adding it to the user catalogue.
-              ;; prefer retail though, it's the most common, and `strict` is `false`
+              ;; prefer retail though (it's the most common) and `strict` here is `false`
               addon (or (catalogue/expand-summary addon-summary :retail false)
                         (error "failed to fetch details of addon"))
 
