@@ -13,6 +13,7 @@
     [addon :as addon]
     [specs :as sp]
     [tukui-api :as tukui-api]
+    [gitlab-api :as gitlab-api]
     [catalogue :as catalogue]
     [http :as http]
     [utils :as utils :refer [if-let* message-list]]
@@ -510,8 +511,8 @@
               source (:source addon-summary-stub)
               match-on-list [[[:source :url] [:source :url]]
                              [[:source :source-id] [:source :source-id]]]
-              addon-summary (if (= source "github")
-                              ;; special case for github
+              addon-summary (cond
+                              (= source "github")
                               (or (github-api/find-addon (:source-id addon-summary-stub))
                                   (error (message-list
                                           "Failed. URL must be:"
@@ -522,6 +523,18 @@
                                            "asset must be a .zip file"
                                            "zip file must be structured like an addon"])))
 
+                              (= source "gitlab")
+                              (or (gitlab-api/find-addon (:source-id addon-summary-stub))
+                                  (error (message-list
+                                          "Failed. URL must be:"
+                                          ["valid"
+                                           "originate from gitlab.com"
+                                           "addon uses releases with 'packages'"
+                                           "latest package has a 'link'"
+                                           "link must be a .zip file"
+                                           "zip file must be structured like an addon"])))
+
+                              :else
                               ;; look in the current catalogue. emit an error if we fail
                               (or (:catalogue-match (db/-find-first-in-db (core/get-state :db) addon-summary-stub match-on-list))
                                   (error (format "couldn't find addon in catalogue '%s'"
