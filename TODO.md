@@ -28,6 +28,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* http, curseforge, don't pause between requests if resource was cached
+
 * bug, stacktrace on double refresh
 
 * grouping

@@ -16,8 +16,16 @@
 
 (defn parse-release
   [release]
-  (let [link (-> release :assets :links first)]
-    {:download-url (:url link)
+  (let [supported-link-types #{"package" "other"} ;; the others are 'runbook' and 'image'
+        link-list (->> release
+                       :assets
+                       :links
+                       (filter (juxt supported-link-types :link-type)))
+        link (first link-list)]
+    {;; "The physical location of the asset can change at any time and the direct link remains unchanged"
+     ;; - https://docs.gitlab.com/ee/user/project/releases/index.html#permanent-links-to-release-assets
+     :download-url (:direct_asset_url link)
+     ;;:download-url (:url link)
      :version (:tag_name release)
      :game-track :retail}))
 
@@ -30,7 +38,12 @@
 (defn-spec parse-user-string (s/or :ok :addon/source-id :error nil?)
   "extracts the addon ID from the given `url`."
   [url ::sp/url]
-  (->> url java.net.URL. .getPath (re-matches #"^/([^/]+/[^/]+)[/]?.*") rest first))
+  (let [bits (take 3 (-> url java.net.URL. .getPath
+                         (clojure.string/split #"/-")
+                         first
+                         (utils/trim "/")
+                         (clojure.string/split #"/")))]
+    (clojure.string/join "/" bits)))
 
 (defn-spec find-addon (s/or :ok :addon/summary, :error nil?)
   [source-id :addon/source-id]

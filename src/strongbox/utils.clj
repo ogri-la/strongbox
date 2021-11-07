@@ -4,7 +4,7 @@
     [specs :as sp]
     [constants :as constants]]
    [clojure.java.shell]
-   [clojure.string :refer [trim lower-case]]
+   [clojure.string :refer [lower-case]]
    [clojure.java.io]
    [clojure.spec.alpha :as s]
    [clojure.pprint]
@@ -364,6 +364,11 @@
   [s string?, m string?]
   (let [pattern (java.util.regex.Pattern/compile (format "[%s]*$" m))]
     (clojure.string/replace s pattern "")))
+
+(defn-spec trim string?
+  "strips leading and trailing chars in `m` from `s`"
+  [s string?, m string?]
+  (-> s (ltrim m) (rtrim m)))
 
 (defn-spec replace-file-ext (s/or :ok ::sp/file, :error nil?)
   [path ::sp/file, ext string?]

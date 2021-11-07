@@ -42,7 +42,7 @@ dl "https://api.github.com/repos/Ravendwyr/Chinchilla/contents" "github-repo-con
 
 # gitlab api
 dl "https://gitlab.com/api/v4/projects/woblight%2Fnitro" "gitlab-repo--woblight-nitro.json"
-dl "https://gitlab.com/api/v4/projects/woblight%2f/releases" "gitlab-repo-release--woblight-nitro.json"
+dl "https://gitlab.com/api/v4/projects/woblight%2f/releases" "gitlab-repo-releases--woblight-nitro.json"
 
 # tukui api
 dl "https://www.tukui.org/api.php?addon=98" "tukui--addon-details.json"

@@ -20,7 +20,32 @@
 
                  ;; looser matching we can also support
                  "https://gitlab.com/woblight/nitro/-/releases"
-                 "https://user:name@gitlab.com/woblight/nitro/foo/bar?baz=bup&boo="]]
+                 "http://user:name@www.gitlab.com/woblight/nitro/?baz=bup&boo=#anchor"]]
+
+      (doseq [given cases]
+        (testing (str "case: " given)
+          (is (= expected (gitlab-api/parse-user-string given))))))))
+
+(deftest parser-user-string--with-group
+  (testing "gitlab IDs that include a group are extracted as expected"
+    (let [expected "thing-engineering/wowthing/wowthing-sync"
+          cases ["https://gitlab.com/thing-engineering/wowthing/wowthing-sync"
+
+
+                 ;; all valid variabtions of the above
+
+
+                 "https://gitlab.com/thing-engineering/wowthing/wowthing-sync/" ;; trailing slash
+                 "http://gitlab.com/thing-engineering/wowthing/wowthing-sync" ;; http
+                 "https://www.gitlab.com/thing-engineering/wowthing/wowthing-sync" ;; leading 'www'
+
+                 ;; looser matching we can also support
+                 "https://www.gitlab.com/thing-engineering/wowthing/wowthing-sync/-/releases"
+                 "http://user:name@www.gitlab.com/thing-engineering/wowthing/wowthing-sync/?baz=bup&boo=#anchor"
+
+                 ;; only the first three segments are used at most
+                 "https://gitlab.com/thing-engineering/wowthing/wowthing-sync/foo/bar/baz"]]
+
       (doseq [given cases]
         (testing (str "case: " given)
           (is (= expected (gitlab-api/parse-user-string given))))))))
@@ -65,7 +90,7 @@
 
           game-track :retail
 
-          expected [{:download-url "https://gitlab.com/woblight/nitro/-/jobs/1307071222/artifacts/download"
+          expected [{:download-url "https://gitlab.com/woblight/nitro/-/releases/v1.0-0-gddcb65a/downloads/Nitro"
                      :version "v1.0-0-gddcb65a"
                      :game-track :retail}]
 
