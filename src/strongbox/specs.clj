@@ -275,7 +275,7 @@
                    :addon/source ;; for host resolver dispatch
                    :addon/source-id ;; unique identifier for host resolver
                    ]
-          :opt-un [::game-track-list ;; wowinterface, tukui
+          :opt-un [::game-track-list ;; wowinterface, tukui, github
                    ]))
 
 ;; the set of per-addon values provided by the remote host on each check

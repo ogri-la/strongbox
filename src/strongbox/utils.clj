@@ -632,7 +632,7 @@
   (map #(zipmap (map keyword head) %1) lines))
 
 (defn-spec guess-game-track (s/nilable ::sp/game-track)
-  "returns the first game track it finds in the given string, preferring `:classic-tbc`, then `:classic`, then `:retail`.
+  "returns the first game track it finds in the given string, preferring `:classic-tbc`, then `:classic`, then `:retail` (most to least specific).
   returns `nil` if no game track found."
   [string (s/nilable string?)]
   (when string

@@ -14,26 +14,43 @@
   (let [encoded-source-id (-> source-id clojure.string/lower-case (java.net.URLEncoder/encode "UTF-8"))]
     (str "https://gitlab.com/api/v4/projects/" encoded-source-id)))
 
-(defn parse-release
-  [release]
-  (let [supported-link-types #{"package" "other"} ;; the others are 'runbook' and 'image'
-        link-list (->> release
-                       :assets
-                       :links
-                       (filter (juxt supported-link-types :link-type)))
-        link (first link-list)]
-    {;; "The physical location of the asset can change at any time and the direct link remains unchanged"
-     ;; - https://docs.gitlab.com/ee/user/project/releases/index.html#permanent-links-to-release-assets
-     :download-url (:direct_asset_url link)
-     ;;:download-url (:url link)
-     :version (:tag_name release)
-     :game-track :retail}))
+(defn-spec parse-release (s/or :ok :addon/release-list, :error nil?)
+  "parses the list of 'links' in a gitlab release.
+  like github, we can't use the automatically generated bundles because the foldername inside the ZIP looks
+  like `Project-version` (AdiBags-v1.2.3) and may make use of templates that need rendering/processing before being
+  uploaded as a proper asset ('link')."
+  [release map?, game-track-list ::sp/game-track-list]
+  (let [release-game-track (utils/guess-game-track (:name release))
+        supported-link-types #{"package" "other"} ;; the others are 'runbook' and 'image'
+        link-release (fn [link]
+                       (let [link-game-track (utils/guess-game-track (:name link))
+                             game-track-list (into game-track-list [release-game-track link-game-track])]
+                         (for [game-track (set game-track-list)
+                               :when (not (nil? game-track))]
+                           {;; "The physical location of the asset can change at any time and the direct link remains unchanged"
+                            ;; - https://docs.gitlab.com/ee/user/project/releases/index.html#permanent-links-to-release-assets
+                            :download-url (:direct_asset_url link)
+                            :version (:tag_name release)
+                            :game-track game-track})))]
+    (->> release
+         :assets
+         :links
+         (filter (juxt false? :external))
+         (filter (juxt supported-link-types :link_type))
+         (map link-release)
+         flatten
+         (remove nil?))))
 
 (defn-spec expand-summary (s/or :ok :addon/release-list, :error nil?)
   [addon-summary :addon/expandable, game-track ::sp/game-track]
-  (let [url (-> addon-summary :source-id api-url (str "/releases"))
-        result (-> url http/download-with-backoff utils/from-json)]
-    (mapv parse-release result)))
+  ;; todo: sink errors
+  (let [result (-> addon-summary :source-id api-url (str "/releases") http/download-with-backoff utils/from-json)
+        known-game-tracks (get addon-summary :game-track-list [:retail])
+        release-list (->> result
+                          (map #(parse-release % known-game-tracks))
+                          flatten
+                          (group-by :game-track))]
+    (get release-list game-track)))
 
 (defn-spec parse-user-string (s/or :ok :addon/source-id :error nil?)
   "extracts the addon ID from the given `url`."
@@ -62,5 +79,5 @@
      ;; not available to the public. must be present, must be >= 0 :(
      ;; - https://docs.gitlab.com/ee/api/project_statistics.html
      :download-count 0
-     :game-track-list []
+     ;;:game-track-list [] ;; todo: check file listing and addon's toc for evidence of multi-game track support
      :tag-list []}))
