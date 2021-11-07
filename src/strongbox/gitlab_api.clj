@@ -37,18 +37,16 @@
          :links
          (filter (juxt false? :external))
          (filter (juxt supported-link-types :link_type))
-         (map link-release)
-         flatten
+         (mapcat link-release)
          (remove nil?))))
 
 (defn-spec expand-summary (s/or :ok :addon/release-list, :error nil?)
   [addon-summary :addon/expandable, game-track ::sp/game-track]
   ;; todo: sink errors
   (let [result (-> addon-summary :source-id api-url (str "/releases") http/download-with-backoff utils/from-json)
-        known-game-tracks (get addon-summary :game-track-list [:retail])
+        known-game-tracks (-> addon-summary :game-track-list utils/nilable (or [:retail]))
         release-list (->> result
-                          (map #(parse-release % known-game-tracks))
-                          flatten
+                          (mapcat #(parse-release % known-game-tracks))
                           (group-by :game-track))]
     (get release-list game-track)))
 

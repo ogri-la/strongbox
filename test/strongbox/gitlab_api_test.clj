@@ -64,7 +64,6 @@
                     :label "Nitro"
                     :name "nitro"
                     :download-count 0
-                    :game-track-list []
                     :tag-list []}
 
           ;; all of these should yield the above
@@ -85,6 +84,7 @@
                  :label "Nitro"
                  :name "nitro"
                  :download-count 0
+                 :game-track-list []
                  :tag-list []}
 
           game-track :retail
