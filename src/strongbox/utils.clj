@@ -325,6 +325,7 @@
 (defn-spec interface-version-to-game-track (s/or :ok ::sp/game-track, :err nil?)
   "converts an interface version like '80000' to a game track like ':retail'"
   [interface-version ::sp/interface-version]
+  ;; todo: this doesn't handle interface-version-to-game-version returning nil. change -> to some->
   (-> interface-version
       interface-version-to-game-version
       game-version-to-game-track))
@@ -708,3 +709,8 @@
   "removes element `x` from collection `coll`, returning a vector"
   [coll x]
   (into [] (remove #{x} coll)))
+
+(defn select-keys*
+  "same as clojure.set/select-keys, but with parameter order changed for threading."
+  [ks m]
+  (select-keys m ks))

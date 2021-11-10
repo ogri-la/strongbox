@@ -561,18 +561,19 @@
 (defn-spec import-addon nil?
   "goes looking for given url and if found adds it to the user catalogue and then installs it."
   [addon-url string?]
-  (if-let* [dry-run? true
-            addon-summary (find-addon addon-url dry-run?)
-            addon (core/expand-summary-wrapper addon-summary)]
-           ;; success! add to user-catalogue and proceed to install
-           (do (core/add-user-addon! addon-summary)
-               (core/install-addon-guard addon (core/selected-addon-dir))
-               ;;(core/db-reload-catalogue) ;; db-reload-catalogue will call `refresh` which we want to trigger in the gui instead
-               (swap! core/state assoc :db nil) ;; will force a reload of db
-               nil)
+  (binding [http/*cache* (core/cache)]
+    (if-let* [dry-run? true
+              addon-summary (find-addon addon-url dry-run?)
+              addon (core/expand-summary-wrapper addon-summary)]
+      ;; success! add to user-catalogue and proceed to install
+      (do (core/add-user-addon! addon-summary)
+          (core/install-addon-guard addon (core/selected-addon-dir))
+          ;;(core/db-reload-catalogue) ;; db-reload-catalogue will call `refresh` which we want to trigger in the gui instead
+          (swap! core/state assoc :db nil) ;; will force a reload of db
+          nil)
 
-           ;; failed to find or expand summary, probably because of selected game track.
-           nil))
+      ;; failed to find or expand summary, probably because of selected game track.
+      nil)))
 
 (defn-spec refresh-user-catalogue nil?
   "re-fetch each item in user catalogue using the URI and replace old entry with any updated details"

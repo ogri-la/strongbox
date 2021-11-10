@@ -1,13 +1,16 @@
 (ns strongbox.gitlab-api
   (:require
    [clojure.spec.alpha :as s]
-   [clojure.string]
+   [clojure.string :refer [ends-with? lower-case]]
    [orchestra.core :refer [defn-spec]]
-   ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
+   [taoensso.timbre :as log :refer [debug info warn error spy]]
    [strongbox
+    [toc :as toc]
     [http :as http]
-    [utils :as utils]
-    [specs :as sp]]))
+    [utils :as utils :refer [select-keys*]]
+    [specs :as sp]])
+  (:import
+   [java.util Base64]))
 
 (defn api-url
   [source-id]
@@ -50,6 +53,62 @@
                           (group-by :game-track))]
     (get release-list game-track)))
 
+;; ---
+
+(defn-spec base64-decode (s/or :ok? string?, :error nil?)
+  [string string?]
+  (String. (.decode (Base64/getDecoder) string)))
+
+(defn-spec download-decode-blob map?
+  [url ::sp/url]
+  (->> url http/download utils/from-json :content base64-decode toc/-parse-toc-file))
+
+(defn-spec find-toc-files map?
+  "returns a map of {toc-filename->blob-url}"
+  [source-id :addon/source-id]
+  (let [result (-> source-id
+                   api-url
+                   (str "/repository/tree")
+                   http/download
+                   utils/from-json)
+
+        blob-url (fn [item]
+                   ;; {"Foo.toc" "https://gitlab.com/api/v4/projects/foo%2Fbar/repository/blobs/125c899d813d2e11c976879f28dccc2a36fd207b"}
+                   {(:name item) (str (api-url source-id) "/repository/blobs/" (:id item))})
+        
+        toc-files (->> result
+                       (filter #(-> % :path lower-case (ends-with? ".toc")))
+                       (map blob-url)
+                       (into {}))]
+
+    toc-files))
+
+(defn-spec guess-game-track-list ::sp/game-track-list
+  [source-id :addon/source-id]
+  (let [toc-file-map (spy :warn (find-toc-files source-id))]
+    ;; if we have multiple toc files, assume multi-toc and check for prefixes
+    (if (> (count toc-file-map) 1)
+      (let [key-check (fn [key]
+                        (cond
+                          (ends-with? key "-bcc.toc") :classic-tbc
+                          (ends-with? key "-classic.toc") :classic
+                          :else :retail))]
+        (->> toc-file-map keys (map lower-case) (map key-check) set sort vec))
+
+      ;; otherwise, download toc file and analyse it's contents
+      ;; todo: test, no toc-file-list is empty
+      (->> toc-file-map
+           vals ;; blob urls
+           first
+           download-decode-blob
+           (select-keys* [:interface :#interface])
+           vals
+           (map utils/to-int)
+           (map utils/interface-version-to-game-track)
+           (remove nil?)
+           set
+           vec))))
+
 (defn-spec parse-user-string (s/or :ok :addon/source-id :error nil?)
   "extracts the addon ID from the given `url`."
   [url ::sp/url]
@@ -77,5 +136,5 @@
      ;; not available to the public. must be present, must be >= 0 :(
      ;; - https://docs.gitlab.com/ee/api/project_statistics.html
      :download-count 0
-     ;;:game-track-list [] ;; todo: check file listing and addon's toc for evidence of multi-game track support
+     :game-track-list (guess-game-track-list source-id)
      :tag-list []}))

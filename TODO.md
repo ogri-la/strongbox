@@ -10,6 +10,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * multi-toc support
     - https://github.com/Stanzilla/WoWUIBugs/issues/68#issuecomment-830351390
+    - https://gitlab.com/woblight/strategos 
+        - has no otherwise identifying game track in it's name, toc file or releases
+        - but it does support all three versions of wow
 
 * add release.json support for github/gitlab addons
 

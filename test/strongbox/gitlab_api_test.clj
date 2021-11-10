@@ -50,11 +50,16 @@
         (testing (str "case: " given)
           (is (= expected (gitlab-api/parse-user-string given))))))))
 
-(deftest find-addon
+(deftest find-addon--multi-toc
   (testing "user input can be parsed and turned into a catalogue item."
-    (let [fixture (slurp (fixture-path "gitlab-repo--woblight-nitro.json"))
+    (let [repo-fixture (slurp (fixture-path "gitlab-repo--woblight-nitro.json"))
+          repo-tree-fixture (slurp (fixture-path "gitlab-repo-tree--woblight-nitro.json"))
+
           fake-routes {"https://gitlab.com/api/v4/projects/woblight%2Fnitro"
-                       {:get (fn [req] {:status 200 :body fixture})}}
+                       {:get (fn [req] {:status 200 :body repo-fixture})}
+
+                       "https://gitlab.com/api/v4/projects/woblight%2Fnitro/repository/tree"
+                       {:get (fn [req] {:status 200 :body repo-tree-fixture})}}
 
           expected {:url "https://gitlab.com/woblight/nitro"
                     :created-date "2020-09-07T08:30:52.562Z"
@@ -64,7 +69,9 @@
                     :label "Nitro"
                     :name "nitro"
                     :download-count 0
-                    :tag-list []}
+                    :tag-list []
+                    :game-track-list [:classic :classic-tbc :retail]
+                    }
 
           ;; all of these should yield the above
           cases ["woblight/nitro"
@@ -73,6 +80,8 @@
         (doseq [given cases]
           (testing (str "case: " given)
             (is (= expected (gitlab-api/find-addon given)))))))))
+
+;; todo: test for toc inspection
 
 (deftest expand-summary
   (testing "expand-summary correctly extracts and adds additional properties"
