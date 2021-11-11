@@ -49,6 +49,7 @@
   (let [result (-> addon-summary :source-id api-url (str "/releases") http/download-with-backoff utils/from-json)
         known-game-tracks (-> addon-summary :game-track-list utils/nilable (or [:retail]))
         release-list (->> result
+                          (remove :upcoming_release)
                           (mapcat #(parse-release % known-game-tracks))
                           (group-by :game-track))]
     (get release-list game-track)))
@@ -85,7 +86,7 @@
 
 (defn-spec guess-game-track-list ::sp/game-track-list
   [source-id :addon/source-id]
-  (let [toc-file-map (spy :warn (find-toc-files source-id))]
+  (let [toc-file-map (find-toc-files source-id)]
     ;; if we have multiple toc files, assume multi-toc and check for prefixes
     (if (> (count toc-file-map) 1)
       (let [key-check (fn [key]

@@ -31,7 +31,7 @@
       "trailers": {},
       "web_url": "https://gitlab.com/woblight/nitro/-/commit/ddcb65ae02d437ab0bc930cdfaccf8d93012f725"
     },
-    "upcoming_release": false,
+    "upcoming_release": true,
     "commit_path": "/woblight/nitro/-/commit/ddcb65ae02d437ab0bc930cdfaccf8d93012f725",
     "tag_path": "/woblight/nitro/-/tags/v1.0-0-gddcb65a",
     "assets": {
