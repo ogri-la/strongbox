@@ -1,0 +1,79 @@
+[
+  {
+    "name": "Release v1.0-0-gddcb65a",
+    "tag_name": "v1.0-0-gddcb65a",
+    "description": "Website: https://woblight.gitlab.io/overview/Nitro/",
+    "created_at": "2021-05-31T18:51:33.790Z",
+    "released_at": "2021-05-31T18:51:33.790Z",
+    "author": {
+      "id": 1103913,
+      "name": "WobLight",
+      "username": "woblight",
+      "state": "active",
+      "avatar_url": "https://gitlab.com/uploads/-/system/user/avatar/1103913/avatar.png",
+      "web_url": "https://gitlab.com/woblight"
+    },
+    "commit": {
+      "id": "ddcb65ae02d437ab0bc930cdfaccf8d93012f725",
+      "short_id": "ddcb65ae",
+      "created_at": "2021-05-31T20:07:22.000+02:00",
+      "parent_ids": [
+        "96b9b67dae1d908f6c9c3036d4a29e70a848e973"
+      ],
+      "title": "Update toc files",
+      "message": "Update toc files\n",
+      "author_name": "WobLight",
+      "author_email": "woblight@gmail.com",
+      "authored_date": "2021-05-31T20:07:22.000+02:00",
+      "committer_name": "WobLight",
+      "committer_email": "woblight@gmail.com",
+      "committed_date": "2021-05-31T20:07:22.000+02:00",
+      "trailers": {},
+      "web_url": "https://gitlab.com/woblight/nitro/-/commit/ddcb65ae02d437ab0bc930cdfaccf8d93012f725"
+    },
+    "upcoming_release": false,
+    "commit_path": "/woblight/nitro/-/commit/ddcb65ae02d437ab0bc930cdfaccf8d93012f725",
+    "tag_path": "/woblight/nitro/-/tags/v1.0-0-gddcb65a",
+    "assets": {
+      "count": 5,
+      "sources": [
+        {
+          "format": "zip",
+          "url": "https://gitlab.com/woblight/nitro/-/archive/v1.0-0-gddcb65a/nitro-v1.0-0-gddcb65a.zip"
+        },
+        {
+          "format": "tar.gz",
+          "url": "https://gitlab.com/woblight/nitro/-/archive/v1.0-0-gddcb65a/nitro-v1.0-0-gddcb65a.tar.gz"
+        },
+        {
+          "format": "tar.bz2",
+          "url": "https://gitlab.com/woblight/nitro/-/archive/v1.0-0-gddcb65a/nitro-v1.0-0-gddcb65a.tar.bz2"
+        },
+        {
+          "format": "tar",
+          "url": "https://gitlab.com/woblight/nitro/-/archive/v1.0-0-gddcb65a/nitro-v1.0-0-gddcb65a.tar"
+        }
+      ],
+      "links": [
+        {
+          "id": 227024,
+          "name": "Nitro-tbc",
+          "url": "https://gitlab.com/woblight/nitro/-/jobs/1307071222/artifacts/download",
+          "direct_asset_url": "https://gitlab.com/woblight/nitro/-/releases/v1.0-0-gddcb65a/downloads/Nitro",
+          "external": false,
+          "link_type": "package"
+        }
+      ]
+    },
+    "evidences": [
+      {
+        "sha": "c2d14e2291e5a9b2dda089fa4c801cbacfe1ad1ef9ed",
+        "filepath": "https://gitlab.com/woblight/nitro/-/releases/v1.0-0-gddcb65a/evidences/1092308.json",
+        "collected_at": "2021-05-31T18:51:35.251Z"
+      }
+    ],
+    "_links": {
+      "self": "https://gitlab.com/woblight/nitro/-/releases/v1.0-0-gddcb65a"
+    }
+  }
+]

@@ -3,7 +3,7 @@
    [clojure.spec.alpha :as s]
    [clojure.string :refer [ends-with? lower-case]]
    [orchestra.core :refer [defn-spec]]
-   [taoensso.timbre :as log :refer [debug info warn error spy]]
+   ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [strongbox
     [toc :as toc]
     [http :as http]
@@ -76,7 +76,7 @@
         blob-url (fn [item]
                    ;; {"Foo.toc" "https://gitlab.com/api/v4/projects/foo%2Fbar/repository/blobs/125c899d813d2e11c976879f28dccc2a36fd207b"}
                    {(:name item) (str (api-url source-id) "/repository/blobs/" (:id item))})
-        
+
         toc-files (->> result
                        (filter #(-> % :path lower-case (ends-with? ".toc")))
                        (map blob-url)
