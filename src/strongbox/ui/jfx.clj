@@ -1122,7 +1122,7 @@
                                  :describe (fn [row]
                                              {:graphic (href-to-hyperlink row)})}
                   :cell-value-factory identity}
-         :source-id {:min-width 60 :pref-width 100 :max-width 200}
+         :source-id {:min-width 60 :pref-width 150}
          :name {:min-width 100 :pref-width 300}
          :description {:min-width 150 :pref-width 450}
          :tag-list {:min-width 200 :pref-width 300}

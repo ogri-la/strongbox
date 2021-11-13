@@ -17,6 +17,7 @@
    [java-time :as jt]
    [java-time.format])
   (:import
+   [java.util Base64]
    [org.ocpsoft.prettytime.units Decade]
    [org.ocpsoft.prettytime PrettyTime]))
 
@@ -325,10 +326,9 @@
 (defn-spec interface-version-to-game-track (s/or :ok ::sp/game-track, :err nil?)
   "converts an interface version like '80000' to a game track like ':retail'"
   [interface-version ::sp/interface-version]
-  ;; todo: this doesn't handle interface-version-to-game-version returning nil. change -> to some->
-  (-> interface-version
-      interface-version-to-game-version
-      game-version-to-game-track))
+  (some-> interface-version
+          interface-version-to-game-version
+          game-version-to-game-track))
 
 (defn-spec game-track-to-latest-game-version (s/or :ok string?, :err nil?)
   "':classic' => '1.13.0'"
@@ -711,6 +711,11 @@
   (into [] (remove #{x} coll)))
 
 (defn select-keys*
-  "same as clojure.set/select-keys, but with parameter order changed for threading."
+  "same as `select-keys`, but with parameter order changed for expression threading."
   [ks m]
   (select-keys m ks))
+
+(defn-spec base64-decode (s/or :ok? string?, :error nil?)
+  [string (s/nilable string?)]
+  (when string
+    (String. (.decode (Base64/getDecoder) string))))

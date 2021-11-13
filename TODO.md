@@ -29,7 +29,14 @@ see CHANGELOG.md for a more formal list of changes by release
         - https://gitlab.com/shrugal/PersoLootRoll
         - any others ...?
 
+* refresh catalogue is not so healthy
+
 ## todo bucket (no particular order)
+
+* column profiles
+    - 'skinny', 'fat', 'default'
+
+* offer to clean up .nfo files when removing a directory
 
 * http, curseforge, don't pause between requests if resource was cached
 

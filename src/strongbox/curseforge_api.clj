@@ -165,6 +165,7 @@
          (group-by :game-track))))
 
 (defn-spec expand-summary (s/or :ok :addon/release-list, :error nil?)
+  "fetches a list of releases from the addon host for the given `addon-summary`"
   [addon-summary :addon/expandable, game-track ::sp/game-track]
   (let [url (api-url "/addon/%s" (:source-id addon-summary))
         result (some-> url http/download-with-backoff http/sink-error utils/from-json)]

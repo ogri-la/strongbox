@@ -529,10 +529,9 @@
                                           "Failed. URL must be:"
                                           ["valid"
                                            "originate from gitlab.com"
-                                           "addon uses releases with 'packages'"
-                                           "latest package has a 'link'"
-                                           "link must be a .zip file"
-                                           "zip file must be structured like an addon"])))
+                                           "addon uses releases"
+                                           "latest release has a custom asset with a 'link'"
+                                           "link type must be either a 'package' or 'other'"])))
 
                               :else
                               ;; look in the current catalogue. emit an error if we fail

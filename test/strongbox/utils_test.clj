@@ -295,8 +295,8 @@
                  ["beta (tbc) 2.13" :classic-tbc]
                  ["beta (bcc) 3.24" :classic-tbc]
 
-                 ;; 2021-06-02 `-bcc` appears to have been adopted by BigWigs packager
-                 ;; we'll probably see much more use of it now
+                 ;; 2021-06-02 `-bcc` appears to have been adopted by BigWigs packager.
+                 ;; we'll probably see much more use of it now.
                  ;; classic-bcc
                  ["WeakAuras-3.4.2-bcc.zip" :classic-tbc]
                  ["classic-bcc" :classic-tbc]
@@ -382,3 +382,45 @@
                   utils/*pretty-dt-printer* utils/-pretty-dt-printer-dummy]
       (doseq [[given expected] cases]
         (is (= expected (utils/format-dt given)))))))
+
+(deftest base64-decode
+  (let [cases [;; input should be URLEncoded first
+               [nil nil]
+               ["" ""]]]
+    (doseq [[given expected] cases]
+      (is (= expected (utils/base64-decode given))))))
+
+(deftest interface-version-to-game-track
+  (let [cases [[10123 :classic]
+               [20123 :classic-tbc]
+               [30123 :retail] ;; for now
+
+               ;; bad interface versions
+               [0 nil]
+               [1111 nil]]]
+    (doseq [[given expected] cases]
+      (is (= expected (utils/interface-version-to-game-track given))))))
+
+(deftest ltrim
+  (let [cases [["" ""]
+               [" " ""]
+               ["  " ""]
+               [" foo " "foo "]]]
+    (doseq [[given expected] cases]
+      (is (= expected (utils/ltrim given " "))))))
+
+(deftest rtrim
+  (let [cases [["" ""]
+               [" " ""]
+               ["  " ""]
+               [" foo " " foo"]]]
+    (doseq [[given expected] cases]
+      (is (= expected (utils/rtrim given " "))))))
+
+(deftest trim
+  (let [cases [["" ""]
+               [" " ""]
+               ["  " ""]
+               [" foo " "foo"]]]
+    (doseq [[given expected] cases]
+      (is (= expected (utils/trim given " "))))))

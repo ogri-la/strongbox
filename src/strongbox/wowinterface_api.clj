@@ -17,7 +17,7 @@
     (second (re-find #"aid=(\d+)" url))))
 
 (defn-spec expand-summary (s/or :ok :addon/release-list, :error nil?)
-  "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per addon required"
+  "fetches a list of releases from the addon host for the given `addon-summary`"
   [addon-summary :addon/expandable, game-track ::sp/game-track]
   ;; this check is a little different to the others.
   ;; the `game-track-list` is stored in the catalogue for wowinterface because it's available at creation time.

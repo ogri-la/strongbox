@@ -8,17 +8,17 @@
     [toc :as toc]
     [http :as http]
     [utils :as utils :refer [select-keys*]]
-    [specs :as sp]])
-  (:import
-   [java.util Base64]))
+    [specs :as sp]]))
 
-(defn api-url
-  [source-id]
-  (let [encoded-source-id (-> source-id clojure.string/lower-case (java.net.URLEncoder/encode "UTF-8"))]
+(defn-spec api-url ::sp/url
+  "returns a gitlab API URL prefix where the `gitlab-source-id` is properly encoded"
+  [gitlab-source-id string?]
+  (let [encoded-source-id (-> gitlab-source-id clojure.string/lower-case (java.net.URLEncoder/encode "UTF-8"))]
     (str "https://gitlab.com/api/v4/projects/" encoded-source-id)))
 
 (defn-spec parse-release (s/or :ok :addon/release-list, :error nil?)
   "parses the list of 'links' in a gitlab release.
+
   like github, we can't use the automatically generated bundles because the foldername inside the ZIP looks
   like `Project-version` (AdiBags-v1.2.3) and may make use of templates that need rendering/processing before being
   uploaded as a proper asset ('link')."
@@ -44,9 +44,17 @@
          (remove nil?))))
 
 (defn-spec expand-summary (s/or :ok :addon/release-list, :error nil?)
+  "fetches a list of releases from the addon host for the given `addon-summary`"
   [addon-summary :addon/expandable, game-track ::sp/game-track]
-  ;; todo: sink errors
-  (let [result (-> addon-summary :source-id api-url (str "/releases") http/download-with-backoff utils/from-json)
+  (let [result (some-> addon-summary
+                       :source-id
+                       api-url
+                       (str "/releases")
+                       http/download-with-backoff
+                       http/sink-error
+                       utils/from-json)
+        ;; if addon has no indication what game track it is, assume `:retail`.
+        ;; we should have *some* idea from originally parsing the toc file or guessing from the multi-toc in `find-addon`
         known-game-tracks (-> addon-summary :game-track-list utils/nilable (or [:retail]))
         release-list (->> result
                           (remove :upcoming_release)
@@ -56,22 +64,26 @@
 
 ;; ---
 
-(defn-spec base64-decode (s/or :ok? string?, :error nil?)
-  [string string?]
-  (String. (.decode (Base64/getDecoder) string)))
-
-(defn-spec download-decode-blob map?
+(defn-spec download-decode-blob (s/or :ok map?, :error nil?)
+  "downloads and base64 decodes the `:content` in a Gitlab `repository/blobs` 'blob' result"
   [url ::sp/url]
-  (->> url http/download utils/from-json :content base64-decode toc/-parse-toc-file))
+  (some->> url
+           http/download
+           http/sink-error
+           utils/from-json
+           :content
+           utils/base64-decode
+           toc/-parse-toc-file))
 
 (defn-spec find-toc-files map?
-  "returns a map of {toc-filename->blob-url}"
+  "returns a map of {filename.toc blob-url, ...}"
   [source-id :addon/source-id]
-  (let [result (-> source-id
-                   api-url
-                   (str "/repository/tree")
-                   http/download
-                   utils/from-json)
+  (let [result (some-> source-id
+                       api-url
+                       (str "/repository/tree")
+                       http/download
+                       http/sink-error
+                       utils/from-json)
 
         blob-url (fn [item]
                    ;; {"Foo.toc" "https://gitlab.com/api/v4/projects/foo%2Fbar/repository/blobs/125c899d813d2e11c976879f28dccc2a36fd207b"}
@@ -84,7 +96,11 @@
 
     toc-files))
 
-(defn-spec guess-game-track-list ::sp/game-track-list
+(defn-spec guess-game-track-list (s/or :ok ::sp/game-track-list, :error nil?)
+  "attempts to guess the game tracks an addon may support.
+  if multiple toc files exist it assumes they are being used for classic versions of the game.
+  if only a single toc file exists, it downloads and inspects the `:interface` value in the toc file.
+  if not toc files are found it returns `nil`."
   [source-id :addon/source-id]
   (let [toc-file-map (find-toc-files source-id)]
     ;; if we have multiple toc files, assume multi-toc and check for prefixes
@@ -97,45 +113,58 @@
         (->> toc-file-map keys (map lower-case) (map key-check) set sort vec))
 
       ;; otherwise, download toc file and analyse it's contents
-      ;; todo: test, no toc-file-list is empty
-      (->> toc-file-map
-           vals ;; blob urls
-           first
-           download-decode-blob
-           (select-keys* [:interface :#interface])
-           vals
-           (map utils/to-int)
-           (map utils/interface-version-to-game-track)
-           (remove nil?)
-           set
-           vec))))
+      (some->> toc-file-map
+               vals ;; blob urls
+               first
+               download-decode-blob
+               (select-keys* [:interface :#interface])
+               vals
+               (map utils/to-int)
+               (map utils/interface-version-to-game-track)
+               (remove nil?)
+               set
+               sort
+               vec))))
 
 (defn-spec parse-user-string (s/or :ok :addon/source-id :error nil?)
-  "extracts the addon ID from the given `url`."
+  "extracts the addon ID from the given `url`.
+  returns `nil` if an addon ID cannot be found."
   [url ::sp/url]
-  (let [bits (take 3 (-> url java.net.URL. .getPath
-                         (clojure.string/split #"/-")
+  (let [;; there will be 2-3 bits in a gitlab url after reaching the delimiter "/-/"
+        bits (take 3 (-> url java.net.URL. .getPath ;; "/group/owner/project/-/foo". "/owner/project/-/foo"
+                         (clojure.string/split #"/-") ;; ["/group/owner/project" "/foo"]
                          first
-                         (utils/trim "/")
-                         (clojure.string/split #"/")))]
-    (clojure.string/join "/" bits)))
+                         (utils/trim "/") ;; "group/owner/project", "owner/project"
+                         (clojure.string/split #"/")))] ;; ["group" "owner" "project"]
+    (when (> (count bits) 1)
+      (clojure.string/join "/" bits))))
 
 (defn-spec find-addon (s/or :ok :addon/summary, :error nil?)
+  "downloads the Gitlab project repository data and extracts an addon summary from it."
   [source-id :addon/source-id]
-  (let [url (api-url source-id)
-        result (-> url http/download-with-backoff utils/from-json)]
-
-    {:url (:web_url result)
-     :created-date (:created_at result)
-     :updated-date (:last_activity_at result)
-     :source "gitlab"
-     ;; prefer the github-like "owner/repo" id over the number id.
-     ;; we have a choice so go with the more consistent and humane option.
-     :source-id (:path_with_namespace result)
-     :label (:name result)
-     :name (:path result)
-     ;; not available to the public. must be present, must be >= 0 :(
-     ;; - https://docs.gitlab.com/ee/api/project_statistics.html
-     :download-count 0
-     :game-track-list (guess-game-track-list source-id)
-     :tag-list []}))
+  (when-let [result (some-> source-id
+                            api-url
+                            http/download-with-backoff
+                            http/sink-error
+                            utils/from-json)]
+    (let [game-track-list (guess-game-track-list source-id)
+          addon-summary
+          {:url (:web_url result)
+           :created-date (:created_at result)
+           :updated-date (:last_activity_at result)
+           :source "gitlab"
+           ;; prefer the github-like "owner/repo" id over the number id.
+           ;; we have a choice so go with the more consistent and humane option.
+           :source-id (:path_with_namespace result)
+           :label (:name result)
+           :name (:path result)
+           ;; not available to the public. must be present, must be >= 0 :(
+           ;; - https://docs.gitlab.com/ee/api/project_statistics.html
+           :download-count 0
+           ;; needs more thought. authors are tagging the repo against other repos rather than the addon, so
+           ;; we get labels like 'world of warcraft' and 'lua' which are not useful.
+           :tag-list [] ;; (get result :tag_list []) 
+           }]
+      (if game-track-list
+        (assoc addon-summary :game-track-list game-track-list)
+        addon-summary))))
