@@ -4,7 +4,7 @@
 
 It supports Linux and macOS.
 
-It supports addons hosted by Curseforge, wowinterface, Tukui and Github.
+It supports addons hosted by Curseforge, wowinterface, Tukui, Github and Gitlab.
 
 [![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-installed-skinny-thumbnail.jpg)](./screenshots/screenshot-4.7.0-installed-skinny.png?raw=true)
 [![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-installed-thumbnail.jpg)](./screenshots/screenshot-4.7.0-installed.png?raw=true)
@@ -59,6 +59,7 @@ Afterwards, use the `Update all` button to update all addons with new versions a
     - wowinterface
     - tukui
     - github (using *releases*)
+    - gitlab (using *releases*)
 * [import and export lists of addons](#import-and-export-lists-of-addons)
 * [safeguards against bad addons](#safeguards-against-bad-addons)
 * [warnings when addons install other bundled addons](#warnings-when-addons-install-other-bundled-addons)
@@ -98,13 +99,14 @@ This software interacts with the following remote hosts:
 * [api.github.com](https://developer.github.com/v3/repos/releases)
     - to download repository and release data for addons hosted on Github
     - to download the latest `strongbox` release data
+* [gitlab.com](https://gitlab.com)
 * [github.com/ogri-la/strongbox-catalogue](https://github.com/ogri-la/strongbox-catalogue), to download addon catalogues
 
 These hosts *may* redirect requests to other hosts.
 
 These interactions use a HTTP user agent header unique to `strongbox` so that it may be identified easily:
 
-    "strongbox/4.0 (https://github.com/ogri-la/strongbox)"
+    "strongbox/4.7 (https://github.com/ogri-la/strongbox)"
 
 Running strongbox with `--debug` will generate a file called "debug.log" that I may ask you to upload if you report a 
 bug. *Some* of the details it contains are:
@@ -210,11 +212,12 @@ Strongbox supports installing addons from the following addon hosts:
 * [curseforge](https://www.curseforge.com/wow/addons)
 * [wowinterface](https://wowinterface.com/addons.php)
 * [tukui](https://www.tukui.org)
-* [github](https://www.github.com), using *releases*
+* [github](https://www.github.com)
+* [gitlab][https://gitlab.com)
 
 Click the `search` tab and begin typing. Select the addon you wish to install and click the `install selected` button.
 
-Addons hosted on Github must meet [certain requirements](./github-addons.md) before they can be installed.
+Addons hosted on Github and Gitlab must be using releases with custom assets before they can be installed.
 
 #### Github API authentication
 
@@ -240,9 +243,9 @@ Click `File` and then select `Export list of addons`.
 
 This allows for simple backups of the *current addon directory* and the sharing of lists of addons.
 
-Github addons installed in *any* addon directory can be exported as a single list.
+Addons installed using `File -> Import addon` in *any* addon directory can be exported as a single list.
 
-Click `File` and then select `Export Github addon list`.
+Click `File` and then select `Export the user-catalogue`.
 
 ### safeguards against bad addons
 
@@ -297,6 +300,7 @@ Strongbox currently supports installing previous releases for:
 
 * Curseforge
 * Github
+* Gitlab
 
 ### pinning an addon to a specific release
 

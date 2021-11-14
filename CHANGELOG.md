@@ -8,9 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Gitlab support.
+    - similar to addons hosted on Github, Gitlab addons must be using releases with custom assets (not the default ones).
+
 ### Changed
 
+* the 'source-id' column in the GUI has had it's max width removed.
+    - this is because Gitlab addons can have very long IDs
+
 ### Fixed
+
+* a minor bug in translating an interface version (10100) to a game track ("classic").
+    - a bad value might have caused a stacktrace in the console
 
 ### Removed
 
