@@ -16,6 +16,7 @@
     [curseforge-api :as curseforge-api]
     [wowinterface :as wowinterface]
     [wowinterface-api :as wowinterface-api]
+    [gitlab-api :as gitlab-api]
     [github-api :as github-api]]))
 
 (defn-spec -expand-summary (s/or :ok :addon/expanded, :error nil?)
@@ -25,6 +26,7 @@
   [addon :addon/expandable, game-track ::sp/game-track]
   (let [dispatch-map {"curseforge" curseforge-api/expand-summary
                       "wowinterface" wowinterface-api/expand-summary
+                      "gitlab" gitlab-api/expand-summary
                       "github" github-api/expand-summary
                       "tukui" tukui-api/expand-summary
                       "tukui-classic" tukui-api/expand-summary
@@ -257,6 +259,7 @@
   "given a string from the user, figures out the addon source (github, etc), calls the right module and returns a stub"
   [uin string?]
   (let [dispatch-map {"github" github-api/parse-user-string
+                      "gitlab" gitlab-api/parse-user-string
                       "wowinterface" wowinterface-api/parse-user-string
                       "curseforge" curseforge-api/parse-user-string
                       "tukui" tukui-api/parse-user-string

@@ -38,7 +38,7 @@
     :else nil))
 
 (defn-spec expand-summary (s/or :ok :addon/release-list, :error nil?)
-  "given a summary, adds the remaining attributes that couldn't be gleaned from the summary page. one additional look-up per ::addon required"
+  "fetches a list of releases from the addon host for the given `addon-summary`"
   [addon :addon/expandable, game-track ::sp/game-track]
   (let [source-id (:source-id addon)
         source-id-str (str source-id)

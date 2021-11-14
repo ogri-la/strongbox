@@ -1498,15 +1498,15 @@
              :download-count 1034,
              :label "A New Simple Percent",
              :name "a-new-simple-percent",
-             :source "gitlab",
+             :source "gitplex",
              :source-id "user/repo",
              :tag-list [:unit-frames],
-             :url "https://www.gitlab.com/user/repo"}]}
+             :url "https://www.gitplex.com/user/repo"}]}
 
           dummy-catalogue (utils/to-json future-data)
           fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                        {:get (fn [req] {:status 200 :body dummy-catalogue})}}
-          expected-messages ["addon 'A New Simple Percent' is from an unsupported source 'gitlab'."
+          expected-messages ["addon 'A New Simple Percent' is from an unsupported source 'gitplex'."
                              "refresh"]]
 
       (with-global-fake-routes-in-isolation fake-routes

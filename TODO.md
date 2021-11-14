@@ -6,13 +6,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-## todo
-
-* multi-toc support
-    - https://github.com/Stanzilla/WoWUIBugs/issues/68#issuecomment-830351390
-
-* add release.json support for github/gitlab addons
-
 * gitlab as addon host
     - https://gitlab.com/search?search=wow+addon
     - returned to bucket 2019-12-04, notes:
@@ -26,7 +19,28 @@ see CHANGELOG.md for a more formal list of changes by release
         - https://gitlab.com/shrugal/PersoLootRoll
         - any others ...?
 
+## todo
+
+* multi-toc support
+    - https://github.com/Stanzilla/WoWUIBugs/issues/68#issuecomment-830351390
+    - https://gitlab.com/woblight/strategos 
+        - has no otherwise identifying game track in it's name, toc file or releases
+        - but it does support all three versions of wow
+
+* add release.json support for github/gitlab addons
+
+* refresh catalogue is not so healthy
+
 ## todo bucket (no particular order)
+
+* gitlab, add optional API authentication like github
+
+* column profiles
+    - 'skinny', 'fat', 'default'
+
+* offer to clean up .nfo files when removing a directory
+
+* http, curseforge, don't pause between requests if resource was cached
 
 * bug, stacktrace on double refresh
 
@@ -219,6 +233,8 @@ see CHANGELOG.md for a more formal list of changes by release
 * remove the (pinned) and (installed) labels from from the 'available' column
 * drop support catalogue v1
     - a prerequisite for v5 then would be introducing a new catalogue
+* readme, the ~your machine's `hostname`~ bit.
+* readme, the "Original Swing GUI was last available in version 3.x using" bit
 
 ## catalogue v3 / capture more addon data
 

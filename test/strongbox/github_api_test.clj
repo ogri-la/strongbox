@@ -10,7 +10,8 @@
    [clj-http.fake :refer [with-fake-routes-in-isolation]]))
 
 (deftest parse-user-string
-  (let [;; all of these should yield the above
+  (let [expected "Aviana/HealComm"
+        ;; all of these should yield the above
         cases ["https://github.com/Aviana/HealComm" ;; perfect case
 
                ;; all valid variations of the above
@@ -25,8 +26,7 @@
                "https://github.com/Aviana/HealComm/foo/bar/baz"
 
                ;; leading 'www'
-               "https://www.github.com/Aviana/HealComm"]
-        expected "Aviana/HealComm"]
+               "https://www.github.com/Aviana/HealComm"]]
     (doseq [given cases]
       (testing (str "case: " given)
         (is (= expected (github-api/parse-user-string given)))))))

@@ -4,7 +4,7 @@
     [specs :as sp]
     [constants :as constants]]
    [clojure.java.shell]
-   [clojure.string :refer [trim lower-case]]
+   [clojure.string :refer [lower-case]]
    [clojure.java.io]
    [clojure.spec.alpha :as s]
    [clojure.pprint]
@@ -17,6 +17,7 @@
    [java-time :as jt]
    [java-time.format])
   (:import
+   [java.util Base64]
    [org.ocpsoft.prettytime.units Decade]
    [org.ocpsoft.prettytime PrettyTime]))
 
@@ -325,9 +326,9 @@
 (defn-spec interface-version-to-game-track (s/or :ok ::sp/game-track, :err nil?)
   "converts an interface version like '80000' to a game track like ':retail'"
   [interface-version ::sp/interface-version]
-  (-> interface-version
-      interface-version-to-game-version
-      game-version-to-game-track))
+  (some-> interface-version
+          interface-version-to-game-version
+          game-version-to-game-track))
 
 (defn-spec game-track-to-latest-game-version (s/or :ok string?, :err nil?)
   "':classic' => '1.13.0'"
@@ -364,6 +365,11 @@
   [s string?, m string?]
   (let [pattern (java.util.regex.Pattern/compile (format "[%s]*$" m))]
     (clojure.string/replace s pattern "")))
+
+(defn-spec trim string?
+  "strips leading and trailing chars in `m` from `s`"
+  [s string?, m string?]
+  (-> s (ltrim m) (rtrim m)))
 
 (defn-spec replace-file-ext (s/or :ok ::sp/file, :error nil?)
   [path ::sp/file, ext string?]
@@ -627,7 +633,7 @@
   (map #(zipmap (map keyword head) %1) lines))
 
 (defn-spec guess-game-track (s/nilable ::sp/game-track)
-  "returns the first game track it finds in the given string, preferring `:classic-tbc`, then `:classic`, then `:retail`.
+  "returns the first game track it finds in the given string, preferring `:classic-tbc`, then `:classic`, then `:retail` (most to least specific).
   returns `nil` if no game track found."
   [string (s/nilable string?)]
   (when string
@@ -651,6 +657,7 @@
                         (subs host 4)
                         host)]
     (case host-sans-www
+      "gitlab.com" "gitlab"
       "github.com" "github"
       "wowinterface.com" "wowinterface"
       "curseforge.com" "curseforge"
@@ -702,3 +709,13 @@
   "removes element `x` from collection `coll`, returning a vector"
   [coll x]
   (into [] (remove #{x} coll)))
+
+(defn select-keys*
+  "same as `select-keys`, but with parameter order changed for expression threading."
+  [ks m]
+  (select-keys m ks))
+
+(defn-spec base64-decode (s/or :ok? string?, :error nil?)
+  [string (s/nilable string?)]
+  (when string
+    (String. (.decode (Base64/getDecoder) string))))
