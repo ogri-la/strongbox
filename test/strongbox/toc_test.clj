@@ -76,10 +76,12 @@ SomeAddon.lua")
                     :#interface "11302"}]
       (is (= expected (toc/-parse-toc-file toc-file-contents))))))
 
+;; todo: tests for reading suffixed data
 (deftest parse-addon-toc-guard
   (testing "parsing of scraped toc-file key-vals"
     (let [addon-path (join fs/*cwd* "SomeAddon")
           toc-file-path (join addon-path "SomeAddon.toc")
+          game-track nil
           expected {:name "addon-name"
                     :dirname "SomeAddon"
                     :label "Addon Name"
@@ -91,7 +93,7 @@ SomeAddon.lua")
                     :source-id 54321}]
       (fs/mkdir addon-path)
       (spit toc-file-path toc-file-contents)
-      (is (= expected (toc/parse-addon-toc-guard addon-path))))))
+      (is (= expected (toc/parse-addon-toc-guard addon-path game-track))))))
 
 (deftest parse-addon-toc
   (testing "parsing scraped keyvals in .toc yields expected values"

@@ -93,21 +93,20 @@
 (defn-spec read-addon-dir (s/or :ok map?, :error nil?)
   "returns a map of key-vals scraped from the .toc file in the given `addon-dir`.
   called without (or with a nil) `game-track`, returns the contents of the default 'SomeAddon.toc' file without a suffix (original behaviour).
-  called with a specific `game-track`, it prefers the contents of the 'SomeAddon_Suffix.toc' file, if it exists, then 'SomeAddon.toc' (most to least specific)."
-  ([addon-dir ::sp/extant-dir]
-   (read-addon-dir addon-dir nil))
-  ([addon-dir ::sp/extant-dir, game-track (s/nilable ::sp/game-track)]
-   (let [toc-dir (-> addon-dir fs/absolute str)
-         any-toc-file nil
-         toc-file-map (or (find-toc-files toc-dir)
-                          (find-toc-files toc-dir any-toc-file))
-         full-path #(utils/join toc-dir %)
-         filename (or (get toc-file-map game-track)
-                      (get toc-file-map nil))]
-     (some-> filename
-             full-path
-             utils/de-bom-slurp
-             -parse-toc-file))))
+  called with a specific `game-track`, it prefers the contents of the 'SomeAddon_Suffix.toc' file, if it exists, then 'SomeAddon.toc' 
+  (most to least specific). Note! this doesn't guarantee the default toc file read will be for the given `game-track`."
+  [addon-dir ::sp/extant-dir, game-track (s/nilable ::sp/game-track)]
+  (let [toc-dir (-> addon-dir fs/absolute str)
+        any-toc-file nil
+        toc-file-map (or (find-toc-files toc-dir)
+                         (find-toc-files toc-dir any-toc-file))
+        full-path #(utils/join toc-dir %)
+        filename (or (get toc-file-map game-track)
+                     (get toc-file-map nil))]
+    (some-> filename
+            full-path
+            utils/de-bom-slurp
+            -parse-toc-file)))
 
 (defn-spec rm-trailing-version string?
   "'foo 1.2.3' => 'foo', 'foo 1"
@@ -192,9 +191,9 @@
 
 (defn-spec parse-addon-toc-guard (s/or :ok :addon/toc, :error nil?)
   "wraps the `parse-addon-toc` function and ensures no unhandled exceptions cause a cascading failure"
-  [addon-dir ::sp/extant-dir]
+  [addon-dir ::sp/extant-dir, game-track (s/nilable ::sp/game-track)]
   (try
-    (if-let [keyvals (read-addon-dir addon-dir)]
+    (if-let [keyvals (read-addon-dir addon-dir game-track)]
       ;; we found a .toc file, now parse it
       (parse-addon-toc addon-dir keyvals)
       ;; we didn't find a .toc file, but just ignore it if it looks like an official addon dir

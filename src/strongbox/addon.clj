@@ -131,35 +131,37 @@
 
 (defn-spec -load-installed-addons (s/or :ok :addon/toc-list, :error nil?)
   "returns a list of addon data scraped from the .toc files of all addons in given `install-dir`"
-  [install-dir ::sp/addon-dir]
+  [install-dir ::sp/addon-dir, game-track (s/nilable ::sp/game-track)]
   (let [addon-dir-list (->> install-dir fs/list-dir (filter fs/directory?) (map str))
         parse-toc (fn [addon-dir]
                     (logging/with-addon {:dirname (-> addon-dir fs/file fs/base-name str)}
-                      (toc/parse-addon-toc-guard addon-dir)))]
+                      (toc/parse-addon-toc-guard addon-dir game-track)))]
     (->> addon-dir-list (map parse-toc) (remove nil?) vec)))
 
 (defn-spec load-installed-addons :addon/toc-list
   "reads the .toc files from the given addon dir, reads any nfo data for 
   these addons, groups them and returns the mooshed data."
-  [install-dir ::sp/extant-dir]
-  (let [addon-list (-load-installed-addons install-dir)
+  ([install-dir ::sp/extant-dir]
+   (load-installed-addons install-dir nil))
+  ([install-dir ::sp/extant-dir, game-track (s/nilable ::sp/game-track)]
+   (let [addon-list (-load-installed-addons install-dir game-track)
 
-        ;; at this point we have a list of the 'top level' addons, with
-        ;; any bundled addons grouped within each one.
+         ;; at this point we have a list of the 'top level' addons, with
+         ;; any bundled addons grouped within each one.
 
-        ;; each addon now needs to be merged with the 'nfo' data, the additional
-        ;; data we store alongside each addon when it is installed/updated
+         ;; each addon now needs to be merged with the 'nfo' data, the additional
+         ;; data we store alongside each addon when it is installed/updated
 
-        merge-nfo-data (fn [addon]
-                         (logging/with-addon addon
-                           (let [nfo-data (nfo/read-nfo install-dir (:dirname addon))]
-                             ;; merge the addon with the nfo data.
-                             ;; when `ignore?` flag in addon is `true` but `false` in nfo-data, nfo-data will take precedence.
-                             (merge-toc-nfo addon nfo-data))))
+         merge-nfo-data (fn [addon]
+                          (logging/with-addon addon
+                            (let [nfo-data (nfo/read-nfo install-dir (:dirname addon))]
+                              ;; merge the addon with the nfo data.
+                              ;; when `ignore?` flag in addon is `true` but `false` in nfo-data, nfo-data will take precedence.
+                              (merge-toc-nfo addon nfo-data))))
 
-        addon-list (mapv merge-nfo-data addon-list)]
+         addon-list (mapv merge-nfo-data addon-list)]
 
-    (group-addons addon-list)))
+     (group-addons addon-list))))
 
 ;;
 
@@ -297,7 +299,8 @@
   an 'implicit ignore' is when the addon is under version control or the `.toc` file looks like an unrendered template."
   [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname]
   (let [path (utils/join install-dir addon-dirname)
-        toc-data (toc/parse-addon-toc-guard path)]
+        game-track nil ;; todo: check all toc files
+        toc-data (toc/parse-addon-toc-guard path game-track)]
     (or (contains? toc-data :ignore?)
         (nfo/version-controlled? path))))
 
