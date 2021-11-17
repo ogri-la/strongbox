@@ -81,9 +81,7 @@
                                 (let [toc-bname (str (fs/base-name filename))
                                       [toc-bname-match game-track-match] (re-matches pattern toc-bname)]
                                   (when toc-bname-match
-                                    (if-not game-track-match
-                                      [:retail toc-bname] ;; assume retail if we have a match 
-                                      [(utils/guess-game-track game-track-match) toc-bname]))))]
+                                    [(utils/guess-game-track game-track-match) toc-bname])))]
      (->> addon-dir
           fs/list-dir
           (map str)
@@ -93,17 +91,20 @@
           utils/nilable))))
 
 (defn-spec read-addon-dir (s/or :ok map?, :error nil?)
-  "returns a map of key-vals scraped from the .toc file in given directory"
+  "returns a map of key-vals scraped from the .toc file in the given `addon-dir`.
+  called without (or with a nil) `game-track`, returns the contents of the default 'SomeAddon.toc' file without a suffix (original behaviour).
+  called with a specific `game-track`, it prefers the contents of the 'SomeAddon_Suffix.toc' file, if it exists, then 'SomeAddon.toc' (most to least specific)."
   ([addon-dir ::sp/extant-dir]
-   (read-addon-dir addon-dir :retail))
-  ([addon-dir ::sp/extant-dir, game-track ::sp/game-track]
+   (read-addon-dir addon-dir nil))
+  ([addon-dir ::sp/extant-dir, game-track (s/nilable ::sp/game-track)]
    (let [toc-dir (-> addon-dir fs/absolute str)
          any-toc-file nil
          toc-file-map (or (find-toc-files toc-dir)
                           (find-toc-files toc-dir any-toc-file))
-         full-path #(utils/join toc-dir %)]
-     (some-> toc-file-map
-             game-track
+         full-path #(utils/join toc-dir %)
+         filename (or (get toc-file-map game-track)
+                      (get toc-file-map nil))]
+     (some-> filename
              full-path
              utils/de-bom-slurp
              -parse-toc-file))))

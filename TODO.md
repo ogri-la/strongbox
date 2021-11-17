@@ -33,6 +33,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* bug, gui, 'updated' column is using dummy date in certain cases
+    - I thought I fixed this?
+
 * gitlab, add optional API authentication like github
 
 * column profiles
