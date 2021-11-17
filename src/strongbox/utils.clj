@@ -640,9 +640,9 @@
     (let [;; matches 'classic-tbc', 'classic-bc', 'classic-bcc', 'classic_tbc', 'classic_bc', 'classic_bcc', 'tbc', 'bc', 'bcc'
           ;; but not 'classictbc' or 'classicbc' or 'classicbcc'
           ;; see tests.
-          classic-tbc-regex #"(?i)classic[\W_]t?bcc?|[\W_]t?bcc?\W?"
+          classic-tbc-regex #"(?i)classic[\W_]t?bcc?|[\W_]t?bcc?\W?|t?bcc?$"
           classic-regex #"(?i)classic"
-          retail-regex #"(?i)retail"]
+          retail-regex #"(?i)retail|mainline"]
       (cond
         (re-find classic-tbc-regex string) :classic-tbc
         (re-find classic-regex string) :classic

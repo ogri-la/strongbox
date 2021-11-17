@@ -12,7 +12,9 @@
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
    [me.raynes.fs :as fs]
-   [clojure.string :refer [lower-case ends-with?]]))
+   [clojure.string :refer [lower-case ends-with?]])
+  (:import
+   [java.util.regex Pattern]))
 
 ;; matches a tocfile's 'Title' (label) to a catalogue's name
 ;; aliases are maintained for the top-50 downloaded addons (ever) only, and only for those that need it
@@ -67,37 +69,44 @@
         contents (clojure.string/split-lines toc-contents)]
     (->> contents (filter interesting?) (map parse-comment) (reduce merge))))
 
+(defn-spec find-toc-files (s/or :ok map?, :error nil?)
+  "returns a map of {game-track filename.toc}"
+  ([addon-dir ::sp/extant-dir]
+   (find-toc-files addon-dir (fs/base-name addon-dir)))
+  ([addon-dir ::sp/extant-dir, addon-dir-name (s/nilable string?)]
+   (let [;; for cases where the .toc file doesn't match the dirname
+         addon-dir-name (or addon-dir-name ".+")
+         pattern (Pattern/compile (format "(?u)^%s(?:[\\-_](Mainline|Classic|Vanilla|TBC|BCC){1})?\\.toc$" addon-dir-name))
+         matching-toc-pattern (fn [filename]
+                                (let [toc-bname (str (fs/base-name filename))
+                                      [toc-bname-match game-track-match] (re-matches pattern toc-bname)]
+                                  (when toc-bname-match
+                                    (if-not game-track-match
+                                      [:retail toc-bname] ;; assume retail if we have a match 
+                                      [(utils/guess-game-track game-track-match) toc-bname]))))]
+     (->> addon-dir
+          fs/list-dir
+          (map str)
+          (map matching-toc-pattern)
+          (remove nil?)
+          (into {})
+          utils/nilable))))
+
 (defn-spec read-addon-dir (s/or :ok map?, :error nil?)
   "returns a map of key-vals scraped from the .toc file in given directory"
-  [addon ::sp/extant-dir]
-  (let [toc-dir (fs/absolute addon)
-        toc-bname (str (fs/base-name addon))
-
-        ;; the ideal, perfect case
-        toc-file (utils/join toc-dir (str toc-bname ".toc")) ;; /foo/Addon/Addon.toc
-
-        ;; less than ideal, probably case-insensitive filesystem + lazy dev
-        alt-toc-file (utils/join toc-dir (-> toc-bname lower-case (str ".toc"))) ;; /foo/Addon/addon.toc
-
-        ;; fubar case, toc file doesn't match dir
-        any-toc-file (first (filter #(-> % lower-case (ends-with? ".toc")) (fs/list-dir toc-dir)))
-
-        do-toc-file (fn [toc-file & [warning]]
-                      (when warning
-                        (debug warning))
-                      (-> toc-file utils/de-bom-slurp -parse-toc-file))]
-    (cond
-      (fs/file? toc-file) (do-toc-file toc-file)
-
-      ;; Archaelogy Helper
-      (fs/file? alt-toc-file) (do-toc-file
-                               alt-toc-file
-                               (format "expecting '%s', found '%s'. filename should be case sensitive" toc-file alt-toc-file))
-
-      ;; TradeSkillMaster_AuctioningScanSummary
-      (not (nil? any-toc-file)) (do-toc-file
-                                 any-toc-file
-                                 (format "expecting '%s', found '%s' . please smack developer" toc-file any-toc-file)))))
+  ([addon-dir ::sp/extant-dir]
+   (read-addon-dir addon-dir :retail))
+  ([addon-dir ::sp/extant-dir, game-track ::sp/game-track]
+   (let [toc-dir (-> addon-dir fs/absolute str)
+         any-toc-file nil
+         toc-file-map (or (find-toc-files toc-dir)
+                          (find-toc-files toc-dir any-toc-file))
+         full-path #(utils/join toc-dir %)]
+     (some-> toc-file-map
+             game-track
+             full-path
+             utils/de-bom-slurp
+             -parse-toc-file))))
 
 (defn-spec rm-trailing-version string?
   "'foo 1.2.3' => 'foo', 'foo 1"
