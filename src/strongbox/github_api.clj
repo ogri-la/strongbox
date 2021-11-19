@@ -34,7 +34,7 @@
   (if-let* [contents-listing (download-root-listing source-id)
             toc-file-list (filterv #(-> % :name fs/split-ext last (= ".toc")) contents-listing)
             toc-file (first toc-file-list)]
-           (some-> toc-file :download_url http/download-with-backoff toc/-parse-toc-file)
+           (some-> toc-file :download_url http/download-with-backoff toc/parse-toc-file)
            (warn (format "failed to find/download/parse remote github '.toc' file for '%s'" source-id))))
 
 (defn-spec -find-gametracks-toc-data (s/or :ok ::sp/game-track-list, :not-tracks-found nil?)

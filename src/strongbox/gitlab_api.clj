@@ -73,7 +73,7 @@
            utils/from-json
            :content
            utils/base64-decode
-           toc/-parse-toc-file))
+           toc/parse-toc-file))
 
 (defn-spec find-toc-files map?
   "returns a map of {filename.toc blob-url, ...}"

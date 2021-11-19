@@ -299,10 +299,14 @@
   an 'implicit ignore' is when the addon is under version control or the `.toc` file looks like an unrendered template."
   [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname]
   (let [path (utils/join install-dir addon-dirname)
-        game-track nil ;; todo: check all toc files
-        toc-data (toc/parse-addon-toc-guard path game-track)]
-    (or (contains? toc-data :ignore?)
-        (nfo/version-controlled? path))))
+        check-toc-data (fn [[_ filename]]
+                         (-> path
+                             (utils/join filename)
+                             toc/read-toc-file
+                             (toc/parse-addon-toc path)
+                             (contains? :ignore?)))]
+    (or (nfo/version-controlled? path) ;; cheapest check first
+        (utils/any (map check-toc-data (toc/find-toc-files path))))))
 
 (defn-spec ignore nil?
   "marks the given `addon` and all of it's group members (if any) as 'ignored'"

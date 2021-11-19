@@ -74,7 +74,7 @@ SomeAddon.lua")
 
                     :interface "80205"
                     :#interface "11302"}]
-      (is (= expected (toc/-parse-toc-file toc-file-contents))))))
+      (is (= expected (toc/parse-toc-file toc-file-contents))))))
 
 ;; todo: tests for reading suffixed data
 (deftest parse-addon-toc-guard
@@ -117,7 +117,7 @@ SomeAddon.lua")
           addon-dir (utils/join install-dir "EveryAddon")]
       (fs/mkdir addon-dir)
       (doseq [[toc-data expected] cases]
-        (is (= expected (toc/parse-addon-toc addon-dir toc-data)))))))
+        (is (= expected (toc/parse-addon-toc toc-data addon-dir)))))))
 
 (deftest parse-addon-toc--aliased
   (testing "addons whose toc files have a `:title` value that matches an alias get a hardcoded source and source-id value"
@@ -131,7 +131,7 @@ SomeAddon.lua")
       (fs/mkdir addon-dir)
       (doseq [[given expected] cases
               :let [expected (merge expected defaults)]]
-        (is (= expected (toc/parse-addon-toc addon-dir given)))))))
+        (is (= expected (toc/parse-addon-toc given addon-dir)))))))
 
 (deftest parse-addon-toc--x-source
   (testing "addons whose toc files have a 'x-$host-id=val' will use those as `:source` and `:source-id`"
@@ -152,7 +152,7 @@ SomeAddon.lua")
       (fs/mkdir addon-dir)
       (doseq [[given expected] cases
               :let [expected (merge expected defaults)]]
-        (is (= expected (toc/parse-addon-toc addon-dir given)))))))
+        (is (= expected (toc/parse-addon-toc given addon-dir)))))))
 
 (deftest rm-trailing-version
   (testing "parsing of 'Title' attribute in toc file"

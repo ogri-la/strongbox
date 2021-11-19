@@ -435,3 +435,24 @@
   (is (addon/unpinnable? {:pinned-version "1.2.3"}))
   (is (not (addon/unpinnable? {:pinned-version "1.2.3" :ignore? true})))
   (is (not (addon/unpinnable? {}))))
+
+(deftest implicitly-ignored?
+  (testing "evidence of a template in the toc file marks addon as implicitly ignored"
+    (let [nom "EveryAddon"
+          addon-dir (utils/join (helper/install-dir) nom)
+          path (fn [bit]
+                 (utils/join addon-dir bit))]
+      (fs/mkdir addon-dir)
+      (spit (path "EveryAddon.toc") "## Title: Foo\n## Version: @project-version@")
+      (is (true? (addon/implicitly-ignored? (helper/install-dir) nom))))))
+
+(deftest implicitly-ignored?--multi-toc
+  (testing "evidence of a template in *any* toc file, marks addon as implicitly ignored"
+    (let [nom "EveryAddon"
+          addon-dir (utils/join (helper/install-dir) nom)
+          path (fn [bit]
+                 (utils/join addon-dir bit))]
+      (fs/mkdir addon-dir)
+      (spit (path "EveryAddon.toc") "## Title: Foo\n## Version: 1.2.3")
+      (spit (path "EveryAddon-Mainline.toc") "## Title: Foo-Bar\n## Version: @project-version@")
+      (is (true? (addon/implicitly-ignored? (helper/install-dir) nom))))))
