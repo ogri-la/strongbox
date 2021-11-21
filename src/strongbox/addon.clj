@@ -148,7 +148,7 @@
                                               :classic [:classic :classic-tbc :retail]
                                               :classic-tbc [:classic-tbc :classic :retail]}
                                 priorities (get priority-map game-track)]
-                            (utils/first-nn #(get grouped-toc-data %) priorities))))))]
+                            (first (utils/first-nn #(get grouped-toc-data %) priorities)))))))]
     (->> addon-dir-list
          (map parse-toc)
          (remove nil?)
@@ -426,7 +426,8 @@
   "returns `true` when given `addon` can be updated to a newer version."
   [addon map?] ;; deliberately lenient
   (let [{:keys [installed-version pinned-version version
-                game-track installed-game-track]} addon]
+                game-track installed-game-track
+                supported-game-tracks]} addon]
     (cond
       ;; not expanded
       (not version) false
@@ -439,11 +440,10 @@
       pinned-version (and (not= pinned-version installed-version)
                           (= pinned-version version))
 
-      ;; todo: versions match BUT game-tracks don't AND game-track is *not* present in supported-game-tracks
-
-      ;; when wouldn't we have a game-track or installed-game-track?
-      (and game-track installed-game-track) (not= [version game-track]
-                                                  [installed-version installed-game-track])
+      (and game-track installed-game-track)
+      (not (and (= version installed-version)
+                (or (= game-track installed-game-track)
+                    (utils/in? installed-game-track supported-game-tracks))))
 
       :else (not= version installed-version))))
 

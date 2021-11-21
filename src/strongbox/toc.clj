@@ -85,10 +85,10 @@ returns a map of key-vals scraped from the .toc file in the given `addon-dir`.
 (defn-spec find-toc-files (s/or :ok ::sp/list-of-lists, :error nil?)
   "returns a list of `[[filename.toc game-track], ...]` where game-track is `nil` if it can't be guessed from the filename."
   [addon-dir ::sp/extant-dir]
-  (let [pattern (Pattern/compile "(?u)^(.+)(?:[\\-_](Mainline|Classic|Vanilla|TBC|BCC){1})?\\.toc$")
+  (let [pattern (Pattern/compile "(?u)^(.+?)(?:[\\-_]{1}(Mainline|Classic|Vanilla|TBC|BCC){1})?\\.toc$")
         matching-toc-pattern (fn [filename]
                                (let [toc-bname (str (fs/base-name filename))
-                                     [toc-bname-match game-track-match] (re-matches pattern toc-bname)]
+                                     [toc-bname-match game-track-match] (rest (re-matches pattern toc-bname))]
                                  (when toc-bname-match
                                    [(utils/guess-game-track game-track-match) toc-bname])))
         result (->> addon-dir
