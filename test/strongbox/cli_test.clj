@@ -204,12 +204,16 @@
 
 (deftest unpin-addon
   (testing "an addon can be installed, selected and un-pinned"
-    (let [addon {:name "everyaddon-classic" :label "EveryAddon (Classic)" :version "1.2.3" :url "https://group.id/never/fetched"
-                 :source "curseforge" :source-id 1
+    (let [addon {:name "everyaddon-classic"
+                 :label "EveryAddon (Classic)"
+                 :version "1.2.3"
+                 :url "https://group.id/never/fetched"
+                 :source "curseforge"
+                 :source-id 1
                  :download-url "https://path/to/remote/addon.zip"
                  :game-track :classic
                  :-testing-zipfile (fixture-path "everyaddon-classic--1-2-3.zip")
-                 ;; yes! we can installed an addon that is pre-pinned.
+                 ;; yes! we can install an addon that is pre-pinned.
                  :pinned-version "1.2.3"}]
       (with-running-app
 
@@ -362,6 +366,8 @@
                     :installed-game-track :retail,
                     :installed-version "1.2.3",
                     :interface-version 70000,
+                    :toc/game-track :retail
+                    :supported-game-tracks [:retail]
                     :label "EveryAddon 1.2.3",
                     :name "rotation-master",
                     :primary? true,
@@ -430,6 +436,8 @@
                     :installed-game-track :retail,
                     :installed-version "v8.2.0-v1.13.2-7135.139",
                     :interface-version 70000,
+                    :toc/game-track :retail
+                    :supported-game-tracks [:retail]
                     :label "EveryAddon 1.2.3",
                     :name "everyaddon",
                     :primary? true,
@@ -498,6 +506,8 @@
                     :installed-game-track :retail,
                     :installed-version "0.960",
                     :interface-version 70000,
+                    :toc/game-track :retail
+                    :supported-game-tracks [:retail]
                     :label "EveryAddon 1.2.3",
                     :name "-rp-tags",
                     :primary? true,

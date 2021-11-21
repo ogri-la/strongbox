@@ -8,6 +8,8 @@
     :label "AdiBags",
     :description "Adirelle's bag addon.",
     :interface-version 80200,
+    :toc/game-track :retail
+    :supported-game-tracks [:retail]
     :installed-version "v1.9.17",
     :group-id "https://www.curseforge.com/wow/addons/adibags",
     :primary? true,
@@ -17,6 +19,8 @@
     :label "AdiBags Configuration",
     :description "Adirelle's bag addon.",
     :interface-version 80200,
+    :toc/game-track :retail
+    :supported-game-tracks [:retail]
     :installed-version "v1.9.17",
     :group-id "https://www.curseforge.com/wow/addons/adibags",
     :primary? false,
@@ -28,6 +32,8 @@
   :name "adibags",
   :source "curseforge",
   :interface-version 80200,
+  :toc/game-track :retail
+  :supported-game-tracks [:retail]
   :download-url
   "https://www.curseforge.com/wow/addons/adibags/download/2738272/file",
   :label "AdiBags",
@@ -43,7 +49,9 @@
   :description "An addon with no match in the catalogue"
   :dirname "noname"
   :interface-version 80200
-  :installed-version "7.8.9"}
+  :installed-version "7.8.9"
+  :toc/game-track :retail
+  :supported-game-tracks [:retail]}
  {:created-date "2011-01-04T05:42:23Z",
   :description
   "CARBONITE® is a multi feature addon developed by game industry veterans.",
@@ -56,6 +64,8 @@
   :name "carbonite",
   :source "curseforge",
   :interface-version 80200,
+  :toc/game-track :retail
+  :supported-game-tracks [:retail]
   :download-url
   "https://www.curseforge.com/wow/addons/carbonite/download/2732714/file",
   :label "Carbonite Maps",

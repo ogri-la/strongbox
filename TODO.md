@@ -33,6 +33,13 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* complex export pane
+    - choose format
+        - json, csv, edn
+    - choose to keep ignored or not
+    - choose fields to keep
+    - warning if not enough fields for import
+
 * bug, gui, 'updated' column is using dummy date in certain cases
     - I thought I fixed this?
 

@@ -719,3 +719,11 @@
   [string (s/nilable string?)]
   (when string
     (String. (.decode (Base64/getDecoder) string))))
+
+(defn first-nn
+  "returns the first non-nil value of lazily applying `f` to `lst`"
+  [f lst]
+  (->> lst
+       (map f)
+       (remove nil?)
+       first))

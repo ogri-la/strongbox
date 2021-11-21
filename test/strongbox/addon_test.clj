@@ -42,66 +42,86 @@
 
 (deftest group-addons
   (testing "addons with nothing to group on are not modified"
-    (let [addon-list [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"}
-                      {:name "a2", :dirname "A2", :label "A2", :description "" :interface-version 80300 :installed-version "4.5.6"}
-                      {:name "a3", :dirname "A3", :label "A2", :description "" :interface-version 80300 :installed-version "7.8.9"}]
+    (let [addon-list [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3" :toc/game-track :retail :supported-game-tracks [:retail]}
+                      {:name "a2", :dirname "A2", :label "A2", :description "" :interface-version 80300 :installed-version "4.5.6" :toc/game-track :retail :supported-game-tracks [:retail]}
+                      {:name "a3", :dirname "A3", :label "A2", :description "" :interface-version 80300 :installed-version "7.8.9" :toc/game-track :retail :supported-game-tracks [:retail]}]
           expected addon-list]
       (is (= expected (addon/group-addons addon-list)))))
 
   (testing "addons with groupable data but no groupings are not modified"
     (let [addon-list [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"
+                       :toc/game-track :retail :supported-game-tracks [:retail]
                        :group-id "foo" :primary? true}
                       {:name "a2", :dirname "A2", :label "A2", :description "" :interface-version 80300 :installed-version "4.5.6"
+                       :toc/game-track :retail :supported-game-tracks [:retail]
                        :group-id "bar" :primary? true}
                       {:name "a3", :dirname "A3", :label "A2", :description "" :interface-version 80300 :installed-version "7.8.9"
+                       :toc/game-track :retail :supported-game-tracks [:retail]
                        :group-id "baz" :primary? true}]
           expected addon-list]
       (is (= expected (addon/group-addons addon-list)))))
 
   (testing "addons with groupable data with one marked as the `primary`, group as expected"
     (let [addon-list [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"
+                       :toc/game-track :retail :supported-game-tracks [:retail]
                        :group-id "foo" :primary? true}
                       {:name "a2", :dirname "A2", :label "A2", :description "" :interface-version 80300 :installed-version "4.5.6"
+                       :toc/game-track :retail :supported-game-tracks [:retail]
                        :group-id "foo" :primary? false}
                       {:name "a3", :dirname "A3", :label "A2", :description "" :interface-version 80300 :installed-version "7.8.9"
+                       :toc/game-track :retail :supported-game-tracks [:retail]
                        :group-id "bar" :primary? true}]
 
           expected [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"
+                     :toc/game-track :retail :supported-game-tracks [:retail]
                      :group-id "foo" :primary? true :group-addon-count 2 :group-addons
                      [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"
+                       :toc/game-track :retail :supported-game-tracks [:retail]
                        :group-id "foo" :primary? true}
                       {:name "a2", :dirname "A2", :label "A2", :description "" :interface-version 80300 :installed-version "4.5.6"
+                       :toc/game-track :retail :supported-game-tracks [:retail]
                        :group-id "foo" :primary? false}]}
 
                     {:name "a3", :dirname "A3", :label "A2", :description "" :interface-version 80300 :installed-version "7.8.9"
+                     :toc/game-track :retail :supported-game-tracks [:retail]
                      :group-id "bar" :primary? true}]]
       (is (= expected (addon/group-addons addon-list)))))
 
   (testing "synthetic records are created for groupable addons with no primary addon"
     (let [addon-list [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"
+                       :toc/game-track :retail :supported-game-tracks [:retail]
                        :group-id "foo" :primary? false}
                       {:name "a2", :dirname "A2", :label "A2", :description "" :interface-version 80300 :installed-version "4.5.6"
+                       :toc/game-track :retail :supported-game-tracks [:retail]
                        :group-id "foo" :primary? false}
                       {:name "a3", :dirname "A3", :label "A2", :description "" :interface-version 80300 :installed-version "7.8.9"
+                       :toc/game-track :retail :supported-game-tracks [:retail]
                        :group-id "bar" :primary? true}]
 
           expected [{:name "a1", :dirname "A1", :label "foo (group)", :description "group record for the foo addon" :interface-version 80300 :installed-version "1.2.3"
+                     :toc/game-track :retail :supported-game-tracks [:retail]
                      :group-id "foo" :primary? false :group-addon-count 2 :group-addons
                      [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"
+                       :toc/game-track :retail :supported-game-tracks [:retail]
                        :group-id "foo" :primary? false}
                       {:name "a2", :dirname "A2", :label "A2", :description "" :interface-version 80300 :installed-version "4.5.6"
+                       :toc/game-track :retail :supported-game-tracks [:retail]
                        :group-id "foo" :primary? false}]}
 
                     {:name "a3", :dirname "A3", :label "A2", :description "" :interface-version 80300 :installed-version "7.8.9"
+                     :toc/game-track :retail :supported-game-tracks [:retail]
                      :group-id "bar" :primary? true}]]
       (is (= expected (addon/group-addons addon-list)))))
 
   (testing "if any one addon in a group is ignored, the top-level addon ('all') is also ignored"
     (let [addon-list [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"
+                       :toc/game-track :retail :supported-game-tracks [:retail]
                        :group-id "foo" :primary? true}
                       {:name "a2", :dirname "A2", :label "A2", :description "" :interface-version 80300 :installed-version "4.5.6"
+                       :toc/game-track :retail :supported-game-tracks [:retail]
                        :group-id "foo" :primary? false}
                       {:name "a3", :dirname "A3", :label "A2", :description "" :interface-version 80300 :installed-version "7.8.9"
+                       :toc/game-track :retail :supported-game-tracks [:retail]
                        :group-id "foo" :primary? false :ignore? true}]
 
           expected [{:name "a1"
@@ -110,6 +130,8 @@
                      :description ""
                      :interface-version 80300
                      :installed-version "1.2.3"
+                     :toc/game-track :retail
+                     :supported-game-tracks [:retail]
                      :group-id "foo"
                      :primary? true
                      :ignore? true
@@ -119,6 +141,8 @@
                                      :label "A1",
                                      :description ""
                                      :interface-version 80300
+                                     :toc/game-track :retail
+                                     :supported-game-tracks [:retail]
                                      :installed-version "1.2.3"
                                      :group-id "foo"
                                      :primary? true}
@@ -127,6 +151,8 @@
                                      :label "A2",
                                      :description ""
                                      :interface-version 80300
+                                     :toc/game-track :retail
+                                     :supported-game-tracks [:retail]
                                      :installed-version "4.5.6"
                                      :group-id "foo"
                                      :primary? false}
@@ -135,6 +161,8 @@
                                      :label "A2",
                                      :description ""
                                      :interface-version 80300
+                                     :toc/game-track :retail
+                                     :supported-game-tracks [:retail]
                                      :installed-version "7.8.9"
                                      :group-id "foo"
                                      :primary? false
@@ -152,8 +180,15 @@
           some-addon-toc (utils/join some-addon-path "SomeAddon.toc")
           _ (spit some-addon-toc "## Title: SomeAddon\n## Description: asdf\n## Interface: 80300\n## Version: 1.2.3")
 
-          expected [{:name "someaddon", :dirname "SomeAddon", :label "SomeAddon", :description "asdf", :interface-version 80300, :installed-version "1.2.3"}]]
-      (is (= expected (addon/load-installed-addons addon-dir))))))
+          expected [{:name "someaddon",
+                     :dirname "SomeAddon",
+                     :label "SomeAddon",
+                     :description "asdf",
+                     :interface-version 80300,
+                     :toc/game-track :retail
+                     :supported-game-tracks [:retail]
+                     :installed-version "1.2.3"}]]
+      (is (= expected (addon/load-installed-addons addon-dir :retail))))))
 
 (deftest load-installed-addons-2
   (testing "toc data and nfo data are mooshed together as expected"
@@ -175,11 +210,12 @@
           _ (spit some-addon-nfo (utils/to-json nfo-data))
 
           expected [{;; toc data
-                     :name "someaddon",
-                     :dirname "SomeAddon",
-                     :label "SomeAddon",
-                     :description "asdf",
-                     :interface-version 80300,
+                     :name "someaddon"
+                     :dirname "SomeAddon"
+                     :label "SomeAddon"
+                     :description "asdf"
+                     :interface-version 80300
+                     :toc/game-track :retail
 
                      ;; shared between toc and nfo, nfo wins out
                      :installed-version "1.2.3"
@@ -189,8 +225,9 @@
                      :source-id 123
                      :group-id "fdsa"
                      :installed-game-track :retail
+                     :supported-game-tracks [:retail]
                      :primary? true}]]
-      (is (= expected (addon/load-installed-addons addon-dir))))))
+      (is (= expected (addon/load-installed-addons addon-dir :retail))))))
 
 (deftest load-installed-addons--invalid-nfo-data-not-loaded
   (testing "invalid nfo data is not loaded"
@@ -213,8 +250,9 @@
                     }
           _ (spit some-addon-nfo (utils/to-json nfo-data))
 
-          expected [{:name "someaddon", :dirname "SomeAddon", :label "SomeAddon", :description "asdf", :interface-version 80300, :installed-version "1.2.3"}]]
-      (is (= expected (addon/load-installed-addons addon-dir))))))
+          expected [{:name "someaddon", :dirname "SomeAddon", :label "SomeAddon", :description "asdf", :interface-version 80300, :installed-version "1.2.3"
+                     :toc/game-track :retail :supported-game-tracks [:retail]}]]
+      (is (= expected (addon/load-installed-addons addon-dir :retail))))))
 
 (deftest load-installed-addons--explicit-nfo-ignore
   (testing "ignore flag in nfo data overrides any ignore flag in toc data"
@@ -231,10 +269,11 @@
                                                  :ignore? false})) ;; expressly un-ignoring this otherwise-ignored addon
 
           expected [{:name "someaddon", :dirname "SomeAddon", :label "SomeAddon", :description "asdf", :interface-version 80300
+                     :toc/game-track :retail :supported-game-tracks [:retail]
                      :installed-version "@project-version@"
                      :source "curseforge" :source-id 123
                      :ignore? false}]]
-      (is (= expected (addon/load-installed-addons addon-dir))))))
+      (is (= expected (addon/load-installed-addons addon-dir :retail))))))
 
 (deftest remove-addon--malign-addon-data
   (testing "uninstalling an addon whose `:dirname` value is corrupted (somehow) shouldn't affect data outside of the addon dir"
@@ -254,7 +293,8 @@
 
           expected (helper/install-dir-contents)
 
-          defaults {:name "nom" :label "Nom" :description "" :interface-version 90100 :installed-version "0.1"}]
+          defaults {:name "nom" :label "Nom" :description "" :interface-version 90100 :installed-version "0.1"
+                    :toc/game-track :retail :supported-game-tracks [:retail]}]
       (doseq [[given error-prefix] cases]
         (let [[error-message]
               (logging/buffered-log :error
@@ -267,21 +307,26 @@
 (deftest test-pinned-dir-list
   (testing "directory names of pinned addons are detected"
     (let [addon-list [;; single, unpinned, addon
-                      {:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"
+                      {:name "a1", :dirname "A1", :label "A1", :description "" :installed-version "1.2.3" :interface-version 80300
+                       :toc/game-track :retail :supported-game-tracks [:retail]
                        :group-id "foo" :primary? true}
 
                       ;; single, pinned, addon
                       {:name "a2", :dirname "A2", :label "A2", :description "" :interface-version 80300 :installed-version "4.5.6"
+                       :toc/game-track :retail :supported-game-tracks [:retail]
                        :group-id "bar" :primary? false :pinned-version "4.5.6"}
 
                       ;; grouped addon, group members pinned
                       {:name "a3", :dirname "A3", :label "A3", :description "" :interface-version 80300 :installed-version "7.8.9"
+                       :toc/game-track :retail :supported-game-tracks [:retail]
                        :group-id "baz" :primary? true, :pinned-version "7.8.9"
                        :group-addons [;; addon's contain themselves in `:group-addons`
                                       {:name "a3", :dirname "A3", :label "A3", :description "" :interface-version 80300 :installed-version "7.8.9"
+                                       :toc/game-track :retail :supported-game-tracks [:retail]
                                        :group-id "baz" :primary? true :pinned-version "7.8.9"}
 
                                       {:name "a3-sub", :dirname "A3_Sub", :label "A3-Sub", :description "" :interface-version 80300 :installed-version "7.8.9.0"
+                                       :toc/game-track :retail :supported-game-tracks [:retail]
                                        :group-id "baz" :primary? false :pinned-version "7.8.9"}]}
 
                       ;; abnormal case.
@@ -289,12 +334,15 @@
                       ;; todo: support this case and consider both A4 and A4_Sub pinned?
                       ;; is this case possible if an unpinned addon overwrites a pinned one?
                       {:name "a4", :dirname "A4", :label "A4", :description "" :interface-version 80300 :installed-version "0.1.2"
+                       :toc/game-track :retail :supported-game-tracks [:retail]
                        :group-id "bup" :primary? false
                        :group-addons [;; addon's contain themselves in `:group-addons`
                                       {:name "a4", :dirname "A4", :label "A4", :description "" :interface-version 80300 :installed-version "0.1.2"
+                                       :toc/game-track :retail :supported-game-tracks [:retail]
                                        :group-id "bup" :primary? false} ;;, :pinned-version "7.8.9"} ;; we're not doing this. should we be doing this?
 
                                       {:name "a4-sub", :dirname "A4_Sub", :label "A4-Sub", :description "" :interface-version 80300 :installed-version "0.1.2.0"
+                                       :toc/game-track :retail :supported-game-tracks [:retail]
                                        :group-id "bup" :primary? false :pinned-version "foooooooooooo"}]}]
 
           expected #{"A2" "A3" "A3_Sub"
@@ -311,8 +359,16 @@
 (deftest test-overwrites-pinned?
   (testing "addon zip files that would extract over a pinned addon are correctly detected"
     (let [downloaded-file (fixture-path "everyaddon--1-2-3.zip")
-          addon {:name "EveryAddon", :dirname "EveryAddon", :label "Every Addon", :description ""
-                 :interface-version 80300 :installed-version "1.2.3" :group-id "foo" :primary? true}
+          addon {:name "EveryAddon",
+                 :dirname "EveryAddon",
+                 :label "Every Addon",
+                 :description ""
+                 :interface-version 80300
+                 :toc/game-track :retail
+                 :installed-version "1.2.3"
+                 :supported-game-tracks [:retail]
+                 :group-id "foo"
+                 :primary? true}
           pinned-addon (assoc addon :pinned-version "1.2.3")]
       (is (addon/overwrites-pinned? downloaded-file [pinned-addon]))
       (is (not (addon/overwrites-pinned? downloaded-file [addon]))))))

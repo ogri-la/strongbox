@@ -69,29 +69,9 @@
         contents (clojure.string/split-lines toc-contents)]
     (->> contents (filter interesting?) (map parse-comment) (reduce merge))))
 
-(defn-spec find-toc-files (s/or :ok map?, :error nil?)
-  "returns a map of {game-track filename.toc}"
-  ([addon-dir ::sp/extant-dir]
-   (find-toc-files addon-dir (fs/base-name addon-dir)))
-  ([addon-dir ::sp/extant-dir, addon-dir-name (s/nilable string?)]
-   (let [;; for cases where the .toc file doesn't match the dirname
-         addon-dir-name (or addon-dir-name ".+")
-         pattern (Pattern/compile (format "(?u)^%s(?:[\\-_](Mainline|Classic|Vanilla|TBC|BCC){1})?\\.toc$" addon-dir-name))
-         matching-toc-pattern (fn [filename]
-                                (let [toc-bname (str (fs/base-name filename))
-                                      [toc-bname-match game-track-match] (re-matches pattern toc-bname)]
-                                  (when toc-bname-match
-                                    [(utils/guess-game-track game-track-match) toc-bname])))]
-     (->> addon-dir
-          fs/list-dir
-          (map str)
-          (map matching-toc-pattern)
-          (remove nil?)
-          (into {})
-          utils/nilable))))
-
 (defn-spec read-toc-file (s/or :ok map?, :error nil?)
-  "returns a map of key-vals scraped from the .toc file in the given `addon-dir`.
+  "reads the contents of a *single* toc file into a map.
+returns a map of key-vals scraped from the .toc file in the given `addon-dir`.
   called without (or with a nil) `game-track`, returns the contents of the default 'SomeAddon.toc' file without a suffix (original behaviour).
   called with a specific `game-track`, it prefers the contents of the 'SomeAddon_Suffix.toc' file, if it exists, then 'SomeAddon.toc' 
   (most to least specific). Note! this doesn't guarantee the default toc file read will be for the given `game-track`."
@@ -100,20 +80,38 @@
        utils/de-bom-slurp
        parse-toc-file))
 
-(defn-spec read-addon-dir (s/or :ok map?, :error nil?)
-  "returns a map of key-vals scraped from the .toc file in the given `addon-dir`.
-  called without (or with a nil) `game-track`, returns the contents of the default 'SomeAddon.toc' file without a suffix (original behaviour).
-  called with a specific `game-track`, it prefers the contents of the 'SomeAddon_Suffix.toc' file, if it exists, then 'SomeAddon.toc' 
-  (most to least specific). Note! this doesn't guarantee the default toc file read will be for the given `game-track`."
-  [addon-dir ::sp/extant-dir, game-track (s/nilable ::sp/game-track)]
-  (let [toc-dir (-> addon-dir fs/absolute str)
-        any-toc-file nil
-        toc-file-map (or (find-toc-files toc-dir)
-                         (find-toc-files toc-dir any-toc-file))
-        full-path #(utils/join toc-dir %)
-        filename (or (get toc-file-map game-track)
-                     (get toc-file-map nil))]
-    (some-> filename full-path read-toc-file)))
+;; ---
+
+(defn-spec find-toc-files (s/or :ok ::sp/list-of-lists, :error nil?)
+  "returns a list of `[[filename.toc game-track], ...]` where game-track is `nil` if it can't be guessed from the filename."
+  [addon-dir ::sp/extant-dir]
+  (let [pattern (Pattern/compile "(?u)^(.+)(?:[\\-_](Mainline|Classic|Vanilla|TBC|BCC){1})?\\.toc$")
+        matching-toc-pattern (fn [filename]
+                               (let [toc-bname (str (fs/base-name filename))
+                                     [toc-bname-match game-track-match] (re-matches pattern toc-bname)]
+                                 (when toc-bname-match
+                                   [(utils/guess-game-track game-track-match) toc-bname])))
+        result (->> addon-dir
+                    fs/list-dir
+                    (map str)
+                    (map matching-toc-pattern)
+                    (remove nil?)
+                    vec
+                    utils/nilable)]
+    (if-not result
+      (warn "failed to find any .toc files:" addon-dir)
+      result)))
+
+(defn-spec read-addon-dir (s/or :ok ::sp/list-of-maps, :error nil?)
+  "reads the contents of *all* .toc files found in the given `addon-dir`.
+  returns a list of [[guessed-game-track keyvals], ...]."
+  [addon-dir ::sp/extant-dir]
+  (let [toc-dir (-> addon-dir fs/absolute str)]
+    (mapv (fn [[filename-game-track filename]]
+            (merge (read-toc-file (utils/join toc-dir filename))
+                   {:dirname (fs/base-name addon-dir) ;; /foo/bar/baz => baz
+                    :filename-game-track filename-game-track}))
+          (find-toc-files toc-dir))))
 
 (defn-spec rm-trailing-version string?
   "'foo 1.2.3' => 'foo', 'foo 1"
@@ -136,76 +134,91 @@
 ;;
 
 (defn-spec parse-addon-toc :addon/toc
-  [keyvals map?, addon-dir ::sp/extant-dir]
-  (let [dirname (fs/base-name addon-dir) ;; /foo/bar/baz => baz
+  ([keyvals map?, addon-dir ::sp/dir]
+   (parse-addon-toc (assoc keyvals :dirname (fs/base-name addon-dir))))
+  ([keyvals map?]
+   (let [dirname (:dirname keyvals)
 
-        ;; https://github.com/ogri-la/strongbox/issues/47 - user encountered addon sans 'Title' attribute
-        ;; if a match in the catalogue is found even after munging the title, it will overwrite this one
-        no-label-label (str dirname " *") ;; "EveryAddon *"
-        label (:title keyvals)
-        label (if-not (empty? label) label no-label-label)
-        _ (when (= label no-label-label)
-            (warn "addon with no \"Title\" value found:" addon-dir))
+         ;; https://github.com/ogri-la/strongbox/issues/47 - user encountered addon sans 'Title' attribute
+         ;; if a match in the catalogue is found even after munging the title, it will overwrite this one
+         no-label-label (str dirname " *") ;; "EveryAddon *"
+         label (:title keyvals)
+         label (if-not (empty? label) label no-label-label)
+         _ (when (= label no-label-label)
+             (warn "addon with no \"Title\" value found:" dirname))
 
-        ;; if :title is present in list of aliases, add that alias to what we return
-        alias (when (contains? aliases label)
-                (get aliases label)) ;; `{:source "curseforge" :source-id 12345}`
+         ;; if :title is present in list of aliases, add that alias to what we return
+         alias (when (contains? aliases label)
+                 (get aliases label)) ;; `{:source "curseforge" :source-id 12345}`
 
-        wowi-source (when-let [x-wowi-id (-> keyvals :x-wowi-id utils/to-int)]
-                      {:source "wowinterface"
-                       :source-id x-wowi-id})
+         wowi-source (when-let [x-wowi-id (-> keyvals :x-wowi-id utils/to-int)]
+                       {:source "wowinterface"
+                        :source-id x-wowi-id})
 
-        curse-source (when-let [x-curse-id (-> keyvals :x-curse-project-id utils/to-int)]
-                       {:source "curseforge"
-                        :source-id x-curse-id})
+         curse-source (when-let [x-curse-id (-> keyvals :x-curse-project-id utils/to-int)]
+                        {:source "curseforge"
+                         :source-id x-curse-id})
 
-        tukui-source (when-let [x-tukui-id (-> keyvals :x-tukui-projectid utils/to-int)]
-                       {:source "tukui"
-                        :source-id x-tukui-id})
+         tukui-source (when-let [x-tukui-id (-> keyvals :x-tukui-projectid utils/to-int)]
+                        {:source "tukui"
+                         :source-id x-tukui-id})
 
-        ;; todo: add support for x-github
-        ;; ## X-Github: https://github.com/teelolws/Altoholic-Retail => source "github", source-id "teelolws/Altoholic-Retail"
+         ;; todo: add support for x-github
+         ;; ## X-Github: https://github.com/teelolws/Altoholic-Retail => source "github", source-id "teelolws/Altoholic-Retail"
 
-        ignore-flag (when (some->> keyvals :version (clojure.string/includes? "@project-version@"))
-                      (warn (format "ignoring '%s': 'Version' field in .toc file is unrendered" dirname))
-                      {:ignore? true})
+         ignore-flag (when (some->> keyvals :version (clojure.string/includes? "@project-version@"))
+                       (warn (format "ignoring '%s': 'Version' field in .toc file is unrendered" dirname))
+                       {:ignore? true})
 
-        addon {:name (normalise-name label)
-               :dirname dirname
-               :label label
-               ;; :notes is preferred but we'll fall back to :description
-               :description (or (:notes keyvals) (:description keyvals))
-               :interface-version (or (some-> keyvals :interface utils/to-int)
-                                      constants/default-interface-version)
-               :installed-version (:version keyvals)
+         interface-version (or (some-> keyvals :interface utils/to-int)
+                               constants/default-interface-version)
 
-               ;; toc file dependency values describe *load order*, not *packaging*
-               ;;:dependencies (:dependencies keyvals)
-               ;;:optional-dependencies (:optionaldependencies keyvals)
-               ;;:required-dependencies (:requireddeps keyvals)
-               }
+         game-track (utils/interface-version-to-game-track interface-version)
 
-        ;; yes, this prefers curseforge over wowinterface. and tukui over all others.
-        ;; I need to figure out some way of supporting multiple hosts per-addon
-        addon (merge addon alias wowi-source curse-source tukui-source ignore-flag)]
+         _ (when (and (some? (:filename-game-track keyvals))
+                      (not= (:filename-game-track keyvals) game-track))
+             (warn (format "'%s' from filename does not match it's interface-version '%s'"
+                           (:filename-game-track keyvals) game-track)))
 
-    addon))
+         addon {:name (normalise-name label)
+                :dirname dirname
+                :label label
+                ;; :notes is preferred but we'll fall back to :description
+                :description (or (:notes keyvals) (:description keyvals))
+                :interface-version interface-version
+                :toc/game-track game-track
+
+                ;; expanded upon in `parse-addon-toc-guard` when it knows about all available toc files
+                :supported-game-tracks [game-track]
+
+                :installed-version (:version keyvals)
+
+                ;; toc file dependency values describe *load order*, not *packaging*
+                ;;:dependencies (:dependencies keyvals)
+                ;;:optional-dependencies (:optionaldependencies keyvals)
+                ;;:required-dependencies (:requireddeps keyvals)
+                }
+
+         ;; yes, this prefers curseforge over wowinterface. and tukui over all others.
+         ;; I need to figure out some way of supporting multiple hosts per-addon
+         addon (merge addon alias wowi-source curse-source tukui-source ignore-flag)]
+
+     addon)))
 
 (defn-spec blizzard-addon? boolean?
   "returns `true` if given path looks like an official Blizzard addon"
   [path ::sp/file]
   (-> path fs/base-name (.startsWith "Blizzard_")))
 
-(defn-spec parse-addon-toc-guard (s/or :ok :addon/toc, :error nil?)
+(defn-spec parse-addon-toc-guard (s/or :ok :addon/toc-list, :error nil?)
   "wraps the `parse-addon-toc` function and ensures no unhandled exceptions cause a cascading failure"
-  [addon-dir ::sp/extant-dir, game-track (s/nilable ::sp/game-track)]
+  [addon-dir ::sp/extant-dir]
   (when-not (blizzard-addon? addon-dir)
     (try
-      (if-let [keyvals (read-addon-dir addon-dir game-track)]
-        ;; we found a .toc file, now parse it
-        (parse-addon-toc keyvals addon-dir)
-        ;; we didn't find a .toc file. warn the user.
-        (warn "failed to find .toc file:" addon-dir))
+      (let [;; we found and parsed one or more .toc files.
+            result (mapv parse-addon-toc (read-addon-dir addon-dir))
+            supported-game-tracks (->> result (map :toc/game-track) distinct sort vec)]
+        (mapv #(assoc % :supported-game-tracks supported-game-tracks) result))
       (catch Exception e
         ;; this addon failed to parse somehow. don't propagate the exception, just report it and return `nil`.
         (error "please report this! https://github.com/ogri-la/strongbox/issues")

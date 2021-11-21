@@ -1180,6 +1180,8 @@
                  ;; todo: why is dirname needed here?
                  :dirname addon/dummy-dirname
                  :interface-version 0
+                 :toc/game-track :retail
+                 :supported-game-tracks []
                  :installed-version "0"}
         addon-list (map #(merge padding %) addon-list)
 
