@@ -366,7 +366,6 @@
                     :installed-game-track :retail,
                     :installed-version "1.2.3",
                     :interface-version 70000,
-                    :toc/game-track :retail
                     :supported-game-tracks [:retail]
                     :label "EveryAddon 1.2.3",
                     :name "rotation-master",
@@ -436,7 +435,6 @@
                     :installed-game-track :retail,
                     :installed-version "v8.2.0-v1.13.2-7135.139",
                     :interface-version 70000,
-                    :toc/game-track :retail
                     :supported-game-tracks [:retail]
                     :label "EveryAddon 1.2.3",
                     :name "everyaddon",
@@ -506,7 +504,6 @@
                     :installed-game-track :retail,
                     :installed-version "0.960",
                     :interface-version 70000,
-                    :toc/game-track :retail
                     :supported-game-tracks [:retail]
                     :label "EveryAddon 1.2.3",
                     :name "-rp-tags",

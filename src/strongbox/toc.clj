@@ -183,7 +183,7 @@
                 ;; :notes is preferred but we'll fall back to :description
                 :description (or (:notes keyvals) (:description keyvals))
                 :interface-version interface-version
-                :toc/game-track game-track
+                :-toc/game-track game-track
 
                 ;; expanded upon in `parse-addon-toc-guard` when it knows about all available toc files
                 :supported-game-tracks [game-track]
@@ -213,7 +213,7 @@
   (when-not (blizzard-addon? addon-dir)
     (try
       (let [result (mapv parse-addon-toc (read-addon-dir addon-dir))
-            supported-game-tracks (->> result (map :toc/game-track) distinct sort vec)]
+            supported-game-tracks (->> result (map :-toc/game-track) distinct sort vec)]
         (mapv #(assoc % :supported-game-tracks supported-game-tracks) result))
       (catch Exception e
         ;; this addon failed to parse somehow. don't propagate the exception, just report it and return `nil`.

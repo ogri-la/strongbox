@@ -143,14 +143,20 @@
                           ;; we have multiple sets of toc-data to choose from. which to choose?
                           ;; prefer the one for the current game track, if it exists, otherwise do as we do in catalogue
                           ;; and use a list of priorities.
-                          (let [grouped-toc-data (group-by :toc/game-track toc-data-list)
+                          (let [grouped-toc-data (group-by :-toc/game-track toc-data-list)
                                 priority-map {:retail [:retail :classic :classic-tbc]
                                               :classic [:classic :classic-tbc :retail]
                                               :classic-tbc [:classic-tbc :classic :retail]}
-                                priorities (get priority-map game-track)]
-                            (first (utils/first-nn #(get grouped-toc-data %) priorities)))))))]
+                                priorities (get priority-map game-track)
+                                group (utils/first-nn #(get grouped-toc-data %) priorities)]
+                            (when (and (> (count group) 1)
+                                       ;; not all members in group are equal ...
+                                       (not (apply = group)))
+                              (warn (format "multiple sets of different toc data found for %s. using first." game-track)))
+                            (first group))))))]
     (->> addon-dir-list
          (map parse-toc)
+         (map #(dissoc % :-toc/game-track))
          (remove nil?)
          vec)))
 

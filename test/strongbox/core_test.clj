@@ -268,7 +268,6 @@
                            :name "everyaddon",
                            :source "curseforge",
                            :interface-version 80000,
-                           :toc/game-track :retail
                            :supported-game-tracks [:retail]
                            :download-url "https://edge.forgecdn.net/files/1/1/EveryAddon.zip",
                            :label "EveryAddon",
@@ -297,7 +296,6 @@
                            :name "everyotheraddon",
                            :source "curseforge",
                            :interface-version 80200,
-                           :toc/game-track :retail
                            :supported-game-tracks [:retail]
                            :download-url "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip",
                            :label "Every Other Addon",
@@ -369,7 +367,6 @@
                            :name "everyaddon",
                            :source "curseforge",
                            :interface-version 80000,
-                           :toc/game-track :retail
                            :supported-game-tracks [:retail]
                            :download-url "https://edge.forgecdn.net/files/1/1/EveryAddon.zip",
                            :label "EveryAddon",
@@ -404,7 +401,6 @@
                            ;; why :retail? According to EveryOtherAddon.toc, it's actually a retail addon and not a classic addon.
                            ;; we're skewing the API results and the addon-dir's strictness to ensure a classic version is found and installed
                            ;; but this test is essentially drifting and should be using a EveryOtherAddonClassic type addon where the toc is consistent.
-                           :toc/game-track :retail
                            :supported-game-tracks [:retail]
 
                            :download-url "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip",
@@ -478,7 +474,6 @@
                      :dirname "EveryAddon"
                      :interface-version 70000
                      :installed-version "v8.10.00"
-                     :toc/game-track :retail
                      :supported-game-tracks [:retail]}
 
                 ;; and optionally these from .strongbox.json if we installed the addon
@@ -569,7 +564,6 @@
    :label "EveryAddon 1.2.3",
    :interface-version 70000,
    :installed-version "1.2.3"
-   :toc/game-track :retail
    :supported-game-tracks [:retail]})
 
 (def addon-summary
@@ -1168,7 +1162,6 @@
                :dirname "EveryAddon"
                :interface-version 70000
                :installed-version "1.2.3"
-               :toc/game-track :retail
                :supported-game-tracks [:retail]}
 
           addon-summary {:name "everyaddon"
@@ -1191,7 +1184,6 @@
                     :dirname "EveryAddon"
                     :interface-version 70000
                     :installed-version "1.2.3"
-                    :toc/game-track :retail
                     :supported-game-tracks [:retail]
 
                     :tag-list []
@@ -1234,7 +1226,6 @@
                         :installed-game-track :retail,
                         :installed-version "1.2.3",
                         :interface-version 70000,
-                        :toc/game-track :retail
                         :supported-game-tracks [:retail]
                         :label "EveryAddon 1.2.3",
                         :name "everyaddon",
@@ -1274,7 +1265,6 @@
                         :installed-game-track :retail,
                         :installed-version "1.2.3",
                         :interface-version 70000,
-                        :toc/game-track :retail
                         :supported-game-tracks [:retail]
                         :label "EveryAddon 1.2.3",
                         :name "everyaddon",
@@ -1323,7 +1313,6 @@
                                         :installed-game-track :retail,
                                         :installed-version "5.6.7",
                                         :interface-version 80000,
-                                        :toc/game-track :retail
                                         :supported-game-tracks [:retail]
                                         :label "BundledAddon a.b.c",
                                         :name "everyotheraddon",
@@ -1337,7 +1326,6 @@
                                         :installed-game-track :retail,
                                         :installed-version "5.6.7",
                                         :interface-version 70000,
-                                        :toc/game-track :retail
                                         :supported-game-tracks [:retail]
                                         :label "EveryOtherAddon 5.6.7",
                                         :name "everyotheraddon",
@@ -1349,7 +1337,6 @@
                         :installed-game-track :retail,
                         :installed-version "5.6.7",
                         :interface-version 80000,
-                        :toc/game-track :retail
                         :supported-game-tracks [:retail]
                         :label "fetched (group)",
                         :name "everyotheraddon",
@@ -1396,7 +1383,6 @@
                         :installed-game-track :retail,
                         :installed-version "1.2.3",
                         :interface-version 70000,
-                        :toc/game-track :retail
                         :supported-game-tracks [:retail]
                         :label "EveryAddon 1.2.3",
                         :name "everyaddon",

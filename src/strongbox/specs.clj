@@ -215,8 +215,6 @@
 
 (s/def :addon/supported-game-tracks ::game-track-list) ;; alias
 
-(s/def :toc/game-track ::game-track)
-
 (s/def :addon/toc
   (s/keys :req-un [::name
                    ::label
@@ -225,7 +223,6 @@
                    ::interface-version
                    ::installed-version
                    :addon/supported-game-tracks]
-          :req [:toc/game-track]
           ;; todo: revisit all of these
           ;;:opt-un [::group-id ::primary? ::group-addons :addon/source :addon/source-id]
           ))

@@ -86,7 +86,7 @@ SomeAddon.lua")
                      :label "Addon Name"
                      :description "Description of the addon here"
                      :interface-version 80205
-                     :toc/game-track :retail
+                     :-toc/game-track :retail
                      :supported-game-tracks [:retail]
                      :installed-version "1.6.1"
                      ;; wowi is edged out in favour of curseforge unfortunately
@@ -104,7 +104,7 @@ SomeAddon.lua")
                      :label "EveryAddon *"
                      :description nil
                      :interface-version constants/default-interface-version
-                     :toc/game-track :retail
+                     :-toc/game-track :retail
                      :supported-game-tracks [:retail]
                      :installed-version nil}
 
@@ -116,7 +116,7 @@ SomeAddon.lua")
                  [{:interface constants/default-interface-version-classic}
                   (merge base-case {:interface-version constants/default-interface-version-classic
                                     :supported-game-tracks [:classic]
-                                    :toc/game-track :classic})]
+                                    :-toc/game-track :classic})]
 
                  ;; addon is in development
                  [{:version "@project-version@"} (merge base-case
@@ -134,7 +134,7 @@ SomeAddon.lua")
                     :description nil
                     :installed-version nil
                     :interface-version constants/default-interface-version
-                    :toc/game-track :retail
+                    :-toc/game-track :retail
                     :supported-game-tracks [:retail]}
           cases [[{:title "Plater"} {:label "Plater" :name "plater" :source "curseforge" :source-id 100547}]
                  [{:title "|cffffd200Deadly Boss Mods|r |cff69ccf0Core|r"}
@@ -154,7 +154,7 @@ SomeAddon.lua")
                     :installed-version nil
                     :interface-version constants/default-interface-version
                     :supported-game-tracks [:retail]
-                    :toc/game-track :retail}
+                    :-toc/game-track :retail}
           cases [[{:x-wowi-id "123"} {:label "dirname *" :name "dirname-*" :source "wowinterface" :source-id 123}]
                  [{:x-wowi-id 123} {:label "dirname *" :name "dirname-*" :source "wowinterface" :source-id 123}]
                  [{:x-wowi-id "abc"} {:label "dirname *" :name "dirname-*"}] ;; bad case, non-numeric wowi ID
