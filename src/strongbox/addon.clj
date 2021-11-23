@@ -131,7 +131,7 @@
 
 (defn-spec -load-installed-addons (s/or :ok :addon/toc-list, :error nil?)
   "returns a list of addon data scraped from the .toc files of all addons in given `install-dir`"
-  [install-dir ::sp/addon-dir, game-track (s/nilable ::sp/game-track)]
+  [install-dir ::sp/addon-dir, game-track ::sp/game-track]
   (let [addon-dir-list (->> install-dir fs/list-dir (filter fs/directory?) (map str))
         parse-toc (fn [addon-dir]
                     (logging/with-addon {:dirname (-> addon-dir fs/file fs/base-name str)}
@@ -320,7 +320,7 @@
                              (toc/parse-addon-toc path)
                              (contains? :ignore?)))]
     (or (nfo/version-controlled? path) ;; cheapest check first
-        (utils/any (map check-toc-data (toc/find-toc-files path))))))
+        (->> path toc/find-toc-files (map check-toc-data) utils/any))))
 
 (defn-spec ignore nil?
   "marks the given `addon` and all of it's group members (if any) as 'ignored'"
@@ -440,6 +440,10 @@
       pinned-version (and (not= pinned-version installed-version)
                           (= pinned-version version))
 
+      ;; if the available version is equal to the installed version
+      ;; AND the installed game track is the same as the available game track
+      ;; (OR, the installed game track is present in the list of game tracks supported by the addon),
+      ;; then the addon is NOT updateable.
       (and game-track installed-game-track)
       (not (and (= version installed-version)
                 (or (= game-track installed-game-track)

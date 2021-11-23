@@ -71,10 +71,7 @@
 
 (defn-spec read-toc-file (s/or :ok map?, :error nil?)
   "reads the contents of a *single* toc file into a map.
-returns a map of key-vals scraped from the .toc file in the given `addon-dir`.
-  called without (or with a nil) `game-track`, returns the contents of the default 'SomeAddon.toc' file without a suffix (original behaviour).
-  called with a specific `game-track`, it prefers the contents of the 'SomeAddon_Suffix.toc' file, if it exists, then 'SomeAddon.toc' 
-  (most to least specific). Note! this doesn't guarantee the default toc file read will be for the given `game-track`."
+  returns a map of key-vals scraped from the .toc file in the given `addon-dir`."
   [path-to-toc ::sp/extant-file]
   (->> path-to-toc
        utils/de-bom-slurp
@@ -83,7 +80,7 @@ returns a map of key-vals scraped from the .toc file in the given `addon-dir`.
 ;; ---
 
 (defn-spec find-toc-files (s/or :ok ::sp/list-of-lists, :error nil?)
-  "returns a list of `[[filename.toc game-track], ...]` where game-track is `nil` if it can't be guessed from the filename."
+  "returns a list of `[[game-track, filename.toc], ...]` where game-track is `nil` if it can't be guessed from the filename."
   [addon-dir ::sp/extant-dir]
   (let [pattern (Pattern/compile "(?u)^(.+?)(?:[\\-_]{1}(Mainline|Classic|Vanilla|TBC|BCC){1})?\\.toc$")
         matching-toc-pattern (fn [filename]
@@ -110,7 +107,7 @@ returns a map of key-vals scraped from the .toc file in the given `addon-dir`.
     (mapv (fn [[filename-game-track filename]]
             (merge (read-toc-file (utils/join toc-dir filename))
                    {:dirname (fs/base-name addon-dir) ;; /foo/bar/baz => baz
-                    :filename-game-track filename-game-track}))
+                    :-filename-game-track filename-game-track}))
           (find-toc-files toc-dir))))
 
 (defn-spec rm-trailing-version string?
@@ -175,10 +172,10 @@ returns a map of key-vals scraped from the .toc file in the given `addon-dir`.
 
          game-track (utils/interface-version-to-game-track interface-version)
 
-         _ (when (and (some? (:filename-game-track keyvals))
-                      (not= (:filename-game-track keyvals) game-track))
+         _ (when (and (some? (:-filename-game-track keyvals))
+                      (not= (:-filename-game-track keyvals) game-track))
              (warn (format "'%s' from filename does not match it's interface-version '%s'"
-                           (:filename-game-track keyvals) game-track)))
+                           (:-filename-game-track keyvals) game-track)))
 
          addon {:name (normalise-name label)
                 :dirname dirname
@@ -211,12 +208,11 @@ returns a map of key-vals scraped from the .toc file in the given `addon-dir`.
   (-> path fs/base-name (.startsWith "Blizzard_")))
 
 (defn-spec parse-addon-toc-guard (s/or :ok :addon/toc-list, :error nil?)
-  "wraps the `parse-addon-toc` function and ensures no unhandled exceptions cause a cascading failure"
+  "wraps the `parse-addon-toc` function, attaching the list of `:supported-game-tracks` and sinking any errors."
   [addon-dir ::sp/extant-dir]
   (when-not (blizzard-addon? addon-dir)
     (try
-      (let [;; we found and parsed one or more .toc files.
-            result (mapv parse-addon-toc (read-addon-dir addon-dir))
+      (let [result (mapv parse-addon-toc (read-addon-dir addon-dir))
             supported-game-tracks (->> result (map :toc/game-track) distinct sort vec)]
         (mapv #(assoc % :supported-game-tracks supported-game-tracks) result))
       (catch Exception e
