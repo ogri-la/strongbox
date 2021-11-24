@@ -10,6 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Gitlab support.
     - similar to addons hosted on Github, Gitlab addons must be using releases with custom assets (not the default ones).
+* multi-toc support.
+    - the presence of multiple .toc files determines if an update is necessary when switching game tracks.
+    - a warning is issued if the suffix of a `.toc` file doesn't match the `Interface Version` within it.
+        - for example, `SomeAddon-Classic.toc` is using a `20501` as it's interface version.
+        - this may lead to false positives for the few addons that are named `SomeAddon-Classic` and use multiple toc files.
+    - a warning is issued if there are multiple non-identical sets of toc data for the same game track.
+        - for example, an addon has `SomeAddon-Classic.toc` and `SomeAddon-Vanilla.toc` (both valid), but `-Vanilla.toc` data is not identical to `-Classic.toc`.
+            - in these cases the first in the group is used with '-Classic' having alphabetic priority over '-Vanilla', '-BCC' over '-TBC', etc.
 
 ### Changed
 

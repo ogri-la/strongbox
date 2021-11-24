@@ -637,12 +637,12 @@
   returns `nil` if no game track found."
   [string (s/nilable string?)]
   (when string
-    (let [;; matches 'classic-tbc', 'classic-bc', 'classic-bcc', 'classic_tbc', 'classic_bc', 'classic_bcc', 'tbc', 'bc', 'bcc'
+    (let [;; matches 'classic-tbc', 'classic-bc', 'classic-bcc', 'classic_tbc', 'classic_bc', 'classic_bcc', 'tbc', 'tbcc', 'bc', 'bcc'
           ;; but not 'classictbc' or 'classicbc' or 'classicbcc'
           ;; see tests.
-          classic-tbc-regex #"(?i)classic[\W_]t?bcc?|[\W_]t?bcc?\W?"
-          classic-regex #"(?i)classic"
-          retail-regex #"(?i)retail"]
+          classic-tbc-regex #"(?i)classic[\W_]t?bcc?|[\W_]t?bcc?\W?|t?bcc?$"
+          classic-regex #"(?i)classic|vanilla"
+          retail-regex #"(?i)retail|mainline"]
       (cond
         (re-find classic-tbc-regex string) :classic-tbc
         (re-find classic-regex string) :classic
@@ -719,3 +719,11 @@
   [string (s/nilable string?)]
   (when string
     (String. (.decode (Base64/getDecoder) string))))
+
+(defn first-nn
+  "returns the first non-nil value of lazily applying `f` to `lst`"
+  [f lst]
+  (->> lst
+       (map f)
+       (remove nil?)
+       first))

@@ -276,6 +276,7 @@
                  ["1.2.3" nil]
 
                  ;; classic-tbc
+                 ["bcc" :classic-tbc]
                  ["classic-tbc" :classic-tbc]
                  ["1.2.3-classic-tbc" :classic-tbc]
                  ["1.2.3-classic-tbc-no-lib" :classic-tbc]
@@ -309,6 +310,7 @@
 
                  ;; classic
                  ["classic" :classic]
+                 ["vanilla" :classic]
                  ["1.2.3-classic" :classic]
                  ["1.2.3-classic-no-lib" :classic]
                  ["classic-no-lib" :classic]
@@ -317,6 +319,7 @@
 
                  ;; retail
                  ["retail" :retail]
+                 ["mainline" :retail]
                  ["1.2.3-retail" :retail]
                  ["1.2.3-retail-no-lib" :retail]
                  ["retail-no-lib" :retail]
@@ -324,8 +327,10 @@
                  ["1.2.3_retail_no-lib" :retail]
 
                  ;; case insensitivity
+                 ["Mainline" :retail]
                  ["Retail" :retail]
                  ["Classic" :classic]
+                 ["Vanilla" :classic]
                  ["Classic-TBC" :classic-tbc]
 
                  ;; priority (classic-tbc > classic > retail)

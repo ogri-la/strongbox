@@ -19,19 +19,31 @@ see CHANGELOG.md for a more formal list of changes by release
         - https://gitlab.com/shrugal/PersoLootRoll
         - any others ...?
 
-## todo
-
 * multi-toc support
     - https://github.com/Stanzilla/WoWUIBugs/issues/68#issuecomment-830351390
     - https://gitlab.com/woblight/strategos 
         - has no otherwise identifying game track in it's name, toc file or releases
         - but it does support all three versions of wow
 
+## todo
+
 * add release.json support for github/gitlab addons
 
 * refresh catalogue is not so healthy
 
 ## todo bucket (no particular order)
+
+* github, like gitlab, use presence of multiple toc files to determine game track support
+
+* complex export pane
+    - choose format
+        - json, csv, edn
+    - choose to keep ignored or not
+    - choose fields to keep
+    - warning if not enough fields for import
+
+* bug, gui, 'updated' column is using dummy date in certain cases
+    - I thought I fixed this?
 
 * gitlab, add optional API authentication like github
 

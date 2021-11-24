@@ -19,7 +19,9 @@
    :dirname "EveryAddon",
    :label "EveryAddon 1.2.3",
    :interface-version 70000,
-   :installed-version "1.2.3"})
+   :installed-version "1.2.3"
+   :toc/game-track :retail
+   :supported-game-tracks [:retail]})
 
 (def fixture-dir (-> "test/fixtures" fs/absolute fs/normalized str))
 

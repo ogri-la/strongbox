@@ -609,7 +609,7 @@
   "guard function. offloads the hard work to `-load-installed-addons` then updates application state"
   []
   (if-let [addon-dir (selected-addon-dir)]
-    (let [addon-list (addon/load-installed-addons addon-dir)]
+    (let [addon-list (addon/load-installed-addons addon-dir (get-game-track))]
       (info (format "loading (%s) installed addons in: %s" (count addon-list) addon-dir))
       (update-installed-addon-list! addon-list))
 
@@ -1180,6 +1180,8 @@
                  ;; todo: why is dirname needed here?
                  :dirname addon/dummy-dirname
                  :interface-version 0
+                 :toc/game-track :retail
+                 :supported-game-tracks []
                  :installed-version "0"}
         addon-list (map #(merge padding %) addon-list)
 

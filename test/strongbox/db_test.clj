@@ -15,6 +15,8 @@
                :description "foo"
                :dirname "EveryAddon"
                :interface-version 70000
+               :toc/game-track :retail
+               :supported-game-tracks [:retail]
                :installed-version "v8.10.00"}
           installed-addon-list [toc]
 
@@ -47,6 +49,8 @@
                :description "foo"
                :dirname "EveryAddon"
                :interface-version 70000
+               :toc/game-track :retail
+               :supported-game-tracks [:retail]
                :installed-version "v8.10.00"
                :ignore? true}
           installed-addon-list [toc]

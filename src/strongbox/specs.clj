@@ -213,8 +213,16 @@
 (s/def :addon/created-date ::inst)
 (s/def :addon/updated-date ::inst)
 
+(s/def :addon/supported-game-tracks ::game-track-list) ;; alias
+
 (s/def :addon/toc
-  (s/keys :req-un [::name ::label ::description ::dirname ::interface-version ::installed-version]
+  (s/keys :req-un [::name
+                   ::label
+                   ::description
+                   ::dirname
+                   ::interface-version
+                   ::installed-version
+                   :addon/supported-game-tracks]
           ;; todo: revisit all of these
           ;;:opt-un [::group-id ::primary? ::group-addons :addon/source :addon/source-id]
           ))

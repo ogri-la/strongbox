@@ -39,7 +39,8 @@
              ;; later, when comparing installed addons against the catalogue, the comparisons will be more consistent
              :installed-version (:version addon)
 
-             ;; knowing the regime the addon was installed under allows us to export and later re-import the correct version
+             ;; used to determine if an update is available.
+             ;; also, knowing the regime the addon was installed under allows us to export and later re-import the correct version.
              :installed-game-track (:game-track addon)
 
              ;; normalised name. once used to match to online addon, we now use source+source-id
