@@ -310,6 +310,7 @@
 
                  ;; classic
                  ["classic" :classic]
+                 ["vanilla" :classic]
                  ["1.2.3-classic" :classic]
                  ["1.2.3-classic-no-lib" :classic]
                  ["classic-no-lib" :classic]
@@ -329,6 +330,7 @@
                  ["Mainline" :retail]
                  ["Retail" :retail]
                  ["Classic" :classic]
+                 ["Vanilla" :classic]
                  ["Classic-TBC" :classic-tbc]
 
                  ;; priority (classic-tbc > classic > retail)

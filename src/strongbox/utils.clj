@@ -641,7 +641,7 @@
           ;; but not 'classictbc' or 'classicbc' or 'classicbcc'
           ;; see tests.
           classic-tbc-regex #"(?i)classic[\W_]t?bcc?|[\W_]t?bcc?\W?|t?bcc?$"
-          classic-regex #"(?i)classic"
+          classic-regex #"(?i)classic|vanilla"
           retail-regex #"(?i)retail|mainline"]
       (cond
         (re-find classic-tbc-regex string) :classic-tbc

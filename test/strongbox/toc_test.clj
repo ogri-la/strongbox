@@ -2,6 +2,7 @@
   (:require
    [clojure.test :refer [deftest testing is use-fixtures]]
    [strongbox
+    [zip :as zip]
     [constants :as constants]
     [utils :as utils :refer [join]]
     [toc :as toc]
@@ -76,7 +77,6 @@ SomeAddon.lua")
                     :#interface "11302"}]
       (is (= expected (toc/parse-toc-file toc-file-contents))))))
 
-;; todo: tests for reading suffixed data
 (deftest parse-addon-toc-guard
   (testing "parsing of scraped toc-file key-vals"
     (let [addon-path (join fs/*cwd* "SomeAddon")
@@ -203,3 +203,15 @@ SomeAddon.lua")
           ]
       (doseq [[given expected] cases]
         (is (= expected (toc/rm-trailing-version given)))))))
+
+(deftest find-toc-files
+  (let [expected [[:classic-tbc "EveryAddon-BCC.toc"]
+                  [:classic "EveryAddon-Classic.toc"]
+                  [:retail "EveryAddon-Mainline.toc"]
+                  [:classic-tbc "EveryAddon-TBC.toc"]
+                  [:classic "EveryAddon-Vanilla.toc"]
+                  [nil "EveryAddon.toc"]]
+        fixture (helper/fixture-path "everyaddon--1-2-3--multi-toc.zip")
+        addon-dir (join (helper/install-dir) "EveryAddon")]
+    (zip/unzip-file fixture (helper/install-dir))
+    (is (= expected (toc/find-toc-files addon-dir)))))

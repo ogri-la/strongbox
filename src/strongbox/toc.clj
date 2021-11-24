@@ -93,6 +93,7 @@
                     (map str)
                     (map matching-toc-pattern)
                     (remove nil?)
+                    (sort-by second) ;; filenames, alphabetically
                     vec
                     utils/nilable)]
     (if-not result

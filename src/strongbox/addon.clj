@@ -137,7 +137,7 @@
                     (logging/with-addon {:dirname (-> addon-dir fs/file fs/base-name str)}
                       (let [toc-data-list (toc/parse-addon-toc-guard addon-dir)]
                         (if (= 1 (count toc-data-list))
-                          ;; whatever toc-data we have, we only have one of it (vast majority of cases) so return that
+                          ;; whatever toc data we have, we only have one of it (vast majority of cases) so return that
                           (first toc-data-list)
 
                           ;; we have multiple sets of toc-data to choose from. which to choose?

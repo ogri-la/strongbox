@@ -4,6 +4,7 @@
    ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [me.raynes.fs :as fs]
    [strongbox
+    [zip :as zip]
     [logging :as logging]
     [utils :as utils]
     [test-helper :as helper :refer [fixture-path slurp-fixture helper-data-dir with-running-app]]
@@ -276,6 +277,25 @@
                      :source "curseforge" :source-id 123
                      :ignore? false}]]
       (is (= expected (addon/load-installed-addons addon-dir :retail))))))
+
+(deftest load-installed-addons--multiple-non-identical-toc-data
+  (let [fixture (helper/fixture-path "everyaddon--1-2-3--multi-toc--inconsistent.zip")
+        game-track :classic
+        expected [;; description has been modified in "-Classic" vs "-Vanilla"
+                  {:description "Slightly differently does what no other addon does."
+                   :dirname "EveryAddon",
+                   :installed-version "1.2.3",
+                   :interface-version 11307,
+                   :label "EveryAddon 1.2.3",
+                   :name "everyaddon",
+                   :supported-game-tracks [:classic :classic-tbc :retail]}]
+
+        expected-warning "multiple sets of different toc data found for :classic. using first."]
+    (zip/unzip-file fixture (helper/install-dir))
+    (let [[warning] (logging/buffered-log
+                     :warn
+                     (is (= expected (addon/-load-installed-addons (helper/install-dir) game-track))))]
+      (is (= expected-warning warning)))))
 
 (deftest remove-addon--malign-addon-data
   (testing "uninstalling an addon whose `:dirname` value is corrupted (somehow) shouldn't affect data outside of the addon dir"
