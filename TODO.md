@@ -27,12 +27,20 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+
 * add release.json support for github/gitlab addons
     - https://github.com/layday/instawow/discussions/72
 
 * refresh catalogue is not so healthy
+    - errors during refresh should appear in the log next to the appropriate addon
+    - 404s shouldn't be retried. the addon is gone
+    - where are the tests catching all these?
+        cli/refresh-user-catalogue
+        cli/import-addon--github
 
 ## todo bucket (no particular order)
+
+* github, gitlab, are we paginating release calls?
 
 * disable support for curseforge
     - https://mailchi.mp/overwolf/whats-new-with-overwolf-curseforge-november3

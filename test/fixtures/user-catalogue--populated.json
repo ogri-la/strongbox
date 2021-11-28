@@ -13,7 +13,7 @@
    "updated-date":"2021-04-18T15:54:03Z",
    "url":"https://www.tukui.org/addons.php?id=3"},
   {"download-count":1581,
-   "game-track-list":["retail"],
+   "game-track-list":["retail", "classic-tbc", "classic"],
    "label":"AdvancedInterfaceOptions",
    "name":"advancedinterfaceoptions",
    "source":"github",

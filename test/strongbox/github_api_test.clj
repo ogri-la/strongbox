@@ -324,37 +324,35 @@
           cases [;; addon-summary updates, latest-release updates, expected
 
                  ;; case: game track present in file name, prefer that over `:game-track-list` and any game-track in release name
-                 [{} [[:assets 0 :name] "1.2.3-Classic"]
+                 [[] [[:assets 0 :name] "1.2.3-Classic"]
                   [{:download-url "https://example.org" :game-track :classic, :version "Release 1.2.3"}]]
 
                  ;; case: game track present in release name, prefer that over `:game-track-list`
-                 [{} [[:name] "Foo 1.2.3-Classic TBC"]
+                 [[] [[:name] "Foo 1.2.3-Classic TBC"]
                   [{:download-url "https://example.org" :game-track :classic-tbc, :version "Foo 1.2.3-Classic TBC"}]]
 
-                 ;; todo: revisit this assumption.
-                 ;; case: no game track present in asset name or release name and no `:game-track-list`. assume `:retail`
-                 [{} {}
-                  [{:download-url "https://example.org" :game-track :retail, :version "Release 1.2.3"}]]
+                 ;; case: no game track present in asset name or release name and no `:game-track-list`.
+                 [[] {}
+                  [{:download-url "https://example.org" :game-track nil, :version "Release 1.2.3"}]]
 
                  ;; case: no game track present in asset name or release name and just a single entry in `:game-track-list`. use that.
-                 [{:game-track-list [:retail]} {}
+                 [[:retail] {}
                   [{:download-url "https://example.org" :game-track :retail, :version "Release 1.2.3"}]]
-                 [{:game-track-list [:classic]} {}
+                 [[:classic] {}
                   [{:download-url "https://example.org" :game-track :classic, :version "Release 1.2.3"}]]
 
                  ;; case: no game track present in asset name or release name with multiple entries in `:game-track-list`.
                  ;; assume all entries in `:game-track-list` supported.
-                 [{:game-track-list [:classic-tbc :classic :retail]} {}
-                  [{:download-url "https://example.org" :game-track :retail, :version "Release 1.2.3"}
-                   {:download-url "https://example.org" :game-track :classic-tbc, :version "Release 1.2.3"}
-                   {:download-url "https://example.org" :game-track :classic, :version "Release 1.2.3"}]]]]
+                 [[:classic-tbc :classic :retail] {}
+                  [{:download-url "https://example.org" :game-track :classic-tbc, :version "Release 1.2.3"}
+                   {:download-url "https://example.org" :game-track :classic, :version "Release 1.2.3"}
+                   {:download-url "https://example.org" :game-track :retail, :version "Release 1.2.3"}]]]]
 
-      (doseq [[addon-summary-updates, release-updates, expected] cases
-              :let [summary (merge addon-summary addon-summary-updates)
-                    release (if (vector? release-updates)
+      (doseq [[game-track-list, release-updates, expected] cases
+              :let [release (if (vector? release-updates)
                               (assoc-in latest-release (first release-updates) (second release-updates))
                               (merge latest-release release-updates))]]
-        (is (= expected (github-api/parse-assets summary release)), (str "failed case: " addon-summary-updates))))))
+        (is (= expected (github-api/parse-assets release game-track-list)), (str "failed case: " game-track-list release-updates))))))
 
 (deftest rate-limit-exceeded
   (testing "403 while importing an addon is handled"
@@ -420,3 +418,9 @@
           asset {:name "LunaUnitFrames-classic.zip"}
           expected "LunaUnitFrames-classic.zip"]
       (is (= expected (github-api/pick-version-name release asset))))))
+
+(deftest find-gametracks-release-list
+  (let [release-list (slurp-fixture "github-repo-releases--altoholic-classic.json")
+        ]
+    (is (github-api/find-gametracks-release-list release-list))))
+

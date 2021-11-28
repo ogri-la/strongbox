@@ -9,14 +9,22 @@
    [strongbox
     [http :as http]
     [toc :as toc]
-    [utils :as utils :refer [pad if-let* nilable]]
+    [utils :as utils :refer [pad if-let*]]
     [specs :as sp]]))
+
+(defn release-json-file?
+  [asset]
+  (-> asset :name (= "release.json")))
+
+(defn fully-uploaded?
+  [asset]
+  (-> asset :state (= "uploaded")))
 
 (defn-spec releases-url ::sp/url
   [source-id string?]
   (format "https://api.github.com/repos/%s/releases" source-id))
 
-(defn-spec download-releases (s/or :ok (s/coll-of map?), :error nil?)
+(defn-spec download-releases (s/or :ok ::sp/list-of-maps, :error nil?)
   [source-id string?]
   (some-> source-id releases-url http/download-with-backoff http/sink-error utils/from-json))
 
@@ -38,23 +46,30 @@
 
 (defn-spec parse-assets ::sp/list-of-maps
   "filters and classifies a release's list of assets."
-  [addon :addon/expandable, release map?]
+  [release map?, game-track-list ::sp/game-track-list]
   (let [supported-zip? #(-> % :content_type vector set (some supported-zip-mimes))
-        fully-uploaded? #(-> % :state (= "uploaded"))
+
+        ;; still not happy with this.
+        ;; some hueristics:
+        ;; 1. if we have more than 1 asset and we have exactly 1 unguessable asset, assume retail
+        ;; 2. if we have one asset and an unguessable game track, try using the name of the release
+        ;; 3. otherwise, download release.json and parse it's contents, but only if this is release 1 of N releases
+        ;; 4. if this is release 1+N of N releases, use the previously downloaded release.json to 'fill in the blanks'.
+        ;; 5. if no release.json exists, fall back on the given `game-track-list`
+        
         classify (fn [asset]
-                   (let [version (pick-version-name release asset)
-                         ;; perhaps: only include the 'release' and 'addon' game tracks if we can't guess a game track from the asset filename.
-                         known-game-tracks (-> addon
-                                               :game-track-list
-                                               (or [])
-                                               (conj (utils/guess-game-track (:name release)))
-                                               (conj (utils/guess-game-track (:name asset))))
-                         known-game-tracks (set (remove nil? known-game-tracks))
-                         known-game-tracks (if (empty? known-game-tracks) #{:retail} known-game-tracks)]
-                     (for [game-track known-game-tracks]
-                       {:game-track game-track
-                        :version version
-                        :download-url (:browser_download_url asset)})))]
+                   (let [asset-game-track (utils/guess-game-track (:name asset))
+                         release-game-track (utils/guess-game-track (:name release))
+                         source-info (fn [game-track]
+                                       {:game-track game-track
+                                        :version (pick-version-name release asset)
+                                        :download-url (:browser_download_url asset)})]
+                     (cond
+                       asset-game-track [(source-info asset-game-track)]
+                       release-game-track [(source-info release-game-track)]
+                       (not (empty? game-track-list)) (mapv source-info game-track-list)
+                       :else (source-info nil))))
+        ]
     (->> release
          :assets
          (filter supported-zip?)
@@ -63,15 +78,15 @@
          flatten
          vec)))
 
-(defn-spec parse-github-release-data vector?
+(defn-spec parse-github-release-data (s/or :ok :addon/release-list, :fail nil?)
   "given a `release-list` (a response from Github), parse the assets in each release."
   [release-list vector?, addon :addon/expandable, game-track ::sp/game-track]
-  (let [result (->> release-list
-                    (map (partial parse-assets addon))
-                    flatten
-                    (group-by :game-track))]
-
-    (get result game-track [])))
+  (let [game-track-list (if (empty? (:game-track-list addon)) [:retail] (:game-track-list addon))]
+    (->> release-list
+         (map #(parse-assets % game-track-list))
+         flatten
+         (group-by :game-track)
+         game-track)))
 
 (defn-spec expand-summary (s/or :ok :addon/release-list, :error nil?)
   "fetches a list of releases from the addon host for the given `addon-summary`"
@@ -84,23 +99,7 @@
 
 ;; ---
 
-        ;;release-json-file? #(-> % :name (= "release.json"))
-        ;;release-json (->> release :assets (filter release-json-file?) (filter fully-uploaded) first)
-
-
-(defn-spec download-release-json ::sp/list-of-maps
-  "release.json should only be downloaded in ambiguous cases, i.e., where the game track can't be guessed from the filename."
-  [release-json-asset (s/nilable map?)]
-  (some->> release-json-asset
-           :browser_download_url
-           http/download-with-backoff
-           http/sink-error
-           utils/from-json
-           :releases
-           (remove :nolib)
-           vec))
-
-(defn-spec download-root-listing (s/or :ok (s/coll-of map?), :error nil?)
+(defn-spec download-root-listing (s/or :ok ::sp/list-of-maps, :error nil?)
   [source-id string?]
   (some-> source-id contents-url http/download-with-backoff http/sink-error utils/from-json))
 
@@ -113,7 +112,7 @@
            (some-> toc-file :download_url http/download-with-backoff toc/parse-toc-file)
            (warn (format "failed to find/download/parse remote github '.toc' file for '%s'" source-id))))
 
-(defn-spec -find-gametracks-toc-data (s/or :ok ::sp/game-track-list, :not-tracks-found nil?)
+(defn-spec -find-gametracks-toc-data (s/or :ok ::sp/game-track-list, :error nil?)
   "returns a set of game tracks after inspecting .toc file contents"
   [toc-data map?]
   (->> (-> toc-data
@@ -134,24 +133,84 @@
 ;; todo: release.json parsing would fit in nicely here.
 ;; prefer release.json over fetching toc file and parsing contents.
 
-(defn-spec find-gametracks-toc-data (s/or :ok ::sp/game-track-list, :no-tracks-found nil?)
-  "returns a set of 'retail' and/or 'classic' after inspecting .toc file contents"
+(defn-spec find-gametracks-toc-data (s/or :ok ::sp/game-track-list, :error nil?)
+  "returns a set of game tracks after inspecting the .toc file contents"
   [source-id string?]
   (some-> source-id find-remote-toc-file -find-gametracks-toc-data))
+
+(defn-spec find-gametracks-release-list (s/or :ok ::sp/game-track-list, :no-game-tracks nil?)
+  "analyses all releases to date and returns a list of game tracks found.
+  returns `nil` if no game tracks are detected.
+  does not guess, fast and cheap to do."
+  [release-list ::sp/list-of-maps]
+  (let [known-game-tracks []]
+    (->> release-list
+         (map #(parse-assets % known-game-tracks))
+         flatten
+         (group-by :game-track)
+         keys
+         (remove nil?) ;; unguessable game tracks default to `nil` when `known-game-tracks` is empty.
+         vec
+         utils/nilable)))
+
+(defn-spec download-release-json ::sp/list-of-maps
+  "release.json should only be downloaded in ambiguous cases, i.e., where the game track can't be guessed from the filename."
+  [release-json-asset map?]
+  (some->> release-json-asset
+           :browser_download_url
+           http/download-with-backoff
+           http/sink-error
+           utils/from-json
+           :releases
+           (remove :nolib)
+           vec))
+
+(defn-spec find-gametracks-release-json (s/or :ok ::sp/game-track-list, :no-game-tracks nil?)
+  "looks for the first release.json it can find and returns the game tracks found inside.
+  returns `nil` if no release.json found or no known game tracks detected."
+  [release-list ::sp/list-of-maps]
+  (let [release-json-asset #(->> % :assets (filter release-json-file?) (filter fully-uploaded?) first)]
+    (some->> release-list
+             (map release-json-asset)
+             (remove nil?)
+             first
+             download-release-json
+             (map :metadata) ;; list of maps `[{:metadata [...]}, ...]` becomes a list of lists `[[...], ...]`
+             flatten ;; single list of maps `[{...}, ...]`
+             (map :flavor) ;; list of strings
+             (map utils/guess-game-track) ;; list of keywords
+             (remove nil?) ;; unguessable game tracks removed. todo: issue warning?
+             set ;; distinct
+             utils/nilable)))
 
 (defn-spec parse-user-string (s/or :ok :addon/source-id :error nil?)
   "extracts the addon ID from the given `url`."
   [url ::sp/url]
   (->> url java.net.URL. .getPath (re-matches #"^/([^/]+/[^/]+)[/]?.*") rest first))
 
+(defn-spec find-latest-release (s/or :release map?, :no-viable-release nil?)
+  "the literal latest release we can find may not be the best choice and should only be "
+  [release-list ::sp/list-of-maps]
+  (->> release-list
+       (remove :prerelease)
+       (remove :draft)
+       (filter (comp utils/nilable :assets))
+       first))
+
 (defn-spec find-addon (s/or :ok :addon/summary, :error nil?)
   [source-id :addon/source-id]
-  (if-let* [release-list (download-releases source-id)
-            latest-release (first release-list) ;; releases must be used
+  (if-let* [release-list (download-releases source-id) ;; releases must be used
 
-            ;; releases must be using uploaded assets
-            ;; todo: revisit this logic. the latest release may not be a good representative
-            _ (-> latest-release :assets nilable)
+            ;; must have something properly released, releases must be using uploaded assets
+            latest-release (find-latest-release release-list)
+
+            ;; we have to to find at least one game track in either a release asset name, a release.json file or a .toc file.
+            ;; if we can't then refuse to guess.
+            ;; later on when we scan releases and we can't find an asset's game track, we'll use these to fill in the blanks.
+            game-track-list (or (find-gametracks-release-list release-list)
+                                (find-gametracks-release-json release-list)
+                                (find-gametracks-toc-data source-id)
+                                [])
 
             ;; will correct any case problems. see tests.
             source-id (-> latest-release :html_url parse-user-string)
@@ -166,7 +225,7 @@
             :label repo
             :name (slugify repo "")
             :download-count download-count
-            :game-track-list (or (find-gametracks-toc-data source-id) [])
+            :game-track-list game-track-list
             ;; 2020-03: disabled in favour of :tag-list
             ;;:category-list []
             :tag-list []}

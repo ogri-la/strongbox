@@ -575,6 +575,8 @@
             github-contents-fixture (slurp (fixture-path "user-catalogue--github-contents.json"))
             github-toc-fixture (slurp (fixture-path "user-catalogue--github-toc.json"))
 
+            ;; todo: gitlab
+
             fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                          {:get (fn [req] {:status 200 :body short-catalogue})}
 
