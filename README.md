@@ -314,13 +314,14 @@ pinned addon.
 
 ### multi-toc support
 
-Introduced [in May 2021](https://github.com/Stanzilla/WoWUIBugs/issues/68#issuecomment-889431675, the WoW game client 
+Introduced [in May 2021](https://github.com/Stanzilla/WoWUIBugs/issues/68#issuecomment-889431675), the WoW game client 
 supports searching for multiple `.toc` files based on a suffix (or lack of one). 
 
 For example, `SomeAddon-Classic.toc` will be preferred in the classic game client over `SomeAddon.toc`.
 
-Strongbox also searches for and reads the toc data from the most appropriate file. Multiple toc files help
-determine if an update is required or not.
+Strongbox also searches for and reads the toc data from the most appropriate file.
+
+Multiple toc files also help determine if an update is required or not.
 
 ## Misc
 

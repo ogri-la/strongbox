@@ -106,9 +106,8 @@
           ;;expected-retail 2
           expected-classic 47
           expected-retail 0]
-      (with-fake-routes-in-isolation {} ;; necessary?
-        (is (= expected-classic (count (github-api/parse-github-release-data fixture addon-summary :classic))))
-        (is (= expected-retail (count (github-api/parse-github-release-data fixture addon-summary :retail))))))))
+      (is (= expected-classic (count (github-api/parse-github-release-data fixture addon-summary :classic))))
+      (is (= expected-retail (count (github-api/parse-github-release-data fixture addon-summary :retail)))))))
 
 (deftest find-gametracks-toc-data
   (testing "games tracks are correctly detected from toc data"
@@ -317,7 +316,8 @@
            :tag-list []}
 
           latest-release {:name "Release 1.2.3"
-                          :assets [{:content_type "application/zip"
+                          :assets [{:browser_download_url "https://example.org"
+                                    :content_type "application/zip"
                                     :state "uploaded"
                                     :name "1.2.3"}]}
 
@@ -325,43 +325,36 @@
 
                  ;; case: game track present in file name, prefer that over `:game-track-list` and any game-track in release name
                  [{} [[:assets 0 :name] "1.2.3-Classic"]
-                  {:classic [{:content_type "application/zip", :state "uploaded", :name "1.2.3-Classic",
-                              :game-track :classic, :version "Release 1.2.3" :-mo :track-in-asset-name}]}]
+                  [{:download-url "https://example.org" :game-track :classic, :version "Release 1.2.3"}]]
 
                  ;; case: game track present in release name, prefer that over `:game-track-list`
                  [{} [[:name] "Foo 1.2.3-Classic TBC"]
-                  {:classic-tbc [{:content_type "application/zip", :state "uploaded", :name "1.2.3",
-                                  :game-track :classic-tbc, :version "Foo 1.2.3-Classic TBC" :-mo :track-in-release-name}]}]
+                  [{:download-url "https://example.org" :game-track :classic-tbc, :version "Foo 1.2.3-Classic TBC"}]]
 
+                 ;; todo: revisit this assumption.
                  ;; case: no game track present in asset name or release name and no `:game-track-list`. assume `:retail`
                  [{} {}
-                  {:retail [{:content_type "application/zip", :state "uploaded", :name "1.2.3",
-                             :game-track :retail, :version "Release 1.2.3" :-mo :sa--ngt}]}]
+                  [{:download-url "https://example.org" :game-track :retail, :version "Release 1.2.3"}]]
 
                  ;; case: no game track present in asset name or release name and just a single entry in `:game-track-list`. use that.
                  [{:game-track-list [:retail]} {}
-                  {:retail [{:content_type "application/zip", :state "uploaded", :name "1.2.3",
-                             :game-track :retail, :version "Release 1.2.3" :-mo :sa--1gt}]}]
+                  [{:download-url "https://example.org" :game-track :retail, :version "Release 1.2.3"}]]
                  [{:game-track-list [:classic]} {}
-                  {:classic [{:content_type "application/zip", :state "uploaded", :name "1.2.3",
-                              :game-track :classic, :version "Release 1.2.3" :-mo :sa--1gt}]}]
+                  [{:download-url "https://example.org" :game-track :classic, :version "Release 1.2.3"}]]
 
                  ;; case: no game track present in asset name or release name with multiple entries in `:game-track-list`.
                  ;; assume all entries in `:game-track-list` supported.
                  [{:game-track-list [:classic-tbc :classic :retail]} {}
-                  {:retail [{:content_type "application/zip", :state "uploaded", :name "1.2.3",
-                             :game-track :retail, :version "Release 1.2.3" :-mo :sa--Ngt}]
-                   :classic-tbc [{:content_type "application/zip", :state "uploaded", :name "1.2.3",
-                                  :game-track :classic-tbc, :version "Release 1.2.3" :-mo :sa--Ngt}]
-                   :classic [{:content_type "application/zip", :state "uploaded", :name "1.2.3",
-                              :game-track :classic, :version "Release 1.2.3" :-mo :sa--Ngt}]}]]]
+                  [{:download-url "https://example.org" :game-track :retail, :version "Release 1.2.3"}
+                   {:download-url "https://example.org" :game-track :classic-tbc, :version "Release 1.2.3"}
+                   {:download-url "https://example.org" :game-track :classic, :version "Release 1.2.3"}]]]]
 
       (doseq [[addon-summary-updates, release-updates, expected] cases
               :let [summary (merge addon-summary addon-summary-updates)
                     release (if (vector? release-updates)
                               (assoc-in latest-release (first release-updates) (second release-updates))
                               (merge latest-release release-updates))]]
-        (is (= expected (github-api/group-assets summary release)))))))
+        (is (= expected (github-api/parse-assets summary release)), (str "failed case: " addon-summary-updates))))))
 
 (deftest rate-limit-exceeded
   (testing "403 while importing an addon is handled"

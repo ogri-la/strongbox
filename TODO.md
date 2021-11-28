@@ -28,10 +28,14 @@ see CHANGELOG.md for a more formal list of changes by release
 ## todo
 
 * add release.json support for github/gitlab addons
+    - https://github.com/layday/instawow/discussions/72
 
 * refresh catalogue is not so healthy
 
 ## todo bucket (no particular order)
+
+* disable support for curseforge
+    - https://mailchi.mp/overwolf/whats-new-with-overwolf-curseforge-november3
 
 * github, like gitlab, use presence of multiple toc files to determine game track support
 
@@ -247,6 +251,8 @@ see CHANGELOG.md for a more formal list of changes by release
     - a prerequisite for v5 then would be introducing a new catalogue
 * readme, the ~your machine's `hostname`~ bit.
 * readme, the "Original Swing GUI was last available in version 3.x using" bit
+* rename 'retail' to 'mainline'
+    - pretty big change ;) but probably for the best.
 
 ## catalogue v3 / capture more addon data
 
