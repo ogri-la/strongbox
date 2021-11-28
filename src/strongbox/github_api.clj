@@ -37,20 +37,13 @@
     (->> candidates (map utils/nilable) (remove nil?) first)))
 
 (defn-spec parse-assets ::sp/list-of-maps
-  "filters, groups and classifies a release's assets.
-  a release may have many assets, however we're only interested in fully uploaded zip files.
-  an asset may contain 'classic-tbc', 'classic' or 'retail' that will help to classify which 
-  game track the asset lives in."
+  "filters and classifies a release's list of assets."
   [addon :addon/expandable, release map?]
   (let [supported-zip? #(-> % :content_type vector set (some supported-zip-mimes))
-
-        ;; ignore any assets that are not completely uploaded
-        ;; - https://developer.github.com/v3/repos/releases/#response-for-upstream-failure
-        fully-uploaded #(-> % :state (= "uploaded"))
-        asset-list (->> release :assets (filter supported-zip?) (filter fully-uploaded))
-
+        fully-uploaded? #(-> % :state (= "uploaded"))
         classify (fn [asset]
                    (let [version (pick-version-name release asset)
+                         ;; perhaps: only include the 'release' and 'addon' game tracks if we can't guess a game track from the asset filename.
                          known-game-tracks (-> addon
                                                :game-track-list
                                                (or [])
@@ -62,7 +55,13 @@
                        {:game-track game-track
                         :version version
                         :download-url (:browser_download_url asset)})))]
-    (->> asset-list (map classify) flatten vec)))
+    (->> release
+         :assets
+         (filter supported-zip?)
+         (filter fully-uploaded?)
+         (map classify)
+         flatten
+         vec)))
 
 (defn-spec parse-github-release-data vector?
   "given a `release-list` (a response from Github), parse the assets in each release."
