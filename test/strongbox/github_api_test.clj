@@ -304,18 +304,7 @@
 
 (deftest gametrack-detection
   (testing "detecting github addon game track"
-    (let [addon-summary
-          {:url "https://github.com/Aviana/HealComm"
-           :updated-date "2019-10-09T17:40:04Z"
-           :source "github"
-           :source-id "Aviana/HealComm"
-           :label "HealComm"
-           :name "healcomm"
-           :download-count 30946
-           :game-track-list [] ;; 'no game tracks'
-           :tag-list []}
-
-          latest-release {:name "Release 1.2.3"
+    (let [latest-release {:name "Release 1.2.3"
                           :assets [{:browser_download_url "https://example.org"
                                     :content_type "application/zip"
                                     :state "uploaded"
@@ -420,7 +409,6 @@
       (is (= expected (github-api/pick-version-name release asset))))))
 
 (deftest find-gametracks-release-list
-  (let [release-list (slurp-fixture "github-repo-releases--altoholic-classic.json")
-        ]
+  (let [release-list (slurp-fixture "github-repo-releases--altoholic-classic.json")]
     (is (github-api/find-gametracks-release-list release-list))))
 

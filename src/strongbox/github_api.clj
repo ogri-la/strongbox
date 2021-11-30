@@ -32,6 +32,18 @@
   [source-id string?]
   (format "https://api.github.com/repos/%s/contents" source-id))
 
+(defn-spec download-release-json ::sp/list-of-maps
+  "release.json should only be downloaded in ambiguous cases, i.e., where the game track can't be guessed from the filename."
+  [release-json-asset map?]
+  (some->> release-json-asset
+           :browser_download_url
+           http/download-with-backoff
+           http/sink-error
+           utils/from-json
+           :releases
+           (remove :nolib)
+           vec))
+
 (def supported-zip-mimes #{"application/zip"  "application/x-zip-compressed"})
 
 (defn-spec pick-version-name (s/or :ok string? :failed nil?)
@@ -46,30 +58,47 @@
 
 (defn-spec parse-assets ::sp/list-of-maps
   "filters and classifies a release's list of assets."
-  [release map?, game-track-list ::sp/game-track-list]
+  [release map?, known-game-tracks ::sp/game-track-list]
   (let [supported-zip? #(-> % :content_type vector set (some supported-zip-mimes))
+        release-game-track (utils/guess-game-track (:name release))
 
-        ;; still not happy with this.
-        ;; some hueristics:
-        ;; 1. if we have more than 1 asset and we have exactly 1 unguessable asset, assume retail
-        ;; 2. if we have one asset and an unguessable game track, try using the name of the release
-        ;; 3. otherwise, download release.json and parse it's contents, but only if this is release 1 of N releases
-        ;; 4. if this is release 1+N of N releases, use the previously downloaded release.json to 'fill in the blanks'.
-        ;; 5. if no release.json exists, fall back on the given `game-track-list`
-        
+        release-json (->> release
+                          :assets
+                          (filter #(= "release.json" (:name %)))
+                          first)
+
         classify (fn [asset]
                    (let [asset-game-track (utils/guess-game-track (:name asset))
-                         release-game-track (utils/guess-game-track (:name release))
-                         source-info (fn [game-track]
-                                       {:game-track game-track
-                                        :version (pick-version-name release asset)
-                                        :download-url (:browser_download_url asset)})]
-                     (cond
-                       asset-game-track [(source-info asset-game-track)]
-                       release-game-track [(source-info release-game-track)]
-                       (not (empty? game-track-list)) (mapv source-info game-track-list)
-                       :else (source-info nil))))
-        ]
+                         source-info {:game-track nil
+                                      :version (pick-version-name release asset)
+                                      :download-url (:browser_download_url asset)}
+
+                         game-track-list
+                         (cond
+                           ;; game track present in file name, prefer that over `:game-track-list` and any game-track in release name
+                           asset-game-track [asset-game-track]
+
+                           ;; game track present in release name, prefer that over `:game-track-list`
+                           release-game-track [release-game-track]
+
+                           ;; no game track present in asset name or release name and no `:game-track-list` BUT a release.json is present.
+                           ;; fetch release and match asset to it's contents
+                           (and (empty? known-game-tracks)
+                                release-json) (->> release-json
+                                                   download-release-json
+                                                   (filter #(= (:name asset) (:filename %)))
+                                                   (map (comp :flavor :metadata))
+                                                   (mapv utils/guess-game-track))
+
+                           ;; no game track present in asset name or release name with multiple entries in `:game-track-list`.
+                           ;; no release.json file.
+                           ;; assume all entries in `:game-track-list` supported.
+                           (not (empty? known-game-tracks)) known-game-tracks
+
+                           ;; we don't know, we couldn't guess. return a `nil` so we can optionally deal with them later.
+                           :else [nil])]
+                     (mapv #(assoc source-info :game-track %) game-track-list)))]
+
     (->> release
          :assets
          (filter supported-zip?)
@@ -152,18 +181,6 @@
          (remove nil?) ;; unguessable game tracks default to `nil` when `known-game-tracks` is empty.
          vec
          utils/nilable)))
-
-(defn-spec download-release-json ::sp/list-of-maps
-  "release.json should only be downloaded in ambiguous cases, i.e., where the game track can't be guessed from the filename."
-  [release-json-asset map?]
-  (some->> release-json-asset
-           :browser_download_url
-           http/download-with-backoff
-           http/sink-error
-           utils/from-json
-           :releases
-           (remove :nolib)
-           vec))
 
 (defn-spec find-gametracks-release-json (s/or :ok ::sp/game-track-list, :no-game-tracks nil?)
   "looks for the first release.json it can find and returns the game tracks found inside.
