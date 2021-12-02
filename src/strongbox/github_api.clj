@@ -7,6 +7,7 @@
    [me.raynes.fs :as fs]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
    [strongbox
+    [constants :as constants]
     [http :as http]
     [toc :as toc]
     [utils :as utils :refer [pad if-let*]]
@@ -44,6 +45,15 @@
            (remove :nolib)
            vec))
 
+(defn-spec release-json-game-tracks map?
+  "returns a map of game tracks keyed by asset name"
+  [release-json-asset map?]
+  (->> release-json-asset
+       download-release-json
+       (map (comp :flavor :metadata))
+       (mapv utils/guess-game-track)
+       (group-by :filename)))
+
 (def supported-zip-mimes #{"application/zip"  "application/x-zip-compressed"})
 
 (defn-spec pick-version-name (s/or :ok string? :failed nil?)
@@ -62,10 +72,17 @@
   (let [supported-zip? #(-> % :content_type vector set (some supported-zip-mimes))
         release-game-track (utils/guess-game-track (:name release))
 
+        release-n (:-i release)
+        latest-release? (= release-n 0)
+
         release-json (->> release
                           :assets
                           (filter #(= "release.json" (:name %)))
                           first)
+
+        published-before-classic? (some-> release
+                                          :published_at
+                                          (utils/dt-before? constants/release-of-wow-classic))
 
         classify (fn [asset]
                    (let [asset-game-track (utils/guess-game-track (:name asset))
@@ -75,47 +92,88 @@
 
                          game-track-list
                          (cond
+                           published-before-classic? [:retail]
+
                            ;; game track present in file name, prefer that over `:game-track-list` and any game-track in release name
                            asset-game-track [asset-game-track]
 
                            ;; game track present in release name, prefer that over `:game-track-list`
                            release-game-track [release-game-track]
 
-                           ;; no game track present in asset name or release name and no `:game-track-list` BUT a release.json is present.
-                           ;; fetch release and match asset to it's contents
-                           (and (empty? known-game-tracks)
-                                release-json) (->> release-json
-                                                   download-release-json
-                                                   (filter #(= (:name asset) (:filename %)))
-                                                   (map (comp :flavor :metadata))
-                                                   (mapv utils/guess-game-track))
+                           ;; no game track present in asset name or release name and no `:game-track-list` BUT
+                           ;; a release.json file is present and this is still the first of N releases.
+                           ;; fetch release and match asset to it's contents.
+                           ;; if asset isn't found (!) then just use [nil]
+                           (and latest-release?
+                                release-json
+                                (empty? known-game-tracks))
+                           (get (release-json-game-tracks release-json) (:name asset)
+                                [nil])
 
-                           ;; no game track present in asset name or release name with multiple entries in `:game-track-list`.
-                           ;; no release.json file.
+                           ;; no game track present in asset name nor release name,
+                           ;; no release.json file (or this isn't the latest release)
+                           ;; and has at least one entry in `:game-track-list`.
                            ;; assume all entries in `:game-track-list` supported.
                            (not (empty? known-game-tracks)) known-game-tracks
 
                            ;; we don't know, we couldn't guess. return a `nil` so we can optionally deal with them later.
                            :else [nil])]
-                     (mapv #(assoc source-info :game-track %) game-track-list)))]
+                     ;;(warn (format "%s got game track list %s with known %s" (:name asset) game-track-list known-game-tracks))
+                     (mapv #(assoc source-info :game-track %) game-track-list)))
 
-    (->> release
-         :assets
-         (filter supported-zip?)
-         (filter fully-uploaded?)
-         (map classify)
-         flatten
+        asset-list (->> release
+                        :assets
+                        (filter supported-zip?)
+                        (filter fully-uploaded?)
+                        (map classify)
+                        flatten
+                        vec)
+
+        ;; there is an assumption here that the release.json file is complete and accurate.
+        ;; I can't fix accuracy problems but if the file is incomplete it's possible for `nil` game tracks to still exist.
+
+        unclassified-assets (->> asset-list
+                                 (map :game-track)
+                                 (filter nil?))
+
+        classified (->> asset-list
+                        (map :game-track)
+                        (remove nil?)
+                        set)
+
+        ;; #{:classic :classic-bc :retail} #{:classic :classic-bc} => #{:retail}
+        diff (clojure.set/difference sp/game-tracks classified)
+
+        asset-list (if (and (= (count unclassified-assets) 1)
+                            (= (count diff) 1))
+                     (->> asset-list
+                          (mapv #(if (nil? (:game-track %))
+                                   (assoc % :game-track (first diff))
+                                   %)))
+                     asset-list)
+
+        unclassifable (fn [asset]
+                        (when-not (:game-track asset)
+                          (warn "failed to detect a game track for asset" (fs/base-name (:download-url asset))))
+                        asset)]
+    (->> asset-list
+         (map unclassifable)
+         (remove nil?)
          vec)))
+
+(defn parse-assets*
+  [game-track-list]
+  (fn [idx release]
+    (parse-assets (assoc release :-i idx) game-track-list)))
 
 (defn-spec parse-github-release-data (s/or :ok :addon/release-list, :fail nil?)
   "given a `release-list` (a response from Github), parse the assets in each release."
   [release-list vector?, addon :addon/expandable, game-track ::sp/game-track]
-  (let [game-track-list (if (empty? (:game-track-list addon)) [:retail] (:game-track-list addon))]
-    (->> release-list
-         (map #(parse-assets % game-track-list))
-         flatten
-         (group-by :game-track)
-         game-track)))
+  (->> release-list
+       (map-indexed (parse-assets* (get addon :game-track-list [])))
+       flatten
+       (group-by :game-track)
+       game-track))
 
 (defn-spec expand-summary (s/or :ok :addon/release-list, :error nil?)
   "fetches a list of releases from the addon host for the given `addon-summary`"
@@ -174,7 +232,7 @@
   [release-list ::sp/list-of-maps]
   (let [known-game-tracks []]
     (->> release-list
-         (map #(parse-assets % known-game-tracks))
+         (map-indexed (parse-assets* known-game-tracks))
          flatten
          (group-by :game-track)
          keys

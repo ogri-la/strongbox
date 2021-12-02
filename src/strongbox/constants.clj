@@ -6,6 +6,11 @@
   https://en.wikipedia.org/wiki/World_of_Warcraft#Expansions"
   "2018-08-14T00:00:00Z")
 
+(def release-of-wow-classic
+  "the date wow classic went live. Addon development may have started before that.
+  https://worldofwarcraft.com/en-us/news/22990080/mark-your-calendars-wow-classic-launch-and-testing-schedule"
+  "2019-08-26T00:00:00Z")
+
 ;; used as a placeholder for an addon's supported version when we're forced to guess.
 ;; don't fret too much about patch versions. These values don't affect much.
 ;; https://wowpedia.fandom.com/wiki/Public_client_builds

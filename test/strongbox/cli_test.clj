@@ -178,15 +178,14 @@
                  :source "curseforge" :source-id 1
                  :download-url "https://path/to/remote/addon.zip"
                  :game-track :classic
-                 :-testing-zipfile (fixture-path "everyaddon-classic--1-2-3.zip")}]
+                 :-testing-zipfile (fixture-path "everyaddon-classic--1-2-3.zip")}
+          fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/1"
+                       {:get (fn [req] {:status 404 :reason-phrase "not found"})}}]
       (with-running-app
 
         ;; 2021-09-04: change in behaviour. addons that no longer match the catalogue are still checked for
         ;; updates if the right toc+nfo data is available.
-        (with-global-fake-routes-in-isolation
-          {"https://addons-ecs.forgesvc.net/api/v2/addon/1"
-           {:get (fn [req] {:status 404 :reason-phrase "not found"})}}
-
+        (with-global-fake-routes-in-isolation fake-routes
           (cli/set-addon-dir! (helper/install-dir))
           (core/install-addon-guard addon)
           (core/load-installed-addons)
@@ -325,7 +324,7 @@
           expected-addon-dir (utils/join install-dir "EveryAddon")
 
           expected-user-catalogue [{:tag-list [],
-                                    :game-track-list [],
+                                    :game-track-list [:retail], ;; todo, what extra thing are we doing here?
                                     :updated-date "2019-10-09T17:40:04Z",
                                     :name "healcomm",
                                     :source "github",
@@ -574,6 +573,7 @@
             github-fixture (slurp (fixture-path "user-catalogue--github.json"))
             github-contents-fixture (slurp (fixture-path "user-catalogue--github-contents.json"))
             github-toc-fixture (slurp (fixture-path "user-catalogue--github-toc.json"))
+            github-release-json-fixture (slurp (fixture-path "user-catalogue--github-release-json.json"))
 
             ;; todo: gitlab
 
@@ -591,6 +591,9 @@
 
                          "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/releases"
                          {:get (fn [req] {:status 200 :body github-fixture})}
+
+                         "https://github.com/Stanzilla/AdvancedInterfaceOptions/releases/download/1.5.0/release.json"
+                         {:get (fn [req] {:status 200 :body github-release-json-fixture})}
 
                          "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/contents"
                          {:get (fn [req] {:status 200 :body github-contents-fixture})}
@@ -618,7 +621,7 @@
           ;; the user-catalogue is then matched against db, the newer summary returned and written to the user catalogue
 
           (let [;; I've modified the user-catalogue--populated.json fixture to be 'older' that the short-catalogue fixture by
-                ;; decrementing the download counts by 1. when the user-catalogue is refreshed we expect 
+                ;; decrementing the download counts by 1. when the user-catalogue is refreshed we expect the new values to be fetched
                 inc-downloads #(update % :download-count inc)
                 today (utils/datestamp-now-ymd)
                 expected-user-catalogue (-> (core/get-create-user-catalogue)

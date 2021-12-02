@@ -64,7 +64,8 @@
                     :label "HealComm"
                     :name "healcomm"
                     :download-count 30946
-                    :game-track-list []
+                    ;; todo: question to self, what extra thing are we doing that now adds retail here?
+                    :game-track-list [:retail]
                     :tag-list []}
 
           ;; all of these should yield the above
@@ -129,7 +130,11 @@
                  :label "HealComm"
                  :name "healcomm"
                  :download-count 30946
-                 :tag-list []}
+                 :tag-list []
+                 ;; 2021-12: 'retail' is no longer used as a default for addons after a certain time.
+                 ;; extra effort is made to determine the game-track-list on import/refresh so they can be
+                 ;; used when forced to guess.
+                 :game-track-list [:retail]}
 
           game-track :retail
 
