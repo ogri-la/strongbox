@@ -92,10 +92,12 @@
 
                          game-track-list
                          (cond
-                           published-before-classic? [:retail]
-
                            ;; game track present in file name, prefer that over `:game-track-list` and any game-track in release name
                            asset-game-track [asset-game-track]
+
+                           ;; I imagine there were classic addons published prior to it's release.
+                           ;; If we can use the asset name, brilliant, if not and it's before the cut off then it's retail.
+                           published-before-classic? [:retail]
 
                            ;; game track present in release name, prefer that over `:game-track-list`
                            release-game-track [release-game-track]
@@ -108,7 +110,8 @@
                                 release-json
                                 (empty? known-game-tracks))
                            (get (release-json-game-tracks release-json) (:name asset)
-                                [nil])
+                                (do (debug "release.json missing asset:" (:name asset))
+                                    [nil]))
 
                            ;; no game track present in asset name nor release name,
                            ;; no release.json file (or this isn't the latest release)
@@ -129,20 +132,19 @@
                         flatten
                         vec)
 
-        ;; there is an assumption here that the release.json file is complete and accurate.
-        ;; I can't fix accuracy problems but if the file is incomplete it's possible for `nil` game tracks to still exist.
-
+        ;; it's possible for `nil` game tracks to still exist.
+        ;; either the release.json file was incomplete or we simply couldn't
+        ;; guess the game track from the asset name and had nothing to fall back on.
         unclassified-assets (->> asset-list
                                  (map :game-track)
                                  (filter nil?))
-
-        classified (->> asset-list
-                        (map :game-track)
-                        (remove nil?)
-                        set)
+        classified-assets (->> asset-list
+                               (map :game-track)
+                               (remove nil?)
+                               set)
 
         ;; #{:classic :classic-bc :retail} #{:classic :classic-bc} => #{:retail}
-        diff (clojure.set/difference sp/game-tracks classified)
+        diff (clojure.set/difference sp/game-tracks classified-assets)
 
         asset-list (if (and (= (count unclassified-assets) 1)
                             (= (count diff) 1))
@@ -307,3 +309,5 @@
 
            ;; 'something' failed to parse :(
            nil))
+
+;; ---

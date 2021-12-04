@@ -3,8 +3,9 @@
    [clojure.spec.alpha :as s]
    [clojure.string :refer [ends-with? lower-case]]
    [orchestra.core :refer [defn-spec]]
-   ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
+   [taoensso.timbre :as log :refer [debug info warn error spy]]
    [strongbox
+    [constants :as constants]
     [toc :as toc]
     [http :as http]
     [utils :as utils :refer [select-keys*]]
@@ -16,31 +17,98 @@
   (let [encoded-source-id (-> gitlab-source-id clojure.string/lower-case (java.net.URLEncoder/encode "UTF-8"))]
     (str "https://gitlab.com/api/v4/projects/" encoded-source-id)))
 
+(defn asset-url
+  [asset]
+  (or (:direct_asset_url asset)
+      (:url asset)))
+
+(defn-spec download-release-json ::sp/list-of-maps
+  "release.json should only be downloaded in ambiguous cases, i.e., where the game track can't be guessed from the filename."
+  [release-json-asset map?]
+  (some->> release-json-asset
+           asset-url
+           http/download-with-backoff
+           http/sink-error
+           utils/from-json
+           :releases
+           (remove :nolib)
+           vec))
+
+(defn-spec release-json-game-tracks map?
+  "returns a map of game tracks keyed by asset name"
+  [release-json-asset map?]
+  (->> release-json-asset
+       download-release-json
+       (map (comp :flavor :metadata))
+       (mapv utils/guess-game-track)
+       (group-by :filename)))
+
 (defn-spec parse-release (s/or :ok :addon/release-list, :error nil?)
   "parses the list of 'links' in a gitlab release.
 
   like github, we can't use the automatically generated bundles because the foldername inside the ZIP looks
-  like `Project-version` (AdiBags-v1.2.3) and may make use of templates that need rendering/processing before being
+  like `<Project>-<version>` (AdiBags-v1.2.3) and may make use of templates that need rendering/processing before being
   uploaded as a proper asset ('link')."
   [release map?, game-track-list ::sp/game-track-list]
   (let [release-game-track (utils/guess-game-track (:name release))
         supported-link-types #{"package" "other"} ;; the others are 'runbook' and 'image'
-        link-release (fn [link]
-                       (let [link-game-track (utils/guess-game-track (:name link))
-                             game-track-list (into game-track-list [release-game-track link-game-track])]
-                         (for [game-track (set game-track-list)
-                               :when (not (nil? game-track))]
-                           {;; "The physical location of the asset can change at any time and the direct link remains unchanged"
-                            ;; - https://docs.gitlab.com/ee/user/project/releases/index.html#permanent-links-to-release-assets
-                            :download-url (:direct_asset_url link)
-                            :version (:tag_name release)
-                            :game-track game-track})))]
+        published-before-classic? (some-> release
+                                          :released_at
+                                          (utils/dt-before? constants/release-of-wow-classic))
+
+        latest-release? (-> release :-i (= 0)) ;; todo
+
+        release-json (->> release
+                          :assets
+                          :links
+                          (filter #(= "release.json" (:name %)))
+                          first)
+
+        classify (fn [asset]
+                   (let [asset-game-track (utils/guess-game-track (:name asset))
+                         source-info {;; "The physical location of the asset can change at any time and the direct link remains unchanged"
+                                      ;; - https://docs.gitlab.com/ee/user/project/releases/index.html#permanent-links-to-release-assets
+                                      :download-url (asset-url asset)
+                                      :version (:tag_name release)
+                                      :game-track nil}
+                         game-track-list
+                         (cond
+                           ;; game track present in file name, prefer that over `:game-track-list` and any game-track in release name
+                           asset-game-track [asset-game-track]
+
+                           ;; I imagine there were classic addons published prior to it's release.
+                           ;; If we can use the asset name, brilliant, if not and it's before the cut off then it's retail.
+                           published-before-classic? [:retail]
+
+                           ;; game track present in release name, prefer that over `:game-track-list`
+                           release-game-track [release-game-track]
+
+                           ;; no game track present in link name or release name and no `:game-track-list` BUT
+                           ;; a release.json file is present and this is still the first of N releases.
+                           ;; fetch release and match asset to it's contents.
+                           ;; if asset isn't found (!) then just use [nil]
+                           (and latest-release?
+                                release-json
+                                (empty? game-track-list))
+                           (get (release-json-game-tracks release-json) (:name asset)
+                                (do (warn "release.json missing asset:" (:name asset))
+                                    [nil]))
+
+                           ;; no game track present in asset name nor release name,
+                           ;; no release.json file (or this isn't the latest release)
+                           ;; and has at least one entry in `:game-track-list`.
+                           ;; assume all entries in `:game-track-list` supported.
+                           (not (empty? game-track-list)) game-track-list
+
+                           :else [nil])]
+                     (mapv #(assoc source-info :game-track %) game-track-list)))]
+
     (->> release
          :assets
          :links
          (filter (juxt false? :external))
          (filter (juxt supported-link-types :link_type))
-         (mapcat link-release)
+         (mapcat classify)
          (remove nil?))))
 
 (defn-spec expand-summary (s/or :ok :addon/release-list, :error nil?)
@@ -100,7 +168,7 @@
   "attempts to guess the game tracks an addon may support.
   if multiple toc files exist it assumes they are being used for classic versions of the game.
   if only a single toc file exists, it downloads and inspects the `:interface` value in the toc file.
-  if not toc files are found it returns `nil`."
+  if no toc files are found it returns `nil`."
   [source-id :addon/source-id]
   (let [toc-file-map (find-toc-files source-id)]
     ;; if we have multiple toc files, assume multi-toc and check for prefixes
@@ -109,7 +177,8 @@
                         (cond
                           (ends-with? key "-bcc.toc") :classic-tbc
                           (ends-with? key "-classic.toc") :classic
-                          :else :retail))]
+                          :else :retail ;; todo: don't assume retail, this could be a mono-toc for classic ...
+                          ))]
         (->> toc-file-map keys (map lower-case) (map key-check) set sort vec))
 
       ;; otherwise, download toc file and analyse it's contents
@@ -142,28 +211,28 @@
 (defn-spec find-addon (s/or :ok :addon/summary, :error nil?)
   "downloads the Gitlab project repository data and extracts an addon summary from it."
   [source-id :addon/source-id]
-  (when-let [result (some-> source-id
-                            api-url
-                            http/download-with-backoff
-                            http/sink-error
-                            utils/from-json)]
+  (when-let [repo (some-> source-id
+                          api-url
+                          http/download-with-backoff
+                          http/sink-error
+                          utils/from-json)]
     (let [game-track-list (guess-game-track-list source-id)
           addon-summary
-          {:url (:web_url result)
-           :created-date (:created_at result)
-           :updated-date (:last_activity_at result)
+          {:url (:web_url repo)
+           :created-date (:created_at repo)
+           :updated-date (:last_activity_at repo)
            :source "gitlab"
            ;; prefer the github-like "owner/repo" id over the number id.
            ;; we have a choice so go with the more consistent and humane option.
-           :source-id (:path_with_namespace result)
-           :label (:name result)
-           :name (:path result)
+           :source-id (:path_with_namespace repo)
+           :label (:name repo)
+           :name (:path repo)
            ;; not available to the public. must be present, must be >= 0 :(
            ;; - https://docs.gitlab.com/ee/api/project_statistics.html
            :download-count 0
            ;; needs more thought. authors are tagging the repo against other repos rather than the addon, so
            ;; we get labels like 'world of warcraft' and 'lua' which are not useful.
-           :tag-list [] ;; (get result :tag_list []) 
+           :tag-list [] ;; (get repo :tag_list []) 
            }]
       (if game-track-list
         (assoc addon-summary :game-track-list game-track-list)
