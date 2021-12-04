@@ -23,6 +23,14 @@
 (def ^:dynamic *default-pause* 1000)
 (def ^:dynamic *default-attempts* 3)
 
+(defn simple-cache
+  "data and a setter that gets bound to *cache* when caching http requests.
+  very simple, good for development"
+  []
+  {:set-etag (constantly nil)
+   :get-etag (constantly nil)
+   :cache-dir (fs/tmpdir)})
+
 (defn- add-etag-or-not
   [etag-key req]
   (if-let [;; for some reason this dynamic binding of *cache* to nil results in:
@@ -387,7 +395,14 @@
                (recur (inc attempt) (* pause 2))))
          result)))))
 
+(defmacro with-simple-cache
+  [& form]
+  `(binding [*cache* (simple-cache)]
+     ~@form))
+
+
 ;;
+
 
 (defn-spec prune-cache-dir nil?
   "deletes files in the given `cache-dir` that are older than the `expiry-offset-hours`"

@@ -628,7 +628,8 @@
 
 ;; https://clojuredocs.org/clojure.core/zipmap#example-56fbf77de4b069b77203b858
 (defn csv-map
-  "ZipMaps header as keys and values from lines."
+  "ZipMaps header as keys and values from lines.
+  usage: `(apply utils/csv-map [header row1 row2 rowN])`"
   [head & lines]
   (map #(zipmap (map keyword head) %1) lines))
 

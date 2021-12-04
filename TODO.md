@@ -27,11 +27,31 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+
 * add release.json support for github/gitlab addons
+    - https://github.com/layday/instawow/discussions/72
 
 * refresh catalogue is not so healthy
+    - errors during refresh should appear in the log next to the appropriate addon
+    - 404s shouldn't be retried. the addon is gone
+    - where are the tests catching all these?
+        cli/refresh-user-catalogue
+        cli/import-addon--github
 
 ## todo bucket (no particular order)
+
+* "developer warnings"
+    - a preference that bumps certain debug messages to warnings and errors for developers
+        - like if a release.json is missing assets
+        - or the toc file is mangled
+            - or is missing useful information
+        - or the zip file is badly formed
+    - stuff a regular user should gloss over but a dev might find useful
+
+* github, gitlab, are we paginating release calls?
+
+* disable support for curseforge
+    - https://mailchi.mp/overwolf/whats-new-with-overwolf-curseforge-november3
 
 * github, like gitlab, use presence of multiple toc files to determine game track support
 
@@ -247,6 +267,8 @@ see CHANGELOG.md for a more formal list of changes by release
     - a prerequisite for v5 then would be introducing a new catalogue
 * readme, the ~your machine's `hostname`~ bit.
 * readme, the "Original Swing GUI was last available in version 3.x using" bit
+* rename 'retail' to 'mainline'
+    - pretty big change ;) but probably for the best.
 
 ## catalogue v3 / capture more addon data
 

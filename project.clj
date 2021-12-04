@@ -56,6 +56,7 @@
 
                  ;;[org.clojure/core.cache "1.0.207"] ;; jfx context caching
 
+                 [org.clojure/data.csv "1.0.0"]
                  ]
 
   :managed-dependencies [;; fixes the annoying:
