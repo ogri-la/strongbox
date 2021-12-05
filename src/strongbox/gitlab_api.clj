@@ -4,11 +4,12 @@
    [clojure.string :refer [ends-with? lower-case]]
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
+   [me.raynes.fs :as fs]
    [strongbox
     [constants :as constants]
     [toc :as toc]
     [http :as http]
-    [utils :as utils :refer [select-keys*]]
+    [utils :as utils :refer [select-keys* if-let*]]
     [specs :as sp]]))
 
 (defn-spec api-url ::sp/url
@@ -101,15 +102,40 @@
                            (not (empty? game-track-list)) game-track-list
 
                            :else [nil])]
-                     (mapv #(assoc source-info :game-track %) game-track-list)))]
+                     (mapv #(assoc source-info :game-track %) game-track-list)))
 
-    (->> release
-         :assets
-         :links
-         (filter (juxt false? :external))
-         (filter (juxt supported-link-types :link_type))
-         (mapcat classify)
-         (remove nil?))))
+        asset-list (->> release
+                        :assets
+                        :links
+                        (filter (juxt false? :external))
+                        (filter (juxt supported-link-types :link_type))
+                        (mapcat classify)
+                        (remove nil?))
+
+        ;; it's possible for `nil` game tracks to still exist.
+        ;; either the release.json file was incomplete or we simply couldn't
+        ;; guess the game track from the asset name and had nothing to fall back on.
+        unclassified-assets (->> asset-list (map :game-track) (filter nil?))
+        classified-assets (->> asset-list (map :game-track) (remove nil?) set)
+        diff (clojure.set/difference sp/game-tracks classified-assets)
+
+        asset-list (if (and (= (count unclassified-assets) 1)
+                            (= (count diff) 1))
+                     (->> asset-list
+                          (mapv #(if (nil? (:game-track %))
+                                   (assoc % :game-track (first diff))
+                                   %)))
+                     asset-list)
+
+        unclassifable (fn [asset]
+                        (when-not (:game-track asset)
+                          (warn "failed to detect a game track for asset" (fs/base-name (:download-url asset))))
+                        asset)]
+
+    (->> asset-list
+         (map unclassifable)
+         (remove nil?)
+         vec)))
 
 (defn-spec expand-summary (s/or :ok :addon/release-list, :error nil?)
   "fetches a list of releases from the addon host for the given `addon-summary`"
@@ -164,36 +190,74 @@
 
     toc-files))
 
+(defn-spec -toc-game-track (s/or :ok ::sp/game-track-list, :error nil?)
+  "attempts to guess the game track of a [filename blob-url] pair.
+  if the game track can't be guessed from the filename, it downlads the blob and inspects the interface version."
+  [[filename blob-url] (s/coll-of any?)]
+  (if-let [game-track (utils/guess-game-track filename)]
+    [game-track]
+    (do (warn "couldn't guess game track, downloading toc file and inspecting interface version:" filename)
+        (some->> blob-url
+                 download-decode-blob
+                 (select-keys* [:interface :#interface])
+                 vals
+                 (map utils/to-int)
+                 (mapv utils/interface-version-to-game-track)))))
+
 (defn-spec guess-game-track-list (s/or :ok ::sp/game-track-list, :error nil?)
   "attempts to guess the game tracks an addon may support.
   if multiple toc files exist it assumes they are being used for classic versions of the game.
   if only a single toc file exists, it downloads and inspects the `:interface` value in the toc file.
   if no toc files are found it returns `nil`."
   [source-id :addon/source-id]
-  (let [toc-file-map (find-toc-files source-id)]
-    ;; if we have multiple toc files, assume multi-toc and check for prefixes
-    (if (> (count toc-file-map) 1)
-      (let [key-check (fn [key]
-                        (cond
-                          (ends-with? key "-bcc.toc") :classic-tbc
-                          (ends-with? key "-classic.toc") :classic
-                          :else :retail ;; todo: don't assume retail, this could be a mono-toc for classic ...
-                          ))]
-        (->> toc-file-map keys (map lower-case) (map key-check) set sort vec))
+  (->> source-id
+       find-toc-files
+       (mapcat -toc-game-track)
+       (remove nil?)
+       set
+       sort
+       vec
+       utils/nilable))
 
-      ;; otherwise, download toc file and analyse it's contents
-      (some->> toc-file-map
-               vals ;; blob urls
-               first
-               download-decode-blob
-               (select-keys* [:interface :#interface])
-               vals
-               (map utils/to-int)
-               (map utils/interface-version-to-game-track)
-               (remove nil?)
-               set
-               sort
-               vec))))
+(defn-spec find-addon (s/or :ok :addon/summary, :error nil?)
+  "downloads the Gitlab project repository data and extracts an addon summary from it."
+  [source-id :addon/source-id]
+  (if-let* [repo (some-> source-id
+                         api-url
+                         http/download-with-backoff
+                         http/sink-error
+                         utils/from-json)
+
+            game-track-list (guess-game-track-list source-id)
+
+            addon-summary
+            {:url (:web_url repo)
+             :created-date (:created_at repo)
+             :updated-date (:last_activity_at repo)
+             :source "gitlab"
+             ;; prefer the github-like "owner/repo" id over the number id.
+             ;; we have a choice so go with the more consistent and humane option.
+             :source-id (:path_with_namespace repo)
+             :label (:name repo)
+             :name (:path repo)
+             ;; not available to the public. must be present, must be >= 0 :(
+             ;; - https://docs.gitlab.com/ee/api/project_statistics.html
+             :download-count 0
+             ;; needs more thought. authors are tagging the repo against other repos rather than the addon, so
+             ;; we get labels like 'world of warcraft' and 'lua' which are not useful.
+             :tag-list [] ;; (get repo :tag_list [])
+             :game-track-list game-track-list}
+
+            ;; make sure at least one release exists
+
+
+            latest-release (expand-summary addon-summary (first game-track-list))]
+
+           addon-summary
+
+           nil))
+
+;; ---
 
 (defn-spec parse-user-string (s/or :ok :addon/source-id :error nil?)
   "extracts the addon ID from the given `url`.
@@ -207,33 +271,3 @@
                          (clojure.string/split #"/")))] ;; ["group" "owner" "project"]
     (when (> (count bits) 1)
       (clojure.string/join "/" bits))))
-
-(defn-spec find-addon (s/or :ok :addon/summary, :error nil?)
-  "downloads the Gitlab project repository data and extracts an addon summary from it."
-  [source-id :addon/source-id]
-  (when-let [repo (some-> source-id
-                          api-url
-                          http/download-with-backoff
-                          http/sink-error
-                          utils/from-json)]
-    (let [game-track-list (guess-game-track-list source-id)
-          addon-summary
-          {:url (:web_url repo)
-           :created-date (:created_at repo)
-           :updated-date (:last_activity_at repo)
-           :source "gitlab"
-           ;; prefer the github-like "owner/repo" id over the number id.
-           ;; we have a choice so go with the more consistent and humane option.
-           :source-id (:path_with_namespace repo)
-           :label (:name repo)
-           :name (:path repo)
-           ;; not available to the public. must be present, must be >= 0 :(
-           ;; - https://docs.gitlab.com/ee/api/project_statistics.html
-           :download-count 0
-           ;; needs more thought. authors are tagging the repo against other repos rather than the addon, so
-           ;; we get labels like 'world of warcraft' and 'lua' which are not useful.
-           :tag-list [] ;; (get repo :tag_list []) 
-           }]
-      (if game-track-list
-        (assoc addon-summary :game-track-list game-track-list)
-        addon-summary))))

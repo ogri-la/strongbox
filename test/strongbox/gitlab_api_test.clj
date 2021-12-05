@@ -70,12 +70,20 @@
   (testing "if more than one toc file is present, assume multi-toc and look for game tracks"
     (let [repo-fixture (slurp (fixture-path "gitlab-repo--woblight-nitro.json"))
           repo-tree-fixture (slurp (fixture-path "gitlab-repo-tree--woblight-nitro.json"))
+          blob-fixture (slurp (fixture-path "gitlab-repo-blobs--woblight-nitro.json"))
+          repo-releases-fixture (slurp (fixture-path "gitlab-repo-releases--woblight-nitro.json"))
 
           fake-routes {"https://gitlab.com/api/v4/projects/woblight%2Fnitro"
                        {:get (fn [req] {:status 200 :body repo-fixture})}
 
                        "https://gitlab.com/api/v4/projects/woblight%2Fnitro/repository/tree"
-                       {:get (fn [req] {:status 200 :body repo-tree-fixture})}}
+                       {:get (fn [req] {:status 200 :body repo-tree-fixture})}
+
+                       "https://gitlab.com/api/v4/projects/woblight%2Fnitro/repository/blobs/6293629816b04063b391e845a67ea8f5e313d540"
+                       {:get (fn [req] {:status 200 :body blob-fixture})}
+
+                       "https://gitlab.com/api/v4/projects/woblight%2Fnitro/releases"
+                       {:get (fn [req] {:status 200 :body repo-releases-fixture})}}
 
           expected {:url "https://gitlab.com/woblight/nitro"
                     :created-date "2020-09-07T08:30:52.562Z"
@@ -100,6 +108,8 @@
   (testing "toc files can be inspected for game tracks"
     (let [repo-fixture (slurp (fixture-path "gitlab-repo--woblight-nitro.json"))
           repo-tree-fixture (slurp (fixture-path "gitlab-repo-tree--single-toc-dummy.json"))
+          repo-releases-fixture (slurp (fixture-path "gitlab-repo-releases--woblight-nitro.json"))
+
           toc-file-fixture (utils/to-json
                             {:size 258
                              :encoding "base64"
@@ -113,7 +123,10 @@
                        {:get (fn [req] {:status 200 :body repo-tree-fixture})}
 
                        "https://gitlab.com/api/v4/projects/woblight%2Fnitro/repository/blobs/125c899d813d2e11c976879f28dccc2a36fd207b"
-                       {:get (fn [req] {:status 200 :body toc-file-fixture})}}
+                       {:get (fn [req] {:status 200 :body toc-file-fixture})}
+
+                       "https://gitlab.com/api/v4/projects/woblight%2Fnitro/releases"
+                       {:get (fn [req] {:status 200 :body repo-releases-fixture})}}
 
           expected {:url "https://gitlab.com/woblight/nitro"
                     :created-date "2020-09-07T08:30:52.562Z"
