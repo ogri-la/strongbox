@@ -7,7 +7,6 @@
    [me.raynes.fs :as fs]
    [strongbox
     [release-json :refer [download-release-json, release-json-game-tracks]]
-    [constants :as constants]
     [toc :as toc]
     [http :as http]
     [utils :as utils :refer [select-keys* if-let*]]
@@ -31,7 +30,7 @@
   like github, we can't use the automatically generated bundles because the foldername inside the ZIP looks
   like `<Project>-<version>` (AdiBags-v1.2.3) and may make use of templates that need rendering/processing before being
   uploaded as a proper asset ('link')."
-  [release map?, game-track-list ::sp/game-track-list]
+  [release map?, known-game-tracks ::sp/game-track-list]
   (let [release-game-track (utils/guess-game-track (:name release))
         supported-link-types #{"package" "other"} ;; the others are 'runbook' and 'image'
 
@@ -64,76 +63,91 @@
                            ;; game track present in release name, prefer that over `:game-track-list`
                            release-game-track [release-game-track]
 
-                           ;; no game track present in link name or release name and no `:game-track-list` BUT
-                           ;; a release.json file is present and this is still the first of N releases.
-                           ;; fetch release and match asset to it's contents.
-                           ;; if asset isn't found (!) then just use [nil]
-                           (and latest-release?
-                                release-json
-                                (empty? game-track-list))
-                           (let [release-json-data (download-release-json (asset-url release-json))]
-                             (get (release-json-game-tracks release-json-data) (:name asset)
-                                  (do (debug "release.json missing asset:" (:name asset))
-                                      [nil])))
-
-                           ;; no game track present in asset name nor release name,
-                           ;; no release.json file (or this isn't the latest release)
-                           ;; and has at least one entry in `:game-track-list`.
-                           ;; assume all entries in `:game-track-list` supported.
-                           (not (empty? game-track-list)) game-track-list
-
                            :else [nil])]
                      (mapv #(assoc source-info :game-track %) game-track-list)))
 
-        asset-list (->> release
-                        :assets
-                        :links
-                        (filter (juxt false? :external))
-                        (filter (juxt supported-link-types :link_type))
-                        (mapcat classify)
-                        (remove nil?))
+        classify2 (fn [asset-list]
+                    (let [;; it's possible for `nil` game tracks to still exist.
+                          ;; either the release.json file was incomplete or we simply couldn't
+                          ;; guess the game track from the asset name and had nothing to fall back on.
+                          unclassified-assets (->> asset-list (map :game-track) (filter nil?))
+                          classified-assets (->> asset-list (map :game-track) (remove nil?) set)
+                          diff (clojure.set/difference sp/game-tracks classified-assets)]
+                      (if (and (= (count unclassified-assets) 1)
+                               (= (count diff) 1))
+                        (->> asset-list
+                             (mapv #(if (nil? (:game-track %))
+                                      (assoc % :game-track (first diff))
+                                      %)))
+                        asset-list)))
 
-        ;; it's possible for `nil` game tracks to still exist.
-        ;; either the release.json file was incomplete or we simply couldn't
-        ;; guess the game track from the asset name and had nothing to fall back on.
-        unclassified-assets (->> asset-list (map :game-track) (filter nil?))
-        classified-assets (->> asset-list (map :game-track) (remove nil?) set)
-        diff (clojure.set/difference sp/game-tracks classified-assets)
 
-        asset-list (if (and (= (count unclassified-assets) 1)
-                            (= (count diff) 1))
-                     (->> asset-list
-                          (mapv #(if (nil? (:game-track %))
-                                   (assoc % :game-track (first diff))
-                                   %)))
-                     asset-list)
+        ;; finally, try downloading the release.json file, if it exists, otherwise just use 'all' game tracks originally detected.
 
-        unclassifable (fn [asset]
-                        (when-not (:game-track asset)
-                          (warn "failed to detect a game track for asset" (fs/base-name (:download-url asset))))
-                        asset)]
 
-    (->> asset-list
-         (map unclassifable)
-         (remove nil?)
+        classify3 (fn [asset]
+                    (if (:game-track asset)
+                      [asset]
+
+                      (let [;; no game track present in asset name or release name BUT 
+                            ;; a release.json file is present and this is still the first of N releases.
+                            ;; fetch release and match asset to it's contents.
+                            ;; if asset isn't found (!) then just use [nil]
+                            game-track (when (and latest-release?
+                                                  release-json)
+                                         (let [release-json-data (download-release-json (asset-url release-json))]
+                                           (get (release-json-game-tracks release-json-data) (:name asset)
+                                                (debug "release.json missing asset:" (:name asset)))))
+
+                            ;; assume all entries in `:game-track-list` supported.
+                            game-track-list (if (empty? known-game-tracks) [nil] known-game-tracks)
+                            game-track-list (or game-track
+                                                game-track-list)]
+
+                        (mapv #(assoc asset :game-track %) game-track-list))))
+
+        classified? (fn [asset]
+                      (if-not (:game-track asset)
+                        (debug "failed to detect a game track for asset" (fs/base-name (get asset :download-url "")))
+                        asset))]
+    (->> release
+         :assets
+         :links
+         (filter (juxt false? :external))
+         (filter (juxt supported-link-types :link_type))
+         (mapcat classify)
+         classify2
+         (mapcat classify3)
+         (filter classified?)
+         (remove (comp nil? :game-track))
          vec)))
+
+(defn-spec -parse-release fn?
+  "convenience wrapper around `parse-assets` that returns a function that accepts a list of releases"
+  [game-track-list ::sp/game-track-list]
+  (fn [idx release]
+    (parse-release (assoc release :-i idx) game-track-list)))
 
 (defn-spec expand-summary (s/or :ok :addon/release-list, :error nil?)
   "fetches a list of releases from the addon host for the given `addon-summary`"
-  [addon-summary :addon/expandable, game-track ::sp/game-track]
-  (let [result (some-> addon-summary
+  [addon :addon/expandable, game-track ::sp/game-track]
+  (let [result (some-> addon
                        :source-id
                        api-url
                        (str "/releases")
                        http/download-with-backoff
                        http/sink-error
                        utils/from-json)
-        ;; if addon has no indication what game track it is, assume `:retail`.
-        ;; we should have *some* idea from originally parsing the toc file or guessing from the multi-toc in `find-addon`
-        known-game-tracks (-> addon-summary :game-track-list utils/nilable (or [:retail]))
+
+        known-game-tracks (cond
+                            (not (empty? (:game-track-list addon))) (:game-track-list addon)
+                            (:installed-game-track addon) [(:installed-game-track addon)]
+                            :else [])
+
         release-list (->> result
                           (remove :upcoming_release)
-                          (mapcat #(parse-release % known-game-tracks))
+                          (map-indexed (-parse-release known-game-tracks))
+                          flatten
                           (group-by :game-track))]
     (get release-list game-track)))
 

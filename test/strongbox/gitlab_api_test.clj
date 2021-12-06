@@ -160,7 +160,7 @@
                  :label "Nitro"
                  :name "nitro"
                  :download-count 0
-                 :game-track-list []
+                 :game-track-list [:retail]
                  :tag-list []}
           game-track :retail
           fixture (slurp (fixture-path "gitlab-repo-releases--woblight-nitro.json"))
