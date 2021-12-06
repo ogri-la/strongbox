@@ -6,6 +6,7 @@
    [taoensso.timbre :as log :refer [debug info warn error spy]]
    [me.raynes.fs :as fs]
    [strongbox
+    [release-json :refer [download-release-json, release-json-game-tracks]]
     [constants :as constants]
     [toc :as toc]
     [http :as http]
@@ -18,31 +19,11 @@
   (let [encoded-source-id (-> gitlab-source-id clojure.string/lower-case (java.net.URLEncoder/encode "UTF-8"))]
     (str "https://gitlab.com/api/v4/projects/" encoded-source-id)))
 
-(defn asset-url
-  [asset]
+(defn-spec asset-url ::sp/url
+  "returns the preferred URL for the given `asset` when a choice is available."
+  [asset map?]
   (or (:direct_asset_url asset)
       (:url asset)))
-
-(defn-spec download-release-json ::sp/list-of-maps
-  "release.json should only be downloaded in ambiguous cases, i.e., where the game track can't be guessed from the filename."
-  [release-json-asset map?]
-  (some->> release-json-asset
-           asset-url
-           http/download-with-backoff
-           http/sink-error
-           utils/from-json
-           :releases
-           (remove :nolib)
-           vec))
-
-(defn-spec release-json-game-tracks map?
-  "returns a map of game tracks keyed by asset name"
-  [release-json-asset map?]
-  (->> release-json-asset
-       download-release-json
-       (map (comp :flavor :metadata))
-       (mapv utils/guess-game-track)
-       (group-by :filename)))
 
 (defn-spec parse-release (s/or :ok :addon/release-list, :error nil?)
   "parses the list of 'links' in a gitlab release.
@@ -53,9 +34,8 @@
   [release map?, game-track-list ::sp/game-track-list]
   (let [release-game-track (utils/guess-game-track (:name release))
         supported-link-types #{"package" "other"} ;; the others are 'runbook' and 'image'
-        published-before-classic? (some-> release
-                                          :released_at
-                                          (utils/dt-before? constants/release-of-wow-classic))
+
+        published-before-classic? (utils/published-before-classic? (:released_at release))
 
         latest-release? (-> release :-i (= 0)) ;; todo
 
@@ -91,9 +71,10 @@
                            (and latest-release?
                                 release-json
                                 (empty? game-track-list))
-                           (get (release-json-game-tracks release-json) (:name asset)
-                                (do (warn "release.json missing asset:" (:name asset))
-                                    [nil]))
+                           (let [release-json-data (download-release-json (asset-url release-json))]
+                             (get (release-json-game-tracks release-json-data) (:name asset)
+                                  (do (debug "release.json missing asset:" (:name asset))
+                                      [nil])))
 
                            ;; no game track present in asset name nor release name,
                            ;; no release.json file (or this isn't the latest release)
@@ -193,7 +174,7 @@
 (defn-spec -toc-game-track (s/or :ok ::sp/game-track-list, :error nil?)
   "attempts to guess the game track of a [filename blob-url] pair.
   if the game track can't be guessed from the filename, it downlads the blob and inspects the interface version."
-  [[filename blob-url] (s/coll-of any?)]
+  [[filename blob-url] (s/coll-of string?)]
   (if-let [game-track (utils/guess-game-track filename)]
     [game-track]
     (do (warn "couldn't guess game track, downloading toc file and inspecting interface version:" filename)

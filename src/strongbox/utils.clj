@@ -152,9 +152,13 @@
   (java-time/zoned-date-time (get java-time.format/predefined-formatters "iso-zoned-date-time") dt))
 
 (defn-spec dt-before? boolean?
-  "returns true if date 1 happened before date 2"
+  "returns `true` if `date-1` happened before `date-2`"
   [date-1 ::sp/inst, date-2 ::sp/inst]
   (jt/before? (todt date-1) (todt date-2)))
+
+(defn-spec published-before-classic? boolean?
+  [dt-string (s/nilable ::sp/inst)]
+  (boolean (some-> dt-string (dt-before? constants/release-of-wow-classic))))
 
 (def -pretty-dt-printer (doto (PrettyTime.)
                           (.removeUnit Decade)))

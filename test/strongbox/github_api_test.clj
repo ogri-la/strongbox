@@ -131,7 +131,8 @@
                  :name "healcomm"
                  :download-count 30946
                  :tag-list []
-                 ;; 2021-12: 'retail' is no longer used as a default for addons after a certain time.
+                 ;; 2021-12: changed from [] to [:retail]
+                 ;; ':retail' can't be used as a default for addons after a certain date.
                  ;; extra effort is made to determine the game-track-list on import/refresh so they can be
                  ;; used when forced to guess.
                  :game-track-list [:retail]}
@@ -317,6 +318,9 @@
 
           cases [;; addon-summary updates, latest-release updates, expected
 
+                 ;; case: no game track present in asset name or release name and no `:game-track-list`.
+                 [[] {} []]
+
                  ;; case: game track present in file name, prefer that over `:game-track-list` and any game-track in release name
                  [[] [[:assets 0 :name] "1.2.3-Classic"]
                   [{:download-url "https://example.org" :game-track :classic, :version "Release 1.2.3"}]]
@@ -324,10 +328,6 @@
                  ;; case: game track present in release name, prefer that over `:game-track-list`
                  [[] [[:name] "Foo 1.2.3-Classic TBC"]
                   [{:download-url "https://example.org" :game-track :classic-tbc, :version "Foo 1.2.3-Classic TBC"}]]
-
-                 ;; case: no game track present in asset name or release name and no `:game-track-list`.
-                 [[] {}
-                  [{:download-url "https://example.org" :game-track nil, :version "Release 1.2.3"}]]
 
                  ;; case: no game track present in asset name or release name and just a single entry in `:game-track-list`. use that.
                  [[:retail] {}

@@ -103,7 +103,8 @@
         (if (some #{ns-kw} [:main :utils :http :tags
                             :core :toc :nfo :zip :config :catalogue :db :addon :logging :joblib
                             :cli :gui :jfx
-                            :curseforge-api :wowinterface :wowinterface-api :gitlab-api :github-api :tukui-api])
+                            :curseforge-api :wowinterface :wowinterface-api :gitlab-api :github-api :tukui-api
+                            :release-json])
           (with-gui-diff
             (if fn-kw
               ;; `test-vars` will run the test but not give feedback if test passes OR test not found
