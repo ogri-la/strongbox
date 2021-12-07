@@ -38,6 +38,9 @@ see CHANGELOG.md for a more formal list of changes by release
         cli/refresh-user-catalogue
         cli/import-addon--github
 
+* http, add with-backoff support to download-file
+    - just had a wowinterface addon timeout
+
 ## todo bucket (no particular order)
 
 * github, gitlab, are we paginating release calls?

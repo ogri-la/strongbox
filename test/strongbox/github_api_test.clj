@@ -3,6 +3,7 @@
    [clojure.test :refer [deftest testing is use-fixtures]]
    ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [strongbox
+    [utils :as utils]
     [constants :as constants]
     [logging :as logging]
     [github-api :as github-api]
@@ -109,6 +110,10 @@
           expected-retail 0]
       (is (= expected-classic (count (github-api/parse-github-release-data fixture addon-summary :classic))))
       (is (= expected-retail (count (github-api/parse-github-release-data fixture addon-summary :retail)))))))
+
+;;(deftest parse-github-release-data--installed-game-track
+;;  (testing "the :installed-game-track is used to populate the 'known game tracks' value"
+;;    (is false)))
 
 (deftest find-gametracks-toc-data
   (testing "games tracks are correctly detected from toc data"
@@ -308,45 +313,55 @@
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (github-api/expand-summary addon-summary game-track)))))))
 
-(deftest gametrack-detection
-  (testing "detecting github addon game track"
-    (let [latest-release {:name "Release 1.2.3"
-                          :assets [{:browser_download_url "https://example.org"
-                                    :content_type "application/zip"
-                                    :state "uploaded"
-                                    :name "1.2.3"}]}
+(deftest parse-assets--worst-case
+  (testing "no game track present in asset name or release name, no `:game-track-list`, no `release.json` file and no known game tracks."
+    (let [expected [] ;; we have to discard the release.
+          release {:name "Release 1.2.3"
+                   :assets [{:browser_download_url "https://example.org"
+                             :content_type "application/zip"
+                             :state "uploaded"
+                             :name "1.2.3"}]}
+          known-game-tracks []]
+      (is (= expected (github-api/parse-assets release known-game-tracks))))))
 
-          cases [;; addon-summary updates, latest-release updates, expected
+(deftest parse-assets--asset-name
+  (testing ""
+    (let [expected [{:game-track :classic, :version "Release 1.2.3", :download-url "https://example.org"}]
+          release {:name "Release 1.2.3"
+                   :assets [{:browser_download_url "https://example.org"
+                             :content_type "application/zip"
+                             :state "uploaded"
+                             :name "1.2.3-Classic.zip"}]}
+          known-game-tracks []]
+      (is (= expected (github-api/parse-assets release known-game-tracks))))))
 
-                 ;; case: no game track present in asset name or release name and no `:game-track-list`.
-                 [[] {} []]
+(deftest parse-assets--release-name
+  (testing ""
+    (let [expected [{:download-url "https://example.org", :game-track :classic-tbc, :version "Foo 1.2.3-Classic TBC"}]
+          release {:name "Foo 1.2.3-Classic TBC"
+                   :assets [{:browser_download_url "https://example.org"
+                             :content_type "application/zip"
+                             :state "uploaded"
+                             :name "1.2.3"}]}
+          known-game-tracks []]
+      (is (= expected (github-api/parse-assets release known-game-tracks))))))
 
-                 ;; case: game track present in file name, prefer that over `:game-track-list` and any game-track in release name
-                 [[] [[:assets 0 :name] "1.2.3-Classic"]
-                  [{:download-url "https://example.org" :game-track :classic, :version "Release 1.2.3"}]]
-
-                 ;; case: game track present in release name, prefer that over `:game-track-list`
-                 [[] [[:name] "Foo 1.2.3-Classic TBC"]
-                  [{:download-url "https://example.org" :game-track :classic-tbc, :version "Foo 1.2.3-Classic TBC"}]]
-
-                 ;; case: no game track present in asset name or release name and just a single entry in `:game-track-list`. use that.
-                 [[:retail] {}
-                  [{:download-url "https://example.org" :game-track :retail, :version "Release 1.2.3"}]]
-                 [[:classic] {}
-                  [{:download-url "https://example.org" :game-track :classic, :version "Release 1.2.3"}]]
-
-                 ;; case: no game track present in asset name or release name with multiple entries in `:game-track-list`.
-                 ;; assume all entries in `:game-track-list` supported.
-                 [[:classic-tbc :classic :retail] {}
-                  [{:download-url "https://example.org" :game-track :classic-tbc, :version "Release 1.2.3"}
-                   {:download-url "https://example.org" :game-track :classic, :version "Release 1.2.3"}
-                   {:download-url "https://example.org" :game-track :retail, :version "Release 1.2.3"}]]]]
-
-      (doseq [[game-track-list, release-updates, expected] cases
-              :let [release (if (vector? release-updates)
-                              (assoc-in latest-release (first release-updates) (second release-updates))
-                              (merge latest-release release-updates))]]
-        (is (= expected (github-api/parse-assets release game-track-list)), (str "failed case: " game-track-list release-updates))))))
+(deftest parse-assets--game-track-list
+  (testing "with no game track in asset name, release name or a release.json, use the known game tracks detected on import."
+    (let [expected1 [{:download-url "https://example.org", :game-track :retail, :version "Release 1.2.3"}]
+          expected2 [{:download-url "https://example.org", :game-track :classic, :version "Release 1.2.3"}]
+          expected3 [{:download-url "https://example.org", :game-track :retail, :version "Release 1.2.3"}
+                     {:download-url "https://example.org", :game-track :classic, :version "Release 1.2.3"}
+                     {:download-url "https://example.org", :game-track :classic-tbc, :version "Release 1.2.3"}
+                     ]
+          release {:name "Release 1.2.3"
+                   :assets [{:browser_download_url "https://example.org"
+                             :content_type "application/zip"
+                             :state "uploaded"
+                             :name "1.2.3"}]}]
+      (is (= expected1 (github-api/parse-assets release [:retail])))
+      (is (= expected2 (github-api/parse-assets release [:classic])))
+      (is (= expected3 (github-api/parse-assets release [:retail :classic :classic-tbc]))))))
 
 (deftest rate-limit-exceeded
   (testing "403 while importing an addon is handled"
@@ -417,3 +432,48 @@
   (let [release-list (slurp-fixture "github-repo-releases--altoholic-classic.json")]
     (is (github-api/find-gametracks-release-list release-list))))
 
+(deftest contents-url
+  (let [cases [["" nil]
+               ["user/repo" "https://api.github.com/repos/user/repo/contents"]
+               ["user" "https://api.github.com/repos/user/contents"]]]
+    (doseq [[given expected] cases]
+      (is (= expected (github-api/contents-url given))))))
+
+(deftest download-root-listing
+  (let [expected [{:foo "bar"} {:baz "bup"}]
+        fixture "[{\"foo\": \"bar\"}, {\"baz\": \"bup\"}]"
+        fake-routes {"https://api.github.com/repos/user/repo/contents"
+                     {:get (fn [req] {:status 200 :body fixture})}}]
+    (with-fake-routes-in-isolation fake-routes
+      (is (= expected (github-api/download-root-listing "user/repo"))))))
+
+(deftest download-root-listing--bad-json
+  (let [expected nil
+        fixture "[}"
+        fake-routes {"https://api.github.com/repos/user/repo/contents"
+                     {:get (fn [req] {:status 200 :body fixture})}}]
+    (with-fake-routes-in-isolation fake-routes
+      (is (= expected (github-api/download-root-listing "user/repo"))))))
+
+(deftest releases-url
+  (let [cases [["" nil]
+               ["user/repo" "https://api.github.com/repos/user/repo/releases"]
+               ["user" "https://api.github.com/repos/user/releases"]]]
+    (doseq [[given expected] cases]
+      (is (= expected (github-api/releases-url given))))))
+
+(deftest download-release-listing
+  (let [expected [{:foo "bar"} {:baz "bup"}]
+        fixture "[{\"foo\": \"bar\"}, {\"baz\": \"bup\"}]"
+        fake-routes {"https://api.github.com/repos/user/repo/releases"
+                     {:get (fn [req] {:status 200 :body fixture})}}]
+    (with-fake-routes-in-isolation fake-routes
+      (is (= expected (github-api/download-release-listing "user/repo"))))))
+
+(deftest download-release-listing--bad-json
+  (let [expected nil
+        fixture "[}"
+        fake-routes {"https://api.github.com/repos/user/repo/releases"
+                     {:get (fn [req] {:status 200 :body fixture})}}]
+    (with-fake-routes-in-isolation fake-routes
+      (is (= expected (github-api/download-release-listing "user/repo"))))))

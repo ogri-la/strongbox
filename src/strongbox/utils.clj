@@ -222,11 +222,11 @@
   (some-> x (clojure.data.json/read-str :key-fn keyword)))
 
 (defn from-json
-  [x]
+  [x & [msg]]
   (try
     (from-json* x)
     (catch Exception exc
-      (error (str "failed to parse json: " exc))
+      (error (format (or msg (str "failed to parse json: %s")) (.getMessage exc)))
       nil)))
 
 (defn-spec dump-json-file ::sp/extant-file

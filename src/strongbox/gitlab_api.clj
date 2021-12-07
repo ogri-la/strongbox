@@ -44,6 +44,7 @@
                           (filter #(= "release.json" (:name %)))
                           first)
 
+        ;; guess the asset game track from the asset name, the release name or the time it was published.
         classify (fn [asset]
                    (let [asset-game-track (utils/guess-game-track (:name asset))
                          source-info {;; "The physical location of the asset can change at any time and the direct link remains unchanged"
@@ -66,6 +67,7 @@
                            :else [nil])]
                      (mapv #(assoc source-info :game-track %) game-track-list)))
 
+        ;; if we have a telltale single unclassified asset in a set of classified assets, use that.
         classify2 (fn [asset-list]
                     (let [;; it's possible for `nil` game tracks to still exist.
                           ;; either the release.json file was incomplete or we simply couldn't
@@ -83,8 +85,6 @@
 
 
         ;; finally, try downloading the release.json file, if it exists, otherwise just use 'all' game tracks originally detected.
-
-
         classify3 (fn [asset]
                     (if (:game-track asset)
                       [asset]

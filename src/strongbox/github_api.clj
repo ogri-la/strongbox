@@ -23,18 +23,24 @@
   [asset map?]
   (-> asset :state (= "uploaded")))
 
-(defn-spec releases-url ::sp/url
+(defn-spec releases-url (s/or :ok ::sp/url, :empty nil?)
   [source-id string?]
-  (format "https://api.github.com/repos/%s/releases" source-id))
+  (some->> source-id utils/nilable (format "https://api.github.com/repos/%s/releases")))
+
+(defn-spec contents-url (s/or :ok ::sp/url, :empty nil?)
+  [source-id string?]
+  (some->> source-id utils/nilable (format "https://api.github.com/repos/%s/contents")))
+
+(defn-spec download-root-listing (s/or :ok ::sp/list-of-maps, :error nil?)
+  [source-id string?]
+  (some-> source-id contents-url http/download-with-backoff http/sink-error
+          (utils/from-json "failed to parse Github API response for repository root file contents: \"%s\"")))
 
 (defn-spec download-release-listing (s/or :ok ::sp/list-of-maps, :error nil?)
-  "downloads the list of releases for the given addon's `source-id`"
+  "downloads and deserialises the list of releases for the given addon's `source-id`"
   [source-id string?]
-  (some-> source-id releases-url http/download-with-backoff http/sink-error utils/from-json))
-
-(defn-spec contents-url ::sp/url
-  [source-id string?]
-  (format "https://api.github.com/repos/%s/contents" source-id))
+  (some-> source-id releases-url http/download-with-backoff http/sink-error
+          (utils/from-json "failed to parse Github API response for repository releases listing: \"%s\"")))
 
 (def supported-zip-mimes #{"application/zip"  "application/x-zip-compressed"})
 
@@ -171,10 +177,6 @@
 
 ;; ---
 
-(defn-spec download-root-listing (s/or :ok ::sp/list-of-maps, :error nil?)
-  [source-id string?]
-  (some-> source-id contents-url http/download-with-backoff http/sink-error utils/from-json))
-
 (defn-spec find-remote-toc-file (s/or :ok map?, :error nil?)
   "returns the contents of the first .toc file it finds in the root directory of the remote addon"
   [source-id string?]
@@ -290,5 +292,3 @@
 
            ;; 'something' failed to parse :(
            nil))
-
-;; ---
