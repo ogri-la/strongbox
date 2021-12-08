@@ -65,7 +65,7 @@
                     :label "HealComm"
                     :name "healcomm"
                     :download-count 30946
-                    ;; todo: question to self, what extra thing are we doing that now adds retail here?
+                    ;; older releases from before classic, so we know retail at least is supported.
                     :game-track-list [:retail]
                     :tag-list []}
 

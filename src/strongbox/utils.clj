@@ -156,9 +156,14 @@
   [date-1 ::sp/inst, date-2 ::sp/inst]
   (jt/before? (todt date-1) (todt date-2)))
 
-(defn-spec published-before-classic? boolean?
+(defn-spec published-before-classic? (s/or :ok boolean?, :error nil?)
   [dt-string (s/nilable ::sp/inst)]
-  (boolean (some-> dt-string (dt-before? constants/release-of-wow-classic))))
+  (try
+    (boolean (some-> dt-string (dt-before? constants/release-of-wow-classic)))
+    (catch RuntimeException e
+      (if (= (.getMessage e) "Conversion failed")
+        (warn (str "bad date: " dt-string)))
+      nil)))
 
 (def -pretty-dt-printer (doto (PrettyTime.)
                           (.removeUnit Decade)))
