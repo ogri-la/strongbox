@@ -43,6 +43,11 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* add support for 'Interface-Retail', 'Interface-Classic', 'Interface-BCC'
+    - how much of a thing is this?
+        - is it more of a templating thing?
+    - https://github.com/Myrroddin/MrBigglesworthDeath/blob/master/MrBigglesworthDeath.toc
+
 * github, gitlab, are we paginating release calls?
 
 * disable support for curseforge

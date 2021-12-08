@@ -60,8 +60,7 @@
   (let [supported-zip? #(-> % :content_type vector set (some supported-zip-mimes))
         release-game-track (utils/guess-game-track (:name release))
 
-        release-n (:-i release)
-        latest-release? (= release-n 0)
+        latest-release? (-> release (get :-i 0) (= 0))
 
         release-json (->> release
                           :assets
@@ -75,7 +74,8 @@
                    (let [asset-game-track (utils/guess-game-track (:name asset))
                          source-info {:game-track nil
                                       :version (pick-version-name release asset)
-                                      :download-url (:browser_download_url asset)}
+                                      :download-url (:browser_download_url asset)
+                                      :-name (:name asset)}
                          game-track-list
                          (cond
                            ;; game track present in file name, prefer that over `:game-track-list` and any game-track in release name
@@ -121,8 +121,8 @@
                             game-track (when (and latest-release?
                                                   release-json)
                                          (let [release-json-data (download-release-json (:browser_download_url release-json))]
-                                           (get (release-json-game-tracks release-json-data) (:name asset)
-                                                (debug "release.json missing asset:" (:name asset)))))
+                                           (get (release-json-game-tracks release-json-data) (:-name asset)
+                                                (debug "release.json missing asset:" (:-name asset)))))
 
                             ;; assume all entries in `:game-track-list` supported.
                             game-track-list (if (empty? known-game-tracks) [nil] known-game-tracks)
@@ -144,6 +144,7 @@
          (mapcat classify3) ;; also returns a nested list of assets
          (filter classified?)
          (remove (comp nil? :game-track))
+         (map #(dissoc % :-name))
          vec)))
 
 (defn-spec -parse-assets fn?
@@ -182,7 +183,7 @@
   [source-id string?]
   (if-let* [contents-listing (download-root-listing source-id)
             toc-file-list (filterv #(-> % :name fs/split-ext last (= ".toc")) contents-listing)
-            toc-file (first toc-file-list)]
+            toc-file (first toc-file-list)] ;; assumes just one toc file :(
            (some-> toc-file :download_url http/download-with-backoff toc/parse-toc-file)
            (warn (format "failed to find/download/parse remote github '.toc' file for '%s'" source-id))))
 
@@ -233,14 +234,16 @@
              (map release-json-asset)
              (remove nil?)
              first
-             :browser-download-url
+             :browser_download_url
              download-release-json
-             (map :metadata) ;; list of maps `[{:metadata [...]}, ...]` becomes a list of lists `[[...], ...]`
+             (map :metadata) ;; a list of maps `[{:metadata [...]}, ...]` becomes a list of lists `[[...], ...]`
              flatten ;; single list of maps `[{...}, ...]`
              (map :flavor) ;; list of strings
              (map utils/guess-game-track) ;; list of keywords
              (remove nil?) ;; unguessable game tracks removed. todo: issue warning?
              set ;; distinct
+             sort
+             vec
              utils/nilable)))
 
 (defn-spec parse-user-string (s/or :ok :addon/source-id :error nil?)

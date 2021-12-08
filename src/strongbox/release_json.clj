@@ -19,7 +19,7 @@
            vec))
 
 (defn-spec release-json-game-tracks map?
-  "returns a map of {asset-filename [:classic :retail], ...}"
+  "returns a map of lists: `{asset-filename [:classic :retail], ...}`"
   [release-json-data ::sp/list-of-maps]
   (let [game-tracks (fn [release]
                       {(:filename release)

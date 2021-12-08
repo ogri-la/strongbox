@@ -51,7 +51,8 @@
                                       ;; - https://docs.gitlab.com/ee/user/project/releases/index.html#permanent-links-to-release-assets
                                       :download-url (asset-url asset)
                                       :version (:tag_name release)
-                                      :game-track nil}
+                                      :game-track nil
+                                      :-name (:name asset)}
                          game-track-list
                          (cond
                            ;; game track present in file name, prefer that over `:game-track-list` and any game-track in release name
@@ -83,7 +84,6 @@
                                       %)))
                         asset-list)))
 
-
         ;; finally, try downloading the release.json file, if it exists, otherwise just use 'all' game tracks originally detected.
         classify3 (fn [asset]
                     (if (:game-track asset)
@@ -96,8 +96,8 @@
                             game-track (when (and latest-release?
                                                   release-json)
                                          (let [release-json-data (download-release-json (asset-url release-json))]
-                                           (get (release-json-game-tracks release-json-data) (:name asset)
-                                                (debug "release.json missing asset:" (:name asset)))))
+                                           (get (release-json-game-tracks release-json-data) (:-name asset)
+                                                (debug "release.json missing asset:" (:-name asset)))))
 
                             ;; assume all entries in `:game-track-list` supported.
                             game-track-list (if (empty? known-game-tracks) [nil] known-game-tracks)
@@ -120,6 +120,7 @@
          (mapcat classify3)
          (filter classified?)
          (remove (comp nil? :game-track))
+         (map #(dissoc % :-name))
          vec)))
 
 (defn-spec -parse-release fn?
