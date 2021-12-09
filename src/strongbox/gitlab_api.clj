@@ -245,8 +245,6 @@
              :game-track-list game-track-list}
 
             ;; make sure at least one release exists
-
-
             latest-release (expand-summary addon-summary (first game-track-list))]
 
            addon-summary

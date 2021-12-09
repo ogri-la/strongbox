@@ -524,10 +524,6 @@
           expected "LunaUnitFrames-classic.zip"]
       (is (= expected (github-api/pick-version-name release asset))))))
 
-(deftest find-gametracks-release-list
-  (let [release-list (slurp-fixture "github-repo-releases--altoholic-classic.json")]
-    (is (github-api/find-gametracks-release-list release-list))))
-
 (deftest contents-url
   (let [cases [["" nil]
                ["user/repo" "https://api.github.com/repos/user/repo/contents"]
