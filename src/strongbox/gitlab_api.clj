@@ -36,7 +36,7 @@
 
         published-before-classic? (utils/published-before-classic? (:released_at release))
 
-        latest-release? (-> release :-i (= 0)) ;; todo
+        latest-release? (-> release (get :-i 0) (= 0))
 
         release-json (->> release
                           :assets

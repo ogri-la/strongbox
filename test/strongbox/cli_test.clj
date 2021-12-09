@@ -324,7 +324,8 @@
           expected-addon-dir (utils/join install-dir "EveryAddon")
 
           expected-user-catalogue [{:tag-list [],
-                                    :game-track-list [:retail], ;; todo, what extra thing are we doing here?
+                                    ;; 2021-12: game-track-list went from [] to [:retail] because of older pre-classic releases
+                                    :game-track-list [:retail]
                                     :updated-date "2019-10-09T17:40:04Z",
                                     :name "healcomm",
                                     :source "github",

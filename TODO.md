@@ -37,6 +37,8 @@ see CHANGELOG.md for a more formal list of changes by release
     - where are the tests catching all these?
         cli/refresh-user-catalogue
         cli/import-addon--github
+    - it's also working sequentially
+        :(
 
 * http, add with-backoff support to download-file
     - just had a wowinterface addon timeout

@@ -381,26 +381,24 @@
       (is (= expected (github-api/parse-assets release known-game-tracks))))))
 
 (deftest parse-assets--asset-name
-  (testing ""
-    (let [expected [{:game-track :classic, :version "Release 1.2.3", :download-url "https://example.org"}]
-          release {:name "Release 1.2.3"
-                   :assets [{:browser_download_url "https://example.org"
-                             :content_type "application/zip"
-                             :state "uploaded"
-                             :name "1.2.3-Classic.zip"}]}
-          known-game-tracks []]
-      (is (= expected (github-api/parse-assets release known-game-tracks))))))
+  (let [expected [{:game-track :classic, :version "Release 1.2.3", :download-url "https://example.org"}]
+        release {:name "Release 1.2.3"
+                 :assets [{:browser_download_url "https://example.org"
+                           :content_type "application/zip"
+                           :state "uploaded"
+                           :name "1.2.3-Classic.zip"}]}
+        known-game-tracks []]
+    (is (= expected (github-api/parse-assets release known-game-tracks)))))
 
 (deftest parse-assets--release-name
-  (testing ""
-    (let [expected [{:download-url "https://example.org", :game-track :classic-tbc, :version "Foo 1.2.3-Classic TBC"}]
-          release {:name "Foo 1.2.3-Classic TBC"
-                   :assets [{:browser_download_url "https://example.org"
-                             :content_type "application/zip"
-                             :state "uploaded"
-                             :name "1.2.3"}]}
-          known-game-tracks []]
-      (is (= expected (github-api/parse-assets release known-game-tracks))))))
+  (let [expected [{:download-url "https://example.org", :game-track :classic-tbc, :version "Foo 1.2.3-Classic TBC"}]
+        release {:name "Foo 1.2.3-Classic TBC"
+                 :assets [{:browser_download_url "https://example.org"
+                           :content_type "application/zip"
+                           :state "uploaded"
+                           :name "1.2.3"}]}
+        known-game-tracks []]
+    (is (= expected (github-api/parse-assets release known-game-tracks)))))
 
 (deftest parse-assets--game-track-list
   (testing "with no game track in asset name, release name or a release.json, use the known game tracks detected on import."

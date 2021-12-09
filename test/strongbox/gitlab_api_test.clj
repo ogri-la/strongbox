@@ -237,6 +237,40 @@
           game-track-list [:retail]]
       (is (= expected (gitlab-api/parse-release given game-track-list))))))
 
+(deftest parse-release--worst-case
+  (testing "no game track present in asset name or release name, no `:game-track-list`, no `release.json` file and no known game tracks."
+    (let [expected []
+          given {:name "EveryAddon"
+                 :tag_name "1.2.3"
+                 :assets {:links [{:external false
+                                   :link_type "other"
+                                   :name "Foo"
+                                   :direct_asset_url "http://example.org"}]}}
+          known-game-tracks []]
+      (is (= expected (gitlab-api/parse-release given known-game-tracks))))))
+
+(deftest parse-release--asset-name
+  (let [expected [{:game-track :classic, :version "1.2.3", :download-url "https://example.org"}]
+        release {:name "Release"
+                 :tag_name "1.2.3"
+                 :assets {:links [{:external false
+                                   :link_type "other"
+                                   :name "Foo-Classic"
+                                   :direct_asset_url "https://example.org"}]}}
+        known-game-tracks []]
+    (is (= expected (gitlab-api/parse-release release known-game-tracks)))))
+
+(deftest parse-assets--release-name
+  (let [expected [{:download-url "https://example.org", :game-track :classic-tbc, :version "1.2.3"}]
+        release {:name "Release-Classic-BCC"
+                 :tag_name "1.2.3"
+                 :assets {:links [{:external false
+                                   :link_type "other"
+                                   :name "Foo"
+                                   :direct_asset_url "https://example.org"}]}}
+        known-game-tracks []]
+    (is (= expected (gitlab-api/parse-release release known-game-tracks)))))
+
 (deftest parse-release--multiple-game-tracks
   (testing "a release with a single asset and multiple game tracks returns multiple releases"
     (let [expected [{:download-url "http://example.org",
@@ -245,7 +279,7 @@
                     {:download-url "http://example.org",
                      :game-track :classic,
                      :version "1.2.3"}]
-          given {:release "EveryAddon"
+          given {:name "EveryAddon"
                  :tag_name "1.2.3"
                  :assets {:links [{:external false
                                    :link_type "other"
@@ -253,6 +287,51 @@
                                    :direct_asset_url "http://example.org"}]}}
           game-track-list [:retail :classic]]
       (is (= expected (gitlab-api/parse-release given game-track-list))))))
+
+(deftest parse-assets--odd-one-out
+  (testing "sole remaining asset is classified as the sole remaining classification"
+    (let [release {:name "Release 1.2.3"
+                   :tag_name "1.2.3"
+                   :assets {:links [{:external false
+                                     :link_type "other"
+                                     :name "Foo-Classic"
+                                     :direct_asset_url "http://example.org"}
+                                    {:external false
+                                     :link_type "other"
+                                     :name "Foo-BCC"
+                                     :direct_asset_url "http://example.org"}
+                                    {:external false
+                                     :link_type "other"
+                                     :name "Foo"
+                                     :direct_asset_url "http://example.org"}]}}
+          
+          expected [{:download-url "http://example.org", :game-track :classic, :version "1.2.3"}
+                    {:download-url "http://example.org", :game-track :classic-tbc, :version "1.2.3"}
+                    {:download-url "http://example.org", :game-track :retail, :version "1.2.3"}]
+          known-game-tracks []]
+      (is (= expected (gitlab-api/parse-release release known-game-tracks))))))
+
+(deftest parse-assets--release-json
+  (testing "no game track present in asset name or release name, no `:game-track-list`, no `release.json` file and no known game tracks."
+    (let [expected [{:download-url "https://example.org", :game-track :classic-tbc, :version "1.2.3"}]
+          release-json {:releases [{:filename "AdvancedInterfaceOptions-1.5.0.zip",
+                                    :nolib false,
+                                    :metadata [{:flavor "bcc", :interface 20501}]}]}
+          release {:name "Release 1.2.3"
+                   :tag_name "1.2.3"
+                   :assets {:links [{:direct_asset_url "https://example.org"
+                                     :link_type "other"
+                                     :external false
+                                     :name "AdvancedInterfaceOptions-1.5.0.zip"}
+                                    {:direct_asset_url "https://example.org/release.json"
+                                     :link_type "application/json"
+                                     :external false
+                                     :name "release.json"}]}}
+          known-game-tracks []
+          fake-routes {"https://example.org/release.json"
+                       {:get (fn [_] {:status 200 :body (utils/to-json release-json)})}}]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (gitlab-api/parse-release release known-game-tracks)))))))
 
 (deftest download-decode-blob
   (let [expected {:author "Freddie",
