@@ -27,11 +27,33 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+
 * add release.json support for github/gitlab addons
+    - https://github.com/layday/instawow/discussions/72
 
 * refresh catalogue is not so healthy
+    - errors during refresh should appear in the log next to the appropriate addon
+    - 404s shouldn't be retried. the addon is gone
+    - where are the tests catching all these?
+        cli/refresh-user-catalogue
+        cli/import-addon--github
+    - it's also working sequentially
+        :(
+
+* http, add with-backoff support to download-file
+    - just had a wowinterface addon timeout
 
 ## todo bucket (no particular order)
+
+* add support for 'Interface-Retail', 'Interface-Classic', 'Interface-BCC'
+    - how much of a thing is this?
+        - is it more of a templating thing?
+    - https://github.com/Myrroddin/MrBigglesworthDeath/blob/master/MrBigglesworthDeath.toc
+
+* github, gitlab, are we paginating release calls?
+
+* disable support for curseforge
+    - https://mailchi.mp/overwolf/whats-new-with-overwolf-curseforge-november3
 
 * github, like gitlab, use presence of multiple toc files to determine game track support
 
@@ -247,6 +269,8 @@ see CHANGELOG.md for a more formal list of changes by release
     - a prerequisite for v5 then would be introducing a new catalogue
 * readme, the ~your machine's `hostname`~ bit.
 * readme, the "Original Swing GUI was last available in version 3.x using" bit
+* rename 'retail' to 'mainline'
+    - pretty big change ;) but probably for the best.
 
 ## catalogue v3 / capture more addon data
 

@@ -1,0 +1,56 @@
+[
+  {
+    "url": "https://api.github.com/repos/robert388/Necrosis/releases/19154694",
+    "assets_url": "https://api.github.com/repos/robert388/Necrosis/releases/19154694/assets",
+    "upload_url": "https://uploads.github.com/repos/robert388/Necrosis/releases/19154694/assets{?name,label}",
+    "html_url": "https://github.com/robert388/Necrosis/releases/tag/v0.5",
+    "id": 19154694,
+    "node_id": "MDc6UmVsZWFzZTE5MTU0Njk0",
+    "tag_name": "v0.5",
+    "target_commitish": "master",
+    "name": "",
+    "draft": false,
+    "author": {
+      "login": "robert388",
+      "id": 1241906,
+      "node_id": "MDQ6VXNlcjEyNDE5MDY=",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/1241906?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/robert388",
+      "html_url": "https://github.com/robert388",
+      "followers_url": "https://api.github.com/users/robert388/followers",
+      "following_url": "https://api.github.com/users/robert388/following{/other_user}",
+      "gists_url": "https://api.github.com/users/robert388/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/robert388/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/robert388/subscriptions",
+      "organizations_url": "https://api.github.com/users/robert388/orgs",
+      "repos_url": "https://api.github.com/users/robert388/repos",
+      "events_url": "https://api.github.com/users/robert388/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/robert388/received_events",
+      "type": "User",
+      "site_admin": false
+    },
+    "prerelease": false,
+    "created_at": "2019-08-08T05:24:57Z",
+    "published_at": "2019-08-08T05:42:53Z",
+    "assets": [
+      {
+        "url": "https://api.github.com/repos/robert388/Necrosis/releases/assets/15386179",
+        "id": 15386179,
+        "name": "release.json",
+        "label": null,
+        "uploader": {},
+        "content_type": "application/json",
+        "state": "uploaded",
+        "size": 33244,
+        "download_count": 10888,
+        "created_at": "2019-10-09T17:40:00Z",
+        "updated_at": "2019-10-09T17:40:01Z",
+        "browser_download_url": "https://github.com/robert388/Necrosis/releases/download/release.json"
+      }
+    ],
+    "tarball_url": "https://api.github.com/repos/robert388/Necrosis/tarball/v0.5",
+    "zipball_url": "https://api.github.com/repos/robert388/Necrosis/zipball/v0.5",
+    "body": "Fixed errors trown after leveling up"
+  }
+]

@@ -70,12 +70,20 @@
   (testing "if more than one toc file is present, assume multi-toc and look for game tracks"
     (let [repo-fixture (slurp (fixture-path "gitlab-repo--woblight-nitro.json"))
           repo-tree-fixture (slurp (fixture-path "gitlab-repo-tree--woblight-nitro.json"))
+          blob-fixture (slurp (fixture-path "gitlab-repo-blobs--woblight-nitro.json"))
+          repo-releases-fixture (slurp (fixture-path "gitlab-repo-releases--woblight-nitro.json"))
 
           fake-routes {"https://gitlab.com/api/v4/projects/woblight%2Fnitro"
                        {:get (fn [req] {:status 200 :body repo-fixture})}
 
                        "https://gitlab.com/api/v4/projects/woblight%2Fnitro/repository/tree"
-                       {:get (fn [req] {:status 200 :body repo-tree-fixture})}}
+                       {:get (fn [req] {:status 200 :body repo-tree-fixture})}
+
+                       "https://gitlab.com/api/v4/projects/woblight%2Fnitro/repository/blobs/6293629816b04063b391e845a67ea8f5e313d540"
+                       {:get (fn [req] {:status 200 :body blob-fixture})}
+
+                       "https://gitlab.com/api/v4/projects/woblight%2Fnitro/releases"
+                       {:get (fn [req] {:status 200 :body repo-releases-fixture})}}
 
           expected {:url "https://gitlab.com/woblight/nitro"
                     :created-date "2020-09-07T08:30:52.562Z"
@@ -100,6 +108,8 @@
   (testing "toc files can be inspected for game tracks"
     (let [repo-fixture (slurp (fixture-path "gitlab-repo--woblight-nitro.json"))
           repo-tree-fixture (slurp (fixture-path "gitlab-repo-tree--single-toc-dummy.json"))
+          repo-releases-fixture (slurp (fixture-path "gitlab-repo-releases--woblight-nitro.json"))
+
           toc-file-fixture (utils/to-json
                             {:size 258
                              :encoding "base64"
@@ -113,7 +123,10 @@
                        {:get (fn [req] {:status 200 :body repo-tree-fixture})}
 
                        "https://gitlab.com/api/v4/projects/woblight%2Fnitro/repository/blobs/125c899d813d2e11c976879f28dccc2a36fd207b"
-                       {:get (fn [req] {:status 200 :body toc-file-fixture})}}
+                       {:get (fn [req] {:status 200 :body toc-file-fixture})}
+
+                       "https://gitlab.com/api/v4/projects/woblight%2Fnitro/releases"
+                       {:get (fn [req] {:status 200 :body repo-releases-fixture})}}
 
           expected {:url "https://gitlab.com/woblight/nitro"
                     :created-date "2020-09-07T08:30:52.562Z"
@@ -147,7 +160,7 @@
                  :label "Nitro"
                  :name "nitro"
                  :download-count 0
-                 :game-track-list []
+                 :game-track-list [:retail]
                  :tag-list []}
           game-track :retail
           fixture (slurp (fixture-path "gitlab-repo-releases--woblight-nitro.json"))
@@ -224,6 +237,40 @@
           game-track-list [:retail]]
       (is (= expected (gitlab-api/parse-release given game-track-list))))))
 
+(deftest parse-release--worst-case
+  (testing "no game track present in asset name or release name, no `:game-track-list`, no `release.json` file and no known game tracks."
+    (let [expected []
+          given {:name "EveryAddon"
+                 :tag_name "1.2.3"
+                 :assets {:links [{:external false
+                                   :link_type "other"
+                                   :name "Foo"
+                                   :direct_asset_url "http://example.org"}]}}
+          known-game-tracks []]
+      (is (= expected (gitlab-api/parse-release given known-game-tracks))))))
+
+(deftest parse-release--asset-name
+  (let [expected [{:game-track :classic, :version "1.2.3", :download-url "https://example.org"}]
+        release {:name "Release"
+                 :tag_name "1.2.3"
+                 :assets {:links [{:external false
+                                   :link_type "other"
+                                   :name "Foo-Classic"
+                                   :direct_asset_url "https://example.org"}]}}
+        known-game-tracks []]
+    (is (= expected (gitlab-api/parse-release release known-game-tracks)))))
+
+(deftest parse-assets--release-name
+  (let [expected [{:download-url "https://example.org", :game-track :classic-tbc, :version "1.2.3"}]
+        release {:name "Release-Classic-BCC"
+                 :tag_name "1.2.3"
+                 :assets {:links [{:external false
+                                   :link_type "other"
+                                   :name "Foo"
+                                   :direct_asset_url "https://example.org"}]}}
+        known-game-tracks []]
+    (is (= expected (gitlab-api/parse-release release known-game-tracks)))))
+
 (deftest parse-release--multiple-game-tracks
   (testing "a release with a single asset and multiple game tracks returns multiple releases"
     (let [expected [{:download-url "http://example.org",
@@ -232,7 +279,7 @@
                     {:download-url "http://example.org",
                      :game-track :classic,
                      :version "1.2.3"}]
-          given {:release "EveryAddon"
+          given {:name "EveryAddon"
                  :tag_name "1.2.3"
                  :assets {:links [{:external false
                                    :link_type "other"
@@ -240,6 +287,51 @@
                                    :direct_asset_url "http://example.org"}]}}
           game-track-list [:retail :classic]]
       (is (= expected (gitlab-api/parse-release given game-track-list))))))
+
+(deftest parse-assets--odd-one-out
+  (testing "sole remaining asset is classified as the sole remaining classification"
+    (let [release {:name "Release 1.2.3"
+                   :tag_name "1.2.3"
+                   :assets {:links [{:external false
+                                     :link_type "other"
+                                     :name "Foo-Classic"
+                                     :direct_asset_url "http://example.org"}
+                                    {:external false
+                                     :link_type "other"
+                                     :name "Foo-BCC"
+                                     :direct_asset_url "http://example.org"}
+                                    {:external false
+                                     :link_type "other"
+                                     :name "Foo"
+                                     :direct_asset_url "http://example.org"}]}}
+
+          expected [{:download-url "http://example.org", :game-track :classic, :version "1.2.3"}
+                    {:download-url "http://example.org", :game-track :classic-tbc, :version "1.2.3"}
+                    {:download-url "http://example.org", :game-track :retail, :version "1.2.3"}]
+          known-game-tracks []]
+      (is (= expected (gitlab-api/parse-release release known-game-tracks))))))
+
+(deftest parse-assets--release-json
+  (testing "no game track present in asset name or release name, no `:game-track-list`, no `release.json` file and no known game tracks."
+    (let [expected [{:download-url "https://example.org", :game-track :classic-tbc, :version "1.2.3"}]
+          release-json {:releases [{:filename "AdvancedInterfaceOptions-1.5.0.zip",
+                                    :nolib false,
+                                    :metadata [{:flavor "bcc", :interface 20501}]}]}
+          release {:name "Release 1.2.3"
+                   :tag_name "1.2.3"
+                   :assets {:links [{:direct_asset_url "https://example.org"
+                                     :link_type "other"
+                                     :external false
+                                     :name "AdvancedInterfaceOptions-1.5.0.zip"}
+                                    {:direct_asset_url "https://example.org/release.json"
+                                     :link_type "application/json"
+                                     :external false
+                                     :name "release.json"}]}}
+          known-game-tracks []
+          fake-routes {"https://example.org/release.json"
+                       {:get (fn [_] {:status 200 :body (utils/to-json release-json)})}}]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (gitlab-api/parse-release release known-game-tracks)))))))
 
 (deftest download-decode-blob
   (let [expected {:author "Freddie",
