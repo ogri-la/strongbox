@@ -574,8 +574,16 @@
              ;; failed to find or expand summary, probably because of selected game track.
              nil)))
 
+(defn-spec refresh-user-catalogue-item nil?
+  "re-fetch an item in the user catalogue using it's URI, replacing the old entry with any updated details. "
+  [addon-url ::sp/url]
+  (let [dry-run? false]
+    (info (str "refreshing addon at " addon-url "..."))
+    (core/add-user-addon! (find-addon addon-url dry-run?))
+    (info "... done!")))
+
 (defn-spec refresh-user-catalogue nil?
-  "re-fetch each item in user catalogue using the URI and replace old entry with any updated details"
+  "re-fetch each item in user catalogue using the URI and replace old entry with any updated details."
   []
   (binding [http/*cache* (core/cache)]
     (info (format "refreshing \"%s\", this may take a minute ..."
@@ -587,6 +595,8 @@
          vec
          core/add-user-addon!))
   nil)
+
+
 
 ;;
 

@@ -25,11 +25,11 @@ see CHANGELOG.md for a more formal list of changes by release
         - has no otherwise identifying game track in it's name, toc file or releases
         - but it does support all three versions of wow
 
-## todo
-
-
 * add release.json support for github/gitlab addons
     - https://github.com/layday/instawow/discussions/72
+    - done
+
+## todo
 
 * refresh catalogue is not so healthy
     - errors during refresh should appear in the log next to the appropriate addon

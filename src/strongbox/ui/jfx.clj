@@ -2042,6 +2042,39 @@
              :tab-idx tab-idx
              :addon-id (:tab-data tab)}})
 
+(defn user-catalogue-pane
+  [{:keys [fx/context]}]
+  (let [user-catalogue (core/get-create-user-catalogue)
+
+        refresh-button (fn [addon]
+                         (component-instance
+                          (button "refresh" (async-handler #(cli/refresh-user-catalogue-item (:url addon))))))
+        
+        column-list [{:id "refresh" :text "" :style-class ["install-button-column"] :pref-width 100 :min-width 100 :resizable false :cell-value-factory refresh-button}
+                     {:id "source" :text "source" :pref-width 100 :min-width 100 :cell-value-factory :source}
+                     {:id "source-id" :text "source-id" :pref-width 100 :min-width 100 :cell-value-factory :source-id}
+                     {:id "name" :text "name" :pref-width 100 :min-width 100 :cell-value-factory :label}
+                     {:id "game-track-list" :text "supports" :pref-width 100 :min-width 100 :cell-value-factory (comp str :game-track-list)}
+                     
+                     ]
+
+        columns-list (mapv make-table-column column-list)
+        row-list (:addon-summary-list user-catalogue)
+
+        ]
+
+  {:fx/type :border-pane
+   :top {:fx/type :text :text "hiya"}
+   :center {:fx/type :table-view
+            :id "key-vals"
+            :style-class ["table-view" "odd-rows"]
+            :placeholder {:fx/type :text
+                          :style-class ["table-placeholder-text"]
+                          :text "(not installed)"}
+            :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
+            :columns (mapv make-table-column column-list)
+            :items (or row-list [])}}))
+
 (defn tabber
   [{:keys [fx/context]}]
   (let [selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])
@@ -2071,7 +2104,12 @@
           :text "log"
           :id "log-tab"
           :closable false
-          :content {:fx/type notice-logger}}]
+          :content {:fx/type notice-logger}}
+         {:fx/type :tab
+          :text "user-catalogue"
+          :id "user-catalogue-tab"
+          :closable false
+          :content {:fx/type user-catalogue-pane}}]
 
         dynamic-tabs (map-indexed (fn [idx tab] {:fx/type addon-detail-tab :tab tab :tab-idx idx}) dynamic-tab-list)]
     {:fx/type :tab-pane
