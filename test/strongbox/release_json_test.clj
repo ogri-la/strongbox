@@ -4,7 +4,8 @@
    ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [strongbox
     [release-json :as release-json]
-    [test-helper :refer [fixture-path slurp-fixture]]]
+    ;;[test-helper :refer [fixture-path slurp-fixture]]
+    ]
    ;;[clj-http.fake :refer [with-fake-routes-in-isolation]]
    ))
 

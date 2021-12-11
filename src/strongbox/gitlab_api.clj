@@ -192,7 +192,7 @@
   [[filename blob-url] (s/coll-of string?)]
   (if-let [game-track (utils/guess-game-track filename)]
     [game-track]
-    (do (warn "couldn't guess game track, downloading toc file and inspecting interface version:" filename)
+    (do (debug "couldn't guess game track, downloading toc file and inspecting interface version:" filename)
         (some->> blob-url
                  download-decode-blob
                  (select-keys* [:interface :#interface])

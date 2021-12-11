@@ -37,13 +37,42 @@ see CHANGELOG.md for a more formal list of changes by release
     - where are the tests catching all these?
         cli/refresh-user-catalogue
         cli/import-addon--github
-    - it's also working sequentially
-        :(
+
+
 
 * http, add with-backoff support to download-file
     - just had a wowinterface addon timeout
 
 ## todo bucket (no particular order)
+
+* user catalogue pane
+    - context menu
+        - refresh selected
+        - remove selected
+    - button bar
+        - refresh all button
+    - menu
+        - 'refresh all' switches to user catalogue pane
+    - push user catalogue in app state
+        - so we can see updates happening to catalogue entries as they happen
+    - write catalogue *once* after all items in operation updated
+        - rather than once per update
+
+* user catalogue, refresh happens in parallel
+
+* a more permanent store than just cached files
+    - I want to store release data permanently
+        - multiple pages
+        - release.json
+
+* github, can we support addons that have no detectable game tracks, no toc files, no release.json, nothing but downloadable assets?
+     - https://github.com/RealUI/RealUI
+     - we could download it, unpack it and inspect it then?
+
+* github, can we support addons that are splitting their game track releases over separate releases?
+    - like Aptechka
+        - https://github.com/rgd87/Aptechka/releases
+            - fucking /sigh!
 
 * add support for 'Interface-Retail', 'Interface-Classic', 'Interface-BCC'
     - how much of a thing is this?

@@ -296,7 +296,12 @@
 (defn http-error?
   [http-resp]
   (and (map? http-resp)
-       (>= (:status http-resp) 400)))
+       (> (:status http-resp) 399)))
+
+(defn http-server-error?
+  [http-resp]
+  (and (map? http-resp)
+       (> (:status http-resp) 499)))
 
 (defn-spec http-error string?
   "returns an error specific to code and host or just a more helpful http error message"
@@ -376,7 +381,7 @@
                     (catch Exception e
                       e))]
        (if (or (instance? Exception result)
-               (http-error? result))
+               (http-server-error? result))
          (if (= attempt *default-attempts*)
            ;; tried three times and failed three times. raise the exception or return the error.
            (if (instance? Exception result)

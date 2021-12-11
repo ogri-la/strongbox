@@ -576,11 +576,15 @@
 
 (defn-spec refresh-user-catalogue-item nil?
   "re-fetch an item in the user catalogue using it's URI, replacing the old entry with any updated details. "
-  [addon-url ::sp/url]
-  (let [dry-run? false]
-    (info (str "refreshing addon at " addon-url "..."))
-    (core/add-user-addon! (find-addon addon-url dry-run?))
-    (info "... done!")))
+  [addon :addon/summary]
+  (logging/with-addon addon
+    (info "refreshing details")
+    (let [dry-run? false
+          refreshed-addon (find-addon (:url addon) dry-run?)]
+      (if refreshed-addon
+        (do (core/add-user-addon! refreshed-addon)
+            (info "... done!"))
+        (warn "failed to refresh catalogue entry")))))
 
 (defn-spec refresh-user-catalogue nil?
   "re-fetch each item in user catalogue using the URI and replace old entry with any updated details."
@@ -590,13 +594,8 @@
                   (-> (core/paths :user-catalogue-file) fs/base-name)))
     (->> (core/get-create-user-catalogue)
          :addon-summary-list
-         (map :url)
-         (map #(find-addon % false))
-         vec
-         core/add-user-addon!))
+         (mapv refresh-user-catalogue-item)))
   nil)
-
-
 
 ;;
 

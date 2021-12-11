@@ -60,7 +60,8 @@
   (let [supported-zip? #(-> % :content_type vector set (some supported-zip-mimes))
         release-game-track (utils/guess-game-track (:name release))
 
-        latest-release? (-> release (get :-i 0) (= 0))
+        num-game-tracks 3
+        latest-release? (-> release (get :-i 0) (<= num-game-tracks))
 
         release-json (->> release
                           :assets
@@ -273,7 +274,8 @@
             game-track-list (or (find-gametracks-release-list release-list)
                                 (find-gametracks-release-json release-list)
                                 (find-gametracks-toc-data source-id)
-                                [])
+                                (do (warn "absolutely no game tracks detected at all, assuming retail.")
+                                    [:retail]))
 
             ;; will correct any case problems. see tests.
             source-id (-> latest-release :html_url parse-user-string)
