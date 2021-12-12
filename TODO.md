@@ -6,35 +6,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* gitlab as addon host
-    - https://gitlab.com/search?search=wow+addon
-    - returned to bucket 2019-12-04, notes:
-        - gitlab doesn't handle releases like github does
-            - https://stackoverflow.com/questions/29520905/how-to-create-releases-in-gitlab
-        - there are very few gitlab addons (88)
-            - where did this number come from?
-        - api is quite slow
-    - update: as of Oct 2020 gitlab sucks a little bit less and, like github, you can attach binaries to releases
-        - https://gitlab.com/explore/projects?tag=World+of+Warcraft
-        - https://gitlab.com/shrugal/PersoLootRoll
-        - any others ...?
-
-* multi-toc support
-    - https://github.com/Stanzilla/WoWUIBugs/issues/68#issuecomment-830351390
-    - https://gitlab.com/woblight/strategos 
-        - has no otherwise identifying game track in it's name, toc file or releases
-        - but it does support all three versions of wow
-
-* add release.json support for github/gitlab addons
-    - https://github.com/layday/instawow/discussions/72
-    - done
-
-* refresh catalogue is not so healthy
-    - errors during refresh should appear in the log next to the appropriate addon
-         -done
-    - 404s shouldn't be retried. the addon is gone
-        - done
-
 ## todo
 
 ## todo bucket (no particular order)
