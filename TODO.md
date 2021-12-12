@@ -8,7 +8,29 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+Curseforge is going away. How to migrate addons off of curseforge?
+- in most cases this won't be possible.
+- realistic alternatives for the rest are wowi and github.
+
+* how to disable the completely integrated curseforge?
+    - I want curseforge addons to still show as being curseforge addons but just never receive updates after the cut off.
+        - when is the cut off again?
+    - I want the catalogue of curseforge addons to not be merged into the short and full catalogues after the cut off
+    - I want the curseforge catalogue to no longer receives updates
+    - I want a permanent warning against curseforge addons between now and when the service goes offline
+        - I want an error after cut off
+
+* github catalogue
+    - something quick and dirty for now
+
+* source switching
+    - some addons will have multiple sources in the toc file we can switch to.
+    - if not, we can search the catalogue for them
+        - exclude curseforge 
+
 ## todo bucket (no particular order)
+
+* star or 'like' addons in the catalogue
 
 * http, add with-backoff support to download-file
     - just had a wowinterface addon timeout
