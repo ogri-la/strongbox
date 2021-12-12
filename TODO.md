@@ -288,8 +288,8 @@ Curseforge is going away. How to migrate addons off of curseforge?
 * remove the (pinned) and (installed) labels from from the 'available' column
 * drop support catalogue v1
     - a prerequisite for v5 then would be introducing a new catalogue
-* readme, the ~your machine's `hostname`~ bit.
-* readme, the "Original Swing GUI was last available in version 3.x using" bit
+* readme, remove the ~your machine's `hostname`~ bit.
+* readme, remove the "Original Swing GUI was last available in version 3.x using" bit
 * rename 'retail' to 'mainline'
     - pretty big change ;) but probably for the best.
 
