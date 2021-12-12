@@ -2,6 +2,7 @@
   (:require
    [clojure.test :refer [deftest testing is use-fixtures]]
    [strongbox
+    [zip :as zip]
     [constants :as constants]
     [utils :as utils :refer [join]]
     [toc :as toc]
@@ -74,21 +75,23 @@ SomeAddon.lua")
 
                     :interface "80205"
                     :#interface "11302"}]
-      (is (= expected (toc/-parse-toc-file toc-file-contents))))))
+      (is (= expected (toc/parse-toc-file toc-file-contents))))))
 
 (deftest parse-addon-toc-guard
   (testing "parsing of scraped toc-file key-vals"
     (let [addon-path (join fs/*cwd* "SomeAddon")
           toc-file-path (join addon-path "SomeAddon.toc")
-          expected {:name "addon-name"
-                    :dirname "SomeAddon"
-                    :label "Addon Name"
-                    :description "Description of the addon here"
-                    :interface-version 80205
-                    :installed-version "1.6.1"
-                    ;; wowi is edged out in favour of curseforge unfortunately
-                    :source "curseforge"
-                    :source-id 54321}]
+          expected [{:name "addon-name"
+                     :dirname "SomeAddon"
+                     :label "Addon Name"
+                     :description "Description of the addon here"
+                     :interface-version 80205
+                     :-toc/game-track :retail
+                     :supported-game-tracks [:retail]
+                     :installed-version "1.6.1"
+                     ;; wowi is edged out in favour of curseforge unfortunately
+                     :source "curseforge"
+                     :source-id 54321}]]
       (fs/mkdir addon-path)
       (spit toc-file-path toc-file-contents)
       (is (= expected (toc/parse-addon-toc-guard addon-path))))))
@@ -101,11 +104,19 @@ SomeAddon.lua")
                      :label "EveryAddon *"
                      :description nil
                      :interface-version constants/default-interface-version
+                     :-toc/game-track :retail
+                     :supported-game-tracks [:retail]
                      :installed-version nil}
 
           cases [;; empty/no title
                  [{:title ""} base-case]
                  [{:title nil} base-case]
+
+                 ;; classic interface version gets a :classic game-track
+                 [{:interface constants/default-interface-version-classic}
+                  (merge base-case {:interface-version constants/default-interface-version-classic
+                                    :supported-game-tracks [:classic]
+                                    :-toc/game-track :classic})]
 
                  ;; addon is in development
                  [{:version "@project-version@"} (merge base-case
@@ -113,14 +124,18 @@ SomeAddon.lua")
                                                          :ignore? true})]]
           install-dir fs/*cwd*
           addon-dir (utils/join install-dir "EveryAddon")]
-      (fs/mkdir addon-dir)
       (doseq [[toc-data expected] cases]
-        (is (= expected (toc/parse-addon-toc addon-dir toc-data)))))))
+        (is (= expected (toc/parse-addon-toc toc-data addon-dir)))))))
 
 (deftest parse-addon-toc--aliased
   (testing "addons whose toc files have a `:title` value that matches an alias get a hardcoded source and source-id value"
     (let [addon-dir (utils/join (helper/install-dir) "dirname")
-          defaults {:dirname "dirname" :description nil :installed-version nil :interface-version constants/default-interface-version}
+          defaults {:dirname "dirname"
+                    :description nil
+                    :installed-version nil
+                    :interface-version constants/default-interface-version
+                    :-toc/game-track :retail
+                    :supported-game-tracks [:retail]}
           cases [[{:title "Plater"} {:label "Plater" :name "plater" :source "curseforge" :source-id 100547}]
                  [{:title "|cffffd200Deadly Boss Mods|r |cff69ccf0Core|r"}
                   {:label "|cffffd200Deadly Boss Mods|r |cff69ccf0Core|r"
@@ -129,12 +144,17 @@ SomeAddon.lua")
       (fs/mkdir addon-dir)
       (doseq [[given expected] cases
               :let [expected (merge expected defaults)]]
-        (is (= expected (toc/parse-addon-toc addon-dir given)))))))
+        (is (= expected (toc/parse-addon-toc given addon-dir)))))))
 
 (deftest parse-addon-toc--x-source
   (testing "addons whose toc files have a 'x-$host-id=val' will use those as `:source` and `:source-id`"
     (let [addon-dir (utils/join (helper/install-dir) "dirname")
-          defaults {:dirname "dirname" :description nil :installed-version nil :interface-version constants/default-interface-version}
+          defaults {:dirname "dirname"
+                    :description nil
+                    :installed-version nil
+                    :interface-version constants/default-interface-version
+                    :supported-game-tracks [:retail]
+                    :-toc/game-track :retail}
           cases [[{:x-wowi-id "123"} {:label "dirname *" :name "dirname-*" :source "wowinterface" :source-id 123}]
                  [{:x-wowi-id 123} {:label "dirname *" :name "dirname-*" :source "wowinterface" :source-id 123}]
                  [{:x-wowi-id "abc"} {:label "dirname *" :name "dirname-*"}] ;; bad case, non-numeric wowi ID
@@ -150,7 +170,7 @@ SomeAddon.lua")
       (fs/mkdir addon-dir)
       (doseq [[given expected] cases
               :let [expected (merge expected defaults)]]
-        (is (= expected (toc/parse-addon-toc addon-dir given)))))))
+        (is (= expected (toc/parse-addon-toc given addon-dir)))))))
 
 (deftest rm-trailing-version
   (testing "parsing of 'Title' attribute in toc file"
@@ -183,3 +203,15 @@ SomeAddon.lua")
           ]
       (doseq [[given expected] cases]
         (is (= expected (toc/rm-trailing-version given)))))))
+
+(deftest find-toc-files
+  (let [expected [[:classic-tbc "EveryAddon-BCC.toc"]
+                  [:classic "EveryAddon-Classic.toc"]
+                  [:retail "EveryAddon-Mainline.toc"]
+                  [:classic-tbc "EveryAddon-TBC.toc"]
+                  [:classic "EveryAddon-Vanilla.toc"]
+                  [nil "EveryAddon.toc"]]
+        fixture (helper/fixture-path "everyaddon--1-2-3--multi-toc.zip")
+        addon-dir (join (helper/install-dir) "EveryAddon")]
+    (zip/unzip-file fixture (helper/install-dir))
+    (is (= expected (toc/find-toc-files addon-dir)))))

@@ -40,6 +40,13 @@ dl "https://api.github.com/repos/jsb/RingMenu/releases" "github-repo-releases--b
 dl "https://api.github.com/repos/Ravendwyr/Chinchilla/releases" "github-repo-releases--many-assets-many-gametracks.json" 
 dl "https://api.github.com/repos/Ravendwyr/Chinchilla/contents" "github-repo-contents--many-assets-many-gametracks.json" 
 
+# gitlab api
+dl "https://gitlab.com/api/v4/projects/woblight%2Fnitro" "gitlab-repo--woblight-nitro.json"
+dl "https://gitlab.com/api/v4/projects/woblight%2Fnitro/releases" "gitlab-repo-releases--woblight-nitro.json"
+dl "https://gitlab.com/api/v4/projects/woblight%2Fnitro/repository/tree" "gitlab-repo-tree--woblight-nitro.json"
+dl "https://gitlab.com/api/v4/projects/thing-engineering%2Fwowthing%2Fwowthing-collector/repository/blobs/125c899d813d2e11c976879f28dccc2a36fd207b" "gitlab-repo-blobs--wowthing.json"
+dl "https://gitlab.com/api/v4/projects/woblight%2Fnitro/repository/tree" "gitlab-repo-tree--woblight-nitro.json"
+
 # tukui api
 dl "https://www.tukui.org/api.php?addon=98" "tukui--addon-details.json"
 dl "https://www.tukui.org/api.php?classic-addon=13" "tukui--classic-addon-details.json"

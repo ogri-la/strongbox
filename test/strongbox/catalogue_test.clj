@@ -580,7 +580,9 @@
     (let [toc+nfo (merge toc {:group-id "https://example.org"
                               :source "wowinterface"
                               :source-id 123
-                              :interface-version constants/default-interface-version-classic})
+                              :interface-version constants/default-interface-version-classic
+                              :toc/game-track :classic
+                              :supported-game-tracks [:classic]})
           expected {:label "EveryAddon 1.2.3",
                     :name "everyaddon",
                     :source "wowinterface",

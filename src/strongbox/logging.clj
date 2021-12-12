@@ -139,7 +139,9 @@
                                 (dissoc log-line :source)
                                 log-line)]
 
-                 (if (= msg (-> @state-atm :log-lines last :message))
+                 ;; 2021-11-10: disabled as it's preventing addons from reporting errors correctly.
+                 ;; I'm also not seeing any error floods (yet).
+                 (if (and false (= msg (-> @state-atm :log-lines last :message)))
                    ;; purely to stop infinite feedback loop. not sure how this one is happening but urgh.
                    (println "[dropping duplicate message]")
                    (when state-atm

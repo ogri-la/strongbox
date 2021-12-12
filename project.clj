@@ -1,4 +1,4 @@
-(defproject ogri-la/strongbox "4.7.0"
+(defproject ogri-la/strongbox "4.8.0"
   :description "World Of Warcraft Addon Manager"
   :url "https://github.com/ogri-la/strongbox"
   :license {:name "GNU Affero General Public License (AGPL)"
@@ -86,7 +86,8 @@
   :plugins [[lein-cljfmt "0.6.4"]
             [jonase/eastwood "0.9.9"]
             [lein-cloverage "1.2.2"]]
-  :eastwood {:exclude-linters [:constant-test]
+  :eastwood {:exclude-linters [:constant-test
+                               :reflection]
              ;; linters that are otherwise disabled
              :add-linters [:unused-namespaces
                            :unused-private-vars

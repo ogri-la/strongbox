@@ -1,0 +1,36 @@
+{
+  "id": 8559770,
+  "description": "World of Warcraft addon to collect data not available via the API",
+  "name": "wowthing-collector",
+  "name_with_namespace": "Thing Engineering / WoWthing / wowthing-collector",
+  "path": "wowthing-collector",
+  "path_with_namespace": "thing-engineering/wowthing/wowthing-collector",
+  "created_at": "2018-09-26T00:43:48.062Z",
+  "default_branch": "main",
+  "tag_list": [
+    "Lua",
+    "World of Warcraft"
+  ],
+  "topics": [
+    "Lua",
+    "World of Warcraft"
+  ],
+  "ssh_url_to_repo": "git@gitlab.com:thing-engineering/wowthing/wowthing-collector.git",
+  "http_url_to_repo": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector.git",
+  "web_url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector",
+  "readme_url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/blob/main/README.md",
+  "avatar_url": null,
+  "forks_count": 0,
+  "star_count": 0,
+  "last_activity_at": "2021-06-27T23:49:27.716Z",
+  "namespace": {
+    "id": 5161299,
+    "name": "WoWthing",
+    "path": "wowthing",
+    "kind": "group",
+    "full_path": "thing-engineering/wowthing",
+    "parent_id": 4269889,
+    "avatar_url": null,
+    "web_url": "https://gitlab.com/groups/thing-engineering/wowthing"
+  }
+}

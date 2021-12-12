@@ -6,90 +6,103 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* gui, synthetic 'version' column
-    - combines 'installed' and 'available' columns
-        - because most of the time the two columns are the same
-    - displays the available version if it exists
-    - style the version value if update available?
+* gitlab as addon host
+    - https://gitlab.com/search?search=wow+addon
+    - returned to bucket 2019-12-04, notes:
+        - gitlab doesn't handle releases like github does
+            - https://stackoverflow.com/questions/29520905/how-to-create-releases-in-gitlab
+        - there are very few gitlab addons (88)
+            - where did this number come from?
+        - api is quite slow
+    - update: as of Oct 2020 gitlab sucks a little bit less and, like github, you can attach binaries to releases
+        - https://gitlab.com/explore/projects?tag=World+of+Warcraft
+        - https://gitlab.com/shrugal/PersoLootRoll
+        - any others ...?
+
+* multi-toc support
+    - https://github.com/Stanzilla/WoWUIBugs/issues/68#issuecomment-830351390
+    - https://gitlab.com/woblight/strategos 
+        - has no otherwise identifying game track in it's name, toc file or releases
+        - but it does support all three versions of wow
+
+* add release.json support for github/gitlab addons
+    - https://github.com/layday/instawow/discussions/72
     - done
 
-* gui, toggleable columns as a menuitem
-    - ensure a 'reset' to defaults option
-    - don't change current set of columns until next major release
-    - done
-
-* gui, any new/synthetic columns?
-    - human friendly update column with "updated x years/months/days/hours/minutes" ago
-        - https://stackoverflow.com/questions/32511405/how-would-time-ago-function-implementation-look-like-in-clojure
-    - number of releases?
-        - nah, for wowinterface and tukui this will be '1' most of the time
-    - 'browse local files'
+* refresh catalogue is not so healthy
+    - errors during refresh should appear in the log next to the appropriate addon
+         -done
+    - 404s shouldn't be retried. the addon is gone
         - done
-    - pinned/unpinned
-        - perhaps also remove the (pinned) from the available column and make it an icon next in the uber button
-    - tags
-        - done
-    - done
-
-* gui, can I make column widths dynamic? 
-    - I'd like the 'version' columns to fit exactly, always.
-        - sorry, not going to happen. we have min, max and pref widths as always.
-    - done
-
-* gui, switch to tree-table-view for installed addons that are grouping other addons
-    - at least investigate how difficult this might be.
-    - done
-
-* bug, explicitly ignoring an addon gives it a dummy updated-date
-    - if an updated-date doesn't exist we shouldn't require that it does exist ...
-    - done. it was being polyfilled when it should have been ignored.
-
-* bug, I can reinstall and install a specific release for an explicitly ignored addon
-    - but not an implicitly ignored addon. weird.
-    - investigated and it's part of a larger problem:
-        - the context menu isn't being refreshed properly between actions
-            - this is because the state in the :selected-addon-list is different to that in the :installed-addon-list
-                - that was just modified by the action.
-                - selecting and deselecting a thing will update this state so it works
-                    - but right-clicking immediately after performing such an action results in a weird state
-            - this can be overcome by clearing the selected items between actions
-                - clearing :selected-addon-list is not enough however, the gui table needs to have it's selection changed as well
-    - done
-
-* bug, tukui is dead again and the jobs are just hanging
-    - I thought I put a timeout on this?
-    - put a timeout on http connections and requests???
-    - can jobs be given a timeout as well?
-    - see tukui--stall-crash
-        - looks like the timeout was working, but after timing out it raises a java.net.ConnectException
-            - I have handling for a SocketTimeoutException which is different
-    - done
-
-* bug, a timeout from curseforge during scraping at page 171 prevent pages 171-182 from being scraped
-    - we should be kinder when scraping. 
-        - add a delay between requests
-        - done
-    - we should be more robust when scraping.
-        - add retries with exponential backoff
-        - done
-
-* revisit the 'File -> Export Github addon list' 
-    - is this the user catalogue?
-        - it is.
-    - rename
-        - done
-
-* update image thumbnails
-    - they're getting a bit stale
-    - done
-
-* http, exponential backoff for failing http requests
-    - done
 
 ## todo
 
-
 ## todo bucket (no particular order)
+
+* http, add with-backoff support to download-file
+    - just had a wowinterface addon timeout
+
+* replace multi-error messages with a single multi-line error message
+
+* user catalogue pane
+    - context menu
+        - refresh selected
+        - remove selected
+    - button bar
+        - refresh all button
+    - menu
+        - 'refresh all' switches to user catalogue pane
+    - push user catalogue in app state
+        - so we can see updates happening to catalogue entries as they happen
+    - write catalogue *once* after all items in operation updated
+        - rather than once per update
+
+* user catalogue, refresh happens in parallel
+
+* a more permanent store than just cached files
+    - I want to store release data permanently
+        - multiple pages
+        - release.json
+
+* github, can we support addons that have no detectable game tracks, no toc files, no release.json, nothing but downloadable assets?
+     - https://github.com/RealUI/RealUI
+     - we could download it, unpack it and inspect it then?
+
+* github, can we support addons that are splitting their game track releases over separate releases?
+    - like Aptechka
+        - https://github.com/rgd87/Aptechka/releases
+            - fucking /sigh!
+
+* add support for 'Interface-Retail', 'Interface-Classic', 'Interface-BCC'
+    - how much of a thing is this?
+        - is it more of a templating thing?
+    - https://github.com/Myrroddin/MrBigglesworthDeath/blob/master/MrBigglesworthDeath.toc
+
+* github, gitlab, are we paginating release calls?
+
+* disable support for curseforge
+    - https://mailchi.mp/overwolf/whats-new-with-overwolf-curseforge-november3
+
+* github, like gitlab, use presence of multiple toc files to determine game track support
+
+* complex export pane
+    - choose format
+        - json, csv, edn
+    - choose to keep ignored or not
+    - choose fields to keep
+    - warning if not enough fields for import
+
+* bug, gui, 'updated' column is using dummy date in certain cases
+    - I thought I fixed this?
+
+* gitlab, add optional API authentication like github
+
+* column profiles
+    - 'skinny', 'fat', 'default'
+
+* offer to clean up .nfo files when removing a directory
+
+* http, curseforge, don't pause between requests if resource was cached
 
 * bug, stacktrace on double refresh
 
@@ -104,25 +117,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * gui, try replacing the auto fit columns with something like this:
     - https://stackoverflow.com/questions/14650787/javafx-column-in-tableview-auto-fit-size#answer-49134109
-
-* multi-toc support
-    - https://github.com/Stanzilla/WoWUIBugs/issues/68#issuecomment-830351390
-
-* add release.json support for github/gitlab addons
-
-* gitlab as addon host
-    - https://gitlab.com/search?search=wow+addon
-    - returned to bucket 2019-12-04, notes:
-        - gitlab doesn't handle releases like github does
-            - https://stackoverflow.com/questions/29520905/how-to-create-releases-in-gitlab
-        - there are very few gitlab addons (88)
-            - where did this number come from?
-        - api is quite slow
-    - update: as of Oct 2020 gitlab sucks a little bit less and, like github, you can attach binaries to releases
-        - https://gitlab.com/explore/projects?tag=World+of+Warcraft
-        - https://gitlab.com/shrugal/PersoLootRoll
-        - any others ...?
-
 
 * gui, toggleable highlighers as a menuitem
     - highlight unmatched
@@ -301,6 +295,10 @@ see CHANGELOG.md for a more formal list of changes by release
 * remove the (pinned) and (installed) labels from from the 'available' column
 * drop support catalogue v1
     - a prerequisite for v5 then would be introducing a new catalogue
+* readme, the ~your machine's `hostname`~ bit.
+* readme, the "Original Swing GUI was last available in version 3.x using" bit
+* rename 'retail' to 'mainline'
+    - pretty big change ;) but probably for the best.
 
 ## catalogue v3 / capture more addon data
 

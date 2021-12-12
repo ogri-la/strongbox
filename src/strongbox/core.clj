@@ -609,7 +609,7 @@
   "guard function. offloads the hard work to `-load-installed-addons` then updates application state"
   []
   (if-let [addon-dir (selected-addon-dir)]
-    (let [addon-list (addon/load-installed-addons addon-dir)]
+    (let [addon-list (addon/load-installed-addons addon-dir (get-game-track))]
       (info (format "loading (%s) installed addons in: %s" (count addon-list) addon-dir))
       (update-installed-addon-list! addon-list))
 
@@ -738,18 +738,20 @@
        user-catalogue-path
        (catalogue/write-empty-catalogue! user-catalogue-path)))))
 
-(defn-spec add-user-addon! nil?
-  "adds one or many addons to the user catalogue"
-  [addon-summary (s/or :single :addon/summary, :many :addon/summary-list)]
-  (let [addon-summary-list (if (sequential? addon-summary)
-                             addon-summary
-                             [addon-summary])
-        user-catalogue-path (paths :user-catalogue-file)
+(defn-spec add-user-addon-list! nil?
+  "adds a list of addons to the user catalogue"
+  [addon-summary-list :addon/summary-list]
+  (let [user-catalogue-path (paths :user-catalogue-file)
         user-catalogue (get-create-user-catalogue)
         tmp-catalogue (catalogue/new-catalogue addon-summary-list)
         new-user-catalogue (catalogue/merge-catalogues user-catalogue tmp-catalogue)]
     (catalogue/write-catalogue new-user-catalogue user-catalogue-path))
   nil)
+
+(defn-spec add-user-addon! nil?
+  "adds a single addon to the user catalogue"
+  [addon-summary :addon/summary]
+  (add-user-addon-list! [addon-summary]))
 
 ;; catalogue db handling
 
@@ -1180,6 +1182,8 @@
                  ;; todo: why is dirname needed here?
                  :dirname addon/dummy-dirname
                  :interface-version 0
+                 :toc/game-track :retail
+                 :supported-game-tracks []
                  :installed-version "0"}
         addon-list (map #(merge padding %) addon-list)
 

@@ -206,15 +206,23 @@
 (s/def :addon/category string?)
 (s/def :addon/category-list (s/coll-of :addon/category))
 
-(s/def :addon/source (s/or :known #{"curseforge" "wowinterface" "github" "tukui" "tukui-classic" "tukui-classic-tbc"}
+(s/def :addon/source (s/or :known #{"curseforge" "wowinterface" "github" "gitlab" "tukui" "tukui-classic" "tukui-classic-tbc"}
                            :unknown string?))
 (s/def :addon/source-id (s/or ::integer-id? int? ;; tukui has negative ids
                               ::string-id? string?))
 (s/def :addon/created-date ::inst)
 (s/def :addon/updated-date ::inst)
 
+(s/def :addon/supported-game-tracks ::game-track-list) ;; alias
+
 (s/def :addon/toc
-  (s/keys :req-un [::name ::label ::description ::dirname ::interface-version ::installed-version]
+  (s/keys :req-un [::name
+                   ::label
+                   ::description
+                   ::dirname
+                   ::interface-version
+                   ::installed-version
+                   :addon/supported-game-tracks]
           ;; todo: revisit all of these
           ;;:opt-un [::group-id ::primary? ::group-addons :addon/source :addon/source-id]
           ))
@@ -275,8 +283,7 @@
                    :addon/source ;; for host resolver dispatch
                    :addon/source-id ;; unique identifier for host resolver
                    ]
-          :opt-un [::game-track-list ;; wowinterface, tukui
-                   ]))
+          :opt-un [::game-track-list])) ;; wowinterface, tukui, github, gitlab
 
 ;; the set of per-addon values provided by the remote host on each check
 (s/def :addon/source-updates

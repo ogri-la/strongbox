@@ -276,6 +276,7 @@
                  ["1.2.3" nil]
 
                  ;; classic-tbc
+                 ["bcc" :classic-tbc]
                  ["classic-tbc" :classic-tbc]
                  ["1.2.3-classic-tbc" :classic-tbc]
                  ["1.2.3-classic-tbc-no-lib" :classic-tbc]
@@ -295,8 +296,8 @@
                  ["beta (tbc) 2.13" :classic-tbc]
                  ["beta (bcc) 3.24" :classic-tbc]
 
-                 ;; 2021-06-02 `-bcc` appears to have been adopted by BigWigs packager
-                 ;; we'll probably see much more use of it now
+                 ;; 2021-06-02 `-bcc` appears to have been adopted by BigWigs packager.
+                 ;; we'll probably see much more use of it now.
                  ;; classic-bcc
                  ["WeakAuras-3.4.2-bcc.zip" :classic-tbc]
                  ["classic-bcc" :classic-tbc]
@@ -309,6 +310,7 @@
 
                  ;; classic
                  ["classic" :classic]
+                 ["vanilla" :classic]
                  ["1.2.3-classic" :classic]
                  ["1.2.3-classic-no-lib" :classic]
                  ["classic-no-lib" :classic]
@@ -317,6 +319,7 @@
 
                  ;; retail
                  ["retail" :retail]
+                 ["mainline" :retail]
                  ["1.2.3-retail" :retail]
                  ["1.2.3-retail-no-lib" :retail]
                  ["retail-no-lib" :retail]
@@ -324,8 +327,10 @@
                  ["1.2.3_retail_no-lib" :retail]
 
                  ;; case insensitivity
+                 ["Mainline" :retail]
                  ["Retail" :retail]
                  ["Classic" :classic]
+                 ["Vanilla" :classic]
                  ["Classic-TBC" :classic-tbc]
 
                  ;; priority (classic-tbc > classic > retail)
@@ -382,3 +387,56 @@
                   utils/*pretty-dt-printer* utils/-pretty-dt-printer-dummy]
       (doseq [[given expected] cases]
         (is (= expected (utils/format-dt given)))))))
+
+(deftest base64-decode
+  (let [cases [;; input should be URLEncoded first
+               [nil nil]
+               ["" ""]]]
+    (doseq [[given expected] cases]
+      (is (= expected (utils/base64-decode given))))))
+
+(deftest interface-version-to-game-track
+  (let [cases [[10123 :classic]
+               [20123 :classic-tbc]
+               [30123 :retail] ;; for now
+
+               ;; bad interface versions
+               [0 nil]
+               [1111 nil]]]
+    (doseq [[given expected] cases]
+      (is (= expected (utils/interface-version-to-game-track given))))))
+
+(deftest ltrim
+  (let [cases [["" ""]
+               [" " ""]
+               ["  " ""]
+               [" foo " "foo "]]]
+    (doseq [[given expected] cases]
+      (is (= expected (utils/ltrim given " "))))))
+
+(deftest rtrim
+  (let [cases [["" ""]
+               [" " ""]
+               ["  " ""]
+               [" foo " " foo"]]]
+    (doseq [[given expected] cases]
+      (is (= expected (utils/rtrim given " "))))))
+
+(deftest trim
+  (let [cases [["" ""]
+               [" " ""]
+               ["  " ""]
+               [" foo " "foo"]]]
+    (doseq [[given expected] cases]
+      (is (= expected (utils/trim given " "))))))
+
+(deftest published-before-classic?
+  (let [cases [["2001" nil]
+               ["2001-01-01" nil]
+               ["2001-01-01T01:00" nil]
+               ["2001-01-01T01:00:00Z" true]
+               ["2019-08-25T23:59:59Z" true]
+               [constants/release-of-wow-classic false]
+               ["2019-08-26T00:00:01Z" false]]]
+    (doseq [[given expected] cases]
+      (is (= expected (utils/published-before-classic? given))))))

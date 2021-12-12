@@ -268,6 +268,7 @@
                            :name "everyaddon",
                            :source "curseforge",
                            :interface-version 80000,
+                           :supported-game-tracks [:retail]
                            :download-url "https://edge.forgecdn.net/files/1/1/EveryAddon.zip",
                            :label "EveryAddon",
                            :download-count 3000000,
@@ -295,6 +296,7 @@
                            :name "everyotheraddon",
                            :source "curseforge",
                            :interface-version 80200,
+                           :supported-game-tracks [:retail]
                            :download-url "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip",
                            :label "Every Other Addon",
                            :download-count 5400000,
@@ -365,6 +367,7 @@
                            :name "everyaddon",
                            :source "curseforge",
                            :interface-version 80000,
+                           :supported-game-tracks [:retail]
                            :download-url "https://edge.forgecdn.net/files/1/1/EveryAddon.zip",
                            :label "EveryAddon",
                            :download-count 3000000,
@@ -394,6 +397,12 @@
                            :name "everyotheraddon",
                            :source "curseforge",
                            :interface-version 11300, ;; changed
+
+                           ;; why :retail? According to EveryOtherAddon.toc, it's actually a retail addon and not a classic addon.
+                           ;; we're skewing the API results and the addon-dir's strictness to ensure a classic version is found and installed
+                           ;; but this test is essentially drifting and should be using a EveryOtherAddonClassic type addon where the toc is consistent.
+                           :supported-game-tracks [:retail]
+
                            :download-url "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip",
                            :label "Every Other Addon",
                            :download-count 5400000,
@@ -464,7 +473,8 @@
                      :description "foo"
                      :dirname "EveryAddon"
                      :interface-version 70000
-                     :installed-version "v8.10.00"}
+                     :installed-version "v8.10.00"
+                     :supported-game-tracks [:retail]}
 
                 ;; and optionally these from .strongbox.json if we installed the addon
                 nfo {:installed-version "v8.10.00",
@@ -546,28 +556,6 @@
 ;;
 
 
-(def toc
-  "local addon .toc file"
-  {:name "everyaddon",
-   :description "Does what no other addon does, slightly differently"
-   :dirname "EveryAddon",
-   :label "EveryAddon 1.2.3",
-   :interface-version 70000,
-   :installed-version "1.2.3"})
-
-(def addon-summary
-  "catalogue of summaries"
-  {:label "EveryAddon",
-   :name  "everyaddon",
-   :description  "Does what no other addon does, slightly differently"
-   :tag-list [:auction :data-broker :economy]
-   :source "curseforge"
-   :source-id 1
-   :created-date  "2009-02-08T13:30:30Z",
-   :updated-date  "2016-09-08T14:18:33Z",
-   :url "https://www.example.org/wow/addons/everyaddon"
-   :download-count 1})
-
 (def matched?
   "was the toc data matched to an addon in the catalogue? (yes)"
   {:matched? true})
@@ -581,7 +569,7 @@
 
 (def addon
   "final mooshed result"
-  (merge toc addon-summary matched? source-updates))
+  (merge helper/toc helper/addon-summary matched? source-updates))
 
 (deftest install-addon-guard
   (testing "an addon can be installed"
@@ -787,7 +775,7 @@
             ;; and doesn't know about the connection. expect the bundled addon to remain
             expected ["EveryAddon-BundledAddon"]]
         (zip/unzip-file (fixture-path "everyaddon--0-1-2.zip") install-dir)
-        (core/remove-many-addons [toc])
+        (core/remove-many-addons [helper/toc])
         (is (= expected (helper/install-dir-contents)))))))
 
 (deftest uninstall-installed-addon
@@ -808,9 +796,11 @@
             _ (fs/copy fixture-v0 (utils/join install-dir fname-v0))
             _ (fs/copy fixture-v1 (utils/join install-dir fname-v1))
 
-            install-path-dirs #(->> install-dir fs/list-dir
+            install-path-dirs #(->> install-dir
+                                    fs/list-dir
                                     (filter fs/directory?) ;; exclude any .zip files
-                                    (map fs/base-name) sort)]
+                                    (map fs/base-name)
+                                    sort)]
 
         (core/install-addon-guard addon-v0 install-dir)
         (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (install-path-dirs)))
@@ -821,8 +811,8 @@
 
         (let [;; our v0 addon should now have group information
               addon-v0 (first (core/get-state :installed-addon-list))
-              addon-v1 (merge addon-v0 source-updates {:url "https://example.org/"}) ;; there is no catalogue so there is no download-url. the version has changed also
-              ]
+              ;; there is no catalogue so there is no download-url. the version has also changed.
+              addon-v1 (merge addon-v0 source-updates {:url "https://example.org/"})]
           ;; install the upgrade that gets rid of a directory
           (core/install-addon-guard addon-v1 install-dir)
           (is (= ["EveryAddon"] (install-path-dirs))))))))
@@ -1141,6 +1131,7 @@
         (core/add-user-addon! user-addon)
         (is (= expected (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))
 
+;; todo: can these fixtures use the test_helper versions?
 (deftest moosh-addons
   (testing "addons are mooshed correctly when a match is found in the db"
     (let [toc {:name "everyaddon"
@@ -1148,7 +1139,8 @@
                :description "Toc Description"
                :dirname "EveryAddon"
                :interface-version 70000
-               :installed-version "1.2.3"}
+               :installed-version "1.2.3"
+               :supported-game-tracks [:retail]}
 
           addon-summary {:name "everyaddon"
                          :label "EveryAddon"
@@ -1170,6 +1162,7 @@
                     :dirname "EveryAddon"
                     :interface-version 70000
                     :installed-version "1.2.3"
+                    :supported-game-tracks [:retail]
 
                     :tag-list []
                     :updated-date "2001-01-01"
@@ -1211,6 +1204,7 @@
                         :installed-game-track :retail,
                         :installed-version "1.2.3",
                         :interface-version 70000,
+                        :supported-game-tracks [:retail]
                         :label "EveryAddon 1.2.3",
                         :name "everyaddon",
                         :primary? true,
@@ -1249,6 +1243,7 @@
                         :installed-game-track :retail,
                         :installed-version "1.2.3",
                         :interface-version 70000,
+                        :supported-game-tracks [:retail]
                         :label "EveryAddon 1.2.3",
                         :name "everyaddon",
                         :primary? true,
@@ -1296,6 +1291,7 @@
                                         :installed-game-track :retail,
                                         :installed-version "5.6.7",
                                         :interface-version 80000,
+                                        :supported-game-tracks [:retail]
                                         :label "BundledAddon a.b.c",
                                         :name "everyotheraddon",
                                         :primary? false,
@@ -1308,6 +1304,7 @@
                                         :installed-game-track :retail,
                                         :installed-version "5.6.7",
                                         :interface-version 70000,
+                                        :supported-game-tracks [:retail]
                                         :label "EveryOtherAddon 5.6.7",
                                         :name "everyotheraddon",
                                         :primary? false,
@@ -1318,6 +1315,7 @@
                         :installed-game-track :retail,
                         :installed-version "5.6.7",
                         :interface-version 80000,
+                        :supported-game-tracks [:retail]
                         :label "fetched (group)",
                         :name "everyotheraddon",
                         :primary? false,
@@ -1363,6 +1361,7 @@
                         :installed-game-track :retail,
                         :installed-version "1.2.3",
                         :interface-version 70000,
+                        :supported-game-tracks [:retail]
                         :label "EveryAddon 1.2.3",
                         :name "everyaddon",
                         :primary? true,
@@ -1498,15 +1497,15 @@
              :download-count 1034,
              :label "A New Simple Percent",
              :name "a-new-simple-percent",
-             :source "gitlab",
+             :source "gitplex",
              :source-id "user/repo",
              :tag-list [:unit-frames],
-             :url "https://www.gitlab.com/user/repo"}]}
+             :url "https://www.gitplex.com/user/repo"}]}
 
           dummy-catalogue (utils/to-json future-data)
           fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                        {:get (fn [req] {:status 200 :body dummy-catalogue})}}
-          expected-messages ["addon 'A New Simple Percent' is from an unsupported source 'gitlab'."
+          expected-messages ["addon 'A New Simple Percent' is from an unsupported source 'gitplex'."
                              "refresh"]]
 
       (with-global-fake-routes-in-isolation fake-routes
