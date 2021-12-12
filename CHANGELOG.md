@@ -41,8 +41,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * stability improvements to the 'refresh user catalogue' feature.
     - 404s, transient server errors and unhandled exceptions will no longer stop the update process.
 
-### Removed
-
 ## 4.7.0 - 2021-10-31
 
 ### Added

@@ -68,7 +68,7 @@ Afterwards, use the `Update all` button to update all addons with new versions a
 * [installing a previous release of an addon](#installing-a-previous-release-of-an-addon)
 * [pinning an addon to a specific release](#pinning-an-addon-to-a-specific-release)
 * [multi-toc support](#multi-toc-support)
-* [release.json support](#release.json-support)
+* [release.json support](#releasejson-support)
 
 ## Recognition
 
@@ -108,7 +108,7 @@ These hosts *may* redirect requests to other hosts.
 
 These interactions use a HTTP user agent header unique to `strongbox` so that it may be identified easily:
 
-    "strongbox/4.7 (https://github.com/ogri-la/strongbox)"
+    "strongbox/4.x (https://github.com/ogri-la/strongbox)"
 
 Running strongbox with `--debug` will generate a file called "debug.log" that I may ask you to upload if you report a 
 bug. *Some* of the details it contains are:
