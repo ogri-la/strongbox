@@ -23,6 +23,19 @@
    :toc/game-track :retail
    :supported-game-tracks [:retail]})
 
+(def addon-summary
+  "catalogue of summaries"
+  {:label "EveryAddon",
+   :name  "everyaddon",
+   :description  "Does what no other addon does, slightly differently"
+   :tag-list [:auction :data-broker :economy]
+   :source "curseforge"
+   :source-id 1
+   :created-date  "2009-02-08T13:30:30Z",
+   :updated-date  "2016-09-08T14:18:33Z",
+   :url "https://www.example.org/wow/addons/everyaddon"
+   :download-count 1})
+
 (def fixture-dir (-> "test/fixtures" fs/absolute fs/normalized str))
 
 (def helper-data-dir "data/strongbox")

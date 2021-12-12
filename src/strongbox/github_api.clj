@@ -273,7 +273,8 @@
             game-track-list (or (find-gametracks-release-list release-list)
                                 (find-gametracks-release-json release-list)
                                 (find-gametracks-toc-data source-id)
-                                [])
+                                (do (warn "failed to find any game tracks at all. assuming 'retail'.")
+                                    [:retail]))
 
             ;; will correct any case problems. see tests.
             source-id (-> latest-release :html_url parse-user-string)

@@ -25,25 +25,53 @@ see CHANGELOG.md for a more formal list of changes by release
         - has no otherwise identifying game track in it's name, toc file or releases
         - but it does support all three versions of wow
 
-## todo
-
-
 * add release.json support for github/gitlab addons
     - https://github.com/layday/instawow/discussions/72
+    - done
 
 * refresh catalogue is not so healthy
     - errors during refresh should appear in the log next to the appropriate addon
+         -done
     - 404s shouldn't be retried. the addon is gone
-    - where are the tests catching all these?
-        cli/refresh-user-catalogue
-        cli/import-addon--github
-    - it's also working sequentially
-        :(
+        - done
+
+## todo
+
+## todo bucket (no particular order)
 
 * http, add with-backoff support to download-file
     - just had a wowinterface addon timeout
 
-## todo bucket (no particular order)
+* replace multi-error messages with a single multi-line error message
+
+* user catalogue pane
+    - context menu
+        - refresh selected
+        - remove selected
+    - button bar
+        - refresh all button
+    - menu
+        - 'refresh all' switches to user catalogue pane
+    - push user catalogue in app state
+        - so we can see updates happening to catalogue entries as they happen
+    - write catalogue *once* after all items in operation updated
+        - rather than once per update
+
+* user catalogue, refresh happens in parallel
+
+* a more permanent store than just cached files
+    - I want to store release data permanently
+        - multiple pages
+        - release.json
+
+* github, can we support addons that have no detectable game tracks, no toc files, no release.json, nothing but downloadable assets?
+     - https://github.com/RealUI/RealUI
+     - we could download it, unpack it and inspect it then?
+
+* github, can we support addons that are splitting their game track releases over separate releases?
+    - like Aptechka
+        - https://github.com/rgd87/Aptechka/releases
+            - fucking /sigh!
 
 * add support for 'Interface-Retail', 'Interface-Classic', 'Interface-BCC'
     - how much of a thing is this?

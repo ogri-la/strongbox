@@ -556,29 +556,6 @@
 ;;
 
 
-(def toc
-  "local addon .toc file"
-  {:name "everyaddon",
-   :description "Does what no other addon does, slightly differently"
-   :dirname "EveryAddon",
-   :label "EveryAddon 1.2.3",
-   :interface-version 70000,
-   :installed-version "1.2.3"
-   :supported-game-tracks [:retail]})
-
-(def addon-summary
-  "catalogue of summaries"
-  {:label "EveryAddon",
-   :name  "everyaddon",
-   :description  "Does what no other addon does, slightly differently"
-   :tag-list [:auction :data-broker :economy]
-   :source "curseforge"
-   :source-id 1
-   :created-date  "2009-02-08T13:30:30Z",
-   :updated-date  "2016-09-08T14:18:33Z",
-   :url "https://www.example.org/wow/addons/everyaddon"
-   :download-count 1})
-
 (def matched?
   "was the toc data matched to an addon in the catalogue? (yes)"
   {:matched? true})
@@ -592,7 +569,7 @@
 
 (def addon
   "final mooshed result"
-  (merge toc addon-summary matched? source-updates))
+  (merge helper/toc helper/addon-summary matched? source-updates))
 
 (deftest install-addon-guard
   (testing "an addon can be installed"
@@ -798,7 +775,7 @@
             ;; and doesn't know about the connection. expect the bundled addon to remain
             expected ["EveryAddon-BundledAddon"]]
         (zip/unzip-file (fixture-path "everyaddon--0-1-2.zip") install-dir)
-        (core/remove-many-addons [toc])
+        (core/remove-many-addons [helper/toc])
         (is (= expected (helper/install-dir-contents)))))))
 
 (deftest uninstall-installed-addon
@@ -1154,6 +1131,7 @@
         (core/add-user-addon! user-addon)
         (is (= expected (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))
 
+;; todo: can these fixtures use the test_helper versions?
 (deftest moosh-addons
   (testing "addons are mooshed correctly when a match is found in the db"
     (let [toc {:name "everyaddon"
