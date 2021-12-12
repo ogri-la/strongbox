@@ -68,7 +68,7 @@ Afterwards, use the `Update all` button to update all addons with new versions a
 * [installing a previous release of an addon](#installing-a-previous-release-of-an-addon)
 * [pinning an addon to a specific release](#pinning-an-addon-to-a-specific-release)
 * [multi-toc support](#multi-toc-support)
-* [release.json support](#release.json-support)
+* [release.json support](#releasejson-support)
 
 ## Recognition
 
