@@ -1241,7 +1241,7 @@
         selected? (not (nil? num-addon-zips-to-keep)) ;; `nil` is 'keep all zips', see `config.clj`
         ]
     {:fx/type :check-menu-item
-     :text "Remove addon zip after installation (global)"
+     :text "Remove addon zip after installation"
      :selected selected?
      :on-action (fn [^Event ev]
                   (let [^javafx.scene.control.CheckMenuItem menu-item (.getSource ev)]
@@ -2106,11 +2106,12 @@
           :id "log-tab"
           :closable false
           :content {:fx/type notice-logger}}
-         {:fx/type :tab
-          :text "user-catalogue"
-          :id "user-catalogue-tab"
-          :closable false
-          :content {:fx/type user-catalogue-pane}}]
+         ;;{:fx/type :tab
+         ;; :text "user-catalogue"
+         ;; :id "user-catalogue-tab"
+         ;; :closable false
+         ;; :content {:fx/type user-catalogue-pane}}
+         ]
 
         dynamic-tabs (map-indexed (fn [idx tab] {:fx/type addon-detail-tab :tab tab :tab-idx idx}) dynamic-tab-list)]
     {:fx/type :tab-pane

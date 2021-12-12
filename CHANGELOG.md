@@ -29,11 +29,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - this is because Gitlab addons can have very long IDs.
 * Github addons are no longer assumed to be for retail/mainline unless released prior to the release of Classic.
 * Github addons will now do extra checks to determine game tracks for the latest release, on initial import and during the user-catalogue refresh.
+    - if absolutely no game tracks can be found we default to retail. 
+        - this may be replaced in the future by actually downloading a release and inspecting it's contents
+* http downloads will no longer be re-attempted on client (4xx) errors, server (5xx) and connection errors only.
+    - this fixes the multi-second pause before an error while updating addons that have gone away.
 
 ### Fixed
 
 * a minor bug in translating an interface version (10100) to a game track ("classic").
     - a bad value might have caused a stacktrace in the console
+* stability improvements to the 'refresh user catalogue' feature.
+    - 404s, transient server errors and unhandled exceptions will no longer stop the update process.
 
 ### Removed
 

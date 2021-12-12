@@ -29,21 +29,20 @@ see CHANGELOG.md for a more formal list of changes by release
     - https://github.com/layday/instawow/discussions/72
     - done
 
-## todo
-
 * refresh catalogue is not so healthy
     - errors during refresh should appear in the log next to the appropriate addon
+         -done
     - 404s shouldn't be retried. the addon is gone
-    - where are the tests catching all these?
-        cli/refresh-user-catalogue
-        cli/import-addon--github
+        - done
 
+## todo
 
+## todo bucket (no particular order)
 
 * http, add with-backoff support to download-file
     - just had a wowinterface addon timeout
 
-## todo bucket (no particular order)
+* replace multi-error messages with a single multi-line error message
 
 * user catalogue pane
     - context menu

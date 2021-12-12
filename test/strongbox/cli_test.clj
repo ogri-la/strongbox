@@ -650,6 +650,17 @@
             ;; ensure new user-catalogue matches expectations
             (is (= expected-user-catalogue (core/get-create-user-catalogue)))))))))
 
+(deftest refresh-user-catalogue--no-catalogue
+  (testing "looking for an addon that doesn't exist in the catalogue isn't a total failure"
+    (with-running-app
+      (is (nil? (cli/refresh-user-catalogue-item helper/addon-summary))))))
+
+(deftest refresh-user-catalogue--unhandled-exception
+  (testing "unhandled exceptions while refreshing a user-catalogue item isn't a total failure"
+    (with-running-app
+      (with-redefs [cli/find-addon (fn [& args] (throw (Exception. "catastrophe!")))]
+        (is (nil? (cli/refresh-user-catalogue-item helper/addon-summary)))))))
+
 ;; test doesn't seem to live comfortably in `core_test.clj`
 (deftest install-update-these-in-parallel--bad-download
   (testing "bad downloads are not passed to `core/install-addon`."

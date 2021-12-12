@@ -535,7 +535,7 @@
 
                               :else
                               ;; look in the current catalogue. emit an error if we fail
-                              (or (:catalogue-match (db/-find-first-in-db (core/get-state :db) addon-summary-stub match-on-list))
+                              (or (:catalogue-match (db/-find-first-in-db (or (core/get-state :db) []) addon-summary-stub match-on-list))
                                   (error (format "couldn't find addon in catalogue '%s'"
                                                  (name (core/get-state :cfg :selected-catalogue))))))
 
@@ -575,19 +575,23 @@
              nil)))
 
 (defn-spec refresh-user-catalogue-item nil?
-  "re-fetch an item in the user catalogue using it's URI, replacing the old entry with any updated details. "
+  "refresh the details of an individual addon in the user catalogue."
   [addon :addon/summary]
   (logging/with-addon addon
     (info "refreshing details")
-    (let [dry-run? false
-          refreshed-addon (find-addon (:url addon) dry-run?)]
-      (if refreshed-addon
-        (do (core/add-user-addon! refreshed-addon)
-            (info "... done!"))
-        (warn "failed to refresh catalogue entry")))))
+    (try
+      (let [dry-run? false
+            refreshed-addon (find-addon (:url addon) dry-run?)]
+        (if refreshed-addon
+          (do (core/add-user-addon! refreshed-addon)
+              (info "... done!"))
+          (warn "failed to refresh catalogue entry")))
+      (catch Exception e
+        (error (format "an unexpected error happened while updating the details for '%s' in the user-catalogue: %s"
+                       (:name addon) (.getMessage e)))))))
 
 (defn-spec refresh-user-catalogue nil?
-  "re-fetch each item in user catalogue using the URI and replace old entry with any updated details."
+  "refresh the details of all addons in the user catalogue."
   []
   (binding [http/*cache* (core/cache)]
     (info (format "refreshing \"%s\", this may take a minute ..."

@@ -294,11 +294,13 @@
             (throw ex)))))))
 
 (defn http-error?
+  "returns `true` if the http response code is either a client error (4xx) or a server error (5xx)"
   [http-resp]
   (and (map? http-resp)
        (> (:status http-resp) 399)))
 
 (defn http-server-error?
+  "returns `true` if the http response code is a server error (5xx)"
   [http-resp]
   (and (map? http-resp)
        (> (:status http-resp) 499)))
