@@ -1,0 +1,15 @@
+{
+  "releases": [
+    {
+      "filename": "AdvancedInterfaceOptions-1.5.0-bcc.zip",
+      "nolib": false,
+      "metadata": [
+        {
+          "flavor": "bcc",
+          "interface": 20501
+        }
+      ]
+    }
+  ]
+}
+

@@ -151,6 +151,20 @@
   [dt ::sp/inst]
   (java-time/zoned-date-time (get java-time.format/predefined-formatters "iso-zoned-date-time") dt))
 
+(defn-spec dt-before? boolean?
+  "returns `true` if `date-1` happened before `date-2`"
+  [date-1 ::sp/inst, date-2 ::sp/inst]
+  (jt/before? (todt date-1) (todt date-2)))
+
+(defn-spec published-before-classic? (s/or :ok boolean?, :error nil?)
+  [dt-string (s/nilable ::sp/inst)]
+  (try
+    (boolean (some-> dt-string (dt-before? constants/release-of-wow-classic)))
+    (catch RuntimeException e
+      (if (= (.getMessage e) "Conversion failed")
+        (warn (str "bad date: " dt-string)))
+      nil)))
+
 (def -pretty-dt-printer (doto (PrettyTime.)
                           (.removeUnit Decade)))
 
@@ -213,11 +227,11 @@
   (some-> x (clojure.data.json/read-str :key-fn keyword)))
 
 (defn from-json
-  [x]
+  [x & [msg]]
   (try
     (from-json* x)
     (catch Exception exc
-      (error (str "failed to parse json: " exc))
+      (error (format (or msg (str "failed to parse json: %s")) (.getMessage exc)))
       nil)))
 
 (defn-spec dump-json-file ::sp/extant-file

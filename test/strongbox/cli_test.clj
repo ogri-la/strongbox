@@ -178,15 +178,14 @@
                  :source "curseforge" :source-id 1
                  :download-url "https://path/to/remote/addon.zip"
                  :game-track :classic
-                 :-testing-zipfile (fixture-path "everyaddon-classic--1-2-3.zip")}]
+                 :-testing-zipfile (fixture-path "everyaddon-classic--1-2-3.zip")}
+          fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/1"
+                       {:get (fn [req] {:status 404 :reason-phrase "not found"})}}]
       (with-running-app
 
         ;; 2021-09-04: change in behaviour. addons that no longer match the catalogue are still checked for
         ;; updates if the right toc+nfo data is available.
-        (with-global-fake-routes-in-isolation
-          {"https://addons-ecs.forgesvc.net/api/v2/addon/1"
-           {:get (fn [req] {:status 404 :reason-phrase "not found"})}}
-
+        (with-global-fake-routes-in-isolation fake-routes
           (cli/set-addon-dir! (helper/install-dir))
           (core/install-addon-guard addon)
           (core/load-installed-addons)
@@ -325,7 +324,8 @@
           expected-addon-dir (utils/join install-dir "EveryAddon")
 
           expected-user-catalogue [{:tag-list [],
-                                    :game-track-list [],
+                                    ;; 2021-12: game-track-list went from [] to [:retail] because of older pre-classic releases
+                                    :game-track-list [:retail]
                                     :updated-date "2019-10-09T17:40:04Z",
                                     :name "healcomm",
                                     :source "github",
@@ -574,6 +574,12 @@
             github-fixture (slurp (fixture-path "user-catalogue--github.json"))
             github-contents-fixture (slurp (fixture-path "user-catalogue--github-contents.json"))
             github-toc-fixture (slurp (fixture-path "user-catalogue--github-toc.json"))
+            github-release-json-fixture (slurp (fixture-path "user-catalogue--github-release-json.json"))
+
+            gitlab-repo-fixture (slurp (fixture-path "user-catalogue--gitlab-repo.json"))
+            gitlab-root-listing-fixture (slurp (fixture-path "user-catalogue--gitlab-root-listing.json"))
+            gitlab-blob-fixture (slurp (fixture-path "user-catalogue--gitlab-blob.json"))
+            gitlab-releases-fixture (slurp (fixture-path "user-catalogue--gitlab-releases.json"))
 
             fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                          {:get (fn [req] {:status 200 :body short-catalogue})}
@@ -590,6 +596,9 @@
                          "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/releases"
                          {:get (fn [req] {:status 200 :body github-fixture})}
 
+                         "https://github.com/Stanzilla/AdvancedInterfaceOptions/releases/download/1.5.0/release.json"
+                         {:get (fn [req] {:status 200 :body github-release-json-fixture})}
+
                          "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/contents"
                          {:get (fn [req] {:status 200 :body github-contents-fixture})}
 
@@ -600,7 +609,21 @@
                          {:get (fn [req] {:status 200 :body wowinterface-fixture})}
 
                          "https://addons-ecs.forgesvc.net/api/v2/addon/13501"
-                         {:get (fn [req] {:status 200 :body curseforge-fixture})}}]
+                         {:get (fn [req] {:status 200 :body curseforge-fixture})}
+
+                         "https://gitlab.com/api/v4/projects/thing-engineering%2Fwowthing%2Fwowthing-collector"
+                         {:get (fn [req] {:status 200 :body gitlab-repo-fixture})}
+
+                         "https://gitlab.com/api/v4/projects/thing-engineering%2Fwowthing%2Fwowthing-collector/repository/tree"
+                         {:get (fn [req] {:status 200 :body gitlab-root-listing-fixture})}
+
+                         "https://gitlab.com/api/v4/projects/thing-engineering%2Fwowthing%2Fwowthing-collector/repository/blobs/125c899d813d2e11c976879f28dccc2a36fd207b"
+                         {:get (fn [req] {:status 200 :body gitlab-blob-fixture})}
+
+                         "https://gitlab.com/api/v4/projects/thing-engineering%2Fwowthing%2Fwowthing-collector/releases"
+                         {:get (fn [req] {:status 200 :body gitlab-releases-fixture})}}
+
+            expected-num 7]
 
         (helper/install-dir)
         (fs/copy user-catalogue-fixture (core/paths :user-catalogue-file))
@@ -610,14 +633,15 @@
           (swap! core/state assoc :cli-opts {:ui :cli})
 
           ;; sanity check, ensure user-catalogue loaded
-          (is (= 6 (count (core/get-state :db))))
+          (is (= expected-num (count (core/get-state :db))))
 
           ;; we need to load the short-catalogue using newer versions of what is in the user-catalogue
           ;; the user-catalogue is then matched against db, the newer summary returned and written to the user catalogue
 
           (let [;; I've modified the user-catalogue--populated.json fixture to be 'older' that the short-catalogue fixture by
-                ;; decrementing the download counts by 1. when the user-catalogue is refreshed we expect 
-                inc-downloads #(update % :download-count inc)
+                ;; decrementing the download counts by 1. when the user-catalogue is refreshed we expect the new values to be fetched
+                ;; 2021-12: gitlab is an exception here. we have no download count information, it will always be zero.
+                inc-downloads #(if (= (:source %) "gitlab") % (update % :download-count inc))
                 today (utils/datestamp-now-ymd)
                 expected-user-catalogue (-> (core/get-create-user-catalogue)
                                             (update-in [:addon-summary-list] #(mapv inc-downloads %))
@@ -625,6 +649,17 @@
             (cli/refresh-user-catalogue)
             ;; ensure new user-catalogue matches expectations
             (is (= expected-user-catalogue (core/get-create-user-catalogue)))))))))
+
+(deftest refresh-user-catalogue--no-catalogue
+  (testing "looking for an addon that doesn't exist in the catalogue isn't a total failure"
+    (with-running-app
+      (is (nil? (cli/refresh-user-catalogue-item helper/addon-summary))))))
+
+(deftest refresh-user-catalogue--unhandled-exception
+  (testing "unhandled exceptions while refreshing a user-catalogue item isn't a total failure"
+    (with-running-app
+      (with-redefs [cli/find-addon (fn [& args] (throw (Exception. "catastrophe!")))]
+        (is (nil? (cli/refresh-user-catalogue-item helper/addon-summary)))))))
 
 ;; test doesn't seem to live comfortably in `core_test.clj`
 (deftest install-update-these-in-parallel--bad-download

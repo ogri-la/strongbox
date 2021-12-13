@@ -1,0 +1,1142 @@
+[
+  {
+    "name": "v9.0.5.3",
+    "tag_name": "v9.0.5.3",
+    "description": "- Fix mount skill scanning, 280% still exists if you bought it pre-Shadowlands.\n- Fix war mode scanning, WAR_MODE_STATUS_UPDATE event doesn't actually do anything.\n\n[WoWthing_Collector-9.0.5.3.zip](/uploads/bcbb7cf2eacc09369cadafa8c7061dad/WoWthing_Collector-9.0.5.3.zip)",
+    "created_at": "2021-06-06T01:50:15.360Z",
+    "released_at": "2021-06-06T01:50:15.360Z",
+    "author": {
+      "id": 654194,
+      "username": "madcowfred",
+      "name": "Freddie",
+      "state": "active",
+      "avatar_url": "https://gitlab.com/uploads/-/system/user/avatar/654194/avatar.png",
+      "web_url": "https://gitlab.com/madcowfred"
+    },
+    "commit": {
+      "id": "6db97ef94715fd1833a336dd93db84031a6c8894",
+      "short_id": "6db97ef9",
+      "created_at": "2021-06-05T18:48:33.000-07:00",
+      "parent_ids": [
+        "0fcbdaf5e94f0061231b76f6a050a1f596305232"
+      ],
+      "title": "Bump version",
+      "message": "Bump version\n",
+      "author_name": "Freddie",
+      "author_email": "freddie@wafflemonster.org",
+      "authored_date": "2021-06-05T18:48:33.000-07:00",
+      "committer_name": "Freddie",
+      "committer_email": "freddie@wafflemonster.org",
+      "committed_date": "2021-06-05T18:48:33.000-07:00",
+      "trailers": {},
+      "web_url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/commit/6db97ef94715fd1833a336dd93db84031a6c8894"
+    },
+    "upcoming_release": false,
+    "commit_path": "/thing-engineering/wowthing/wowthing-collector/-/commit/6db97ef94715fd1833a336dd93db84031a6c8894",
+    "tag_path": "/thing-engineering/wowthing/wowthing-collector/-/tags/v9.0.5.3",
+    "assets": {
+      "count": 5,
+      "sources": [
+        {
+          "format": "zip",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v9.0.5.3/wowthing-collector-v9.0.5.3.zip"
+        },
+        {
+          "format": "tar.gz",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v9.0.5.3/wowthing-collector-v9.0.5.3.tar.gz"
+        },
+        {
+          "format": "tar.bz2",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v9.0.5.3/wowthing-collector-v9.0.5.3.tar.bz2"
+        },
+        {
+          "format": "tar",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v9.0.5.3/wowthing-collector-v9.0.5.3.tar"
+        }
+      ],
+      "links": [
+        {
+          "id": 233964,
+          "name": "WoWthing_Collector-9.0.5.3.zip",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/uploads/bcbb7cf2eacc09369cadafa8c7061dad/WoWthing_Collector-9.0.5.3.zip",
+          "direct_asset_url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/uploads/bcbb7cf2eacc09369cadafa8c7061dad/WoWthing_Collector-9.0.5.3.zip",
+          "external": false,
+          "link_type": "other"
+        }
+      ]
+    },
+    "evidences": [
+      {
+        "sha": "527de1901742535f810700d8fbfb9def883b872ec54d",
+        "filepath": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/releases/v9.0.5.3/evidences/1111581.json",
+        "collected_at": "2021-06-06T01:50:15.484Z"
+      }
+    ],
+    "_links": {
+      "self": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/releases/v9.0.5.3"
+    }
+  },
+  {
+    "name": "v9.0.5.2",
+    "tag_name": "v9.0.5.2",
+    "description": "- Changed Chromie Time tracking from yes/no to which specific expansion.\n\n[WoWthing_Collector-9.0.5.2.zip](/uploads/de709c7ba44b1192d6252fac36d0dc6e/WoWthing_Collector-9.0.5.2.zip)",
+    "created_at": "2021-06-05T21:40:33.516Z",
+    "released_at": "2021-06-05T21:40:33.516Z",
+    "author": {
+      "id": 654194,
+      "username": "madcowfred",
+      "name": "Freddie",
+      "state": "active",
+      "avatar_url": "https://gitlab.com/uploads/-/system/user/avatar/654194/avatar.png",
+      "web_url": "https://gitlab.com/madcowfred"
+    },
+    "commit": {
+      "id": "a6eb3ea0bf75e508d755c0fbd1c9fc76e5dae6de",
+      "short_id": "a6eb3ea0",
+      "created_at": "2021-06-05T14:39:01.000-07:00",
+      "parent_ids": [
+        "0d4c9a51419921ad69e63deca4930f96898f778d"
+      ],
+      "title": "Bump version",
+      "message": "Bump version\n\n- Fix TOC\n",
+      "author_name": "Freddie",
+      "author_email": "freddie@wafflemonster.org",
+      "authored_date": "2021-06-05T14:39:01.000-07:00",
+      "committer_name": "Freddie",
+      "committer_email": "freddie@wafflemonster.org",
+      "committed_date": "2021-06-05T14:39:01.000-07:00",
+      "trailers": {},
+      "web_url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/commit/a6eb3ea0bf75e508d755c0fbd1c9fc76e5dae6de"
+    },
+    "upcoming_release": false,
+    "commit_path": "/thing-engineering/wowthing/wowthing-collector/-/commit/a6eb3ea0bf75e508d755c0fbd1c9fc76e5dae6de",
+    "tag_path": "/thing-engineering/wowthing/wowthing-collector/-/tags/v9.0.5.2",
+    "assets": {
+      "count": 4,
+      "sources": [
+        {
+          "format": "zip",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v9.0.5.2/wowthing-collector-v9.0.5.2.zip"
+        },
+        {
+          "format": "tar.gz",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v9.0.5.2/wowthing-collector-v9.0.5.2.tar.gz"
+        },
+        {
+          "format": "tar.bz2",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v9.0.5.2/wowthing-collector-v9.0.5.2.tar.bz2"
+        },
+        {
+          "format": "tar",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v9.0.5.2/wowthing-collector-v9.0.5.2.tar"
+        }
+      ],
+      "links": []
+    },
+    "evidences": [
+      {
+        "sha": "82bddc6cadd62a7f27562326c75ac5b2d19f14974cad",
+        "filepath": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/releases/v9.0.5.2/evidences/1111485.json",
+        "collected_at": "2021-06-05T21:40:33.621Z"
+      }
+    ],
+    "_links": {
+      "self": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/releases/v9.0.5.2"
+    }
+  },
+  {
+    "name": "v9.0.5.1",
+    "tag_name": "v9.0.5.1",
+    "description": "- Added Chromie Time tracking.\n- Added War Mode tracking.\n- Added weekly vault scanning (M+ only right now).\n- Cleaned up mount speed scanning.\n- Disabled a bunch of scans that aren't being used.\n- Fixed various issues due to 9.0 API changes.\n- Removed Azerite scanning.\n- Removed Void Storage scanning.\n- Updated addon data version to force a reset.\n- Updated LibRealmInfo to janekjl's forked v17.\n- Updated TOC for 9.0.5.\n\n[WoWthing_Collector-9.0.5.1.zip](/uploads/4e0950843adeff2e86893edb07f44108/WoWthing_Collector-9.0.5.1.zip)",
+    "created_at": "2021-06-05T21:06:03.631Z",
+    "released_at": "2021-06-05T21:06:03.631Z",
+    "author": {
+      "id": 654194,
+      "username": "madcowfred",
+      "name": "Freddie",
+      "state": "active",
+      "avatar_url": "https://gitlab.com/uploads/-/system/user/avatar/654194/avatar.png",
+      "web_url": "https://gitlab.com/madcowfred"
+    },
+    "commit": {
+      "id": "5c8135c638c08356390d48fd387e46be06dcaa4a",
+      "short_id": "5c8135c6",
+      "created_at": "2021-06-05T14:04:05.000-07:00",
+      "parent_ids": [
+        "97410234c9ed78f3de4b009521e9ac78961a5e87"
+      ],
+      "title": "Update changelog",
+      "message": "Update changelog\n",
+      "author_name": "Freddie",
+      "author_email": "freddie@wafflemonster.org",
+      "authored_date": "2021-06-05T14:04:05.000-07:00",
+      "committer_name": "Freddie",
+      "committer_email": "freddie@wafflemonster.org",
+      "committed_date": "2021-06-05T14:04:05.000-07:00",
+      "trailers": {},
+      "web_url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/commit/5c8135c638c08356390d48fd387e46be06dcaa4a"
+    },
+    "upcoming_release": false,
+    "commit_path": "/thing-engineering/wowthing/wowthing-collector/-/commit/5c8135c638c08356390d48fd387e46be06dcaa4a",
+    "tag_path": "/thing-engineering/wowthing/wowthing-collector/-/tags/v9.0.5.1",
+    "assets": {
+      "count": 4,
+      "sources": [
+        {
+          "format": "zip",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v9.0.5.1/wowthing-collector-v9.0.5.1.zip"
+        },
+        {
+          "format": "tar.gz",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v9.0.5.1/wowthing-collector-v9.0.5.1.tar.gz"
+        },
+        {
+          "format": "tar.bz2",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v9.0.5.1/wowthing-collector-v9.0.5.1.tar.bz2"
+        },
+        {
+          "format": "tar",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v9.0.5.1/wowthing-collector-v9.0.5.1.tar"
+        }
+      ],
+      "links": []
+    },
+    "evidences": [
+      {
+        "sha": "3d370c62cf6cd912bf1711ecfbff408dc3b8f5caf00d",
+        "filepath": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/releases/v9.0.5.1/evidences/1111473.json",
+        "collected_at": "2021-06-05T21:06:03.719Z"
+      }
+    ],
+    "_links": {
+      "self": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/releases/v9.0.5.1"
+    }
+  },
+  {
+    "name": "v8.2.0.1",
+    "tag_name": "v8.2.0.1",
+    "description": "- Add battle tag to data, makes it easier to match accounts on the server.\r\n- Updated reputation scan list.\r\n- Updated paragon reputation scan list.\r\n- Updated addon data version.\r\n\r\n[WoWthing_Collector-8.2.0.1.zip](/uploads/c3340be3a8a6455ddea4a2799d7e3efa/WoWthing_Collector-8.2.0.1.zip)",
+    "created_at": "2019-06-28T05:01:04.739Z",
+    "released_at": "2019-06-28T05:01:04.739Z",
+    "author": {
+      "id": 654194,
+      "username": "madcowfred",
+      "name": "Freddie",
+      "state": "active",
+      "avatar_url": "https://gitlab.com/uploads/-/system/user/avatar/654194/avatar.png",
+      "web_url": "https://gitlab.com/madcowfred"
+    },
+    "commit": {
+      "id": "d539a7390a6f1da54bc9cb8e0055cb26a986d646",
+      "short_id": "d539a739",
+      "created_at": "2019-06-27T09:49:34.000-07:00",
+      "parent_ids": [
+        "b89f29c70672327bc399c862e36ce85096393caf"
+      ],
+      "title": "Bump version",
+      "message": "Bump version\n",
+      "author_name": "Freddie",
+      "author_email": "freddie@wafflemonster.org",
+      "authored_date": "2019-06-27T09:49:34.000-07:00",
+      "committer_name": "Freddie",
+      "committer_email": "freddie@wafflemonster.org",
+      "committed_date": "2019-06-27T09:49:34.000-07:00",
+      "trailers": {},
+      "web_url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/commit/d539a7390a6f1da54bc9cb8e0055cb26a986d646"
+    },
+    "upcoming_release": false,
+    "commit_path": "/thing-engineering/wowthing/wowthing-collector/-/commit/d539a7390a6f1da54bc9cb8e0055cb26a986d646",
+    "tag_path": "/thing-engineering/wowthing/wowthing-collector/-/tags/v8.2.0.1",
+    "assets": {
+      "count": 4,
+      "sources": [
+        {
+          "format": "zip",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v8.2.0.1/wowthing-collector-v8.2.0.1.zip"
+        },
+        {
+          "format": "tar.gz",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v8.2.0.1/wowthing-collector-v8.2.0.1.tar.gz"
+        },
+        {
+          "format": "tar.bz2",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v8.2.0.1/wowthing-collector-v8.2.0.1.tar.bz2"
+        },
+        {
+          "format": "tar",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v8.2.0.1/wowthing-collector-v8.2.0.1.tar"
+        }
+      ],
+      "links": []
+    },
+    "evidences": [],
+    "_links": {
+      "self": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/releases/v8.2.0.1"
+    }
+  },
+  {
+    "name": "v8.0.1.6",
+    "tag_name": "v8.0.1.6",
+    "description": "- Added BfA emissary scanning.\r\n- Added Azerite level/XP scanning.\r\n- Removed leftover bits of garrison scanning.\r\n\r\n[WoWthing_Collector-8.0.1.6.zip](/uploads/4e18ad5f2962e16d98ed9d780025d595/WoWthing_Collector-8.0.1.6.zip)",
+    "created_at": "2018-08-27T04:37:56.000Z",
+    "released_at": "2018-08-27T04:37:56.000Z",
+    "commit": {
+      "id": "3386042ad94ba327c41d239b45183419b312a00b",
+      "short_id": "3386042a",
+      "created_at": "2018-08-26T21:37:56.000-07:00",
+      "parent_ids": [
+        "cec5eb831d754df12afa208173df76dd4fd1c40d"
+      ],
+      "title": "Bump version",
+      "message": "Bump version\n",
+      "author_name": "Freddie",
+      "author_email": "freddie@wafflemonster.org",
+      "authored_date": "2018-08-26T21:37:56.000-07:00",
+      "committer_name": "Freddie",
+      "committer_email": "freddie@wafflemonster.org",
+      "committed_date": "2018-08-26T21:37:56.000-07:00",
+      "trailers": {},
+      "web_url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/commit/3386042ad94ba327c41d239b45183419b312a00b"
+    },
+    "upcoming_release": false,
+    "commit_path": "/thing-engineering/wowthing/wowthing-collector/-/commit/3386042ad94ba327c41d239b45183419b312a00b",
+    "tag_path": "/thing-engineering/wowthing/wowthing-collector/-/tags/v8.0.1.6",
+    "assets": {
+      "count": 4,
+      "sources": [
+        {
+          "format": "zip",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v8.0.1.6/wowthing-collector-v8.0.1.6.zip"
+        },
+        {
+          "format": "tar.gz",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v8.0.1.6/wowthing-collector-v8.0.1.6.tar.gz"
+        },
+        {
+          "format": "tar.bz2",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v8.0.1.6/wowthing-collector-v8.0.1.6.tar.bz2"
+        },
+        {
+          "format": "tar",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v8.0.1.6/wowthing-collector-v8.0.1.6.tar"
+        }
+      ],
+      "links": []
+    },
+    "evidences": [],
+    "_links": {
+      "self": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/releases/v8.0.1.6"
+    }
+  },
+  {
+    "name": "v8.0.1.5",
+    "tag_name": "v8.0.1.5",
+    "description": "- Add BfA currency scanning.\r\n- Fixed guild bank scanning error.\r\n- Fixed world quest scanning error.\r\n- Remove artifact weapon data.\r\n",
+    "created_at": "2018-08-17T15:50:03.000Z",
+    "released_at": "2018-08-17T15:50:03.000Z",
+    "commit": {
+      "id": "1dabb72e193bd5942c9fec6931910b17442f892d",
+      "short_id": "1dabb72e",
+      "created_at": "2018-08-17T08:50:03.000-07:00",
+      "parent_ids": [
+        "f84d3ce15fc9fc419dfedd1ccaca69783c9d22e7"
+      ],
+      "title": "Bump version",
+      "message": "Bump version\n",
+      "author_name": "Freddie",
+      "author_email": "freddie@wafflemonster.org",
+      "authored_date": "2018-08-17T08:50:03.000-07:00",
+      "committer_name": "Freddie",
+      "committer_email": "freddie@wafflemonster.org",
+      "committed_date": "2018-08-17T08:50:03.000-07:00",
+      "trailers": {},
+      "web_url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/commit/1dabb72e193bd5942c9fec6931910b17442f892d"
+    },
+    "upcoming_release": false,
+    "commit_path": "/thing-engineering/wowthing/wowthing-collector/-/commit/1dabb72e193bd5942c9fec6931910b17442f892d",
+    "tag_path": "/thing-engineering/wowthing/wowthing-collector/-/tags/v8.0.1.5",
+    "assets": {
+      "count": 4,
+      "sources": [
+        {
+          "format": "zip",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v8.0.1.5/wowthing-collector-v8.0.1.5.zip"
+        },
+        {
+          "format": "tar.gz",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v8.0.1.5/wowthing-collector-v8.0.1.5.tar.gz"
+        },
+        {
+          "format": "tar.bz2",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v8.0.1.5/wowthing-collector-v8.0.1.5.tar.bz2"
+        },
+        {
+          "format": "tar",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v8.0.1.5/wowthing-collector-v8.0.1.5.tar"
+        }
+      ],
+      "links": []
+    },
+    "evidences": [],
+    "_links": {
+      "self": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/releases/v8.0.1.5"
+    }
+  },
+  {
+    "name": "v8.0.1.4",
+    "tag_name": "v8.0.1.4",
+    "description": "- Change bag item scanning to include bonusIDs/enchants/gems.\r\n- Fix Broken Isles emissary scanning.\r\n",
+    "created_at": "2018-08-09T17:27:51.000Z",
+    "released_at": "2018-08-09T17:27:51.000Z",
+    "commit": {
+      "id": "6becca6dda3254f3732ab1d487be3da9859a3aba",
+      "short_id": "6becca6d",
+      "created_at": "2018-08-09T10:27:51.000-07:00",
+      "parent_ids": [
+        "1ae4dc25d656d3fe035af30be972ac182949cc16"
+      ],
+      "title": "Bump version",
+      "message": "Bump version\n",
+      "author_name": "Freddie",
+      "author_email": "freddie@wafflemonster.org",
+      "authored_date": "2018-08-09T10:27:51.000-07:00",
+      "committer_name": "Freddie",
+      "committer_email": "freddie@wafflemonster.org",
+      "committed_date": "2018-08-09T10:27:51.000-07:00",
+      "trailers": {},
+      "web_url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/commit/6becca6dda3254f3732ab1d487be3da9859a3aba"
+    },
+    "upcoming_release": false,
+    "commit_path": "/thing-engineering/wowthing/wowthing-collector/-/commit/6becca6dda3254f3732ab1d487be3da9859a3aba",
+    "tag_path": "/thing-engineering/wowthing/wowthing-collector/-/tags/v8.0.1.4",
+    "assets": {
+      "count": 4,
+      "sources": [
+        {
+          "format": "zip",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v8.0.1.4/wowthing-collector-v8.0.1.4.zip"
+        },
+        {
+          "format": "tar.gz",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v8.0.1.4/wowthing-collector-v8.0.1.4.tar.gz"
+        },
+        {
+          "format": "tar.bz2",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v8.0.1.4/wowthing-collector-v8.0.1.4.tar.bz2"
+        },
+        {
+          "format": "tar",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v8.0.1.4/wowthing-collector-v8.0.1.4.tar"
+        }
+      ],
+      "links": []
+    },
+    "evidences": [],
+    "_links": {
+      "self": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/releases/v8.0.1.4"
+    }
+  },
+  {
+    "name": "v8.0.1.3",
+    "tag_name": "v8.0.1.3",
+    "description": "- Fix a dumb typo.",
+    "created_at": "2018-08-01T19:46:41.000Z",
+    "released_at": "2018-08-01T19:46:41.000Z",
+    "commit": {
+      "id": "a98ca028cf864153e4649780b4a5952044177b14",
+      "short_id": "a98ca028",
+      "created_at": "2018-08-01T12:46:41.000-07:00",
+      "parent_ids": [
+        "65f51ead167d467c9af8e81ec6dba6bccabf21c7"
+      ],
+      "title": "Bump version",
+      "message": "Bump version\n",
+      "author_name": "Freddie",
+      "author_email": "freddie@wafflemonster.org",
+      "authored_date": "2018-08-01T12:46:41.000-07:00",
+      "committer_name": "Freddie",
+      "committer_email": "freddie@wafflemonster.org",
+      "committed_date": "2018-08-01T12:46:41.000-07:00",
+      "trailers": {},
+      "web_url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/commit/a98ca028cf864153e4649780b4a5952044177b14"
+    },
+    "upcoming_release": false,
+    "commit_path": "/thing-engineering/wowthing/wowthing-collector/-/commit/a98ca028cf864153e4649780b4a5952044177b14",
+    "tag_path": "/thing-engineering/wowthing/wowthing-collector/-/tags/v8.0.1.3",
+    "assets": {
+      "count": 4,
+      "sources": [
+        {
+          "format": "zip",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v8.0.1.3/wowthing-collector-v8.0.1.3.zip"
+        },
+        {
+          "format": "tar.gz",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v8.0.1.3/wowthing-collector-v8.0.1.3.tar.gz"
+        },
+        {
+          "format": "tar.bz2",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v8.0.1.3/wowthing-collector-v8.0.1.3.tar.bz2"
+        },
+        {
+          "format": "tar",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v8.0.1.3/wowthing-collector-v8.0.1.3.tar"
+        }
+      ],
+      "links": []
+    },
+    "evidences": [],
+    "_links": {
+      "self": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/releases/v8.0.1.3"
+    }
+  },
+  {
+    "name": "v8.0.1.2",
+    "tag_name": "v8.0.1.2",
+    "description": "- Fixed Mythic+ scanning again, oops.\r\n- Fixed Mythic+ keystone scanning.\r\n",
+    "created_at": "2018-08-01T18:08:25.000Z",
+    "released_at": "2018-08-01T18:08:25.000Z",
+    "commit": {
+      "id": "8f3c2ab068781a274382f74b8d5734fe59e34dd6",
+      "short_id": "8f3c2ab0",
+      "created_at": "2018-08-01T11:08:25.000-07:00",
+      "parent_ids": [
+        "89e4f866bbac23b7e3cad085ab435bb78e443791"
+      ],
+      "title": "Bump version",
+      "message": "Bump version\n",
+      "author_name": "Freddie",
+      "author_email": "freddie@wafflemonster.org",
+      "authored_date": "2018-08-01T11:08:25.000-07:00",
+      "committer_name": "Freddie",
+      "committer_email": "freddie@wafflemonster.org",
+      "committed_date": "2018-08-01T11:08:25.000-07:00",
+      "trailers": {},
+      "web_url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/commit/8f3c2ab068781a274382f74b8d5734fe59e34dd6"
+    },
+    "upcoming_release": false,
+    "commit_path": "/thing-engineering/wowthing/wowthing-collector/-/commit/8f3c2ab068781a274382f74b8d5734fe59e34dd6",
+    "tag_path": "/thing-engineering/wowthing/wowthing-collector/-/tags/v8.0.1.2",
+    "assets": {
+      "count": 4,
+      "sources": [
+        {
+          "format": "zip",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v8.0.1.2/wowthing-collector-v8.0.1.2.zip"
+        },
+        {
+          "format": "tar.gz",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v8.0.1.2/wowthing-collector-v8.0.1.2.tar.gz"
+        },
+        {
+          "format": "tar.bz2",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v8.0.1.2/wowthing-collector-v8.0.1.2.tar.bz2"
+        },
+        {
+          "format": "tar",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v8.0.1.2/wowthing-collector-v8.0.1.2.tar"
+        }
+      ],
+      "links": []
+    },
+    "evidences": [],
+    "_links": {
+      "self": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/releases/v8.0.1.2"
+    }
+  },
+  {
+    "name": "v8.0.1.1",
+    "tag_name": "v8.0.1.1",
+    "description": "- Fixed Mythic+ scanning.\r\n- Disabled trade skill scanning until I can work out where the event went.\r\n- Removed artifact scanning.\r\n- Removed netherlight crucible scanning.\r\n- Removed prestige scanning.\r\n",
+    "created_at": "2018-07-26T05:19:10.000Z",
+    "released_at": "2018-07-26T05:19:10.000Z",
+    "commit": {
+      "id": "470ee645b5906a674117cbce970a403a1c4abedc",
+      "short_id": "470ee645",
+      "created_at": "2018-07-25T22:19:10.000-07:00",
+      "parent_ids": [
+        "5555c3cb327e7a73c8441f35491e4505787cb321",
+        "fd792ca3a399e42bda61167f42f825646e12f3eb"
+      ],
+      "title": "Merge branch 'master' of https://github.com/madcowfred/wowthing_collector",
+      "message": "Merge branch 'master' of https://github.com/madcowfred/wowthing_collector\n\n# Conflicts:\n#\tCollector.lua\n#\tVERSIONS.txt\n#\tWoWthing_Collector.toc\n",
+      "author_name": "Freddie",
+      "author_email": "freddie@wafflemonster.org",
+      "authored_date": "2018-07-25T22:19:10.000-07:00",
+      "committer_name": "Freddie",
+      "committer_email": "freddie@wafflemonster.org",
+      "committed_date": "2018-07-25T22:19:10.000-07:00",
+      "trailers": {},
+      "web_url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/commit/470ee645b5906a674117cbce970a403a1c4abedc"
+    },
+    "upcoming_release": false,
+    "commit_path": "/thing-engineering/wowthing/wowthing-collector/-/commit/470ee645b5906a674117cbce970a403a1c4abedc",
+    "tag_path": "/thing-engineering/wowthing/wowthing-collector/-/tags/v8.0.1.1",
+    "assets": {
+      "count": 4,
+      "sources": [
+        {
+          "format": "zip",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v8.0.1.1/wowthing-collector-v8.0.1.1.zip"
+        },
+        {
+          "format": "tar.gz",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v8.0.1.1/wowthing-collector-v8.0.1.1.tar.gz"
+        },
+        {
+          "format": "tar.bz2",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v8.0.1.1/wowthing-collector-v8.0.1.1.tar.bz2"
+        },
+        {
+          "format": "tar",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v8.0.1.1/wowthing-collector-v8.0.1.1.tar"
+        }
+      ],
+      "links": []
+    },
+    "evidences": [],
+    "_links": {
+      "self": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/releases/v8.0.1.1"
+    }
+  },
+  {
+    "name": "v7.3.5.9",
+    "tag_name": "v7.3.5.9",
+    "description": "- Fixed World Quest emissary cache scanning having an invalid faction ID for Armies of Legionfall.\r\n- Fixed reagent bank scanning being able to trigger when the bank frame isn't open.",
+    "created_at": "2018-06-09T23:47:18.000Z",
+    "released_at": "2018-06-09T23:47:18.000Z",
+    "commit": {
+      "id": "fd792ca3a399e42bda61167f42f825646e12f3eb",
+      "short_id": "fd792ca3",
+      "created_at": "2018-06-09T16:47:18.000-07:00",
+      "parent_ids": [
+        "84ae9c77ef6ac0a1deb163f3c1e5192ce344b844"
+      ],
+      "title": "Bump version",
+      "message": "Bump version\n",
+      "author_name": "Freddie",
+      "author_email": "freddie@wafflemonster.org",
+      "authored_date": "2018-06-09T16:47:18.000-07:00",
+      "committer_name": "Freddie",
+      "committer_email": "freddie@wafflemonster.org",
+      "committed_date": "2018-06-09T16:47:18.000-07:00",
+      "trailers": {},
+      "web_url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/commit/fd792ca3a399e42bda61167f42f825646e12f3eb"
+    },
+    "upcoming_release": false,
+    "commit_path": "/thing-engineering/wowthing/wowthing-collector/-/commit/fd792ca3a399e42bda61167f42f825646e12f3eb",
+    "tag_path": "/thing-engineering/wowthing/wowthing-collector/-/tags/v7.3.5.9",
+    "assets": {
+      "count": 4,
+      "sources": [
+        {
+          "format": "zip",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.9/wowthing-collector-v7.3.5.9.zip"
+        },
+        {
+          "format": "tar.gz",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.9/wowthing-collector-v7.3.5.9.tar.gz"
+        },
+        {
+          "format": "tar.bz2",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.9/wowthing-collector-v7.3.5.9.tar.bz2"
+        },
+        {
+          "format": "tar",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.9/wowthing-collector-v7.3.5.9.tar"
+        }
+      ],
+      "links": []
+    },
+    "evidences": [],
+    "_links": {
+      "self": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/releases/v7.3.5.9"
+    }
+  },
+  {
+    "name": "v7.3.5.8",
+    "tag_name": "v7.3.5.8",
+    "description": "- Fixed the paragon faction check, oops.\r\n- Fixed timezone calculation ignoring DST, oops.\r\n",
+    "created_at": "2018-05-20T23:46:02.000Z",
+    "released_at": "2018-05-20T23:46:02.000Z",
+    "commit": {
+      "id": "fb294e9f3a07a6f6acf11acc6eb19014efc6aace",
+      "short_id": "fb294e9f",
+      "created_at": "2018-05-21T09:46:02.000+10:00",
+      "parent_ids": [
+        "1c2b77fe2bc91b5144169444796f1105d0fc91cc"
+      ],
+      "title": "Bump version",
+      "message": "Bump version\n\n",
+      "author_name": "Freddie",
+      "author_email": "freddie@wafflemonster.org",
+      "authored_date": "2018-05-21T09:46:02.000+10:00",
+      "committer_name": "Freddie",
+      "committer_email": "freddie@wafflemonster.org",
+      "committed_date": "2018-05-21T09:46:02.000+10:00",
+      "trailers": {},
+      "web_url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/commit/fb294e9f3a07a6f6acf11acc6eb19014efc6aace"
+    },
+    "upcoming_release": false,
+    "commit_path": "/thing-engineering/wowthing/wowthing-collector/-/commit/fb294e9f3a07a6f6acf11acc6eb19014efc6aace",
+    "tag_path": "/thing-engineering/wowthing/wowthing-collector/-/tags/v7.3.5.8",
+    "assets": {
+      "count": 4,
+      "sources": [
+        {
+          "format": "zip",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.8/wowthing-collector-v7.3.5.8.zip"
+        },
+        {
+          "format": "tar.gz",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.8/wowthing-collector-v7.3.5.8.tar.gz"
+        },
+        {
+          "format": "tar.bz2",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.8/wowthing-collector-v7.3.5.8.tar.bz2"
+        },
+        {
+          "format": "tar",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.8/wowthing-collector-v7.3.5.8.tar"
+        }
+      ],
+      "links": []
+    },
+    "evidences": [],
+    "_links": {
+      "self": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/releases/v7.3.5.8"
+    }
+  },
+  {
+    "name": "v7.3.5.7",
+    "tag_name": "v7.3.5.7",
+    "description": "- Fixed Bigger Fish to Fry achievement scanning when you have already completed it.\r\n- Fixed World Quest emissary cache scanning having an invalid faction ID for Argus factions.\r\n",
+    "created_at": "2018-05-12T23:36:26.000Z",
+    "released_at": "2018-05-12T23:36:26.000Z",
+    "commit": {
+      "id": "16520299ee680b3e05902f88b5c0cfc9438de39b",
+      "short_id": "16520299",
+      "created_at": "2018-05-13T09:36:26.000+10:00",
+      "parent_ids": [
+        "cea3d0a8b5cbc3406b3b374efb9cc18629c0ca02"
+      ],
+      "title": "Bump version",
+      "message": "Bump version\n\n",
+      "author_name": "Freddie",
+      "author_email": "freddie@wafflemonster.org",
+      "authored_date": "2018-05-13T09:36:26.000+10:00",
+      "committer_name": "Freddie",
+      "committer_email": "freddie@wafflemonster.org",
+      "committed_date": "2018-05-13T09:36:26.000+10:00",
+      "trailers": {},
+      "web_url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/commit/16520299ee680b3e05902f88b5c0cfc9438de39b"
+    },
+    "upcoming_release": false,
+    "commit_path": "/thing-engineering/wowthing/wowthing-collector/-/commit/16520299ee680b3e05902f88b5c0cfc9438de39b",
+    "tag_path": "/thing-engineering/wowthing/wowthing-collector/-/tags/v7.3.5.7",
+    "assets": {
+      "count": 4,
+      "sources": [
+        {
+          "format": "zip",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.7/wowthing-collector-v7.3.5.7.zip"
+        },
+        {
+          "format": "tar.gz",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.7/wowthing-collector-v7.3.5.7.tar.gz"
+        },
+        {
+          "format": "tar.bz2",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.7/wowthing-collector-v7.3.5.7.tar.bz2"
+        },
+        {
+          "format": "tar",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.7/wowthing-collector-v7.3.5.7.tar"
+        }
+      ],
+      "links": []
+    },
+    "evidences": [],
+    "_links": {
+      "self": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/releases/v7.3.5.7"
+    }
+  },
+  {
+    "name": "v7.3.5.6",
+    "tag_name": "v7.3.5.6",
+    "description": "v7.3.5.6\r\n--------\r\n- Added Bigger Fish to Fry to achievement scanning.\r\n- Added Balance of Power artifact appearance variations to achievement scanning.\r\n",
+    "created_at": "2018-04-25T09:02:01.000Z",
+    "released_at": "2018-04-25T09:02:01.000Z",
+    "commit": {
+      "id": "d82a65b36e32daea9c19f3df69f1d9facef80723",
+      "short_id": "d82a65b3",
+      "created_at": "2018-04-25T19:02:01.000+10:00",
+      "parent_ids": [
+        "41a7a2af7b0632c8a729626f0542b6e66f6ac9a3"
+      ],
+      "title": "Bump version",
+      "message": "Bump version\n\n",
+      "author_name": "Freddie",
+      "author_email": "freddie@wafflemonster.org",
+      "authored_date": "2018-04-25T19:02:01.000+10:00",
+      "committer_name": "Freddie",
+      "committer_email": "freddie@wafflemonster.org",
+      "committed_date": "2018-04-25T19:02:01.000+10:00",
+      "trailers": {},
+      "web_url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/commit/d82a65b36e32daea9c19f3df69f1d9facef80723"
+    },
+    "upcoming_release": false,
+    "commit_path": "/thing-engineering/wowthing/wowthing-collector/-/commit/d82a65b36e32daea9c19f3df69f1d9facef80723",
+    "tag_path": "/thing-engineering/wowthing/wowthing-collector/-/tags/v7.3.5.6",
+    "assets": {
+      "count": 4,
+      "sources": [
+        {
+          "format": "zip",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.6/wowthing-collector-v7.3.5.6.zip"
+        },
+        {
+          "format": "tar.gz",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.6/wowthing-collector-v7.3.5.6.tar.gz"
+        },
+        {
+          "format": "tar.bz2",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.6/wowthing-collector-v7.3.5.6.tar.bz2"
+        },
+        {
+          "format": "tar",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.6/wowthing-collector-v7.3.5.6.tar"
+        }
+      ],
+      "links": []
+    },
+    "evidences": [],
+    "_links": {
+      "self": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/releases/v7.3.5.6"
+    }
+  },
+  {
+    "name": "v7.3.5.5",
+    "tag_name": "v7.3.5.5",
+    "description": "- Changed World Quest scanning to hook the quest log update event and scan more regularly, fixes the 3rd day not always detecting properly.\r\n",
+    "created_at": "2018-04-24T23:13:13.000Z",
+    "released_at": "2018-04-24T23:13:13.000Z",
+    "commit": {
+      "id": "a58eb8c72f168073548a48319efde29a42e39af4",
+      "short_id": "a58eb8c7",
+      "created_at": "2018-04-25T09:13:13.000+10:00",
+      "parent_ids": [
+        "f7068158129435312369cb1705a337e0e04ba90f"
+      ],
+      "title": "Bump version",
+      "message": "Bump version\n\n",
+      "author_name": "Freddie",
+      "author_email": "freddie@wafflemonster.org",
+      "authored_date": "2018-04-25T09:13:13.000+10:00",
+      "committer_name": "Freddie",
+      "committer_email": "freddie@wafflemonster.org",
+      "committed_date": "2018-04-25T09:13:13.000+10:00",
+      "trailers": {},
+      "web_url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/commit/a58eb8c72f168073548a48319efde29a42e39af4"
+    },
+    "upcoming_release": false,
+    "commit_path": "/thing-engineering/wowthing/wowthing-collector/-/commit/a58eb8c72f168073548a48319efde29a42e39af4",
+    "tag_path": "/thing-engineering/wowthing/wowthing-collector/-/tags/v7.3.5.5",
+    "assets": {
+      "count": 4,
+      "sources": [
+        {
+          "format": "zip",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.5/wowthing-collector-v7.3.5.5.zip"
+        },
+        {
+          "format": "tar.gz",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.5/wowthing-collector-v7.3.5.5.tar.gz"
+        },
+        {
+          "format": "tar.bz2",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.5/wowthing-collector-v7.3.5.5.tar.bz2"
+        },
+        {
+          "format": "tar",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.5/wowthing-collector-v7.3.5.5.tar"
+        }
+      ],
+      "links": []
+    },
+    "evidences": [],
+    "_links": {
+      "self": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/releases/v7.3.5.5"
+    }
+  },
+  {
+    "name": "v7.3.5.4",
+    "tag_name": "v7.3.5.4",
+    "description": "- Added World Quest emissary cache scanning.\r\n",
+    "created_at": "2018-04-24T22:28:47.000Z",
+    "released_at": "2018-04-24T22:28:47.000Z",
+    "commit": {
+      "id": "9d0e79a90eff4fd0b36b0557e585e3e25fe41861",
+      "short_id": "9d0e79a9",
+      "created_at": "2018-04-25T08:28:47.000+10:00",
+      "parent_ids": [
+        "2066c46fbcbd3a276a9e60de83b3ba6304c3f01c"
+      ],
+      "title": "Bump version",
+      "message": "Bump version\n\n",
+      "author_name": "Freddie",
+      "author_email": "freddie@wafflemonster.org",
+      "authored_date": "2018-04-25T08:28:47.000+10:00",
+      "committer_name": "Freddie",
+      "committer_email": "freddie@wafflemonster.org",
+      "committed_date": "2018-04-25T08:28:47.000+10:00",
+      "trailers": {},
+      "web_url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/commit/9d0e79a90eff4fd0b36b0557e585e3e25fe41861"
+    },
+    "upcoming_release": false,
+    "commit_path": "/thing-engineering/wowthing/wowthing-collector/-/commit/9d0e79a90eff4fd0b36b0557e585e3e25fe41861",
+    "tag_path": "/thing-engineering/wowthing/wowthing-collector/-/tags/v7.3.5.4",
+    "assets": {
+      "count": 4,
+      "sources": [
+        {
+          "format": "zip",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.4/wowthing-collector-v7.3.5.4.zip"
+        },
+        {
+          "format": "tar.gz",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.4/wowthing-collector-v7.3.5.4.tar.gz"
+        },
+        {
+          "format": "tar.bz2",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.4/wowthing-collector-v7.3.5.4.tar.bz2"
+        },
+        {
+          "format": "tar",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.4/wowthing-collector-v7.3.5.4.tar"
+        }
+      ],
+      "links": []
+    },
+    "evidences": [],
+    "_links": {
+      "self": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/releases/v7.3.5.4"
+    }
+  },
+  {
+    "name": "v7.3.5.3",
+    "tag_name": "v7.3.5.3",
+    "description": "- Fixed Reagent Bank not updating properly when consuming items from outside the bank.\r\n",
+    "created_at": "2018-04-24T06:11:42.000Z",
+    "released_at": "2018-04-24T06:11:42.000Z",
+    "commit": {
+      "id": "b37ecd5084dda3f88fa15514bee88792f498a21d",
+      "short_id": "b37ecd50",
+      "created_at": "2018-04-24T16:11:42.000+10:00",
+      "parent_ids": [
+        "7a1a7a61b9bba3662f5ce44fb8ca0835c6ad39d4"
+      ],
+      "title": "Bump version",
+      "message": "Bump version\n\n",
+      "author_name": "Freddie",
+      "author_email": "freddie@wafflemonster.org",
+      "authored_date": "2018-04-24T16:11:42.000+10:00",
+      "committer_name": "Freddie",
+      "committer_email": "freddie@wafflemonster.org",
+      "committed_date": "2018-04-24T16:11:42.000+10:00",
+      "trailers": {},
+      "web_url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/commit/b37ecd5084dda3f88fa15514bee88792f498a21d"
+    },
+    "upcoming_release": false,
+    "commit_path": "/thing-engineering/wowthing/wowthing-collector/-/commit/b37ecd5084dda3f88fa15514bee88792f498a21d",
+    "tag_path": "/thing-engineering/wowthing/wowthing-collector/-/tags/v7.3.5.3",
+    "assets": {
+      "count": 4,
+      "sources": [
+        {
+          "format": "zip",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.3/wowthing-collector-v7.3.5.3.zip"
+        },
+        {
+          "format": "tar.gz",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.3/wowthing-collector-v7.3.5.3.tar.gz"
+        },
+        {
+          "format": "tar.bz2",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.3/wowthing-collector-v7.3.5.3.tar.bz2"
+        },
+        {
+          "format": "tar",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.3/wowthing-collector-v7.3.5.3.tar"
+        }
+      ],
+      "links": []
+    },
+    "evidences": [],
+    "_links": {
+      "self": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/releases/v7.3.5.3"
+    }
+  },
+  {
+    "name": "v7.3.5.2",
+    "tag_name": "v7.3.5.2",
+    "description": "- Added Order Hall research scanning.\r\n- Added \"Fuel of a Doomed World\" quest as a fake \"Pristine Argunite\" world boss.\r\n",
+    "created_at": "2018-04-22T22:07:31.000Z",
+    "released_at": "2018-04-22T22:07:31.000Z",
+    "commit": {
+      "id": "e368bd712d89f21a5fd37c6a29ca2c217788931b",
+      "short_id": "e368bd71",
+      "created_at": "2018-04-23T08:07:31.000+10:00",
+      "parent_ids": [
+        "fc76bfdbcecd5c765df94c559b09d724a845ee45"
+      ],
+      "title": "Bump version",
+      "message": "Bump version\n\n",
+      "author_name": "Freddie",
+      "author_email": "freddie@wafflemonster.org",
+      "authored_date": "2018-04-23T08:07:31.000+10:00",
+      "committer_name": "Freddie",
+      "committer_email": "freddie@wafflemonster.org",
+      "committed_date": "2018-04-23T08:07:31.000+10:00",
+      "trailers": {},
+      "web_url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/commit/e368bd712d89f21a5fd37c6a29ca2c217788931b"
+    },
+    "upcoming_release": false,
+    "commit_path": "/thing-engineering/wowthing/wowthing-collector/-/commit/e368bd712d89f21a5fd37c6a29ca2c217788931b",
+    "tag_path": "/thing-engineering/wowthing/wowthing-collector/-/tags/v7.3.5.2",
+    "assets": {
+      "count": 4,
+      "sources": [
+        {
+          "format": "zip",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.2/wowthing-collector-v7.3.5.2.zip"
+        },
+        {
+          "format": "tar.gz",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.2/wowthing-collector-v7.3.5.2.tar.gz"
+        },
+        {
+          "format": "tar.bz2",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.2/wowthing-collector-v7.3.5.2.tar.bz2"
+        },
+        {
+          "format": "tar",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.2/wowthing-collector-v7.3.5.2.tar"
+        }
+      ],
+      "links": []
+    },
+    "evidences": [],
+    "_links": {
+      "self": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/releases/v7.3.5.2"
+    }
+  },
+  {
+    "name": "v7.3.5.1",
+    "tag_name": "v7.3.5.1",
+    "description": "- Added Netherlight Crucible scanning.",
+    "created_at": "2018-01-31T13:11:51.000Z",
+    "released_at": "2018-01-31T13:11:51.000Z",
+    "commit": {
+      "id": "d56300f5a7f141dd8b82b284a7521ae8fef1b4b4",
+      "short_id": "d56300f5",
+      "created_at": "2018-02-01T00:11:51.000+11:00",
+      "parent_ids": [
+        "0bfe3ce14acdec7237c9904d6d445b7585589398"
+      ],
+      "title": "Bump version",
+      "message": "Bump version\n\n",
+      "author_name": "Freddie",
+      "author_email": "freddie@wafflemonster.org",
+      "authored_date": "2018-02-01T00:11:51.000+11:00",
+      "committer_name": "Freddie",
+      "committer_email": "freddie@wafflemonster.org",
+      "committed_date": "2018-02-01T00:11:51.000+11:00",
+      "trailers": {},
+      "web_url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/commit/d56300f5a7f141dd8b82b284a7521ae8fef1b4b4"
+    },
+    "upcoming_release": false,
+    "commit_path": "/thing-engineering/wowthing/wowthing-collector/-/commit/d56300f5a7f141dd8b82b284a7521ae8fef1b4b4",
+    "tag_path": "/thing-engineering/wowthing/wowthing-collector/-/tags/v7.3.5.1",
+    "assets": {
+      "count": 4,
+      "sources": [
+        {
+          "format": "zip",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.1/wowthing-collector-v7.3.5.1.zip"
+        },
+        {
+          "format": "tar.gz",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.1/wowthing-collector-v7.3.5.1.tar.gz"
+        },
+        {
+          "format": "tar.bz2",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.1/wowthing-collector-v7.3.5.1.tar.bz2"
+        },
+        {
+          "format": "tar",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.1/wowthing-collector-v7.3.5.1.tar"
+        }
+      ],
+      "links": []
+    },
+    "evidences": [],
+    "_links": {
+      "self": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/releases/v7.3.5.1"
+    }
+  },
+  {
+    "name": "v7.3.5.0",
+    "tag_name": "v7.3.5.0",
+    "description": "- Added Wakening Essence to currency scanning.\r\n- Fixed \"Antorus, the Burning Throne\" LFR instance name.",
+    "created_at": "2018-01-31T13:11:51.000Z",
+    "released_at": "2018-01-31T13:11:51.000Z",
+    "commit": {
+      "id": "d56300f5a7f141dd8b82b284a7521ae8fef1b4b4",
+      "short_id": "d56300f5",
+      "created_at": "2018-02-01T00:11:51.000+11:00",
+      "parent_ids": [
+        "0bfe3ce14acdec7237c9904d6d445b7585589398"
+      ],
+      "title": "Bump version",
+      "message": "Bump version\n\n",
+      "author_name": "Freddie",
+      "author_email": "freddie@wafflemonster.org",
+      "authored_date": "2018-02-01T00:11:51.000+11:00",
+      "committer_name": "Freddie",
+      "committer_email": "freddie@wafflemonster.org",
+      "committed_date": "2018-02-01T00:11:51.000+11:00",
+      "trailers": {},
+      "web_url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/commit/d56300f5a7f141dd8b82b284a7521ae8fef1b4b4"
+    },
+    "upcoming_release": false,
+    "commit_path": "/thing-engineering/wowthing/wowthing-collector/-/commit/d56300f5a7f141dd8b82b284a7521ae8fef1b4b4",
+    "tag_path": "/thing-engineering/wowthing/wowthing-collector/-/tags/v7.3.5.0",
+    "assets": {
+      "count": 4,
+      "sources": [
+        {
+          "format": "zip",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.0/wowthing-collector-v7.3.5.0.zip"
+        },
+        {
+          "format": "tar.gz",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.0/wowthing-collector-v7.3.5.0.tar.gz"
+        },
+        {
+          "format": "tar.bz2",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.0/wowthing-collector-v7.3.5.0.tar.bz2"
+        },
+        {
+          "format": "tar",
+          "url": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/archive/v7.3.5.0/wowthing-collector-v7.3.5.0.tar"
+        }
+      ],
+      "links": []
+    },
+    "evidences": [],
+    "_links": {
+      "self": "https://gitlab.com/thing-engineering/wowthing/wowthing-collector/-/releases/v7.3.5.0"
+    }
+  }
+]

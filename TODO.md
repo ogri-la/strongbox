@@ -6,37 +6,30 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* gitlab as addon host
-    - https://gitlab.com/search?search=wow+addon
-    - returned to bucket 2019-12-04, notes:
-        - gitlab doesn't handle releases like github does
-            - https://stackoverflow.com/questions/29520905/how-to-create-releases-in-gitlab
-        - there are very few gitlab addons (88)
-            - where did this number come from?
-        - api is quite slow
-    - update: as of Oct 2020 gitlab sucks a little bit less and, like github, you can attach binaries to releases
-        - https://gitlab.com/explore/projects?tag=World+of+Warcraft
-        - https://gitlab.com/shrugal/PersoLootRoll
-        - any others ...?
-
-* multi-toc support
-    - https://github.com/Stanzilla/WoWUIBugs/issues/68#issuecomment-830351390
-    - https://gitlab.com/woblight/strategos 
-        - has no otherwise identifying game track in it's name, toc file or releases
-        - but it does support all three versions of wow
-
 ## todo
 
+Curseforge is going away. How to migrate addons off of curseforge?
+- in most cases this won't be possible.
+- realistic alternatives for the rest are wowi and github.
 
-* add release.json support for github/gitlab addons
-    - https://github.com/layday/instawow/discussions/72
+* how to disable the completely integrated curseforge?
+    - I want curseforge addons to still show as being curseforge addons but just never receive updates after the cut off.
+        - when is the cut off again?
+    - I want the catalogue of curseforge addons to not be merged into the short and full catalogues after the cut off
+    - I want the curseforge catalogue to no longer receives updates
+    - I want a permanent warning against curseforge addons between now and when the service goes offline
+        - I want an error after cut off
 
-* refresh catalogue is not so healthy
-    - errors during refresh should appear in the log next to the appropriate addon
-    - 404s shouldn't be retried. the addon is gone
-    - where are the tests catching all these?
-        cli/refresh-user-catalogue
-        cli/import-addon--github
+* github catalogue
+    - something quick and dirty for now
+
+* source switching
+    - some addons will have multiple sources in the toc file we can switch to.
+    - if not, we can search the catalogue for them
+        - exclude curseforge 
+
+* strongbox-comrades
+    - remove curseforge as a requirement for any category.
 
 ## todo bucket (no particular order)
 
@@ -47,6 +40,47 @@ see CHANGELOG.md for a more formal list of changes by release
             - or is missing useful information
         - or the zip file is badly formed
     - stuff a regular user should gloss over but a dev might find useful
+
+* star or 'like' addons in the catalogue
+
+* http, add with-backoff support to download-file
+    - just had a wowinterface addon timeout
+
+* replace multi-error messages with a single multi-line error message
+
+* user catalogue pane
+    - context menu
+        - refresh selected
+        - remove selected
+    - button bar
+        - refresh all button
+    - menu
+        - 'refresh all' switches to user catalogue pane
+    - push user catalogue in app state
+        - so we can see updates happening to catalogue entries as they happen
+    - write catalogue *once* after all items in operation updated
+        - rather than once per update
+
+* user catalogue, refresh happens in parallel
+
+* a more permanent store than just cached files
+    - I want to store release data permanently
+        - multiple pages
+        - release.json
+
+* github, can we support addons that have no detectable game tracks, no toc files, no release.json, nothing but downloadable assets?
+     - https://github.com/RealUI/RealUI
+     - we could download it, unpack it and inspect it then?
+
+* github, can we support addons that are splitting their game track releases over separate releases?
+    - like Aptechka
+        - https://github.com/rgd87/Aptechka/releases
+            - fucking /sigh!
+
+* add support for 'Interface-Retail', 'Interface-Classic', 'Interface-BCC'
+    - how much of a thing is this?
+        - is it more of a templating thing?
+    - https://github.com/Myrroddin/MrBigglesworthDeath/blob/master/MrBigglesworthDeath.toc
 
 * github, gitlab, are we paginating release calls?
 
@@ -265,8 +299,8 @@ see CHANGELOG.md for a more formal list of changes by release
 * remove the (pinned) and (installed) labels from from the 'available' column
 * drop support catalogue v1
     - a prerequisite for v5 then would be introducing a new catalogue
-* readme, the ~your machine's `hostname`~ bit.
-* readme, the "Original Swing GUI was last available in version 3.x using" bit
+* readme, remove the ~your machine's `hostname`~ bit.
+* readme, remove the "Original Swing GUI was last available in version 3.x using" bit
 * rename 'retail' to 'mainline'
     - pretty big change ;) but probably for the best.
 
