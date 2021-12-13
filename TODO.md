@@ -28,6 +28,9 @@ Curseforge is going away. How to migrate addons off of curseforge?
     - if not, we can search the catalogue for them
         - exclude curseforge 
 
+* strongbox-comrades
+    - remove curseforge as a requirement for any category.
+
 ## todo bucket (no particular order)
 
 * star or 'like' addons in the catalogue
