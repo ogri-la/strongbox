@@ -17,6 +17,11 @@
   (when (s/valid? spec x)
     x))
 
+(defn valid-or-explain
+  [spec x]
+  (when-not (s/valid? spec x)
+    (s/explain spec x)))
+
 (defn spec-to-kw-list
   "very limited. only works for basic specs that have a :req [keys] and :opt [keys]"
   [spec]

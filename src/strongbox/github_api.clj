@@ -321,7 +321,7 @@
            :tag-list []
            :updated-date (:last_updated row)
            :download-count 0
-           :source :github
+           :source "github"
            :source-id (-> url java.net.URL. .getPath)
            :description (:description row)
            :game-track-list (->> row

@@ -735,6 +735,8 @@
   (binding [http/*cache* (core/cache)]
     (let [output-file (find-catalogue-local-path :github)
           catalogue-data (github-api/build-catalogue)
+          ;;_ (doseq [row catalogue-data]
+          ;;    (sp/valid-or-explain :addon/summary row))
           created (utils/datestamp-now-ymd)
           formatted-catalogue-data (catalogue/format-catalogue-data-for-output catalogue-data created)]
       (catalogue/write-catalogue formatted-catalogue-data output-file))))
