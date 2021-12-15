@@ -4,8 +4,6 @@
    [taoensso.timbre :as timbre :refer [debug info warn error report spy]]
    [clojure.spec.alpha :as s]
    [me.raynes.fs :as fs]
-   [clojure.data.csv :as csv]
-   [slugify.core :refer [slugify]]
    [strongbox
     [constants :as constants]
     [joblib :as joblib]
@@ -683,7 +681,6 @@
 
 ;; debug
 
-
 (defn-spec touch nil?
   "used to select each addon in the GUI so the 'unsteady' colour can be tested."
   []
@@ -720,40 +717,6 @@
 
 ;; ---
 
-(defn get-github-catalogue
-  []
-  (http/with-simple-cache
-    (let [url "https://raw.githubusercontent.com/layday/github-wow-addon-catalogue/main/addons.csv"
-          result (-> url
-                     http/download-with-backoff
-                     http/sink-error
-                     csv/read-csv)
-
-          result-list (apply utils/csv-map result)
-
-          split* (fn [string]
-                   (clojure.string/split string #","))
-
-          to-summary
-          (fn [row]
-            {:url (:url row)
-             :name (slugify (:name row))
-             :label (:name row)
-             :tag-list []
-             :updated-date (:last_updated row)
-             :download-count 0
-             :source :github
-             :source-id (-> url java.net.URL. .getPath)
-             :description (:description row)
-             :game-track-list (->> row
-                                   :flavors
-                                   split*
-                                   (mapv utils/guess-game-track))})]
-
-      (mapv to-summary result-list))))
-
-;;
-
 (defmulti action
   "handles the following actions:
     :scrape-wowinterface-catalogue - scrapes wowinterface host and creates a wowinterface catalogue
@@ -766,6 +729,15 @@
     (cond
       (map? x) (:action x)
       (keyword? x) x)))
+
+(defmethod action :scrape-github-catalogue
+  [_]
+  (binding [http/*cache* (core/cache)]
+    (let [output-file (find-catalogue-local-path :github)
+          catalogue-data (github-api/build-catalogue)
+          created (utils/datestamp-now-ymd)
+          formatted-catalogue-data (catalogue/format-catalogue-data-for-output catalogue-data created)]
+      (catalogue/write-catalogue formatted-catalogue-data output-file))))
 
 (defmethod action :scrape-wowinterface-catalogue
   [_]
@@ -799,8 +771,9 @@
   (let [curseforge-catalogue (find-catalogue-local-path :curseforge)
         wowinterface-catalogue (find-catalogue-local-path :wowinterface)
         tukui-catalogue (find-catalogue-local-path :tukui)
+        github-catalogue (spy :warn (find-catalogue-local-path :github))
 
-        catalogue-path-list [curseforge-catalogue wowinterface-catalogue tukui-catalogue]
+        catalogue-path-list [curseforge-catalogue wowinterface-catalogue tukui-catalogue github-catalogue]
         catalogue (mapv catalogue/read-catalogue catalogue-path-list)
         catalogue (reduce catalogue/merge-catalogues catalogue)
         ;; 2021-09: `merge-catalogues` no longer converts an addon to an `ordered-map`.
@@ -819,6 +792,7 @@
   (action :scrape-curseforge-catalogue)
   (action :scrape-wowinterface-catalogue)
   (action :scrape-tukui-catalogue)
+  (action :scrape-github-catalogue)
   (action :write-catalogue))
 
 (defmethod action :list

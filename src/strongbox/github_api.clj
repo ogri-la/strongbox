@@ -1,5 +1,6 @@
 (ns strongbox.github-api
   (:require
+   [clojure.data.csv :as csv]
    [clojure.string :refer [index-of split]]
    [slugify.core :refer [slugify]]
    [clojure.spec.alpha :as s]
@@ -296,3 +297,36 @@
 
            ;; 'something' failed to parse :(
            nil))
+
+;;
+
+(defn-spec build-catalogue (s/or :ok :addon/summary-list, :error nil?)
+  []
+  (let [url "https://raw.githubusercontent.com/ogri-la/github-wow-addon-catalogue/main/addons.csv"
+        result (-> url
+                   http/download-with-backoff
+                   http/sink-error
+                   csv/read-csv)
+
+        result-list (apply utils/csv-map result)
+
+        split* (fn [string]
+                 (clojure.string/split string #","))
+
+        to-summary
+        (fn [row]
+          {:url (:url row)
+           :name (slugify (:name row))
+           :label (:name row)
+           :tag-list []
+           :updated-date (:last_updated row)
+           :download-count 0
+           :source :github
+           :source-id (-> url java.net.URL. .getPath)
+           :description (:description row)
+           :game-track-list (->> row
+                                 :flavors
+                                 split*
+                                 (mapv utils/guess-game-track))})]
+
+    (mapv to-summary result-list)))
