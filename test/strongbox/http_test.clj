@@ -96,7 +96,7 @@
           output-file nil
           message nil
           extra-params {}
-          expected {:host "foo.bar", :reason-phrase "Connection timed out", :status 408}]
+          expected {:host "foo.bar", :reason-phrase "Connection timed out", :status 608}]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (http/-download url output-file message extra-params)))))))
 
@@ -108,7 +108,7 @@
           output-file nil
           message nil
           extra-params {}
-          expected {:host "foo.bar", :reason-phrase "Connection timed out", :status 408}]
+          expected {:host "foo.bar", :reason-phrase "Connection timed out", :status 608}]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (http/-download url output-file message extra-params)))))))
 

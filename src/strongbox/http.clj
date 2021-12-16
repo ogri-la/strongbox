@@ -253,7 +253,7 @@
             (close-stream ste))
           ;; return a synthetic HTTP error
           (let [request-obj (java.net.URL. url)
-                http-error {:status 408 ;; 'Request Timeout'
+                http-error {:status 608 ;; 'Request Timeout'
                             :host (.getHost request-obj)
                             :reason-phrase "Connection timed out"}]
             (warn (format "failed to fetch '%s': connection timed out." url))
@@ -265,7 +265,7 @@
         (catch java.net.ConnectException ce
           ;; return a synthetic HTTP error
           (let [request-obj (java.net.URL. url)
-                http-error {:status 408 ;; 'Request Timeout'
+                http-error {:status 608 ;; 'Request Timeout'
                             :host (.getHost request-obj)
                             :reason-phrase "Connection timed out"}]
             (warn (format "failed to connect '%s': connection timed out." url))
