@@ -8,7 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* a github catalogue.
+    - actually, the catalogue is available right now if you're using the 'short' (default) or 'full' catalogues.
+    - an entry in the `Catalogue` menu where you can switch to the Github catalogue exclusively.
+
 ### Changed
+
+* the set of catalogues in your `config.json` file will be upgraded to include the new Github catalogue
+    - but only if it looks unmodified from the default set of catalogues.
 
 ### Fixed
 
