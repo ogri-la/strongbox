@@ -315,18 +315,21 @@
 
         to-summary
         (fn [row]
-          {:url (:url row)
-           :name (slugify (:name row))
-           :label (:name row)
-           :tag-list []
-           :updated-date (:last_updated row)
-           :download-count 0
-           :source "github"
-           :source-id (-> url java.net.URL. .getPath)
-           :description (:description row)
-           :game-track-list (->> row
-                                 :flavors
-                                 split*
-                                 (mapv utils/guess-game-track))})]
-
+          (let [addon {:url (:url row)
+                       :name (slugify (:name row))
+                       :label (:name row)
+                       :tag-list []
+                       :updated-date (:last_updated row)
+                       :download-count 0
+                       :source "github"
+                       :source-id (-> row :url java.net.URL. .getPath (utils/ltrim "/"))
+                       ;;:description (:description row) ;; may be empty
+                       :game-track-list (->> row
+                                             :flavors
+                                             split*
+                                             (mapv utils/guess-game-track))}]
+            ;; this is so clumsy :(
+            (if-let [description (utils/nilable (:description row))]
+              (assoc addon :description description)
+              addon)))]
     (mapv to-summary result-list)))
