@@ -6,6 +6,12 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
+* github catalogue
+    - something quick and dirty for now
+
+* regression, synthetic http errors are no longer retried because they're in the 4xx range
+    - bumped the synthetic 408 errors to 608
+
 ## todo
 
 Curseforge is going away. How to migrate addons off of curseforge?
@@ -20,9 +26,6 @@ Curseforge is going away. How to migrate addons off of curseforge?
     - I want a permanent warning against curseforge addons between now and when the service goes offline
         - I want an error after cut off
 
-* github catalogue
-    - something quick and dirty for now
-
 * source switching
     - some addons will have multiple sources in the toc file we can switch to.
     - if not, we can search the catalogue for them
@@ -30,8 +33,6 @@ Curseforge is going away. How to migrate addons off of curseforge?
 
 * strongbox-comrades
     - remove curseforge as a requirement for any category.
-
-* regression, synthetic http errors are no longer retried because they're in the 4xx range
 
 ## todo bucket (no particular order)
 

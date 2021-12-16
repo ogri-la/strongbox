@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+* http backoff regression on timeout errors.
+    - the 'synthetic' http errors I was using to replicate socket connection errors and connection timeout errors used 4xx statuses.
+        - this meant they were considered 'client' errors and (404, 403, etc) and *not* re-attempted.
+
 ### Removed
 
 ## 4.8.0 - 2021-12-12
