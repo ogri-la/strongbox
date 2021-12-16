@@ -24,8 +24,8 @@
 (def ^:dynamic *default-attempts* 3)
 
 (defn simple-cache
-  "data and a setter that gets bound to *cache* when caching http requests.
-  very simple, good for development"
+  "binds a simplistic getter+setter and `/tmp` to *cache* when caching http requests.
+  good for debugging, don't use otherwise."
   []
   {:set-etag (constantly nil)
    :get-etag (constantly nil)
@@ -403,13 +403,13 @@
          result)))))
 
 (defmacro with-simple-cache
+  "executes the body form with results cached in `/tmp`.
+  just like `simple-cache`, don't use outside of debugging."
   [& form]
   `(binding [*cache* (simple-cache)]
      ~@form))
 
-
 ;;
-
 
 (defn-spec prune-cache-dir nil?
   "deletes files in the given `cache-dir` that are older than the `expiry-offset-hours`"

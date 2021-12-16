@@ -102,9 +102,11 @@
     ;; key not present, return config as-is
     cfg))
 
-(defn add-github-catalogue
-  [cfg]
-  (if (= (:catalogue-location-list cfg) -default-catalogue-list--v1)
+(defn-spec add-github-catalogue map?
+  "upgrades a v1 list of catalogue locations to a v2 list if it looks like a default set is present."
+  [cfg map?]
+  (if (= (->> cfg :catalogue-location-list (map :name) set)
+         (->> -default-catalogue-list--v1 (map :name) set))
     (assoc cfg :catalogue-location-list -default-catalogue-list--v2)
     cfg))
 

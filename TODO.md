@@ -31,6 +31,8 @@ Curseforge is going away. How to migrate addons off of curseforge?
 * strongbox-comrades
     - remove curseforge as a requirement for any category.
 
+* regression, synthetic http errors are no longer retried because they're in the 4xx range
+
 ## todo bucket (no particular order)
 
 * "developer warnings"

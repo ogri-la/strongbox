@@ -735,8 +735,6 @@
   (binding [http/*cache* (core/cache)]
     (let [output-file (find-catalogue-local-path :github)
           catalogue-data (github-api/build-catalogue)
-          ;;_ (doseq [row catalogue-data]
-          ;;    (sp/valid-or-explain :addon/summary row))
           created (utils/datestamp-now-ymd)
           formatted-catalogue-data (catalogue/format-catalogue-data-for-output catalogue-data created)]
       (catalogue/write-catalogue formatted-catalogue-data output-file))))
@@ -773,7 +771,7 @@
   (let [curseforge-catalogue (find-catalogue-local-path :curseforge)
         wowinterface-catalogue (find-catalogue-local-path :wowinterface)
         tukui-catalogue (find-catalogue-local-path :tukui)
-        github-catalogue (spy :warn (find-catalogue-local-path :github))
+        github-catalogue (find-catalogue-local-path :github)
 
         catalogue-path-list [curseforge-catalogue wowinterface-catalogue tukui-catalogue github-catalogue]
         catalogue (mapv catalogue/read-catalogue catalogue-path-list)

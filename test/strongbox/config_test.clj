@@ -332,6 +332,7 @@
                                 :selected-addon-dir "/tmp/.strongbox-foo"
 
                                 ;; new in 1.0
+                                ;; the set of available catalogues are added to configuration.
                                 :catalogue-location-list [{:name :short :label "Short (default)" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"}
                                                           {:name :full :label "Full" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/full-catalogue.json"}
                                                           {:name :tukui :label "Tukui" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/tukui-catalogue.json"}
@@ -529,6 +530,7 @@
                                            {:addon-dir "/tmp/.strongbox-foo", :game-track :retail :strict? false}]
 
                           ;; new in 1.0
+                          ;; new in 4.9, the set of available catalogues now includes a github catalogue
                           :catalogue-location-list (:catalogue-location-list config/default-cfg)
 
                           ;; new in 0.12
@@ -554,6 +556,7 @@
                                                           {:name :curseforge :label "Curseforge" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/curseforge-catalogue.json"}
                                                           {:name :wowinterface :label "WoWInterface" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/wowinterface-catalogue.json"}
                                                           ;; new in 4.9
+                                                          ;; the set of available catalogues now includes a github catalogue
                                                           {:name :github :label "GitHub" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/github-catalogue.json"}]
 
                                 :preferences {:addon-zips-to-keep 3
