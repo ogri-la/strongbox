@@ -30,7 +30,7 @@
     (with-running-app
       (doseq [action-kw safe-actions]
         (testing (str "cli: " action)
-          (cli/action action-kw))))))
+          (is (nil? (cli/action action-kw))))))))
 
 (deftest write-catalogue
   (with-running-app
@@ -39,12 +39,14 @@
 
           curse (core/find-catalogue-local-path :curseforge)
           wowi (core/find-catalogue-local-path :wowinterface)
-          tukui (core/find-catalogue-local-path :tukui)]
+          tukui (core/find-catalogue-local-path :tukui)
+          github (core/find-catalogue-local-path :github)]
 
       ;; copy some fixtures
       (fs/copy (fixture-path "catalogue--v2--curseforge.json") curse)
       (fs/copy (fixture-path "catalogue--v2--wowinterface.json") wowi)
       (fs/copy (fixture-path "catalogue--v2--tukui.json") tukui)
+      (fs/copy (fixture-path "catalogue--v2--github.json") github)
 
       (cli/action :write-catalogue)
 
@@ -53,10 +55,10 @@
         (is (fs/exists? (core/find-catalogue-local-path :short))))
 
       (testing "each catalogue has one addon each"
-        (is (= 3 (-> full catalogue/read-catalogue :total))))
+        (is (= 4 (-> full catalogue/read-catalogue :total))))
 
-      (testing "the short catalogue has just one addon in range"
-        (is (= 1 (-> short catalogue/read-catalogue :total)))))))
+      (testing "the short catalogue has two addons in range"
+        (is (= 2 (-> short catalogue/read-catalogue :total)))))))
 
 (deftest search-db--empty-db
   (testing "an empty database can be searched from the CLI"
@@ -550,6 +552,9 @@
           ;; and that the addon was added to the user catalogue
           (is (= expected-user-catalogue
                  (:addon-summary-list (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))))
+
+;; todo: no import-addon-gitlab ?
+
 
 (deftest refresh-user-catalogue
   (testing "the user catalogue can be 'refreshed', pulling in updated information from github and the current catalogue"

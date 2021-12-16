@@ -1,0 +1,6 @@
+name,description,url,last_updated,flavors,curse_id,wago_id,wowi_id
+premade-applicants-filter,Allows filtering of premade applicants using advanced filter expressions.,https://github.com/0xbs/premade-applicants-filter,2021-07-19T21:11:20+00:00,mainline,,,
+ArenaLeaveConfirmer,,https://github.com/AlexFolland/ArenaLeaveConfirmer,2021-07-04T22:12:06+00:00,"classic,mainline",49965,,
+BattlegroundSpiritReleaser,,https://github.com/AlexFolland/BattlegroundSpiritReleaser,2021-07-04T21:55:31+00:00,"bcc,classic,mainline",95070,,
+AltReps,AltReps is an addon that allows you to track reputations across your characters,https://github.com/Alastair-Scott/AltReps,2021-07-01T18:21:23+00:00,mainline,408394,,25680
+ChatCleaner,,https://github.com/GoldpawsStuff/ChatCleaner,2021-11-17T10:12:53+00:00,"bcc,classic,mainline",531109,baNDwAGo,

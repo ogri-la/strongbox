@@ -15,6 +15,7 @@
                  [org.clojure/tools.cli "1.0.206"] ;; cli arg parsing
                  [org.clojure/tools.namespace "1.1.0"] ;; reload code
                  [org.clojure/data.json "2.4.0"] ;; json handling
+                 [org.clojure/data.csv "1.0.0"] ;; csv handling
                  [orchestra "2021.01.01-1"] ;; improved clojure.spec instrumentation
                  ;; see lein deps :tree
                  [com.taoensso/timbre "5.1.2"] ;; logging
@@ -47,7 +48,7 @@
                  [org.openjfx/javafx-graphics "15.0.1" :classifier "mac"]
 
                  ;; GPLv3 compatible dependencies.
-                 ;; these don't need an exception to be made in LICENCE.txt
+                 ;; these don't need an exception in LICENCE.txt
                  [org.apache.commons/commons-compress "1.21"] ;; Apache 2.0 licenced, bz2 compression/decompression of static catalogue
                  [org.ocpsoft.prettytime/prettytime "5.0.2.Final"] ;; Apache 2.0 licenced, pretty date formatting
 

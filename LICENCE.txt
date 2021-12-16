@@ -673,6 +673,7 @@ Program grant you additional permission to convey the resulting work.
 * org.clojure/tools.cli
 * org.clojure/tools.namespace
 * org.clojure/data.json
+* org.clojure/data.csv
 * orchestra
 * com.taoensso/timbre
 * enlive

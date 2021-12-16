@@ -17,6 +17,15 @@
   (when (s/valid? spec x)
     x))
 
+(defn valid-or-explain
+  "when the given `x` isn't a valid `spec`, prints off an explanation.
+  good for debugging gigantic blocks of spec output by targeting just bits of it's body, for example:
+  (doseq [row catalogue-data]
+     (sp/valid-or-explain :addon/summary row))"
+  [spec x]
+  (when-not (s/valid? spec x)
+    (s/explain spec x)))
+
 (defn spec-to-kw-list
   "very limited. only works for basic specs that have a :req [keys] and :opt [keys]"
   [spec]

@@ -28,7 +28,20 @@ Curseforge is going away. How to migrate addons off of curseforge?
     - if not, we can search the catalogue for them
         - exclude curseforge 
 
+* strongbox-comrades
+    - remove curseforge as a requirement for any category.
+
+* regression, synthetic http errors are no longer retried because they're in the 4xx range
+
 ## todo bucket (no particular order)
+
+* "developer warnings"
+    - a preference that bumps certain debug messages to warnings and errors for developers
+        - like if a release.json is missing assets
+        - or the toc file is mangled
+            - or is missing useful information
+        - or the zip file is badly formed
+    - stuff a regular user should gloss over but a dev might find useful
 
 * star or 'like' addons in the catalogue
 

@@ -681,7 +681,6 @@
 
 ;; debug
 
-
 (defn-spec touch nil?
   "used to select each addon in the GUI so the 'unsteady' colour can be tested."
   []
@@ -716,7 +715,7 @@
     (joblib/run-jobs! queue-atm core/num-concurrent-downloads)
     nil))
 
-;;
+;; ---
 
 (defmulti action
   "handles the following actions:
@@ -730,6 +729,15 @@
     (cond
       (map? x) (:action x)
       (keyword? x) x)))
+
+(defmethod action :scrape-github-catalogue
+  [_]
+  (binding [http/*cache* (core/cache)]
+    (let [output-file (find-catalogue-local-path :github)
+          catalogue-data (github-api/build-catalogue)
+          created (utils/datestamp-now-ymd)
+          formatted-catalogue-data (catalogue/format-catalogue-data-for-output catalogue-data created)]
+      (catalogue/write-catalogue formatted-catalogue-data output-file))))
 
 (defmethod action :scrape-wowinterface-catalogue
   [_]
@@ -763,8 +771,9 @@
   (let [curseforge-catalogue (find-catalogue-local-path :curseforge)
         wowinterface-catalogue (find-catalogue-local-path :wowinterface)
         tukui-catalogue (find-catalogue-local-path :tukui)
+        github-catalogue (find-catalogue-local-path :github)
 
-        catalogue-path-list [curseforge-catalogue wowinterface-catalogue tukui-catalogue]
+        catalogue-path-list [curseforge-catalogue wowinterface-catalogue tukui-catalogue github-catalogue]
         catalogue (mapv catalogue/read-catalogue catalogue-path-list)
         catalogue (reduce catalogue/merge-catalogues catalogue)
         ;; 2021-09: `merge-catalogues` no longer converts an addon to an `ordered-map`.
@@ -783,6 +792,7 @@
   (action :scrape-curseforge-catalogue)
   (action :scrape-wowinterface-catalogue)
   (action :scrape-tukui-catalogue)
+  (action :scrape-github-catalogue)
   (action :write-catalogue))
 
 (defmethod action :list

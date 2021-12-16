@@ -155,7 +155,7 @@
 
 
 (defn-spec format-catalogue-data :catalogue/catalogue
-  "returns a correctly formatted catalogue given a list of addons and a datestamp"
+  "returns a correctly formatted, ordered, catalogue given a list of addons and a datestamp"
   [addon-list :addon/summary-list, datestamp ::sp/ymd-dt]
   (let [addon-list (p :cat/sort-addons
                       (sort-by :name addon-list))]
