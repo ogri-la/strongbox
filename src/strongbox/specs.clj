@@ -219,6 +219,10 @@
                            :unknown string?))
 (s/def :addon/source-id (s/or ::integer-id? int? ;; tukui has negative ids
                               ::string-id? string?))
+
+(s/def :addon/source-map (s/keys :req-un [:addon/source :addon/source-id]))
+(s/def :addon/source-map-list (s/coll-of :addon/source-map :kind vector?))
+
 (s/def :addon/created-date ::inst)
 (s/def :addon/updated-date ::inst)
 
@@ -232,9 +236,10 @@
                    ::interface-version
                    ::installed-version
                    :addon/supported-game-tracks]
-          ;; todo: revisit all of these
-          ;;:opt-un [::group-id ::primary? ::group-addons :addon/source :addon/source-id]
-          ))
+          :opt-un [;; toc file may contain addon host information but it's not guaranteed.
+                   :addon/source
+                   :addon/source-id
+                   :addon/source-map-list]))
 (s/def :addon/toc-list (s/coll-of :addon/toc))
 
 ;; circular dependency? :addon/toc has an optional ::group-addons and ::group-addons is a list of :addon/toc ? oof
@@ -274,9 +279,10 @@
                    ::download-count
                    :addon/source
                    :addon/source-id]
-          :opt-un [::description ;; wowinterface summaries have no description
+          :opt-un [::description ;; wowinterface summaries have no description. github may not have a description.
                    :addon/created-date ;; wowinterface summaries have no created date
-                   ::game-track-list ;; more of a set, really
+                   ::game-track-list   ;; more of a set, really
+                   ;;:addon/source-map-list
                    ]))
 (s/def :addon/summary-list (s/coll-of :addon/summary))
 
