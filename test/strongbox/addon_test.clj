@@ -533,3 +533,49 @@
       (spit (path "EveryAddon.toc") "## Title: Foo\n## Version: 1.2.3")
       (spit (path "EveryAddon-Mainline.toc") "## Title: Foo-Bar\n## Version: @project-version@")
       (is (true? (addon/implicitly-ignored? (helper/install-dir) nom))))))
+
+(deftest source-switch--no-sources-available
+  (testing "an addon can switch between sources but only if another source is available."
+    (let [new-source-map {:source "wowinterface" :source-id 321}
+          addon helper/strongbox-installed-addon] ;; has no source-map-list
+      (is (nil? (addon/switch-source! (helper/install-dir) addon new-source-map))))))
+
+(deftest source-switch--no-ignored
+  (testing "an addon can switch between sources, but not if it is being ignored."
+    (let [new-source-map {:source "wowinterface" :source-id 321}
+          addon (merge helper/strongbox-installed-addon
+                       {:source-map-list [new-source-map]
+                        :ignore? true})
+          nfo-data {:source-map-list [new-source-map]
+                    :ignore? true}
+          expected (merge helper/nfo-data nfo-data)]
+      (helper/install-every-addon! nfo-data)
+      (is (nil? (addon/switch-source! (helper/install-dir) addon new-source-map)))
+      (is (= expected (nfo/read-nfo (helper/install-dir) (:dirname helper/toc-data)))))))
+
+(deftest source-switch--no-pinned
+  (testing "an addon can switch between sources, but not if it is pinned."
+    (let [new-source-map {:source "wowinterface" :source-id 321}
+          addon (merge helper/strongbox-installed-addon
+                       {:source-map-list [new-source-map]
+                        :pinned-version "123"})
+          nfo-data {:source-map-list [new-source-map]
+                    :pinned-version "123"}
+          expected (merge helper/nfo-data nfo-data)]
+      (helper/install-every-addon! nfo-data)
+      (is (nil? (addon/switch-source! (helper/install-dir) addon new-source-map)))
+      (is (= expected (nfo/read-nfo (helper/install-dir) (:dirname helper/toc-data)))))))
+
+(deftest source-switch
+  (testing "an addon can switch between sources"
+    (let [new-source-map {:source "wowinterface" :source-id 321}
+          addon (merge helper/strongbox-installed-addon
+                       {:source-map-list [new-source-map]})
+          ;; todo: should we 'remember' the one being overwritten? can that happen outside of test conditions?
+          nfo-data {:source-map-list [new-source-map]}
+          ;; `:source-map-list` isn't stored in nfo data. not yet anyway. should it?
+          expected (merge helper/nfo-data new-source-map)]
+      (helper/install-every-addon! nfo-data)
+      (is (nil? (addon/switch-source! (helper/install-dir) addon new-source-map)))
+      (is (= expected (nfo/read-nfo (helper/install-dir) (:dirname helper/toc-data)))))))
+

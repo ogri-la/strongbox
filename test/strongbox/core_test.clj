@@ -556,30 +556,15 @@
 ;;
 
 
-(def matched?
-  "was the toc data matched to an addon in the catalogue? (yes)"
-  {:matched? true})
-
-(def source-updates
-  "updates to the addon data fetched from remote source"
-  {:interface-version  70000,
-   :download-url  "https://www.example.org/wow/addons/everyaddon/download/123456/file",
-   :version  "1.2.3"
-   :game-track :retail})
-
-(def addon
-  "final mooshed result"
-  (merge helper/toc helper/addon-summary matched? source-updates))
-
 (deftest install-addon-guard
   (testing "an addon can be installed"
     (with-running-app*
       (let [install-dir (str fs/*cwd*)
             ;; move dummy addon file into place so there is no cache miss
-            fname (downloaded-addon-fname (:name addon) (:version addon))
+            fname (downloaded-addon-fname (:name helper/addon) (:version helper/addon))
             _ (utils/cp (fixture-path fname) install-dir)
             test-only? false
-            file-list (core/install-addon-guard addon install-dir test-only?)]
+            file-list (core/install-addon-guard helper/addon install-dir test-only?)]
         (testing "addon directory created, single file written (.strongbox.json nfo file)"
           (is (= (count file-list) 1))
           (is (fs/exists? (first file-list))))))))
@@ -588,9 +573,9 @@
   (testing "trial installation of a good addon"
     (with-running-app*
       (let [install-dir (helper/install-dir)
-            fname (downloaded-addon-fname (:name addon) (:version addon))
+            fname (downloaded-addon-fname (:name helper/addon) (:version helper/addon))
             dest (utils/cp (fixture-path fname) install-dir)
-            addon (assoc addon :-testing-zipfile dest)
+            addon (assoc helper/addon :-testing-zipfile dest)
             test-only? true
             result (core/install-addon-guard addon install-dir test-only?)]
         (is result) ;; success
@@ -603,11 +588,11 @@
     (with-running-app*
       (let [install-dir (helper/install-dir)
             ;; move dummy addon file into place so there is no cache miss
-            fname (downloaded-addon-fname (:name addon) (:version addon))
+            fname (downloaded-addon-fname (:name helper/addon) (:version helper/addon))
             _ (fs/copy (fixture-path "bad-truncated.zip") (utils/join install-dir fname))
 
             test-only? true
-            result (core/install-addon-guard addon install-dir test-only?)]
+            result (core/install-addon-guard helper/addon install-dir test-only?)]
         (is (not result)) ;; failure
 
         ;; ensure nothing was actually unzipped
@@ -617,10 +602,10 @@
   (testing "installing a bad addon"
     (with-global-fake-routes-in-isolation {}
       (let [install-dir (str fs/*cwd*)
-            fname (downloaded-addon-fname (:name addon) (:version addon))
+            fname (downloaded-addon-fname (:name helper/addon) (:version helper/addon))
             dest (utils/join install-dir fname)
             _ (fs/copy (fixture-path "bad-truncated.zip") dest)
-            addon (assoc addon :-testing-zipfile dest)]
+            addon (assoc helper/addon :-testing-zipfile dest)]
         (is (nil? (core/install-addon-guard addon install-dir)))
         ;; bad zip file deleted
         (is (= 0 (count (fs/list-dir install-dir))))))))
@@ -630,7 +615,7 @@
     (with-running-app
       (let [install-dir (helper/install-dir)
             ;; reuse the addon fixture but change it's version
-            bundled-addon (merge addon {:version "0.1.2"})
+            bundled-addon (merge helper/addon {:version "0.1.2"})
 
             ;; move dummy addon file into place so there is no cache miss
             fname (downloaded-addon-fname (:name bundled-addon) (:version bundled-addon))
@@ -726,10 +711,10 @@
     (with-running-app
       (let [install-dir (helper/install-dir)
             ;; move dummy addon file into place so there is no cache miss
-            fname (downloaded-addon-fname (:name addon) (:version addon))
+            fname (downloaded-addon-fname (:name helper/addon) (:version helper/addon))
             _ (utils/cp (fixture-path fname) install-dir)]
         (cli/set-preference :addon-zips-to-keep 0)
-        (core/install-addon-guard addon install-dir)
+        (core/install-addon-guard helper/addon install-dir)
         (is (= ["EveryAddon"] (helper/install-dir-contents)))))))
 
 (deftest install-addon--remove-multiple-zips
@@ -737,11 +722,11 @@
     (with-running-app
       (let [install-dir (helper/install-dir)
             ;; move dummy addon file into place so there is no cache miss
-            fname (downloaded-addon-fname (:name addon) (:version addon))]
+            fname (downloaded-addon-fname (:name helper/addon) (:version helper/addon))]
 
         ;; create a bunch of empty files that will be matched and cleaned up.
         (doseq [i (range 1 6)]
-          (let [empty-file (fs/file install-dir (downloaded-addon-fname (:name addon) (str "0.0." i)))]
+          (let [empty-file (fs/file install-dir (downloaded-addon-fname (:name helper/addon) (str "0.0." i)))]
             (fs/touch empty-file)
             ;; ensure each one is definitively a little older than the previous
             (Thread/sleep 10)))
@@ -758,7 +743,7 @@
                (helper/install-dir-contents)))
 
         (cli/set-preference :addon-zips-to-keep 3)
-        (core/install-addon-guard addon install-dir)
+        (core/install-addon-guard helper/addon install-dir)
         (is (= ["EveryAddon"
                 "everyaddon--0-0-4.zip"
                 "everyaddon--0-0-5.zip"
@@ -775,7 +760,7 @@
             ;; and doesn't know about the connection. expect the bundled addon to remain
             expected ["EveryAddon-BundledAddon"]]
         (zip/unzip-file (fixture-path "everyaddon--0-1-2.zip") install-dir)
-        (core/remove-many-addons [helper/toc])
+        (core/remove-many-addons [helper/toc-data])
         (is (= expected (helper/install-dir-contents)))))))
 
 (deftest uninstall-installed-addon
@@ -783,8 +768,8 @@
     (with-running-app
       (let [install-dir (helper/install-dir)
 
-            addon-v0 (merge addon {:version "0.1.2"})
-            addon-v1 addon
+            addon-v0 (merge helper/addon {:version "0.1.2"})
+            addon-v1 helper/addon
 
             ;; move dummy addon files into place so there is no cache miss
             fname-v0 (downloaded-addon-fname (:name addon-v0) (:version addon-v0))
@@ -812,7 +797,7 @@
         (let [;; our v0 addon should now have group information
               addon-v0 (first (core/get-state :installed-addon-list))
               ;; there is no catalogue so there is no download-url. the version has also changed.
-              addon-v1 (merge addon-v0 source-updates {:url "https://example.org/"})]
+              addon-v1 (merge addon-v0 helper/source-updates {:url "https://example.org/"})]
           ;; install the upgrade that gets rid of a directory
           (core/install-addon-guard addon-v1 install-dir)
           (is (= ["EveryAddon"] (install-path-dirs))))))))
@@ -841,16 +826,16 @@
         (let [install-dir (helper/install-dir)
               install-dir-contents #(->> install-dir fs/list-dir (filter fs/directory?) (map fs/base-name) sort)
 
-            ;; trick here: copying 0.1.2 fixture to 1.2.3 filename. this fixture unpacks two directories
-              fname (downloaded-addon-fname (:name addon) (:version addon))
+              ;; trick here: copying 0.1.2 fixture to 1.2.3 filename. this fixture unpacks two directories
+              fname (downloaded-addon-fname (:name helper/addon) (:version helper/addon))
               _ (fs/copy (fixture-path "everyaddon--0-1-2.zip") (utils/join install-dir fname))
-              _ (core/install-addon-guard addon install-dir)
+              _ (core/install-addon-guard helper/addon install-dir)
 
-            ;; ensure bundled addon gets ignored
+              ;; ensure bundled addon gets ignored
               _ (fs/mkdir (utils/join install-dir "EveryAddon-BundledAddon" ".git"))
               _ (core/load-installed-addons)
-              addon (first (core/get-state :installed-addon-list))]
-          (core/remove-many-addons [addon])
+              refreshed-addon (first (core/get-state :installed-addon-list))]
+          (core/remove-addon refreshed-addon)
           (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (install-dir-contents))))))))
 
 ;; mutual dependencies

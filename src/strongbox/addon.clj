@@ -46,31 +46,32 @@
       :else (do (fs/delete-dir addon-path)
                 (debug (format "removed '%s'" addon-path))))))
 
+(defn-spec flatten-addon ::sp/list-of-maps
+  "given an `addon`, returns a list of that addon's members (that includes itself) or the addon wrapped in a list."
+  [addon map?]
+  (if-let [group-members (:group-addons addon)]
+    group-members
+    [addon]))
+
 (defn-spec remove-addon nil?
   "removes the given addon. if addon is part of a group, all addons in group are removed"
   [install-dir ::sp/extant-dir, addon :addon/installed]
   (info (format "removing \"%s\" version \"%s'" (:label addon) (:installed-version addon)))
-  (cond
+  (if (:ignore? addon)
     ;; if addon is being ignored, refuse to remove addon.
     ;; note: `group-addons` will add a top level `:ignore?` flag if any addon in a bundle is being ignored.
-    (:ignore? addon) (error "refusing to delete ignored addon:" install-dir)
+    (error "refusing to delete ignored addon:" install-dir)
 
-    ;; addon is part of a bundle.
-    ;; because the addon is also contained in `:group-addons` we just remove all in list
-    (contains? addon :group-addons) (doseq [grouped-addon (:group-addons addon)]
-                                      (-remove-addon install-dir (:dirname grouped-addon) (:group-id addon)))
-
-    ;; addon is a single directory
-    :else (-remove-addon install-dir (:dirname addon) (:group-id addon))))
+    (doseq [grouped-addon (flatten-addon addon)]
+      (-remove-addon install-dir (:dirname grouped-addon) (:group-id addon)))))
 
 ;;
 
-;; todo: toc-list to installed-list
-(defn-spec group-addons :addon/toc-list
+(defn-spec group-addons :addon/installed-list
   "an addon may actually be many addons bundled together in a single download.
   strongbox tags the bundled addons as they are unzipped and tries to determine the primary one.
   after we've loaded the addons and merged their nfo data, we can then group them"
-  [addon-list :addon/toc-list]
+  [addon-list :addon/installed-list]
   (let [;; group-id comes from the nfo file
         addon-groups (group-by :group-id addon-list)
 
@@ -115,14 +116,6 @@
         ;; this flattens the newly grouped addons from a map into a list and joins the unknowns
         addon-list (apply conj (mapv expand addon-groups) unknown-grouping)]
     addon-list))
-
-(defn-spec ungroup-addon :addon/installed-list
-  "an addon may actually be many addons bundled together with a primary one chosen to represent them.
-  sometimes we want to treat this addon as a list of addons"
-  [addon :addon/installed]
-  (if (empty? (:group-addons addon))
-    [addon]
-    (get addon :group-addons [])))
 
 (defn merge-toc-nfo
   "it's own function because the logic is duplicated in tests otherwise"
@@ -332,8 +325,7 @@
   "marks the given `addon` and all of it's group members (if any) as 'ignored'"
   [install-dir ::sp/extant-dir, addon :addon/installed]
   (->> addon
-       ungroup-addon
-       flatten
+       flatten-addon
        (map :dirname)
        (run! (partial nfo/ignore install-dir))))
 
@@ -346,18 +338,11 @@
                     nfo/stop-ignoring
                     nfo/clear-ignore)]
     (->> addon
-         ungroup-addon
-         (mapv :dirname)
+         flatten-addon
+         (map :dirname)
          (run! (partial ignore-fn install-dir)))))
 
 ;;
-
-(defn flatten-addon
-  "given an `addon`, returns a list of that addon's members (that includes itself) or the addon wrapped in a list."
-  [addon]
-  (if-let [group-members (:group-addons addon)]
-    group-members
-    [addon]))
 
 (defn-spec pin nil?
   "pins an `addon` and all of it's group members (if any) to the given `version` or the `:installed-version` when missing.
@@ -501,3 +486,21 @@
   "returns `true` if there is more than 1 release available and the addon isn't pinned"
   [addon map?]
   (releases-available? (update-in addon [:release-list] rest)))
+
+;;
+
+(defn-spec update-nfo! nil?
+  "updates the nfo data for the given addon and all of it's grouped addons"
+  [install-dir ::sp/extant-dir, addon :addon/toc+nfo, updates map?]
+  (doseq [grouped-addon (flatten-addon addon)]
+    (nfo/update-nfo install-dir (:dirname grouped-addon) updates)))
+
+(defn-spec switch-source! nil?
+  "switches addon from one source (like curseforge) to another (like wowinterface), rewriting nfo data.
+  `new-source` must appear in the addon's `source-map-list`."
+  [install-dir ::sp/extant-dir, addon :addon/toc+nfo, new-source-map :addon/source-map]
+  (when (and (utils/in? new-source-map (:source-map-list addon))
+             (not (ignored? addon))
+             (not (pinned? addon)))
+    ;; todo: update group-id as well?
+    (update-nfo! install-dir addon new-source-map)))

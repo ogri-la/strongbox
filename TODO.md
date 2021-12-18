@@ -65,6 +65,7 @@ Curseforge is going away. How to migrate addons off of curseforge?
         - rather than once per update
 
 * user catalogue, refresh happens in parallel
+    - write the user-catalogue once, not each time or else we'll get Weirdness
 
 * a more permanent store than just cached files
     - I want to store release data permanently

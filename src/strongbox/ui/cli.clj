@@ -679,7 +679,18 @@
   (sort-by (fn [x]
              (.indexOf sp/known-column-list x)) column-list))
 
+;; source switching
+
+(defn-spec switch-source (s/or :ok :addon/toc+nfo, :error nil?)
+  "switches addon from one source (like curseforge) to another (like wowinterface), rewriting nfo data.
+  `new-source` must appear in the addon's `source-map-list`."
+  [addon :addon/toc+nfo, new-source-map :addon/source-map]
+  (addon/switch-source! (core/selected-addon-dir) addon new-source-map)
+  (half-refresh))
+
+
 ;; debug
+
 
 (defn-spec touch nil?
   "used to select each addon in the GUI so the 'unsteady' colour can be tested."

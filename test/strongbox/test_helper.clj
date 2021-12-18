@@ -7,12 +7,14 @@
    [me.raynes.fs :as fs :refer [with-cwd]]
    [clj-http.fake :refer [with-global-fake-routes-in-isolation]]
    [strongbox
+    [nfo :as nfo]
+    [zip :as zip]
     [specs :as sp]
     [main :as main]
     [core :as core]
     [utils :as utils]]))
 
-(def toc
+(def toc-data
   "local addon .toc file"
   {:name "everyaddon",
    :description "Does what no other addon does, slightly differently"
@@ -22,6 +24,18 @@
    :installed-version "1.2.3"
    :toc/game-track :retail
    :supported-game-tracks [:retail]})
+
+(def nfo-data
+  {:installed-version "1.2.3"
+   :name "everyaddon"
+   :group-id "https://www.curseforge.com/wow/addons/everyaddon"
+   :primary? true
+   :installed-game-track :retail
+   :source "curseforge"
+   :source-id 1})
+
+(def strongbox-installed-addon
+  (merge toc-data nfo-data))
 
 (def addon-summary
   "catalogue of summaries"
@@ -35,6 +49,21 @@
    :updated-date  "2016-09-08T14:18:33Z",
    :url "https://www.example.org/wow/addons/everyaddon"
    :download-count 1})
+
+(def matched?
+  "was the toc data matched to an addon in the catalogue? (yes)"
+  {:matched? true})
+
+(def source-updates
+  "updates to the addon data fetched from remote source"
+  {:interface-version  70000,
+   :download-url  "https://www.example.org/wow/addons/everyaddon/download/123456/file",
+   :version  "1.2.3"
+   :game-track :retail})
+
+(def addon
+  "final mooshed result"
+  (merge toc-data addon-summary matched? source-updates))
 
 (def fixture-dir (-> "test/fixtures" fs/absolute fs/normalized str))
 
@@ -109,6 +138,13 @@
       (finally
         (debug "destroying temp working directory" temp-dir-path) ;; "with contents" (vec (file-seq fs/*cwd*)))
         (fs/delete-dir temp-dir-path)))))
+
+(defn install-every-addon!
+  "convenience, unzips the EveryAddon to the given `addon-dir` and writes the toc data"
+  [& [more-nfo-data]]
+  (zip/unzip-file (fixture-path "everyaddon--1-2-3.zip") (install-dir))
+  (spit (utils/join (install-dir) "EveryAddon" nfo/nfo-filename) ;; "/tmp/something/EveryAddon/.strongbox.json"
+        (utils/to-json (merge nfo-data more-nfo-data))))
 
 (defmacro with-running-app+opts
   [opts & form]
