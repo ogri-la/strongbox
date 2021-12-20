@@ -161,11 +161,7 @@
                         {:source "tukui"
                          :source-id x-tukui-id})
 
-         wago-source (when-let [x-wago-id (-> keyvals :x-wago-id)]
-                       {:source "wago"
-                        :source-id x-wago-id})
-
-         source-map-list (when-let [items (->> [wowi-source curse-source tukui-source wago-source]
+         source-map-list (when-let [items (->> [wowi-source curse-source tukui-source]
                                                utils/items
                                                utils/nilable)]
                            {:source-map-list items})
