@@ -117,10 +117,27 @@
         addon-list (apply conj (mapv expand addon-groups) unknown-grouping)]
     addon-list))
 
+(defn merge-source-map-lists
+  "merges two lists of source-maps returning a single distinct one or nil if empty"
+  [list-a, list-b]
+  (some->> (into list-a list-b)
+           (remove nil?)
+           utils/nilable
+           distinct
+           vec))
+
+(defn extract-source-map-list
+  "extracts a source-map from the given `data` as well as anything in :source-map-list and returns a single distinct source map list"
+  [data]
+  (merge-source-map-lists
+   (or (some-> data (select-keys [:source :source-id]) utils/nilable vector) [])
+   (get data :source-map-list [])))
+
 (defn merge-toc-nfo
-  "it's own function because the logic is duplicated in tests otherwise"
   [toc nfo]
-  (merge toc nfo))
+  (merge toc nfo (some->> (merge-source-map-lists (extract-source-map-list toc)
+                                                  (extract-source-map-list nfo))
+                          (assoc {} :source-map-list))))
 
 (defn-spec -load-installed-addons (s/or :ok :addon/toc-list, :error nil?)
   "returns a list of addon data scraped from the .toc files of all addons in given `install-dir`"
@@ -143,7 +160,7 @@
                                 priorities (get priority-map game-track)
                                 group (utils/first-nn #(get grouped-toc-data %) priorities)]
                             (when (and (> (count group) 1)
-                                       ;; not all members in group are equal ...
+                                       ;; not all members in group are the same ...
                                        (not (apply = group)))
                               (warn (format "multiple sets of different toc data found for %s. using first." game-track)))
                             (first group))))))]
@@ -498,7 +515,7 @@
 (defn-spec switch-source! nil?
   "switches addon from one source (like curseforge) to another (like wowinterface), rewriting nfo data.
   `new-source` must appear in the addon's `source-map-list`."
-  [install-dir ::sp/extant-dir, addon :addon/toc+nfo, new-source-map :addon/source-map]
+  [install-dir ::sp/extant-dir, addon :addon/installed, new-source-map :addon/source-map]
   (when (and (utils/in? new-source-map (:source-map-list addon))
              (not (ignored? addon))
              (not (pinned? addon)))

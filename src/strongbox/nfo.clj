@@ -30,7 +30,16 @@
   [addon :addon/nfo]
   (if (sequential? addon)
     (mapv prune addon)
-    (select-keys addon (sp/spec-to-kw-list :addon/-nfo))))
+    (select-keys addon [:installed-version
+                        :name
+                        :group-id
+                        :primary?
+                        :source
+                        :installed-game-track
+                        :source-id
+                        :ignore?
+                        :pinned-version
+                        :source-map-list])))
 
 (defn-spec derive :addon/nfo
   "extract fields from the addon data that will be written to the nfo file"
@@ -54,7 +63,9 @@
 
              ;; where the addon came from and how they identified it
              :source (:source addon)
-             :source-id (:source-id addon)}
+             :source-id (:source-id addon)
+
+             :source-map-list [{:source (:source addon) :source-id (:source-id addon)}]}
 
         ;; users can set this in the nfo file manually or
         ;; it can be drived later in the process by examining the addon's toc file or subdirs, or
@@ -79,18 +90,6 @@
     (fs/delete path)
     nil))
 
-(defn-spec read-nfo-file* (s/or :ok ::sp/map-or-list-of-maps, :error nil?)
-  "safely reads a nfo file with basic transformations.
-  old nfo data had no spec and it's shape changed several times.
-  this function returns whatever we can find or nil.
-  it won't destroy bad/invalid data like `read-nfo-file` will."
-  [path ::sp/file & [opts] (s/* map?)]
-  (let [default-opts {:no-file? nil
-                      :bad-data? nil
-                      :key-fn keyword
-                      :transform-map {:installed-game-track keyword}}]
-    (utils/load-json-file-safely path (merge default-opts opts))))
-
 (defn-spec read-nfo-file (s/or :ok :addon/nfo, :error nil?)
   "reads the nfo file with basic transformations.
   failure to load the json results in the file being deleted.
@@ -101,12 +100,25 @@
                    (warn (format "bad \"%s\" file, deleting: %s" nfo-filename path))
                    (rm-nfo-file path))
         invalid-data (fn []
-                       (warn (format "invalid \"%s\" file, deleting:" nfo-filename path))
-                       (rm-nfo-file path))
-        opts {:bad-data? bad-data
-              :invalid-data? invalid-data,
-              :data-spec :addon/nfo}]
-    (read-nfo-file* path opts)))
+                       (when (fs/exists? path)
+                         (warn (format "invalid \"%s\" file, deleting: %s" nfo-filename path))
+                         (rm-nfo-file path)))
+        opts {:no-file? nil
+              :bad-data? bad-data
+              :key-fn keyword
+              :transform-map {:installed-game-track keyword}}
+
+        coerce (fn [nfo-data]
+                 (if (and (map? nfo-data)
+                          (contains? nfo-data :source)
+                          (not (contains? nfo-data :source-map-list)))
+                   (assoc nfo-data :source-map-list (-> nfo-data (select-keys [:source :source-id]) vector))
+                   nfo-data))
+
+        nfo-data (coerce (utils/load-json-file-safely path opts))]
+    (if (s/valid? :addon/nfo nfo-data)
+      nfo-data
+      (invalid-data))))
 
 (defn-spec mutual-dependency? boolean?
   "returns `true` if multiple sets of nfo data exist in file"

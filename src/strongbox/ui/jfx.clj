@@ -1066,7 +1066,7 @@
           [(:tick constants/glyph-map) "no problems"])
 
         text (if (:update? row) (str text " " (:update constants/glyph-map)) text)
-        tooltip (if (:update? row) (str tooltip ", updates pending") tooltip)]
+        tooltip (if (:update? row) (str tooltip ", updates available") tooltip)]
 
     {:fx/type fx.ext.node/with-tooltip-props
      :props {:tooltip {:fx/type :tooltip
@@ -1424,6 +1424,18 @@
                      (async-handler (juxt (partial cli/set-version addon release) clear-table-selected-items))))
         (:release-list addon)))
 
+(defn-spec build-addon-source-menu (s/or :ok ::sp/list-of-maps, :no-sources nil?)
+  [addon map?]
+  (let [source-map-list (:source-map-list addon)]
+    (when (> (count source-map-list) 1) ;; don't bother if the only source we have is the current one
+      (mapv (fn [source-map]
+              {:fx/type :check-menu-item
+               :text (:source source-map)
+               :selected (-> addon :source (= (:source source-map)))
+               :on-action (async-handler (partial cli/switch-source addon source-map))
+               })
+            source-map-list))))
+
 (defn singular-context-menu
   "context menu when a single addon is selected."
   [{:keys [fx/context]}]
@@ -1433,9 +1445,14 @@
         releases-available? (and (not (empty? release-list))
                                  (not pinned?))
         ignored? (addon/ignored? selected-addon)
-        child? (child-row? selected-addon)]
+        child? (child-row? selected-addon)
+
+        source-menu (build-addon-source-menu selected-addon)]
+
     {:fx/type :context-menu
-     :items [(menu-item "Update" (async-handler (juxt cli/update-selected clear-table-selected-items))
+     :items [(menu "Source" (or source-menu []) {:disable (nil? source-menu)})
+             separator
+             (menu-item "Update" (async-handler (juxt cli/update-selected clear-table-selected-items))
                         {:disable (or child?
                                       (not (addon/updateable? selected-addon)))})
 
@@ -1471,6 +1488,8 @@
         some-ignored? (->> selected-addon-list (filter :ignore?) (some some?) boolean)]
     {:fx/type :context-menu
      :items [(menu-item (str num-selected " addons selected") donothing {:disable true})
+             separator
+             (menu-item "Migrate" donothing {:disable true})
              separator
              (menu-item "Update" (async-handler (juxt cli/update-selected clear-table-selected-items))
                         {:disable none-selected?})

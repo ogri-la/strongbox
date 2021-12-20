@@ -266,13 +266,14 @@
                            :installed-game-track :retail
                            :game-track :retail
                            :name "everyaddon",
-                           :source "curseforge",
                            :interface-version 80000,
                            :supported-game-tracks [:retail]
                            :download-url "https://edge.forgecdn.net/files/1/1/EveryAddon.zip",
                            :label "EveryAddon",
                            :download-count 3000000,
+                           :source "curseforge",
                            :source-id 1,
+                           :source-map-list [{:source "curseforge" :source-id 1}]
                            :url "https://www.curseforge.com/wow/addons/everyaddon",
                            :version "v8.2.0-v1.13.2-7135.139",
                            :dirname "EveryAddon",
@@ -294,13 +295,14 @@
                            :installed-game-track :retail
                            :game-track :retail
                            :name "everyotheraddon",
-                           :source "curseforge",
                            :interface-version 80200,
                            :supported-game-tracks [:retail]
                            :download-url "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip",
                            :label "Every Other Addon",
                            :download-count 5400000,
+                           :source "curseforge",
                            :source-id 2,
+                           :source-map-list [{:source "curseforge" :source-id 2}]
                            :url "https://www.curseforge.com/wow/addons/everyotheraddon",
                            :version "v8.2.0-v1.13.2-7135.139",
                            :dirname "EveryOtherAddon",
@@ -365,13 +367,14 @@
                            :installed-game-track :retail
                            :game-track :retail
                            :name "everyaddon",
-                           :source "curseforge",
                            :interface-version 80000,
                            :supported-game-tracks [:retail]
                            :download-url "https://edge.forgecdn.net/files/1/1/EveryAddon.zip",
                            :label "EveryAddon",
                            :download-count 3000000,
+                           :source "curseforge",
                            :source-id 1,
+                           :source-map-list [{:source "curseforge" :source-id 1}]
                            :url "https://www.curseforge.com/wow/addons/everyaddon",
                            :version "v8.2.0-v1.13.2-7135.139",
                            :dirname "EveryAddon",
@@ -396,6 +399,8 @@
                            :game-track :classic
                            :name "everyotheraddon",
                            :source "curseforge",
+                           :source-id 2,
+                           :source-map-list [{:source "curseforge" :source-id 2}]
                            :interface-version 11300, ;; changed
 
                            ;; why :retail? According to EveryOtherAddon.toc, it's actually a retail addon and not a classic addon.
@@ -406,7 +411,6 @@
                            :download-url "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip",
                            :label "Every Other Addon",
                            :download-count 5400000,
-                           :source-id 2,
                            :url "https://www.curseforge.com/wow/addons/everyotheraddon",
                            :version "v8.2.0-v1.13.2-7135.139",
                            :dirname "EveryOtherAddon",
@@ -632,7 +636,8 @@
                           :installed-game-track :retail,
                           :primary? false,
                           :source "curseforge",
-                          :source-id 1}]
+                          :source-id 1
+                          :source-map-list [{:source "curseforge" :source-id 1}]}]
         (is result) ;; success
         (is (= ["EveryAddon" "EveryAddon-BundledAddon" "everyaddon--0-1-2.zip"] directory-list))
         (is (= expected-nfo (nfo/read-nfo-file install-dir "EveryAddon-BundledAddon")))))))
@@ -872,21 +877,24 @@
                        :name "everyaddon"
                        :primary? false
                        :source "curseforge"
-                       :source-id 1}
+                       :source-id 1
+                       :source-map-list [{:source "curseforge" :source-id 1}]}
                       {:group-id "https://group.id/also/never/fetched",
                        :installed-game-track :retail,
                        :installed-version "5.6.7",
                        :name "everyotheraddon",
                        :primary? false,
                        :source "curseforge",
-                       :source-id 2}
+                       :source-id 2
+                       :source-map-list [{:source "curseforge" :source-id 2}]}
                       {:group-id "https://group.id/still/not/fetched",
                        :installed-game-track :retail,
                        :installed-version "a.b.c",
                        :name "bundledaddon",
                        :primary? true,
                        :source "curseforge",
-                       :source-id 3}]]
+                       :source-id 3
+                       :source-map-list [{:source "curseforge" :source-id 3}]}]]
 
         (core/install-addon-guard addon-1)
         (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
@@ -952,7 +960,8 @@
                         :name "everyaddon"
                         :primary? false
                         :source "curseforge"
-                        :source-id 1}]
+                        :source-id 1
+                        :source-map-list [{:source "curseforge" :source-id 1}]}]
 
           (core/install-addon-guard addon-1)
           (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
@@ -995,7 +1004,8 @@
                         :name "everyotheraddon"
                         :primary? false
                         :source "curseforge"
-                        :source-id 2}]
+                        :source-id 2
+                        :source-map-list [{:source "curseforge" :source-id 2}]}]
 
           (core/install-addon-guard addon-1)
           (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
@@ -1195,6 +1205,7 @@
                         :primary? true,
                         :source "curseforge",
                         :source-id 1,
+                        :source-map-list [{:source "curseforge" :source-id 1}]
                         :update? false}]
           (core/install-addon-guard addon)
           (is (= ["EveryAddon"] (helper/install-dir-contents)))
@@ -1234,6 +1245,7 @@
                         :primary? true,
                         :source "curseforge",
                         :source-id 1,
+                        :source-map-list [{:source "curseforge" :source-id 1}]
                         :update? false}]
           (core/install-addon-guard addon)
           (core/load-installed-addons)
@@ -1281,7 +1293,8 @@
                                         :name "everyotheraddon",
                                         :primary? false,
                                         :source "curseforge",
-                                        :source-id 2}
+                                        :source-id 2
+                                        :source-map-list [{:source "curseforge" :source-id 2}]}
 
                                        {:description "Does what every addon does, just better",
                                         :dirname "EveryOtherAddon",
@@ -1294,7 +1307,8 @@
                                         :name "everyotheraddon",
                                         :primary? false,
                                         :source "curseforge",
-                                        :source-id 2}],
+                                        :source-id 2
+                                        :source-map-list [{:source "curseforge" :source-id 2}]}],
                         :group-id "https://group.id/also/never/fetched",
                         :ignore? true,
                         :installed-game-track :retail,
@@ -1305,7 +1319,8 @@
                         :name "everyotheraddon",
                         :primary? false,
                         :source "curseforge",
-                        :source-id 2}
+                        :source-id 2
+                        :source-map-list [{:source "curseforge" :source-id 2}]}
 
               target-idx 0
               expected-2 (-> expected
@@ -1352,6 +1367,7 @@
                         :primary? true,
                         :source "curseforge",
                         :source-id 1,
+                        :source-map-list [{:source "curseforge" :source-id 1}]
                         :update? false}]
           (core/install-addon-guard addon)
           (fs/mkdir (utils/join install-dir "EveryAddon" ".git"))

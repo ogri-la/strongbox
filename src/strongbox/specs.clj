@@ -26,15 +26,6 @@
   (when-not (s/valid? spec x)
     (s/explain spec x)))
 
-(defn spec-to-kw-list
-  "very limited. only works for basic specs that have a :req [keys] and :opt [keys]"
-  [spec]
-  (let [required #(nth % 2)
-        optional #(last %)
-        extract (juxt optional required)
-        normalise (comp keyword name)]
-    (->> spec clojure.spec.alpha/form extract (apply concat) (mapv normalise))))
-
 (s/def ::atom #(instance? clojure.lang.Atom %))
 
 (s/def ::list-of-strings (s/coll-of string?))
@@ -246,14 +237,14 @@
 (s/def ::group-addons :addon/toc-list)
 
 ;; 'nfo' files contain extra per-addon data written to addon directories as .strongbox.json.
-;; note! this form is being targeted by `spec-to-kw-list` in nfo.clj to strip unspecced keys before writing to file.
 (s/def :addon/-nfo (s/keys :req-un [::installed-version
                                     ::name
                                     ::group-id
                                     ::primary?
                                     :addon/source
                                     ::installed-game-track
-                                    :addon/source-id]
+                                    :addon/source-id
+                                    :addon/source-map-list]
                            :opt-un [::ignore?
                                     :addon/pinned-version]))
 
