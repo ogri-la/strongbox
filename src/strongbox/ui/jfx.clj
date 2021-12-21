@@ -1432,8 +1432,7 @@
               {:fx/type :check-menu-item
                :text (:source source-map)
                :selected (-> addon :source (= (:source source-map)))
-               :on-action (async-handler (partial cli/switch-source addon source-map))
-               })
+               :on-action (async-handler (partial cli/switch-source addon source-map))})
             source-map-list))))
 
 (defn singular-context-menu

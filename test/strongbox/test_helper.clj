@@ -32,7 +32,8 @@
    :primary? true
    :installed-game-track :retail
    :source "curseforge"
-   :source-id 1})
+   :source-id 1
+   :source-map-list [{:source "curseforge" :source-id 1}]})
 
 (def strongbox-installed-addon
   (merge toc-data nfo-data))

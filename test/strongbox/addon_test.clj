@@ -580,11 +580,14 @@
 (deftest switch-source
   (testing "an addon can switch between sources"
     (let [new-source-map {:source "wowinterface" :source-id 321}
+          ;; attach extra source-map to the toc data so we can switch to it
           addon (merge helper/strongbox-installed-addon
                        {:source-map-list [new-source-map]})
-          nfo-data {:source-map-list [new-source-map]}
-          expected (merge helper/nfo-data new-source-map nfo-data)]
-      (helper/install-every-addon! nfo-data)
+          expected (merge helper/nfo-data
+                          new-source-map
+                          {:source-map-list [{:source "curseforge" :source-id 1} ;; original is preserved
+                                             new-source-map]})] ;; new one is present
+      (helper/install-every-addon!)
       (is (nil? (addon/switch-source! (helper/install-dir) addon new-source-map)))
       (is (= expected (nfo/read-nfo (helper/install-dir) (:dirname helper/toc-data)))))))
 

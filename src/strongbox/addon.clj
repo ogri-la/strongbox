@@ -516,8 +516,11 @@
   "switches addon from one source (like curseforge) to another (like wowinterface), rewriting nfo data.
   `new-source` must appear in the addon's `source-map-list`."
   [install-dir ::sp/extant-dir, addon :addon/installed, new-source-map :addon/source-map]
-  (when (and (utils/in? new-source-map (:source-map-list addon))
+  (when (and (utils/in? new-source-map (:source-map-list addon)) ;; todo: consider moving this check to cli
              (not (ignored? addon))
              (not (pinned? addon)))
-    ;; todo: update group-id as well?
-    (update-nfo! install-dir addon new-source-map)))
+    ;; todo: update group-id as well
+    (let [new-source-map-list (merge-source-map-lists (extract-source-map-list addon)
+                                                      [new-source-map])
+          nfo-updates (merge new-source-map {:source-map-list new-source-map-list})]
+      (update-nfo! install-dir addon nfo-updates))))
