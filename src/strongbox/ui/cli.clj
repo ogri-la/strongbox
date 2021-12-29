@@ -56,8 +56,7 @@
         vec
         select-addons*)))
 
-;; unselect? https://english.stackexchange.com/questions/18465/unselect-or-deselect
-(defn-spec deselect-addons! nil?
+(defn-spec clear-selected-addons! nil?
   "removes all addons from the `:selected-addon-list` list"
   []
   (select-addons* []))

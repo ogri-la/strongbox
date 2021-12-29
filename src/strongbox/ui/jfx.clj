@@ -657,7 +657,7 @@
 
 (defn-spec clear-table-selected-items nil?
   "the context menu isn't being refreshed with new data when selected or installed addons change. 
-  It should be, but isn't. 
+  It should be, but isn't.
   A way around this is to clear the selected items in the table after a context menu action forcing a re-selection."
   []
   (.clearSelection (.getSelectionModel (find-installed-addons-table))))
@@ -1447,7 +1447,9 @@
               {:fx/type :check-menu-item
                :text (:source source-map)
                :selected (-> addon :source (= (:source source-map)))
-               :on-action (async-handler (partial cli/switch-source addon source-map))})
+               :on-action (async-handler (fn []
+                                           (cli/switch-source addon source-map)
+                                           (clear-table-selected-items)))})
             source-map-list))))
 
 (defn singular-context-menu
