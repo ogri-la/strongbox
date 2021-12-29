@@ -1,5 +1,6 @@
 (ns strongbox.ui.cli
   (:require
+   [clojure.string]
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :as timbre :refer [debug info warn error report spy]]
    [clojure.spec.alpha :as s]
@@ -629,6 +630,14 @@
   {:browse-local {:label "browse" :value-fn :addon-dir}
    :source {:label "source" :value-fn :source}
    :source-id {:label "ID" :value-fn :source-id}
+   :source-map-list {:label "other sources" :value-fn (fn [row]
+                                                        (->> row
+                                                             :source-map-list
+                                                             (map :source)
+                                                             (remove #(= % (:source row)))
+                                                             vec
+                                                             utils/nilable
+                                                             (clojure.string/join ", ")))}
    :name {:label "name" :value-fn (comp utils/no-new-lines :label)}
    :description {:label "description" :value-fn (comp utils/no-new-lines :description)}
    :tag-list {:label "tags" :value-fn (fn [row]
