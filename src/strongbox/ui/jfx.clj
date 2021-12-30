@@ -1466,15 +1466,18 @@
         source-menu (build-addon-source-menu selected-addon)]
 
     {:fx/type :context-menu
-     :items [(menu "Source" (or source-menu []) {:disable (nil? source-menu)})
-             separator
-             (menu-item "Update" (async-handler (juxt cli/update-selected clear-table-selected-items))
+     :items [(menu-item "Update" (async-handler (juxt cli/update-selected clear-table-selected-items))
                         {:disable (or child?
                                       (not (addon/updateable? selected-addon)))})
 
              (menu-item "Re-install" (async-handler (juxt cli/re-install-or-update-selected clear-table-selected-items))
                         {:disable (or child?
                                       (not (addon/re-installable? selected-addon)))})
+             separator
+             (menu "Source" (or source-menu []) {:disable (nil? source-menu)})
+             (menu-item "Find similar" (async-handler (fn []
+                                                        (switch-tab SEARCH-TAB)
+                                                        (cli/search (:label selected-addon)))))
              separator
              (if pinned?
                (menu-item "Unpin release" (async-handler (juxt cli/unpin clear-table-selected-items))
@@ -1505,12 +1508,13 @@
     {:fx/type :context-menu
      :items [(menu-item (str num-selected " addons selected") donothing {:disable true})
              separator
-             (menu-item "Migrate" donothing {:disable true})
-             separator
              (menu-item "Update" (async-handler (juxt cli/update-selected clear-table-selected-items))
                         {:disable none-selected?})
              (menu-item "Re-install" (async-handler (juxt cli/re-install-or-update-selected clear-table-selected-items))
                         {:disable none-selected?})
+             separator
+             (menu "Source" [] {:disable true})
+             (menu-item "Find similar" donothing {:disable true})
              separator
              (if some-pinned?
                (menu-item "Unpin release" (async-handler (juxt cli/unpin clear-table-selected-items)))
@@ -1808,7 +1812,8 @@
      [{:fx/type :text-field
        :id "search-text-field"
        :prompt-text "search"
-       ;;:text (:term search-state) ;; don't do this
+       ;;:text (:term search-state) ;; don't do this, it can go spastic
+       :text (core/get-state :search :term) ;; this seems ok, probably has it's own drawbacks
        :on-text-changed cli/search}
 
       {:fx/type :button
