@@ -265,3 +265,9 @@
                          (clojure.string/split #"/")))] ;; ["group" "owner" "project"]
     (when (> (count bits) 1)
       (clojure.string/join "/" bits))))
+
+;;
+
+(defn-spec make-url (s/or :ok ::sp/url, :error nil?)
+  [toc (s/or :just-toc :addon/toc, :mixed :addon/toc+nfo)]
+  (str "https://gitlab.com/" (:source-id toc)))

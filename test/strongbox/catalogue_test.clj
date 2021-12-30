@@ -590,7 +590,9 @@
                     :source-id 123
 
                     ;; synthetic
-                    :url "https://example.org" ;; url won't be derived from source and id
+                    ;; 2021-12-30: changed, group-id is now ignored in favour of reconstructing the URL.
+                    ;;:url "https://example.org" ;; url won't be derived from source and id
+                    :url "https://www.wowinterface.com/downloads/info123"
                     :download-count 0,
                     :game-track-list [:classic], ;; classic is used
                     :tag-list [],
@@ -638,6 +640,24 @@
                                 {:source "curseforge"
                                  :source-id 123})]
       (is (nil? (catalogue/toc2summary curseforge-toc))))))
+
+(deftest toc2summary--github
+  (testing "toc data with a github source and id can be coerced to an addon summary without a `:url`"
+    (let [github-toc (merge helper/toc-data
+                            {:source "github"
+                             :source-id "everyman/everyaddon"})
+
+          expected {:source "github",
+                    :source-id "everyman/everyaddon",
+                    :name "everyaddon",
+                    :label "EveryAddon 1.2.3",
+
+                    ;; synthetic
+                    :tag-list [],
+                    :updated-date "2001-01-01T01:01:01Z",
+                    :url "https://github.com/everyman/everyaddon"
+                    :download-count 0}]
+      (is (= expected (catalogue/toc2summary github-toc))))))
 
 (deftest toc2summary--ignored
   (testing "any data that is ignored cannot be coerced to an addon summary, even if all the right data is there."

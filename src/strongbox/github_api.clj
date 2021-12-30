@@ -335,3 +335,9 @@
               (assoc addon :description description)
               addon)))]
     (mapv to-summary result-list)))
+
+;;
+
+(defn-spec make-url (s/or :ok ::sp/url, :error nil?)
+  [toc (s/or :just-toc :addon/toc, :mixed :addon/toc+nfo)]
+  (str "https://github.com/" (:source-id toc)))
