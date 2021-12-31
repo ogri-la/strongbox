@@ -1126,7 +1126,7 @@
          :source-map-list {:cell-factory {:fx/cell-type :tree-table-cell
                                           :describe (fn [row]
                                                       (let [urls (for [source-map (:source-map-list row)
-                                                                       :let [url (utils/addon-source-map-to-url row source-map)]
+                                                                       :let [url (cli/addon-source-map-to-url row source-map)]
                                                                        :when (and url
                                                                                   (not (= (:source row) (:source source-map))))]
                                                                    (href-to-hyperlink (assoc source-map :url url)))
@@ -1440,6 +1440,7 @@
         (:release-list addon)))
 
 (defn-spec build-addon-source-menu (s/or :ok ::sp/list-of-maps, :no-sources nil?)
+  "context sub-menu for addons that have multiple sources."
   [addon map?]
   (let [source-map-list (:source-map-list addon)]
     (when (> (count source-map-list) 1) ;; don't bother if the only source we have is the current one

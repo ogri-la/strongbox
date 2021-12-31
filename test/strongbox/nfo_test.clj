@@ -79,8 +79,8 @@
           expected nil]
       (doseq [nfo-data invalid-nfo-data]
         (spit (utils/join (addon-path) nfo/nfo-filename) (utils/to-json nfo-data))
-        (is (= expected (nfo/read-nfo (install-dir) addon-dir)), (str "failed: " nfo-data))))))
-        ;;(is (not (fs/exists? (nfo/read-nfo (install-dir) addon-dir))))))))
+        (is (= expected (nfo/read-nfo (install-dir) addon-dir)), (str "failed: " nfo-data))
+        (is (not (fs/exists? (nfo/read-nfo (install-dir) addon-dir))))))))
 
 (deftest read-nfo--ignorable-subdir
   (testing "an addon with no nfo data but an ignorable sub-directory returns the 'ignore flag'"

@@ -623,3 +623,13 @@
                      {:get (fn [req] {:status 200 :body fixture})}}]
     (with-fake-routes-in-isolation fake-routes
       (is (= expected (github-api/build-catalogue))))))
+
+(deftest make-url
+  (let [cases [[nil nil]
+               [{} nil]
+               [{:foo :bar} nil]
+               [{:source-id ""} "https://github.com/"]
+               [{:source-id "foo"} "https://github.com/foo"]
+               [{:source-id "foo/bar"} "https://github.com/foo/bar"]]]
+    (doseq [[given expected] cases]
+      (is (= expected (github-api/make-url given))))))

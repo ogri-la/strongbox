@@ -92,7 +92,7 @@ SomeAddon.lua")
                      ;; wowi is edged out in favour of curseforge ...
                      :source "curseforge"
                      :source-id 54321
-                     ;; ... both are captured here in `:source-map-list` however
+                     ;; ... however both are captured here in `:source-map-list`
                      :source-map-list [{:source "wowinterface" :source-id 12345}
                                        {:source "curseforge" :source-id 54321}]}]]
       (fs/mkdir addon-path)

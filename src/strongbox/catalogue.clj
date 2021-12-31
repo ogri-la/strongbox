@@ -121,7 +121,7 @@
   (when-not (:ignore? toc)
     (let [sink nil
           syn (-> toc
-                  (merge {;; :url (:group-id toc) ;; 2021-12-30: can't rely on this value being consistent anymore.
+                  (merge {;; :url (:group-id toc) ;; 2021-12-30: can't rely on `url` being consistent with `source` anymore.
                           :url nil ;; attempt to reconstruct below
                           :tag-list []
                           :updated-date constants/fake-datetime
@@ -140,7 +140,7 @@
           ;; all urls except curseforge can be reconstructed
           syn (if (-> syn :url nil?)
                 (case (:source toc)
-                  ;; "curseforge" ... ;; can't be reconstructed
+                  ;; "curseforge" ... ;; addon page URL can't be reconstructed, so clickable links break.
                   "wowinterface" (assoc syn :url (wowinterface/make-url toc))
                   "tukui" (assoc syn :url (tukui-api/make-url toc))
                   "github" (assoc syn :url (github-api/make-url toc))

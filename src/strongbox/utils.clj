@@ -684,28 +684,6 @@
                     nil)
       nil)))
 
-(defn url-encode
-  [string]
-  (if string
-    (java.net.URLEncoder/encode string "UTF-8")
-    ""))
-
-(defn-spec addon-source-map-to-url (s/or :ok ::sp/url, :error nil?)
-  "construct a URL given a `source`, `source-id` and toc data only.
-  caveats: 
-  * curseforge, can't go directly to an addon with just the source-id, so we use the slug and hope for the best.
-  * tukui, we also need the game track to know which url"
-  [addon :addon/toc, source-map :addon/source-map]
-  (case (:source source-map)
-    ;;"curseforge" (str "https://www.curseforge.com/wow/addons/search?search=" (-> addon :label java.net.URLEncoder/encode))
-    "curseforge" (str "https://www.curseforge.com/wow/addons/" (-> addon :name)) ;; still not great but about ~80% hit rate.
-    "wowinterface" (str "https://www.wowinterface.com/downloads/info" (-> source-map :source-id))
-    "tukui" (str "https://www.tukui.org/addons.php?search=" (-> addon :label url-encode))
-    "github" (str "https://github.com/" (-> source-map :source-id))
-    "gitlab" (str "https://gitlab.com/" (-> source-map :source-id))
-
-    nil))
-
 (defn-spec message-list string?
   "returns a multi-line string with the given `msg` on top and each message in `msg-list` bulleted beneath it"
   [msg string?, msg-list ::sp/list-of-strings]

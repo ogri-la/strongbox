@@ -9,17 +9,17 @@
     [constants :as constants]
     [joblib :as joblib]
     [github-api :as github-api]
+    [tukui-api :as tukui-api]
+    [gitlab-api :as gitlab-api]
+    [curseforge-api :as curseforge-api]
+    [wowinterface :as wowinterface]
     [db :as db]
     [logging :as logging]
     [addon :as addon]
     [specs :as sp]
-    [tukui-api :as tukui-api]
-    [gitlab-api :as gitlab-api]
     [catalogue :as catalogue]
     [http :as http]
     [utils :as utils :refer [if-let* message-list]]
-    [curseforge-api :as curseforge-api]
-    [wowinterface :as wowinterface]
     [core :as core :refer [get-state paths find-catalogue-local-path]]]))
 
 (comment "the UIs pool their logic here, which calls core.clj.")
@@ -603,6 +603,21 @@
 
 ;;
 
+(defn-spec addon-source-map-to-url (s/or :ok ::sp/url, :error nil?)
+  "construct a URL given a `source`, `source-id` and toc data only.
+  caveats: 
+  * curseforge, can't go directly to an addon with just the source-id, so we use the slug and hope for the best.
+  * tukui, we also need the game track to know which url"
+  [addon :addon/toc, source-map :addon/source-map]
+  (case (:source source-map)
+    "curseforge" (str "https://www.curseforge.com/wow/addons/" (-> addon :name)) ;; still not great but about ~80% hit rate.
+    "wowinterface" (wowinterface/make-url source-map)
+    "tukui" (tukui-api/make-url (merge addon source-map))
+    "github" (github-api/make-url source-map)
+    "gitlab" (gitlab-api/make-url source-map)
+
+    nil))
+
 (defn-spec available-versions-v1 (s/or :ok string? :no-version-available nil?)
   "formats the 'available version' string depending on the state of the addon.
   pinned and ignored addons get a helpful prefix."
@@ -634,7 +649,6 @@
                                                              :source-map-list
                                                              (map :source)
                                                              (remove #(= % (:source row)))
-                                                             vec
                                                              utils/nilable
                                                              (clojure.string/join ", ")))}
    :name {:label "name" :value-fn (comp utils/no-new-lines :label)}

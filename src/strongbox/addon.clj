@@ -117,27 +117,30 @@
         addon-list (apply conj (mapv expand addon-groups) unknown-grouping)]
     addon-list))
 
-(defn merge-source-map-lists
-  "merges two lists of source-maps returning a single distinct one or nil if empty"
-  [list-a, list-b]
+(defn-spec merge-lists (s/or :ok vector? :empty nil?)
+  "merges two lists of items returning a single list of distinct items or nil if empty"
+  [list-a (s/nilable sequential?), list-b (s/nilable sequential?)]
   (some->> (into list-a list-b)
            (remove nil?)
            utils/nilable
            distinct
            vec))
 
-(defn extract-source-map-list
-  "extracts a source-map from the given `data` as well as anything in :source-map-list and returns a single distinct source map list"
-  [data]
-  (merge-source-map-lists
+(defn-spec extract-source-map-list (s/or :ok :addon/source-map-list, :empty nil?)
+  "extracts a `:addon/source-map` from the given `data` as well as anything in `:source-map-list`, returning a single distinct `:addon/source-map-list`"
+  [data (s/nilable map?)]
+  (merge-lists
    (or (some-> data (select-keys [:source :source-id]) utils/nilable vector) [])
    (get data :source-map-list [])))
 
-(defn merge-toc-nfo
-  [toc nfo]
-  (merge toc nfo (some->> (merge-source-map-lists (extract-source-map-list toc)
-                                                  (extract-source-map-list nfo))
-                          (assoc {} :source-map-list))))
+;; todo: this spec could do with tightening up. ~6 tests holding us back.
+(defn-spec merge-toc-nfo (s/or :ok map?, :empty nil?)
+  "merges `toc` data with `nfo` data with special handling for the `source-map-list`."
+  [toc (s/nilable map?), nfo (s/nilable map?)]
+  (let [source-map-list (some->> (merge-lists (extract-source-map-list toc)
+                                              (extract-source-map-list nfo))
+                                 (assoc {} :source-map-list))]
+    (merge toc nfo source-map-list)))
 
 (defn-spec -load-installed-addons (s/or :ok :addon/toc-list, :error nil?)
   "returns a list of addon data scraped from the .toc files of all addons in given `install-dir`"
@@ -192,6 +195,14 @@
         addon-list (mapv merge-nfo-data addon-list)]
 
     (group-addons addon-list)))
+
+(defn-spec -read-nfo ::sp/list-of-maps
+  "unused except for testing. reads the nfo data for the given addon and all of it's grouped addons. returns a list of nfo data."
+  [install-dir ::sp/extant-dir, addon map?]
+  (->> addon
+       flatten-addon
+       (map :dirname)
+       (mapv (partial nfo/read-nfo-file install-dir))))
 
 ;;
 
@@ -508,7 +519,7 @@
 
 (defn-spec update-nfo! nil?
   "updates the nfo data for the given addon and all of it's grouped addons"
-  [install-dir ::sp/extant-dir, addon :addon/toc+nfo, updates map?]
+  [install-dir ::sp/extant-dir, addon (s/keys :req-un [::sp/dirname]), updates map?]
   (doseq [grouped-addon (flatten-addon addon)]
     (nfo/update-nfo install-dir (:dirname grouped-addon) updates)))
 
@@ -519,8 +530,7 @@
   (when (and (utils/in? new-source-map (:source-map-list addon)) ;; todo: consider moving this check to cli
              (not (ignored? addon))
              (not (pinned? addon)))
-    ;; todo: update group-id as well
-    (let [new-source-map-list (merge-source-map-lists (extract-source-map-list addon)
-                                                      [new-source-map])
+    (let [new-source-map-list (merge-lists (extract-source-map-list addon)
+                                           [new-source-map])
           nfo-updates (merge new-source-map {:source-map-list new-source-map-list})]
       (update-nfo! install-dir addon nfo-updates))))

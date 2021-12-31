@@ -12,6 +12,14 @@ see CHANGELOG.md for a more formal list of changes by release
 * regression, synthetic http errors are no longer retried because they're in the 4xx range
     - bumped the synthetic 408 errors to 608
 
+* source switching
+    - some addons will have multiple sources in the toc file we can switch to.
+    - if not, we can search the catalogue for them
+        - exclude curseforge
+            - not done, curseforge is still supported until Feb 
+                - and search results are thin enough as it is. if it can only be found on curseforge, then that is more helpful than the 'no results' msg.
+    - done
+
 ## todo
 
 Curseforge is going away. How to migrate addons off of curseforge?
@@ -22,19 +30,16 @@ Curseforge is going away. How to migrate addons off of curseforge?
     - I want curseforge addons to still show as being curseforge addons but just never receive updates after the cut off.
         - when is the cut off again?
     - I don't want the catalogue of curseforge addons to be merged into the short and full catalogues after the cut off
-    - I done't want the curseforge catalogue to receive updates
+    - I don't want the curseforge catalogue to receive updates
     - I want a permanent warning against curseforge addons between now and when the service goes offline
         - I want an error after cut off
-
-* source switching
-    - some addons will have multiple sources in the toc file we can switch to.
-    - if not, we can search the catalogue for them
-        - exclude curseforge
 
 * strongbox-comrades
     - remove curseforge as a requirement for any category.
 
 ## todo bucket (no particular order)
+
+* nfo, replace the URL as the group-id with something random
 
 * "developer warnings"
     - a preference that bumps certain debug messages to warnings and errors for developers

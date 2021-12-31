@@ -65,6 +65,7 @@
              :source (:source addon)
              :source-id (:source-id addon)
 
+             ;; record the origin and it's ID so we can switch back to it later if other sources present themselves.
              :source-map-list [{:source (:source addon) :source-id (:source-id addon)}]}
 
         ;; users can set this in the nfo file manually or

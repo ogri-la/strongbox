@@ -338,6 +338,8 @@
 
 ;;
 
-(defn-spec make-url (s/or :ok ::sp/url, :error nil?)
-  [toc (s/or :just-toc :addon/toc, :mixed :addon/toc+nfo)]
-  (str "https://github.com/" (:source-id toc)))
+(defn make-url
+  "returns a URL to the given addon data"
+  [{:keys [source-id]}]
+  (when source-id
+    (str "https://github.com/" source-id)))

@@ -273,7 +273,6 @@
           :opt-un [::description ;; wowinterface summaries have no description. github may not have a description.
                    :addon/created-date ;; wowinterface summaries have no created date
                    ::game-track-list   ;; more of a set, really
-                   ;;:addon/source-map-list
                    ]))
 (s/def :addon/summary-list (s/coll-of :addon/summary))
 
