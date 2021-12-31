@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * the set of catalogues in your `config.json` file will be upgraded to include the new Github catalogue
     - but only if it looks unmodified from the default set of catalogues.
-* curseforge addons not found in the currently selected catalogue can no longer check for updates anyway.
+* curseforge addons not found in the currently selected catalogue can no longer check for updates.
     - the `group-id` value used to group together multiple addons may not be consistent now source switching is present.
 
 ### Fixed

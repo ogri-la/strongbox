@@ -29,6 +29,7 @@ Curseforge is going away. How to migrate addons off of curseforge?
 * how to disable the completely integrated curseforge?
     - I want curseforge addons to still show as being curseforge addons but just never receive updates after the cut off.
         - when is the cut off again?
+            - Strongbox cut off will be Feb 1st 2021
     - I don't want the catalogue of curseforge addons to be merged into the short and full catalogues after the cut off
     - I don't want the curseforge catalogue to receive updates
     - I want a permanent warning against curseforge addons between now and when the service goes offline
@@ -52,7 +53,7 @@ Curseforge is going away. How to migrate addons off of curseforge?
 * star or 'like' addons in the catalogue
 
 * http, add with-backoff support to download-file
-    - just had a wowinterface addon timeout
+    - just had a wowinterface addon download timeout
 
 * replace multi-error messages with a single multi-line error message
 
@@ -86,12 +87,14 @@ Curseforge is going away. How to migrate addons off of curseforge?
         - https://github.com/rgd87/Aptechka/releases
             - fucking /sigh!
 
-* add support for 'Interface-Retail', 'Interface-Classic', 'Interface-BCC'
+* toc, add support for 'Interface-Retail', 'Interface-Classic', 'Interface-BCC'
     - how much of a thing is this?
         - is it more of a templating thing?
     - https://github.com/Myrroddin/MrBigglesworthDeath/blob/master/MrBigglesworthDeath.toc
 
 * github, gitlab, are we paginating release calls?
+    - no we're not.
+    - unless authenticated somehow, I wouldn't bother.
 
 * disable support for curseforge
     - https://mailchi.mp/overwolf/whats-new-with-overwolf-curseforge-november3
