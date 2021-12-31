@@ -335,3 +335,11 @@
               (assoc addon :description description)
               addon)))]
     (mapv to-summary result-list)))
+
+;;
+
+(defn make-url
+  "returns a URL to the given addon data"
+  [{:keys [source-id]}]
+  (when source-id
+    (str "https://github.com/" source-id)))

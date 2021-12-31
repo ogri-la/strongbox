@@ -657,7 +657,7 @@
 
 (defn-spec clear-table-selected-items nil?
   "the context menu isn't being refreshed with new data when selected or installed addons change. 
-  It should be, but isn't. 
+  It should be, but isn't.
   A way around this is to clear the selected items in the table after a context menu action forcing a re-selection."
   []
   (.clearSelection (.getSelectionModel (find-installed-addons-table))))
@@ -1066,7 +1066,7 @@
           [(:tick constants/glyph-map) "no problems"])
 
         text (if (:update? row) (str text " " (:update constants/glyph-map)) text)
-        tooltip (if (:update? row) (str tooltip ", updates pending") tooltip)]
+        tooltip (if (:update? row) (str tooltip ", updates available") tooltip)]
 
     {:fx/type fx.ext.node/with-tooltip-props
      :props {:tooltip {:fx/type :tooltip
@@ -1123,6 +1123,21 @@
                                              {:graphic (href-to-hyperlink row)})}
                   :cell-value-factory identity}
          :source-id {:min-width 60 :pref-width 150}
+         :source-map-list {:cell-factory {:fx/cell-type :tree-table-cell
+                                          :describe (fn [row]
+                                                      (let [urls (for [source-map (:source-map-list row)
+                                                                       :let [url (cli/addon-source-map-to-url row source-map)]
+                                                                       :when (and url
+                                                                                  (not (= (:source row) (:source source-map))))]
+                                                                   (href-to-hyperlink (assoc source-map :url url)))
+                                                            urls (utils/nilable (vec urls))]
+                                                        (if urls
+                                                          {:graphic {:fx/type :h-box
+                                                                     :children urls}}
+                                                          {:graphic {:fx/type :label
+                                                                     :text ""}})))}
+                           :cell-value-factory identity}
+
          :name {:min-width 100 :pref-width 300}
          :description {:min-width 150 :pref-width 450}
          :tag-list {:min-width 200 :pref-width 300}
@@ -1424,6 +1439,20 @@
                      (async-handler (juxt (partial cli/set-version addon release) clear-table-selected-items))))
         (:release-list addon)))
 
+(defn-spec build-addon-source-menu (s/or :ok ::sp/list-of-maps, :no-sources nil?)
+  "context sub-menu for addons that have multiple sources."
+  [addon map?]
+  (let [source-map-list (:source-map-list addon)]
+    (when (> (count source-map-list) 1) ;; don't bother if the only source we have is the current one
+      (mapv (fn [source-map]
+              {:fx/type :check-menu-item
+               :text (:source source-map)
+               :selected (-> addon :source (= (:source source-map)))
+               :on-action (async-handler (fn []
+                                           (cli/switch-source addon source-map)
+                                           (clear-table-selected-items)))})
+            source-map-list))))
+
 (defn singular-context-menu
   "context menu when a single addon is selected."
   [{:keys [fx/context]}]
@@ -1433,7 +1462,10 @@
         releases-available? (and (not (empty? release-list))
                                  (not pinned?))
         ignored? (addon/ignored? selected-addon)
-        child? (child-row? selected-addon)]
+        child? (child-row? selected-addon)
+
+        source-menu (build-addon-source-menu selected-addon)]
+
     {:fx/type :context-menu
      :items [(menu-item "Update" (async-handler (juxt cli/update-selected clear-table-selected-items))
                         {:disable (or child?
@@ -1442,6 +1474,11 @@
              (menu-item "Re-install" (async-handler (juxt cli/re-install-or-update-selected clear-table-selected-items))
                         {:disable (or child?
                                       (not (addon/re-installable? selected-addon)))})
+             separator
+             (menu "Source" (or source-menu []) {:disable (nil? source-menu)})
+             (menu-item "Find similar" (async-handler (fn []
+                                                        (switch-tab SEARCH-TAB)
+                                                        (cli/search (:label selected-addon)))))
              separator
              (if pinned?
                (menu-item "Unpin release" (async-handler (juxt cli/unpin clear-table-selected-items))
@@ -1476,6 +1513,9 @@
                         {:disable none-selected?})
              (menu-item "Re-install" (async-handler (juxt cli/re-install-or-update-selected clear-table-selected-items))
                         {:disable none-selected?})
+             separator
+             (menu "Source" [] {:disable true})
+             (menu-item "Find similar" donothing {:disable true})
              separator
              (if some-pinned?
                (menu-item "Unpin release" (async-handler (juxt cli/unpin clear-table-selected-items)))
@@ -1773,7 +1813,8 @@
      [{:fx/type :text-field
        :id "search-text-field"
        :prompt-text "search"
-       ;;:text (:term search-state) ;; don't do this
+       ;;:text (:term search-state) ;; don't do this, it can go spastic
+       :text (core/get-state :search :term) ;; this seems ok, probably has it's own drawbacks
        :on-text-changed cli/search}
 
       {:fx/type :button

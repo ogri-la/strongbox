@@ -373,7 +373,8 @@
                     :name "rotation-master",
                     :primary? true,
                     :source "wowinterface",
-                    :source-id 25079}
+                    :source-id 25079
+                    :source-map-list [{:source "wowinterface" :source-id 25079}]}
 
           expected-addon-dir (utils/join install-dir "EveryAddon")
           expected-user-catalogue [match]
@@ -442,7 +443,8 @@
                     :name "everyaddon",
                     :primary? true,
                     :source "curseforge",
-                    :source-id 1}
+                    :source-id 1
+                    :source-map-list [{:source "curseforge" :source-id 1}]}
 
           expected-addon-dir (utils/join install-dir "EveryAddon")
           expected-user-catalogue [match]
@@ -511,7 +513,8 @@
                     :name "-rp-tags",
                     :primary? true,
                     :source "tukui",
-                    :source-id 98}
+                    :source-id 98
+                    :source-map-list [{:source "tukui" :source-id 98}]}
 
           expected-addon-dir (utils/join install-dir "EveryAddon")
           expected-user-catalogue [match]

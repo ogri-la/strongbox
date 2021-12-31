@@ -203,6 +203,7 @@
           some-addon-nfo (utils/join some-addon-path nfo/nfo-filename)
           nfo-data {:source "curseforge"
                     :source-id 123
+                    :source-map-list [{:source "curseforge" :source-id 123}]
                     :installed-version "1.2.3"
                     :name "someaddon"
                     :group-id "fdsa"
@@ -217,15 +218,13 @@
                      :description "asdf"
                      :interface-version 80300
 
-
                      ;; shared between toc and nfo, nfo wins out
-
-
                      :installed-version "1.2.3"
 
                      ;; unique items from nfo data
                      :source "curseforge"
                      :source-id 123
+                     :source-map-list [{:source "curseforge" :source-id 123}]
                      :group-id "fdsa"
                      :installed-game-track :retail
                      :supported-game-tracks [:retail]
@@ -241,7 +240,7 @@
           some-addon-toc (utils/join some-addon-path "SomeAddon.toc")
           _ (spit some-addon-toc "## Title: SomeAddon\n## Description: asdf\n## Interface: 80300\n## Version: 1.2.3")
 
-          some-addon-nfo (utils/join some-addon-path nfo/nfo-filename)
+          nfo-path (utils/join some-addon-path nfo/nfo-filename)
           nfo-data {:source nil ;; invalid
                     :source-id 123
                     :installed-version "1.2.3"
@@ -251,9 +250,14 @@
                     ;;:primary? true
                     ;;:installed-game-track :retail
                     }
-          _ (spit some-addon-nfo (utils/to-json nfo-data))
+          _ (spit nfo-path (utils/to-json nfo-data))
 
-          expected [{:name "someaddon", :dirname "SomeAddon", :label "SomeAddon", :description "asdf", :interface-version 80300, :installed-version "1.2.3"
+          expected [{:name "someaddon",
+                     :dirname "SomeAddon",
+                     :label "SomeAddon",
+                     :description "asdf",
+                     :interface-version 80300,
+                     :installed-version "1.2.3"
                      :supported-game-tracks [:retail]}]]
       (is (= expected (addon/load-installed-addons addon-dir :retail))))))
 
@@ -271,10 +275,17 @@
           _ (spit some-addon-nfo (utils/to-json {:source "curseforge" :source-id 123
                                                  :ignore? false})) ;; expressly un-ignoring this otherwise-ignored addon
 
-          expected [{:name "someaddon", :dirname "SomeAddon", :label "SomeAddon", :description "asdf", :interface-version 80300
+          expected [{:name "someaddon",
+                     :dirname "SomeAddon",
+                     :label "SomeAddon",
+                     :description "asdf",
+                     :interface-version 80300
                      :supported-game-tracks [:retail]
                      :installed-version "@project-version@"
-                     :source "curseforge" :source-id 123
+                     :source "curseforge"
+                     :source-id 123
+                     :source-map-list [{:source "curseforge" :source-id 123}]
+
                      :ignore? false}]]
       (is (= expected (addon/load-installed-addons addon-dir :retail))))))
 
@@ -533,3 +544,150 @@
       (spit (path "EveryAddon.toc") "## Title: Foo\n## Version: 1.2.3")
       (spit (path "EveryAddon-Mainline.toc") "## Title: Foo-Bar\n## Version: @project-version@")
       (is (true? (addon/implicitly-ignored? (helper/install-dir) nom))))))
+
+(deftest switch-source--no-sources-available
+  (testing "an addon can switch between sources but only if another source is available."
+    (let [new-source-map {:source "wowinterface" :source-id 321}
+          addon helper/strongbox-installed-addon] ;; has no source-map-list
+      (is (nil? (addon/switch-source! (helper/install-dir) addon new-source-map))))))
+
+(deftest switch-source--no-ignored
+  (testing "an addon can switch between sources, but not if it is being ignored."
+    (let [new-source-map {:source "wowinterface" :source-id 321}
+          addon (merge helper/strongbox-installed-addon
+                       {:source-map-list [new-source-map]
+                        :ignore? true})
+          nfo-data {:source-map-list [new-source-map]
+                    :ignore? true}
+          expected (merge helper/nfo-data nfo-data)]
+      (helper/install-every-addon! nfo-data)
+      (is (nil? (addon/switch-source! (helper/install-dir) addon new-source-map)))
+      (is (= expected (nfo/read-nfo (helper/install-dir) (:dirname helper/toc-data)))))))
+
+(deftest switch-source--no-pinned
+  (testing "an addon can switch between sources, but not if it is pinned."
+    (let [new-source-map {:source "wowinterface" :source-id 321}
+          addon (merge helper/strongbox-installed-addon
+                       {:source-map-list [new-source-map]
+                        :pinned-version "123"})
+          nfo-data {:source-map-list [new-source-map]
+                    :pinned-version "123"}
+          expected (merge helper/nfo-data nfo-data)]
+      (helper/install-every-addon! nfo-data)
+      (is (nil? (addon/switch-source! (helper/install-dir) addon new-source-map)))
+      (is (= expected (nfo/read-nfo (helper/install-dir) (:dirname helper/toc-data)))))))
+
+(deftest switch-source
+  (testing "an addon can switch between sources"
+    (let [new-source-map {:source "wowinterface" :source-id 321}
+          ;; attach extra source-map to the toc data so we can switch to it
+          addon (merge helper/strongbox-installed-addon
+                       {:source-map-list [new-source-map]})
+          expected (merge helper/nfo-data
+                          new-source-map
+                          {:source-map-list [{:source "curseforge" :source-id 1} ;; original is preserved
+                                             new-source-map]})] ;; new one is present
+      (helper/install-every-addon!)
+      (is (nil? (addon/switch-source! (helper/install-dir) addon new-source-map)))
+      (is (= expected (nfo/read-nfo (helper/install-dir) (:dirname helper/toc-data)))))))
+
+(deftest merge-toc-nfo--source-map-list1
+  (testing "merging toc and nfo with various source maps, including a duplicate, will generate a final, correct version"
+    (let [nfo {:source "github" :source-id "123"}
+          toc {:source "github" :source-id "123" :source-map-list [{:source "wowinterface" :source-id "321"}]}
+          expected {:source "github" :source-id "123"
+                    :source-map-list [{:source "github" :source-id "123"}
+                                      {:source "wowinterface" :source-id "321"}]}]
+      (is (= expected (addon/merge-toc-nfo toc nfo))))))
+
+(deftest merge-toc-nfo--source-map-list2
+  (testing "merging toc and empty nfo with results in a correct source-map-list"
+    (let [nfo nil
+          toc {:source "github" :source-id "123"}
+          expected {:source "github" :source-id "123"
+                    :source-map-list [{:source "github" :source-id "123"}]}]
+
+      (is (= expected (addon/merge-toc-nfo toc nfo))))))
+
+(deftest merge-lists
+  (let [cases [[[nil nil] nil]
+               [[[] nil] nil]
+               [[nil []] nil]
+               [[[] []] nil]
+
+               [[[:foo] [:bar]] [:foo :bar]]
+               [[[{:foo :bar} {:bar :baz}] [{:foo :bar}]] [{:foo :bar} {:bar :baz}]]]]
+
+    (doseq [[[a b] expected] cases]
+      (is (= expected (addon/merge-lists a b))))))
+
+(deftest extract-source-map-list
+  (let [cases [[nil nil]
+               [{} nil]
+
+               ;; source+id but no source-map-list
+               [{:source-id 123 :source "curseforge"} [{:source-id 123 :source "curseforge"}]]
+
+               ;; source+id+source-map-list
+               [{:source-id 123 :source "curseforge" :source-map-list [{:source-id 321 :source "wowinterface"}]}
+                [{:source-id 123 :source "curseforge"} {:source "wowinterface", :source-id 321}]]
+
+               ;; source+id+source-map-list w.duplicates
+               [{:source-id 123 :source "curseforge" :source-map-list [{:source-id 123 :source "curseforge"}
+                                                                       {:source-id 321 :source "wowinterface"}]}
+                [{:source-id 123 :source "curseforge"} {:source "wowinterface", :source-id 321}]]
+
+               ;; source+id+source-map-list
+               [{:source-id 123 :source "curseforge" :source-map-list [{:source-id 321 :source "wowinterface"}
+                                                                       {:source-id 456 :source "tukui"}]}
+                [{:source-id 123 :source "curseforge"} {:source "wowinterface", :source-id 321} {:source "tukui", :source-id 456}]]]]
+
+    (doseq [[data expected] cases]
+      (is (= expected (addon/extract-source-map-list data))))))
+
+(deftest update-nfo!
+  (let [zipfile (fixture-path "everyotheraddon--5-6-7.zip")
+        addon {:name "everyotheraddon"
+               :label "EveryOtherAddon"
+               :version "5.6.7"
+               :url "https://group.id/also/never/fetched"
+               :source "curseforge"
+               :source-id 2
+               :download-url "https://path/to/remote/addon.zip"
+               :game-track :retail
+
+               :dirname "EveryOtherAddon"
+               :group-addons [{:dirname "EveryOtherAddon"}
+                              {:dirname "EveryAddon-BundledAddon"}]}
+
+        original-nfo [{:group-id "https://group.id/also/never/fetched",
+                       :installed-game-track :retail,
+                       :installed-version "5.6.7",
+                       :name "everyotheraddon",
+                       :primary? false,
+                       :source "curseforge",
+                       :source-id 2,
+                       :source-map-list [{:source "curseforge", :source-id 2}]}
+                      {:group-id "https://group.id/also/never/fetched",
+                       :installed-game-track :retail,
+                       :installed-version "5.6.7",
+                       :name "everyotheraddon",
+                       :primary? false,
+                       :source "curseforge",
+                       :source-id 2,
+                       :source-map-list [{:source "curseforge", :source-id 2}]}]
+
+        updates {:group-id "foobar"}
+        expected-nfo (mapv #(merge % updates) original-nfo)]
+
+    (addon/install-addon addon (helper/install-dir) zipfile)
+
+    ;; sanity checks
+    (is (= ["EveryAddon-BundledAddon" "EveryOtherAddon"] (helper/install-dir-contents)))
+    (is (= original-nfo (addon/-read-nfo (helper/install-dir) addon)))
+
+    ;; updated nfo is returned
+    (addon/update-nfo! (helper/install-dir) addon updates)
+
+    ;; updated nfo is written to disk
+    (is (= expected-nfo (addon/-read-nfo (helper/install-dir) addon)))))

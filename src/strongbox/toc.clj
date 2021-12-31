@@ -161,6 +161,11 @@
                         {:source "tukui"
                          :source-id x-tukui-id})
 
+         source-map-list (when-let [items (->> [wowi-source curse-source tukui-source]
+                                               utils/items
+                                               utils/nilable)]
+                           {:source-map-list items})
+
          ;; todo: add support for x-github
          ;; ## X-Github: https://github.com/teelolws/Altoholic-Retail => source "github", source-id "teelolws/Altoholic-Retail"
 
@@ -199,7 +204,7 @@
 
          ;; yes, this prefers curseforge over wowinterface. and tukui over all others.
          ;; I need to figure out some way of supporting multiple hosts per-addon
-         addon (merge addon alias wowi-source curse-source tukui-source ignore-flag)]
+         addon (merge addon alias wowi-source curse-source tukui-source ignore-flag source-map-list)]
 
      addon)))
 

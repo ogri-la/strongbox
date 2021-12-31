@@ -48,7 +48,8 @@
                     :group-id "https://foo.bar"
                     :primary? true
                     :source "curseforge"
-                    :source-id 321}]
+                    :source-id 321
+                    :source-map-list [{:source "curseforge" :source-id 321}]}]
       (nfo/write-nfo (install-dir) addon-dir nfo-data)
       (is (fs/exists? (nfo/nfo-path (install-dir) addon-dir)))))
 
@@ -60,6 +61,7 @@
                     :primary? true
                     :source "curseforge"
                     :source-id 321
+                    :source-map-list [{:source "curseforge" :source-id 321}]
 
                     :foo "bar!"}
           expected (dissoc nfo-data :foo)]
@@ -69,20 +71,23 @@
 (deftest read-nfo
   (testing "an addon with no nfo data returns nothing"
     (let [expected nil]
-      (is (= expected (nfo/read-nfo (install-dir) addon-dir)))))
+      (is (= expected (nfo/read-nfo (install-dir) addon-dir))))))
 
+(deftest read-nfo--invalid
   (testing "invalid nfo data returns `nil` and the nfo file is deleted"
     (let [invalid-nfo-data [{} [] 1 {:foo "bar"} "null"]
           expected nil]
       (doseq [nfo-data invalid-nfo-data]
         (spit (utils/join (addon-path) nfo/nfo-filename) (utils/to-json nfo-data))
-        (is (= expected (nfo/read-nfo (install-dir) addon-dir)))
-        (is (not (fs/exists? (nfo/read-nfo (install-dir) addon-dir)))))))
+        (is (= expected (nfo/read-nfo (install-dir) addon-dir)), (str "failed: " nfo-data))
+        (is (not (fs/exists? (nfo/read-nfo (install-dir) addon-dir))))))))
 
+(deftest read-nfo--ignorable-subdir
   (testing "an addon with no nfo data but an ignorable sub-directory returns the 'ignore flag'"
     (let [expected {:ignore? true}]
-      (is (= expected (nfo/read-nfo (install-dir) ignorable-addon-dir)))))
+      (is (= expected (nfo/read-nfo (install-dir) ignorable-addon-dir))))))
 
+(deftest read-nfo--v1
   (testing "an addon with v1 nfo data is parsed correctly"
     (let [nfo-data {:installed-version "1.0"
                     :name "someaddon"
@@ -94,10 +99,15 @@
                     ;; may not have actually been installed from the retail track, we had to guess
                     ;; this will be updated as the addon is updated
                     :installed-game-track :retail}
-          expected nfo-data]
-      (spit (utils/join (addon-path) nfo/nfo-filename) (utils/to-json nfo-data))
-      (is (= expected (nfo/read-nfo (install-dir) addon-dir)))))
 
+          ;; 2021-12-20: new.
+          source-map-list {:source-map-list [{:source "wowinterface" :source-id 123}]}
+
+          expected (merge nfo-data source-map-list)]
+      (spit (utils/join (addon-path) nfo/nfo-filename) (utils/to-json nfo-data))
+      (is (= expected (nfo/read-nfo (install-dir) addon-dir))))))
+
+(deftest read-nfo--v1--ignorable-subdir
   (testing "an addon with v1 nfo data AND an ignorable sub-directory is parsed correctly"
     (let [nfo-data {:installed-version "1.0"
                     :name "someaddon"
@@ -109,10 +119,17 @@
                     ;; may not have actually been installed from the retail track, we had to guess
                     ;; this will be updated as the addon is updated
                     :installed-game-track :retail}
-          expected (assoc nfo-data :ignore? true)]
-      (spit (utils/join (ignorable-addon-path) nfo/nfo-filename) (utils/to-json nfo-data))
-      (is (= expected (nfo/read-nfo (install-dir) ignorable-addon-dir)))))
 
+          ;; 2021-12-20: new.
+          source-map-list {:source-map-list [{:source "wowinterface" :source-id 123}]}
+
+          expected (merge nfo-data
+                          {:ignore? true}
+                          source-map-list)]
+      (spit (utils/join (ignorable-addon-path) nfo/nfo-filename) (utils/to-json nfo-data))
+      (is (= expected (nfo/read-nfo (install-dir) ignorable-addon-dir))))))
+
+(deftest read-nfo--v2--ignorable-subdir--ignore-flag
   (testing "an addon with nfo v2 data, an ignorable sub-directory AND an ignore flag, is parsed correctly"
     (let [nfo-data {:installed-version "1.0"
                     :name "someaddon"
@@ -120,6 +137,7 @@
                     :primary? true
                     :source "wowinterface"
                     :source-id 123
+                    :source-map-list [{:source "wowinterface", :source-id 123}]
 
                     ;; user has manually marked this development addon for updates.
                     ;; this is only set by the user, not by the app (for now)
@@ -154,7 +172,8 @@
                   :group-id "https://foo.bar"
                   :primary? true
                   :source "curseforge"
-                  :source-id 321}]
+                  :source-id 321
+                  :source-map-list [{:source "curseforge" :source-id 321}]}]
 
     (testing "handles nil nfo data (for when nfo data doesn't exist)"
       (let [expected nil]
@@ -190,12 +209,16 @@
 
           updates {:source "wowinterface"}
 
-          expected (merge nfo-data updates)]
+          ;; 2021-12-20: new.
+          source-map-list {:source-map-list [{:source "curseforge" :source-id 321}]}
 
-      (nfo/write-nfo (install-dir) addon-dir nfo-data)
+          expected (merge nfo-data updates source-map-list)]
+
+      (spit (utils/join (addon-path) nfo/nfo-filename) (utils/to-json nfo-data))
       (nfo/update-nfo (install-dir) addon-dir updates)
-      (is (= expected (nfo/read-nfo (install-dir) addon-dir)))))
+      (is (= expected (nfo/read-nfo (install-dir) addon-dir))))))
 
+(deftest update-nfo-data--invalid-data
   (testing "invalid data is not updated"
     (let [nfo-data {:installed-version "1.2.1"
                     :installed-game-track :classic
@@ -207,10 +230,13 @@
 
           updates {:installed-game-track :foo}
 
-          expected nfo-data
+          ;; 2021-12-20: new.
+          source-map-list {:source-map-list [{:source "curseforge" :source-id 321}]}
+
+          expected (merge nfo-data source-map-list)
           expected-log ["new \".strongbox.json\" data is invalid and won't be written to file"]]
 
-      (nfo/write-nfo (install-dir) addon-dir nfo-data)
+      (spit (utils/join (addon-path) nfo/nfo-filename) (utils/to-json nfo-data))
       (is (= expected-log
              (logging/buffered-log :error
                                    (nfo/update-nfo (install-dir) addon-dir updates))))
@@ -249,7 +275,8 @@
                     :group-id "https://foo.bar"
                     :primary? true
                     :source "curseforge"
-                    :source-id 321}
+                    :source-id 321
+                    :source-map-list [{:source "curseforge" :source-id 321}]}
           expected-raw nfo-data ;; no change in file
           expected (assoc nfo-data :ignore? true)] ;; back to being implicitly ignored
       (nfo/write-nfo (install-dir) ignorable-addon-dir nfo-data)
@@ -265,6 +292,7 @@
                     :primary? true
                     :source "curseforge"
                     :source-id 321
+                    :source-map-list [{:source "curseforge" :source-id 321}]
                     :ignore? false} ;; explicit ignore flag
           expected-raw (dissoc nfo-data :ignore?)
           expected (assoc nfo-data :ignore? true)] ;; back to being implicitly ignored
@@ -281,7 +309,8 @@
                     :group-id "https://foo.bar"
                     :primary? true
                     :source "curseforge"
-                    :source-id 321}
+                    :source-id 321
+                    :source-map-list [{:source "curseforge", :source-id 123}]}
           expected (assoc nfo-data :pinned-version "a.b.c")]
       (nfo/write-nfo (install-dir) addon-dir nfo-data)
       (nfo/pin (install-dir) addon-dir "a.b.c")
@@ -296,6 +325,8 @@
                     :primary? true
                     :source "curseforge"
                     :source-id 321
+                    :source-map-list [{:source "curseforge" :source-id 321}]
+
                     :pinned-version "1.2.1"}
           expected (dissoc nfo-data :pinned-version)]
       (nfo/write-nfo (install-dir) addon-dir nfo-data)
@@ -309,7 +340,8 @@
                     :group-id "https://foo.bar"
                     :primary? true
                     :source "curseforge"
-                    :source-id 321}
+                    :source-id 321
+                    :source-map-list [{:source "curseforge" :source-id 321}]}
           expected nfo-data]
       (nfo/write-nfo (install-dir) addon-dir nfo-data)
       (nfo/unpin (install-dir) addon-dir)

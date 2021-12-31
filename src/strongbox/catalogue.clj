@@ -121,7 +121,8 @@
   (when-not (:ignore? toc)
     (let [sink nil
           syn (-> toc
-                  (merge {:url (:group-id toc)
+                  (merge {;; :url (:group-id toc) ;; 2021-12-30: can't rely on `url` being consistent with `source` anymore.
+                          :url nil ;; attempt to reconstruct below
                           :tag-list []
                           :updated-date constants/fake-datetime
                           :download-count 0
@@ -136,11 +137,16 @@
                 syn)
 
           ;; we might be able to recover from this.
-          ;; wowi and github urls can be reconstructed
+          ;; all urls except curseforge can be reconstructed
           syn (if (-> syn :url nil?)
                 (case (:source toc)
+                  ;; "curseforge" ... ;; addon page URL can't be reconstructed, so clickable links break.
                   "wowinterface" (assoc syn :url (wowinterface/make-url toc))
                   "tukui" (assoc syn :url (tukui-api/make-url toc))
+                  "github" (assoc syn :url (github-api/make-url toc))
+                  ;; gitlab addons only appear in the user catalogue so will only be 'polyfilled' here if
+                  ;; they remain installed but removed from the user-catalogue.
+                  "gitlab" (assoc syn :url (gitlab-api/make-url toc))
                   syn)
                 syn)
 
