@@ -452,9 +452,6 @@
                 "#time"
                 {:-fx-alignment "center"}
 
-                "#message"
-                {:-fx-padding "0 0 0 .5em"}
-
                 "#message.column-header .label"
                 {:-fx-alignment "center-left"}}
 

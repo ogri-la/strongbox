@@ -19,6 +19,14 @@
     [gitlab-api :as gitlab-api]
     [github-api :as github-api]]))
 
+(defn-spec host-disabled? boolean?
+  "returns `true` if the addon host has been disabled"
+  [addon map?]
+  (when (-> addon :source (= "curseforge"))
+    (warn (utils/message-list (str "addon host 'curseforge' will be disabled " constants/curseforge-cutoff-label)
+                              ["use 'Source' and 'Find similar' from the addon context menu"])))
+  false)
+
 (defn-spec -expand-summary (s/or :ok :addon/expanded, :error nil?)
   "fetches updates from the addon host for the given `addon` and `game-track`.
   does *not* support compound game tracks or warning the user, see `expand-summary`.
@@ -55,63 +63,30 @@
   when `strict?` is `false` and an addon fails to match for the given `game-track`, other game tracks will be checked.
   emits warnings to user when no release found."
   [addon :addon/expandable, game-track :addon-dir/game-track, strict? ::sp/strict?]
-  (if-let [source-updates
-           (case [game-track strict?]
-             [:retail true] (-expand-summary addon :retail)
-             [:classic true] (-expand-summary addon :classic)
-             [:classic-tbc true] (-expand-summary addon :classic-tbc)
-             [:retail false]
-             (or
-              (-expand-summary addon :retail)
-              (-expand-summary addon :classic)
-              (-expand-summary addon :classic-tbc))
+  (let [strict? (boolean strict?)
+        track-map {:retail [:retail :classic :classic-tbc]
+                   :classic [:classic :classic-tbc :retail]
+                   :classic-tbc [:classic-tbc :classic :retail]}
+        game-track* game-track
+        game-track (some #{game-track} sp/game-tracks)] ;; :retail => :retail, :unknown-game-track => nil
+    (cond
+      (not game-track) (error (format "unsupported game track '%s'." (str game-track*)))
+      (host-disabled? addon) (error (format "addon host '%s' has been disabled." (:source addon)))
+      :else (if-let [source-updates (if strict?
+                                      (-expand-summary addon game-track)
+                                      (utils/first-nn (partial -expand-summary addon) (get track-map game-track)))]
+              source-updates
 
-             [:classic false]
-             (or
-              (-expand-summary addon :classic)
-              (-expand-summary addon :classic-tbc)
-              (-expand-summary addon :retail))
-
-             [:classic-tbc false]
-             (or
-              (-expand-summary addon :classic-tbc)
-              (-expand-summary addon :classic)
-              (-expand-summary addon :retail))
-
-             ;; rare case, we received a game track or strictness setting that isn't catered for.
-             ;; possibly an older strongbox with newer data. we'll leave an error message below.
-             nil)]
-
-    source-updates
-
-    (let [;; "no 'Retail' release found on github"
-          ;; "no 'Classic' release found on wowinterface"
-          ;; "no 'Classic (TBC)', 'Classic' or 'Retail' release found on curseforge"
-
-          retail-lbl (sp/game-track-labels-map :retail)
-          classic-lbl (sp/game-track-labels-map :classic)
-          classic-tbc-lbl (sp/game-track-labels-map :classic-tbc)
-          source (:source addon)
-
-          single-template "no '%s' release found on %s."
-          multi-template "no '%s', '%s' or '%s' release found on %s."
-
-          msg (case [game-track strict?]
-                [:retail true] (format single-template retail-lbl source)
-                [:classic true] (format single-template classic-lbl source)
-                [:classic-tbc true] (format single-template classic-tbc-lbl source)
-
-                ;; these can happen after alpha/beta/no-lib releases have been excluded and no releases are left
-                [:retail false] (format multi-template retail-lbl classic-lbl classic-tbc-lbl source)
-                [:classic false] (format multi-template classic-lbl classic-tbc-lbl retail-lbl source)
-                [:classic-tbc false] (format multi-template classic-tbc-lbl classic-lbl retail-lbl source)
-
-                (if (boolean? strict?)
-                  (error (format "unsupported game track '%s'." (str game-track)))
-                  (do (error "this is a programming error, please report this if possible.")
-                      (error (format "unknown strictness value '%s'." (str strict?))))))]
-      (when msg
-        (warn msg)))))
+              ;; "no 'Retail' release found on github"
+              ;; "no 'Classic' release found on wowinterface"
+              ;; "no 'Classic (TBC)', 'Classic' or 'Retail' release found on curseforge"
+              (let [single-template "no '%s' release found on %s."
+                    multi-template "no '%s', '%s' or '%s' release found on %s."
+                    msg (if strict?
+                          (format single-template (sp/game-track-labels-map game-track) (:source addon))
+                          (apply format multi-template (conj (mapv #(sp/game-track-labels-map %) (get track-map game-track))
+                                                             (:source addon))))]
+                (warn msg))))))
 
 ;;
 

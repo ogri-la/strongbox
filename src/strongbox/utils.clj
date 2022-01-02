@@ -735,10 +735,20 @@
   (when string
     (String. (.decode (Base64/getDecoder) string))))
 
+;; https://stackoverflow.com/questions/3407876/how-do-i-avoid-clojures-chunking-behavior-for-lazy-seqs-that-i-want-to-short-ci
+(defn unchunk
+  "wraps sequence `s` in a call to `lazy-seq` that produces a closure, avoiding chunking behaviour."
+  [s]
+  (when (seq s)
+    (lazy-seq
+     (cons (first s)
+           (unchunk (next s))))))
+
 (defn first-nn
-  "returns the first non-nil value of lazily applying `f` to `lst`"
+  "returns the first non-nil value of lazily applying `f` to `lst`, avoiding chunking behaviour so side-effects are safe"
   [f lst]
   (->> lst
+       unchunk
        (map f)
        (remove nil?)
        first))

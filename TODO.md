@@ -20,24 +20,28 @@ see CHANGELOG.md for a more formal list of changes by release
                 - and search results are thin enough as it is. if it can only be found on curseforge, then that is more helpful than the 'no results' msg.
     - done
 
+* disable curseforge
+    - https://mailchi.mp/overwolf/whats-new-with-overwolf-curseforge-november3
+    - I want a permanent warning against curseforge addons between now and when the service goes offline
+        - done
+
 ## todo
 
-Curseforge is going away. How to migrate addons off of curseforge?
-- in most cases this won't be possible.
-- realistic alternatives for the rest are wowi and github.
 
-* how to disable the completely integrated curseforge?
-    - I want curseforge addons to still show as being curseforge addons but just never receive updates after the cut off.
-        - when is the cut off again?
-    - I don't want the catalogue of curseforge addons to be merged into the short and full catalogues after the cut off
-    - I don't want the curseforge catalogue to receive updates
-    - I want a permanent warning against curseforge addons between now and when the service goes offline
-        - I want an error after cut off
+## todo bucket (no particular order)
+
+* disable support for curseforge
+    - https://mailchi.mp/overwolf/whats-new-with-overwolf-curseforge-november3
+    - addons from curseforge can not be imported
+    - addons from curseforge can not be updated
+        - they should get an error
+            - or marked as ignored?
+    - curseforge catalogue should not be present
+    - curseforge addons should be present in full and short catalogues
+    - curseforge results should not be in search results
 
 * strongbox-comrades
     - remove curseforge as a requirement for any category.
-
-## todo bucket (no particular order)
 
 * nfo, replace the URL as the group-id with something random
 
@@ -52,7 +56,7 @@ Curseforge is going away. How to migrate addons off of curseforge?
 * star or 'like' addons in the catalogue
 
 * http, add with-backoff support to download-file
-    - just had a wowinterface addon timeout
+    - just had a wowinterface addon download timeout
 
 * replace multi-error messages with a single multi-line error message
 
@@ -86,15 +90,15 @@ Curseforge is going away. How to migrate addons off of curseforge?
         - https://github.com/rgd87/Aptechka/releases
             - fucking /sigh!
 
-* add support for 'Interface-Retail', 'Interface-Classic', 'Interface-BCC'
+* toc, add support for 'Interface-Retail', 'Interface-Classic', 'Interface-BCC'
     - how much of a thing is this?
         - is it more of a templating thing?
     - https://github.com/Myrroddin/MrBigglesworthDeath/blob/master/MrBigglesworthDeath.toc
 
 * github, gitlab, are we paginating release calls?
+    - no we're not.
+    - unless authenticated somehow, I wouldn't bother.
 
-* disable support for curseforge
-    - https://mailchi.mp/overwolf/whats-new-with-overwolf-curseforge-november3
 
 * github, like gitlab, use presence of multiple toc files to determine game track support
 
