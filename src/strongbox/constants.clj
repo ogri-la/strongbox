@@ -42,3 +42,5 @@
    :ignored "\u26AA" ;; '⚪' medium white circle
    :pinned "\u26ab" ;; '⚫' medium black circle
    })
+
+(def curseforge-cutoff-label "Feb 1st, 2022")
