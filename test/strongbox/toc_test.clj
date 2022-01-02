@@ -89,9 +89,12 @@ SomeAddon.lua")
                      :-toc/game-track :retail
                      :supported-game-tracks [:retail]
                      :installed-version "1.6.1"
-                     ;; wowi is edged out in favour of curseforge unfortunately
+                     ;; wowi is edged out in favour of curseforge ...
                      :source "curseforge"
-                     :source-id 54321}]]
+                     :source-id 54321
+                     ;; ... however both are captured here in `:source-map-list`
+                     :source-map-list [{:source "wowinterface" :source-id 12345}
+                                       {:source "curseforge" :source-id 54321}]}]]
       (fs/mkdir addon-path)
       (spit toc-file-path toc-file-contents)
       (is (= expected (toc/parse-addon-toc-guard addon-path))))))
@@ -147,7 +150,7 @@ SomeAddon.lua")
         (is (= expected (toc/parse-addon-toc given addon-dir)))))))
 
 (deftest parse-addon-toc--x-source
-  (testing "addons whose toc files have a 'x-$host-id=val' will use those as `:source` and `:source-id`"
+  (testing "addons whose toc files have a 'x-<host>-id' value will use those as `:source` and `:source-id`"
     (let [addon-dir (utils/join (helper/install-dir) "dirname")
           defaults {:dirname "dirname"
                     :description nil
@@ -155,18 +158,45 @@ SomeAddon.lua")
                     :interface-version constants/default-interface-version
                     :supported-game-tracks [:retail]
                     :-toc/game-track :retail}
-          cases [[{:x-wowi-id "123"} {:label "dirname *" :name "dirname-*" :source "wowinterface" :source-id 123}]
-                 [{:x-wowi-id 123} {:label "dirname *" :name "dirname-*" :source "wowinterface" :source-id 123}]
+          cases [;; wowinterface
+                 [{:x-wowi-id "123"} {:label "dirname *" :name "dirname-*"
+                                      :source "wowinterface" :source-id 123
+                                      :source-map-list [{:source "wowinterface" :source-id 123}]}]
+                 [{:x-wowi-id 123} {:label "dirname *" :name "dirname-*"
+                                    :source "wowinterface" :source-id 123
+                                    :source-map-list [{:source "wowinterface" :source-id 123}]}]
                  [{:x-wowi-id "abc"} {:label "dirname *" :name "dirname-*"}] ;; bad case, non-numeric wowi ID
 
-                 [{:x-curse-project-id "123"} {:label "dirname *" :name "dirname-*" :source "curseforge" :source-id 123}]
-                 [{:x-curse-project-id 123} {:label "dirname *" :name "dirname-*" :source "curseforge" :source-id 123}]
+                 ;; curse
+                 [{:x-curse-project-id "123"} {:label "dirname *" :name "dirname-*"
+                                               :source "curseforge" :source-id 123
+                                               :source-map-list [{:source "curseforge" :source-id 123}]}]
+                 [{:x-curse-project-id 123} {:label "dirname *" :name "dirname-*"
+                                             :source "curseforge" :source-id 123
+                                             :source-map-list [{:source "curseforge" :source-id 123}]}]
                  [{:x-curse-project-id "abc"} {:label "dirname *" :name "dirname-*"}] ;; bad case, non-numeric curse ID
 
-                 [{:x-tukui-projectid "123"} {:label "dirname *" :name "dirname-*" :source "tukui" :source-id 123}]
-                 [{:x-tukui-projectid "-1"} {:label "dirname *" :name "dirname-*" :source "tukui" :source-id -1}]
-                 [{:x-tukui-projectid 123} {:label "dirname *" :name "dirname-*" :source "tukui" :source-id 123}]
-                 [{:x-tukui-projectid "abc"} {:label "dirname *" :name "dirname-*"}]]] ;; bad case
+                 ;; tukui
+                 [{:x-tukui-projectid "123"} {:label "dirname *" :name "dirname-*"
+                                              :source "tukui" :source-id 123
+                                              :source-map-list [{:source "tukui" :source-id 123}]}]
+                 [{:x-tukui-projectid "-1"} {:label "dirname *" :name "dirname-*"
+                                             :source "tukui" :source-id -1
+                                             :source-map-list [{:source "tukui" :source-id -1}]}]
+                 [{:x-tukui-projectid 123} {:label "dirname *" :name "dirname-*"
+                                            :source "tukui" :source-id 123
+                                            :source-map-list [{:source "tukui" :source-id 123}]}]
+                 [{:x-tukui-projectid "abc"} {:label "dirname *" :name "dirname-*"}] ;; bad case
+
+                 ;; mixed
+                 [{:x-wowi-id "123"
+                   :x-tukui-projectid "123"
+                   :x-curse-project-id "123"} {:label "dirname *" :name "dirname-*"
+                                               :source "tukui" :source-id 123 ;; todo: this precedence is interesting ...
+                                               :source-map-list [{:source "wowinterface" :source-id 123}
+                                                                 {:source "curseforge" :source-id 123}
+                                                                 {:source "tukui" :source-id 123}]}]]]
+
       (fs/mkdir addon-dir)
       (doseq [[given expected] cases
               :let [expected (merge expected defaults)]]

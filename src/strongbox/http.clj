@@ -23,6 +23,14 @@
 (def ^:dynamic *default-pause* 1000)
 (def ^:dynamic *default-attempts* 3)
 
+(defn simple-cache
+  "binds a simplistic getter+setter and `/tmp` to *cache* when caching http requests.
+  good for debugging, don't use otherwise."
+  []
+  {:set-etag (constantly nil)
+   :get-etag (constantly nil)
+   :cache-dir (fs/tmpdir)})
+
 (defn- add-etag-or-not
   [etag-key req]
   (if-let [;; for some reason this dynamic binding of *cache* to nil results in:
@@ -245,7 +253,7 @@
             (close-stream ste))
           ;; return a synthetic HTTP error
           (let [request-obj (java.net.URL. url)
-                http-error {:status 408 ;; 'Request Timeout'
+                http-error {:status 608 ;; 'Request Timeout'
                             :host (.getHost request-obj)
                             :reason-phrase "Connection timed out"}]
             (warn (format "failed to fetch '%s': connection timed out." url))
@@ -257,7 +265,7 @@
         (catch java.net.ConnectException ce
           ;; return a synthetic HTTP error
           (let [request-obj (java.net.URL. url)
-                http-error {:status 408 ;; 'Request Timeout'
+                http-error {:status 608 ;; 'Request Timeout'
                             :host (.getHost request-obj)
                             :reason-phrase "Connection timed out"}]
             (warn (format "failed to connect '%s': connection timed out." url))
@@ -393,6 +401,13 @@
            (do (Thread/sleep pause)
                (recur (inc attempt) (* pause 2))))
          result)))))
+
+(defmacro with-simple-cache
+  "executes the body form with results cached in `/tmp`.
+  just like `simple-cache`, don't use outside of debugging."
+  [& form]
+  `(binding [*cache* (simple-cache)]
+     ~@form))
 
 ;;
 

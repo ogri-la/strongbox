@@ -200,8 +200,8 @@
   (let [index (* page-size page)
         game-id 1 ;; WoW
         sort-by 3 ;; alphabetically, asc (a-z)
-        results (http/download-with-backoff (api-url "/addon/search?gameId=%s&index=%s&pageSize=%s&searchFilter=&sort=%s" game-id index page-size sort-by))
-        results (utils/from-json results)]
+        url (api-url "/addon/search?gameId=%s&index=%s&pageSize=%s&searchFilter=&sort=%s" game-id index page-size sort-by)
+        results (->> url http/download-with-backoff http/sink-error utils/from-json)]
     (mapv extract-addon-summary results)))
 
 (defn-spec download-all-summaries-alphabetically (s/or :ok :addon/summary-list, :error nil?)

@@ -265,3 +265,11 @@
                          (clojure.string/split #"/")))] ;; ["group" "owner" "project"]
     (when (> (count bits) 1)
       (clojure.string/join "/" bits))))
+
+;;
+
+(defn make-url
+  "returns a URL to the given addon data"
+  [{:keys [source-id]}]
+  (when source-id
+    (str "https://gitlab.com/" source-id)))

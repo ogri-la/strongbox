@@ -17,14 +17,14 @@
   (when (s/valid? spec x)
     x))
 
-(defn spec-to-kw-list
-  "very limited. only works for basic specs that have a :req [keys] and :opt [keys]"
-  [spec]
-  (let [required #(nth % 2)
-        optional #(last %)
-        extract (juxt optional required)
-        normalise (comp keyword name)]
-    (->> spec clojure.spec.alpha/form extract (apply concat) (mapv normalise))))
+(defn valid-or-explain
+  "when the given `x` isn't a valid `spec`, prints off an explanation.
+  good for debugging gigantic blocks of spec output by targeting just bits of it's body, for example:
+  (doseq [row catalogue-data]
+     (sp/valid-or-explain :addon/summary row))"
+  [spec x]
+  (when-not (s/valid? spec x)
+    (s/explain spec x)))
 
 (s/def ::atom #(instance? clojure.lang.Atom %))
 
@@ -134,7 +134,7 @@
 ;; column lists
 
 ;; all known columns. also constitutes the column order.
-(def known-column-list [:browse-local :source :source-id :name :description :tag-list :created-date :updated-date :installed-version :available-version :combined-version :game-version :uber-button])
+(def known-column-list [:browse-local :source :source-id :source-map-list :name :description :tag-list :created-date :updated-date :installed-version :available-version :combined-version :game-version :uber-button])
 
 ;; default set of columns
 (def default-column-list [:source :name :description :installed-version :available-version :game-version :uber-button])
@@ -210,6 +210,10 @@
                            :unknown string?))
 (s/def :addon/source-id (s/or ::integer-id? int? ;; tukui has negative ids
                               ::string-id? string?))
+
+(s/def :addon/source-map (s/keys :req-un [:addon/source :addon/source-id]))
+(s/def :addon/source-map-list (s/coll-of :addon/source-map :kind vector?))
+
 (s/def :addon/created-date ::inst)
 (s/def :addon/updated-date ::inst)
 
@@ -223,23 +227,24 @@
                    ::interface-version
                    ::installed-version
                    :addon/supported-game-tracks]
-          ;; todo: revisit all of these
-          ;;:opt-un [::group-id ::primary? ::group-addons :addon/source :addon/source-id]
-          ))
+          :opt-un [;; toc file may contain addon host information but it's not guaranteed.
+                   :addon/source
+                   :addon/source-id
+                   :addon/source-map-list]))
 (s/def :addon/toc-list (s/coll-of :addon/toc))
 
 ;; circular dependency? :addon/toc has an optional ::group-addons and ::group-addons is a list of :addon/toc ? oof
 (s/def ::group-addons :addon/toc-list)
 
 ;; 'nfo' files contain extra per-addon data written to addon directories as .strongbox.json.
-;; note! this form is being targeted by `spec-to-kw-list` in nfo.clj to strip unspecced keys before writing to file.
 (s/def :addon/-nfo (s/keys :req-un [::installed-version
                                     ::name
                                     ::group-id
                                     ::primary?
                                     :addon/source
                                     ::installed-game-track
-                                    :addon/source-id]
+                                    :addon/source-id
+                                    :addon/source-map-list]
                            :opt-un [::ignore?
                                     :addon/pinned-version]))
 
@@ -265,9 +270,9 @@
                    ::download-count
                    :addon/source
                    :addon/source-id]
-          :opt-un [::description ;; wowinterface summaries have no description
+          :opt-un [::description ;; wowinterface summaries have no description. github may not have a description.
                    :addon/created-date ;; wowinterface summaries have no created date
-                   ::game-track-list ;; more of a set, really
+                   ::game-track-list   ;; more of a set, really
                    ]))
 (s/def :addon/summary-list (s/coll-of :addon/summary))
 

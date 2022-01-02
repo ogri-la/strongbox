@@ -370,3 +370,13 @@
                      {:get (fn [req] {:status 200 :body "{}"})}}]
     (with-fake-routes-in-isolation fake-routes
       (is (= expected (gitlab-api/guess-game-track-list source-id))))))
+
+(deftest make-url
+  (let [cases [[nil nil]
+               [{} nil]
+               [{:foo :bar} nil]
+               [{:source-id ""} "https://gitlab.com/"]
+               [{:source-id "foo"} "https://gitlab.com/foo"]
+               [{:source-id "foo/bar"} "https://gitlab.com/foo/bar"]]]
+    (doseq [[given expected] cases]
+      (is (= expected (gitlab-api/make-url given))))))

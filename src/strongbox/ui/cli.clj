@@ -1,5 +1,6 @@
 (ns strongbox.ui.cli
   (:require
+   [clojure.string]
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :as timbre :refer [debug info warn error report spy]]
    [clojure.spec.alpha :as s]
@@ -8,17 +9,17 @@
     [constants :as constants]
     [joblib :as joblib]
     [github-api :as github-api]
+    [tukui-api :as tukui-api]
+    [gitlab-api :as gitlab-api]
+    [curseforge-api :as curseforge-api]
+    [wowinterface :as wowinterface]
     [db :as db]
     [logging :as logging]
     [addon :as addon]
     [specs :as sp]
-    [tukui-api :as tukui-api]
-    [gitlab-api :as gitlab-api]
     [catalogue :as catalogue]
     [http :as http]
     [utils :as utils :refer [if-let* message-list]]
-    [curseforge-api :as curseforge-api]
-    [wowinterface :as wowinterface]
     [core :as core :refer [get-state paths find-catalogue-local-path]]]))
 
 (comment "the UIs pool their logic here, which calls core.clj.")
@@ -55,8 +56,7 @@
         vec
         select-addons*)))
 
-;; unselect? https://english.stackexchange.com/questions/18465/unselect-or-deselect
-(defn-spec deselect-addons! nil?
+(defn-spec clear-selected-addons! nil?
   "removes all addons from the `:selected-addon-list` list"
   []
   (select-addons* []))
@@ -603,6 +603,21 @@
 
 ;;
 
+(defn-spec addon-source-map-to-url (s/or :ok ::sp/url, :error nil?)
+  "construct a URL given a `source`, `source-id` and toc data only.
+  caveats: 
+  * curseforge, can't go directly to an addon with just the source-id, so we use the slug and hope for the best.
+  * tukui, we also need the game track to know which url"
+  [addon :addon/toc, source-map :addon/source-map]
+  (case (:source source-map)
+    "curseforge" (str "https://www.curseforge.com/wow/addons/" (-> addon :name)) ;; still not great but about ~80% hit rate.
+    "wowinterface" (wowinterface/make-url source-map)
+    "tukui" (tukui-api/make-url (merge addon source-map))
+    "github" (github-api/make-url source-map)
+    "gitlab" (gitlab-api/make-url source-map)
+
+    nil))
+
 (defn-spec available-versions-v1 (s/or :ok string? :no-version-available nil?)
   "formats the 'available version' string depending on the state of the addon.
   pinned and ignored addons get a helpful prefix."
@@ -629,6 +644,13 @@
   {:browse-local {:label "browse" :value-fn :addon-dir}
    :source {:label "source" :value-fn :source}
    :source-id {:label "ID" :value-fn :source-id}
+   :source-map-list {:label "other sources" :value-fn (fn [row]
+                                                        (->> row
+                                                             :source-map-list
+                                                             (map :source)
+                                                             (remove #(= % (:source row)))
+                                                             utils/nilable
+                                                             (clojure.string/join ", ")))}
    :name {:label "name" :value-fn (comp utils/no-new-lines :label)}
    :description {:label "description" :value-fn (comp utils/no-new-lines :description)}
    :tag-list {:label "tags" :value-fn (fn [row]
@@ -679,6 +701,16 @@
   (sort-by (fn [x]
              (.indexOf sp/known-column-list x)) column-list))
 
+;; source switching
+
+(defn-spec switch-source (s/or :ok :addon/toc+nfo, :error nil?)
+  "switches addon from one source (like curseforge) to another (like wowinterface), rewriting nfo data.
+  `new-source` must appear in the addon's `source-map-list`."
+  [addon :addon/toc+nfo, new-source-map :addon/source-map]
+  (addon/switch-source! (core/selected-addon-dir) addon new-source-map)
+  (half-refresh))
+
+
 ;; debug
 
 
@@ -716,7 +748,7 @@
     (joblib/run-jobs! queue-atm core/num-concurrent-downloads)
     nil))
 
-;;
+;; ---
 
 (defmulti action
   "handles the following actions:
@@ -730,6 +762,15 @@
     (cond
       (map? x) (:action x)
       (keyword? x) x)))
+
+(defmethod action :scrape-github-catalogue
+  [_]
+  (binding [http/*cache* (core/cache)]
+    (let [output-file (find-catalogue-local-path :github)
+          catalogue-data (github-api/build-catalogue)
+          created (utils/datestamp-now-ymd)
+          formatted-catalogue-data (catalogue/format-catalogue-data-for-output catalogue-data created)]
+      (catalogue/write-catalogue formatted-catalogue-data output-file))))
 
 (defmethod action :scrape-wowinterface-catalogue
   [_]
@@ -763,8 +804,9 @@
   (let [curseforge-catalogue (find-catalogue-local-path :curseforge)
         wowinterface-catalogue (find-catalogue-local-path :wowinterface)
         tukui-catalogue (find-catalogue-local-path :tukui)
+        github-catalogue (find-catalogue-local-path :github)
 
-        catalogue-path-list [curseforge-catalogue wowinterface-catalogue tukui-catalogue]
+        catalogue-path-list [curseforge-catalogue wowinterface-catalogue tukui-catalogue github-catalogue]
         catalogue (mapv catalogue/read-catalogue catalogue-path-list)
         catalogue (reduce catalogue/merge-catalogues catalogue)
         ;; 2021-09: `merge-catalogues` no longer converts an addon to an `ordered-map`.
@@ -783,6 +825,7 @@
   (action :scrape-curseforge-catalogue)
   (action :scrape-wowinterface-catalogue)
   (action :scrape-tukui-catalogue)
+  (action :scrape-github-catalogue)
   (action :write-catalogue))
 
 (defmethod action :list

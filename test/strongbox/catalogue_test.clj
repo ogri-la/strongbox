@@ -8,7 +8,7 @@
     [constants :as constants]
     [logging :as logging]
     [catalogue :as catalogue]
-    [test-helper :refer [fixture-path toc]]]
+    [test-helper :as helper :refer [fixture-path]]]
    [clj-http.fake :refer [with-fake-routes-in-isolation]]))
 
 (deftest de-dupe-wowinterface
@@ -350,7 +350,8 @@
           strict? true
           fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/281321"
                        {:get (fn [req] {:status 502 :reason-phrase "Gateway Time-out (HTTP 502)"})}}
-          expected ["failed to fetch 'https://addons-ecs.forgesvc.net/api/v2/addon/281321': Gateway Time-out (HTTP 502) (HTTP 502)"
+          expected ["addon host 'curseforge' will be disabled Feb 1st, 2022\n • use 'Source' and 'Find similar' from the addon context menu"
+                    "failed to fetch 'https://addons-ecs.forgesvc.net/api/v2/addon/281321': Gateway Time-out (HTTP 502) (HTTP 502)"
                     "Curseforge: the API is having problems right now. Try again later."
                     "no 'Retail' release found on curseforge."]]
       (with-fake-routes-in-isolation fake-routes
@@ -363,7 +364,8 @@
           strict? true
           fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/281321"
                        {:get (fn [req] {:status 504 :reason-phrase "Gateway Time-out (HTTP 504)"})}}
-          expected ["failed to fetch 'https://addons-ecs.forgesvc.net/api/v2/addon/281321': Gateway Time-out (HTTP 504) (HTTP 504)"
+          expected ["addon host 'curseforge' will be disabled Feb 1st, 2022\n • use 'Source' and 'Find similar' from the addon context menu"
+                    "failed to fetch 'https://addons-ecs.forgesvc.net/api/v2/addon/281321': Gateway Time-out (HTTP 504) (HTTP 504)"
                     "Curseforge: the API is having problems right now. Try again later."
                     "no 'Retail' release found on curseforge."]]
       (with-fake-routes-in-isolation fake-routes
@@ -573,23 +575,26 @@
 
 (deftest toc2summary--plain
   (testing "plain toc data with no extras can't be coerced into an addon summary"
-    (is (nil? (catalogue/toc2summary toc)))))
+    (is (nil? (catalogue/toc2summary helper/toc-data)))))
 
 (deftest toc2summary--toc+nfo
   (testing "toc with extra nfo data *can* be coerced into an addon summary with less guessing"
-    (let [toc+nfo (merge toc {:group-id "https://example.org"
-                              :source "wowinterface"
-                              :source-id 123
-                              :interface-version constants/default-interface-version-classic
-                              :toc/game-track :classic
-                              :supported-game-tracks [:classic]})
+    (let [toc+nfo (merge helper/toc-data
+                         {:group-id "https://example.org"
+                          :source "wowinterface"
+                          :source-id 123
+                          :interface-version constants/default-interface-version-classic
+                          :toc/game-track :classic
+                          :supported-game-tracks [:classic]})
           expected {:label "EveryAddon 1.2.3",
                     :name "everyaddon",
                     :source "wowinterface",
                     :source-id 123
 
                     ;; synthetic
-                    :url "https://example.org" ;; url won't be derived from source and id
+                    ;; 2021-12-30: changed, group-id is now ignored in favour of reconstructing the URL.
+                    ;;:url "https://example.org" ;; url won't be derived from source and id
+                    :url "https://www.wowinterface.com/downloads/info123"
                     :download-count 0,
                     :game-track-list [:classic], ;; classic is used
                     :tag-list [],
@@ -598,8 +603,9 @@
 
 (deftest toc2summary--wowinterface
   (testing "toc data with a wowinterface source and id *can* be coerced to addon summary without a `:url`"
-    (let [wowinterface-toc (merge toc {:source "wowinterface"
-                                       :source-id 123})
+    (let [wowinterface-toc (merge helper/toc-data
+                                  {:source "wowinterface"
+                                   :source-id 123})
           expected {:label "EveryAddon 1.2.3",
                     :name "everyaddon",
                     :source "wowinterface",
@@ -615,8 +621,9 @@
 
 (deftest toc2summary--tukui
   (testing "toc data with a tukui source and id can be coerced to an addon summary without a `:url`"
-    (let [tukui-toc (merge toc {:source "tukui"
-                                :source-id 123})
+    (let [tukui-toc (merge helper/toc-data
+                           {:source "tukui"
+                            :source-id 123})
           expected {:source "tukui",
                     :source-id 123,
                     :name "everyaddon",
@@ -631,16 +638,36 @@
 
 (deftest toc2summary--curseforge
   (testing "toc data with a curseforge source and id cannot be coerced to an addon summary without a `:url`"
-    (let [curseforge-toc (merge toc {:source "curseforge"
-                                     :source-id 123})]
+    (let [curseforge-toc (merge helper/toc-data
+                                {:source "curseforge"
+                                 :source-id 123})]
       (is (nil? (catalogue/toc2summary curseforge-toc))))))
+
+(deftest toc2summary--github
+  (testing "toc data with a github source and id can be coerced to an addon summary without a `:url`"
+    (let [github-toc (merge helper/toc-data
+                            {:source "github"
+                             :source-id "everyman/everyaddon"})
+
+          expected {:source "github",
+                    :source-id "everyman/everyaddon",
+                    :name "everyaddon",
+                    :label "EveryAddon 1.2.3",
+
+                    ;; synthetic
+                    :tag-list [],
+                    :updated-date "2001-01-01T01:01:01Z",
+                    :url "https://github.com/everyman/everyaddon"
+                    :download-count 0}]
+      (is (= expected (catalogue/toc2summary github-toc))))))
 
 (deftest toc2summary--ignored
   (testing "any data that is ignored cannot be coerced to an addon summary, even if all the right data is there."
-    (let [toc (merge toc {:source "wowinterface"
-                          :source-id 123
-                          :ignore? true})]
-      (is (nil? (catalogue/toc2summary toc))))))
+    (let [wowi-toc (merge helper/toc-data
+                          {:source "wowinterface"
+                           :source-id 123
+                           :ignore? true})]
+      (is (nil? (catalogue/toc2summary wowi-toc))))))
 
 (deftest filter-catalogue
   (testing "a catalogue can have it's addon-summary-list filtered by a specific source"

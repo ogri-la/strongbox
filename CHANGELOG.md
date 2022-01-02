@@ -4,6 +4,40 @@ All notable changes to this project will be documented in this file. This change
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 4.9.0 - 2022-01-02
+
+### Added
+
+* a github catalogue.
+    - actually, the catalogue is available right now if you're using the 'short' (default) or 'full' catalogues.
+    - an entry in the `Catalogue` menu where you can switch to the Github catalogue exclusively.
+* source switching. 
+    - when an addon has multiple sources (curseforge, wowinterface, github, etc) you can switch between them.
+        - this relies on the `x-project-id` type values in addon `.toc` files.
+    - a 'Source' context menu option for addons with multiple sources.
+    - a 'other sources' column with clickable links.
+        - note: curseforge links are a bit hit or miss as a direct URL isn't possible from just the source/project ID
+* 'find similar' context menu option. It searches the catalogue for addons that share the addon's name.
+    - this *may* reveal the same addon on different hosts that aren't present in an addon's `.toc` file.
+        - ensure the 'short' or 'full' catalogues are selected for better results.
+* a warning for curseforge addons that updates will stop Feb 1st 2022 and directions on how to migrate.
+* new dependency `org.clojure/data.csv` for parsing the Github catalogue.
+
+### Changed
+
+* the set of catalogues in your `config.json` file will be upgraded to include the new Github catalogue
+    - but only if it looks unmodified from the default set of catalogues.
+* curseforge addons missing from the currently selected catalogue can no longer be checked for updates.
+    - this was a recent feature that allowed addons that could patch together a full set of data to be checked regardless of a match in the catalogue.
+        - it is now disabled for curseforge because the `group-id` value it depends on may not be consistent now that source switching is present.
+
+### Fixed
+
+* http backoff regression on timeout errors.
+    - the 'synthetic' http errors I was using to replicate socket connection errors and connection timeout errors used 4xx statuses.
+        - this meant they were considered 'client' errors (404, 403, etc) and were *not* re-attempted.
+* minor issue causing cramped multi-line messages in the notice logger.
+
 ## 4.8.0 - 2021-12-12
 
 ### Added

@@ -6,41 +6,57 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* gitlab as addon host
-    - https://gitlab.com/search?search=wow+addon
-    - returned to bucket 2019-12-04, notes:
-        - gitlab doesn't handle releases like github does
-            - https://stackoverflow.com/questions/29520905/how-to-create-releases-in-gitlab
-        - there are very few gitlab addons (88)
-            - where did this number come from?
-        - api is quite slow
-    - update: as of Oct 2020 gitlab sucks a little bit less and, like github, you can attach binaries to releases
-        - https://gitlab.com/explore/projects?tag=World+of+Warcraft
-        - https://gitlab.com/shrugal/PersoLootRoll
-        - any others ...?
+* github catalogue
+    - something quick and dirty for now
 
-* multi-toc support
-    - https://github.com/Stanzilla/WoWUIBugs/issues/68#issuecomment-830351390
-    - https://gitlab.com/woblight/strategos 
-        - has no otherwise identifying game track in it's name, toc file or releases
-        - but it does support all three versions of wow
+* regression, synthetic http errors are no longer retried because they're in the 4xx range
+    - bumped the synthetic 408 errors to 608
 
-* add release.json support for github/gitlab addons
-    - https://github.com/layday/instawow/discussions/72
+* source switching
+    - some addons will have multiple sources in the toc file we can switch to.
+    - if not, we can search the catalogue for them
+        - exclude curseforge
+            - not done, curseforge is still supported until Feb 
+                - and search results are thin enough as it is. if it can only be found on curseforge, then that is more helpful than the 'no results' msg.
     - done
 
-* refresh catalogue is not so healthy
-    - errors during refresh should appear in the log next to the appropriate addon
-         -done
-    - 404s shouldn't be retried. the addon is gone
+* disable curseforge
+    - https://mailchi.mp/overwolf/whats-new-with-overwolf-curseforge-november3
+    - I want a permanent warning against curseforge addons between now and when the service goes offline
         - done
 
 ## todo
 
+
 ## todo bucket (no particular order)
 
+* disable support for curseforge
+    - https://mailchi.mp/overwolf/whats-new-with-overwolf-curseforge-november3
+    - addons from curseforge can not be imported
+    - addons from curseforge can not be updated
+        - they should get an error
+            - or marked as ignored?
+    - curseforge catalogue should not be present
+    - curseforge addons should be present in full and short catalogues
+    - curseforge results should not be in search results
+
+* strongbox-comrades
+    - remove curseforge as a requirement for any category.
+
+* nfo, replace the URL as the group-id with something random
+
+* "developer warnings"
+    - a preference that bumps certain debug messages to warnings and errors for developers
+        - like if a release.json is missing assets
+        - or the toc file is mangled
+            - or is missing useful information
+        - or the zip file is badly formed
+    - stuff a regular user should gloss over but a dev might find useful
+
+* star or 'like' addons in the catalogue
+
 * http, add with-backoff support to download-file
-    - just had a wowinterface addon timeout
+    - just had a wowinterface addon download timeout
 
 * replace multi-error messages with a single multi-line error message
 
@@ -58,6 +74,7 @@ see CHANGELOG.md for a more formal list of changes by release
         - rather than once per update
 
 * user catalogue, refresh happens in parallel
+    - write the user-catalogue once, not each time or else we'll get Weirdness
 
 * a more permanent store than just cached files
     - I want to store release data permanently
@@ -73,15 +90,15 @@ see CHANGELOG.md for a more formal list of changes by release
         - https://github.com/rgd87/Aptechka/releases
             - fucking /sigh!
 
-* add support for 'Interface-Retail', 'Interface-Classic', 'Interface-BCC'
+* toc, add support for 'Interface-Retail', 'Interface-Classic', 'Interface-BCC'
     - how much of a thing is this?
         - is it more of a templating thing?
     - https://github.com/Myrroddin/MrBigglesworthDeath/blob/master/MrBigglesworthDeath.toc
 
 * github, gitlab, are we paginating release calls?
+    - no we're not.
+    - unless authenticated somehow, I wouldn't bother.
 
-* disable support for curseforge
-    - https://mailchi.mp/overwolf/whats-new-with-overwolf-curseforge-november3
 
 * github, like gitlab, use presence of multiple toc files to determine game track support
 
@@ -295,8 +312,8 @@ see CHANGELOG.md for a more formal list of changes by release
 * remove the (pinned) and (installed) labels from from the 'available' column
 * drop support catalogue v1
     - a prerequisite for v5 then would be introducing a new catalogue
-* readme, the ~your machine's `hostname`~ bit.
-* readme, the "Original Swing GUI was last available in version 3.x using" bit
+* readme, remove the ~your machine's `hostname`~ bit.
+* readme, remove the "Original Swing GUI was last available in version 3.x using" bit
 * rename 'retail' to 'mainline'
     - pretty big change ;) but probably for the best.
 

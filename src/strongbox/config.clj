@@ -7,12 +7,12 @@
    [clojure.string]
    [strongbox
     [specs :as sp]
-    [utils :as utils :refer [deep-merge]]]))
+    [utils :as utils]]))
 
 ;; if the user provides their own catalogue list in their config file, it will override these defaults entirely
 ;; if the `:catalogue-location-list` entry is *missing* in the user config file, these will be used instead.
 ;; to use strongbox with no catalogues at all, use `:catalogue-location-list []` (empty list)
-(def -default-catalogue-list
+(def -default-catalogue-list--v1
   [{:name :short :label "Short (default)" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"}
    {:name :full :label "Full" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/full-catalogue.json"}
    ;; ---
@@ -20,13 +20,19 @@
    {:name :curseforge :label "Curseforge" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/curseforge-catalogue.json"}
    {:name :wowinterface :label "WoWInterface" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/wowinterface-catalogue.json"}])
 
+(def -github-catalogue {:name :github :label "GitHub" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/github-catalogue.json"})
+(def -default-catalogue-list--v2
+  (conj -default-catalogue-list--v1 -github-catalogue))
+
+(def -default-catalogue-list -default-catalogue-list--v2)
+
 ;; see `cli/column-map` for all known columns
 (def -default-column-list sp/default-column-list)
 
 (def default-cfg
   {:addon-dir-list []
    :selected-addon-dir nil
-   :catalogue-location-list -default-catalogue-list
+   :catalogue-location-list -default-catalogue-list--v2
    :selected-catalogue :short
    :gui-theme :light
    :preferences {;; nil: keep all zips (default)
@@ -96,6 +102,14 @@
     ;; key not present, return config as-is
     cfg))
 
+(defn-spec add-github-catalogue map?
+  "upgrades a v1 list of catalogue locations to a v2 list if it looks like a default set is present."
+  [cfg map?]
+  (if (= (->> cfg :catalogue-location-list (map :name) set)
+         (->> -default-catalogue-list--v1 (map :name) set))
+    (assoc cfg :catalogue-location-list -default-catalogue-list--v2)
+    cfg))
+
 (defn remove-invalid-addon-dirs
   "removes any `addon-dir-map` items from the given configuration whose directories do not exist"
   [cfg]
@@ -129,12 +143,13 @@
   [cfg-a map?, cfg-b map?, msg string?]
   (debug "loading config:" msg)
   (let [cfg (-> cfg-a
-                (deep-merge cfg-b)
+                (utils/deep-merge cfg-b)
                 handle-install-dir
                 handle-compound-game-tracks
                 remove-invalid-addon-dirs
                 handle-selected-addon-dir
                 remove-invalid-catalogue-location-entries
+                add-github-catalogue
                 strip-unspecced-keys)
         message (format "configuration from %s is invalid and will be ignored: %s"
                         msg (s/explain-str ::sp/user-config cfg))]

@@ -77,6 +77,7 @@
   (let [expected [{:fx/type :check-menu-item, :text "browse", :selected false}
                   {:fx/type :check-menu-item, :text "source", :selected true}
                   {:fx/type :check-menu-item, :text "ID", :selected true}
+                  {:fx/type :check-menu-item, :text "other sources", :selected false}
                   {:fx/type :check-menu-item, :text "name", :selected false}
                   {:fx/type :check-menu-item, :text "description", :selected false}
                   {:fx/type :check-menu-item, :text "tags", :selected false}

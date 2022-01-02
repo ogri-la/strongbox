@@ -1,5 +1,6 @@
 (ns strongbox.github-api
   (:require
+   [clojure.data.csv :as csv]
    [clojure.string :refer [index-of split]]
    [slugify.core :refer [slugify]]
    [clojure.spec.alpha :as s]
@@ -296,3 +297,49 @@
 
            ;; 'something' failed to parse :(
            nil))
+
+;;
+
+(defn-spec build-catalogue (s/or :ok :addon/summary-list, :error nil?)
+  "converts a CSV list of addons compiled by @layday to a strongbox-compatible catalogue of addon summaries."
+  []
+  (let [url "https://raw.githubusercontent.com/ogri-la/github-wow-addon-catalogue/main/addons.csv"
+        result (-> url
+                   http/download-with-backoff
+                   http/sink-error
+                   clojure.string/trim-newline
+                   csv/read-csv)
+
+        result-list (apply utils/csv-map result)
+
+        split* (fn [string]
+                 (clojure.string/split string #","))
+
+        to-summary
+        (fn [row]
+          (let [addon {:url (:url row)
+                       :name (slugify (:name row))
+                       :label (:name row)
+                       :tag-list []
+                       :updated-date (:last_updated row)
+                       :download-count 0
+                       :source "github"
+                       :source-id (-> row :url java.net.URL. .getPath (utils/ltrim "/"))
+                       ;;:description (:description row) ;; may be empty
+                       :game-track-list (->> row
+                                             :flavors
+                                             split*
+                                             (mapv utils/guess-game-track))}]
+            ;; this is so clumsy :(
+            (if-let [description (utils/nilable (:description row))]
+              (assoc addon :description description)
+              addon)))]
+    (mapv to-summary result-list)))
+
+;;
+
+(defn make-url
+  "returns a URL to the given addon data"
+  [{:keys [source-id]}]
+  (when source-id
+    (str "https://github.com/" source-id)))

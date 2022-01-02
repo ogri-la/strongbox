@@ -6,6 +6,18 @@ It supports Linux and macOS.
 
 It supports addons hosted by Curseforge, wowinterface, Tukui, Github and Gitlab.
 
+---
+
+***Notice***: Curseforge addons will no longer receive updates from version **5.0.0**, to be released Feb 1st, 2022.
+
+The **4.x** releases may or may not continue to work for a time [depending on Overwolf's deprecation schedule](https://mailchi.mp/overwolf/whats-new-with-overwolf-curseforge-november3).
+
+Use the *"Source"* and *"Find similar"* actions from the addon context menu ([added **4.9.0**](https://github.com/ogri-la/strongbox/releases)) to help migrate addons away from Curseforge.
+
+I also maintain a list of [other addon managers](https://ogri-la.github.io/wow-addon-managers/).
+
+---
+
 [![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-installed-skinny-thumbnail.jpg)](./screenshots/screenshot-4.7.0-installed-skinny.png?raw=true)
 [![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-installed-thumbnail.jpg)](./screenshots/screenshot-4.7.0-installed.png?raw=true)
 [![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-installed-fat-thumbnail.jpg)](./screenshots/screenshot-4.7.0-installed-fat.png?raw=true)
@@ -22,14 +34,14 @@ Arch Linux users can install `strongbox` from the [AUR](https://aur.archlinux.or
 
 For other Linux users:
 
-1. download: [./releases/strongbox](https://github.com/ogri-la/strongbox/releases/download/4.8.0/strongbox)
+1. download: [./releases/strongbox](https://github.com/ogri-la/strongbox/releases/download/4.9.0/strongbox)
 2. make executable: `chmod +x strongbox`
 3. run: `./strongbox`
 
 If you're on macOS or having a problem with the binary or just prefer Java `.jar` files (requires Java 11+):
 
-1. download: [./releases/strongbox-4.8.0-standalone.jar](https://github.com/ogri-la/strongbox/releases/download/4.8.0/strongbox-4.8.0-standalone.jar)
-2. run: `java -jar strongbox-4.8.0-standalone.jar`
+1. download: [./releases/strongbox-4.9.0-standalone.jar](https://github.com/ogri-la/strongbox/releases/download/4.9.0/strongbox-4.9.0-standalone.jar)
+2. run: `java -jar strongbox-4.9.0-standalone.jar`
 
 ## Usage
 
