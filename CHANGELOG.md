@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
         - this relies on the `x-project-id` type values in addon `.toc` files.
     - a 'Source' context menu option for addons with multiple sources.
     - a 'other sources' column with clickable links.
-        - note: curseforge links are a bit hit or miss as we a direct URL isn't possible from just the source/project ID
+        - note: curseforge links are a bit hit or miss as a direct URL isn't possible from just the source/project ID
 * 'find similar' context menu option. It searches the catalogue for addons that share the addon's name.
     - this *may* reveal the same addon on different hosts that aren't present in an addon's `.toc` file.
         - ensure the 'short' or 'full' catalogues are selected for better results.
@@ -26,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * the set of catalogues in your `config.json` file will be upgraded to include the new Github catalogue
     - but only if it looks unmodified from the default set of catalogues.
 * curseforge addons not found in the currently selected catalogue can no longer check for updates.
-    - the `group-id` value used to group together multiple addons may not be consistent now source switching is present.
+    - the `group-id` value used to group together multiple addons may not be consistent now that source switching is present.
 
 ### Fixed
 
