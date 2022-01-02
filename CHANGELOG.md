@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * 'find similar' context menu option. It searches the catalogue for addons that share the addon's name.
     - this *may* reveal the same addon on different hosts that aren't present in an addon's `.toc` file.
         - ensure the 'short' or 'full' catalogues are selected for better results.
+* a warning for curseforge addons that updates will stop Feb 1st 2022 and directions on how to migrate.
 
 ### Changed
 
@@ -33,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * http backoff regression on timeout errors.
     - the 'synthetic' http errors I was using to replicate socket connection errors and connection timeout errors used 4xx statuses.
         - this meant they were considered 'client' errors and (404, 403, etc) and *not* re-attempted.
+* minor issue causing cramped multi-line messages in the notice logger.
 
 ### Removed
 
