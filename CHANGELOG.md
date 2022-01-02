@@ -21,22 +21,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - this *may* reveal the same addon on different hosts that aren't present in an addon's `.toc` file.
         - ensure the 'short' or 'full' catalogues are selected for better results.
 * a warning for curseforge addons that updates will stop Feb 1st 2022 and directions on how to migrate.
+* new dependency `org.clojure/data.csv` for parsing the Github catalogue.
 
 ### Changed
 
 * the set of catalogues in your `config.json` file will be upgraded to include the new Github catalogue
     - but only if it looks unmodified from the default set of catalogues.
-* curseforge addons not found in the currently selected catalogue can no longer check for updates.
-    - the `group-id` value used to group together multiple addons may not be consistent now that source switching is present.
+* curseforge addons missing from the currently selected catalogue can no longer be checked for updates.
+    - this was a recent feature that allowed addons that could patch together a full set of data to be checked regardless of a match in the catalogue.
+        - it is now disabled for curseforge because the `group-id` value it depends on may not be consistent now that source switching is present.
 
 ### Fixed
 
 * http backoff regression on timeout errors.
     - the 'synthetic' http errors I was using to replicate socket connection errors and connection timeout errors used 4xx statuses.
-        - this meant they were considered 'client' errors and (404, 403, etc) and *not* re-attempted.
+        - this meant they were considered 'client' errors (404, 403, etc) and were *not* re-attempted.
 * minor issue causing cramped multi-line messages in the notice logger.
-
-### Removed
 
 ## 4.8.0 - 2021-12-12
 
