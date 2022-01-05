@@ -6,9 +6,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-## todo
-
-## todo bucket (no particular order)
+## todo (4.9.0 -> 5.0.0)
 
 * disable support for curseforge
     - https://mailchi.mp/overwolf/whats-new-with-overwolf-curseforge-november3
@@ -20,25 +18,39 @@ see CHANGELOG.md for a more formal list of changes by release
     - curseforge addons should be present in full and short catalogues
     - curseforge results should not be in search results
 
+* toc, add support for x-github key
+    - X-Github: https://github.com/teelolws/Altoholic-Retail 
+        - repo no longer exists
+        - github search:
+            - https://github.com/search?q=%22X-Github%22++extension%3Atoc&type=Code&ref=advsearch&l=&l=
+    - and what would it do?
+        - I could switch between sources I suppose ...
+            - ha! done.
+
+* column profiles
+    - 'skinny', 'fat', 'default'
+
+* github, update catalogue to handle layday's changed csv format
+
+* replace 'installed' and 'available' columns with the composite 'version' column
+
+* remove the (pinned) and (installed) labels from from the 'available' column
+
+* readme, remove the ~your machine's `hostname`~ bit.
+
+* readme, remove the "Original Swing GUI was last available in version 3.x using" bit
+
+* readme, add source swapping to list of features
+
 * strongbox-comrades
     - remove curseforge as a requirement for any category.
 
-* nfo, replace the URL as the group-id with something random
-
-* "developer warnings"
-    - a preference that bumps certain debug messages to warnings and errors for developers
-        - like if a release.json is missing assets
-        - or the toc file is mangled
-            - or is missing useful information
-        - or the zip file is badly formed
-    - stuff a regular user should gloss over but a dev might find useful
-
-* star or 'like' addons in the catalogue
-
-* http, add with-backoff support to download-file
-    - just had a wowinterface addon download timeout
-
 * replace multi-error messages with a single multi-line error message
+
+* default to keeping last three zip files by default
+    - stretch goal
+
+## todo bucket (no particular order)
 
 * user catalogue pane
     - context menu
@@ -52,6 +64,21 @@ see CHANGELOG.md for a more formal list of changes by release
         - so we can see updates happening to catalogue entries as they happen
     - write catalogue *once* after all items in operation updated
         - rather than once per update
+
+* nfo, replace the URL as the group-id with something random
+
+* "developer warnings"
+    - a preference that bumps certain debug messages to warnings and errors for developers
+        - like if a release.json is missing assets
+        - or the toc file is mangled
+            - or is missing useful information
+        - or the zip file is badly formed
+    - stuff a regular user should gloss over but a dev might find useful
+
+* ux, star or 'like' addons in the catalogue
+
+* http, add with-backoff support to download-file
+    - just had a wowinterface addon download timeout
 
 * user catalogue, refresh happens in parallel
     - write the user-catalogue once, not each time or else we'll get Weirdness
@@ -75,14 +102,7 @@ see CHANGELOG.md for a more formal list of changes by release
         - is it more of a templating thing?
     - https://github.com/Myrroddin/MrBigglesworthDeath/blob/master/MrBigglesworthDeath.toc
 
-* github, gitlab, are we paginating release calls?
-    - no we're not.
-    - unless authenticated somehow, I wouldn't bother.
-
-
-* github, like gitlab, use presence of multiple toc files to determine game track support
-
-* complex export pane
+* ux, complex export pane
     - choose format
         - json, csv, edn
     - choose to keep ignored or not
@@ -94,12 +114,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * gitlab, add optional API authentication like github
 
-* column profiles
-    - 'skinny', 'fat', 'default'
-
-* offer to clean up .nfo files when removing a directory
-
-* http, curseforge, don't pause between requests if resource was cached
+* ux, offer to clean up .nfo files when removing a directory
 
 * bug, stacktrace on double refresh
 
@@ -156,8 +171,6 @@ see CHANGELOG.md for a more formal list of changes by release
         - clicking 'more' (or whatever) takes to addon detail page
     - perhaps coincide with catalogue v3 with more addon details
 
-
-
 * wowinterface, revisit the pages that are being scraped, make sure we're not missing any
 
 * export/import addons to/from github
@@ -177,7 +190,7 @@ see CHANGELOG.md for a more formal list of changes by release
 * 'update all' should be a no-op if nothing has updates available
     - don't disable the button, just don't do anything
 
-* clear non-catalogue cache after session
+* http, clear non-catalogue cache after session
     - it seems reasonable that stopping and starting the app will have it re-fetch addon summaries.
 
 * install addon from local zipfile
@@ -190,8 +203,9 @@ see CHANGELOG.md for a more formal list of changes by release
         - 'from url' and 'from file'
 
 * deleting an addon should also remove any of it's zip files
+    - this sounds like an opt-in preference
 
-* acquire locks on affected addons during installatinon
+* acquire locks on affected addons during installation
     - this will let us uninstall and install addons in parallel
 
 * share a pool of connections between jobs
@@ -207,7 +221,7 @@ see CHANGELOG.md for a more formal list of changes by release
 * change split button 'outdent' to 'indent'
     - and if split, keep it 'pressed in'
 
-* tags, make clickable in search results, 
+* tags, make clickable in search results
     - adds a filter that can be removed
     - add clickable tags to addon detail page
 
@@ -287,13 +301,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## next major version (v5)
 
-* default to keeping last three zip files by default
-* replace 'installed' and 'available' columns with the composite 'version' column
-* remove the (pinned) and (installed) labels from from the 'available' column
 * drop support catalogue v1
     - a prerequisite for v5 then would be introducing a new catalogue
-* readme, remove the ~your machine's `hostname`~ bit.
-* readme, remove the "Original Swing GUI was last available in version 3.x using" bit
+
 * rename 'retail' to 'mainline'
     - pretty big change ;) but probably for the best.
 
@@ -309,7 +319,7 @@ see CHANGELOG.md for a more formal list of changes by release
     - add to addon-detail
     - search other addons by author
 
-## releases
+## 
 
 * addon detail, 'releases' widget, including *all* possible releases to download and install
     - add an 'WoW' column to know which game-track/interface
@@ -332,8 +342,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * addon detail, 'releases' widget
     - installed release should be highlighted
 
-## import/exports
-
 * import and export addons using addon urls
 
 * cli, exports
@@ -351,16 +359,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - no need for padding and dummy dirnames then
     - installing normally would also include the mutual dependency handling
 
-## github 
-
-* toc, add support for x-github key
-    - X-Github: https://github.com/teelolws/Altoholic-Retail 
-        - repo no longer exists
-        - github search:
-            - https://github.com/search?q=%22X-Github%22++extension%3Atoc&type=Code&ref=advsearch&l=&l=
-    - and what would it do?
-        - I could switch between sources I suppose ...
-
 * github, importing an exported addon list with a github addon won't see that addon installed
     - unless that addon is present in the user catalogue
         - which in a fresh install where a list of addons are being restored is unlikely...
@@ -372,13 +370,17 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * github, add 'created date'
 
-## ui/gui
+* github, gitlab, are we paginating release calls?
+    - no we're not.
+    - unless authenticated somehow, I wouldn't bother.
 
-* dedicated tab for "user-catalogue" ?
+* github, like gitlab, use presence of multiple toc files to determine game track support
+
+* gui, dedicated tab for "user-catalogue" ?
     - add, delete, update github addons
     - see accumulating release history for addons?
 
-* bug, changing sort order during refresh doesn't reflect which addon is being updated
+* gui, bug, changing sort order during refresh doesn't reflect which addon is being updated
     - I think changing column ordering and moving columns should be disabled while updates happen
         - just freeze or disable them or something.
 
