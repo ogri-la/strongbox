@@ -8,7 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* column presets 'default', 'skinny' and 'fat'.
+
 ### Changed
+
+* replaced 'View -> Columns -> Reset to defaults' with the 'default' column preset.
 
 ### Fixed
 

@@ -6,6 +6,19 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
+* column profiles
+    - 'skinny', 'fat', 'default'
+    - done
+
+* readme, remove the ~your machine's `hostname`~ bit.
+    - done
+
+* readme, remove the "Original Swing GUI was last available in version 3.x using" bit
+    - done
+
+* readme, add source swapping to list of features
+    - done
+
 ## todo (4.9.0 -> 5.0.0)
 
 * disable support for curseforge
@@ -27,20 +40,11 @@ see CHANGELOG.md for a more formal list of changes by release
         - I could switch between sources I suppose ...
             - ha! done.
 
-* column profiles
-    - 'skinny', 'fat', 'default'
-
 * github, update catalogue to handle layday's changed csv format
 
 * replace 'installed' and 'available' columns with the composite 'version' column
 
 * remove the (pinned) and (installed) labels from from the 'available' column
-
-* readme, remove the ~your machine's `hostname`~ bit.
-
-* readme, remove the "Original Swing GUI was last available in version 3.x using" bit
-
-* readme, add source swapping to list of features
 
 * strongbox-comrades
     - remove curseforge as a requirement for any category.
@@ -51,6 +55,8 @@ see CHANGELOG.md for a more formal list of changes by release
     - stretch goal
 
 ## todo bucket (no particular order)
+
+* 'downloading strongbox data' shouldn't be blocking the gui from starting
 
 * user catalogue pane
     - context menu

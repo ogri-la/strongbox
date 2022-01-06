@@ -81,6 +81,7 @@ Afterwards, use the `Update all` button to update all addons with new versions a
 * [pinning an addon to a specific release](#pinning-an-addon-to-a-specific-release)
 * [multi-toc support](#multi-toc-support)
 * [release.json support](#releasejson-support)
+* [source swapping](#source-swapping)
 
 ## Recognition
 
@@ -126,8 +127,6 @@ Running strongbox with `--debug` will generate a file called "debug.log" that I 
 bug. *Some* of the details it contains are:
 
 * addons detected in the currently selected addon directory
-* ~your machine's `hostname`~
-    - removed in 4.0
 * paths to strongbox configuration and data:
     - `/home/torkus/.local/share/strongbox`
     - `/home/torkus/.config/strongbox`
@@ -227,7 +226,7 @@ Strongbox supports installing addons from the following addon hosts:
 * [wowinterface](https://wowinterface.com/addons.php)
 * [tukui](https://www.tukui.org)
 * [github](https://www.github.com)
-* [gitlab][https://gitlab.com)
+* [gitlab](https://gitlab.com)
 
 Click the `search` tab and begin typing. Select the addon you wish to install and click the `install selected` button.
 
@@ -346,9 +345,18 @@ No documentation or specification seems to exist for it but there are [plenty of
 Because another HTTP request is required to download the file it is only consulted for the latest release and only if
 the game tracks for a release can't be otherwise guessed.
 
-## Misc
+### source swapping
 
-Original Swing GUI was last available in version 3.x using: `./strongbox --ui gui1`
+An installed addon comes from a specific addon host or *source*. An addon in it's `.toc` file may include the details of
+other sources where it can be found.
+
+For example, WeakAuras can be found on github, wowinterface and curseforge.
+
+To see addons with other sources, go to `View -> Columns` and click `other sources`.
+
+To switch an addon between sources, right-click an addon with other sources and select `Source`.
+
+## Misc
 
 Prior to `1.0.0`, `strongbox` was known as `wowman`. The [AUR package](https://aur.archlinux.org/packages/wowman) for 
 `wowman` is obsolete.
