@@ -701,6 +701,11 @@
   (sort-by (fn [x]
              (.indexOf sp/known-column-list x)) column-list))
 
+(defn-spec set-column-list nil?
+  [column-list :ui/column-list]
+  (swap! core/state assoc-in [:cfg :preferences :ui-selected-columns] column-list)
+  (core/save-settings!))
+
 ;; source switching
 
 (defn-spec switch-source (s/or :ok :addon/toc+nfo, :error nil?)

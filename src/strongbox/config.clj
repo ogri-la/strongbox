@@ -26,9 +26,6 @@
 
 (def -default-catalogue-list -default-catalogue-list--v2)
 
-;; see `cli/column-map` for all known columns
-(def -default-column-list sp/default-column-list)
-
 (def default-cfg
   {:addon-dir-list []
    :selected-addon-dir nil
@@ -40,7 +37,10 @@
                  ;; 1:   keep 1 zip
                  ;; N:   keep N zips
                  :addon-zips-to-keep nil
-                 :ui-selected-columns -default-column-list}})
+
+                 ;; see `specs/column-preset-list` for selectable presets
+                 ;; see `cli/column-map` for all known columns
+                 :ui-selected-columns sp/default-column-list}})
 
 (defn handle-install-dir
   "`:install-dir` was once supported in the user configuration but is now only supported in the command line options.

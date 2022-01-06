@@ -174,9 +174,10 @@
 (def ^:dynamic *pretty-dt-printer* -pretty-dt-printer)
 
 (defn-spec format-dt string?
-  "returns a PrettyTime formatted datetime representation"
-  [val ::sp/inst]
-  (some->> val nilable todt (.format *pretty-dt-printer*)))
+  "returns a PrettyTime formatted datetime representation or an empty string"
+  [val (s/or :ok ::sp/inst, :supported nil?, :weird-gui-edge-case empty?)]
+  (or (some->> val nilable todt (.format *pretty-dt-printer*))
+      ""))
 
 (defn nav-map
   "wrapper around `get-in` that returns the map as-is if given `path` is empty"

@@ -1142,14 +1142,12 @@
                         :cell-value-factory :created-date
                         :cell-factory {:fx/cell-type :tree-table-cell
                                        :describe (fn [dt]
-                                                   (when-not (empty? dt)
-                                                     {:text (utils/format-dt dt)}))}}
+                                                   {:text (utils/format-dt dt)})}}
          :updated-date {:min-width 90 :pref-width 110 :max-width 120
                         :cell-value-factory :updated-date
                         :cell-factory {:fx/cell-type :tree-table-cell
                                        :describe (fn [dt]
-                                                   (when-not (empty? dt)
-                                                     {:text (utils/format-dt dt)}))}}
+                                                   {:text (utils/format-dt dt)})}}
          :installed-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]}
          :available-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]}
          :combined-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]}
@@ -1266,18 +1264,24 @@
   (let [column-list (cli/sort-column-list (keys cli/column-map))
         queue nil
         gui-column-map (gui-column-map queue)
-        check-menu (fn [column-id]
-                     (let [;; todo: this should be using the `gui-column-map`
-                           column (column-id gui-column-map)]
-                       {:fx/type :check-menu-item
-                        :text (or (:text column) (name column-id))
-                        :selected (utils/in? column-id selected-column-list)
-                        :on-action (fn [ev]
-                                     (cli/toggle-ui-column column-id (-> ev .getTarget .isSelected)))}))]
+        toggle-column-menu-item
+        (fn [column-id]
+          (let [column (column-id gui-column-map)]
+            {:fx/type :check-menu-item
+             :text (or (:text column) (name column-id))
+             :selected (utils/in? column-id selected-column-list)
+             :on-action (fn [ev]
+                          (cli/toggle-ui-column column-id (-> ev .getTarget .isSelected)))}))
 
-    (utils/items [(mapv check-menu column-list)
+        preset-menu-item
+        (fn [[name-kw column-list]]
+          {:fx/type :menu-item
+           :text (name name-kw)
+           :on-action (async-handler #(cli/set-column-list column-list))})]
+
+    (utils/items [(mapv preset-menu-item sp/column-preset-list)
                   separator
-                  (menu-item "Reset to defaults" (handler cli/reset-ui-columns))])))
+                  (mapv toggle-column-menu-item column-list)])))
 
 (defn menu-bar
   "returns a description of the menu at the top of the application"
