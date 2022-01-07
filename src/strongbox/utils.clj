@@ -175,9 +175,9 @@
 
 (defn-spec format-dt string?
   "returns a PrettyTime formatted datetime representation or an empty string"
-  [val (s/or :ok ::sp/inst, :supported nil?, :weird-gui-edge-case empty?)]
-  (or (some->> val nilable todt (.format *pretty-dt-printer*))
-      ""))
+  [val (s/or :ok ::sp/inst, :supported nil?, :gui-edge-case ::sp/empty-string)]
+  ;; the `gui-edge-case` comes from converting nil values (crashes widgets) to empty strings (less crashy)
+  (or (some->> val nilable todt (.format *pretty-dt-printer*)) ""))
 
 (defn nav-map
   "wrapper around `get-in` that returns the map as-is if given `path` is empty"

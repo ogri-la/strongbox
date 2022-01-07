@@ -38,6 +38,7 @@
 
 (s/def ::regex #(instance? java.util.regex.Pattern %))
 (s/def ::short-string #(<= (count %) 80))
+(s/def ::empty-string (s/and string? #(= % "")))
 
 (defn-spec has-ext boolean?
   "returns true if given `path` is suffixed with one of the extensions in `ext-list`"
@@ -145,7 +146,6 @@
 (def column-preset-list [[:default default-column-list]
                          [:skinny skinny-column-list]
                          [:fat fat-column-list]])
-;; (def column-preset-map (into {} column-preset-list))
 
 (s/def :ui/column-list ::list-of-keywords)
 

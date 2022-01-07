@@ -688,23 +688,23 @@
    (swap! core/state update-in [:cfg :preferences :ui-selected-columns] (if selected? conj utils/rmv) column-id)
    (core/save-settings!)))
 
+(defn-spec set-column-list nil?
+  "replaces the current set of columns with `column-list`"
+  [column-list :ui/column-list]
+  (dosync
+   (swap! core/state assoc-in [:cfg :preferences :ui-selected-columns] column-list)
+   (core/save-settings!)))
+
 (defn-spec reset-ui-columns nil?
   "replaces user column preferences with the default set"
   []
-  (dosync
-   (swap! core/state assoc-in [:cfg :preferences :ui-selected-columns] sp/default-column-list)
-   (core/save-settings!)))
+  (set-column-list sp/default-column-list))
 
 (defn-spec sort-column-list :ui/column-list
   "returns the given `column-list` but in the preferred order"
   [column-list :ui/column-list]
   (sort-by (fn [x]
              (.indexOf sp/known-column-list x)) column-list))
-
-(defn-spec set-column-list nil?
-  [column-list :ui/column-list]
-  (swap! core/state assoc-in [:cfg :preferences :ui-selected-columns] column-list)
-  (core/save-settings!))
 
 ;; source switching
 
