@@ -19,6 +19,9 @@ see CHANGELOG.md for a more formal list of changes by release
 * readme, add source swapping to list of features
     - done
 
+* github, update catalogue to handle layday's changed csv format
+    - done
+
 ## todo (4.9.0 -> 5.0.0)
 
 * disable support for curseforge
@@ -39,8 +42,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - and what would it do?
         - I could switch between sources I suppose ...
             - ha! done.
-
-* github, update catalogue to handle layday's changed csv format
 
 * replace 'installed' and 'available' columns with the composite 'version' column
 
