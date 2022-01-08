@@ -110,10 +110,10 @@
     (assoc cfg :catalogue-location-list -default-catalogue-list--v2)
     cfg))
 
-(defn handle-column-preference
+(defn-spec handle-column-preferences map?
   "handles upgrading of the default column list.
   if the config is using the v1 defaults, upgrade to v2 defaults."
-  [cfg]
+  [cfg map?]
   (if (= (-> cfg :preferences :ui-selected-columns set)
          (set sp/default-column-list--v1))
     (assoc-in cfg [:preferences :ui-selected-columns] sp/default-column-list--v2)
@@ -159,7 +159,7 @@
                 handle-selected-addon-dir
                 remove-invalid-catalogue-location-entries
                 add-github-catalogue
-                handle-column-preference
+                handle-column-preferences
                 strip-unspecced-keys)
         message (format "configuration from %s is invalid and will be ignored: %s"
                         msg (s/explain-str ::sp/user-config cfg))]
