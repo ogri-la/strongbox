@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * replaced 'View -> Columns -> Reset to defaults' with the 'default' column preset.
+* github catalogue tweaks to support latest version of https://github.com/layday/github-wow-addon-catalogue
 
 ### Fixed
 

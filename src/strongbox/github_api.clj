@@ -324,16 +324,13 @@
                        :updated-date (:last_updated row)
                        :download-count 0
                        :source "github"
-                       :source-id (-> row :url java.net.URL. .getPath (utils/ltrim "/"))
-                       ;;:description (:description row) ;; may be empty
+                       :source-id (:full_name row)
+                       :description (-> row :description utils/nilable)
                        :game-track-list (->> row
                                              :flavors
                                              split*
                                              (mapv utils/guess-game-track))}]
-            ;; this is so clumsy :(
-            (if-let [description (utils/nilable (:description row))]
-              (assoc addon :description description)
-              addon)))]
+            (utils/drop-nils addon [:description])))]
     (mapv to-summary result-list)))
 
 ;;

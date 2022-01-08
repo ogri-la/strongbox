@@ -579,10 +579,10 @@
                    :source "github",
                    :source-id "0xbs/premade-applicants-filter",
                    :tag-list [],
-                   :updated-date "2021-07-19T21:11:20+00:00",
+                   :updated-date "2021-12-26T09:40:18+00:00"
                    :url "https://github.com/0xbs/premade-applicants-filter"}
                   {:download-count 0,
-                   :game-track-list [:classic :retail],
+                   :game-track-list [:classic-tbc :classic :retail],
                    :label "ArenaLeaveConfirmer",
                    :name "arenaleaveconfirmer",
                    :source "github",
@@ -607,16 +607,17 @@
                    :source "github",
                    :source-id "Alastair-Scott/AltReps",
                    :tag-list [],
-                   :updated-date "2021-07-01T18:21:23+00:00",
+                   :updated-date "2021-12-03T00:26:27+00:00",
                    :url "https://github.com/Alastair-Scott/AltReps"}
-                  {:download-count 0,
+                  {:description "Makes system chat messages prettier and tidier, and reduces the need for multiple chat windows."
+                   :download-count 0,
                    :game-track-list [:classic-tbc :classic :retail],
                    :label "ChatCleaner",
                    :name "chatcleaner",
                    :source "github",
                    :source-id "GoldpawsStuff/ChatCleaner",
                    :tag-list [],
-                   :updated-date "2021-11-17T10:12:53+00:00",
+                   :updated-date "2021-12-15T21:17:51+00:00"
                    :url "https://github.com/GoldpawsStuff/ChatCleaner"}]
         fixture (slurp (fixture-path "github-catalogue--dummy.csv"))
         fake-routes {"https://raw.githubusercontent.com/ogri-la/github-wow-addon-catalogue/main/addons.csv"
