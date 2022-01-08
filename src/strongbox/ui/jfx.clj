@@ -1142,35 +1142,36 @@
                         :cell-value-factory :created-date
                         :cell-factory {:fx/cell-type :tree-table-cell
                                        :describe (fn [dt]
-                                                   (when-not (empty? dt)
-                                                     {:text (utils/format-dt dt)}))}}
+                                                   ;; for some reason I'm getting the whole row here ... (:uber button column?)!
+                                                   {:text (if-not (string? dt) "" (utils/format-dt dt))})}}
          :updated-date {:min-width 90 :pref-width 110 :max-width 120
                         :cell-value-factory :updated-date
                         :cell-factory {:fx/cell-type :tree-table-cell
                                        :describe (fn [dt]
-                                                   (when-not (empty? dt)
-                                                     {:text (utils/format-dt dt)}))}}
+                                                   {:text (if-not (string? dt) "" (utils/format-dt dt))})}}
          :installed-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]}
          :available-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]}
          :combined-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]}
          :game-version {:min-width 70 :pref-width 70 :max-width 100}
          :uber-button {:min-width 80 :pref-width 80 :max-width 120 :style-class ["more-column"]
+                       :cell-value-factory identity
                        :cell-factory {:fx/cell-type :tree-table-cell
                                       :describe (fn [row]
-                                                  (if-not row
+                                                  (if (or (not row)
+                                                          (not (map? row)))
+                                                    ;; for some reason I'm getting the contents of the :created-date column here
                                                     {:text ""}
 
                                                     (let [job-id (joblib/addon-id row)]
                                                       {:graphic (if (and (core/unsteady? (:name row))
                                                                          (joblib/has-job? queue job-id))
                                                                   (addon-progress-bar row queue job-id)
-                                                                  (uber-button row))})))}
-                       :cell-value-factory identity}}
+                                                                  (uber-button row))})))}}}
 
         ;; rename some UI column keys and then merge with the gui columns
         merge-ui-gui-columns (fn [[key val]]
                                [key (merge
-                                     (clojure.set/rename-keys val  {:label :text, :value-fn :cell-value-factory})
+                                     (clojure.set/rename-keys val {:label :text, :value-fn :cell-value-factory})
                                      (get -gui-column-map key))])
         column-map (->> cli/column-map (map merge-ui-gui-columns) (into {}))]
     column-map))
@@ -1266,18 +1267,23 @@
   (let [column-list (cli/sort-column-list (keys cli/column-map))
         queue nil
         gui-column-map (gui-column-map queue)
-        check-menu (fn [column-id]
-                     (let [;; todo: this should be using the `gui-column-map`
-                           column (column-id gui-column-map)]
-                       {:fx/type :check-menu-item
-                        :text (or (:text column) (name column-id))
-                        :selected (utils/in? column-id selected-column-list)
-                        :on-action (fn [ev]
-                                     (cli/toggle-ui-column column-id (-> ev .getTarget .isSelected)))}))]
+        toggle-column-menu-item
+        (fn [column-id]
+          (let [column (column-id gui-column-map)]
+            {:fx/type :check-menu-item
+             :text (or (:text column) (name column-id))
+             :selected (utils/in? column-id selected-column-list)
+             :on-action (async-event-handler #(cli/toggle-ui-column column-id (-> % .getTarget .isSelected)))}))
 
-    (utils/items [(mapv check-menu column-list)
+        preset-menu-item
+        (fn [[name-kw column-list]]
+          {:fx/type :menu-item
+           :text (name name-kw)
+           :on-action (async-handler #(cli/set-column-list column-list))})]
+
+    (utils/items [(mapv preset-menu-item sp/column-preset-list)
                   separator
-                  (menu-item "Reset to defaults" (handler cli/reset-ui-columns))])))
+                  (mapv toggle-column-menu-item column-list)])))
 
 (defn menu-bar
   "returns a description of the menu at the top of the application"

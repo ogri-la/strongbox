@@ -373,7 +373,9 @@
   (is (= [] (utils/rmv [:foo] :foo))))
 
 (deftest format-dt
-  (let [cases [["2000-12-31T23:30:00Z" "30 minutes ago"]
+  (let [cases [[nil ""]
+               ["" ""]
+               ["2000-12-31T23:30:00Z" "30 minutes ago"]
                ["2000-12-31T23:00:00Z" "1 hour ago"]
                ["2000-12-31T12:00:00Z" "12 hours ago"]
                ["2000-12-31T00:00:00Z" "1 day ago"]
