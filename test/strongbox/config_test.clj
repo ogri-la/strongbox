@@ -194,7 +194,10 @@
                           ;; new in 3.1.0
                           :preferences {:addon-zips-to-keep nil
                                         ;; new in 4.7.0
-                                        :ui-selected-columns [:source :name :description :installed-version :available-version :game-version :uber-button]}}
+                                        :ui-selected-columns [:source :name :description
+                                                              ;;:installed-version :available-version ;; replaced in 5.0.0
+                                                              :combined-version
+                                                              :game-version :uber-button]}}
 
                     :cli-opts {}
                     :file-opts {:debug? true
@@ -225,7 +228,10 @@
                           ;; new in 3.1.0
                           :preferences {:addon-zips-to-keep nil
                                         ;; new in 4.7.0
-                                        :ui-selected-columns [:source :name :description :installed-version :available-version :game-version :uber-button]}}
+                                        :ui-selected-columns [:source :name :description
+                                                              ;;:installed-version :available-version ;; replaced in 5.0.0
+                                                              :combined-version
+                                                              :game-version :uber-button]}}
 
                     :cli-opts {}
                     :file-opts {:selected-catalogue :full
@@ -257,7 +263,10 @@
                           ;; new in 3.1.0
                           :preferences {:addon-zips-to-keep nil
                                         ;; new in 4.7.0
-                                        :ui-selected-columns [:source :name :description :installed-version :available-version :game-version :uber-button]}}
+                                        :ui-selected-columns [:source :name :description
+                                                              ;;:installed-version :available-version ;; replaced in 5.0.0
+                                                              :combined-version
+                                                              :game-version :uber-button]}}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark
@@ -290,7 +299,10 @@
                           ;; new in 3.1.0
                           :preferences {:addon-zips-to-keep nil
                                         ;; new in 4.7.0
-                                        :ui-selected-columns [:source :name :description :installed-version :available-version :game-version :uber-button]}}
+                                        :ui-selected-columns [:source :name :description
+                                                              ;;:installed-version :available-version ;; replaced in 5.0.0
+                                                              :combined-version
+                                                              :game-version :uber-button]}}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark
@@ -322,7 +334,10 @@
                           ;; new in 3.1.0
                           :preferences {:addon-zips-to-keep nil
                                         ;; new in 4.7.0
-                                        :ui-selected-columns [:source :name :description :installed-version :available-version :game-version :uber-button]}}
+                                        :ui-selected-columns [:source :name :description
+                                                              ;;:installed-version :available-version ;; replaced in 5.0.0
+                                                              :combined-version
+                                                              :game-version :uber-button]}}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark
@@ -365,7 +380,10 @@
                           ;; new in 3.1.0
                           :preferences {:addon-zips-to-keep 3
                                         ;; new in 4.7.0
-                                        :ui-selected-columns [:source :name :description :installed-version :available-version :game-version :uber-button]}}
+                                        :ui-selected-columns [:source :name :description
+                                                              ;;:installed-version :available-version ;; replaced in 5.0.0
+                                                              :combined-version
+                                                              :game-version :uber-button]}}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark
@@ -409,7 +427,10 @@
                           ;; new in 3.1.0
                           :preferences {:addon-zips-to-keep 3
                                         ;; new in 4.7.0
-                                        :ui-selected-columns [:source :name :description :installed-version :available-version :game-version :uber-button]}}
+                                        :ui-selected-columns [:source :name :description
+                                                              ;;:installed-version :available-version ;; replaced in 5.0.0
+                                                              :combined-version
+                                                              :game-version :uber-button]}}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark-green
@@ -452,7 +473,10 @@
                           ;; new in 3.1.0
                           :preferences {:addon-zips-to-keep 3
                                         ;; new in 4.7.0
-                                        :ui-selected-columns [:source :name :description :installed-version :available-version :game-version :uber-button]}}
+                                        :ui-selected-columns [:source :name :description
+                                                              ;;:installed-version :available-version ;; replaced in 5.0.0
+                                                              :combined-version
+                                                              :game-version :uber-button]}}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark-green
@@ -564,3 +588,5 @@
 
                     :etag-db {}}]
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))
+
+;; todo: settings for 5.0.0
