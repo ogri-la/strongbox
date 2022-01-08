@@ -161,7 +161,11 @@
                         {:source "tukui"
                          :source-id x-tukui-id})
 
-         source-map-list (when-let [items (->> [wowi-source curse-source tukui-source]
+         github-source (when-let [x-github (-> keyvals :x-github)]
+                         {:source "github"
+                          :source-id (utils/github-url-to-source-id x-github)})
+
+         source-map-list (when-let [items (->> [wowi-source curse-source tukui-source github-source]
                                                utils/items
                                                utils/nilable)]
                            {:source-map-list items})

@@ -247,10 +247,7 @@
              vec
              utils/nilable)))
 
-(defn-spec parse-user-string (s/or :ok :addon/source-id :error nil?)
-  "extracts the addon ID from the given `url`."
-  [url ::sp/url]
-  (->> url java.net.URL. .getPath (re-matches #"^/([^/]+/[^/]+)[/]?.*") rest first))
+(def parse-user-string utils/github-url-to-source-id) ;; moved to utils to avoid coupling with `toc.clj`
 
 (defn-spec find-latest-release (s/or :release map?, :no-viable-release nil?)
   "the literal latest release we can find may not be the best choice and should only be "
