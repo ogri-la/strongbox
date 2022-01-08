@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * replaced 'View -> Columns -> Reset to defaults' with the 'default' column preset.
 * github catalogue tweaks to support latest version of https://github.com/layday/github-wow-addon-catalogue
+* column preferences in the config file are now upgraded to the new default column set.
+    - any customised column preferences are preserved.
 
 ### Fixed
 

@@ -22,6 +22,12 @@ see CHANGELOG.md for a more formal list of changes by release
 * github, update catalogue to handle layday's changed csv format
     - done
 
+* replace 'installed' and 'available' columns with the composite 'version' column
+    - done
+
+* remove the (pinned) and (ignored) labels from the 'available' column
+    - done
+
 ## todo (4.9.0 -> 5.0.0)
 
 * disable support for curseforge
@@ -43,10 +49,6 @@ see CHANGELOG.md for a more formal list of changes by release
         - I could switch between sources I suppose ...
             - ha! done.
 
-* replace 'installed' and 'available' columns with the composite 'version' column
-
-* remove the (pinned) and (installed) labels from from the 'available' column
-
 * strongbox-comrades
     - remove curseforge as a requirement for any category.
 
@@ -56,6 +58,9 @@ see CHANGELOG.md for a more formal list of changes by release
     - stretch goal
 
 ## todo bucket (no particular order)
+
+* search, add ability to browse catalogue page by page
+    - I have neglected the catalogue search *so much*. I need a whole release dedicated to improving it.
 
 * 'downloading strongbox data' shouldn't be blocking the gui from starting
 

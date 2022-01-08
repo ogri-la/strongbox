@@ -623,8 +623,8 @@
   pinned and ignored addons get a helpful prefix."
   [row map?]
   (cond
-    (:ignore? row) "(ignored)"
-    (:pinned-version row) (str "(pinned) " (:pinned-version row))
+    (:ignore? row) ""
+    (:pinned-version row) (:pinned-version row)
     :else
     (:version row)))
 
