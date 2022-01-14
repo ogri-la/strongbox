@@ -2,7 +2,7 @@
 
 `strongbox` is an **open source**, **[advertisement free](#recognition)** and **[privacy respecting](#privacy)** addon manager for World of Warcraft.
 
-It supports Linux and macOS.
+It runs on Linux and macOS.
 
 It supports addons hosted by Curseforge, wowinterface, Tukui, Github and Gitlab.
 
@@ -350,16 +350,13 @@ the game tracks for a release can't be otherwise guessed.
 An installed addon comes from a specific addon host or *source*. An addon in it's `.toc` file may include the details of
 other sources where it can be found.
 
-For example, WeakAuras can be found on github, wowinterface and curseforge.
+For example, WeakAuras can be found on Github, wowinterface and Curseforge.
 
 To see addons with other sources, go to `View -> Columns` and click `other sources`.
 
 To switch an addon between sources, right-click an addon with other sources and select `Source`.
 
 ## Misc
-
-Prior to `1.0.0`, `strongbox` was known as `wowman`. The [AUR package](https://aur.archlinux.org/packages/wowman) for 
-`wowman` is obsolete.
 
 User configuration is stored in `~/.config/strongbox` unless run with the envvar `$XDG_CONFIG_HOME` set.
 
@@ -382,9 +379,10 @@ Changes are recorded in the [CHANGELOG.md](CHANGELOG.md) file.
 
 All bugs/questions/requests/feedback should go in [Github Issues](https://github.com/ogri-la/strongbox/issues).
 
-I prefer to **not** receive *code* contributions.
+I prefer to **not** receive *code* contributions. See [CONTRIBUTING](CONTRIBUTING.md) for more detail.
 
-See [CONTRIBUTING](CONTRIBUTING.md) for more detail.
+Prior to `1.0.0`, `strongbox` was known as `wowman`. The [AUR package](https://aur.archlinux.org/packages/wowman) for 
+`wowman` is obsolete.
 
 ## Other addon managers
 
