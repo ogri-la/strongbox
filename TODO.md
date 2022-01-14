@@ -27,6 +27,16 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * remove the (pinned) and (ignored) labels from the 'available' column
     - done
+    
+* toc, add support for x-github key
+    - X-Github: https://github.com/teelolws/Altoholic-Retail 
+        - repo no longer exists
+        - github search:
+            - https://github.com/search?q=%22X-Github%22++extension%3Atoc&type=Code&ref=advsearch&l=&l=
+    - and what would it do?
+        - I could switch between sources I suppose ...
+            - ha! done.
+    - done
 
 ## todo (4.9.0 -> 5.0.0)
 
@@ -39,15 +49,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - curseforge catalogue should not be present
     - curseforge addons should be present in full and short catalogues
     - curseforge results should not be in search results
-
-* toc, add support for x-github key
-    - X-Github: https://github.com/teelolws/Altoholic-Retail 
-        - repo no longer exists
-        - github search:
-            - https://github.com/search?q=%22X-Github%22++extension%3Atoc&type=Code&ref=advsearch&l=&l=
-    - and what would it do?
-        - I could switch between sources I suppose ...
-            - ha! done.
 
 * strongbox-comrades
     - remove curseforge as a requirement for any category.

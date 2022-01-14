@@ -753,3 +753,8 @@
        (map f)
        (remove nil?)
        first))
+
+(defn-spec github-url-to-source-id (s/or :ok :addon/source-id :error nil?)
+  "extracts the addon ID from the given `url`."
+  [url ::sp/url]
+  (->> url java.net.URL. .getPath (re-matches #"^/([^/]+/[^/]+)[/]?.*") rest first))

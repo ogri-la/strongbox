@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 * column presets 'default', 'skinny' and 'fat'.
+* support for `X-Github` fields in the `.toc` file.
+    - these are a form `x-<source>-id` like `x-curse-project-id` and `x-wowi-id` and the value should be a Github URL.
 
 ### Changed
 
