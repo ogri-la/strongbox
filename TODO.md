@@ -38,7 +38,17 @@ see CHANGELOG.md for a more formal list of changes by release
             - ha! done.
     - done
 
+* strongbox-comrades
+    - remove curseforge as a requirement for any category.
+    - done
+
 ## todo (4.9.0 -> 5.0.0)
+
+* bugs: 
+    source menu
+        - clicking on an already selected item still does something
+            - it shouldn't do anything
+    BloodShieldTracker isn't switching to wowinterface from curseforge
 
 * disable support for curseforge
     - https://mailchi.mp/overwolf/whats-new-with-overwolf-curseforge-november3
@@ -49,9 +59,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - curseforge catalogue should not be present
     - curseforge addons should be present in full and short catalogues
     - curseforge results should not be in search results
-
-* strongbox-comrades
-    - remove curseforge as a requirement for any category.
 
 * replace multi-error messages with a single multi-line error message
 
