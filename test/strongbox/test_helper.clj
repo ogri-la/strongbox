@@ -143,7 +143,7 @@
 (defn install-every-addon!
   "convenience, unzips the EveryAddon to the given `addon-dir` and writes the toc data"
   [& [more-nfo-data]]
-  (zip/unzip-file (fixture-path "everyaddon--1-2-3.zip") (install-dir))
+  (zip/unzip-file (fixture-path "everyaddon--1-2-3--retail.zip") (install-dir))
   (spit (utils/join (install-dir) "EveryAddon" nfo/nfo-filename) ;; "/tmp/something/EveryAddon/.strongbox.json"
         (utils/to-json (merge nfo-data more-nfo-data))))
 

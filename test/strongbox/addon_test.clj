@@ -391,7 +391,7 @@
 
 (deftest test-overwrites-pinned?
   (testing "addon zip files that would extract over a pinned addon are correctly detected"
-    (let [downloaded-file (fixture-path "everyaddon--1-2-3.zip")
+    (let [downloaded-file (fixture-path "everyaddon--1-2-3--retail.zip")
           addon {:name "EveryAddon",
                  :dirname "EveryAddon",
                  :label "Every Addon",

@@ -514,7 +514,7 @@
   [addon :addon/installable, install-dir ::sp/writeable-dir]
   (when (expanded? addon)
     (info (format "downloading '%s' version '%s'" (:label addon) (:version addon)))
-    (let [output-fname (addon/downloaded-addon-fname (:name addon) (:version addon)) ;; addonname--1-2-3.zip
+    (let [output-fname (addon/downloaded-addon-fname (:name addon) (:version addon) (:game-track addon)) ;; addonname--1-2-3--classic-tbc.zip
           output-path (join (fs/absolute install-dir) output-fname)] ;; /path/to/installed/addons/addonname--1.2.3.zip
       (binding [http/*cache* (cache)]
         (http/download-file (:download-url addon) output-path)))))

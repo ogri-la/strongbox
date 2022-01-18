@@ -222,7 +222,7 @@
 (deftest import-exported-addon-list-file-v1
   (testing "an export can be imported"
     (let [;; modified curseforge addon files to generate fake links
-          every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
+          every-addon-zip-file (fixture-path "everyaddon--1-2-3--retail.zip")
           every-other-addon-zip-file (fixture-path "everyotheraddon--4-5-6.zip")
 
           every-addon-api (slurp (fixture-path "curseforge-api-addon--everyaddon.json"))
@@ -321,7 +321,7 @@
 (deftest import-exported-addon-list-file-v2
   (testing "an export can be imported AND per-addon game track preferences are preserved"
     (let [;; modified curseforge addon files to generate fake links
-          every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
+          every-addon-zip-file (fixture-path "everyaddon--1-2-3--retail.zip")
           every-other-addon-zip-file (fixture-path "everyotheraddon--4-5-6.zip")
 
           every-addon-api (slurp (fixture-path "curseforge-api-addon--everyaddon.json"))
@@ -565,7 +565,7 @@
     (with-running-app*
       (let [install-dir (str fs/*cwd*)
             ;; move dummy addon file into place so there is no cache miss
-            fname (downloaded-addon-fname (:name helper/addon) (:version helper/addon))
+            fname (downloaded-addon-fname (:name helper/addon) (:version helper/addon) (:game-track helper/addon))
             _ (utils/cp (fixture-path fname) install-dir)
             test-only? false
             file-list (core/install-addon-guard helper/addon install-dir test-only?)]
@@ -577,7 +577,7 @@
   (testing "trial installation of a good addon"
     (with-running-app*
       (let [install-dir (helper/install-dir)
-            fname (downloaded-addon-fname (:name helper/addon) (:version helper/addon))
+            fname (downloaded-addon-fname (:name helper/addon) (:version helper/addon) (:game-track helper/addon))
             dest (utils/cp (fixture-path fname) install-dir)
             addon (assoc helper/addon :-testing-zipfile dest)
             test-only? true
@@ -592,7 +592,7 @@
     (with-running-app*
       (let [install-dir (helper/install-dir)
             ;; move dummy addon file into place so there is no cache miss
-            fname (downloaded-addon-fname (:name helper/addon) (:version helper/addon))
+            fname (downloaded-addon-fname (:name helper/addon) (:version helper/addon) (:game-track helper/addon))
             _ (fs/copy (fixture-path "bad-truncated.zip") (utils/join install-dir fname))
 
             test-only? true
@@ -606,7 +606,7 @@
   (testing "installing a bad addon"
     (with-global-fake-routes-in-isolation {}
       (let [install-dir (str fs/*cwd*)
-            fname (downloaded-addon-fname (:name helper/addon) (:version helper/addon))
+            fname (downloaded-addon-fname (:name helper/addon) (:version helper/addon) (:game-track helper/addon))
             dest (utils/join install-dir fname)
             _ (fs/copy (fixture-path "bad-truncated.zip") dest)
             addon (assoc helper/addon :-testing-zipfile dest)]
@@ -622,7 +622,7 @@
             bundled-addon (merge helper/addon {:version "0.1.2"})
 
             ;; move dummy addon file into place so there is no cache miss
-            fname (downloaded-addon-fname (:name bundled-addon) (:version bundled-addon))
+            fname (downloaded-addon-fname (:name bundled-addon) (:version bundled-addon) (:game-track helper/addon))
             _ (fs/copy (fixture-path "everyaddon--0-1-2.zip") (utils/join install-dir fname))
 
             result (core/install-addon-guard bundled-addon)
@@ -639,7 +639,7 @@
                           :source-id 1
                           :source-map-list [{:source "curseforge" :source-id 1}]}]
         (is result) ;; success
-        (is (= ["EveryAddon" "EveryAddon-BundledAddon" "everyaddon--0-1-2.zip"] directory-list))
+        (is (= ["EveryAddon" "EveryAddon-BundledAddon" "everyaddon--0-1-2--retail.zip"] directory-list))
         (is (= expected-nfo (nfo/read-nfo-file install-dir "EveryAddon-BundledAddon")))))))
 
 (deftest install-bundled-addon-overwriting-ignored-addon
@@ -716,22 +716,23 @@
     (with-running-app
       (let [install-dir (helper/install-dir)
             ;; move dummy addon file into place so there is no cache miss
-            fname (downloaded-addon-fname (:name helper/addon) (:version helper/addon))
+            fname (downloaded-addon-fname (:name helper/addon) (:version helper/addon) (:game-track helper/addon))
             _ (utils/cp (fixture-path fname) install-dir)]
         (cli/set-preference :addon-zips-to-keep 0)
         (core/install-addon-guard helper/addon install-dir)
         (is (= ["EveryAddon"] (helper/install-dir-contents)))))))
 
+;; todo: shouldn't this live in addon_test.clj ?
 (deftest install-addon--remove-multiple-zips
   (testing "installing an addon with the `:addon-zips-to-keep` preference set to `0` will delete the zip afterwards"
     (with-running-app
       (let [install-dir (helper/install-dir)
             ;; move dummy addon file into place so there is no cache miss
-            fname (downloaded-addon-fname (:name helper/addon) (:version helper/addon))]
+            fname (downloaded-addon-fname (:name helper/addon) (:version helper/addon) (:game-track helper/addon))]
 
         ;; create a bunch of empty files that will be matched and cleaned up.
         (doseq [i (range 1 6)]
-          (let [empty-file (fs/file install-dir (downloaded-addon-fname (:name helper/addon) (str "0.0." i)))]
+          (let [empty-file (fs/file install-dir (downloaded-addon-fname (:name helper/addon) (str "0.0." i) (:game-track helper/addon)))]
             (fs/touch empty-file)
             ;; ensure each one is definitively a little older than the previous
             (Thread/sleep 10)))
@@ -739,20 +740,20 @@
         ;; ensure the actual zip arrives last
         (utils/cp (fixture-path fname) install-dir)
 
-        (is (= ["everyaddon--0-0-1.zip"
-                "everyaddon--0-0-2.zip"
-                "everyaddon--0-0-3.zip"
-                "everyaddon--0-0-4.zip"
-                "everyaddon--0-0-5.zip"
-                "everyaddon--1-2-3.zip"]
+        (is (= ["everyaddon--0-0-1--retail.zip"
+                "everyaddon--0-0-2--retail.zip"
+                "everyaddon--0-0-3--retail.zip"
+                "everyaddon--0-0-4--retail.zip"
+                "everyaddon--0-0-5--retail.zip"
+                "everyaddon--1-2-3--retail.zip"]
                (helper/install-dir-contents)))
 
         (cli/set-preference :addon-zips-to-keep 3)
         (core/install-addon-guard helper/addon install-dir)
         (is (= ["EveryAddon"
-                "everyaddon--0-0-4.zip"
-                "everyaddon--0-0-5.zip"
-                "everyaddon--1-2-3.zip"]
+                "everyaddon--0-0-4--retail.zip"
+                "everyaddon--0-0-5--retail.zip"
+                "everyaddon--1-2-3--retail.zip"]
                (helper/install-dir-contents)))))))
 
 ;;
@@ -777,11 +778,11 @@
             addon-v1 helper/addon
 
             ;; move dummy addon files into place so there is no cache miss
-            fname-v0 (downloaded-addon-fname (:name addon-v0) (:version addon-v0))
-            fname-v1 (downloaded-addon-fname (:name addon-v1) (:version addon-v1))
+            fname-v0 (downloaded-addon-fname (:name addon-v0) (:version addon-v0) :retail)
+            fname-v1 (downloaded-addon-fname (:name addon-v1) (:version addon-v1) :retail)
 
             fixture-v0 (fixture-path "everyaddon--0-1-2.zip") ;; v0.1 unzips to two directories
-            fixture-v1 (fixture-path "everyaddon--1-2-3.zip") ;; v1.2 has just the one directory
+            fixture-v1 (fixture-path "everyaddon--1-2-3--retail.zip") ;; v1.2 has just the one directory
 
             _ (fs/copy fixture-v0 (utils/join install-dir fname-v0))
             _ (fs/copy fixture-v1 (utils/join install-dir fname-v1))
@@ -811,7 +812,7 @@
   (testing "uninstalling an addon we're ignoring isn't possible."
     (with-running-app
       (let [install-dir (helper/install-dir)
-            _ (zip/unzip-file (fixture-path "everyaddon--1-2-3.zip") install-dir)
+            _ (zip/unzip-file (fixture-path "everyaddon--1-2-3--retail.zip") install-dir)
             _ (fs/mkdir (utils/join install-dir "EveryAddon" ".git"))
             _ (core/load-installed-addons)
             addon (first (core/get-state :installed-addon-list))]
@@ -832,7 +833,7 @@
               install-dir-contents #(->> install-dir fs/list-dir (filter fs/directory?) (map fs/base-name) sort)
 
               ;; trick here: copying 0.1.2 fixture to 1.2.3 filename. this fixture unpacks two directories
-              fname (downloaded-addon-fname (:name helper/addon) (:version helper/addon))
+              fname (downloaded-addon-fname (:name helper/addon) (:version helper/addon) (:game-track helper/addon))
               _ (fs/copy (fixture-path "everyaddon--0-1-2.zip") (utils/join install-dir fname))
               _ (core/install-addon-guard helper/addon install-dir)
 
@@ -1186,7 +1187,7 @@
         (let [addon {:name "everyaddon" :label "EveryAddon" :version "1.2.3" :url "https://group.id/never/fetched"
                      :source "curseforge" :source-id 1
                      :download-url "https://path/to/remote/addon.zip" :game-track :retail
-                     :-testing-zipfile (fixture-path "everyaddon--1-2-3.zip")}
+                     :-testing-zipfile (fixture-path "everyaddon--1-2-3--retail.zip")}
 
               expected {:ignore? true,
                         ;; `catalogue/expand-summary` is never called so the source updates are never added.
@@ -1230,7 +1231,7 @@
         (let [addon {:name "everyaddon" :label "EveryAddon" :version "1.2.3" :url "https://group.id/never/fetched"
                      :source "curseforge" :source-id 1
                      :download-url "https://path/to/remote/addon.zip" :game-track :retail
-                     :-testing-zipfile (fixture-path "everyaddon--1-2-3.zip")}
+                     :-testing-zipfile (fixture-path "everyaddon--1-2-3--retail.zip")}
 
               expected {;;:ignore? false, ;; removed rather than set to false.
                         :description "Does what no other addon does, slightly differently",
@@ -1352,7 +1353,7 @@
               addon {:name "everyaddon" :label "EveryAddon" :version "1.2.3" :url "https://group.id/never/fetched"
                      :source "curseforge" :source-id 1
                      :download-url "https://path/to/remote/addon.zip" :game-track :retail
-                     :-testing-zipfile (fixture-path "everyaddon--1-2-3.zip")}
+                     :-testing-zipfile (fixture-path "everyaddon--1-2-3--retail.zip")}
 
               expected {:ignore? false, ;; explicit `false` rather than removed
                         :description "Does what no other addon does, slightly differently",

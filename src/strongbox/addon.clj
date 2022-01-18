@@ -286,8 +286,8 @@
 
 (defn-spec downloaded-addon-fname string?
   "given an addon's `name` and `version`, returns the expected addon zip filename."
-  [name ::sp/name, version ::sp/version]
-  (format "%s--%s.zip" name (utils/slugify version))) ;; addonname--1-2-3.zip
+  [addon-name ::sp/name, version ::sp/version, game-track ::sp/game-track]
+  (format "%s--%s--%s.zip" addon-name (utils/slugify version) (name game-track))) ;; addonname--1-2-3--classic-tbc.zip
 
 (defn-spec remove-zip-files! nil?
   "given a directory `install-dir`, and a prefix `addon-name`, find all zip files that match a pattern, sort 

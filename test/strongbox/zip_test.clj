@@ -23,7 +23,7 @@
     (is (false? (zip/valid-zip-file? "test/fixtures/bad-empty.zip")))
     (is (false? (zip/valid-zip-file? "test/fixtures/bad-truncated.zip")))
     (is (true? (zip/valid-zip-file? "test/fixtures/empty.zip")))
-    (is (true? (zip/valid-zip-file? "test/fixtures/everyaddon--1-2-3.zip")))))
+    (is (true? (zip/valid-zip-file? "test/fixtures/everyaddon--1-2-3--retail.zip")))))
 
 (deftest valid-addon-zip-file?
   (testing "valid addon zip files are a subset of valid zip files"
@@ -32,7 +32,7 @@
     (is (false? (zip/valid-addon-zip-file? "test/fixtures/empty.zip")) "contains top-level file") ;; it's not quite empty
     (is (false? (zip/valid-addon-zip-file? "test/fixtures/everyaddon--1-2-3--non-addon-tld.zip")) "contains non-addon top-level directories")
 
-    (is (true? (zip/valid-addon-zip-file? "test/fixtures/everyaddon--1-2-3.zip")))))
+    (is (true? (zip/valid-addon-zip-file? "test/fixtures/everyaddon--1-2-3--retail.zip")))))
 
 (deftest unzip-file
   (testing "unzipping a file returns it's given output path. given output path contains unzipped contents"

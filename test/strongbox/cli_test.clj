@@ -308,7 +308,7 @@
 
 (deftest import-addon--github
   (testing "user addon is successfully added to the user catalogue from a github url"
-    (let [every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
+    (let [every-addon-zip-file (fixture-path "everyaddon--1-2-3--retail.zip")
 
           fake-routes {"https://api.github.com/repos/Aviana/HealComm/releases"
                        {:get (fn [req] {:status 200 :body (slurp (fixture-path "github-repo-releases--aviana-healcomm.json"))})}
@@ -381,7 +381,7 @@
 
           catalogue (utils/to-json (catalogue/new-catalogue [match]))
 
-          every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
+          every-addon-zip-file (fixture-path "everyaddon--1-2-3--retail.zip")
           fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                        {:get (fn [req] {:status 200 :body catalogue})}
 
@@ -451,7 +451,7 @@
 
           catalogue (utils/to-json (catalogue/new-catalogue [match]))
 
-          every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
+          every-addon-zip-file (fixture-path "everyaddon--1-2-3--retail.zip")
           fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                        {:get (fn [req] {:status 200 :body catalogue})}
 
@@ -521,7 +521,7 @@
 
           catalogue (utils/to-json (catalogue/new-catalogue [match]))
 
-          every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
+          every-addon-zip-file (fixture-path "everyaddon--1-2-3--retail.zip")
           fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                        {:get (fn [req] {:status 200 :body catalogue})}
 
