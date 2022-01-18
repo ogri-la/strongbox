@@ -167,9 +167,24 @@
       (is (= expected-classic (count (github-api/parse-github-release-data fixture addon-summary :classic))))
       (is (= expected-retail (count (github-api/parse-github-release-data fixture addon-summary :retail)))))))
 
-;;(deftest parse-github-release-data--installed-game-track
-;;  (testing "the :installed-game-track is used to populate the 'known game tracks' value"
-;;    (is false)))
+(deftest parse-github-release-data--pre-release-ignored
+  (testing "a complete list of release data can be parsed and filtered, pre-releases and drafts are removed."
+    (let [fixture (slurp-fixture "github-repo-releases--leatrix-plus-bcc.json")
+          addon-summary
+          {:url "https://github.com/Bar/Foo"
+           :updated-date "2019-10-09T17:40:04Z"
+           :source "github"
+           :source-id "Bar/Foo"
+           :label "Foo"
+           :name "foo"
+           :download-count 123
+           :game-track-list []
+           :tag-list []}
+
+          ;; I changed the non-prerelease 2.5.84 to a draft
+          ;;expected-classic 4
+          expected-classic 3]
+      (is (= expected-classic (count (github-api/parse-github-release-data fixture addon-summary :classic-tbc)))))))
 
 (deftest find-gametracks-toc-data
   (testing "games tracks are correctly detected from toc data"

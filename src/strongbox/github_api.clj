@@ -163,6 +163,8 @@
                           (:installed-game-track addon) [(:installed-game-track addon)]
                           :else [])]
     (->> release-list
+         (remove :prerelease)
+         (remove :draft)
          (map-indexed (-parse-assets game-track-list))
          flatten
          (group-by :game-track)
