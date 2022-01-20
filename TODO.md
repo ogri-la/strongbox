@@ -4,20 +4,22 @@ this is my own scratchpad for keeping track of things. it gets truncated frequen
 
 see CHANGELOG.md for a more formal list of changes by release
 
-## done (4.9.1
+## done (4.9.1)
 
 * bug, github, prereleases and drafts not being removed
+    - done
+
+* bug, addon/updateable? logic fixed for multi-toc addons
+    - done
+
 
 ## todo
 
-* bug, zip file names contain no game track information
-    - when we download them as `addonname--version.zip`, there will be a cache hit when we switch game tracks and download an update
-* bug, I think. If I have "Addon 1.2.3 (mainline)" installed and switch to "Addon 1.2.3 (classic)", and there is a separate file available, then I should see an update link
-    - I have a strong suspicion I introduced this recently so that 
-        - see `addon/updateable?`
-
 
 ## todo bucket (no particular order)
+
+* github, bug, multi-toc addons are getting a warning when `strict?` is true and the game track is changed
+    - https://github.com/LenweSaralonde/MusicianList/releases
 
 * disable support for curseforge
     - https://mailchi.mp/overwolf/whats-new-with-overwolf-curseforge-november3
