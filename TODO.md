@@ -4,31 +4,22 @@ this is my own scratchpad for keeping track of things. it gets truncated frequen
 
 see CHANGELOG.md for a more formal list of changes by release
 
-## done
+## done (4.9.1)
 
-* github catalogue
-    - something quick and dirty for now
-
-* regression, synthetic http errors are no longer retried because they're in the 4xx range
-    - bumped the synthetic 408 errors to 608
-
-* source switching
-    - some addons will have multiple sources in the toc file we can switch to.
-    - if not, we can search the catalogue for them
-        - exclude curseforge
-            - not done, curseforge is still supported until Feb 
-                - and search results are thin enough as it is. if it can only be found on curseforge, then that is more helpful than the 'no results' msg.
+* bug, github, prereleases and drafts not being removed
     - done
 
-* disable curseforge
-    - https://mailchi.mp/overwolf/whats-new-with-overwolf-curseforge-november3
-    - I want a permanent warning against curseforge addons between now and when the service goes offline
-        - done
+* bug, addon/updateable? logic fixed for multi-toc addons
+    - done
+
 
 ## todo
 
 
 ## todo bucket (no particular order)
+
+* github, bug, multi-toc addons are getting a warning when `strict?` is true and the game track is changed
+    - https://github.com/LenweSaralonde/MusicianList/releases
 
 * disable support for curseforge
     - https://mailchi.mp/overwolf/whats-new-with-overwolf-curseforge-november3

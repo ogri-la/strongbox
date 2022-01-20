@@ -162,14 +162,30 @@
           ;; from two releases both named "Teelo's Altoholic Classic Fork". These two assets are now correctly labelled classic.
           ;;expected-classic 45
           ;;expected-retail 2
-          expected-classic 47
+          num-prereleases 2
+          expected-classic (- 47 num-prereleases)
           expected-retail 0]
       (is (= expected-classic (count (github-api/parse-github-release-data fixture addon-summary :classic))))
       (is (= expected-retail (count (github-api/parse-github-release-data fixture addon-summary :retail)))))))
 
-;;(deftest parse-github-release-data--installed-game-track
-;;  (testing "the :installed-game-track is used to populate the 'known game tracks' value"
-;;    (is false)))
+(deftest parse-github-release-data--pre-release-ignored
+  (testing "a complete list of release data can be parsed and filtered, pre-releases and drafts are removed."
+    (let [fixture (slurp-fixture "github-repo-releases--leatrix-plus-bcc.json")
+          addon-summary
+          {:url "https://github.com/Bar/Foo"
+           :updated-date "2019-10-09T17:40:04Z"
+           :source "github"
+           :source-id "Bar/Foo"
+           :label "Foo"
+           :name "foo"
+           :download-count 123
+           :game-track-list []
+           :tag-list []}
+
+          ;; I changed the non-prerelease 2.5.84 to a draft
+          ;;expected-classic 4
+          expected-classic 3]
+      (is (= expected-classic (count (github-api/parse-github-release-data fixture addon-summary :classic-tbc)))))))
 
 (deftest find-gametracks-toc-data
   (testing "games tracks are correctly detected from toc data"
@@ -256,10 +272,7 @@
 
           expected [{:download-url "https://github.com/Ravendwyr/Chinchilla/releases/download/v2.10.0/Chinchilla-v2.10.0-classic.zip"
                      :game-track game-track
-                     :version "v2.10.0"}
-                    {:download-url "https://github.com/Ravendwyr/Chinchilla/releases/download/v2.10.0-beta3/Chinchilla-v2.10.0-beta3-classic.zip",
-                     :game-track game-track,
-                     :version "v2.10.0-beta3"}]
+                     :version "v2.10.0"}]
 
           fixture (slurp (fixture-path "github-repo-releases--mixed-game-tracks.json"))
           fake-routes {"https://api.github.com/repos/Ravendwyr/Chinchilla/releases"
@@ -283,10 +296,7 @@
 
           expected [{:download-url "https://github.com/Ravendwyr/Chinchilla/releases/download/v2.10.0/Chinchilla-v2.10.0-classic-tbc.zip",
                      :game-track :classic-tbc,
-                     :version "v2.10.0"}
-                    {:download-url "https://github.com/Ravendwyr/Chinchilla/releases/download/v2.10.0-beta3/Chinchilla-v2.10.0-beta3-classic-tbc.zip",
-                     :game-track :classic-tbc,
-                     :version "v2.10.0-beta3"}]
+                     :version "v2.10.0"}]
 
           fixture (slurp (fixture-path "github-repo-releases--mixed-game-tracks.json"))
           fake-routes {"https://api.github.com/repos/Foo/Bar/releases"

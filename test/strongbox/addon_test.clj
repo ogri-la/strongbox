@@ -407,37 +407,58 @@
 
 (deftest test-updateable?
   (testing "an addon's 'updateable' states"
-    (let [cases [;; update available
-                 {:installed-version "1.2.0" :version "1.2.3"}
-                 ;; update available, explicitly not being ignored
-                 {:installed-version "1.2.0" :version "1.2.3" :ignore? false}
-                 ;; update available and pinned version matches available version
-                 {:installed-version "1.2.3" :version "1.2.4" :pinned-version "1.2.4"}
-                 ;; update available with same version but different game track
-                 {:installed-version "1.2.3", :installed-game-track :classic
-                  :version "1.2.3" :game-track :retail}]]
-
-      (doseq [addon cases]
-        (is (addon/updateable? addon)))))
-
-  (testing "not updateable states"
     (let [cases [;; no update available
-                 {:installed-version "1.2.3"}
+                 [{:installed-version "1.2.3"} false]
+
                  ;; installed and available are equal
-                 {:installed-version "1.2.3" :version "1.2.3"}
+                 [{:installed-version "1.2.3" :version "1.2.3"} false]
+
                  ;; ignored
-                 {:installed-version "1.2.3" :version "1.2.4" :ignore? true}
-                 ;; update available but pinned to installed version.
+                 [{:installed-version "1.2.3" :version "1.2.4" :ignore? true} false]
+
+                 ;; update available, but pinned to installed version.
                  ;; this may happen when a release drifts off of a curseforge addon's list of latest releases by game version,
                  ;; or `:projectFileId` synthetic `:-unique-name` that we set is changed,
                  ;; or the release is simply deleted I suppose.
                  ;; `catalogue.clj` won't be able to find the pinned release and will use the latest release instead.
-                 {:installed-version "1.2.3" :version "1.2.4" :pinned-version "1.2.3"}
-                 ;; update possibly available but no `:installed-game-track` present
-                 {:installed-version "1.2.3", :version "1.2.3" :game-track :retail}]]
+                 [{:installed-version "1.2.3" :version "1.2.4" :pinned-version "1.2.3"} false]
 
-      (doseq [addon cases]
-        (is (not (addon/updateable? addon)))))))
+                 ;; update possibly available but no `:installed-game-track` present
+                 [{:installed-version "1.2.3", :version "1.2.3" :game-track :retail} false]
+
+                 ;; ---
+
+                 ;; update available
+                 [{:installed-version "1.2.0" :version "1.2.3"} true]
+
+                 ;; update available, explicitly not being ignored
+                 [{:installed-version "1.2.0" :version "1.2.3" :ignore? false} true]
+
+                 ;; update available and pinned version matches available version
+                 [{:installed-version "1.2.3" :version "1.2.4" :pinned-version "1.2.4"} true]
+
+                 ;; update available with same version but different game track.
+                 ;; happens when addon installed under one game track, the game track is switched and a catalogue match is still found.
+                 [{:installed-version "1.2.3", :version "1.2.3"
+                   :installed-game-track :classic, :game-track :retail} true]
+
+                 ;; ---
+
+                 ;; same version, different game track and the available game track isn't in list of supported game tracks.
+                 ;; happens when addon installed under one game track, the game track is switched and a catalogue match is still found.
+                 ;; list of supported-game-tracks doesn't make any difference.
+                 [{:installed-version "1.2.3", :version "1.2.3",
+                   :installed-game-track :classic, :game-track :retail
+                   :supported-game-tracks [:classic]} true]
+
+                 ;; same version, different game track and the available game track *is* in list of supported game tracks.
+                 ;; happens when addon supporting multiple game tracks is installed under one game track, the game track is switched and a catalogue match is still found.
+                 [{:installed-version "1.2.3", :version "1.2.3",
+                   :installed-game-track :classic, :game-track :retail
+                   :supported-game-tracks [:classic :retail]} false]]]
+
+      (doseq [[addon expected] cases]
+        (is (= expected (addon/updateable? addon)), (str addon " != " expected))))))
 
 (deftest test-ignored?
   (testing "an addon is being ignored if the `:ignore?` flag is present and set to `true`"
