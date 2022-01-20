@@ -23,6 +23,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## 4.9.1 - 2022-01-20
+
+### Fixed
+
+* github, regression, pre-releases and drafts are now removed from consideration when looking for updates.
+* addon, regression, the 'updatable?' check now correctly handles addons with multiple .toc files.
+    - regular addons were being affected by some buggy logic here introduced in 4.8.0 (2021-12-12).
+
 ## 4.9.0 - 2022-01-02
 
 ### Added
