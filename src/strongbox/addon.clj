@@ -459,14 +459,9 @@
       pinned-version (and (not= pinned-version installed-version)
                           (= pinned-version version))
 
-      ;; if the available version is equal to the installed version
-      ;; AND the installed game track is the same as the available game track
-      ;; (OR, the installed game track is present in the list of game tracks supported by the addon),
-      ;; then the addon is NOT updateable.
-      (and game-track installed-game-track)
-      (not (and (= version installed-version)
-                (or (= game-track installed-game-track)
-                    (utils/in? installed-game-track supported-game-tracks))))
+      (and game-track installed-game-track) (not (and (= version installed-version)
+                                                      (= game-track installed-game-track)
+                                                      (utils/in? installed-game-track supported-game-tracks)))
 
       :else (not= version installed-version))))
 
