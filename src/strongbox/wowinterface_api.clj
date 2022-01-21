@@ -24,7 +24,7 @@
   ;; however! we know this information isn't good and doesn't always match what we see on the website.
   ;; until wowinterface improve, and short of doing more scraping of html, this is the best we can do.
   (when-not (:game-track-list addon-summary)
-    (error "given addon-summary has no game track list! please report this if you're not a developer.")
+    (error (utils/reportable-error "given addon-summary has no game track list."))
     (error addon-summary))
 
   ;; todo: this shouldn't be an 'if' if there is no 'else'
