@@ -40,7 +40,10 @@
           curse (core/find-catalogue-local-path :curseforge)
           wowi (core/find-catalogue-local-path :wowinterface)
           tukui (core/find-catalogue-local-path :tukui)
-          github (core/find-catalogue-local-path :github)]
+          github (core/find-catalogue-local-path :github)
+
+          num-full-addons (- 4 1) ;; 2022-01-22: curseforge not present in full catalogue
+          num-short-addons 2]
 
       ;; copy some fixtures
       (fs/copy (fixture-path "catalogue--v2--curseforge.json") curse)
@@ -55,10 +58,10 @@
         (is (fs/exists? (core/find-catalogue-local-path :short))))
 
       (testing "each catalogue has one addon each"
-        (is (= 4 (-> full catalogue/read-catalogue :total))))
+        (is (= num-full-addons (-> full catalogue/read-catalogue :total))))
 
       (testing "the short catalogue has two addons in range"
-        (is (= 2 (-> short catalogue/read-catalogue :total)))))))
+        (is (= num-short-addons (-> short catalogue/read-catalogue :total)))))))
 
 (deftest search-db--empty-db
   (testing "an empty database can be searched from the CLI"

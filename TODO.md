@@ -55,13 +55,19 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * disable support for curseforge
     - https://mailchi.mp/overwolf/whats-new-with-overwolf-curseforge-november3
-    - addons from curseforge can not be imported
-    - addons from curseforge can not be updated
+    - addons from curseforge can not be updatedreplace multi-error messages with a single multi-line error message
         - they should get an error
             - or marked as ignored?
     - curseforge catalogue should not be present
-    - curseforge addons should be present in full and short catalogues
+    - curseforge addons should not be present in full and short catalogues
+        - 
     - curseforge results should not be in search results
+        - this will occur naturally when curseforge addons are not present in any catalogue
+    - addons from curseforge can not be imported
+        - this will occur naturally when curseforge addons are not present in any catalogue
+    - curseforge should not be present in emergency catalogue
+        - this will occur naturally when curseforge addons are not present in any catalogue
+        - disabled anyway
 
 * replace multi-error messages with a single multi-line error message
 
