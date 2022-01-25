@@ -732,11 +732,14 @@
 (defn-spec get-create-user-catalogue :catalogue/catalogue
   "returns the contents of the user catalogue, creating one if necessary"
   []
-  (let [user-catalogue-path (paths :user-catalogue-file)]
-    (catalogue/read-catalogue
-     (if (fs/exists? user-catalogue-path)
-       user-catalogue-path
-       (catalogue/write-empty-catalogue! user-catalogue-path)))))
+  (let [user-catalogue-path (paths :user-catalogue-file)
+        catalogue (catalogue/read-catalogue
+                   (if (fs/exists? user-catalogue-path)
+                     user-catalogue-path
+                     (catalogue/write-empty-catalogue! user-catalogue-path)))
+        cursed? (fn [addon]
+                  (-> addon :source (= :curseforge)))]
+    (update catalogue :addon-summary-list #(vec (remove cursed? %)))))
 
 (defn-spec add-user-addon-list! nil?
   "adds a list of addons to the user catalogue"
