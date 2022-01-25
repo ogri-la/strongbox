@@ -5,7 +5,8 @@
     [http :as http]
     [joblib :as joblib]
     [logging :as logging]
-    [core :as core]]
+    [core :as core]
+    [catalogue :as catalogue]]
    [clojure.test :as test]
    [cloverage.coverage :as c]))
 
@@ -20,7 +21,8 @@
                   main/spec? true
                   http/*default-pause* 1 ;; ms
                   http/*default-attempts* 1
-                  joblib/tick-delay joblib/tick]
+                  joblib/tick-delay joblib/tick
+                  catalogue/host-disabled? (constantly false)]
       (core/reset-logging!)
       (apply require (map symbol ns-list))
       {:errors (reduce + ((juxt :error :fail)
