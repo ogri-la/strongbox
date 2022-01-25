@@ -37,7 +37,7 @@
     (let [full (core/find-catalogue-local-path :full)
           short (core/find-catalogue-local-path :short)
 
-          curse (core/find-catalogue-local-path :curseforge)
+          ;;curse (core/find-catalogue-local-path :curseforge)
           wowi (core/find-catalogue-local-path :wowinterface)
           tukui (core/find-catalogue-local-path :tukui)
           github (core/find-catalogue-local-path :github)
@@ -46,7 +46,7 @@
           num-short-addons 2]
 
       ;; copy some fixtures
-      (fs/copy (fixture-path "catalogue--v2--curseforge.json") curse)
+      ;;(fs/copy (fixture-path "catalogue--v2--curseforge.json") curse)
       (fs/copy (fixture-path "catalogue--v2--wowinterface.json") wowi)
       (fs/copy (fixture-path "catalogue--v2--tukui.json") tukui)
       (fs/copy (fixture-path "catalogue--v2--github.json") github)

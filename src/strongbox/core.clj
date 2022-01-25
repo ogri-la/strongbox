@@ -657,7 +657,7 @@
 (defn-spec catalogue-local-path ::sp/file
   "given a catalogue-location, returns the local path to the catalogue."
   [catalogue-location :catalogue/location]
-  ;; {:name :full ...} => "/path/to/catalogue/dir/full-catalogue.json"
+  ;; {:name :full, ...} => "/path/to/catalogue/dir/full-catalogue.json"
   (utils/join (paths :catalogue-dir) (-> catalogue-location :name name (str "-catalogue.json"))))
 
 (defn-spec find-catalogue-local-path (s/or :ok ::sp/file, :not-found nil?)

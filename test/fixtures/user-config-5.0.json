@@ -30,11 +30,6 @@
       "source": "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/tukui-catalogue.json"
     },
     {
-      "name": "curseforge",
-      "label": "Curseforge",
-      "source": "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/curseforge-catalogue.json"
-    },
-    {
       "name": "wowinterface",
       "label": "WoWInterface",
       "source": "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/wowinterface-catalogue.json"
