@@ -71,10 +71,11 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * replace multi-error messages with a single multi-line error message
 
+## todo bucket (no particular order)
+
 * default to keeping last three zip files by default
     - stretch goal
-
-## todo bucket (no particular order)
+        - probably not a good idea for this release where we might want to keep zips around
 
 * search, add ability to browse catalogue page by page
     - I have neglected the catalogue search *so much*. I need a whole release dedicated to improving it.

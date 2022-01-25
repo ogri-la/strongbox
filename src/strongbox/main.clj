@@ -8,6 +8,7 @@
    [clojure.string :refer [lower-case]]
    [me.raynes.fs :as fs]
    [strongbox
+    [catalogue :as catalogue]
     [http :as http]
     [joblib :as joblib]
     [core :as core]
@@ -96,6 +97,8 @@
                   ;;main/spec? true
                   ;;cli/install-update-these-in-parallel cli/install-update-these-serially
                   ;;core/check-for-updates core/check-for-updates-serially
+                  ;; for testing purposes, no addon host is disabled
+                  catalogue/host-disabled? (constantly false)
                   ]
       (core/reset-logging!)
 

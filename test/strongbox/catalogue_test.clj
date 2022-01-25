@@ -350,8 +350,7 @@
           strict? true
           fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/281321"
                        {:get (fn [req] {:status 502 :reason-phrase "Gateway Time-out (HTTP 502)"})}}
-          expected ["addon host 'curseforge' will be disabled Feb 1st, 2022\n • use 'Source' and 'Find similar' from the addon context menu"
-                    "failed to fetch 'https://addons-ecs.forgesvc.net/api/v2/addon/281321': Gateway Time-out (HTTP 502) (HTTP 502)"
+          expected ["failed to fetch 'https://addons-ecs.forgesvc.net/api/v2/addon/281321': Gateway Time-out (HTTP 502) (HTTP 502)"
                     "Curseforge: the API is having problems right now. Try again later."
                     "no 'Retail' release found on curseforge."]]
       (with-fake-routes-in-isolation fake-routes
@@ -364,8 +363,7 @@
           strict? true
           fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/281321"
                        {:get (fn [req] {:status 504 :reason-phrase "Gateway Time-out (HTTP 504)"})}}
-          expected ["addon host 'curseforge' will be disabled Feb 1st, 2022\n • use 'Source' and 'Find similar' from the addon context menu"
-                    "failed to fetch 'https://addons-ecs.forgesvc.net/api/v2/addon/281321': Gateway Time-out (HTTP 504) (HTTP 504)"
+          expected ["failed to fetch 'https://addons-ecs.forgesvc.net/api/v2/addon/281321': Gateway Time-out (HTTP 504) (HTTP 504)"
                     "Curseforge: the API is having problems right now. Try again later."
                     "no 'Retail' release found on curseforge."]]
       (with-fake-routes-in-isolation fake-routes
