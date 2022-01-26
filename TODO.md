@@ -45,13 +45,16 @@ see CHANGELOG.md for a more formal list of changes by release
 * replace multi-error messages with a single multi-line error message
     - done
 
-## todo (4.9.0 -> 5.0.0)
+* BloodShieldTracker isn't switching to wowinterface from curseforge
+    - working now, weird.
+    - done
 
-* bugs: 
-    source menu
-        - clicking on an already selected item still does something
-            - it shouldn't do anything
-    BloodShieldTracker isn't switching to wowinterface from curseforge
+* source menu
+    - clicking on an already selected item still does something
+        - it shouldn't do anything
+    - done
+
+## todo (4.9.0 -> 5.0.0)
 
 * github, bug, multi-toc addons are getting a warning when `strict?` is true and the game track is changed
     - https://github.com/LenweSaralonde/MusicianList/releases
