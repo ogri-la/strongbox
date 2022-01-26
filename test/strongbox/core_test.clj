@@ -256,63 +256,8 @@
           (let [;; our list of addons to import
                 output-path (fixture-path "import-export--export-v1.json")
 
-                expected [{:created-date "2010-05-07T18:48:16Z",
-                           :description "Does what no other addon does, slightly differently",
-                           :tag-list [:bags :inventory]
-                           :update? false,
-                           :updated-date "2019-06-26T01:21:39Z",
-                           :group-id "https://www.curseforge.com/wow/addons/everyaddon",
-                           :installed-version "v8.2.0-v1.13.2-7135.139",
-                           :installed-game-track :retail
-                           :game-track :retail
-                           :name "everyaddon",
-                           :interface-version 80000,
-                           :supported-game-tracks [:retail]
-                           :download-url "https://edge.forgecdn.net/files/1/1/EveryAddon.zip",
-                           :label "EveryAddon",
-                           :download-count 3000000,
-                           :source "curseforge",
-                           :source-id 1,
-                           :source-map-list [{:source "curseforge" :source-id 1}]
-                           :url "https://www.curseforge.com/wow/addons/everyaddon",
-                           :version "v8.2.0-v1.13.2-7135.139",
-                           :dirname "EveryAddon",
-                           :primary? true,
-                           :matched? true
-                           :release-list [{:download-url "https://edge.forgecdn.net/files/1/1/EveryAddon.zip",
-                                           :game-track :retail,
-                                           :interface-version 80000,
-                                           :release-label "[WoW 8.0.1] EveryAddon-v8.2.0-v1.13.2-7135.139",
-                                           :version "v8.2.0-v1.13.2-7135.139"}]}
-
-                          {:created-date "2011-01-04T05:42:23Z",
-                           :description "Does what every addon does, just better",
-                           :tag-list [:coords :map :minimap :professions :ui]
-                           :update? false,
-                           :updated-date "2019-07-03T07:11:47Z",
-                           :group-id "https://www.curseforge.com/wow/addons/everyotheraddon",
-                           :installed-version "v8.2.0-v1.13.2-7135.139",
-                           :installed-game-track :retail
-                           :game-track :retail
-                           :name "everyotheraddon",
-                           :interface-version 80200,
-                           :supported-game-tracks [:retail]
-                           :download-url "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip",
-                           :label "Every Other Addon",
-                           :download-count 5400000,
-                           :source "curseforge",
-                           :source-id 2,
-                           :source-map-list [{:source "curseforge" :source-id 2}]
-                           :url "https://www.curseforge.com/wow/addons/everyotheraddon",
-                           :version "v8.2.0-v1.13.2-7135.139",
-                           :dirname "EveryOtherAddon",
-                           :primary? true,
-                           :matched? true
-                           :release-list [{:download-url "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip",
-                                           :game-track :retail,
-                                           :interface-version 80200,
-                                           :release-label "[WoW 8.2.0] EveryOtherAddon-v8.2.0-v1.13.2-7135.139",
-                                           :version "v8.2.0-v1.13.2-7135.139"}]}]]
+                expected [] ;; 2022-01-26: importing curseforge addons disabled
+                ]
 
             (core/import-exported-file output-path)
             (core/refresh) ;; re-read the installation directory
@@ -357,70 +302,8 @@
 
                 strict? false
 
-                expected [{:created-date "2010-05-07T18:48:16Z",
-                           :description "Does what no other addon does, slightly differently",
-                           :tag-list [:bags :inventory]
-                           :update? false,
-                           :updated-date "2019-06-26T01:21:39Z",
-                           :group-id "https://www.curseforge.com/wow/addons/everyaddon",
-                           :installed-version "v8.2.0-v1.13.2-7135.139",
-                           :installed-game-track :retail
-                           :game-track :retail
-                           :name "everyaddon",
-                           :interface-version 80000,
-                           :supported-game-tracks [:retail]
-                           :download-url "https://edge.forgecdn.net/files/1/1/EveryAddon.zip",
-                           :label "EveryAddon",
-                           :download-count 3000000,
-                           :source "curseforge",
-                           :source-id 1,
-                           :source-map-list [{:source "curseforge" :source-id 1}]
-                           :url "https://www.curseforge.com/wow/addons/everyaddon",
-                           :version "v8.2.0-v1.13.2-7135.139",
-                           :dirname "EveryAddon",
-                           :primary? true,
-                           :matched? true
-                           :release-list [{:download-url "https://edge.forgecdn.net/files/1/1/EveryAddon.zip",
-                                           :game-track :retail,
-                                           :interface-version 80000,
-                                           :release-label "[WoW 8.0.1] EveryAddon-v8.2.0-v1.13.2-7135.139",
-                                           :version "v8.2.0-v1.13.2-7135.139"}]},
-
-                          {:created-date "2011-01-04T05:42:23Z",
-                           :description "Does what every addon does, just better",
-                           :tag-list [:coords :map :minimap :professions :ui]
-                           :update? false,
-                           :updated-date "2019-07-03T07:11:47Z",
-                           :group-id "https://www.curseforge.com/wow/addons/everyotheraddon",
-                           :installed-version "v8.2.0-v1.13.2-7135.139",
-                           :installed-game-track :classic
-                           ;; significant! differs from above because addon directory's `:game-track`
-                           ;; is set to `:retail` and `strict?` is `false`
-                           :game-track :classic
-                           :name "everyotheraddon",
-                           :source "curseforge",
-                           :source-id 2,
-                           :source-map-list [{:source "curseforge" :source-id 2}]
-                           :interface-version 11300, ;; changed
-
-                           ;; why :retail? According to EveryOtherAddon.toc, it's actually a retail addon and not a classic addon.
-                           ;; we're skewing the API results and the addon-dir's strictness to ensure a classic version is found and installed
-                           ;; but this test is essentially drifting and should be using a EveryOtherAddonClassic type addon where the toc is consistent.
-                           :supported-game-tracks [:retail]
-
-                           :download-url "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip",
-                           :label "Every Other Addon",
-                           :download-count 5400000,
-                           :url "https://www.curseforge.com/wow/addons/everyotheraddon",
-                           :version "v8.2.0-v1.13.2-7135.139",
-                           :dirname "EveryOtherAddon",
-                           :primary? true,
-                           :matched? true
-                           :release-list [{:download-url "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip",
-                                           :game-track :classic,
-                                           :interface-version 11300,
-                                           :release-label "[WoW 1.13.2] EveryOtherAddon-v8.2.0-v1.13.2-7135.139",
-                                           :version "v8.2.0-v1.13.2-7135.139"}]}]]
+                expected [] ;; 2022-01-26: importing curseforge addons disabled
+                ]
 
             (core/import-exported-file output-path)
             ;; so both retail and classic are picked up on refresh
@@ -1175,90 +1058,77 @@
 (deftest ignore-addon
   (testing "a regular installed addon can be marked as 'ignored'"
     (with-running-app
+      (helper/install-dir)
+      (let [addon {:name "everyaddon" :label "EveryAddon" :version "1.2.3" :url "https://group.id/never/fetched"
+                   :source "wowinterface" :source-id 1
+                   :download-url "https://path/to/remote/addon.zip" :game-track :retail
+                   :-testing-zipfile (fixture-path "everyaddon--1-2-3.zip")}
 
-      ;; 2021-09-04: change in behaviour. addons that no longer match the catalogue are still checked for
-      ;; updates if the right toc+nfo data is available.
-      (with-global-fake-routes-in-isolation
-        {"https://addons-ecs.forgesvc.net/api/v2/addon/1"
-         {:get (fn [req] {:status 404 :reason-phrase "not found"})}}
+            expected {:ignore? true,
+                      ;; `catalogue/expand-summary` is never called so the source updates are never added.
+                      ;;:game-track :retail
+                      ;;:download-url ...
+                      ;;:version ...
+                      :description "Does what no other addon does, slightly differently",
+                      :dirname "EveryAddon",
+                      :group-id "https://group.id/never/fetched",
+                      :installed-game-track :retail,
+                      :installed-version "1.2.3",
+                      :interface-version 70000,
+                      :supported-game-tracks [:retail]
+                      :label "EveryAddon 1.2.3",
+                      :name "everyaddon",
+                      :primary? true,
+                      :source "wowinterface",
+                      :source-id 1,
+                      :source-map-list [{:source "wowinterface" :source-id 1}]
+                      :update? false}]
+        (core/install-addon-guard addon)
+        (is (= ["EveryAddon"] (helper/install-dir-contents)))
+        (core/load-installed-addons)
 
-        (helper/install-dir)
-        (let [addon {:name "everyaddon" :label "EveryAddon" :version "1.2.3" :url "https://group.id/never/fetched"
-                     :source "curseforge" :source-id 1
-                     :download-url "https://path/to/remote/addon.zip" :game-track :retail
-                     :-testing-zipfile (fixture-path "everyaddon--1-2-3.zip")}
-
-              expected {:ignore? true,
-                        ;; `catalogue/expand-summary` is never called so the source updates are never added.
-                        ;;:game-track :retail
-                        ;;:download-url ...
-                        ;;:version ...
-                        :description "Does what no other addon does, slightly differently",
-                        :dirname "EveryAddon",
-                        :group-id "https://group.id/never/fetched",
-                        :installed-game-track :retail,
-                        :installed-version "1.2.3",
-                        :interface-version 70000,
-                        :supported-game-tracks [:retail]
-                        :label "EveryAddon 1.2.3",
-                        :name "everyaddon",
-                        :primary? true,
-                        :source "curseforge",
-                        :source-id 1,
-                        :source-map-list [{:source "curseforge" :source-id 1}]
-                        :update? false}]
-          (core/install-addon-guard addon)
-          (is (= ["EveryAddon"] (helper/install-dir-contents)))
-          (core/load-installed-addons)
-
-          ;; todo: the below makes this a UI test. move test to cli_test.clj
-          (cli/select-addons)
-          (cli/ignore-selected) ;; calls `core/refresh`
-          (is (= expected (first (core/get-state :installed-addon-list)))))))))
+        ;; todo: the below makes this a UI test. move test to cli_test.clj
+        (cli/select-addons)
+        (cli/ignore-selected) ;; calls `core/refresh`
+        (is (= expected (first (core/get-state :installed-addon-list))))))))
 
 (deftest clear-addon-ignore-flag
   (testing "an ignored addon can be 'unignored'"
     (with-running-app
 
-      ;; 2021-09-04: change in behaviour. addons that no longer match the catalogue are still checked for
-      ;; updates if the right toc+nfo data is available.
-      (with-global-fake-routes-in-isolation
-        {"https://addons-ecs.forgesvc.net/api/v2/addon/1"
-         {:get (fn [req] {:status 404 :reason-phrase "not found"})}}
+      (helper/install-dir)
+      (let [addon {:name "everyaddon" :label "EveryAddon" :version "1.2.3" :url "https://group.id/never/fetched"
+                   :source "wowinterface" :source-id 1 :game-track-list [:retail]
+                   :download-url "https://path/to/remote/addon.zip" :game-track :retail
+                   :-testing-zipfile (fixture-path "everyaddon--1-2-3.zip")}
 
-        (helper/install-dir)
-        (let [addon {:name "everyaddon" :label "EveryAddon" :version "1.2.3" :url "https://group.id/never/fetched"
-                     :source "curseforge" :source-id 1
-                     :download-url "https://path/to/remote/addon.zip" :game-track :retail
-                     :-testing-zipfile (fixture-path "everyaddon--1-2-3.zip")}
+            expected {;;:ignore? false, ;; removed rather than set to false.
+                      :description "Does what no other addon does, slightly differently",
+                      :dirname "EveryAddon",
+                      :group-id "https://group.id/never/fetched",
+                      :installed-game-track :retail,
+                      :installed-version "1.2.3",
+                      :interface-version 70000,
+                      :supported-game-tracks [:retail]
+                      :label "EveryAddon 1.2.3",
+                      :name "everyaddon",
+                      :primary? true,
+                      :source "wowinterface",
+                      :source-id 1,
+                      :source-map-list [{:source "wowinterface" :source-id 1}]
+                      :update? false}]
+        (core/install-addon-guard addon)
+        (core/load-installed-addons)
 
-              expected {;;:ignore? false, ;; removed rather than set to false.
-                        :description "Does what no other addon does, slightly differently",
-                        :dirname "EveryAddon",
-                        :group-id "https://group.id/never/fetched",
-                        :installed-game-track :retail,
-                        :installed-version "1.2.3",
-                        :interface-version 70000,
-                        :supported-game-tracks [:retail]
-                        :label "EveryAddon 1.2.3",
-                        :name "everyaddon",
-                        :primary? true,
-                        :source "curseforge",
-                        :source-id 1,
-                        :source-map-list [{:source "curseforge" :source-id 1}]
-                        :update? false}]
-          (core/install-addon-guard addon)
-          (core/load-installed-addons)
+        ;; todo: the below makes this a UI test. move test to cli_test.clj
+        (cli/select-addons)
+        (cli/ignore-selected) ;; calls `core/refresh`
+        (is (:ignore? (first (core/get-state :installed-addon-list))))
 
-          ;; todo: the below makes this a UI test. move test to cli_test.clj
-          (cli/select-addons)
-          (cli/ignore-selected) ;; calls `core/refresh`
-          (is (:ignore? (first (core/get-state :installed-addon-list))))
-
-          ;; addon are deselected after having an action performed on them.
-          (cli/select-addons)
-          (cli/clear-ignore-selected)
-          (is (= expected (first (core/get-state :installed-addon-list)))))))))
+        ;; addon are deselected after having an action performed on them.
+        (cli/select-addons)
+        (cli/clear-ignore-selected)
+        (is (= expected (first (core/get-state :installed-addon-list))))))))
 
 (deftest clear-addon-ignore-flag--group-addons
   (testing "an addon with an ignored group member can be 'unignored'. see issue#193"
@@ -1272,8 +1142,8 @@
 
         (let [install-dir (helper/install-dir)
               addon {:name "everyotheraddon" :label "EveryOtherAddon" :version "5.6.7" :url "https://group.id/also/never/fetched"
-                     :source "curseforge" :source-id 2
-                     :download-url "https://path/to/remote/addon.zip" :game-track :retail
+                     :source "wowinterface" :source-id 2
+                     :download-url "https://path/to/remote/addon.zip" :game-track :retail :game-track-list [:retail]
                      :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}
 
               expected {:description "group record for the fetched addon",
@@ -1292,9 +1162,9 @@
                                         :label "BundledAddon a.b.c",
                                         :name "everyotheraddon",
                                         :primary? false,
-                                        :source "curseforge",
+                                        :source "wowinterface",
                                         :source-id 2
-                                        :source-map-list [{:source "curseforge" :source-id 2}]}
+                                        :source-map-list [{:source "wowinterface" :source-id 2}]}
 
                                        {:description "Does what every addon does, just better",
                                         :dirname "EveryOtherAddon",
@@ -1306,9 +1176,9 @@
                                         :label "EveryOtherAddon 5.6.7",
                                         :name "everyotheraddon",
                                         :primary? false,
-                                        :source "curseforge",
+                                        :source "wowinterface",
                                         :source-id 2
-                                        :source-map-list [{:source "curseforge" :source-id 2}]}],
+                                        :source-map-list [{:source "wowinterface" :source-id 2}]}],
                         :group-id "https://group.id/also/never/fetched",
                         :ignore? true,
                         :installed-game-track :retail,
@@ -1318,9 +1188,9 @@
                         :label "fetched (group)",
                         :name "everyotheraddon",
                         :primary? false,
-                        :source "curseforge",
+                        :source "wowinterface",
                         :source-id 2
-                        :source-map-list [{:source "curseforge" :source-id 2}]}
+                        :source-map-list [{:source "wowinterface" :source-id 2}]}
 
               target-idx 0
               expected-2 (-> expected
@@ -1350,8 +1220,8 @@
 
         (let [install-dir (helper/install-dir)
               addon {:name "everyaddon" :label "EveryAddon" :version "1.2.3" :url "https://group.id/never/fetched"
-                     :source "curseforge" :source-id 1
-                     :download-url "https://path/to/remote/addon.zip" :game-track :retail
+                     :source "wowinterface" :source-id 1
+                     :download-url "https://path/to/remote/addon.zip" :game-track :retail :game-track-list [:retail]
                      :-testing-zipfile (fixture-path "everyaddon--1-2-3.zip")}
 
               expected {:ignore? false, ;; explicit `false` rather than removed
@@ -1365,9 +1235,9 @@
                         :label "EveryAddon 1.2.3",
                         :name "everyaddon",
                         :primary? true,
-                        :source "curseforge",
+                        :source "wowinterface",
                         :source-id 1,
-                        :source-map-list [{:source "curseforge" :source-id 1}]
+                        :source-map-list [{:source "wowinterface" :source-id 1}]
                         :update? false}]
           (core/install-addon-guard addon)
           (fs/mkdir (utils/join install-dir "EveryAddon" ".git"))

@@ -73,6 +73,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* bug, test [:core :clear-addon-ignore-flag--implicit-ignore] is printing an error when game-track-list definitely exists
+    - what is removing it?
+
 * default to keeping last three zip files by default
     - stretch goal
         - probably not a good idea for this release where we might want to keep zips around

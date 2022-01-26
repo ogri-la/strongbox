@@ -1227,6 +1227,11 @@
                                                  :data-spec ::sp/export-record-list
                                                  :invalid-data? nil-me
                                                  :transform-map {:game-track keyword}})
+
+        curse? (fn [addon]
+                 (some-> addon :source (= "curseforge")))
+        addon-list (remove curse? addon-list)
+
         full-data? (fn [addon]
                      (utils/all (mapv #(contains? addon %) [:source :source-id :name])))
         [full-data, partial-data] (utils/split-filter full-data? addon-list)]

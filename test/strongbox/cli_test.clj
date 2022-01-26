@@ -420,7 +420,7 @@
                  (:addon-summary-list (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))))
 
 (deftest import-addon--curseforge
-  (testing "user addon is successfully added to the user catalogue from a curseforge url"
+  (testing "user curseforge addon is not added to the user catalogue if it's present in the catalogue"
     (let [install-dir (helper/install-dir)
 
           match {:created-date "2010-05-07T18:48:16Z",
@@ -434,23 +434,7 @@
                  :source-id 1,
                  :url "https://www.curseforge.com/wow/addons/everyaddon"}
 
-          ;; a mush of the above (.nfo written during install) and the EveryAddon .toc file
-          expected {:description "Does what no other addon does, slightly differently",
-                    :dirname "EveryAddon",
-                    :group-id "https://www.curseforge.com/wow/addons/everyaddon",
-                    :installed-game-track :retail,
-                    :installed-version "v8.2.0-v1.13.2-7135.139",
-                    :interface-version 70000,
-                    :supported-game-tracks [:retail]
-                    :label "EveryAddon 1.2.3",
-                    :name "everyaddon",
-                    :primary? true,
-                    :source "curseforge",
-                    :source-id 1
-                    :source-map-list [{:source "curseforge" :source-id 1}]}
-
           expected-addon-dir (utils/join install-dir "EveryAddon")
-          expected-user-catalogue [match]
 
           catalogue (utils/to-json (catalogue/new-catalogue [match]))
 
@@ -488,10 +472,7 @@
           (is (= [] (core/get-state :installed-addon-list)))
 
           ;; and that the addon was added to the user catalogue
-          ;;(is (= expected-user-catalogue
-          ;;       (:addon-summary-list (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))))
-
-          (is (empty? (:addon-summary-list (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))))
+          (is (nil? (catalogue/read-catalogue (core/paths :user-catalogue-file)))))))))
 
 (deftest import-addon--tukui
   (testing "user addon is successfully added to the user catalogue from a tukui url"
