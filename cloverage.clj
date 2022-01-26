@@ -21,7 +21,7 @@
                   main/spec? true
                   http/*default-pause* 1 ;; ms
                   http/*default-attempts* 1
-                  joblib/tick-delay joblib/tick
+                  joblib/tick-delay joblib/*tick*
                   catalogue/host-disabled? (constantly false)]
       (core/reset-logging!)
       (apply require (map symbol ns-list))

@@ -11,9 +11,9 @@
         stateful-thing (atom [])
 
         update-stateful-thing (fn []
-                                (joblib/tick 0.0)
+                                (joblib/*tick* 0.0)
                                 (swap! stateful-thing conj (.getId (Thread/currentThread)))
-                                (joblib/tick 1.0))
+                                (joblib/*tick* 1.0))
         num 5
         pool (lasync/pool {:threads num})
         _ (vec (take num (repeatedly #(joblib/create-job! queue-atm update-stateful-thing (joblib/unique-id)))))]

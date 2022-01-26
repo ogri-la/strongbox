@@ -11,7 +11,7 @@
     [github-api :as github-api]
     [tukui-api :as tukui-api]
     [gitlab-api :as gitlab-api]
-    [curseforge-api :as curseforge-api]
+    ;;[curseforge-api :as curseforge-api]
     [wowinterface :as wowinterface]
     [db :as db]
     [logging :as logging]
@@ -738,8 +738,8 @@
                 (let [total 2
                       pieces 100]
                   (doseq [pos (range 1 (* total pieces))]
-                    (joblib/tick (double (/ 1 (/ (* total pieces)
-                                                 pos))))
+                    (joblib/*tick* (double (/ 1 (/ (* total pieces)
+                                                   pos))))
                     (Thread/sleep 10)))
 
                 (core/stop-affecting-addon addon))

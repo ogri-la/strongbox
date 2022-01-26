@@ -729,17 +729,23 @@
 
 ;;
 
-(defn-spec get-create-user-catalogue :catalogue/catalogue
+(defn-spec get-create-user-catalogue (s/or :ok :catalogue/catalogue, :missing+no-create nil?)
   "returns the contents of the user catalogue, creating one if necessary"
-  []
-  (let [user-catalogue-path (paths :user-catalogue-file)
-        catalogue (catalogue/read-catalogue
-                   (if (fs/exists? user-catalogue-path)
-                     user-catalogue-path
-                     (catalogue/write-empty-catalogue! user-catalogue-path)))
-        cursed? (fn [addon]
-                  (-> addon :source (= :curseforge)))]
-    (update catalogue :addon-summary-list #(vec (remove cursed? %)))))
+  ([]
+   (get-create-user-catalogue (paths :user-catalogue-file) true))
+  ([user-catalogue-path string?, create? boolean?]
+
+   (when (and create?
+              (not (fs/exists? user-catalogue-path)))
+     (catalogue/write-empty-catalogue! user-catalogue-path))
+
+   (let [catalogue (catalogue/read-catalogue user-catalogue-path {:bad-data? nil})
+         cursed? (fn [addon]
+                   (-> addon :source (= "curseforge")))
+         new-summary-list (->> catalogue :addon-summary-list (remove cursed?) vec)]
+     (when catalogue
+       (merge catalogue {:addon-summary-list new-summary-list
+                         :total (count new-summary-list)})))))
 
 (defn-spec add-user-addon-list! nil?
   "adds a list of addons to the user catalogue"
@@ -812,7 +818,7 @@
                                (emergency-catalogue catalogue-location)))
 
           user-catalogue-data (p :p2/db:catalogue:read-user-catalogue
-                                 (catalogue/read-catalogue (paths :user-catalogue-file) {:bad-data? nil}))
+                                 (get-create-user-catalogue (paths :user-catalogue-file) false))
           ;; 2021-06-30: merge order changed. catalogue data is now merged over the top of the user-catalogue.
           ;; this is because the user-catalogue may now contain addons from all hosts and is likely to be out of date.
           final-catalogue (p :p2/db:catalogue:merge-catalogues
