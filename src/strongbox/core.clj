@@ -143,7 +143,7 @@
    ;; subset of possible data about all INSTALLED addons
    ;; starts as parsed .toc file data
    ;; ... then updated with data from catalogue
-   ;; ... then updated again with live data from curseforge
+   ;; ... then updated again with live data from addon hosts
    ;; see specs/toc-addon
    :installed-addon-list nil
 
@@ -740,9 +740,9 @@
      (catalogue/write-empty-catalogue! user-catalogue-path))
 
    (let [catalogue (catalogue/read-catalogue user-catalogue-path {:bad-data? nil})
-         cursed? (fn [addon]
-                   (-> addon :source (= "curseforge")))
-         new-summary-list (->> catalogue :addon-summary-list (remove cursed?) vec)]
+         curse? (fn [addon]
+                  (-> addon :source (= "curseforge")))
+         new-summary-list (->> catalogue :addon-summary-list (remove curse?) vec)]
      (when catalogue
        (merge catalogue {:addon-summary-list new-summary-list
                          :total (count new-summary-list)})))))

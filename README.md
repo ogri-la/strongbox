@@ -4,11 +4,11 @@
 
 It runs on Linux and macOS.
 
-It supports addons hosted by Curseforge, wowinterface, Tukui, Github and Gitlab.
+It supports addons hosted by ~Curseforge,~ wowinterface, Tukui, Github and Gitlab.
 
 ---
 
-***Notice***: Curseforge addons will no longer receive updates from version **5.0.0**, to be released Feb 1st, 2022.
+***Notice***: Curseforge addons no longer receive updates as of version **5.0.0**, released Feb 1st, 2022.
 
 The **4.x** releases may or may not continue to work for a time [depending on Overwolf's deprecation schedule](https://mailchi.mp/overwolf/whats-new-with-overwolf-curseforge-november3).
 
@@ -67,7 +67,7 @@ Afterwards, use the `Update all` button to update all addons with new versions a
 * [catalogue search](#catalogue-search)
 * [bulk update](#bulk-update)
 * [install addons from multiple sources](#install-addons-from-multiple-sources):
-    - curseforge
+    - ~curseforge~
     - wowinterface
     - tukui
     - github (using *releases*)
@@ -108,7 +108,7 @@ that it's my privilege to offer this small piece back.
 
 This software interacts with the following remote hosts:
 
-* Overwolf/Twitch/Curseforge [Addons API](https://addons-ecs.forgesvc.net/) and its [CDN](https://edge.forgecdn.net/)
+* ~Overwolf/Twitch/Curseforge [Addons API](https://addons-ecs.forgesvc.net/) and its [CDN](https://edge.forgecdn.net/)~
 * [wowinterface.com](https://wowinterface.com)
 * [www.tukui.org](https://www.tukui.org/api.php)
 * [api.github.com](https://developer.github.com/v3/repos/releases)
@@ -172,9 +172,9 @@ compare it to the `Version` value in the list of WoW [public client builds](http
 
 Strongbox supports installing addons using URLs from addon hosts.
 
-Addons installed this way are always available regardless of the catalogue you've selected. 
+Addons installed this way are always available regardless of the catalogue you've selected.
 
-For example, an addon imported from Github will be available even if you otherwise use Curseforge addons exclusively.
+For example, an addon imported from Github will be available even if you otherwise use Wowinterface addons exclusively.
 
 Click `File` from the top menu and select `Import addon` and paste the URL of the addon you want to install.
 
@@ -182,9 +182,10 @@ Click `File` from the top menu and select `Import addon` and paste the URL of th
 
 Strongbox supports searching for addons from the following addon hosts:
 
-* [curseforge](https://www.curseforge.com/wow/addons)
+* ~[curseforge](https://www.curseforge.com/wow/addons)~
 * [wowinterface](https://wowinterface.com/addons.php)
 * [tukui](https://www.tukui.org)
+* [Github](https://github.com)
 
 Click the `search` tab and start typing.
 
@@ -199,7 +200,7 @@ catalogue has approximately 7.5k addons.
 The 'full' catalogue contains all addons from all supported hosts, ever, and is approximately 15.3k addons large. It 
 contains many addons that haven't been updated in years.
 
-There are also per-host catalogues, like a 'curseforge' catalogue, and strongbox supports selecting between all of them.
+There are also per-host catalogues, like a 'wowinterface' catalogue, and strongbox supports selecting between all of them.
 
 Catalogues are updated weekly. New addons released during the week will not be present until the next week. Addons can 
 be installed using its URL in these cases.
@@ -222,7 +223,7 @@ Click the `Update all` button next to your addon directory.
 
 Strongbox supports installing addons from the following addon hosts:
 
-* [curseforge](https://www.curseforge.com/wow/addons)
+* ~[curseforge](https://www.curseforge.com/wow/addons)~
 * [wowinterface](https://wowinterface.com/addons.php)
 * [tukui](https://www.tukui.org)
 * [github](https://www.github.com)
@@ -311,7 +312,7 @@ Right-click an addon and select `Release`.
 
 Strongbox currently supports installing previous releases for:
 
-* Curseforge
+* ~Curseforge~
 * Github
 * Gitlab
 
@@ -350,7 +351,7 @@ the game tracks for a release can't be otherwise guessed.
 An installed addon comes from a specific addon host or *source*. An addon in it's `.toc` file may include the details of
 other sources where it can be found.
 
-For example, WeakAuras can be found on Github, wowinterface and Curseforge.
+For example, WeakAuras can be found on Github and wowinterface.
 
 To see addons with other sources, go to `View -> Columns` and click `other sources`.
 

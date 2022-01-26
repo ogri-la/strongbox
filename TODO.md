@@ -203,6 +203,10 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * wowinterface, revisit the pages that are being scraped, make sure we're not missing any
 
+* import/export, bring up the split logging pane during operation so any problems can be seen
+    - or update the tab title to reflect the number of warnings/errors
+        - otherwise there is zero feedback
+
 * export/import addons to/from github
     - I have a github account, I'd like to push/pull addons to it
         - use a gist?
