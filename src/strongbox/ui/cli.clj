@@ -533,6 +533,9 @@
                                            "latest release has a custom asset with a 'link'"
                                            "link type must be either a 'package' or 'other'"])))
 
+                              (= source "curseforge")
+                              (error (str "addon host 'curseforge' was disabled " constants/curseforge-cutoff-label "."))
+
                               :else
                               ;; look in the current catalogue. emit an error if we fail
                               (or (:catalogue-match (db/-find-first-in-db (or (core/get-state :db) []) addon-summary-stub match-on-list))

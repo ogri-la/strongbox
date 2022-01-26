@@ -201,9 +201,9 @@
           _ (spit some-addon-toc "## Title: SomeAddon\n## Description: asdf\n## Interface: 80300\n## Version: 1.2.3")
 
           some-addon-nfo (utils/join some-addon-path nfo/nfo-filename)
-          nfo-data {:source "curseforge"
+          nfo-data {:source "wowinterface"
                     :source-id 123
-                    :source-map-list [{:source "curseforge" :source-id 123}]
+                    :source-map-list [{:source "wowinterface" :source-id 123}]
                     :installed-version "1.2.3"
                     :name "someaddon"
                     :group-id "fdsa"
@@ -222,9 +222,9 @@
                      :installed-version "1.2.3"
 
                      ;; unique items from nfo data
-                     :source "curseforge"
+                     :source "wowinterface"
                      :source-id 123
-                     :source-map-list [{:source "curseforge" :source-id 123}]
+                     :source-map-list [{:source "wowinterface" :source-id 123}]
                      :group-id "fdsa"
                      :installed-game-track :retail
                      :supported-game-tracks [:retail]
@@ -272,7 +272,7 @@
           _ (spit some-addon-toc "## Title: SomeAddon\n## Description: asdf\n## Interface: 80300\n## Version: @project-version@")
 
           some-addon-nfo (utils/join some-addon-path nfo/nfo-filename)
-          _ (spit some-addon-nfo (utils/to-json {:source "curseforge" :source-id 123
+          _ (spit some-addon-nfo (utils/to-json {:source "wowinterface" :source-id 123
                                                  :ignore? false})) ;; expressly un-ignoring this otherwise-ignored addon
 
           expected [{:name "someaddon",
@@ -282,9 +282,9 @@
                      :interface-version 80300
                      :supported-game-tracks [:retail]
                      :installed-version "@project-version@"
-                     :source "curseforge"
+                     :source "wowinterface"
                      :source-id 123
-                     :source-map-list [{:source "curseforge" :source-id 123}]
+                     :source-map-list [{:source "wowinterface" :source-id 123}]
 
                      :ignore? false}]]
       (is (= expected (addon/load-installed-addons addon-dir :retail))))))

@@ -153,9 +153,9 @@
                        {:source "wowinterface"
                         :source-id x-wowi-id})
 
-         curse-source (when-let [x-curse-id (-> keyvals :x-curse-project-id utils/to-int)]
-                        {:source "curseforge"
-                         :source-id x-curse-id})
+         ;;curse-source (when-let [x-curse-id (-> keyvals :x-curse-project-id utils/to-int)]
+         ;;               {:source "curseforge"
+         ;;                :source-id x-curse-id})
 
          tukui-source (when-let [x-tukui-id (-> keyvals :x-tukui-projectid utils/to-int)]
                         {:source "tukui"
@@ -165,7 +165,9 @@
                          {:source "github"
                           :source-id (utils/github-url-to-source-id x-github)})
 
-         source-map-list (when-let [items (->> [wowi-source curse-source tukui-source github-source]
+         source-map-list (when-let [items (->> [wowi-source tukui-source github-source
+                                                ;;curse-source
+                                                ]
                                                utils/items
                                                utils/nilable)]
                            {:source-map-list items})
@@ -206,9 +208,10 @@
                 ;;:required-dependencies (:requireddeps keyvals)
                 }
 
-         ;; yes, this prefers curseforge over wowinterface. and tukui over all others.
-         ;; I need to figure out some way of supporting multiple hosts per-addon
-         addon (merge addon alias wowi-source curse-source tukui-source ignore-flag source-map-list)]
+         ;; prefer github over all others.
+         addon (merge addon alias
+                      wowi-source tukui-source github-source
+                      ignore-flag source-map-list)]
 
      addon)))
 

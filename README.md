@@ -366,7 +366,7 @@ Temporary data is stored in `~/.local/share/strongbox` unless run with the envva
 Addon zip files are downloaded to your WoW `Addons` directory. See `Preferences -> Remove addon zip after installation`.
 
 A file called `.strongbox.json` is created within newly installed or re-installed addons. This file maps specific 
-attributes between the addon host (like curseforge.com) and the addon as well as *across* addons, as some addons unzip 
+attributes between the addon host (like wowinterface.com) and the addon as well as *across* addons, as some addons unzip 
 to multiple directories. It's a simple `txt` file in a structured format called `json`.
 
 Addon zip files, `.strongbox.json` files, old `.wowman.json` files, cached data and `WowMatrix.dat` files can all be 
