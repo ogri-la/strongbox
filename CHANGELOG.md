@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+* minor, clicking an already selected source in an addon's 'Source' context menu no longer triggers an update.
+
 ### Removed
 
 ## 4.9.1 - 2022-01-20

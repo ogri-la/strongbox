@@ -712,8 +712,9 @@
   "switches addon from one source (like curseforge) to another (like wowinterface), rewriting nfo data.
   `new-source` must appear in the addon's `source-map-list`."
   [addon :addon/toc+nfo, new-source-map :addon/source-map]
-  (addon/switch-source! (core/selected-addon-dir) addon new-source-map)
-  (half-refresh))
+  (when-not (= (:source addon) (:source new-source-map))
+    (addon/switch-source! (core/selected-addon-dir) addon new-source-map)
+    (half-refresh)))
 
 
 ;; debug
