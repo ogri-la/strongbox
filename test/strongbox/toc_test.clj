@@ -127,25 +127,6 @@ SomeAddon.lua")
       (doseq [[toc-data expected] cases]
         (is (= expected (toc/parse-addon-toc toc-data addon-dir)))))))
 
-(deftest parse-addon-toc--aliased
-  (testing "addons whose toc files have a `:title` value that matches an alias get a hardcoded source and source-id value"
-    (let [addon-dir (utils/join (helper/install-dir) "dirname")
-          defaults {:dirname "dirname"
-                    :description nil
-                    :installed-version nil
-                    :interface-version constants/default-interface-version
-                    :-toc/game-track :retail
-                    :supported-game-tracks [:retail]}
-          cases [[{:title "Plater"} {:label "Plater" :name "plater" :source "curseforge" :source-id 100547}]
-                 [{:title "|cffffd200Deadly Boss Mods|r |cff69ccf0Core|r"}
-                  {:label "|cffffd200Deadly Boss Mods|r |cff69ccf0Core|r"
-                   :name "|cffffd200deadly-boss-mods|r-|cff69ccf0core|r" ;; gibberish :(
-                   :source "curseforge" :source-id 8814}]]]
-      (fs/mkdir addon-dir)
-      (doseq [[given expected] cases
-              :let [expected (merge expected defaults)]]
-        (is (= expected (toc/parse-addon-toc given addon-dir)))))))
-
 (deftest parse-addon-toc--x-source
   (testing "addons whose toc files have a 'x-<host>-id' value will use those as `:source` and `:source-id`"
     (let [addon-dir (utils/join (helper/install-dir) "dirname")

@@ -16,39 +16,6 @@
   (:import
    [java.util.regex Pattern]))
 
-;; matches a tocfile's 'Title' (label) to a catalogue's name
-;; aliases are maintained for the top-50 downloaded addons (ever) only, and only for those that need it
-;; best and nicest way to avoid needing an alias is to have your .toc 'Title' attribute match your curseforge addon name
-(def aliases1
-  {"AtlasLoot |cFF22B14C[Core]|r" {:source "curseforge" :source-id 2134}
-   "BigWigs [|cffeda55fCore|r]" {:source "curseforge" :source-id 2382}
-   "|cffffd200Deadly Boss Mods|r |cff69ccf0Core|r" {:source "curseforge" :source-id 8814}
-   "|cffffe00a<|r|cffff7d0aDBM|r|cffffe00a>|r |cff69ccf0Azeroth (Classic)|r" {:source "curseforge" :source-id 16442}
-   "Raider.IO Mythic Plus and Raiding" {:source "curseforge" :source-id 279257}
-   "HealBot" {:source "curseforge" :source-id 2743}
-   "Auc-Auctioneer |cff774422(core)" {:source "curseforge" :source-id 7879}
-   "Titan Panel |cff00aa005.17.1.80100|r" {:source "curseforge" :source-id 489}
-   "BadBoy" {:source "curseforge" :source-id 5547}
-   "Mik's Scrolling Battle Text" {:source "curseforge" :source-id 2450}
-   "|cffffe00a<|r|cffff7d0aDBM|r|cffffe00a>|r |cff69ccf0Icecrown Citadel|r" {:source "curseforge" :source-id 43970}
-   "Prat |cff8080ff3.0|r" {:source "curseforge" :source-id 10783}
-   "Omen3" {:source "curseforge" :source-id 4963}
-   "|cffffe00a<|r|cffff7d0aDBM|r|cffffe00a>|r |cff69ccf0Firelands|r" {:source "curseforge" :source-id 43971}
-   "X-Perl UnitFrames by |cFFFF8080Zek|r" {:source "curseforge" :source-id 14911}})
-
-;; 2020-12-13
-;; took the top 50 downloaded addons from curseforge and the top 50 from wowinterface,
-;; installed them, removed the nfo files, reconciled them and below are the ones that were not found.
-;; when multiple sources available, the most recently updated one was picked.
-(def aliases2
-  {"Plater" {:source "curseforge" :source-id 100547}
-   "|cff1784d1ElvUI|r |cff9482c9Shadow & Light|r" {:source "tukui" :source-id 38}
-   "|cff00aeffCharacterStatsClassic|r" {:source "curseforge" :source-id 338856}
-   "Adapt" {:source "wowinterface" :source-id 4729}
-   "Dugi Questing Essential |cffffffff5.504|r" {:source "wowinterface" :source-id 20540}})
-
-(def aliases (merge aliases1 aliases2))
-
 (defn-spec parse-toc-file map?
   [toc-contents string?]
   (let [comment? #(= (utils/safe-subs % 2) "##")
@@ -145,10 +112,6 @@
          _ (when (= label no-label-label)
              (warn "addon with no \"Title\" value found:" dirname))
 
-         ;; if :title is present in list of aliases, add that alias to what we return
-         alias (when (contains? aliases label)
-                 (get aliases label)) ;; `{:source "curseforge" :source-id 12345}`
-
          wowi-source (when-let [x-wowi-id (-> keyvals :x-wowi-id utils/to-int)]
                        {:source "wowinterface"
                         :source-id x-wowi-id})
@@ -209,7 +172,7 @@
                 }
 
          ;; prefer github over all others.
-         addon (merge addon alias
+         addon (merge addon
                       wowi-source tukui-source github-source
                       ignore-flag source-map-list)]
 
