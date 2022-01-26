@@ -95,7 +95,7 @@
             (when (fs/exists? path)
               path)
             (catch Exception uncaught-exception
-              (error uncaught-exception (str "unhandled exception attempting to delete file: " path))
+              (error uncaught-exception (str "unexpected error attempting to delete file: " path))
               path))))
 
 (defn-spec delete-many-files! nil?
@@ -689,6 +689,10 @@
   "returns a multi-line string with the given `msg` on top and each message in `msg-list` bulleted beneath it"
   [msg string?, msg-list ::sp/list-of-strings]
   (clojure.string/join (format "\n %s " constants/bullet) (into [msg] msg-list)))
+
+(defn-spec reportable-error string?
+  [msg string?]
+  (message-list msg ["please report this! https://github.com/ogri-la/strongbox/issues"]))
 
 (defn-spec select-vals coll?
   "like `get` on `m` but for each key in `ks`. removes nils."

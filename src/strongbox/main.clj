@@ -25,7 +25,7 @@
 (Thread/setDefaultUncaughtExceptionHandler
  (reify Thread$UncaughtExceptionHandler
    (uncaughtException [_ thread ex]
-     (error ex "Uncaught exception on" (.getName thread)))))
+     (error ex (format "unexpected error on thread %s: %s" (.getName thread) (.getMessage ex))))))
 
 ;; spec checking is enabled during repl development and *any* testing unless explicitly turned off.
 ;; spec checking is disabled upon release
