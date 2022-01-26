@@ -227,4 +227,4 @@
         (mapv #(assoc % :supported-game-tracks supported-game-tracks) result))
       (catch Exception e
         ;; this addon failed to parse somehow. don't propagate the exception, just report it and return `nil`.
-        (error e (utils/reportable-error (format "unhandled error parsing addon in directory '%s': %s" addon-dir (.getMessage e))))))))
+        (error e (utils/reportable-error (format "unexpected error parsing addon in directory '%s': %s" addon-dir (.getMessage e))))))))

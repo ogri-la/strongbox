@@ -521,7 +521,7 @@
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (catalogue/expand-summary addon game-track strict?)))))))
 
-(deftest expand-summary--pinned--1
+(deftest expand-summary--pinned--use-pinned
   (testing "when an addon is pinned, look for it's release in the list of releases returned from the host"
     (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"
                  :installed-version "1.2.3" :pinned-version "1.2.0"}
@@ -547,7 +547,7 @@
         (with-redefs [strongbox.curseforge-api/expand-summary (constantly fixture)]
           (is (= expected (catalogue/expand-summary addon game-track strict?))))))))
 
-(deftest expand-summary--pinned--2
+(deftest expand-summary--pinned--use-latest
   (testing "when a pinned addon cannot find it's pinned release, use the latest release available"
     (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"
                  :installed-version "0.9.9" :pinned-version "0.9.9"}

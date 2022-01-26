@@ -691,8 +691,8 @@
         catalogue (catalogue/read-catalogue (.getBytes (decompress-bytes static-catalogue)) opts)
         catalogue (assoc catalogue :emergency? true)]
 
-    (info (str "backup catalogue generated: " (:datestamp catalogue)))
-    (warn (format "remote catalogue unreachable or corrupt: %s" (:source catalogue-location)))
+    (warn (utils/message-list (format "the remote catalogue is unreachable or corrupt: %s" (:source catalogue-location))
+                              [(str "backup catalogue generated: " (:datestamp catalogue))]))
 
     (case (:name catalogue-location)
       :full catalogue

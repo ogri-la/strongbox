@@ -55,7 +55,7 @@
                 (merge source-updates {:release-list release-list})
                 (dissoc :release-label)))))
       (catch Exception e
-        (error e (utils/reportable-error "unhandled exception attempting to expand addon summary"))))))
+        (error e (utils/reportable-error "unexpected error attempting to expand addon summary"))))))
 
 (defn-spec expand-summary (s/or :ok :addon/expanded, :error nil?)
   "fetches updates from the addon host for the given `addon` and `game-track`.

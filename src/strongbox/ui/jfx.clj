@@ -853,7 +853,7 @@
        (apply f arg-list)
        (catch RuntimeException re
          ;;(error re "unhandled exception in thread"))))))
-         (println "unhandled exception in thread" re))))))
+         (println "unexpected error in thread" re))))))
 
 ;; handlers
 

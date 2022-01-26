@@ -95,7 +95,7 @@
             (when (fs/exists? path)
               path)
             (catch Exception uncaught-exception
-              (error uncaught-exception (str "unhandled exception attempting to delete file: " path))
+              (error uncaught-exception (str "unexpected error attempting to delete file: " path))
               path))))
 
 (defn-spec delete-many-files! nil?
