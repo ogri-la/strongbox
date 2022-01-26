@@ -4,7 +4,7 @@
 
 It runs on Linux and macOS.
 
-It supports addons hosted by ~Curseforge,~ wowinterface, Tukui, Github and Gitlab.
+It supports addons hosted by ~Curseforge,~ wowinterface.com, Tukui, Github and Gitlab.
 
 ---
 
@@ -67,11 +67,11 @@ Afterwards, use the `Update all` button to update all addons with new versions a
 * [catalogue search](#catalogue-search)
 * [bulk update](#bulk-update)
 * [install addons from multiple sources](#install-addons-from-multiple-sources):
-    - ~curseforge~
-    - wowinterface
-    - tukui
-    - github (using *releases*)
-    - gitlab (using *releases*)
+    - ~Curseforge~
+    - wowinterface.com
+    - Tukui
+    - Github (using *releases*)
+    - Gitlab (using *releases*)
 * [import and export lists of addons](#import-and-export-lists-of-addons)
 * [safeguards against bad addons](#safeguards-against-bad-addons)
 * [warnings when addons install other bundled addons](#warnings-when-addons-install-other-bundled-addons)
@@ -182,9 +182,9 @@ Click `File` from the top menu and select `Import addon` and paste the URL of th
 
 Strongbox supports searching for addons from the following addon hosts:
 
-* ~[curseforge](https://www.curseforge.com/wow/addons)~
-* [wowinterface](https://wowinterface.com/addons.php)
-* [tukui](https://www.tukui.org)
+* ~[Curseforge](https://www.curseforge.com/wow/addons)~
+* [wowinterface.com](https://wowinterface.com/addons.php)
+* [Tukui](https://www.tukui.org)
 * [Github](https://github.com)
 
 Click the `search` tab and start typing.
@@ -223,11 +223,11 @@ Click the `Update all` button next to your addon directory.
 
 Strongbox supports installing addons from the following addon hosts:
 
-* ~[curseforge](https://www.curseforge.com/wow/addons)~
-* [wowinterface](https://wowinterface.com/addons.php)
-* [tukui](https://www.tukui.org)
-* [github](https://www.github.com)
-* [gitlab](https://gitlab.com)
+* ~[Curseforge](https://www.curseforge.com/wow/addons)~
+* [wowinterface.com](https://wowinterface.com/addons.php)
+* [Tukui](https://www.tukui.org)
+* [Github](https://www.github.com)
+* [Gitlab](https://gitlab.com)
 
 Click the `search` tab and begin typing. Select the addon you wish to install and click the `install selected` button.
 
@@ -351,7 +351,7 @@ the game tracks for a release can't be otherwise guessed.
 An installed addon comes from a specific addon host or *source*. An addon in it's `.toc` file may include the details of
 other sources where it can be found.
 
-For example, WeakAuras can be found on Github and wowinterface.
+For example, WeakAuras can be found on Github and wowinterface.com.
 
 To see addons with other sources, go to `View -> Columns` and click `other sources`.
 

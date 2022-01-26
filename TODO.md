@@ -50,9 +50,6 @@ see CHANGELOG.md for a more formal list of changes by release
             - it shouldn't do anything
     BloodShieldTracker isn't switching to wowinterface from curseforge
 
-* github, bug, multi-toc addons are getting a warning when `strict?` is true and the game track is changed
-    - https://github.com/LenweSaralonde/MusicianList/releases
-
 * disable support for curseforge
     - https://mailchi.mp/overwolf/whats-new-with-overwolf-curseforge-november3
     - addons from curseforge can not be updatedreplace multi-error messages with a single multi-line error message
@@ -69,9 +66,14 @@ see CHANGELOG.md for a more formal list of changes by release
         - this will occur naturally when curseforge addons are not present in any catalogue
         - disabled anyway
 
+* update comrades, remove curse support from strongbox
+
 * replace multi-error messages with a single multi-line error message
 
 ## todo bucket (no particular order)
+
+* github, bug, multi-toc addons are getting a warning when `strict?` is true and the game track is changed
+    - https://github.com/LenweSaralonde/MusicianList/releases
 
 * bug, test [:core :clear-addon-ignore-flag--implicit-ignore] is printing an error when game-track-list definitely exists
     - what is removing it?
