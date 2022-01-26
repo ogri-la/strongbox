@@ -691,8 +691,8 @@
         catalogue (catalogue/read-catalogue (.getBytes (decompress-bytes static-catalogue)) opts)
         catalogue (assoc catalogue :emergency? true)]
 
-    (warn (str "backup catalogue generated: " (:datestamp catalogue)))
-    (warn (format "remote catalogue unreachable or corrupt: %s" (:source catalogue-location)))
+    (warn (utils/message-list (format "the remote catalogue is unreachable or corrupt: %s" (:source catalogue-location))
+                              [(str "backup catalogue generated: " (:datestamp catalogue))]))
 
     (case (:name catalogue-location)
       :full catalogue
@@ -801,8 +801,7 @@
             (catalogue/read-catalogue
              catalogue-path
              {:bad-data? (fn []
-                           (error "please report this! https://github.com/ogri-la/strongbox/issues")
-                           (error "remote catalogue failed to load and might be corrupt."))}))
+                           (error (utils/reportable-error "remote catalogue failed to load and might be corrupt.")))}))
 
           catalogue-data (or (catalogue/read-catalogue catalogue-path {:bad-data? bad-json-file-handler})
                              (when-not testing?
@@ -876,12 +875,10 @@
               (logging/with-addon addon
                 (if (:ignore? addon)
                   (info "not matched to catalogue, addon is being ignored")
-                  (do ;; todo: replace these with a :help level and a less scary colour
-                    (info "if this is part of a bundle, try \"File -> Re-install all\"")
-                    (info "try searching for this addon by name or description")
-                    (warn (format "failed to find %s in the '%s' catalogue"
-                                  (:dirname addon)
-                                  (name (get-state :cfg :selected-catalogue))))))))
+                  (warn (utils/message-list
+                         (format "failed to find %s in the '%s' catalogue" (:dirname addon) (name (get-state :cfg :selected-catalogue)))
+                         ["try searching for this addon by name or description"
+                          "if this addon is part of a bundle, try \"File -> Re-install all\""])))))
 
             unmatched))
 
@@ -935,8 +932,9 @@
                         (-> addon :game-track sp/game-track-labels-map)
                         (-> (get-game-track) sp/game-track-labels-map))))
         (when (:nfo/source addon)
-          (warn "this happens when an exact match is not found in the selected catalogue.")
-          (warn (format "update is from a different host (%s) to the one it was installed from (%s)." (:source addon) (:nfo/source addon)))))
+          (warn (utils/message-list
+                 (format "update is from a different host (%s) to the one it was installed from (%s)." (:source addon) (:nfo/source addon))
+                 ["this happens when an exact match is not found in the selected catalogue."]))))
 
       (joblib/tick-delay 0.75)
       (assoc addon :update? has-update?))))

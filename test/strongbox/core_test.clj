@@ -1597,13 +1597,11 @@
       (is (= expected (core/default-catalogue))))))
 
 (deftest emergency-catalogue
-  (let [expected-warnings ["backup catalogue generated: 2021-09-25"
-                           "remote catalogue unreachable or corrupt: https://example.org"]
+  (let [expected-messages ["the remote catalogue is unreachable or corrupt: https://example.org\n • backup catalogue generated: 2021-09-25"]
         expected-total 3
-
         catalogue-location {:name :full :label "Full" :source "https://example.org"}
-        warnings (logging/buffered-log
+        messages (logging/buffered-log
                   :warn
                   (is (= expected-total (:total (core/emergency-catalogue catalogue-location)))))]
-    (is (= expected-warnings warnings))))
+    (is (= expected-messages messages))))
 

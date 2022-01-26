@@ -60,7 +60,7 @@
     "wow_burning_crusade" :classic-tbc
 
     ;; else
-    (do (warn (format "unhandled game track '%s', falling back to 'retail'" game-version-flavor))
+    (do (warn (format "unexpected game track '%s', falling back to 'retail'" game-version-flavor))
         :retail)))
 
 (defn-spec older-releases :addon/release-list

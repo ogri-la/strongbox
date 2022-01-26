@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * github catalogue tweaks to support latest version of https://github.com/layday/github-wow-addon-catalogue
 * column preferences in the config file are now upgraded to the new default column set.
     - any customised column preferences are preserved.
+* minor, errors/warning/info messages that appeared across multiple messages are now just one message.
+    - I also replaced some developer-isms like 'unhandled exception' with 'unexpected error'.
+        - please let me know if you ever find messages in the log obscure.
 
 ### Fixed
 

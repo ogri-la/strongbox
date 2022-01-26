@@ -42,6 +42,9 @@ see CHANGELOG.md for a more formal list of changes by release
     - remove curseforge as a requirement for any category.
     - done
 
+* replace multi-error messages with a single multi-line error message
+    - done
+
 ## todo (4.9.0 -> 5.0.0)
 
 * bugs: 
@@ -63,7 +66,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - curseforge addons should be present in full and short catalogues
     - curseforge results should not be in search results
 
-* replace multi-error messages with a single multi-line error message
 
 * default to keeping last three zip files by default
     - stretch goal
