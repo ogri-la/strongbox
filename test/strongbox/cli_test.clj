@@ -460,18 +460,18 @@
           ;; user gives us this url, we find it and install it
           (cli/import-addon user-url)
 
-          ;; addon was successfully download and installed
+          ;; addon was *not* download and installed
           ;;(is (fs/exists? expected-addon-dir))
           (is (not (fs/exists? expected-addon-dir)))
 
           ;; re-read install dir
           (core/load-installed-addons)
 
-          ;; we expect our mushy set of .nfo and .toc data
+          ;; we expect nothing to have been installed
           ;;(is (= [expected] (core/get-state :installed-addon-list)))
           (is (= [] (core/get-state :installed-addon-list)))
 
-          ;; and that the addon was added to the user catalogue
+          ;; and that nothing was added to the user catalogue
           (is (nil? (catalogue/read-catalogue (core/paths :user-catalogue-file)))))))))
 
 (deftest import-addon--tukui

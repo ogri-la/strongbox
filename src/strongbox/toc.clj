@@ -171,9 +171,10 @@
                 ;;:required-dependencies (:requireddeps keyvals)
                 }
 
-         ;; prefer github over all others.
+         ;; prefers tukui over wowi, wowi over github.
+         ;; github requires API calls to interact with and these are limited unless authenticated.
          addon (merge addon
-                      wowi-source tukui-source github-source
+                      github-source wowi-source tukui-source
                       ignore-flag source-map-list)]
 
      addon)))

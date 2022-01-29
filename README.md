@@ -174,7 +174,7 @@ Strongbox supports installing addons using URLs from addon hosts.
 
 Addons installed this way are always available regardless of the catalogue you've selected.
 
-For example, an addon imported from Github will be available even if you otherwise use Wowinterface addons exclusively.
+For example, addons imported from Github will be available even if you otherwise use wowinterface.com addons exclusively.
 
 Click `File` from the top menu and select `Import addon` and paste the URL of the addon you want to install.
 

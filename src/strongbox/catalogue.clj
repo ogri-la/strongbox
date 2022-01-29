@@ -28,7 +28,7 @@
   "fetches updates from the addon host for the given `addon` and `game-track`.
   does *not* support multiple game tracks or warning the user, see `expand-summary`.
   does *not* support ignoring disabled hosts, see `expand-summary`.
-  returns `nil` when release not found."
+  returns `nil` when no release found."
   [addon :addon/expandable, game-track ::sp/game-track]
   (let [dispatch-map {"curseforge" curseforge-api/expand-summary
                       "wowinterface" wowinterface-api/expand-summary

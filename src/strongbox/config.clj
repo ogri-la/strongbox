@@ -25,8 +25,8 @@
   (conj -default-catalogue-list--v1 -github-catalogue))
 
 (def -default-catalogue-list--v3
-  (let [cursed-idx 3]
-    (utils/drop-idx -default-catalogue-list--v2 cursed-idx)))
+  (let [curse-idx 3]
+    (utils/drop-idx -default-catalogue-list--v2 curse-idx)))
 
 (def -default-catalogue-list -default-catalogue-list--v3)
 
@@ -115,7 +115,7 @@
     cfg))
 
 (defn-spec remove-curseforge-catalogue map?
-  "removes any mention of the curseforge catalogue from the user config."
+  "removes the curseforge catalogue from the user config."
   [cfg map?]
   (let [new-catalogue-list (vec (remove #(= :curseforge (:name %)) (:catalogue-location-list cfg)))]
     (assoc cfg :catalogue-location-list new-catalogue-list)))

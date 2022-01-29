@@ -730,15 +730,13 @@
 ;;
 
 (defn-spec get-create-user-catalogue (s/or :ok :catalogue/catalogue, :missing+no-create nil?)
-  "returns the contents of the user catalogue, creating one if necessary"
+  "returns the contents of the user catalogue at `user-catalogue-path`, creating one if `create?` is true (default)."
   ([]
    (get-create-user-catalogue (paths :user-catalogue-file) true))
   ([user-catalogue-path string?, create? boolean?]
-
    (when (and create?
               (not (fs/exists? user-catalogue-path)))
      (catalogue/write-empty-catalogue! user-catalogue-path))
-
    (let [catalogue (catalogue/read-catalogue user-catalogue-path {:bad-data? nil})
          curse? (fn [addon]
                   (-> addon :source (= "curseforge")))
@@ -816,8 +814,9 @@
                              (when-not testing?
                                (emergency-catalogue catalogue-location)))
 
+          create-user-catalogue? false
           user-catalogue-data (p :p2/db:catalogue:read-user-catalogue
-                                 (get-create-user-catalogue (paths :user-catalogue-file) false))
+                                 (get-create-user-catalogue (paths :user-catalogue-file) create-user-catalogue?))
           ;; 2021-06-30: merge order changed. catalogue data is now merged over the top of the user-catalogue.
           ;; this is because the user-catalogue may now contain addons from all hosts and is likely to be out of date.
           final-catalogue (p :p2/db:catalogue:merge-catalogues
