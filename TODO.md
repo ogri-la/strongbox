@@ -54,8 +54,6 @@ see CHANGELOG.md for a more formal list of changes by release
         - it shouldn't do anything
     - done
 
-## todo (4.9.0 -> 5.0.0)
-
 * disable support for curseforge
     - https://mailchi.mp/overwolf/whats-new-with-overwolf-curseforge-november3
     - addons from curseforge can not be updatedreplace multi-error messages with a single multi-line error message
@@ -71,9 +69,14 @@ see CHANGELOG.md for a more formal list of changes by release
     - curseforge should not be present in emergency catalogue
         - this will occur naturally when curseforge addons are not present in any catalogue
         - disabled anyway
-
+    - done
+    
 * update comrades, remove curse support from strongbox
+    - done
 
+## todo (4.9.0 -> 5.0.0)
+
+* update screenshots, remove curseforge addons
 
 ## todo bucket (no particular order)
 
