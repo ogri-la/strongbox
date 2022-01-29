@@ -56,7 +56,7 @@
 (defn-spec remove-addon nil?
   "removes the given addon. if addon is part of a group, all addons in group are removed"
   [install-dir ::sp/extant-dir, addon :addon/installed]
-  (info (format "removing \"%s\" version \"%s'" (:label addon) (:installed-version addon)))
+  (info (format "removing \"%s\" version \"%s\"" (:label addon) (:installed-version addon)))
   (if (:ignore? addon)
     ;; if addon is being ignored, refuse to remove addon.
     ;; note: `group-addons` will add a top level `:ignore?` flag if any addon in a bundle is being ignored.

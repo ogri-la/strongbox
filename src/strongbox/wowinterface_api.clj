@@ -33,9 +33,11 @@
           result-list (some-> url http/download-with-backoff http/sink-error utils/from-json)
           result (first result-list)]
       (when result
+
+        ;; has this happened before? can we find an example?
         (when (> (count result-list) 1)
-          ;; has this happened before? can we find an example?
           (warn "wowinterface api returned more than one result for addon with id:" (:source-id addon-summary)))
+
         (let [sid (:source-id addon-summary)
               ;; rarely present. use it if found. actual value of `aid` not necessary, it seems to work when empty as well.
               aid (extract-aid (:UIDownload result))]

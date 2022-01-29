@@ -1,9 +1,17 @@
 [ {
+  "name" : "addon1"
+},
+{
   "source" : "curseforge",
-  "name" : "everyaddon"
+  "name" : "addon2"
 }, {
-  "name" : "noname"
+  "source" : "wowinterface",
+  "name" : "addon3"
 }, {
-  "source" : "curseforge",
-  "name" : "everyotheraddon"
-} ]
+  "source" : "tukui",
+  "name" : "addon4"
+}, {
+  "source": "github",
+  "name" : "addon5"
+}
+]

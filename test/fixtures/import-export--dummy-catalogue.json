@@ -1,27 +1,46 @@
-{"spec":{"version":2},
- "datestamp":"2020-02-20",
- "total":2,
- "addon-summary-list":
- [ {
-  "created-date" : "2010-05-07T18:48:16Z",
-  "description" : "Does what no other addon does, slightly differently",
-  "tag-list" : [ "bags", "inventory" ],
-  "updated-date" : "2019-06-26T01:21:39Z",
-  "name" : "everyaddon",
-  "source" : "curseforge",
-  "source-id": 1,
-  "label" : "EveryAddon",
-  "download-count" : 3000000,
-  "url" : "https://www.curseforge.com/wow/addons/everyaddon"
-}, {
-  "created-date" : "2011-01-04T05:42:23Z",
-  "description" : "Does what every addon does, just better",
-  "tag-list" : [ "coords", "map", "minimap", "professions", "ui" ],
-  "updated-date" : "2019-07-03T07:11:47Z",
-  "name" : "everyotheraddon",
-  "source" : "curseforge",
-  "source-id": 2,
-  "label" : "Every Other Addon",
-  "download-count" : 5400000,
-  "url" : "https://www.curseforge.com/wow/addons/everyotheraddon"
-} ]}
+{
+  "spec": {
+    "version": 2
+  },
+  "datestamp": "2020-02-20",
+  "total": 3,
+  "addon-summary-list": [
+    {
+      "created-date": "2011-01-04T05:42:23Z",
+      "updated-date": "2019-07-03T07:11:47Z",
+      "description": "desc",
+      "tag-list": [],
+      "name": "addon3",
+      "source": "wowinterface",
+      "source-id": 3,
+      "label": "Addon3",
+      "download-count": 3,
+      "game-track-list": [ "retail", "classic" ],
+      "url": "https://www.wowinterface.com/downloads/info3"
+    },
+    {
+      "created-date": "2011-01-04T05:42:23Z",
+      "updated-date": "2019-07-03T07:11:47Z",
+      "description": "desc",
+      "tag-list": [],
+      "name": "addon4",
+      "source": "tukui",
+      "source-id": 4,
+      "label": "Addon4",
+      "download-count": 4,
+      "url": "https://www.tukui.org/addons.php?id=4"
+    },
+    {
+      "created-date": "2011-01-04T05:42:23Z",
+      "updated-date": "2019-07-03T07:11:47Z",
+      "description": "desc",
+      "tag-list": [],
+      "name": "addon5",
+      "source": "github",
+      "source-id": "author/addon5",
+      "label": "Addon5",
+      "download-count": 5,
+      "url": "https://github.com/author/addon5"
+    }
+  ]
+}

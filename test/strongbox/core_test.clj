@@ -221,95 +221,290 @@
 
 (deftest import-exported-addon-list-file-v1
   (testing "an export can be imported"
-    (let [;; modified curseforge addon files to generate fake links
-          every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
-          every-other-addon-zip-file (fixture-path "everyotheraddon--4-5-6.zip")
+    (let [;; our list of addons to import
+          export-v1 (fixture-path "import-export--export-v1.json")
 
-          every-addon-api (slurp (fixture-path "curseforge-api-addon--everyaddon.json"))
-          every-other-addon-api (slurp (fixture-path "curseforge-api-addon--everyotheraddon.json"))
-
+          ;; addons to be imported will be matched against the catalogue.
           dummy-catalogue (slurp (fixture-path "import-export--dummy-catalogue.json"))
+
+          ;; loading the addons after import won't overlooking releases not strictly matching game track
+          strict? false
+
+          addon3-wowinterface-fixture (slurp (fixture-path "import-export--wowinterface-addon-details.json"))
+          addon3-zip-file (fixture-path "addon3.zip")
+
+          addon4-tukui-addon-list-fixture (slurp (fixture-path "import-export--tukui-addon-list.json"))
+          addon4-zip-file (fixture-path "addon4.zip")
+
+          addon5-github-addon-fixture (slurp (fixture-path "import-export--github-addon-details.json"))
+          addon5-zip-file (fixture-path "addon5.zip")
 
           fake-routes {;; catalogue
                        "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                        {:get (fn [req] {:status 200 :body dummy-catalogue})}
 
-                       ;; every-addon
-                       "https://addons-ecs.forgesvc.net/api/v2/addon/1"
-                       {:get (fn [req] {:status 200 :body every-addon-api})}
+                       ;; addon1, no source, no matching catalogue entry
+                       ;; disabled
 
-                       ;; ... it's zip file
-                       "https://edge.forgecdn.net/files/1/1/EveryAddon.zip"
-                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-addon-zip-file)})}
+                       ;; addon2, curseforge
+                       ;; disabled
 
-                       ;; every-other-addon
-                       "https://addons-ecs.forgesvc.net/api/v2/addon/2"
-                       {:get (fn [req] {:status 200 :body every-other-addon-api})}
+                       ;; addon3, wowinterface
+                       "https://api.mmoui.com/v3/game/WOW/filedetails/3.json"
+                       {:get (fn [req] {:status 200 :body addon3-wowinterface-fixture})}
 
-                       ;; ... it's zip file
-                       "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip"
-                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-other-addon-zip-file)})}}]
+                       ;; ... zip file
+                       "https://cdn.wowinterface.com/downloads/getfile.php?id=3"
+                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array addon3-zip-file)})}
+
+                       ;; addon4, tukui
+                       "https://www.tukui.org/api.php?addons"
+                       {:get (fn [req] {:status 200 :body addon4-tukui-addon-list-fixture})}
+
+                       ;; ... zip file
+                       "https://www.tukui.org/addons.php?download=4"
+                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array addon4-zip-file)})}
+
+                       ;; addon5, github
+                       "https://api.github.com/repos/author/addon5/releases"
+                       {:get (fn [req] {:status 200 :body addon5-github-addon-fixture})}
+
+                       ;; ... zip file
+                       "https://github.com/author/addon5/releases/download/Addon5-v1.2.3/Addon5-v1.2.3.zip"
+                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array addon5-zip-file)})}}
+
+          expected [{:created-date "2011-01-04T05:42:23Z",
+                     :description "desc",
+                     :dirname "Addon3",
+                     :download-count 3,
+                     :download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=3",
+                     :game-track :retail,
+                     :game-track-list [:retail :classic],
+                     :group-id "https://www.wowinterface.com/downloads/info3",
+                     :installed-game-track :retail,
+                     :installed-version "1.2.3",
+                     :interface-version 70000,
+                     :label "Addon3",
+                     :matched? true,
+                     :name "addon3",
+                     :primary? true,
+                     :release-list [{:download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=3",
+                                     :game-track :retail,
+                                     :version "1.2.3"}],
+                     :source "wowinterface",
+                     :source-id 3,
+                     :source-map-list [{:source "wowinterface", :source-id 3}],
+                     :supported-game-tracks [:retail],
+                     :tag-list [],
+                     :update? false,
+                     :updated-date "2019-07-03T07:11:47Z",
+                     :url "https://www.wowinterface.com/downloads/info3",
+                     :version "1.2.3"}
+                    {:created-date "2011-01-04T05:42:23Z",
+                     :description "desc",
+                     :dirname "Addon4",
+                     :download-count 4,
+                     :download-url "https://www.tukui.org/addons.php?download=4",
+                     :game-track :retail,
+                     :group-id "https://www.tukui.org/addons.php?id=4",
+                     :installed-game-track :retail,
+                     :installed-version "1.2.3",
+                     :interface-version 80200,
+                     :label "Addon4",
+                     :matched? true,
+                     :name "addon4",
+                     :primary? true,
+                     :release-list [{:download-url "https://www.tukui.org/addons.php?download=4",
+                                     :game-track :retail,
+                                     :interface-version 80200,
+                                     :version "1.2.3"}],
+                     :source "tukui",
+                     :source-id 4,
+                     :source-map-list [{:source "tukui", :source-id 4}],
+                     :supported-game-tracks [:retail],
+                     :tag-list [],
+                     :update? false,
+                     :updated-date "2019-07-03T07:11:47Z",
+                     :url "https://www.tukui.org/addons.php?id=4",
+                     :version "1.2.3"}
+                    {:created-date "2011-01-04T05:42:23Z",
+                     :description "desc",
+                     :dirname "Addon5",
+                     :download-count 5,
+                     :download-url "https://github.com/author/addon5/releases/download/Addon5-v1.2.3/Addon5-v1.2.3.zip",
+                     :game-track :classic-tbc,
+                     :group-id "https://github.com/author/addon5",
+                     :installed-game-track :classic-tbc,
+                     :installed-version "v0.6",
+                     :interface-version 70000,
+                     :label "Addon5",
+                     :matched? true,
+                     :name "addon5",
+                     :primary? true,
+                     :release-list [{:download-url "https://github.com/author/addon5/releases/download/Addon5-v1.2.3/Addon5-v1.2.3.zip",
+                                     :game-track :classic-tbc,
+                                     :version "v0.6"}],
+                     :source "github",
+                     :source-id "author/addon5",
+                     :source-map-list [{:source "github", :source-id "author/addon5"}],
+                     :supported-game-tracks [:retail],
+                     :tag-list [],
+                     :update? false,
+                     :updated-date "2019-07-03T07:11:47Z",
+                     :url "https://github.com/author/addon5",
+                     :version "v0.6"}]]
+
       (with-global-fake-routes-in-isolation fake-routes
         (with-running-app
           (core/set-addon-dir! (str fs/*cwd*))
-
-          (let [;; our list of addons to import
-                output-path (fixture-path "import-export--export-v1.json")
-
-                expected [] ;; 2022-01-26: importing curseforge addons disabled
-                ]
-
-            (core/import-exported-file output-path)
-            (core/refresh) ;; re-read the installation directory
-            (is (= expected (core/get-state :installed-addon-list)))))))))
+          (core/set-game-track-strictness! strict?)
+          (core/import-exported-file export-v1)
+          (core/refresh) ;; re-read the installation directory
+          (is (= expected (core/get-state :installed-addon-list))))))))
 
 (deftest import-exported-addon-list-file-v2
   (testing "an export can be imported AND per-addon game track preferences are preserved"
-    (let [;; modified curseforge addon files to generate fake links
-          every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
-          every-other-addon-zip-file (fixture-path "everyotheraddon--4-5-6.zip")
 
-          every-addon-api (slurp (fixture-path "curseforge-api-addon--everyaddon.json"))
-          every-other-addon-api (slurp (fixture-path "curseforge-api-addon--everyotheraddon-classic.json"))
+    (let [;; our list of addons to import
+          export-v2 (fixture-path "import-export--export-v2.json")
 
+          ;; addons to be imported will be matched against the catalogue.
           dummy-catalogue (slurp (fixture-path "import-export--dummy-catalogue.json"))
+
+          ;; loading the addons after import won't overlooking releases not strictly matching game track
+          strict? false
+
+          addon3-wowinterface-fixture (slurp (fixture-path "import-export--wowinterface-addon-details.json"))
+          addon3-zip-file (fixture-path "addon3.zip")
+
+          addon4-tukui-addon-list-fixture (slurp (fixture-path "import-export--tukui-addon-list.json"))
+          addon4-zip-file (fixture-path "addon4.zip")
+
+          addon5-github-addon-fixture (slurp (fixture-path "import-export--github-addon-details.json"))
+          addon5-zip-file (fixture-path "addon5.zip")
 
           fake-routes {;; catalogue
                        "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                        {:get (fn [req] {:status 200 :body dummy-catalogue})}
 
-                       ;; every-addon
-                       "https://addons-ecs.forgesvc.net/api/v2/addon/1"
-                       {:get (fn [req] {:status 200 :body every-addon-api})}
+                       ;; addon1, no source, no matching catalogue entry
+                       ;; disabled
 
-                       ;; ... it's zip file
-                       "https://edge.forgecdn.net/files/1/1/EveryAddon.zip"
-                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-addon-zip-file)})}
+                       ;; addon2, curseforge
+                       ;; disabled
 
-                       ;; every-other-addon
-                       "https://addons-ecs.forgesvc.net/api/v2/addon/2"
-                       {:get (fn [req] {:status 200 :body every-other-addon-api})}
+                       ;; addon3, wowinterface
+                       "https://api.mmoui.com/v3/game/WOW/filedetails/3.json"
+                       {:get (fn [req] {:status 200 :body addon3-wowinterface-fixture})}
 
-                       ;; ... it's zip file
-                       "https://edge.forgecdn.net/files/2/2/EveryOtherAddon.zip"
-                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-other-addon-zip-file)})}}]
+                       ;; ... zip file
+                       "https://cdn.wowinterface.com/downloads/getfile.php?id=3"
+                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array addon3-zip-file)})}
+
+                       ;; addon4, tukui
+                       "https://www.tukui.org/api.php?addons"
+                       {:get (fn [req] {:status 200 :body addon4-tukui-addon-list-fixture})}
+
+                       ;; ... zip file
+                       "https://www.tukui.org/addons.php?download=4"
+                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array addon4-zip-file)})}
+
+                       ;; addon5, github
+                       "https://api.github.com/repos/author/addon5/releases"
+                       {:get (fn [req] {:status 200 :body addon5-github-addon-fixture})}
+
+                       ;; ... zip file
+                       "https://github.com/author/addon5/releases/download/Addon5-v1.2.3/Addon5-v1.2.3.zip"
+                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array addon5-zip-file)})}}
+
+          expected [{:created-date "2011-01-04T05:42:23Z",
+                     :description "desc",
+                     :dirname "Addon3",
+                     :download-count 3,
+                     :download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=3",
+                     :game-track :retail ;; addon supports retail and classic, addon dir game track is set to retail
+                     :game-track-list [:retail :classic],
+                     :group-id "https://www.wowinterface.com/downloads/info3",
+                     :installed-game-track :classic, ;; imported game track
+                     :installed-version "1.2.3",
+                     :interface-version 70000,
+                     :label "Addon3",
+                     :matched? true,
+                     :name "addon3",
+                     :primary? true,
+                     :release-list [{:download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=3",
+                                     :game-track :retail,
+                                     :version "1.2.3"}],
+                     :source "wowinterface",
+                     :source-id 3,
+                     :source-map-list [{:source "wowinterface", :source-id 3}],
+                     :supported-game-tracks [:retail],
+                     :tag-list [],
+                     :update? false,
+                     :updated-date "2019-07-03T07:11:47Z",
+                     :url "https://www.wowinterface.com/downloads/info3",
+                     :version "1.2.3"}
+                    {:created-date "2011-01-04T05:42:23Z",
+                     :description "desc",
+                     :dirname "Addon4",
+                     :download-count 4,
+                     :download-url "https://www.tukui.org/addons.php?download=4",
+                     :game-track :retail,
+                     :group-id "https://www.tukui.org/addons.php?id=4",
+                     :installed-game-track :retail,
+                     :installed-version "1.2.3",
+                     :interface-version 80200,
+                     :label "Addon4",
+                     :matched? true,
+                     :name "addon4",
+                     :primary? true,
+                     :release-list [{:download-url "https://www.tukui.org/addons.php?download=4",
+                                     :game-track :retail,
+                                     :interface-version 80200,
+                                     :version "1.2.3"}],
+                     :source "tukui",
+                     :source-id 4,
+                     :source-map-list [{:source "tukui", :source-id 4}],
+                     :supported-game-tracks [:retail],
+                     :tag-list [],
+                     :update? false,
+                     :updated-date "2019-07-03T07:11:47Z",
+                     :url "https://www.tukui.org/addons.php?id=4",
+                     :version "1.2.3"}
+                    {:created-date "2011-01-04T05:42:23Z",
+                     :description "desc",
+                     :dirname "Addon5",
+                     :download-count 5,
+                     :download-url "https://github.com/author/addon5/releases/download/Addon5-v1.2.3/Addon5-v1.2.3.zip",
+                     :game-track :classic-tbc
+                     :group-id "https://github.com/author/addon5",
+                     :installed-game-track :classic-tbc,
+                     :installed-version "v0.6",
+                     :interface-version 70000,
+                     :label "Addon5",
+                     :matched? true,
+                     :name "addon5",
+                     :primary? true,
+                     :release-list [{:download-url "https://github.com/author/addon5/releases/download/Addon5-v1.2.3/Addon5-v1.2.3.zip",
+                                     :game-track :classic-tbc
+                                     :version "v0.6"}],
+                     :source "github",
+                     :source-id "author/addon5",
+                     :source-map-list [{:source "github", :source-id "author/addon5"}],
+                     :supported-game-tracks [:retail], ;; derived from the .toc file, and all these fixtures are the same (retail)
+                     :tag-list [],
+                     :update? false,
+                     :updated-date "2019-07-03T07:11:47Z",
+                     :url "https://github.com/author/addon5",
+                     :version "v0.6"}]]
+
       (with-global-fake-routes-in-isolation fake-routes
         (with-running-app
-          (helper/install-dir)
-
-          (let [;; our list of addons to import
-                output-path (fixture-path "import-export--export-v2.json")
-
-                strict? false
-
-                expected [] ;; 2022-01-26: importing curseforge addons disabled
-                ]
-
-            (core/import-exported-file output-path)
-            ;; so both retail and classic are picked up on refresh
-            (core/set-game-track-strictness! strict?)
-            (core/refresh) ;; re-read the installation directory
-            (is (= expected (core/get-state :installed-addon-list)))))))))
+          (core/set-addon-dir! (str fs/*cwd*))
+          (core/set-game-track-strictness! strict?)
+          (core/import-exported-file export-v2)
+          (core/refresh) ;; re-read the installation directory
+          (is (= expected (core/get-state :installed-addon-list))))))))
 
 (deftest check-for-addon-update
   (testing "the key `:update?` is set to `true` when the installed version doesn't match the catalogue version"
