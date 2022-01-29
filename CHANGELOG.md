@@ -21,10 +21,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * minor, errors/warning/info messages that appeared across multiple messages are now just one message.
     - I also replaced some developer-isms like 'unhandled exception' with 'unexpected error'.
         - please let me know if you ever find messages in the log obscure.
+* curseforge February deprecation notice is now the definitive "no longer supported".
 
 ### Fixed
 
 ### Removed
+
+* Curseforge support. Curseforge addons are:
+    - no longer checked for updates.
+    - excluded from being imported.
+    - excluded from the user-catalogue.
+    - no longer scraped from the api into a catalogue.
+    - no longer present in the 'full' or 'short' catalogues.
+    - excluded from search results.
+    - removed from the 'emergency' (built-in, hardcoded) catalogue (used when remote catalogues are unavailable).
+    - removed from lists of known addon sources to switch between.
 
 ## 4.9.1 - 2022-01-20
 
