@@ -89,12 +89,9 @@ SomeAddon.lua")
                      :-toc/game-track :retail
                      :supported-game-tracks [:retail]
                      :installed-version "1.6.1"
-                     ;; wowi is edged out in favour of curseforge ...
-                     :source "curseforge"
-                     :source-id 54321
-                     ;; ... however both are captured here in `:source-map-list`
-                     :source-map-list [{:source "wowinterface" :source-id 12345}
-                                       {:source "curseforge" :source-id 54321}]}]]
+                     :source "wowinterface"
+                     :source-id 12345
+                     :source-map-list [{:source "wowinterface" :source-id 12345}]}]]
       (fs/mkdir addon-path)
       (spit toc-file-path toc-file-contents)
       (is (= expected (toc/parse-addon-toc-guard addon-path))))))
@@ -130,25 +127,6 @@ SomeAddon.lua")
       (doseq [[toc-data expected] cases]
         (is (= expected (toc/parse-addon-toc toc-data addon-dir)))))))
 
-(deftest parse-addon-toc--aliased
-  (testing "addons whose toc files have a `:title` value that matches an alias get a hardcoded source and source-id value"
-    (let [addon-dir (utils/join (helper/install-dir) "dirname")
-          defaults {:dirname "dirname"
-                    :description nil
-                    :installed-version nil
-                    :interface-version constants/default-interface-version
-                    :-toc/game-track :retail
-                    :supported-game-tracks [:retail]}
-          cases [[{:title "Plater"} {:label "Plater" :name "plater" :source "curseforge" :source-id 100547}]
-                 [{:title "|cffffd200Deadly Boss Mods|r |cff69ccf0Core|r"}
-                  {:label "|cffffd200Deadly Boss Mods|r |cff69ccf0Core|r"
-                   :name "|cffffd200deadly-boss-mods|r-|cff69ccf0core|r" ;; gibberish :(
-                   :source "curseforge" :source-id 8814}]]]
-      (fs/mkdir addon-dir)
-      (doseq [[given expected] cases
-              :let [expected (merge expected defaults)]]
-        (is (= expected (toc/parse-addon-toc given addon-dir)))))))
-
 (deftest parse-addon-toc--x-source
   (testing "addons whose toc files have a 'x-<host>-id' value will use those as `:source` and `:source-id`"
     (let [addon-dir (utils/join (helper/install-dir) "dirname")
@@ -168,13 +146,13 @@ SomeAddon.lua")
                  [{:x-wowi-id "abc"} {:label "dirname *" :name "dirname-*"}] ;; bad case, non-numeric wowi ID
 
                  ;; curse
-                 [{:x-curse-project-id "123"} {:label "dirname *" :name "dirname-*"
-                                               :source "curseforge" :source-id 123
-                                               :source-map-list [{:source "curseforge" :source-id 123}]}]
-                 [{:x-curse-project-id 123} {:label "dirname *" :name "dirname-*"
-                                             :source "curseforge" :source-id 123
-                                             :source-map-list [{:source "curseforge" :source-id 123}]}]
-                 [{:x-curse-project-id "abc"} {:label "dirname *" :name "dirname-*"}] ;; bad case, non-numeric curse ID
+                 ;;[{:x-curse-project-id "123"} {:label "dirname *" :name "dirname-*"
+                 ;;                              :source "curseforge" :source-id 123
+                 ;;                              :source-map-list [{:source "curseforge" :source-id 123}]}]
+                 ;;[{:x-curse-project-id 123} {:label "dirname *" :name "dirname-*"
+                 ;;                            :source "curseforge" :source-id 123
+                 ;;                            :source-map-list [{:source "curseforge" :source-id 123}]}]
+                 ;;[{:x-curse-project-id "abc"} {:label "dirname *" :name "dirname-*"}] ;; bad case, non-numeric curse ID
 
                  ;; tukui
                  [{:x-tukui-projectid "123"} {:label "dirname *" :name "dirname-*"
@@ -194,7 +172,7 @@ SomeAddon.lua")
                    :x-curse-project-id "123"} {:label "dirname *" :name "dirname-*"
                                                :source "tukui" :source-id 123 ;; todo: this precedence is interesting ...
                                                :source-map-list [{:source "wowinterface" :source-id 123}
-                                                                 {:source "curseforge" :source-id 123}
+                                                                 ;;{:source "curseforge" :source-id 123}
                                                                  {:source "tukui" :source-id 123}]}]]]
 
       (fs/mkdir addon-dir)

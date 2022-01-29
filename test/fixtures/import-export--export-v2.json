@@ -1,12 +1,34 @@
-[ {
+[
+{
+  "name" : "addon1"
+}, 
+
+{
   "source" : "curseforge",
-  "source-id" : 1,
-  "name" : "everyaddon"
-}, {
-  "name" : "noname"
-}, {
-  "source" : "curseforge",
-  "source-id": 2,
-  "name" : "everyotheraddon",
+  "source-id" : 2,
+  "name" : "addon2"
+}, 
+
+{
+  "source" : "wowinterface",
+  "source-id": 3,
+  "name" : "addon3",
   "game-track" : "classic"
-} ]
+},
+
+{
+  "source" : "tukui",
+  "source-id": 4,
+  "name" : "addon4",
+  "game-track": "retail"
+}, 
+
+{
+  "source": "github",
+  "name" : "addon5",
+  "source-id": "author/addon5",
+  "game-track": "classic-tbc"
+}
+
+
+]

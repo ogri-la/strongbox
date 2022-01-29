@@ -24,12 +24,16 @@
 (def -default-catalogue-list--v2
   (conj -default-catalogue-list--v1 -github-catalogue))
 
-(def -default-catalogue-list -default-catalogue-list--v2)
+(def -default-catalogue-list--v3
+  (let [curse-idx 3]
+    (utils/drop-idx -default-catalogue-list--v2 curse-idx)))
+
+(def -default-catalogue-list -default-catalogue-list--v3)
 
 (def default-cfg
   {:addon-dir-list []
    :selected-addon-dir nil
-   :catalogue-location-list -default-catalogue-list--v2
+   :catalogue-location-list -default-catalogue-list
    :selected-catalogue :short
    :gui-theme :light
    :preferences {;; nil: keep all zips (default)
@@ -107,8 +111,14 @@
   [cfg map?]
   (if (= (->> cfg :catalogue-location-list (map :name) set)
          (->> -default-catalogue-list--v1 (map :name) set))
-    (assoc cfg :catalogue-location-list -default-catalogue-list--v2)
+    (assoc cfg :catalogue-location-list -default-catalogue-list)
     cfg))
+
+(defn-spec remove-curseforge-catalogue map?
+  "removes the curseforge catalogue from the user config."
+  [cfg map?]
+  (let [new-catalogue-list (vec (remove #(= :curseforge (:name %)) (:catalogue-location-list cfg)))]
+    (assoc cfg :catalogue-location-list new-catalogue-list)))
 
 (defn-spec handle-column-preferences map?
   "handles upgrading of the default column list.
@@ -159,6 +169,7 @@
                 handle-selected-addon-dir
                 remove-invalid-catalogue-location-entries
                 add-github-catalogue
+                remove-curseforge-catalogue
                 handle-column-preferences
                 strip-unspecced-keys)
         message (format "configuration from %s is invalid and will be ignored: %s"

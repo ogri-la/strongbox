@@ -56,24 +56,36 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo (4.9.0 -> 5.0.0)
 
-* github, bug, multi-toc addons are getting a warning when `strict?` is true and the game track is changed
-    - https://github.com/LenweSaralonde/MusicianList/releases
-
 * disable support for curseforge
     - https://mailchi.mp/overwolf/whats-new-with-overwolf-curseforge-november3
-    - addons from curseforge can not be imported
-    - addons from curseforge can not be updated
+    - addons from curseforge can not be updatedreplace multi-error messages with a single multi-line error message
         - they should get an error
             - or marked as ignored?
     - curseforge catalogue should not be present
-    - curseforge addons should be present in full and short catalogues
+    - curseforge addons should not be present in full and short catalogues
+        - 
     - curseforge results should not be in search results
+        - this will occur naturally when curseforge addons are not present in any catalogue
+    - addons from curseforge can not be imported
+        - this will occur naturally when curseforge addons are not present in any catalogue
+    - curseforge should not be present in emergency catalogue
+        - this will occur naturally when curseforge addons are not present in any catalogue
+        - disabled anyway
 
+* update comrades, remove curse support from strongbox
+
+
+## todo bucket (no particular order)
+
+* github, bug, multi-toc addons are getting a warning when `strict?` is true and the game track is changed
+    - https://github.com/LenweSaralonde/MusicianList/releases
+
+* bug, test [:core :clear-addon-ignore-flag--implicit-ignore] is printing an error when game-track-list definitely exists
+    - what is removing it?
 
 * default to keeping last three zip files by default
     - stretch goal
-
-## todo bucket (no particular order)
+        - probably not a good idea for this release where we might want to keep zips around
 
 * search, add ability to browse catalogue page by page
     - I have neglected the catalogue search *so much*. I need a whole release dedicated to improving it.
@@ -200,6 +212,10 @@ see CHANGELOG.md for a more formal list of changes by release
     - perhaps coincide with catalogue v3 with more addon details
 
 * wowinterface, revisit the pages that are being scraped, make sure we're not missing any
+
+* import/export, bring up the split logging pane during operation so any problems can be seen
+    - or update the tab title to reflect the number of warnings/errors
+        - otherwise there is zero feedback
 
 * export/import addons to/from github
     - I have a github account, I'd like to push/pull addons to it

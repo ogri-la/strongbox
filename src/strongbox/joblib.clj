@@ -12,7 +12,7 @@
 
 (comment "Simple one job per thread queue manager. Keep module uncoupled from core and ui.")
 
-(def ^:dynamic tick
+(def ^:dynamic *tick*
   "per-thread binding to a function that updates progress of running job"
   (constantly nil))
 
@@ -20,7 +20,7 @@
   "ticks but then pauses for a short random period providing an illusion that something is happening.
   pause only occurs if the `tick` fn is bound."
   [pct :joblib/progress]
-  (when-let [progress (tick pct)]
+  (when-let [progress (*tick* pct)]
     (Thread/sleep (rand-int 150))
     progress))
 
@@ -167,7 +167,7 @@
   jobs that raised an exception have the exception raised returned."
   [queue-atm atom?, n pos-int?, pool utils/thread-pool-executor?]
   (let [start-job (fn [[job-id {:keys [job]}]]
-                    (binding [tick (make-ticker queue-atm job-id)]
+                    (binding [*tick* (make-ticker queue-atm job-id)]
                       (try
                         (job)
                         (catch Exception uncaught-exc

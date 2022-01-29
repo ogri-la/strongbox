@@ -11,7 +11,7 @@
     [github-api :as github-api]
     [tukui-api :as tukui-api]
     [gitlab-api :as gitlab-api]
-    [curseforge-api :as curseforge-api]
+    ;;[curseforge-api :as curseforge-api]
     [wowinterface :as wowinterface]
     [db :as db]
     [logging :as logging]
@@ -503,7 +503,7 @@
 
 ;; todo: logic might be better off in core.clj
 (defn-spec find-addon (s/or :ok :addon/summary, :error nil?)
-  "given a URL of a support addon host, parses it, looks for it in the catalogue, expands addon and attempts a dry run installation.
+  "given a URL of a supported addon host, parses it, looks for it in the catalogue, expands addon and attempts a dry run installation.
   if successful, returns the addon-summary."
   [addon-url string?, dry-run? boolean?]
   (binding [http/*cache* (core/cache)]
@@ -532,6 +532,9 @@
                                            "addon uses releases"
                                            "latest release has a custom asset with a 'link'"
                                            "link type must be either a 'package' or 'other'"])))
+
+                              (= source "curseforge")
+                              (error (str "addon host 'curseforge' was disabled " constants/curseforge-cutoff-label "."))
 
                               :else
                               ;; look in the current catalogue. emit an error if we fail
@@ -739,8 +742,8 @@
                 (let [total 2
                       pieces 100]
                   (doseq [pos (range 1 (* total pieces))]
-                    (joblib/tick (double (/ 1 (/ (* total pieces)
-                                                 pos))))
+                    (joblib/*tick* (double (/ 1 (/ (* total pieces)
+                                                   pos))))
                     (Thread/sleep 10)))
 
                 (core/stop-affecting-addon addon))
@@ -759,7 +762,6 @@
 (defmulti action
   "handles the following actions:
     :scrape-wowinterface-catalogue - scrapes wowinterface host and creates a wowinterface catalogue
-    :scrape-curseforge-catalogue - scrapes curseforge host and creates a curseforge catalogue
     :scrape-catalogue - scrapes all available sources and creates a full and short catalogue
     :list - lists all installed addons
     :list-updates - lists all installed addons with updates available
@@ -787,14 +789,16 @@
           formatted-catalogue-data (catalogue/format-catalogue-data-for-output catalogue-data created)]
       (catalogue/write-catalogue formatted-catalogue-data output-file))))
 
-(defmethod action :scrape-curseforge-catalogue
-  [_]
-  (binding [http/*cache* (core/cache)]
-    (let [output-file (find-catalogue-local-path :curseforge)
-          catalogue-data (curseforge-api/download-all-summaries-alphabetically)
-          created (utils/datestamp-now-ymd)
-          formatted-catalogue-data (catalogue/format-catalogue-data-for-output catalogue-data created)]
-      (catalogue/write-catalogue formatted-catalogue-data output-file))))
+(comment
+  "disabled, to be removed"
+  (defmethod action :scrape-curseforge-catalogue
+    [_]
+    (binding [http/*cache* (core/cache)]
+      (let [output-file (find-catalogue-local-path :curseforge)
+            catalogue-data (curseforge-api/download-all-summaries-alphabetically)
+            created (utils/datestamp-now-ymd)
+            formatted-catalogue-data (catalogue/format-catalogue-data-for-output catalogue-data created)]
+        (catalogue/write-catalogue formatted-catalogue-data output-file)))))
 
 (defmethod action :scrape-tukui-catalogue
   [_]
@@ -807,12 +811,13 @@
 
 (defmethod action :write-catalogue
   [_]
-  (let [curseforge-catalogue (find-catalogue-local-path :curseforge)
+  (let [;;curseforge-catalogue (find-catalogue-local-path :curseforge)
         wowinterface-catalogue (find-catalogue-local-path :wowinterface)
         tukui-catalogue (find-catalogue-local-path :tukui)
         github-catalogue (find-catalogue-local-path :github)
 
-        catalogue-path-list [curseforge-catalogue wowinterface-catalogue tukui-catalogue github-catalogue]
+        catalogue-path-list [;;curseforge-catalogue
+                             wowinterface-catalogue tukui-catalogue github-catalogue]
         catalogue (mapv catalogue/read-catalogue catalogue-path-list)
         catalogue (reduce catalogue/merge-catalogues catalogue)
         ;; 2021-09: `merge-catalogues` no longer converts an addon to an `ordered-map`.
@@ -828,7 +833,7 @@
 
 (defmethod action :scrape-catalogue
   [_]
-  (action :scrape-curseforge-catalogue)
+  ;;(action :scrape-curseforge-catalogue)
   (action :scrape-wowinterface-catalogue)
   (action :scrape-tukui-catalogue)
   (action :scrape-github-catalogue)

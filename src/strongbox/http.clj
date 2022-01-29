@@ -218,7 +218,7 @@
                                                      (let [size (.read input buffer)]
                                                        (when (pos? size)
                                                          (.write output buffer 0 size)
-                                                         (joblib/tick (joblib/progress length (.getByteCount counter)))
+                                                         (joblib/*tick* (joblib/progress length (.getByteCount counter)))
                                                          (recur))))))))
 
                                            (when streaming-response?

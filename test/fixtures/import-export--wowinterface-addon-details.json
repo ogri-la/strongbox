@@ -1,0 +1,19 @@
+[
+  {
+    "UID": "3",
+    "UICATID": "25",
+    "UIVersion": "1.2.3",
+    "UIDate": 1570296493000,
+    "UIMD5": "f3ea7dc82fac500038be1f230759f43d",
+    "UIFileName": "Addon3-1.2.3.zip",
+    "UIDownload": "https://cdn.wowinterface.com/downloads/getfile.php?id=25079&d=1570296493&minion",
+    "UIPending": "0",
+    "UIName": "Addon3",
+    "UIAuthorName": "authorname",
+    "UIDescription": "desc",
+    "UIChangeLog": "changelog",
+    "UIHitCount": "1195",
+    "UIHitCountMonthly": "404",
+    "UIFavoriteTotal": "3"
+  }
+]
