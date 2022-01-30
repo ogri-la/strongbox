@@ -73,10 +73,12 @@ see CHANGELOG.md for a more formal list of changes by release
     
 * update comrades, remove curse support from strongbox
     - done
+    
+* update screenshots, remove curseforge addons
+    - done
 
 ## todo (4.9.0 -> 5.0.0)
 
-* update screenshots, remove curseforge addons
 
 ## todo bucket (no particular order)
 
