@@ -1114,7 +1114,7 @@
                                                                  {:fx/type :label
                                                                   :text (get row :dirname "")})})}
                         :cell-value-factory identity}
-         :source {:min-width 125 :pref-width 125 :max-width 135
+         :source {:min-width 130 :pref-width 135 :max-width 145
                   :cell-factory {:fx/cell-type :tree-table-cell
                                  :describe (fn [row]
                                              {:graphic (href-to-hyperlink row)})}
