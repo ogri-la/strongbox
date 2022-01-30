@@ -18,15 +18,15 @@ I also maintain a list of [other addon managers](https://ogri-la.github.io/wow-a
 
 ---
 
-[![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-installed-skinny-thumbnail.jpg)](./screenshots/screenshot-4.7.0-installed-skinny.png?raw=true)
-[![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-installed-thumbnail.jpg)](./screenshots/screenshot-4.7.0-installed.png?raw=true)
-[![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-installed-fat-thumbnail.jpg)](./screenshots/screenshot-4.7.0-installed-fat.png?raw=true)
-[![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-detail-thumbnail.jpg)](./screenshots/screenshot-4.7.0-detail.png?raw=true)
+[![strongbox version 5.0.0](./screenshots/screenshot-5.0.0-installed-skinny-thumbnail.jpg)](./screenshots/screenshot-5.0.0-installed-skinny.png?raw=true)
+[![strongbox version 5.0.0](./screenshots/screenshot-5.0.0-installed-thumbnail.jpg)](./screenshots/screenshot-5.0.0-installed.png?raw=true)
+[![strongbox version 5.0.0](./screenshots/screenshot-5.0.0-installed-fat-thumbnail.jpg)](./screenshots/screenshot-5.0.0-installed-fat.png?raw=true)
+[![strongbox version 5.0.0](./screenshots/screenshot-5.0.0-detail-thumbnail.jpg)](./screenshots/screenshot-5.0.0-detail.png?raw=true)
 
-[![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-dark-installed-skinny-thumbnail.jpg)](./screenshots/screenshot-4.7.0-dark-installed-skinny.png?raw=true)
-[![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-dark-installed-thumbnail.jpg)](./screenshots/screenshot-4.7.0-dark-installed.png?raw=true)
-[![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-dark-installed-fat-thumbnail.jpg)](./screenshots/screenshot-4.7.0-dark-installed-fat.png?raw=true)
-[![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-dark-detail-thumbnail.jpg)](./screenshots/screenshot-4.7.0-dark-detail.png?raw=true)
+[![strongbox version 5.0.0](./screenshots/screenshot-5.0.0-dark-installed-skinny-thumbnail.jpg)](./screenshots/screenshot-5.0.0-dark-installed-skinny.png?raw=true)
+[![strongbox version 5.0.0](./screenshots/screenshot-5.0.0-dark-installed-thumbnail.jpg)](./screenshots/screenshot-5.0.0-dark-installed.png?raw=true)
+[![strongbox version 5.0.0](./screenshots/screenshot-5.0.0-dark-installed-fat-thumbnail.jpg)](./screenshots/screenshot-5.0.0-dark-installed-fat.png?raw=true)
+[![strongbox version 5.0.0](./screenshots/screenshot-5.0.0-dark-detail-thumbnail.jpg)](./screenshots/screenshot-5.0.0-dark-detail.png?raw=true)
 
 ## Installation
 
