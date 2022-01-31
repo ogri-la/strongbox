@@ -8,6 +8,31 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+* search, add ability to browse catalogue page by page
+    - I have neglected the catalogue search *so much*. I need a whole release dedicated to improving it.
+
+* tags, make clickable in search results
+    - adds a filter that can be removed
+    - add clickable tags to addon detail page
+
+* search, filter by addon hosts
+
+* installed, clicking an addon's tags does a search
+
+* gui, dedicated tab for "user-catalogue" ?
+    - add, delete, update github addons
+    - see accumulating release history for addons?
+
+* ux, star or 'like' addons in the catalogue
+    - I think I'll hook these off of the user catalogue.
+        - liking a catalogue addon adds it to the user catalogue without installing it
+    - add a column to the search results
+        - ensure items in user-catalogue are liked already
+
+* addon detail, mutual dependencies pane
+    - for example, I would like to see what is happening when:
+        adibags anima & conduits is overwritten by adibags anima filter
+
 ## todo bucket (no particular order)
 
 * github, bug, multi-toc addons are getting a warning when `strict?` is true and the game track is changed
@@ -19,9 +44,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * default to keeping last three zip files by default
     - stretch goal
         - probably not a good idea for this release where we might want to keep zips around
-
-* search, add ability to browse catalogue page by page
-    - I have neglected the catalogue search *so much*. I need a whole release dedicated to improving it.
 
 * 'downloading strongbox data' shouldn't be blocking the gui from starting
 
@@ -48,8 +70,6 @@ see CHANGELOG.md for a more formal list of changes by release
         - or the zip file is badly formed
     - stuff a regular user should gloss over but a dev might find useful
 
-* ux, star or 'like' addons in the catalogue
-
 * http, add with-backoff support to download-file
     - just had a wowinterface addon download timeout
 
@@ -60,6 +80,7 @@ see CHANGELOG.md for a more formal list of changes by release
     - I want to store release data permanently
         - multiple pages
         - release.json
+        - why can't we do this using the nfo data?
 
 * github, can we support addons that have no detectable game tracks, no toc files, no release.json, nothing but downloadable assets?
      - https://github.com/RealUI/RealUI
@@ -191,16 +212,10 @@ see CHANGELOG.md for a more formal list of changes by release
     - pretty fast just by making requests in parallel
         - moving this back to the bucket until I start really looking for optimisations
 
-* addon detail, mutual dependencies pane
-    - for example, I would like to see what is happening when:
-        adibags anima & conduits is overwritten by adibags anima filter
+
 
 * change split button 'outdent' to 'indent'
     - and if split, keep it 'pressed in'
-
-* tags, make clickable in search results
-    - adds a filter that can be removed
-    - add clickable tags to addon detail page
 
 * preferences, "update all addons automatically"
     - update README features
@@ -352,10 +367,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - unless authenticated somehow, I wouldn't bother.
 
 * github, like gitlab, use presence of multiple toc files to determine game track support
-
-* gui, dedicated tab for "user-catalogue" ?
-    - add, delete, update github addons
-    - see accumulating release history for addons?
 
 * gui, bug, changing sort order during refresh doesn't reflect which addon is being updated
     - I think changing column ordering and moving columns should be disabled while updates happen
