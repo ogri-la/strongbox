@@ -1,0 +1,51 @@
+{
+  "gui-theme": "dark-green",
+  "addon-dir-list": [
+    {
+      "addon-dir": "/tmp/.strongbox-bar",
+      "game-track": "classic-tbc",
+      "strict?": true
+    },
+    {
+      "addon-dir": "/tmp/.strongbox-foo",
+      "game-track": "retail",
+      "strict?": false
+    }
+  ],
+  "selected-addon-dir": "/tmp/.strongbox-foo",
+  "catalogue-location-list": [
+    {
+      "name": "short",
+      "label": "Short (default)",
+      "source": "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
+    },
+    {
+      "name": "full",
+      "label": "Full",
+      "source": "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/full-catalogue.json"
+    },
+    {
+      "name": "tukui",
+      "label": "Tukui",
+      "source": "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/tukui-catalogue.json"
+    },
+    {
+      "name": "wowinterface",
+      "label": "WoWInterface",
+      "source": "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/wowinterface-catalogue.json"
+    },
+    {
+      "name": "github",
+      "label": "GitHub",
+      "source": "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/github-catalogue.json"
+    }
+  ],
+  "selected-catalogue": "full",
+  "preferences":
+  {
+      "addon-zips-to-keep": 3,
+      "ui-selected-columns": [
+        "source", "name", "description", "installed-version", "available-version", "game-version", "uber-button"
+      ]
+  }
+}

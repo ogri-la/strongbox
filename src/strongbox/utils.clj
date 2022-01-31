@@ -95,7 +95,7 @@
             (when (fs/exists? path)
               path)
             (catch Exception uncaught-exception
-              (error uncaught-exception (str "unhandled exception attempting to delete file: " path))
+              (error uncaught-exception (str "unexpected error attempting to delete file: " path))
               path))))
 
 (defn-spec delete-many-files! nil?
@@ -174,9 +174,10 @@
 (def ^:dynamic *pretty-dt-printer* -pretty-dt-printer)
 
 (defn-spec format-dt string?
-  "returns a PrettyTime formatted datetime representation"
-  [val ::sp/inst]
-  (some->> val nilable todt (.format *pretty-dt-printer*)))
+  "returns a PrettyTime formatted datetime representation or an empty string"
+  [val (s/or :ok ::sp/inst, :supported nil?, :gui-edge-case ::sp/empty-string)]
+  ;; the `gui-edge-case` comes from converting nil values (crashes widgets) to empty strings (less crashy)
+  (or (some->> val nilable todt (.format *pretty-dt-printer*)) ""))
 
 (defn nav-map
   "wrapper around `get-in` that returns the map as-is if given `path` is empty"
@@ -689,6 +690,10 @@
   [msg string?, msg-list ::sp/list-of-strings]
   (clojure.string/join (format "\n %s " constants/bullet) (into [msg] msg-list)))
 
+(defn-spec reportable-error string?
+  [msg string?]
+  (message-list msg ["please report this! https://github.com/ogri-la/strongbox/issues"]))
+
 (defn-spec select-vals coll?
   "like `get` on `m` but for each key in `ks`. removes nils."
   [m map?, ks (s/coll-of any?)]
@@ -752,3 +757,8 @@
        (map f)
        (remove nil?)
        first))
+
+(defn-spec github-url-to-source-id (s/or :ok :addon/source-id :error nil?)
+  "extracts the addon ID from the given `url`."
+  [url ::sp/url]
+  (->> url java.net.URL. .getPath (re-matches #"^/([^/]+/[^/]+)[/]?.*") rest first))

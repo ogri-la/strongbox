@@ -350,8 +350,7 @@
           strict? true
           fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/281321"
                        {:get (fn [req] {:status 502 :reason-phrase "Gateway Time-out (HTTP 502)"})}}
-          expected ["addon host 'curseforge' will be disabled Feb 1st, 2022\n • use 'Source' and 'Find similar' from the addon context menu"
-                    "failed to fetch 'https://addons-ecs.forgesvc.net/api/v2/addon/281321': Gateway Time-out (HTTP 502) (HTTP 502)"
+          expected ["failed to fetch 'https://addons-ecs.forgesvc.net/api/v2/addon/281321': Gateway Time-out (HTTP 502) (HTTP 502)"
                     "Curseforge: the API is having problems right now. Try again later."
                     "no 'Retail' release found on curseforge."]]
       (with-fake-routes-in-isolation fake-routes
@@ -364,8 +363,7 @@
           strict? true
           fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/281321"
                        {:get (fn [req] {:status 504 :reason-phrase "Gateway Time-out (HTTP 504)"})}}
-          expected ["addon host 'curseforge' will be disabled Feb 1st, 2022\n • use 'Source' and 'Find similar' from the addon context menu"
-                    "failed to fetch 'https://addons-ecs.forgesvc.net/api/v2/addon/281321': Gateway Time-out (HTTP 504) (HTTP 504)"
+          expected ["failed to fetch 'https://addons-ecs.forgesvc.net/api/v2/addon/281321': Gateway Time-out (HTTP 504) (HTTP 504)"
                     "Curseforge: the API is having problems right now. Try again later."
                     "no 'Retail' release found on curseforge."]]
       (with-fake-routes-in-isolation fake-routes
@@ -521,7 +519,7 @@
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (catalogue/expand-summary addon game-track strict?)))))))
 
-(deftest expand-summary--pinned
+(deftest expand-summary--pinned--use-pinned
   (testing "when an addon is pinned, look for it's release in the list of releases returned from the host"
     (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"
                  :installed-version "1.2.3" :pinned-version "1.2.0"}
@@ -545,8 +543,9 @@
       (with-fake-routes-in-isolation {}
         ;; omg, with-redefs is fantastic
         (with-redefs [strongbox.curseforge-api/expand-summary (constantly fixture)]
-          (is (= expected (catalogue/expand-summary addon game-track strict?)))))))
+          (is (= expected (catalogue/expand-summary addon game-track strict?))))))))
 
+(deftest expand-summary--pinned--use-latest
   (testing "when a pinned addon cannot find it's pinned release, use the latest release available"
     (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"
                  :installed-version "0.9.9" :pinned-version "0.9.9"}
@@ -567,7 +566,6 @@
                               (first fixture))
                        (dissoc :release-label))]
       (with-fake-routes-in-isolation {}
-        ;; omg, with-redefs is fantastic
         (with-redefs [strongbox.curseforge-api/expand-summary (constantly fixture)]
           (is (= expected (catalogue/expand-summary addon game-track strict?))))))))
 

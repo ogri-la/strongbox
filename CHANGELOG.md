@@ -4,6 +4,41 @@ All notable changes to this project will be documented in this file. This change
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 5.0.0 - 2022-01-31
+
+### Added
+
+* column presets 'default', 'skinny' and 'fat'.
+* support for `X-Github` fields in the `.toc` file.
+    - these are a form `x-<source>-id` like `x-curse-project-id` and `x-wowi-id` and the value should be a Github URL.
+
+### Changed
+
+* replaced 'View -> Columns -> Reset to defaults' with the 'default' column preset.
+* github catalogue tweaks to support latest version of https://github.com/layday/github-wow-addon-catalogue
+* column preferences in the config file are now upgraded to the new default column set.
+    - any customised column preferences are preserved.
+* minor, errors/warning/info messages that appeared across multiple messages are now just one message.
+    - I also replaced some developer-isms like 'unhandled exception' with 'unexpected error'.
+        - please let me know if you ever find messages in the log obscure.
+* curseforge February deprecation notice is now the definitive "no longer supported".
+
+### Fixed
+
+* minor, clicking an already selected source in an addon's 'Source' context menu no longer triggers an update.
+
+### Removed
+
+* Curseforge support. Curseforge addons are:
+    - no longer checked for updates.
+    - excluded from being imported.
+    - excluded from the user-catalogue.
+    - no longer scraped from the api into a catalogue.
+    - no longer present in the 'full' or 'short' catalogues.
+    - excluded from search results.
+    - removed from the 'emergency' (built-in, hardcoded) catalogue (used when remote catalogues are unavailable).
+    - removed from lists of known addon sources to switch between.
+
 ## 4.9.1 - 2022-01-20
 
 ### Fixed

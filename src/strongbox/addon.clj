@@ -56,7 +56,7 @@
 (defn-spec remove-addon nil?
   "removes the given addon. if addon is part of a group, all addons in group are removed"
   [install-dir ::sp/extant-dir, addon :addon/installed]
-  (info (format "removing \"%s\" version \"%s'" (:label addon) (:installed-version addon)))
+  (info (format "removing \"%s\" version \"%s\"" (:label addon) (:installed-version addon)))
   (if (:ignore? addon)
     ;; if addon is being ignored, refuse to remove addon.
     ;; note: `group-addons` will add a top level `:ignore?` flag if any addon in a bundle is being ignored.
@@ -137,8 +137,12 @@
 (defn-spec merge-toc-nfo (s/or :ok map?, :empty nil?)
   "merges `toc` data with `nfo` data with special handling for the `source-map-list`."
   [toc (s/nilable map?), nfo (s/nilable map?)]
-  (let [source-map-list (some->> (merge-lists (extract-source-map-list toc)
+  (let [curse? (fn [source-map]
+                 (= (:source source-map) "curseforge"))
+        source-map-list (some->> (merge-lists (extract-source-map-list toc)
                                               (extract-source-map-list nfo))
+                                 (remove curse?)
+                                 vec
                                  (assoc {} :source-map-list))]
     (merge toc nfo source-map-list)))
 
@@ -525,7 +529,7 @@
   "switches addon from one source (like curseforge) to another (like wowinterface), rewriting nfo data.
   `new-source` must appear in the addon's `source-map-list`."
   [install-dir ::sp/extant-dir, addon :addon/installed, new-source-map :addon/source-map]
-  (when (and (utils/in? new-source-map (:source-map-list addon)) ;; todo: consider moving this check to cli
+  (when (and (utils/in? new-source-map (:source-map-list addon))
              (not (ignored? addon))
              (not (pinned? addon)))
     (let [new-source-map-list (merge-lists (extract-source-map-list addon)

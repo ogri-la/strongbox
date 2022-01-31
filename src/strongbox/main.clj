@@ -8,6 +8,7 @@
    [clojure.string :refer [lower-case]]
    [me.raynes.fs :as fs]
    [strongbox
+    [catalogue :as catalogue]
     [http :as http]
     [joblib :as joblib]
     [core :as core]
@@ -24,7 +25,7 @@
 (Thread/setDefaultUncaughtExceptionHandler
  (reify Thread$UncaughtExceptionHandler
    (uncaughtException [_ thread ex]
-     (error ex "Uncaught exception on" (.getName thread)))))
+     (error ex (format "unexpected error on thread %s: %s" (.getName thread) (.getMessage ex))))))
 
 ;; spec checking is enabled during repl development and *any* testing unless explicitly turned off.
 ;; spec checking is disabled upon release
@@ -90,13 +91,14 @@
                   http/*default-pause* 1 ;; ms
                   http/*default-attempts* 1
                   ;; don't pause while testing. nothing should depend on that pause happening.
-                  ;; note! this is different to `joblib/tick-delay` not delaying when `joblib/tick` is unbound.
-                  ;; tests still bind `joblib/tick` and run things in parallel.
-                  joblib/tick-delay joblib/tick
+                  ;; note! this is different to `joblib/tick-delay` not delaying when `joblib/*tick*` is unbound.
+                  ;; tests still bind `joblib/*tick*` and run things in parallel.
+                  joblib/tick-delay joblib/*tick*
                   ;;main/spec? true
                   ;;cli/install-update-these-in-parallel cli/install-update-these-serially
                   ;;core/check-for-updates core/check-for-updates-serially
-                  ]
+                  ;; for testing purposes, no addon host is disabled
+                  catalogue/host-disabled? (constantly false)]
       (core/reset-logging!)
 
       (if ns-kw

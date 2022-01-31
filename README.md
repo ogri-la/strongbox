@@ -2,13 +2,13 @@
 
 `strongbox` is an **open source**, **[advertisement free](#recognition)** and **[privacy respecting](#privacy)** addon manager for World of Warcraft.
 
-It supports Linux and macOS.
+It runs on Linux and macOS.
 
-It supports addons hosted by Curseforge, wowinterface, Tukui, Github and Gitlab.
+It supports addons hosted by ~Curseforge,~ wowinterface.com, Tukui, Github and Gitlab.
 
 ---
 
-***Notice***: Curseforge addons will no longer receive updates from version **5.0.0**, to be released Feb 1st, 2022.
+***Notice***: Curseforge addons no longer receive updates as of version **5.0.0**, released Feb 1st, 2022.
 
 The **4.x** releases may or may not continue to work for a time [depending on Overwolf's deprecation schedule](https://mailchi.mp/overwolf/whats-new-with-overwolf-curseforge-november3).
 
@@ -18,15 +18,15 @@ I also maintain a list of [other addon managers](https://ogri-la.github.io/wow-a
 
 ---
 
-[![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-installed-skinny-thumbnail.jpg)](./screenshots/screenshot-4.7.0-installed-skinny.png?raw=true)
-[![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-installed-thumbnail.jpg)](./screenshots/screenshot-4.7.0-installed.png?raw=true)
-[![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-installed-fat-thumbnail.jpg)](./screenshots/screenshot-4.7.0-installed-fat.png?raw=true)
-[![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-detail-thumbnail.jpg)](./screenshots/screenshot-4.7.0-detail.png?raw=true)
+[![strongbox version 5.0.0](./screenshots/screenshot-5.0.0-installed-skinny-thumbnail.jpg)](./screenshots/screenshot-5.0.0-installed-skinny.png?raw=true)
+[![strongbox version 5.0.0](./screenshots/screenshot-5.0.0-installed-thumbnail.jpg)](./screenshots/screenshot-5.0.0-installed.png?raw=true)
+[![strongbox version 5.0.0](./screenshots/screenshot-5.0.0-installed-fat-thumbnail.jpg)](./screenshots/screenshot-5.0.0-installed-fat.png?raw=true)
+[![strongbox version 5.0.0](./screenshots/screenshot-5.0.0-detail-thumbnail.jpg)](./screenshots/screenshot-5.0.0-detail.png?raw=true)
 
-[![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-dark-installed-skinny-thumbnail.jpg)](./screenshots/screenshot-4.7.0-dark-installed-skinny.png?raw=true)
-[![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-dark-installed-thumbnail.jpg)](./screenshots/screenshot-4.7.0-dark-installed.png?raw=true)
-[![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-dark-installed-fat-thumbnail.jpg)](./screenshots/screenshot-4.7.0-dark-installed-fat.png?raw=true)
-[![strongbox version 4.7.0](./screenshots/screenshot-4.7.0-dark-detail-thumbnail.jpg)](./screenshots/screenshot-4.7.0-dark-detail.png?raw=true)
+[![strongbox version 5.0.0](./screenshots/screenshot-5.0.0-dark-installed-skinny-thumbnail.jpg)](./screenshots/screenshot-5.0.0-dark-installed-skinny.png?raw=true)
+[![strongbox version 5.0.0](./screenshots/screenshot-5.0.0-dark-installed-thumbnail.jpg)](./screenshots/screenshot-5.0.0-dark-installed.png?raw=true)
+[![strongbox version 5.0.0](./screenshots/screenshot-5.0.0-dark-installed-fat-thumbnail.jpg)](./screenshots/screenshot-5.0.0-dark-installed-fat.png?raw=true)
+[![strongbox version 5.0.0](./screenshots/screenshot-5.0.0-dark-detail-thumbnail.jpg)](./screenshots/screenshot-5.0.0-dark-detail.png?raw=true)
 
 ## Installation
 
@@ -34,14 +34,14 @@ Arch Linux users can install `strongbox` from the [AUR](https://aur.archlinux.or
 
 For other Linux users:
 
-1. download: [./releases/strongbox](https://github.com/ogri-la/strongbox/releases/download/4.9.1/strongbox)
+1. download: [./releases/strongbox](https://github.com/ogri-la/strongbox/releases/download/5.0.0/strongbox)
 2. make executable: `chmod +x strongbox`
 3. run: `./strongbox`
 
 If you're on macOS or having a problem with the binary or just prefer Java `.jar` files (requires Java 11+):
 
-1. download: [./releases/strongbox-4.9.1-standalone.jar](https://github.com/ogri-la/strongbox/releases/download/4.9.1/strongbox-4.9.1-standalone.jar)
-2. run: `java -jar strongbox-4.9.1-standalone.jar`
+1. download: [./releases/strongbox-5.0.0-standalone.jar](https://github.com/ogri-la/strongbox/releases/download/5.0.0/strongbox-5.0.0-standalone.jar)
+2. run: `java -jar strongbox-5.0.0-standalone.jar`
 
 ## Usage
 
@@ -67,11 +67,11 @@ Afterwards, use the `Update all` button to update all addons with new versions a
 * [catalogue search](#catalogue-search)
 * [bulk update](#bulk-update)
 * [install addons from multiple sources](#install-addons-from-multiple-sources):
-    - curseforge
-    - wowinterface
-    - tukui
-    - github (using *releases*)
-    - gitlab (using *releases*)
+    - ~Curseforge~
+    - wowinterface.com
+    - Tukui
+    - Github (using *releases*)
+    - Gitlab (using *releases*)
 * [import and export lists of addons](#import-and-export-lists-of-addons)
 * [safeguards against bad addons](#safeguards-against-bad-addons)
 * [warnings when addons install other bundled addons](#warnings-when-addons-install-other-bundled-addons)
@@ -81,6 +81,7 @@ Afterwards, use the `Update all` button to update all addons with new versions a
 * [pinning an addon to a specific release](#pinning-an-addon-to-a-specific-release)
 * [multi-toc support](#multi-toc-support)
 * [release.json support](#releasejson-support)
+* [source swapping](#source-swapping)
 
 ## Recognition
 
@@ -107,7 +108,7 @@ that it's my privilege to offer this small piece back.
 
 This software interacts with the following remote hosts:
 
-* Overwolf/Twitch/Curseforge [Addons API](https://addons-ecs.forgesvc.net/) and its [CDN](https://edge.forgecdn.net/)
+* ~Overwolf/Twitch/Curseforge [Addons API](https://addons-ecs.forgesvc.net/) and its [CDN](https://edge.forgecdn.net/)~
 * [wowinterface.com](https://wowinterface.com)
 * [www.tukui.org](https://www.tukui.org/api.php)
 * [api.github.com](https://developer.github.com/v3/repos/releases)
@@ -126,8 +127,6 @@ Running strongbox with `--debug` will generate a file called "debug.log" that I 
 bug. *Some* of the details it contains are:
 
 * addons detected in the currently selected addon directory
-* ~your machine's `hostname`~
-    - removed in 4.0
 * paths to strongbox configuration and data:
     - `/home/torkus/.local/share/strongbox`
     - `/home/torkus/.config/strongbox`
@@ -173,9 +172,9 @@ compare it to the `Version` value in the list of WoW [public client builds](http
 
 Strongbox supports installing addons using URLs from addon hosts.
 
-Addons installed this way are always available regardless of the catalogue you've selected. 
+Addons installed this way are always available regardless of the catalogue you've selected.
 
-For example, an addon imported from Github will be available even if you otherwise use Curseforge addons exclusively.
+For example, addons imported from Github will be available even if you otherwise use wowinterface.com addons exclusively.
 
 Click `File` from the top menu and select `Import addon` and paste the URL of the addon you want to install.
 
@@ -183,9 +182,10 @@ Click `File` from the top menu and select `Import addon` and paste the URL of th
 
 Strongbox supports searching for addons from the following addon hosts:
 
-* [curseforge](https://www.curseforge.com/wow/addons)
-* [wowinterface](https://wowinterface.com/addons.php)
-* [tukui](https://www.tukui.org)
+* ~[Curseforge](https://www.curseforge.com/wow/addons)~
+* [wowinterface.com](https://wowinterface.com/addons.php)
+* [Tukui](https://www.tukui.org)
+* [Github](https://github.com)
 
 Click the `search` tab and start typing.
 
@@ -200,7 +200,7 @@ catalogue has approximately 7.5k addons.
 The 'full' catalogue contains all addons from all supported hosts, ever, and is approximately 15.3k addons large. It 
 contains many addons that haven't been updated in years.
 
-There are also per-host catalogues, like a 'curseforge' catalogue, and strongbox supports selecting between all of them.
+There are also per-host catalogues, like a 'wowinterface' catalogue, and strongbox supports selecting between all of them.
 
 Catalogues are updated weekly. New addons released during the week will not be present until the next week. Addons can 
 be installed using its URL in these cases.
@@ -223,11 +223,11 @@ Click the `Update all` button next to your addon directory.
 
 Strongbox supports installing addons from the following addon hosts:
 
-* [curseforge](https://www.curseforge.com/wow/addons)
-* [wowinterface](https://wowinterface.com/addons.php)
-* [tukui](https://www.tukui.org)
-* [github](https://www.github.com)
-* [gitlab][https://gitlab.com)
+* ~[Curseforge](https://www.curseforge.com/wow/addons)~
+* [wowinterface.com](https://wowinterface.com/addons.php)
+* [Tukui](https://www.tukui.org)
+* [Github](https://www.github.com)
+* [Gitlab](https://gitlab.com)
 
 Click the `search` tab and begin typing. Select the addon you wish to install and click the `install selected` button.
 
@@ -312,7 +312,7 @@ Right-click an addon and select `Release`.
 
 Strongbox currently supports installing previous releases for:
 
-* Curseforge
+* ~Curseforge~
 * Github
 * Gitlab
 
@@ -346,12 +346,18 @@ No documentation or specification seems to exist for it but there are [plenty of
 Because another HTTP request is required to download the file it is only consulted for the latest release and only if
 the game tracks for a release can't be otherwise guessed.
 
+### source swapping
+
+An installed addon comes from a specific addon host or *source*. An addon in it's `.toc` file may include the details of
+other sources where it can be found.
+
+For example, WeakAuras can be found on Github and wowinterface.com.
+
+To see addons with other sources, go to `View -> Columns` and click `other sources`.
+
+To switch an addon between sources, right-click an addon with other sources and select `Source`.
+
 ## Misc
-
-Original Swing GUI was last available in version 3.x using: `./strongbox --ui gui1`
-
-Prior to `1.0.0`, `strongbox` was known as `wowman`. The [AUR package](https://aur.archlinux.org/packages/wowman) for 
-`wowman` is obsolete.
 
 User configuration is stored in `~/.config/strongbox` unless run with the envvar `$XDG_CONFIG_HOME` set.
 
@@ -360,7 +366,7 @@ Temporary data is stored in `~/.local/share/strongbox` unless run with the envva
 Addon zip files are downloaded to your WoW `Addons` directory. See `Preferences -> Remove addon zip after installation`.
 
 A file called `.strongbox.json` is created within newly installed or re-installed addons. This file maps specific 
-attributes between the addon host (like curseforge.com) and the addon as well as *across* addons, as some addons unzip 
+attributes between the addon host (like wowinterface.com) and the addon as well as *across* addons, as some addons unzip 
 to multiple directories. It's a simple `txt` file in a structured format called `json`.
 
 Addon zip files, `.strongbox.json` files, old `.wowman.json` files, cached data and `WowMatrix.dat` files can all be 
@@ -374,9 +380,10 @@ Changes are recorded in the [CHANGELOG.md](CHANGELOG.md) file.
 
 All bugs/questions/requests/feedback should go in [Github Issues](https://github.com/ogri-la/strongbox/issues).
 
-I prefer to **not** receive *code* contributions.
+I prefer to **not** receive *code* contributions. See [CONTRIBUTING](CONTRIBUTING.md) for more detail.
 
-See [CONTRIBUTING](CONTRIBUTING.md) for more detail.
+Prior to `1.0.0`, `strongbox` was known as `wowman`. The [AUR package](https://aur.archlinux.org/packages/wowman) for 
+`wowman` is obsolete.
 
 ## Other addon managers
 
@@ -386,6 +393,6 @@ See [CONTRIBUTING](CONTRIBUTING.md) for more detail.
 
 ## License
 
-Copyright © 2018-2021 Torkus
+Copyright © 2018-2022 Torkus
 
 Distributed under the GNU Affero General Public Licence, version 3 [with additional permissions](LICENCE.txt#L665)

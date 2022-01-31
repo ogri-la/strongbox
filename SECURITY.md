@@ -15,8 +15,9 @@ All other major versions are unsupported.
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 4.x.x   | :heavy_check_mark: |
-| 3.x.x   | :heavy_minus_sign: |
+| 5.x.x   | :heavy_check_mark: |
+| 4.x.x   | :heavy_minus_sign: |
+| 3.x.x   | :x:                |
 | 2.x.x   | :x:                |
 | 1.x.x   | :x:                |
 | 0.x.x   | :x:                |

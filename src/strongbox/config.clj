@@ -24,15 +24,16 @@
 (def -default-catalogue-list--v2
   (conj -default-catalogue-list--v1 -github-catalogue))
 
-(def -default-catalogue-list -default-catalogue-list--v2)
+(def -default-catalogue-list--v3
+  (let [curse-idx 3]
+    (utils/drop-idx -default-catalogue-list--v2 curse-idx)))
 
-;; see `cli/column-map` for all known columns
-(def -default-column-list sp/default-column-list)
+(def -default-catalogue-list -default-catalogue-list--v3)
 
 (def default-cfg
   {:addon-dir-list []
    :selected-addon-dir nil
-   :catalogue-location-list -default-catalogue-list--v2
+   :catalogue-location-list -default-catalogue-list
    :selected-catalogue :short
    :gui-theme :light
    :preferences {;; nil: keep all zips (default)
@@ -40,7 +41,10 @@
                  ;; 1:   keep 1 zip
                  ;; N:   keep N zips
                  :addon-zips-to-keep nil
-                 :ui-selected-columns -default-column-list}})
+
+                 ;; see `specs/column-preset-list` for selectable presets
+                 ;; see `cli/column-map` for all known columns
+                 :ui-selected-columns sp/default-column-list}})
 
 (defn handle-install-dir
   "`:install-dir` was once supported in the user configuration but is now only supported in the command line options.
@@ -107,7 +111,22 @@
   [cfg map?]
   (if (= (->> cfg :catalogue-location-list (map :name) set)
          (->> -default-catalogue-list--v1 (map :name) set))
-    (assoc cfg :catalogue-location-list -default-catalogue-list--v2)
+    (assoc cfg :catalogue-location-list -default-catalogue-list)
+    cfg))
+
+(defn-spec remove-curseforge-catalogue map?
+  "removes the curseforge catalogue from the user config."
+  [cfg map?]
+  (let [new-catalogue-list (vec (remove #(= :curseforge (:name %)) (:catalogue-location-list cfg)))]
+    (assoc cfg :catalogue-location-list new-catalogue-list)))
+
+(defn-spec handle-column-preferences map?
+  "handles upgrading of the default column list.
+  if the config is using the v1 defaults, upgrade to v2 defaults."
+  [cfg map?]
+  (if (= (-> cfg :preferences :ui-selected-columns set)
+         (set sp/default-column-list--v1))
+    (assoc-in cfg [:preferences :ui-selected-columns] sp/default-column-list--v2)
     cfg))
 
 (defn remove-invalid-addon-dirs
@@ -150,6 +169,8 @@
                 handle-selected-addon-dir
                 remove-invalid-catalogue-location-entries
                 add-github-catalogue
+                remove-curseforge-catalogue
+                handle-column-preferences
                 strip-unspecced-keys)
         message (format "configuration from %s is invalid and will be ignored: %s"
                         msg (s/explain-str ::sp/user-config cfg))]

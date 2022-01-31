@@ -249,10 +249,7 @@
              vec
              utils/nilable)))
 
-(defn-spec parse-user-string (s/or :ok :addon/source-id :error nil?)
-  "extracts the addon ID from the given `url`."
-  [url ::sp/url]
-  (->> url java.net.URL. .getPath (re-matches #"^/([^/]+/[^/]+)[/]?.*") rest first))
+(def parse-user-string utils/github-url-to-source-id) ;; moved to utils to avoid coupling with `toc.clj`
 
 (defn-spec find-latest-release (s/or :release map?, :no-viable-release nil?)
   "the literal latest release we can find may not be the best choice and should only be "
@@ -326,16 +323,13 @@
                        :updated-date (:last_updated row)
                        :download-count 0
                        :source "github"
-                       :source-id (-> row :url java.net.URL. .getPath (utils/ltrim "/"))
-                       ;;:description (:description row) ;; may be empty
+                       :source-id (:full_name row)
+                       :description (-> row :description utils/nilable)
                        :game-track-list (->> row
                                              :flavors
                                              split*
                                              (mapv utils/guess-game-track))}]
-            ;; this is so clumsy :(
-            (if-let [description (utils/nilable (:description row))]
-              (assoc addon :description description)
-              addon)))]
+            (utils/drop-nils addon [:description])))]
     (mapv to-summary result-list)))
 
 ;;

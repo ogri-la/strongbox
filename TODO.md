@@ -4,16 +4,80 @@ this is my own scratchpad for keeping track of things. it gets truncated frequen
 
 see CHANGELOG.md for a more formal list of changes by release
 
-## done (4.9.1)
+## done
 
-* bug, github, prereleases and drafts not being removed
+* column profiles
+    - 'skinny', 'fat', 'default'
     - done
 
-* bug, addon/updateable? logic fixed for multi-toc addons
+* readme, remove the ~your machine's `hostname`~ bit.
     - done
 
+* readme, remove the "Original Swing GUI was last available in version 3.x using" bit
+    - done
 
-## todo
+* readme, add source swapping to list of features
+    - done
+
+* github, update catalogue to handle layday's changed csv format
+    - done
+
+* replace 'installed' and 'available' columns with the composite 'version' column
+    - done
+
+* remove the (pinned) and (ignored) labels from the 'available' column
+    - done
+    
+* toc, add support for x-github key
+    - X-Github: https://github.com/teelolws/Altoholic-Retail 
+        - repo no longer exists
+        - github search:
+            - https://github.com/search?q=%22X-Github%22++extension%3Atoc&type=Code&ref=advsearch&l=&l=
+    - and what would it do?
+        - I could switch between sources I suppose ...
+            - ha! done.
+    - done
+
+* strongbox-comrades
+    - remove curseforge as a requirement for any category.
+    - done
+
+* replace multi-error messages with a single multi-line error message
+    - done
+
+* BloodShieldTracker isn't switching to wowinterface from curseforge
+    - working now, weird.
+    - done
+
+* source menu
+    - clicking on an already selected item still does something
+        - it shouldn't do anything
+    - done
+
+* disable support for curseforge
+    - https://mailchi.mp/overwolf/whats-new-with-overwolf-curseforge-november3
+    - addons from curseforge can not be updatedreplace multi-error messages with a single multi-line error message
+        - they should get an error
+            - or marked as ignored?
+    - curseforge catalogue should not be present
+    - curseforge addons should not be present in full and short catalogues
+        - 
+    - curseforge results should not be in search results
+        - this will occur naturally when curseforge addons are not present in any catalogue
+    - addons from curseforge can not be imported
+        - this will occur naturally when curseforge addons are not present in any catalogue
+    - curseforge should not be present in emergency catalogue
+        - this will occur naturally when curseforge addons are not present in any catalogue
+        - disabled anyway
+    - done
+    
+* update comrades, remove curse support from strongbox
+    - done
+    
+* update screenshots, remove curseforge addons
+    - done
+
+## todo (4.9.0 -> 5.0.0)
 
 
 ## todo bucket (no particular order)
@@ -21,35 +85,17 @@ see CHANGELOG.md for a more formal list of changes by release
 * github, bug, multi-toc addons are getting a warning when `strict?` is true and the game track is changed
     - https://github.com/LenweSaralonde/MusicianList/releases
 
-* disable support for curseforge
-    - https://mailchi.mp/overwolf/whats-new-with-overwolf-curseforge-november3
-    - addons from curseforge can not be imported
-    - addons from curseforge can not be updated
-        - they should get an error
-            - or marked as ignored?
-    - curseforge catalogue should not be present
-    - curseforge addons should be present in full and short catalogues
-    - curseforge results should not be in search results
+* bug, test [:core :clear-addon-ignore-flag--implicit-ignore] is printing an error when game-track-list definitely exists
+    - what is removing it?
 
-* strongbox-comrades
-    - remove curseforge as a requirement for any category.
+* default to keeping last three zip files by default
+    - stretch goal
+        - probably not a good idea for this release where we might want to keep zips around
 
-* nfo, replace the URL as the group-id with something random
+* search, add ability to browse catalogue page by page
+    - I have neglected the catalogue search *so much*. I need a whole release dedicated to improving it.
 
-* "developer warnings"
-    - a preference that bumps certain debug messages to warnings and errors for developers
-        - like if a release.json is missing assets
-        - or the toc file is mangled
-            - or is missing useful information
-        - or the zip file is badly formed
-    - stuff a regular user should gloss over but a dev might find useful
-
-* star or 'like' addons in the catalogue
-
-* http, add with-backoff support to download-file
-    - just had a wowinterface addon download timeout
-
-* replace multi-error messages with a single multi-line error message
+* 'downloading strongbox data' shouldn't be blocking the gui from starting
 
 * user catalogue pane
     - context menu
@@ -63,6 +109,21 @@ see CHANGELOG.md for a more formal list of changes by release
         - so we can see updates happening to catalogue entries as they happen
     - write catalogue *once* after all items in operation updated
         - rather than once per update
+
+* nfo, replace the URL as the group-id with something random
+
+* "developer warnings"
+    - a preference that bumps certain debug messages to warnings and errors for developers
+        - like if a release.json is missing assets
+        - or the toc file is mangled
+            - or is missing useful information
+        - or the zip file is badly formed
+    - stuff a regular user should gloss over but a dev might find useful
+
+* ux, star or 'like' addons in the catalogue
+
+* http, add with-backoff support to download-file
+    - just had a wowinterface addon download timeout
 
 * user catalogue, refresh happens in parallel
     - write the user-catalogue once, not each time or else we'll get Weirdness
@@ -86,14 +147,7 @@ see CHANGELOG.md for a more formal list of changes by release
         - is it more of a templating thing?
     - https://github.com/Myrroddin/MrBigglesworthDeath/blob/master/MrBigglesworthDeath.toc
 
-* github, gitlab, are we paginating release calls?
-    - no we're not.
-    - unless authenticated somehow, I wouldn't bother.
-
-
-* github, like gitlab, use presence of multiple toc files to determine game track support
-
-* complex export pane
+* ux, complex export pane
     - choose format
         - json, csv, edn
     - choose to keep ignored or not
@@ -105,12 +159,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * gitlab, add optional API authentication like github
 
-* column profiles
-    - 'skinny', 'fat', 'default'
-
-* offer to clean up .nfo files when removing a directory
-
-* http, curseforge, don't pause between requests if resource was cached
+* ux, offer to clean up .nfo files when removing a directory
 
 * bug, stacktrace on double refresh
 
@@ -167,9 +216,11 @@ see CHANGELOG.md for a more formal list of changes by release
         - clicking 'more' (or whatever) takes to addon detail page
     - perhaps coincide with catalogue v3 with more addon details
 
-
-
 * wowinterface, revisit the pages that are being scraped, make sure we're not missing any
+
+* import/export, bring up the split logging pane during operation so any problems can be seen
+    - or update the tab title to reflect the number of warnings/errors
+        - otherwise there is zero feedback
 
 * export/import addons to/from github
     - I have a github account, I'd like to push/pull addons to it
@@ -188,7 +239,7 @@ see CHANGELOG.md for a more formal list of changes by release
 * 'update all' should be a no-op if nothing has updates available
     - don't disable the button, just don't do anything
 
-* clear non-catalogue cache after session
+* http, clear non-catalogue cache after session
     - it seems reasonable that stopping and starting the app will have it re-fetch addon summaries.
 
 * install addon from local zipfile
@@ -201,8 +252,9 @@ see CHANGELOG.md for a more formal list of changes by release
         - 'from url' and 'from file'
 
 * deleting an addon should also remove any of it's zip files
+    - this sounds like an opt-in preference
 
-* acquire locks on affected addons during installatinon
+* acquire locks on affected addons during installation
     - this will let us uninstall and install addons in parallel
 
 * share a pool of connections between jobs
@@ -218,7 +270,7 @@ see CHANGELOG.md for a more formal list of changes by release
 * change split button 'outdent' to 'indent'
     - and if split, keep it 'pressed in'
 
-* tags, make clickable in search results, 
+* tags, make clickable in search results
     - adds a filter that can be removed
     - add clickable tags to addon detail page
 
@@ -298,13 +350,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## next major version (v5)
 
-* default to keeping last three zip files by default
-* replace 'installed' and 'available' columns with the composite 'version' column
-* remove the (pinned) and (installed) labels from from the 'available' column
 * drop support catalogue v1
     - a prerequisite for v5 then would be introducing a new catalogue
-* readme, remove the ~your machine's `hostname`~ bit.
-* readme, remove the "Original Swing GUI was last available in version 3.x using" bit
+
 * rename 'retail' to 'mainline'
     - pretty big change ;) but probably for the best.
 
@@ -320,7 +368,7 @@ see CHANGELOG.md for a more formal list of changes by release
     - add to addon-detail
     - search other addons by author
 
-## releases
+## 
 
 * addon detail, 'releases' widget, including *all* possible releases to download and install
     - add an 'WoW' column to know which game-track/interface
@@ -343,8 +391,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * addon detail, 'releases' widget
     - installed release should be highlighted
 
-## import/exports
-
 * import and export addons using addon urls
 
 * cli, exports
@@ -362,16 +408,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - no need for padding and dummy dirnames then
     - installing normally would also include the mutual dependency handling
 
-## github 
-
-* toc, add support for x-github key
-    - X-Github: https://github.com/teelolws/Altoholic-Retail 
-        - repo no longer exists
-        - github search:
-            - https://github.com/search?q=%22X-Github%22++extension%3Atoc&type=Code&ref=advsearch&l=&l=
-    - and what would it do?
-        - I could switch between sources I suppose ...
-
 * github, importing an exported addon list with a github addon won't see that addon installed
     - unless that addon is present in the user catalogue
         - which in a fresh install where a list of addons are being restored is unlikely...
@@ -383,13 +419,17 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * github, add 'created date'
 
-## ui/gui
+* github, gitlab, are we paginating release calls?
+    - no we're not.
+    - unless authenticated somehow, I wouldn't bother.
 
-* dedicated tab for "user-catalogue" ?
+* github, like gitlab, use presence of multiple toc files to determine game track support
+
+* gui, dedicated tab for "user-catalogue" ?
     - add, delete, update github addons
     - see accumulating release history for addons?
 
-* bug, changing sort order during refresh doesn't reflect which addon is being updated
+* gui, bug, changing sort order during refresh doesn't reflect which addon is being updated
     - I think changing column ordering and moving columns should be disabled while updates happen
         - just freeze or disable them or something.
 

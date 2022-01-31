@@ -143,7 +143,7 @@
    ;; subset of possible data about all INSTALLED addons
    ;; starts as parsed .toc file data
    ;; ... then updated with data from catalogue
-   ;; ... then updated again with live data from curseforge
+   ;; ... then updated again with live data from addon hosts
    ;; see specs/toc-addon
    :installed-addon-list nil
 
@@ -657,7 +657,7 @@
 (defn-spec catalogue-local-path ::sp/file
   "given a catalogue-location, returns the local path to the catalogue."
   [catalogue-location :catalogue/location]
-  ;; {:name :full ...} => "/path/to/catalogue/dir/full-catalogue.json"
+  ;; {:name :full, ...} => "/path/to/catalogue/dir/full-catalogue.json"
   (utils/join (paths :catalogue-dir) (-> catalogue-location :name name (str "-catalogue.json"))))
 
 (defn-spec find-catalogue-local-path (s/or :ok ::sp/file, :not-found nil?)
@@ -691,13 +691,13 @@
         catalogue (catalogue/read-catalogue (.getBytes (decompress-bytes static-catalogue)) opts)
         catalogue (assoc catalogue :emergency? true)]
 
-    (warn (str "backup catalogue generated: " (:datestamp catalogue)))
-    (warn (format "remote catalogue unreachable or corrupt: %s" (:source catalogue-location)))
+    (warn (utils/message-list (format "the remote catalogue is unreachable or corrupt: %s" (:source catalogue-location))
+                              [(str "backup catalogue generated: " (:datestamp catalogue))]))
 
     (case (:name catalogue-location)
       :full catalogue
       :short (catalogue/shorten-catalogue catalogue)
-      :curseforge (catalogue/filter-catalogue catalogue "curseforge")
+      ;;:curseforge (catalogue/filter-catalogue catalogue "curseforge")
       :wowinterface (catalogue/filter-catalogue catalogue "wowinterface")
       :tukui (catalogue/filter-catalogue catalogue "tukui")
       nil)))
@@ -729,14 +729,21 @@
 
 ;;
 
-(defn-spec get-create-user-catalogue :catalogue/catalogue
-  "returns the contents of the user catalogue, creating one if necessary"
-  []
-  (let [user-catalogue-path (paths :user-catalogue-file)]
-    (catalogue/read-catalogue
-     (if (fs/exists? user-catalogue-path)
-       user-catalogue-path
-       (catalogue/write-empty-catalogue! user-catalogue-path)))))
+(defn-spec get-create-user-catalogue (s/or :ok :catalogue/catalogue, :missing+no-create nil?)
+  "returns the contents of the user catalogue at `user-catalogue-path`, creating one if `create?` is true (default)."
+  ([]
+   (get-create-user-catalogue (paths :user-catalogue-file) true))
+  ([user-catalogue-path string?, create? boolean?]
+   (when (and create?
+              (not (fs/exists? user-catalogue-path)))
+     (catalogue/write-empty-catalogue! user-catalogue-path))
+   (let [catalogue (catalogue/read-catalogue user-catalogue-path {:bad-data? nil})
+         curse? (fn [addon]
+                  (-> addon :source (= "curseforge")))
+         new-summary-list (->> catalogue :addon-summary-list (remove curse?) vec)]
+     (when catalogue
+       (merge catalogue {:addon-summary-list new-summary-list
+                         :total (count new-summary-list)})))))
 
 (defn-spec add-user-addon-list! nil?
   "adds a list of addons to the user catalogue"
@@ -801,15 +808,15 @@
             (catalogue/read-catalogue
              catalogue-path
              {:bad-data? (fn []
-                           (error "please report this! https://github.com/ogri-la/strongbox/issues")
-                           (error "remote catalogue failed to load and might be corrupt."))}))
+                           (error (utils/reportable-error "remote catalogue failed to load and might be corrupt.")))}))
 
           catalogue-data (or (catalogue/read-catalogue catalogue-path {:bad-data? bad-json-file-handler})
                              (when-not testing?
                                (emergency-catalogue catalogue-location)))
 
+          create-user-catalogue? false
           user-catalogue-data (p :p2/db:catalogue:read-user-catalogue
-                                 (catalogue/read-catalogue (paths :user-catalogue-file) {:bad-data? nil}))
+                                 (get-create-user-catalogue (paths :user-catalogue-file) create-user-catalogue?))
           ;; 2021-06-30: merge order changed. catalogue data is now merged over the top of the user-catalogue.
           ;; this is because the user-catalogue may now contain addons from all hosts and is likely to be out of date.
           final-catalogue (p :p2/db:catalogue:merge-catalogues
@@ -876,12 +883,10 @@
               (logging/with-addon addon
                 (if (:ignore? addon)
                   (info "not matched to catalogue, addon is being ignored")
-                  (do ;; todo: replace these with a :help level and a less scary colour
-                    (info "if this is part of a bundle, try \"File -> Re-install all\"")
-                    (info "try searching for this addon by name or description")
-                    (warn (format "failed to find %s in the '%s' catalogue"
-                                  (:dirname addon)
-                                  (name (get-state :cfg :selected-catalogue))))))))
+                  (warn (utils/message-list
+                         (format "failed to find %s in the '%s' catalogue" (:dirname addon) (name (get-state :cfg :selected-catalogue)))
+                         ["try searching for this addon by name or description"
+                          "if this addon is part of a bundle, try \"File -> Re-install all\""])))))
 
             unmatched))
 
@@ -935,8 +940,9 @@
                         (-> addon :game-track sp/game-track-labels-map)
                         (-> (get-game-track) sp/game-track-labels-map))))
         (when (:nfo/source addon)
-          (warn "this happens when an exact match is not found in the selected catalogue.")
-          (warn (format "update is from a different host (%s) to the one it was installed from (%s)." (:source addon) (:nfo/source addon)))))
+          (warn (utils/message-list
+                 (format "update is from a different host (%s) to the one it was installed from (%s)." (:source addon) (:nfo/source addon))
+                 ["this happens when an exact match is not found in the selected catalogue."]))))
 
       (joblib/tick-delay 0.75)
       (assoc addon :update? has-update?))))
@@ -1218,6 +1224,11 @@
                                                  :data-spec ::sp/export-record-list
                                                  :invalid-data? nil-me
                                                  :transform-map {:game-track keyword}})
+
+        curse? (fn [addon]
+                 (some-> addon :source (= "curseforge")))
+        addon-list (remove curse? addon-list)
+
         full-data? (fn [addon]
                      (utils/all (mapv #(contains? addon %) [:source :source-id :name])))
         [full-data, partial-data] (utils/split-filter full-data? addon-list)]

@@ -37,13 +37,16 @@
     (let [full (core/find-catalogue-local-path :full)
           short (core/find-catalogue-local-path :short)
 
-          curse (core/find-catalogue-local-path :curseforge)
+          ;;curse (core/find-catalogue-local-path :curseforge)
           wowi (core/find-catalogue-local-path :wowinterface)
           tukui (core/find-catalogue-local-path :tukui)
-          github (core/find-catalogue-local-path :github)]
+          github (core/find-catalogue-local-path :github)
+
+          num-full-addons (- 4 1) ;; 2022-01-22: curseforge not present in full catalogue
+          num-short-addons 2]
 
       ;; copy some fixtures
-      (fs/copy (fixture-path "catalogue--v2--curseforge.json") curse)
+      ;;(fs/copy (fixture-path "catalogue--v2--curseforge.json") curse)
       (fs/copy (fixture-path "catalogue--v2--wowinterface.json") wowi)
       (fs/copy (fixture-path "catalogue--v2--tukui.json") tukui)
       (fs/copy (fixture-path "catalogue--v2--github.json") github)
@@ -55,10 +58,10 @@
         (is (fs/exists? (core/find-catalogue-local-path :short))))
 
       (testing "each catalogue has one addon each"
-        (is (= 4 (-> full catalogue/read-catalogue :total))))
+        (is (= num-full-addons (-> full catalogue/read-catalogue :total))))
 
       (testing "the short catalogue has two addons in range"
-        (is (= 2 (-> short catalogue/read-catalogue :total)))))))
+        (is (= num-short-addons (-> short catalogue/read-catalogue :total)))))))
 
 (deftest search-db--empty-db
   (testing "an empty database can be searched from the CLI"
@@ -417,7 +420,7 @@
                  (:addon-summary-list (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))))
 
 (deftest import-addon--curseforge
-  (testing "user addon is successfully added to the user catalogue from a curseforge url"
+  (testing "user curseforge addon is not added to the user catalogue if it's present in the catalogue"
     (let [install-dir (helper/install-dir)
 
           match {:created-date "2010-05-07T18:48:16Z",
@@ -431,23 +434,7 @@
                  :source-id 1,
                  :url "https://www.curseforge.com/wow/addons/everyaddon"}
 
-          ;; a mush of the above (.nfo written during install) and the EveryAddon .toc file
-          expected {:description "Does what no other addon does, slightly differently",
-                    :dirname "EveryAddon",
-                    :group-id "https://www.curseforge.com/wow/addons/everyaddon",
-                    :installed-game-track :retail,
-                    :installed-version "v8.2.0-v1.13.2-7135.139",
-                    :interface-version 70000,
-                    :supported-game-tracks [:retail]
-                    :label "EveryAddon 1.2.3",
-                    :name "everyaddon",
-                    :primary? true,
-                    :source "curseforge",
-                    :source-id 1
-                    :source-map-list [{:source "curseforge" :source-id 1}]}
-
           expected-addon-dir (utils/join install-dir "EveryAddon")
-          expected-user-catalogue [match]
 
           catalogue (utils/to-json (catalogue/new-catalogue [match]))
 
@@ -473,18 +460,19 @@
           ;; user gives us this url, we find it and install it
           (cli/import-addon user-url)
 
-          ;; addon was successfully download and installed
-          (is (fs/exists? expected-addon-dir))
+          ;; addon was *not* download and installed
+          ;;(is (fs/exists? expected-addon-dir))
+          (is (not (fs/exists? expected-addon-dir)))
 
           ;; re-read install dir
           (core/load-installed-addons)
 
-          ;; we expect our mushy set of .nfo and .toc data
-          (is (= [expected] (core/get-state :installed-addon-list)))
+          ;; we expect nothing to have been installed
+          ;;(is (= [expected] (core/get-state :installed-addon-list)))
+          (is (= [] (core/get-state :installed-addon-list)))
 
-          ;; and that the addon was added to the user catalogue
-          (is (= expected-user-catalogue
-                 (:addon-summary-list (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))))
+          ;; and that nothing was added to the user catalogue
+          (is (nil? (catalogue/read-catalogue (core/paths :user-catalogue-file)))))))))
 
 (deftest import-addon--tukui
   (testing "user addon is successfully added to the user catalogue from a tukui url"

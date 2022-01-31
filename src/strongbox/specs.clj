@@ -38,6 +38,7 @@
 
 (s/def ::regex #(instance? java.util.regex.Pattern %))
 (s/def ::short-string #(<= (count %) 80))
+(s/def ::empty-string (s/and string? #(= % "")))
 
 (defn-spec has-ext boolean?
   "returns true if given `path` is suffixed with one of the extensions in `ext-list`"
@@ -132,12 +133,22 @@
 (s/def :ui/tab-list (s/coll-of :ui/tab))
 
 ;; column lists
+;; defined here to prevent coupling between cli.clj and config.clj (I guess?)
 
 ;; all known columns. also constitutes the column order.
 (def known-column-list [:browse-local :source :source-id :source-map-list :name :description :tag-list :created-date :updated-date :installed-version :available-version :combined-version :game-version :uber-button])
 
 ;; default set of columns
-(def default-column-list [:source :name :description :installed-version :available-version :game-version :uber-button])
+(def default-column-list--v1 [:source :name :description :installed-version :available-version :game-version :uber-button])
+(def default-column-list--v2 [:source :name :description :combined-version :game-version :uber-button])
+(def default-column-list default-column-list--v2)
+
+(def skinny-column-list [:name :version :combined-version :game-version :uber-button])
+(def fat-column-list [:browse-local :source :source-id :name :description :tag-list :created-date :updated-date :combined-version :game-version :uber-button])
+
+(def column-preset-list [[:default default-column-list]
+                         [:skinny skinny-column-list]
+                         [:fat fat-column-list]])
 
 (s/def :ui/column-list ::list-of-keywords)
 

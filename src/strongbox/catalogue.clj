@@ -22,15 +22,13 @@
 (defn-spec host-disabled? boolean?
   "returns `true` if the addon host has been disabled"
   [addon map?]
-  (when (-> addon :source (= "curseforge"))
-    (warn (utils/message-list (str "addon host 'curseforge' will be disabled " constants/curseforge-cutoff-label)
-                              ["use 'Source' and 'Find similar' from the addon context menu"])))
-  false)
+  (-> addon :source (= "curseforge")))
 
 (defn-spec -expand-summary (s/or :ok :addon/expanded, :error nil?)
   "fetches updates from the addon host for the given `addon` and `game-track`.
-  does *not* support compound game tracks or warning the user, see `expand-summary`.
-  returns `nil` when release not found"
+  does *not* support multiple game tracks or warning the user, see `expand-summary`.
+  does *not* support ignoring disabled hosts, see `expand-summary`.
+  returns `nil` when no release found."
   [addon :addon/expandable, game-track ::sp/game-track]
   (let [dispatch-map {"curseforge" curseforge-api/expand-summary
                       "wowinterface" wowinterface-api/expand-summary
@@ -55,8 +53,7 @@
                 (merge source-updates {:release-list release-list})
                 (dissoc :release-label)))))
       (catch Exception e
-        (error e "unhandled exception attempting to expand addon summary")
-        (error "please report this! https://github.com/ogri-la/strongbox/issues")))))
+        (error e (utils/reportable-error "unexpected error attempting to expand addon summary"))))))
 
 (defn-spec expand-summary (s/or :ok :addon/expanded, :error nil?)
   "fetches updates from the addon host for the given `addon` and `game-track`.
@@ -71,7 +68,8 @@
         game-track (some #{game-track} sp/game-tracks)] ;; :retail => :retail, :unknown-game-track => nil
     (cond
       (not game-track) (error (format "unsupported game track '%s'." (str game-track*)))
-      (host-disabled? addon) (error (format "addon host '%s' has been disabled." (:source addon)))
+      (host-disabled? addon) (warn (utils/message-list (str "addon host 'curseforge' was disabled " constants/curseforge-cutoff-label ".")
+                                                       ["use 'Source' and 'Find similar' from the addon context menu for alternatives."]))
       :else (if-let [source-updates (if strict?
                                       (-expand-summary addon game-track)
                                       (utils/first-nn (partial -expand-summary addon) (get track-map game-track)))]
@@ -79,7 +77,7 @@
 
               ;; "no 'Retail' release found on github"
               ;; "no 'Classic' release found on wowinterface"
-              ;; "no 'Classic (TBC)', 'Classic' or 'Retail' release found on curseforge"
+              ;; "no 'Classic (TBC)', 'Classic' or 'Retail' release found on github"
               (let [single-template "no '%s' release found on %s."
                     multi-template "no '%s', '%s' or '%s' release found on %s."
                     msg (if strict?

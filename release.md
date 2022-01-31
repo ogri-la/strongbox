@@ -6,6 +6,7 @@ git reset --hard
 git pull
 ./prep.sh <version>
 review PR
+merge
 ./release <version>
 
 exit vagrant

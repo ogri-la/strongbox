@@ -24,7 +24,7 @@
   ;; however! we know this information isn't good and doesn't always match what we see on the website.
   ;; until wowinterface improve, and short of doing more scraping of html, this is the best we can do.
   (when-not (:game-track-list addon-summary)
-    (error "given addon-summary has no game track list! please report this if you're not a developer.")
+    (error (utils/reportable-error "given addon-summary has no game track list."))
     (error addon-summary))
 
   ;; todo: this shouldn't be an 'if' if there is no 'else'
@@ -33,9 +33,11 @@
           result-list (some-> url http/download-with-backoff http/sink-error utils/from-json)
           result (first result-list)]
       (when result
+
+        ;; has this happened before? can we find an example?
         (when (> (count result-list) 1)
-          ;; has this happened before? can we find an example?
           (warn "wowinterface api returned more than one result for addon with id:" (:source-id addon-summary)))
+
         (let [sid (:source-id addon-summary)
               ;; rarely present. use it if found. actual value of `aid` not necessary, it seems to work when empty as well.
               aid (extract-aid (:UIDownload result))]
