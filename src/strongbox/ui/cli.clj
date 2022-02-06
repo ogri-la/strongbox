@@ -720,6 +720,13 @@
     (half-refresh)))
 
 
+;;
+
+(defn-spec add-summary-to-user-catalogue nil?
+  "adds an addon-summary (catalogue entry) to the user-catalogue, if it's not already present"
+  [addon-summary :addon/summary]
+  (core/add-user-addon-list! [addon-summary]))
+
 ;; debug
 
 

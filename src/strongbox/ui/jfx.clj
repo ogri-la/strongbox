@@ -28,6 +28,7 @@
   (:import
    [java.util List Calendar Locale]
    [javafx.util Callback]
+   [javafx.scene.text Font]
    [javafx.scene.control TreeTableRow TableRow TextInputDialog Alert Alert$AlertType ButtonType]
    [javafx.scene.input MouseButton MouseEvent KeyEvent KeyCode]
    [javafx.stage Stage FileChooser FileChooser$ExtensionFilter DirectoryChooser Window WindowEvent]
@@ -59,6 +60,9 @@
 
 (def user-locale (Locale/getDefault))
 (def ^java.text.NumberFormat number-formatter (NumberFormat/getNumberInstance user-locale))
+
+(Font/loadFont (.toExternalForm (clojure.java.io/resource "fontawesome.ttf")) (double 12))
+
 
 (defn format-number
   [^Integer n]
@@ -293,6 +297,42 @@
                 :-fx-background-radius "4"}
 
 
+
+               ".more-column"
+                {:-fx-padding 0
+                 :-fx-alignment "top-center"}
+
+                ".more-column > .button"
+                {:-fx-padding 0
+                 :-fx-pref-width 100
+                 :-fx-background-color nil
+                 :-fx-font-size "1.5em"
+                 ;; green tick
+                 :-fx-text-fill (colour :uber-button-tick)
+                 :-fx-font-weight "bold"}
+               
+
+              ".heart-column.table-cell" {" .text" {:-fx-font-family "FontAwesome"
+                                                    :-fx-fill "#ddd"
+                                                    ;;:-fx-font-size "1.3em"
+                                                    ;;:-fx-spacing "0"
+
+                                                    ":hover" {:-fx-fill "#ff5555"
+                                                              
+                                                              }
+                                                    
+                                                    }
+
+                                           ;;:-fx-padding 0
+                                           ;;:-fx-alignment "center"
+                                          :-fx-pref-width "50px"
+
+                                          
+                                           
+                                           }
+
+               
+
                ;;
                ;; treetableview
                ;;
@@ -355,19 +395,6 @@
                ".table-view#installed-addons "
                {".wow-column"
                 {:-fx-alignment "center"}
-
-                ".more-column"
-                {:-fx-padding 0
-                 :-fx-alignment "top-center"}
-
-                ".more-column > .button"
-                {:-fx-padding 0
-                 :-fx-pref-width 100
-                 :-fx-background-color nil
-                 :-fx-font-size "1.5em"
-                 ;; green tick
-                 :-fx-text-fill (colour :uber-button-tick)
-                 :-fx-font-weight "bold"}
 
                 ".table-row-cell.warnings .more-column > .button"
                 {;; orange bar
@@ -1750,6 +1777,8 @@
         installed-addon-idx (mapv idx-key (fx/sub-val context get-in [:app-state :installed-addon-list]))
         installed? #(utils/in? (idx-key %) installed-addon-idx)
 
+        favourited? false
+        
         search-state (fx/sub-val context get-in [:app-state :search])
         addon-list (cli/search-results search-state)
 
@@ -1757,7 +1786,17 @@
         empty-next-page (and (= 0 (count addon-list))
                              (> (-> search-state :page) 0))
 
-        column-list [{:text "source" :min-width 125 :pref-width 125 :max-width 125 :resizable false
+        column-list [{:text "" :style-class ["more-column" (if favourited? "heart-column-selected" "heart-column")]
+                      :cell-value-factory identity
+                      :cell-factory {:fx/cell-type :table-cell
+                                     :describe (fn [addon-summary]
+                                                 {:graphic (button "\uf004" (handler (fn []
+                                                                                       (println "got" addon-summary)
+                                                                                       (when-not (empty? addon-summary)
+                                                                                         (cli/add-summary-to-user-catalogue addon-summary)))))})}
+                                                                                     
+                      }
+                     {:text "source" :min-width 125 :pref-width 125 :max-width 125 :resizable false
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [row]
                                                  {:graphic (href-to-hyperlink row)})}
@@ -2092,11 +2131,9 @@
 
         refresh-button (fn [addon]
                          (component-instance
-                          (button "refresh" (async-handler #(cli/refresh-user-catalogue-item addon)))))
+                          (button "update" (async-handler #(cli/refresh-user-catalogue-item addon)))))
 
-        column-list [{:id "refresh" :text "" :style-class ["install-button-column"] :pref-width 100 :min-width 100 :resizable false :cell-value-factory refresh-button}
-
-                     {:id "source" :text "source" :pref-width 100 :min-width 100
+        column-list [{:id "source" :text "source" :pref-width 100 :min-width 100
                       :cell-value-factory identity
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [row]
@@ -2104,7 +2141,8 @@
 
                      {:id "source-id" :text "source-id" :pref-width 100 :min-width 100 :cell-value-factory :source-id}
                      {:id "name" :text "name" :pref-width 100 :min-width 100 :cell-value-factory :label}
-                     {:id "game-track-list" :text "supports" :pref-width 100 :min-width 100 :cell-value-factory (comp str :game-track-list)}]
+                     {:id "game-track-list" :text "supports" :pref-width 100 :min-width 100 :cell-value-factory (comp str :game-track-list)}
+                     {:id "refresh" :text "" :style-class ["install-button-column"] :pref-width 100 :min-width 100 :resizable false :cell-value-factory refresh-button}]
 
         row-list (:addon-summary-list user-catalogue)]
 
@@ -2150,6 +2188,7 @@
           :id "log-tab"
           :closable false
           :content {:fx/type notice-logger}}
+
          ;;{:fx/type :tab
          ;; :text "user-catalogue"
          ;; :id "user-catalogue-tab"
