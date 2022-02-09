@@ -732,6 +732,11 @@
 
 ;;
 
+(defn-spec write-user-catalogue! nil?
+  []
+  (catalogue/write-catalogue (catalogue/new-catalogue (get-state :user-catalogue :addon-summary-list)) (paths :user-catalogue-file))
+  nil)
+
 (defn-spec get-create-user-catalogue (s/or :ok :catalogue/catalogue, :missing+no-create nil?)
   "returns the contents of the user catalogue at `user-catalogue-path`, creating one if `create?` is true (default)."
   ([]
@@ -754,13 +759,26 @@
   (let [user-catalogue (get-state :user-catalogue)
         tmp-catalogue (catalogue/new-catalogue addon-summary-list)
         new-user-catalogue (catalogue/merge-catalogues user-catalogue tmp-catalogue)]
-    (catalogue/write-catalogue new-user-catalogue (paths :user-catalogue-file)))
+    (swap! state assoc :user-catalogue new-user-catalogue))
   nil)
 
 (defn-spec add-user-addon! nil?
   "adds a single addon to the user catalogue"
   [addon-summary :addon/summary]
   (add-user-addon-list! [addon-summary]))
+
+(defn-spec remove-user-addon! nil?
+  "removes a single addon from the user-catalogue"
+  [addon-summary :addon/summary]
+  (let [idx (fn [{:keys [source source-id]}]
+              #{source source-id})
+        user-catalogue (->> (get-state :user-catalogue :addon-summary-list)
+                            (remove (fn [row]
+                                      (= (idx row) (idx addon-summary)))))
+        new-user-catalogue (catalogue/new-catalogue user-catalogue)
+        ]
+    (swap! state assoc :user-catalogue new-user-catalogue))
+  nil)
 
 ;; catalogue db handling
 
@@ -794,10 +812,12 @@
   nil)
 
 (defn-spec db-load-user-catalogue nil?
+  "loads the user catalogue into state, but only if it hasn't already been loaded."
   []
-  (let [create-user-catalogue? false
-        path (paths :user-catalogue-file)]
-    (swap! state assoc :user-catalogue (get-create-user-catalogue path create-user-catalogue?)))
+  (when-not (get-state :user-catalogue)
+    (let [create-user-catalogue? false
+          path (paths :user-catalogue-file)]
+      (swap! state assoc :user-catalogue (get-create-user-catalogue path create-user-catalogue?))))
   nil)
 
 (defn-spec load-current-catalogue (s/or :ok :catalogue/catalogue, :error nil?)

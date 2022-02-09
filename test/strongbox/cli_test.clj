@@ -541,6 +541,9 @@
           (is (= [expected] (core/get-state :installed-addon-list)))
 
           ;; and that the addon was added to the user catalogue
+          (is (= expected-user-catalogue (core/get-state :user-catalogue :addon-summary-list)))
+
+          ;; and that the user catalogue was persisted to disk
           (is (= expected-user-catalogue
                  (:addon-summary-list (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))))
 
@@ -634,7 +637,7 @@
           ;; we need to load the short-catalogue using newer versions of what is in the user-catalogue
           ;; the user-catalogue is then matched against db, the newer summary returned and written to the user catalogue
 
-          (let [;; I've modified the user-catalogue--populated.json fixture to be 'older' that the short-catalogue fixture by
+          (let [;; I've modified the user-catalogue--populated.json fixture to be 'older' than the short-catalogue fixture by
                 ;; decrementing the download counts by 1. when the user-catalogue is refreshed we expect the new values to be fetched
                 ;; 2021-12: gitlab is an exception here. we have no download count information, it will always be zero.
                 inc-downloads #(if (= (:source %) "gitlab") % (update % :download-count inc))

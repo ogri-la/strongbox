@@ -1180,7 +1180,7 @@
 
       (with-running-app
         (core/add-user-addon! user-addon)
-        (is (= expected (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))
+        (is (= expected (core/get-state :user-catalogue)))))))
 
 (deftest add-user-addon-to-user-catalogue--idempotence
   (testing "adding addons to the user catalogue is idempotent"
@@ -1202,7 +1202,7 @@
         (core/add-user-addon! user-addon)
         (core/add-user-addon! user-addon)
         (core/add-user-addon! user-addon)
-        (is (= expected (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))
+        (is (= expected (core/get-state :user-catalogue)))))))
 
 ;; todo: can these fixtures use the test_helper versions?
 (deftest moosh-addons
