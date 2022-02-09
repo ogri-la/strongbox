@@ -604,7 +604,8 @@
   (binding [http/*cache* (core/cache)]
     (info (format "refreshing \"%s\", this may take a minute ..."
                   (-> (core/paths :user-catalogue-file) fs/base-name)))
-    (mapv #(refresh-user-catalogue-item % false) (core/get-state :user-catalogue :addon-summary-list))
+    (doseq [user-addon (core/get-state :user-catalogue :addon-summary-list)]
+      (refresh-user-catalogue-item user-addon false))
     (core/write-user-catalogue!))
   nil)
 

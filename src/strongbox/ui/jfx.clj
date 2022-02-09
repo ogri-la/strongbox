@@ -28,7 +28,6 @@
   (:import
    [java.util List Calendar Locale]
    [javafx.util Callback]
-   [javafx.scene.text Font]
    [javafx.scene.control TreeTableRow TableRow TextInputDialog Alert Alert$AlertType ButtonType]
    [javafx.scene.input MouseButton MouseEvent KeyEvent KeyCode]
    [javafx.stage Stage FileChooser FileChooser$ExtensionFilter DirectoryChooser Window WindowEvent]
@@ -60,9 +59,6 @@
 
 (def user-locale (Locale/getDefault))
 (def ^java.text.NumberFormat number-formatter (NumberFormat/getNumberInstance user-locale))
-
-(Font/loadFont (.toExternalForm (clojure.java.io/resource "fontawesome.ttf")) (double 12))
-
 
 (defn format-number
   [^Integer n]
@@ -296,42 +292,29 @@
                 :-fx-padding "2px 0"
                 :-fx-background-radius "4"}
 
-
-
                ".more-column"
-                {:-fx-padding 0
-                 :-fx-alignment "top-center"}
+               {:-fx-padding 0
+                :-fx-alignment "top-center"}
 
-                ".more-column > .button"
-                {:-fx-padding 0
-                 :-fx-pref-width 100
-                 :-fx-background-color nil
-                 :-fx-font-size "1.5em"
+               ".more-column > .button"
+               {:-fx-padding 0
+                :-fx-background-color nil
+                :-fx-font-size "1.5em"
+
+                 ;; todo: shift these to .more-column > .button.uber
                  ;; green tick
-                 :-fx-text-fill (colour :uber-button-tick)
-                 :-fx-font-weight "bold"}
-               
+                :-fx-pref-width 100
+                :-fx-text-fill (colour :uber-button-tick)
+                :-fx-font-weight "bold"}
 
-              ".heart-column.table-cell" {" .text" {:-fx-font-family "FontAwesome"
-                                                    :-fx-fill "#ddd"
-                                                    ;;:-fx-font-size "1.3em"
-                                                    ;;:-fx-spacing "0"
+               ".star-column" {" > .button" {:-fx-padding "-0.25em"
 
-                                                    ":hover" {:-fx-fill "#ff5555"
-                                                              
-                                                              }
-                                                    
-                                                    }
+                                             " .text" {:-fx-fill "#ddd"
+                                                       :-fx-font-size "1.9em"}
 
-                                           ;;:-fx-padding 0
-                                           ;;:-fx-alignment "center"
-                                          :-fx-pref-width "50px"
-
-                                          
-                                           
-                                           }
-
-               
+                                             ".starred .text" {:-fx-fill "#ffbf00"} ;; yellow-orange
+                                             }
+                               ":hover > .button .text" {:-fx-fill "#6495ed"}} ;; blueish
 
                ;;
                ;; treetableview
@@ -1774,11 +1757,13 @@
 (defn search-addons-table
   [{:keys [fx/context]}]
   (let [idx-key #(select-keys % [:source :source-id])
-        installed-addon-idx (mapv idx-key (fx/sub-val context get-in [:app-state :installed-addon-list]))
-        installed? #(utils/in? (idx-key %) installed-addon-idx)
+        installed-addon-idx (mapv idx-key (fx/sub-val context get-in [:app-state, :installed-addon-list]))
+        installed? #(utils/in? (idx-key %) installed-addon-idx) ;; todo: this is probably pretty slow?
 
-        favourited? false
-        
+        user-catalogue-idx (mapv idx-key (fx/sub-val context get-in [:app-state, :user-catalogue :addon-summary-list]))
+        starred? (fn [a]
+                   (utils/in? (idx-key a) user-catalogue-idx))
+
         search-state (fx/sub-val context get-in [:app-state :search])
         addon-list (cli/search-results search-state)
 
@@ -1786,16 +1771,17 @@
         empty-next-page (and (= 0 (count addon-list))
                              (> (-> search-state :page) 0))
 
-        column-list [{:text "" :style-class ["more-column" (if favourited? "heart-column-selected" "heart-column")]
+        column-list [{:text "" :style-class ["more-column" "star-column"]
+                      :min-width 50 :pref-width 50 :max-width 50
                       :cell-value-factory identity
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [addon-summary]
-                                                 {:graphic (button "\uf004" (handler (fn []
-                                                                                       (println "got" addon-summary)
-                                                                                       (when-not (empty? addon-summary)
-                                                                                         (cli/add-summary-to-user-catalogue addon-summary)))))})}
-                                                                                     
-                      }
+                                                 (let [starred (starred? addon-summary)
+                                                       f (if starred cli/remove-summary-from-user-catalogue cli/add-summary-to-user-catalogue)]
+                                                   {:graphic (button "\u2605" ;; "\uf004"
+                                                                     (handler (partial f addon-summary))
+                                                                     {:style-class (when starred "starred")})}))}}
+
                      {:text "source" :min-width 125 :pref-width 125 :max-width 125 :resizable false
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [row]

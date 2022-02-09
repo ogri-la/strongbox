@@ -775,8 +775,7 @@
         user-catalogue (->> (get-state :user-catalogue :addon-summary-list)
                             (remove (fn [row]
                                       (= (idx row) (idx addon-summary)))))
-        new-user-catalogue (catalogue/new-catalogue user-catalogue)
-        ]
+        new-user-catalogue (catalogue/new-catalogue user-catalogue)]
     (swap! state assoc :user-catalogue new-user-catalogue))
   nil)
 
@@ -843,7 +842,7 @@
                              (when-not testing?
                                (emergency-catalogue catalogue-location)))
 
-          create-user-catalogue? false
+          ;;create-user-catalogue? false
           ;;user-catalogue-data (p :p2/db:catalogue:read-user-catalogue
           ;;                       (get-create-user-catalogue (paths :user-catalogue-file) create-user-catalogue?))
           user-catalogue-data (get-state :user-catalogue)
@@ -1284,7 +1283,7 @@
   ;; load the user-catalogue
   ;; the `db-load-catalogue` will incorporate this if it's found
   (db-load-user-catalogue)
-  
+
    ;; load the contents of the selected catalogue and the user catalogue
   (p :p2/db (db-load-catalogue))
 
