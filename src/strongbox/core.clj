@@ -733,8 +733,10 @@
 ;;
 
 (defn-spec write-user-catalogue! nil?
+  "flushes the current user-catalogue in app state to disk"
   []
-  (catalogue/write-catalogue (catalogue/new-catalogue (get-state :user-catalogue :addon-summary-list)) (paths :user-catalogue-file))
+  (catalogue/write-catalogue (catalogue/new-catalogue (get-state :user-catalogue :addon-summary-list))
+                             (paths :user-catalogue-file))
   nil)
 
 (defn-spec get-create-user-catalogue (s/or :ok :catalogue/catalogue, :missing+no-create nil?)
@@ -770,11 +772,11 @@
 (defn-spec remove-user-addon! nil?
   "removes a single addon from the user-catalogue"
   [addon-summary :addon/summary]
-  (let [idx (fn [{:keys [source source-id]}]
-              #{source source-id})
+  (let [idx #(select-keys % [:source :source-id])
+        addon-summary-idx (idx addon-summary)
         user-catalogue (->> (get-state :user-catalogue :addon-summary-list)
                             (remove (fn [row]
-                                      (= (idx row) (idx addon-summary)))))
+                                      (= (idx row) addon-summary-idx))))
         new-user-catalogue (catalogue/new-catalogue user-catalogue)]
     (swap! state assoc :user-catalogue new-user-catalogue))
   nil)
@@ -842,9 +844,6 @@
                              (when-not testing?
                                (emergency-catalogue catalogue-location)))
 
-          ;;create-user-catalogue? false
-          ;;user-catalogue-data (p :p2/db:catalogue:read-user-catalogue
-          ;;                       (get-create-user-catalogue (paths :user-catalogue-file) create-user-catalogue?))
           user-catalogue-data (get-state :user-catalogue)
           ;; 2021-06-30: merge order changed. catalogue data is now merged over the top of the user-catalogue.
           ;; this is because the user-catalogue may now contain addons from all hosts and is likely to be out of date.
@@ -1171,7 +1170,7 @@
   "generates a list of 'export-records' from the addon summaries in the user catalogue and writes them to the given `output-file`"
   [output-file ::sp/file]
   (let [output-file (-> output-file fs/absolute str (utils/replace-file-ext ".json"))
-        catalogue (get-create-user-catalogue) ;; this needs to be sorted as well
+        catalogue (get-state :user-catalogue)
         export (export-catalogue-addon-list catalogue)]
     (utils/dump-json-file output-file export)
     (info "wrote:" output-file)
@@ -1280,8 +1279,7 @@
    ;; downloads the big long list of addon information stored on github
   (download-current-catalogue)
 
-  ;; load the user-catalogue
-  ;; the `db-load-catalogue` will incorporate this if it's found
+  ;; load the user-catalogue. `db-load-catalogue` will incorporate this if it's found.
   (db-load-user-catalogue)
 
    ;; load the contents of the selected catalogue and the user catalogue

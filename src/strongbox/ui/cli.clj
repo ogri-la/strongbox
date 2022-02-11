@@ -599,7 +599,7 @@
                         (:name addon) (.getMessage e))))))))
 
 (defn-spec refresh-user-catalogue nil?
-  "refresh the details of all addons in the user catalogue."
+  "refresh the details of all addons in the user catalogue, writing the updated catalogue to file once."
   []
   (binding [http/*cache* (core/cache)]
     (info (format "refreshing \"%s\", this may take a minute ..."

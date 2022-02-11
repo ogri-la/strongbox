@@ -1758,7 +1758,7 @@
   [{:keys [fx/context]}]
   (let [idx-key #(select-keys % [:source :source-id])
         installed-addon-idx (mapv idx-key (fx/sub-val context get-in [:app-state, :installed-addon-list]))
-        installed? #(utils/in? (idx-key %) installed-addon-idx) ;; todo: this is probably pretty slow?
+        installed? #(utils/in? (idx-key %) installed-addon-idx) ;; todo: probably pretty slow compared to set membership?
 
         user-catalogue-idx (mapv idx-key (fx/sub-val context get-in [:app-state, :user-catalogue :addon-summary-list]))
         starred? (fn [a]
@@ -1771,14 +1771,14 @@
         empty-next-page (and (= 0 (count addon-list))
                              (> (-> search-state :page) 0))
 
-        column-list [{:text "" :style-class ["more-column" "star-column"]
+        column-list [{:text "\u2605" :style-class ["more-column" "star-column"]
                       :min-width 50 :pref-width 50 :max-width 50
                       :cell-value-factory identity
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [addon-summary]
                                                  (let [starred (starred? addon-summary)
                                                        f (if starred cli/remove-summary-from-user-catalogue cli/add-summary-to-user-catalogue)]
-                                                   {:graphic (button "\u2605" ;; "\uf004"
+                                                   {:graphic (button "\u2605"
                                                                      (handler (partial f addon-summary))
                                                                      {:style-class (when starred "starred")})}))}}
 
