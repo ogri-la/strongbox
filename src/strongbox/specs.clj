@@ -217,7 +217,8 @@
 (s/def :addon/category string?)
 (s/def :addon/category-list (s/coll-of :addon/category))
 
-(s/def :addon/source (s/or :known #{"curseforge" "wowinterface" "github" "gitlab" "tukui" "tukui-classic" "tukui-classic-tbc"}
+(def known-hosts ["wowinterface" "github" "gitlab" "tukui" "tukui-classic" "tukui-classic-tbc"])
+(s/def :addon/source (s/or :known (set (conj known-hosts "curseforge"))
                            :unknown string?))
 (s/def :addon/source-id (s/or ::integer-id? int? ;; tukui has negative ids
                               ::string-id? string?))

@@ -17,6 +17,7 @@
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
    [strongbox.ui.cli :as cli]
+   [strongbox.ui.check-combo-box :as controlsfx.check-combo-box]
    [strongbox
     [constants :as constants]
     [joblib :as joblib]
@@ -1853,22 +1854,29 @@
      :padding 10
      :spacing 10
      :children
-     [{:fx/type :text-field
+     [{:fx/type :button
+       :id "search-install-button"
+       :text "install selected"
+       :on-action (async-handler #(search-results-install-handler (core/get-state :search :selected-result-list)))}
+
+      {:fx/type :text-field
        :id "search-text-field"
        :prompt-text "search"
        ;;:text (:term search-state) ;; don't do this, it can go spastic
        :text (core/get-state :search :term) ;; this seems ok, probably has it's own drawbacks
        :on-text-changed cli/search}
 
-      {:fx/type :button
-       :id "search-install-button"
-       :text "install selected"
-       :on-action (async-handler #(search-results-install-handler (core/get-state :search :selected-result-list)))}
+      {:fx/type controlsfx.check-combo-box/lifecycle
+       :title "addon host"
+       :items sp/known-hosts
+       :show-checked-count true
+       :on-checked-items-changed (async-handler (partial cli/search-results-filter-by :host))
+       }
 
-      {:fx/type :button
-       :id "search-random-button"
-       :text "random"
-       :on-action (handler cli/random-search)}
+      ;;{:fx/type :button
+      ;; :id "search-random-button"
+      ;; :text "random"
+      ;; :on-action (handler cli/random-search)}
 
       {:fx/type :h-box
        :id "spacer"

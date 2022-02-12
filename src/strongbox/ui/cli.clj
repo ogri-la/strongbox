@@ -188,6 +188,10 @@
        (let [results (core/db-search (-> new-state :search :term))]
          (swap! core/state assoc-in [:search :results] results))))))
 
+(defn-spec search-results-filter-by nil?
+  [filter-by keyword?, val any?]
+  nil)
+
 ;;
 
 (defn-spec change-catalogue nil?

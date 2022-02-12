@@ -118,6 +118,7 @@
 
 (def -search-state-template
   {:term nil
+   :filter-by []
    :page 0
    :results []
    :selected-result-list []

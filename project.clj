@@ -57,6 +57,8 @@
 
                  ;;[org.clojure/core.cache "1.0.207"] ;; jfx context caching
 
+                 [org.controlsfx/controlsfx "11.1.1"] ;; BSD-3
+                 
                  ]
 
   :managed-dependencies [;; fixes the annoying:
