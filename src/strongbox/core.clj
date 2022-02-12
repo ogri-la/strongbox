@@ -733,11 +733,12 @@
 ;;
 
 (defn-spec write-user-catalogue! nil?
-  "flushes the current user-catalogue in app state to disk"
-  []
-  (catalogue/write-catalogue (catalogue/new-catalogue (get-state :user-catalogue :addon-summary-list))
-                             (paths :user-catalogue-file))
-  nil)
+  "writes the `new-user-catalogue` to disk, using the current state of the `:user-catalogue` by default"
+  ([]
+   (write-user-catalogue! (catalogue/new-catalogue (get-state :user-catalogue :addon-summary-list))))
+  ([new-user-catalogue :catalogue/catalogue]
+   (catalogue/write-catalogue new-user-catalogue (paths :user-catalogue-file))
+   nil))
 
 (defn-spec get-create-user-catalogue (s/or :ok :catalogue/catalogue, :missing+no-create nil?)
   "returns the contents of the user catalogue at `user-catalogue-path`, creating one if `create?` is true (default)."
