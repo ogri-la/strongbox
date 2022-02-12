@@ -6,6 +6,12 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
+* ux, star or 'like' addons in the catalogue
+    - I think I'll hook these off of the user catalogue.
+        - liking a catalogue addon adds it to the user catalogue without installing it
+    - add a column to the search results
+    - done
+
 ## todo
 
 * search, add ability to browse catalogue page by page
@@ -18,16 +24,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * search, filter by addon hosts
 
 * installed, clicking an addon's tags does a search
-
-* gui, dedicated tab for "user-catalogue" ?
-    - add, delete, update github addons
-    - see accumulating release history for addons?
-
-* ux, star or 'like' addons in the catalogue
-    - I think I'll hook these off of the user catalogue.
-        - liking a catalogue addon adds it to the user catalogue without installing it
-    - add a column to the search results
-        - ensure items in user-catalogue are liked already
 
 * addon detail, mutual dependencies pane
     - for example, I would like to see what is happening when:

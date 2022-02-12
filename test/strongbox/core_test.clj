@@ -1162,7 +1162,7 @@
 
 ;;
 
-(deftest add-user-addon-to-user-catalogue
+(deftest add-user-addon!
   (testing "user addon is successfully added to the user catalogue, creating it if it doesn't exist"
     (let [user-addon {:url "https://github.com/Aviana/HealComm"
                       :updated-date "2019-10-09T17:40:01Z"
@@ -1180,9 +1180,9 @@
 
       (with-running-app
         (core/add-user-addon! user-addon)
-        (is (= expected (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))
+        (is (= expected (core/get-state :user-catalogue)))))))
 
-(deftest add-user-addon-to-user-catalogue--idempotence
+(deftest add-user-addon!--idempotence
   (testing "adding addons to the user catalogue is idempotent"
     (let [user-addon {:url "https://github.com/Aviana/HealComm"
                       :updated-date "2019-10-09T17:40:01Z"
@@ -1202,7 +1202,27 @@
         (core/add-user-addon! user-addon)
         (core/add-user-addon! user-addon)
         (core/add-user-addon! user-addon)
-        (is (= expected (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))
+        (is (= expected (core/get-state :user-catalogue)))))))
+
+(deftest remove-user-addon!
+  (testing "addon is successfully removed from the user catalogue"
+    (let [user-addon {:url "https://github.com/Aviana/HealComm"
+                      :updated-date "2019-10-09T17:40:01Z"
+                      :source "github"
+                      :source-id "Aviana/HealComm"
+                      :label "HealComm"
+                      :name "healcomm"
+                      :download-count 30946
+                      :tag-list []}]
+      (with-running-app
+        (core/remove-user-addon! user-addon)
+        (is (empty? (core/get-state :user-catalogue :addon-summary-list)))
+
+        (core/add-user-addon! user-addon)
+        (is (= [user-addon] (core/get-state :user-catalogue :addon-summary-list)))
+
+        (core/remove-user-addon! user-addon)
+        (is (empty? (core/get-state :user-catalogue :addon-summary-list)))))))
 
 ;; todo: can these fixtures use the test_helper versions?
 (deftest moosh-addons

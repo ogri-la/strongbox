@@ -88,7 +88,11 @@
     :row-alt "-fx-control-inner-background-alt"
     :uber-button-tick "darkseagreen"
     :uber-button-warn "orange"
-    :uber-button-error "red"}
+    :uber-button-error "red"
+    :star-hover "#aaa"
+    :star-unstarred "#ddd"
+    :star-starred "#ffbf00" ;; bright yellow
+    }
 
    :dark ;; "'dracula' theme: https://github.com/dracula/dracula-theme"
    {:base "#1e1f29"
@@ -113,7 +117,10 @@
     :row-alt "#22232e"
     :uber-button-tick "aquamarine"
     :uber-button-warn "#ffb86c"
-    :uber-button-error "red"}})
+    :uber-button-error "red"
+    :star-hover "#6272c3"
+    :star-unstarred "#555"
+    :star-starred "#6495ed"}})
 
 (def sub-theme-map
   {:dark
@@ -121,14 +128,18 @@
     {:row-updateable "#50a67b" ;; (green)
      :row-updateable-selected "#40c762" ;; (brighter green)
      :row-updateable-text "black"
-     :hyperlink-updateable "black"}
+     :hyperlink-updateable "black"
+     :star-hover "#50a67b"
+     :star-starred "#40c762"}
 
     :orange
     {:row-updateable "#df8750" ;; (orange)
-     :row-updateable-selected "#df722e" ;; (brigher orange)
+     :row-updateable-selected "#df722e" ;; (brighter orange)
      :row-updateable-text "black"
      :hyperlink-updateable "black"
-     :uber-button-error "brown"}}})
+     :uber-button-error "brown"
+     :star-hover "#df8750"
+     :star-starred "#df722e"}}})
 
 (def themes
   (into major-theme-map
@@ -292,6 +303,32 @@
                 :-fx-padding "2px 0"
                 :-fx-background-radius "4"}
 
+               ;; columns with invisible buttons in them
+               ".button-column"
+               {:-fx-padding 0
+                :-fx-alignment "top-center"}
+
+               ".button-column > .button"
+               {:-fx-padding 0
+                :-fx-background-color nil
+                :-fx-max-width "10em"} ;; "fill column width" 
+
+               ".star-column:hover > .button"
+               {:-fx-text-fill (colour :star-hover)}
+
+               ".star-column > .button"
+               {:-fx-padding "-0.25em"
+                :-fx-font-size "1.9em"
+                :-fx-text-fill (colour :star-unstarred)
+
+                ".starred"
+                {:-fx-text-fill (colour :star-starred)}}
+
+               ".button-column > .uber"
+               {:-fx-font-size "1.5em"
+                :-fx-text-fill (colour :uber-button-tick) ;; green tick
+                :-fx-font-weight "bold"}
+
 
                ;;
                ;; treetableview
@@ -356,24 +393,11 @@
                {".wow-column"
                 {:-fx-alignment "center"}
 
-                ".more-column"
-                {:-fx-padding 0
-                 :-fx-alignment "top-center"}
-
-                ".more-column > .button"
-                {:-fx-padding 0
-                 :-fx-pref-width 100
-                 :-fx-background-color nil
-                 :-fx-font-size "1.5em"
-                 ;; green tick
-                 :-fx-text-fill (colour :uber-button-tick)
-                 :-fx-font-weight "bold"}
-
-                ".table-row-cell.warnings .more-column > .button"
+                ".table-row-cell.warnings .button-column > .button"
                 {;; orange bar
                  :-fx-text-fill (colour :uber-button-warn)}
 
-                ".table-row-cell.errors .more-column > .button"
+                ".table-row-cell.errors .button-column > .button"
                 {;; red cross
                  :-fx-text-fill (colour :uber-button-error)}
 
@@ -411,7 +435,7 @@
                ;; installed, ignored
 
                ".table-view#installed-addons .ignored"
-               {" .more-column > .button"
+               {" .button-column > .button"
                 ;; !important because an orange warning colour is being inherited from somewhere
                 {:-fx-text-fill "gray !important"}}
 
@@ -1071,6 +1095,7 @@
                        :show-delay 200}}
      :desc {:fx/type :button
             :text text
+            :style-class ["button" "uber"]
             :on-action (fn [_]
                          (cli/add-addon-tab row)
                          (switch-tab-latest))}}))
@@ -1153,7 +1178,7 @@
          :available-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]}
          :combined-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]}
          :game-version {:min-width 70 :pref-width 70 :max-width 100}
-         :uber-button {:min-width 80 :pref-width 80 :max-width 120 :style-class ["more-column"]
+         :uber-button {:min-width 80 :pref-width 80 :max-width 120 :style-class ["button-column"]
                        :cell-value-factory identity
                        :cell-factory {:fx/cell-type :tree-table-cell
                                       :describe (fn [row]
@@ -1747,8 +1772,12 @@
 (defn search-addons-table
   [{:keys [fx/context]}]
   (let [idx-key #(select-keys % [:source :source-id])
-        installed-addon-idx (mapv idx-key (fx/sub-val context get-in [:app-state :installed-addon-list]))
-        installed? #(utils/in? (idx-key %) installed-addon-idx)
+        installed-addon-idx (mapv idx-key (fx/sub-val context get-in [:app-state, :installed-addon-list]))
+        installed? #(utils/in? (idx-key %) installed-addon-idx) ;; todo: probably pretty slow compared to set membership?
+
+        user-catalogue-idx (mapv idx-key (fx/sub-val context get-in [:app-state, :user-catalogue :addon-summary-list]))
+        starred? (fn [a]
+                   (utils/in? (idx-key a) user-catalogue-idx))
 
         search-state (fx/sub-val context get-in [:app-state :search])
         addon-list (cli/search-results search-state)
@@ -1757,7 +1786,18 @@
         empty-next-page (and (= 0 (count addon-list))
                              (> (-> search-state :page) 0))
 
-        column-list [{:text "source" :min-width 125 :pref-width 125 :max-width 125 :resizable false
+        column-list [{:text "\u2605" :style-class ["button-column" "star-column"]
+                      :min-width 50 :pref-width 50 :max-width 50
+                      :cell-value-factory identity
+                      :cell-factory {:fx/cell-type :table-cell
+                                     :describe (fn [addon-summary]
+                                                 (let [starred (starred? addon-summary)
+                                                       f (if starred cli/remove-summary-from-user-catalogue cli/add-summary-to-user-catalogue)]
+                                                   {:graphic (button "\u2605"
+                                                                     (handler (partial f addon-summary))
+                                                                     {:style-class (if starred "starred" "unstarred")})}))}}
+
+                     {:text "source" :min-width 125 :pref-width 125 :max-width 125 :resizable false
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [row]
                                                  {:graphic (href-to-hyperlink row)})}
@@ -2092,11 +2132,9 @@
 
         refresh-button (fn [addon]
                          (component-instance
-                          (button "refresh" (async-handler #(cli/refresh-user-catalogue-item addon)))))
+                          (button "update" (async-handler #(cli/refresh-user-catalogue-item addon)))))
 
-        column-list [{:id "refresh" :text "" :style-class ["install-button-column"] :pref-width 100 :min-width 100 :resizable false :cell-value-factory refresh-button}
-
-                     {:id "source" :text "source" :pref-width 100 :min-width 100
+        column-list [{:id "source" :text "source" :pref-width 100 :min-width 100
                       :cell-value-factory identity
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [row]
@@ -2104,7 +2142,8 @@
 
                      {:id "source-id" :text "source-id" :pref-width 100 :min-width 100 :cell-value-factory :source-id}
                      {:id "name" :text "name" :pref-width 100 :min-width 100 :cell-value-factory :label}
-                     {:id "game-track-list" :text "supports" :pref-width 100 :min-width 100 :cell-value-factory (comp str :game-track-list)}]
+                     {:id "game-track-list" :text "supports" :pref-width 100 :min-width 100 :cell-value-factory (comp str :game-track-list)}
+                     {:id "refresh" :text "" :style-class ["install-button-column"] :pref-width 100 :min-width 100 :resizable false :cell-value-factory refresh-button}]
 
         row-list (:addon-summary-list user-catalogue)]
 
@@ -2150,6 +2189,7 @@
           :id "log-tab"
           :closable false
           :content {:fx/type notice-logger}}
+
          ;;{:fx/type :tab
          ;; :text "user-catalogue"
          ;; :id "user-catalogue-tab"

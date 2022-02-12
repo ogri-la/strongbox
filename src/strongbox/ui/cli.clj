@@ -569,6 +569,7 @@
               addon (core/expand-summary-wrapper addon-summary)]
              ;; success! add to user-catalogue and proceed to install
              (do (core/add-user-addon! addon-summary)
+                 (core/write-user-catalogue!)
                  (core/install-addon-guard addon (core/selected-addon-dir))
                  ;;(core/db-reload-catalogue) ;; db-reload-catalogue will call `refresh` which we want to trigger in the gui instead
                  (swap! core/state assoc :db nil) ;; will force a reload of db
@@ -578,30 +579,34 @@
              nil)))
 
 (defn-spec refresh-user-catalogue-item nil?
-  "refresh the details of an individual addon in the user catalogue."
-  [addon :addon/summary]
-  (logging/with-addon addon
-    (info "refreshing details")
-    (try
-      (let [dry-run? false
-            refreshed-addon (find-addon (:url addon) dry-run?)]
-        (if refreshed-addon
-          (do (core/add-user-addon! refreshed-addon)
-              (info "... done!"))
-          (warn "failed to refresh catalogue entry")))
-      (catch Exception e
-        (error (format "an unexpected error happened while updating the details for '%s' in the user-catalogue: %s"
-                       (:name addon) (.getMessage e)))))))
+  "refresh the details of an individual addon in the user catalogue, optionally writing the updated catalogue to file"
+  ([addon :addon/summary]
+   (refresh-user-catalogue-item addon true))
+  ([addon :addon/summary, write? boolean?]
+   (logging/with-addon addon
+     (info "refreshing details")
+     (try
+       (let [dry-run? false
+             refreshed-addon (find-addon (:url addon) dry-run?)]
+         (if refreshed-addon
+           (do (core/add-user-addon! refreshed-addon)
+               (when write?
+                 (core/write-user-catalogue!))
+               (info "... done!"))
+           (warn "failed to refresh catalogue entry")))
+       (catch Exception e
+         (error (format "an unexpected error happened while updating the details for '%s' in the user-catalogue: %s"
+                        (:name addon) (.getMessage e))))))))
 
 (defn-spec refresh-user-catalogue nil?
-  "refresh the details of all addons in the user catalogue."
+  "refresh the details of all addons in the user catalogue, writing the updated catalogue to file once."
   []
   (binding [http/*cache* (core/cache)]
     (info (format "refreshing \"%s\", this may take a minute ..."
                   (-> (core/paths :user-catalogue-file) fs/base-name)))
-    (->> (core/get-create-user-catalogue)
-         :addon-summary-list
-         (mapv refresh-user-catalogue-item)))
+    (doseq [user-addon (core/get-state :user-catalogue :addon-summary-list)]
+      (refresh-user-catalogue-item user-addon false))
+    (core/write-user-catalogue!))
   nil)
 
 ;;
@@ -719,6 +724,20 @@
     (addon/switch-source! (core/selected-addon-dir) addon new-source-map)
     (half-refresh)))
 
+
+;;
+
+
+(defn-spec add-summary-to-user-catalogue nil?
+  "adds an addon-summary (catalogue entry) to the user-catalogue, if it's not already present"
+  [addon-summary :addon/summary]
+  (core/add-user-addon! addon-summary)
+  (core/write-user-catalogue!))
+
+(defn-spec remove-summary-from-user-catalogue nil?
+  [addon-summary :addon/summary]
+  (core/remove-user-addon! addon-summary)
+  (core/write-user-catalogue!))
 
 ;; debug
 

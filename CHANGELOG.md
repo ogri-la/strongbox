@@ -8,7 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* 'star' column to the search tab. Starring an addon will add it to your user-catalogue.
+
 ### Changed
+
+* core, the user-catalogue is now part of application state rather than read from file as needed.
 
 ### Fixed
 

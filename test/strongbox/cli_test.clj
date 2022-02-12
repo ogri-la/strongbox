@@ -345,6 +345,10 @@
 
           ;; addon was found and added to user catalogue
           (is (= expected-user-catalogue
+                 (core/get-state :user-catalogue :addon-summary-list)))
+
+          ;; user-catalogue was written to disk
+          (is (= expected-user-catalogue
                  (:addon-summary-list (catalogue/read-catalogue (core/paths :user-catalogue-file)))))
 
           ;; addon was successfully download and installed
@@ -415,7 +419,11 @@
           ;; we expect our mushy set of .nfo and .toc data
           (is (= [expected] (core/get-state :installed-addon-list)))
 
-          ;; and that the addon was added to the user catalogue
+          ;; addon was found and added to user catalogue
+          (is (= expected-user-catalogue
+                 (core/get-state :user-catalogue :addon-summary-list)))
+
+          ;; user-catalogue was written to disk
           (is (= expected-user-catalogue
                  (:addon-summary-list (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))))
 
@@ -541,6 +549,9 @@
           (is (= [expected] (core/get-state :installed-addon-list)))
 
           ;; and that the addon was added to the user catalogue
+          (is (= expected-user-catalogue (core/get-state :user-catalogue :addon-summary-list)))
+
+          ;; and that the user catalogue was persisted to disk
           (is (= expected-user-catalogue
                  (:addon-summary-list (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))))
 
@@ -550,11 +561,6 @@
 (deftest refresh-user-catalogue
   (testing "the user catalogue can be 'refreshed', pulling in updated information from github and the current catalogue"
     (with-running-app+opts {:ui nil}
-      ;; start with an up-to-date catalogue and 'old' user catalogue
-      ;; call `cli/refresh-user-catalogue`
-      ;; provide dummy updates
-      ;; expect new values
-
       (let [;; user-catalogue with a bunch of addons across all hosts that the user has added.
             user-catalogue-fixture (fixture-path "user-catalogue--populated.json")
 
@@ -634,7 +640,7 @@
           ;; we need to load the short-catalogue using newer versions of what is in the user-catalogue
           ;; the user-catalogue is then matched against db, the newer summary returned and written to the user catalogue
 
-          (let [;; I've modified the user-catalogue--populated.json fixture to be 'older' that the short-catalogue fixture by
+          (let [;; I've modified the user-catalogue--populated.json fixture to be 'older' than the short-catalogue fixture by
                 ;; decrementing the download counts by 1. when the user-catalogue is refreshed we expect the new values to be fetched
                 ;; 2021-12: gitlab is an exception here. we have no download count information, it will always be zero.
                 inc-downloads #(if (= (:source %) "gitlab") % (update % :download-count inc))
@@ -646,16 +652,60 @@
             ;; ensure new user-catalogue matches expectations
             (is (= expected-user-catalogue (core/get-create-user-catalogue)))))))))
 
-(deftest refresh-user-catalogue--no-catalogue
+(deftest refresh-user-catalogue-item
+  (testing "individual addons can be refreshed, writing the changes to disk afterwards."
+    (let [user-catalogue (catalogue/new-catalogue [helper/addon-summary])
+          new-addon (merge helper/addon-summary {:updated-date "2022-02-02T02:02:02"})
+          expected (assoc user-catalogue :addon-summary-list [new-addon])]
+      (with-running-app
+        (swap! core/state assoc :user-catalogue user-catalogue)
+        (core/write-user-catalogue!)
+        (with-redefs [cli/find-addon (fn [& args] new-addon)]
+          (cli/refresh-user-catalogue-item helper/addon-summary))
+        (is (= expected (core/get-state :user-catalogue)))))))
+
+(deftest refresh-user-catalogue-item--no-catalogue
   (testing "looking for an addon that doesn't exist in the catalogue isn't a total failure"
     (with-running-app
       (is (nil? (cli/refresh-user-catalogue-item helper/addon-summary))))))
 
-(deftest refresh-user-catalogue--unhandled-exception
+(deftest refresh-user-catalogue-item--unhandled-exception
   (testing "unhandled exceptions while refreshing a user-catalogue item isn't a total failure"
     (with-running-app
       (with-redefs [cli/find-addon (fn [& args] (throw (Exception. "catastrophe!")))]
         (is (nil? (cli/refresh-user-catalogue-item helper/addon-summary)))))))
+
+
+;;
+
+
+(deftest add-summary-to-user-catalogue
+  (testing "addon summaries can be added to the user catalogue"
+    (with-running-app
+      (let [expected (catalogue/new-catalogue [helper/addon-summary])
+            user-catalogue-file (core/paths :user-catalogue-file)]
+        (is (nil? (core/get-state :user-catalogue)))
+        (is (not (fs/exists? user-catalogue-file)))
+
+        (cli/add-summary-to-user-catalogue helper/addon-summary)
+
+        (is (= expected (core/get-state :user-catalogue)))
+        (is (= expected (catalogue/read-catalogue user-catalogue-file)))))))
+
+(deftest remove-summary-from-user-catalogue
+  (testing "addon summaries can be added to the user catalogue"
+    (with-running-app
+      (let [expected (catalogue/new-catalogue [])
+            user-catalogue-file (core/paths :user-catalogue-file)]
+
+        (cli/add-summary-to-user-catalogue helper/addon-summary)
+        (cli/remove-summary-from-user-catalogue helper/addon-summary)
+
+        (is (= expected (core/get-state :user-catalogue)))
+        (is (= expected (catalogue/read-catalogue user-catalogue-file)))))))
+
+
+;;
 
 ;; test doesn't seem to live comfortably in `core_test.clj`
 (deftest install-update-these-in-parallel--bad-download
