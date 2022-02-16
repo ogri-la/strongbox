@@ -707,6 +707,7 @@
 
 ;;
 
+
 ;; test doesn't seem to live comfortably in `core_test.clj`
 (deftest install-update-these-in-parallel--bad-download
   (testing "bad downloads are not passed to `core/install-addon`."

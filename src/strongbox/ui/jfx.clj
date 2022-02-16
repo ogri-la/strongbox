@@ -1849,7 +1849,9 @@
 
 (defn search-addons-search-field
   [{:keys [fx/context]}]
-  (let [search-state (fx/sub-val context get-in [:app-state :search])]
+  (let [just-x (fn [state]
+                 (select-keys (get-in state [:app-state :search]) [:term :filter-by :page :results-per-page]))
+        search-state (fx/sub-val context just-x)]
     {:fx/type :h-box
      :padding 10
      :spacing 10
@@ -1870,8 +1872,8 @@
        :title "addon host"
        :items sp/known-hosts
        :show-checked-count true
-       :on-checked-items-changed (async-handler (partial cli/search-results-filter-by :host))
-       }
+       :on-checked-items-changed (fn [val]
+                                   (cli/search-results-filter-by :source val))}
 
       ;;{:fx/type :button
       ;; :id "search-random-button"

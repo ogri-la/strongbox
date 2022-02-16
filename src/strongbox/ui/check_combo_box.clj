@@ -6,7 +6,6 @@
    [cljfx.lifecycle :as lifecycle]
    [cljfx.fx.control]
    [cljfx.mutator :as mutator]
-   [cljfx.prop :as prop]
    [cljfx.coerce :as coerce])
   (:import
    [org.controlsfx.control IndexedCheckModel CheckComboBox]

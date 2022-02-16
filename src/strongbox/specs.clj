@@ -415,4 +415,6 @@
 (s/def :joblib/job-info (s/keys :req-un [:joblib/job :joblib/job-id :joblib/progress]))
 (s/def :joblib/queue (s/or :keyvals map? :pairs ::list-of-lists))
 
-;;
+;; search
+
+(s/def :search/filter-by #{:source})

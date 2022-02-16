@@ -5,7 +5,9 @@
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :refer [log debug info warn error spy]]
-   [strongbox.specs :as sp])
+   [strongbox
+    [utils :as utils]
+    [specs :as sp]])
   (:import
    [java.util.regex Pattern]))
 
@@ -106,23 +108,32 @@
   results are constructed using a `seque` that (somehow) bypasses chunking behaviour so our
   search never takes more than `cap` results.
   matches are case insensitive."
-  [db uin cap]
-  (if (nil? uin)
-    (let [pct (->> db count (max 1) (/ 100) (* 0.6))]
-      ;; decrement cap here so navigation for random search results is disabled
-      [(take (dec cap) (random-sample pct db))])
+  [db uin cap filter-by]
+  (let [;; filter by addon hosts first, if possible
+        f (if-let [source-list (:source filter-by)]
+            (fn [row]
+              (utils/in? (:source row) source-list))
+            (constantly true))
+        db (filter f db)]
+    (if (nil? uin)
 
-    (let [uin (clojure.string/trim uin)
-          ;; implementation taken from here:
-          ;; - https://www.baeldung.com/java-case-insensitive-string-matching
-          regex (Pattern/compile (Pattern/quote uin) Pattern/CASE_INSENSITIVE)
-          match-fn (fn [row]
-                     (p :p3/db-search-row
-                        (or
-                         (.find (.matcher regex (or (:label row) "")))
-                         (.find (.matcher regex (or (:description row) ""))))))]
-      (p :p3/db-partition
-         (partition-all cap (seque 100 (filterv match-fn db)))))))
+      (let [pct (->> db count (max 1) (/ 100) (* 0.6))]
+        ;; decrement cap here so navigation for random search results is disabled
+        [(take (dec cap) (random-sample pct db))])
+
+      (let [uin (clojure.string/trim uin)
+            ;; implementation taken from here:
+            ;; - https://www.baeldung.com/java-case-insensitive-string-matching
+            regex (Pattern/compile (Pattern/quote uin) Pattern/CASE_INSENSITIVE)
+            match-fn (fn [row]
+                       (p :p3/db-search-row
+                          (or
+                           (.find (.matcher regex (or (:label row) "")))
+                           (.find (.matcher regex (or (:description row) ""))))))]
+        (p :p3/db-partition
+           (partition-all cap (seque 100 (filter match-fn db))))))))
+
+;;
 
 ;; not specced because the results and argument lists may vary greatly
 (defn stored-query
@@ -131,5 +142,5 @@
   (case query-kw
     :addon-by-source-and-name (-addon-by-source-and-name db (first arg-list) (second arg-list))
     :addon-by-name (-addon-by-name db (first arg-list))
-    :search (-search db (first arg-list) (second arg-list))
+    :search (-search db (first arg-list) (second arg-list) (nth arg-list 2))
     nil))

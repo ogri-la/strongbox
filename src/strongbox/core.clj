@@ -118,7 +118,7 @@
 
 (def -search-state-template
   {:term nil
-   :filter-by []
+   :filter-by {}
    :page 0
    :results []
    :selected-result-list []
@@ -803,8 +803,8 @@
 (defn db-search
   "searches database for addons whose name or description contains given user input.
   if no user input, returns a list of randomly ordered results"
-  [search-term]
-  (let [args [(utils/nilable search-term) (get-state :search :results-per-page)]]
+  [search-term cap filter-by]
+  (let [args [(utils/nilable search-term) cap filter-by]]
     (query-db :search args)))
 
 (defn-spec empty-search-results nil?
