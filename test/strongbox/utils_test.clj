@@ -442,3 +442,19 @@
                ["2019-08-26T00:00:01Z" false]]]
     (doseq [[given expected] cases]
       (is (= expected (utils/published-before-classic? given))))))
+
+(deftest just-in
+  (let [cases [[nil [] nil]
+               [nil [:foo :bar [:baz]] nil]
+               [{} [] nil]
+               [{:foo :bar} [:foo] nil]
+               [{:foo :bar} [:foo [:foo]] nil]
+               [{:foo :bar, :baz :bup} [:foo [:foo :baz]] nil]
+               [{:foo {:bar :baz}} [:foo [:bar]] {:bar :baz}]
+               [{:foo {:bar :baz, :bup :boo}} [:foo [:bar :bup :boop]] {:bar :baz, :bup :boo}]
+
+               [{:foo []} [:foo [:bar]] nil]
+               [{:foo ""} [:foo [:bar]] nil]]]
+    (doseq [[m ks expected] cases]
+      (is (= expected (utils/just-in m ks)), (str "failed case: " m ks)))))
+

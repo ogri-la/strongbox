@@ -12,7 +12,12 @@ see CHANGELOG.md for a more formal list of changes by release
     - add a column to the search results
     - done
 
+* search, filter by addon hosts
+    - done
+
 ## todo
+
+* search, bug, 'install selected' shouldn't do anything if nothing is selectedor
 
 * search, add ability to browse catalogue page by page
     - I have neglected the catalogue search *so much*. I need a whole release dedicated to improving it.
@@ -20,8 +25,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * tags, make clickable in search results
     - adds a filter that can be removed
     - add clickable tags to addon detail page
-
-* search, filter by addon hosts
 
 * installed, clicking an addon's tags does a search
 

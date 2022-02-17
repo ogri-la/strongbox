@@ -119,6 +119,46 @@
           (Thread/sleep 10)
           (is (= nil (core/get-state :search :term))))))))
 
+(deftest search-db--filter-by--host
+  (testing "a populated database can be filtered by host from the CLI"
+    (let [catalogue (slurp (fixture-path "catalogue--v2.json"))
+          fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
+                       {:get (fn [req] {:status 200 :body catalogue})}}
+          expected-num-addons 4
+          page-1 0]
+      (with-global-fake-routes-in-isolation fake-routes
+        (with-running-app
+          ;; any catalogue with less than 60 (a magic number) items has >100% probability of being included.
+          (cli/search nil)
+          (Thread/sleep 10)
+          ;; sanity check, we have all four addons
+          (is (= expected-num-addons (count (core/get-state :search :results page-1))))
+
+          ;; limit results to just wowinterface
+          (cli/search-add-filter :source ["wowinterface"])
+          (Thread/sleep 10)
+          (is (= "wowinterface" (-> (core/get-state :search :results page-1)
+                                    first ;; `get-in` doesn't realize lazy sequences so we'll get nils if we try accessing this with `0`
+                                    :source))) ;; we have one addon from each of the hosts
+
+          ;; limit results to just github
+          (cli/search-add-filter :source ["github"])
+          (Thread/sleep 10)
+          (is (= "github" (-> (core/get-state :search :results page-1)
+                              first
+                              :source)))
+
+          ;; limit results to just wowinterface+github, results are OR'd, order from catalogue is preserved (wowi, curse, tukui, github)
+          (cli/search-add-filter :source ["github" "wowinterface"])
+          (Thread/sleep 10)
+          (is (= "wowinterface" (-> (core/get-state :search :results page-1)
+                                    first ;; `get-in` doesn't realize lazy sequences so we'll get nils if we try accessing this with `0`
+                                    :source))) ;; we have one addon from each of the hosts
+          (is (= "github" (-> (core/get-state :search :results page-1)
+                              second ;; `get-in` doesn't realize lazy sequences so we'll get nils if we try accessing this with `0`
+                              :source))) ;; we have one addon from each of the hosts
+          )))))
+
 (deftest search-db--navigate
   (testing "a populated database can be searched forwards and backwards from the CLI"
     (let [catalogue (slurp (fixture-path "catalogue--v2.json"))
@@ -707,7 +747,10 @@
 
 ;;
 
+
 ;; test doesn't seem to live comfortably in `core_test.clj`
+
+
 (deftest install-update-these-in-parallel--bad-download
   (testing "bad downloads are not passed to `core/install-addon`."
     (with-running-app

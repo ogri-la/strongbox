@@ -762,3 +762,14 @@
   "extracts the addon ID from the given `url`."
   [url ::sp/url]
   (->> url java.net.URL. .getPath (re-matches #"^/([^/]+/[^/]+)[/]?.*") rest first))
+
+(defn-spec just-in any?
+  "like `get-in` but the last path element is used with `select-keys`.
+  returns nil if the second-to-last path element doesn't yield a map."
+  [m (s/nilable map?), ks vector?]
+  (let [path (butlast ks)
+        these-keys (last ks)]
+    (when m
+      (let [v (get-in m path)]
+        (when (and (map? v) (vector? these-keys))
+          (select-keys v these-keys))))))

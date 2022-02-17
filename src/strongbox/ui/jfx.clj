@@ -17,6 +17,7 @@
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
    [strongbox.ui.cli :as cli]
+   [strongbox.ui.check-combo-box :as controlsfx.check-combo-box]
    [strongbox
     [constants :as constants]
     [joblib :as joblib]
@@ -1794,7 +1795,7 @@
                                                  (let [starred (starred? addon-summary)
                                                        f (if starred cli/remove-summary-from-user-catalogue cli/add-summary-to-user-catalogue)]
                                                    {:graphic (button "\u2605"
-                                                                     (handler (partial f addon-summary))
+                                                                     (async-handler (partial f addon-summary))
                                                                      {:style-class (if starred "starred" "unstarred")})}))}}
 
                      {:text "source" :min-width 125 :pref-width 125 :max-width 125 :resizable false
@@ -1848,27 +1849,37 @@
 
 (defn search-addons-search-field
   [{:keys [fx/context]}]
-  (let [search-state (fx/sub-val context get-in [:app-state :search])]
+  (let [search-state (fx/sub-val context utils/just-in [:app-state :search [:term :filter-by :page :results-per-page]])
+        known-host-list (core/get-state :db-stats :known-host-list)
+        disable-host-selector? (= 1 (count known-host-list))]
     {:fx/type :h-box
      :padding 10
      :spacing 10
      :children
-     [{:fx/type :text-field
+     [{:fx/type :button
+       :id "search-install-button"
+       :text "install selected"
+       :on-action (async-handler #(search-results-install-handler (core/get-state :search :selected-result-list)))}
+
+      {:fx/type :text-field
        :id "search-text-field"
        :prompt-text "search"
        ;;:text (:term search-state) ;; don't do this, it can go spastic
        :text (core/get-state :search :term) ;; this seems ok, probably has it's own drawbacks
        :on-text-changed cli/search}
 
-      {:fx/type :button
-       :id "search-install-button"
-       :text "install selected"
-       :on-action (async-handler #(search-results-install-handler (core/get-state :search :selected-result-list)))}
+      {:fx/type controlsfx.check-combo-box/lifecycle
+       :title "addon host"
+       :items known-host-list
+       :show-checked-count true
+       :on-checked-items-changed (fn [val]
+                                   (cli/search-add-filter :source val))
+       :disable disable-host-selector?}
 
-      {:fx/type :button
-       :id "search-random-button"
-       :text "random"
-       :on-action (handler cli/random-search)}
+      ;;{:fx/type :button
+      ;; :id "search-random-button"
+      ;; :text "random"
+      ;; :on-action (handler cli/random-search)}
 
       {:fx/type :h-box
        :id "spacer"

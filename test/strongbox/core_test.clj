@@ -1592,7 +1592,11 @@
           fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                        {:get (fn [req] {:status 200 :body dummy-catalogue})}}
           expected-messages ["addon 'A New Simple Percent' is from an unsupported source 'gitplex'."
-                             "refresh"]]
+                             "refresh"]
+
+          search-term "new"
+          search-cap 10
+          search-filter-by {}]
 
       (with-global-fake-routes-in-isolation fake-routes
         (with-running-app+opts {:spec? false}
@@ -1602,7 +1606,7 @@
           (is (= expected-messages
                  (logging/buffered-log
                   :error
-                  (-> (core/db-search "new")
+                  (-> (core/db-search search-term search-cap search-filter-by)
                       first ;; first page of results
                       first ;; first result
                       cli/install-addon))))
@@ -1633,7 +1637,10 @@
                      "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                      {:get (fn [req] {:status 200 :body dummy-catalogue})}}
         expected-messages ["unsupported game track ':classic-bfa'."
-                           "refresh"]]
+                           "refresh"]
+        search-term "chin"
+        search-cap 10
+        search-filter-by {}]
 
     (testing "strongbox can attempt to install an addon from an unknown source and not crash"
       (with-global-fake-routes-in-isolation fake-routes
@@ -1648,7 +1655,7 @@
           (is (= expected-messages
                  (logging/buffered-log
                   :error
-                  (-> (core/db-search "chin")
+                  (-> (core/db-search search-term search-cap search-filter-by)
                       first ;; first page of results
                       first ;; first result
                       cli/install-addon))))

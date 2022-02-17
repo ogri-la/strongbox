@@ -181,12 +181,21 @@
   results are updated at [:search :results]"
   []
   ;; todo: cancel any other searching going on?
-  (core/state-bind
-   [:search :term]
-   (fn [new-state]
-     (future
-       (let [results (core/db-search (-> new-state :search :term))]
-         (swap! core/state assoc-in [:search :results] results))))))
+  (let [path-list [[:search :term]
+                   [:search :filter-by]]
+        listener (fn [new-state]
+                   (future
+                     (let [{:keys [term results-per-page filter-by]} (:search new-state)
+                           results (core/db-search term results-per-page filter-by)]
+                       (swap! core/state assoc-in [:search :results] results))))]
+    (doseq [path path-list]
+      (core/state-bind path listener))))
+
+(defn-spec search-add-filter nil?
+  "adds a new filter to the search filter-by configuration."
+  [filter-by :search/filter-by, val any?]
+  (swap! core/state assoc-in [:search :filter-by filter-by] (utils/nilable val))
+  nil)
 
 ;;
 

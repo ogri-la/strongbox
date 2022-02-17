@@ -118,6 +118,7 @@
 
 (def -search-state-template
   {:term nil
+   :filter-by {}
    :page 0
    :results []
    :selected-result-list []
@@ -151,6 +152,9 @@
 
    ;; the list of addons from the catalogue
    :db nil
+
+   ;; some generated stats about the db that are updated just once at load time.
+   :db-stats {:known-host-list []}
 
    ;; the list of addons from the user-catalogue
    :user-catalogue nil
@@ -802,8 +806,8 @@
 (defn db-search
   "searches database for addons whose name or description contains given user input.
   if no user input, returns a list of randomly ordered results"
-  [search-term]
-  (let [args [(utils/nilable search-term) (get-state :search :results-per-page)]]
+  [search-term cap filter-by]
+  (let [args [(utils/nilable search-term) cap filter-by]]
     (query-db :search args)))
 
 (defn-spec empty-search-results nil?
@@ -863,8 +867,14 @@
                              (load-current-catalogue))]
       (when-not (empty? final-catalogue)
         (p :p2/db:load
-           (swap! state assoc :db
-                  (db/put-many [] (:addon-summary-list final-catalogue))))))
+           (swap! state merge {:db (:addon-summary-list final-catalogue)
+                               :db-stats {:num-addons (count (:addon-summary-list final-catalogue))
+                                          :known-host-list (->> final-catalogue
+                                                                :addon-summary-list
+                                                                (map :source)
+                                                                distinct
+                                                                sort
+                                                                vec)}}))))
     (debug "skipping db load. already loaded or no catalogue selected."))
   nil)
 
