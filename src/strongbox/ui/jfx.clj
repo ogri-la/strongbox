@@ -1810,7 +1810,8 @@
                                      :describe (fn [row]
                                                  {:graphic {:fx/type :h-box
                                                             :children (mapv (fn [tag]
-                                                                              (button (name tag) donothing)) (:tag-list row))}})}
+                                                                              (button (name tag) (async-handler (partial cli/search-add-filter :tag tag))))
+                                                                            (:tag-list row))}})}
                       }
                      {:text "updated" :min-width 85 :max-width 85 :pref-width 85 :resizable false :cell-value-factory (comp #(utils/safe-subs % 10) :updated-date)}
                      {:text "downloads" :min-width 120 :pref-width 120 :max-width 120 :resizable false

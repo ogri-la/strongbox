@@ -416,4 +416,4 @@
 
 ;; search
 
-(s/def :search/filter-by #{:source})
+(s/def :search/filter-by #{:source :tag})
