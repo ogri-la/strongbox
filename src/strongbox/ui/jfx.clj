@@ -1795,7 +1795,7 @@
                                                  (let [starred (starred? addon-summary)
                                                        f (if starred cli/remove-summary-from-user-catalogue cli/add-summary-to-user-catalogue)]
                                                    {:graphic (button "\u2605"
-                                                                     (handler (partial f addon-summary))
+                                                                     (async-handler (partial f addon-summary))
                                                                      {:style-class (if starred "starred" "unstarred")})}))}}
 
                      {:text "source" :min-width 125 :pref-width 125 :max-width 125 :resizable false
@@ -1849,9 +1849,9 @@
 
 (defn search-addons-search-field
   [{:keys [fx/context]}]
-  (let [just-x (fn [state]
-                 (select-keys (get-in state [:app-state :search]) [:term :filter-by :page :results-per-page]))
-        search-state (fx/sub-val context just-x)]
+  (let [search-state (fx/sub-val context utils/just-in [:app-state :search [:term :filter-by :page :results-per-page]])
+        known-host-list (core/get-state :db-stats :known-host-list)
+        disable-host-selector? (= 1 (count known-host-list))]
     {:fx/type :h-box
      :padding 10
      :spacing 10
@@ -1870,10 +1870,11 @@
 
       {:fx/type controlsfx.check-combo-box/lifecycle
        :title "addon host"
-       :items sp/known-hosts
+       :items known-host-list
        :show-checked-count true
        :on-checked-items-changed (fn [val]
-                                   (cli/search-results-filter-by :source val))}
+                                   (cli/search-add-filter :source val))
+       :disable disable-host-selector?}
 
       ;;{:fx/type :button
       ;; :id "search-random-button"

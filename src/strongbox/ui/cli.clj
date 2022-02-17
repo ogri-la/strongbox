@@ -191,7 +191,8 @@
     (doseq [path path-list]
       (core/state-bind path listener))))
 
-(defn-spec search-results-filter-by nil?
+(defn-spec search-add-filter nil?
+  "adds a new filter to the search filter-by configuration."
   [filter-by :search/filter-by, val any?]
   (swap! core/state assoc-in [:search :filter-by filter-by] (utils/nilable val))
   nil)

@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 * 'star' column to the search tab. Starring an addon will add it to your user-catalogue.
+* 'addon host' multi-checkbox field to the search tab, allowing you to select which hosts to see addons from.
+    - (disabled when there is only one host to choose from)
 
 ### Changed
 

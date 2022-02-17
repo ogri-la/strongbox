@@ -107,20 +107,22 @@
   "returns a lazily fetched and paginated list of addon summaries.
   results are constructed using a `seque` that (somehow) bypasses chunking behaviour so our
   search never takes more than `cap` results.
-  matches are case insensitive."
+  matches on `uin` are case insensitive.
+  `filter-by` filters are applied before searching for `uin`."
   [db uin cap filter-by]
-  (let [;; filter by addon hosts first, if possible
-        f (if-let [source-list (:source filter-by)]
-            (fn [row]
-              (utils/in? (:source row) source-list))
-            (constantly true))
-        db (filter f db)]
-    (if (nil? uin)
+  (let [host-filter (if-let [source-list (:source filter-by)]
+                      (fn [row]
+                        (utils/in? (:source row) source-list))
+                      (constantly true))
+        db (filter host-filter db)]
 
+    ;; no/empty input, do a random sample
+    (if (nil? uin)
       (let [pct (->> db count (max 1) (/ 100) (* 0.6))]
         ;; decrement cap here so navigation for random search results is disabled
         [(take (dec cap) (random-sample pct db))])
 
+      ;; else, search by input
       (let [uin (clojure.string/trim uin)
             ;; implementation taken from here:
             ;; - https://www.baeldung.com/java-case-insensitive-string-matching
