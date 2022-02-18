@@ -1163,7 +1163,13 @@
 
          :name {:min-width 100 :pref-width 300}
          :description {:min-width 150 :pref-width 450}
-         :tag-list {:min-width 200 :pref-width 300}
+         :tag-list {:min-width 200 :pref-width 300 :cell-value-factory identity 
+                    :cell-factory {:fx/cell-type :tree-table-cell
+                                   :describe (fn [row]
+                                               {:graphic {:fx/type :h-box
+                                                          :children (mapv (fn [tag]
+                                                                            (button (name tag) (async-handler (partial cli/search-add-filter :tag tag))))
+                                                                          (:tag-list row))}})}}
          :created-date {:min-width 90 :pref-width 110 :max-width 120
                         :cell-value-factory :created-date
                         :cell-factory {:fx/cell-type :tree-table-cell
