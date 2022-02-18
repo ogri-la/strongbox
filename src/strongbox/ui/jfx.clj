@@ -1168,7 +1168,9 @@
                                    :describe (fn [row]
                                                {:graphic {:fx/type :h-box
                                                           :children (mapv (fn [tag]
-                                                                            (button (name tag) (async-handler (partial cli/search-add-filter :tag tag))))
+                                                                            (button (name tag)
+                                                                                    (async-handler #(do (switch-tab SEARCH-TAB)
+                                                                                                        (cli/search-add-filter :tag tag)))))
                                                                           (:tag-list row))}})}}
          :created-date {:min-width 90 :pref-width 110 :max-width 120
                         :cell-value-factory :created-date
