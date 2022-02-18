@@ -159,6 +159,35 @@
                               :source))) ;; we have one addon from each of the hosts
           )))))
 
+(deftest search-db--filter-by--tag
+  (testing "a populated database can be filtered by tag from the CLI"
+    (let [catalogue (slurp (fixture-path "catalogue--v2.json"))
+          fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
+                       {:get (fn [req] {:status 200 :body catalogue})}}
+          page-1 0]
+      (with-global-fake-routes-in-isolation fake-routes
+        (with-running-app
+          ;; populate the search
+          (cli/search nil)
+          (Thread/sleep 10)
+
+          ;; sanity check
+          (is (= 4 (count (core/get-state :search :results page-1))))
+
+          (cli/search-add-filter :tag :ui)
+          (is (= #{:ui} (core/get-state :search :filter-by :tag)))
+          (Thread/sleep 10)
+          (is (= 1 (count (core/get-state :search :results page-1))))
+          (is (= "tukui" (-> (core/get-state :search :results page-1) first :source)))
+
+          ;; results are OR'ed
+          (cli/search-add-filter :tag :vendors)
+          (is (= #{:vendors :ui} (core/get-state :search :filter-by :tag)))
+          (Thread/sleep 10)
+          (is (= 2 (count (core/get-state :search :results page-1))))
+          (is (= "wowinterface" (->> (core/get-state :search :results page-1) first :source)))
+          (is (= "tukui" (-> (core/get-state :search :results page-1) second :source))))))))
+
 (deftest search-db--navigate
   (testing "a populated database can be searched forwards and backwards from the CLI"
     (let [catalogue (slurp (fixture-path "catalogue--v2.json"))

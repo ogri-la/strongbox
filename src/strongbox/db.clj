@@ -110,11 +110,23 @@
   matches on `uin` are case insensitive.
   `filter-by` filters are applied before searching for `uin`."
   [db uin cap filter-by]
-  (let [host-filter (if-let [source-list (:source filter-by)]
+  (let [constantly-true (constantly true)
+        host-filter (if-let [source-list (:source filter-by)]
                       (fn [row]
                         (utils/in? (:source row) source-list))
-                      (constantly true))
-        db (filter host-filter db)]
+                      constantly-true)
+
+        tag-set (:tag filter-by)
+        tag-filter (if-not (empty? tag-set)
+                     (fn [row]
+                       (if-let [row-tag-set (set (:tag-list row))]
+                         ;; if the addon contains *some* of the selected tags, include it
+                         (some tag-set row-tag-set)))
+                     constantly-true)
+
+        db (->> db
+                (filter host-filter)
+                (filter tag-filter))]
 
     ;; no/empty input, do a random sample
     (if (nil? uin)

@@ -1163,7 +1163,7 @@
 
          :name {:min-width 100 :pref-width 300}
          :description {:min-width 150 :pref-width 450}
-         :tag-list {:min-width 200 :pref-width 300 :cell-value-factory identity 
+         :tag-list {:min-width 200 :pref-width 300 :cell-value-factory identity
                     :cell-factory {:fx/cell-type :tree-table-cell
                                    :describe (fn [row]
                                                {:graphic {:fx/type :h-box
@@ -1811,14 +1811,13 @@
                       :cell-value-factory identity}
                      {:text "name" :min-width 150 :pref-width 250 :cell-value-factory (comp no-new-lines :label)}
                      {:text "description" :min-width 200 :pref-width 400 :cell-value-factory (comp no-new-lines :description)}
-                     {:text "tags" :min-width 200 :pref-width 250 :cell-value-factory identity 
+                     {:text "tags" :min-width 200 :pref-width 250 :cell-value-factory identity
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [row]
                                                  {:graphic {:fx/type :h-box
                                                             :children (mapv (fn [tag]
                                                                               (button (name tag) (async-handler (partial cli/search-add-filter :tag tag))))
-                                                                            (:tag-list row))}})}
-                      }
+                                                                            (:tag-list row))}})}}
                      {:text "updated" :min-width 85 :max-width 85 :pref-width 85 :resizable false :cell-value-factory (comp #(utils/safe-subs % 10) :updated-date)}
                      {:text "downloads" :min-width 120 :pref-width 120 :max-width 120 :resizable false
                       :cell-value-factory :download-count
