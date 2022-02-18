@@ -192,11 +192,17 @@
       (core/state-bind path listener))))
 
 (defn-spec search-add-filter nil?
-  "adds a new filter to the search filter-by configuration."
+  "adds a new filter to the search `filter-by` state."
   [filter-by :search/filter-by, val any?]
   (case filter-by
     :source (swap! core/state assoc-in [:search :filter-by filter-by] (utils/nilable val))
     :tag (swap! core/state update-in [:search :filter-by filter-by] conj val))
+  nil)
+
+(defn-spec search-rm-filter nil?
+  "removes a filter from the search `filter-by` state."
+  [filter-by :search/filter-by, val any?]
+  (swap! core/state update-in [:search :filter-by filter-by] clojure.set/difference #{val})
   nil)
 
 ;;

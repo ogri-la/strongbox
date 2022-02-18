@@ -1861,53 +1861,71 @@
 
 (defn search-addons-search-field
   [{:keys [fx/context]}]
-  (let [search-state (fx/sub-val context utils/just-in [:app-state :search [:term :filter-by :page :results-per-page]])
+  (let [search-state (fx/sub-val context utils/just-in [:app-state, :search [:term :filter-by :page :results-per-page]])
+        ;;known-host-list (fx/sub-val context get-in [:app-state, :db-stats :known-host-list])
         known-host-list (core/get-state :db-stats :known-host-list)
-        disable-host-selector? (= 1 (count known-host-list))]
-    {:fx/type :h-box
-     :padding 10
-     :spacing 10
-     :children
-     [{:fx/type :button
-       :id "search-install-button"
-       :text "install selected"
-       :on-action (async-handler #(search-results-install-handler (core/get-state :search :selected-result-list)))}
+        disable-host-selector? (= 1 (count known-host-list))
 
-      {:fx/type :text-field
-       :id "search-text-field"
-       :prompt-text "search"
-       ;;:text (:term search-state) ;; don't do this, it can go spastic
-       :text (core/get-state :search :term) ;; this seems ok, probably has it's own drawbacks
-       :on-text-changed cli/search}
+        tag-set (->> search-state :filter-by :tag)
 
-      {:fx/type controlsfx.check-combo-box/lifecycle
-       :title "addon host"
-       :items known-host-list
-       :show-checked-count true
-       :on-checked-items-changed (fn [val]
-                                   (cli/search-add-filter :source val))
-       :disable disable-host-selector?}
+        tag-button (fn [tag]
+                     (button (name tag) (async-handler #(cli/search-rm-filter :tag tag))))
 
-      ;;{:fx/type :button
-      ;; :id "search-random-button"
-      ;; :text "random"
-      ;; :on-action (handler cli/random-search)}
+        row-1 {:fx/type :h-box
+               :padding 10
+               :spacing 10
+               :children
+               [{:fx/type :button
+                 :id "search-install-button"
+                 :text "install selected"
+                 :on-action (async-handler #(search-results-install-handler (core/get-state :search :selected-result-list)))}
 
-      {:fx/type :h-box
-       :id "spacer"
-       :h-box/hgrow :ALWAYS}
+                {:fx/type :text-field
+                 :id "search-text-field"
+                 :prompt-text "search"
+                 ;;:text (:term search-state) ;; don't do this, it can go spastic
+                 :text (core/get-state :search :term) ;; this seems ok, probably has it's own drawbacks
+                 :on-text-changed cli/search}
 
-      {:fx/type :button
-       :id "search-prev-button"
-       :text "previous"
-       :disable (not (cli/search-has-prev? search-state))
-       :on-action (handler cli/search-results-prev-page)}
+                {:fx/type controlsfx.check-combo-box/lifecycle
+                 :title "addon host"
+                 :items known-host-list
+                 :show-checked-count false
+                 :on-checked-items-changed (fn [val]
+                                             (cli/search-add-filter :source val))
+                 :disable disable-host-selector?}
 
-      {:fx/type :button
-       :id "search-next-button"
-       :text "next"
-       :disable (not (cli/search-has-next? search-state))
-       :on-action (handler cli/search-results-next-page)}]}))
+                ;;{:fx/type :button
+                ;; :id "search-random-button"
+                ;; :text "random"
+                ;; :on-action (handler cli/random-search)}
+
+                {:fx/type :h-box
+                 :id "spacer"
+                 :h-box/hgrow :ALWAYS}
+
+                {:fx/type :button
+                 :id "search-prev-button"
+                 :text "previous"
+                 :disable (not (cli/search-has-prev? search-state))
+                 :on-action (handler cli/search-results-prev-page)}
+
+                {:fx/type :button
+                 :id "search-next-button"
+                 :text "next"
+                 :disable (not (cli/search-has-next? search-state))
+                 :on-action (handler cli/search-results-next-page)}]}
+
+        row-2 {:fx/type :h-box
+               :padding 10
+               :spacing 10
+               :children (mapv tag-button tag-set)}
+        ]
+
+    (if (empty? tag-set)
+      row-1
+      {:fx/type :v-box
+       :children [row-1 row-2]})))
 
 (defn search-addons-pane
   [_]
