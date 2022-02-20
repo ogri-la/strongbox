@@ -515,15 +515,18 @@
                {:-fx-min-width "100px"
                 :-fx-text-fill (colour :table-font-colour)}
 
+               "#search-selected-tag-bar"
+               {:-fx-padding "0 0 10 10"
+                :-fx-spacing "10"
+                " > .button" {:-fx-padding "2.5 8"
+                              :-fx-background-radius "4"}}
+               
                ".table-view#search-addons .downloads-column"
                {:-fx-alignment "center-right"}
 
                ".table-view#search-addons .updated-column"
                {:-fx-alignment "center"}
 
-               ".tag-button-column-row"
-               {;;:-fx-spacing "3px"
-                :-fx-padding "0"}
 
                ".tag-button-column"
                {:-fx-padding "-1 0 0 0"
@@ -537,12 +540,6 @@
                             :-fx-border-color (colour :table-border)
                             :-fx-text-overrun "word-ellipsis"
                             ":hover" {:-fx-background-color (colour :row-updateable-selected)}}}
-
-               "#search-selected-tag-bar"
-               {:-fx-padding "0 0 10 10"
-                :-fx-spacing "10"
-                " > .button" {:-fx-padding "2.5 8"
-                              :-fx-background-radius "4"}}
 
 
                ;;
@@ -1820,7 +1817,7 @@
         empty-next-page (and (= 0 (count addon-list))
                              (> (-> search-state :page) 0))
 
-        tag-set (->> search-state :filter-by :tag)
+        tag-set (-> search-state :filter-by :tag)
         tag-selected (fn [tag]
                        (some #{tag} tag-set))
 
@@ -1847,7 +1844,6 @@
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [row]
                                                  {:graphic {:fx/type :h-box
-                                                            :style-class ["h-box" "tag-button-column-row"]
                                                             :children (remove nil?
                                                                               (map (fn [tag]
                                                                                      (when-not (tag-selected tag)
@@ -1862,7 +1858,7 @@
                                      :describe (fn [n]
                                                  (when n
                                                    {:text (format-number n)}))}}
-                     {:text "" :style-class ["install-button-column"] :min-width 120 :pref-width 120 :resizable false
+                     {:text "" :style-class ["install-button-column"] :min-width 120 :pref-width 120 :max-width 120 :resizable false
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [addon]
                                                  {:graphic (button "install" (async-handler #(search-results-install-handler [addon]))

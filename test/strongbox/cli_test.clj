@@ -186,7 +186,12 @@
           (Thread/sleep 10)
           (is (= 2 (count (core/get-state :search :results page-1))))
           (is (= "wowinterface" (->> (core/get-state :search :results page-1) first :source)))
-          (is (= "tukui" (-> (core/get-state :search :results page-1) second :source))))))))
+          (is (= "tukui" (-> (core/get-state :search :results page-1) second :source)))
+
+          ;; filters can be removed
+          (cli/search-rm-filter :tag :ui)
+          (is (= #{:vendors} (core/get-state :search :filter-by :tag)))
+          (is (= "wowinterface" (->> (core/get-state :search :results page-1) first :source))))))))          
 
 (deftest search-db--navigate
   (testing "a populated database can be searched forwards and backwards from the CLI"
