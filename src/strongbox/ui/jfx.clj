@@ -521,6 +521,30 @@
                ".table-view#search-addons .updated-column"
                {:-fx-alignment "center"}
 
+               ".tag-button-column-row"
+               {;;:-fx-spacing "3px"
+                :-fx-padding "0"}
+
+               ".tag-button-column"
+               {:-fx-padding "-1 0 0 0"
+
+                " .button" {:-fx-min-width 50
+                            :-fx-font-size ".9em"
+                            :-fx-padding "4px 5px"
+                            ;;:-fx-background-color (colour :row-updateable)
+                            :-fx-background-color "none"
+                            :-fx-opacity "1"
+                            :-fx-border-width "0 1 0 0"
+                            :-fx-border-color (colour :table-border)
+                            :-fx-text-overrun "word-ellipsis"
+                            ":hover" {:-fx-background-color (colour :row-updateable-selected)}}}
+
+               "#search-selected-tag-bar"
+               {:-fx-padding "0 0 10 10"
+                :-fx-spacing "10"
+                " > .button" {:-fx-padding "2.5 8"
+                              :-fx-background-radius "4"}}
+
 
                ;;
                ;; status bar (bottom of app)
@@ -1163,14 +1187,16 @@
 
          :name {:min-width 100 :pref-width 300}
          :description {:min-width 150 :pref-width 450}
-         :tag-list {:min-width 200 :pref-width 300 :cell-value-factory identity
+         :tag-list {:min-width 200 :pref-width 300 :style-class ["tag-button-column"]
+                    :cell-value-factory identity
                     :cell-factory {:fx/cell-type :tree-table-cell
                                    :describe (fn [row]
                                                {:graphic {:fx/type :h-box
                                                           :children (mapv (fn [tag]
                                                                             (button (name tag)
                                                                                     (async-handler #(do (switch-tab SEARCH-TAB)
-                                                                                                        (cli/search-add-filter :tag tag)))))
+                                                                                                        (cli/search-add-filter :tag tag)))
+                                                                                    {:tooltip (name tag)}))
                                                                           (:tag-list row))}})}}
          :created-date {:min-width 90 :pref-width 110 :max-width 120
                         :cell-value-factory :created-date
@@ -1795,6 +1821,10 @@
         empty-next-page (and (= 0 (count addon-list))
                              (> (-> search-state :page) 0))
 
+        tag-set (->> search-state :filter-by :tag)
+        tag-selected (fn [tag]
+                       (some #{tag} tag-set))
+
         column-list [{:text "\u2605" :style-class ["button-column" "star-column"]
                       :min-width 50 :pref-width 50 :max-width 50
                       :cell-value-factory identity
@@ -1812,14 +1842,20 @@
                                                  {:graphic (href-to-hyperlink row)})}
                       :cell-value-factory identity}
                      {:text "name" :min-width 150 :pref-width 250 :cell-value-factory (comp no-new-lines :label)}
-                     {:text "description" :min-width 200 :pref-width 400 :cell-value-factory (comp no-new-lines :description)}
-                     {:text "tags" :min-width 200 :pref-width 250 :cell-value-factory identity
+                     {:text "description" :min-width 200 :cell-value-factory (comp no-new-lines :description)}
+                     {:text "tags" :min-width 300 :style-class ["tag-button-column"]
+                      :cell-value-factory identity
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [row]
                                                  {:graphic {:fx/type :h-box
-                                                            :children (mapv (fn [tag]
-                                                                              (button (name tag) (async-handler (partial cli/search-add-filter :tag tag))))
-                                                                            (:tag-list row))}})}}
+                                                            :style-class ["h-box" "tag-button-column-row"]
+                                                            :children (remove nil?
+                                                                              (map (fn [tag]
+                                                                                     (when-not (tag-selected tag)
+                                                                                       (button (name tag)
+                                                                                               (async-handler #(cli/search-add-filter :tag tag))
+                                                                                               {:tooltip (name tag)})))
+                                                                                   (:tag-list row)))}})}}
                      {:text "updated" :min-width 85 :max-width 85 :pref-width 85 :resizable false :cell-value-factory (comp #(utils/safe-subs % 10) :updated-date)}
                      {:text "downloads" :min-width 120 :pref-width 120 :max-width 120 :resizable false
                       :cell-value-factory :download-count
@@ -1827,7 +1863,7 @@
                                      :describe (fn [n]
                                                  (when n
                                                    {:text (format-number n)}))}}
-                     {:text "" :style-class ["install-button-column"] :min-width 120 :pref-width 120 :max-width 120 :resizable false
+                     {:text "" :style-class ["install-button-column"] :min-width 120 :pref-width 120 :resizable false
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [addon]
                                                  {:graphic (button "install" (async-handler #(search-results-install-handler [addon]))
@@ -1919,10 +1955,8 @@
                  :on-action (handler cli/search-results-next-page)}]}
 
         row-2 {:fx/type :h-box
-               :padding 10
-               :spacing 10
-               :children (mapv tag-button tag-set)}
-        ]
+               :id "search-selected-tag-bar"
+               :children (mapv tag-button tag-set)}]
 
     (if (empty? tag-set)
       row-1
