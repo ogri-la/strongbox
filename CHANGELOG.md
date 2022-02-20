@@ -13,14 +13,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - disabled when there is only one host to choose from.
 * clickable tags in the 'tags' column that filter search results.
     - selected tags appear in the search area. clicking them will remove the tag from the search.
+* gui, search, count of addons selected to the 'install selected' button.
 
 ### Changed
 
 * core, the user-catalogue is now part of application state rather than read from file as needed.
+* gui, search, 'install selected' button moved to the left of the search field and disabled if no addons selected.
 
 ### Fixed
 
 ### Removed
+
+* the 'random' button. room was needed for the new filters.
+    - it's affect can still be simulated by pressing spacebar in the search field.
 
 ## 5.0.0 - 2022-01-31
 

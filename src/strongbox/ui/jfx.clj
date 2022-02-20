@@ -1904,14 +1904,19 @@
         tag-button (fn [tag]
                      (button (name tag) (async-handler #(cli/search-rm-filter :tag tag))))
 
+        num-selected (count (:selected-result-list search-state))
+
         row-1 {:fx/type :h-box
                :padding 10
                :spacing 10
                :children
                [{:fx/type :button
                  :id "search-install-button"
-                 :text "install selected"
-                 :on-action (async-handler #(search-results-install-handler (core/get-state :search :selected-result-list)))}
+                 :text (if (> num-selected 0)
+                         (format "install selected (%s)" num-selected)
+                         "install selected")
+                 :on-action (async-handler #(search-results-install-handler (core/get-state :search :selected-result-list)))
+                 :disable (zero? num-selected)}
 
                 {:fx/type :text-field
                  :id "search-text-field"
