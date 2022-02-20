@@ -161,6 +161,9 @@
    ;; the list of addons from the user-catalogue
    :user-catalogue nil
 
+   ;; a set of maps with `:source` and `:source-id` keys from the user-catalogue
+   :user-catalogue-idx #{}
+
    :log-lines []
 
    ;; a map of paths whose location may vary according to the cwd and envvars.
@@ -762,13 +765,24 @@
        (merge catalogue {:addon-summary-list new-summary-list
                          :total (count new-summary-list)})))))
 
+(defn-spec set-user-catalogue! nil?
+  [new-user-catalogue (s/nilable :catalogue/catalogue)]
+  (let [user-catalogue-idx (some->> new-user-catalogue
+                                    :addon-summary-list
+                                    (map #(select-keys % [:source :source-id]))
+                                    set)]
+
+    (swap! state merge {:user-catalogue new-user-catalogue
+                        :user-catalogue-idx user-catalogue-idx}))
+  nil)
+
 (defn-spec add-user-addon-list! nil?
   "adds a list of addons to the user catalogue"
   [addon-summary-list :addon/summary-list]
   (let [user-catalogue (get-state :user-catalogue)
         tmp-catalogue (catalogue/new-catalogue addon-summary-list)
         new-user-catalogue (catalogue/merge-catalogues user-catalogue tmp-catalogue)]
-    (swap! state assoc :user-catalogue new-user-catalogue))
+    (set-user-catalogue! new-user-catalogue))
   nil)
 
 (defn-spec add-user-addon! nil?
@@ -785,7 +799,7 @@
                             (remove (fn [row]
                                       (= (idx row) addon-summary-idx))))
         new-user-catalogue (catalogue/new-catalogue user-catalogue)]
-    (swap! state assoc :user-catalogue new-user-catalogue))
+    (set-user-catalogue! new-user-catalogue))
   nil)
 
 ;; catalogue db handling
@@ -808,8 +822,8 @@
 (defn db-search
   "searches database for addons whose name or description contains given user input.
   if no user input, returns a list of randomly ordered results"
-  [search-term cap filter-by]
-  (let [args [(utils/nilable search-term) cap filter-by]]
+  [search-term cap filter-by] ;; user-catalogue-idx]
+  (let [args [(utils/nilable search-term) cap filter-by (get-state :user-catalogue-idx)]]
     (query-db :search args)))
 
 (defn-spec empty-search-results nil?
@@ -825,7 +839,7 @@
   (when-not (get-state :user-catalogue)
     (let [create-user-catalogue? false
           path (paths :user-catalogue-file)]
-      (swap! state assoc :user-catalogue (get-create-user-catalogue path create-user-catalogue?))))
+      (set-user-catalogue! (get-create-user-catalogue path create-user-catalogue?))))
   nil)
 
 (defn-spec load-current-catalogue (s/or :ok :catalogue/catalogue, :error nil?)

@@ -520,13 +520,12 @@
                 :-fx-spacing "10"
                 " > .button" {:-fx-padding "2.5 8"
                               :-fx-background-radius "4"}}
-               
+
                ".table-view#search-addons .downloads-column"
                {:-fx-alignment "center-right"}
 
                ".table-view#search-addons .updated-column"
                {:-fx-alignment "center"}
-
 
                ".tag-button-column"
                {:-fx-padding "-1 0 0 0"

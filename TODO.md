@@ -39,6 +39,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* github, preference to sync stars with github repo, if authenticated
+
 * catalogue, descriptions for wowinterface addons
 * catalogue, download counts for github addons
 
