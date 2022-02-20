@@ -10,7 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * 'star' column to the search tab. Starring an addon will add it to your user-catalogue.
 * 'addon host' multi-checkbox field to the search tab, allowing you to select which hosts to see addons from.
-    - (disabled when there is only one host to choose from)
+    - disabled when there is only one host to choose from.
+* clickable tags in the 'tags' column that filter search results.
+    - selected tags appear in the search area. clicking them will remove the tag from the search.
 
 ### Changed
 

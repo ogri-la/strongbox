@@ -15,6 +15,14 @@ see CHANGELOG.md for a more formal list of changes by release
 * search, filter by addon hosts
     - done
 
+* tags, make clickable in search results
+    - adds a filter that can be removed
+    - add clickable tags to addon detail page
+    - done
+
+* installed, clicking an addon's tags does a search
+    - done
+
 ## todo
 
 * search, bug, 'install selected' shouldn't do anything if nothing is selectedor
@@ -22,17 +30,14 @@ see CHANGELOG.md for a more formal list of changes by release
 * search, add ability to browse catalogue page by page
     - I have neglected the catalogue search *so much*. I need a whole release dedicated to improving it.
 
-* tags, make clickable in search results
-    - adds a filter that can be removed
-    - add clickable tags to addon detail page
-
-* installed, clicking an addon's tags does a search
-
 * addon detail, mutual dependencies pane
     - for example, I would like to see what is happening when:
         adibags anima & conduits is overwritten by adibags anima filter
 
 ## todo bucket (no particular order)
+
+* catalogue, descriptions for wowinterface addons
+* catalogue, download counts for github addons
 
 * github, bug, multi-toc addons are getting a warning when `strict?` is true and the game track is changed
     - https://github.com/LenweSaralonde/MusicianList/releases

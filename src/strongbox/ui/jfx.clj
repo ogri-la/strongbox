@@ -515,11 +515,31 @@
                {:-fx-min-width "100px"
                 :-fx-text-fill (colour :table-font-colour)}
 
+               "#search-selected-tag-bar"
+               {:-fx-padding "0 0 10 10"
+                :-fx-spacing "10"
+                " > .button" {:-fx-padding "2.5 8"
+                              :-fx-background-radius "4"}}
+               
                ".table-view#search-addons .downloads-column"
                {:-fx-alignment "center-right"}
 
                ".table-view#search-addons .updated-column"
                {:-fx-alignment "center"}
+
+
+               ".tag-button-column"
+               {:-fx-padding "-1 0 0 0"
+
+                " .button" {:-fx-min-width 50
+                            :-fx-font-size ".9em"
+                            :-fx-padding "4px 5px"
+                            :-fx-background-color "none"
+                            :-fx-opacity "1"
+                            :-fx-border-width "0 1 0 0"
+                            :-fx-border-color (colour :table-border)
+                            :-fx-text-overrun "word-ellipsis"
+                            ":hover" {:-fx-background-color (colour :row-updateable-selected)}}}
 
 
                ;;
@@ -1163,7 +1183,17 @@
 
          :name {:min-width 100 :pref-width 300}
          :description {:min-width 150 :pref-width 450}
-         :tag-list {:min-width 200 :pref-width 300}
+         :tag-list {:min-width 200 :pref-width 300 :style-class ["tag-button-column"]
+                    :cell-value-factory identity
+                    :cell-factory {:fx/cell-type :tree-table-cell
+                                   :describe (fn [row]
+                                               {:graphic {:fx/type :h-box
+                                                          :children (mapv (fn [tag]
+                                                                            (button (name tag)
+                                                                                    (async-handler #(do (switch-tab SEARCH-TAB)
+                                                                                                        (cli/search-add-filter :tag tag)))
+                                                                                    {:tooltip (name tag)}))
+                                                                          (:tag-list row))}})}}
          :created-date {:min-width 90 :pref-width 110 :max-width 120
                         :cell-value-factory :created-date
                         :cell-factory {:fx/cell-type :tree-table-cell
@@ -1787,6 +1817,10 @@
         empty-next-page (and (= 0 (count addon-list))
                              (> (-> search-state :page) 0))
 
+        tag-set (-> search-state :filter-by :tag)
+        tag-selected (fn [tag]
+                       (some #{tag} tag-set))
+
         column-list [{:text "\u2605" :style-class ["button-column" "star-column"]
                       :min-width 50 :pref-width 50 :max-width 50
                       :cell-value-factory identity
@@ -1804,8 +1838,19 @@
                                                  {:graphic (href-to-hyperlink row)})}
                       :cell-value-factory identity}
                      {:text "name" :min-width 150 :pref-width 250 :cell-value-factory (comp no-new-lines :label)}
-                     {:text "description" :min-width 200 :pref-width 400 :cell-value-factory (comp no-new-lines :description)}
-                     {:text "tags" :min-width 200 :pref-width 250 :cell-value-factory (comp str :tag-list)}
+                     {:text "description" :min-width 200 :cell-value-factory (comp no-new-lines :description)}
+                     {:text "tags" :min-width 300 :style-class ["tag-button-column"]
+                      :cell-value-factory identity
+                      :cell-factory {:fx/cell-type :table-cell
+                                     :describe (fn [row]
+                                                 {:graphic {:fx/type :h-box
+                                                            :children (remove nil?
+                                                                              (map (fn [tag]
+                                                                                     (when-not (tag-selected tag)
+                                                                                       (button (name tag)
+                                                                                               (async-handler #(cli/search-add-filter :tag tag))
+                                                                                               {:tooltip (name tag)})))
+                                                                                   (:tag-list row)))}})}}
                      {:text "updated" :min-width 85 :max-width 85 :pref-width 85 :resizable false :cell-value-factory (comp #(utils/safe-subs % 10) :updated-date)}
                      {:text "downloads" :min-width 120 :pref-width 120 :max-width 120 :resizable false
                       :cell-value-factory :download-count
@@ -1849,53 +1894,69 @@
 
 (defn search-addons-search-field
   [{:keys [fx/context]}]
-  (let [search-state (fx/sub-val context utils/just-in [:app-state :search [:term :filter-by :page :results-per-page]])
+  (let [search-state (fx/sub-val context get-in [:app-state, :search])
+        ;;known-host-list (fx/sub-val context get-in [:app-state, :db-stats :known-host-list])
         known-host-list (core/get-state :db-stats :known-host-list)
-        disable-host-selector? (= 1 (count known-host-list))]
-    {:fx/type :h-box
-     :padding 10
-     :spacing 10
-     :children
-     [{:fx/type :button
-       :id "search-install-button"
-       :text "install selected"
-       :on-action (async-handler #(search-results-install-handler (core/get-state :search :selected-result-list)))}
+        disable-host-selector? (= 1 (count known-host-list))
 
-      {:fx/type :text-field
-       :id "search-text-field"
-       :prompt-text "search"
-       ;;:text (:term search-state) ;; don't do this, it can go spastic
-       :text (core/get-state :search :term) ;; this seems ok, probably has it's own drawbacks
-       :on-text-changed cli/search}
+        tag-set (->> search-state :filter-by :tag)
 
-      {:fx/type controlsfx.check-combo-box/lifecycle
-       :title "addon host"
-       :items known-host-list
-       :show-checked-count true
-       :on-checked-items-changed (fn [val]
-                                   (cli/search-add-filter :source val))
-       :disable disable-host-selector?}
+        tag-button (fn [tag]
+                     (button (name tag) (async-handler #(cli/search-rm-filter :tag tag))))
 
-      ;;{:fx/type :button
-      ;; :id "search-random-button"
-      ;; :text "random"
-      ;; :on-action (handler cli/random-search)}
+        row-1 {:fx/type :h-box
+               :padding 10
+               :spacing 10
+               :children
+               [{:fx/type :button
+                 :id "search-install-button"
+                 :text "install selected"
+                 :on-action (async-handler #(search-results-install-handler (core/get-state :search :selected-result-list)))}
 
-      {:fx/type :h-box
-       :id "spacer"
-       :h-box/hgrow :ALWAYS}
+                {:fx/type :text-field
+                 :id "search-text-field"
+                 :prompt-text "search"
+                 ;;:text (:term search-state) ;; don't do this, it can go spastic
+                 :text (core/get-state :search :term) ;; this seems ok, probably has it's own drawbacks
+                 :on-text-changed cli/search}
 
-      {:fx/type :button
-       :id "search-prev-button"
-       :text "previous"
-       :disable (not (cli/search-has-prev? search-state))
-       :on-action (handler cli/search-results-prev-page)}
+                {:fx/type controlsfx.check-combo-box/lifecycle
+                 :title "addon host"
+                 :items known-host-list
+                 :show-checked-count false
+                 :on-checked-items-changed (fn [val]
+                                             (cli/search-add-filter :source val))
+                 :disable disable-host-selector?}
 
-      {:fx/type :button
-       :id "search-next-button"
-       :text "next"
-       :disable (not (cli/search-has-next? search-state))
-       :on-action (handler cli/search-results-next-page)}]}))
+                ;;{:fx/type :button
+                ;; :id "search-random-button"
+                ;; :text "random"
+                ;; :on-action (handler cli/random-search)}
+
+                {:fx/type :h-box
+                 :id "spacer"
+                 :h-box/hgrow :ALWAYS}
+
+                {:fx/type :button
+                 :id "search-prev-button"
+                 :text "previous"
+                 :disable (not (cli/search-has-prev? search-state))
+                 :on-action (handler cli/search-results-prev-page)}
+
+                {:fx/type :button
+                 :id "search-next-button"
+                 :text "next"
+                 :disable (not (cli/search-has-next? search-state))
+                 :on-action (handler cli/search-results-next-page)}]}
+
+        row-2 {:fx/type :h-box
+               :id "search-selected-tag-bar"
+               :children (mapv tag-button tag-set)}]
+
+    (if (empty? tag-set)
+      row-1
+      {:fx/type :v-box
+       :children [row-1 row-2]})))
 
 (defn search-addons-pane
   [_]

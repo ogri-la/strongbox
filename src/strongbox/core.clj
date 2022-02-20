@@ -118,7 +118,8 @@
 
 (def -search-state-template
   {:term nil
-   :filter-by {}
+   :filter-by {:source nil
+               :tag #{}}
    :page 0
    :results []
    :selected-result-list []
