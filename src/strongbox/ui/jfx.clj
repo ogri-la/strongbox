@@ -531,7 +531,6 @@
                 " .button" {:-fx-min-width 50
                             :-fx-font-size ".9em"
                             :-fx-padding "4px 5px"
-                            ;;:-fx-background-color (colour :row-updateable)
                             :-fx-background-color "none"
                             :-fx-opacity "1"
                             :-fx-border-width "0 1 0 0"
@@ -1899,7 +1898,7 @@
 
 (defn search-addons-search-field
   [{:keys [fx/context]}]
-  (let [search-state (fx/sub-val context utils/just-in [:app-state, :search [:term :filter-by :page :results-per-page]])
+  (let [search-state (fx/sub-val context get-in [:app-state, :search])
         ;;known-host-list (fx/sub-val context get-in [:app-state, :db-stats :known-host-list])
         known-host-list (core/get-state :db-stats :known-host-list)
         disable-host-selector? (= 1 (count known-host-list))
