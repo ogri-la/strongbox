@@ -1925,6 +1925,8 @@
                  :text (core/get-state :search :term) ;; this seems ok, probably has it's own drawbacks
                  :on-text-changed cli/search}
 
+                (button "\u2605" (async-handler #(cli/search-toggle-filter :user-catalogue)))
+
                 {:fx/type controlsfx.check-combo-box/lifecycle
                  :title "addon host"
                  :items known-host-list

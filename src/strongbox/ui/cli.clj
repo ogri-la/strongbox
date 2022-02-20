@@ -205,6 +205,12 @@
   (swap! core/state update-in [:search :filter-by filter-by] clojure.set/difference #{val})
   nil)
 
+(defn-spec search-toggle-filter nil?
+  "toggles boolean filters on and off"
+  [filter-by :search/filter-by]
+  (swap! core/state update-in [:search :filter-by filter-by] not)
+  nil)
+
 ;;
 
 (defn-spec change-catalogue nil?

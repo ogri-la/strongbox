@@ -119,7 +119,8 @@
 (def -search-state-template
   {:term nil
    :filter-by {:source nil
-               :tag #{}}
+               :tag #{}
+               :user-catalogue false}
    :page 0
    :results []
    :selected-result-list []
