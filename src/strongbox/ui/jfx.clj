@@ -515,9 +515,7 @@
                             ;; this gives the text a border (stroke) and a very faint glow.
                             " .text" {:-fx-stroke (colour :table-font-colour)
                                       :-fx-stroke-width ".2"
-                                      :-fx-effect (str "dropshadow( gaussian , " (colour :star-starred) " , 10, 0.0 , 0 , 0 )")}
-                            }
-                }
+                                      :-fx-effect (str "dropshadow( gaussian , " (colour :star-starred) " , 10, 0.0 , 0 , 0 )")}}}
 
                "#search-prev-button"
                {:-fx-min-width "80px"}
@@ -1884,7 +1882,7 @@
     {:fx/type fx.ext.table-view/with-selection-props
      :props {:selection-mode :multiple
              ;; unlike gui.clj, we have access to the original data here. no need to re-select addons.
-             :on-selected-items-changed cli/select-addons-search*}
+             :on-selected-items-changed cli/select-addons-search!}
      :desc {:fx/type :table-view
             :id "search-addons"
             :placeholder {:fx/type :label
