@@ -505,6 +505,20 @@
                "#search-random-button"
                {:-fx-min-width "80px"}
 
+               "#search-user-catalogue-button"
+               {:-fx-font-weight "bold"
+                :-fx-font-size "1.4em"
+                :-fx-padding "1 7"
+
+                ".starred" {:-fx-text-fill (colour :star-starred)
+                            ;; the yellow of the star doesn't stand out from the gray gradient behind it.
+                            ;; this gives the text a border (stroke) and a very faint glow.
+                            " .text" {:-fx-stroke (colour :table-font-colour)
+                                      :-fx-stroke-width ".2"
+                                      :-fx-effect (str "dropshadow( gaussian , " (colour :star-starred) " , 10, 0.0 , 0 , 0 )")}
+                            }
+                }
+
                "#search-prev-button"
                {:-fx-min-width "80px"}
 
@@ -843,7 +857,7 @@
 
 (defn button
   "generates a simple button with a means to check to see if it should be disabled and an optional tooltip"
-  [label on-action & [{:keys [disabled? tooltip tooltip-delay style-class]}]]
+  [label on-action & [{:keys [disabled? tooltip tooltip-delay style-class id]}]]
   (let [btn (cond->
              {:fx/type :button
               :text label
@@ -851,6 +865,9 @@
 
               (boolean? disabled?)
               (merge {:disable disabled?})
+
+              (some? id)
+              (merge {:id id})
 
               (some? style-class)
               (merge {:style-class ["button" style-class]}))]
@@ -1820,7 +1837,7 @@
         tag-selected (fn [tag]
                        (some #{tag} tag-set))
 
-        column-list [{:text "\u2605" :style-class ["button-column" "star-column"]
+        column-list [{:text "" :style-class ["button-column" "star-column"]
                       :min-width 50 :pref-width 50 :max-width 50
                       :cell-value-factory identity
                       :cell-factory {:fx/cell-type :table-cell
@@ -1924,7 +1941,9 @@
                  :text (core/get-state :search :term) ;; this seems ok, probably has it's own drawbacks
                  :on-text-changed cli/search}
 
-                (button "\u2605" (async-handler #(cli/search-toggle-filter :user-catalogue)))
+                (button "\u2605" (async-handler #(cli/search-toggle-filter :user-catalogue))
+                        {:id "search-user-catalogue-button"
+                         :style-class (if (-> search-state :filter-by :user-catalogue) "starred" "unstarred")})
 
                 {:fx/type controlsfx.check-combo-box/lifecycle
                  :title "addon host"
