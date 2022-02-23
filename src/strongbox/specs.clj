@@ -416,4 +416,4 @@
 
 ;; search
 
-(s/def :search/filter-by #{:source :tag})
+(s/def :search/filter-by #{:source :tag :user-catalogue})

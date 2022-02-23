@@ -773,3 +773,8 @@
       (let [v (get-in m path)]
         (when (and (map? v) (vector? these-keys))
           (select-keys v these-keys))))))
+
+(defn-spec source-map (s/nilable map?)
+  [addon (s/nilable map?)]
+  (select-keys addon [:source :source-id]))
+

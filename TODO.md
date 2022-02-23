@@ -26,9 +26,10 @@ see CHANGELOG.md for a more formal list of changes by release
 * search, bug, 'install selected' shouldn't do anything if nothing is selectedor
     - done
 
-## todo
-
 * add a 'starred' filter to limit the search results to just those that are starred
+    - done
+
+## todo
 
 * search, add ability to browse catalogue page by page
     - I have neglected the catalogue search *so much*. I need a whole release dedicated to improving it.
@@ -38,6 +39,8 @@ see CHANGELOG.md for a more formal list of changes by release
         adibags anima & conduits is overwritten by adibags anima filter
 
 ## todo bucket (no particular order)
+
+* github, preference to sync stars with github repo, if authenticated
 
 * catalogue, descriptions for wowinterface addons
 * catalogue, download counts for github addons

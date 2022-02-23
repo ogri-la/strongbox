@@ -109,8 +109,14 @@
   search never takes more than `cap` results.
   matches on `uin` are case insensitive.
   `filter-by` filters are applied before searching for `uin`."
-  [db uin cap filter-by]
+  [db uin cap filter-by user-catalogue-idx]
   (let [constantly-true (constantly true)
+
+        user-catalogue-filter (if (:user-catalogue filter-by)
+                                (fn [row]
+                                  (contains? user-catalogue-idx (utils/source-map row)))
+                                constantly-true)
+
         host-filter (if-let [source-list (:source filter-by)]
                       (fn [row]
                         (utils/in? (:source row) source-list))
@@ -125,17 +131,21 @@
                      constantly-true)
 
         db (->> db
+                (filter user-catalogue-filter)
                 (filter host-filter)
-                (filter tag-filter))]
+                (filter tag-filter))
+
+        random-sample? (and (nil? uin)
+                            (not (:user-catalogue filter-by)))]
 
     ;; no/empty input, do a random sample
-    (if (nil? uin)
+    (if random-sample?
       (let [pct (->> db count (max 1) (/ 100) (* 0.6))]
         ;; decrement cap here so navigation for random search results is disabled
         [(take (dec cap) (random-sample pct db))])
 
       ;; else, search by input
-      (let [uin (clojure.string/trim uin)
+      (let [uin (clojure.string/trim (or uin ""))
             ;; implementation taken from here:
             ;; - https://www.baeldung.com/java-case-insensitive-string-matching
             regex (Pattern/compile (Pattern/quote uin) Pattern/CASE_INSENSITIVE)
@@ -156,5 +166,5 @@
   (case query-kw
     :addon-by-source-and-name (-addon-by-source-and-name db (first arg-list) (second arg-list))
     :addon-by-name (-addon-by-name db (first arg-list))
-    :search (-search db (first arg-list) (second arg-list) (nth arg-list 2))
+    :search (-search db (first arg-list) (second arg-list) (nth arg-list 2) (nth arg-list 3))
     nil))

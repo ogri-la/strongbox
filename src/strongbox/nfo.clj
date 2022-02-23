@@ -113,7 +113,7 @@
                  (if (and (map? nfo-data)
                           (contains? nfo-data :source)
                           (not (contains? nfo-data :source-map-list)))
-                   (assoc nfo-data :source-map-list (-> nfo-data (select-keys [:source :source-id]) vector))
+                   (assoc nfo-data :source-map-list (-> nfo-data utils/source-map vector))
                    nfo-data))
 
         nfo-data (coerce (utils/load-json-file-safely path opts))]

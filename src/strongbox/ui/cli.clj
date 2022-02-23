@@ -31,11 +31,16 @@
 
 ;; selecting addons
 
-(defn-spec select-addons-search* nil?
+(defn-spec select-addons-search! nil?
   "sets the selected list of addons in application state for a later action"
   [selected-addons :addon/summary-list]
   (swap! core/state assoc-in [:search :selected-result-list] selected-addons)
   nil)
+
+(defn-spec clear-selected-search-addons! nil?
+  "removes all addons from the `:selected-addon-list` list"
+  []
+  (select-addons-search! []))
 
 (defn-spec select-addons* nil?
   "sets the selected list of addons to the given `selected-addons` for bulk operations like 'update', 'delete', 'ignore', etc"
@@ -187,7 +192,9 @@
                    (future
                      (let [{:keys [term results-per-page filter-by]} (:search new-state)
                            results (core/db-search term results-per-page filter-by)]
-                       (swap! core/state assoc-in [:search :results] results))))]
+                       (dosync
+                        (clear-selected-search-addons!)
+                        (swap! core/state assoc-in [:search :results] results)))))]
     (doseq [path path-list]
       (core/state-bind path listener))))
 
@@ -203,6 +210,12 @@
   "removes a filter from the search `filter-by` state."
   [filter-by :search/filter-by, val any?]
   (swap! core/state update-in [:search :filter-by filter-by] clojure.set/difference #{val})
+  nil)
+
+(defn-spec search-toggle-filter nil?
+  "toggles boolean filters on and off"
+  [filter-by :search/filter-by]
+  (swap! core/state update-in [:search :filter-by filter-by] not)
   nil)
 
 ;;

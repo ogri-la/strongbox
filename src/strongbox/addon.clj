@@ -130,7 +130,7 @@
   "extracts a `:addon/source-map` from the given `data` as well as anything in `:source-map-list`, returning a single distinct `:addon/source-map-list`"
   [data (s/nilable map?)]
   (merge-lists
-   (or (some-> data (select-keys [:source :source-id]) utils/nilable vector) [])
+   (or (some-> data utils/source-map utils/nilable vector) [])
    (get data :source-map-list [])))
 
 ;; todo: this spec could do with tightening up. ~6 tests holding us back.
