@@ -112,12 +112,9 @@
   [db uin cap filter-by user-catalogue-idx]
   (let [constantly-true (constantly true)
 
-        mk-idx (fn [addon]
-                 (select-keys addon [:source :source-id]))
-
         user-catalogue-filter (if (:user-catalogue filter-by)
                                 (fn [row]
-                                  (contains? user-catalogue-idx (mk-idx row)))
+                                  (contains? user-catalogue-idx (utils/source-map row)))
                                 constantly-true)
 
         host-filter (if-let [source-list (:source filter-by)]

@@ -766,12 +766,12 @@
                          :total (count new-summary-list)})))))
 
 (defn-spec set-user-catalogue! nil?
+  "given a catalogue, replaces the current user-catalogue in app state and generates a source-map index for faster lookups."
   [new-user-catalogue (s/nilable :catalogue/catalogue)]
   (let [user-catalogue-idx (some->> new-user-catalogue
                                     :addon-summary-list
-                                    (map #(select-keys % [:source :source-id]))
+                                    (map utils/source-map)
                                     set)]
-
     (swap! state merge {:user-catalogue new-user-catalogue
                         :user-catalogue-idx user-catalogue-idx}))
   nil)
@@ -793,11 +793,10 @@
 (defn-spec remove-user-addon! nil?
   "removes a single addon from the user-catalogue"
   [addon-summary :addon/summary]
-  (let [idx #(select-keys % [:source :source-id])
-        addon-summary-idx (idx addon-summary)
+  (let [addon-summary-idx (utils/source-map addon-summary)
         user-catalogue (->> (get-state :user-catalogue :addon-summary-list)
                             (remove (fn [row]
-                                      (= (idx row) addon-summary-idx))))
+                                      (= (utils/source-map row) addon-summary-idx))))
         new-user-catalogue (catalogue/new-catalogue user-catalogue)]
     (set-user-catalogue! new-user-catalogue))
   nil)
@@ -822,7 +821,7 @@
 (defn db-search
   "searches database for addons whose name or description contains given user input.
   if no user input, returns a list of randomly ordered results"
-  [search-term cap filter-by] ;; user-catalogue-idx]
+  [search-term cap filter-by]
   (let [args [(utils/nilable search-term) cap filter-by (get-state :user-catalogue-idx)]]
     (query-db :search args)))
 

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 * 'star' column to the search tab. Starring an addon will add it to your user-catalogue.
+* 'star' button to the search pane that will filter addons to those in your user-catalogue.
 * 'addon host' multi-checkbox field to the search tab, allowing you to select which hosts to see addons from.
     - disabled when there is only one host to choose from.
 * clickable tags in the 'tags' column that filter search results.
@@ -26,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * the 'random' button. room was needed for the new filters.
     - it's affect can still be simulated by pressing spacebar in the search field.
+* the 'wrote: /path/to/user-catalogue.json' message when the user catalogue is updated.
+    - it's just noise when the operation becomes common
 
 ## 5.0.0 - 2022-01-31
 

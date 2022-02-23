@@ -1816,13 +1816,12 @@
 
 (defn search-addons-table
   [{:keys [fx/context]}]
-  (let [idx-key #(select-keys % [:source :source-id])
-        installed-addon-idx (mapv idx-key (fx/sub-val context get-in [:app-state, :installed-addon-list]))
-        installed? #(utils/in? (idx-key %) installed-addon-idx) ;; todo: probably pretty slow compared to set membership?
+  (let [installed-addon-idx (mapv utils/source-map (fx/sub-val context get-in [:app-state, :installed-addon-list]))
+        installed? #(utils/in? (utils/source-map %) installed-addon-idx) ;; todo: probably pretty slow compared to set membership?
 
-        user-catalogue-idx (mapv idx-key (fx/sub-val context get-in [:app-state, :user-catalogue :addon-summary-list]))
+        user-catalogue-idx (mapv utils/source-map (fx/sub-val context get-in [:app-state, :user-catalogue :addon-summary-list]))
         starred? (fn [a]
-                   (utils/in? (idx-key a) user-catalogue-idx))
+                   (utils/in? (utils/source-map a) user-catalogue-idx))
 
         search-state (fx/sub-val context get-in [:app-state :search])
         addon-list (cli/search-results search-state)

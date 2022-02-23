@@ -26,9 +26,10 @@ see CHANGELOG.md for a more formal list of changes by release
 * search, bug, 'install selected' shouldn't do anything if nothing is selectedor
     - done
 
-## todo
-
 * add a 'starred' filter to limit the search results to just those that are starred
+    - done
+
+## todo
 
 * search, add ability to browse catalogue page by page
     - I have neglected the catalogue search *so much*. I need a whole release dedicated to improving it.

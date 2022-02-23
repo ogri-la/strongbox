@@ -217,8 +217,7 @@
   [catalogue-data :catalogue/catalogue, output-file ::sp/file]
   (locking output-file
     (if (some->> catalogue-data validate (utils/dump-json-file output-file))
-      (do (info "wrote:" output-file)
-          output-file)
+      output-file
       (error "catalogue data is invalid, refusing to write:" output-file))))
 
 (defn-spec new-catalogue :catalogue/catalogue
