@@ -774,7 +774,7 @@
         (when (and (map? v) (vector? these-keys))
           (select-keys v these-keys))))))
 
-(defn-spec source-map map?
-  [addon map?]
+(defn-spec source-map (s/nilable map?)
+  [addon (s/nilable map?)]
   (select-keys addon [:source :source-id]))
 

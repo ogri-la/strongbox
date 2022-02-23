@@ -458,3 +458,13 @@
     (doseq [[m ks expected] cases]
       (is (= expected (utils/just-in m ks)), (str "failed case: " m ks)))))
 
+(deftest source-map
+  (let [cases [[nil {}]
+               [{} {}]
+               [{:foo "bar"} {}]
+               [{:source "foo"} {:source "foo"}]
+               [{:source "foo" :source-id "bar"} {:source "foo" :source-id "bar"}]
+               [{:source "foo" :source-id "bar" :name "baz"} {:source "foo" :source-id "bar"}]]
+        ]
+    (doseq [[given expected] cases]
+      (is (= expected (utils/source-map given))))))
