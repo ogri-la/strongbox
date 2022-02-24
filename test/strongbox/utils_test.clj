@@ -464,7 +464,6 @@
                [{:foo "bar"} {}]
                [{:source "foo"} {:source "foo"}]
                [{:source "foo" :source-id "bar"} {:source "foo" :source-id "bar"}]
-               [{:source "foo" :source-id "bar" :name "baz"} {:source "foo" :source-id "bar"}]]
-        ]
+               [{:source "foo" :source-id "bar" :name "baz"} {:source "foo" :source-id "bar"}]]]
     (doseq [[given expected] cases]
       (is (= expected (utils/source-map given))))))

@@ -625,12 +625,12 @@
                  :-fx-background-radius ".4em"}
 
                 ".subtitle .hyperlink"
-                {:-fx-padding "0 .5em .1em .5em"
+                {:-fx-padding "0 1.5em 0 0"
                  :-fx-font-size ".9em"}
 
                 ".section-title"
                 {:-fx-font-size "1.3em"
-                 :-fx-padding "1em 0 .5em 1em"
+                 :-fx-padding "0 0 .5em 1em"
                  :-fx-min-width "200px"
                  :-fx-text-fill "-fx-text-base-color"}
 
@@ -639,14 +639,17 @@
 
                 ".description"
                 {:-fx-font-size "1.4em"
-                 :-fx-padding "0 0 1.5em 1em"
+                 :-fx-padding "1em 0 2em 1.5em"
                  :-fx-wrap-text true
                  :-fx-font-style "italic"
                  :-fx-text-fill "-fx-text-base-color"}
 
+                "#addon-detail-button-menu"
+                {:-fx-alignment "center"}
+
                 ;; keep the ignore and delete buttons very separate from the others
                 ".separator"
-                {:-fx-padding "0 1em"}
+                {:-fx-padding "0 .5em"}
 
                 ".table-view#notice-logger"
                 {:-fx-pref-height "10pc"}
@@ -1990,6 +1993,7 @@
   "a row of buttons attached to available actions for the given addon"
   [{:keys [addon]}]
   {:fx/type :h-box
+   :id "addon-detail-button-menu"
    :children [(if (addon/installed? addon)
                 (button "Re-install" (async-handler #(cli/re-install-or-update-selected [addon]))
                         {:disabled? (not (addon/re-installable? addon))
@@ -2104,6 +2108,73 @@
               :items row-list
               :disable disabled?}}))
 
+(defn addon-detail-centre-pane
+  [{:keys [addon]}]
+  (let [stub {:fx/type :v-box
+              :children
+              (utils/items
+               [{:fx/type :h-box
+                 :style-class ["subtitle"]
+                 :children (utils/items
+                            [(when (:installed-version addon)
+                               {:fx/type :label
+                                :style-class ["installed-version"]
+                                :text (:installed-version addon)})
+
+                             (when (:update? addon)
+                               {:fx/type :label
+                                :style-class ["version"]
+                                :text (format "%s available" (:version addon))})])}
+
+                {:fx/type :h-box
+                 :style-class ["subtitle"]
+                 :children (utils/items
+                            [;; if installed, path to addon directory, clicking it opens file browser
+                             (addon-fs-link (:dirname addon))
+
+                             ;; order is important, a hyperlink may not exist, can't have nav jumping around.
+                             (href-to-hyperlink addon)])}
+
+                (when-not (empty? (:description addon))
+                  {:fx/type :label
+                   :style-class ["description"]
+                   :wrap-text true
+                   :text (:description addon)})
+
+                {:fx/type addon-detail-button-menu
+                 :addon addon}])}
+
+        ;;key-vals {:fx/type addon-detail-key-vals
+        ;;          :addon addon
+        ;;          :grid-pane/column 1
+        ;;          :grid-pane/hgrow :always
+        ;;          :grid-pane/vgrow :always}
+
+
+        releases {:fx/type addon-detail-release-widget
+                  :addon addon
+                  :grid-pane/column 2
+                  :grid-pane/hgrow :always
+                  :grid-pane/vgrow :always}
+
+        grouped {:fx/type addon-detail-group-addons
+                 :addon addon
+                 :grid-pane/column 3
+                 :grid-pane/hgrow :always
+                 :grid-pane/vgrow :always}]
+
+    {:fx/type :grid-pane
+     :children [;;key-vals
+                (merge stub
+                       {:min-width 450
+                        :pref-width 450
+                        :grid-pane/column 1
+                        :grid-pane/hgrow :never
+                        :grid-pane/vgrow :always})
+
+                releases
+                grouped]}))
+
 (defn addon-detail-pane
   "a place to elaborate on what we know about an addon as well somewhere we can put lots of buttons and widgets."
   [{:keys [fx/context addon-id tab-idx]}]
@@ -2148,59 +2219,12 @@
         {:fx/type :border-pane
          :id "addon-detail-pane"
          :style-class ["addon-detail"]
-         :top {:fx/type :v-box
-               :children
-               (utils/items
-                [{:fx/type :label
-                  :style-class ["title"]
-                  :text (:label addon)}
+         :top {:fx/type :label
+               :style-class ["title"]
+               :text (:label addon)}
 
-                 {:fx/type :h-box
-                  :style-class ["subtitle"]
-                  :children (utils/items
-                             [(when (:installed-version addon)
-                                {:fx/type :label
-                                 :style-class ["installed-version"]
-                                 :text (:installed-version addon)})
-
-                              (when (:update? addon)
-                                {:fx/type :label
-                                 :style-class ["version"]
-                                 :text (format "%s available" (:version addon))})
-
-                              ;; if installed, path to addon directory, clicking it opens file browser
-                              (addon-fs-link (:dirname addon))
-
-                              ;; order is important, a hyperlink may not exist, can't have nav jumping around.
-                              (href-to-hyperlink addon)])}
-
-                 (when-not (empty? (:description addon))
-                   {:fx/type :label
-                    :style-class ["description"]
-                    :wrap-text true
-                    :text (:description addon)})
-
-                 {:fx/type addon-detail-button-menu
-                  :addon addon}])}
-
-         :center {:fx/type :grid-pane
-                  :children [{:fx/type addon-detail-key-vals
-                              :addon addon
-                              :grid-pane/column 1
-                              :grid-pane/hgrow :always
-                              :grid-pane/vgrow :always}
-
-                             {:fx/type addon-detail-release-widget
-                              :addon addon
-                              :grid-pane/column 2
-                              :grid-pane/hgrow :always
-                              :grid-pane/vgrow :always}
-
-                             {:fx/type addon-detail-group-addons
-                              :addon addon
-                              :grid-pane/column 3
-                              :grid-pane/hgrow :always
-                              :grid-pane/vgrow :always}]}
+         :center {:fx/type addon-detail-centre-pane
+                  :addon addon}
 
          :bottom {:fx/type notice-logger
                   :tab-idx tab-idx
