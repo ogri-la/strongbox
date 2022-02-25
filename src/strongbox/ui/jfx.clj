@@ -671,7 +671,15 @@
                 ".table-view#key-vals .key-column"
                 {:-fx-alignment "center-right"
                  :-fx-padding "0 1em 0 0"
-                 :-fx-font-style "italic"}} ;; ends .addon-detail
+                 :-fx-font-style "italic"}
+
+                "#addon-detail-big-buttons"
+                {:-fx-padding "2em 0"
+                 " .toggle-button" {:-fx-pref-width "100pc"
+                                    :-fx-padding "1.7em 0"
+                                    :-fx-background-radius "0"
+                                    :-fx-font-size "1.1em"
+                                    ":selected" {:-fx-background-color (colour :row-updateable)}}}} ;; ends .addon-detail
 
                ;; ---
                }}))]
@@ -2109,8 +2117,25 @@
               :disable disabled?}}))
 
 (defn addon-detail-centre-pane
-  [{:keys [addon]}]
-  (let [stub {:fx/type :v-box
+  [{:keys [fx/context tab-idx addon]}]
+  (let [addon-detail-nav [[:releases+grouped-addons "releases + grouped-addons"]
+                          [:mutual-dependencies "mutual dependencies"]
+                          [:raw-data "raw data"]]
+        selected-nav-key (fx/sub-val context get-in [:app-state :tab-list tab-idx :addon-detail-nav-key])
+        toggle-button (fn [[key val]]
+                        {:fx/type :toggle-button
+                         :text val
+                         :selected (= key selected-nav-key)
+                         :on-selected-changed (async-handler #(cli/change-addon-detail-nav key tab-idx))
+                         :toggle-group {:fx/type fx/ext-get-ref
+                                        :ref ::toggle-group}})
+
+        stub {:fx/type :v-box
+              :min-width 450
+              :pref-width 450
+              :grid-pane/column 1
+              :grid-pane/hgrow :never
+              :grid-pane/vgrow :always
               :children
               (utils/items
                [{:fx/type :h-box
@@ -2142,14 +2167,19 @@
                    :text (:description addon)})
 
                 {:fx/type addon-detail-button-menu
-                 :addon addon}])}
+                 :addon addon}
 
-        ;;key-vals {:fx/type addon-detail-key-vals
-        ;;          :addon addon
-        ;;          :grid-pane/column 1
-        ;;          :grid-pane/hgrow :always
-        ;;          :grid-pane/vgrow :always}
+                {:fx/type fx/ext-let-refs
+                 :refs {::toggle-group {:fx/type :toggle-group}}
+                 :desc {:fx/type :v-box
+                        :id "addon-detail-big-buttons"
+                        :children (mapv toggle-button addon-detail-nav)}}])}
 
+        key-vals {:fx/type addon-detail-key-vals
+                  :addon addon
+                  :grid-pane/column 2
+                  :grid-pane/hgrow :always
+                  :grid-pane/vgrow :always}
 
         releases {:fx/type addon-detail-release-widget
                   :addon addon
@@ -2164,16 +2194,10 @@
                  :grid-pane/vgrow :always}]
 
     {:fx/type :grid-pane
-     :children [;;key-vals
-                (merge stub
-                       {:min-width 450
-                        :pref-width 450
-                        :grid-pane/column 1
-                        :grid-pane/hgrow :never
-                        :grid-pane/vgrow :always})
-
-                releases
-                grouped]}))
+     :children (case selected-nav-key
+                 :releases+grouped-addons [stub releases grouped]
+                 :mutual-dependencies [stub key-vals]
+                 :raw-data [stub key-vals])}))
 
 (defn addon-detail-pane
   "a place to elaborate on what we know about an addon as well somewhere we can put lots of buttons and widgets."
@@ -2224,6 +2248,7 @@
                :text (:label addon)}
 
          :center {:fx/type addon-detail-centre-pane
+                  :tab-idx tab-idx
                   :addon addon}
 
          :bottom {:fx/type notice-logger

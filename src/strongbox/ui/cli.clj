@@ -418,6 +418,11 @@
 
 ;; tabs
 
+(defn-spec change-addon-detail-nav nil?
+  [nav-key :ui/addon-detail-nav-key, tab-idx int?]
+  (swap! core/state assoc-in [:tab-list tab-idx :addon-detail-nav-key] nav-key)
+  nil)
+
 (defn-spec change-notice-logger-level nil?
   "changes the log level on the UI notice-logger widget.
   changes the log level for a tab in `:tab-list` when `tab-idx` is also given."
@@ -450,7 +455,8 @@
                  :label tab-label
                  :closable? closable?
                  :log-level :info
-                 :tab-data tab-data}
+                 :tab-data tab-data
+                 :addon-detail-nav-key :releases+grouped-addons}
         tab-list (remove (fn [tab]
                            (= (dissoc tab :tab-id)
                               (dissoc new-tab :tab-id)))
