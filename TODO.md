@@ -31,6 +31,15 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+* addon detail, 'releases' widget
+    - installed release should be highlighted
+
+* 'update all' should be a no-op if nothing has updates available
+    - don't disable the button, just don't do anything
+
+* change split button 'outdent' to 'indent'
+    - and if split, keep it 'pressed in'
+
 * search, add ability to browse catalogue page by page
     - I have neglected the catalogue search *so much*. I need a whole release dedicated to improving it.
 
@@ -41,10 +50,37 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
-* github, preference to sync stars with github repo, if authenticated
+### catalogue v3 / capture more addon data
 
+* 'website'
+    - 'x-website'/'x-url' in toc
+    - add 'website' to addon-detail pane next to 'browse local files' and addon host
+        - depends on capturing x-website
+    - add a 'website' column to installed-addons
+* 'author'
+    - add an 'author' column to installed-addons
+    - add to addon-detail
+    - search other addons by author
+* 'releases'
+    - capture full set of releases, including hashes if they exist
+
+###
+
+* wowinterface, multiple game tracks
+    - investigate just what is being downloaded when a classic version of a wowi addon is downloaded
+    - see 'LagBar'
+* investigate better popularity metric than 'downloads'
+    - if we make an effort to scrape everyday, we can generate this popularity graph ourselves
+* wowinterface, revisit the pages that are being scraped, make sure we're not missing any
+* github, questie is kinda fubar
 * catalogue, descriptions for wowinterface addons
 * catalogue, download counts for github addons
+
+* github, preference to sync stars with github repo, if authenticated
+
+* user catalogue, refresh happens in parallel
+    - write the user-catalogue once, not each time or else we'll get Weirdness
+        - a lock is now acquired when writing the user catalogue
 
 * github, bug, multi-toc addons are getting a warning when `strict?` is true and the game track is changed
     - https://github.com/LenweSaralonde/MusicianList/releases
@@ -83,9 +119,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * http, add with-backoff support to download-file
     - just had a wowinterface addon download timeout
-
-* user catalogue, refresh happens in parallel
-    - write the user-catalogue once, not each time or else we'll get Weirdness
 
 * a more permanent store than just cached files
     - I want to store release data permanently
@@ -176,7 +209,6 @@ see CHANGELOG.md for a more formal list of changes by release
         - clicking 'more' (or whatever) takes to addon detail page
     - perhaps coincide with catalogue v3 with more addon details
 
-* wowinterface, revisit the pages that are being scraped, make sure we're not missing any
 
 * import/export, bring up the split logging pane during operation so any problems can be seen
     - or update the tab title to reflect the number of warnings/errors
@@ -196,11 +228,9 @@ see CHANGELOG.md for a more formal list of changes by release
     - ensure the user catalogue doesn't get too stale and perform an update in the background if it looks like it's very old
         - update README
 
-* 'update all' should be a no-op if nothing has updates available
-    - don't disable the button, just don't do anything
-
 * http, clear non-catalogue cache after session
     - it seems reasonable that stopping and starting the app will have it re-fetch addon summaries.
+    - maybe add as a preference
 
 * install addon from local zipfile
     - *not* the 'reinstallation' feature, but literally selecting a zipfile from somewhere and installing it
@@ -222,11 +252,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - N connections serving M threads
     - pretty fast just by making requests in parallel
         - moving this back to the bucket until I start really looking for optimisations
-
-
-
-* change split button 'outdent' to 'indent'
-    - and if split, keep it 'pressed in'
 
 * preferences, "update all addons automatically"
     - update README features
@@ -285,19 +310,12 @@ see CHANGELOG.md for a more formal list of changes by release
 * reconciliation, add dirname support
     - not sure which hosts support these
 
-* wowinterface, multiple game tracks
-    - investigate just what is being downloaded when a classic version of a wowi addon is downloaded
-    - see 'LagBar'
-
 * reconciliation, rename 'reinstall all' to 'reconcile'
     - steal from the best
     - make the reconcile automatic
         - if a nfo file isn't found
     - remove the 'first time instructions' from the readme
         - it should just fucking do it
-
-* investigate better popularity metric than 'downloads'
-    - if we make an effort to scrape everyday, we can generate this popularity graph ourselves
 
 * add a 'tabula rasa' option that wipes *everything* 
     - cache, catalog, config, downloaded zip files
@@ -309,18 +327,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * rename 'retail' to 'mainline'
     - pretty big change ;) but probably for the best.
-
-## catalogue v3 / capture more addon data
-
-* 'website'
-    - 'x-website'/'x-url' in toc
-    - add 'website' to addon-detail pane next to 'browse local files' and addon host
-        - depends on capturing x-website
-    - add a 'website' column to installed-addons
-* 'author'
-    - add an 'author' column to installed-addons
-    - add to addon-detail
-    - search other addons by author
 
 ## 
 
@@ -341,9 +347,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - eh. tie it in with downloading more release information
     - defer until after job queue
         - very large downloads are possible. just see curseforge dbm
-
-* addon detail, 'releases' widget
-    - installed release should be highlighted
 
 * import and export addons using addon urls
 
@@ -445,10 +448,6 @@ this is still an interesting idea
     - I'm moving this to 'wontfix'
         - it's possible for wowi and tukui, not curse
         - the error message is clear (can't find in catalogue)
-* github, add a github catalogue
-    - just a simple list of wow addons on github that can be installed with strongbox
-    - yeah, nah
-        - I don't want that responsibility
 * logs, persistent addon events
     - installed, updated, pin, ignore events
     - like ... stored in addon history?
@@ -473,7 +472,6 @@ this is still an interesting idea
     - the vast majority of addons use .zip
     - no native support in java/clojure for it
         - library here: https://github.com/junrar/junrar
-            - just found it while going through minion source
 
 * cli, interactive interface when no specific action specified 
     - you have N addons installed. what do you want to do? (list, update, update-all, delete) etc

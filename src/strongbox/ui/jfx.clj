@@ -19,6 +19,7 @@
    [strongbox.ui.cli :as cli]
    [strongbox.ui.check-combo-box :as controlsfx.check-combo-box]
    [strongbox
+    [nfo :as nfo]
     [constants :as constants]
     [joblib :as joblib]
     [logging :as logging]
@@ -633,6 +634,10 @@
                  :-fx-padding "0 0 .5em 1em"
                  :-fx-min-width "200px"
                  :-fx-text-fill "-fx-text-base-color"}
+
+                ".section-description"
+                {:-fx-font-style "italic"
+                 :-fx-padding "0 0 .5em 1em"}
 
                 ".disabled-text"
                 {:-fx-opacity "0.3"}
@@ -2046,10 +2051,10 @@
   (let [key-col (fn [keypair]
                   ;; shouldn't ever be nil but better safe than sorry
                   (-> keypair :key (or ":nil") str (subs 1)))
-        column-list [{:text "key" :min-width 150 :pref-width 150 :max-width 150 :resizable false :cell-value-factory key-col}
+        column-list [{:text "key" :min-width 150 :pref-width 150 :max-width 250 :cell-value-factory key-col}
                      {:text "val" :cell-value-factory :val}]
 
-        blacklist [:group-addons :release-list]
+        blacklist [:group-addons :release-list :source-map-list]
         sanitised (apply dissoc addon blacklist)
 
         row-list (apply utils/csv-map [:key :val] (vec sanitised))
@@ -2116,6 +2121,78 @@
               :items row-list
               :disable disabled?}}))
 
+(defn find-depth
+  [a i]
+  (if-let [children (:children a)]
+    (apply max (conj (mapv #(find-depth % (inc i)) children) i))
+    i))
+
+(defn addon-detail-mutual-dependences-widget
+  [{:keys [addon]}]
+  (let [disabled? false
+
+        to-tree-rows (fn [row]
+                       {:fx/type :tree-item
+                        :expanded true
+                        :value row})
+
+        to-children (fn [a b]
+                      (assoc b :children [a]))
+
+        install-dir (core/get-state :cfg :selected-addon-dir)
+
+        children (if-not (:dirname addon)
+                   []
+                   (for [grouped-addon (addon/flatten-addon addon)
+                         :let [mut-deps (nfo/mutual-dependencies install-dir (:dirname grouped-addon))
+                               mut-deps-tree-items (map (fn [nfo]
+                                                          (to-tree-rows (merge grouped-addon nfo))) mut-deps)]]
+                     (reduce to-children mut-deps-tree-items)))
+
+        root {:fx/type :tree-item
+              :expanded true
+              :children children}
+
+        ;; we want a depth > 1 to show anything meaningful
+        depth (find-depth root 0)]
+
+    {:fx/type :border-pane
+     :top {:fx/type :v-box
+           :children [{:fx/type :label
+                       :style-class (if disabled? ["section-title", "disabled-text"] ["section-title"])
+                       :text "mutual dependencies"}
+                      {:fx/type :label
+                       :style-class ["section-description"]
+                       :text "addons that this addon (or any of it's grouped addons) overlaps with"}]}
+
+     :center {:fx/type :tree-table-view
+              :columns [{:fx/type :tree-table-column
+                         :text ""
+                         :cell-value-factory :arrow
+                         :min-width (* depth 14)}
+                        {:fx/type :tree-table-column
+                         :text "dirname"
+                         :cell-value-factory (comp str :dirname)}
+                        {:fx/type :tree-table-column
+                         :text "name"
+                         :cell-value-factory :name}
+
+                        {:fx/type :tree-table-column
+                         :text "source"
+                         :cell-value-factory :source}
+
+                        {:fx/type :tree-table-column
+                         :text "source-id"
+                         :cell-value-factory :source-id}
+
+                        {:fx/type :tree-table-column
+                         :text "installed-version"
+                         :cell-value-factory :installed-version}]
+
+              :root root
+              :show-root false
+              :disable (< depth 2)}}))
+
 (defn addon-detail-centre-pane
   [{:keys [fx/context tab-idx addon]}]
   (let [addon-detail-nav [[:releases+grouped-addons "releases + grouped-addons"]
@@ -2126,7 +2203,7 @@
                         {:fx/type :toggle-button
                          :text val
                          :selected (= key selected-nav-key)
-                         :on-selected-changed (async-handler #(cli/change-addon-detail-nav key tab-idx))
+                         :on-selected-changed (handler #(cli/change-addon-detail-nav key tab-idx))
                          :toggle-group {:fx/type fx/ext-get-ref
                                         :ref ::toggle-group}})
 
@@ -2191,12 +2268,18 @@
                  :addon addon
                  :grid-pane/column 3
                  :grid-pane/hgrow :always
+                 :grid-pane/vgrow :always}
+
+        mutuals {:fx/type addon-detail-mutual-dependences-widget
+                 :addon addon
+                 :grid-pane/column 2
+                 :grid-pane/hgrow :always
                  :grid-pane/vgrow :always}]
 
     {:fx/type :grid-pane
      :children (case selected-nav-key
                  :releases+grouped-addons [stub releases grouped]
-                 :mutual-dependencies [stub key-vals]
+                 :mutual-dependencies [stub mutuals]
                  :raw-data [stub key-vals])}))
 
 (defn addon-detail-pane

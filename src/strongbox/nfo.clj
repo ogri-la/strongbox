@@ -121,6 +121,14 @@
       nfo-data
       (invalid-data))))
 
+(defn-spec mutual-dependencies (s/coll-of :addon/nfo)
+  "returns a list of `addon/nfo` data for addons using the given `addon-dirname` (including itself)."
+  [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname]
+  (let [contents (read-nfo-file install-dir addon-dirname)]
+    (if (vector? contents)
+      contents
+      [contents])))
+
 (defn-spec mutual-dependency? boolean?
   "returns `true` if multiple sets of nfo data exist in file"
   ([nfo-data (s/nilable ::sp/map-or-list-of-maps)]
