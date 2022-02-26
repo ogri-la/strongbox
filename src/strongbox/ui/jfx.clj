@@ -1162,10 +1162,12 @@
   "returns a hyperlink description or an empty text description"
   [row (s/nilable (s/keys :opt-un [::sp/url]))]
   (let [url (:url row)
+        fallback-url (:group-id row)
         label (:source row)]
-    (if (and url label)
+    (if (or (and url label)
+            (and fallback-url label))
       {:fx/type :hyperlink
-       :on-action (handler #(utils/browse-to url))
+       :on-action (handler #(utils/browse-to (or url fallback-url)))
        :text (str "↪ " label)}
       {:fx/type :text
        :text ""})))
@@ -2154,7 +2156,9 @@
               :children children}
 
         ;; we want a depth > 1 to show anything meaningful
-        depth (find-depth root 0)]
+        depth (find-depth root 0)
+
+        gui-column-map (gui-column-map nil)]
 
     {:fx/type :border-pane
      :top {:fx/type :v-box
@@ -2170,24 +2174,22 @@
                          :text ""
                          :cell-value-factory :arrow
                          :min-width (* depth 14)}
-                        {:fx/type :tree-table-column
-                         :text "dirname"
-                         :cell-value-factory (comp str :dirname)}
+
+                        (make-tree-table-column (:browse-local gui-column-map))
+
+                        (make-tree-table-column (:source gui-column-map))
+
+                        (make-tree-table-column (:source-id gui-column-map))
+
                         {:fx/type :tree-table-column
                          :text "name"
                          :cell-value-factory :name}
 
                         {:fx/type :tree-table-column
-                         :text "source"
-                         :cell-value-factory :source}
+                         :text "directory"
+                         :cell-value-factory :dirname}
 
-                        {:fx/type :tree-table-column
-                         :text "source-id"
-                         :cell-value-factory :source-id}
-
-                        {:fx/type :tree-table-column
-                         :text "installed-version"
-                         :cell-value-factory :installed-version}]
+                        (make-tree-table-column (:installed-version gui-column-map))]
 
               :root root
               :show-root false
