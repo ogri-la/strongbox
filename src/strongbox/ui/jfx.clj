@@ -666,7 +666,7 @@
                  :-fx-min-height 0}
 
                 "#notice-logger-nav"
-                {:-fx-padding "0 0 .5em 0"
+                {:-fx-padding ".6em 0 .7em 0"
                  :-fx-alignment "bottom-right"
                  :-fx-pref-width 9999.0}
 
