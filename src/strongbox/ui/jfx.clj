@@ -629,7 +629,7 @@
 
                 ".section-description"
                 {:-fx-font-style "italic"
-                 :-fx-padding "0 0 .5em 1em"}
+                 :-fx-padding "0 0 .7em 1em"}
 
                 ".disabled-text"
                 {:-fx-opacity "0.3"}
@@ -2047,13 +2047,13 @@
                       {:disabled? (not (addon/deletable? addon))
                        :tooltip "Permanently delete"})]})
 
-(defn addon-detail-key-vals
+(defn addon-detail-key-vals-widget
   "displays a two-column table of `key: val` fields for what we know about an addon."
   [{:keys [addon]}]
   (let [key-col (fn [keypair]
                   ;; shouldn't ever be nil but better safe than sorry
                   (-> keypair :key (or ":nil") str (subs 1)))
-        column-list [{:text "key" :min-width 150 :pref-width 150 :max-width 200 :cell-value-factory key-col}
+        column-list [{:text "key" :min-width 150 :pref-width 150 :max-width 200 :resizable false :cell-value-factory key-col}
                      {:text "val" :cell-value-factory :val}]
 
         blacklist [:group-addons :release-list :source-map-list]
@@ -2123,17 +2123,9 @@
               :items row-list
               :disable disabled?}}))
 
-(defn find-depth
-  [a i]
-  (if-let [children (:children a)]
-    (apply max (conj (mapv #(find-depth % (inc i)) children) i))
-    i))
-
 (defn addon-detail-mutual-dependences-widget
   [{:keys [addon]}]
-  (let [disabled? false
-
-        to-tree-rows (fn [row]
+  (let [to-tree-rows (fn [row]
                        {:fx/type :tree-item
                         :expanded true
                         :value row})
@@ -2144,7 +2136,9 @@
         install-dir (core/get-state :cfg :selected-addon-dir)
 
         children (if-not (:dirname addon)
+                   ;; search result
                    []
+                   ;; installed addon. read the raw nfo data and create a hierarchy of lowest->highest (see to-children)
                    (for [grouped-addon (addon/flatten-addon addon)
                          :let [mut-deps (nfo/mutual-dependencies install-dir (:dirname grouped-addon))
                                mut-deps-tree-items (map (fn [nfo]
@@ -2155,8 +2149,9 @@
               :expanded true
               :children children}
 
-        ;; we want a depth > 1 to show anything meaningful
-        depth (find-depth root 0)
+        ;; we need a depth > 1 to show anything meaningful
+        depth (utils/find-depth root 0)
+        disabled? (< depth 2)
 
         gui-column-map (gui-column-map nil)]
 
@@ -2166,7 +2161,7 @@
                        :style-class (if disabled? ["section-title", "disabled-text"] ["section-title"])
                        :text "mutual dependencies"}
                       {:fx/type :label
-                       :style-class ["section-description"]
+                       :style-class (if disabled? ["section-description" "disabled-text"] ["section-description"])
                        :text "addons that this addon (or any of it's grouped addons) overlaps with"}]}
 
      :center {:fx/type :tree-table-view
@@ -2174,7 +2169,7 @@
               :style-class ["table-view"]
               :show-root false
               :column-resize-policy javafx.scene.control.TreeTableView/CONSTRAINED_RESIZE_POLICY
-              :disable (< depth 2)
+              :disable disabled?
               :row-factory {:fx/cell-type :tree-table-row
                             :describe (fn [row]
                                         {:style-class ["table-row-cell" "tree-table-row-cell"]})}
@@ -2202,66 +2197,72 @@
                          :text "version"
                          :cell-value-factory :installed-version}]}}))
 
-(defn addon-detail-centre-pane
-  [{:keys [fx/context tab-idx addon]}]
+(defn addon-detail-nav-widget
+  [{:keys [tab-idx addon nav-key]}]
   (let [addon-detail-nav [[:releases+grouped-addons "releases + grouped-addons"]
                           [:mutual-dependencies "mutual dependencies"]
                           [:raw-data "raw data"]]
-        selected-nav-key (fx/sub-val context get-in [:app-state :tab-list tab-idx :addon-detail-nav-key])
         toggle-button (fn [[key val]]
                         {:fx/type :toggle-button
                          :text val
-                         :selected (= key selected-nav-key)
+                         :selected (= key nav-key)
                          :on-selected-changed (handler #(cli/change-addon-detail-nav key tab-idx))
                          :toggle-group {:fx/type fx/ext-get-ref
-                                        :ref ::toggle-group}})
+                                        :ref ::toggle-group}})]
+    {:fx/type :v-box
+     :min-width 460
+     :pref-width 460
+     :children
+     (utils/items
+      [{:fx/type :h-box
+        :style-class ["subtitle"]
+        :children (utils/items
+                   [(when (:installed-version addon)
+                      {:fx/type :label
+                       :style-class ["installed-version"]
+                       :text (:installed-version addon)})
 
-        stub {:fx/type :v-box
-              :min-width 460
-              :pref-width 460
-              :grid-pane/column 1
-              :grid-pane/hgrow :never
-              :grid-pane/vgrow :always
-              :children
-              (utils/items
-               [{:fx/type :h-box
-                 :style-class ["subtitle"]
-                 :children (utils/items
-                            [(when (:installed-version addon)
-                               {:fx/type :label
-                                :style-class ["installed-version"]
-                                :text (:installed-version addon)})
+                    (when (:update? addon)
+                      {:fx/type :label
+                       :style-class ["version"]
+                       :text (format "%s available" (:version addon))})])}
 
-                             (when (:update? addon)
-                               {:fx/type :label
-                                :style-class ["version"]
-                                :text (format "%s available" (:version addon))})])}
+       {:fx/type :h-box
+        :style-class ["subtitle"]
+        :children (utils/items
+                   [;; if installed, path to addon directory, clicking it opens file browser
+                    (addon-fs-link (:dirname addon))
 
-                {:fx/type :h-box
-                 :style-class ["subtitle"]
-                 :children (utils/items
-                            [;; if installed, path to addon directory, clicking it opens file browser
-                             (addon-fs-link (:dirname addon))
+                    ;; order is important, a hyperlink may not exist, can't have nav jumping around.
+                    (href-to-hyperlink addon)])}
 
-                             ;; order is important, a hyperlink may not exist, can't have nav jumping around.
-                             (href-to-hyperlink addon)])}
+       (when-not (empty? (:description addon))
+         {:fx/type :label
+          :style-class ["description"]
+          :wrap-text true
+          :text (:description addon)})
 
-                (when-not (empty? (:description addon))
-                  {:fx/type :label
-                   :style-class ["description"]
-                   :wrap-text true
-                   :text (:description addon)})
+       {:fx/type addon-detail-button-menu
+        :addon addon}
 
-                {:fx/type addon-detail-button-menu
-                 :addon addon}
+       {:fx/type fx/ext-let-refs
+        :refs {::toggle-group {:fx/type :toggle-group}}
+        :desc {:fx/type :v-box
+               :id "addon-detail-big-buttons"
+               :children (mapv toggle-button addon-detail-nav)}}])}))
 
-                {:fx/type fx/ext-let-refs
-                 :refs {::toggle-group {:fx/type :toggle-group}}
-                 :desc {:fx/type :v-box
-                        :id "addon-detail-big-buttons"
-                        :children (mapv toggle-button addon-detail-nav)}}])}
+(defn addon-detail-centre-pane
+  [{:keys [fx/context tab-idx addon]}]
+  (let [selected-nav-key (fx/sub-val context get-in [:app-state :tab-list tab-idx :addon-detail-nav-key])
+        nav {:fx/type addon-detail-nav-widget
+             :addon addon
+             :tab-idx tab-idx
+             :nav-key selected-nav-key
+             :grid-pane/column 1
+             :grid-pane/hgrow :never
+             :grid-pane/vgrow :always}
 
-        key-vals {:fx/type addon-detail-key-vals
+        key-vals {:fx/type addon-detail-key-vals-widget
                   :addon addon
                   :grid-pane/column 2
                   :grid-pane/hgrow :always
@@ -2287,9 +2288,9 @@
 
     {:fx/type :grid-pane
      :children (case selected-nav-key
-                 :releases+grouped-addons [stub releases grouped]
-                 :mutual-dependencies [stub mutuals]
-                 :raw-data [stub key-vals])}))
+                 :releases+grouped-addons [nav releases grouped]
+                 :mutual-dependencies [nav mutuals]
+                 :raw-data [nav key-vals])}))
 
 (defn addon-detail-pane
   "a place to elaborate on what we know about an addon as well somewhere we can put lots of buttons and widgets."

@@ -875,3 +875,18 @@
 
       (doseq [[given expected] cases]
         (is (= expected (cli/sort-column-list given)))))))
+
+(deftest change-addon-detail-nav
+  (let [addon {:source "wowinterface" :source-id 123 :label "Foo"}
+        tab-idx 0
+        expected {:closable? true
+                  :label "Foo"
+                  :tab-data {:source "wowinterface", :source-id 123}
+                  :tab-id "foobar"
+                  :log-level :info
+                  :addon-detail-nav-key :mutual-dependencies}]
+    (with-running-app
+      (with-redefs [strongbox.utils/unique-id (constantly "foobar")]
+        (cli/add-addon-tab addon)
+        (cli/change-addon-detail-nav :mutual-dependencies tab-idx)
+        (is (= expected (core/get-state :tab-list tab-idx)))))))

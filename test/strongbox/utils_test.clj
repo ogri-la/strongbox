@@ -467,3 +467,18 @@
                [{:source "foo" :source-id "bar" :name "baz"} {:source "foo" :source-id "bar"}]]]
     (doseq [[given expected] cases]
       (is (= expected (utils/source-map given))))))
+
+(deftest find-depth
+  (let [cases [[{} 0]
+               [{:foo []} 0]
+
+               ;; we went down one level but not further
+               [{:children {:foo :bar}} 1]
+               [{:children [{:foo :bar}]} 1]
+
+               [{:children [{:children [{:children nil}]}]} 3]
+               [{:children [{:children [{:children :foo}]}]} 3]
+               [{:children [{:children [{:children []}]}]} 3]]]
+
+    (doseq [[given expected] cases]
+      (is (= expected (utils/find-depth given 0))))))

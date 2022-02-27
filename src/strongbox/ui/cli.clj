@@ -419,9 +419,11 @@
 ;; tabs
 
 (defn-spec change-addon-detail-nav nil?
+  "changes the selected mode of the addon detail pane between releases+grouped-addons, mutual dependencies and key+vals"
   [nav-key :ui/addon-detail-nav-key, tab-idx int?]
-  (swap! core/state assoc-in [:tab-list tab-idx :addon-detail-nav-key] nav-key)
-  nil)
+  (when (some #{nav-key} sp/addon-detail-nav-key-set)
+    (swap! core/state assoc-in [:tab-list tab-idx :addon-detail-nav-key] nav-key)
+    nil))
 
 (defn-spec change-notice-logger-level nil?
   "changes the log level on the UI notice-logger widget.
