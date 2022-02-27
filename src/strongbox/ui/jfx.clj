@@ -597,7 +597,13 @@
 
 
                "#addon-detail-pane "
-               {".title"
+               {
+
+                ".table-row-cell.updateable"
+                {:-fx-background-color :green
+                 }
+
+                ".title"
                 {:-fx-font-size "2.5em"
                  :-fx-padding "1em 0 .5em 1em"
                  :-fx-text-fill "-fx-text-base-color"}
@@ -2106,7 +2112,9 @@
                           (button "install" (async-handler #(cli/set-version addon release)))))
         column-list [{:text "" :style-class ["wide-button-column"] :min-width 120 :pref-width 120 :max-width 120 :resizable false :cell-value-factory install-button}
                      {:text "name" :cell-value-factory #(or (:release-label %) (:version %))}]
-        row-list (or (rest (:release-list addon)) [])
+        ;;row-list (or (rest (:release-list addon)) [])
+        row-list (or (:release-list addon) [])
+        
         disabled? (not (addon/releases-visible? addon))]
     {:fx/type :border-pane
      :top {:fx/type :label
@@ -2121,6 +2129,16 @@
               :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
               :columns (mapv make-table-column column-list)
               :items row-list
+              :row-factory {:fx/cell-type :table-row
+                            :describe (fn [row]
+                                        {:style-class (utils/items
+                                                       ["table-row-cell"
+                                                        (when (= (:version row) (:installed-version addon))
+                                                          "installed")
+                                                        (when (= (:version row) (:version addon))
+                                                          "updateable")])})}
+                                          
+
               :disable disabled?}}))
 
 (defn addon-detail-mutual-dependences-widget
