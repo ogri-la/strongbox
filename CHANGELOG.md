@@ -15,20 +15,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * clickable tags in the 'tags' column that filter search results.
     - selected tags appear in the search area. clicking them will remove the tag from the search.
 * gui, search, count of addons selected to the 'install selected' button.
+* gui, addon-details, a 'mutual dependencies' pane to show which addons the current addon is overwriting.
 
 ### Changed
 
 * core, the user-catalogue is now part of application state rather than read from file as needed.
 * gui, search, 'install selected' button moved to the left of the search field and disabled if no addons selected.
+* gui, addon-details, switched from a three-pane layout to a two-pane layout with navigation.
+    - default panes displayed are 'releases' and 'grouped addons'
+    - 'raw-data' shifted to it's own pane, it's always been a bit of a debug option.
+* gui, styling, some of the early, complex, styling has been minimised and contained to just the install and search tabs.
+    - the appearance shouldn't have altered, it's just less wooly behind the scenes.
+* gui, addon-details, very minor, "Stop ignoring" label changed to "Unignore" to conserve horizontal space.
 
 ### Fixed
+
+* gui, addon-details, very minor bug that would sometimes result in two seemingly identical addon tabs being open.
+    - new tab and their default state were being compared to all other tabs open and, if not found, a new one would be opened.
+        - for example, if you changed the log level in an addon's detail pane then opened the addon again, you'd get a duplicate tab.
 
 ### Removed
 
 * the 'random' button. room was needed for the new filters.
     - it's affect can still be simulated by pressing spacebar in the search field.
 * the 'wrote: /path/to/user-catalogue.json' message when the user catalogue is updated.
-    - it's just noise when the operation becomes common
+    - it's just noise now that the operation has become common.
 
 ## 5.0.0 - 2022-01-31
 

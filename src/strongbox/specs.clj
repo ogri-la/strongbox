@@ -127,9 +127,12 @@
 
 (s/def :addon/id (s/or :regular (s/keys :req-un [:addon/source :addon/source-id]) ;; installed addons and catalogue addons
                        :edge (s/keys :req-in [::dirname]))) ;; unmatched and ignored addons
+
+(def addon-detail-nav-key-set #{:releases+grouped-addons :mutual-dependencies :raw-data})
+(s/def :ui/addon-detail-nav-key addon-detail-nav-key-set)
 (s/def :ui/tab-data :addon/id) ;; for now
 (s/def :ui/tab-id string?)
-(s/def :ui/tab (s/keys :req-un [:ui/tab-id ::label ::closable? :ui/tab-data ::log-level]))
+(s/def :ui/tab (s/keys :req-un [:ui/tab-id ::label ::closable? :ui/tab-data ::log-level :ui/addon-detail-nav-key]))
 (s/def :ui/tab-list (s/coll-of :ui/tab))
 
 ;; column lists

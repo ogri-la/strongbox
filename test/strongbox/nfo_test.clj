@@ -347,3 +347,41 @@
       (nfo/unpin (install-dir) addon-dir)
       (is (= expected (nfo/read-nfo (install-dir) addon-dir))))))
 
+(deftest mutual-dependencies--no-dependencies
+  (testing "returns all nfo data the given addon depends on, including itself, as a simple ordered list"
+    (let [nfo-data {:installed-version "1.2.1"
+                    :installed-game-track :classic
+                    :name "EveryAddon"
+                    :group-id "https://foo.bar"
+                    :primary? true
+                    :source "wowinterface"
+                    :source-id 321
+                    :source-map-list [{:source "wowinterface" :source-id 321}]}
+          expected [nfo-data]]
+      (nfo/write-nfo (install-dir) addon-dir nfo-data)
+      (is (= expected (nfo/mutual-dependencies (install-dir) addon-dir))))))
+
+(deftest mutual-dependencies
+  (testing "returns all nfo data the given addon depends on, including itself, as a simple ordered list"
+    (let [nfo-data-a {:installed-version "1.2.1"
+                      :installed-game-track :classic
+                      :name "EveryAddon"
+                      :group-id "https://foo.bar"
+                      :primary? true
+                      :source "wowinterface"
+                      :source-id 321
+                      :source-map-list [{:source "wowinterface" :source-id 321}]}
+
+          nfo-data-b {:installed-version "3.2.1"
+                      :installed-game-track :retail
+                      :name "EveryOtherAddon"
+                      :group-id "https://bar.baz"
+                      :primary? true
+                      :source "github"
+                      :source-id 123
+                      :source-map-list [{:source "github" :source-id 123}]}
+
+          expected [nfo-data-a nfo-data-b]]
+      (nfo/write-nfo (install-dir) addon-dir expected)
+      (is (= expected (nfo/mutual-dependencies (install-dir) addon-dir))))))
+

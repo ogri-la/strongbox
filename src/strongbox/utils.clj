@@ -778,3 +778,12 @@
   [addon (s/nilable map?)]
   (select-keys addon [:source :source-id]))
 
+(defn-spec find-depth int?
+  "given a map `m`, if it contains `:children`, increments `i` and calls self"
+  [m map?, i int?]
+  (if (contains? m :children)
+    (let [children (:children m)]
+      (if (sequential? children)
+        (apply max (conj (mapv #(find-depth % (inc i)) children) (inc i)))
+        (inc i)))
+    i))
