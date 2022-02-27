@@ -236,7 +236,23 @@
 
 
                ;;
-               ;; common tables
+               ;; tabber
+               ;;
+
+
+               ".tab-pane > .tab-header-area "
+               {:-fx-padding ".7em 0 0 .6em"
+
+                "> .headers-region > .tab"
+                {:-fx-background-radius "0"
+                 :-fx-padding ".25em 1em"
+                 :-fx-focus-color "transparent" ;; disables the 'blue box' of selected widgets
+                 :-fx-faint-focus-color "transparent" ;; literally, a very faint box remains
+                 }}
+
+
+               ;;
+               ;; common styling for all tables
                ;;
 
 
@@ -248,162 +264,52 @@
 
                 ".table-placeholder-text" {:-fx-font-size "3em"}
 
-                ".column-header" {;;:-fx-background-color "#ddd" ;; flat colour vs gradient
-                                  :-fx-font-size "1em"}
+                ".column-header" {:-fx-font-size "1em"}
 
                 [".table-row-cell" ".tree-table-row-cell"]
                 {:-fx-border-insets "-1 -1 0 -1"
-                 :-fx-border-color (colour :table-border)
-                 :-fx-background-color (colour :row) ;; even
+                 :-fx-border-color (colour :table-border)}
 
-                 " .table-cell" {:-fx-text-fill (colour :table-font-colour)}
-                 ":hover" {:-fx-background-color (colour :row-hover)}
-                 ":selected" {:-fx-background-color (colour :row-selected)
-                              :-fx-table-cell-border-color (colour :table-border)
-                              " .table-cell" {:-fx-text-fill "-fx-focused-text-base-color"}}
-                 ":selected:hover" {:-fx-background-color (colour :row-hover)}
 
-                 ":odd" {:-fx-background-color (colour :row)
-                         ":hover" {:-fx-background-color (colour :row-hover)}
-                         ":selected" {:-fx-background-color (colour :row-selected)}
-                         ":selected:hover" {:-fx-background-color (colour :row-hover)}}
+                ;;
+                ;; common column styling
+                ;;
 
-                 ".unsteady" {;; '!important' so that it takes precedence over .updateable addons
-                              ;;:-fx-background-color (str (colour :unsteady) " !important")
-                              }}
+                ;; 'wide' buttons, like "[  install  ]" buttons
 
+
+                ".wide-button-column.table-cell"
+                {:-fx-padding "0px"
+                 :-fx-alignment "center"}
+
+                ".wide-button-column .button"
+                {:-fx-pref-width 100
+                 :-fx-padding "2px 0"
+                 :-fx-background-radius "4"}
+
+                ;; columns with buttons that don't look like buttons (star, uber-button, etc)
+                ".invisible-button-column"
+                {:-fx-padding 0
+                 :-fx-alignment "top-center"}
+
+                ".invisible-button-column > .button"
+                {:-fx-padding 0
+                 :-fx-background-color nil
+                 ;; invisible button should fill width of column
+                 :-fx-max-width "10em"}
+
+                ;; cells in ignored rows are semi-transparent
                 ".ignored .table-cell" {:-fx-opacity "0.5"
                                         :-fx-font-style "italic"}
 
-                ;; ignored 'install' button gets slightly different styling
-                ".ignored .install-button-column.table-cell"
-                {:-fx-opacity "1" ;; a disabled button already has some greying effect applied
-                 :-fx-font-style "normal"}}
-
-               ;;
-               ;; tables with alternating row colours (just add the '.odd-rows' class)
-               ;; 
-
-               ".table-view.odd-rows .table-row-cell:odd"
-               {:-fx-background-color (colour :row-alt)
-                ":hover"
-                {:-fx-background-color (colour :row-hover)}}
-
-               ;; 'the above overwrites the pseudo class as well apparently.
-               ;; this 'resets' it so we don't get selected rows with alternating blanks
-               ".table-view.odd-rows .table-row-cell:odd:selected"
-               {:-fx-background-color (colour :row-selected)
-                ":hover"
-                {:-fx-background-color (colour :row-hover)}}
-
-               ".table-view .install-button-column.table-cell"
-               {:-fx-padding "0px"
-                :-fx-alignment "center"}
-
-               ".table-view .install-button-column .button"
-               {:-fx-pref-width 100
-                :-fx-padding "2px 0"
-                :-fx-background-radius "4"}
-
-               ;; columns with invisible buttons in them
-               ".button-column"
-               {:-fx-padding 0
-                :-fx-alignment "top-center"}
-
-               ".button-column > .button"
-               {:-fx-padding 0
-                :-fx-background-color nil
-                :-fx-max-width "10em"} ;; "fill column width" 
-
-               ".star-column:hover > .button"
-               {:-fx-text-fill (colour :star-hover)}
-
-               ".star-column > .button"
-               {:-fx-padding "-0.25em"
-                :-fx-font-size "1.9em"
-                :-fx-text-fill (colour :star-unstarred)
-
-                ".starred"
-                {:-fx-text-fill (colour :star-starred)}}
-
-               ".button-column > .uber"
-               {:-fx-font-size "1.5em"
-                :-fx-text-fill (colour :uber-button-tick) ;; green tick
-                :-fx-font-weight "bold"}
-
-
-               ;;
-               ;; treetableview
-               ;;
-
-
-               ".tree-table-row-cell > .tree-disclosure-node"
-               {;; default is "4 6 4 8" but this makes the hitbox a tiny bit easier to hit
-                :-fx-padding "9"
-                " > .arrow" {:-fx-background-color (colour :table-font-colour)}}
-
-               ".table-view .child-row .table-cell"
-               {:-fx-opacity 0.6}
-
-               ;;
-               ;; tabber
-               ;;
-
-
-               ".tab-pane > .tab-header-area"
-               {:-fx-padding ".7em 0 0 .6em"}
-
-               ;; tabs
-               ".tab-pane > .tab-header-area > .headers-region > .tab"
-               {:-fx-background-radius "0"
-                :-fx-padding ".25em 1em"
-                :-fx-focus-color "transparent" ;; disables the 'blue box' of selected widgets
-                :-fx-faint-focus-color "transparent" ;; literally, a very faint box remains
-                }
-
-
-               ;;
-               ;; installed-addons tab
-               ;;
-
-
-               ".table-view #placeholder "
-               {:-fx-alignment "center"
-
-                ".big-welcome-text"
-                {:-fx-font-size "5em"
-                 :-fx-font-weight "bold"
-                 :-fx-padding ".3em 1em"
-                 :-fx-spacing "1em"}
-
-                ".big-welcome-subtext"
-                {:-fx-font-size "1.8em"
-                 :-fx-font-family "monospace"
-                 :-fx-padding ".8em 0 1em 0"}}
-
-               "#update-all-button"
-               {:-fx-min-width "110px"}
-
-               "#game-track-container "
-               {:-fx-alignment "center"
-
-                "#game-track-check-box"
-                {:-fx-padding "0 0 0 .65em"
-                 :-fx-min-width "70px"}}
-
-               ".table-view#installed-addons "
-               {".wow-column"
-                {:-fx-alignment "center"}
-
-                ".table-row-cell.warnings .button-column > .button"
-                {;; orange bar
-                 :-fx-text-fill (colour :uber-button-warn)}
-
-                ".table-row-cell.errors .button-column > .button"
-                {;; red cross
-                 :-fx-text-fill (colour :uber-button-error)}
+                ;; wide buttons in ignored cells get slightly different styling
+                ".ignored .wide-button-column.table-cell"
+                {:-fx-opacity "1" ;; a disabled button already has a greying effect applied
+                 :-fx-font-style "normal"}
 
                 ;; .installed-column, .available-column, .version-column
+
+
                 ".version-column"
                 {:-fx-alignment "center-right"
                  :-fx-text-overrun "leading-ellipsis"}
@@ -418,68 +324,150 @@
                 ".updated-column"
                 {:-fx-alignment "center"}}
 
-               ;; installed, updateable
+               ;;
+               ;; common styling for tree-tables
+               ;;
 
-               ".table-view#installed-addons .updateable"
-               {:-fx-background-color (colour :row-updateable)
 
-                " .table-cell"
-                {:-fx-text-fill (colour :row-updateable-text)}
+               ".tree-table-row-cell > .tree-disclosure-node"
+               {;; default is "4 6 4 8" but this makes the hitbox a tiny bit easier to hit
+                :-fx-padding "9"
+                " > .arrow" {:-fx-background-color (colour :table-font-colour)}}
 
-                " .hyperlink"
-                {:-fx-text-fill (colour :hyperlink-updateable)}
 
-                ;; selected+updateable addons look *slightly* different
-                ":selected"
-                {;; !important so that hovering over a selected+updateable row doesn't change it's colour
-                 :-fx-background-color (str (colour :row-updateable-selected) " !important")}}
+               ;;
+               ;; common styling for install + search tables
+               ;;
 
-               ;; installed, ignored
 
-               ".table-view#installed-addons .ignored"
-               {" .button-column > .button"
-                ;; !important because an orange warning colour is being inherited from somewhere
-                {:-fx-text-fill "gray !important"}}
+               ["#installed-addons .table-view " "#search-addons .table-view "]
+               {[".table-row-cell" ".tree-table-row-cell"]
+                {:-fx-background-color (colour :row) ;; even rows
+
+                 " .table-cell" {:-fx-text-fill (colour :table-font-colour)}
+                 ":hover" {:-fx-background-color (colour :row-hover)}
+                 ":selected" {:-fx-background-color (colour :row-selected)
+                              :-fx-table-cell-border-color (colour :table-border)
+                              " .table-cell" {:-fx-text-fill "-fx-focused-text-base-color"}}
+                 ":selected:hover" {:-fx-background-color (colour :row-hover)}
+
+                 ":odd" {;;:-fx-background-color (colour :row)
+                         ":hover" {:-fx-background-color (colour :row-hover)}
+                         ":selected" {:-fx-background-color (colour :row-selected)}
+                         ":selected:hover" {:-fx-background-color (colour :row-hover)}}}}
+
+
+
+
+               ;;
+               ;; installed-addons tab
+               ;;
+
+
+               "#installed-addons"
+               {".table-view #placeholder "
+                {:-fx-alignment "center"
+
+                 ".big-welcome-text"
+                 {:-fx-font-size "5em"
+                  :-fx-font-weight "bold"
+                  :-fx-padding ".3em 1em"
+                  :-fx-spacing "1em"}
+
+                 ".big-welcome-subtext"
+                 {:-fx-font-size "1.8em"
+                  :-fx-font-family "monospace"
+                  :-fx-padding ".8em 0 1em 0"}}
+
+                "#update-all-button"
+                {:-fx-min-width "110px"}
+
+                "#game-track-container "
+                {:-fx-alignment "center"
+
+                 "#game-track-check-box"
+                 {:-fx-padding "0 0 0 .65em"
+                  :-fx-min-width "70px"}}
+
+                ".table-view#installed-addons-table "
+                {".wow-column"
+                 {:-fx-alignment "center"}
+
+                 ".uber-button"
+                 {:-fx-font-size "1.5em"
+                  :-fx-text-fill (colour :uber-button-tick) ;; green tick
+                  :-fx-font-weight "bold"}
+
+                 ".table-row-cell.warnings .invisible-button-column > .uber-button"
+                 {;; orange bar
+                  :-fx-text-fill (colour :uber-button-warn)}
+
+                 ".table-row-cell.errors .invisible-button-column > .uber-button"
+                 {;; red cross
+                  :-fx-text-fill (colour :uber-button-error)}
+
+                 ".child-row .table-cell"
+                 {:-fx-opacity 0.6}
+
+                 ".updateable"
+                 {:-fx-background-color (str (colour :row-updateable) " !important")
+
+                  " .table-cell"
+                  {:-fx-text-fill (colour :row-updateable-text)}
+
+                  " .hyperlink"
+                  {:-fx-text-fill (colour :hyperlink-updateable)}
+
+                  ;; selected+updateable addons look *slightly* different
+                  ":selected"
+                  {;; !important so that hovering over a selected+updateable row doesn't change it's colour
+                   :-fx-background-color (str (colour :row-updateable-selected) " !important")}}
+
+                 ".ignored"
+                 {" .invisible-button-column > .button"
+                  ;; !important because an orange warning colour is being inherited from somewhere
+                  {:-fx-text-fill "gray !important"}}}}
 
                ;;
                ;; notice-logger
                ;;
 
 
-               ".table-view#notice-logger "
-               {:-fx-font-family "monospace"
+               "#notice-logger "
+               {".table-view "
+                {:-fx-font-family "monospace"
 
-                ".warn .table-cell"
-                {:-fx-text-fill (colour :row-warning-text)
-                 :-fx-background-color (colour :row-warning)}
+                 ".warn .table-cell"
+                 {:-fx-text-fill (colour :row-warning-text)
+                  :-fx-background-color (colour :row-warning)}
 
-                ".warn:selected"
-                {:-fx-background-color "-fx-selection-bar"}
+                 ".warn:selected"
+                 {:-fx-background-color "-fx-selection-bar"}
 
-                ".error .table-cell"
-                {:-fx-text-fill (colour :row-error-text)
-                 :-fx-background-color (colour :row-error)}
+                 ".error .table-cell"
+                 {:-fx-text-fill (colour :row-error-text)
+                  :-fx-background-color (colour :row-error)}
 
-                ".error:selected"
-                {:-fx-background-color "-fx-selection-bar"}
+                 ".error:selected"
+                 {:-fx-background-color "-fx-selection-bar"}
 
-                ".report .table-cell"
-                {:-fx-text-fill (colour :row-report-text)}
+                 ".report .table-cell"
+                 {:-fx-text-fill (colour :row-report-text)}
 
-                ".report #message"
-                {:-fx-font-style "italic"}
+                 ".report #message"
+                 {:-fx-font-style "italic"}
 
-                "#level"
-                {:-fx-alignment "center"}
+                 "#level"
+                 {:-fx-alignment "center"}
 
-                "#source"
-                {:-fx-alignment "center"}
+                 "#source"
+                 {:-fx-alignment "center"}
 
-                "#time"
-                {:-fx-alignment "center"}
+                 "#time"
+                 {:-fx-alignment "center"}
 
-                "#message.column-header .label"
-                {:-fx-alignment "center-left"}}
+                 "#message.column-header .label"
+                 {:-fx-alignment "center-left"}}
 
 
                ;;
@@ -487,124 +475,128 @@
                ;;
 
 
-               "#notice-logger-nav"
-               {:-fx-padding "1.1em .75em" ;; 1.1em so installed, search and log pane tables all start at the same height
-                :-fx-font-size ".9em"
+                "#notice-logger-nav"
+                {:-fx-padding "1.1em .75em" ;; 1.1em so installed, search and log pane tables all start at the same height
+                 :-fx-font-size ".9em"
 
-                " .radio-button"
-                {:-fx-padding "0 .5em"}}
-
+                 " .radio-button"
+                 {:-fx-padding "0 .5em"}}}
 
                ;;
                ;; search
                ;;
 
 
-               "#search-install-button"
-               {:-fx-min-width "90px"}
+               "#search-addons "
+               {".star-column:hover > .button"
+                {:-fx-text-fill (colour :star-hover)}
 
-               "#search-random-button"
-               {:-fx-min-width "80px"}
+                ".star-column > .button"
+                {:-fx-padding "-0.25em !important"
+                 :-fx-font-size "1.9em"
+                 :-fx-text-fill (colour :star-unstarred)
 
-               "#search-user-catalogue-button"
-               {:-fx-font-weight "bold"
-                :-fx-font-size "1.4em"
-                :-fx-padding "1 7"
+                 ".starred"
+                 {:-fx-text-fill (colour :star-starred)}}
 
-                ".starred" {:-fx-text-fill (colour :star-starred)
-                            ;; the yellow of the star doesn't stand out from the gray gradient behind it.
-                            ;; this gives the text a border (stroke) and a very faint glow.
-                            " .text" {:-fx-stroke (colour :table-font-colour)
-                                      :-fx-stroke-width ".2"
-                                      :-fx-effect (str "dropshadow( gaussian , " (colour :star-starred) " , 10, 0.0 , 0 , 0 )")}}}
+                "#search-install-button"
+                {:-fx-min-width "90px"}
 
-               "#search-prev-button"
-               {:-fx-min-width "80px"}
+                "#search-random-button"
+                {:-fx-min-width "80px"}
 
-               "#search-next-button"
-               {:-fx-min-width "70px"}
+                "#search-user-catalogue-button"
+                {:-fx-font-weight "bold"
+                 :-fx-font-size "1.4em"
+                 :-fx-padding "1 7"
 
-               "#search-text-field "
-               {:-fx-min-width "100px"
-                :-fx-text-fill (colour :table-font-colour)}
+                 ".starred" {:-fx-text-fill (colour :star-starred)
+                             ;; the yellow of the star doesn't stand out from the gray gradient behind it.
+                             ;; this gives the text a border (stroke) and a very faint glow.
+                             " .text" {:-fx-stroke (colour :table-font-colour)
+                                       :-fx-stroke-width ".2"
+                                       :-fx-effect (str "dropshadow( gaussian , " (colour :star-starred) " , 10, 0.0 , 0 , 0 )")}}}
 
-               "#search-selected-tag-bar"
-               {:-fx-padding "0 0 10 10"
-                :-fx-spacing "10"
-                " > .button" {:-fx-padding "2.5 8"
-                              :-fx-background-radius "4"}}
+                "#search-prev-button"
+                {:-fx-min-width "80px"}
 
-               ".table-view#search-addons .downloads-column"
-               {:-fx-alignment "center-right"}
+                "#search-next-button"
+                {:-fx-min-width "70px"}
 
-               ".table-view#search-addons .updated-column"
-               {:-fx-alignment "center"}
+                "#search-text-field "
+                {:-fx-min-width "100px"
+                 :-fx-text-fill (colour :table-font-colour)}
 
-               ".tag-button-column"
-               {:-fx-padding "-1 0 0 0"
+                "#search-selected-tag-bar"
+                {:-fx-padding "0 0 10 10"
+                 :-fx-spacing "10"
+                 " > .button" {:-fx-padding "2.5 8"
+                               :-fx-background-radius "4"}}
 
-                " .button" {:-fx-min-width 50
-                            :-fx-font-size ".9em"
-                            :-fx-padding "4px 5px"
-                            :-fx-background-color "none"
-                            :-fx-opacity "1"
-                            :-fx-border-width "0 1 0 0"
-                            :-fx-border-color (colour :table-border)
-                            :-fx-text-overrun "word-ellipsis"
-                            ":hover" {:-fx-background-color (colour :row-updateable-selected)}}}
+                ".table-view "
+                {".downloads-column" {:-fx-alignment "center-right"}
+                 ".updated-column" {:-fx-alignment "center"}
 
+                 ".tag-button-column"
+                 {:-fx-padding "-1 0 0 0"
+                  " .button" {:-fx-min-width 50
+                              :-fx-font-size ".9em"
+                              :-fx-padding "4px 5px"
+                              :-fx-background-color "none"
+                              :-fx-opacity "1"
+                              :-fx-border-width "0 1 0 0"
+                              :-fx-border-color (colour :table-border)
+                              :-fx-text-overrun "word-ellipsis"
+                              ":hover" {:-fx-background-color (colour :row-updateable-selected)}}}}}
 
                ;;
                ;; status bar (bottom of app)
                ;; 
 
 
-               "#status-bar"
+               "#status-bar "
                {:-fx-font-size ".9em"
                 :-fx-padding "0"
-                :-fx-alignment "center-left"}
-
-               "#status-bar-left"
-               {:-fx-padding "0 10"
                 :-fx-alignment "center-left"
-                :-fx-pref-width 9999.0
 
-                " > .text"
-                {;; omg, wtf does 'fx-fill' work and not 'fx-text-fill' ???
-                 :-fx-fill (colour :table-font-colour)}}
+                "#status-bar-left"
+                {:-fx-padding "0 10"
+                 :-fx-alignment "center-left"
+                 :-fx-pref-width 9999.0
+                 " > .text" {;; omg, wtf does 'fx-fill' work and not 'fx-text-fill' ???
+                             :-fx-fill (colour :table-font-colour)}}
 
-               "#status-bar-right"
-               {:-fx-min-width "130px" ;; long enough to render "warnings (999)"
+                "#status-bar-right"
+                {:-fx-min-width "130px" ;; long enough to render "warnings (999)"
+                 :-fx-padding "5px 12px 5px 0"
+                 :-fx-alignment "center-right"}
 
-                :-fx-padding "5px 12px 5px 0"
-                :-fx-alignment "center-right"}
+                "#status-bar-right .button"
+                {:-fx-padding "4 10"
+                 ;; doesn't look right when button is coloured.
+                 ;;:-fx-background-radius "4"
+                 :-fx-font-size "11px"
 
-               "#status-bar-right .button"
-               {:-fx-padding "4 10"
-                ;; doesn't look right when button is coloured.
-                ;;:-fx-background-radius "4"
-                :-fx-font-size "11px"
+                 ;; this isn't great but it's better than nothing. revisit when it makes more sense.
+                 ":armed"
+                 {:-fx-background-insets "1 1 0 0,  1,  2,  3"}}
 
-                ;; this isn't great but it's better than nothing. revisit when it makes more sense.
-                ":armed"
-                {:-fx-background-insets "1 1 0 0,  1,  2,  3"}}
+                ".button.with-warning"
+                {:-fx-background-insets "0 0 -1 0,  0,  1,  2"
+                 :-fx-background-color (str "-fx-shadow-highlight-color, -fx-outer-border, -fx-inner-border, " (colour :row-warning))
+                 :-fx-text-fill (colour :row-warning-text)}
 
-               ".button.with-warning"
-               {:-fx-background-insets "0 0 -1 0,  0,  1,  2"
-                :-fx-background-color (str "-fx-shadow-highlight-color, -fx-outer-border, -fx-inner-border, " (colour :row-warning))
-                :-fx-text-fill (colour :row-warning-text)}
-
-               ".button.with-error"
-               {:-fx-background-insets "0 0 -1 0,  0"
-                :-fx-background-color (str "-fx-shadow-highlight-color, -fx-inner-border, " (colour :row-error))
-                :-fx-text-fill (colour :row-error-text)}
+                ".button.with-error"
+                {:-fx-background-insets "0 0 -1 0,  0"
+                 :-fx-background-color (str "-fx-shadow-highlight-color, -fx-inner-border, " (colour :row-error))
+                 :-fx-text-fill (colour :row-error-text)}}
 
                ;;
                ;; addon-detail
                ;;
 
 
-               ".addon-detail "
+               "#addon-detail-pane "
                {".title"
                 {:-fx-font-size "2.5em"
                  :-fx-padding "1em 0 .5em 1em"
@@ -652,15 +644,15 @@
                 "#addon-detail-button-menu"
                 {:-fx-alignment "center"}
 
-                ;; keep the ignore and delete buttons very separate from the others
+                 ;; keep the ignore and delete buttons very separate from the others
                 ".separator"
                 {:-fx-padding "0 .5em"}
 
-                ".table-view#notice-logger"
+                ".table-view#notice-logger-table"
                 {:-fx-pref-height "10pc"}
 
-                ;; hide column headers in notice-logger in addon-detail pane
-                ".table-view#notice-logger .column-header-background"
+                 ;; hide column headers in notice-logger in addon-detail pane
+                ".table-view#notice-logger-table .column-header-background"
                 {:-fx-max-height 0
                  :-fx-pref-height 0
                  :-fx-min-height 0}
@@ -684,7 +676,7 @@
                                     :-fx-padding "1.7em 0"
                                     :-fx-background-radius "0"
                                     :-fx-font-size "1.1em"
-                                    ":selected" {:-fx-background-color (colour :row-updateable)}}}} ;; ends .addon-detail
+                                    ":selected" {:-fx-background-color (colour :row-updateable)}}}} ;; ends #addon-detail-pane
 
                ;; ---
                }}))]
@@ -722,7 +714,7 @@
 
 (defn find-installed-addons-table
   []
-  (first (select "#installed-addons")))
+  (first (select "#installed-addons-table")))
 
 (defn-spec clear-table-selected-items nil?
   "the context menu isn't being refreshed with new data when selected or installed addons change. 
@@ -1146,7 +1138,7 @@
                        :show-delay 200}}
      :desc {:fx/type :button
             :text text
-            :style-class ["button" "uber"]
+            :style-class ["button" "uber-button"]
             :on-action (fn [_]
                          (cli/add-addon-tab row)
                          (switch-tab-latest))}}))
@@ -1241,7 +1233,7 @@
          :available-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]}
          :combined-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]}
          :game-version {:min-width 70 :pref-width 70 :max-width 100}
-         :uber-button {:min-width 80 :pref-width 80 :max-width 120 :style-class ["button-column"]
+         :uber-button {:min-width 80 :pref-width 80 :max-width 120 :style-class ["invisible-button-column"]
                        :cell-value-factory identity
                        :cell-factory {:fx/cell-type :tree-table-cell
                                       :describe (fn [row]
@@ -1663,7 +1655,7 @@
                                                                       (.getValue tree-item))
                                                                     tree-item-list)))}
      :desc {:fx/type :tree-table-view
-            :id "installed-addons"
+            :id "installed-addons-table"
             ;; replaces "tree-table-view" class and keeps all styling attached to table-view.
             :style-class ["table-view"]
             :show-root false
@@ -1782,8 +1774,8 @@
 
         log-message-list (filter log-level-filter log-message-list)]
     {:fx/type :border-pane
+     :id "notice-logger"
      :top {:fx/type :h-box
-           :style-class ["notice-logger-nav-box"]
            :children (utils/items
                       [(when section-title
                          {:fx/type :label
@@ -1798,8 +1790,8 @@
                         :on-action log-level-changed-handler}])}
 
      :center {:fx/type :table-view
-              :id "notice-logger"
-              :style-class ["table-view" "odd-rows"]
+              :id "notice-logger-table"
+              :style-class ["table-view"]
               :placeholder {:fx/type :text
                             :style-class ["table-placeholder-text"]
                             :text ""}
@@ -1829,6 +1821,7 @@
 (defn installed-addons-pane
   [_]
   {:fx/type :border-pane
+   :id "installed-addons"
    :top {:fx/type installed-addons-menu-bar}
    :center {:fx/type installed-addons-table}})
 
@@ -1852,7 +1845,7 @@
         tag-selected (fn [tag]
                        (some #{tag} tag-set))
 
-        column-list [{:text "" :style-class ["button-column" "star-column"]
+        column-list [{:text "" :style-class ["invisible-button-column" "star-column"]
                       :min-width 50 :pref-width 50 :max-width 50
                       :cell-value-factory identity
                       :cell-factory {:fx/cell-type :table-cell
@@ -1889,7 +1882,7 @@
                                      :describe (fn [n]
                                                  (when n
                                                    {:text (format-number n)}))}}
-                     {:text "" :style-class ["install-button-column"] :min-width 120 :pref-width 120 :max-width 120 :resizable false
+                     {:text "" :style-class ["wide-button-column"] :min-width 120 :pref-width 120 :max-width 120 :resizable false
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [addon]
                                                  {:graphic (button "install" (async-handler #(search-results-install-handler [addon]))
@@ -1901,7 +1894,7 @@
              ;; unlike gui.clj, we have access to the original data here. no need to re-select addons.
              :on-selected-items-changed cli/select-addons-search!}
      :desc {:fx/type :table-view
-            :id "search-addons"
+            :id "search-addons-table"
             :placeholder {:fx/type :label
                           :style-class ["table-placeholder-text"]
                           :text (if empty-next-page
@@ -2001,6 +1994,7 @@
 (defn search-addons-pane
   [_]
   {:fx/type :border-pane
+   :id "search-addons"
    :top {:fx/type search-addons-search-field}
    :center {:fx/type search-addons-table}})
 
@@ -2067,7 +2061,7 @@
            :text "raw data"}
      :center {:fx/type :table-view
               :id "key-vals"
-              :style-class ["table-view" "odd-rows"]
+              :style-class ["table-view"]
               :placeholder {:fx/type :text
                             :style-class ["table-placeholder-text"]
                             :text "(not installed)"}
@@ -2089,7 +2083,7 @@
            :text "grouped addons"}
      :center {:fx/type :table-view
               :id "group-addons"
-              :style-class ["table-view" "odd-rows"]
+              :style-class ["table-view"]
               :placeholder {:fx/type :text
                             :style-class ["table-placeholder-text"]
                             :text "(not grouped)"}
@@ -2104,7 +2098,7 @@
   (let [install-button (fn [release]
                          (component-instance
                           (button "install" (async-handler #(cli/set-version addon release)))))
-        column-list [{:text "" :style-class ["install-button-column"] :min-width 120 :pref-width 120 :max-width 120 :resizable false :cell-value-factory install-button}
+        column-list [{:text "" :style-class ["wide-button-column"] :min-width 120 :pref-width 120 :max-width 120 :resizable false :cell-value-factory install-button}
                      {:text "name" :cell-value-factory #(or (:release-label %) (:version %))}]
         row-list (or (rest (:release-list addon)) [])
         disabled? (not (addon/releases-visible? addon))]
@@ -2114,7 +2108,7 @@
            :text "releases"}
      :center {:fx/type :table-view
               :id "release-list"
-              :style-class ["table-view" "odd-rows"]
+              :style-class ["table-view"]
               :placeholder {:fx/type :text
                             :style-class ["table-placeholder-text"]
                             :text "(no releases)"}
@@ -2170,7 +2164,15 @@
                        :text "addons that this addon (or any of it's grouped addons) overlaps with"}]}
 
      :center {:fx/type :tree-table-view
+              :root root
+              :style-class ["table-view"]
+              :show-root false
+              :disable (< depth 2)
+              :row-factory {:fx/cell-type :tree-table-row
+                            :describe (fn [row]
+                                        {:style-class ["table-row-cell" "tree-table-row-cell"]})}
               :columns [{:fx/type :tree-table-column
+                         :style-class ["table-view"]
                          :text ""
                          :cell-value-factory :arrow
                          :min-width (* depth 14)}
@@ -2189,11 +2191,7 @@
                          :text "directory"
                          :cell-value-factory :dirname}
 
-                        (make-tree-table-column (:installed-version gui-column-map))]
-
-              :root root
-              :show-root false
-              :disable (< depth 2)}}))
+                        (make-tree-table-column (:installed-version gui-column-map))]}}))
 
 (defn addon-detail-centre-pane
   [{:keys [fx/context tab-idx addon]}]
@@ -2327,7 +2325,6 @@
       (let [notice-pane-filter (logging/log-line-filter-with-reports (core/selected-addon-dir) addon)]
         {:fx/type :border-pane
          :id "addon-detail-pane"
-         :style-class ["addon-detail"]
          :top {:fx/type :label
                :style-class ["title"]
                :text (:label addon)}
@@ -2371,7 +2368,7 @@
                      {:id "source-id" :text "source-id" :pref-width 100 :min-width 100 :cell-value-factory :source-id}
                      {:id "name" :text "name" :pref-width 100 :min-width 100 :cell-value-factory :label}
                      {:id "game-track-list" :text "supports" :pref-width 100 :min-width 100 :cell-value-factory (comp str :game-track-list)}
-                     {:id "refresh" :text "" :style-class ["install-button-column"] :pref-width 100 :min-width 100 :resizable false :cell-value-factory refresh-button}]
+                     {:id "refresh" :text "" :style-class ["wide-button-column"] :pref-width 100 :min-width 100 :resizable false :cell-value-factory refresh-button}]
 
         row-list (:addon-summary-list user-catalogue)]
 
@@ -2379,7 +2376,7 @@
      :top {:fx/type :text :text "hiya"}
      :center {:fx/type :table-view
               :id "key-vals"
-              :style-class ["table-view" "odd-rows"]
+              :style-class ["table-view"]
               :placeholder {:fx/type :text
                             :style-class ["table-placeholder-text"]
                             :text "(not installed)"}
