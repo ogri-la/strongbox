@@ -599,9 +599,10 @@
                "#addon-detail-pane "
                {
 
+                ".table-row-cell.installed"
+                {:-fx-background-color (colour :row-updateable)}
                 ".table-row-cell.updateable"
-                {:-fx-background-color :green
-                 }
+                {:-fx-background-color (colour :row-updateable-selected)}
 
                 ".title"
                 {:-fx-font-size "2.5em"
