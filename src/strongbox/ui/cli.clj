@@ -458,8 +458,8 @@
                  :tab-data tab-data
                  :addon-detail-nav-key :releases+grouped-addons}
         tab-list (remove (fn [tab]
-                           (= (dissoc tab :tab-id)
-                              (dissoc new-tab :tab-id)))
+                           (= (select-keys tab [:label :tab-data])
+                              (select-keys new-tab [:label :tab-data])))
                          (core/get-state :tab-list))
         tab-list (vec (concat tab-list [new-tab]))]
     (swap! core/state assoc :tab-list tab-list))

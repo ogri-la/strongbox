@@ -636,7 +636,7 @@
 
                 ".description"
                 {:-fx-font-size "1.4em"
-                 :-fx-padding "1em 0 2em 1.5em"
+                 :-fx-padding "1em .5em 2em 1.5em"
                  :-fx-wrap-text true
                  :-fx-font-style "italic"
                  :-fx-text-fill "-fx-text-base-color"}
@@ -646,7 +646,7 @@
 
                  ;; keep the ignore and delete buttons very separate from the others
                 ".separator"
-                {:-fx-padding "0 .5em"}
+                {:-fx-padding "0 .25em"}
 
                 ".table-view#notice-logger-table"
                 {:-fx-pref-height "10pc"}
@@ -669,6 +669,12 @@
                 {:-fx-alignment "center-right"
                  :-fx-padding "0 1em 0 0"
                  :-fx-font-style "italic"}
+
+                ".table-view#key-vals .key-column.column-header .label"
+                {:-fx-alignment "center-right"}
+
+                ".table-view#key-vals .val-column.column-header .label"
+                {:-fx-alignment "center-left"}
 
                 "#addon-detail-big-buttons"
                 {:-fx-padding "2em 0"
@@ -2029,7 +2035,7 @@
                :orientation :vertical}
 
               (if (addon/ignored? addon)
-                (button "Stop ignoring" (async-handler #(cli/clear-ignore-selected [addon] (core/selected-addon-dir))))
+                (button "Unignore" (async-handler #(cli/clear-ignore-selected [addon] (core/selected-addon-dir))))
                 (button "Ignore" (async-handler #(cli/ignore-selected [addon]))
                         {:tooltip "Prevent all changes"
                          :disabled? (not (addon/ignorable? addon))}))
@@ -2047,7 +2053,7 @@
   (let [key-col (fn [keypair]
                   ;; shouldn't ever be nil but better safe than sorry
                   (-> keypair :key (or ":nil") str (subs 1)))
-        column-list [{:text "key" :min-width 150 :pref-width 150 :max-width 250 :cell-value-factory key-col}
+        column-list [{:text "key" :min-width 150 :pref-width 150 :max-width 200 :cell-value-factory key-col}
                      {:text "val" :cell-value-factory :val}]
 
         blacklist [:group-addons :release-list :source-map-list]
@@ -2167,6 +2173,7 @@
               :root root
               :style-class ["table-view"]
               :show-root false
+              :column-resize-policy javafx.scene.control.TreeTableView/CONSTRAINED_RESIZE_POLICY
               :disable (< depth 2)
               :row-factory {:fx/cell-type :tree-table-row
                             :describe (fn [row]
@@ -2175,9 +2182,9 @@
                          :style-class ["table-view"]
                          :text ""
                          :cell-value-factory :arrow
-                         :min-width (* depth 14)}
-
-                        (make-tree-table-column (:browse-local gui-column-map))
+                         :min-width (* depth 14)
+                         :pref-width (* depth 14)
+                         :max-width (* depth 14)}
 
                         (make-tree-table-column (:source gui-column-map))
 
@@ -2191,7 +2198,9 @@
                          :text "directory"
                          :cell-value-factory :dirname}
 
-                        (make-tree-table-column (:installed-version gui-column-map))]}}))
+                        {:fx/type :tree-table-column
+                         :text "version"
+                         :cell-value-factory :installed-version}]}}))
 
 (defn addon-detail-centre-pane
   [{:keys [fx/context tab-idx addon]}]
@@ -2208,8 +2217,8 @@
                                         :ref ::toggle-group}})
 
         stub {:fx/type :v-box
-              :min-width 450
-              :pref-width 450
+              :min-width 460
+              :pref-width 460
               :grid-pane/column 1
               :grid-pane/hgrow :never
               :grid-pane/vgrow :always

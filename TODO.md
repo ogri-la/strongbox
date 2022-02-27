@@ -46,7 +46,7 @@ see CHANGELOG.md for a more formal list of changes by release
 * addon detail, mutual dependencies pane
     - for example, I would like to see what is happening when:
         - adibags anima & conduits is overwritten by adibags anima filter
-        - adibags-shadowlands (github+wowinterface) 
+        - adibags-shadowlands (github+wowinterface)
 
 ## todo bucket (no particular order)
 
