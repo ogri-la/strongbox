@@ -29,6 +29,12 @@ see CHANGELOG.md for a more formal list of changes by release
 * add a 'starred' filter to limit the search results to just those that are starred
     - done
 
+* addon detail, mutual dependencies pane
+    - for example, I would like to see what is happening when:
+        - adibags anima & conduits is overwritten by adibags anima filter
+        - adibags-shadowlands (github+wowinterface)
+    - done 
+
 ## todo
 
 * addon detail, 'releases' widget
@@ -42,11 +48,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * search, add ability to browse catalogue page by page
     - I have neglected the catalogue search *so much*. I need a whole release dedicated to improving it.
-
-* addon detail, mutual dependencies pane
-    - for example, I would like to see what is happening when:
-        - adibags anima & conduits is overwritten by adibags anima filter
-        - adibags-shadowlands (github+wowinterface)
 
 ## todo bucket (no particular order)
 
