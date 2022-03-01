@@ -6,47 +6,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* ux, star or 'like' addons in the catalogue
-    - I think I'll hook these off of the user catalogue.
-        - liking a catalogue addon adds it to the user catalogue without installing it
-    - add a column to the search results
-    - done
-
-* search, filter by addon hosts
-    - done
-
-* tags, make clickable in search results
-    - adds a filter that can be removed
-    - add clickable tags to addon detail page
-    - done
-
-* installed, clicking an addon's tags does a search
-    - done
-
-* search, bug, 'install selected' shouldn't do anything if nothing is selectedor
-    - done
-
-* add a 'starred' filter to limit the search results to just those that are starred
-    - done
-
-* addon detail, mutual dependencies pane
-    - for example, I would like to see what is happening when:
-        - adibags anima & conduits is overwritten by adibags anima filter
-        - adibags-shadowlands (github+wowinterface)
-    - done 
-
-* addon detail, 'releases' widget
-    - installed release should be highlighted
-    - done
-
-* 'update all' should be a no-op if nothing has updates available
-    - don't disable the button, just don't do anything
-    - done
-
-* change split button 'outdent' to 'indent'
-    - and if split, keep it 'pressed in'
-    - done
-
 ## todo
 
 ## todo bucket (no particular order)
