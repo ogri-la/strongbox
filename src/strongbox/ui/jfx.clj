@@ -583,7 +583,7 @@
 
                 ".toggle-button.with-warning"
                 {:-fx-text-fill (colour :row-warning-text)
-                 :-fx-base (colour :row-updateable-selected)}
+                 :-fx-base (colour :row-warning)}
 
                 ".toggle-button.with-error"
                 {:-fx-text-fill (colour :row-error-text)
@@ -2110,7 +2110,6 @@
                           (button "install" (async-handler #(cli/set-version addon release)))))
         column-list [{:text "" :style-class ["wide-button-column"] :min-width 120 :pref-width 120 :max-width 120 :resizable false :cell-value-factory install-button}
                      {:text "name" :cell-value-factory #(or (:release-label %) (:version %))}]
-        ;;row-list (or (rest (:release-list addon)) [])
         row-list (or (:release-list addon) [])
         disabled? (not (addon/releases-visible? addon))]
     {:fx/type :border-pane
@@ -2483,7 +2482,7 @@
 
         tooltip (if (or has-errors? has-warnings?)
                   "since last refresh"
-                  "add a log pane")]
+                  "split log pane")]
 
     {:fx/type fx.ext.node/with-tooltip-props
      :props {:tooltip {:fx/type :tooltip
@@ -2492,9 +2491,10 @@
      :desc {:fx/type :toggle-button
             :text lbl
             :selected (boolean toggle)
-            :style-class ["toggle-button" (cond
-                                            has-errors? "with-error"
-                                            has-warnings? "with-warning")]
+            :style-class (utils/items
+                          ["toggle-button" (cond
+                                             has-errors? "with-error"
+                                             has-warnings? "with-warning")])
             :on-selected-changed (async-handler (fn []
                                                   (cli/toggle-split-pane)
                                                   (cli/change-notice-logger-level max-level)))}}))
