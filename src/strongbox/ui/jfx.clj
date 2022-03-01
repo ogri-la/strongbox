@@ -364,7 +364,7 @@
                ;;
 
 
-               "#installed-addons"
+               "#installed-addons "
                {".table-view #placeholder "
                 {:-fx-alignment "center"
 
@@ -1643,7 +1643,8 @@
 
         selected-columns (or user-selected-column-list sp/default-column-list)
         column-list (utils/select-vals (gui-column-map queue) selected-columns)
-        column-list (into [arrow-column] (mapv make-tree-table-column column-list))
+        column-list (mapv make-tree-table-column column-list)
+        column-list (if-not (empty? column-list) (into [arrow-column] column-list) [])
 
         ;; wraps the list of addons in a :`tree-item` component to model the parent->child relationship.
         row-list (mapv (fn [row]
