@@ -354,7 +354,19 @@
                  ":odd" {;;:-fx-background-color (colour :row)
                          ":hover" {:-fx-background-color (colour :row-hover)}
                          ":selected" {:-fx-background-color (colour :row-selected)}
-                         ":selected:hover" {:-fx-background-color (colour :row-hover)}}}}
+                         ":selected:hover" {:-fx-background-color (colour :row-hover)}}}
+
+                ".tag-button-column"
+                {:-fx-padding "-1 0 0 0"
+                 " .button" {:-fx-min-width 50
+                             :-fx-font-size ".9em"
+                             :-fx-padding "4px 5px"
+                             :-fx-background-color "none"
+                             :-fx-opacity "1"
+                             :-fx-border-width "0 1 0 0"
+                             :-fx-border-color (colour :table-border)
+                             :-fx-text-overrun "word-ellipsis"
+                             ":hover" {:-fx-background-color (colour :row-updateable-selected)}}}}
 
 
 
@@ -535,19 +547,7 @@
 
                 ".table-view "
                 {".downloads-column" {:-fx-alignment "center-right"}
-                 ".updated-column" {:-fx-alignment "center"}
-
-                 ".tag-button-column"
-                 {:-fx-padding "-1 0 0 0"
-                  " .button" {:-fx-min-width 50
-                              :-fx-font-size ".9em"
-                              :-fx-padding "4px 5px"
-                              :-fx-background-color "none"
-                              :-fx-opacity "1"
-                              :-fx-border-width "0 1 0 0"
-                              :-fx-border-color (colour :table-border)
-                              :-fx-text-overrun "word-ellipsis"
-                              ":hover" {:-fx-background-color (colour :row-updateable-selected)}}}}}
+                 ".updated-column" {:-fx-alignment "center"}}}
 
                ;;
                ;; status bar (bottom of app)
