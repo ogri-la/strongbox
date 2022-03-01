@@ -5,7 +5,9 @@
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :refer [log debug info warn error spy]]
-   [strongbox.specs :as sp])
+   [strongbox
+    [utils :as utils]
+    [specs :as sp]])
   (:import
    [java.util.regex Pattern]))
 
@@ -105,24 +107,57 @@
   "returns a lazily fetched and paginated list of addon summaries.
   results are constructed using a `seque` that (somehow) bypasses chunking behaviour so our
   search never takes more than `cap` results.
-  matches are case insensitive."
-  [db uin cap]
-  (if (nil? uin)
-    (let [pct (->> db count (max 1) (/ 100) (* 0.6))]
-      ;; decrement cap here so navigation for random search results is disabled
-      [(take (dec cap) (random-sample pct db))])
+  matches on `uin` are case insensitive.
+  `filter-by` filters are applied before searching for `uin`."
+  [db uin cap filter-by user-catalogue-idx]
+  (let [constantly-true (constantly true)
 
-    (let [uin (clojure.string/trim uin)
-          ;; implementation taken from here:
-          ;; - https://www.baeldung.com/java-case-insensitive-string-matching
-          regex (Pattern/compile (Pattern/quote uin) Pattern/CASE_INSENSITIVE)
-          match-fn (fn [row]
-                     (p :p3/db-search-row
-                        (or
-                         (.find (.matcher regex (or (:label row) "")))
-                         (.find (.matcher regex (or (:description row) ""))))))]
-      (p :p3/db-partition
-         (partition-all cap (seque 100 (filterv match-fn db)))))))
+        user-catalogue-filter (if (:user-catalogue filter-by)
+                                (fn [row]
+                                  (contains? user-catalogue-idx (utils/source-map row)))
+                                constantly-true)
+
+        host-filter (if-let [source-list (:source filter-by)]
+                      (fn [row]
+                        (utils/in? (:source row) source-list))
+                      constantly-true)
+
+        tag-set (:tag filter-by)
+        tag-filter (if-not (empty? tag-set)
+                     (fn [row]
+                       (if-let [row-tag-set (set (:tag-list row))]
+                         ;; if the addon contains *some* of the selected tags, include it
+                         (some tag-set row-tag-set)))
+                     constantly-true)
+
+        db (->> db
+                (filter user-catalogue-filter)
+                (filter host-filter)
+                (filter tag-filter))
+
+        random-sample? (and (nil? uin)
+                            (not (:user-catalogue filter-by)))]
+
+    ;; no/empty input, do a random sample
+    (if random-sample?
+      (let [pct (->> db count (max 1) (/ 100) (* 0.6))]
+        ;; decrement cap here so navigation for random search results is disabled
+        [(take (dec cap) (random-sample pct db))])
+
+      ;; else, search by input
+      (let [uin (clojure.string/trim (or uin ""))
+            ;; implementation taken from here:
+            ;; - https://www.baeldung.com/java-case-insensitive-string-matching
+            regex (Pattern/compile (Pattern/quote uin) Pattern/CASE_INSENSITIVE)
+            match-fn (fn [row]
+                       (p :p3/db-search-row
+                          (or
+                           (.find (.matcher regex (or (:label row) "")))
+                           (.find (.matcher regex (or (:description row) ""))))))]
+        (p :p3/db-partition
+           (partition-all cap (seque 100 (filter match-fn db))))))))
+
+;;
 
 ;; not specced because the results and argument lists may vary greatly
 (defn stored-query
@@ -131,5 +166,5 @@
   (case query-kw
     :addon-by-source-and-name (-addon-by-source-and-name db (first arg-list) (second arg-list))
     :addon-by-name (-addon-by-name db (first arg-list))
-    :search (-search db (first arg-list) (second arg-list))
+    :search (-search db (first arg-list) (second arg-list) (nth arg-list 2) (nth arg-list 3))
     nil))

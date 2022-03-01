@@ -31,11 +31,16 @@
 
 ;; selecting addons
 
-(defn-spec select-addons-search* nil?
+(defn-spec select-addons-search! nil?
   "sets the selected list of addons in application state for a later action"
   [selected-addons :addon/summary-list]
   (swap! core/state assoc-in [:search :selected-result-list] selected-addons)
   nil)
+
+(defn-spec clear-selected-search-addons! nil?
+  "removes all addons from the `:selected-addon-list` list"
+  []
+  (select-addons-search! []))
 
 (defn-spec select-addons* nil?
   "sets the selected list of addons to the given `selected-addons` for bulk operations like 'update', 'delete', 'ignore', etc"
@@ -181,12 +186,37 @@
   results are updated at [:search :results]"
   []
   ;; todo: cancel any other searching going on?
-  (core/state-bind
-   [:search :term]
-   (fn [new-state]
-     (future
-       (let [results (core/db-search (-> new-state :search :term))]
-         (swap! core/state assoc-in [:search :results] results))))))
+  (let [path-list [[:search :term]
+                   [:search :filter-by]]
+        listener (fn [new-state]
+                   (future
+                     (let [{:keys [term results-per-page filter-by]} (:search new-state)
+                           results (core/db-search term results-per-page filter-by)]
+                       (dosync
+                        (clear-selected-search-addons!)
+                        (swap! core/state assoc-in [:search :results] results)))))]
+    (doseq [path path-list]
+      (core/state-bind path listener))))
+
+(defn-spec search-add-filter nil?
+  "adds a new filter to the search `filter-by` state."
+  [filter-by :search/filter-by, val any?]
+  (case filter-by
+    :source (swap! core/state assoc-in [:search :filter-by filter-by] (utils/nilable val))
+    :tag (swap! core/state update-in [:search :filter-by filter-by] conj val))
+  nil)
+
+(defn-spec search-rm-filter nil?
+  "removes a filter from the search `filter-by` state."
+  [filter-by :search/filter-by, val any?]
+  (swap! core/state update-in [:search :filter-by filter-by] clojure.set/difference #{val})
+  nil)
+
+(defn-spec search-toggle-filter nil?
+  "toggles boolean filters on and off"
+  [filter-by :search/filter-by]
+  (swap! core/state update-in [:search :filter-by filter-by] not)
+  nil)
 
 ;;
 
@@ -337,12 +367,13 @@
   "updates all installed addons with any new releases.
   command is ignored if any addons are unsteady"
   []
-  (if (empty? (get-state :unsteady-addon-list))
-    (do (->> (get-state :installed-addon-list)
-             (filter addon/updateable?)
-             install-update-these-in-parallel)
-        (core/refresh))
-    (warn "updates in progress, 'update all' command ignored")))
+  (if-not (empty? (get-state :unsteady-addon-list))
+    (warn "updates in progress, 'update all' command ignored")
+    (let [updateable-addons (->> (get-state :installed-addon-list)
+                                 (filter addon/updateable?))]
+      (when-not (empty? updateable-addons)
+        (install-update-these-in-parallel updateable-addons)
+        (core/refresh)))))
 
 (defn-spec set-version nil?
   "updates `addon` with the given `release` data and then installs it."
@@ -388,6 +419,13 @@
 
 ;; tabs
 
+(defn-spec change-addon-detail-nav nil?
+  "changes the selected mode of the addon detail pane between releases+grouped-addons, mutual dependencies and key+vals"
+  [nav-key :ui/addon-detail-nav-key, tab-idx int?]
+  (when (some #{nav-key} sp/addon-detail-nav-key-set)
+    (swap! core/state assoc-in [:tab-list tab-idx :addon-detail-nav-key] nav-key)
+    nil))
+
 (defn-spec change-notice-logger-level nil?
   "changes the log level on the UI notice-logger widget.
   changes the log level for a tab in `:tab-list` when `tab-idx` is also given."
@@ -420,10 +458,11 @@
                  :label tab-label
                  :closable? closable?
                  :log-level :info
-                 :tab-data tab-data}
+                 :tab-data tab-data
+                 :addon-detail-nav-key :releases+grouped-addons}
         tab-list (remove (fn [tab]
-                           (= (dissoc tab :tab-id)
-                              (dissoc new-tab :tab-id)))
+                           (= (select-keys tab [:label :tab-data])
+                              (select-keys new-tab [:label :tab-data])))
                          (core/get-state :tab-list))
         tab-list (vec (concat tab-list [new-tab]))]
     (swap! core/state assoc :tab-list tab-list))
@@ -569,6 +608,7 @@
               addon (core/expand-summary-wrapper addon-summary)]
              ;; success! add to user-catalogue and proceed to install
              (do (core/add-user-addon! addon-summary)
+                 (core/write-user-catalogue!)
                  (core/install-addon-guard addon (core/selected-addon-dir))
                  ;;(core/db-reload-catalogue) ;; db-reload-catalogue will call `refresh` which we want to trigger in the gui instead
                  (swap! core/state assoc :db nil) ;; will force a reload of db
@@ -578,30 +618,34 @@
              nil)))
 
 (defn-spec refresh-user-catalogue-item nil?
-  "refresh the details of an individual addon in the user catalogue."
-  [addon :addon/summary]
-  (logging/with-addon addon
-    (info "refreshing details")
-    (try
-      (let [dry-run? false
-            refreshed-addon (find-addon (:url addon) dry-run?)]
-        (if refreshed-addon
-          (do (core/add-user-addon! refreshed-addon)
-              (info "... done!"))
-          (warn "failed to refresh catalogue entry")))
-      (catch Exception e
-        (error (format "an unexpected error happened while updating the details for '%s' in the user-catalogue: %s"
-                       (:name addon) (.getMessage e)))))))
+  "refresh the details of an individual addon in the user catalogue, optionally writing the updated catalogue to file"
+  ([addon :addon/summary]
+   (refresh-user-catalogue-item addon true))
+  ([addon :addon/summary, write? boolean?]
+   (logging/with-addon addon
+     (info "refreshing details")
+     (try
+       (let [dry-run? false
+             refreshed-addon (find-addon (:url addon) dry-run?)]
+         (if refreshed-addon
+           (do (core/add-user-addon! refreshed-addon)
+               (when write?
+                 (core/write-user-catalogue!))
+               (info "... done!"))
+           (warn "failed to refresh catalogue entry")))
+       (catch Exception e
+         (error (format "an unexpected error happened while updating the details for '%s' in the user-catalogue: %s"
+                        (:name addon) (.getMessage e))))))))
 
 (defn-spec refresh-user-catalogue nil?
-  "refresh the details of all addons in the user catalogue."
+  "refresh the details of all addons in the user catalogue, writing the updated catalogue to file once."
   []
   (binding [http/*cache* (core/cache)]
     (info (format "refreshing \"%s\", this may take a minute ..."
                   (-> (core/paths :user-catalogue-file) fs/base-name)))
-    (->> (core/get-create-user-catalogue)
-         :addon-summary-list
-         (mapv refresh-user-catalogue-item)))
+    (doseq [user-addon (core/get-state :user-catalogue :addon-summary-list)]
+      (refresh-user-catalogue-item user-addon false))
+    (core/write-user-catalogue!))
   nil)
 
 ;;
@@ -719,6 +763,20 @@
     (addon/switch-source! (core/selected-addon-dir) addon new-source-map)
     (half-refresh)))
 
+
+;;
+
+
+(defn-spec add-summary-to-user-catalogue nil?
+  "adds an addon-summary (catalogue entry) to the user-catalogue, if it's not already present"
+  [addon-summary :addon/summary]
+  (core/add-user-addon! addon-summary)
+  (core/write-user-catalogue!))
+
+(defn-spec remove-summary-from-user-catalogue nil?
+  [addon-summary :addon/summary]
+  (core/remove-user-addon! addon-summary)
+  (core/write-user-catalogue!))
 
 ;; debug
 

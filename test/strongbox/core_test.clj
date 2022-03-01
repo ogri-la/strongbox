@@ -1162,7 +1162,7 @@
 
 ;;
 
-(deftest add-user-addon-to-user-catalogue
+(deftest add-user-addon!
   (testing "user addon is successfully added to the user catalogue, creating it if it doesn't exist"
     (let [user-addon {:url "https://github.com/Aviana/HealComm"
                       :updated-date "2019-10-09T17:40:01Z"
@@ -1180,9 +1180,9 @@
 
       (with-running-app
         (core/add-user-addon! user-addon)
-        (is (= expected (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))
+        (is (= expected (core/get-state :user-catalogue)))))))
 
-(deftest add-user-addon-to-user-catalogue--idempotence
+(deftest add-user-addon!--idempotence
   (testing "adding addons to the user catalogue is idempotent"
     (let [user-addon {:url "https://github.com/Aviana/HealComm"
                       :updated-date "2019-10-09T17:40:01Z"
@@ -1202,7 +1202,27 @@
         (core/add-user-addon! user-addon)
         (core/add-user-addon! user-addon)
         (core/add-user-addon! user-addon)
-        (is (= expected (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))
+        (is (= expected (core/get-state :user-catalogue)))))))
+
+(deftest remove-user-addon!
+  (testing "addon is successfully removed from the user catalogue"
+    (let [user-addon {:url "https://github.com/Aviana/HealComm"
+                      :updated-date "2019-10-09T17:40:01Z"
+                      :source "github"
+                      :source-id "Aviana/HealComm"
+                      :label "HealComm"
+                      :name "healcomm"
+                      :download-count 30946
+                      :tag-list []}]
+      (with-running-app
+        (core/remove-user-addon! user-addon)
+        (is (empty? (core/get-state :user-catalogue :addon-summary-list)))
+
+        (core/add-user-addon! user-addon)
+        (is (= [user-addon] (core/get-state :user-catalogue :addon-summary-list)))
+
+        (core/remove-user-addon! user-addon)
+        (is (empty? (core/get-state :user-catalogue :addon-summary-list)))))))
 
 ;; todo: can these fixtures use the test_helper versions?
 (deftest moosh-addons
@@ -1572,7 +1592,11 @@
           fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                        {:get (fn [req] {:status 200 :body dummy-catalogue})}}
           expected-messages ["addon 'A New Simple Percent' is from an unsupported source 'gitplex'."
-                             "refresh"]]
+                             "refresh"]
+
+          search-term "new"
+          search-cap 10
+          search-filter-by {}]
 
       (with-global-fake-routes-in-isolation fake-routes
         (with-running-app+opts {:spec? false}
@@ -1582,7 +1606,7 @@
           (is (= expected-messages
                  (logging/buffered-log
                   :error
-                  (-> (core/db-search "new")
+                  (-> (core/db-search search-term search-cap search-filter-by)
                       first ;; first page of results
                       first ;; first result
                       cli/install-addon))))
@@ -1613,7 +1637,10 @@
                      "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                      {:get (fn [req] {:status 200 :body dummy-catalogue})}}
         expected-messages ["unsupported game track ':classic-bfa'."
-                           "refresh"]]
+                           "refresh"]
+        search-term "chin"
+        search-cap 10
+        search-filter-by {}]
 
     (testing "strongbox can attempt to install an addon from an unknown source and not crash"
       (with-global-fake-routes-in-isolation fake-routes
@@ -1628,7 +1655,7 @@
           (is (= expected-messages
                  (logging/buffered-log
                   :error
-                  (-> (core/db-search "chin")
+                  (-> (core/db-search search-term search-cap search-filter-by)
                       first ;; first page of results
                       first ;; first result
                       cli/install-addon))))

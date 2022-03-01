@@ -34,14 +34,14 @@ Arch Linux users can install `strongbox` from the [AUR](https://aur.archlinux.or
 
 For other Linux users:
 
-1. download: [./releases/strongbox](https://github.com/ogri-la/strongbox/releases/download/5.0.0/strongbox)
+1. download: [./releases/strongbox](https://github.com/ogri-la/strongbox/releases/download/5.1.0/strongbox)
 2. make executable: `chmod +x strongbox`
 3. run: `./strongbox`
 
 If you're on macOS or having a problem with the binary or just prefer Java `.jar` files (requires Java 11+):
 
-1. download: [./releases/strongbox-5.0.0-standalone.jar](https://github.com/ogri-la/strongbox/releases/download/5.0.0/strongbox-5.0.0-standalone.jar)
-2. run: `java -jar strongbox-5.0.0-standalone.jar`
+1. download: [./releases/strongbox-5.1.0-standalone.jar](https://github.com/ogri-la/strongbox/releases/download/5.1.0/strongbox-5.1.0-standalone.jar)
+2. run: `java -jar strongbox-5.1.0-standalone.jar`
 
 ## Usage
 
@@ -195,17 +195,18 @@ Click `Catalogue` from the top menu and choose your preferred catalogue.
 
 The default catalogue is the 'short' catalogue. It contains all addons from all supported hosts that have been *updated* 
 since *the beginning of the previous expansion*. This is currently Battle For Azeroth, released 2018-08-14 and the 
-catalogue has approximately 7.5k addons.
+catalogue has approximately 2.8k addons.
 
-The 'full' catalogue contains all addons from all supported hosts, ever, and is approximately 15.3k addons large. It 
-contains many addons that haven't been updated in years.
+The 'full' catalogue contains all addons from all supported hosts, ever, and is approximately 7.2k addons large. It 
+contains many unmaintained addons.
 
 There are also per-host catalogues, like a 'wowinterface' catalogue, and strongbox supports selecting between all of them.
 
 Catalogues are updated weekly. New addons released during the week will not be present until the next week. Addons can 
 be installed using its URL in these cases.
 
-The 'user' catalogue is a little different. It's initially empty but grows as addons are imported from hosts like Github. 
+The 'user' catalogue is a little different. It's initially empty but grows as addons are starred while searching or 
+imported from addon hosts, like Github. 
 These addons also appear in search results. Individual addons from the user catalogue are checked for new releases 
 normally, but the catalogue itself can only be updated manually.
 

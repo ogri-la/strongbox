@@ -1,4 +1,4 @@
-(defproject ogri-la/strongbox "5.0.0"
+(defproject ogri-la/strongbox "5.1.0"
   :description "World Of Warcraft Addon Manager"
   :url "https://github.com/ogri-la/strongbox"
   :license {:name "GNU Affero General Public License (AGPL)"
@@ -51,12 +51,13 @@
                  ;; these don't need an exception in LICENCE.txt
                  [org.apache.commons/commons-compress "1.21"] ;; Apache 2.0 licenced, bz2 compression/decompression of static catalogue
                  [org.ocpsoft.prettytime/prettytime "5.0.2.Final"] ;; Apache 2.0 licenced, pretty date formatting
-
+                 [org.controlsfx/controlsfx "11.1.1"] ;; BSD-3
+                 
                  ;; remember to update the LICENCE.txt
                  ;; remember to update pom file (`lein pom`)
 
                  ;;[org.clojure/core.cache "1.0.207"] ;; jfx context caching
-
+                 
                  ]
 
   :managed-dependencies [;; fixes the annoying:

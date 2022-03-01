@@ -113,13 +113,21 @@
                  (if (and (map? nfo-data)
                           (contains? nfo-data :source)
                           (not (contains? nfo-data :source-map-list)))
-                   (assoc nfo-data :source-map-list (-> nfo-data (select-keys [:source :source-id]) vector))
+                   (assoc nfo-data :source-map-list (-> nfo-data utils/source-map vector))
                    nfo-data))
 
         nfo-data (coerce (utils/load-json-file-safely path opts))]
     (if (s/valid? :addon/nfo nfo-data)
       nfo-data
       (invalid-data))))
+
+(defn-spec mutual-dependencies (s/coll-of :addon/nfo)
+  "returns a list of `addon/nfo` data for addons using the given `addon-dirname` (including itself)."
+  [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname]
+  (let [contents (read-nfo-file install-dir addon-dirname)]
+    (if (vector? contents)
+      contents
+      [contents])))
 
 (defn-spec mutual-dependency? boolean?
   "returns `true` if multiple sets of nfo data exist in file"

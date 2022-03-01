@@ -442,3 +442,43 @@
                ["2019-08-26T00:00:01Z" false]]]
     (doseq [[given expected] cases]
       (is (= expected (utils/published-before-classic? given))))))
+
+(deftest just-in
+  (let [cases [[nil [] nil]
+               [nil [:foo :bar [:baz]] nil]
+               [{} [] nil]
+               [{:foo :bar} [:foo] nil]
+               [{:foo :bar} [:foo [:foo]] nil]
+               [{:foo :bar, :baz :bup} [:foo [:foo :baz]] nil]
+               [{:foo {:bar :baz}} [:foo [:bar]] {:bar :baz}]
+               [{:foo {:bar :baz, :bup :boo}} [:foo [:bar :bup :boop]] {:bar :baz, :bup :boo}]
+
+               [{:foo []} [:foo [:bar]] nil]
+               [{:foo ""} [:foo [:bar]] nil]]]
+    (doseq [[m ks expected] cases]
+      (is (= expected (utils/just-in m ks)), (str "failed case: " m ks)))))
+
+(deftest source-map
+  (let [cases [[nil {}]
+               [{} {}]
+               [{:foo "bar"} {}]
+               [{:source "foo"} {:source "foo"}]
+               [{:source "foo" :source-id "bar"} {:source "foo" :source-id "bar"}]
+               [{:source "foo" :source-id "bar" :name "baz"} {:source "foo" :source-id "bar"}]]]
+    (doseq [[given expected] cases]
+      (is (= expected (utils/source-map given))))))
+
+(deftest find-depth
+  (let [cases [[{} 0]
+               [{:foo []} 0]
+
+               ;; we went down one level but not further
+               [{:children {:foo :bar}} 1]
+               [{:children [{:foo :bar}]} 1]
+
+               [{:children [{:children [{:children nil}]}]} 3]
+               [{:children [{:children [{:children :foo}]}]} 3]
+               [{:children [{:children [{:children []}]}]} 3]]]
+
+    (doseq [[given expected] cases]
+      (is (= expected (utils/find-depth given 0))))))

@@ -118,6 +118,9 @@
 
 (def -search-state-template
   {:term nil
+   :filter-by {:source nil
+               :tag #{}
+               :user-catalogue false}
    :page 0
    :results []
    :selected-result-list []
@@ -151,6 +154,15 @@
 
    ;; the list of addons from the catalogue
    :db nil
+
+   ;; some generated stats about the db that are updated just once at load time.
+   :db-stats {:known-host-list []}
+
+   ;; the list of addons from the user-catalogue
+   :user-catalogue nil
+
+   ;; a set of maps with `:source` and `:source-id` keys from the user-catalogue
+   :user-catalogue-idx #{}
 
    :log-lines []
 
@@ -729,6 +741,14 @@
 
 ;;
 
+(defn-spec write-user-catalogue! nil?
+  "writes the `new-user-catalogue` to disk, using the current state of the `:user-catalogue` by default"
+  ([]
+   (write-user-catalogue! (catalogue/new-catalogue (get-state :user-catalogue :addon-summary-list))))
+  ([new-user-catalogue :catalogue/catalogue]
+   (catalogue/write-catalogue new-user-catalogue (paths :user-catalogue-file))
+   nil))
+
 (defn-spec get-create-user-catalogue (s/or :ok :catalogue/catalogue, :missing+no-create nil?)
   "returns the contents of the user catalogue at `user-catalogue-path`, creating one if `create?` is true (default)."
   ([]
@@ -745,20 +765,41 @@
        (merge catalogue {:addon-summary-list new-summary-list
                          :total (count new-summary-list)})))))
 
+(defn-spec set-user-catalogue! nil?
+  "given a catalogue, replaces the current user-catalogue in app state and generates a source-map index for faster lookups."
+  [new-user-catalogue (s/nilable :catalogue/catalogue)]
+  (let [user-catalogue-idx (some->> new-user-catalogue
+                                    :addon-summary-list
+                                    (map utils/source-map)
+                                    set)]
+    (swap! state merge {:user-catalogue new-user-catalogue
+                        :user-catalogue-idx user-catalogue-idx}))
+  nil)
+
 (defn-spec add-user-addon-list! nil?
   "adds a list of addons to the user catalogue"
   [addon-summary-list :addon/summary-list]
-  (let [user-catalogue-path (paths :user-catalogue-file)
-        user-catalogue (get-create-user-catalogue)
+  (let [user-catalogue (get-state :user-catalogue)
         tmp-catalogue (catalogue/new-catalogue addon-summary-list)
         new-user-catalogue (catalogue/merge-catalogues user-catalogue tmp-catalogue)]
-    (catalogue/write-catalogue new-user-catalogue user-catalogue-path))
+    (set-user-catalogue! new-user-catalogue))
   nil)
 
 (defn-spec add-user-addon! nil?
   "adds a single addon to the user catalogue"
   [addon-summary :addon/summary]
   (add-user-addon-list! [addon-summary]))
+
+(defn-spec remove-user-addon! nil?
+  "removes a single addon from the user-catalogue"
+  [addon-summary :addon/summary]
+  (let [addon-summary-idx (utils/source-map addon-summary)
+        user-catalogue (->> (get-state :user-catalogue :addon-summary-list)
+                            (remove (fn [row]
+                                      (= (utils/source-map row) addon-summary-idx))))
+        new-user-catalogue (catalogue/new-catalogue user-catalogue)]
+    (set-user-catalogue! new-user-catalogue))
+  nil)
 
 ;; catalogue db handling
 
@@ -780,8 +821,8 @@
 (defn db-search
   "searches database for addons whose name or description contains given user input.
   if no user input, returns a list of randomly ordered results"
-  [search-term]
-  (let [args [(utils/nilable search-term) (get-state :search :results-per-page)]]
+  [search-term cap filter-by]
+  (let [args [(utils/nilable search-term) cap filter-by (get-state :user-catalogue-idx)]]
     (query-db :search args)))
 
 (defn-spec empty-search-results nil?
@@ -789,6 +830,15 @@
   this is to clear out anything between catalogue reloads."
   []
   (swap! state update-in [:search] merge (select-keys -search-state-template [:page :results :selected-results-list]))
+  nil)
+
+(defn-spec db-load-user-catalogue nil?
+  "loads the user catalogue into state, but only if it hasn't already been loaded."
+  []
+  (when-not (get-state :user-catalogue)
+    (let [create-user-catalogue? false
+          path (paths :user-catalogue-file)]
+      (set-user-catalogue! (get-create-user-catalogue path create-user-catalogue?))))
   nil)
 
 (defn-spec load-current-catalogue (s/or :ok :catalogue/catalogue, :error nil?)
@@ -814,9 +864,7 @@
                              (when-not testing?
                                (emergency-catalogue catalogue-location)))
 
-          create-user-catalogue? false
-          user-catalogue-data (p :p2/db:catalogue:read-user-catalogue
-                                 (get-create-user-catalogue (paths :user-catalogue-file) create-user-catalogue?))
+          user-catalogue-data (get-state :user-catalogue)
           ;; 2021-06-30: merge order changed. catalogue data is now merged over the top of the user-catalogue.
           ;; this is because the user-catalogue may now contain addons from all hosts and is likely to be out of date.
           final-catalogue (p :p2/db:catalogue:merge-catalogues
@@ -834,8 +882,14 @@
                              (load-current-catalogue))]
       (when-not (empty? final-catalogue)
         (p :p2/db:load
-           (swap! state assoc :db
-                  (db/put-many [] (:addon-summary-list final-catalogue))))))
+           (swap! state merge {:db (:addon-summary-list final-catalogue)
+                               :db-stats {:num-addons (count (:addon-summary-list final-catalogue))
+                                          :known-host-list (->> final-catalogue
+                                                                :addon-summary-list
+                                                                (map :source)
+                                                                distinct
+                                                                sort
+                                                                vec)}}))))
     (debug "skipping db load. already loaded or no catalogue selected."))
   nil)
 
@@ -1142,7 +1196,7 @@
   "generates a list of 'export-records' from the addon summaries in the user catalogue and writes them to the given `output-file`"
   [output-file ::sp/file]
   (let [output-file (-> output-file fs/absolute str (utils/replace-file-ext ".json"))
-        catalogue (get-create-user-catalogue)
+        catalogue (get-state :user-catalogue)
         export (export-catalogue-addon-list catalogue)]
     (utils/dump-json-file output-file export)
     (info "wrote:" output-file)
@@ -1251,7 +1305,10 @@
    ;; downloads the big long list of addon information stored on github
   (download-current-catalogue)
 
-   ;; load the contents of the catalogue into the database
+  ;; load the user-catalogue. `db-load-catalogue` will incorporate this if it's found.
+  (db-load-user-catalogue)
+
+   ;; load the contents of the selected catalogue and the user catalogue
   (p :p2/db (db-load-catalogue))
 
    ;; match installed addons to those in catalogue

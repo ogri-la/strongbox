@@ -215,10 +215,10 @@
 (defn-spec write-catalogue (s/or :ok ::sp/extant-file, :error nil?)
   "write catalogue to given `output-file` as JSON. returns path to output file"
   [catalogue-data :catalogue/catalogue, output-file ::sp/file]
-  (if (some->> catalogue-data validate (utils/dump-json-file output-file))
-    (do (info "wrote:" output-file)
-        output-file)
-    (error "catalogue data is invalid, refusing to write:" output-file)))
+  (locking output-file
+    (if (some->> catalogue-data validate (utils/dump-json-file output-file))
+      output-file
+      (error "catalogue data is invalid, refusing to write:" output-file))))
 
 (defn-spec new-catalogue :catalogue/catalogue
   "convenience. returns a new catalogue with datestamp of 'now' given a list of addon summaries"

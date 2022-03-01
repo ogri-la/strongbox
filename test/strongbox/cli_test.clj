@@ -119,6 +119,80 @@
           (Thread/sleep 10)
           (is (= nil (core/get-state :search :term))))))))
 
+(deftest search-db--filter-by--host
+  (testing "a populated database can be filtered by host from the CLI"
+    (let [catalogue (slurp (fixture-path "catalogue--v2.json"))
+          fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
+                       {:get (fn [req] {:status 200 :body catalogue})}}
+          expected-num-addons 4
+          page-1 0]
+      (with-global-fake-routes-in-isolation fake-routes
+        (with-running-app
+          ;; any catalogue with less than 60 (a magic number) items has >100% probability of being included.
+          (cli/search nil)
+          (Thread/sleep 10)
+          ;; sanity check, we have all four addons
+          (is (= expected-num-addons (count (core/get-state :search :results page-1))))
+
+          ;; limit results to just wowinterface
+          (cli/search-add-filter :source ["wowinterface"])
+          (Thread/sleep 10)
+          (is (= "wowinterface" (-> (core/get-state :search :results page-1)
+                                    first ;; `get-in` doesn't realize lazy sequences so we'll get nils if we try accessing this with `0`
+                                    :source))) ;; we have one addon from each of the hosts
+
+          ;; limit results to just github
+          (cli/search-add-filter :source ["github"])
+          (Thread/sleep 10)
+          (is (= "github" (-> (core/get-state :search :results page-1)
+                              first
+                              :source)))
+
+          ;; limit results to just wowinterface+github, results are OR'd, order from catalogue is preserved (wowi, curse, tukui, github)
+          (cli/search-add-filter :source ["github" "wowinterface"])
+          (Thread/sleep 10)
+          (is (= "wowinterface" (-> (core/get-state :search :results page-1)
+                                    first ;; `get-in` doesn't realize lazy sequences so we'll get nils if we try accessing this with `0`
+                                    :source))) ;; we have one addon from each of the hosts
+          (is (= "github" (-> (core/get-state :search :results page-1)
+                              second ;; `get-in` doesn't realize lazy sequences so we'll get nils if we try accessing this with `0`
+                              :source))) ;; we have one addon from each of the hosts
+          )))))
+
+(deftest search-db--filter-by--tag
+  (testing "a populated database can be filtered by tag from the CLI"
+    (let [catalogue (slurp (fixture-path "catalogue--v2.json"))
+          fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
+                       {:get (fn [req] {:status 200 :body catalogue})}}
+          page-1 0]
+      (with-global-fake-routes-in-isolation fake-routes
+        (with-running-app
+          ;; populate the search
+          (cli/search nil)
+          (Thread/sleep 10)
+
+          ;; sanity check
+          (is (= 4 (count (core/get-state :search :results page-1))))
+
+          (cli/search-add-filter :tag :ui)
+          (is (= #{:ui} (core/get-state :search :filter-by :tag)))
+          (Thread/sleep 10)
+          (is (= 1 (count (core/get-state :search :results page-1))))
+          (is (= "tukui" (-> (core/get-state :search :results page-1) first :source)))
+
+          ;; results are OR'ed
+          (cli/search-add-filter :tag :vendors)
+          (is (= #{:vendors :ui} (core/get-state :search :filter-by :tag)))
+          (Thread/sleep 10)
+          (is (= 2 (count (core/get-state :search :results page-1))))
+          (is (= "wowinterface" (->> (core/get-state :search :results page-1) first :source)))
+          (is (= "tukui" (-> (core/get-state :search :results page-1) second :source)))
+
+          ;; filters can be removed
+          (cli/search-rm-filter :tag :ui)
+          (is (= #{:vendors} (core/get-state :search :filter-by :tag)))
+          (is (= "wowinterface" (->> (core/get-state :search :results page-1) first :source))))))))
+
 (deftest search-db--navigate
   (testing "a populated database can be searched forwards and backwards from the CLI"
     (let [catalogue (slurp (fixture-path "catalogue--v2.json"))
@@ -244,7 +318,7 @@
 
 (deftest add-tab
   (testing "a generic tab can be created"
-    (let [expected [{:tab-id "foo" :label "Foo!" :closable? false :log-level :info :tab-data {:dirname "EveryAddon"}}]]
+    (let [expected [{:tab-id "foo" :label "Foo!" :closable? false :log-level :info :tab-data {:dirname "EveryAddon"} :addon-detail-nav-key :releases+grouped-addons}]]
       (with-running-app
         (is (= [] (core/get-state :tab-list)))
         (cli/add-tab "foo" "Foo!" false {:dirname "EveryAddon"})
@@ -252,8 +326,13 @@
 
 (deftest add-addon-tab
   (testing "an addon can be used to create a tab"
-    (let [addon {:source "curseforge" :source-id 123 :label "Foo"}
-          expected [{:closable? true, :label "Foo", :tab-data {:source "curseforge", :source-id 123}, :tab-id "foobar" :log-level :info}]]
+    (let [addon {:source "wowinterface" :source-id 123 :label "Foo"}
+          expected [{:closable? true
+                     :label "Foo"
+                     :tab-data {:source "wowinterface", :source-id 123}
+                     :tab-id "foobar"
+                     :log-level :info
+                     :addon-detail-nav-key :releases+grouped-addons}]]
       (with-running-app
         (with-redefs [strongbox.utils/unique-id (constantly "foobar")]
           (cli/add-addon-tab addon))
@@ -261,8 +340,18 @@
 
 (deftest remove-all-tabs
   (testing "all tabs can be removed at once"
-    (let [tab-list [{:tab-id "foo" :label "Foo!" :closable? false :log-level :info :tab-data {:dirname "EveryAddon"}}
-                    {:tab-id "bar" :label "Bar!" :closable? true :log-level :info :tab-data {:dirname "EveryOtherAddon"}}]
+    (let [tab-list [{:tab-id "foo"
+                     :label "Foo!"
+                     :closable? false
+                     :log-level :info
+                     :tab-data {:dirname "EveryAddon"}
+                     :addon-detail-nav-key :releases+grouped-addons}
+                    {:tab-id "bar"
+                     :label "Bar!"
+                     :closable? true
+                     :log-level :info
+                     :tab-data {:dirname "EveryOtherAddon"}
+                     :addon-detail-nav-key :releases+grouped-addons}]
           expected []]
       (with-running-app
         (cli/add-tab "foo" "Foo!" false {:dirname "EveryAddon"})
@@ -273,9 +362,9 @@
 
 (deftest remove-tab-at-idx
   (testing "all tabs can be removed at once"
-    (let [tab-list [{:tab-id "foo" :label "Foo!" :closable? false :log-level :info :tab-data {:dirname "EveryAddon"}}
-                    {:tab-id "bar" :label "Bar!" :closable? true :log-level :info :tab-data {:dirname "EveryOtherAddon"}}
-                    {:tab-id "baz" :label "Baz!" :closable? false :log-level :info :tab-data {:dirname "EveryAddonClassic"}}]
+    (let [tab-list [{:tab-id "foo" :label "Foo!" :closable? false :log-level :info :tab-data {:dirname "EveryAddon"} :addon-detail-nav-key :releases+grouped-addons}
+                    {:tab-id "bar" :label "Bar!" :closable? true :log-level :info :tab-data {:dirname "EveryOtherAddon"} :addon-detail-nav-key :releases+grouped-addons}
+                    {:tab-id "baz" :label "Baz!" :closable? false :log-level :info :tab-data {:dirname "EveryAddonClassic"} :addon-detail-nav-key :releases+grouped-addons}]
           expected [(first tab-list)
                     (last tab-list)]]
       (with-running-app
@@ -344,6 +433,10 @@
           (cli/import-addon user-url)
 
           ;; addon was found and added to user catalogue
+          (is (= expected-user-catalogue
+                 (core/get-state :user-catalogue :addon-summary-list)))
+
+          ;; user-catalogue was written to disk
           (is (= expected-user-catalogue
                  (:addon-summary-list (catalogue/read-catalogue (core/paths :user-catalogue-file)))))
 
@@ -415,7 +508,11 @@
           ;; we expect our mushy set of .nfo and .toc data
           (is (= [expected] (core/get-state :installed-addon-list)))
 
-          ;; and that the addon was added to the user catalogue
+          ;; addon was found and added to user catalogue
+          (is (= expected-user-catalogue
+                 (core/get-state :user-catalogue :addon-summary-list)))
+
+          ;; user-catalogue was written to disk
           (is (= expected-user-catalogue
                  (:addon-summary-list (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))))
 
@@ -541,6 +638,9 @@
           (is (= [expected] (core/get-state :installed-addon-list)))
 
           ;; and that the addon was added to the user catalogue
+          (is (= expected-user-catalogue (core/get-state :user-catalogue :addon-summary-list)))
+
+          ;; and that the user catalogue was persisted to disk
           (is (= expected-user-catalogue
                  (:addon-summary-list (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))))
 
@@ -550,11 +650,6 @@
 (deftest refresh-user-catalogue
   (testing "the user catalogue can be 'refreshed', pulling in updated information from github and the current catalogue"
     (with-running-app+opts {:ui nil}
-      ;; start with an up-to-date catalogue and 'old' user catalogue
-      ;; call `cli/refresh-user-catalogue`
-      ;; provide dummy updates
-      ;; expect new values
-
       (let [;; user-catalogue with a bunch of addons across all hosts that the user has added.
             user-catalogue-fixture (fixture-path "user-catalogue--populated.json")
 
@@ -634,7 +729,7 @@
           ;; we need to load the short-catalogue using newer versions of what is in the user-catalogue
           ;; the user-catalogue is then matched against db, the newer summary returned and written to the user catalogue
 
-          (let [;; I've modified the user-catalogue--populated.json fixture to be 'older' that the short-catalogue fixture by
+          (let [;; I've modified the user-catalogue--populated.json fixture to be 'older' than the short-catalogue fixture by
                 ;; decrementing the download counts by 1. when the user-catalogue is refreshed we expect the new values to be fetched
                 ;; 2021-12: gitlab is an exception here. we have no download count information, it will always be zero.
                 inc-downloads #(if (= (:source %) "gitlab") % (update % :download-count inc))
@@ -646,18 +741,65 @@
             ;; ensure new user-catalogue matches expectations
             (is (= expected-user-catalogue (core/get-create-user-catalogue)))))))))
 
-(deftest refresh-user-catalogue--no-catalogue
+(deftest refresh-user-catalogue-item
+  (testing "individual addons can be refreshed, writing the changes to disk afterwards."
+    (let [user-catalogue (catalogue/new-catalogue [helper/addon-summary])
+          new-addon (merge helper/addon-summary {:updated-date "2022-02-02T02:02:02"})
+          expected (assoc user-catalogue :addon-summary-list [new-addon])]
+      (with-running-app
+        (swap! core/state assoc :user-catalogue user-catalogue)
+        (core/write-user-catalogue!)
+        (with-redefs [cli/find-addon (fn [& args] new-addon)]
+          (cli/refresh-user-catalogue-item helper/addon-summary))
+        (is (= expected (core/get-state :user-catalogue)))))))
+
+(deftest refresh-user-catalogue-item--no-catalogue
   (testing "looking for an addon that doesn't exist in the catalogue isn't a total failure"
     (with-running-app
       (is (nil? (cli/refresh-user-catalogue-item helper/addon-summary))))))
 
-(deftest refresh-user-catalogue--unhandled-exception
+(deftest refresh-user-catalogue-item--unhandled-exception
   (testing "unhandled exceptions while refreshing a user-catalogue item isn't a total failure"
     (with-running-app
       (with-redefs [cli/find-addon (fn [& args] (throw (Exception. "catastrophe!")))]
         (is (nil? (cli/refresh-user-catalogue-item helper/addon-summary)))))))
 
+
+;;
+
+
+(deftest add-summary-to-user-catalogue
+  (testing "addon summaries can be added to the user catalogue"
+    (with-running-app
+      (let [expected (catalogue/new-catalogue [helper/addon-summary])
+            user-catalogue-file (core/paths :user-catalogue-file)]
+        (is (nil? (core/get-state :user-catalogue)))
+        (is (not (fs/exists? user-catalogue-file)))
+
+        (cli/add-summary-to-user-catalogue helper/addon-summary)
+
+        (is (= expected (core/get-state :user-catalogue)))
+        (is (= expected (catalogue/read-catalogue user-catalogue-file)))))))
+
+(deftest remove-summary-from-user-catalogue
+  (testing "addon summaries can be added to the user catalogue"
+    (with-running-app
+      (let [expected (catalogue/new-catalogue [])
+            user-catalogue-file (core/paths :user-catalogue-file)]
+
+        (cli/add-summary-to-user-catalogue helper/addon-summary)
+        (cli/remove-summary-from-user-catalogue helper/addon-summary)
+
+        (is (= expected (core/get-state :user-catalogue)))
+        (is (= expected (catalogue/read-catalogue user-catalogue-file)))))))
+
+
+;;
+
+
 ;; test doesn't seem to live comfortably in `core_test.clj`
+
+
 (deftest install-update-these-in-parallel--bad-download
   (testing "bad downloads are not passed to `core/install-addon`."
     (with-running-app
@@ -733,3 +875,18 @@
 
       (doseq [[given expected] cases]
         (is (= expected (cli/sort-column-list given)))))))
+
+(deftest change-addon-detail-nav
+  (let [addon {:source "wowinterface" :source-id 123 :label "Foo"}
+        tab-idx 0
+        expected {:closable? true
+                  :label "Foo"
+                  :tab-data {:source "wowinterface", :source-id 123}
+                  :tab-id "foobar"
+                  :log-level :info
+                  :addon-detail-nav-key :mutual-dependencies}]
+    (with-running-app
+      (with-redefs [strongbox.utils/unique-id (constantly "foobar")]
+        (cli/add-addon-tab addon)
+        (cli/change-addon-detail-nav :mutual-dependencies tab-idx)
+        (is (= expected (core/get-state :tab-list tab-idx)))))))

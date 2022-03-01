@@ -4,6 +4,50 @@ All notable changes to this project will be documented in this file. This change
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 5.1.0 - 2022-03-01
+
+### Added
+
+* 'star' column to the search tab. Starring an addon will add it to your user-catalogue.
+* 'star' button to the search pane that will filter addons to those in your user-catalogue.
+* 'addon host' multi-checkbox field to the search tab, allowing you to select which hosts to see addons from.
+    - disabled when there is only one host to choose from.
+* clickable tags in the 'tags' column that filter search results.
+    - selected tags appear in the search area. clicking them will remove the tag from the search.
+* gui, search, count of addons selected to the 'install selected' button.
+* gui, addon-details, a 'mutual dependencies' pane to show which addons the current addon is overwriting.
+* gui, addon-details, the installed and latest releases are now highlighted in the 'releases' pane.
+
+### Changed
+
+* core, the user-catalogue is now part of application state rather than read from file as needed.
+* gui, search, 'install selected' button moved to the left of the search field and disabled if no addons selected.
+* gui, addon-details, switched from a three-pane layout to a two-pane layout with navigation.
+    - default panes displayed are 'releases' and 'grouped addons'
+    - 'raw-data' shifted to it's own pane, it's always been a bit of a debug option.
+* gui, styling, some of the early, complex, styling has been minimised and contained to just the install and search tabs.
+    - the appearance shouldn't have altered, it's just less wooly behind the scenes.
+* gui, addon-details, very minor, "Stop ignoring" label changed to "Unignore" to conserve horizontal space.
+* gui, installed addons, 'update all' button no longer does anything if no addons need updates.
+* gui, the 'split' button (bottom right) is now a proper 'toggle' button with indent and outdent styling.
+
+### Fixed
+
+* gui, addon-details, very minor bug that would sometimes result in two seemingly identical addon tabs being open.
+    - new tab and their default state were being compared to all other tabs open and, if not found, a new one would be opened.
+        - for example, if you changed the log level in an addon's detail pane then opened the addon again, you'd get a duplicate tab.
+* gui, addon-details, the most recent release would always be missing from the 'releases' pane.
+    - my thinking was the user wouldn't want to see the latest release, only the *other* releases available.
+* gui, installed addons, removing all columns will now present with you a helpful message again and a button to reset columns.
+    - the condition that would trigger this message was never being hit after the introduction of the 'arrow' column in `4.7.0`.
+
+### Removed
+
+* the 'random' button. room was needed for the new filters.
+    - it's affect can still be simulated by pressing spacebar in the search field.
+* the 'wrote: /path/to/user-catalogue.json' message when the user catalogue is updated.
+    - it's just noise now that the operation has become common.
+
 ## 5.0.0 - 2022-01-31
 
 ### Added
