@@ -4,7 +4,7 @@
   <groupId>ogri-la</groupId>
   <artifactId>strongbox</artifactId>
   <packaging>jar</packaging>
-  <version>5.0.0</version>
+  <version>5.1.0</version>
   <name>strongbox</name>
   <description>World Of Warcraft Addon Manager</description>
   <url>https://github.com/ogri-la/strongbox</url>
@@ -18,7 +18,7 @@
     <url>https://github.com/ogri-la/strongbox</url>
     <connection>scm:git:git://github.com/ogri-la/strongbox.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/ogri-la/strongbox.git</developerConnection>
-    <tag>69326905c83825ae4fba7e6412b8050e6a2e2c85</tag>
+    <tag>fba80a953c351f85199a359613b40e0fae3f9248</tag>
   </scm>
   <build>
     <sourceDirectory>src</sourceDirectory>
@@ -251,6 +251,11 @@
       <groupId>org.ocpsoft.prettytime</groupId>
       <artifactId>prettytime</artifactId>
       <version>5.0.2.Final</version>
+    </dependency>
+    <dependency>
+      <groupId>org.controlsfx</groupId>
+      <artifactId>controlsfx</artifactId>
+      <version>11.1.1</version>
     </dependency>
     <dependency>
       <groupId>clj-http-fake</groupId>
