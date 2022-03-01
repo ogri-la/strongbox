@@ -49,10 +49,10 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
-* search, add ability to browse catalogue page by page
-    - I have neglected the catalogue search *so much*. I need a whole release dedicated to improving it.
-
 ## todo bucket (no particular order)
+
+* search, add ability to browse catalogue page by page
+    - returned to bucket 2022-03-02
 
 ### catalogue v3 / capture more addon data
 
