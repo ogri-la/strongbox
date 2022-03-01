@@ -364,7 +364,7 @@
                ;;
 
 
-               "#installed-addons"
+               "#installed-addons "
                {".table-view #placeholder "
                 {:-fx-alignment "center"
 
@@ -581,15 +581,13 @@
                  ":armed"
                  {:-fx-background-insets "1 1 0 0,  1,  2,  3"}}
 
-                ".button.with-warning"
-                {:-fx-background-insets "0 0 -1 0,  0,  1,  2"
-                 :-fx-background-color (str "-fx-shadow-highlight-color, -fx-outer-border, -fx-inner-border, " (colour :row-warning))
-                 :-fx-text-fill (colour :row-warning-text)}
+                ".toggle-button.with-warning"
+                {:-fx-text-fill (colour :row-warning-text)
+                 :-fx-base (colour :row-warning)}
 
-                ".button.with-error"
-                {:-fx-background-insets "0 0 -1 0,  0"
-                 :-fx-background-color (str "-fx-shadow-highlight-color, -fx-inner-border, " (colour :row-error))
-                 :-fx-text-fill (colour :row-error-text)}}
+                ".toggle-button.with-error"
+                {:-fx-text-fill (colour :row-error-text)
+                 :-fx-base (colour :row-error)}}
 
                ;;
                ;; addon-detail
@@ -597,7 +595,12 @@
 
 
                "#addon-detail-pane "
-               {".title"
+               {".table-row-cell.installed"
+                {:-fx-background-color (colour :row-updateable)}
+                ".table-row-cell.updateable"
+                {:-fx-background-color (colour :row-updateable-selected)}
+
+                ".title"
                 {:-fx-font-size "2.5em"
                  :-fx-padding "1em 0 .5em 1em"
                  :-fx-text-fill "-fx-text-base-color"}
@@ -1640,7 +1643,8 @@
 
         selected-columns (or user-selected-column-list sp/default-column-list)
         column-list (utils/select-vals (gui-column-map queue) selected-columns)
-        column-list (into [arrow-column] (mapv make-tree-table-column column-list))
+        column-list (mapv make-tree-table-column column-list)
+        column-list (if-not (empty? column-list) (into [arrow-column] column-list) [])
 
         ;; wraps the list of addons in a :`tree-item` component to model the parent->child relationship.
         row-list (mapv (fn [row]
@@ -2106,7 +2110,7 @@
                           (button "install" (async-handler #(cli/set-version addon release)))))
         column-list [{:text "" :style-class ["wide-button-column"] :min-width 120 :pref-width 120 :max-width 120 :resizable false :cell-value-factory install-button}
                      {:text "name" :cell-value-factory #(or (:release-label %) (:version %))}]
-        row-list (or (rest (:release-list addon)) [])
+        row-list (or (:release-list addon) [])
         disabled? (not (addon/releases-visible? addon))]
     {:fx/type :border-pane
      :top {:fx/type :label
@@ -2121,6 +2125,14 @@
               :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
               :columns (mapv make-table-column column-list)
               :items row-list
+              :row-factory {:fx/cell-type :table-row
+                            :describe (fn [row]
+                                        {:style-class (utils/items
+                                                       ["table-row-cell"
+                                                        (when (= (:version row) (:installed-version addon))
+                                                          "installed")
+                                                        (when (= (:version row) (:version addon))
+                                                          "updateable")])})}
               :disable disabled?}}))
 
 (defn addon-detail-mutual-dependences-widget
@@ -2444,6 +2456,8 @@
   (let [log-lines (fx/sub-val context get-in [:app-state :log-lines])
         log-lines (cli/log-entries-since-last-refresh log-lines)
 
+        toggle (fx/sub-val context get-in [:app-state :gui-split-pane])
+
         ;; {:warn 1, :info 20}
         stats (utils/count-occurances log-lines :level)
 
@@ -2466,16 +2480,24 @@
               has-warnings? (clf "warning~:p (~:*~d)" (:warn stats))
               :else "split")
 
-        tooltip (when (or has-errors? has-warnings?) "since last refresh")]
+        tooltip (if (or has-errors? has-warnings?)
+                  "since last refresh"
+                  "split log pane")]
 
-    (button lbl (async-handler (fn []
-                                 (cli/toggle-split-pane)
-                                 (cli/change-notice-logger-level max-level)))
-            {:style-class (cond
-                            has-errors? "with-error"
-                            has-warnings? "with-warning")
-             :tooltip tooltip
-             :tooltip-delay 400})))
+    {:fx/type fx.ext.node/with-tooltip-props
+     :props {:tooltip {:fx/type :tooltip
+                       :text tooltip
+                       :show-delay 400}}
+     :desc {:fx/type :toggle-button
+            :text lbl
+            :selected (boolean toggle)
+            :style-class (utils/items
+                          ["toggle-button" (cond
+                                             has-errors? "with-error"
+                                             has-warnings? "with-warning")])
+            :on-selected-changed (async-handler (fn []
+                                                  (cli/toggle-split-pane)
+                                                  (cli/change-notice-logger-level max-level)))}}))
 
 (defn status-bar
   "this is the litle strip of text at the bottom of the application."

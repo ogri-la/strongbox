@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - selected tags appear in the search area. clicking them will remove the tag from the search.
 * gui, search, count of addons selected to the 'install selected' button.
 * gui, addon-details, a 'mutual dependencies' pane to show which addons the current addon is overwriting.
+* gui, addon-details, the installed and latest releases are now highlighted in the 'releases' pane.
 
 ### Changed
 
@@ -27,12 +28,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * gui, styling, some of the early, complex, styling has been minimised and contained to just the install and search tabs.
     - the appearance shouldn't have altered, it's just less wooly behind the scenes.
 * gui, addon-details, very minor, "Stop ignoring" label changed to "Unignore" to conserve horizontal space.
+* gui, installed addons, 'update all' button no longer does anything if no addons need updates.
+* gui, the 'split' button (bottom right) is now a proper 'toggle' button with indent and outdent styling.
 
 ### Fixed
 
 * gui, addon-details, very minor bug that would sometimes result in two seemingly identical addon tabs being open.
     - new tab and their default state were being compared to all other tabs open and, if not found, a new one would be opened.
         - for example, if you changed the log level in an addon's detail pane then opened the addon again, you'd get a duplicate tab.
+* gui, addon-details, the most recent release would always be missing from the 'releases' pane.
+    - my thinking was the user wouldn't want to see the latest release, only the *other* releases available.
+* gui, installed addons, removing all columns will now present with you a helpful message again and a button to reset columns.
+    - the condition that would trigger this message was never being hit after the introduction of the 'arrow' column in `4.7.0`.
 
 ### Removed
 

@@ -35,16 +35,19 @@ see CHANGELOG.md for a more formal list of changes by release
         - adibags-shadowlands (github+wowinterface)
     - done 
 
-## todo
-
 * addon detail, 'releases' widget
     - installed release should be highlighted
+    - done
 
 * 'update all' should be a no-op if nothing has updates available
     - don't disable the button, just don't do anything
+    - done
 
 * change split button 'outdent' to 'indent'
     - and if split, keep it 'pressed in'
+    - done
+
+## todo
 
 * search, add ability to browse catalogue page by page
     - I have neglected the catalogue search *so much*. I need a whole release dedicated to improving it.

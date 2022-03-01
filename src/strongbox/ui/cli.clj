@@ -367,12 +367,13 @@
   "updates all installed addons with any new releases.
   command is ignored if any addons are unsteady"
   []
-  (if (empty? (get-state :unsteady-addon-list))
-    (do (->> (get-state :installed-addon-list)
-             (filter addon/updateable?)
-             install-update-these-in-parallel)
-        (core/refresh))
-    (warn "updates in progress, 'update all' command ignored")))
+  (if-not (empty? (get-state :unsteady-addon-list))
+    (warn "updates in progress, 'update all' command ignored")
+    (let [updateable-addons (->> (get-state :installed-addon-list)
+                                 (filter addon/updateable?))]
+      (when-not (empty? updateable-addons)
+        (install-update-these-in-parallel updateable-addons)
+        (core/refresh)))))
 
 (defn-spec set-version nil?
   "updates `addon` with the given `release` data and then installs it."
