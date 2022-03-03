@@ -8,10 +8,16 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
-## todo bucket (no particular order)
-
 * search, add ability to browse catalogue page by page
     - returned to bucket 2022-03-02
+
+## todo bucket (no particular order)
+
+* catalogue, descriptions for wowinterface addons
+* catalogue, download counts for github addons
+* wowinterface, multiple game tracks
+    - investigate just what is being downloaded when a classic version of a wowi addon is downloaded
+    - see 'LagBar'
 
 ### catalogue v3 / capture more addon data
 
@@ -29,15 +35,10 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ###
 
-* wowinterface, multiple game tracks
-    - investigate just what is being downloaded when a classic version of a wowi addon is downloaded
-    - see 'LagBar'
 * investigate better popularity metric than 'downloads'
     - if we make an effort to scrape everyday, we can generate this popularity graph ourselves
 * wowinterface, revisit the pages that are being scraped, make sure we're not missing any
 * github, questie is kinda fubar
-* catalogue, descriptions for wowinterface addons
-* catalogue, download counts for github addons
 
 * github, preference to sync stars with github repo, if authenticated
 
