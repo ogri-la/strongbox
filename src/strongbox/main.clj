@@ -131,7 +131,7 @@
 
 (def catalogue-actions
   #{:scrape-catalogue :write-catalogue
-    :scrape-curseforge-catalogue :scrape-wowinterface-catalogue :scrape-tukui-catalogue})
+    :scrape-github-catalogue :scrape-curseforge-catalogue :scrape-wowinterface-catalogue :scrape-tukui-catalogue})
 
 (def catalogue-action-str (clojure.string/join ", " (mapv #(format "'%s'" (name %)) (sort catalogue-actions))))
 
