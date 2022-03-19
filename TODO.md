@@ -6,6 +6,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
+* github, added 'scrape-github-catalogue' to list of cli actions
+* github, catalogue, fixed handling for empty game track list in csv catalogue
+
 ## todo
 
 * search, add ability to browse catalogue page by page
