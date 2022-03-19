@@ -328,8 +328,12 @@
                        :game-track-list (->> row
                                              :flavors
                                              split*
-                                             (mapv utils/guess-game-track))}]
-            (utils/drop-nils addon [:description])))]
+                                             (map utils/guess-game-track)
+                                             (remove nil?)
+                                             vec
+                                             utils/nilable
+                                             )}]
+            (utils/drop-nils addon [:description :game-track-list])))]
     (mapv to-summary result-list)))
 
 ;;
