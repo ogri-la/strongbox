@@ -27,7 +27,7 @@
 
 (defn-spec -format-wowinterface-dt string?
   "formats a shitty US-style m/d/y date with a shitty 12 hour time component and no timezone
-  into a glorious RFC3399 formatted UTC string."
+  into a glorious RFC3339 formatted UTC string."
   [dt string?]
   (let [;; https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html
         dt (java-time/local-date-time "MM-dd-yy hh:mm a" dt) ;; "09-07-18 01:27 PM" => obj with no tz
