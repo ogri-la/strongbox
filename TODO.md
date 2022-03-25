@@ -13,6 +13,10 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * search, add ability to browse catalogue page by page
     - returned to bucket 2022-03-02
+* addon detail, highlighted installed version shouldn't have an 'install' button
+    - it's already installed
+    - rename it 'reinstall' or similar
+* bug, addon detail, highlighted installed version is causing rows to be highlighted in the raw data column?
 
 ## todo bucket (no particular order)
 
@@ -37,6 +41,8 @@ see CHANGELOG.md for a more formal list of changes by release
     - capture full set of releases, including hashes if they exist
 
 ###
+
+* addon details, mutual dependencies, 'no content in table' is teeny tiny
 
 * investigate better popularity metric than 'downloads'
     - if we make an effort to scrape everyday, we can generate this popularity graph ourselves

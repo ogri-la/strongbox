@@ -331,8 +331,7 @@
                                              (map utils/guess-game-track)
                                              (remove nil?)
                                              vec
-                                             utils/nilable
-                                             )}]
+                                             utils/nilable)}]
             (utils/drop-nils addon [:description :game-track-list])))]
     (mapv to-summary result-list)))
 
