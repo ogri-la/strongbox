@@ -11,12 +11,26 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
-* search, add ability to browse catalogue page by page
-    - returned to bucket 2022-03-02
-* addon detail, highlighted installed version shouldn't have an 'install' button
+* acquire locks on affected addons during installation
+    - this will let us uninstall and install addons in parallel
+
+* user catalogue, refresh happens in parallel
+    - write the user-catalogue once, not each time or else we'll get Weirdness
+        - a lock is now acquired when writing the user catalogue
+
+* zip, switch to apache commons compress for decompressing
+    - https://commons.apache.org/proper/commons-compress/
+    - .tar.gz and 7z support would be interesting
+    - rar should just die already
+    - this would fix a major showstopper in porting to windows
+
+* bug, addon detail, highlighted installed version shouldn't have an 'install' button
     - it's already installed
     - rename it 'reinstall' or similar
+
 * bug, addon detail, highlighted installed version is causing rows to be highlighted in the raw data column?
+
+* bug, addon detail, mutual dependencies, 'no content in table' is teeny tiny
 
 ## todo bucket (no particular order)
 
@@ -25,6 +39,8 @@ see CHANGELOG.md for a more formal list of changes by release
 * wowinterface, multiple game tracks
     - investigate just what is being downloaded when a classic version of a wowi addon is downloaded
     - see 'LagBar'
+* search, add ability to browse catalogue page by page
+    - returned to bucket 2022-03-02
 
 ### catalogue v3 / capture more addon data
 
@@ -42,7 +58,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ###
 
-* addon details, mutual dependencies, 'no content in table' is teeny tiny
 
 * investigate better popularity metric than 'downloads'
     - if we make an effort to scrape everyday, we can generate this popularity graph ourselves
@@ -50,10 +65,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * github, questie is kinda fubar
 
 * github, preference to sync stars with github repo, if authenticated
-
-* user catalogue, refresh happens in parallel
-    - write the user-catalogue once, not each time or else we'll get Weirdness
-        - a lock is now acquired when writing the user catalogue
 
 * github, bug, multi-toc addons are getting a warning when `strict?` is true and the game track is changed
     - https://github.com/LenweSaralonde/MusicianList/releases
@@ -217,9 +228,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * deleting an addon should also remove any of it's zip files
     - this sounds like an opt-in preference
 
-* acquire locks on affected addons during installation
-    - this will let us uninstall and install addons in parallel
-
 * share a pool of connections between jobs
     - https://github.com/dakrone/clj-http#user-content-persistent-connections
     - N connections serving M threads
@@ -251,12 +259,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * nfo, spend some time futzing with nfo files on disk and how they can break the UI
     - I've managed to get some weird error messages by changing 'source' to an int, to a catalogue that doesn't exist, etc
-
-* zip, switch to apache commons compress for decompressing
-    - https://commons.apache.org/proper/commons-compress/
-    - .tar.gz and 7z support would be interesting
-    - rar should just die already
-    - this would fix a major showstopper in porting to windows
 
 * test, can gui-diff and main/test be pushed back into the testing namespace and elided from release somehow?
 
