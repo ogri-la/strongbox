@@ -6,6 +6,7 @@
    [clojure.spec.alpha :as s]
    [me.raynes.fs :as fs]
    [strongbox
+    [zip :as zip]
     [constants :as constants]
     [joblib :as joblib]
     [github-api :as github-api]
@@ -296,17 +297,22 @@
   [updateable-addon-list :addon/installable-list]
   (let [queue-atm (core/get-state :job-queue)
         install-dir (core/selected-addon-dir)
+        current-locks (atom #{})
         add-download-job! (fn [addon]
                             (let [job-fn (fn []
-                                           [addon (core/download-addon-guard-affective addon install-dir)])
+                                           (let [downloaded-file (core/download-addon-guard-affective addon install-dir)
+                                                 locks-needed (->> downloaded-file
+                                                                   zip/zipfile-normal-entries
+                                                                   zip/top-level-directories
+                                                                   (map :path)
+                                                                   set)]
+                                             (utils/with-lock current-locks locks-needed
+                                               (core/install-addon-affective addon install-dir downloaded-file))))
                                   job-id (joblib/addon-job-id addon :download-addon)]
-                              (joblib/create-job! queue-atm job-fn job-id)))
-        _ (run! add-download-job! updateable-addon-list)
-        addon+downloaded-file-list (joblib/run-jobs! queue-atm core/num-concurrent-downloads)]
-
-    ;; install addons serially, skip download checks, mark addons as unsteady
-    (doseq [[addon downloaded-file] addon+downloaded-file-list]
-      (core/install-addon-affective addon install-dir downloaded-file))))
+                              (joblib/create-job! queue-atm job-fn job-id)))]
+    (run! add-download-job! updateable-addon-list)
+    (joblib/run-jobs! queue-atm core/num-concurrent-downloads)
+    nil))
 
 (defn-spec re-install-or-update-selected nil?
   "re-installs (if possible) or updates all addons in given `addon-list`.

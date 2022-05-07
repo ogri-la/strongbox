@@ -787,3 +787,26 @@
         (apply max (conj (mapv #(find-depth % (inc i)) children) (inc i)))
         (inc i)))
     i))
+
+(defmacro with-lock
+  "executes `form` once all items in given `set` are available"
+  [lock-set-atom user-set & form]
+  `(let [wait-time# 10] ;; ms
+     (loop [waited# 0]
+       (println (format "acquiring locks %s ..." ~user-set))
+      (if (empty? (clojure.set/intersection (deref ~lock-set-atom) ~user-set))
+        (try
+          (println (format "locks acquired %s" ~user-set))
+          ;; there is no overlap between the locks we have and what the user wants.
+          ;; add the user locks to the working set and execute body
+          (swap! ~lock-set-atom into ~user-set)
+          ~@form
+          (finally
+            ;; when body is complete, release the locks
+            (println (format "releasing locks %s" ~user-set))
+            (swap! ~lock-set-atom clojure.set/difference ~user-set)))
+
+        ;; something else holds one or more of the desired locks! wait a duration and try again
+        (do (Thread/sleep wait-time#)
+            (println (format "recurring in %s ms, have waited %s ms" wait-time# waited#))
+            (recur (+ waited# wait-time#)))))))
