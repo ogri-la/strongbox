@@ -267,7 +267,7 @@
         (with-global-fake-routes-in-isolation fake-routes
           (cli/set-addon-dir! (helper/install-dir))
           (core/install-addon-guard addon)
-          (core/load-installed-addons)
+          (core/load-all-installed-addons)
 
           (let [addon (first (core/get-state :installed-addon-list))]
             (is (= "1.2.3" (:installed-version addon)))
@@ -303,7 +303,7 @@
 
           (cli/set-addon-dir! (helper/install-dir))
           (core/install-addon-guard addon)
-          (core/load-installed-addons)
+          (core/load-all-installed-addons)
 
           (let [addon (first (core/get-state :installed-addon-list))]
             (is (= "1.2.3" (:installed-version addon)))
@@ -503,7 +503,7 @@
           (is (fs/exists? expected-addon-dir))
 
           ;; re-read install dir
-          (core/load-installed-addons)
+          (core/load-all-installed-addons)
 
           ;; we expect our mushy set of .nfo and .toc data
           (is (= [expected] (core/get-state :installed-addon-list)))
@@ -562,7 +562,7 @@
           (is (not (fs/exists? expected-addon-dir)))
 
           ;; re-read install dir
-          (core/load-installed-addons)
+          (core/load-all-installed-addons)
 
           ;; we expect nothing to have been installed
           ;;(is (= [expected] (core/get-state :installed-addon-list)))
@@ -632,7 +632,7 @@
           (is (fs/exists? expected-addon-dir))
 
           ;; re-read install dir
-          (core/load-installed-addons)
+          (core/load-all-installed-addons)
 
           ;; we expect our mushy set of .nfo and .toc data
           (is (= [expected] (core/get-state :installed-addon-list)))

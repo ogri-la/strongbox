@@ -61,7 +61,7 @@
 (s/def ::writeable-dir (s/and ::extant-dir fs/writeable?))
 (s/def ::empty-coll (s/and coll? empty?))
 (s/def ::gui-event #(instance? java.util.EventObject %))
-(s/def ::install-dir (s/nilable ::extant-dir))
+(s/def ::install-dir ::extant-dir)
 (s/def ::selected? boolean?)
 (s/def ::gui-theme #{:light :dark :dark-green :dark-orange})
 (s/def ::closable? boolean?)

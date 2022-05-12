@@ -32,7 +32,14 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * bug, addon detail, mutual dependencies, 'no content in table' is teeny tiny
 
+* add a 'browse addons' link to the file dir
+
 ## todo bucket (no particular order)
+
+* clean up this confusion between 'install-dir' and 'addon-dir'
+    - install-dir is where addons are installed
+    - addon-dir is either where addons are installed or a specific addon's directory
+        - i.e., ambiguous
 
 * catalogue, descriptions for wowinterface addons
 * catalogue, download counts for github addons

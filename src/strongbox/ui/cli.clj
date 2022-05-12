@@ -87,7 +87,7 @@
   "like core/refresh but focuses on loading+matching+checking for updates"
   []
   (report "refresh")
-  (core/load-installed-addons)
+  (core/load-all-installed-addons)
   (core/match-installed-addons-with-catalogue)
   (core/check-for-updates)
   (core/save-settings!))

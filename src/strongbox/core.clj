@@ -421,7 +421,7 @@
   ([]
    (reset-logging! testing? state (and @state (selected-addon-dir))))
 
-  ([testing? boolean?, state-atm ::sp/atom, addon-dir ::sp/install-dir]
+  ([testing? boolean?, state-atm ::sp/atom, install-dir (s/nilable ::sp/install-dir)]
    ;; reset logging configuration to timbre's default.
    (timbre/swap-config! timbre/default-config)
 
@@ -435,7 +435,7 @@
    (-debug-logging state-atm)
 
    ;; ensure we're storing log lines in app state
-   (add-cleanup-fn (logging/add-ui-appender! state-atm addon-dir))
+   (add-cleanup-fn (logging/add-ui-appender! state-atm install-dir))
 
    ;; and finally, if we're running tests, drop the logging level to :debug and ensure nothing is emitting to a file
    (when testing?
@@ -617,11 +617,11 @@
     (swap! state assoc :installed-addon-list installed-addon-list)
     nil))
 
-(defn-spec load-installed-addons nil?
-  "guard function. offloads the hard work to `-load-installed-addons` then updates application state"
+(defn-spec load-all-installed-addons nil?
+  "guard function. offloads the hard work to `addon/load-all-installed-addons` then updates application state"
   []
   (if-let [addon-dir (selected-addon-dir)]
-    (let [addon-list (addon/load-installed-addons addon-dir (get-game-track))]
+    (let [addon-list (addon/load-all-installed-addons addon-dir (get-game-track))]
       (info (format "loading (%s) installed addons in: %s" (count addon-list) addon-dir))
       (update-installed-addon-list! addon-list))
 
@@ -1300,7 +1300,7 @@
   (report "refresh")
 
    ;; parse toc files in install-dir. do this first so we see *something* while catalogue downloads (next)
-  (load-installed-addons)
+  (load-all-installed-addons)
 
    ;; downloads the big long list of addon information stored on github
   (download-current-catalogue)
