@@ -810,3 +810,14 @@
          (do (Thread/sleep wait-time#)
              (println (format "recurring in %s ms, have waited %s ms" wait-time# waited#))
              (recur (+ waited# wait-time#)))))))
+
+(defn-spec replace-item vector?
+  "replaces all instances of `(keyfn item)` with `replacement` in given `item-list`"
+  [item-list vector?, keyfn ifn?, replacement any?]
+  (let [key (keyfn replacement)]
+    (mapv (fn [item]
+            (if (= (keyfn item) key)
+              replacement
+              item))
+          item-list)))
+

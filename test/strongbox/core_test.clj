@@ -572,7 +572,7 @@
 
                 ;; we then attempt to match this 'toc+nfo' to an addon in the catalogue
                 ;; in this case we have a catalogue of 1 and only interested in the first result
-                result (first (db/-db-match-installed-addons-with-catalogue (core/get-state :db) [toc]))
+                result (first (db/-db-match-installed-addon-list-with-catalogue (core/get-state :db) [toc]))
 
                 ;; previously done in above step, mooshing the installed addon and catalogue item together is
                 ;; now a separate step

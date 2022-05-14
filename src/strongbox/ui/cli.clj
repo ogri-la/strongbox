@@ -88,7 +88,7 @@
   []
   (report "refresh")
   (core/load-all-installed-addons)
-  (core/match-installed-addons-with-catalogue)
+  (core/match-all-installed-addons-with-catalogue)
   (core/check-for-updates)
   (core/save-settings!))
 
@@ -316,7 +316,8 @@
                                            (let [downloaded-file (core/download-addon-guard-affective addon install-dir)
                                                  locks-needed (addon-locks addon downloaded-file)]
                                              (utils/with-lock current-locks locks-needed
-                                               (core/install-addon-affective addon install-dir downloaded-file))))
+                                               (core/install-addon-affective addon install-dir downloaded-file))
+                                             (core/refresh-addon addon)))
                                   job-id (joblib/addon-job-id addon :download-addon)]
                               (joblib/create-job! queue-atm job-fn job-id)))]
     (run! add-download-job! updateable-addon-list)
@@ -333,7 +334,8 @@
         (filter core/expanded?)
         (map -find-replace-release)
         install-update-these-in-parallel)
-   (core/refresh)))
+   ;;(core/refresh)
+   ))
 
 (defn-spec re-install-or-update-all nil?
   "re-installs (if possible) or updates all installed addons"
@@ -376,7 +378,8 @@
    (->> addon-list
         (filter addon/updateable?)
         install-update-these-in-parallel)
-   (core/refresh)))
+   ;;(core/refresh)
+   ))
 
 (defn-spec update-all nil?
   "updates all installed addons with any new releases.
@@ -388,14 +391,16 @@
                                  (filter addon/updateable?))]
       (when-not (empty? updateable-addons)
         (install-update-these-in-parallel updateable-addons)
-        (core/refresh)))))
+        ;;(core/refresh)
+        ))))
 
 (defn-spec set-version nil?
   "updates `addon` with the given `release` data and then installs it."
   [addon :addon/installable, release :addon/source-updates]
   ;;(core/install-addon-guard-affective (merge addon release))
   (install-update-these-in-parallel [(merge addon release)])
-  (core/refresh))
+  ;;(core/refresh)
+  )
 
 (defn-spec delete-selected nil?
   "deletes all addons in given `addon-list`.

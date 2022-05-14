@@ -36,6 +36,10 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* trade skill master string-converter changed directory names between 2.0.7 and 2.1.0
+    - this causes a problem with the 'browse local files' button failing a spec check
+        - it also means that the dirname isn't being updated (somehow) during the addon refresh
+
 * clean up this confusion between 'install-dir' and 'addon-dir'
     - install-dir is where addons are installed
     - addon-dir is either where addons are installed or a specific addon's directory

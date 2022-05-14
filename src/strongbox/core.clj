@@ -609,13 +609,27 @@
 (def install-addon-guard-affective
   (affects-addon-wrapper install-addon-guard))
 
-(defn update-installed-addon-list!
-  [installed-addon-list]
+(defn-spec update-installed-addon-list! nil?
+  "replaces the list of installed addons with `installed-addon-list`"
+  [installed-addon-list vector?]
   (let [asc compare
         ;; `vec` so we can use `update-in` and `assoc-in` on `:installed-addon-list`
         installed-addon-list (vec (sort-by :name asc installed-addon-list))]
     (swap! state assoc :installed-addon-list installed-addon-list)
     nil))
+
+(defn-spec update-installed-addon! :addon/installed
+  "updates a single `addon` in the `:installed-addon-list`"
+  [addon :addon/installed]
+  (update-installed-addon-list!
+   (utils/replace-item (get-state :installed-addon-list)
+                       (juxt :source :source-id)
+                       addon))
+  addon)
+
+(defn-spec load-installed-addon :addon/installed
+  [addon-dir ::sp/addon-dir]
+  (update-installed-addon! (addon/load-installed-addon addon-dir (get-game-track))))
 
 (defn-spec load-all-installed-addons nil?
   "guard function. offloads the hard work to `addon/load-all-installed-addons` then updates application state"
@@ -893,14 +907,14 @@
     (debug "skipping db load. already loaded or no catalogue selected."))
   nil)
 
-(defn-spec -match-installed-addons-with-catalogue :addon/installed-list
+(defn-spec -match-installed-addon-list-with-catalogue :addon/installed-list
   "compare the list of addons installed with the database of known addons and try to match the two up.
-  when a match is found (see `db/-db-match-installed-addons-with-catalogue`), merge it into the addon data."
+  when a match is found (see `db/-db-match-installed-addon-list-with-catalogue`), merge it into the addon data."
   [database :addon/summary-list, installed-addon-list :addon/toc-list]
   (let [num-installed (count installed-addon-list)
         _ (when (> num-installed 0)
             (info (format "matching %s addons to catalogue" (count installed-addon-list))))
-        match-results (db/-db-match-installed-addons-with-catalogue database installed-addon-list)
+        match-results (db/-db-match-installed-addon-list-with-catalogue database installed-addon-list)
         [matched unmatched] (utils/split-filter :matched? match-results)
 
         ;; for those that *did* match, merge the installed addon data together with the catalogue data
@@ -946,7 +960,7 @@
 
     expanded-installed-addon-list))
 
-(defn-spec match-installed-addons-with-catalogue nil?
+(defn-spec match-all-installed-addons-with-catalogue nil?
   "compare the list of addons installed with the database of known addons, match the two up, merge
   the two together and update the list of installed addons.
   Skipped when no catalogue loaded or no addon directory selected."
@@ -954,7 +968,17 @@
   (when (and (db-catalogue-loaded?)
              (selected-addon-dir))
     (update-installed-addon-list!
-     (-match-installed-addons-with-catalogue (get-state :db) (get-state :installed-addon-list)))))
+     (-match-installed-addon-list-with-catalogue (get-state :db) (get-state :installed-addon-list)))))
+
+(defn-spec match-installed-addon-with-catalogue (s/or :ok :addon/installed, :app-not-started nil?) ;; todo: revisit
+  "compare the list of addons installed with the database of known addons, match the two up, merge
+  the two together and update the list of installed addons.
+  Skipped when no catalogue loaded or no addon directory selected."
+  [addon :addon/installed]
+  (when (and (db-catalogue-loaded?)
+             (selected-addon-dir))
+    (update-installed-addon!
+     (first (-match-installed-addon-list-with-catalogue (get-state :db) [addon])))))
 
 
 ;;
@@ -1038,7 +1062,24 @@
 
 (def check-for-updates check-for-updates-in-parallel)
 
+(defn-spec find-installed-addon (s/or :match map? :no-match nil?)
+  [addon map?]
+  (let [keyfn (juxt :source :source-id)
+        key (keyfn addon)
+        addon-list (get-state :installed-addon-list)]
+    (first (filter (comp #(= key %) keyfn) addon-list))))
+
+(defn-spec check-addon-for-updates (s/or :ok :addon/installed, :app-not-started nil?)
+  "downloads full details for all installed addons that can be found in summary list"
+  [addon :addon/installed]
+  (when (selected-addon-dir)
+    (let [;;addon (find-installed-addon addon) ;; pull from app state
+          improved-addon (check-for-update addon)]
+      (update-installed-addon! improved-addon))))
+
+
 ;; ui interface
+
 
 (defn-spec init-dirs nil?
   "ensures all directories in `generate-path-map` exist and are writable, creating them if necessary.
@@ -1250,7 +1291,7 @@
         ;; todo: why aren't we just calling `expand-summary-wrapper` ?
         ;; match each of these padded addon maps to entries in the catalogue database
         ;; afterwards this will call `update-installed-addon-list!` that will trigger a refresh in the gui
-        matching-addon-list (-match-installed-addons-with-catalogue (get-state :db) addon-list)
+        matching-addon-list (-match-installed-addon-list-with-catalogue (get-state :db) addon-list)
 
         ;; this is what v1 does, but it's hidden away in `expand-summary-wrapper`
         ;;default-game-track (get-game-track)
@@ -1295,6 +1336,17 @@
 
 ;;
 
+(defn-spec refresh-addon nil?
+  "refreshes state of individual addon"
+  [addon :addon/installed]
+  (->> addon
+       :dirname
+       (utils/join (selected-addon-dir))
+       load-installed-addon
+       match-installed-addon-with-catalogue
+       check-addon-for-updates)
+  nil)
+
 (defn-spec refresh nil?
   []
   (report "refresh")
@@ -1312,7 +1364,7 @@
   (p :p2/db (db-load-catalogue))
 
    ;; match installed addons to those in catalogue
-  (match-installed-addons-with-catalogue)
+  (match-all-installed-addons-with-catalogue)
 
    ;; for those addons that have matches, download their details
   (check-for-updates)

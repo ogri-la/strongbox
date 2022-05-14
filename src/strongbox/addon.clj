@@ -174,26 +174,28 @@
         (-> group first (dissoc :-toc/game-track))))))
 
 (defn-spec load-installed-addon (s/or :ok :addon/toc, :error nil?)
+  "reads and merges the toc+nfo data from the given `addon-dir`, groups them and returns the grouped mooshed data."
   [addon-dir ::sp/addon-dir, game-track ::sp/game-track]
   (logging/with-addon {:dirname (-> addon-dir fs/file fs/base-name str)}
-    (let [install-dir (fs/parent addon-dir)
-          addon-dirname (fs/base-name addon-dir)
+    (let [install-dir (str (fs/parent addon-dir))
+          addon-dirname (str (fs/base-name addon-dir))
           addon (-load-installed-addon addon-dir game-track)
           nfo-data (nfo/read-nfo install-dir addon-dirname)]
       ;; merge the addon with the nfo data.
       ;; when `ignore?` flag in addon is `true` but `false` in nfo-data, nfo-data will take precedence.
-      (merge-toc-nfo addon nfo-data))))
+      (first (group-addons [(merge-toc-nfo addon nfo-data)])))))
 
 ;; --- multiple
 
 (defn-spec load-all-installed-addons :addon/toc-list
-  "reads the *toc* data from the given addon dir, reads any *nfo* data, groups them and returns the mooshed data."
+  "reads and merges the toc+nfo data from all addons in the given `install-dir`, groups them and returns the grouped mooshed data."
   [install-dir ::sp/extant-dir, game-track ::sp/game-track]
   (->> install-dir
        fs/list-dir
        (filter fs/directory?)
-       (map #(load-installed-addon (str %) game-track))
+       (map #(-load-installed-addon (str %) game-track))
        (remove nil?)
+       (map #(merge-toc-nfo % (nfo/read-nfo install-dir (:dirname %))))
        group-addons))
 
 ;; ---
