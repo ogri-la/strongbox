@@ -8,7 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* cli, added 'scrape-github-catalogue' to list of actions
+* 'scrape-github-catalogue' to the list of command line actions.
+* 'Browse addon directory' to the 'File' menu that opens your configured file browser to the selected addon directory.
+    - accessible with `ctrl+b`
 
 ### Changed
 
