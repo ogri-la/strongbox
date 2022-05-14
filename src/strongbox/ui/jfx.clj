@@ -1378,13 +1378,16 @@
   "returns a description of the menu at the top of the application"
   [{:keys [fx/context]}]
 
-  (let [no-addon-dir? (nil? (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir]))
+  (let [addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])
+        no-addon-dir? (nil? addon-dir)
         selected-theme (fx/sub-val context get-in [:app-state :cfg :gui-theme])
         selected-columns (fx/sub-val context get-in [:app-state :cfg :preferences :ui-selected-columns])
         file-menu [(menu-item "Import addon" (async-handler import-addon-handler)
                               {:disable no-addon-dir?})
                    separator
                    (menu-item "_New addon directory" (handler wow-dir-picker) {:key "Ctrl+N"})
+                   (menu-item "_Browse addon directory" (async-handler #(utils/browse-to addon-dir))
+                              {:disable no-addon-dir?, :key "Ctrl+B"})
                    (menu-item "Remove addon directory" (async-handler remove-addon-dir)
                               {:disable no-addon-dir?})
                    separator

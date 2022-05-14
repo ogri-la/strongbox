@@ -33,7 +33,7 @@ jobs:
             - v1-dependencies-
 
       - run: |
-            sudo apt update
+            sudo apt update -y
             sudo apt install libgtk-3-0 libxtst6 --no-install-recommends -y
             # 'lein cloverage -h' will pull down further deps for the plugin without actually running it
             lein deps && lein cloverage -h
