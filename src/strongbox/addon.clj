@@ -146,8 +146,6 @@
                                  (assoc {} :source-map-list))]
     (merge toc nfo source-map-list)))
 
-;; -- singular
-
 (defn-spec -load-installed-addon (s/or :ok :addon/toc, :error nil?)
   [addon-dir ::sp/addon-dir, game-track ::sp/game-track]
   (let [toc-data-list (toc/parse-addon-toc-guard addon-dir)]
@@ -172,20 +170,6 @@
 
         (-> group first (dissoc :-toc/game-track))))))
 
-(defn-spec load-installed-addon (s/or :ok :addon/toc, :error nil?)
-  "reads and merges the toc+nfo data from the given `addon-dir`, groups them and returns the grouped mooshed data."
-  [addon-dir ::sp/addon-dir, game-track ::sp/game-track]
-  (logging/with-addon {:dirname (-> addon-dir fs/file fs/base-name str)}
-    (let [install-dir (str (fs/parent addon-dir))
-          addon-dirname (str (fs/base-name addon-dir))
-          addon (-load-installed-addon addon-dir game-track)
-          nfo-data (nfo/read-nfo install-dir addon-dirname)]
-      ;; merge the addon with the nfo data.
-      ;; when `ignore?` flag in addon is `true` but `false` in nfo-data, nfo-data will take precedence.
-      (first (group-addons [(merge-toc-nfo addon nfo-data)])))))
-
-;; --- multiple
-
 (defn-spec load-all-installed-addons :addon/toc-list
   "reads and merges the toc+nfo data from all addons in the given `install-dir`, groups them and returns the grouped mooshed data."
   [install-dir ::sp/extant-dir, game-track ::sp/game-track]
@@ -197,7 +181,21 @@
        (map #(merge-toc-nfo % (nfo/read-nfo install-dir (:dirname %))))
        group-addons))
 
+(defn-spec load-installed-addon (s/or :ok :addon/toc, :error nil?)
+  "reads and merges the toc+nfo data from the given `addon-dir`, groups them and returns the grouped mooshed data."
+  [addon-dir ::sp/addon-dir, game-track ::sp/game-track]
+  (logging/with-addon {:dirname (-> addon-dir fs/file fs/base-name str)}
+    (let [install-dir (str (fs/parent addon-dir))
+          addon-dirname (str (fs/base-name addon-dir))
+
+          ;; todo: this sucks. is there another way we can figure out the relationships between addons in an install-dir other than reading them *all* in?
+          all-addon-data (load-all-installed-addons install-dir game-track)]
+
+      (first (filter #(= addon-dirname (:dirname %)) all-addon-data)))))
+
+
 ;; ---
+
 
 (defn-spec -read-nfo ::sp/list-of-maps
   "unused except for testing. reads the nfo data for the given addon and all of it's grouped addons. returns a list of nfo data."

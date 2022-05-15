@@ -43,6 +43,14 @@ see CHANGELOG.md for a more formal list of changes by release
 * trade skill master string-converter changed directory names between 2.0.7 and 2.1.0
     - this causes a problem with the 'browse local files' button failing a spec check
         - it also means that the dirname isn't being updated (somehow) during the addon refresh
+    - see also Combuctor 9.1.3 vs Combuctor 8.1.1 with 'BagBrother' in old addons
+        - BagBrother was removed but also got 
+            00:35:37.982 [info] [BagBrother] downloading 'Combuctor' version '8.1.1'
+            00:35:38.017 [info] [BagBrother] removing "Combuctor" version "9.1.3"
+            00:35:38.017 [error] [BagBrother] addon not removed, path is not a directory: /home/torkus/old-addons/BagBrother
+            00:35:38.021 [info] [BagBrother] installing "Combuctor" version "8.1.1"
+            00:35:38.042 [warn] [BagBrother] failed to find any .toc files: /home/torkus/old-addons/Sound
+
 
 * clean up this confusion between 'install-dir' and 'addon-dir'
     - install-dir is where addons are installed
