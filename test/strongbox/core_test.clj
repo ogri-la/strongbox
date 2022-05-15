@@ -1697,3 +1697,29 @@
                   (is (= expected-total (:total (core/emergency-catalogue catalogue-location)))))]
     (is (= expected-messages messages))))
 
+
+;;
+
+
+(deftest update-installed-addon!
+  (testing "a modified addon can be found in the installed addon list and replaced"
+    (let [addon {:source "foo" :source-id "bar" :name "baz"}
+          installed-addon-list [addon]
+          updated-addon (merge addon {:name "bup"})
+          updated-addon-list [updated-addon]]
+      (with-running-app
+        (swap! core/state assoc :installed-addon-list installed-addon-list)
+        (is (= installed-addon-list (core/get-state :installed-addon-list)))
+        (core/update-installed-addon! updated-addon)
+        (is (= updated-addon-list (core/get-state :installed-addon-list))))))
+
+  (testing "addons that don't exist are added"
+    (let [addon {:source "foo" :source-id "bar" :name "baz"}
+          installed-addon-list [addon]
+          updated-addon {:source "bar" :source-id "foo" :name "baz"}
+          expected-addon-list [addon updated-addon]]
+      (with-running-app
+        (swap! core/state assoc :installed-addon-list installed-addon-list)
+        (is (= installed-addon-list (core/get-state :installed-addon-list)))
+        (core/update-installed-addon! updated-addon)
+        (is (= expected-addon-list (core/get-state :installed-addon-list)))))))

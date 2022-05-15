@@ -301,12 +301,12 @@
                    :name "everyaddon",
                    :supported-game-tracks [:classic :classic-tbc :retail]}]
 
-        expected-warning "multiple sets of different toc data found for :classic. using first."]
+        expected-debug "multiple sets of different toc data found for :classic. using first."]
     (zip/unzip-file fixture (helper/install-dir))
-    (let [[warning] (logging/buffered-log
-                     :warn
-                     (is (= expected (addon/load-all-installed-addons (helper/install-dir) game-track))))]
-      (is (= expected-warning warning)))))
+    (let [[debug] (logging/buffered-log
+                   :debug
+                   (is (= expected (addon/load-all-installed-addons (helper/install-dir) game-track))))]
+      (is (= expected-debug debug)))))
 
 (deftest remove-addon--malign-addon-data
   (testing "uninstalling an addon whose `:dirname` value is corrupted (somehow) shouldn't affect data outside of the addon dir"

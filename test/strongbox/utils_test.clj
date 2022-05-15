@@ -482,13 +482,3 @@
 
     (doseq [[given expected] cases]
       (is (= expected (utils/find-depth given 0))))))
-
-(deftest replace-item
-  (let [cases [[[:a :c :e] [:a :c :e]]
-               [[:b] [:foo]]
-               [[:a :b :c] [:a :foo :c]]
-               [[:b :b :b] [:foo :foo :foo]]]
-        keyfn #(if (some #{%} [:b :foo]) :! %)
-        replacement :foo]
-    (doseq [[given expected] cases]
-      (is (= expected (utils/replace-item given keyfn replacement))))))

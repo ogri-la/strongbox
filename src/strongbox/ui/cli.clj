@@ -293,6 +293,8 @@
   (run! core/install-addon-guard-affective updateable-addon-list))
 
 (defn-spec addon-locks set?
+  "returns a set of names of directories used by the given `addon` and it's grouped addons,
+  as well as the top-level directories that will be needed after unzipped the given `downloaded-file`."
   [addon :addon/installable, downloaded-file ::sp/extant-archive-file]
   (let [;; addon may not be installed yet, we may not have any `:dirname` values at all
         existing-dirs (->> addon addon/flatten-addon (map :dirname) utils/nilable set)
@@ -316,8 +318,8 @@
                                            (let [downloaded-file (core/download-addon-guard-affective addon install-dir)
                                                  locks-needed (addon-locks addon downloaded-file)]
                                              (utils/with-lock current-locks locks-needed
-                                               (core/install-addon-affective addon install-dir downloaded-file))
-                                             (core/refresh-addon addon)))
+                                               (core/install-addon-affective addon install-dir downloaded-file)
+                                               (core/refresh-addon addon))))
                                   job-id (joblib/addon-job-id addon :download-addon)]
                               (joblib/create-job! queue-atm job-fn job-id)))]
     (run! add-download-job! updateable-addon-list)
@@ -333,9 +335,7 @@
    (->> addon-list
         (filter core/expanded?)
         (map -find-replace-release)
-        install-update-these-in-parallel)
-   ;;(core/refresh)
-   ))
+        install-update-these-in-parallel)))
 
 (defn-spec re-install-or-update-all nil?
   "re-installs (if possible) or updates all installed addons"
@@ -377,9 +377,7 @@
   ([addon-list :addon/installed-list]
    (->> addon-list
         (filter addon/updateable?)
-        install-update-these-in-parallel)
-   ;;(core/refresh)
-   ))
+        install-update-these-in-parallel)))
 
 (defn-spec update-all nil?
   "updates all installed addons with any new releases.
@@ -390,17 +388,13 @@
     (let [updateable-addons (->> (get-state :installed-addon-list)
                                  (filter addon/updateable?))]
       (when-not (empty? updateable-addons)
-        (install-update-these-in-parallel updateable-addons)
-        ;;(core/refresh)
-        ))))
+        (install-update-these-in-parallel updateable-addons)))))
 
 (defn-spec set-version nil?
   "updates `addon` with the given `release` data and then installs it."
   [addon :addon/installable, release :addon/source-updates]
   ;;(core/install-addon-guard-affective (merge addon release))
-  (install-update-these-in-parallel [(merge addon release)])
-  ;;(core/refresh)
-  )
+  (install-update-these-in-parallel [(merge addon release)]))
 
 (defn-spec delete-selected nil?
   "deletes all addons in given `addon-list`.

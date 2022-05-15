@@ -793,31 +793,27 @@
   [lock-set-atom user-set & form]
   `(let [wait-time# 10] ;; ms
      (loop [waited# 0]
-       (println (format "acquiring locks %s ..." ~user-set))
+       (debug (str "acquiring locks: " ~user-set))
        (if (empty? (clojure.set/intersection (deref ~lock-set-atom) ~user-set))
          (try
-           (println (format "locks acquired %s" ~user-set))
+           (debug (str "locks acquired: " ~user-set))
           ;; there is no overlap between the locks we have and what the user wants.
           ;; add the user locks to the working set and execute body
            (swap! ~lock-set-atom into ~user-set)
            ~@form
            (finally
             ;; when body is complete, release the locks
-             (println (format "releasing locks %s" ~user-set))
+             (debug (str "releasing locks: " ~user-set))
              (swap! ~lock-set-atom clojure.set/difference ~user-set)))
 
         ;; something else holds one or more of the desired locks! wait a duration and try again
          (do (Thread/sleep wait-time#)
-             (println (format "recurring in %s ms, have waited %s ms" wait-time# waited#))
+             (debug (format "recurring in %s ms, have waited %s ms" wait-time# waited#))
              (recur (+ waited# wait-time#)))))))
 
-(defn-spec replace-item vector?
-  "replaces all instances of `(keyfn item)` with `replacement` in given `item-list`"
-  [item-list vector?, keyfn ifn?, replacement any?]
-  (let [key (keyfn replacement)]
-    (mapv (fn [item]
-            (if (= (keyfn item) key)
-              replacement
-              item))
-          item-list)))
+(defn-spec remove-items-matching vector?
+  "removes all instances where `(keyfn item)` matches `(keyfn given)` returning a vector."
+  [item-list vector?, keyfn ifn?, given any?]
+  (let [matching (keyfn given)]
+    (vec (remove #(= (keyfn %) matching) item-list))))
 

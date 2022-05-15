@@ -234,6 +234,16 @@
 
 ;;
 
+(defn-spec find-installed-addon (s/or :match :addon/source-map, :no-match nil?)
+  "returns first addon from the `:installed-addon-list` matching the `:source` and `:source-id` of the given `addon`."
+  [addon :addon/source-map]
+  (let [keyfn (juxt :source :source-id)
+        key (keyfn addon)
+        addon-list (get-state :installed-addon-list)]
+    (first (filter (comp #(= key %) keyfn) addon-list))))
+
+;;
+
 (defn set-etag
   "convenient wrapper around adding and removing etag values from state map"
   ([filename]
@@ -618,16 +628,20 @@
     (swap! state assoc :installed-addon-list installed-addon-list)
     nil))
 
-(defn-spec update-installed-addon! :addon/installed
-  "updates a single `addon` in the `:installed-addon-list`"
-  [addon :addon/installed]
+(defn-spec update-installed-addon! :addon/source-map
+  "adds or updates an addon in the `:installed-addon-list` matching the `:source` and `:source-id` of the given `addon` with the given `addon`.
+  order is not preserved.
+  returns the given `addon`."
+  [addon :addon/source-map]
   (update-installed-addon-list!
-   (utils/replace-item (get-state :installed-addon-list)
-                       (juxt :source :source-id)
-                       addon))
+   (conj (utils/remove-items-matching (get-state :installed-addon-list)
+                                      (juxt :source :source-id)
+                                      addon)
+         addon))
   addon)
 
 (defn-spec load-installed-addon :addon/installed
+  "loads the addon at the given `addon-dir` path, updating or adding it to the `:installed-addon-list`."
   [addon-dir ::sp/addon-dir]
   (update-installed-addon! (addon/load-installed-addon addon-dir (get-game-track))))
 
@@ -1062,20 +1076,12 @@
 
 (def check-for-updates check-for-updates-in-parallel)
 
-(defn-spec find-installed-addon (s/or :match map? :no-match nil?)
-  [addon map?]
-  (let [keyfn (juxt :source :source-id)
-        key (keyfn addon)
-        addon-list (get-state :installed-addon-list)]
-    (first (filter (comp #(= key %) keyfn) addon-list))))
-
 (defn-spec check-addon-for-updates (s/or :ok :addon/installed, :app-not-started nil?)
   "downloads full details for all installed addons that can be found in summary list"
-  [addon :addon/installed]
+  [addon (s/or :unmatched :addon/toc
+               :matched :addon/toc+summary+match)]
   (when (selected-addon-dir)
-    (let [;;addon (find-installed-addon addon) ;; pull from app state
-          improved-addon (check-for-update addon)]
-      (update-installed-addon! improved-addon))))
+    (update-installed-addon! (check-for-update addon))))
 
 
 ;; ui interface

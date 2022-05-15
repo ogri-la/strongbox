@@ -8,6 +8,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * github, added 'scrape-github-catalogue' to list of cli actions
 * github, catalogue, fixed handling for empty game track list in csv catalogue
+* add a 'browse addons' link to the file dir
+    - done
 
 ## todo
 
@@ -32,9 +34,11 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * bug, addon detail, mutual dependencies, 'no content in table' is teeny tiny
 
-* add a 'browse addons' link to the file dir
 
 ## todo bucket (no particular order)
+
+* ctrl-f5 should re-load addons from the addon dir as well
+    - currently it just wipes out the http cache
 
 * trade skill master string-converter changed directory names between 2.0.7 and 2.1.0
     - this causes a problem with the 'browse local files' button failing a spec check

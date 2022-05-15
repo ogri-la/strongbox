@@ -155,7 +155,7 @@
       ;; whatever toc data we have, we only have 1 of it (normal case), so return that
       (-> toc-data-list first (dissoc :-toc/game-track))
 
-      ;; we have multiple sets of toc-data to choose from. which to choose?
+      ;; we have multiple sets of toc data to choose from. which to choose?
       ;; prefer the one for the current game track, if it exists, otherwise do as we do with
       ;; the catalogue and use a list of priorities.
       (let [grouped-toc-data (group-by :-toc/game-track toc-data-list)
@@ -168,8 +168,7 @@
         (when (and (> (count group) 1)
                    ;; not all members in group are the same ...
                    (not (apply = group)))
-          ;; todo: not a good warning message. what is the user supposed to think? it's fine as a debug
-          (warn (format "multiple sets of different toc data found for %s. using first." game-track)))
+          (debug (format "multiple sets of different toc data found for %s. using first." game-track)))
 
         (-> group first (dissoc :-toc/game-track))))))
 
@@ -194,7 +193,7 @@
        fs/list-dir
        (filter fs/directory?)
        (map #(-load-installed-addon (str %) game-track))
-       (remove nil?)
+       (remove nil?) ;; under what circumstances are we getting nils?
        (map #(merge-toc-nfo % (nfo/read-nfo install-dir (:dirname %))))
        group-addons))
 
