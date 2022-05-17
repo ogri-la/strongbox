@@ -6,6 +6,7 @@
    [clojure.spec.alpha :as s]
    [me.raynes.fs :as fs]
    [strongbox
+    [zip :as zip]
     [constants :as constants]
     [joblib :as joblib]
     [github-api :as github-api]
@@ -86,8 +87,8 @@
   "like core/refresh but focuses on loading+matching+checking for updates"
   []
   (report "refresh")
-  (core/load-installed-addons)
-  (core/match-installed-addons-with-catalogue)
+  (core/load-all-installed-addons)
+  (core/match-all-installed-addons-with-catalogue)
   (core/check-for-updates)
   (core/save-settings!))
 
@@ -291,22 +292,42 @@
   [updateable-addon-list :addon/installable-list]
   (run! core/install-addon-guard-affective updateable-addon-list))
 
+(defn-spec addon-locks set?
+  "returns a set of names of directories used by the given `addon` and it's grouped addons"
+  [addon map?]
+  ;; addon may not be installed yet, we may not have any `:dirname` values at all
+  (->> addon addon/flatten-addon (map :dirname) (remove nil?) utils/nilable set))
+
+(defn-spec zipfile-locks set?
+  "returns a set of the top-level directories that will be needed after unzipping the given `downloaded-file`."
+  [downloaded-file ::sp/extant-archive-file]
+  (let [strip-trailing-slash #(utils/rtrim % "/")]
+    (->> downloaded-file
+         zip/zipfile-normal-entries
+         zip/top-level-directories
+         (map :path)
+         (map strip-trailing-slash)
+         set)))
+
 (defn-spec install-update-these-in-parallel nil?
   "installs/updates a list of addons in parallel, pushing guard checks into threads and then installing serially."
   [updateable-addon-list :addon/installable-list]
   (let [queue-atm (core/get-state :job-queue)
         install-dir (core/selected-addon-dir)
+        current-locks (atom #{})
         add-download-job! (fn [addon]
                             (let [job-fn (fn []
-                                           [addon (core/download-addon-guard-affective addon install-dir)])
+                                           (let [downloaded-file (core/download-addon-guard-affective addon install-dir)
+                                                 locks-needed (clojure.set/union (addon-locks addon)
+                                                                                 (zipfile-locks downloaded-file))]
+                                             (utils/with-lock current-locks locks-needed
+                                               (core/install-addon-affective addon install-dir downloaded-file)
+                                               (core/refresh-addon addon))))
                                   job-id (joblib/addon-job-id addon :download-addon)]
-                              (joblib/create-job! queue-atm job-fn job-id)))
-        _ (run! add-download-job! updateable-addon-list)
-        addon+downloaded-file-list (joblib/run-jobs! queue-atm core/num-concurrent-downloads)]
-
-    ;; install addons serially, skip download checks, mark addons as unsteady
-    (doseq [[addon downloaded-file] addon+downloaded-file-list]
-      (core/install-addon-affective addon install-dir downloaded-file))))
+                              (joblib/create-job! queue-atm job-fn job-id)))]
+    (run! add-download-job! updateable-addon-list)
+    (joblib/run-jobs! queue-atm core/num-concurrent-downloads)
+    nil))
 
 (defn-spec re-install-or-update-selected nil?
   "re-installs (if possible) or updates all addons in given `addon-list`.
@@ -317,8 +338,7 @@
    (->> addon-list
         (filter core/expanded?)
         (map -find-replace-release)
-        install-update-these-in-parallel)
-   (core/refresh)))
+        install-update-these-in-parallel)))
 
 (defn-spec re-install-or-update-all nil?
   "re-installs (if possible) or updates all installed addons"
@@ -360,8 +380,7 @@
   ([addon-list :addon/installed-list]
    (->> addon-list
         (filter addon/updateable?)
-        install-update-these-in-parallel)
-   (core/refresh)))
+        install-update-these-in-parallel)))
 
 (defn-spec update-all nil?
   "updates all installed addons with any new releases.
@@ -372,15 +391,13 @@
     (let [updateable-addons (->> (get-state :installed-addon-list)
                                  (filter addon/updateable?))]
       (when-not (empty? updateable-addons)
-        (install-update-these-in-parallel updateable-addons)
-        (core/refresh)))))
+        (install-update-these-in-parallel updateable-addons)))))
 
 (defn-spec set-version nil?
   "updates `addon` with the given `release` data and then installs it."
   [addon :addon/installable, release :addon/source-updates]
   ;;(core/install-addon-guard-affective (merge addon release))
-  (install-update-these-in-parallel [(merge addon release)])
-  (core/refresh))
+  (install-update-these-in-parallel [(merge addon release)]))
 
 (defn-spec delete-selected nil?
   "deletes all addons in given `addon-list`.

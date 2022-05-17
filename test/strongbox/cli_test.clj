@@ -267,7 +267,7 @@
         (with-global-fake-routes-in-isolation fake-routes
           (cli/set-addon-dir! (helper/install-dir))
           (core/install-addon-guard addon)
-          (core/load-installed-addons)
+          (core/load-all-installed-addons)
 
           (let [addon (first (core/get-state :installed-addon-list))]
             (is (= "1.2.3" (:installed-version addon)))
@@ -303,7 +303,7 @@
 
           (cli/set-addon-dir! (helper/install-dir))
           (core/install-addon-guard addon)
-          (core/load-installed-addons)
+          (core/load-all-installed-addons)
 
           (let [addon (first (core/get-state :installed-addon-list))]
             (is (= "1.2.3" (:installed-version addon)))
@@ -503,7 +503,7 @@
           (is (fs/exists? expected-addon-dir))
 
           ;; re-read install dir
-          (core/load-installed-addons)
+          (core/load-all-installed-addons)
 
           ;; we expect our mushy set of .nfo and .toc data
           (is (= [expected] (core/get-state :installed-addon-list)))
@@ -562,7 +562,7 @@
           (is (not (fs/exists? expected-addon-dir)))
 
           ;; re-read install dir
-          (core/load-installed-addons)
+          (core/load-all-installed-addons)
 
           ;; we expect nothing to have been installed
           ;;(is (= [expected] (core/get-state :installed-addon-list)))
@@ -632,7 +632,7 @@
           (is (fs/exists? expected-addon-dir))
 
           ;; re-read install dir
-          (core/load-installed-addons)
+          (core/load-all-installed-addons)
 
           ;; we expect our mushy set of .nfo and .toc data
           (is (= [expected] (core/get-state :installed-addon-list)))
@@ -890,3 +890,17 @@
         (cli/add-addon-tab addon)
         (cli/change-addon-detail-nav :mutual-dependencies tab-idx)
         (is (= expected (core/get-state :tab-list tab-idx)))))))
+
+(deftest addon-locks
+  (let [cases [[{} #{}]
+               [{:dirname "Foo"} #{"Foo"}]
+               [{:dirname "Foo" :group-addons [{:dirname "Foo"} {:dirname "Bar"} {:dirname "Baz"}]} #{"Foo" "Bar" "Baz"}]
+               ;; (parent addon should be present in group-addons)
+               [{:dirname "Foo" :group-addons [{:dirname "Bar"} {:dirname "Baz"}]} #{"Bar" "Baz"}]]]
+    (doseq [[given expected] cases]
+      (is (= expected (cli/addon-locks given))))))
+
+(deftest zipfile-locks
+  (let [zipfile-fixture (helper/fixture-path "everyaddon--0-1-2.zip")
+        expected #{"EveryAddon" "EveryAddon-BundledAddon"}]
+    (is (= expected (cli/zipfile-locks zipfile-fixture)))))

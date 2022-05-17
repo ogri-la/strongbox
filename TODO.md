@@ -8,15 +8,16 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * github, added 'scrape-github-catalogue' to list of cli actions
 * github, catalogue, fixed handling for empty game track list in csv catalogue
-
-## todo
-
+* add a 'browse addons' link to the file dir
+    - done
 * acquire locks on affected addons during installation
     - this will let us uninstall and install addons in parallel
-
+    - done
 * user catalogue, refresh happens in parallel
     - write the user-catalogue once, not each time or else we'll get Weirdness
         - a lock is now acquired when writing the user catalogue
+
+## todo
 
 * zip, switch to apache commons compress for decompressing
     - https://commons.apache.org/proper/commons-compress/
@@ -32,7 +33,28 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * bug, addon detail, mutual dependencies, 'no content in table' is teeny tiny
 
+
 ## todo bucket (no particular order)
+
+* ctrl-f5 should re-load addons from the addon dir as well
+    - currently it just wipes out the http cache
+
+* trade skill master string-converter changed directory names between 2.0.7 and 2.1.0
+    - this causes a problem with the 'browse local files' button failing a spec check
+        - it also means that the dirname isn't being updated (somehow) during the addon refresh
+    - see also Combuctor 9.1.3 vs Combuctor 8.1.1 with 'BagBrother' in old addons
+        - BagBrother was removed but also got 
+            00:35:37.982 [info] [BagBrother] downloading 'Combuctor' version '8.1.1'
+            00:35:38.017 [info] [BagBrother] removing "Combuctor" version "9.1.3"
+            00:35:38.017 [error] [BagBrother] addon not removed, path is not a directory: /home/torkus/old-addons/BagBrother
+            00:35:38.021 [info] [BagBrother] installing "Combuctor" version "8.1.1"
+            00:35:38.042 [warn] [BagBrother] failed to find any .toc files: /home/torkus/old-addons/Sound
+
+
+* clean up this confusion between 'install-dir' and 'addon-dir'
+    - install-dir is where addons are installed
+    - addon-dir is either where addons are installed or a specific addon's directory
+        - i.e., ambiguous
 
 * catalogue, descriptions for wowinterface addons
 * catalogue, download counts for github addons

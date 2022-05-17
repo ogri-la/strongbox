@@ -146,59 +146,56 @@
                                  (assoc {} :source-map-list))]
     (merge toc nfo source-map-list)))
 
-(defn-spec -load-installed-addons (s/or :ok :addon/toc-list, :error nil?)
-  "returns a list of addon data scraped from the .toc files of all addons in given `install-dir`"
-  [install-dir ::sp/addon-dir, game-track ::sp/game-track]
-  (let [addon-dir-list (->> install-dir fs/list-dir (filter fs/directory?) (map str))
-        parse-toc (fn [addon-dir]
-                    (logging/with-addon {:dirname (-> addon-dir fs/file fs/base-name str)}
-                      (let [toc-data-list (toc/parse-addon-toc-guard addon-dir)]
-                        (if (= 1 (count toc-data-list))
-                          ;; whatever toc data we have, we only have one of it (vast majority of cases) so return that
-                          (first toc-data-list)
+(defn-spec -load-installed-addon (s/or :ok :addon/toc, :error nil?)
+  [addon-dir ::sp/addon-dir, game-track ::sp/game-track]
+  (let [toc-data-list (toc/parse-addon-toc-guard addon-dir)]
+    (if (= 1 (count toc-data-list))
+      ;; whatever toc data we have, we only have 1 of it (normal case), so return that
+      (-> toc-data-list first (dissoc :-toc/game-track))
 
-                          ;; we have multiple sets of toc-data to choose from. which to choose?
-                          ;; prefer the one for the current game track, if it exists, otherwise do as we do in catalogue
-                          ;; and use a list of priorities.
-                          (let [grouped-toc-data (group-by :-toc/game-track toc-data-list)
-                                priority-map {:retail [:retail :classic :classic-tbc]
-                                              :classic [:classic :classic-tbc :retail]
-                                              :classic-tbc [:classic-tbc :classic :retail]}
-                                priorities (get priority-map game-track)
-                                group (utils/first-nn #(get grouped-toc-data %) priorities)]
-                            (when (and (> (count group) 1)
-                                       ;; not all members in group are the same ...
-                                       (not (apply = group)))
-                              (warn (format "multiple sets of different toc data found for %s. using first." game-track)))
-                            (first group))))))]
-    (->> addon-dir-list
-         (map parse-toc)
-         (map #(dissoc % :-toc/game-track))
-         (remove nil?)
-         vec)))
+      ;; we have multiple sets of toc data to choose from. which to choose?
+      ;; prefer the one for the current game track, if it exists, otherwise do as we do with
+      ;; the catalogue and use a list of priorities.
+      (let [grouped-toc-data (group-by :-toc/game-track toc-data-list)
+            priority-map {:retail [:retail :classic :classic-tbc]
+                          :classic [:classic :classic-tbc :retail]
+                          :classic-tbc [:classic-tbc :classic :retail]}
+            priorities (get priority-map game-track)
+            group (utils/first-nn #(get grouped-toc-data %) priorities)]
 
-(defn-spec load-installed-addons :addon/toc-list
-  "reads the .toc files from the given addon dir, reads any nfo data for 
-  these addons, groups them and returns the mooshed data."
+        (when (and (> (count group) 1)
+                   ;; not all members in group are the same ...
+                   (not (apply = group)))
+          (debug (format "multiple sets of different toc data found for %s. using first." game-track)))
+
+        (-> group first (dissoc :-toc/game-track))))))
+
+(defn-spec load-all-installed-addons :addon/toc-list
+  "reads and merges the toc+nfo data from all addons in the given `install-dir`, groups them and returns the grouped mooshed data."
   [install-dir ::sp/extant-dir, game-track ::sp/game-track]
-  (let [addon-list (-load-installed-addons install-dir game-track)
+  (->> install-dir
+       fs/list-dir
+       (filter fs/directory?)
+       (map #(-load-installed-addon (str %) game-track))
+       (remove nil?) ;; under what circumstances are we getting nils?
+       (map #(merge-toc-nfo % (nfo/read-nfo install-dir (:dirname %))))
+       group-addons))
 
-        ;; at this point we have a list of the 'top level' addons, with
-        ;; any bundled addons grouped within each one.
+(defn-spec load-installed-addon (s/or :ok :addon/toc, :error nil?)
+  "reads and merges the toc+nfo data from the given `addon-dir`, groups them and returns the grouped mooshed data."
+  [addon-dir ::sp/addon-dir, game-track ::sp/game-track]
+  (logging/with-addon {:dirname (-> addon-dir fs/file fs/base-name str)}
+    (let [install-dir (str (fs/parent addon-dir))
+          addon-dirname (str (fs/base-name addon-dir))
 
-        ;; each addon now needs to be merged with the 'nfo' data, the additional
-        ;; data we store alongside each addon when it is installed/updated
+          ;; todo: this sucks. is there another way we can figure out the relationships between addons in an install-dir other than reading them *all* in?
+          all-addon-data (load-all-installed-addons install-dir game-track)]
 
-        merge-nfo-data (fn [addon]
-                         (logging/with-addon addon
-                           (let [nfo-data (nfo/read-nfo install-dir (:dirname addon))]
-                             ;; merge the addon with the nfo data.
-                             ;; when `ignore?` flag in addon is `true` but `false` in nfo-data, nfo-data will take precedence.
-                             (merge-toc-nfo addon nfo-data))))
+      (first (filter #(= addon-dirname (:dirname %)) all-addon-data)))))
 
-        addon-list (mapv merge-nfo-data addon-list)]
 
-    (group-addons addon-list)))
+;; ---
+
 
 (defn-spec -read-nfo ::sp/list-of-maps
   "unused except for testing. reads the nfo data for the given addon and all of it's grouped addons. returns a list of nfo data."

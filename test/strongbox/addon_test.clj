@@ -189,7 +189,7 @@
 
                      :supported-game-tracks [:retail]
                      :installed-version "1.2.3"}]]
-      (is (= expected (addon/load-installed-addons addon-dir :retail))))))
+      (is (= expected (addon/load-all-installed-addons addon-dir :retail))))))
 
 (deftest load-installed-addons-2
   (testing "toc data and nfo data are mooshed together as expected"
@@ -229,7 +229,7 @@
                      :installed-game-track :retail
                      :supported-game-tracks [:retail]
                      :primary? true}]]
-      (is (= expected (addon/load-installed-addons addon-dir :retail))))))
+      (is (= expected (addon/load-all-installed-addons addon-dir :retail))))))
 
 (deftest load-installed-addons--invalid-nfo-data-not-loaded
   (testing "invalid nfo data is not loaded"
@@ -259,7 +259,7 @@
                      :interface-version 80300,
                      :installed-version "1.2.3"
                      :supported-game-tracks [:retail]}]]
-      (is (= expected (addon/load-installed-addons addon-dir :retail))))))
+      (is (= expected (addon/load-all-installed-addons addon-dir :retail))))))
 
 (deftest load-installed-addons--explicit-nfo-ignore
   (testing "ignore flag in nfo data overrides any ignore flag in toc data"
@@ -287,7 +287,7 @@
                      :source-map-list [{:source "wowinterface" :source-id 123}]
 
                      :ignore? false}]]
-      (is (= expected (addon/load-installed-addons addon-dir :retail))))))
+      (is (= expected (addon/load-all-installed-addons addon-dir :retail))))))
 
 (deftest load-installed-addons--multiple-non-identical-toc-data
   (let [fixture (helper/fixture-path "everyaddon--1-2-3--multi-toc--inconsistent.zip")
@@ -301,12 +301,12 @@
                    :name "everyaddon",
                    :supported-game-tracks [:classic :classic-tbc :retail]}]
 
-        expected-warning "multiple sets of different toc data found for :classic. using first."]
+        expected-debug "multiple sets of different toc data found for :classic. using first."]
     (zip/unzip-file fixture (helper/install-dir))
-    (let [[warning] (logging/buffered-log
-                     :warn
-                     (is (= expected (addon/-load-installed-addons (helper/install-dir) game-track))))]
-      (is (= expected-warning warning)))))
+    (let [[debug] (logging/buffered-log
+                   :debug
+                   (is (= expected (addon/load-all-installed-addons (helper/install-dir) game-track))))]
+      (is (= expected-debug debug)))))
 
 (deftest remove-addon--malign-addon-data
   (testing "uninstalling an addon whose `:dirname` value is corrupted (somehow) shouldn't affect data outside of the addon dir"

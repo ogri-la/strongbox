@@ -572,7 +572,7 @@
 
                 ;; we then attempt to match this 'toc+nfo' to an addon in the catalogue
                 ;; in this case we have a catalogue of 1 and only interested in the first result
-                result (first (db/-db-match-installed-addons-with-catalogue (core/get-state :db) [toc]))
+                result (first (db/-db-match-installed-addon-list-with-catalogue (core/get-state :db) [toc]))
 
                 ;; previously done in above step, mooshing the installed addon and catalogue item together is
                 ;; now a separate step
@@ -734,7 +734,7 @@
 
         ;; make newly installed addon implicitly ignored
         (fs/mkdir (utils/join install-dir "EveryAddon" ".git"))
-        (core/load-installed-addons) ;; refresh our knowledge of what is installed
+        (core/load-all-installed-addons) ;; refresh our knowledge of what is installed
 
         (let [addon2 {:name "everyotheraddon" :label "EveryOtherAddon" :version "5.6.7" :url "https://group.id/also/never/fetched"
                       :source "curseforge" :source-id 2
@@ -761,13 +761,13 @@
         (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
 
         ;; refresh our knowledge of what is installed.
-        (core/load-installed-addons)
+        (core/load-all-installed-addons)
 
         ;; pin the addon. 
         (addon/pin install-dir (first (core/get-state :installed-addon-list)) "0.1.2")
 
         ;; refresh our knowledge of what is installed.
-        (core/load-installed-addons)
+        (core/load-all-installed-addons)
 
         ;; overwrite first addon with addon2.
         ;; this would ordinarily introduce the 'EveryOtherAddon' dirname
@@ -874,7 +874,7 @@
         (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (install-path-dirs)))
 
         ;; reload the list of addons. this groups the addons up by :group-id
-        (core/load-installed-addons)
+        (core/load-all-installed-addons)
         (is (= 1 (count (core/get-state :installed-addon-list))))
 
         (let [;; our v0 addon should now have group information
@@ -891,7 +891,7 @@
       (let [install-dir (helper/install-dir)
             _ (zip/unzip-file (fixture-path "everyaddon--1-2-3.zip") install-dir)
             _ (fs/mkdir (utils/join install-dir "EveryAddon" ".git"))
-            _ (core/load-installed-addons)
+            _ (core/load-all-installed-addons)
             addon (first (core/get-state :installed-addon-list))]
         (core/remove-many-addons [addon])
         (is (= ["EveryAddon"] (helper/install-dir-contents)))))))
@@ -916,7 +916,7 @@
 
               ;; ensure bundled addon gets ignored
               _ (fs/mkdir (utils/join install-dir "EveryAddon-BundledAddon" ".git"))
-              _ (core/load-installed-addons)
+              _ (core/load-all-installed-addons)
               refreshed-addon (first (core/get-state :installed-addon-list))]
           (core/remove-addon refreshed-addon)
           (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (install-dir-contents))))))))
@@ -979,14 +979,14 @@
         (is (= (first expected) (nfo/read-nfo install-dir bundled-dirname)))
         (is (= (first expected) (nfo/read-nfo-file install-dir bundled-dirname)))
 
-        (core/load-installed-addons) ;; refresh our knowledge of what is installed
+        (core/load-all-installed-addons) ;; refresh our knowledge of what is installed
 
         (core/install-addon-guard addon-2)
         (is (= ["EveryAddon" "EveryAddon-BundledAddon" "EveryOtherAddon"] (helper/install-dir-contents)))
         (is (= (second expected) (nfo/read-nfo install-dir bundled-dirname)))
         (is (= (subvec expected 0 2) (nfo/read-nfo-file install-dir bundled-dirname)))
 
-        (core/load-installed-addons) ;; refresh our knowledge of what is installed
+        (core/load-all-installed-addons) ;; refresh our knowledge of what is installed
 
         (core/install-addon-guard addon-3)
         (is (= (last expected) (nfo/read-nfo install-dir bundled-dirname)))
@@ -1006,7 +1006,7 @@
             expected ["addon \"everyotheraddon\" is overwriting \"everyaddon\""]]
         (helper/install-dir)
         (core/install-addon-guard addon-1)
-        (core/load-installed-addons) ;; refresh our knowledge of what is installed
+        (core/load-all-installed-addons) ;; refresh our knowledge of what is installed
         (is (= expected (logging/buffered-log :warn (core/install-addon-guard addon-2))))))))
 
 (deftest uninstall-addons-with-mutual-dependencies--overwrote
@@ -1043,11 +1043,11 @@
 
           (core/install-addon-guard addon-1)
           (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
-          (core/load-installed-addons) ;; refresh our knowledge of what is installed
+          (core/load-all-installed-addons) ;; refresh our knowledge of what is installed
 
           (core/install-addon-guard addon-2)
           (is (= ["EveryAddon" "EveryAddon-BundledAddon" "EveryOtherAddon"] (helper/install-dir-contents)))
-          (core/load-installed-addons) ;; refresh our knowledge of what is installed
+          (core/load-all-installed-addons) ;; refresh our knowledge of what is installed
 
           (core/remove-addon (helper/select-addon (:url addon-2)))
           (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
@@ -1087,11 +1087,11 @@
 
           (core/install-addon-guard addon-1)
           (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
-          (core/load-installed-addons) ;; refresh our knowledge of what is installed
+          (core/load-all-installed-addons) ;; refresh our knowledge of what is installed
 
           (core/install-addon-guard addon-2)
           (is (= ["EveryAddon" "EveryAddon-BundledAddon" "EveryOtherAddon"] (helper/install-dir-contents)))
-          (core/load-installed-addons) ;; refresh our knowledge of what is installed
+          (core/load-all-installed-addons) ;; refresh our knowledge of what is installed
 
           (core/remove-addon (helper/select-addon (:url addon-1)))
           (is (= ["EveryAddon-BundledAddon" "EveryOtherAddon"] (helper/install-dir-contents)))
@@ -1300,7 +1300,7 @@
                       :update? false}]
         (core/install-addon-guard addon)
         (is (= ["EveryAddon"] (helper/install-dir-contents)))
-        (core/load-installed-addons)
+        (core/load-all-installed-addons)
 
         ;; todo: the below makes this a UI test. move test to cli_test.clj
         (cli/select-addons)
@@ -1333,7 +1333,7 @@
                       :source-map-list [{:source "wowinterface" :source-id 1}]
                       :update? false}]
         (core/install-addon-guard addon)
-        (core/load-installed-addons)
+        (core/load-all-installed-addons)
 
         ;; todo: the below makes this a UI test. move test to cli_test.clj
         (cli/select-addons)
@@ -1414,7 +1414,7 @@
                              (update-in [:group-addons target-idx] dissoc :ignore?))]
           (core/install-addon-guard addon)
           (nfo/ignore install-dir "EveryAddon-BundledAddon")
-          (core/load-installed-addons)
+          (core/load-all-installed-addons)
 
           ;; todo: the below makes this a UI test. move test to cli_test.clj
           (cli/select-addons)
@@ -1456,7 +1456,7 @@
                         :update? false}]
           (core/install-addon-guard addon)
           (fs/mkdir (utils/join install-dir "EveryAddon" ".git"))
-          (core/load-installed-addons)
+          (core/load-all-installed-addons)
           (is (:ignore? (first (core/get-state :installed-addon-list)))) ;; implicitly ignored
 
           ;; todo: the below makes this a UI test. move test to cli_test.clj
@@ -1697,3 +1697,29 @@
                   (is (= expected-total (:total (core/emergency-catalogue catalogue-location)))))]
     (is (= expected-messages messages))))
 
+
+;;
+
+
+(deftest update-installed-addon!
+  (testing "a modified addon can be found in the installed addon list and replaced"
+    (let [addon {:source "foo" :source-id "bar" :name "baz"}
+          installed-addon-list [addon]
+          updated-addon (merge addon {:name "bup"})
+          updated-addon-list [updated-addon]]
+      (with-running-app
+        (swap! core/state assoc :installed-addon-list installed-addon-list)
+        (is (= installed-addon-list (core/get-state :installed-addon-list)))
+        (core/update-installed-addon! updated-addon)
+        (is (= updated-addon-list (core/get-state :installed-addon-list))))))
+
+  (testing "addons that don't exist are added"
+    (let [addon {:source "foo" :source-id "bar" :name "baz"}
+          installed-addon-list [addon]
+          updated-addon {:source "bar" :source-id "foo" :name "baz"}
+          expected-addon-list [addon updated-addon]]
+      (with-running-app
+        (swap! core/state assoc :installed-addon-list installed-addon-list)
+        (is (= installed-addon-list (core/get-state :installed-addon-list)))
+        (core/update-installed-addon! updated-addon)
+        (is (= expected-addon-list (core/get-state :installed-addon-list)))))))

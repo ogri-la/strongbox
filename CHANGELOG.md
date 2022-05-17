@@ -8,15 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* 'scrape-github-catalogue' to the list of command line actions.
-* 'Browse addon directory' to the 'File' menu that opens your configured file browser to the selected addon directory.
-    - accessible with `ctrl+b`
+* added 'scrape-github-catalogue' to the list of command line actions.
+* added 'Browse addon directory' to the 'File' menu that opens your configured file browser to the selected addon directory.
+    - also accessible with the `ctrl+b` shortcut
 
 ### Changed
 
+* addons are now installed and uninstalled in parallel.
+    - this was previously done as a separate, sequential, step after downloading the addons in parallel to prevent addons with mutual dependencies potentially overwriting each other in a non-deterministic way.
+
 ### Fixed
 
-* github, catalogue, fixed handling for empty game track list in csv catalogue
+* fixed handling for empty game track lists in the github csv catalogue.
 
 ### Removed
 

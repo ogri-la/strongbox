@@ -98,7 +98,7 @@
 
 (defn-spec log-line-filter fn?
   "returns a function that matches a log entry to the given `install-dir` + `addon`"
-  [install-dir ::sp/install-dir, addon map?]
+  [install-dir (s/nilable ::sp/install-dir), addon map?]
   (let [;; installed addon
         preferred-match {:install-dir install-dir, :dirname (:dirname addon)}
         ;; addons from the catalogue
@@ -109,7 +109,7 @@
 
 (defn-spec log-line-filter-with-reports fn?
   "like `log-line-filter`, but conveniently includes 'report' level log lines as well."
-  [install-dir ::sp/install-dir, addon map?]
+  [install-dir (s/nilable ::sp/install-dir), addon map?]
   (let [filter-fn (log-line-filter install-dir addon)]
     (fn [log-line]
       (or (-> log-line :level (= :report))

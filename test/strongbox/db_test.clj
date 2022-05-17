@@ -8,7 +8,7 @@
     (let [expected []]
       (is (= expected (db/put-many [] []))))))
 
-(deftest db-match-installed-addons-with-catalogue
+(deftest db-match-installed-addon-list-with-catalogue
   (testing "matched addons return a map of useful information"
     (let [toc {:name "every-addon"
                :label "Every Addon"
@@ -40,9 +40,9 @@
                      :catalogue-match catalogue-entry
                      ;; installed addon that was matched
                      :installed-addon toc}]]
-      (is (= expected (db/-db-match-installed-addons-with-catalogue db installed-addon-list))))))
+      (is (= expected (db/-db-match-installed-addon-list-with-catalogue db installed-addon-list))))))
 
-(deftest db-match-installed-addons-with-catalogue--ignored-addons-are-skipped
+(deftest db-match-installed-addon-list-with-catalogue--ignored-addons-are-skipped
   (testing "ignored addons are not matched to the catalogue and always return themselves"
     (let [toc {:name "every-addon"
                :label "Every Addon"
@@ -65,4 +65,4 @@
                :url "https://www.curseforge.com/wow/addons/every-addon"}]
 
           expected [toc]]
-      (is (= expected (db/-db-match-installed-addons-with-catalogue db installed-addon-list))))))
+      (is (= expected (db/-db-match-installed-addon-list-with-catalogue db installed-addon-list))))))
