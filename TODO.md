@@ -10,15 +10,14 @@ see CHANGELOG.md for a more formal list of changes by release
 * github, catalogue, fixed handling for empty game track list in csv catalogue
 * add a 'browse addons' link to the file dir
     - done
-
-## todo
-
 * acquire locks on affected addons during installation
     - this will let us uninstall and install addons in parallel
-
+    - done
 * user catalogue, refresh happens in parallel
     - write the user-catalogue once, not each time or else we'll get Weirdness
         - a lock is now acquired when writing the user catalogue
+
+## todo
 
 * zip, switch to apache commons compress for decompressing
     - https://commons.apache.org/proper/commons-compress/
