@@ -788,28 +788,41 @@
         (inc i)))
     i))
 
+(def -with-lock-lock (Object.))
+
 (defmacro with-lock
-  "executes `form` once all items in given `set` are available"
+  "executes `form` once all items in given `user-set` are available in `lock-set-atom`."
   [lock-set-atom user-set & form]
   `(let [wait-time# 10] ;; ms
      (loop [waited# 0]
-       (debug (str "acquiring locks: " ~user-set))
-       (if (empty? (clojure.set/intersection (deref ~lock-set-atom) ~user-set))
-         (try
-           (debug (str "locks acquired: " ~user-set))
-          ;; there is no overlap between the locks we have and what the user wants.
-          ;; add the user locks to the working set and execute body
-           (swap! ~lock-set-atom into ~user-set)
-           ~@form
-           (finally
-            ;; when body is complete, release the locks
-             (debug (str "releasing locks: " ~user-set))
-             (swap! ~lock-set-atom clojure.set/difference ~user-set)))
 
-        ;; something else holds one or more of the desired locks! wait a duration and try again
-         (do (Thread/sleep wait-time#)
-             (debug (format "recurring in %s ms, have waited %s ms" wait-time# waited#))
-             (recur (+ waited# wait-time#)))))))
+       ;; ensure reading the atom is single threaded (locking) and that when we read it and test the result,
+       ;; we update it in the same operation (dosync).
+       (let [lock-set#
+             (locking -with-lock-lock
+               (dosync
+                (debug "current locks:" (deref ~lock-set-atom))
+                (when (empty? (clojure.set/intersection (deref ~lock-set-atom) ~user-set))
+                  ;; there is no overlap between the locks we have and what the user wants.
+                  ;; add the user locks to the working set and execute body
+                  (swap! ~lock-set-atom into ~user-set))))]
+
+         (debug "acquiring locks:" ~user-set)
+         (if (not (nil? lock-set#))
+           (try
+             (debug "locks acquired:" ~user-set)
+             ~@form
+             (finally
+               ;; when body is complete, release the locks
+               ;; synchronised access not required ?
+               (debug "releasing locks:" ~user-set)
+               (swap! ~lock-set-atom clojure.set/difference ~user-set)))
+
+           ;; something else holds one or more of the desired locks! wait a duration and try again
+           (do (debug "blocked!")
+               (Thread/sleep wait-time#)
+               (debug (format "recurring in %s ms, have waited %s ms" wait-time# waited#))
+               (recur (+ waited# wait-time#))))))))
 
 (defn-spec remove-items-matching vector?
   "removes all instances where `(keyfn item)` matches `(keyfn given)` returning a vector."

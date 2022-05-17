@@ -890,3 +890,17 @@
         (cli/add-addon-tab addon)
         (cli/change-addon-detail-nav :mutual-dependencies tab-idx)
         (is (= expected (core/get-state :tab-list tab-idx)))))))
+
+(deftest addon-locks
+  (let [cases [[{} #{}]
+               [{:dirname "Foo"} #{"Foo"}]
+               [{:dirname "Foo" :group-addons [{:dirname "Foo"} {:dirname "Bar"} {:dirname "Baz"}]} #{"Foo" "Bar" "Baz"}]
+               ;; (parent addon should be present in group-addons)
+               [{:dirname "Foo" :group-addons [{:dirname "Bar"} {:dirname "Baz"}]} #{"Bar" "Baz"}]]]
+    (doseq [[given expected] cases]
+      (is (= expected (cli/addon-locks given))))))
+
+(deftest zipfile-locks
+  (let [zipfile-fixture (helper/fixture-path "everyaddon--0-1-2.zip")
+        expected #{"EveryAddon" "EveryAddon-BundledAddon"}]
+    (is (= expected (cli/zipfile-locks zipfile-fixture)))))

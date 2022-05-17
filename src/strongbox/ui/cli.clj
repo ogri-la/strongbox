@@ -293,19 +293,21 @@
   (run! core/install-addon-guard-affective updateable-addon-list))
 
 (defn-spec addon-locks set?
-  "returns a set of names of directories used by the given `addon` and it's grouped addons,
-  as well as the top-level directories that will be needed after unzipped the given `downloaded-file`."
-  [addon :addon/installable, downloaded-file ::sp/extant-archive-file]
-  (let [;; addon may not be installed yet, we may not have any `:dirname` values at all
-        existing-dirs (->> addon addon/flatten-addon (map :dirname) utils/nilable set)
-        strip-trailing-slash #(utils/rtrim % "/")
-        new-dirs (->> downloaded-file
-                      zip/zipfile-normal-entries
-                      zip/top-level-directories
-                      (map :path)
-                      (map strip-trailing-slash)
-                      set)]
-    (into existing-dirs new-dirs)))
+  "returns a set of names of directories used by the given `addon` and it's grouped addons"
+  [addon map?]
+  ;; addon may not be installed yet, we may not have any `:dirname` values at all
+  (->> addon addon/flatten-addon (map :dirname) (remove nil?) utils/nilable set))
+
+(defn-spec zipfile-locks set?
+  "returns a set of the top-level directories that will be needed after unzipping the given `downloaded-file`."
+  [downloaded-file ::sp/extant-archive-file]
+  (let [strip-trailing-slash #(utils/rtrim % "/")]
+    (->> downloaded-file
+         zip/zipfile-normal-entries
+         zip/top-level-directories
+         (map :path)
+         (map strip-trailing-slash)
+         set)))
 
 (defn-spec install-update-these-in-parallel nil?
   "installs/updates a list of addons in parallel, pushing guard checks into threads and then installing serially."
@@ -316,7 +318,8 @@
         add-download-job! (fn [addon]
                             (let [job-fn (fn []
                                            (let [downloaded-file (core/download-addon-guard-affective addon install-dir)
-                                                 locks-needed (addon-locks addon downloaded-file)]
+                                                 locks-needed (clojure.set/union (addon-locks addon)
+                                                                                 (zipfile-locks downloaded-file))]
                                              (utils/with-lock current-locks locks-needed
                                                (core/install-addon-affective addon install-dir downloaded-file)
                                                (core/refresh-addon addon))))
