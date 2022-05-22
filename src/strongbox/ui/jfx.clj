@@ -975,6 +975,12 @@
       ;; unlike swing, it doesn't appear possible to select a non-directory with javafx (good)
       (cli/set-addon-dir! dir))))
 
+(defn zip-file-picker
+  [event]
+  (when-let [abs-path (file-chooser event {:filters [{:description "ZIP files" :extensions ["*.zip"]}]})]
+    (cli/install-addon-from-file abs-path))
+  nil)
+
 (defn exit-handler
   "exit the application. if running while testing or within a repl, it just closes the window"
   [& [_]]
@@ -1382,7 +1388,8 @@
         no-addon-dir? (nil? addon-dir)
         selected-theme (fx/sub-val context get-in [:app-state :cfg :gui-theme])
         selected-columns (fx/sub-val context get-in [:app-state :cfg :preferences :ui-selected-columns])
-        file-menu [(menu-item "Import addon" (async-handler import-addon-handler)
+        file-menu [(menu-item "Install addon from file" (event-handler zip-file-picker))
+                   (menu-item "Import addon" (async-handler import-addon-handler)
                               {:disable no-addon-dir?})
                    separator
                    (menu-item "_New addon directory" (handler wow-dir-picker) {:key "Ctrl+N"})

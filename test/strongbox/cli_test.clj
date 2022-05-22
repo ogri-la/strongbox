@@ -904,3 +904,40 @@
   (let [zipfile-fixture (helper/fixture-path "everyaddon--0-1-2.zip")
         expected #{"EveryAddon" "EveryAddon-BundledAddon"}]
     (is (= expected (cli/zipfile-locks zipfile-fixture)))))
+
+(deftest install-addon-from-file
+  (testing "an addon can be installed from a zip file."
+    (with-running-app
+      (helper/install-dir)
+      (let [fixture (helper/fixture-path "everyaddon--0-1-2.zip")
+            expected [{:description "Does what no other addon does, slightly differently",
+                       :dirname "EveryAddon",
+                       :group-addon-count 2,
+                       :group-addons [{:description "Does what no other addon does, slightly differently",
+                                       :dirname "EveryAddon",
+                                       :group-id "everyaddon--0-1-2.zip",
+                                       :installed-version "1.2.3",
+                                       :interface-version 70000,
+                                       :label "EveryAddon 1.2.3",
+                                       :name "everyaddon",
+                                       :primary? true,
+                                       :supported-game-tracks [:retail]}
+                                      {:description "A useful addon that everyone bundles with their own.",
+                                       :dirname "EveryAddon-BundledAddon",
+                                       :group-id "everyaddon--0-1-2.zip",
+                                       :installed-version "a.b.c",
+                                       :interface-version 80000,
+                                       :label "BundledAddon a.b.c",
+                                       :name "bundledaddon-a.b.c",
+                                       :primary? false,
+                                       :supported-game-tracks [:retail]}],
+                       :group-id "everyaddon--0-1-2.zip",
+                       :installed-version "1.2.3",
+                       :interface-version 70000,
+                       :label "EveryAddon 1.2.3",
+                       :name "everyaddon",
+                       :primary? true,
+                       :supported-game-tracks [:retail],
+                       :update? false}]]
+        (cli/install-addon-from-file fixture)
+        (is (= expected (core/get-state :installed-addon-list)))))))

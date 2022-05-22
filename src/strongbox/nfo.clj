@@ -41,7 +41,7 @@
                         :pinned-version
                         :source-map-list])))
 
-(defn-spec derive :addon/nfo
+(defn-spec -derive :addon/nfo
   "extract fields from the addon data that will be written to the nfo file"
   [addon :addon/nfo-input-minimum, primary? boolean?]
   (let [nfo {;; important! as an addon is updated or installed, the `:installed-version` from the .toc file is overridden by the `:version` online
@@ -78,6 +78,16 @@
                          {:pinned-version pinned-version})]
 
     (merge nfo ignore-flag pinned-version)))
+
+(defn-spec derive :addon/nfo
+  "extract fields from the addon data that will be written to the nfo file"
+  [addon :addon/nfo-input-minimum, primary? boolean?]
+  (if (contains? addon :group-id)
+    ;; addon is coming from an unknown source. rather than munge unknown fields, use the given group-id
+    {:group-id (:group-id addon)
+     :primary? primary?}
+
+    (-derive addon primary?)))
 
 (defn-spec nfo-path ::sp/file
   "given an installation directory and the directory name of an addon, return the absolute path to the nfo file"

@@ -226,14 +226,12 @@
                     :group-id "https://foo.bar"
                     :primary? true
                     :source "curseforge"
-                    :source-id 321}
+                    :source-id 321
+                    :source-map-list [{:source "curseforge" :source-id 321}]}
 
           updates {:installed-game-track :foo}
 
-          ;; 2021-12-20: new.
-          source-map-list {:source-map-list [{:source "curseforge" :source-id 321}]}
-
-          expected (merge nfo-data source-map-list)
+          expected nfo-data
           expected-log ["new \".strongbox.json\" data is invalid and won't be written to file"]]
 
       (spit (utils/join (addon-path) nfo/nfo-filename) (utils/to-json nfo-data))

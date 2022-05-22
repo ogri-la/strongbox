@@ -345,6 +345,14 @@
   []
   (re-install-or-update-selected (get-state :installed-addon-list)))
 
+;; note: this task should block the UI
+(defn install-addon-from-file
+  [downloaded-file]
+  (let [;;kaddon {:group-id (utils/unique-id)}
+        addon {:group-id (fs/base-name downloaded-file)}]
+    (addon/install-addon addon (core/selected-addon-dir) downloaded-file)
+    (core/refresh)))
+
 (defn-spec install-addon nil?
   "install an addon from the catalogue. works on expanded addons as well."
   [addon :addon/summary]
