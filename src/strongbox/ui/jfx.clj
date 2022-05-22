@@ -1888,7 +1888,12 @@
                                                                                                (async-handler #(cli/search-add-filter :tag tag))
                                                                                                {:tooltip (name tag)})))
                                                                                    (:tag-list row)))}})}}
-                     {:text "updated" :min-width 85 :max-width 85 :pref-width 85 :resizable false :cell-value-factory (comp #(utils/safe-subs % 10) :updated-date)}
+                     {:text "updated" :min-width 90 :pref-width 110 :max-width 120 :resizable false
+                      :cell-value-factory :updated-date
+                      :cell-factory {:fx/cell-type :table-cell
+                                     :describe (fn [dt]
+                                                 {:text (if-not (string? dt) "" (utils/format-dt dt))})}}
+
                      {:text "downloads" :min-width 120 :pref-width 120 :max-width 120 :resizable false
                       :cell-value-factory :download-count
                       :cell-factory {:fx/cell-type :table-cell

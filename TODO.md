@@ -16,6 +16,10 @@ see CHANGELOG.md for a more formal list of changes by release
 * user catalogue, refresh happens in parallel
     - write the user-catalogue once, not each time or else we'll get Weirdness
         - a lock is now acquired when writing the user catalogue
+* highlight 'version' value when update available
+    - done
+* format date column in search tab
+    - done
 
 ## todo
 
@@ -36,6 +40,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* github, updated dates are are using '+00:00' instead of 'Z'
 * ctrl-f5 should re-load addons from the addon dir as well
     - currently it just wipes out the http cache
 
