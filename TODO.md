@@ -36,6 +36,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* add note against 'reinstall all' in README
+
 * BigWigs_Classic from Github cannot be installed when 'retail strict' is set
     - it can be installed from wowi fine
 * create a parser for that shit markup that is preventing reconcilation

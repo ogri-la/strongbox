@@ -757,7 +757,7 @@
                              dbc-source
                              (not (= inst-source dbc-source)))]
     ;; merges left->right. catalogue-addon overwrites installed-addon, ':matched' overwrites catalogue-addon, etc
-    (logging/addon-log installed-addon :info (format "found in catalogue with source \"%s\" and id \"%s\"" (:source installed-addon) (:source-id installed-addon)))
+    (logging/addon-log installed-addon :info (format "found in catalogue with source \"%s\" and id \"%s\"" (:source db-catalogue-addon) (:source-id db-catalogue-addon)))
     (merge installed-addon
            db-catalogue-addon
            {:matched? true}

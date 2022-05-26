@@ -4,6 +4,7 @@
    [strongbox.ui.cli :as cli]
    [clj-http.fake :refer [with-global-fake-routes-in-isolation]]
    [strongbox
+    [nfo :as nfo]
     [specs :as specs]
     [utils :as utils]
     [logging :as logging]
@@ -908,8 +909,8 @@
 (deftest install-addon-from-file
   (testing "an addon can be installed from a zip file."
     (with-running-app
-      (helper/install-dir)
-      (let [fixture (helper/fixture-path "everyaddon--0-1-2.zip")
+      (let [install-dir (helper/install-dir)
+            fixture (helper/fixture-path "everyaddon--0-1-2.zip")
             expected [{:description "Does what no other addon does, slightly differently",
                        :dirname "EveryAddon",
                        :group-addon-count 2,
@@ -938,6 +939,52 @@
                        :name "everyaddon",
                        :primary? true,
                        :supported-game-tracks [:retail],
-                       :update? false}]]
+                       :update? false}]
+
+            expected-nfo {:group-id "everyaddon--0-1-2.zip", :primary? true}]
         (cli/install-addon-from-file fixture)
-        (is (= expected (core/get-state :installed-addon-list)))))))
+        (is (= expected (core/get-state :installed-addon-list)))
+        (is (= expected-nfo (nfo/read-nfo-file install-dir "EveryAddon")))))))
+
+(deftest install-addon-from-file--then-update
+  (testing "an addon can be installed from a zip file."
+    (let [fixture (helper/fixture-path "everyaddon--0-1-2.zip")
+          dummy-catalogue (slurp (fixture-path "catalogue--v2--everyaddon.json"))
+          dummy-host-response (slurp (fixture-path "everyaddon--wowinterface--detail.json"))
+          update-fixture (fixture-path "everyaddon--7-8-9.zip")
+
+          fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
+                       {:get (fn [req] {:status 200 :body dummy-catalogue})}
+
+                       "https://api.mmoui.com/v3/game/WOW/filedetails/1.json"
+                       {:get (fn [req] {:status 200 :body dummy-host-response})}
+
+                       "https://cdn.wowinterface.com/downloads/getfile.php?id=1"
+                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array update-fixture)})}}
+
+          ;;expected []
+          expected-nfo {:source "wowinterface",
+                        :source-id 1,
+                        :group-id "https://www.wowinterface.com/downloads/info1",
+
+                        :installed-game-track :retail,
+                        :installed-version "7.8.9",
+                        :name "everyaddon",
+                        :primary? true,
+                        :source-map-list [{:source "wowinterface", :source-id 1}]}]
+
+      (with-global-fake-routes-in-isolation fake-routes
+        (with-running-app
+          (let [install-dir (helper/install-dir)
+                _ (cli/install-addon-from-file fixture)
+                _ (core/refresh)
+                addon (first (core/get-state :installed-addon-list))]
+
+            (is (:matched? addon))
+            (is (:update? addon))
+
+            (cli/install-update-these-serially [addon])
+            (core/refresh)
+
+            ;;(is (= expected (core/get-state :installed-addon-list)))
+            (is (= expected-nfo (nfo/read-nfo-file install-dir "EveryAddon")))))))))

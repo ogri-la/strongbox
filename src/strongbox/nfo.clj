@@ -82,7 +82,7 @@
 (defn-spec derive :addon/nfo
   "extract fields from the addon data that will be written to the nfo file"
   [addon :addon/nfo-input-minimum, primary? boolean?]
-  (if (contains? addon :group-id)
+  (if (s/valid? :addon/-nfo-just-group addon)
     ;; addon is coming from an unknown source. rather than munge unknown fields, use the given group-id
     {:group-id (:group-id addon)
      :primary? primary?}
