@@ -908,43 +908,44 @@
 
 (deftest install-addon-from-file
   (testing "an addon can be installed from a zip file."
-    (with-running-app
-      (let [install-dir (helper/install-dir)
-            fixture (helper/fixture-path "everyaddon--0-1-2.zip")
-            expected [{:description "Does what no other addon does, slightly differently",
-                       :dirname "EveryAddon",
-                       :group-addon-count 2,
-                       :group-addons [{:description "Does what no other addon does, slightly differently",
-                                       :dirname "EveryAddon",
-                                       :group-id "everyaddon--0-1-2.zip",
-                                       :installed-version "1.2.3",
-                                       :interface-version 70000,
-                                       :label "EveryAddon 1.2.3",
-                                       :name "everyaddon",
-                                       :primary? true,
-                                       :supported-game-tracks [:retail]}
-                                      {:description "A useful addon that everyone bundles with their own.",
-                                       :dirname "EveryAddon-BundledAddon",
-                                       :group-id "everyaddon--0-1-2.zip",
-                                       :installed-version "a.b.c",
-                                       :interface-version 80000,
-                                       :label "BundledAddon a.b.c",
-                                       :name "bundledaddon-a.b.c",
-                                       :primary? false,
-                                       :supported-game-tracks [:retail]}],
-                       :group-id "everyaddon--0-1-2.zip",
-                       :installed-version "1.2.3",
-                       :interface-version 70000,
-                       :label "EveryAddon 1.2.3",
-                       :name "everyaddon",
-                       :primary? true,
-                       :supported-game-tracks [:retail],
-                       :update? false}]
+    (with-redefs [utils/unique-id (constantly "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")]
+      (with-running-app
+        (let [install-dir (helper/install-dir)
+              fixture (helper/fixture-path "everyaddon--0-1-2.zip")
+              expected [{:description "Does what no other addon does, slightly differently",
+                         :dirname "EveryAddon",
+                         :group-addon-count 2,
+                         :group-addons [{:description "Does what no other addon does, slightly differently",
+                                         :dirname "EveryAddon",
+                                         :group-id "everyaddon-aaaaaaaa",
+                                         :installed-version "1.2.3",
+                                         :interface-version 70000,
+                                         :label "EveryAddon 1.2.3",
+                                         :name "everyaddon",
+                                         :primary? true,
+                                         :supported-game-tracks [:retail]}
+                                        {:description "A useful addon that everyone bundles with their own.",
+                                         :dirname "EveryAddon-BundledAddon",
+                                         :group-id "everyaddon-aaaaaaaa",
+                                         :installed-version "a.b.c",
+                                         :interface-version 80000,
+                                         :label "BundledAddon a.b.c",
+                                         :name "bundledaddon-a.b.c",
+                                         :primary? false,
+                                         :supported-game-tracks [:retail]}],
+                         :group-id "everyaddon-aaaaaaaa",
+                         :installed-version "1.2.3",
+                         :interface-version 70000,
+                         :label "EveryAddon 1.2.3",
+                         :name "everyaddon",
+                         :primary? true,
+                         :supported-game-tracks [:retail],
+                         :update? false}]
 
-            expected-nfo {:group-id "everyaddon--0-1-2.zip", :primary? true}]
-        (cli/install-addon-from-file fixture)
-        (is (= expected (core/get-state :installed-addon-list)))
-        (is (= expected-nfo (nfo/read-nfo-file install-dir "EveryAddon")))))))
+              expected-nfo {:group-id "everyaddon-aaaaaaaa", :primary? true}]
+          (cli/install-addon-from-file fixture)
+          (is (= expected (core/get-state :installed-addon-list)))
+          (is (= expected-nfo (nfo/read-nfo-file install-dir "EveryAddon"))))))))
 
 (deftest install-addon-from-file--then-update
   (testing "an addon can be installed from a zip file."

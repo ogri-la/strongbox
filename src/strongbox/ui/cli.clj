@@ -345,11 +345,21 @@
   []
   (re-install-or-update-selected (get-state :installed-addon-list)))
 
+(defn unique-group-id-from-zip-file
+  [downloaded-file]
+  (let [uniquish-id (subs (utils/unique-id) 0 8)]
+    (-> downloaded-file ;; /foo/bar/baz.zip
+        fs/base-name ;; baz.zip
+        fs/split-ext ;; baz, .zip
+        first ;; baz
+        (clojure.string/split #"--") ;; baz,
+        first ;; baz
+        (str "-" uniquish-id)))) ;; baz-467cec22
+
 ;; note: this task should block the UI
 (defn install-addon-from-file
   [downloaded-file]
-  (let [;;kaddon {:group-id (utils/unique-id)}
-        addon {:group-id (fs/base-name downloaded-file)}]
+  (let [addon {:group-id (unique-group-id-from-zip-file downloaded-file)}]
     (addon/install-addon addon (core/selected-addon-dir) downloaded-file)
     (core/refresh)))
 
