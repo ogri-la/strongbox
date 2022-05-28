@@ -357,11 +357,16 @@
         (str "-" uniquish-id)))) ;; baz-467cec22
 
 ;; note: this task should block the UI
-(defn install-addon-from-file
-  [downloaded-file]
-  (let [addon {:group-id (unique-group-id-from-zip-file downloaded-file)}]
-    (addon/install-addon addon (core/selected-addon-dir) downloaded-file)
-    (core/refresh)))
+(defn-spec install-addon-from-file map?
+  [downloaded-file ::sp/extant-archive-file]
+  (let [addon {:group-id (unique-group-id-from-zip-file downloaded-file)}
+        error-messages
+        (logging/buffered-log
+         :warn
+         (addon/install-addon addon (core/selected-addon-dir) downloaded-file))]
+    (core/refresh) ;; todo: refresh-addon
+    {:label (fs/base-name downloaded-file)
+     :error-messages error-messages}))
 
 (defn-spec install-addon nil?
   "install an addon from the catalogue. works on expanded addons as well."

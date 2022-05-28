@@ -978,7 +978,10 @@
 (defn zip-file-picker
   [event]
   (when-let [abs-path (file-chooser event {:filters [{:description "ZIP files" :extensions ["*.zip"]}]})]
-    (cli/install-addon-from-file abs-path))
+    (let [{:keys [error-messages label]} (cli/install-addon-from-file abs-path)]
+      (when-not (empty? error-messages)
+        (let [msg (message-list (format "warnings/errors while installing \"%s\"" label) error-messages)]
+          (alert :warning msg {:wait? false})))))
   nil)
 
 (defn exit-handler
