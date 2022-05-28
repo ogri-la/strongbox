@@ -2,7 +2,7 @@
   (:require
    [lasync.core :as lasync]
    [clojure.set]
-   [taoensso.timbre :as timbre :refer [warn spy]]
+   [taoensso.timbre :as timbre :refer [debug warn spy]]
    [flatland.ordered.map :refer [ordered-map]]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
@@ -208,7 +208,10 @@
   [job-id :joblib/job-id]
   (if (set? job-id)
     (fn [[queue-key _]]
-      (clojure.set/subset? job-id queue-key))
+      ;; note@2022-05: this case was 'fixed' by using `create-addon-job!` instead of `create-job!`
+      (when-not (set? queue-key)
+        (debug "expecting a set, got job-id" job-id "and queue key" queue-key))
+      (clojure.set/subset? job-id (set #{queue-key})))
     (fn [[queue-key _]]
       (= queue-key job-id))))
 
