@@ -279,11 +279,13 @@
                            :opt-un [::ignore?
                                     :addon/pinned-version]))
 
-(s/def :addon/nfo (s/or :ignored ::ignore-flag
-                        ;; a nfo file can be just a group-id
-                        :grouped :addon/-nfo-just-grouped
-                        :ok :addon/-nfo
-                        :mutual-depedency (s/coll-of :addon/-nfo :kind vector?)))
+(s/def :addon/-nfo-types (s/or :ignored ::ignore-flag
+                               ;; a nfo file can be just a group-id
+                               :grouped :addon/-nfo-just-grouped
+                               :ok :addon/-nfo))
+
+(s/def :addon/nfo (s/or :ok :addon/-nfo-types
+                        :mutual-dependency (s/coll-of :addon/-nfo-types :kind vector?)))
 
 ;; a nfo file can be just a group-id and a primary flag.
 (s/def :addon/-nfo-just-group (limit-keys :req-un [::group-id]

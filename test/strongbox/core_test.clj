@@ -1003,7 +1003,7 @@
                      :source "curseforge" :source-id 2
                      :download-url "https://path/to/remote/addon.zip" :game-track :retail
                      :-testing-zipfile (fixture-path "everyotheraddon--5-6-7.zip")}
-            expected ["addon \"everyotheraddon\" is overwriting \"everyaddon\""]]
+            expected ["\"everyotheraddon\" (5.6.7) replaced directory \"EveryAddon-BundledAddon/\" of addon \"everyaddon\" (0.1.2)"]]
         (helper/install-dir)
         (core/install-addon-guard addon-1)
         (core/load-all-installed-addons) ;; refresh our knowledge of what is installed

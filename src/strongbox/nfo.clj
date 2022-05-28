@@ -193,7 +193,23 @@
   [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, new-nfo-data :addon/nfo]
   (let [user-warning (fn [nfo-data-list]
                        (when-not (empty? nfo-data-list)
-                         (warn (format "addon \"%s\" is overwriting \"%s\"" (:name new-nfo-data) (:name (last nfo-data-list)))))
+                         ;; catalogue overwriting catalogue
+                         ;; '"Healbot Continued" (9.2.0.12) replaced dir 'HealBot/' of addon "Healbot Continued" (9.2.0.7)'
+
+                         ;; catalogue overwriting file install
+                         ;; '"Healbot Continued" (9.2.0.12) replaced dir 'HealBot/' of addon "healbot-continued-abcdef12345'
+
+                         ;; file install overwriting catalogue
+                         ;; '"healbot-continued-abcdef12345' replaced dir 'HealBot/' of addon "Healbot Continued" (9.2.0.12)'
+                         (let [target (last nfo-data-list) ;; todo: when stacked N high, won't this report incorrectly?
+                               nom #(or (:name %)
+                                        (:group-id %))
+                               version #(if-let [v (:installed-version %)]
+                                          (format " (%s)" v) "")
+                               msg (format "\"%s\"%s replaced directory \"%s\" of addon \"%s\"%s"
+                                           (nom new-nfo-data) (version new-nfo-data)
+                                           addon-dirname (nom target) (version target))]
+                           (warn msg)))
                        nfo-data-list)]
     (-> (read-nfo-file install-dir addon-dirname)
         (rm-nfo* (:group-id new-nfo-data))
