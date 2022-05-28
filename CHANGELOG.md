@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * addons are now installed and uninstalled in parallel.
     - this was previously done as a separate, sequential, step after downloading the addons in parallel to prevent addons with mutual dependencies potentially overwriting each other in a non-deterministic way.
+* 'version' column on installed addons tab now emboldens it's value when update available.
+    - both 'installed version' and 'available version' columns are also available if you prefer separate values.
+* 'updated' column on the search tab is now 'friendly' formatted
+    - consistent with the date columns on the installed addons tab.
 
 ### Fixed
 

@@ -307,10 +307,7 @@
                 {:-fx-opacity "1" ;; a disabled button already has a greying effect applied
                  :-fx-font-style "normal"}
 
-                ;; .installed-column, .available-column, .version-column
-
-
-                ".version-column"
+                [".version-column" ".installed-column" ".available-version-column"]
                 {:-fx-alignment "center-right"
                  :-fx-text-overrun "leading-ellipsis"}
 
@@ -429,6 +426,9 @@
 
                   " .hyperlink"
                   {:-fx-text-fill (colour :hyperlink-updateable)}
+
+                  " .version-column"
+                  {:-fx-font-weight "bold"}
 
                   ;; selected+updateable addons look *slightly* different
                   ":selected"
@@ -1244,8 +1244,8 @@
                         :cell-factory {:fx/cell-type :tree-table-cell
                                        :describe (fn [dt]
                                                    {:text (if-not (string? dt) "" (utils/format-dt dt))})}}
-         :installed-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]}
-         :available-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]}
+         :installed-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["installed-column"]}
+         :available-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["available-version-column"]}
          :combined-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]}
          :game-version {:min-width 70 :pref-width 70 :max-width 100}
          :uber-button {:min-width 80 :pref-width 80 :max-width 120 :style-class ["invisible-button-column"]
@@ -1895,7 +1895,12 @@
                                                                                                (async-handler #(cli/search-add-filter :tag tag))
                                                                                                {:tooltip (name tag)})))
                                                                                    (:tag-list row)))}})}}
-                     {:text "updated" :min-width 85 :max-width 85 :pref-width 85 :resizable false :cell-value-factory (comp #(utils/safe-subs % 10) :updated-date)}
+                     {:text "updated" :min-width 90 :pref-width 110 :max-width 120 :resizable false
+                      :cell-value-factory :updated-date
+                      :cell-factory {:fx/cell-type :table-cell
+                                     :describe (fn [dt]
+                                                 {:text (if-not (string? dt) "" (utils/format-dt dt))})}}
+
                      {:text "downloads" :min-width 120 :pref-width 120 :max-width 120 :resizable false
                       :cell-value-factory :download-count
                       :cell-factory {:fx/cell-type :table-cell
