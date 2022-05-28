@@ -224,7 +224,10 @@
   [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, addon ::sp/map-or-list-of-maps]
   (let [path (nfo-path install-dir addon-dirname)]
     (if-not (s/valid? :addon/nfo addon)
-      (error (format "new \"%s\" data is invalid and won't be written to file" nfo-filename))
+      ;; todo: this error message is not good
+      ;; perhaps: "new "HealBot_ExtraSkins/.strongbox.json" data is invalid and won't be written to disk. This is a program error, please report it."
+      (do (error (format "new \"%s\" data is invalid and won't be written to file" nfo-filename))
+          (debug (s/explain :addon/nfo addon)))
       (utils/dump-json-file path (prune addon)))))
 
 ;; this function could definitely do with a second pass, but not right now.

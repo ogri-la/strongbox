@@ -265,6 +265,8 @@
 
 ;; a nfo file can be just a group-id and a primary flag.
 (s/def :addon/-nfo-just-grouped (limit-keys :req-un [::group-id ::primary?]
+                                            :opt-un [::ignore?
+                                                     :addon/pinned-version]
                                             :only true))
 
 ;; nfo files contain extra per-addon data written to addon directories as .strongbox.json.
