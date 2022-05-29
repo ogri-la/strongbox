@@ -358,16 +358,16 @@
   a bit different from the other installation functions, this one returns a list of maps with the installation results."
   [addon-list :addon/summary-list]
   (let [queue-atm (core/get-state :job-queue)
-        job-fn (fn [addon]
-                 (let [error-messages
-                       (logging/buffered-log
-                        :warn
-                        (some-> addon
-                                core/expand-summary-wrapper
-                                core/install-addon-guard-affective))]
-                   {:label (:label addon)
-                    :error-messages error-messages}))]
-    (run! #(joblib/create-addon-job! queue-atm % job-fn) addon-list)
+        job (fn [addon]
+              (let [error-messages
+                    (logging/buffered-log
+                     :warn
+                     (some-> addon
+                             core/expand-summary-wrapper
+                             core/install-addon-guard-affective))]
+                {:label (:label addon)
+                 :error-messages error-messages}))]
+    (run! #(joblib/create-addon-job! queue-atm % job) addon-list)
     (joblib/run-jobs! (core/get-state :job-queue) core/num-concurrent-downloads)))
 
 (defn-spec update-selected nil?
