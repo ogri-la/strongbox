@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 * fixed handling for empty game track lists in the github csv catalogue.
+* fixed bug where the GUI would look for parallel jobs matching a complex ID when jobs with a simple ID were present.
 
 ### Removed
 
