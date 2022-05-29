@@ -325,9 +325,8 @@
                                              (swap! new-dirs into updated-dirs)
                                              (utils/with-lock current-locks locks-needed
                                                (core/install-addon-affective addon install-dir downloaded-file)
-                                               (core/refresh-addon addon))))
-                                  job-id (joblib/addon-job-id addon :download-addon)]
-                              (joblib/create-job! queue-atm job-fn job-id)))]
+                                               (core/refresh-addon addon))))]
+                              (joblib/create-addon-job! queue-atm addon job-fn)))]
     (run! add-download-job! updateable-addon-list)
     (joblib/run-jobs! queue-atm core/num-concurrent-downloads)
     ;; if any of the new directories introduced are not present in the :installed-addon-list, do a full refresh.
@@ -388,16 +387,15 @@
   [addon-list :addon/summary-list]
   (let [queue-atm (core/get-state :job-queue)
         job (fn [addon]
-              (fn []
-                (let [error-messages
-                      (logging/buffered-log
-                       :warn
-                       (some-> addon
-                               core/expand-summary-wrapper
-                               core/install-addon-guard-affective))]
-                  {:label (:label addon)
-                   :error-messages error-messages})))]
-    (run! (partial joblib/create-job! queue-atm) (mapv job addon-list))
+              (let [error-messages
+                    (logging/buffered-log
+                     :warn
+                     (some-> addon
+                             core/expand-summary-wrapper
+                             core/install-addon-guard-affective))]
+                {:label (:label addon)
+                 :error-messages error-messages}))]
+    (run! #(joblib/create-addon-job! queue-atm % job) addon-list)
     (joblib/run-jobs! (core/get-state :job-queue) core/num-concurrent-downloads)))
 
 (defn-spec update-selected nil?

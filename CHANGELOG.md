@@ -22,10 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * 'updated' column on the search tab is now 'friendly' formatted
     - consistent with the date columns on the installed addons tab.
 
-
 ### Fixed
 
 * fixed handling for empty game track lists in the github csv catalogue.
+* fixed bug where the GUI would look for parallel jobs matching a complex ID when jobs with a simple ID were present.
 * fixed placeholder text size in addon detail pane for addons with no mutual dependency data (like search results).
 * fixed button text in addon detail pane from "install" to "re-install" for releases matching currently installed version.
 
