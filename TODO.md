@@ -39,6 +39,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 
 ## todo bucket (no particular order)
+
+* tooltip on WoW column with patch name
+
 * github, updated dates are are using '+00:00' instead of 'Z'
 
 * add note against 'reinstall all' in README
