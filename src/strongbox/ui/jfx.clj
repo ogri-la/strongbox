@@ -2125,7 +2125,10 @@
   [{:keys [addon]}]
   (let [install-button (fn [release]
                          (component-instance
-                          (button "install" (async-handler #(cli/set-version addon release)))))
+                          (button (if (= (:version release) (:installed-version addon))
+                                    "re-install"
+                                    "install")
+                                  (async-handler #(cli/set-version addon release)))))
         column-list [{:text "" :style-class ["wide-button-column"] :min-width 120 :pref-width 120 :max-width 120 :resizable false :cell-value-factory install-button}
                      {:text "name" :cell-value-factory #(or (:release-label %) (:version %))}]
         row-list (or (:release-list addon) [])
