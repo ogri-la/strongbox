@@ -20,25 +20,27 @@ see CHANGELOG.md for a more formal list of changes by release
     - done
 * format date column in search tab
     - done
+* bug, addon detail, highlighted installed version shouldn't have an 'install' button
+    - it's already installed
+    - rename it 'reinstall' or similar
+    - done
+* bug, addon detail, mutual dependencies, 'no content in table' is teeny tiny
+    - done
 
 ## todo
+
+## todo bucket (no particular order)
 
 * zip, switch to apache commons compress for decompressing
     - https://commons.apache.org/proper/commons-compress/
     - .tar.gz and 7z support would be interesting
     - rar should just die already
     - this would fix a major showstopper in porting to windows
-
-* bug, addon detail, highlighted installed version shouldn't have an 'install' button
-    - it's already installed
-    - rename it 'reinstall' or similar
+    - 2022-05-29: returned to bucket, gazumped by installing addon from file.
 
 * bug, addon detail, highlighted installed version is causing rows to be highlighted in the raw data column?
-
-* bug, addon detail, mutual dependencies, 'no content in table' is teeny tiny
-
-
-## todo bucket (no particular order)
+    - looks like a javafx problem, no idea how to fix
+    - try reducing to smallest possible reproduction
 
 * tooltip on WoW column with patch name
 

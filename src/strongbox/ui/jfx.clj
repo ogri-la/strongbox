@@ -2203,6 +2203,9 @@
               :show-root false
               :column-resize-policy javafx.scene.control.TreeTableView/CONSTRAINED_RESIZE_POLICY
               :disable disabled?
+              :placeholder {:fx/type :text
+                            :style-class ["table-placeholder-text"]
+                            :text "(no mutual dependencies)"}
               :row-factory {:fx/cell-type :tree-table-row
                             :describe (fn [row]
                                         {:style-class ["table-row-cell" "tree-table-row-cell"]})}

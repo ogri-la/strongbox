@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* bumped JavaFX from 15.0.1 to 17.0.2
 * addons are now installed and uninstalled in parallel.
     - this was previously done as a separate, sequential, step after downloading the addons in parallel to prevent addons with mutual dependencies potentially overwriting each other in a non-deterministic way.
 * 'version' column on installed addons tab now emboldens it's value when update available.
@@ -21,9 +22,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * 'updated' column on the search tab is now 'friendly' formatted
     - consistent with the date columns on the installed addons tab.
 
+
 ### Fixed
 
 * fixed handling for empty game track lists in the github csv catalogue.
+* fixed placeholder text size in addon detail pane for addons with no mutual dependency data (like search results).
+* fixed button text in addon detail pane from "install" to "re-install" for releases matching currently installed version.
 
 ### Removed
 
