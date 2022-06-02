@@ -316,18 +316,16 @@
         install-dir (core/selected-addon-dir)
         current-locks (atom #{})
         new-dirs (atom #{})
-        add-download-job! (fn [addon]
-                            (let [job-fn (fn []
-                                           (let [downloaded-file (core/download-addon-guard-affective addon install-dir)
-                                                 existing-dirs (addon-locks addon)
-                                                 updated-dirs (zipfile-locks downloaded-file)
-                                                 locks-needed (clojure.set/union existing-dirs updated-dirs)]
-                                             (swap! new-dirs into updated-dirs)
-                                             (utils/with-lock current-locks locks-needed
-                                               (core/install-addon-affective addon install-dir downloaded-file)
-                                               (core/refresh-addon addon))))]
-                              (joblib/create-addon-job! queue-atm addon job-fn)))]
-    (run! add-download-job! updateable-addon-list)
+        job-fn (fn [addon]
+                 (let [downloaded-file (core/download-addon-guard-affective addon install-dir)
+                       existing-dirs (addon-locks addon)
+                       updated-dirs (zipfile-locks downloaded-file)
+                       locks-needed (clojure.set/union existing-dirs updated-dirs)]
+                   (swap! new-dirs into updated-dirs)
+                   (utils/with-lock current-locks locks-needed
+                     (core/install-addon-affective addon install-dir downloaded-file)
+                     (core/refresh-addon addon))))]
+    (run! #(joblib/create-addon-job! queue-atm % job-fn) updateable-addon-list)
     (joblib/run-jobs! queue-atm core/num-concurrent-downloads)
     ;; if any of the new directories introduced are not present in the :installed-addon-list, do a full refresh.
     (core/refresh-check @new-dirs)

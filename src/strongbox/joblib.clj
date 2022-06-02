@@ -208,10 +208,8 @@
   [job-id :joblib/job-id]
   (if (set? job-id)
     (fn [[queue-key _]]
-      ;; note@2022-05: this case was 'fixed' by using `create-addon-job!` instead of `create-job!`
-      (when-not (set? queue-key)
-        (debug "expecting a set, got job-id" job-id "and queue key" queue-key))
-      (clojure.set/subset? job-id (set #{queue-key})))
+      (when (set? queue-key)
+        (clojure.set/subset? job-id queue-key)))
     (fn [[queue-key _]]
       (= queue-key job-id))))
 
