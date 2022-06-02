@@ -315,16 +315,14 @@
   (let [queue-atm (core/get-state :job-queue)
         install-dir (core/selected-addon-dir)
         current-locks (atom #{})
-        add-download-job! (fn [addon]
-                            (let [job-fn (fn []
-                                           (let [downloaded-file (core/download-addon-guard-affective addon install-dir)
-                                                 locks-needed (clojure.set/union (addon-locks addon)
-                                                                                 (zipfile-locks downloaded-file))]
-                                             (utils/with-lock current-locks locks-needed
-                                               (core/install-addon-affective addon install-dir downloaded-file)
-                                               (core/refresh-addon addon))))]
-                              (joblib/create-addon-job! queue-atm addon job-fn)))]
-    (run! add-download-job! updateable-addon-list)
+        job-fn (fn [addon]
+                 (let [downloaded-file (core/download-addon-guard-affective addon install-dir)
+                       locks-needed (clojure.set/union (addon-locks addon)
+                                                       (zipfile-locks downloaded-file))]
+                   (utils/with-lock current-locks locks-needed
+                     (core/install-addon-affective addon install-dir downloaded-file)
+                     (core/refresh-addon addon))))]
+    (run! #(joblib/create-addon-job! queue-atm % job-fn) updateable-addon-list)
     (joblib/run-jobs! queue-atm core/num-concurrent-downloads)
     nil))
 
