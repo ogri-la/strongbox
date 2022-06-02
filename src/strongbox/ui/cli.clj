@@ -318,7 +318,7 @@
         new-dirs (atom #{})
         add-download-job! (fn [addon]
                             (let [job-fn (fn []
-                                           (let [downloaded-file (spy :warn (core/download-addon-guard-affective addon install-dir))
+                                           (let [downloaded-file (core/download-addon-guard-affective addon install-dir)
                                                  existing-dirs (addon-locks addon)
                                                  updated-dirs (zipfile-locks downloaded-file)
                                                  locks-needed (clojure.set/union existing-dirs updated-dirs)]
@@ -349,26 +349,27 @@
   []
   (re-install-or-update-selected (get-state :installed-addon-list)))
 
-(defn unique-group-id-from-zip-file
-  [downloaded-file]
+(defn-spec unique-group-id-from-zip-file string?
+  "generates a reasonably unique `group-id` from the given `downloaded-file` filename."
+  [downloaded-file ::sp/file]
   (let [uniquish-id (subs (utils/unique-id) 0 8)]
     (-> downloaded-file ;; /foo/bar/baz.zip
         fs/base-name ;; baz.zip
-        fs/split-ext ;; baz, .zip
+        fs/split-ext ;; [baz, .zip]
         first ;; baz
-        (clojure.string/split #"--") ;; baz,
+        (clojure.string/split #"--") ;; [baz,]
         first ;; baz
         (str "-" uniquish-id)))) ;; baz-467cec22
 
-;; note: this task should block the UI
 (defn-spec install-addon-from-file map?
+  "install an addon from a zip file."
   [downloaded-file ::sp/extant-archive-file]
   (let [addon {:group-id (unique-group-id-from-zip-file downloaded-file)}
         error-messages
         (logging/buffered-log
          :warn
          (addon/install-addon addon (core/selected-addon-dir) downloaded-file))]
-    (core/refresh) ;; todo: refresh-addon
+    (core/refresh)
     {:label (fs/base-name downloaded-file)
      :error-messages error-messages}))
 

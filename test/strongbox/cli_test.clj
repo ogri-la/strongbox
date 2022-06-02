@@ -987,5 +987,16 @@
             (cli/install-update-these-serially [addon])
             (core/refresh)
 
-            ;;(is (= expected (core/get-state :installed-addon-list)))
             (is (= expected-nfo (nfo/read-nfo-file install-dir "EveryAddon")))))))))
+
+(deftest unique-group-id-from-zip-file
+  (let [cases [["/foo/bar/baz.zip" "baz-aaaaaaaa"]
+               ["/foo/bar/baz--bup.zip" "baz-aaaaaaaa"]
+               ["baz.zip" "baz-aaaaaaaa"]
+               ["baz--bup.zip" "baz-aaaaaaaa"]
+
+               ["/home/torkus/empty/healbot-continued--9-2-0-12.zip", "healbot-continued-aaaaaaaa"]]]
+
+    (with-redefs [utils/unique-id (constantly "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")]
+      (doseq [[given expected] cases]
+        (is (= expected (cli/unique-group-id-from-zip-file given)))))))

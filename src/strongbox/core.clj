@@ -1344,10 +1344,11 @@
 
 (defn-spec refresh-addon nil?
   "refreshes state of an individual addon.
-  note! an addon may change it's set of directories between updates. this means the :dirname of the given `addon` may not represent the new :dirname, or that it's list of :grouped-addons are now stale.
-  We could reload the addons using the set of old and new directories acquired, however that can lead to 'orphaned' addons where we unintentionally ensure old addons are propagated into new state using old data, despite the addon not existing on disk.
-  We could do a lot more here but this operation already depends on re-reading the state of *all* addons from the filesystem for just a single addon update.
-  The best thing to do is a full core/refresh after many individual core/refresh-addon."
+  note! an addon may change it's set of directories between updates. This means the `:dirname` of the given `addon` may not represent the new `:dirname`,
+  or that it's list of `:grouped-addons` are now stale. We could reload the addons using the set of old and new directories acquired, however that can lead
+  to 'orphaned' addons where we unintentionally ensure old addons are propagated into new state using old data, despite the addon not existing on disk.
+  We could do more here but this operation already depends on re-reading the state of *all* addons from the filesystem for just a single addon update.
+  See `refresh-check`."
   [addon :addon/installed]
   (->> addon
        :dirname

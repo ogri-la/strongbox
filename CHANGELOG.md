@@ -15,8 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * bumped JavaFX from 15.0.1 to 17.0.2
-* addons are now installed and uninstalled in parallel.
-    - this was previously done as a separate, sequential, step after downloading the addons in parallel to prevent addons with mutual dependencies potentially overwriting each other in a non-deterministic way.
+* addons are now installed and uninstalled in parallel. 
+    - this was previously done as a separate and sequential step after downloading the addons in parallel to prevent addons with mutual dependencies potentially overwriting each other in a non-deterministic way.
+* the warning message 'addon "Foo" is overwriting "Bar"' when creating a mutual dependency has been changed to the more helpful '"Foo" (1.2.3) replaced directory "Bar/" of addon "Baz" (3.4.5)'
+    - or similar. It varies depending on availability of version numbers, labels, etc.
 * 'version' column on installed addons tab now emboldens it's value when update available.
     - both 'installed version' and 'available version' columns are also available if you prefer separate values.
 * 'updated' column on the search tab is now 'friendly' formatted

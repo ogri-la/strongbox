@@ -14,6 +14,7 @@
 ;; 刘鑫
 ;; - https://groups.google.com/g/clojure/c/fti0eJdPQJ8
 (defmacro limit-keys
+  "ensures *only* the specified set of keys constitute a valid spec."
   [& {:keys [req req-un opt opt-un only] :as args}]
   (if only
     `(s/merge (s/keys ~@(apply concat (vec args)))
@@ -281,9 +282,8 @@
                            :opt-un [::ignore?
                                     :addon/pinned-version]))
 
-(s/def :addon/-nfo-types (s/or :ignored ::ignore-flag
-                               ;; a nfo file can be just a group-id
-                               :grouped :addon/-nfo-just-grouped
+(s/def :addon/-nfo-types (s/or :ignored ::ignore-flag ;; a nfo file can be just an ignore flag
+                               :grouped :addon/-nfo-just-grouped ;; a nfo file can be just a group-id
                                :ok :addon/-nfo))
 
 (s/def :addon/nfo (s/or :ok :addon/-nfo-types

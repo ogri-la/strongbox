@@ -26,6 +26,8 @@ see CHANGELOG.md for a more formal list of changes by release
     - done
 * bug, addon detail, mutual dependencies, 'no content in table' is teeny tiny
     - done
+* add note against 'reinstall all' in README
+    - done
 
 ## todo
 
@@ -46,15 +48,12 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * github, updated dates are are using '+00:00' instead of 'Z'
 
-* add note against 'reinstall all' in README
-
 * BigWigs_Classic from Github cannot be installed when 'retail strict' is set
     - it can be installed from wowi fine
 * create a parser for that shit markup that is preventing reconcilation
 * manually select the primary addon in a group of addons to prevent synthetic titles
 * finer grained control over grouping of addons
 * gui, better copying from the interface, especially the log box
-* highlighting changed values in the 'version' column when an addon has an update available
 
 * prompt user when installing an addon will create mutual dependencies
     - for example:
@@ -64,6 +63,7 @@ see CHANGELOG.md for a more formal list of changes by release
         4. addon *overwrites* existing version of addon, creating a messy mutual dependency between old and new
     - when we could have
         3. user installs addon 'NewFoo'
+        4. if it completely overwrites 'Foo', just uninstall it, don't prompt.
         4. mutual dependency check - "'NewFoo' overwrites 'Foo', do you want to uninstall 'Foo'?"
         5. user clicks no, mutual dependency is created
         5. user clicks yes, 'Foo' is uninstalled, 'NewFoo' has no mutual dependencies.
