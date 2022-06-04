@@ -6,29 +6,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* github, added 'scrape-github-catalogue' to list of cli actions
-* github, catalogue, fixed handling for empty game track list in csv catalogue
-* add a 'browse addons' link to the file dir
-    - done
-* acquire locks on affected addons during installation
-    - this will let us uninstall and install addons in parallel
-    - done
-* user catalogue, refresh happens in parallel
-    - write the user-catalogue once, not each time or else we'll get Weirdness
-        - a lock is now acquired when writing the user catalogue
-* highlight 'version' value when update available
-    - done
-* format date column in search tab
-    - done
-* bug, addon detail, highlighted installed version shouldn't have an 'install' button
-    - it's already installed
-    - rename it 'reinstall' or similar
-    - done
-* bug, addon detail, mutual dependencies, 'no content in table' is teeny tiny
-    - done
-* add note against 'reinstall all' in README
-    - done
-
 ## todo
 
 ## todo bucket (no particular order)
@@ -48,7 +25,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * github, updated dates are are using '+00:00' instead of 'Z'
 
-* BigWigs_Classic from Github cannot be installed when 'retail strict' is set
+* bug, BigWigs_Classic from Github cannot be installed when 'retail strict' is set
     - it can be installed from wowi fine
 * create a parser for that shit markup that is preventing reconcilation
 * manually select the primary addon in a group of addons to prevent synthetic titles
