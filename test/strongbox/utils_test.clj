@@ -538,3 +538,4 @@
                     "releasing locks: #{:fn2 :foo}"]]
       (is (= expected log-messages))
       (is (empty? @current-locks)))))
+

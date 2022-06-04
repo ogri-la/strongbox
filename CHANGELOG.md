@@ -11,11 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * added 'scrape-github-catalogue' to the list of command line actions.
 * added 'Browse addon directory' to the 'File' menu that opens your configured file browser to the selected addon directory.
     - also accessible with the `ctrl+b` shortcut
+* added ability to install addons from zip files, bypassing catalogue matching.
+    - you get grouping, ignoring and pinning but unless the addon matches against the catalogue, you won't get updates.
+    - see: `File -> Install addon from file`
 
 ### Changed
 
+* bumped JavaFX from 15.0.1 to 17.0.2
 * addons are now installed and uninstalled in parallel.
-    - this was previously done as a separate, sequential, step after downloading the addons in parallel to prevent addons with mutual dependencies potentially overwriting each other in a non-deterministic way.
+    - previously they were just downloaded in parallel then installed sequentially to prevent addons with mutual dependencies potentially overwriting each other in a non-deterministic way.
+* the warning message 'addon "Foo" is overwriting "Bar"' when creating a mutual dependency has been changed to the more helpful '"Foo" (1.2.3) replaced directory "Bar/" of addon "Baz" (3.4.5)'
+    - or similar. It varies depending on availability of version numbers, labels, etc.
 * 'version' column on installed addons tab now emboldens it's value when update available.
     - both 'installed version' and 'available version' columns are also available if you prefer separate values.
 * 'updated' column on the search tab is now 'friendly' formatted
@@ -25,6 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * fixed handling for empty game track lists in the github csv catalogue.
 * fixed bug where the GUI would look for parallel jobs matching a complex ID when jobs with a simple ID were present.
+* fixed placeholder text size in addon detail pane for addons with no mutual dependency data (like search results).
+* fixed button text in addon detail pane from "install" to "re-install" for releases matching currently installed version.
 
 ### Removed
 

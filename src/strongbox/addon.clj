@@ -247,17 +247,17 @@
 (defn-spec install-addon (s/or :ok (s/coll-of ::sp/extant-file), :error ::sp/empty-coll)
   "installs an addon given an addon description, a place to install the addon and the addon zip file itself.
   handles suspicious looking bundles, conflicts with other addons, uninstalling previous addon version and updating nfo files."
-  [addon :addon/installable, install-dir ::sp/writeable-dir, downloaded-file ::sp/archive-file]
+  [addon :addon/nfo-input-minimum, install-dir ::sp/writeable-dir, downloaded-file ::sp/archive-file]
   (let [zipfile-entries (zip/zipfile-normal-entries downloaded-file)
         toplevel-dirs (zip/top-level-directories zipfile-entries)
         primary-dirname (determine-primary-subdir toplevel-dirs)
-
+        nom (or (:label addon) (:name addon) (fs/base-name downloaded-file))
         ;; not a show stopper, but if there are bundled addons and they don't share a common prefix, let the user know
         suspicious-bundle-check (fn []
                                   (let [sus-addons (zip/inconsistently-prefixed zipfile-entries)
                                         msg "%s will also install these addons: %s"]
                                     (when sus-addons
-                                      (warn (format msg (:label addon) (clojure.string/join ", " sus-addons))))))
+                                      (warn (format msg nom (clojure.string/join ", " sus-addons))))))
 
         unzip-addon (fn []
                       (zip/unzip-file downloaded-file install-dir))
@@ -281,7 +281,10 @@
     (when (s/valid? :addon/toc addon)
       (remove-addon install-dir addon))
 
-    (info (format "installing \"%s\" version \"%s\"" (:label addon) (:version addon)))
+    (if-let [v (:version addon)]
+      (info (format "installing \"%s\" version \"%s\"" nom v))
+      (info (format "installing \"%s\"" nom)))
+
     (unzip-addon)
     (update-nfo-files)))
 

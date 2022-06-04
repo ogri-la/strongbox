@@ -757,7 +757,7 @@
                              dbc-source
                              (not (= inst-source dbc-source)))]
     ;; merges left->right. catalogue-addon overwrites installed-addon, ':matched' overwrites catalogue-addon, etc
-    (logging/addon-log installed-addon :info (format "found in catalogue with source \"%s\" and id \"%s\"" (:source installed-addon) (:source-id installed-addon)))
+    (logging/addon-log installed-addon :info (format "found in catalogue with source \"%s\" and id \"%s\"" (:source db-catalogue-addon) (:source-id db-catalogue-addon)))
     (merge installed-addon
            db-catalogue-addon
            {:matched? true}
@@ -1343,7 +1343,12 @@
 ;;
 
 (defn-spec refresh-addon nil?
-  "refreshes state of individual addon"
+  "refreshes state of an individual addon.
+  note! an addon may change it's set of directories between updates. This means the `:dirname` of the given `addon` may not represent the new `:dirname`,
+  or that it's list of `:grouped-addons` are now stale. We could reload the addons using the set of old and new directories acquired, however that can lead
+  to 'orphaned' addons where we unintentionally ensure old addons are propagated into new state using old data, despite the addon not existing on disk.
+  We could do more here but this operation already depends on re-reading the state of *all* addons from the filesystem for just a single addon update.
+  See `refresh-check`."
   [addon :addon/installed]
   (->> addon
        :dirname
@@ -1382,6 +1387,21 @@
   (save-settings!)
 
   nil)
+
+(defn refresh-check
+  "given a set of new directories, presumably introduced during an update, checks to see if new directories
+  are present at all in the current set of known directories and does a `refresh` if not.
+  this should solve the problem with 'stuck' addons, where the addon changed it's primary directory name during update."
+  [new-dirs]
+  (let [existing-dirs (->> (get-state :installed-addon-list)
+                           (mapv addon/flatten-addon)
+                           flatten
+                           (mapv :dirname)
+                           set)
+        diff (clojure.set/difference new-dirs existing-dirs)]
+    (when-not (empty? diff)
+      (debug "diff found between new and old, full refresh required:" diff)
+      (refresh))))
 
 ;; todo: move to ui.cli
 (defn-spec remove-addon nil?

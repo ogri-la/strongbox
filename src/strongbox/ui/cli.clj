@@ -315,15 +315,20 @@
   (let [queue-atm (core/get-state :job-queue)
         install-dir (core/selected-addon-dir)
         current-locks (atom #{})
+        new-dirs (atom #{})
         job-fn (fn [addon]
                  (let [downloaded-file (core/download-addon-guard-affective addon install-dir)
-                       locks-needed (clojure.set/union (addon-locks addon)
-                                                       (zipfile-locks downloaded-file))]
+                       existing-dirs (addon-locks addon)
+                       updated-dirs (zipfile-locks downloaded-file)
+                       locks-needed (clojure.set/union existing-dirs updated-dirs)]
+                   (swap! new-dirs into updated-dirs)
                    (utils/with-lock current-locks locks-needed
                      (core/install-addon-affective addon install-dir downloaded-file)
                      (core/refresh-addon addon))))]
     (run! #(joblib/create-addon-job! queue-atm % job-fn) updateable-addon-list)
     (joblib/run-jobs! queue-atm core/num-concurrent-downloads)
+    ;; if any of the new directories introduced are not present in the :installed-addon-list, do a full refresh.
+    (core/refresh-check @new-dirs)
     nil))
 
 (defn-spec re-install-or-update-selected nil?
@@ -341,6 +346,30 @@
   "re-installs (if possible) or updates all installed addons"
   []
   (re-install-or-update-selected (get-state :installed-addon-list)))
+
+(defn-spec unique-group-id-from-zip-file string?
+  "generates a reasonably unique `group-id` from the given `downloaded-file` filename."
+  [downloaded-file ::sp/file]
+  (let [uniquish-id (subs (utils/unique-id) 0 8)]
+    (-> downloaded-file ;; /foo/bar/baz.zip
+        fs/base-name ;; baz.zip
+        fs/split-ext ;; [baz, .zip]
+        first ;; baz
+        (clojure.string/split #"--") ;; [baz,]
+        first ;; baz
+        (str "-" uniquish-id)))) ;; baz-467cec22
+
+(defn-spec install-addon-from-file map?
+  "install an addon from a zip file."
+  [downloaded-file ::sp/extant-archive-file]
+  (let [addon {:group-id (unique-group-id-from-zip-file downloaded-file)}
+        error-messages
+        (logging/buffered-log
+         :warn
+         (addon/install-addon addon (core/selected-addon-dir) downloaded-file))]
+    (core/refresh)
+    {:label (fs/base-name downloaded-file)
+     :error-messages error-messages}))
 
 (defn-spec install-addon nil?
   "install an addon from the catalogue. works on expanded addons as well."

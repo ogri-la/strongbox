@@ -57,6 +57,7 @@ First time usage:
 
 1. Select *File -> New addon directory* and select your "Addons" directory (`/path/to/WoW/_retail_/Interface/Addons`)
 2. Select *Addons -> Re-install all* to re-install all **matching** addons
+    - **warning**! this may *downgrade* the version from what is _installed_ to what is _available_. If unsure, re-install addons individually using the context menu.
 
 Afterwards, use the `Update all` button to update all addons with new versions available.
 
