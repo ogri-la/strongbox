@@ -71,7 +71,7 @@
         match))))
 
 ;; todo: flesh out the 'match' and match-on-list specs.
-(defn-spec -db-match-installed-addons-with-catalogue (s/coll-of (s/or :match map? :no-match :addon/toc))
+(defn-spec -db-match-installed-addon-list-with-catalogue (s/coll-of (s/or :match map? :no-match :addon/toc))
   "for each installed addon, search the catalogue across multiple joins until a match is found.
   addons with no match return themselves"
   [db :addon/summary-list, installed-addon-list :addon/installed-list]

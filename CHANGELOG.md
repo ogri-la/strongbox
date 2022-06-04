@@ -4,6 +4,37 @@ All notable changes to this project will be documented in this file. This change
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 5.2.0 - 2022-06-04
+
+### Added
+
+* added 'scrape-github-catalogue' to the list of command line actions.
+* added 'Browse addon directory' to the 'File' menu that opens your configured file browser to the selected addon directory.
+    - also accessible with the `ctrl+b` shortcut.
+* added ability to install addons from zip files, bypassing catalogue matching.
+    - you get grouping, ignoring and pinning but unless the addon matches against the catalogue, you won't get updates.
+    - see: `File -> Install addon from file`
+
+### Changed
+
+* bumped JavaFX from 15.0.1 to 17.0.2
+* addons are now installed and uninstalled in parallel.
+    - previously they were just downloaded in parallel then installed sequentially to prevent mutual dependencies potentially overwriting each other in a non-deterministic way.
+* the warning message 'addon "Foo" is overwriting "Bar"' when creating a mutual dependency has been changed to the more helpful '"Foo" (1.2.3) replaced directory "Bar/" of addon "Baz" (3.4.5)'.
+    - or similar. It varies depending on availability of version numbers, labels, etc.
+* 'version' column on installed addons tab now emboldens it's value when update available.
+    - both 'installed version' and 'available version' columns are also available if you prefer separate values.
+    - (possibly not working on mac)
+* 'updated' column on the search tab is now 'friendly' formatted using a relative time label.
+    - consistent with the date columns on the installed addons tab.
+
+### Fixed
+
+* fixed handling for empty game track lists in the github csv catalogue.
+* fixed bug where the GUI would look for parallel jobs matching a complex ID when jobs with a simple ID were present.
+* fixed placeholder text size in addon detail pane for addons with no mutual dependency data (like search results).
+* fixed button text in addon detail pane from "install" to "re-install" for releases matching currently installed version.
+
 ## 5.1.0 - 2022-03-01
 
 ### Added

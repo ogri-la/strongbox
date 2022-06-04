@@ -1,8 +1,9 @@
 (ns strongbox.utils-test
   (:require
-   ;;[taoensso.timbre :refer [debug info warn error spy]]
+   [taoensso.timbre :refer [debug]] ;; info warn error spy]]
    [clojure.test :refer [deftest testing is use-fixtures]]
    [strongbox
+    [logging :as logging]
     [utils :as utils :refer [join]]
     [constants :as constants]]
    [me.raynes.fs :as fs]))
@@ -482,3 +483,59 @@
 
     (doseq [[given expected] cases]
       (is (= expected (utils/find-depth given 0))))))
+
+(deftest with-lock
+  (testing "lock is acquired, body is executed, lock is released"
+    (let [current-locks (atom #{})
+          locks-needed #{:foo}
+          log-messages (logging/buffered-log
+                        :debug
+                        (utils/with-lock current-locks locks-needed
+                          (println "foo!")))
+          expected ["current locks: #{}"
+                    "acquiring locks: #{:foo}"
+                    "locks acquired: #{:foo}"
+                    "releasing locks: #{:foo}"]]
+      (is (= expected log-messages))
+      (is (empty? @current-locks)))))
+
+(deftest with-lock--contention
+  (testing "two forms to execute that share a lock will see one executed first, then the second."
+    (let [current-locks (atom #{})
+
+          fn1 #(future
+                 (utils/with-lock current-locks #{:foo :fn1}
+                   ;; sleep longer than the wait-retry period (10ms) forcing fn2 to retry execution
+                   (Thread/sleep 10)
+                   (debug "--fn1 executed--")))
+
+          fn2 #(future
+                 (utils/with-lock current-locks #{:foo :fn2}
+                   (debug "--fn2 executed--")))
+
+          log-messages (logging/buffered-log
+                        :debug
+                        (let [fn1-ref (fn1)
+                              ;; ensure fn1 is always executed first. it will always finish last.
+                              _ (Thread/sleep 7)
+                              fn2-ref (fn2)]
+                          @fn1-ref
+                          @fn2-ref))
+
+          expected ["current locks: #{}"
+                    "acquiring locks: #{:fn1 :foo}"
+                    "locks acquired: #{:fn1 :foo}"
+                    "current locks: #{:fn1 :foo}"
+                    "acquiring locks: #{:fn2 :foo}"
+                    "blocked!"
+                    "--fn1 executed--"
+                    "releasing locks: #{:fn1 :foo}"
+                    "recurring in 10 ms, have waited 0 ms"
+                    "current locks: #{}"
+                    "acquiring locks: #{:fn2 :foo}"
+                    "locks acquired: #{:fn2 :foo}"
+                    "--fn2 executed--"
+                    "releasing locks: #{:fn2 :foo}"]]
+      (is (= expected log-messages))
+      (is (empty? @current-locks)))))
+

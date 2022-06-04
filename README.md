@@ -34,14 +34,14 @@ Arch Linux users can install `strongbox` from the [AUR](https://aur.archlinux.or
 
 For other Linux users:
 
-1. download: [./releases/strongbox](https://github.com/ogri-la/strongbox/releases/download/5.1.0/strongbox)
+1. download: [./releases/strongbox](https://github.com/ogri-la/strongbox/releases/download/5.2.0/strongbox)
 2. make executable: `chmod +x strongbox`
 3. run: `./strongbox`
 
 If you're on macOS or having a problem with the binary or just prefer Java `.jar` files (requires Java 11+):
 
-1. download: [./releases/strongbox-5.1.0-standalone.jar](https://github.com/ogri-la/strongbox/releases/download/5.1.0/strongbox-5.1.0-standalone.jar)
-2. run: `java -jar strongbox-5.1.0-standalone.jar`
+1. download: [./releases/strongbox-5.2.0-standalone.jar](https://github.com/ogri-la/strongbox/releases/download/5.2.0/strongbox-5.2.0-standalone.jar)
+2. run: `java -jar strongbox-5.2.0-standalone.jar`
 
 ## Usage
 
@@ -57,6 +57,7 @@ First time usage:
 
 1. Select *File -> New addon directory* and select your "Addons" directory (`/path/to/WoW/_retail_/Interface/Addons`)
 2. Select *Addons -> Re-install all* to re-install all **matching** addons
+    - **warning**! this may *downgrade* the version from what is _installed_ to what is _available_. If unsure, re-install addons individually using the context menu.
 
 Afterwards, use the `Update all` button to update all addons with new versions available.
 

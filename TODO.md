@@ -6,51 +6,94 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* ux, star or 'like' addons in the catalogue
-    - I think I'll hook these off of the user catalogue.
-        - liking a catalogue addon adds it to the user catalogue without installing it
-    - add a column to the search results
+* github, added 'scrape-github-catalogue' to list of cli actions
+* github, catalogue, fixed handling for empty game track list in csv catalogue
+* add a 'browse addons' link to the file dir
     - done
-
-* search, filter by addon hosts
+* acquire locks on affected addons during installation
+    - this will let us uninstall and install addons in parallel
     - done
-
-* tags, make clickable in search results
-    - adds a filter that can be removed
-    - add clickable tags to addon detail page
+* user catalogue, refresh happens in parallel
+    - write the user-catalogue once, not each time or else we'll get Weirdness
+        - a lock is now acquired when writing the user catalogue
+* highlight 'version' value when update available
     - done
-
-* installed, clicking an addon's tags does a search
+* format date column in search tab
     - done
-
-* search, bug, 'install selected' shouldn't do anything if nothing is selectedor
+* bug, addon detail, highlighted installed version shouldn't have an 'install' button
+    - it's already installed
+    - rename it 'reinstall' or similar
     - done
-
-* add a 'starred' filter to limit the search results to just those that are starred
+* bug, addon detail, mutual dependencies, 'no content in table' is teeny tiny
     - done
-
-* addon detail, mutual dependencies pane
-    - for example, I would like to see what is happening when:
-        - adibags anima & conduits is overwritten by adibags anima filter
-        - adibags-shadowlands (github+wowinterface)
-    - done 
-
-* addon detail, 'releases' widget
-    - installed release should be highlighted
-    - done
-
-* 'update all' should be a no-op if nothing has updates available
-    - don't disable the button, just don't do anything
-    - done
-
-* change split button 'outdent' to 'indent'
-    - and if split, keep it 'pressed in'
+* add note against 'reinstall all' in README
     - done
 
 ## todo
 
 ## todo bucket (no particular order)
 
+* zip, switch to apache commons compress for decompressing
+    - https://commons.apache.org/proper/commons-compress/
+    - .tar.gz and 7z support would be interesting
+    - rar should just die already
+    - this would fix a major showstopper in porting to windows
+    - 2022-05-29: returned to bucket, gazumped by installing addon from file.
+
+* bug, addon detail, highlighted installed version is causing rows to be highlighted in the raw data column?
+    - looks like a javafx problem, no idea how to fix
+    - try reducing to smallest possible reproduction
+
+* tooltip on WoW column with patch name
+
+* github, updated dates are are using '+00:00' instead of 'Z'
+
+* BigWigs_Classic from Github cannot be installed when 'retail strict' is set
+    - it can be installed from wowi fine
+* create a parser for that shit markup that is preventing reconcilation
+* manually select the primary addon in a group of addons to prevent synthetic titles
+* finer grained control over grouping of addons
+* gui, better copying from the interface, especially the log box
+
+* prompt user when installing an addon will create mutual dependencies
+    - for example:
+        1. user selects 'find similar' to replace a curseforge addon
+        2. user finds a wowi hosted version
+        3. user installs addon
+        4. addon *overwrites* existing version of addon, creating a messy mutual dependency between old and new
+    - when we could have
+        3. user installs addon 'NewFoo'
+        4. if it completely overwrites 'Foo', just uninstall it, don't prompt.
+        4. mutual dependency check - "'NewFoo' overwrites 'Foo', do you want to uninstall 'Foo'?"
+        5. user clicks no, mutual dependency is created
+        5. user clicks yes, 'Foo' is uninstalled, 'NewFoo' has no mutual dependencies.
+
+* ctrl-f5 should re-load addons from the addon dir as well
+    - currently it just wipes out the http cache
+
+* trade skill master string-converter changed directory names between 2.0.7 and 2.1.0
+    - see also Combuctor 9.1.3 vs Combuctor 8.1.1 with 'BagBrother' in old addons
+        - BagBrother was removed but also got 
+            00:35:37.982 [info] [BagBrother] downloading 'Combuctor' version '8.1.1'
+            00:35:38.017 [info] [BagBrother] removing "Combuctor" version "9.1.3"
+            00:35:38.017 [error] [BagBrother] addon not removed, path is not a directory: /home/torkus/old-addons/BagBrother
+            00:35:38.021 [info] [BagBrother] installing "Combuctor" version "8.1.1"
+            00:35:38.042 [warn] [BagBrother] failed to find any .toc files: /home/torkus/old-addons/Sound
+    - this can be replicated by:
+        install combuctor 9.1.3
+        find 'combuctor' and install from wowi (8.1.1)
+        get weird orphaned BagBrother addon
+
+* clean up this confusion between 'install-dir' and 'addon-dir'
+    - install-dir is where addons are installed
+    - addon-dir is either where addons are installed or a specific addon's directory
+        - i.e., ambiguous
+
+* catalogue, descriptions for wowinterface addons
+* catalogue, download counts for github addons
+* wowinterface, multiple game tracks
+    - investigate just what is being downloaded when a classic version of a wowi addon is downloaded
+    - see 'LagBar'
 * search, add ability to browse catalogue page by page
     - returned to bucket 2022-03-02
 
@@ -70,21 +113,13 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ###
 
-* wowinterface, multiple game tracks
-    - investigate just what is being downloaded when a classic version of a wowi addon is downloaded
-    - see 'LagBar'
+
 * investigate better popularity metric than 'downloads'
     - if we make an effort to scrape everyday, we can generate this popularity graph ourselves
 * wowinterface, revisit the pages that are being scraped, make sure we're not missing any
 * github, questie is kinda fubar
-* catalogue, descriptions for wowinterface addons
-* catalogue, download counts for github addons
 
 * github, preference to sync stars with github repo, if authenticated
-
-* user catalogue, refresh happens in parallel
-    - write the user-catalogue once, not each time or else we'll get Weirdness
-        - a lock is now acquired when writing the user catalogue
 
 * github, bug, multi-toc addons are getting a warning when `strict?` is true and the game track is changed
     - https://github.com/LenweSaralonde/MusicianList/releases
@@ -248,9 +283,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * deleting an addon should also remove any of it's zip files
     - this sounds like an opt-in preference
 
-* acquire locks on affected addons during installation
-    - this will let us uninstall and install addons in parallel
-
 * share a pool of connections between jobs
     - https://github.com/dakrone/clj-http#user-content-persistent-connections
     - N connections serving M threads
@@ -283,16 +315,8 @@ see CHANGELOG.md for a more formal list of changes by release
 * nfo, spend some time futzing with nfo files on disk and how they can break the UI
     - I've managed to get some weird error messages by changing 'source' to an int, to a catalogue that doesn't exist, etc
 
-* zip, switch to apache commons compress for decompressing
-    - https://commons.apache.org/proper/commons-compress/
-    - .tar.gz and 7z support would be interesting
-    - rar should just die already
-    - this would fix a major showstopper in porting to windows
-
 * test, can gui-diff and main/test be pushed back into the testing namespace and elided from release somehow?
 
-* create a parser for that shit markup that is preventing reconcilation
-    - see aliases
 
 * add checksum checks after downloading
     - curseforge have an md5 that can be used

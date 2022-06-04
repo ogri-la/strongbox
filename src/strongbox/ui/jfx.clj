@@ -307,10 +307,7 @@
                 {:-fx-opacity "1" ;; a disabled button already has a greying effect applied
                  :-fx-font-style "normal"}
 
-                ;; .installed-column, .available-column, .version-column
-
-
-                ".version-column"
+                [".version-column" ".installed-column" ".available-version-column"]
                 {:-fx-alignment "center-right"
                  :-fx-text-overrun "leading-ellipsis"}
 
@@ -429,6 +426,9 @@
 
                   " .hyperlink"
                   {:-fx-text-fill (colour :hyperlink-updateable)}
+
+                  " .version-column"
+                  {:-fx-font-weight "bold"}
 
                   ;; selected+updateable addons look *slightly* different
                   ":selected"
@@ -757,17 +757,17 @@
 
 (defn file-chooser
   "prompt user to select a file"
-  [event & [opt-map]]
+  [& [opt-map]]
   (let [opt-map (or opt-map {})
         default-open-type :open
         open-type (get opt-map :type default-open-type)
-        ;; valid for a menu-item
-        ;;window (-> event .getTarget .getParentPopup .getOwnerWindow .getScene .getWindow)
         window (get-window)
         chooser (doto (FileChooser.)
                   (.setTitle "Open File"))]
     (when-let [ext-filters (:filters opt-map)]
       (-> chooser .getExtensionFilters (.addAll (mapv extension-filter ext-filters))))
+    (when-let [initial-dir (:initial-dir opt-map)]
+      (.setInitialDirectory chooser (java.io.File. initial-dir)))
     (when-let [^java.io.File
                file-obj @(fx/on-fx-thread
                           (case open-type
@@ -940,7 +940,7 @@
     (async f args)))
 
 (defn-spec async-handler fn?
-  "same as `async-handler` but calls `f` and ignores `args`.
+  "same as `async-event-handler` but just calls `f` and ignores any args.
   useful for calling functions asynchronously that don't accept an `event` object."
   [f fn?]
   (fn [& _]
@@ -964,6 +964,7 @@
   "accepts any args, does nothing, returns nil.
   good for placeholder event handlers."
   (constantly nil))
+
 (def do-nothing donothing)
 
 (defn wow-dir-picker
@@ -974,6 +975,17 @@
     (when (fs/directory? dir)
       ;; unlike swing, it doesn't appear possible to select a non-directory with javafx (good)
       (cli/set-addon-dir! dir))))
+
+(defn zip-file-picker
+  "file chooser dialog for .zip files, opened to current addon directory."
+  []
+  (when-let [abs-path (file-chooser {:filters [{:description "ZIP files" :extensions ["*.zip"]}]
+                                     :initial-dir (core/selected-addon-dir)})]
+    (let [{:keys [error-messages label]} (cli/install-addon-from-file abs-path)]
+      (when-not (empty? error-messages)
+        (let [msg (message-list (format "warnings/errors while installing \"%s\"" label) error-messages)]
+          (alert :warning msg {:wait? false})))))
+  nil)
 
 (defn exit-handler
   "exit the application. if running while testing or within a repl, it just closes the window"
@@ -1041,25 +1053,25 @@
 
 (defn import-addon-list-handler
   "prompts user with a file selection dialogue then imports a list of addons from the selected file"
-  [event]
-  (when-let [abs-path (file-chooser event {:filters json-files-extension-filters})]
+  []
+  (when-let [abs-path (file-chooser {:filters json-files-extension-filters})]
     (core/import-exported-file abs-path)
     (core/refresh))
   nil)
 
 (defn export-addon-list-handler
   "prompts user with a file selection dialogue then writes the current directory of addons to the selected file"
-  [event]
-  (when-let [abs-path (file-chooser event {:type :save
-                                           :filters json-files-extension-filters})]
+  []
+  (when-let [abs-path (file-chooser {:type :save
+                                     :filters json-files-extension-filters})]
     (core/export-installed-addon-list-safely abs-path))
   nil)
 
 (defn export-user-catalogue-handler
   "prompts user with a file selection dialogue then writes the user catalogue to selected file"
-  [event]
-  (when-let [abs-path (file-chooser event {:type :save
-                                           :filters json-files-extension-filters})]
+  []
+  (when-let [abs-path (file-chooser {:type :save
+                                     :filters json-files-extension-filters})]
     (core/export-user-catalogue-addon-list-safely abs-path))
   nil)
 
@@ -1238,8 +1250,8 @@
                         :cell-factory {:fx/cell-type :tree-table-cell
                                        :describe (fn [dt]
                                                    {:text (if-not (string? dt) "" (utils/format-dt dt))})}}
-         :installed-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]}
-         :available-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]}
+         :installed-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["installed-column"]}
+         :available-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["available-version-column"]}
          :combined-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]}
          :game-version {:min-width 70 :pref-width 70 :max-width 100}
          :uber-button {:min-width 80 :pref-width 80 :max-width 120 :style-class ["invisible-button-column"]
@@ -1378,13 +1390,18 @@
   "returns a description of the menu at the top of the application"
   [{:keys [fx/context]}]
 
-  (let [no-addon-dir? (nil? (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir]))
+  (let [addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])
+        no-addon-dir? (nil? addon-dir)
         selected-theme (fx/sub-val context get-in [:app-state :cfg :gui-theme])
         selected-columns (fx/sub-val context get-in [:app-state :cfg :preferences :ui-selected-columns])
-        file-menu [(menu-item "Import addon" (async-handler import-addon-handler)
+        file-menu [(menu-item "Install addon from file" (async-handler zip-file-picker)
+                              {:disable no-addon-dir?})
+                   (menu-item "Import addon" (async-handler import-addon-handler)
                               {:disable no-addon-dir?})
                    separator
                    (menu-item "_New addon directory" (handler wow-dir-picker) {:key "Ctrl+N"})
+                   (menu-item "_Browse addon directory" (async-handler #(utils/browse-to addon-dir))
+                              {:disable no-addon-dir?, :key "Ctrl+B"})
                    (menu-item "Remove addon directory" (async-handler remove-addon-dir)
                               {:disable no-addon-dir?})
                    separator
@@ -1393,11 +1410,11 @@
                    (menu-item "Re-install all" (async-handler cli/re-install-or-update-all)
                               {:disable no-addon-dir?})
                    separator
-                   (menu-item "Import a list of addons" (async-event-handler import-addon-list-handler)
+                   (menu-item "Import a list of addons" (async-handler import-addon-list-handler)
                               {:disable no-addon-dir?})
-                   (menu-item "Export a list of addons" (async-event-handler export-addon-list-handler)
+                   (menu-item "Export a list of addons" (async-handler export-addon-list-handler)
                               {:disable no-addon-dir?})
-                   (menu-item "Export the user-catalogue" (async-event-handler export-user-catalogue-handler)
+                   (menu-item "Export the user-catalogue" (async-handler export-user-catalogue-handler)
                               {:disable no-addon-dir?})
                    separator
                    (menu-item "E_xit" exit-handler {:key "Ctrl+Q"})]
@@ -1885,7 +1902,12 @@
                                                                                                (async-handler #(cli/search-add-filter :tag tag))
                                                                                                {:tooltip (name tag)})))
                                                                                    (:tag-list row)))}})}}
-                     {:text "updated" :min-width 85 :max-width 85 :pref-width 85 :resizable false :cell-value-factory (comp #(utils/safe-subs % 10) :updated-date)}
+                     {:text "updated" :min-width 90 :pref-width 110 :max-width 120 :resizable false
+                      :cell-value-factory :updated-date
+                      :cell-factory {:fx/cell-type :table-cell
+                                     :describe (fn [dt]
+                                                 {:text (if-not (string? dt) "" (utils/format-dt dt))})}}
+
                      {:text "downloads" :min-width 120 :pref-width 120 :max-width 120 :resizable false
                       :cell-value-factory :download-count
                       :cell-factory {:fx/cell-type :table-cell
@@ -2107,7 +2129,10 @@
   [{:keys [addon]}]
   (let [install-button (fn [release]
                          (component-instance
-                          (button "install" (async-handler #(cli/set-version addon release)))))
+                          (button (if (= (:version release) (:installed-version addon))
+                                    "re-install"
+                                    "install")
+                                  (async-handler #(cli/set-version addon release)))))
         column-list [{:text "" :style-class ["wide-button-column"] :min-width 120 :pref-width 120 :max-width 120 :resizable false :cell-value-factory install-button}
                      {:text "name" :cell-value-factory #(or (:release-label %) (:version %))}]
         row-list (or (:release-list addon) [])
@@ -2182,6 +2207,9 @@
               :show-root false
               :column-resize-policy javafx.scene.control.TreeTableView/CONSTRAINED_RESIZE_POLICY
               :disable disabled?
+              :placeholder {:fx/type :text
+                            :style-class ["table-placeholder-text"]
+                            :text "(no mutual dependencies)"}
               :row-factory {:fx/cell-type :tree-table-row
                             :describe (fn [row]
                                         {:style-class ["table-row-cell" "tree-table-row-cell"]})}

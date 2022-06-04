@@ -4,7 +4,7 @@
   <groupId>ogri-la</groupId>
   <artifactId>strongbox</artifactId>
   <packaging>jar</packaging>
-  <version>5.1.0</version>
+  <version>5.2.0</version>
   <name>strongbox</name>
   <description>World Of Warcraft Addon Manager</description>
   <url>https://github.com/ogri-la/strongbox</url>
@@ -18,7 +18,7 @@
     <url>https://github.com/ogri-la/strongbox</url>
     <connection>scm:git:git://github.com/ogri-la/strongbox.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/ogri-la/strongbox.git</developerConnection>
-    <tag>fba80a953c351f85199a359613b40e0fae3f9248</tag>
+    <tag>7be377803ca4470ed0c123c1f7b4a9a156f4125e</tag>
   </scm>
   <build>
     <sourceDirectory>src</sourceDirectory>
@@ -174,7 +174,7 @@
     <dependency>
       <groupId>cljfx</groupId>
       <artifactId>cljfx</artifactId>
-      <version>1.7.14</version>
+      <version>1.7.19</version>
       <exclusions>
         <exclusion>
           <artifactId>javafx-web</artifactId>
@@ -194,52 +194,52 @@
     <dependency>
       <groupId>org.openjfx</groupId>
       <artifactId>javafx-base</artifactId>
-      <version>15.0.1</version>
+      <version>17.0.2</version>
     </dependency>
     <dependency>
       <groupId>org.openjfx</groupId>
       <artifactId>javafx-base</artifactId>
-      <version>15.0.1</version>
+      <version>17.0.2</version>
       <classifier>linux</classifier>
     </dependency>
     <dependency>
       <groupId>org.openjfx</groupId>
       <artifactId>javafx-base</artifactId>
-      <version>15.0.1</version>
+      <version>17.0.2</version>
       <classifier>mac</classifier>
     </dependency>
     <dependency>
       <groupId>org.openjfx</groupId>
       <artifactId>javafx-controls</artifactId>
-      <version>15.0.1</version>
+      <version>17.0.2</version>
     </dependency>
     <dependency>
       <groupId>org.openjfx</groupId>
       <artifactId>javafx-controls</artifactId>
-      <version>15.0.1</version>
+      <version>17.0.2</version>
       <classifier>linux</classifier>
     </dependency>
     <dependency>
       <groupId>org.openjfx</groupId>
       <artifactId>javafx-controls</artifactId>
-      <version>15.0.1</version>
+      <version>17.0.2</version>
       <classifier>mac</classifier>
     </dependency>
     <dependency>
       <groupId>org.openjfx</groupId>
       <artifactId>javafx-graphics</artifactId>
-      <version>15.0.1</version>
+      <version>17.0.2</version>
     </dependency>
     <dependency>
       <groupId>org.openjfx</groupId>
       <artifactId>javafx-graphics</artifactId>
-      <version>15.0.1</version>
+      <version>17.0.2</version>
       <classifier>linux</classifier>
     </dependency>
     <dependency>
       <groupId>org.openjfx</groupId>
       <artifactId>javafx-graphics</artifactId>
-      <version>15.0.1</version>
+      <version>17.0.2</version>
       <classifier>mac</classifier>
     </dependency>
     <dependency>

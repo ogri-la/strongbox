@@ -1,4 +1,4 @@
-(defproject ogri-la/strongbox "5.1.0"
+(defproject ogri-la/strongbox "5.2.0"
   :description "World Of Warcraft Addon Manager"
   :url "https://github.com/ogri-la/strongbox"
   :license {:name "GNU Affero General Public License (AGPL)"
@@ -31,21 +31,21 @@
                  [com.taoensso/tufte "2.2.0"] ;; profiling
                  [tolitius/lasync "0.1.23"] ;; better parallel processing
 
-                 [cljfx "1.7.14" :exclusions [org.openjfx/javafx-web
+                 [cljfx "1.7.19" :exclusions [org.openjfx/javafx-web
                                               org.openjfx/javafx-media]]
                  [cljfx/css "1.1.0"]
 
-                 [org.openjfx/javafx-base "15.0.1"]
-                 [org.openjfx/javafx-base "15.0.1" :classifier "linux"]
-                 [org.openjfx/javafx-base "15.0.1" :classifier "mac"]
+                 [org.openjfx/javafx-base "17.0.2"]
+                 [org.openjfx/javafx-base "17.0.2" :classifier "linux"]
+                 [org.openjfx/javafx-base "17.0.2" :classifier "mac"]
 
-                 [org.openjfx/javafx-controls "15.0.1"]
-                 [org.openjfx/javafx-controls "15.0.1" :classifier "linux"]
-                 [org.openjfx/javafx-controls "15.0.1" :classifier "mac"]
+                 [org.openjfx/javafx-controls "17.0.2"]
+                 [org.openjfx/javafx-controls "17.0.2" :classifier "linux"]
+                 [org.openjfx/javafx-controls "17.0.2" :classifier "mac"]
 
-                 [org.openjfx/javafx-graphics "15.0.1"]
-                 [org.openjfx/javafx-graphics "15.0.1" :classifier "linux"]
-                 [org.openjfx/javafx-graphics "15.0.1" :classifier "mac"]
+                 [org.openjfx/javafx-graphics "17.0.2"]
+                 [org.openjfx/javafx-graphics "17.0.2" :classifier "linux"]
+                 [org.openjfx/javafx-graphics "17.0.2" :classifier "mac"]
 
                  ;; GPLv3 compatible dependencies.
                  ;; these don't need an exception in LICENCE.txt

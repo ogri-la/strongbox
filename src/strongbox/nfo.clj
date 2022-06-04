@@ -41,7 +41,7 @@
                         :pinned-version
                         :source-map-list])))
 
-(defn-spec derive :addon/nfo
+(defn-spec -derive :addon/nfo
   "extract fields from the addon data that will be written to the nfo file"
   [addon :addon/nfo-input-minimum, primary? boolean?]
   (let [nfo {;; important! as an addon is updated or installed, the `:installed-version` from the .toc file is overridden by the `:version` online
@@ -78,6 +78,16 @@
                          {:pinned-version pinned-version})]
 
     (merge nfo ignore-flag pinned-version)))
+
+(defn-spec derive :addon/nfo
+  "extract fields from the addon data that will be written to the nfo file"
+  [addon :addon/nfo-input-minimum, primary? boolean?]
+  (if (s/valid? :addon/-nfo-just-group addon)
+    ;; addon is coming from an unknown source. rather than munge unknown fields, use the given group-id
+    {:group-id (:group-id addon)
+     :primary? primary?}
+
+    (-derive addon primary?)))
 
 (defn-spec nfo-path ::sp/file
   "given an installation directory and the directory name of an addon, return the absolute path to the nfo file"
@@ -183,7 +193,23 @@
   [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, new-nfo-data :addon/nfo]
   (let [user-warning (fn [nfo-data-list]
                        (when-not (empty? nfo-data-list)
-                         (warn (format "addon \"%s\" is overwriting \"%s\"" (:name new-nfo-data) (:name (last nfo-data-list)))))
+                         ;; catalogue overwriting catalogue
+                         ;; '"Healbot Continued" (9.2.0.12) replaced dir 'HealBot/' of addon "Healbot Continued" (9.2.0.7)'
+
+                         ;; catalogue overwriting file install
+                         ;; '"Healbot Continued" (9.2.0.12) replaced dir 'HealBot/' of addon "healbot-continued-abcdef12345'
+
+                         ;; file install overwriting catalogue
+                         ;; '"healbot-continued-abcdef12345' replaced dir 'HealBot/' of addon "Healbot Continued" (9.2.0.12)'
+                         (let [target (last nfo-data-list) ;; todo: when stacked N high, won't this report incorrectly?
+                               nom #(or (:name %)
+                                        (:group-id %))
+                               version #(if-let [v (:installed-version %)]
+                                          (format " (%s)" v) "")
+                               msg (format "\"%s\"%s replaced directory \"%s\" of addon \"%s\"%s"
+                                           (nom new-nfo-data) (version new-nfo-data)
+                                           addon-dirname (nom target) (version target))]
+                           (warn msg)))
                        nfo-data-list)]
     (-> (read-nfo-file install-dir addon-dirname)
         (rm-nfo* (:group-id new-nfo-data))
@@ -198,7 +224,9 @@
   [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, addon ::sp/map-or-list-of-maps]
   (let [path (nfo-path install-dir addon-dirname)]
     (if-not (s/valid? :addon/nfo addon)
-      (error (format "new \"%s\" data is invalid and won't be written to file" nfo-filename))
+      ;; 'new "HealBot_ExtraSkins/.strongbox.json" data is invalid and won't be written to disk. This is a program error, please report it.'
+      (do (error (format "new \"./%s/%s\" data is invalid and won't be written to disk. This is a program error, please report it." addon-dirname nfo-filename))
+          (debug (s/explain :addon/nfo addon)))
       (utils/dump-json-file path (prune addon)))))
 
 ;; this function could definitely do with a second pass, but not right now.

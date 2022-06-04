@@ -11,6 +11,20 @@
 ;; todo: explain
 (def placeholder "even qualified specs still require `specs.clj` to be included for linting and uberjar")
 
+;; 刘鑫
+;; - https://groups.google.com/g/clojure/c/fti0eJdPQJ8
+(defmacro limit-keys
+  "ensures *only* the specified set of keys constitute a valid spec."
+  [& {:keys [req req-un opt opt-un only] :as args}]
+  (if only
+    `(s/merge (s/keys ~@(apply concat (vec args)))
+              (s/map-of ~(set (concat req
+                                      (map (comp keyword name) req-un)
+                                      opt
+                                      (map (comp keyword name) opt-un)))
+                        any?))
+    `(s/keys ~@(apply concat (vec args)))))
+
 (defn valid-or-nil
   "returns `nil` instead of `false` when given data `x` is invalid"
   [spec x]
@@ -61,7 +75,7 @@
 (s/def ::writeable-dir (s/and ::extant-dir fs/writeable?))
 (s/def ::empty-coll (s/and coll? empty?))
 (s/def ::gui-event #(instance? java.util.EventObject %))
-(s/def ::install-dir (s/nilable ::extant-dir))
+(s/def ::install-dir ::extant-dir)
 (s/def ::selected? boolean?)
 (s/def ::gui-theme #{:light :dark :dark-green :dark-orange})
 (s/def ::closable? boolean?)
@@ -250,7 +264,13 @@
 ;; circular dependency? :addon/toc has an optional ::group-addons and ::group-addons is a list of :addon/toc ? oof
 (s/def ::group-addons :addon/toc-list)
 
-;; 'nfo' files contain extra per-addon data written to addon directories as .strongbox.json.
+;; a nfo file can be just a group-id and a primary flag.
+(s/def :addon/-nfo-just-grouped (limit-keys :req-un [::group-id ::primary?]
+                                            :opt-un [::ignore?
+                                                     :addon/pinned-version]
+                                            :only true))
+
+;; nfo files contain extra per-addon data written to addon directories as .strongbox.json.
 (s/def :addon/-nfo (s/keys :req-un [::installed-version
                                     ::name
                                     ::group-id
@@ -262,17 +282,27 @@
                            :opt-un [::ignore?
                                     :addon/pinned-version]))
 
-(s/def :addon/nfo (s/or :ignored ::ignore-flag
-                        :ok :addon/-nfo
-                        :mutual-depedency (s/coll-of :addon/-nfo :kind vector?)))
+(s/def :addon/-nfo-types (s/or :ignored ::ignore-flag ;; a nfo file can be just an ignore flag
+                               :grouped :addon/-nfo-just-grouped ;; a nfo file can be just a group-id
+                               :ok :addon/-nfo))
+
+(s/def :addon/nfo (s/or :ok :addon/-nfo-types
+                        :mutual-dependency (s/coll-of :addon/-nfo-types :kind vector?)))
+
+;; a nfo file can be just a group-id and a primary flag.
+(s/def :addon/-nfo-just-group (limit-keys :req-un [::group-id]
+                                          :only true))
 
 ;; intermediate spec. minimum amount of data required to create a nfo file. the rest is derived.
-(s/def :addon/nfo-input-minimum (s/keys :req-un [::version
-                                                 ::name
-                                                 ::game-track
-                                                 ::url ;; becomes the `group-id`
-                                                 :addon/source
-                                                 :addon/source-id]))
+(s/def :addon/-nfo-input-minimum (s/keys :req-un [::version
+                                                  ::name
+                                                  ::game-track
+                                                  ::url ;; becomes the `group-id`
+                                                  :addon/source
+                                                  :addon/source-id]))
+
+(s/def :addon/nfo-input-minimum (s/or :from-unknown-source :addon/-nfo-just-group
+                                      :from-catalogue :addon/-nfo-input-minimum))
 
 ;; a catalogue entry, essentially
 (s/def :addon/summary
