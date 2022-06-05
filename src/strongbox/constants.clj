@@ -46,6 +46,8 @@
 (def curseforge-cutoff-label "Feb 1st, 2022")
 
 (def releases
+  "https://wowpedia.fandom.com/wiki/Patch"
+
   {"9.2" "Shadowlands: Eternity's End"
    "9.1" "Shadowlands: Chains of Domination"
    "9" "Shadowlands"

@@ -830,10 +830,13 @@
   (let [matching (keyfn given)]
     (vec (remove #(= (keyfn %) matching) item-list))))
 
-(defn patch-name
-  [game-version] ;; 9.2.5
+(defn-spec patch-name (s/or :ok string?, :not-found nil?)
+  "returns the 'patch' name for the given `game-version`, considering only the major and minor values.
+  if a precise match is not found, the major version is then considered.
+  if a major version is not found, nil is returned.
+  For example, 9.2.5 has no patch name, but 9.2 is 'Shadowlands: Eternity's End'"
+  [game-version string?]
   (let [[major, minor] (clojure.string/split game-version #"\.")
         major-minor (clojure.string/join "." [major minor])]
     (or (get constants/releases major-minor)
-        (get constants/releases major)
-        "???")))
+        (get constants/releases major))))
