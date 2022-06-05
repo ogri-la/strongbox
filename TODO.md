@@ -8,6 +8,10 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+* ctrl-f5 should re-load addons from the addon dir as well
+    - currently it just wipes out the http cache
+    - done
+
 ## todo bucket (no particular order)
 
 * zip, switch to apache commons compress for decompressing
@@ -45,9 +49,6 @@ see CHANGELOG.md for a more formal list of changes by release
         5. user clicks no, mutual dependency is created
         5. user clicks yes, 'Foo' is uninstalled, 'NewFoo' has no mutual dependencies.
 
-* ctrl-f5 should re-load addons from the addon dir as well
-    - currently it just wipes out the http cache
-
 * trade skill master string-converter changed directory names between 2.0.7 and 2.1.0
     - see also Combuctor 9.1.3 vs Combuctor 8.1.1 with 'BagBrother' in old addons
         - BagBrother was removed but also got 
@@ -60,6 +61,9 @@ see CHANGELOG.md for a more formal list of changes by release
         install combuctor 9.1.3
         find 'combuctor' and install from wowi (8.1.1)
         get weird orphaned BagBrother addon
+
+* possible bug? installing combuctor 8.1.1 from file matches against the catalogue (good), then installing 9.1.3 file looses the match.
+    - mutual dependencies information is mostly blank
 
 * clean up this confusion between 'install-dir' and 'addon-dir'
     - install-dir is where addons are installed

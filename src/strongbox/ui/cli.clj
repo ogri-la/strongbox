@@ -80,8 +80,7 @@
   ;; this is also removing the etag cache.
   ;; the etag db is pretty worthless and only applies to catalogues and downloaded zip files.
   (core/delete-http-cache!)
-  (report "refresh")
-  (core/check-for-updates))
+  (core/refresh))
 
 (defn-spec half-refresh nil?
   "like core/refresh but focuses on loading+matching+checking for updates"
