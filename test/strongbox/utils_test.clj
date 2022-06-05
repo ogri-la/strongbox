@@ -539,3 +539,10 @@
       (is (= expected log-messages))
       (is (empty? @current-locks)))))
 
+(deftest patch-name
+  (let [cases [["" nil]
+               ["foo" nil]
+               ["a.b" nil]
+               ["1.2" "World of Warcraft: Mysteries of Maraudon"]]]
+    (doseq [[given expected] cases]
+      (is (= expected (utils/patch-name given))))))

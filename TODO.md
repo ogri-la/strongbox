@@ -6,31 +6,27 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
+* tooltip on WoW column with patch name
+    - done
+
 ## todo
 
-## todo bucket (no particular order)
+* bug, github, questie is kinda fubar
+    - https://github.com/ogri-la/strongbox/issues/339
+    - it's also breaking being installed from a zipfile when spec is turned on
 
-* zip, switch to apache commons compress for decompressing
-    - https://commons.apache.org/proper/commons-compress/
-    - .tar.gz and 7z support would be interesting
-    - rar should just die already
-    - this would fix a major showstopper in porting to windows
-    - 2022-05-29: returned to bucket, gazumped by installing addon from file.
+* bug, github, BigWigs_Classic from Github cannot be installed when 'retail strict' is set
+    - it can be installed from wowi fine
 
-* bug, addon detail, highlighted installed version is causing rows to be highlighted in the raw data column?
-    - looks like a javafx problem, no idea how to fix
-    - try reducing to smallest possible reproduction
+* 'local' source
+    - https://github.com/ogri-la/strongbox/issues/355
+    - investigate and make a decision
 
-* tooltip on WoW column with patch name
+* 'update check only'
+    - https://github.com/ogri-la/strongbox/issues/356
+    - investigate an make a decision
 
 * github, updated dates are are using '+00:00' instead of 'Z'
-
-* bug, BigWigs_Classic from Github cannot be installed when 'retail strict' is set
-    - it can be installed from wowi fine
-* create a parser for that shit markup that is preventing reconcilation
-* manually select the primary addon in a group of addons to prevent synthetic titles
-* finer grained control over grouping of addons
-* gui, better copying from the interface, especially the log box
 
 * prompt user when installing an addon will create mutual dependencies
     - for example:
@@ -48,7 +44,7 @@ see CHANGELOG.md for a more formal list of changes by release
 * ctrl-f5 should re-load addons from the addon dir as well
     - currently it just wipes out the http cache
 
-* trade skill master string-converter changed directory names between 2.0.7 and 2.1.0
+* bug, trade skill master string-converter changed directory names between 2.0.7 and 2.1.0
     - see also Combuctor 9.1.3 vs Combuctor 8.1.1 with 'BagBrother' in old addons
         - BagBrother was removed but also got 
             00:35:37.982 [info] [BagBrother] downloading 'Combuctor' version '8.1.1'
@@ -61,16 +57,30 @@ see CHANGELOG.md for a more formal list of changes by release
         find 'combuctor' and install from wowi (8.1.1)
         get weird orphaned BagBrother addon
 
+## todo bucket (no particular order)
+
+* zip, switch to apache commons compress for decompressing
+    - https://commons.apache.org/proper/commons-compress/
+    - .tar.gz and 7z support would be interesting
+    - rar should just die already
+    - this would fix a major showstopper in porting to windows
+    - 2022-05-29: returned to bucket, gazumped by installing addon from file.
+
+* bug, addon detail, highlighted installed version is causing rows to be highlighted in the raw data column?
+    - looks like a javafx problem, no idea how to fix
+    - try reducing to smallest possible reproduction
+
+* create a parser for that shit markup that is preventing reconcilation
+* manually select the primary addon in a group of addons to prevent synthetic titles
+* finer grained control over grouping of addons
+* gui, better copying from the interface, especially the log box
+
 * clean up this confusion between 'install-dir' and 'addon-dir'
     - install-dir is where addons are installed
     - addon-dir is either where addons are installed or a specific addon's directory
         - i.e., ambiguous
 
-* catalogue, descriptions for wowinterface addons
 * catalogue, download counts for github addons
-* wowinterface, multiple game tracks
-    - investigate just what is being downloaded when a classic version of a wowi addon is downloaded
-    - see 'LagBar'
 * search, add ability to browse catalogue page by page
     - returned to bucket 2022-03-02
 
@@ -94,7 +104,7 @@ see CHANGELOG.md for a more formal list of changes by release
 * investigate better popularity metric than 'downloads'
     - if we make an effort to scrape everyday, we can generate this popularity graph ourselves
 * wowinterface, revisit the pages that are being scraped, make sure we're not missing any
-* github, questie is kinda fubar
+
 
 * github, preference to sync stars with github repo, if authenticated
 

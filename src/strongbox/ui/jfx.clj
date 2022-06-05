@@ -1253,7 +1253,17 @@
          :installed-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["installed-column"]}
          :available-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["available-version-column"]}
          :combined-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]}
-         :game-version {:min-width 70 :pref-width 70 :max-width 100}
+         :game-version {:min-width 70 :pref-width 70 :max-width 100
+                        :cell-factory {:fx/cell-type :tree-table-cell
+                                       :describe (fn [text]
+                                                   {:graphic {:fx/type fx.ext.node/with-tooltip-props
+                                                              :props {:tooltip {:fx/type :tooltip
+                                                                                :text (-> text (or "") utils/patch-name (or "?"))
+                                                                                ;; the tooltip will be long and intrusive, make delay longer than typical.
+                                                                                :show-delay 400}}
+                                                              :desc {:fx/type :label
+                                                                     :text text}}})}}
+
          :uber-button {:min-width 80 :pref-width 80 :max-width 120 :style-class ["invisible-button-column"]
                        :cell-value-factory identity
                        :cell-factory {:fx/cell-type :tree-table-cell
