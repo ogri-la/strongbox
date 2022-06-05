@@ -830,3 +830,10 @@
   (let [matching (keyfn given)]
     (vec (remove #(= (keyfn %) matching) item-list))))
 
+(defn patch-name
+  [game-version] ;; 9.2.5
+  (let [[major, minor] (clojure.string/split game-version #"\.")
+        major-minor (clojure.string/join "." [major minor])]
+    (or (get constants/releases major-minor)
+        (get constants/releases major)
+        "???")))
