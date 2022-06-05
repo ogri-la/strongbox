@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* the tooltip for values in the 'WoW' column is now the long-form patch name.
+    - for example, '9.2.5' will have the tooltip 'Shadowlands: Eternity's End'.
+
 ### Changed
 
 ### Fixed
