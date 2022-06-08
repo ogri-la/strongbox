@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* `ctrl-f5` now clears the http cache and then does a full refresh, including a reload of the addons from the filesystem.
+    - previously it just cleared the cache and checked for updates online.
+
 ### Fixed
 
 ### Removed

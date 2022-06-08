@@ -9,6 +9,10 @@ see CHANGELOG.md for a more formal list of changes by release
 * tooltip on WoW column with patch name
     - done
 
+* ctrl-f5 should re-load addons from the addon dir as well
+    - currently it just wipes out the http cache
+    - done
+
 ## todo
 
 * bug, github, questie is kinda fubar
@@ -41,9 +45,6 @@ see CHANGELOG.md for a more formal list of changes by release
         5. user clicks no, mutual dependency is created
         5. user clicks yes, 'Foo' is uninstalled, 'NewFoo' has no mutual dependencies.
 
-* ctrl-f5 should re-load addons from the addon dir as well
-    - currently it just wipes out the http cache
-
 * bug, trade skill master string-converter changed directory names between 2.0.7 and 2.1.0
     - see also Combuctor 9.1.3 vs Combuctor 8.1.1 with 'BagBrother' in old addons
         - BagBrother was removed but also got 
@@ -69,11 +70,14 @@ see CHANGELOG.md for a more formal list of changes by release
 * bug, addon detail, highlighted installed version is causing rows to be highlighted in the raw data column?
     - looks like a javafx problem, no idea how to fix
     - try reducing to smallest possible reproduction
-
+* bug, BigWigs_Classic from Github cannot be installed when 'retail strict' is set
+    - it can be installed from wowi fine
 * create a parser for that shit markup that is preventing reconcilation
 * manually select the primary addon in a group of addons to prevent synthetic titles
 * finer grained control over grouping of addons
 * gui, better copying from the interface, especially the log box
+* possible bug? installing combuctor 8.1.1 from file matches against the catalogue (good), then installing 9.1.3 file loses the match.
+    - mutual dependencies information is mostly blank
 
 * clean up this confusion between 'install-dir' and 'addon-dir'
     - install-dir is where addons are installed
@@ -104,7 +108,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * investigate better popularity metric than 'downloads'
     - if we make an effort to scrape everyday, we can generate this popularity graph ourselves
 * wowinterface, revisit the pages that are being scraped, make sure we're not missing any
-
 
 * github, preference to sync stars with github repo, if authenticated
 
