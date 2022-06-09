@@ -75,6 +75,7 @@
     (mapv (fn [[filename-game-track filename]]
             (merge (read-toc-file (utils/join toc-dir filename))
                    {:dirname (fs/base-name addon-dir) ;; /foo/bar/baz => baz
+                    :-filename filename
                     :-filename-game-track filename-game-track}))
           (find-toc-files toc-dir))))
 
@@ -98,7 +99,7 @@
 
 ;;
 
-(defn-spec parse-addon-toc :addon/toc
+(defn-spec parse-addon-toc (s/or :ok :addon/toc, :invalid nil?)
   ([keyvals map?, addon-dir ::sp/dir]
    (parse-addon-toc (assoc keyvals :dirname (fs/base-name addon-dir))))
   ([keyvals map?]
@@ -177,7 +178,10 @@
                       github-source wowi-source tukui-source
                       ignore-flag source-map-list)]
 
-     addon)))
+     (if-not (s/valid? :addon/toc addon)
+       (do (warn (format "ignoring %s, invalid data found." (:-filename keyvals)))
+           (debug (s/explain :addon/toc addon)))
+       addon))))
 
 (defn-spec blizzard-addon? boolean?
   "returns `true` if given path looks like an official Blizzard addon"
@@ -189,7 +193,7 @@
   [addon-dir ::sp/extant-dir]
   (when-not (blizzard-addon? addon-dir)
     (try
-      (let [result (mapv parse-addon-toc (read-addon-dir addon-dir))
+      (let [result (remove nil? (map parse-addon-toc (read-addon-dir addon-dir)))
             supported-game-tracks (->> result (map :-toc/game-track) distinct sort vec)]
         (mapv #(assoc % :supported-game-tracks supported-game-tracks) result))
       (catch Exception e
