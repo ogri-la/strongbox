@@ -5,9 +5,12 @@
    [envvar.core :refer [env with-env]]
    [taoensso.timbre :as timbre :refer [debug info warn error spy]]
    [me.raynes.fs :as fs :refer [with-cwd]]
+   [me.raynes.fs.compression]
    [clj-http.fake :refer [with-global-fake-routes-in-isolation]]
+   [clojure.pprint]
    [strongbox
     [nfo :as nfo]
+    [toc :as toc]
     [zip :as zip]
     [specs :as sp]
     [main :as main]
@@ -171,3 +174,99 @@
   (->> (core/get-state :installed-addon-list)
        (filter (fn [addon] (= (:group-id addon) group-id)))
        first))
+
+(defn gen-addon-data
+  [& [{:keys [num-dirs override base-url]}]]
+  (let [num-dirs (or num-dirs 1)
+        override (or override {})
+
+        nom (get override :label "EveryAddon")
+        version (get override :version "1.2.3")
+        description (get override :description "Does what no other addon does, slightly differently.")
+        interface-version (get override :interface-version 70000)
+
+        source "wowinterface"
+        source-id "999"
+        game-track :retail
+
+        base-url (or base-url "https://example.org")
+
+        -gen-addon
+        (fn [i]
+          (let [override-map (get override i {})
+                i (get override-map :i i)
+                i-label (clojure.pprint/cl-format nil "~@(~R~)" i) ;; 1 => One
+                dirname (str nom i-label) ;; EveryAddonOne
+
+                url (format "%s/%s" base-url dirname) ;; "https://example.org/EveryAddonOne"
+                download-url (format "%s/%s/version/%s.zip" base-url dirname version) ;; "https://example.org/EveryAddonOne/version/1.2.3"
+                normal-name (toc/normalise-name nom)
+
+                ;; expected toc data after installation
+                toc {:name normal-name
+                     :label nom
+                     :version version
+                     :description description
+                     :dirname dirname
+                     :interface-version interface-version
+                     :installed-version version
+                     :supported-game-tracks [game-track]}
+
+                ;; catalogue entry
+                addon-summary {:url url
+                               :name normal-name
+                               :label nom
+                               :tag-list []
+                               :created-date "2015-05-15T15:15:15Z"
+                               :updated-date "2016-06-16T16:16:16Z"
+                               :download-count 0
+                               :source source
+                               :source-id source-id}
+
+                ;; addon host source updates
+                source-updates {:version version ;; no update
+                                :download-url download-url
+                                :game-track game-track}
+
+                ;; expected nfo data derived from addon-summary and source-updates
+                nfo {:source source
+                     :source-id source-id
+                     :url url
+                     :download-url download-url
+                     :game-track game-track
+                     :group-id i-label}
+
+                ;; zip file contents
+                tocfile-name (str dirname "/" dirname ".toc") ;; EveryAddonOne/EveryAddonOne.toc
+                tocfile (toc/gen-tocfile toc)
+                luafile-name (str dirname "/" dirname ".lua") ;; EveryAddonOne/EveryAddonOne.lua
+                luafile ""
+                filename+content-list [[tocfile-name tocfile]
+                                       [luafile-name luafile]]]
+
+            {:toc toc
+             :nfo nfo
+             :addon-summary addon-summary
+             :source-updates source-updates
+             :installable (merge addon-summary source-updates)
+
+             ;; single dir zip file contents
+             :zip-contents filename+content-list}))
+
+        generated (map -gen-addon (range 1 (inc num-dirs)))
+
+        addon-data (mapv #(dissoc % :zip-contents) generated)
+
+        ;; multi dir zip file contents
+        output-filename (str nom "-" (utils/short-unique-id) ".zip") ;; EveryAddon-fe3b9639.zip
+        zipfile+contents [output-filename
+                          (mapcat :zip-contents generated)]]
+
+    [addon-data zipfile+contents]))
+
+(defn gen-addon!
+  [output-dir & [opts]]
+  (let [[addon-data [output-filename zipfile-contents]] (gen-addon-data opts)
+        output-path (utils/join output-dir output-filename)]
+    (me.raynes.fs.compression/zip output-path zipfile-contents)
+    [addon-data output-path]))

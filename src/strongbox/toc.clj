@@ -195,3 +195,31 @@
       (catch Exception e
         ;; this addon failed to parse somehow. don't propagate the exception, just report it and return `nil`.
         (error e (utils/reportable-error (format "unexpected error parsing addon in directory '%s': %s" addon-dir (.getMessage e))))))))
+
+;; --
+
+(defn-spec gen-tocfile string?
+  [addon :addon/toc]
+  (let [unslug
+        (fn [string]
+          (clojure.string/join "" (map clojure.string/capitalize (clojure.string/split string #"-"))))
+
+        render-line
+        (fn [[key val]]
+          (format "## %s: %s" (unslug (name key)) val))
+
+        rename-map {:interface-version :interface
+                    :label :title
+                    :installed-version :version}
+        toc (clojure.set/rename-keys addon rename-map)
+
+        white-list [:interface :title :version :author :description
+                    :default-state :required-deps :optional-deps :saved-variables]
+        sort-order (keep-indexed vector white-list)
+        sorted-map (sort-by #(get sort-order %1) (select-keys toc white-list))
+
+        footer (str (:dirname addon) ".lua")
+        footer (str "\n" footer)]
+    (clojure.string/join "\n" (conj (mapv render-line sorted-map) footer))))
+
+

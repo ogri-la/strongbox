@@ -634,6 +634,10 @@
   []
   (str (java.util.UUID/randomUUID)))
 
+(defn short-unique-id
+  []
+  (subs (unique-id) 0 8))
+
 (defn count-occurances
   ;; {"Foo-v1.zip" 1, "Foo-v2.zip 1, "Foo.zip" 5}
   [my-list my-key]
