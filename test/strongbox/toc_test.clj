@@ -223,3 +223,9 @@ SomeAddon.lua")
         addon-dir (join (helper/install-dir) "EveryAddon")]
     (zip/unzip-file fixture (helper/install-dir))
     (is (= expected (toc/find-toc-files addon-dir)))))
+
+(deftest parse-addon-toc--invalid-toc-questie
+  (testing "invalid toc data is discarded"
+    (let [fixture (helper/fixture-path "questie--invalid.toc")
+          raw-data (toc/read-toc-file fixture)]
+      (is (nil? (toc/parse-addon-toc raw-data))))))

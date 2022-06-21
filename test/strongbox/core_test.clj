@@ -833,6 +833,10 @@
                 "everyaddon--1-2-3.zip"]
                (helper/install-dir-contents)))))))
 
+(deftest install-addon--invalid-toc
+  (testing "installing an addon with a single invalid toc data ... ?"
+    nil))
+
 ;;
 
 (deftest uninstall-addon

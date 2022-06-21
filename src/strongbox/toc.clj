@@ -179,7 +179,9 @@
                       ignore-flag source-map-list)]
 
      (if-not (s/valid? :addon/toc addon)
-       (do (warn (format "ignoring %s, invalid data found." (:-filename keyvals)))
+       ;; "ignoring EveryAddon.toc, invalid data found."
+       (do (warn (utils/reportable-error (format "ignoring %s, invalid data found." (:-filename keyvals))
+                                         "feel free to report this!"))
            (debug (s/explain :addon/toc addon)))
        addon))))
 

@@ -691,8 +691,10 @@
   (clojure.string/join (format "\n %s " constants/bullet) (into [msg] msg-list)))
 
 (defn-spec reportable-error string?
-  [msg string?]
-  (message-list msg ["please report this! https://github.com/ogri-la/strongbox/issues"]))
+  ([msg string?]
+   (reportable-error msg "please report this!"))
+  ([msg string?, report-msg string?]
+   (message-list msg [(str report-msg " https://github.com/ogri-la/strongbox/issues")])))
 
 (defn-spec select-vals coll?
   "like `get` on `m` but for each key in `ks`. removes nils."
