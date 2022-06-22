@@ -3,6 +3,7 @@
    [clojure.string :refer [lower-case starts-with?]]
    [taoensso.timbre :as timbre :refer [debug info warn error spy]]
    [clojure.spec.alpha :as s]
+   [clojure.set]
    [orchestra.core :refer [defn-spec]]
    [me.raynes.fs :as fs]
    [strongbox
@@ -187,11 +188,13 @@
   (logging/with-addon {:dirname (-> addon-dir fs/file fs/base-name str)}
     (let [install-dir (str (fs/parent addon-dir))
           addon-dirname (str (fs/base-name addon-dir))
-
           ;; todo: this sucks. is there another way we can figure out the relationships between addons in an install-dir other than reading them *all* in?
           all-addon-data (load-all-installed-addons install-dir game-track)]
-
-      (first (filter #(= addon-dirname (:dirname %)) all-addon-data)))))
+      ;; find the first installed addon that has a `:dirname` (or a grouped addon's `:dirname`) matching the given `addon-dirname`.
+      (first (filter (fn [some-addon]
+                       (let [flattened (mapv :dirname (flatten-addon some-addon))]
+                         (not (nil? (some #{addon-dirname} flattened)))))
+                     all-addon-data)))))
 
 
 ;; ---
@@ -248,6 +251,12 @@
   "installs an addon given an addon description, a place to install the addon and the addon zip file itself.
   handles suspicious looking bundles, conflicts with other addons, uninstalling previous addon version and updating nfo files."
   [addon :addon/nfo-input-minimum, install-dir ::sp/writeable-dir, downloaded-file ::sp/archive-file]
+  (let [nom (or (:label addon) (:name addon) (fs/base-name downloaded-file))
+        v (:version addon)]
+    (if v
+      (info (format "installing \"%s\" version \"%s\"" nom v))
+      (info (format "installing \"%s\"" nom))))
+
   (let [zipfile-entries (zip/zipfile-normal-entries downloaded-file)
         toplevel-dirs (zip/top-level-directories zipfile-entries)
         primary-dirname (determine-primary-subdir toplevel-dirs)
@@ -272,7 +281,31 @@
 
         update-nfo-files (fn []
                            ;; write the nfo files, return a list of all nfo files written
-                           (mapv update-nfo-fn toplevel-dirs))]
+                           (mapv update-nfo-fn toplevel-dirs))
+
+        ;; an addon may completely replace another addon.
+        ;; if it's a complete replacement, remove addon instead of creating a mutual dependency.
+        remove-completely-overwritten-addons
+        (fn []
+          ;; find the full addons for each 
+          (let [strip-trailing-slash #(utils/rtrim % "/")
+                ;; all of the directories this addon will create
+                dir-superset (->> toplevel-dirs
+                                  (map :path)
+                                  (map fs/base-name)
+                                  (map strip-trailing-slash)
+                                  set)
+                ;; we don't care which game track is used, just that addons are logically grouped.
+                all-addon-data (load-all-installed-addons install-dir :retail)
+                removeable? (fn [some-addon]
+                              (let [dir-subset (->> some-addon
+                                                    flatten-addon
+                                                    (map :dirname)
+                                                    set)]
+                                (clojure.set/subset? dir-subset dir-superset)))]
+            (->> all-addon-data
+                 (filter removeable?)
+                 (run! (partial remove-addon install-dir)))))]
 
     (suspicious-bundle-check)
 
@@ -281,9 +314,7 @@
     (when (s/valid? :addon/toc addon)
       (remove-addon install-dir addon))
 
-    (if-let [v (:version addon)]
-      (info (format "installing \"%s\" version \"%s\"" nom v))
-      (info (format "installing \"%s\"" nom)))
+    (remove-completely-overwritten-addons)
 
     (unzip-addon)
     (update-nfo-files)))
