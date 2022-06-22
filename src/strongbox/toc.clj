@@ -100,6 +100,7 @@
 ;;
 
 (defn-spec parse-addon-toc (s/or :ok :addon/toc, :invalid nil?)
+  "coerces raw `keyvals` map into a valid `:addon/toc` map or returns `nil` if toc data is invalid."
   ([keyvals map?, addon-dir ::sp/dir]
    (parse-addon-toc (assoc keyvals :dirname (fs/base-name addon-dir))))
   ([keyvals map?]
