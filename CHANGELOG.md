@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * `ctrl-f5` now clears the http cache and then does a full refresh, including a reload of the addons from the filesystem.
     - previously it just cleared the cache and checked for updates online.
+* addons that are completely replaced by another addon are now uninstalled first rather than creating a 'mutual dependency'.
+    - I discovered that using the `Find similar` option to replace Curseforge addons was leading to addons from other hosts creating unnecessary mutual dependencies.
 
 ### Fixed
 
