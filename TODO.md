@@ -13,6 +13,23 @@ see CHANGELOG.md for a more formal list of changes by release
     - currently it just wipes out the http cache
     - done
 
+* prompt user when installing an addon will create mutual dependencies
+    - for example:
+        1. user selects 'find similar' to replace a curseforge addon
+        2. user finds a wowi hosted version
+        3. user installs addon
+        4. addon *overwrites* existing version of addon, creating a messy mutual dependency between old and new
+    - when we could have
+        3. user installs addon 'NewFoo'
+        4. if it completely overwrites 'Foo', just uninstall it, don't prompt.
+        4. mutual dependency check - "'NewFoo' overwrites 'Foo', do you want to uninstall 'Foo'?"
+        5. user clicks no, mutual dependency is created
+        5. user clicks yes, 'Foo' is uninstalled, 'NewFoo' has no mutual dependencies.
+
+    - I don't really like such prompts, my eyes tend to glaze over eventually or I get confused/frustrated at how severe the problem actually is.
+        - I've gone with automaticaly uninstalling completely replaced addons with warnings
+    - done
+
 ## todo
 
 * bug, github, questie is kinda fubar
@@ -31,19 +48,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - investigate an make a decision
 
 * github, updated dates are are using '+00:00' instead of 'Z'
-
-* prompt user when installing an addon will create mutual dependencies
-    - for example:
-        1. user selects 'find similar' to replace a curseforge addon
-        2. user finds a wowi hosted version
-        3. user installs addon
-        4. addon *overwrites* existing version of addon, creating a messy mutual dependency between old and new
-    - when we could have
-        3. user installs addon 'NewFoo'
-        4. if it completely overwrites 'Foo', just uninstall it, don't prompt.
-        4. mutual dependency check - "'NewFoo' overwrites 'Foo', do you want to uninstall 'Foo'?"
-        5. user clicks no, mutual dependency is created
-        5. user clicks yes, 'Foo' is uninstalled, 'NewFoo' has no mutual dependencies.
 
 * bug, trade skill master string-converter changed directory names between 2.0.7 and 2.1.0
     - see also Combuctor 9.1.3 vs Combuctor 8.1.1 with 'BagBrother' in old addons

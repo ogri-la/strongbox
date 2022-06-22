@@ -17,7 +17,8 @@
    [java-time :as jt]
    [java-time.format])
   (:import
-   [java.util Base64]
+   [java.lang StringBuilder]
+   [java.util Base64 Random]
    [org.ocpsoft.prettytime.units Decade]
    [org.ocpsoft.prettytime PrettyTime]))
 
@@ -634,9 +635,22 @@
   []
   (str (java.util.UUID/randomUUID)))
 
+;; `rand-str2`, Istvan
+;; - https://stackoverflow.com/questions/64034761/fast-random-string-generator-in-clojure
 (defn short-unique-id
-  []
-  (subs (unique-id) 0 8))
+  ^String
+  ([]
+   (short-unique-id 8))
+  ([^Long len]
+   (let [leftLimit 97
+         rightLimit 122
+         random (java.util.Random.)
+         stringBuilder (StringBuilder. len)
+         diff (- rightLimit leftLimit)]
+     (dotimes [_ len]
+       (let [ch (char (.intValue ^Double (+ leftLimit (* (.nextFloat ^Random random) (+ diff 1)))))]
+         (.append ^StringBuilder stringBuilder ch)))
+     (.toString ^StringBuilder stringBuilder))))
 
 (defn count-occurances
   ;; {"Foo-v1.zip" 1, "Foo-v2.zip 1, "Foo.zip" 5}

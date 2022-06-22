@@ -1740,6 +1740,7 @@
             [[addon-b] downloaded-file-b] (helper/gen-addon! fs/*cwd* {:num-dirs 1, :base-url "https://example.net" :override {1 {:i 2}}})
 
             ;; addon C is three directories, replacing A and B, grouped by 'example.com'
+            ;; any of the three sets of addon data could be used to install the addon, we'll use the third, 'addon-c3'
             [[_ _ addon-c3] downloaded-file-c] (helper/gen-addon! fs/*cwd* {:num-dirs 3, :base-url "https://example.com"})
 
             ;; after installing A, then B then C, we expect C to have cleanly replaced A and B

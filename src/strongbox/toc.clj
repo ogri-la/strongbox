@@ -199,6 +199,9 @@
 ;; --
 
 (defn-spec gen-tocfile string?
+  "given `addon` toc data, generates the contents of a `.toc` file.
+  order of keys is deterministic, some keys are renamed.
+  only used during testing."
   [addon :addon/toc]
   (let [unslug
         (fn [string]

@@ -176,6 +176,12 @@
        first))
 
 (defn gen-addon-data
+  "generates a complete set of addon data, including toc, nfo, summary, expanded (`:installable`) as well as
+  a struct that can be used to create a zipfile that includes a .toc file.
+  accepts a map with options:
+  `:num-dirs` - the number of addons to generate.
+  `:override` - a map of per-addon overrides, keyed by `i`, for example: {:override {1 {:version '5.4.3'}}}
+  `:base-url` - the hostname used to generate a unique group ID."
   [& [{:keys [num-dirs override base-url]}]]
   (let [num-dirs (or num-dirs 1)
         override (or override {})
@@ -191,6 +197,7 @@
 
         base-url (or base-url "https://example.org")
 
+        ;; generate a single addon with a single zipfile directory
         -gen-addon
         (fn [i]
           (let [override-map (get override i {})
@@ -248,7 +255,7 @@
              :nfo nfo
              :addon-summary addon-summary
              :source-updates source-updates
-             :installable (merge addon-summary source-updates)
+             :installable (merge addon-summary source-updates) ;; aka 'expanded' 
 
              ;; single dir zip file contents
              :zip-contents filename+content-list}))
@@ -265,6 +272,7 @@
     [addon-data zipfile+contents]))
 
 (defn gen-addon!
+  "just like `gen-addon`, but will write the generated zip file to the given `output-dir`, returning a pair of `(addon-data, output-dir+filename)`"
   [output-dir & [opts]]
   (let [[addon-data [output-filename zipfile-contents]] (gen-addon-data opts)
         output-path (utils/join output-dir output-filename)]

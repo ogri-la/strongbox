@@ -188,14 +188,13 @@
   (logging/with-addon {:dirname (-> addon-dir fs/file fs/base-name str)}
     (let [install-dir (str (fs/parent addon-dir))
           addon-dirname (str (fs/base-name addon-dir))
-
           ;; todo: this sucks. is there another way we can figure out the relationships between addons in an install-dir other than reading them *all* in?
-          all-addon-data (load-all-installed-addons install-dir game-track)
-          addon (first (filter (fn [some-addon]
-                                 (let [flattened (mapv :dirname (flatten-addon some-addon))]
-                                   (not (nil? (some #{addon-dirname} flattened)))))
-                               all-addon-data))]
-      addon)))
+          all-addon-data (load-all-installed-addons install-dir game-track)]
+      ;; find the first installed addon that has a `:dirname` (or a grouped addon's `:dirname`) matching the given `addon-dirname`.
+      (first (filter (fn [some-addon]
+                       (let [flattened (mapv :dirname (flatten-addon some-addon))]
+                         (not (nil? (some #{addon-dirname} flattened)))))
+                     all-addon-data)))))
 
 
 ;; ---
@@ -252,7 +251,6 @@
   "installs an addon given an addon description, a place to install the addon and the addon zip file itself.
   handles suspicious looking bundles, conflicts with other addons, uninstalling previous addon version and updating nfo files."
   [addon :addon/nfo-input-minimum, install-dir ::sp/writeable-dir, downloaded-file ::sp/archive-file]
-
   (let [nom (or (:label addon) (:name addon) (fs/base-name downloaded-file))
         v (:version addon)]
     (if v
@@ -290,30 +288,24 @@
         remove-completely-overwritten-addons
         (fn []
           ;; find the full addons for each 
-
           (let [strip-trailing-slash #(utils/rtrim % "/")
-
                 ;; all of the directories this addon will create
                 dir-superset (->> toplevel-dirs
                                   (map :path)
                                   (map fs/base-name)
                                   (map strip-trailing-slash)
                                   set)
-
                 ;; we don't care which game track is used, just that addons are logically grouped.
-                all-addon-data (load-all-installed-addons install-dir :retail) ;; (:game-track addon)) ;; game-track here is problematic
-
+                all-addon-data (load-all-installed-addons install-dir :retail)
                 removeable? (fn [some-addon]
                               (let [dir-subset (->> some-addon
-                                                    ;;load-installed-addon
                                                     flatten-addon
                                                     (map :dirname)
                                                     set)]
                                 (clojure.set/subset? dir-subset dir-superset)))]
-
             (->> all-addon-data
-                 (filterv removeable?)
-                 (mapv (partial remove-addon install-dir)))))]
+                 (filter removeable?)
+                 (run! (partial remove-addon install-dir)))))]
 
     (suspicious-bundle-check)
 
