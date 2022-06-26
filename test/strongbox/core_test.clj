@@ -1838,3 +1838,59 @@
         (is (= expected-nfo (nfo/read-nfo-file install-dir (-> addon-a :toc :dirname))))
         (is (= expected-nfo (nfo/read-nfo-file install-dir (-> addon-b :toc :dirname))))
         (is (= expected-nfo (nfo/read-nfo-file install-dir (-> addon-c3 :toc :dirname))))))))
+
+;;
+
+(deftest install-addon--orphaned
+  (testing "demonstrates how to orphan part of an addon. I don't know a good solution to this, yet."
+    (with-running-app
+      (let [install-dir (helper/install-dir)
+            ;; install two distinct addons: A, B
+
+            ;; addon A is from curseforge, has two directories, One and Two uses "example.net" for it's group-id
+            [[addon-a1 addon-a2] downloaded-file-a] (helper/gen-addon! fs/*cwd* {:num-dirs 2, :base-url "http://example.net", :override {:source "curseforge"}})
+
+            ;; addon B is from wowinterface, has a single directory, One, and uses "example.org" for it's group-id
+            [[addon-b] downloaded-file-b] (helper/gen-addon! fs/*cwd* {:num-dirs 1, :override {2 {:i 2}}})
+
+            expected-nfo-addon-a1
+            [{:group-id "http://example.net/EveryAddonOne",
+              :installed-game-track :retail,
+              :installed-version "1.2.3",
+              :name "everyaddon",
+              :primary? false,
+              :source "curseforge",
+              :source-id "999",
+              :source-map-list [{:source "curseforge", :source-id "999"}]}
+             {:group-id "https://example.org/EveryAddonOne",
+              :installed-game-track :retail,
+              :installed-version "1.2.3",
+              :name "everyaddon",
+              :primary? true,
+              :source "wowinterface",
+              :source-id "999",
+              :source-map-list [{:source "wowinterface", :source-id "999"}]}]
+
+            ;; the orphan
+            expected-nfo-addon-a2
+            {:group-id "https://example.net/EveryAddonOne",
+             :installed-game-track :retail,
+             :installed-version "1.2.3",
+             :name "everyaddon",
+             :primary? false,
+             :source "curseforge",
+             :source-id "999",
+             :source-map-list [{:source "curseforge", :source-id "999"}]}]
+
+        (core/install-addon (:installable addon-a1) install-dir downloaded-file-a)
+
+        ;; addon B will overwrite directory 1 (EveryAddonOne) of addon A creating an orphan of directory 2 (EveryAddonTwo).
+        ;; this happens because addon A isn't being fully replaced by addon B and won't be uninstalled, just overwritten.
+        (core/install-addon (:installable addon-b) install-dir downloaded-file-b)
+
+        ;; addon-a1 (EveryAddonOne) overwritten, now a mutual dependency
+        (is (= expected-nfo-addon-a1 (nfo/read-nfo-file install-dir (-> addon-a1 :toc :dirname))))
+
+        ;; addon-a2 (EveryAddonTwo) orphaned as expected
+        (is (= expected-nfo-addon-a2 (nfo/read-nfo-file install-dir (-> addon-a2 :toc :dirname))))))))
+

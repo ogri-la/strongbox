@@ -180,9 +180,9 @@
   a struct that can be used to create a zipfile that includes a .toc file.
   accepts a map with options:
   `:num-dirs` - the number of addons to generate.
-  `:override` - a map of per-addon overrides, keyed by `i`, for example: {:override {1 {:version '5.4.3'}}}
+  `:override` - a map of overrides. per-addon overrides can be keyed by `i`, for example: {:override {1 {:version '5.4.3'}}}
   `:base-url` - the hostname used to generate a unique group ID."
-  [& [{:keys [num-dirs override base-url]}]]
+  [& [{:keys [num-dirs base-url override]}]]
   (let [num-dirs (or num-dirs 1)
         override (or override {})
 
@@ -191,7 +191,7 @@
         description (get override :description "Does what no other addon does, slightly differently.")
         interface-version (get override :interface-version 70000)
 
-        source "wowinterface"
+        source (get override :source "wowinterface")
         source-id "999"
         game-track :retail
 
