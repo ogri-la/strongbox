@@ -303,7 +303,7 @@
   (sluglib/slugify string))
 
 (defn-spec interface-version-to-game-version (s/or :ok string?, :no-match nil?)
-  [iface-version (s/or :deprecated string?, :preferred ::sp/interface-version)]
+  [iface-version (s/or :deprecated string?, :ok int?)]
   ;; warning! there is no way to convert *unambiguously* between the 'patch level' and the 'interface version'
   ;; for example, patch "1.2.0" => "10200", but so does "1.20.0" => "10200"
   ;; there haven't been any minor versions >4 since MOP
@@ -341,10 +341,10 @@
 
 (defn-spec interface-version-to-game-track (s/or :ok ::sp/game-track, :err nil?)
   "converts an interface version like '80000' to a game track like ':retail'"
-  [interface-version ::sp/interface-version]
-  (some-> interface-version
-          interface-version-to-game-version
-          game-version-to-game-track))
+  [interface-version int?]
+  (some-> interface-version ;; 80000
+          interface-version-to-game-version ;; 8.0
+          game-version-to-game-track)) ;; :retail
 
 (defn-spec game-track-to-latest-game-version (s/or :ok string?, :err nil?)
   "':classic' => '1.13.0'"

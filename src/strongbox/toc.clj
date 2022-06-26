@@ -209,7 +209,7 @@
   "given `addon` toc data, generates the contents of a `.toc` file.
   order of keys is deterministic, some keys are renamed.
   only used during testing."
-  [addon :addon/toc]
+  [addon map?]
   (let [unslug
         (fn [string]
           (clojure.string/join "" (map clojure.string/capitalize (clojure.string/split string #"-"))))

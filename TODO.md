@@ -195,6 +195,7 @@ see CHANGELOG.md for a more formal list of changes by release
             - ignored are collapsed
 
 * add a 'add to user-catalogue' option to make an addon always available despite selected catalogue
+    - done, via favouriting, but! it's not available on the installed addon pane page
 
 * add a 'catalogue is N days old' somewhere
 
