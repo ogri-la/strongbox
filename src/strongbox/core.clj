@@ -11,6 +11,7 @@
    [trptcolin.versioneer.core :as versioneer]
    [envvar.core :refer [env]]
    [strongbox
+    [constants :as constants]
     [addon :as addon]
     [db :as db]
     [config :as config]
@@ -640,10 +641,11 @@
          addon))
   addon)
 
-(defn-spec load-installed-addon :addon/installed
+(defn-spec load-installed-addon (s/or :ok :addon/installed, :error nil?)
   "loads the addon at the given `addon-dir` path, updating or adding it to the `:installed-addon-list`."
-  [addon-dir ::sp/addon-dir]
-  (update-installed-addon! (addon/load-installed-addon addon-dir (get-game-track))))
+  [addon-path ::sp/addon-dir]
+  (when-let [installed-addon (addon/load-installed-addon addon-path (get-game-track))]
+    (update-installed-addon! installed-addon)))
 
 (defn-spec load-all-installed-addons nil?
   "guard function. offloads the hard work to `addon/load-all-installed-addons` then updates application state"
@@ -1288,7 +1290,7 @@
                  ;; 2020-06: dirname must be a non-empty string
                  ;; todo: why is dirname needed here?
                  :dirname addon/dummy-dirname
-                 :interface-version 0
+                 :interface-version constants/default-interface-version
                  :toc/game-track :retail
                  :supported-game-tracks []
                  :installed-version "0"}
@@ -1350,12 +1352,13 @@
   We could do more here but this operation already depends on re-reading the state of *all* addons from the filesystem for just a single addon update.
   See `refresh-check`."
   [addon :addon/installed]
-  (->> addon
-       :dirname
-       (utils/join (selected-addon-dir))
-       load-installed-addon
-       match-installed-addon-with-catalogue
-       check-addon-for-updates)
+  (logging/with-addon addon
+    (some->> addon
+             :dirname
+             (utils/join (selected-addon-dir))
+             load-installed-addon
+             match-installed-addon-with-catalogue
+             check-addon-for-updates))
   nil)
 
 (defn-spec refresh nil?

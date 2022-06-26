@@ -833,6 +833,15 @@
                 "everyaddon--1-2-3.zip"]
                (helper/install-dir-contents)))))))
 
+(deftest install-addon--invalid-toc
+  (testing "installing an addon with a single invalid toc is possible, but loading it's toc data is not."
+    (with-running-app
+      (let [install-dir (helper/install-dir)
+            [[addon] downloaded-file] (helper/gen-addon! install-dir {:override {:interface-version 0}})]
+        (core/install-addon (:installable addon) install-dir downloaded-file)
+        (core/load-installed-addon (str (fs/file install-dir (-> addon :toc :dirname))))
+        (is (= [] (core/get-state :installed-addon-list)))))))
+
 ;;
 
 (deftest uninstall-addon

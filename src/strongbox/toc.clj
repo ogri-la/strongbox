@@ -75,6 +75,7 @@
     (mapv (fn [[filename-game-track filename]]
             (merge (read-toc-file (utils/join toc-dir filename))
                    {:dirname (fs/base-name addon-dir) ;; /foo/bar/baz => baz
+                    :-filename filename
                     :-filename-game-track filename-game-track}))
           (find-toc-files toc-dir))))
 
@@ -98,7 +99,8 @@
 
 ;;
 
-(defn-spec parse-addon-toc :addon/toc
+(defn-spec parse-addon-toc (s/or :ok :addon/toc, :invalid nil?)
+  "coerces raw `keyvals` map into a valid `:addon/toc` map or returns `nil` if toc data is invalid."
   ([keyvals map?, addon-dir ::sp/dir]
    (parse-addon-toc (assoc keyvals :dirname (fs/base-name addon-dir))))
   ([keyvals map?]
@@ -177,7 +179,12 @@
                       github-source wowi-source tukui-source
                       ignore-flag source-map-list)]
 
-     addon)))
+     (if-not (s/valid? :addon/toc addon)
+       ;; "ignoring EveryAddon.toc, invalid data found."
+       (do (warn (utils/reportable-error (format "ignoring %s, invalid data found." (:-filename keyvals))
+                                         "feel free to report this!"))
+           (debug (s/explain :addon/toc addon)))
+       addon))))
 
 (defn-spec blizzard-addon? boolean?
   "returns `true` if given path looks like an official Blizzard addon"
@@ -189,7 +196,7 @@
   [addon-dir ::sp/extant-dir]
   (when-not (blizzard-addon? addon-dir)
     (try
-      (let [result (mapv parse-addon-toc (read-addon-dir addon-dir))
+      (let [result (remove nil? (map parse-addon-toc (read-addon-dir addon-dir)))
             supported-game-tracks (->> result (map :-toc/game-track) distinct sort vec)]
         (mapv #(assoc % :supported-game-tracks supported-game-tracks) result))
       (catch Exception e
@@ -202,7 +209,7 @@
   "given `addon` toc data, generates the contents of a `.toc` file.
   order of keys is deterministic, some keys are renamed.
   only used during testing."
-  [addon :addon/toc]
+  [addon map?]
   (let [unslug
         (fn [string]
           (clojure.string/join "" (map clojure.string/capitalize (clojure.string/split string #"-"))))

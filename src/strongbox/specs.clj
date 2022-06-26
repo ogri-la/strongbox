@@ -114,7 +114,8 @@
 (s/def ::version string?)
 (s/def ::installed-version (s/nilable ::version))
 (s/def ::update? boolean?)
-(s/def ::interface-version int?) ;; 90005, 11307, 20501
+(s/def ::interface-version (and int? (fn [interface-version]
+                                       (>= interface-version 10000)))) ;; 90005, 11307, 20501
 (s/def ::name string?) ;; normalised name of the addon, shared between toc file and curseforge
 (s/def ::label string?) ;; name of the addon without normalisation
 (s/def ::release-label ::label)

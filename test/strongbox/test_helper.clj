@@ -271,10 +271,16 @@
 
     [addon-data zipfile+contents]))
 
-(defn gen-addon!
-  "just like `gen-addon`, but will write the generated zip file to the given `output-dir`, returning a pair of `(addon-data, output-dir+filename)`"
-  [output-dir & [opts]]
-  (let [[addon-data [output-filename zipfile-contents]] (gen-addon-data opts)
+(defn mk-addon!
+  "takes the `addon-data` created with `gen-addon` and writes a zipfile to the given `output-dir`.
+  returns a pair of `(addon-data, output-dir+filename)`."
+  [output-dir addon-data]
+  (let [[addon-data [output-filename zipfile-contents]] addon-data
         output-path (utils/join output-dir output-filename)]
     (me.raynes.fs.compression/zip output-path zipfile-contents)
     [addon-data output-path]))
+
+(defn gen-addon!
+  "convenience. just like `gen-addon`, but also writes the generated zip file to the given `output-dir`."
+  [output-dir & [opts]]
+  (mk-addon! output-dir (gen-addon-data opts)))
