@@ -1352,12 +1352,13 @@
   We could do more here but this operation already depends on re-reading the state of *all* addons from the filesystem for just a single addon update.
   See `refresh-check`."
   [addon :addon/installed]
-  (some->> addon
-           :dirname
-           (utils/join (selected-addon-dir))
-           load-installed-addon
-           match-installed-addon-with-catalogue
-           check-addon-for-updates)
+  (logging/with-addon addon
+    (some->> addon
+             :dirname
+             (utils/join (selected-addon-dir))
+             load-installed-addon
+             match-installed-addon-with-catalogue
+             check-addon-for-updates))
   nil)
 
 (defn-spec refresh nil?
