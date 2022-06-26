@@ -1848,13 +1848,13 @@
             ;; install two distinct addons: A, B
 
             ;; addon A is from curseforge, has two directories, One and Two uses "example.net" for it's group-id
-            [[addon-a1 addon-a2] downloaded-file-a] (helper/gen-addon! fs/*cwd* {:num-dirs 2, :base-url "http://example.net", :override {:source "curseforge"}})
+            [[addon-a1 addon-a2] downloaded-file-a] (helper/gen-addon! fs/*cwd* {:num-dirs 2, :base-url "https://example.net", :override {:source "curseforge"}})
 
             ;; addon B is from wowinterface, has a single directory, One, and uses "example.org" for it's group-id
             [[addon-b] downloaded-file-b] (helper/gen-addon! fs/*cwd* {:num-dirs 1, :override {2 {:i 2}}})
 
             expected-nfo-addon-a1
-            [{:group-id "http://example.net/EveryAddonOne",
+            [{:group-id "https://example.net/EveryAddonOne",
               :installed-game-track :retail,
               :installed-version "1.2.3",
               :name "everyaddon",
