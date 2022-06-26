@@ -30,11 +30,12 @@ see CHANGELOG.md for a more formal list of changes by release
         - I've gone with automaticaly uninstalling completely replaced addons with warnings
     - done
 
-## todo
-
 * bug, github, questie is kinda fubar
     - https://github.com/ogri-la/strongbox/issues/339
     - it's also breaking being installed from a zipfile when spec is turned on
+    - done
+
+## todo
 
 * bug, github, BigWigs_Classic from Github cannot be installed when 'retail strict' is set
     - it can be installed from wowi fine
