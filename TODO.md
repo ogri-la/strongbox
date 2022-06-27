@@ -35,6 +35,9 @@ see CHANGELOG.md for a more formal list of changes by release
     - it's also breaking being installed from a zipfile when spec is turned on
     - done
 
+* github, updated dates are are using '+00:00' instead of 'Z'
+    - done
+
 ## todo
 
 * bug, github, BigWigs_Classic from Github cannot be installed when 'retail strict' is set
@@ -48,7 +51,7 @@ see CHANGELOG.md for a more formal list of changes by release
     - https://github.com/ogri-la/strongbox/issues/356
     - investigate an make a decision
 
-* github, updated dates are are using '+00:00' instead of 'Z'
+## todo bucket (no particular order)
 
 * bug, trade skill master string-converter changed directory names between 2.0.7 and 2.1.0
     - see also Combuctor 9.1.3 vs Combuctor 8.1.1 with 'BagBrother' in old addons
@@ -62,8 +65,8 @@ see CHANGELOG.md for a more formal list of changes by release
         install combuctor 9.1.3
         find 'combuctor' and install from wowi (8.1.1)
         get weird orphaned BagBrother addon
-
-## todo bucket (no particular order)
+    - 2022-06-27, returned to bucket 
+        - I don't have a solution for this, good or bad.
 
 * zip, switch to apache commons compress for decompressing
     - https://commons.apache.org/proper/commons-compress/

@@ -135,13 +135,6 @@
         now (java-time/local-date)]
     (.getDays (java-time/period then now))))
 
-(comment "unused"
-         (defn fmt-date
-           ([dateobj]
-            (fmt-date dateobj "yyyy-MM-dd'T'HH:mm:ss'Z'"))
-           ([dateobj fmt]
-            (.format (java.text.SimpleDateFormat. fmt) dateobj))))
-
 (defn datestamp-now-ymd
   []
   (.format (java.text.SimpleDateFormat. "yyyy-MM-dd") (java.util.Date.)))
