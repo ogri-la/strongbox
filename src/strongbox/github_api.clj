@@ -320,7 +320,7 @@
                        :name (slugify (:name row))
                        :label (:name row)
                        :tag-list []
-                       :updated-date (:last_updated row)
+                       :updated-date (-> row :last_updated utils/todt str)
                        :download-count 0
                        :source "github"
                        :source-id (:full_name row)
