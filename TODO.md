@@ -38,6 +38,22 @@ see CHANGELOG.md for a more formal list of changes by release
 * github, updated dates are are using '+00:00' instead of 'Z'
     - done
 
+* 'update check only'
+    - https://github.com/ogri-la/strongbox/issues/356
+    - investigate an make a decision
+        - decided against it
+    - done
+
+* install addon from local zipfile
+    - *not* the 'reinstallation' feature, but literally selecting a zipfile from somewhere and installing it
+    - would be good for installing older versions of an addon?
+    - would be good for installing addons from unsupported sources
+        - wouldn't be able to update it however :(
+            - we would if it matched against the catalogue, like all the other reconciled addons
+    - 'import addon' dialog could do double time
+        - 'from url' and 'from file'
+    - done
+
 ## todo
 
 * bug, github, BigWigs_Classic from Github cannot be installed when 'retail strict' is set
@@ -46,10 +62,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * 'local' source
     - https://github.com/ogri-la/strongbox/issues/355
     - investigate and make a decision
-
-* 'update check only'
-    - https://github.com/ogri-la/strongbox/issues/356
-    - investigate an make a decision
 
 ## todo bucket (no particular order)
 
@@ -247,7 +259,6 @@ see CHANGELOG.md for a more formal list of changes by release
         - clicking 'more' (or whatever) takes to addon detail page
     - perhaps coincide with catalogue v3 with more addon details
 
-
 * import/export, bring up the split logging pane during operation so any problems can be seen
     - or update the tab title to reflect the number of warnings/errors
         - otherwise there is zero feedback
@@ -269,15 +280,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * http, clear non-catalogue cache after session
     - it seems reasonable that stopping and starting the app will have it re-fetch addon summaries.
     - maybe add as a preference
-
-* install addon from local zipfile
-    - *not* the 'reinstallation' feature, but literally selecting a zipfile from somewhere and installing it
-    - would be good for installing older versions of an addon?
-    - would be good for installing addons from unsupported sources
-        - wouldn't be able to update it however :(
-            - we would if it matched against the catalogue, like all the other reconciled addons
-    - 'import addon' dialog could do double time
-        - 'from url' and 'from file'
 
 * deleting an addon should also remove any of it's zip files
     - this sounds like an opt-in preference
