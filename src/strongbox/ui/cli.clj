@@ -370,6 +370,41 @@
     {:label (fs/base-name downloaded-file)
      :error-messages error-messages}))
 
+(defn-spec install-addons-from-file-in-parallel ::sp/list-of-maps
+  "installs/updates a list of addon zip files in parallel, pushing guard checks into threads and then installing serially."
+  [download-file-list (s/coll-of ::sp/extant-archive-file)]
+  (let [queue-atm (core/get-state :job-queue)
+        install-dir (core/selected-addon-dir)
+        current-locks (atom #{})
+        new-dirs (atom #{})
+        job-fn (fn [downloaded-file] ;;[addon]
+                 (let [;;downloaded-file (core/download-addon-guard-affective addon install-dir)
+                       ;;existing-dirs (addon-locks addon) ;; zip file is untethered from addon data
+                       updated-dirs (zipfile-locks downloaded-file)
+                       ;;locks-needed (clojure.set/union existing-dirs updated-dirs)
+                       locks-needed updated-dirs
+                       addon {:group-id (unique-group-id-from-zip-file downloaded-file)}]
+                   (swap! new-dirs into updated-dirs)
+                   (utils/with-lock current-locks locks-needed
+                     (let [error-messages
+                           (logging/buffered-log
+                            :warn
+                            (let [results (addon/install-addon addon install-dir downloaded-file)
+                                  installed-addon-dir (str (fs/parent (first results)))]
+                              (core/refresh-addon* installed-addon-dir)))]
+
+                       {:label (fs/base-name downloaded-file)
+                        :error-messages error-messages}))))
+
+        _ (run! (fn [downloaded-file]
+                  (joblib/create-job! queue-atm #(job-fn downloaded-file))) download-file-list)
+        results (joblib/run-jobs! queue-atm core/num-concurrent-downloads)]
+
+    ;; if any of the new directories introduced are not present in the :installed-addon-list, do a full refresh.
+    (core/refresh-check @new-dirs)
+
+    results))
+
 (defn-spec install-addon nil?
   "install an addon from the catalogue. works on expanded addons as well."
   [addon :addon/summary]

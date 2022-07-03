@@ -837,11 +837,17 @@
                (debug (format "recurring in %s ms, have waited %s ms" wait-time# waited#))
                (recur (+ waited# wait-time#))))))))
 
+;; todo: remove?
 (defn-spec remove-items-matching vector?
   "removes all instances where `(keyfn item)` matches `(keyfn given)` returning a vector."
   [item-list vector?, keyfn ifn?, given any?]
   (let [matching (keyfn given)]
     (vec (remove #(= (keyfn %) matching) item-list))))
+
+(defn matching
+  [subject keyfn]
+  (let [match (keyfn subject)]
+    #(= match (keyfn %))))
 
 (defn-spec patch-name (s/or :ok string?, :not-found nil?)
   "returns the 'patch' name for the given `game-version`, considering only the major and minor values.

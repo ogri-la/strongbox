@@ -11,6 +11,7 @@
    [strongbox
     [nfo :as nfo]
     [toc :as toc]
+    [addon :as addon]
     [zip :as zip]
     [specs :as sp]
     [main :as main]
@@ -192,8 +193,9 @@
         interface-version (get override :interface-version 70000)
 
         source "wowinterface"
-        source-id "999"
+        source-id (get override :source-id "999")
         game-track :retail
+        group-id (get override :group-id)
 
         base-url (or base-url "https://example.org")
 
@@ -203,6 +205,7 @@
           (let [override-map (get override i {})
                 i (get override-map :i i)
                 i-label (clojure.pprint/cl-format nil "~@(~R~)" i) ;; 1 => One
+                group-id (or group-id (get override-map :group-id) i-label)
                 dirname (str nom i-label) ;; EveryAddonOne
 
                 url (format "%s/%s" base-url dirname) ;; "https://example.org/EveryAddonOne"
@@ -241,7 +244,7 @@
                      :url url
                      :download-url download-url
                      :game-track game-track
-                     :group-id i-label}
+                     :group-id group-id}
 
                 ;; zip file contents
                 tocfile-name (str dirname "/" dirname ".toc") ;; EveryAddonOne/EveryAddonOne.toc
@@ -255,7 +258,9 @@
              :nfo nfo
              :addon-summary addon-summary
              :source-updates source-updates
-             :installable (merge addon-summary source-updates) ;; aka 'expanded' 
+             :installable (merge addon-summary source-updates) ;; aka 'expanded'
+             :installed toc
+             :strongbox-installed (addon/merge-toc-nfo toc nfo)
 
              ;; single dir zip file contents
              :zip-contents filename+content-list}))

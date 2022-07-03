@@ -1712,7 +1712,8 @@
 
 (deftest update-installed-addon!
   (testing "a modified addon can be found in the installed addon list and replaced"
-    (let [addon {:source "foo" :source-id "bar" :name "baz"}
+    (let [;;addon {:source "foo" :source-id "bar" :name "baz"}
+          addon (get-in (helper/gen-addon-data) [0 0 :toc])
           installed-addon-list [addon]
           updated-addon (merge addon {:name "bup"})
           updated-addon-list [updated-addon]]
@@ -1720,12 +1721,13 @@
         (swap! core/state assoc :installed-addon-list installed-addon-list)
         (is (= installed-addon-list (core/get-state :installed-addon-list)))
         (core/update-installed-addon! updated-addon)
-        (is (= updated-addon-list (core/get-state :installed-addon-list))))))
+        (is (= updated-addon-list (core/get-state :installed-addon-list)))))))
 
+(deftest update-installed-addon!--missing
   (testing "addons that don't exist are added"
-    (let [addon {:source "foo" :source-id "bar" :name "baz"}
+    (let [addon (get-in (helper/gen-addon-data {:override {:group-id "123"}}) [0 0 :strongbox-installed])
           installed-addon-list [addon]
-          updated-addon {:source "bar" :source-id "foo" :name "baz"}
+          updated-addon (get-in (helper/gen-addon-data {:override {:group-id "456"}}) [0 0 :strongbox-installed])
           expected-addon-list [addon updated-addon]]
       (with-running-app
         (swap! core/state assoc :installed-addon-list installed-addon-list)
