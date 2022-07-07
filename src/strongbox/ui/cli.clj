@@ -389,9 +389,9 @@
                      (let [error-messages
                            (logging/buffered-log
                             :warn
-                            (let [results (addon/install-addon addon install-dir downloaded-file)
-                                  installed-addon-dir (str (fs/parent (first results)))]
-                              (core/refresh-addon* installed-addon-dir)))]
+                            (let [results (addon/install-addon addon install-dir downloaded-file)]
+                              (when-let [installed-addon-dir (some-> results first fs/parent str)]
+                                (core/refresh-addon* installed-addon-dir))))]
 
                        {:label (fs/base-name downloaded-file)
                         :error-messages error-messages}))))

@@ -181,15 +181,16 @@
           some-addon-toc (utils/join some-addon-path "SomeAddon.toc")
           _ (spit some-addon-toc "## Title: SomeAddon\n## Description: asdf\n## Interface: 80300\n## Version: 1.2.3")
 
-          expected [{:name "someaddon",
-                     :dirname "SomeAddon",
-                     :label "SomeAddon",
-                     :description "asdf",
-                     :interface-version 80300,
+          expected {:name "someaddon",
+                    :dirname "SomeAddon",
+                    :label "SomeAddon",
+                    :description "asdf",
+                    :interface-version 80300,
 
-                     :supported-game-tracks [:retail]
-                     :installed-version "1.2.3"}]]
-      (is (= expected (addon/load-all-installed-addons addon-dir :retail))))))
+                    :supported-game-tracks [:retail]
+                    :installed-version "1.2.3"}]
+      (is (= expected (addon/load-installed-addon some-addon-path :retail)))
+      (is (= [expected] (addon/load-all-installed-addons addon-dir :retail))))))
 
 (deftest load-installed-addons-2
   (testing "toc data and nfo data are mooshed together as expected"
@@ -211,25 +212,26 @@
                     :installed-game-track :retail}
           _ (spit some-addon-nfo (utils/to-json nfo-data))
 
-          expected [{;; toc data
-                     :name "someaddon"
-                     :dirname "SomeAddon"
-                     :label "SomeAddon"
-                     :description "asdf"
-                     :interface-version 80300
+          expected {;; toc data
+                    :name "someaddon"
+                    :dirname "SomeAddon"
+                    :label "SomeAddon"
+                    :description "asdf"
+                    :interface-version 80300
 
                      ;; shared between toc and nfo, nfo wins out
-                     :installed-version "1.2.3"
+                    :installed-version "1.2.3"
 
                      ;; unique items from nfo data
-                     :source "wowinterface"
-                     :source-id 123
-                     :source-map-list [{:source "wowinterface" :source-id 123}]
-                     :group-id "fdsa"
-                     :installed-game-track :retail
-                     :supported-game-tracks [:retail]
-                     :primary? true}]]
-      (is (= expected (addon/load-all-installed-addons addon-dir :retail))))))
+                    :source "wowinterface"
+                    :source-id 123
+                    :source-map-list [{:source "wowinterface" :source-id 123}]
+                    :group-id "fdsa"
+                    :installed-game-track :retail
+                    :supported-game-tracks [:retail]
+                    :primary? true}]
+      (is (= expected (addon/load-installed-addon some-addon-path :retail)))
+      (is (= [expected] (addon/load-all-installed-addons addon-dir :retail))))))
 
 (deftest load-installed-addons--invalid-nfo-data-not-loaded
   (testing "invalid nfo data is not loaded"
@@ -252,14 +254,15 @@
                     }
           _ (spit nfo-path (utils/to-json nfo-data))
 
-          expected [{:name "someaddon",
-                     :dirname "SomeAddon",
-                     :label "SomeAddon",
-                     :description "asdf",
-                     :interface-version 80300,
-                     :installed-version "1.2.3"
-                     :supported-game-tracks [:retail]}]]
-      (is (= expected (addon/load-all-installed-addons addon-dir :retail))))))
+          expected {:name "someaddon",
+                    :dirname "SomeAddon",
+                    :label "SomeAddon",
+                    :description "asdf",
+                    :interface-version 80300,
+                    :installed-version "1.2.3"
+                    :supported-game-tracks [:retail]}]
+      (is (= expected (addon/load-installed-addon some-addon-path :retail)))
+      (is (= [expected] (addon/load-all-installed-addons addon-dir :retail))))))
 
 (deftest load-installed-addons--explicit-nfo-ignore
   (testing "ignore flag in nfo data overrides any ignore flag in toc data"
@@ -275,19 +278,20 @@
           _ (spit some-addon-nfo (utils/to-json {:source "wowinterface" :source-id 123
                                                  :ignore? false})) ;; expressly un-ignoring this otherwise-ignored addon
 
-          expected [{:name "someaddon",
-                     :dirname "SomeAddon",
-                     :label "SomeAddon",
-                     :description "asdf",
-                     :interface-version 80300
-                     :supported-game-tracks [:retail]
-                     :installed-version "@project-version@"
-                     :source "wowinterface"
-                     :source-id 123
-                     :source-map-list [{:source "wowinterface" :source-id 123}]
+          expected {:name "someaddon",
+                    :dirname "SomeAddon",
+                    :label "SomeAddon",
+                    :description "asdf",
+                    :interface-version 80300
+                    :supported-game-tracks [:retail]
+                    :installed-version "@project-version@"
+                    :source "wowinterface"
+                    :source-id 123
+                    :source-map-list [{:source "wowinterface" :source-id 123}]
 
-                     :ignore? false}]]
-      (is (= expected (addon/load-all-installed-addons addon-dir :retail))))))
+                    :ignore? false}]
+      (is (= expected (addon/load-installed-addon some-addon-path :retail)))
+      (is (= [expected] (addon/load-all-installed-addons addon-dir :retail))))))
 
 (deftest load-installed-addons--multiple-non-identical-toc-data
   (let [fixture (helper/fixture-path "everyaddon--1-2-3--multi-toc--inconsistent.zip")

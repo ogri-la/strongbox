@@ -183,27 +183,32 @@
        (map #(merge-toc-nfo % (nfo/read-nfo install-dir (:dirname %))))
        group-addons))
 
-(defn-spec load-installed-addon (s/or :ok :addon/toc, :error nil?)
-  "reads and merges the toc+nfo data from the given `addon-dir`, groups them and returns the grouped mooshed data."
+(defn-spec load-installed-addon (s/or :ok-toc :addon/toc, :ok-nfo :addon/nfo, :error nil?)
+  "reads and merges the toc+nfo data from the given `addon-dir` and those in it's group, groups them up and returns the grouped mooshed data."
   [addon-dir ::sp/addon-dir, game-track ::sp/game-track]
   (logging/with-addon {:dirname (-> addon-dir fs/base-name str)}
     (let [install-dir (str (fs/parent addon-dir))
           addon-dirname (str (fs/base-name addon-dir))
           target-nfo (nfo/read-nfo install-dir addon-dirname)
-          group-id (:group-id target-nfo)
+          target-toc (-load-installed-addon addon-dir game-track)
+          target-addon (merge-toc-nfo target-toc target-nfo)
+          group-id (:group-id target-addon)
           -load-installed-addon* (fn [[addon-path nfo-data]]
                                    (when-let [toc-data (-load-installed-addon addon-path game-track)]
-                                     (merge-toc-nfo toc-data nfo-data)))]
-      (->> install-dir
-           fs/list-dir
-           (filterv fs/directory?)
-           (mapv #(vector (str %) (nfo/read-nfo install-dir (str (fs/base-name %)))))
-           (filterv #(= group-id (:group-id (second %))))
-           (mapv -load-installed-addon*)
-           (remove nil?)
-           group-addons ;; should only be one, we filtered by group-id earlier
-           first))))
+                                     (merge-toc-nfo toc-data nfo-data)))
 
+          grouped-addon
+          (->> install-dir
+               fs/list-dir
+               (filterv fs/directory?)
+               ;; [[/path/to/addon, {nfo data, ...}], ...]
+               (mapv #(vector (str %) (nfo/read-nfo install-dir (str (fs/base-name %)))))
+               (filterv #(= group-id (:group-id (second %))))
+               (mapv -load-installed-addon*)
+               (remove nil?)
+               group-addons ;; should only be one, we filtered by group-id earlier
+               first)]
+      (or grouped-addon target-addon))))
 
 ;; ---
 
@@ -304,8 +309,11 @@
                                   (map fs/base-name)
                                   (map strip-trailing-slash)
                                   set)
-                ;; we don't care which game track is used, just that addons are logically grouped.
-                all-addon-data (timbre/with-merged-config {:middleware [(constantly nil)]}
+
+                all-addon-data (timbre/with-merged-config
+                                 ;; swallow log output, else warnings for unrelated addons are surfaced for *this* addon
+                                 {:middleware [(constantly nil)]}
+                                 ;; we don't care which game track is used, just that addons are logically grouped.
                                  (load-all-installed-addons install-dir :retail))
 
                 removeable? (fn [some-addon]

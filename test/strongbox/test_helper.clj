@@ -238,13 +238,24 @@
                                 :download-url download-url
                                 :game-track game-track}
 
-                ;; expected nfo data derived from addon-summary and source-updates
+                ;; valid nfo data we're just making up.
                 nfo {:source source
                      :source-id source-id
-                     :url url
-                     :download-url download-url
-                     :game-track game-track
                      :group-id group-id}
+
+                ;; nfo data derived from the toc+addon-summary (catalogue entry) data.
+
+
+                derived-nfo {:group-id url
+                             :source-map-list [{:source "wowinterface", :source-id "999"}]
+                             :installed-game-track game-track
+                             :installed-version version
+
+                             :source source
+                             :source-id source-id
+                             :name normal-name
+                             :primary? (get override-map :primary? (= i 1)) ;; first addon is always the primary
+                             }
 
                 ;; zip file contents
                 tocfile-name (str dirname "/" dirname ".toc") ;; EveryAddonOne/EveryAddonOne.toc
@@ -256,6 +267,7 @@
 
             {:toc toc
              :nfo nfo
+             :derived-nfo derived-nfo
              :addon-summary addon-summary
              :source-updates source-updates
              :installable (merge addon-summary source-updates) ;; aka 'expanded'

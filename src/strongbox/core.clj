@@ -630,9 +630,9 @@
     nil))
 
 (defn-spec update-installed-addon! :addon/installed
-  "adds or updates an addon in the `:installed-addon-list` matching the `:source` and `:source-id` of the given `addon` with the given `addon`.
-  order is not preserved.
-  returns the given `addon`."
+  "adds or updates an addon in the `:installed-addon-list`, removing all addons matching the given `f` predicate and appending the given `addon`.
+  `f` defaults to addons matching the `:group-id` of the given `addon`.
+  order is not preserved. returns the given `addon`."
   ([addon :addon/installed]
    (update-installed-addon! addon (utils/matching addon :group-id)))
   ([addon :addon/installed, f fn?]
@@ -1346,12 +1346,12 @@
 ;;
 
 (defn-spec refresh-addon* nil?
-  "refreshes state of an individual addon.
-  note! an addon may change it's set of directories between updates. This means the `:dirname` of the given `addon` may not represent the new `:dirname`,
-  or that it's list of `:grouped-addons` are now stale. We could reload the addons using the set of old and new directories acquired, however that can lead
-  to 'orphaned' addons where we unintentionally ensure old addons are propagated into new state using old data, despite the addon not existing on disk.
-  We could do more here but this operation already depends on re-reading the state of *all* addons from the filesystem for just a single addon update.
-  See `refresh-check`."
+  "refreshes state of an individual addon using a filesystem path.
+  note! an addon may change it's set of directories between updates, or be completely overwritten by the same addon being installed without the context of a catalogue.
+  This means the `:dirname` of the *given* `addon` may not represent the *new* `:dirname` and that it's list of `:grouped-addons` are now stale.
+  We could reload the addons using the set of old and new directories acquired (see `refresh-check`), however that also leads to 'orphaned' addons,
+  where a grouped addon that used to belong no longer does.
+  It's messy. A full refresh is best but that's ugly :("
   [addon-path ::sp/addon-dir]
   (some->> addon-path
            load-installed-addon
@@ -1360,12 +1360,12 @@
   nil)
 
 (defn-spec refresh-addon nil?
-  "refreshes state of an individual addon.
-  note! an addon may change it's set of directories between updates. This means the `:dirname` of the given `addon` may not represent the new `:dirname`,
-  or that it's list of `:grouped-addons` are now stale. We could reload the addons using the set of old and new directories acquired, however that can lead
-  to 'orphaned' addons where we unintentionally ensure old addons are propagated into new state using old data, despite the addon not existing on disk.
-  We could do more here but this operation already depends on re-reading the state of *all* addons from the filesystem for just a single addon update.
-  See `refresh-check`."
+  "refreshes state of an individual `addon`.
+  note! an addon may change it's set of directories between updates, or be completely overwritten by the same addon being installed without the context of a catalogue.
+  This means the `:dirname` of the *given* `addon` may not represent the *new* `:dirname` and that it's list of `:grouped-addons` are now stale.
+  We could reload the addons using the set of old and new directories acquired (see `refresh-check`), however that also leads to 'orphaned' addons,
+  where a grouped addon that used to belong no longer does.
+  It's messy. A full refresh is best but that's ugly :("
   [addon :addon/installed]
   (logging/with-addon addon
     (some->> addon

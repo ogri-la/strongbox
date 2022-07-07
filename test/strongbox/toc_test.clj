@@ -77,6 +77,10 @@ SomeAddon.lua")
                     :#interface "11302"}]
       (is (= expected (toc/parse-toc-file toc-file-contents))))))
 
+(deftest parse-toc-file--empty
+  (testing "empty toc data returns `nil`"
+    (is (nil? (toc/parse-toc-file "")))))
+
 (deftest parse-addon-toc-guard
   (testing "parsing of scraped toc-file key-vals"
     (let [addon-path (join fs/*cwd* "SomeAddon")

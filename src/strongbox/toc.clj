@@ -16,7 +16,7 @@
   (:import
    [java.util.regex Pattern]))
 
-(defn-spec parse-toc-file map?
+(defn-spec parse-toc-file (s/or :ok map?, :empty-or-just-comments nil?)
   [toc-contents string?]
   (let [comment? #(= (utils/safe-subs % 2) "##")
         comment-comment? #(= (utils/safe-subs % 4) "# ##")
@@ -34,7 +34,10 @@
                             (debug "cannot parse line, ignoring:" comment)
                             {key (clojure.string/trim value)})))
         contents (clojure.string/split-lines toc-contents)]
-    (->> contents (filter interesting?) (map parse-comment) (reduce merge))))
+    (->> contents
+         (filter interesting?)
+         (map parse-comment)
+         (reduce merge))))
 
 (defn-spec read-toc-file (s/or :ok map?, :error nil?)
   "reads the contents of a *single* toc file into a map.

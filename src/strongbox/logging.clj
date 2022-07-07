@@ -85,7 +85,7 @@
   nil)
 
 (defmacro buffered-log+return-value
-  "macro. returns a list of log entries made while executing the given form"
+  "macro. returns a pair of `form` results and a list of log entries at the given `level` and above made while executing the given `form`"
   [level & form]
   `(let [stateful-buffer# (atom [])
          appender# (fn [data#]
@@ -97,7 +97,7 @@
          [(deref stateful-buffer#) result#]))))
 
 (defmacro buffered-log
-  "macro. returns a list of log entries made while executing the given form"
+  "macro. returns a list of log entries at the given `level` and above made while executing the given `form`"
   [level & form]
   `(first (buffered-log+return-value ~level ~@form)))
 
