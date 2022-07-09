@@ -6,72 +6,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* tooltip on WoW column with patch name
-    - done
-
-* ctrl-f5 should re-load addons from the addon dir as well
-    - currently it just wipes out the http cache
-    - done
-
-* prompt user when installing an addon will create mutual dependencies
-    - for example:
-        1. user selects 'find similar' to replace a curseforge addon
-        2. user finds a wowi hosted version
-        3. user installs addon
-        4. addon *overwrites* existing version of addon, creating a messy mutual dependency between old and new
-    - when we could have
-        3. user installs addon 'NewFoo'
-        4. if it completely overwrites 'Foo', just uninstall it, don't prompt.
-        4. mutual dependency check - "'NewFoo' overwrites 'Foo', do you want to uninstall 'Foo'?"
-        5. user clicks no, mutual dependency is created
-        5. user clicks yes, 'Foo' is uninstalled, 'NewFoo' has no mutual dependencies.
-
-    - I don't really like such prompts, my eyes tend to glaze over eventually or I get confused/frustrated at how severe the problem actually is.
-        - I've gone with automaticaly uninstalling completely replaced addons with warnings
-    - done
-
-* bug, github, questie is kinda fubar
-    - https://github.com/ogri-la/strongbox/issues/339
-    - it's also breaking being installed from a zipfile when spec is turned on
-    - done
-
-* github, updated dates are are using '+00:00' instead of 'Z'
-    - done
-
-* 'update check only'
-    - https://github.com/ogri-la/strongbox/issues/356
-    - investigate an make a decision
-        - decided against it
-    - done
-
-* install addon from local zipfile
-    - *not* the 'reinstallation' feature, but literally selecting a zipfile from somewhere and installing it
-    - would be good for installing older versions of an addon?
-    - would be good for installing addons from unsupported sources
-        - wouldn't be able to update it however :(
-            - we would if it matched against the catalogue, like all the other reconciled addons
-    - 'import addon' dialog could do double time
-        - 'from url' and 'from file'
-    - done
-
-* bug, github, BigWigs_Classic from Github cannot be installed when 'retail strict' is set
-    - it can be installed from wowi fine
-    - erm, this is *not* a bug. 
-        - Bigwigs Classic is for *retail*
-            - the .toc file says it
-            - the release.json says it
-        - the only weird thing is that the .toc in the root of the addon has "_Classic.toc"
-    - nothing to fix
-    - done
-
-* 'local' source
-    - https://github.com/ogri-la/strongbox/issues/355
-    - investigate and make a decision
-    - done
-        - sort of, many addons can now be installed from file
-
 ## todo
-
 
 ## todo bucket (no particular order)
 
