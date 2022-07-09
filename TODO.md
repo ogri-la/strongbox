@@ -54,14 +54,24 @@ see CHANGELOG.md for a more formal list of changes by release
         - 'from url' and 'from file'
     - done
 
-## todo
-
 * bug, github, BigWigs_Classic from Github cannot be installed when 'retail strict' is set
     - it can be installed from wowi fine
+    - erm, this is *not* a bug. 
+        - Bigwigs Classic is for *retail*
+            - the .toc file says it
+            - the release.json says it
+        - the only weird thing is that the .toc in the root of the addon has "_Classic.toc"
+    - nothing to fix
+    - done
 
 * 'local' source
     - https://github.com/ogri-la/strongbox/issues/355
     - investigate and make a decision
+    - done
+        - sort of, many addons can now be installed from file
+
+## todo
+
 
 ## todo bucket (no particular order)
 

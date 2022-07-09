@@ -363,8 +363,9 @@
 (s/def :addon/toc+nfo (s/merge :addon/toc :addon/nfo))
 
 ;; addon is installed
-(s/def :addon/installed (s/or :installed :addon/toc
-                              :strongbox-installed :addon/toc+nfo))
+;; 2022-07: it's now possible for toc data to be invalid and discarded, leaving just the nfo data
+(s/def :addon/installed (s/or :installed (s/or :toc :addon/toc, :nfo :addon/nfo) ;; addon has nfo or toc ..
+                              :strongbox-installed :addon/toc+nfo)) ;; .. or both
 (s/def :addon/installed-list (s/coll-of :addon/installed))
 
 ;; addon has been run against the catalogue and a match was *not* found.

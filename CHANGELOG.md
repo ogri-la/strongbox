@@ -8,20 +8,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* multiple addons can now be selected and installed from `File -> Install addon from file`
 * the tooltip for values in the 'WoW' column is now the long-form patch name.
     - for example, '9.2.5' will have the tooltip 'Shadowlands: Eternity's End'.
 
 ### Changed
 
-* `ctrl-f5` now clears the http cache and then does a full refresh, including a reload of the addons from the filesystem.
-    - previously it just cleared the cache and checked for updates online.
 * addons that are completely replaced by another addon are now uninstalled first rather than creating a 'mutual dependency'.
     - using the `Find similar` option to replace Curseforge addons was leading to addons from other hosts creating unnecessary mutual dependencies.
+    - also common when installing an addon from a file that overwrites one installed from a catalogue.
 * data from invalid .toc files is now discarded.
     - for example, Questie: https://github.com/Questie/Questie/blob/2242b806172163122ba0a08e451b750851aac3f8/Questie.toc#L4
     - it means some data derived from toc files, like description, game-track, alternate source hosts, etc will not be available.
-    - if there is a catalogue match then most of this shouldn't be a problem.
-    - this is a pretty rare case.
+    - if there is a catalogue match then most of this shouldn't be a problem. This is a pretty rare case.
+* `ctrl-f5` now clears the http cache and then does a full refresh, including a reload of the addons from the filesystem.
+    - previously it just cleared the cache and checked for updates online.
+* some warnings have been made less obscure or dropped down to debug statements
+    - strongbox runs at `info` by default, you'd need to restart strongbox with `--debug` to see them again.
 
 ### Fixed
 

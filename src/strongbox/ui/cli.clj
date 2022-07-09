@@ -291,12 +291,6 @@
   [updateable-addon-list :addon/installable-list]
   (run! core/install-addon-guard-affective updateable-addon-list))
 
-(defn-spec addon-locks set?
-  "returns a set of names of directories used by the given `addon` and it's grouped addons"
-  [addon map?]
-  ;; addon may not be installed yet, we may not have any `:dirname` values at all
-  (->> addon addon/flatten-addon (map :dirname) (remove nil?) utils/nilable set))
-
 (defn-spec zipfile-locks set?
   "returns a set of the top-level directories that will be needed after unzipping the given `downloaded-file`."
   [downloaded-file ::sp/extant-archive-file]
@@ -317,7 +311,7 @@
         new-dirs (atom #{})
         job-fn (fn [addon]
                  (let [downloaded-file (core/download-addon-guard-affective addon install-dir)
-                       existing-dirs (addon-locks addon)
+                       existing-dirs (addon/dirname-set addon)
                        updated-dirs (zipfile-locks downloaded-file)
                        locks-needed (clojure.set/union existing-dirs updated-dirs)]
                    (swap! new-dirs into updated-dirs)
@@ -369,6 +363,42 @@
     (core/refresh)
     {:label (fs/base-name downloaded-file)
      :error-messages error-messages}))
+
+(defn-spec install-addons-from-file-in-parallel ::sp/list-of-maps
+  "installs/updates a list of addon zip files in parallel, pushing guard checks into threads and then installing serially."
+  [download-file-list (s/coll-of ::sp/extant-archive-file)]
+  (let [queue-atm (core/get-state :job-queue)
+        install-dir (core/selected-addon-dir)
+        current-locks (atom #{})
+        new-dirs (atom #{})
+        job-fn (fn [downloaded-file] ;;[addon]
+                 (let [;;downloaded-file (core/download-addon-guard-affective addon install-dir)
+                       ;;existing-dirs (addon-locks addon) ;; zip file is untethered from addon data
+                       updated-dirs (zipfile-locks downloaded-file)
+                       ;;locks-needed (clojure.set/union existing-dirs updated-dirs)
+                       locks-needed updated-dirs
+                       addon {:group-id (unique-group-id-from-zip-file downloaded-file)}]
+                   (swap! new-dirs into updated-dirs)
+                   (utils/with-lock current-locks locks-needed
+                     (let [error-messages
+                           (logging/buffered-log
+                            :warn
+                            (let [results (addon/install-addon addon install-dir downloaded-file)]
+                              (when-let [installed-addon-dir (some-> results first fs/parent str)]
+                                (core/refresh-addon* installed-addon-dir))))]
+
+                       {:label (fs/base-name downloaded-file)
+                        :error-messages error-messages}))))
+
+        _ (run! (fn [downloaded-file]
+                  (joblib/create-job! queue-atm #(job-fn downloaded-file))) download-file-list)
+        results (joblib/run-jobs! queue-atm core/num-concurrent-downloads)]
+
+    ;; if any of the new directories introduced are not present in the :installed-addon-list, do a full refresh.
+    ;; a same-set of directories that replaced existing directories (but with different group-ids) may cause orphans in the installed-addon-list.
+    (core/refresh-check @new-dirs)
+
+    results))
 
 (defn-spec install-addon nil?
   "install an addon from the catalogue. works on expanded addons as well."

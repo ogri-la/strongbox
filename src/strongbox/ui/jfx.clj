@@ -768,12 +768,14 @@
       (-> chooser .getExtensionFilters (.addAll (mapv extension-filter ext-filters))))
     (when-let [initial-dir (:initial-dir opt-map)]
       (.setInitialDirectory chooser (java.io.File. initial-dir)))
-    (when-let [^java.io.File
-               file-obj @(fx/on-fx-thread
+    (when-let [file-obj @(fx/on-fx-thread
                           (case open-type
                             :save (.showSaveDialog chooser window)
+                            :open-multi (.showOpenMultipleDialog chooser window)
                             (.showOpenDialog chooser window)))]
-      (-> file-obj .getAbsolutePath str))))
+      (if (instance? java.util.Collection file-obj)
+        (mapv #(str (.getAbsolutePath %)) file-obj)
+        (-> file-obj .getAbsolutePath str)))))
 
 (defn dir-chooser
   "prompt user to select a directory"
@@ -979,9 +981,10 @@
 (defn zip-file-picker
   "file chooser dialog for .zip files, opened to current addon directory."
   []
-  (when-let [abs-path (file-chooser {:filters [{:description "ZIP files" :extensions ["*.zip"]}]
-                                     :initial-dir (core/selected-addon-dir)})]
-    (let [{:keys [error-messages label]} (cli/install-addon-from-file abs-path)]
+  (when-let [abs-path-list (file-chooser {:filters [{:description "ZIP files" :extensions ["*.zip"]}]
+                                          :type :open-multi
+                                          :initial-dir (core/selected-addon-dir)})]
+    (doseq [{:keys [error-messages label]} (cli/install-addons-from-file-in-parallel abs-path-list)]
       (when-not (empty? error-messages)
         (let [msg (message-list (format "warnings/errors while installing \"%s\"" label) error-messages)]
           (alert :warning msg {:wait? false})))))

@@ -16,7 +16,7 @@
   (:import
    [java.util.regex Pattern]))
 
-(defn-spec parse-toc-file map?
+(defn-spec parse-toc-file (s/or :ok map?, :empty-or-just-comments nil?)
   [toc-contents string?]
   (let [comment? #(= (utils/safe-subs % 2) "##")
         comment-comment? #(= (utils/safe-subs % 4) "# ##")
@@ -34,7 +34,10 @@
                             (debug "cannot parse line, ignoring:" comment)
                             {key (clojure.string/trim value)})))
         contents (clojure.string/split-lines toc-contents)]
-    (->> contents (filter interesting?) (map parse-comment) (reduce merge))))
+    (->> contents
+         (filter interesting?)
+         (map parse-comment)
+         (reduce merge))))
 
 (defn-spec read-toc-file (s/or :ok map?, :error nil?)
   "reads the contents of a *single* toc file into a map.
@@ -137,11 +140,8 @@
                                                utils/nilable)]
                            {:source-map-list items})
 
-         ;; todo: add support for x-github
-         ;; ## X-Github: https://github.com/teelolws/Altoholic-Retail => source "github", source-id "teelolws/Altoholic-Retail"
-
          ignore-flag (when (some->> keyvals :version (clojure.string/includes? "@project-version@"))
-                       (warn (format "ignoring '%s': 'Version' field in .toc file is unrendered" dirname))
+                       (debug (format "ignoring '%s': 'Version' field in .toc file is unrendered" dirname))
                        {:ignore? true})
 
          interface-version (or (some-> keyvals :interface utils/to-int)
@@ -151,8 +151,11 @@
 
          _ (when (and (some? (:-filename-game-track keyvals))
                       (not= (:-filename-game-track keyvals) game-track))
-             (warn (format "'%s' from filename does not match it's interface-version '%s'"
-                           (:-filename-game-track keyvals) game-track)))
+             (debug (format
+                    ;; 'classic' in .toc filename does not match 'retail' derived from it's 'Interface' value of '90200'.
+                    ;; see BigWigs_Classic for a false-positive
+                    "'%s' in .toc filename does not match '%s' derived from it's 'Interface' value of '%s'."
+                    (name (:-filename-game-track keyvals)) (name game-track) interface-version)))
 
          addon {:name (normalise-name label)
                 :dirname dirname
@@ -180,8 +183,8 @@
                       ignore-flag source-map-list)]
 
      (if-not (s/valid? :addon/toc addon)
-       ;; "ignoring EveryAddon.toc, invalid data found."
-       (do (warn (utils/reportable-error (format "ignoring %s, invalid data found." (:-filename keyvals))
+       ;; "ignoring data in 'EveryAddon.toc', invalid values found."
+       (do (warn (utils/reportable-error (format "ignoring data in '%s', invalid values found." (:-filename keyvals))
                                          "feel free to report this!"))
            (debug (s/explain :addon/toc addon)))
        addon))))

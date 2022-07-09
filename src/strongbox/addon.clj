@@ -179,24 +179,39 @@
        fs/list-dir
        (filter fs/directory?)
        (map #(-load-installed-addon (str %) game-track))
-       (remove nil?) ;; under what circumstances are we getting nils?
+       (remove nil?) ;; under what circumstances are we getting nils? when toc data is bad
        (map #(merge-toc-nfo % (nfo/read-nfo install-dir (:dirname %))))
        group-addons))
 
-(defn-spec load-installed-addon (s/or :ok :addon/toc, :error nil?)
-  "reads and merges the toc+nfo data from the given `addon-dir`, groups them and returns the grouped mooshed data."
+(defn-spec load-installed-addon (s/or :ok-toc :addon/toc, :ok-nfo :addon/nfo, :error nil?)
+  "reads and merges the toc+nfo data from the given `addon-dir` and those in it's group, groups them up and returns the grouped mooshed data."
   [addon-dir ::sp/addon-dir, game-track ::sp/game-track]
   (logging/with-addon {:dirname (-> addon-dir fs/base-name str)}
     (let [install-dir (str (fs/parent addon-dir))
           addon-dirname (str (fs/base-name addon-dir))
-          ;; todo: this sucks. is there another way we can figure out the relationships between addons in an install-dir other than reading them *all* in?
-          all-addon-data (load-all-installed-addons install-dir game-track)]
-      ;; find the first installed addon that has a `:dirname` (or a grouped addon's `:dirname`) matching the given `addon-dirname`.
-      (first (filter (fn [some-addon]
-                       (let [flattened (mapv :dirname (flatten-addon some-addon))]
-                         (not (nil? (some #{addon-dirname} flattened)))))
-                     all-addon-data)))))
+          target-nfo (nfo/read-nfo install-dir addon-dirname)
+          target-toc (-load-installed-addon addon-dir game-track)
+          target-addon (merge-toc-nfo target-toc target-nfo)
+          group-id (:group-id target-addon)
+          -load-installed-addon* (fn [[addon-path nfo-data]]
+                                   (when-let [toc-data (if (= addon-dir addon-path)
+                                                         ;; skip reading toc data a second time as any warnings generated look duplicated to the user.
+                                                         target-toc
+                                                         (-load-installed-addon addon-path game-track))]
+                                     (merge-toc-nfo toc-data nfo-data)))
 
+          grouped-addon
+          (->> install-dir
+               fs/list-dir
+               (filterv fs/directory?)
+               ;; [[/path/to/addon, {nfo data, ...}], ...]
+               (mapv #(vector (str %) (logging/silenced (nfo/read-nfo install-dir (str (fs/base-name %))))))
+               (filterv #(= group-id (:group-id (second %))))
+               (mapv -load-installed-addon*)
+               (remove nil?)
+               group-addons ;; should only be one, we filtered by group-id earlier
+               first)]
+      (or grouped-addon target-addon))))
 
 ;; ---
 
@@ -250,7 +265,8 @@
 
 (defn-spec install-addon (s/or :ok (s/coll-of ::sp/extant-file), :error ::sp/empty-coll)
   "installs an addon given an addon description, a place to install the addon and the addon zip file itself.
-  handles suspicious looking bundles, conflicts with other addons, uninstalling previous addon version and updating nfo files."
+  handles suspicious looking bundles, conflicts with other addons, uninstalling previous addon version and updating nfo files.
+  returns a list of nfo files that were written to disk."
   [addon :addon/nfo-input-minimum, install-dir ::sp/writeable-dir, downloaded-file ::sp/archive-file]
   (let [nom (or (:label addon) (:name addon) (fs/base-name downloaded-file))
         v (:version addon)]
@@ -296,8 +312,11 @@
                                   (map fs/base-name)
                                   (map strip-trailing-slash)
                                   set)
-                ;; we don't care which game track is used, just that addons are logically grouped.
-                all-addon-data (load-all-installed-addons install-dir :retail)
+
+                all-addon-data (logging/silenced ;; swallow log output, else warnings for unrelated addons are surfaced for *this* addon
+                                ;; we don't care which game track is used, just that addons are logically grouped.
+                                (load-all-installed-addons install-dir :retail))
+
                 removeable? (fn [some-addon]
                               (let [dir-subset (->> some-addon
                                                     flatten-addon
@@ -568,3 +587,11 @@
                                            [new-source-map])
           nfo-updates (merge new-source-map {:source-map-list new-source-map-list})]
       (update-nfo! install-dir addon nfo-updates))))
+
+;;
+
+(defn-spec dirname-set set?
+  "returns a set of names of directories used by the given `addon` and it's grouped addons"
+  [addon map?]
+  ;; addon may not be installed yet, we may not have any `:dirname` values at all
+  (->> addon flatten-addon (map :dirname) (remove nil?) utils/nilable set))

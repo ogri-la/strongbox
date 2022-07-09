@@ -629,17 +629,20 @@
     (swap! state assoc :installed-addon-list installed-addon-list)
     nil))
 
-(defn-spec update-installed-addon! :addon/source-map
-  "adds or updates an addon in the `:installed-addon-list` matching the `:source` and `:source-id` of the given `addon` with the given `addon`.
-  order is not preserved.
-  returns the given `addon`."
-  [addon :addon/source-map]
-  (update-installed-addon-list!
-   (conj (utils/remove-items-matching (get-state :installed-addon-list)
-                                      (juxt :source :source-id)
-                                      addon)
-         addon))
-  addon)
+(defn-spec update-installed-addon! :addon/installed
+  "adds or updates an addon in the `:installed-addon-list`, removing all addons matching the given `f` predicate and appending the given `addon`.
+  `f` defaults to addons matching the `:group-id` of the given `addon`.
+  order is not preserved. returns the given `addon`."
+  ([addon :addon/installed]
+   (update-installed-addon! addon (fn [some-addon]
+                                    ;; group-id matches, or there is 
+                                    (or (= (:group-id addon) (:group-id some-addon))
+                                        (and (:dirname addon)
+                                             (= (:dirname addon) (:dirname some-addon)))))))
+  ([addon :addon/installed, f fn?]
+   (update-installed-addon-list!
+    (conj (vec (remove f (get-state :installed-addon-list))) addon))
+   addon))
 
 (defn-spec load-installed-addon (s/or :ok :addon/installed, :error nil?)
   "loads the addon at the given `addon-dir` path, updating or adding it to the `:installed-addon-list`."
@@ -955,12 +958,14 @@
     (when-not (= num-installed num-matched)
       (info (format "num installed %s, num matched %s" num-installed num-matched)))
 
-    (when-not (empty? unmatched-names)
-      (warn "you need to manually search for them and then re-install them")
-      (warn (format "failed to find %s addons in the '%s' catalogue: %s"
-                    (count unmatched-names)
-                    (name (get-state :cfg :selected-catalogue))
-                    (clojure.string/join ", " unmatched-names))))
+    (when (and (not (empty? unmatched-names))
+               (> 1 (count installed-addon-list))) ;; *probably* per-addon installation/refresh, it gives us just the addon in question
+      (let [msg (format "failed to find %s addons in the '%s' catalogue: %s"
+                        (count unmatched-names)
+                        (name (get-state :cfg :selected-catalogue))
+                        (clojure.string/join ", " unmatched-names))
+            suggestion "you need to manually search for them and then re-install them"]
+        (warn (utils/message-list msg [suggestion]))))
 
     (when-not (empty? unmatched)
       (run! (fn [addon]
@@ -970,7 +975,8 @@
                   (warn (utils/message-list
                          (format "failed to find %s in the '%s' catalogue" (:dirname addon) (name (get-state :cfg :selected-catalogue)))
                          ["try searching for this addon by name or description"
-                          "if this addon is part of a bundle, try \"File -> Re-install all\""])))))
+                          ;;"if this addon is part of a bundle, try \"File -> Re-install all\"" ;; not great advice these days when 'downgrades' are likely.
+                          ])))))
 
             unmatched))
 
@@ -1344,22 +1350,33 @@
 
 ;;
 
+(defn-spec refresh-addon* nil?
+  "refreshes state of an individual addon using a filesystem path.
+  note! an addon may change it's set of directories between updates, or be completely overwritten by the same addon being installed without the context of a catalogue.
+  This means the `:dirname` of the *given* `addon` may not represent the *new* `:dirname` and that it's list of `:grouped-addons` are now stale.
+  We could reload the addons using the set of old and new directories acquired (see `refresh-check`), however that also leads to 'orphaned' addons,
+  where a grouped addon that used to belong no longer does.
+  It's messy. A full refresh is best but that's ugly :("
+  [addon-path ::sp/addon-dir]
+  (some->> addon-path
+           load-installed-addon
+           match-installed-addon-with-catalogue
+           check-addon-for-updates)
+  nil)
+
 (defn-spec refresh-addon nil?
-  "refreshes state of an individual addon.
-  note! an addon may change it's set of directories between updates. This means the `:dirname` of the given `addon` may not represent the new `:dirname`,
-  or that it's list of `:grouped-addons` are now stale. We could reload the addons using the set of old and new directories acquired, however that can lead
-  to 'orphaned' addons where we unintentionally ensure old addons are propagated into new state using old data, despite the addon not existing on disk.
-  We could do more here but this operation already depends on re-reading the state of *all* addons from the filesystem for just a single addon update.
-  See `refresh-check`."
+  "refreshes state of an individual `addon`.
+  note! an addon may change it's set of directories between updates, or be completely overwritten by the same addon being installed without the context of a catalogue.
+  This means the `:dirname` of the *given* `addon` may not represent the *new* `:dirname` and that it's list of `:grouped-addons` are now stale.
+  We could reload the addons using the set of old and new directories acquired (see `refresh-check`), however that also leads to 'orphaned' addons,
+  where a grouped addon that used to belong no longer does.
+  It's messy. A full refresh is best but that's ugly :("
   [addon :addon/installed]
   (logging/with-addon addon
     (some->> addon
              :dirname
              (utils/join (selected-addon-dir))
-             load-installed-addon
-             match-installed-addon-with-catalogue
-             check-addon-for-updates))
-  nil)
+             refresh-addon*)))
 
 (defn-spec refresh nil?
   []
