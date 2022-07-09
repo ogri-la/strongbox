@@ -6,54 +6,12 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* github, added 'scrape-github-catalogue' to list of cli actions
-* github, catalogue, fixed handling for empty game track list in csv catalogue
-* add a 'browse addons' link to the file dir
-    - done
-* acquire locks on affected addons during installation
-    - this will let us uninstall and install addons in parallel
-    - done
-* user catalogue, refresh happens in parallel
-    - write the user-catalogue once, not each time or else we'll get Weirdness
-        - a lock is now acquired when writing the user catalogue
-* highlight 'version' value when update available
-    - done
-* format date column in search tab
-    - done
-* bug, addon detail, highlighted installed version shouldn't have an 'install' button
-    - it's already installed
-    - rename it 'reinstall' or similar
-    - done
-* bug, addon detail, mutual dependencies, 'no content in table' is teeny tiny
-    - done
-* add note against 'reinstall all' in README
-    - done
-
-## todo
-
-## todo bucket (no particular order)
-
-* zip, switch to apache commons compress for decompressing
-    - https://commons.apache.org/proper/commons-compress/
-    - .tar.gz and 7z support would be interesting
-    - rar should just die already
-    - this would fix a major showstopper in porting to windows
-    - 2022-05-29: returned to bucket, gazumped by installing addon from file.
-
-* bug, addon detail, highlighted installed version is causing rows to be highlighted in the raw data column?
-    - looks like a javafx problem, no idea how to fix
-    - try reducing to smallest possible reproduction
-
 * tooltip on WoW column with patch name
+    - done
 
-* github, updated dates are are using '+00:00' instead of 'Z'
-
-* BigWigs_Classic from Github cannot be installed when 'retail strict' is set
-    - it can be installed from wowi fine
-* create a parser for that shit markup that is preventing reconcilation
-* manually select the primary addon in a group of addons to prevent synthetic titles
-* finer grained control over grouping of addons
-* gui, better copying from the interface, especially the log box
+* ctrl-f5 should re-load addons from the addon dir as well
+    - currently it just wipes out the http cache
+    - done
 
 * prompt user when installing an addon will create mutual dependencies
     - for example:
@@ -68,10 +26,56 @@ see CHANGELOG.md for a more formal list of changes by release
         5. user clicks no, mutual dependency is created
         5. user clicks yes, 'Foo' is uninstalled, 'NewFoo' has no mutual dependencies.
 
-* ctrl-f5 should re-load addons from the addon dir as well
-    - currently it just wipes out the http cache
+    - I don't really like such prompts, my eyes tend to glaze over eventually or I get confused/frustrated at how severe the problem actually is.
+        - I've gone with automaticaly uninstalling completely replaced addons with warnings
+    - done
 
-* trade skill master string-converter changed directory names between 2.0.7 and 2.1.0
+* bug, github, questie is kinda fubar
+    - https://github.com/ogri-la/strongbox/issues/339
+    - it's also breaking being installed from a zipfile when spec is turned on
+    - done
+
+* github, updated dates are are using '+00:00' instead of 'Z'
+    - done
+
+* 'update check only'
+    - https://github.com/ogri-la/strongbox/issues/356
+    - investigate an make a decision
+        - decided against it
+    - done
+
+* install addon from local zipfile
+    - *not* the 'reinstallation' feature, but literally selecting a zipfile from somewhere and installing it
+    - would be good for installing older versions of an addon?
+    - would be good for installing addons from unsupported sources
+        - wouldn't be able to update it however :(
+            - we would if it matched against the catalogue, like all the other reconciled addons
+    - 'import addon' dialog could do double time
+        - 'from url' and 'from file'
+    - done
+
+* bug, github, BigWigs_Classic from Github cannot be installed when 'retail strict' is set
+    - it can be installed from wowi fine
+    - erm, this is *not* a bug. 
+        - Bigwigs Classic is for *retail*
+            - the .toc file says it
+            - the release.json says it
+        - the only weird thing is that the .toc in the root of the addon has "_Classic.toc"
+    - nothing to fix
+    - done
+
+* 'local' source
+    - https://github.com/ogri-la/strongbox/issues/355
+    - investigate and make a decision
+    - done
+        - sort of, many addons can now be installed from file
+
+## todo
+
+
+## todo bucket (no particular order)
+
+* bug, trade skill master string-converter changed directory names between 2.0.7 and 2.1.0
     - see also Combuctor 9.1.3 vs Combuctor 8.1.1 with 'BagBrother' in old addons
         - BagBrother was removed but also got 
             00:35:37.982 [info] [BagBrother] downloading 'Combuctor' version '8.1.1'
@@ -83,17 +87,34 @@ see CHANGELOG.md for a more formal list of changes by release
         install combuctor 9.1.3
         find 'combuctor' and install from wowi (8.1.1)
         get weird orphaned BagBrother addon
+    - 2022-06-27, returned to bucket 
+        - I don't have a solution for this, good or bad.
+
+* zip, switch to apache commons compress for decompressing
+    - https://commons.apache.org/proper/commons-compress/
+    - .tar.gz and 7z support would be interesting
+    - rar should just die already
+    - this would fix a major showstopper in porting to windows
+    - 2022-05-29: returned to bucket, gazumped by installing addon from file.
+
+* bug, addon detail, highlighted installed version is causing rows to be highlighted in the raw data column?
+    - looks like a javafx problem, no idea how to fix
+    - try reducing to smallest possible reproduction
+* bug, BigWigs_Classic from Github cannot be installed when 'retail strict' is set
+    - it can be installed from wowi fine
+* create a parser for that shit markup that is preventing reconcilation
+* manually select the primary addon in a group of addons to prevent synthetic titles
+* finer grained control over grouping of addons
+* gui, better copying from the interface, especially the log box
+* possible bug? installing combuctor 8.1.1 from file matches against the catalogue (good), then installing 9.1.3 file loses the match.
+    - mutual dependencies information is mostly blank
 
 * clean up this confusion between 'install-dir' and 'addon-dir'
     - install-dir is where addons are installed
     - addon-dir is either where addons are installed or a specific addon's directory
         - i.e., ambiguous
 
-* catalogue, descriptions for wowinterface addons
 * catalogue, download counts for github addons
-* wowinterface, multiple game tracks
-    - investigate just what is being downloaded when a classic version of a wowi addon is downloaded
-    - see 'LagBar'
 * search, add ability to browse catalogue page by page
     - returned to bucket 2022-03-02
 
@@ -117,7 +138,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * investigate better popularity metric than 'downloads'
     - if we make an effort to scrape everyday, we can generate this popularity graph ourselves
 * wowinterface, revisit the pages that are being scraped, make sure we're not missing any
-* github, questie is kinda fubar
 
 * github, preference to sync stars with github repo, if authenticated
 
@@ -201,6 +221,7 @@ see CHANGELOG.md for a more formal list of changes by release
             - ignored are collapsed
 
 * add a 'add to user-catalogue' option to make an addon always available despite selected catalogue
+    - done, via favouriting, but! it's not available on the installed addon pane page
 
 * add a 'catalogue is N days old' somewhere
 
@@ -248,7 +269,6 @@ see CHANGELOG.md for a more formal list of changes by release
         - clicking 'more' (or whatever) takes to addon detail page
     - perhaps coincide with catalogue v3 with more addon details
 
-
 * import/export, bring up the split logging pane during operation so any problems can be seen
     - or update the tab title to reflect the number of warnings/errors
         - otherwise there is zero feedback
@@ -270,15 +290,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * http, clear non-catalogue cache after session
     - it seems reasonable that stopping and starting the app will have it re-fetch addon summaries.
     - maybe add as a preference
-
-* install addon from local zipfile
-    - *not* the 'reinstallation' feature, but literally selecting a zipfile from somewhere and installing it
-    - would be good for installing older versions of an addon?
-    - would be good for installing addons from unsupported sources
-        - wouldn't be able to update it however :(
-            - we would if it matched against the catalogue, like all the other reconciled addons
-    - 'import addon' dialog could do double time
-        - 'from url' and 'from file'
 
 * deleting an addon should also remove any of it's zip files
     - this sounds like an opt-in preference

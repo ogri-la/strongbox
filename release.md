@@ -12,7 +12,7 @@ merge
 exit vagrant
 vagrant halt
 
-cd strongbox
+cd ../strongbox
 git checkout master
 git pull
 git checkout develop

@@ -17,7 +17,8 @@
    [java-time :as jt]
    [java-time.format])
   (:import
-   [java.util Base64]
+   [java.lang StringBuilder]
+   [java.util Base64 Random]
    [org.ocpsoft.prettytime.units Decade]
    [org.ocpsoft.prettytime PrettyTime]))
 
@@ -133,13 +134,6 @@
   (let [then (java-time/local-date datestamp)
         now (java-time/local-date)]
     (.getDays (java-time/period then now))))
-
-(comment "unused"
-         (defn fmt-date
-           ([dateobj]
-            (fmt-date dateobj "yyyy-MM-dd'T'HH:mm:ss'Z'"))
-           ([dateobj fmt]
-            (.format (java.text.SimpleDateFormat. fmt) dateobj))))
 
 (defn datestamp-now-ymd
   []
@@ -302,7 +296,7 @@
   (sluglib/slugify string))
 
 (defn-spec interface-version-to-game-version (s/or :ok string?, :no-match nil?)
-  [iface-version (s/or :deprecated string?, :preferred ::sp/interface-version)]
+  [iface-version (s/or :deprecated string?, :ok int?)]
   ;; warning! there is no way to convert *unambiguously* between the 'patch level' and the 'interface version'
   ;; for example, patch "1.2.0" => "10200", but so does "1.20.0" => "10200"
   ;; there haven't been any minor versions >4 since MOP
@@ -340,10 +334,10 @@
 
 (defn-spec interface-version-to-game-track (s/or :ok ::sp/game-track, :err nil?)
   "converts an interface version like '80000' to a game track like ':retail'"
-  [interface-version ::sp/interface-version]
-  (some-> interface-version
-          interface-version-to-game-version
-          game-version-to-game-track))
+  [interface-version int?]
+  (some-> interface-version ;; 80000
+          interface-version-to-game-version ;; 8.0
+          game-version-to-game-track)) ;; :retail
 
 (defn-spec game-track-to-latest-game-version (s/or :ok string?, :err nil?)
   "':classic' => '1.13.0'"
@@ -634,6 +628,23 @@
   []
   (str (java.util.UUID/randomUUID)))
 
+;; `rand-str2`, Istvan
+;; - https://stackoverflow.com/questions/64034761/fast-random-string-generator-in-clojure
+(defn short-unique-id
+  ^String
+  ([]
+   (short-unique-id 8))
+  ([^Long len]
+   (let [leftLimit 97
+         rightLimit 122
+         random (java.util.Random.)
+         stringBuilder (StringBuilder. len)
+         diff (- rightLimit leftLimit)]
+     (dotimes [_ len]
+       (let [ch (char (.intValue ^Double (+ leftLimit (* (.nextFloat ^Random random) (+ diff 1)))))]
+         (.append ^StringBuilder stringBuilder ch)))
+     (.toString ^StringBuilder stringBuilder))))
+
 (defn count-occurances
   ;; {"Foo-v1.zip" 1, "Foo-v2.zip 1, "Foo.zip" 5}
   [my-list my-key]
@@ -691,8 +702,10 @@
   (clojure.string/join (format "\n %s " constants/bullet) (into [msg] msg-list)))
 
 (defn-spec reportable-error string?
-  [msg string?]
-  (message-list msg ["please report this! https://github.com/ogri-la/strongbox/issues"]))
+  ([msg string?]
+   (reportable-error msg "please report this!"))
+  ([msg string?, report-msg string?]
+   (message-list msg [(str report-msg " https://github.com/ogri-la/strongbox/issues")])))
 
 (defn-spec select-vals coll?
   "like `get` on `m` but for each key in `ks`. removes nils."
@@ -824,9 +837,19 @@
                (debug (format "recurring in %s ms, have waited %s ms" wait-time# waited#))
                (recur (+ waited# wait-time#))))))))
 
-(defn-spec remove-items-matching vector?
-  "removes all instances where `(keyfn item)` matches `(keyfn given)` returning a vector."
-  [item-list vector?, keyfn ifn?, given any?]
-  (let [matching (keyfn given)]
-    (vec (remove #(= (keyfn %) matching) item-list))))
+(defn-spec matching fn?
+  "returns a predicate that accepts one argument and returns true if it matches the result of applying `keyfn` to `x`"
+  [x any?, keyfn ifn?]
+  (let [match (keyfn x)]
+    #(= match (keyfn %))))
 
+(defn-spec patch-name (s/or :ok string?, :not-found nil?)
+  "returns the 'patch' name for the given `game-version`, considering only the major and minor values.
+  if a precise match is not found, the major version is then considered.
+  if a major version is not found, nil is returned.
+  For example, 9.2.5 has no patch name, but 9.2 is 'Shadowlands: Eternity's End'"
+  [game-version string?]
+  (let [[major, minor] (clojure.string/split game-version #"\.")
+        major-minor (clojure.string/join "." [major minor])]
+    (or (get constants/releases major-minor)
+        (get constants/releases major))))

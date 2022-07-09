@@ -114,7 +114,8 @@
 (s/def ::version string?)
 (s/def ::installed-version (s/nilable ::version))
 (s/def ::update? boolean?)
-(s/def ::interface-version int?) ;; 90005, 11307, 20501
+(s/def ::interface-version (and int? (fn [interface-version]
+                                       (>= interface-version 10000)))) ;; 90005, 11307, 20501
 (s/def ::name string?) ;; normalised name of the addon, shared between toc file and curseforge
 (s/def ::label string?) ;; name of the addon without normalisation
 (s/def ::release-label ::label)
@@ -362,8 +363,9 @@
 (s/def :addon/toc+nfo (s/merge :addon/toc :addon/nfo))
 
 ;; addon is installed
-(s/def :addon/installed (s/or :installed :addon/toc
-                              :strongbox-installed :addon/toc+nfo))
+;; 2022-07: it's now possible for toc data to be invalid and discarded, leaving just the nfo data
+(s/def :addon/installed (s/or :installed (s/or :toc :addon/toc, :nfo :addon/nfo) ;; addon has nfo or toc ..
+                              :strongbox-installed :addon/toc+nfo)) ;; .. or both
 (s/def :addon/installed-list (s/coll-of :addon/installed))
 
 ;; addon has been run against the catalogue and a match was *not* found.

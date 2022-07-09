@@ -84,8 +84,8 @@
   (timbre/merge-config! {:appenders {key nil}})
   nil)
 
-(defmacro buffered-log
-  "macro. returns a list of log entries made while executing the given form"
+(defmacro buffered-log+return-value
+  "macro. returns a pair of `form` results and a list of log entries at the given `level` and above made while executing the given `form`"
   [level & form]
   `(let [stateful-buffer# (atom [])
          appender# (fn [data#]
@@ -93,8 +93,13 @@
      (timbre/with-merged-config {:min-level ~level,
                                  :appenders {:-temp {:fn appender#
                                                      :enabled? true}}}
-       ~@form)
-     (deref stateful-buffer#)))
+       (let [result# ~@form]
+         [(deref stateful-buffer#) result#]))))
+
+(defmacro buffered-log
+  "macro. returns a list of log entries at the given `level` and above made while executing the given `form`"
+  [level & form]
+  `(first (buffered-log+return-value ~level ~@form)))
 
 (defn-spec log-line-filter fn?
   "returns a function that matches a log entry to the given `install-dir` + `addon`"
@@ -176,4 +181,11 @@
 (defmacro with-label
   [label & form]
   `(with-addon {:name ~label}
+     ~@form))
+
+(defmacro silenced
+  "swallows log output. recommended for shallow forms where we knows errors/warnings can be discarded"
+  [& form]
+  `(timbre/with-merged-config
+     {:middleware [(constantly nil)]}
      ~@form))

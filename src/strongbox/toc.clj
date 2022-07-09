@@ -16,7 +16,7 @@
   (:import
    [java.util.regex Pattern]))
 
-(defn-spec parse-toc-file map?
+(defn-spec parse-toc-file (s/or :ok map?, :empty-or-just-comments nil?)
   [toc-contents string?]
   (let [comment? #(= (utils/safe-subs % 2) "##")
         comment-comment? #(= (utils/safe-subs % 4) "# ##")
@@ -34,7 +34,10 @@
                             (debug "cannot parse line, ignoring:" comment)
                             {key (clojure.string/trim value)})))
         contents (clojure.string/split-lines toc-contents)]
-    (->> contents (filter interesting?) (map parse-comment) (reduce merge))))
+    (->> contents
+         (filter interesting?)
+         (map parse-comment)
+         (reduce merge))))
 
 (defn-spec read-toc-file (s/or :ok map?, :error nil?)
   "reads the contents of a *single* toc file into a map.
@@ -75,6 +78,7 @@
     (mapv (fn [[filename-game-track filename]]
             (merge (read-toc-file (utils/join toc-dir filename))
                    {:dirname (fs/base-name addon-dir) ;; /foo/bar/baz => baz
+                    :-filename filename
                     :-filename-game-track filename-game-track}))
           (find-toc-files toc-dir))))
 
@@ -98,7 +102,8 @@
 
 ;;
 
-(defn-spec parse-addon-toc :addon/toc
+(defn-spec parse-addon-toc (s/or :ok :addon/toc, :invalid nil?)
+  "coerces raw `keyvals` map into a valid `:addon/toc` map or returns `nil` if toc data is invalid."
   ([keyvals map?, addon-dir ::sp/dir]
    (parse-addon-toc (assoc keyvals :dirname (fs/base-name addon-dir))))
   ([keyvals map?]
@@ -135,11 +140,8 @@
                                                utils/nilable)]
                            {:source-map-list items})
 
-         ;; todo: add support for x-github
-         ;; ## X-Github: https://github.com/teelolws/Altoholic-Retail => source "github", source-id "teelolws/Altoholic-Retail"
-
          ignore-flag (when (some->> keyvals :version (clojure.string/includes? "@project-version@"))
-                       (warn (format "ignoring '%s': 'Version' field in .toc file is unrendered" dirname))
+                       (debug (format "ignoring '%s': 'Version' field in .toc file is unrendered" dirname))
                        {:ignore? true})
 
          interface-version (or (some-> keyvals :interface utils/to-int)
@@ -149,8 +151,11 @@
 
          _ (when (and (some? (:-filename-game-track keyvals))
                       (not= (:-filename-game-track keyvals) game-track))
-             (warn (format "'%s' from filename does not match it's interface-version '%s'"
-                           (:-filename-game-track keyvals) game-track)))
+             (debug (format
+                    ;; 'classic' in .toc filename does not match 'retail' derived from it's 'Interface' value of '90200'.
+                    ;; see BigWigs_Classic for a false-positive
+                    "'%s' in .toc filename does not match '%s' derived from it's 'Interface' value of '%s'."
+                    (name (:-filename-game-track keyvals)) (name game-track) interface-version)))
 
          addon {:name (normalise-name label)
                 :dirname dirname
@@ -177,7 +182,12 @@
                       github-source wowi-source tukui-source
                       ignore-flag source-map-list)]
 
-     addon)))
+     (if-not (s/valid? :addon/toc addon)
+       ;; "ignoring data in 'EveryAddon.toc', invalid values found."
+       (do (warn (utils/reportable-error (format "ignoring data in '%s', invalid values found." (:-filename keyvals))
+                                         "feel free to report this!"))
+           (debug (s/explain :addon/toc addon)))
+       addon))))
 
 (defn-spec blizzard-addon? boolean?
   "returns `true` if given path looks like an official Blizzard addon"
@@ -189,9 +199,40 @@
   [addon-dir ::sp/extant-dir]
   (when-not (blizzard-addon? addon-dir)
     (try
-      (let [result (mapv parse-addon-toc (read-addon-dir addon-dir))
+      (let [result (remove nil? (map parse-addon-toc (read-addon-dir addon-dir)))
             supported-game-tracks (->> result (map :-toc/game-track) distinct sort vec)]
         (mapv #(assoc % :supported-game-tracks supported-game-tracks) result))
       (catch Exception e
         ;; this addon failed to parse somehow. don't propagate the exception, just report it and return `nil`.
         (error e (utils/reportable-error (format "unexpected error parsing addon in directory '%s': %s" addon-dir (.getMessage e))))))))
+
+;; --
+
+(defn-spec gen-tocfile string?
+  "given `addon` toc data, generates the contents of a `.toc` file.
+  order of keys is deterministic, some keys are renamed.
+  only used during testing."
+  [addon map?]
+  (let [unslug
+        (fn [string]
+          (clojure.string/join "" (map clojure.string/capitalize (clojure.string/split string #"-"))))
+
+        render-line
+        (fn [[key val]]
+          (format "## %s: %s" (unslug (name key)) val))
+
+        rename-map {:interface-version :interface
+                    :label :title
+                    :installed-version :version}
+        toc (clojure.set/rename-keys addon rename-map)
+
+        white-list [:interface :title :version :author :description
+                    :default-state :required-deps :optional-deps :saved-variables]
+        sort-order (keep-indexed vector white-list)
+        sorted-map (sort-by #(get sort-order %1) (select-keys toc white-list))
+
+        footer (str (:dirname addon) ".lua")
+        footer (str "\n" footer)]
+    (clojure.string/join "\n" (conj (mapv render-line sorted-map) footer))))
+
+

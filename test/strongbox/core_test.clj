@@ -833,6 +833,16 @@
                 "everyaddon--1-2-3.zip"]
                (helper/install-dir-contents)))))))
 
+(deftest install-addon--invalid-toc
+  (testing "installing an addon with a single invalid toc is possible, but loading it's toc data is not."
+    (with-running-app
+      (let [install-dir (helper/install-dir)
+            [[addon] downloaded-file] (helper/gen-addon! install-dir {:override {:interface-version 0}})
+            expected (-> addon :derived-nfo)]
+        (core/install-addon (:installable addon) install-dir downloaded-file)
+        (is (= expected (core/load-installed-addon (str (fs/file install-dir (-> addon :toc :dirname))))))
+        (is (= [expected] (core/get-state :installed-addon-list)))))))
+
 ;;
 
 (deftest uninstall-addon
@@ -1703,7 +1713,7 @@
 
 (deftest update-installed-addon!
   (testing "a modified addon can be found in the installed addon list and replaced"
-    (let [addon {:source "foo" :source-id "bar" :name "baz"}
+    (let [addon (get-in (helper/gen-addon-data) [0 0 :toc])
           installed-addon-list [addon]
           updated-addon (merge addon {:name "bup"})
           updated-addon-list [updated-addon]]
@@ -1711,15 +1721,125 @@
         (swap! core/state assoc :installed-addon-list installed-addon-list)
         (is (= installed-addon-list (core/get-state :installed-addon-list)))
         (core/update-installed-addon! updated-addon)
-        (is (= updated-addon-list (core/get-state :installed-addon-list))))))
+        (is (= updated-addon-list (core/get-state :installed-addon-list)))))))
 
+(deftest update-installed-addon!--missing
   (testing "addons that don't exist are added"
-    (let [addon {:source "foo" :source-id "bar" :name "baz"}
+    (let [addon (get-in (helper/gen-addon-data {:override {:group-id "123"}}) [0 0 :strongbox-installed])
           installed-addon-list [addon]
-          updated-addon {:source "bar" :source-id "foo" :name "baz"}
+          ;; both group-id and the dirname set are now checked to catch any orphans.
+          ;; helper/gen-addon-data uses the `:label` to generate the `:dirname`
+          updated-addon (get-in (helper/gen-addon-data {:override {:label "EveryOtherAddon" :group-id "456"}}) [0 0 :strongbox-installed])
           expected-addon-list [addon updated-addon]]
       (with-running-app
         (swap! core/state assoc :installed-addon-list installed-addon-list)
         (is (= installed-addon-list (core/get-state :installed-addon-list)))
         (core/update-installed-addon! updated-addon)
         (is (= expected-addon-list (core/get-state :installed-addon-list)))))))
+
+;;
+
+(deftest install-addon--uninstall-fully-replaced-mutual-dependencies
+  (testing "installing an addon that completely replaces one or more addons will uninstall those addons and issue warnings rather than create mutual dependencies."
+    (with-running-app
+      (let [install-dir (helper/install-dir)
+            game-track :retail
+
+            ;; install three distinct addons: A, B, C
+
+            ;; addon A is a single directory, grouped by 'example.org'
+            [[addon-a] downloaded-file-a] (helper/gen-addon! fs/*cwd* {:num-dirs 1})
+
+            ;; addon B is a single directory, grouped by 'example.net'
+            [[addon-b] downloaded-file-b] (helper/gen-addon! fs/*cwd* {:num-dirs 1, :base-url "https://example.net" :override {1 {:i 2}}})
+
+            ;; addon C is three directories, replacing A and B, grouped by 'example.com'
+            ;; any of the three sets of addon data could be used to install the addon, we'll use the third, 'addon-c3'
+            [[_ _ addon-c3] downloaded-file-c] (helper/gen-addon! fs/*cwd* {:num-dirs 3, :base-url "https://example.com"})
+
+            ;; after installing A, then B then C, we expect C to have cleanly replaced A and B
+            expected {:description "group record for the EveryAddonThree addon",
+                      :dirname "EveryAddonOne",
+                      :group-addon-count 3,
+                      :group-addons [{:description "Does what no other addon does, slightly differently.",
+                                      :dirname "EveryAddonOne",
+                                      :group-id "https://example.com/EveryAddonThree",
+                                      :installed-game-track :retail,
+                                      :installed-version "1.2.3",
+                                      :interface-version 70000,
+                                      :label "EveryAddon",
+                                      :name "everyaddon",
+                                      :primary? false,
+                                      :source "wowinterface",
+                                      :source-id "999",
+                                      :source-map-list [{:source "wowinterface",
+                                                         :source-id "999"}],
+                                      :supported-game-tracks [:retail]}
+                                     {:description "Does what no other addon does, slightly differently.",
+                                      :dirname "EveryAddonThree",
+                                      :group-id "https://example.com/EveryAddonThree",
+                                      :installed-game-track :retail,
+                                      :installed-version "1.2.3",
+                                      :interface-version 70000,
+                                      :label "EveryAddon",
+                                      :name "everyaddon",
+                                      :primary? false,
+                                      :source "wowinterface",
+                                      :source-id "999",
+                                      :source-map-list [{:source "wowinterface",
+                                                         :source-id "999"}],
+                                      :supported-game-tracks [:retail]}
+                                     {:description "Does what no other addon does, slightly differently.",
+                                      :dirname "EveryAddonTwo",
+                                      :group-id "https://example.com/EveryAddonThree",
+                                      :installed-game-track :retail,
+                                      :installed-version "1.2.3",
+                                      :interface-version 70000,
+                                      :label "EveryAddon",
+                                      :name "everyaddon",
+                                      :primary? false,
+                                      :source "wowinterface",
+                                      :source-id "999",
+                                      :source-map-list [{:source "wowinterface",
+                                                         :source-id "999"}],
+                                      :supported-game-tracks [:retail]}],
+                      :group-id "https://example.com/EveryAddonThree",
+                      :installed-game-track :retail,
+                      :installed-version "1.2.3",
+                      :interface-version 70000,
+                      :label "EveryAddonThree (group)",
+                      :name "everyaddon",
+                      :primary? false,
+                      :source "wowinterface",
+                      :source-id "999",
+                      :source-map-list [{:source "wowinterface", :source-id "999"}],
+                      :supported-game-tracks [:retail]}
+
+            expected-nfo
+            {:group-id "https://example.com/EveryAddonThree",
+             :installed-game-track :retail,
+             :installed-version "1.2.3",
+             :name "everyaddon",
+             :primary? false,
+             :source "wowinterface",
+             :source-id "999",
+             :source-map-list [{:source "wowinterface", :source-id "999"}]}]
+
+        ;; A and B can live happily side by side
+        (core/install-addon (:installable addon-a) install-dir downloaded-file-a)
+        (core/install-addon (:installable addon-b) install-dir downloaded-file-b)
+
+        ;; C wipes out both A and B
+        (core/install-addon (:installable addon-c3) install-dir downloaded-file-c)
+
+        ;; because C *completely* replaces both A and B, A and B should be uninstalled by C rather
+        ;; than overwritten and turned into mutual dependencies of C.
+        (is (= expected (addon/load-installed-addon (->> addon-a :toc :dirname (fs/file install-dir) str) game-track)))
+        (is (= expected (addon/load-installed-addon (->> addon-b :toc :dirname (fs/file install-dir) str) game-track)))
+        (is (= expected (addon/load-installed-addon (->> addon-c3 :toc :dirname (fs/file install-dir) str) game-track)))
+
+        ;; a mutual dependency has a list of nfo data with the bottommost nfo data being the most recent.
+        ;; in this case we expect a single map, not a list, with the A, B and C addons all using the nfo generated by installing addon-c3.
+        (is (= expected-nfo (nfo/read-nfo-file install-dir (-> addon-a :toc :dirname))))
+        (is (= expected-nfo (nfo/read-nfo-file install-dir (-> addon-b :toc :dirname))))
+        (is (= expected-nfo (nfo/read-nfo-file install-dir (-> addon-c3 :toc :dirname))))))))
