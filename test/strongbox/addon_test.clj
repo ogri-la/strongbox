@@ -716,3 +716,12 @@
 
     ;; updated nfo is written to disk
     (is (= expected-nfo (addon/-read-nfo (helper/install-dir) addon)))))
+
+(deftest addon-locks
+  (let [cases [[{} #{}]
+               [{:dirname "Foo"} #{"Foo"}]
+               [{:dirname "Foo" :group-addons [{:dirname "Foo"} {:dirname "Bar"} {:dirname "Baz"}]} #{"Foo" "Bar" "Baz"}]
+               ;; (parent addon should be present in group-addons)
+               [{:dirname "Foo" :group-addons [{:dirname "Bar"} {:dirname "Baz"}]} #{"Bar" "Baz"}]]]
+    (doseq [[given expected] cases]
+      (is (= expected (addon/dirname-set given))))))

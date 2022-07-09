@@ -194,7 +194,10 @@
           target-addon (merge-toc-nfo target-toc target-nfo)
           group-id (:group-id target-addon)
           -load-installed-addon* (fn [[addon-path nfo-data]]
-                                   (when-let [toc-data (-load-installed-addon addon-path game-track)]
+                                   (when-let [toc-data (if (= addon-dir addon-path)
+                                                         ;; skip reading toc data a second time as any warnings generated look duplicated to the user.
+                                                         target-toc
+                                                         (-load-installed-addon addon-path game-track))]
                                      (merge-toc-nfo toc-data nfo-data)))
 
           grouped-addon
@@ -202,7 +205,7 @@
                fs/list-dir
                (filterv fs/directory?)
                ;; [[/path/to/addon, {nfo data, ...}], ...]
-               (mapv #(vector (str %) (nfo/read-nfo install-dir (str (fs/base-name %)))))
+               (mapv #(vector (str %) (logging/silenced (nfo/read-nfo install-dir (str (fs/base-name %))))))
                (filterv #(= group-id (:group-id (second %))))
                (mapv -load-installed-addon*)
                (remove nil?)
@@ -310,11 +313,9 @@
                                   (map strip-trailing-slash)
                                   set)
 
-                all-addon-data (timbre/with-merged-config
-                                 ;; swallow log output, else warnings for unrelated addons are surfaced for *this* addon
-                                 {:middleware [(constantly nil)]}
-                                 ;; we don't care which game track is used, just that addons are logically grouped.
-                                 (load-all-installed-addons install-dir :retail))
+                all-addon-data (logging/silenced ;; swallow log output, else warnings for unrelated addons are surfaced for *this* addon
+                                ;; we don't care which game track is used, just that addons are logically grouped.
+                                (load-all-installed-addons install-dir :retail))
 
                 removeable? (fn [some-addon]
                               (let [dir-subset (->> some-addon
@@ -586,3 +587,11 @@
                                            [new-source-map])
           nfo-updates (merge new-source-map {:source-map-list new-source-map-list})]
       (update-nfo! install-dir addon nfo-updates))))
+
+;;
+
+(defn-spec dirname-set set?
+  "returns a set of names of directories used by the given `addon` and it's grouped addons"
+  [addon map?]
+  ;; addon may not be installed yet, we may not have any `:dirname` values at all
+  (->> addon flatten-addon (map :dirname) (remove nil?) utils/nilable set))

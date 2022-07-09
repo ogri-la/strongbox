@@ -291,12 +291,6 @@
   [updateable-addon-list :addon/installable-list]
   (run! core/install-addon-guard-affective updateable-addon-list))
 
-(defn-spec addon-locks set?
-  "returns a set of names of directories used by the given `addon` and it's grouped addons"
-  [addon map?]
-  ;; addon may not be installed yet, we may not have any `:dirname` values at all
-  (->> addon addon/flatten-addon (map :dirname) (remove nil?) utils/nilable set))
-
 (defn-spec zipfile-locks set?
   "returns a set of the top-level directories that will be needed after unzipping the given `downloaded-file`."
   [downloaded-file ::sp/extant-archive-file]
@@ -317,7 +311,7 @@
         new-dirs (atom #{})
         job-fn (fn [addon]
                  (let [downloaded-file (core/download-addon-guard-affective addon install-dir)
-                       existing-dirs (addon-locks addon)
+                       existing-dirs (addon/dirname-set addon)
                        updated-dirs (zipfile-locks downloaded-file)
                        locks-needed (clojure.set/union existing-dirs updated-dirs)]
                    (swap! new-dirs into updated-dirs)
@@ -401,6 +395,7 @@
         results (joblib/run-jobs! queue-atm core/num-concurrent-downloads)]
 
     ;; if any of the new directories introduced are not present in the :installed-addon-list, do a full refresh.
+    ;; a same-set of directories that replaced existing directories (but with different group-ids) may cause orphans in the installed-addon-list.
     (core/refresh-check @new-dirs)
 
     results))

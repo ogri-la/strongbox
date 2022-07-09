@@ -837,16 +837,10 @@
                (debug (format "recurring in %s ms, have waited %s ms" wait-time# waited#))
                (recur (+ waited# wait-time#))))))))
 
-;; todo: remove?
-(defn-spec remove-items-matching vector?
-  "removes all instances where `(keyfn item)` matches `(keyfn given)` returning a vector."
-  [item-list vector?, keyfn ifn?, given any?]
-  (let [matching (keyfn given)]
-    (vec (remove #(= (keyfn %) matching) item-list))))
-
-(defn matching
-  [subject keyfn]
-  (let [match (keyfn subject)]
+(defn-spec matching fn?
+  "returns a predicate that accepts one argument and returns true if it matches the result of applying `keyfn` to `x`"
+  [x any?, keyfn ifn?]
+  (let [match (keyfn x)]
     #(= match (keyfn %))))
 
 (defn-spec patch-name (s/or :ok string?, :not-found nil?)

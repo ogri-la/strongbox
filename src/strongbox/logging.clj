@@ -182,3 +182,10 @@
   [label & form]
   `(with-addon {:name ~label}
      ~@form))
+
+(defmacro silenced
+  "swallows log output. recommended for shallow forms where we knows errors/warnings can be discarded"
+  [& form]
+  `(timbre/with-merged-config
+     {:middleware [(constantly nil)]}
+     ~@form))

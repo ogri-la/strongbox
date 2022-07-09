@@ -634,7 +634,11 @@
   `f` defaults to addons matching the `:group-id` of the given `addon`.
   order is not preserved. returns the given `addon`."
   ([addon :addon/installed]
-   (update-installed-addon! addon (utils/matching addon :group-id)))
+   (update-installed-addon! addon (fn [some-addon]
+                                    ;; group-id matches, or there is 
+                                    (or (= (:group-id addon) (:group-id some-addon))
+                                        (and (:dirname addon)
+                                             (= (:dirname addon) (:dirname some-addon)))))))
   ([addon :addon/installed, f fn?]
    (update-installed-addon-list!
     (conj (vec (remove f (get-state :installed-addon-list))) addon))
@@ -955,7 +959,7 @@
       (info (format "num installed %s, num matched %s" num-installed num-matched)))
 
     (when (and (not (empty? unmatched-names))
-               (> 1 (count installed-addon-list))) ;; *probably* per-addon installation/refresh, thus just noise
+               (> 1 (count installed-addon-list))) ;; *probably* per-addon installation/refresh, it gives us just the addon in question
       (let [msg (format "failed to find %s addons in the '%s' catalogue: %s"
                         (count unmatched-names)
                         (name (get-state :cfg :selected-catalogue))
@@ -971,7 +975,8 @@
                   (warn (utils/message-list
                          (format "failed to find %s in the '%s' catalogue" (:dirname addon) (name (get-state :cfg :selected-catalogue)))
                          ["try searching for this addon by name or description"
-                          "if this addon is part of a bundle, try \"File -> Re-install all\""])))))
+                          ;;"if this addon is part of a bundle, try \"File -> Re-install all\"" ;; not great advice these days when 'downgrades' are likely.
+                          ])))))
 
             unmatched))
 

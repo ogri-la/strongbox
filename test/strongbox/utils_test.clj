@@ -546,3 +546,13 @@
                ["1.2" "World of Warcraft: Mysteries of Maraudon"]]]
     (doseq [[given expected] cases]
       (is (= expected (utils/patch-name given))))))
+
+(deftest matching
+  (let [cases [[[0 pos?] [0 true]]
+               [[0 pos?] [1 false]]
+               [[0 pos?] [-1 true]]
+               [[{:foo :bar} :foo], [{:foo :bar} true]]
+               [[{:foo :bar} :foo], [{:foo :baz} false]]]]
+    (doseq [[[x f] [given expected]] cases]
+      (let [p (utils/matching x f)]
+        (is (= expected (p given)))))))

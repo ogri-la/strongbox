@@ -1713,8 +1713,7 @@
 
 (deftest update-installed-addon!
   (testing "a modified addon can be found in the installed addon list and replaced"
-    (let [;;addon {:source "foo" :source-id "bar" :name "baz"}
-          addon (get-in (helper/gen-addon-data) [0 0 :toc])
+    (let [addon (get-in (helper/gen-addon-data) [0 0 :toc])
           installed-addon-list [addon]
           updated-addon (merge addon {:name "bup"})
           updated-addon-list [updated-addon]]
@@ -1728,7 +1727,9 @@
   (testing "addons that don't exist are added"
     (let [addon (get-in (helper/gen-addon-data {:override {:group-id "123"}}) [0 0 :strongbox-installed])
           installed-addon-list [addon]
-          updated-addon (get-in (helper/gen-addon-data {:override {:group-id "456"}}) [0 0 :strongbox-installed])
+          ;; both group-id and the dirname set are now checked to catch any orphans.
+          ;; helper/gen-addon-data uses the `:label` to generate the `:dirname`
+          updated-addon (get-in (helper/gen-addon-data {:override {:label "EveryOtherAddon" :group-id "456"}}) [0 0 :strongbox-installed])
           expected-addon-list [addon updated-addon]]
       (with-running-app
         (swap! core/state assoc :installed-addon-list installed-addon-list)

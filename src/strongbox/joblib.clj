@@ -21,7 +21,8 @@
   pause only occurs if the `tick` fn is bound."
   [pct :joblib/progress]
   (when-let [progress (*tick* pct)]
-    (Thread/sleep (rand-int 150))
+    ;; 2022-07-09: disabled, let things look fast, they *are* fast.
+    ;;(Thread/sleep (rand-int 150))
     progress))
 
 (defn-spec deref* any?
