@@ -64,11 +64,14 @@ see CHANGELOG.md for a more formal list of changes by release
     - nothing to fix
     - done
 
-## todo
-
 * 'local' source
     - https://github.com/ogri-la/strongbox/issues/355
     - investigate and make a decision
+    - done
+        - sort of, many addons can now be installed from file
+
+## todo
+
 
 ## todo bucket (no particular order)
 
