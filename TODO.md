@@ -8,7 +8,23 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+* wotlk classic support
+
 ## todo bucket (no particular order)
+
+* wowinterface, fetch addon data from secondary source
+    - *augment* what is currently implemented with my own source
+        - failure to fetch this other data shouldn't prevent wowi updates from working normally
+    - this source is hosted on github as static content, updated daily.
+
+* update screenshots
+
+* add support for wotlk classic
+    - https://github.com/EsreverWoW/ShestakUI_Classic
+    - https://www.wowinterface.com/downloads/info26239
+    - https://www.wowinterface.com/downloads/info26016
+    - https://www.wowinterface.com/downloads/info25460
+    - https://www.wowinterface.com/downloads/info25977
 
 * bug, trade skill master string-converter changed directory names between 2.0.7 and 2.1.0
     - see also Combuctor 9.1.3 vs Combuctor 8.1.1 with 'BagBrother' in old addons
@@ -37,6 +53,8 @@ see CHANGELOG.md for a more formal list of changes by release
     - try reducing to smallest possible reproduction
 * bug, BigWigs_Classic from Github cannot be installed when 'retail strict' is set
     - it can be installed from wowi fine
+        - perhaps check the addon name isn't prefixed with '_Classic' ? 
+            - how many would be affected by this?
 * create a parser for that shit markup that is preventing reconcilation
 * manually select the primary addon in a group of addons to prevent synthetic titles
 * finer grained control over grouping of addons
