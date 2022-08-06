@@ -84,7 +84,8 @@
 ;; preserve order here
 (def game-track-labels [[:retail "Retail"]
                         [:classic "Classic"]
-                        [:classic-tbc "Classic (TBC)"]])
+                        [:classic-tbc "Classic (TBC)"]
+                        [:classic-wotlk "Classic (WotLK)"]])
 
 (def game-track-labels-map (into {} game-track-labels)) ;; {:retail "WoW Retail", ...}
 (def game-track-labels-map-inv (map-invert game-track-labels)) ;; {"WoW Retail" :retail, ...}
