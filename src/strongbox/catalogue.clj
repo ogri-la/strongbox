@@ -61,9 +61,10 @@
   emits warnings to user when no release found."
   [addon :addon/expandable, game-track :addon-dir/game-track, strict? ::sp/strict?]
   (let [strict? (boolean strict?)
-        track-map {:retail [:retail :classic :classic-tbc]
-                   :classic [:classic :classic-tbc :retail]
-                   :classic-tbc [:classic-tbc :classic :retail]}
+        track-map {:retail [:retail :classic :classic-tbc :classic-wotlk]
+                   :classic [:classic :classic-tbc :classic-wotlk :retail]
+                   :classic-tbc [:classic-tbc :classic-wotlk :classic :retail]
+                   :classic-wotlk [:classic-wotlk :classic-tbc :classic :retail]}
         game-track* game-track
         game-track (some #{game-track} sp/game-tracks)] ;; :retail => :retail, :unknown-game-track => nil
     (cond

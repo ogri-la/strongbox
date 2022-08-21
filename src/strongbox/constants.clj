@@ -14,9 +14,10 @@
 ;; used as a placeholder for an addon's supported version when we're forced to guess.
 ;; don't fret too much about patch versions. These values don't affect much.
 ;; https://wowpedia.fandom.com/wiki/Public_client_builds
-(def latest-retail-game-version "9.0.5")
-(def latest-classic-game-version "1.13.7")
-(def latest-classic-tbc-game-version "2.5.1")
+(def latest-retail-game-version "9.2.5")
+(def latest-classic-game-version "1.14.3")
+(def latest-classic-tbc-game-version "2.5.4")
+(def latest-classic-wotlk-game-version "3.4.0")
 
 ;; interface version to use if .toc file is missing one.
 ;; assume addon is compatible with the most recent version of retail (see above).

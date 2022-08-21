@@ -86,15 +86,15 @@
           expected {:retail [{:download-url "https://example.org/path/to/1.2.3.zip"
                               :version "1.2.3"
                               :game-track :retail
-                              :release-label "[WoW 9.0.5] Foo",
+                              :release-label "[WoW 9.2.5] Foo",
                               ;; synthetic, we had to guess using `:gameVersionFlavor`
-                              :interface-version 90000}]
+                              :interface-version 90200}]
                     :classic [{:download-url "https://example.org/path/to/a.b.c.zip"
                                :version "a.b.c"
                                :game-track :classic
-                               :release-label "[WoW 1.13.7] Foo"
+                               :release-label "[WoW 1.14.3] Foo"
                                ;; synthetic, we had to guess using `:gameVersionFlavor`
-                               :interface-version 11300}]}]
+                               :interface-version 11400}]}]
       (is (= expected (curseforge-api/group-releases fixture)))))
 
   (testing "a release using both `:gameVersionFlavor` and a list of supported `:gameVersion` game tracks ignores `:gameVersionFlavor` and is expanded into multiple releases"
@@ -167,8 +167,8 @@
                     :classic [{:download-url "https://example.org/path/to/1.2.4.zip"
                                :version "1.2.4"
                                :game-track :classic
-                               :release-label "[WoW 1.13.7] Foo",
-                               :interface-version 11300}
+                               :release-label "[WoW 1.14.3] Foo",
+                               :interface-version 11400}
                               {:download-url "https://example.org/path/to/1.2.3.zip"
                                :version "1.2.3"
                                :game-track :classic

@@ -302,11 +302,16 @@
                                      :direct_asset_url "http://example.org"}
                                     {:external false
                                      :link_type "other"
+                                     :name "Foo-Wrath"
+                                     :direct_asset_url "http://example.org"}
+                                    {:external false
+                                     :link_type "other"
                                      :name "Foo"
                                      :direct_asset_url "http://example.org"}]}}
 
           expected [{:download-url "http://example.org", :game-track :classic, :version "1.2.3"}
                     {:download-url "http://example.org", :game-track :classic-tbc, :version "1.2.3"}
+                    {:download-url "http://example.org", :game-track :classic-wotlk, :version "1.2.3"}
                     {:download-url "http://example.org", :game-track :retail, :version "1.2.3"}]
           known-game-tracks []]
       (is (= expected (gitlab-api/parse-release release known-game-tracks))))))

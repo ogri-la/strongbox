@@ -440,10 +440,15 @@
                             {:browser_download_url "https://example.org"
                              :content_type "application/zip"
                              :state "uploaded"
-                             :name "1.2.3-Classic-BCC"}]}
+                             :name "1.2.3-Classic-BCC"}
+                            {:browser_download_url "https://example.org"
+                             :content_type "application/zip"
+                             :state "uploaded"
+                             :name "1.2.3-Classic-WotLK"}]}
           expected [{:download-url "https://example.org", :game-track :retail, :version "Release 1.2.3"}
                     {:download-url "https://example.org", :game-track :classic, :version "Release 1.2.3"}
-                    {:download-url "https://example.org", :game-track :classic-tbc, :version "Release 1.2.3"}]
+                    {:download-url "https://example.org", :game-track :classic-tbc, :version "Release 1.2.3"}
+                    {:download-url "https://example.org", :game-track :classic-wotlk, :version "Release 1.2.3"}]
           known-game-tracks []]
       (is (= expected (github-api/parse-assets release known-game-tracks))))))
 

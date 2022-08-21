@@ -1259,13 +1259,15 @@
          :game-version {:min-width 70 :pref-width 70 :max-width 100
                         :cell-factory {:fx/cell-type :tree-table-cell
                                        :describe (fn [text]
-                                                   {:graphic {:fx/type fx.ext.node/with-tooltip-props
-                                                              :props {:tooltip {:fx/type :tooltip
-                                                                                :text (-> text (or "") utils/patch-name (or "?"))
-                                                                                ;; the tooltip will be long and intrusive, make delay longer than typical.
-                                                                                :show-delay 400}}
-                                                              :desc {:fx/type :label
-                                                                     :text text}}})}}
+                                                   ;; for some reason I'm getting the whole row here
+                                                   (let [text (if-not (string? text) "" text)]
+                                                     {:graphic {:fx/type fx.ext.node/with-tooltip-props
+                                                                :props {:tooltip {:fx/type :tooltip
+                                                                                  :text (-> text utils/patch-name (or "?"))
+                                                                                  ;; the tooltip will be long and intrusive, make delay longer than typical.
+                                                                                  :show-delay 400}}
+                                                                :desc {:fx/type :label
+                                                                       :text text}}}))}}
 
          :uber-button {:min-width 80 :pref-width 80 :max-width 120 :style-class ["invisible-button-column"]
                        :cell-value-factory identity
