@@ -11,13 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * support for WotLK Classic.
     - you can now select the game track from the drop down, strictly enforce it or not, etc.
 
-### Changed
-
 ### Fixed
 
 * the WoW column tooltip occasionally received a map of data instead of the addon's supported WoW version during rendering.
-
-### Removed
 
 ## 5.3.0 - 2022-07-09
 

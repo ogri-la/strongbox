@@ -6,9 +6,15 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-## todo
-
 * wotlk classic support
+* add support for wotlk classic
+    - https://github.com/EsreverWoW/ShestakUI_Classic
+    - https://www.wowinterface.com/downloads/info26239
+    - https://www.wowinterface.com/downloads/info26016
+    - https://www.wowinterface.com/downloads/info25460
+    - https://www.wowinterface.com/downloads/info25977
+
+## todo
 
 ## todo bucket (no particular order)
 
@@ -20,13 +26,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - this source is hosted on github as static content, updated daily.
 
 * update screenshots
-
-* add support for wotlk classic
-    - https://github.com/EsreverWoW/ShestakUI_Classic
-    - https://www.wowinterface.com/downloads/info26239
-    - https://www.wowinterface.com/downloads/info26016
-    - https://www.wowinterface.com/downloads/info25460
-    - https://www.wowinterface.com/downloads/info25977
 
 * bug, trade skill master string-converter changed directory names between 2.0.7 and 2.1.0
     - see also Combuctor 9.1.3 vs Combuctor 8.1.1 with 'BagBrother' in old addons
