@@ -444,8 +444,7 @@
                             {:browser_download_url "https://example.org"
                              :content_type "application/zip"
                              :state "uploaded"
-                             :name "1.2.3-Classic-WotLK"}
-                            ]}
+                             :name "1.2.3-Classic-WotLK"}]}
           expected [{:download-url "https://example.org", :game-track :retail, :version "Release 1.2.3"}
                     {:download-url "https://example.org", :game-track :classic, :version "Release 1.2.3"}
                     {:download-url "https://example.org", :game-track :classic-tbc, :version "Release 1.2.3"}

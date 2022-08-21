@@ -12,6 +12,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* no errors displayed when installing from addon detail page
+
 * wowinterface, fetch addon data from secondary source
     - *augment* what is currently implemented with my own source
         - failure to fetch this other data shouldn't prevent wowi updates from working normally

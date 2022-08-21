@@ -251,7 +251,7 @@
                ["3.4.0" :classic-wotlk]
                ["3.foo.bar" :classic-wotlk]
                [constants/latest-classic-wotlk-game-version :classic-wotlk]
-               
+
                ;; everything else
                ["4.3.0" :retail]
                ["5.0.4" :retail]
@@ -294,7 +294,7 @@
                  ["1.2.3-classic-wotlk.no-lib" :classic-wotlk]
                  ["1.2.3_classic_wotlk_no-lib" :classic-wotlk]
                  ["ShestakUI-1.6.2-wrath.zip" :classic-wotlk]
-                 
+
                  ;; classic-tbc
                  ["bcc" :classic-tbc]
                  ["classic-tbc" :classic-tbc]
@@ -304,6 +304,7 @@
                  ["classic-tbc.no-lib" :classic-tbc]
                  ["classic_tbc" :classic-tbc]
                  ["1.2.3_classic_tbc_no-lib" :classic-tbc]
+                 ["LunaUnitFrames-bcc-4.330.zip" :classic-tbc]
 
                  ;; classic-tbc (edge cases)
                  ["beta-tbc" :classic-tbc]

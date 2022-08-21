@@ -154,8 +154,8 @@
              (debug (format
                     ;; 'classic' in .toc filename does not match 'retail' derived from it's 'Interface' value of '90200'.
                     ;; see BigWigs_Classic for a false-positive
-                    "'%s' in .toc filename does not match '%s' derived from it's 'Interface' value of '%s'."
-                    (name (:-filename-game-track keyvals)) (name game-track) interface-version)))
+                     "'%s' in .toc filename does not match '%s' derived from it's 'Interface' value of '%s'."
+                     (name (:-filename-game-track keyvals)) (name game-track) interface-version)))
 
          addon {:name (normalise-name label)
                 :dirname dirname
