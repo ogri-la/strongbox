@@ -329,7 +329,8 @@
       "1." :classic
       ;; 2.x.x == classic (burning crusade)
       "2." :classic-tbc
-      ;; 3.x.x == classic (wrath of the lich king) (probably)
+      ;; 3.x.x == classic (wrath of the lich king)
+      "3." :classic-wotlk
       :retail)))
 
 (defn-spec interface-version-to-game-track (s/or :ok ::sp/game-track, :err nil?)
@@ -345,7 +346,8 @@
   (case game-track
     :retail constants/latest-retail-game-version
     :classic constants/latest-classic-game-version
-    :classic-tbc constants/latest-classic-tbc-game-version))
+    :classic-tbc constants/latest-classic-tbc-game-version
+    :classic-wotlk constants/latest-classic-wotlk-game-version))
 
 ;; https://stackoverflow.com/questions/13789092/length-of-the-first-line-in-an-utf-8-file-with-bom
 (defn debomify
@@ -660,17 +662,20 @@
   (map #(zipmap (map keyword head) %1) lines))
 
 (defn-spec guess-game-track (s/nilable ::sp/game-track)
-  "returns the first game track it finds in the given string, preferring `:classic-tbc`, then `:classic`, then `:retail` (most to least specific).
+  "returns the first game track it finds in the given string, preferring `:classic-wotlk`, then `:classic-tbc`, then `:classic`, then `:retail` (most to least specific).
   returns `nil` if no game track found."
   [string (s/nilable string?)]
   (when string
-    (let [;; matches 'classic-tbc', 'classic-bc', 'classic-bcc', 'classic_tbc', 'classic_bc', 'classic_bcc', 'tbc', 'tbcc', 'bc', 'bcc'
+    (let [;; matches 'classic-wotlk', 'classic_wotlk', 'classic-wrath', 'classic_wrath', 'wotlk', 'wrath'
+          classic-wotlk-regex #"(?i)(classic[\W_])?(wrath|wotlk){1}\W?"
+          ;; matches 'classic-tbc', 'classic-bc', 'classic-bcc', 'classic_tbc', 'classic_bc', 'classic_bcc', 'tbc', 'tbcc', 'bc', 'bcc'
           ;; but not 'classictbc' or 'classicbc' or 'classicbcc'
           ;; see tests.
           classic-tbc-regex #"(?i)classic[\W_]t?bcc?|[\W_]t?bcc?\W?|t?bcc?$"
           classic-regex #"(?i)classic|vanilla"
           retail-regex #"(?i)retail|mainline"]
       (cond
+        (re-find classic-wotlk-regex string) :classic-wotlk
         (re-find classic-tbc-regex string) :classic-tbc
         (re-find classic-regex string) :classic
         (re-find retail-regex string) :retail))))

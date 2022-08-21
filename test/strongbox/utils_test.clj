@@ -246,8 +246,13 @@
                ["2.foo.bar" :classic-tbc]
                [constants/latest-classic-tbc-game-version :classic-tbc]
 
+               ;; wotlk
+               ["3." :classic-wotlk]
+               ["3.4.0" :classic-wotlk]
+               ["3.foo.bar" :classic-wotlk]
+               [constants/latest-classic-wotlk-game-version :classic-wotlk]
+
                ;; everything else
-               ["3.0.2" :retail]
                ["4.3.0" :retail]
                ["5.0.4" :retail]
                ;; ...etc
@@ -276,6 +281,20 @@
                  ["foo" nil]
                  ["1.2.3" nil]
 
+                 ;; classic-wotlk
+                 ["wotlk" :classic-wotlk]
+                 ["wrath" :classic-wotlk]
+                 ["classic-wotlk" :classic-wotlk]
+                 ["classic-wrath" :classic-wotlk]
+                 ["classic_wotlk" :classic-wotlk]
+                 ["classic_wrath" :classic-wotlk]
+                 ["classic-wotlk.no-lib" :classic-wotlk]
+                 ["1.2.3-classic-wotlk" :classic-wotlk]
+                 ["1.2.3-classic-wotlk-no-lib" :classic-wotlk]
+                 ["1.2.3-classic-wotlk.no-lib" :classic-wotlk]
+                 ["1.2.3_classic_wotlk_no-lib" :classic-wotlk]
+                 ["ShestakUI-1.6.2-wrath.zip" :classic-wotlk]
+
                  ;; classic-tbc
                  ["bcc" :classic-tbc]
                  ["classic-tbc" :classic-tbc]
@@ -285,6 +304,7 @@
                  ["classic-tbc.no-lib" :classic-tbc]
                  ["classic_tbc" :classic-tbc]
                  ["1.2.3_classic_tbc_no-lib" :classic-tbc]
+                 ["LunaUnitFrames-bcc-4.330.zip" :classic-tbc]
 
                  ;; classic-tbc (edge cases)
                  ["beta-tbc" :classic-tbc]
@@ -341,7 +361,7 @@
                  ["retail-classic" :classic]]]
 
       (doseq [[given expected] cases]
-        (is (= expected (utils/guess-game-track given)) (format "failed case: %s" given))))))
+        (is (= expected (utils/guess-game-track given)) (format "failed case '%s', expecting '%s'" given expected))))))
 
 (deftest select-vals
   (let [given {:a 1 :b 2 :c 3 :d 4 :e nil}
@@ -401,7 +421,8 @@
 (deftest interface-version-to-game-track
   (let [cases [[10123 :classic]
                [20123 :classic-tbc]
-               [30123 :retail] ;; for now
+               [30123 :classic-wotlk]
+               [40123 :retail] ;; for now
 
                ;; bad interface versions
                [0 nil]
