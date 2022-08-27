@@ -11,7 +11,7 @@
     [release-json :refer [download-release-json, release-json-game-tracks]]
     [http :as http]
     [toc :as toc]
-    [utils :as utils :refer [pad if-let*]]
+    [utils :as utils :refer [if-let*]]
     [specs :as sp]]))
 
 (defn-spec release-json-file? boolean?

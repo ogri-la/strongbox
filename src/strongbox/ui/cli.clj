@@ -21,7 +21,7 @@
     [catalogue :as catalogue]
     [http :as http]
     [utils :as utils :refer [if-let* message-list]]
-    [core :as core :refer [get-state paths find-catalogue-local-path]]]))
+    [core :as core :refer [get-state paths]]]))
 
 (comment "the UIs pool their logic here, which calls core.clj.")
 

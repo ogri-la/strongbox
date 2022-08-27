@@ -280,23 +280,6 @@
 
 ;; 
 
-(defn de-dupe-wowinterface
-  "at time of writing, wowinterface has 5 pairs of duplicate addons with slightly different labels
-  for each pair we'll pick the most recently updated.
-  these pairs *may* get picked up and filtered out further down when comparing merged catalogues,
-  depending on the time difference between the two updated dates"
-  [addon-list]
-  (let [de-duper (fn [[_ group-list]]
-                   (if (> (count group-list) 1)
-                     (do
-                       (warn "wowinterface: multiple addons slugify to the same :name" (utils/pprint group-list))
-                       (last (sort-by :updated-date group-list)))
-                     (first group-list)))
-        addon-groups (group-by :name addon-list)]
-    (mapv de-duper addon-groups)))
-
-;;
-
 (defn-spec shorten-catalogue (s/or :ok :catalogue/catalogue, :problem nil?)
   "returns a truncated version of `catalogue` where all addons considered unmaintained are removed.
   an addon is considered unmaintained if it hasn't been updated since before the given `cutoff` date."

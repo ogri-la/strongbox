@@ -79,18 +79,6 @@
           (finally
             (fs/delete path)))))))
 
-(deftest pad
-  (let [cases [;;[[nil 2] nil] ;; must be a collection
-               [[[] 0] []]
-               [[[] 2] [nil nil]]
-               [[[nil nil] 2] [nil nil]]
-               [[[:foo :bar] 2] [:foo :bar]]
-               [[[:foo] 2] [:foo nil]]
-               [[[:foo :bar] 1] [:foo :bar]]]]
-    (doseq [[[coll pad-amt] expected] cases]
-      (testing (str "list is padded, case:" expected)
-        (is (= expected (utils/pad coll pad-amt)))))))
-
 (deftest nilable
   (let [cases [[nil nil]
                [[] nil]

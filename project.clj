@@ -87,7 +87,8 @@
 
   :plugins [[lein-cljfmt "0.6.4"]
             [jonase/eastwood "0.9.9"]
-            [lein-cloverage "1.2.2"]]
+            [lein-cloverage "1.2.2"]
+            [venantius/yagni "0.1.7"]]
   :eastwood {:exclude-linters [:constant-test
                                :reflection]
              ;; linters that are otherwise disabled

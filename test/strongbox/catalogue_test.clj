@@ -11,19 +11,6 @@
     [test-helper :as helper :refer [fixture-path]]]
    [clj-http.fake :refer [with-fake-routes-in-isolation]]))
 
-(deftest de-dupe-wowinterface
-  (testing "given multiple addons with the same name, the most recently updated one is preferred"
-    (let [fixture [{:name "adibags" :updated-date "2001-01-01T00:00:00Z" :source "wowinterface"}
-                   {:name "adibags" :updated-date "2019-09-09T00:00:00Z" :source "curseforge"}]
-          expected [{:name "adibags" :updated-date "2019-09-09T00:00:00Z" :source "curseforge"}]]
-      (is (= (catalogue/de-dupe-wowinterface fixture) expected))))
-
-  (testing "given multiple addons with distinct names, all addons are returned"
-    (let [fixture [{:name "adi-bags" :updated-date "2001-01-01T00:00:00Z" :source "wowinterface"}
-                   {:name "baggy-adidas" :updated-date "2019-09-09T00:00:00Z" :source "curseforge"}]
-          expected fixture]
-      (is (= (catalogue/de-dupe-wowinterface fixture) expected)))))
-
 (deftest format-catalogue-data
   (testing "catalogue data has a consistent structure"
     (let [addon-list []

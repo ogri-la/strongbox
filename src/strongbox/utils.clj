@@ -17,8 +17,7 @@
    [java-time :as jt]
    [java-time.format])
   (:import
-   [java.lang StringBuilder]
-   [java.util Base64 Random]
+   [java.util Base64]
    [org.ocpsoft.prettytime.units Decade]
    [org.ocpsoft.prettytime PrettyTime]))
 
@@ -63,20 +62,6 @@
     (and (string? x)
          (clojure.string/blank? x)) nil
     :else x))
-
-(defn-spec pad coll?
-  "given a collection, ensures there are at least pad-amt items in result. pad value is nil"
-  [lst coll?, pad-amt int?]
-  (let [lst-size (count lst)]
-    (if (< lst-size pad-amt)
-      (into lst (repeat (- pad-amt lst-size) nil))
-      lst)))
-
-(defn-spec kw2str (s/or :ok? string? :nil nil?)
-  "returns the string version of the given keyword, if keyword is not nil"
-  [kw (s/nilable keyword?)]
-  (when kw
-    (name kw)))
 
 (defn-spec safe-to-delete? boolean?
   "predicate, returns `true` if given file is prefixed with given directory."
@@ -403,12 +388,6 @@
   [f c]
   [(filterv f c) (filterv (complement f) c)])
 
-(defn-spec cp ::sp/extant-file
-  [old-path ::sp/extant-file new-dir ::sp/extant-dir]
-  (let [new-path (join new-dir (fs/base-name old-path))]
-    (fs/copy old-path new-path)
-    new-path))
-
 (defn -semver-comp
   [a-bits b-bits]
   (let [find-int (fn [x]
@@ -630,22 +609,6 @@
   []
   (str (java.util.UUID/randomUUID)))
 
-;; `rand-str2`, Istvan
-;; - https://stackoverflow.com/questions/64034761/fast-random-string-generator-in-clojure
-(defn short-unique-id
-  ^String
-  ([]
-   (short-unique-id 8))
-  ([^Long len]
-   (let [leftLimit 97
-         rightLimit 122
-         random (java.util.Random.)
-         stringBuilder (StringBuilder. len)
-         diff (- rightLimit leftLimit)]
-     (dotimes [_ len]
-       (let [ch (char (.intValue ^Double (+ leftLimit (* (.nextFloat ^Random random) (+ diff 1)))))]
-         (.append ^StringBuilder stringBuilder ch)))
-     (.toString ^StringBuilder stringBuilder))))
 
 (defn count-occurances
   ;; {"Foo-v1.zip" 1, "Foo-v2.zip 1, "Foo.zip" 5}

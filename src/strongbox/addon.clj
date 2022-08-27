@@ -216,6 +216,7 @@
 ;; ---
 
 
+;; todo: remove, update tests 
 (defn-spec -read-nfo ::sp/list-of-maps
   "unused except for testing. reads the nfo data for the given addon and all of it's grouped addons. returns a list of nfo data."
   [install-dir ::sp/extant-dir, addon map?]
