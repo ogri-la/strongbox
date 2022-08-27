@@ -176,24 +176,6 @@
                                :interface-version 11300}]}]
       (is (= expected (curseforge-api/group-releases fixture))))))
 
-(deftest extract-addon-summary
-  (testing "data extracted from curseforge api 'search' results is correct"
-    (let [fixture (slurp (fixture-path "curseforge-api-search--truncated.json"))
-          fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/search?gameId=1&index=0&pageSize=50&searchFilter=&sort=3"
-                       {:get (fn [req] {:status 200 :body fixture})}}
-          expected [{:created-date "2016-05-09T17:21:30.1Z",
-                     :description "Restores access to removed interface options in Legion",
-                     :tag-list [:misc],
-                     :updated-date "2019-08-30T14:39:44.943Z",
-                     :name "advancedinterfaceoptions",
-                     :label "AdvancedInterfaceOptions",
-                     :download-count 2923589,
-                     :source "curseforge"
-                     :source-id 99982,
-                     :url "https://www.curseforge.com/wow/addons/advancedinterfaceoptions"}]]
-      (with-fake-routes-in-isolation fake-routes
-        (is (= expected (curseforge-api/download-all-summaries-alphabetically)))))))
-
 ;;
 
 (deftest download-addon-404

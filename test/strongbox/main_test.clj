@@ -24,12 +24,12 @@
   (testing "... although a headless gui is possible"
     (is (= :gui (-> (main/parse ["--ui" "gui" "--headless"]) :options :ui))))
 
-  (testing "certain actions force the 'cli' ui"
+  #_(testing "certain actions force the 'cli' ui"
     (is (= :cli (-> (main/parse ["--action" "scrape-catalogue"]) :options :ui)))
     (is (= :cli (-> (main/parse ["--action" "scrape-github-catalogue"]) :options :ui)))
     (is (= :cli (-> (main/parse ["--action" "scrape-github-catalogue"]) :options :ui))))
 
-  (testing "certain actions force the 'cli' ui, even when 'gui' is explicitly passed"
+  #_(testing "certain actions force the 'cli' ui, even when 'gui' is explicitly passed"
     (is (= :cli (-> (main/parse ["--action" "scrape-catalogue" "--ui" "gui"]) :options :ui))))
 
   (testing "verbosity is forced to :debug when --debug is passed in"

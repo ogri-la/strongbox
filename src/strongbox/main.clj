@@ -105,7 +105,7 @@
         (if (some #{ns-kw} [:main :utils :http :tags
                             :core :toc :nfo :zip :config :catalogue :db :addon :logging :joblib
                             :cli :gui :jfx
-                            :curseforge-api :wowinterface :wowinterface-api :gitlab-api :github-api :tukui-api
+                            :curseforge-api :wowinterface-api :gitlab-api :github-api :tukui-api
                             :release-json])
           (with-gui-diff
             (if fn-kw
@@ -128,12 +128,6 @@
   (str "Usage: ./strongbox [--action] [--addons-dir]\n\n" (:summary parsed-opts)))
 
 ;;
-
-(def catalogue-actions
-  #{:scrape-catalogue :write-catalogue
-    :scrape-github-catalogue :scrape-wowinterface-catalogue :scrape-tukui-catalogue})
-
-(def catalogue-action-str (clojure.string/join ", " (mapv #(format "'%s'" (name %)) (sort catalogue-actions))))
 
 (def cli-options
   [["-h" "--help"]
@@ -165,10 +159,10 @@
     :parse-fn #(-> % lower-case keyword)
     :validate [(in? [:cli :gui])]]
 
-   ["-a" "--action ACTION" (str "perform action and exit. action is one of: 'list', 'list-updates', 'update-all'," catalogue-action-str)
+   ["-a" "--action ACTION" "perform action and exit. action is one of: 'list', 'list-updates', 'update-all'"
     :id :action
     :parse-fn #(-> % lower-case keyword)
-    :validate [(in? (concat [:list :list-updates :update-all] catalogue-actions))]]])
+    :validate [(in? [:list :list-updates :update-all])]]])
 
 (defn validate
   [parsed]
@@ -196,19 +190,18 @@
       ;; post-processing
       (let [{:keys [options]} args
 
-            ;; force verbosity to :debug when `--debug` is given
-            ;; `--debug` is a shortcut right now but has potential beyond just throttling output
+            ;; force verbosity to `:debug` when `--debug` is given
             args (if (:debug-mode? options)
                    (-> args (assoc-in [:options :verbosity] :debug) (update-in [:options] dissoc :debug-mode?))
                    args)
 
-            ;; switch default ui to :cli if --headless given without explicit --ui
+            ;; switch default ui to `:cli` if `--headless` given without explicit `--ui`
             args (if (not (contains? options :ui))
                    (assoc-in args [:options :ui] (if (:headless? options) :cli :gui))
                    args)
 
-            ;; force :cli for certain actions
-            args (if (contains? catalogue-actions (:action options))
+            ;; force `:cli` for certain actions
+            args (if (contains? #{} (:action options))
                    (assoc-in args [:options :ui] :cli)
                    args)]
         args))))

@@ -33,37 +33,6 @@
         (testing (str "cli: " action)
           (is (nil? (cli/action action-kw))))))))
 
-(deftest write-catalogue
-  (with-running-app
-    (let [full (core/find-catalogue-local-path :full)
-          short (core/find-catalogue-local-path :short)
-
-          ;;curse (core/find-catalogue-local-path :curseforge)
-          wowi (core/find-catalogue-local-path :wowinterface)
-          tukui (core/find-catalogue-local-path :tukui)
-          github (core/find-catalogue-local-path :github)
-
-          num-full-addons (- 4 1) ;; 2022-01-22: curseforge not present in full catalogue
-          num-short-addons 2]
-
-      ;; copy some fixtures
-      ;;(fs/copy (fixture-path "catalogue--v2--curseforge.json") curse)
-      (fs/copy (fixture-path "catalogue--v2--wowinterface.json") wowi)
-      (fs/copy (fixture-path "catalogue--v2--tukui.json") tukui)
-      (fs/copy (fixture-path "catalogue--v2--github.json") github)
-
-      (cli/action :write-catalogue)
-
-      (testing "full and shortened catalogues were written"
-        (is (fs/exists? (core/find-catalogue-local-path :full)))
-        (is (fs/exists? (core/find-catalogue-local-path :short))))
-
-      (testing "each catalogue has one addon each"
-        (is (= num-full-addons (-> full catalogue/read-catalogue :total))))
-
-      (testing "the short catalogue has two addons in range"
-        (is (= num-short-addons (-> short catalogue/read-catalogue :total)))))))
-
 (deftest search-db--empty-db
   (testing "an empty database can be searched from the CLI"
     (with-running-app

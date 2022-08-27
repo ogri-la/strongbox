@@ -14,7 +14,6 @@
     [specs :as sp]
     [tukui-api :as tukui-api]
     [curseforge-api :as curseforge-api]
-    [wowinterface :as wowinterface]
     [wowinterface-api :as wowinterface-api]
     [gitlab-api :as gitlab-api]
     [github-api :as github-api]]))
@@ -115,7 +114,7 @@
           syn (if (-> syn :url nil?)
                 (case (:source toc)
                   ;; "curseforge" ... ;; addon page URL can't be reconstructed, so clickable links break.
-                  "wowinterface" (assoc syn :url (wowinterface/make-url toc))
+                  "wowinterface" (assoc syn :url (wowinterface-api/make-url toc))
                   "tukui" (assoc syn :url (tukui-api/make-url toc))
                   "github" (assoc syn :url (github-api/make-url toc))
                   ;; gitlab addons only appear in the user catalogue so will only be 'polyfilled' here if
