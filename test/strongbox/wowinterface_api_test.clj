@@ -74,3 +74,10 @@
                  ["&aid=asdf" nil]]]
       (doseq [[given expected] cases]
         (is (= expected (wowinterface-api/extract-aid given)))))))
+
+(deftest make-url
+  (let [cases [[{} nil]
+               [{:source-id nil} nil]
+               [{:source-id 123} "https://www.wowinterface.com/downloads/info123"]]]
+    (doseq [[given expected] cases]
+      (is (= expected (wowi/make-url given))))))
