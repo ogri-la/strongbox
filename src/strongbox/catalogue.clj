@@ -37,11 +37,12 @@
                       "tukui" tukui-api/expand-summary
                       "tukui-classic" tukui-api/expand-summary
                       "tukui-classic-tbc" tukui-api/expand-summary
+                      "tukui-classic-wotlk" tukui-api/expand-summary
                       nil (fn [_ _] (error "malformed addon:" (utils/pprint addon)))}
         key (:source addon)]
     (try
       (if-not (contains? dispatch-map key)
-        (error (format "addon '%s' is from an unsupported source '%s'." (:label addon) key))
+        (error (format "addon '%s' for %s is from an unsupported source '%s'." (:label addon) (sp/game-track-labels-map game-track) key))
         (let [release-list ((get dispatch-map key) addon game-track)
               latest-release (first release-list)
               pinned-release (when (and release-list
@@ -80,7 +81,7 @@
               ;; "no 'Classic' release found on wowinterface"
               ;; "no 'Classic (TBC)', 'Classic' or 'Retail' release found on github"
               (let [single-template "no '%s' release found on %s."
-                    multi-template "no '%s', '%s' or '%s' release found on %s."
+                    multi-template "no '%s', '%s', '%s' or '%s' release found on %s."
                     msg (if strict?
                           (format single-template (sp/game-track-labels-map game-track) (:source addon))
                           (apply format multi-template (conj (mapv #(sp/game-track-labels-map %) (get track-map game-track))
