@@ -698,6 +698,7 @@
                     "/addons.php" "tukui"
                     "/classic-addons.php" "tukui-classic"
                     "/classic-tbc-addons.php" "tukui-classic-tbc"
+                    "/classic-wotlk-addons.php" "tukui-classic-wotlk"
                     nil)
       nil)))
 

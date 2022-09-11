@@ -30,18 +30,16 @@
   does *not* support ignoring disabled hosts, see `expand-summary`.
   returns `nil` when no release found."
   [addon :addon/expandable, game-track ::sp/game-track]
-  (let [dispatch-map {"curseforge" curseforge-api/expand-summary
-                      "wowinterface" wowinterface-api/expand-summary
-                      "gitlab" gitlab-api/expand-summary
-                      "github" github-api/expand-summary
+  (let [dispatch-map {"curse" curseforge-api/expand-summary
+                      "wowin" wowinterface-api/expand-summary
+                      "gitla" gitlab-api/expand-summary
+                      "githu" github-api/expand-summary
                       "tukui" tukui-api/expand-summary
-                      "tukui-classic" tukui-api/expand-summary
-                      "tukui-classic-tbc" tukui-api/expand-summary
                       nil (fn [_ _] (error "malformed addon:" (utils/pprint addon)))}
-        key (:source addon)]
+        key (utils/safe-subs (:source addon) 5)]
     (try
       (if-not (contains? dispatch-map key)
-        (error (format "addon '%s' is from an unsupported source '%s'." (:label addon) key))
+        (error (format "addon '%s' for %s is from an unsupported source '%s'." (:label addon) (sp/game-track-labels-map game-track) (:source addon)))
         (let [release-list ((get dispatch-map key) addon game-track)
               latest-release (first release-list)
               pinned-release (when (and release-list
@@ -80,7 +78,7 @@
               ;; "no 'Classic' release found on wowinterface"
               ;; "no 'Classic (TBC)', 'Classic' or 'Retail' release found on github"
               (let [single-template "no '%s' release found on %s."
-                    multi-template "no '%s', '%s' or '%s' release found on %s."
+                    multi-template "no '%s', '%s', '%s' or '%s' release found on %s."
                     msg (if strict?
                           (format single-template (sp/game-track-labels-map game-track) (:source addon))
                           (apply format multi-template (conj (mapv #(sp/game-track-labels-map %) (get track-map game-track))
@@ -238,18 +236,16 @@
                                    :error nil?)
   "given a string from the user, figures out the addon source (github, etc), calls the right module and returns a stub"
   [uin string?]
-  (let [dispatch-map {"github" github-api/parse-user-string
-                      "gitlab" gitlab-api/parse-user-string
-                      "wowinterface" wowinterface-api/parse-user-string
-                      "curseforge" curseforge-api/parse-user-string
-                      "tukui" tukui-api/parse-user-string
-                      "tukui-classic" tukui-api/parse-user-string
-                      "tukui-classic-tbc" tukui-api/parse-user-string}
+  (let [dispatch-map {"githu" github-api/parse-user-string
+                      "gitla" gitlab-api/parse-user-string
+                      "wowin" wowinterface-api/parse-user-string
+                      "curse" curseforge-api/parse-user-string
+                      "tukui" tukui-api/parse-user-string}
         url (some-> uin utils/unmangle-https-url java.net.URL. str)]
     (if-not url
       (error "bad url")
       (let [source (utils/url-to-addon-source url)]
-        (if-let [f (get dispatch-map source)]
+        (if-let [f (dispatch-map (utils/safe-subs source 5))]
           (when-let [result (f url)]
             ;; special handling for curseforge, that returns a URL to be matched against catalogue.
             (merge {:source source} (if (= source "curseforge") {:url result} {:source-id result})))

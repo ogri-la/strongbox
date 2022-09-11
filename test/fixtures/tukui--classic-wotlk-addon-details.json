@@ -1,0 +1,19 @@
+[
+  {
+    "id": "6",
+    "name": "HydraUI",
+    "small_desc": "A visual interface replacement. HydraUI restyles the default interface, while adding many useful features.",
+    "author": "Hydra",
+    "version": "1.75",
+    "screenshot_url": "https://www.tukui.org/addons/Hydra/1619382889/screenshot.png",
+    "url": "https://www.tukui.org/classic-wotlk-addons.php?download=6",
+    "category": "Interfaces",
+    "downloads": "107070",
+    "lastupdate": "2022-09-03 06:43:35",
+    "patch": "3.4.0",
+    "web_url": "https://www.tukui.org/classic-wotlk-addons.php?id=6",
+    "last_download": "2022-09-10 13:39:05",
+    "changelog": "https://www.tukui.org/classic-wotlk-addons.php?id=6&changelog",
+    "donate_url": "https://www.paypal.me/vuiaddon"
+  }
+]

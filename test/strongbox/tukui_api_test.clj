@@ -65,6 +65,25 @@
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (tukui-api/download-classic-tbc-summaries)))))))
 
+(deftest parse-addons--classic-wotlk
+  (testing "parsing classic (wotlk) addons"
+    (let [fixture (slurp (fixture-path "tukui--classic-wotlk-addon-details.json"))
+          fake-routes {tukui-api/classic-tbc-summary-list-url
+                       {:get (fn [req] {:status 200 :body fixture})}}
+
+          expected [{:description "A visual interface replacement. HydraUI restyles the default interface, while adding many useful features.",
+                     :download-count 107070,
+                     :game-track-list [:classic-tbc],
+                     :label "HydraUI",
+                     :name "hydraui",
+                     :source "tukui-classic-tbc",
+                     :source-id 6,
+                     :tag-list [:interfaces],
+                     :updated-date "2022-09-03T06:43:35Z",
+                     :url "https://www.tukui.org/classic-wotlk-addons.php?id=6"}]]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (tukui-api/download-classic-tbc-summaries)))))))
+
 (deftest parse-addons--proper
   (testing "parsing tukui/elvui addons proper"
     (let [fixture (slurp (fixture-path "tukui--elvui-addon-proper.json"))

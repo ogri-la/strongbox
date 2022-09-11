@@ -1898,7 +1898,7 @@
                                                                      (async-handler (partial f addon-summary))
                                                                      {:style-class (if starred "starred" "unstarred")})}))}}
 
-                     {:text "source" :min-width 125 :pref-width 125 :max-width 125 :resizable false
+                     {:text "source" :min-width 130 :pref-width 135 :max-width 145
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [row]
                                                  {:graphic (href-to-hyperlink row)})}
