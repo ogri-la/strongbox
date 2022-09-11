@@ -122,7 +122,7 @@
 (defn-spec -download (s/or :file ::sp/extant-file, :raw :http/resp, :error :http/error)
   "if writing to a file is possible then the output file is returned, else the raw http response.
    writing response body to a file is possible when caching is available or `output-file` provided."
-  [^String url ::sp/url, output-file (s/nilable ::sp/file), message (s/nilable ::sp/short-string), extra-params map?]
+  [^String url ::sp/url, output-file (s/nilable ::sp/file), message (s/nilable string?), extra-params map?]
   (let [cache? (not (nil? *cache*))
         encoded-path (url-to-filename url)
         alt-output-file (when cache?
@@ -354,7 +354,7 @@
   an optional `message` can be supplied as the second argument that will be displayed on a cache miss."
   ([url ::sp/url]
    (download url nil))
-  ([url ::sp/url, message (s/nilable ::sp/short-string)]
+  ([url ::sp/url, message (s/nilable string?)]
    (let [output-file nil
          resp (-download url output-file message {})]
      (cond
@@ -369,7 +369,7 @@
   an optional `message` can be supplied as the second argument that will be displayed on a cache miss."
   ([url ::sp/url, output-file ::sp/file]
    (download-file url output-file nil))
-  ([url ::sp/url, output-file ::sp/file, message (s/nilable ::sp/short-string)]
+  ([url ::sp/url, output-file ::sp/file, message (s/nilable string?)]
    (let [resp (-download url output-file message {:as :stream})]
      (if-not (http-error? resp)
        output-file
@@ -381,7 +381,7 @@
   "wrapper around `download` that will pause and retry a download several times with an exponentially increasing duration between each attemp"
   ([url ::sp/url]
    (download-with-backoff url nil))
-  ([url ::sp/url, message (s/nilable ::sp/short-string)]
+  ([url ::sp/url, message (s/nilable string?)]
    (loop [attempt 1
           pause *default-pause*]
      (let [result (try

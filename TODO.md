@@ -6,14 +6,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* wotlk classic support
-* add support for wotlk classic
-    - https://github.com/EsreverWoW/ShestakUI_Classic
-    - https://www.wowinterface.com/downloads/info26239
-    - https://www.wowinterface.com/downloads/info26016
-    - https://www.wowinterface.com/downloads/info25460
-    - https://www.wowinterface.com/downloads/info25977
-
 ## todo
 
 ## todo bucket (no particular order)
