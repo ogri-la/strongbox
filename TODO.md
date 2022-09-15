@@ -16,6 +16,9 @@ see CHANGELOG.md for a more formal list of changes by release
 * remove wowman/v1 catalogue support
     - done
 
+* remove tags
+    - done
+
 ## todo
 
 * add 'wotlk support' to comrades.csv
@@ -26,8 +29,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - this source is hosted on github as static content, updated daily.
 
 * update screenshots
-
-* remove tags
 
 ## todo bucket (no particular order)
 
