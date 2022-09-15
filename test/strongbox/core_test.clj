@@ -201,12 +201,6 @@
                     {:name "carbonite" :source "curseforge" :game-track :retail}]]
       (is (= expected (core/export-installed-addon-list addon-list))))))
 
-(deftest export-catalogue-addon-list--v1
-  (testing "exported addon list data from v1 catalogue data is correct"
-    (let [catalogue (catalogue/read-catalogue (fixture-path "import-export--user-catalogue-v1.json"))
-          expected (slurp-fixture "import-export--user-catalogue-export.json")]
-      (is (= expected (core/export-catalogue-addon-list catalogue))))))
-
 (deftest export-catalogue-addon-list--v2
   (testing "exported addon list data from v2 catalogue data is correct"
     (let [catalogue (catalogue/read-catalogue (fixture-path "import-export--user-catalogue-v2.json"))

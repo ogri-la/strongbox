@@ -124,8 +124,7 @@
         (is (= expected (catalogue/parse-user-string given)))))))
 
 (deftest read-catalogue
-  (let [v1-catalogue-path (fixture-path "catalogue--v1.json")
-        v2-catalogue-path (fixture-path "catalogue--v2.json")
+  (let [v2-catalogue-path (fixture-path "catalogue--v2.json")
 
         expected-addon-list
         [{:download-count 1077,
@@ -171,9 +170,6 @@
                   :datestamp "2020-02-20"
                   :total 4
                   :addon-summary-list expected-addon-list}]
-
-    (testing "a v1 (wowman-era) catalogue spec can be processed and coerced to a valid v2 spec"
-      (is (= expected (catalogue/read-catalogue v1-catalogue-path))))
 
     (testing "a v2 (strongbox-era) catalogue spec can be read and validated as a v2 spec"
       (is (= expected (catalogue/read-catalogue v2-catalogue-path))))))
