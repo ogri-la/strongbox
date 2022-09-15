@@ -14,7 +14,6 @@
     [specs :as sp]
     [tukui-api :as tukui-api]
     [curseforge-api :as curseforge-api]
-    [wowinterface :as wowinterface]
     [wowinterface-api :as wowinterface-api]
     [gitlab-api :as gitlab-api]
     [github-api :as github-api]]))
@@ -113,7 +112,7 @@
           syn (if (-> syn :url nil?)
                 (case (:source toc)
                   ;; "curseforge" ... ;; addon page URL can't be reconstructed, so clickable links break.
-                  "wowinterface" (assoc syn :url (wowinterface/make-url toc))
+                  "wowinterface" (assoc syn :url (wowinterface-api/make-url toc))
                   "tukui" (assoc syn :url (tukui-api/make-url toc))
                   "github" (assoc syn :url (github-api/make-url toc))
                   ;; gitlab addons only appear in the user catalogue so will only be 'polyfilled' here if
@@ -276,23 +275,6 @@
       (format-catalogue-data addon-summary-list datestamp))))
 
 ;; 
-
-(defn de-dupe-wowinterface
-  "at time of writing, wowinterface has 5 pairs of duplicate addons with slightly different labels
-  for each pair we'll pick the most recently updated.
-  these pairs *may* get picked up and filtered out further down when comparing merged catalogues,
-  depending on the time difference between the two updated dates"
-  [addon-list]
-  (let [de-duper (fn [[_ group-list]]
-                   (if (> (count group-list) 1)
-                     (do
-                       (warn "wowinterface: multiple addons slugify to the same :name" (utils/pprint group-list))
-                       (last (sort-by :updated-date group-list)))
-                     (first group-list)))
-        addon-groups (group-by :name addon-list)]
-    (mapv de-duper addon-groups)))
-
-;;
 
 (defn-spec shorten-catalogue (s/or :ok :catalogue/catalogue, :problem nil?)
   "returns a truncated version of `catalogue` where all addons considered unmaintained are removed.

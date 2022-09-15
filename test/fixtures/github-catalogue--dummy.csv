@@ -1,6 +1,0 @@
-name,full_name,url,description,last_updated,flavors,curse_id,wago_id,wowi_id,has_release_json
-premade-applicants-filter,0xbs/premade-applicants-filter,https://github.com/0xbs/premade-applicants-filter,Allows filtering of premade applicants using advanced filter expressions.,2021-12-26T09:40:18+00:00,mainline,,,,True
-ArenaLeaveConfirmer,AlexFolland/ArenaLeaveConfirmer,https://github.com/AlexFolland/ArenaLeaveConfirmer,,2021-07-04T22:12:06+00:00,"bcc,classic,mainline",49965,,,True
-BattlegroundSpiritReleaser,AlexFolland/BattlegroundSpiritReleaser,https://github.com/AlexFolland/BattlegroundSpiritReleaser,,2021-07-04T21:55:31+00:00,"bcc,classic,mainline",95070,,,True
-AltReps,Alastair-Scott/AltReps,https://github.com/Alastair-Scott/AltReps,AltReps is an addon that allows you to track reputations across your characters,2021-12-03T00:26:27+00:00,mainline,408394,,25680,True
-ChatCleaner,GoldpawsStuff/ChatCleaner,https://github.com/GoldpawsStuff/ChatCleaner,"Makes system chat messages prettier and tidier, and reduces the need for multiple chat windows.",2021-12-15T21:17:51+00:00,"bcc,classic,mainline",531109,baNDwAGo,,True

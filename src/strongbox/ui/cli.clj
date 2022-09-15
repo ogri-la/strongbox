@@ -13,7 +13,7 @@
     [tukui-api :as tukui-api]
     [gitlab-api :as gitlab-api]
     ;;[curseforge-api :as curseforge-api]
-    [wowinterface :as wowinterface]
+    [wowinterface-api :as wowinterface-api]
     [db :as db]
     [logging :as logging]
     [addon :as addon]
@@ -21,7 +21,7 @@
     [catalogue :as catalogue]
     [http :as http]
     [utils :as utils :refer [if-let* message-list]]
-    [core :as core :refer [get-state paths find-catalogue-local-path]]]))
+    [core :as core :refer [get-state paths]]]))
 
 (comment "the UIs pool their logic here, which calls core.clj.")
 
@@ -729,7 +729,7 @@
   [addon :addon/toc, source-map :addon/source-map]
   (case (:source source-map)
     "curseforge" (str "https://www.curseforge.com/wow/addons/" (-> addon :name)) ;; still not great but about ~80% hit rate.
-    "wowinterface" (wowinterface/make-url source-map)
+    "wowinterface" (wowinterface-api/make-url source-map)
     "tukui" (tukui-api/make-url (merge addon source-map))
     "github" (github-api/make-url source-map)
     "gitlab" (gitlab-api/make-url source-map)
@@ -849,6 +849,7 @@
   (core/remove-user-addon! addon-summary)
   (core/write-user-catalogue!))
 
+
 ;; debug
 
 
@@ -890,8 +891,6 @@
 
 (defmulti action
   "handles the following actions:
-    :scrape-wowinterface-catalogue - scrapes wowinterface host and creates a wowinterface catalogue
-    :scrape-catalogue - scrapes all available sources and creates a full and short catalogue
     :list - lists all installed addons
     :list-updates - lists all installed addons with updates available
     :update-all - updates all installed addons with updates available"
@@ -899,74 +898,6 @@
     (cond
       (map? x) (:action x)
       (keyword? x) x)))
-
-(defmethod action :scrape-github-catalogue
-  [_]
-  (binding [http/*cache* (core/cache)]
-    (let [output-file (find-catalogue-local-path :github)
-          catalogue-data (github-api/build-catalogue)
-          created (utils/datestamp-now-ymd)
-          formatted-catalogue-data (catalogue/format-catalogue-data-for-output catalogue-data created)]
-      (catalogue/write-catalogue formatted-catalogue-data output-file))))
-
-(defmethod action :scrape-wowinterface-catalogue
-  [_]
-  (binding [http/*cache* (core/cache)]
-    (let [output-file (find-catalogue-local-path :wowinterface)
-          catalogue-data (wowinterface/scrape)
-          created (utils/datestamp-now-ymd)
-          formatted-catalogue-data (catalogue/format-catalogue-data-for-output catalogue-data created)]
-      (catalogue/write-catalogue formatted-catalogue-data output-file))))
-
-(comment
-  "disabled, to be removed"
-  (defmethod action :scrape-curseforge-catalogue
-    [_]
-    (binding [http/*cache* (core/cache)]
-      (let [output-file (find-catalogue-local-path :curseforge)
-            catalogue-data (curseforge-api/download-all-summaries-alphabetically)
-            created (utils/datestamp-now-ymd)
-            formatted-catalogue-data (catalogue/format-catalogue-data-for-output catalogue-data created)]
-        (catalogue/write-catalogue formatted-catalogue-data output-file)))))
-
-(defmethod action :scrape-tukui-catalogue
-  [_]
-  (binding [http/*cache* (core/cache)]
-    (let [output-file (find-catalogue-local-path :tukui)
-          catalogue-data (tukui-api/download-all-summaries)
-          created (utils/datestamp-now-ymd)
-          formatted-catalogue-data (catalogue/format-catalogue-data-for-output catalogue-data created)]
-      (catalogue/write-catalogue formatted-catalogue-data output-file))))
-
-(defmethod action :write-catalogue
-  [_]
-  (let [;;curseforge-catalogue (find-catalogue-local-path :curseforge)
-        wowinterface-catalogue (find-catalogue-local-path :wowinterface)
-        tukui-catalogue (find-catalogue-local-path :tukui)
-        github-catalogue (find-catalogue-local-path :github)
-
-        catalogue-path-list [;;curseforge-catalogue
-                             wowinterface-catalogue tukui-catalogue github-catalogue]
-        catalogue (mapv catalogue/read-catalogue catalogue-path-list)
-        catalogue (reduce catalogue/merge-catalogues catalogue)
-        ;; 2021-09: `merge-catalogues` no longer converts an addon to an `ordered-map`.
-        ;; turns out this is fast individually but slow in aggregate and not necessary for regular usage of strongbox,
-        ;; just generating catalogues.
-        catalogue (catalogue/format-catalogue-data-for-output (:addon-summary-list catalogue) (:datestamp catalogue))
-        short-catalogue (when catalogue
-                          (catalogue/shorten-catalogue catalogue))]
-    (if-not catalogue
-      (warn "no catalogue data found, nothing to write")
-      (do (catalogue/write-catalogue catalogue (find-catalogue-local-path :full))
-          (catalogue/write-catalogue short-catalogue (find-catalogue-local-path :short))))))
-
-(defmethod action :scrape-catalogue
-  [_]
-  ;;(action :scrape-curseforge-catalogue)
-  (action :scrape-wowinterface-catalogue)
-  (action :scrape-tukui-catalogue)
-  (action :scrape-github-catalogue)
-  (action :write-catalogue))
 
 (defmethod action :list
   [_]

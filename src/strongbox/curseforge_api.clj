@@ -1,7 +1,6 @@
 (ns strongbox.curseforge-api
   (:require
    [strongbox
-    [tags :as tags]
     [http :as http]
     [specs :as sp]
     [utils :as utils :refer [to-json join]]]
@@ -172,52 +171,6 @@
     (-> result group-releases (get game-track) prune-leading-duplicates)))
 
 ;; catalogue building
-
-(defn-spec extract-addon-summary :addon/summary
-  "converts addon data extracted from a listing into an :addon/summary"
-  [snippet map?] ;; TODO: spec out curseforge results? eh.
-  {:url (:websiteUrl snippet)
-   :label (:name snippet)
-   :name (:slug snippet)
-   :description (:summary snippet)
-   ;; sorting cuts down on noise in diffs.
-   ;; `set` because of curseforge duplicate categories
-   ;; 2020-03: disabled in favour of :tag-list
-   ;;:category-list (->> snippet :categories (map :name) set sort vec)
-   :tag-list (->> snippet :categories (map :name) (tags/category-list-to-tag-list "curseforge"))
-   :created-date (:dateCreated snippet) ;; omg *yes*. perfectly formed dates
-   ;; we now have :dateModified and :dateReleased to pick from
-   ;;:updated-date (:dateModified snippet)
-   :updated-date (:dateReleased snippet) ;; this seems closest to what we originaly had
-   :download-count (-> snippet :downloadCount int) ;; I got a '511.0' ...?
-   :source "curseforge"
-   :source-id (:id snippet)})
-
-(defn-spec download-summary-page-alphabetically (s/or :ok (s/coll-of map?), :error nil?)
-  "downloads a page of results from the curseforge API, sorted A to Z"
-  [page int? page-size pos-int?]
-  (info "downloading" page-size "results from api, page" (inc page))
-  (let [index (* page-size page)
-        game-id 1 ;; WoW
-        sort-by 3 ;; alphabetically, asc (a-z)
-        url (api-url "/addon/search?gameId=%s&index=%s&pageSize=%s&searchFilter=&sort=%s" game-id index page-size sort-by)
-        results (->> url http/download-with-backoff http/sink-error utils/from-json)]
-    (mapv extract-addon-summary results)))
-
-(defn-spec download-all-summaries-alphabetically (s/or :ok :addon/summary-list, :error nil?)
-  []
-  (loop [page 0
-         accumulator []]
-    (let [page-size 50 ;; used to be quite a bit larger
-          results (download-summary-page-alphabetically page page-size)
-          num-results (count results)]
-      (if (< num-results page-size)
-        (into accumulator results) ;; short page, exit loop
-        ;; 184 requests with a 500ms pause means a minimum of 368 seconds (~6mins) to scrape curseforge.
-        ;; 184 requests with a 250ms pause means ~3.8min scrape time. this seems reasonable for now.
-        (do (Thread/sleep 250) ;; ms
-            (recur (inc page)
-                   (into accumulator results)))))))
 
 (defn-spec parse-user-string (s/or :ok ::sp/url, :error nil?)
   "extracts the addon name from the given `url` and returns a URL that would match a catalogue addon summary."

@@ -162,8 +162,7 @@
               priority-map {:retail [:retail :classic :classic-tbc]
                             :classic [:classic :classic-tbc :retail]
                             :classic-tbc [:classic-tbc :classic :retail]
-                            :classic-wotlk [:classic-wotlk :classic-tbc :classic :retail]
-                            }
+                            :classic-wotlk [:classic-wotlk :classic-tbc :classic :retail]}
               safe-fallback [game-track]
               priorities (get priority-map game-track safe-fallback)
               group (utils/first-nn #(get grouped-toc-data %) priorities)]
@@ -217,17 +216,6 @@
       (or grouped-addon target-addon))))
 
 ;; ---
-
-
-(defn-spec -read-nfo ::sp/list-of-maps
-  "unused except for testing. reads the nfo data for the given addon and all of it's grouped addons. returns a list of nfo data."
-  [install-dir ::sp/extant-dir, addon map?]
-  (->> addon
-       flatten-addon
-       (map :dirname)
-       (mapv (partial nfo/read-nfo-file install-dir))))
-
-;;
 
 (defn-spec determine-primary-subdir (s/or :found map?, :not-found nil?)
   "if an addon unpacks to multiple directories, which is the 'main' addon?

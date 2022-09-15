@@ -709,13 +709,13 @@
 
     ;; sanity checks
     (is (= ["EveryAddon-BundledAddon" "EveryOtherAddon"] (helper/install-dir-contents)))
-    (is (= original-nfo (addon/-read-nfo (helper/install-dir) addon)))
+    (is (= original-nfo (helper/read-nfo (helper/install-dir) addon)))
 
     ;; updated nfo is returned
     (addon/update-nfo! (helper/install-dir) addon updates)
 
     ;; updated nfo is written to disk
-    (is (= expected-nfo (addon/-read-nfo (helper/install-dir) addon)))))
+    (is (= expected-nfo (helper/read-nfo (helper/install-dir) addon)))))
 
 (deftest addon-locks
   (let [cases [[{} #{}]

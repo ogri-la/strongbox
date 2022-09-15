@@ -16,7 +16,46 @@
     [specs :as sp]
     [main :as main]
     [core :as core]
-    [utils :as utils]]))
+    [utils :as utils]])
+  (:import
+   [java.util Random]
+   [java.lang StringBuilder]))
+
+;; utils used only during testing
+
+(defn-spec cp ::sp/extant-file
+  "copies `old-path` into `new-dir`, returning the new full path."
+  [old-path ::sp/extant-file new-dir ::sp/extant-dir]
+  (let [new-path (utils/join new-dir (fs/base-name old-path))]
+    (fs/copy old-path new-path)
+    new-path))
+
+(defn-spec read-nfo ::sp/list-of-maps
+  "reads the nfo data for the given addon and all of it's grouped addons. returns a list of nfo data."
+  [install-dir ::sp/extant-dir, addon map?]
+  (->> addon
+       addon/flatten-addon
+       (map :dirname)
+       (mapv (partial nfo/read-nfo-file install-dir))))
+
+;; `rand-str2`, Istvan
+;; - https://stackoverflow.com/questions/64034761/fast-random-string-generator-in-clojure
+(defn short-unique-id
+  ^String
+  ([]
+   (short-unique-id 8))
+  ([^Long len]
+   (let [leftLimit 97
+         rightLimit 122
+         random (java.util.Random.)
+         stringBuilder (StringBuilder. len)
+         diff (- rightLimit leftLimit)]
+     (dotimes [_ len]
+       (let [ch (char (.intValue ^Double (+ leftLimit (* (.nextFloat ^Random random) (+ diff 1)))))]
+         (.append ^StringBuilder stringBuilder ch)))
+     (.toString ^StringBuilder stringBuilder))))
+
+;;
 
 (def toc-data
   "local addon .toc file"
@@ -282,7 +321,7 @@
         addon-data (mapv #(dissoc % :zip-contents) generated)
 
         ;; multi dir zip file contents
-        output-filename (str nom "-" (utils/short-unique-id) ".zip") ;; EveryAddon-fe3b9639.zip
+        output-filename (str nom "-" (short-unique-id) ".zip") ;; EveryAddon-fe3b9639.zip
         zipfile+contents [output-filename
                           (mapcat :zip-contents generated)]]
 
@@ -301,3 +340,5 @@
   "convenience. just like `gen-addon`, but also writes the generated zip file to the given `output-dir`."
   [output-dir & [opts]]
   (mk-addon! output-dir (gen-addon-data opts)))
+
+;;

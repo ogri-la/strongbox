@@ -15,11 +15,9 @@
                  [org.clojure/tools.cli "1.0.206"] ;; cli arg parsing
                  [org.clojure/tools.namespace "1.1.0"] ;; reload code
                  [org.clojure/data.json "2.4.0"] ;; json handling
-                 [org.clojure/data.csv "1.0.0"] ;; csv handling
                  [orchestra "2021.01.01-1"] ;; improved clojure.spec instrumentation
                  ;; see lein deps :tree
                  [com.taoensso/timbre "5.1.2"] ;; logging
-                 [enlive "1.1.6"] ;; html parsing
                  [clj-http "3.12.3"] ;; better http slurping
                  [clj-commons/fs "1.6.307"] ;; file system wrangling
                  [slugify "0.0.1"]
@@ -87,7 +85,8 @@
 
   :plugins [[lein-cljfmt "0.6.4"]
             [jonase/eastwood "0.9.9"]
-            [lein-cloverage "1.2.2"]]
+            [lein-cloverage "1.2.2"]
+            [venantius/yagni "0.1.7"]]
   :eastwood {:exclude-linters [:constant-test
                                :reflection]
              ;; linters that are otherwise disabled

@@ -6,11 +6,14 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
+* remove catalogue building logic
+    - this now lives in strongbox-catalogue-builder
+    - update scripts in strongbox-catalogue as well
+        - strongbox-catalogue is now just a dumb repository of catalogues again
+    - this will make this a major version release
+    - done
+
 ## todo
-
-## todo bucket (no particular order)
-
-* no errors displayed when installing from addon detail page
 
 * wowinterface, fetch addon data from secondary source
     - *augment* what is currently implemented with my own source
@@ -18,6 +21,18 @@ see CHANGELOG.md for a more formal list of changes by release
     - this source is hosted on github as static content, updated daily.
 
 * update screenshots
+
+* remove wowman/v1 catalogue support
+
+* remove tags
+
+## todo bucket (no particular order)
+
+* github authentication
+    - so user doesn't get capped
+        - or have to wrangle GITHUB_AUTH tokens
+
+* no errors displayed when installing from addon detail page
 
 * bug, trade skill master string-converter changed directory names between 2.0.7 and 2.1.0
     - see also Combuctor 9.1.3 vs Combuctor 8.1.1 with 'BagBrother' in old addons

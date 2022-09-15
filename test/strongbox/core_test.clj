@@ -145,13 +145,7 @@
 
       (testing "core/catalogue-local-path returns the expected path to the catalogue file on the filesystem"
         (is (= (utils/join fs/*cwd* helper-data-dir "short-catalogue.json") (core/catalogue-local-path short-catalogue)))
-        (is (= (utils/join fs/*cwd* helper-data-dir "full-catalogue.json") (core/catalogue-local-path full-catalogue))))
-
-      (testing "core/find-catalogue-local-path just needs a catalogue :name"
-        (is (= (utils/join fs/*cwd* helper-data-dir "short-catalogue.json") (core/find-catalogue-local-path :short))))
-
-      (testing "core/find-catalogue-local-path returns nil if the given catalogue can't be found"
-        (is (= nil (core/find-catalogue-local-path :foo)))))))
+        (is (= (utils/join fs/*cwd* helper-data-dir "full-catalogue.json") (core/catalogue-local-path full-catalogue)))))))
 
 (deftest paths
   (with-running-app
@@ -644,7 +638,7 @@
       (let [install-dir (str fs/*cwd*)
             ;; move dummy addon file into place so there is no cache miss
             fname (downloaded-addon-fname (:name helper/addon) (:version helper/addon))
-            _ (utils/cp (fixture-path fname) install-dir)
+            _ (helper/cp (fixture-path fname) install-dir)
             test-only? false
             file-list (core/install-addon-guard helper/addon install-dir test-only?)]
         (testing "addon directory created, single file written (.strongbox.json nfo file)"
@@ -656,7 +650,7 @@
     (with-running-app*
       (let [install-dir (helper/install-dir)
             fname (downloaded-addon-fname (:name helper/addon) (:version helper/addon))
-            dest (utils/cp (fixture-path fname) install-dir)
+            dest (helper/cp (fixture-path fname) install-dir)
             addon (assoc helper/addon :-testing-zipfile dest)
             test-only? true
             result (core/install-addon-guard addon install-dir test-only?)]
@@ -795,7 +789,7 @@
       (let [install-dir (helper/install-dir)
             ;; move dummy addon file into place so there is no cache miss
             fname (downloaded-addon-fname (:name helper/addon) (:version helper/addon))
-            _ (utils/cp (fixture-path fname) install-dir)]
+            _ (helper/cp (fixture-path fname) install-dir)]
         (cli/set-preference :addon-zips-to-keep 0)
         (core/install-addon-guard helper/addon install-dir)
         (is (= ["EveryAddon"] (helper/install-dir-contents)))))))
@@ -815,7 +809,7 @@
             (Thread/sleep 10)))
 
         ;; ensure the actual zip arrives last
-        (utils/cp (fixture-path fname) install-dir)
+        (helper/cp (fixture-path fname) install-dir)
 
         (is (= ["everyaddon--0-0-1.zip"
                 "everyaddon--0-0-2.zip"
