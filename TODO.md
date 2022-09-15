@@ -15,6 +15,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+* add 'wotlk support' to comrades.csv
+
 * wowinterface, fetch addon data from secondary source
     - *augment* what is currently implemented with my own source
         - failure to fetch this other data shouldn't prevent wowi updates from working normally
