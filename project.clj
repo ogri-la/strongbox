@@ -18,7 +18,6 @@
                  [orchestra "2021.01.01-1"] ;; improved clojure.spec instrumentation
                  ;; see lein deps :tree
                  [com.taoensso/timbre "5.1.2"] ;; logging
-                 [enlive "1.1.6"] ;; html parsing
                  [clj-http "3.12.3"] ;; better http slurping
                  [clj-commons/fs "1.6.307"] ;; file system wrangling
                  [slugify "0.0.1"]

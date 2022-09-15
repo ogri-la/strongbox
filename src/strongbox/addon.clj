@@ -217,18 +217,6 @@
 
 ;; ---
 
-
-;; todo: remove, update tests 
-(defn-spec -read-nfo ::sp/list-of-maps
-  "unused except for testing. reads the nfo data for the given addon and all of it's grouped addons. returns a list of nfo data."
-  [install-dir ::sp/extant-dir, addon map?]
-  (->> addon
-       flatten-addon
-       (map :dirname)
-       (mapv (partial nfo/read-nfo-file install-dir))))
-
-;;
-
 (defn-spec determine-primary-subdir (s/or :found map?, :not-found nil?)
   "if an addon unpacks to multiple directories, which is the 'main' addon?
    a common convention looks like 'Addon[seperator]Subname', for example:

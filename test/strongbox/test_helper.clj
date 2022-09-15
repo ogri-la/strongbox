@@ -30,6 +30,14 @@
     (fs/copy old-path new-path)
     new-path))
 
+(defn-spec read-nfo ::sp/list-of-maps
+  "reads the nfo data for the given addon and all of it's grouped addons. returns a list of nfo data."
+  [install-dir ::sp/extant-dir, addon map?]
+  (->> addon
+       addon/flatten-addon
+       (map :dirname)
+       (mapv (partial nfo/read-nfo-file install-dir))))
+
 ;; `rand-str2`, Istvan
 ;; - https://stackoverflow.com/questions/64034761/fast-random-string-generator-in-clojure
 (defn short-unique-id

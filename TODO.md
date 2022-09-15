@@ -21,6 +21,9 @@ see CHANGELOG.md for a more formal list of changes by release
         - strongbox-catalogue is now just a dumb repository of catalogues again
     - this will make this a major version release
 
+* remove wowman/v1 catalogue support
+* remove tags
+
 ## todo bucket (no particular order)
 
 * github authentication
