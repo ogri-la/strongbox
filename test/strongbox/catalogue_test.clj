@@ -91,6 +91,7 @@
                  ["https://www.tukui.org/addons.php?id=38" {:source "tukui" :source-id 38}]
                  ["https://www.tukui.org/classic-addons.php?id=3" {:source "tukui-classic" :source-id 3}]
                  ["https://www.tukui.org/classic-tbc-addons.php?id=21" {:source "tukui-classic-tbc" :source-id 21}]
+                 ["https://www.tukui.org/classic-wotlk-addons.php?id=21" {:source "tukui-classic-wotlk" :source-id 21}]
 
                  ;; edge cases that utils/unmangle-url fix
                  ["github.com/Aviana/HealComm" {:source "github" :source-id "Aviana/HealComm"}]

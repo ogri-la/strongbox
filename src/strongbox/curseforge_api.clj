@@ -1,7 +1,6 @@
 (ns strongbox.curseforge-api
   (:require
    [strongbox
-    [tags :as tags]
     [http :as http]
     [specs :as sp]
     [utils :as utils :refer [to-json join]]]

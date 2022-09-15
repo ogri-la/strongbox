@@ -14,6 +14,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## 5.4.1 - 2022-09-11
+
+### Added
+
+* support for Tukui's WotLK addons
+    - because of how Tukui partition their addons they need some special handling.
+
+### Changed
+
+* inconsistent 'source' column widths and resizing behaviour in the search addons tab.
+
+### Fixed
+
+* bug with selecting the 'WotLK Classic' game track in strict mode that would empty the list of installed addons.
+* minor bug with an error message repeated N times when installing an addon and the selected game track isn't supported
+    - affected non-strict mode only and was simply the same error message but for each game track it iterated through, i.e. 'no releases found for classic', 'no releases found for classic-tbc', etc.
+
 ## 5.4.0 - 2022-08-21
 
 ### Added

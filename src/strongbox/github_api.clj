@@ -1,6 +1,5 @@
 (ns strongbox.github-api
   (:require
-   [clojure.data.csv :as csv]
    [clojure.string :refer [index-of split]]
    [slugify.core :refer [slugify]]
    [clojure.spec.alpha :as s]

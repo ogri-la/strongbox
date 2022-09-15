@@ -1,12 +1,10 @@
 (ns strongbox.tukui-api
   (:require
-   [slugify.core :refer [slugify]]
    [clojure.spec.alpha :as s]
    [clojure.string :refer [lower-case]]
    [orchestra.core :refer [defn-spec]]
    ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [strongbox
-    [tags :as tags]
     [http :as http]
     [utils :as utils]
     [specs :as sp]]))
@@ -14,6 +12,7 @@
 (def summary-list-url "https://www.tukui.org/api.php?addons")
 (def classic-summary-list-url "https://www.tukui.org/api.php?classic-addons")
 (def classic-tbc-summary-list-url "https://www.tukui.org/api.php?classic-tbc-addons")
+(def classic-wotlk-summary-list-url "https://www.tukui.org/api.php?classic-wotlk-addons")
 
 (def proper-url "https://www.tukui.org/api.php?ui=%s")
 (def tukui-proper-url (format proper-url "tukui"))
@@ -33,6 +32,7 @@
       :retail (str "https://www.tukui.org/addons.php?id=" source-id)
       :classic (str "https://www.tukui.org/classic-addons.php?id=" source-id)
       :classic-tbc (str "https://www.tukui.org/classic-tbc-addons.php?id=" source-id)
+      :classic-wotlk (str "https://www.tukui.org/classic-wotlk-addons.php?id=" source-id)
       nil)
 
     :else nil))
@@ -47,7 +47,8 @@
               (neg? source-id) (format proper-url (:name addon))
               (= game-track :retail) summary-list-url
               (= game-track :classic) classic-summary-list-url
-              (= game-track :classic-tbc) classic-tbc-summary-list-url)
+              (= game-track :classic-tbc) classic-tbc-summary-list-url
+              (= game-track :classic-wotlk) classic-wotlk-summary-list-url)
 
         ;; tukui addons do not share IDs across game tracks like curseforge does.
         ;; 2020-12-02: Tukui has dropped the per-addon endpoint, all results are now lists of items

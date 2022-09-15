@@ -80,4 +80,4 @@
                [{:source-id nil} nil]
                [{:source-id 123} "https://www.wowinterface.com/downloads/info123"]]]
     (doseq [[given expected] cases]
-      (is (= expected (wowi/make-url given))))))
+      (is (= expected (wowinterface-api/make-url given))))))

@@ -1595,7 +1595,7 @@
           dummy-catalogue (utils/to-json future-data)
           fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                        {:get (fn [req] {:status 200 :body dummy-catalogue})}}
-          expected-messages ["addon 'A New Simple Percent' is from an unsupported source 'gitplex'."
+          expected-messages ["addon 'A New Simple Percent' for Retail is from an unsupported source 'gitplex'."
                              "refresh"]
 
           search-term "new"
