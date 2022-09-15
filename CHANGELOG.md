@@ -14,6 +14,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+* Removed catalogue building support. 
+    - this logic now lives in `ogri-la/strongbox-catalogue-builder`.
+* Removed the command line actions:
+    - 'scrape-catalogue'
+    - 'write-catalogue'
+    - 'scrape-github-catalogue'
+    - 'scrape-wowinterface-catalogue'
+    - 'scrape-tukui-catalogue'
+* Removed dependencies `org.clojure/data.csv` and `enlive`.
+
 ## 5.4.1 - 2022-09-11
 
 ### Added

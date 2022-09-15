@@ -6,6 +6,13 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
+* remove catalogue building logic
+    - this now lives in strongbox-catalogue-builder
+    - update scripts in strongbox-catalogue as well
+        - strongbox-catalogue is now just a dumb repository of catalogues again
+    - this will make this a major version release
+    - done
+
 ## todo
 
 * wowinterface, fetch addon data from secondary source
@@ -15,13 +22,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * update screenshots
 
-* remove catalogue building logic
-    - this now lives in strongbox-catalogue-builder
-    - update scripts in strongbox-catalogue as well
-        - strongbox-catalogue is now just a dumb repository of catalogues again
-    - this will make this a major version release
-
 * remove wowman/v1 catalogue support
+
 * remove tags
 
 ## todo bucket (no particular order)
