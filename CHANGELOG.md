@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-* Removed catalogue building support. 
+* Removed support for building catalogues.
     - this logic now lives in `ogri-la/strongbox-catalogue-builder`.
 * Removed the command line actions:
     - 'scrape-catalogue'
@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - 'scrape-tukui-catalogue'
 * Removed support for reading version 1 catalogues built using `wowman` 
     - last release of `wowman` was 2020-06-01
+* Removed the 'tag' logic used to normalise and map catagories between addons and addon hosts.
+    - it was used exclusively for catalogue building.
 * Removed dependencies `org.clojure/data.csv` and `enlive`.
 
 ## 5.4.1 - 2022-09-11
