@@ -13,7 +13,12 @@ see CHANGELOG.md for a more formal list of changes by release
     - this will make this a major version release
     - done
 
+* remove wowman/v1 catalogue support
+    - done
+
 ## todo
+
+* add 'wotlk support' to comrades.csv
 
 * wowinterface, fetch addon data from secondary source
     - *augment* what is currently implemented with my own source
@@ -21,8 +26,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - this source is hosted on github as static content, updated daily.
 
 * update screenshots
-
-* remove wowman/v1 catalogue support
 
 * remove tags
 

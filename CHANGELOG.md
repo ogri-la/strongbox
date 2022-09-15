@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - 'scrape-github-catalogue'
     - 'scrape-wowinterface-catalogue'
     - 'scrape-tukui-catalogue'
+* Removed support for reading version 1 catalogues built using `wowman` 
+    - last release of `wowman` was 2020-06-01
 * Removed dependencies `org.clojure/data.csv` and `enlive`.
 
 ## 5.4.1 - 2022-09-11

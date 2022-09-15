@@ -201,12 +201,6 @@
                     {:name "carbonite" :source "curseforge" :game-track :retail}]]
       (is (= expected (core/export-installed-addon-list addon-list))))))
 
-(deftest export-catalogue-addon-list--v1
-  (testing "exported addon list data from v1 catalogue data is correct"
-    (let [catalogue (catalogue/read-catalogue (fixture-path "import-export--user-catalogue-v1.json"))
-          expected (slurp-fixture "import-export--user-catalogue-export.json")]
-      (is (= expected (core/export-catalogue-addon-list catalogue))))))
-
 (deftest export-catalogue-addon-list--v2
   (testing "exported addon list data from v2 catalogue data is correct"
     (let [catalogue (catalogue/read-catalogue (fixture-path "import-export--user-catalogue-v2.json"))
@@ -503,7 +497,7 @@
 (deftest check-for-addon-update
   (testing "the key `:update?` is set to `true` when the installed version doesn't match the catalogue version"
     (let [;; we start off with a list of these called a catalogue. it's downloaded from github
-          catalogue {:category-list ["Auction House & Vendors"],
+          catalogue {:tag-list [:auction-house]
                      :download-count 1
                      :label "Every Addon"
                      :name "every-addon",
@@ -523,10 +517,7 @@
                                      :exposeAsAlternative nil}]}
           alt-api-result (assoc-in api-result [:latestFiles 0 :displayName] "v8.20.00")
 
-          dummy-catalogue (merge (catalogue/new-catalogue [])
-                                 {:addon-summary-list [catalogue]
-                                  :spec {:version 1}
-                                  :total 1})
+          dummy-catalogue (catalogue/new-catalogue [catalogue])
 
           fake-routes {;; catalogue
                        "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
@@ -605,7 +596,7 @@
            ;; 256 characters, 1 more than is supported
            :description  "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur dapibus, ligula at auctor facilisis, arcu metus tempor neque, a aliquam sem magna in augue. Cras vel justo augue. Suspendisse ex leo, pellentesque ut congue vel, lobortis eu nisl. Sed amet."
 
-           :category-list  ["Auction & Economy", "Data Broker"],
+           :tag-list  [:auction-house :data]
            :source "curseforge"
            :source-id 1
            :created-date  "2009-02-08T13:30:30Z",
@@ -615,10 +606,7 @@
 
           expected (subs (:description addon-with-long-description) 0 255)
 
-          dummy-catalogue (merge (catalogue/new-catalogue [])
-                                 {:addon-summary-list [addon-with-long-description]
-                                  :total 1
-                                  :spec {:version 1}})
+          dummy-catalogue (catalogue/new-catalogue  [addon-with-long-description])
 
           fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                        {:get (fn [req] {:status 200 :body (utils/to-json dummy-catalogue)})}}]
@@ -1176,12 +1164,7 @@
                       :name "healcomm"
                       :download-count 30946
                       :tag-list []}
-
-          expected (merge (catalogue/new-catalogue [])
-                          {;; hack, catalogue/format-catalogue-data orders the addon summary making them uncomparable
-                           :total 1
-                           :addon-summary-list [user-addon]})]
-
+          expected (catalogue/new-catalogue [user-addon])]
       (with-running-app
         (core/add-user-addon! user-addon)
         (is (= expected (core/get-state :user-catalogue)))))))
@@ -1196,12 +1179,7 @@
                       :name "healcomm"
                       :download-count 30946
                       :tag-list []}
-
-          expected (merge (catalogue/new-catalogue [])
-                          {;; hack, catalogue/format-catalogue-data orders the addon summary making them uncomparable
-                           :total 1
-                           :addon-summary-list [user-addon]})]
-
+          expected (catalogue/new-catalogue [user-addon])]
       (with-running-app
         (core/add-user-addon! user-addon)
         (core/add-user-addon! user-addon)

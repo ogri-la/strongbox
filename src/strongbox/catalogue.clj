@@ -9,7 +9,6 @@
    [strongbox
     [constants :as constants]
     [addon]
-    [tags :as tags]
     [utils :as utils :refer [todt]]
     [specs :as sp]
     [tukui-api :as tukui-api]
@@ -154,17 +153,6 @@
      :total (count addon-list)
      :addon-summary-list addon-list}))
 
-(defn-spec catalogue-v1-coercer :catalogue/catalogue
-  "converts wowman-era specification 1 catalogues, coercing them to specification version 2 catalogues"
-  [catalogue-data map?]
-  (let [row-coerce (fn [row]
-                     (-> row
-                         (assoc :tag-list (tags/category-list-to-tag-list (:source row) (:category-list row)))
-                         (dissoc :category-list)))]
-    (-> catalogue-data
-        (update-in [:addon-summary-list] #(into [] (map row-coerce) %))
-        (update-in [:spec :version] inc))))
-
 (defn -read-catalogue-value-fn
   "used to transform catalogue values as the json is read. applies to both v1 and v2 catalogues."
   [key val]
@@ -172,37 +160,18 @@
     :game-track-list (mapv keyword val)
     :tag-list (mapv keyword val)
     :description (utils/safe-subs val 255) ;; no database anymore, no hard failures on value length?
-
-    ;; returning the function itself ensures element is removed from the result entirely
-    :alt-name -read-catalogue-value-fn
-
-    ;; catalogue-level in v1 catalogue, not the addon-level 'updated-date' that we should keep
-    :updated-datestamp -read-catalogue-value-fn
-
     val))
 
 (defn-spec read-catalogue (s/or :ok :catalogue/catalogue, :error nil?)
-  "reads the catalogue of addon data at the given `catalogue-path`.
-  supports reading legacy catalogues by dispatching on the `[:spec :version]` number."
+  "reads the catalogue of addon data at the given `catalogue-path`."
   ([catalogue-path (s/or :file ::sp/file, :bytes bytes?)]
    (read-catalogue catalogue-path {}))
   ([catalogue-path (s/or :file ::sp/file, :bytes bytes?), opts map?]
-   (p :catalogue
-      (let [key-fn (fn [k]
-                     (case k
-                       "uri" :url
-                       ;;"category-list" :tag-list ;; pushed back into v1 post-processing
-                       (keyword k)))
-            value-fn -read-catalogue-value-fn ;; defined 'outside' so it can reference itself
-            opts (merge opts {:key-fn key-fn :value-fn value-fn})
-            catalogue-data (p :catalogue:load-json-file
-                              (utils/load-json-file-safely catalogue-path opts))]
-
-        (when-not (empty? catalogue-data)
-          (if (-> catalogue-data :spec :version (= 1)) ;; if v1 catalogue, coerce
-            (p :catalogue:v1-coercer
-               (utils/nilable (catalogue-v1-coercer catalogue-data)))
-            catalogue-data))))))
+   (let [value-fn -read-catalogue-value-fn ;; defined 'outside' so it can reference itself
+         opts (merge opts {:key-fn keyword :value-fn value-fn})
+         catalogue-data (utils/load-json-file-safely catalogue-path opts)]
+     (when-not (empty? catalogue-data)
+       catalogue-data))))
 
 (defn validate
   "validates the given data as a `:catalogue/catalogue`, returning nil if data is invalid"
