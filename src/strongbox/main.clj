@@ -102,7 +102,7 @@
       (core/reset-logging!)
 
       (if ns-kw
-        (if (some #{ns-kw} [:main :utils :http :tags
+        (if (some #{ns-kw} [:main :utils :http
                             :core :toc :nfo :zip :config :catalogue :db :addon :logging :joblib
                             :cli :gui :jfx
                             :curseforge-api :wowinterface-api :gitlab-api :github-api :tukui-api
