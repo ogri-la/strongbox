@@ -833,9 +833,7 @@
     (addon/switch-source! (core/selected-addon-dir) addon new-source-map)
     (half-refresh)))
 
-
 ;;
-
 
 (defn-spec add-summary-to-user-catalogue nil?
   "adds an addon-summary (catalogue entry) to the user-catalogue, if it's not already present"
@@ -848,9 +846,7 @@
   (core/remove-user-addon! addon-summary)
   (core/write-user-catalogue!))
 
-
 ;; debug
-
 
 (defn-spec touch nil?
   "used to select each addon in the GUI so the 'unsteady' colour can be tested."

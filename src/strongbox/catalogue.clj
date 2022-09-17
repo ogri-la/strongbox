@@ -125,9 +125,7 @@
           syn (if (-> syn :source nil?) sink syn)]
       syn)))
 
-
 ;;
-
 
 (defn-spec format-catalogue-data :catalogue/catalogue
   "returns a correctly formatted, ordered, catalogue given a list of addons and a datestamp"
@@ -205,9 +203,7 @@
             (merge {:source source} (if (= source "curseforge") {:url result} {:source-id result})))
           (warn "unsupported URL"))))))
 
-
 ;;
-
 
 (defn-spec merge-catalogues (s/or :ok :catalogue/catalogue, :error nil?)
   "merges catalogue `cat-b` over catalogue `cat-a`.

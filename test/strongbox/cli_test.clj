@@ -616,7 +616,6 @@
 
 ;; todo: no import-addon-gitlab ?
 
-
 (deftest refresh-user-catalogue
   (testing "the user catalogue can be 'refreshed', pulling in updated information from github and the current catalogue"
     (with-running-app+opts {:ui nil}
@@ -734,9 +733,7 @@
       (with-redefs [cli/find-addon (fn [& args] (throw (Exception. "catastrophe!")))]
         (is (nil? (cli/refresh-user-catalogue-item helper/addon-summary)))))))
 
-
 ;;
-
 
 (deftest add-summary-to-user-catalogue
   (testing "addon summaries can be added to the user catalogue"
@@ -763,12 +760,7 @@
         (is (= expected (core/get-state :user-catalogue)))
         (is (= expected (catalogue/read-catalogue user-catalogue-file)))))))
 
-
-;;
-
-
 ;; test doesn't seem to live comfortably in `core_test.clj`
-
 
 (deftest install-update-these-in-parallel--bad-download
   (testing "bad downloads are not passed to `core/install-addon`."

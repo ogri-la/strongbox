@@ -615,9 +615,7 @@
           (is (= expected
                  (:description (first (core/get-state :db))))))))))
 
-
 ;;
-
 
 (deftest install-addon-guard
   (testing "an addon can be installed"
@@ -1677,9 +1675,7 @@
                   (is (= expected-total (:total (core/emergency-catalogue catalogue-location)))))]
     (is (= expected-messages messages))))
 
-
 ;;
-
 
 (deftest update-installed-addon!
   (testing "a modified addon can be found in the installed addon list and replaced"
@@ -1813,9 +1809,7 @@
         (is (= expected-nfo (nfo/read-nfo-file install-dir (-> addon-b :toc :dirname))))
         (is (= expected-nfo (nfo/read-nfo-file install-dir (-> addon-c3 :toc :dirname))))))))
 
-
 ;;
-
 
 (deftest db-match-installed-addon-list-with-catalogue
   (testing "matched addons return a map of useful information"

@@ -320,7 +320,6 @@
 
                 ;; nfo data derived from the toc+addon-summary (catalogue entry) data.
 
-
                 derived-nfo {:group-id url
                              :source-map-list [{:source "wowinterface", :source-id "999"}]
                              :installed-game-track game-track

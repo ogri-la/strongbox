@@ -223,22 +223,18 @@
                 :-fx-padding "5px 17px" ;; makes buttons same height as dropdowns
                 }
 
-
                ;;
                ;; hyperlinks
                ;;
-
 
                ".hyperlink"
                {:-fx-underline "false"
                 :-fx-font-weight (colour :hyperlink-weight)
                 :-fx-text-fill (colour :hyperlink)}
 
-
                ;;
                ;; tabber
                ;;
-
 
                ".tab-pane > .tab-header-area "
                {:-fx-padding ".7em 0 0 .6em"
@@ -250,11 +246,9 @@
                  :-fx-faint-focus-color "transparent" ;; literally, a very faint box remains
                  }}
 
-
                ;;
                ;; common styling for all tables
                ;;
-
 
                ".table-view "
                {:-fx-table-cell-border-color (colour :table-border)
@@ -270,13 +264,11 @@
                 {:-fx-border-insets "-1 -1 0 -1"
                  :-fx-border-color (colour :table-border)}
 
-
                 ;;
                 ;; common column styling
                 ;;
 
                 ;; 'wide' buttons, like "[  install  ]" buttons
-
 
                 ".wide-button-column.table-cell"
                 {:-fx-padding "0px"
@@ -325,17 +317,14 @@
                ;; common styling for tree-tables
                ;;
 
-
                ".tree-table-row-cell > .tree-disclosure-node"
                {;; default is "4 6 4 8" but this makes the hitbox a tiny bit easier to hit
                 :-fx-padding "9"
                 " > .arrow" {:-fx-background-color (colour :table-font-colour)}}
 
-
                ;;
                ;; common styling for install + search tables
                ;;
-
 
                ["#installed-addons .table-view " "#search-addons .table-view "]
                {[".table-row-cell" ".tree-table-row-cell"]
@@ -365,13 +354,9 @@
                              :-fx-text-overrun "word-ellipsis"
                              ":hover" {:-fx-background-color (colour :row-updateable-selected)}}}}
 
-
-
-
                ;;
                ;; installed-addons tab
                ;;
-
 
                "#installed-addons "
                {".table-view #placeholder "
@@ -444,7 +429,6 @@
                ;; notice-logger
                ;;
 
-
                "#notice-logger "
                {".table-view "
                 {:-fx-font-family "monospace"
@@ -481,11 +465,9 @@
                  "#message.column-header .label"
                  {:-fx-alignment "center-left"}}
 
-
                ;;
                ;; notice-logger-nav
                ;;
-
 
                 "#notice-logger-nav"
                 {:-fx-padding "1.1em .75em" ;; 1.1em so installed, search and log pane tables all start at the same height
@@ -497,7 +479,6 @@
                ;;
                ;; search
                ;;
-
 
                "#search-addons "
                {".star-column:hover > .button"
@@ -553,7 +534,6 @@
                ;; status bar (bottom of app)
                ;; 
 
-
                "#status-bar "
                {:-fx-font-size ".9em"
                 :-fx-padding "0"
@@ -592,7 +572,6 @@
                ;;
                ;; addon-detail
                ;;
-
 
                "#addon-detail-pane "
                {".table-row-cell.installed"
@@ -692,7 +671,6 @@
 
      ;; return a single map with all themes in it.
      ;; themes are separated by their top-level 'root' key.
-
 
      (into {} (for [[theme-key _] themes]
                 (expand (generate-style theme-key)))))))
@@ -870,7 +848,6 @@
   (-> row :-parent nil? not))
 
 ;;
-
 
 (defn button
   "generates a simple button with a means to check to see if it should be disabled and an optional tooltip"
@@ -2535,7 +2512,6 @@
                  :children [{:fx/type split-pane-button}]}]}))
 
 ;;
-
 
 (defn app
   "returns a description of the javafx Stage, Scene and the 'root' node.

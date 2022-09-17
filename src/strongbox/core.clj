@@ -413,9 +413,7 @@
      (swap! state update-in [:cfg] assoc :addon-dir-list new-addon-dir-map-list))
    nil))
 
-
 ;; stateful logging
-
 
 (defn-spec -debug-logging nil?
   "if we're in debug mode, turn profiling on and write log to file"
@@ -525,9 +523,6 @@
         (finally
           (when applied?
             (stop-affecting-addon addon)))))))
-
-;; 
-
 
 ;; downloading and installing and updating
 
@@ -828,15 +823,7 @@
     (set-user-catalogue! new-user-catalogue))
   nil)
 
-
-
-
-
-
-
-
 ;; catalogue db handling
-
 
 (defn-spec find-in-db :db/addon-catalogue-match
   "looks for `installed-addon` in the given `db`, matching `toc-key` to a `catalogue-key`.
@@ -1151,11 +1138,9 @@
     (update-installed-addon!
      (first (-match-installed-addon-list-with-catalogue (get-state :db) [addon])))))
 
-
 ;;
 ;; addon summary and toc merging
 ;;
-
 
 (defn expand-summary-wrapper
   [addon-summary]
@@ -1241,9 +1226,7 @@
   (when (selected-addon-dir)
     (update-installed-addon! (check-for-update addon))))
 
-
 ;; ui interface
-
 
 (defn-spec init-dirs nil?
   "ensures all directories in `generate-path-map` exist and are writable, creating them if necessary.
