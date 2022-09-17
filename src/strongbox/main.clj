@@ -36,7 +36,7 @@
   this is done because including the cljfx directly will start will the JavaFX application
   thread and cause hanging behaviour when running tests or using the non-gui CLI"
   [action]
-  (require 'strongbox.jfx)
+  (require '[strongbox.jfx])
   (let [jfx-ns (find-ns 'strongbox.jfx)]
     (case action
       :start ((ns-resolve jfx-ns 'start))
@@ -102,7 +102,7 @@
 
       (if ns-kw
         (if (some #{ns-kw} [:main :utils :http
-                            :core :toc :nfo :zip :config :catalogue :db :addon :logging :joblib
+                            :core :toc :nfo :zip :config :catalogue :addon :logging :joblib
                             :cli :gui :jfx
                             :curseforge-api :wowinterface-api :gitlab-api :github-api :tukui-api
                             :release-json])

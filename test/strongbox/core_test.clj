@@ -9,7 +9,6 @@
    [strongbox.cli :as cli]
    [strongbox
     [addon :as addon :refer [downloaded-addon-fname]]
-    [db :as db]
     [logging :as logging]
     [zip :as zip]
     [main :as main]
@@ -557,7 +556,7 @@
 
                 ;; we then attempt to match this 'toc+nfo' to an addon in the catalogue
                 ;; in this case we have a catalogue of 1 and only interested in the first result
-                result (first (db/-db-match-installed-addon-list-with-catalogue (core/get-state :db) [toc]))
+                result (first (core/-db-match-installed-addon-list-with-catalogue (core/get-state :db) [toc]))
 
                 ;; previously done in above step, mooshing the installed addon and catalogue item together is
                 ;; now a separate step
@@ -1813,3 +1812,66 @@
         (is (= expected-nfo (nfo/read-nfo-file install-dir (-> addon-a :toc :dirname))))
         (is (= expected-nfo (nfo/read-nfo-file install-dir (-> addon-b :toc :dirname))))
         (is (= expected-nfo (nfo/read-nfo-file install-dir (-> addon-c3 :toc :dirname))))))))
+
+
+;;
+
+
+(deftest db-match-installed-addon-list-with-catalogue
+  (testing "matched addons return a map of useful information"
+    (let [toc {:name "every-addon"
+               :label "Every Addon"
+               :description "foo"
+               :dirname "EveryAddon"
+               :interface-version 70000
+               :toc/game-track :retail
+               :supported-game-tracks [:retail]
+               :installed-version "v8.10.00"}
+          installed-addon-list [toc]
+
+          catalogue-entry {:name "every-addon",
+                           :label "Every Addon"
+                           :tag-list [],
+                           :download-count 1
+                           :source "curseforge",
+                           :source-id 0
+                           :updated-date "2012-09-20T05:32:00Z",
+                           :url "https://www.curseforge.com/wow/addons/every-addon"}
+          db [catalogue-entry]
+
+          expected [{;; how they were matched
+                     :idx [[:name] [:name]]
+                     ;; the value they were matched on
+                     :key ["every-addon"]
+                     ;; convenient flag for having matched
+                     :matched? true
+                     ;; catalogue entry that was matched
+                     :catalogue-match catalogue-entry
+                     ;; installed addon that was matched
+                     :installed-addon toc}]]
+      (is (= expected (core/-db-match-installed-addon-list-with-catalogue db installed-addon-list))))))
+
+(deftest db-match-installed-addon-list-with-catalogue--ignored-addons-are-skipped
+  (testing "ignored addons are not matched to the catalogue and always return themselves"
+    (let [toc {:name "every-addon"
+               :label "Every Addon"
+               :description "foo"
+               :dirname "EveryAddon"
+               :interface-version 70000
+               :toc/game-track :retail
+               :supported-game-tracks [:retail]
+               :installed-version "v8.10.00"
+               :ignore? true}
+          installed-addon-list [toc]
+
+          db [{:name "every-addon",
+               :label "Every Addon"
+               :tag-list [],
+               :download-count 1
+               :source "curseforge",
+               :source-id 0
+               :updated-date "2012-09-20T05:32:00Z",
+               :url "https://www.curseforge.com/wow/addons/every-addon"}]
+
+          expected [toc]]
+      (is (= expected (core/-db-match-installed-addon-list-with-catalogue db installed-addon-list))))))

@@ -14,7 +14,6 @@
     [gitlab-api :as gitlab-api]
     ;;[curseforge-api :as curseforge-api]
     [wowinterface-api :as wowinterface-api]
-    [db :as db]
     [logging :as logging]
     [addon :as addon]
     [specs :as sp]
@@ -648,7 +647,7 @@
 
                               :else
                               ;; look in the current catalogue. emit an error if we fail
-                              (or (:catalogue-match (db/-find-first-in-db (or (core/get-state :db) []) addon-summary-stub match-on-list))
+                              (or (:catalogue-match (core/-find-first-in-db (or (core/get-state :db) []) addon-summary-stub match-on-list))
                                   (error (format "couldn't find addon in catalogue '%s'"
                                                  (name (core/get-state :cfg :selected-catalogue))))))
 
