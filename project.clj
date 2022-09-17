@@ -71,6 +71,8 @@
                    :dependencies [[clj-http-fake "1.0.3"] ;; fake http responses for testing
                                   ]}
 
+             :yagni {:source-paths ["src/strongbox" "test/strongbox" ]}
+             
              :uberjar {:aot :all
                        ;; fixes hanging issue:
                        ;; - https://github.com/cljfx/cljfx/issues/17
@@ -87,6 +89,9 @@
             [jonase/eastwood "0.9.9"]
             [lein-cloverage "1.2.2"]
             [venantius/yagni "0.1.7"]]
+
+  
+  
   :eastwood {:exclude-linters [:constant-test
                                :reflection]
              ;; linters that are otherwise disabled

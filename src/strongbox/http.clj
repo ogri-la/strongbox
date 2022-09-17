@@ -23,13 +23,13 @@
 (def ^:dynamic *default-pause* 1000)
 (def ^:dynamic *default-attempts* 3)
 
-(defn simple-cache
-  "binds a simplistic getter+setter and `/tmp` to *cache* when caching http requests.
+#_(defn simple-cache
+    "binds a simplistic getter+setter and `/tmp` to *cache* when caching http requests.
   good for debugging, don't use otherwise."
-  []
-  {:set-etag (constantly nil)
-   :get-etag (constantly nil)
-   :cache-dir (fs/tmpdir)})
+    []
+    {:set-etag (constantly nil)
+     :get-etag (constantly nil)
+     :cache-dir (fs/tmpdir)})
 
 (defn- add-etag-or-not
   [etag-key req]
@@ -402,12 +402,12 @@
                (recur (inc attempt) (* pause 2))))
          result)))))
 
-(defmacro with-simple-cache
-  "executes the body form with results cached in `/tmp`.
+#_(defmacro with-simple-cache
+    "executes the body form with results cached in `/tmp`.
   just like `simple-cache`, don't use outside of debugging."
-  [& form]
-  `(binding [*cache* (simple-cache)]
-     ~@form))
+    [& form]
+    `(binding [*cache* (simple-cache)]
+       ~@form))
 
 ;;
 

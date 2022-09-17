@@ -242,7 +242,7 @@
 
                        ;; ... zip file
                        "https://cdn.wowinterface.com/downloads/getfile.php?id=3"
-                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array addon3-zip-file)})}
+                       {:get (fn [req] {:status 200 :body (helper/file-to-lazy-byte-array addon3-zip-file)})}
 
                        ;; addon4, tukui
                        "https://www.tukui.org/api.php?addons"
@@ -250,7 +250,7 @@
 
                        ;; ... zip file
                        "https://www.tukui.org/addons.php?download=4"
-                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array addon4-zip-file)})}
+                       {:get (fn [req] {:status 200 :body (helper/file-to-lazy-byte-array addon4-zip-file)})}
 
                        ;; addon5, github
                        "https://api.github.com/repos/author/addon5/releases"
@@ -258,7 +258,7 @@
 
                        ;; ... zip file
                        "https://github.com/author/addon5/releases/download/Addon5-v1.2.3/Addon5-v1.2.3.zip"
-                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array addon5-zip-file)})}}
+                       {:get (fn [req] {:status 200 :body (helper/file-to-lazy-byte-array addon5-zip-file)})}}
 
           expected [{:created-date "2011-01-04T05:42:23Z",
                      :description "desc",
@@ -386,7 +386,7 @@
 
                        ;; ... zip file
                        "https://cdn.wowinterface.com/downloads/getfile.php?id=3"
-                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array addon3-zip-file)})}
+                       {:get (fn [req] {:status 200 :body (helper/file-to-lazy-byte-array addon3-zip-file)})}
 
                        ;; addon4, tukui
                        "https://www.tukui.org/api.php?addons"
@@ -394,7 +394,7 @@
 
                        ;; ... zip file
                        "https://www.tukui.org/addons.php?download=4"
-                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array addon4-zip-file)})}
+                       {:get (fn [req] {:status 200 :body (helper/file-to-lazy-byte-array addon4-zip-file)})}
 
                        ;; addon5, github
                        "https://api.github.com/repos/author/addon5/releases"
@@ -402,7 +402,7 @@
 
                        ;; ... zip file
                        "https://github.com/author/addon5/releases/download/Addon5-v1.2.3/Addon5-v1.2.3.zip"
-                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array addon5-zip-file)})}}
+                       {:get (fn [req] {:status 200 :body (helper/file-to-lazy-byte-array addon5-zip-file)})}}
 
           expected [{:created-date "2011-01-04T05:42:23Z",
                      :description "desc",
@@ -909,7 +909,7 @@
               _ (fs/mkdir (utils/join install-dir "EveryAddon-BundledAddon" ".git"))
               _ (core/load-all-installed-addons)
               refreshed-addon (first (core/get-state :installed-addon-list))]
-          (core/remove-addon refreshed-addon)
+          (core/remove-many-addons [refreshed-addon])
           (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (install-dir-contents))))))))
 
 ;; mutual dependencies
@@ -1040,7 +1040,7 @@
           (is (= ["EveryAddon" "EveryAddon-BundledAddon" "EveryOtherAddon"] (helper/install-dir-contents)))
           (core/load-all-installed-addons) ;; refresh our knowledge of what is installed
 
-          (core/remove-addon (helper/select-addon (:url addon-2)))
+          (core/remove-many-addons [(helper/select-addon (:url addon-2))])
           (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
           (is (= expected (nfo/read-nfo install-dir bundled-dirname))))))))
 
@@ -1084,7 +1084,7 @@
           (is (= ["EveryAddon" "EveryAddon-BundledAddon" "EveryOtherAddon"] (helper/install-dir-contents)))
           (core/load-all-installed-addons) ;; refresh our knowledge of what is installed
 
-          (core/remove-addon (helper/select-addon (:url addon-1)))
+          (core/remove-many-addons [(helper/select-addon (:url addon-1))])
           (is (= ["EveryAddon-BundledAddon" "EveryOtherAddon"] (helper/install-dir-contents)))
           (is (= expected (nfo/read-nfo install-dir bundled-dirname))))))))
 

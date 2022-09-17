@@ -17,7 +17,7 @@
     [zip :as zip]
     [http :as http]
     [logging :as logging]
-    [utils :as utils :refer [join nav-map nav-map-fn delete-many-files! expand-path if-let*]]
+    [utils :as utils :refer [join nav-map delete-many-files! expand-path if-let*]]
     [catalogue :as catalogue]
     [specs :as sp]
     [joblib :as joblib]])
@@ -235,13 +235,13 @@
 
 ;;
 
-(defn-spec find-installed-addon (s/or :match :addon/source-map, :no-match nil?)
-  "returns first addon from the `:installed-addon-list` matching the `:source` and `:source-id` of the given `addon`."
-  [addon :addon/source-map]
-  (let [keyfn (juxt :source :source-id)
-        key (keyfn addon)
-        addon-list (get-state :installed-addon-list)]
-    (first (filter (comp #(= key %) keyfn) addon-list))))
+#_(defn-spec find-installed-addon (s/or :match :addon/source-map, :no-match nil?)
+    "returns first addon from the `:installed-addon-list` matching the `:source` and `:source-id` of the given `addon`."
+    [addon :addon/source-map]
+    (let [keyfn (juxt :source :source-id)
+          key (keyfn addon)
+          addon-list (get-state :installed-addon-list)]
+      (first (filter (comp #(= key %) keyfn) addon-list))))
 
 ;;
 
@@ -352,9 +352,9 @@
      (swap! state assoc-in [:cfg :selected-addon-dir] (-> new-addon-dir-list first :addon-dir)))
    nil))
 
-(defn available-addon-dirs
-  []
-  (mapv :addon-dir (get-state :cfg :addon-dir-list)))
+#_(defn available-addon-dirs
+    []
+    (mapv :addon-dir (get-state :cfg :addon-dir-list)))
 
 (defn-spec addon-dir-map (s/or :ok ::sp/addon-dir-map, :missing nil?)
   "returns the addon-dir map for the given `addon-dir`, if it exists in the map.
@@ -542,8 +542,7 @@
       (binding [http/*cache* (cache)]
         (http/download-file (:download-url addon) output-path)))))
 
-(def download-addon-affective
-  (affects-addon-wrapper download-addon))
+#_(def download-addon-affective (affects-addon-wrapper download-addon))
 
 (defn-spec download-addon-guard (s/or :ok ::sp/archive-file, :error nil?)
   "downloads an addon, handling http and non-http errors, bad zip files, bad addons, bad directories."
@@ -986,12 +985,6 @@
     :search (-search db (first arg-list) (second arg-list) (nth arg-list 2) (nth arg-list 3))
     nil))
 
-
-
-
-
-
-
 (defn query-db
   "uses keywords to do predefined queries."
   [query-kw & [arg-list]]
@@ -1205,19 +1198,20 @@
 
 (def check-for-update-affective (affects-addon-wrapper check-for-update))
 
-(defn-spec check-for-updates-serially nil?
-  "downloads full details for all installed addons that can be found in summary list"
-  []
-  (when (selected-addon-dir)
-    (let [installed-addon-list (get-state :installed-addon-list)
-          num-installed (count installed-addon-list)]
-      (when (> num-installed 0)
-        (info "checking for updates")
-        (let [improved-addon-list (mapv check-for-update installed-addon-list)
-              num-matched (->> improved-addon-list (filterv :matched?) count)
-              num-updates (->> improved-addon-list (filterv :update?) count)]
-          (update-installed-addon-list! improved-addon-list)
-          (info (format "%s addons checked, %s updates available" num-matched num-updates)))))))
+#_"unused"
+#_(defn-spec check-for-updates-serially nil?
+    "downloads full details for all installed addons that can be found in summary list"
+    []
+    (when (selected-addon-dir)
+      (let [installed-addon-list (get-state :installed-addon-list)
+            num-installed (count installed-addon-list)]
+        (when (> num-installed 0)
+          (info "checking for updates")
+          (let [improved-addon-list (mapv check-for-update installed-addon-list)
+                num-matched (->> improved-addon-list (filterv :matched?) count)
+                num-updates (->> improved-addon-list (filterv :update?) count)]
+            (update-installed-addon-list! improved-addon-list)
+            (info (format "%s addons checked, %s updates available" num-matched num-updates)))))))
 
 (defn-spec check-for-updates-in-parallel nil?
   "downloads full details for all installed addons that can be found in summary list"
@@ -1580,12 +1574,12 @@
       (refresh))))
 
 ;; todo: move to ui.cli
-(defn-spec remove-addon nil?
-  "removes given installed addon"
-  [installed-addon :addon/installed]
-  (logging/with-addon installed-addon
-    (addon/remove-addon (selected-addon-dir) installed-addon))
-  (refresh))
+#_(defn-spec remove-addon nil?
+    "removes given installed addon"
+    [installed-addon :addon/installed]
+    (logging/with-addon installed-addon
+      (addon/remove-addon (selected-addon-dir) installed-addon))
+    (refresh))
 
 ;; todo: move to ui.cli
 (defn-spec remove-many-addons nil?

@@ -351,17 +351,17 @@
         first ;; baz
         (str "-" uniquish-id)))) ;; baz-467cec22
 
-(defn-spec install-addon-from-file map?
-  "install an addon from a zip file."
-  [downloaded-file ::sp/extant-archive-file]
-  (let [addon {:group-id (unique-group-id-from-zip-file downloaded-file)}
-        error-messages
-        (logging/buffered-log
-         :warn
-         (addon/install-addon addon (core/selected-addon-dir) downloaded-file))]
-    (core/refresh)
-    {:label (fs/base-name downloaded-file)
-     :error-messages error-messages}))
+#_(defn-spec install-addon-from-file map?
+    "install an addon from a zip file."
+    [downloaded-file ::sp/extant-archive-file]
+    (let [addon {:group-id (unique-group-id-from-zip-file downloaded-file)}
+          error-messages
+          (logging/buffered-log
+           :warn
+           (addon/install-addon addon (core/selected-addon-dir) downloaded-file))]
+      (core/refresh)
+      {:label (fs/base-name downloaded-file)
+       :error-messages error-messages}))
 
 (defn-spec install-addons-from-file-in-parallel ::sp/list-of-maps
   "installs/updates a list of addon zip files in parallel, pushing guard checks into threads and then installing serially."

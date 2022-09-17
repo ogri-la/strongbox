@@ -6,7 +6,13 @@
     [logging :as logging]
     [utils :as utils :refer [join]]
     [constants :as constants]]
-   [me.raynes.fs :as fs]))
+   [me.raynes.fs :as fs]
+   [java-time :as jt])
+
+  (:import
+   [java.util Base64]
+   [org.ocpsoft.prettytime.units Decade]
+   [org.ocpsoft.prettytime PrettyTime]))
 
 (def ^:dynamic *temp-dir-path* "")
 
@@ -62,10 +68,10 @@
           expected '("1.2" "1.2.3" "1.2.3" "1.2.3.4" "1.5.5" "1.5.19" "1.6.0" "1.6.0-unstable" "1.6.0-aaaaaa" "2.3.1" "4.1.3" "4.2.0" "4.11.6" "10.5.5" "11.3.0")]
       (is (= expected (utils/sort-semver-strings given))))))
 
-(deftest days-between-then-and-now
-  (testing "the number of days between two dates"
-    (java-time/with-clock (java-time/fixed-clock "2001-01-02T00:00:00Z")
-      (is (= (utils/days-between-then-and-now "2001-01-01") 1)))))
+#_(deftest days-between-then-and-now
+    (testing "the number of days between two dates"
+      (java-time/with-clock (java-time/fixed-clock "2001-01-02T00:00:00Z")
+        (is (= (utils/days-between-then-and-now "2001-01-01") 1)))))
 
 (deftest file-older-than
   (testing "files whose modification times are older than N hours"
@@ -393,9 +399,14 @@
 
                ;; weird that the sixth hour changes '12 months from now' to '1 year from now'
                ["2002-01-01T05:00:00Z" "12 months from now"]
-               ["2002-01-01T06:00:00Z" "1 year from now"]]]
+               ["2002-01-01T06:00:00Z" "1 year from now"]]
+
+        pretty-dt-printer-dummy
+        (doto (PrettyTime. (java-time/local-date constants/fake-date) (java-time/zone-id "UTC"))
+          (.removeUnit Decade))]
+
     (with-redefs [;; default date formatter uses `(now)` as it's reference point.
-                  utils/*pretty-dt-printer* utils/-pretty-dt-printer-dummy]
+                  utils/*pretty-dt-printer* pretty-dt-printer-dummy]
       (doseq [[given expected] cases]
         (is (= expected (utils/format-dt given)))))))
 
@@ -452,21 +463,6 @@
                ["2019-08-26T00:00:01Z" false]]]
     (doseq [[given expected] cases]
       (is (= expected (utils/published-before-classic? given))))))
-
-(deftest just-in
-  (let [cases [[nil [] nil]
-               [nil [:foo :bar [:baz]] nil]
-               [{} [] nil]
-               [{:foo :bar} [:foo] nil]
-               [{:foo :bar} [:foo [:foo]] nil]
-               [{:foo :bar, :baz :bup} [:foo [:foo :baz]] nil]
-               [{:foo {:bar :baz}} [:foo [:bar]] {:bar :baz}]
-               [{:foo {:bar :baz, :bup :boo}} [:foo [:bar :bup :boop]] {:bar :baz, :bup :boo}]
-
-               [{:foo []} [:foo [:bar]] nil]
-               [{:foo ""} [:foo [:bar]] nil]]]
-    (doseq [[m ks expected] cases]
-      (is (= expected (utils/just-in m ks)), (str "failed case: " m ks)))))
 
 (deftest source-map
   (let [cases [[nil {}]
@@ -555,13 +551,3 @@
                ["1.2" "World of Warcraft: Mysteries of Maraudon"]]]
     (doseq [[given expected] cases]
       (is (= expected (utils/patch-name given))))))
-
-(deftest matching
-  (let [cases [[[0 pos?] [0 true]]
-               [[0 pos?] [1 false]]
-               [[0 pos?] [-1 true]]
-               [[{:foo :bar} :foo], [{:foo :bar} true]]
-               [[{:foo :bar} :foo], [{:foo :baz} false]]]]
-    (doseq [[[x f] [given expected]] cases]
-      (let [p (utils/matching x f)]
-        (is (= expected (p given)))))))

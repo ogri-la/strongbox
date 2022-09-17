@@ -60,9 +60,9 @@
   [addon :joblib/addon]
   (set (utils/select-vals addon [:source :source-id :dirname])))
 
-(defn-spec addon-job-id :joblib/job-id
-  [addon :joblib/addon, job-id :joblib/job-id]
-  (conj (addon-id addon) job-id))
+#_(defn-spec addon-job-id :joblib/job-id
+    [addon :joblib/addon, job-id :joblib/job-id]
+    (conj (addon-id addon) job-id))
 
 ;;
 
@@ -118,6 +118,7 @@
   [job :joblib/job]
   (fn? job))
 
+;; todo: test this, integrate or something
 (defn-spec job-started? boolean?
   "returns `true` if the job has been started. It may even be done."
   [job :joblib/job]
@@ -141,6 +142,7 @@
   (and (future? job)
        (future-done? job)))
 
+;; todo: test this, integrate or something
 (defn-spec cancel-job boolean?
   "returns `true` if job was found and successfully cancelled. Already-cancelled and completed jobs cannot be cancelled."
   [job :joblib/job]

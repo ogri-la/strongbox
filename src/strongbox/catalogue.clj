@@ -1,6 +1,5 @@
 (ns strongbox.catalogue
   (:require
-   [flatland.ordered.map :as omap]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
@@ -135,19 +134,6 @@
   [addon-list :addon/summary-list, datestamp ::sp/ymd-dt]
   (let [addon-list (p :cat/sort-addons
                       (sort-by :name addon-list))]
-    {:spec {:version 2}
-     :datestamp datestamp
-     :total (count addon-list)
-     :addon-summary-list addon-list}))
-
-(defn-spec format-catalogue-data-for-output :catalogue/catalogue
-  "same as `format-catalogue-data`, but the addon maps are converted to an `ordered-map` for better diffs"
-  [addon-list :addon/summary-list, datestamp ::sp/ymd-dt]
-  (let [addon-list (p :cat/format-catalogue-data
-                      (mapv #(p :cat/format-addon
-                                (into (omap/ordered-map) (sort %)))
-                            (p :cat/sort-addons
-                               (sort-by :name addon-list))))]
     {:spec {:version 2}
      :datestamp datestamp
      :total (count addon-list)

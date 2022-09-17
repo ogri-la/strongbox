@@ -23,6 +23,15 @@
 
 ;; utils used only during testing
 
+(defn-spec file-to-lazy-byte-array bytes?
+  [path ::sp/extant-file]
+  (let [fobj (java.io.File. ^String path)
+        ary (byte-array (.length fobj))
+        is (java.io.FileInputStream. fobj)]
+    (.read is ary)
+    (.close is)
+    ary))
+
 (defn-spec cp ::sp/extant-file
   "copies `old-path` into `new-dir`, returning the new full path."
   [old-path ::sp/extant-file new-dir ::sp/extant-dir]
@@ -215,6 +224,33 @@
        (filter (fn [addon] (= (:group-id addon) group-id)))
        first))
 
+(defn-spec gen-tocfile string?
+  "given `addon` toc data, generates the contents of a `.toc` file.
+  order of keys is deterministic, some keys are renamed.
+  only used during testing."
+  [addon map?]
+  (let [unslug
+        (fn [string]
+          (clojure.string/join "" (map clojure.string/capitalize (clojure.string/split string #"-"))))
+
+        render-line
+        (fn [[key val]]
+          (format "## %s: %s" (unslug (name key)) val))
+
+        rename-map {:interface-version :interface
+                    :label :title
+                    :installed-version :version}
+        toc (clojure.set/rename-keys addon rename-map)
+
+        white-list [:interface :title :version :author :description
+                    :default-state :required-deps :optional-deps :saved-variables]
+        sort-order (keep-indexed vector white-list)
+        sorted-map (sort-by #(get sort-order %1) (select-keys toc white-list))
+
+        footer (str (:dirname addon) ".lua")
+        footer (str "\n" footer)]
+    (clojure.string/join "\n" (conj (mapv render-line sorted-map) footer))))
+
 (defn gen-addon-data
   "generates a complete set of addon data, including toc, nfo, summary, expanded (`:installable`) as well as
   a struct that can be used to create a zipfile that includes a .toc file.
@@ -298,7 +334,7 @@
 
                 ;; zip file contents
                 tocfile-name (str dirname "/" dirname ".toc") ;; EveryAddonOne/EveryAddonOne.toc
-                tocfile (toc/gen-tocfile toc)
+                tocfile (gen-tocfile toc)
                 luafile-name (str dirname "/" dirname ".lua") ;; EveryAddonOne/EveryAddonOne.lua
                 luafile ""
                 filename+content-list [[tocfile-name tocfile]
