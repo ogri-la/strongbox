@@ -1,4 +1,4 @@
-(ns strongbox.ui.jfx
+(ns strongbox.jfx
   (:require
    [me.raynes.fs :as fs]
    [clojure.pprint]
@@ -16,9 +16,9 @@
    [cljfx.css :as css]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
-   [strongbox.ui.cli :as cli]
-   [strongbox.ui.check-combo-box :as controlsfx.check-combo-box]
+   [strongbox.check-combo-box :as controlsfx.check-combo-box]
    [strongbox
+    [cli :as cli]
     [nfo :as nfo]
     [constants :as constants]
     [joblib :as joblib]

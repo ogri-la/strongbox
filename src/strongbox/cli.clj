@@ -1,4 +1,4 @@
-(ns strongbox.ui.cli
+(ns strongbox.cli
   (:require
    [clojure.string]
    [orchestra.core :refer [defn-spec]]

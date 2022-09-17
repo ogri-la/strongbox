@@ -12,14 +12,13 @@
     [http :as http]
     [joblib :as joblib]
     [core :as core]
-    [utils :as utils :refer [in?]]]
-   [gui.diff :refer [with-gui-diff]]
-   [strongbox.ui
+    [utils :as utils :refer [in?]]
     ;; warning! requiring cljfx starts the javafx application thread.
     ;; this is a pita for exiting a non-javafx UI (cli) and aot as it just 'hangs'.
     ;; hanging aot is handled in project.clj, but dynamic inclusion of jfx is handled here.
     ;;[jfx :as jfx] 
-    [cli :as cli]])
+    [cli :as cli]]
+   [gui.diff :refer [with-gui-diff]])
   (:gen-class))
 
 (Thread/setDefaultUncaughtExceptionHandler
@@ -32,13 +31,13 @@
 (def spec? (utils/in-repl?))
 
 (defn jfx
-  "dynamically resolve the `strongbox.ui.jfx` ns and call the requisite `action`.
+  "dynamically resolve the `strongbox.jfx` ns and call the requisite `action`.
   `action` is either `:start` or `:stop`.
   this is done because including the cljfx directly will start will the JavaFX application
   thread and cause hanging behaviour when running tests or using the non-gui CLI"
   [action]
-  (require 'strongbox.ui.jfx)
-  (let [jfx-ns (find-ns 'strongbox.ui.jfx)]
+  (require 'strongbox.jfx)
+  (let [jfx-ns (find-ns 'strongbox.jfx)]
     (case action
       :start ((ns-resolve jfx-ns 'start))
       :stop ((ns-resolve jfx-ns 'stop)))))

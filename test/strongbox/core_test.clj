@@ -6,7 +6,7 @@
    [envvar.core :refer [with-env]]
    [me.raynes.fs :as fs]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
-   [strongbox.ui.cli :as cli]
+   [strongbox.cli :as cli]
    [strongbox
     [addon :as addon :refer [downloaded-addon-fname]]
     [db :as db]

@@ -1,7 +1,7 @@
 (ns strongbox.cli-test
   (:require
    [clojure.test :refer [deftest testing is use-fixtures]]
-   [strongbox.ui.cli :as cli]
+   [strongbox.cli :as cli]
    [clj-http.fake :refer [with-global-fake-routes-in-isolation]]
    [strongbox
     [nfo :as nfo]
