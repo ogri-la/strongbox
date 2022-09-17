@@ -21,6 +21,11 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+* clean up this confusion between 'install-dir' and 'addon-dir'
+    - install-dir is where addons are installed
+    - addon-dir is either where addons are installed or a specific addon's directory
+        - i.e., ambiguous
+
 * add 'wotlk support' to comrades.csv
 
 * wowinterface, fetch addon data from secondary source
@@ -73,11 +78,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * gui, better copying from the interface, especially the log box
 * possible bug? installing combuctor 8.1.1 from file matches against the catalogue (good), then installing 9.1.3 file loses the match.
     - mutual dependencies information is mostly blank
-
-* clean up this confusion between 'install-dir' and 'addon-dir'
-    - install-dir is where addons are installed
-    - addon-dir is either where addons are installed or a specific addon's directory
-        - i.e., ambiguous
 
 * catalogue, download counts for github addons
 * search, add ability to browse catalogue page by page
@@ -259,7 +259,7 @@ see CHANGELOG.md for a more formal list of changes by release
 * deleting an addon should also remove any of it's zip files
     - this sounds like an opt-in preference
 
-* share a pool of connections between jobs
+* http, share a pool of connections between jobs
     - https://github.com/dakrone/clj-http#user-content-persistent-connections
     - N connections serving M threads
     - pretty fast just by making requests in parallel
@@ -293,7 +293,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * test, can gui-diff and main/test be pushed back into the testing namespace and elided from release somehow?
 
-
 * add checksum checks after downloading
     - curseforge have an md5 that can be used
         - unfortunately no checksum in api results
@@ -323,14 +322,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * add a 'tabula rasa' option that wipes *everything* 
     - cache, catalog, config, downloaded zip files
-
-## next major version (v5)
-
-* drop support catalogue v1
-    - a prerequisite for v5 then would be introducing a new catalogue
-
-* rename 'retail' to 'mainline'
-    - pretty big change ;) but probably for the best.
 
 ## 
 

@@ -75,7 +75,7 @@
 (s/def ::writeable-dir (s/and ::extant-dir fs/writeable?))
 (s/def ::empty-coll (s/and coll? empty?))
 (s/def ::gui-event #(instance? java.util.EventObject %))
-(s/def ::install-dir ::extant-dir)
+(s/def ::install-dir ::extant-dir) ;; todo: remove?
 (s/def ::selected? boolean?)
 (s/def ::gui-theme #{:light :dark :dark-green :dark-orange})
 (s/def ::closable? boolean?)
@@ -107,7 +107,7 @@
 (s/def ::ignore? boolean?)
 (s/def ::ignore-flag (s/keys :req-un [::ignore?]))
 (s/def ::download-url ::url)
-(s/def ::dirname (s/and string? #(not (empty? %))))
+(s/def ::dirname (s/and string? #(not (empty? %)))) ;; and doesn't contain any '/' characters
 (s/def ::description (s/nilable string?))
 (s/def ::matched? boolean?)
 (s/def ::group-id string?)

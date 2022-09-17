@@ -19,9 +19,8 @@
 (defn-spec -remove-addon nil?
   "safely removes the given `addon-dirname` from `install-dir`"
   [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, group-id (s/nilable ::sp/group-id)]
-  (let [addon-path (fs/file install-dir (fs/base-name addon-dirname)) ;; `fs/base-name` strips any parents
-        addon-path (-> addon-path fs/absolute fs/normalized)
-        addon-path (str addon-path)] ;; very important, otherwise a bunch of checks quietly pass
+  (let [addon-dirname (fs/base-name addon-dirname) ;; `fs/base-name` strips any parents. todo: when might this happen?
+        addon-path (-> install-dir (utils/join addon-dirname) fs/absolute fs/normalized str)]
     (cond
       ;; todo: unhandled case here when importing addons into a directory of pre-existing addons.
       ;; what happens when we import the same set of addons over each other? it bypasses the mutual dependency handling for one thing ...
@@ -48,14 +47,16 @@
                 (debug (format "removed '%s'" addon-path))))))
 
 (defn-spec flatten-addon ::sp/list-of-maps
-  "given an `addon`, returns a list of that addon's members (that includes itself) or the addon wrapped in a list."
+  "given an `addon`, returns a list of that addon's members, including itself."
   [addon map?]
   (if-let [group-members (:group-addons addon)]
     group-members
     [addon]))
 
 (defn-spec remove-addon nil?
-  "removes the given addon. if addon is part of a group, all addons in group are removed"
+  "removes the given `addon`.
+  if addon is part of a group, all addons in group are removed.
+  if addon is being ignored, addon will not be removed."
   [install-dir ::sp/extant-dir, addon :addon/installed]
   (info (format "removing \"%s\" version \"%s\"" (:label addon) (:installed-version addon)))
   (if (:ignore? addon)
@@ -92,11 +93,10 @@
                          addons (vec (sort-by :dirname addons))
                          primary (first (filter :primary? addons))
                          next-best (first addons)
-                         new-data {:group-addons addons
-                                   :group-addon-count (count addons)} ;; todo: do I need this?
+                         new-data {:group-addons addons}
                          next-best-label (-> next-best :group-id fs/base-name)
                          ;; add a group-level ignore flag if any bundled addon is being ignored
-                         ;; todo: test for this
+                         ;; todo: test for this.
                          ignore-group? (when (utils/any (map :ignore? addons))
                                          {:ignore? true})
 
@@ -128,7 +128,7 @@
            vec))
 
 (defn-spec extract-source-map-list (s/or :ok :addon/source-map-list, :empty nil?)
-  "extracts a `:addon/source-map` from the given `data` as well as anything in `:source-map-list`, returning a single distinct `:addon/source-map-list`"
+  "extracts a `:addon/source-map` from the given `data` and anything in `:source-map-list`, returning a single distinct `:addon/source-map-list`"
   [data (s/nilable map?)]
   (merge-lists
    (or (some-> data utils/source-map utils/nilable vector) [])
@@ -156,7 +156,7 @@
         (-> toc-data-list first (dissoc :-toc/game-track))
 
         ;; we have multiple sets of toc data to choose from. which to choose?
-        ;; prefer the one for the current game track, if it exists, otherwise do as we do with
+        ;; prefer the one for the given `game-track`, if it exists, otherwise do as we do with
         ;; the catalogue and use a list of priorities.
         (let [grouped-toc-data (group-by :-toc/game-track toc-data-list)
               priority-map {:retail [:retail :classic :classic-tbc]
@@ -167,6 +167,8 @@
               priorities (get priority-map game-track safe-fallback)
               group (utils/first-nn #(get grouped-toc-data %) priorities)]
 
+          ;; after grouping toc data by game-track we may have multiple `:retail` or `:classic` data sets.
+          ;; we're going to use the first one in the list, but issue a warning anyway.
           (when (and (> (count group) 1)
                      ;; not all members in group are the same ...
                      (not (apply = group)))
@@ -181,7 +183,7 @@
        fs/list-dir
        (filter fs/directory?)
        (map #(-load-installed-addon (str %) game-track))
-       (remove nil?) ;; under what circumstances are we getting nils? when toc data is bad
+       (remove nil?) ;; when toc data is bad
        (map #(merge-toc-nfo % (nfo/read-nfo install-dir (:dirname %))))
        group-addons))
 

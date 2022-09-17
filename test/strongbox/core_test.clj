@@ -1345,7 +1345,6 @@
 
               expected {:description "group record for the fetched addon",
                         :dirname "EveryAddon-BundledAddon",
-                        :group-addon-count 2,
                         :group-addons [{:description "A useful addon that everyone bundles with their own.",
                                         :dirname "EveryAddon-BundledAddon",
                                         :group-id "https://group.id/also/never/fetched",
@@ -1732,7 +1731,6 @@
             ;; after installing A, then B then C, we expect C to have cleanly replaced A and B
             expected {:description "group record for the EveryAddonThree addon",
                       :dirname "EveryAddonOne",
-                      :group-addon-count 3,
                       :group-addons [{:description "Does what no other addon does, slightly differently.",
                                       :dirname "EveryAddonOne",
                                       :group-id "https://example.com/EveryAddonThree",

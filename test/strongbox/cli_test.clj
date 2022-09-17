@@ -874,7 +874,6 @@
               fixture (helper/fixture-path "everyaddon--0-1-2.zip")
               expected [{:description "Does what no other addon does, slightly differently",
                          :dirname "EveryAddon",
-                         :group-addon-count 2,
                          :group-addons [{:description "Does what no other addon does, slightly differently",
                                          :dirname "EveryAddon",
                                          :group-id "everyaddon-aaaaaaaa",
@@ -890,7 +889,7 @@
                                          :installed-version "a.b.c",
                                          :interface-version 80000,
                                          :label "BundledAddon a.b.c",
-                                         :name "bundledaddon-a.b.c",
+                                         :name "bundledaddon-a-b-c",
                                          :primary? false,
                                          :supported-game-tracks [:retail]}],
                          :group-id "everyaddon-aaaaaaaa",

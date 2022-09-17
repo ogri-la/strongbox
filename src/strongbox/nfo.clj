@@ -3,7 +3,7 @@
   (:require
    [strongbox
     [specs :as sp]
-    [utils :as utils :refer [to-json join]]]
+    [utils :as utils]]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
@@ -12,21 +12,20 @@
 (comment
   "a '.strongbox.json' (nfo) file is written when an addon is installed or updated. 
   It serves to fill in any blank spots in our knowledge of the addon.
-  The file can be safely deleted but some addons may fail to find a match 
-  in the catalogue and will need to be found and re-installed.")
+  The file can be safely deleted but some addons may become ungrouped and fail to find a catalogue match.")
 
 (def nfo-filename ".strongbox.json")
 
 (def ignorable-dir-set #{".git" ".hg" ".svn"})
 
 (defn-spec version-controlled? boolean?
-  "returns `true` if addon looks like it's under version control"
+  "returns `true` if `path` contains a directory used for version control"
   [path ::sp/extant-dir]
-  (let [sub-dirs (->> path fs/list-dir (filter fs/directory?) (map fs/base-name) (mapv str))]
-    (not (nil? (some ignorable-dir-set sub-dirs)))))
+  (let [sub-dir-list (->> path fs/list-dir (filter fs/directory?) (map fs/base-name) (mapv str))]
+    (not (nil? (some ignorable-dir-set sub-dir-list)))))
 
 (defn-spec prune :addon/nfo
-  "prevents writing unwanted data to nfo files by removing keys not present in the `addon/nfo` spec."
+  "removes keys not present in the `addon/nfo` spec to prevent writing unwanted data to nfo files."
   [addon :addon/nfo]
   (if (sequential? addon)
     (mapv prune addon)
@@ -42,17 +41,18 @@
                         :source-map-list])))
 
 (defn-spec -derive :addon/nfo
-  "extract fields from the addon data that will be written to the nfo file"
+  "extract fields from the addon data that will be used in the nfo file"
   [addon :addon/nfo-input-minimum, primary? boolean?]
-  (let [nfo {;; important! as an addon is updated or installed, the `:installed-version` from the .toc file is overridden by the `:version` online
-             ;; later, when comparing installed addons against the catalogue, the comparisons will be more consistent
+  (let [nfo {;; important! as an addon is updated or installed, the `:installed-version` value from the .toc file
+             ;; is overridden by the `:version` value from the expand-summary action later.
              :installed-version (:version addon)
 
-             ;; used to determine if an update is available.
+             ;; used to filter available updates.
              ;; also, knowing the regime the addon was installed under allows us to export and later re-import the correct version.
              :installed-game-track (:game-track addon)
 
-             ;; normalised name. once used to match to online addon, we now use source+source-id
+             ;; normalised name.
+             ;; once used to match to online addon, we now use source+source-id
              :name (:name addon)
 
              ;; groups all of an addon's directories together.
@@ -66,7 +66,7 @@
              :source-id (:source-id addon)
 
              ;; record the origin and it's ID so we can switch back to it later if other sources present themselves.
-             :source-map-list [{:source (:source addon) :source-id (:source-id addon)}]}
+             :source-map-list [{:source (:source addon), :source-id (:source-id addon)}]}
 
         ;; users can set this in the nfo file manually or
         ;; it can be drived later in the process by examining the addon's toc file or subdirs, or
@@ -90,9 +90,9 @@
     (-derive addon primary?)))
 
 (defn-spec nfo-path ::sp/file
-  "given an installation directory and the directory name of an addon, return the absolute path to the nfo file"
-  [install-dir ::sp/extant-dir, dirname ::sp/dirname]
-  (join install-dir dirname nfo-filename)) ;; /path/to/addons/AddonName/.strongbox.json
+  "given an installation directory and the directory name of an addon, return the absolute path to the nfo file."
+  [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname]
+  (utils/join install-dir addon-dirname nfo-filename)) ;; /path/to/addons/AddonName/.strongbox.json
 
 (defn-spec rm-nfo-file nil?
   "deletes a nfo file and *only* a nfo file"
@@ -102,11 +102,11 @@
     nil))
 
 (defn-spec read-nfo-file (s/or :ok :addon/nfo, :error nil?)
-  "reads the nfo file with basic transformations.
+  "reads the nfo file at the given `path` with basic transformations.
   failure to load the json results in the file being deleted.
   failure to validate the json data results in the file being deleted."
-  [install-dir ::sp/extant-dir, dirname ::sp/dirname]
-  (let [path (nfo-path install-dir dirname)
+  [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname]
+  (let [path (nfo-path install-dir addon-dirname)
         bad-data (fn []
                    (warn (format "bad \"%s\" file, deleting: %s" nfo-filename path))
                    (rm-nfo-file path))
@@ -148,8 +148,8 @@
 
 (defn-spec read-nfo (s/or :ok :addon/nfo, :error nil?)
   "parses the contents of the .nfo file and checks if addon should be ignored or not"
-  [install-dir ::sp/extant-dir, dirname ::sp/dirname]
-  (let [nfo-file-contents (read-nfo-file install-dir dirname)
+  [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname]
+  (let [nfo-file-contents (read-nfo-file install-dir addon-dirname)
         nfo-file-contents (if (mutual-dependency? nfo-file-contents)
                             (last nfo-file-contents)
                             nfo-file-contents)
@@ -158,11 +158,11 @@
         user-ignored (contains? nfo-file-contents :ignore?)
         _ (when (and user-ignored
                      (:ignore? nfo-file-contents))
-            (debug (format "ignoring \"%s\"" dirname)))
+            (debug (format "ignoring \"%s\"" addon-dirname)))
 
         ignore-flag (when (and (not user-ignored)
-                               (version-controlled? (join install-dir dirname)))
-                      (warn (format "ignoring \"%s\": addon directory contains a .git/.hg/.svn folder" dirname))
+                               (version-controlled? (utils/join install-dir addon-dirname)))
+                      (warn (format "ignoring \"%s\": addon directory contains a .git/.hg/.svn folder" addon-dirname))
                       {:ignore? true})]
     (merge nfo-file-contents ignore-flag)))
 
@@ -234,9 +234,9 @@
 ;; and the update logic is tied to the removal logic
 (defn-spec update-nfo nil?
   "updates *existing* nfo data with new values."
-  [install-dir ::sp/extant-dir, dirname ::sp/dirname, updates map?]
-  (let [path (nfo-path install-dir dirname)
-        nfo (read-nfo install-dir dirname)
+  [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, updates map?]
+  (let [path (nfo-path install-dir addon-dirname)
+        nfo (read-nfo install-dir addon-dirname)
         new-nfo (merge nfo updates)
         ;; convenience for implicitly ignored addons.
         ;; if the nfo file was missing (implicitly ignored) and the update is to clear the flag, set the flag to false instead
@@ -255,7 +255,7 @@
       ;; edge case. a valid nfo file is also simply a `ignore: [True|False]`.
       ;; if `:ignore?` was dissociated, it's now empty. when this happens, just delete the nfo file.
       (rm-nfo-file path)
-      (write-nfo install-dir dirname new-nfo)))
+      (write-nfo install-dir addon-dirname new-nfo)))
   nil)
 
 ;;
@@ -263,29 +263,29 @@
 (defn-spec ignore nil?
   "prevent any changes made by strongbox to this addon. 
   explicitly ignores this addon by setting the `ignore?` flag to `true`."
-  [install-dir ::sp/extant-dir, dirname ::sp/dirname]
-  (update-nfo install-dir dirname {:ignore? true}))
+  [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname]
+  (update-nfo install-dir addon-dirname {:ignore? true}))
 
 (defn-spec stop-ignoring nil?
   "sets the `ignore?` flag to `false`, which is an explicit 'do not ignore'.
   used for implicitly ignored addons."
-  [install-dir ::sp/extant-dir, dirname ::sp/dirname]
-  (update-nfo install-dir dirname {:ignore? false}))
+  [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname]
+  (update-nfo install-dir addon-dirname {:ignore? false}))
 
 (defn-spec clear-ignore nil?
   "removes the `ignore?` flag on an addon.
   the addon may still be implicitly ignored afterwards."
-  [install-dir ::sp/extant-dir, dirname ::sp/dirname]
-  (update-nfo install-dir dirname {:ignore? nil}))
+  [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname]
+  (update-nfo install-dir addon-dirname {:ignore? nil}))
 
 ;;
 
 (defn-spec pin nil?
   "'pins' the given `version` of a specific addon"
-  [install-dir ::sp/extant-dir, dirname ::sp/dirname, version :addon/pinned-version]
-  (update-nfo install-dir dirname {:pinned-version version}))
+  [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, version :addon/pinned-version]
+  (update-nfo install-dir addon-dirname {:pinned-version version}))
 
 (defn-spec unpin nil?
   "removes `:pinned-version` from a specific addon's nfo file, if it exists"
-  [install-dir ::sp/extant-dir, dirname ::sp/dirname]
-  (update-nfo install-dir dirname {:pinned-version nil}))
+  [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname]
+  (update-nfo install-dir addon-dirname {:pinned-version nil}))

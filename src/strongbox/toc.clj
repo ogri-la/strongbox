@@ -17,6 +17,7 @@
    [java.util.regex Pattern]))
 
 (defn-spec parse-toc-file (s/or :ok map?, :empty-or-just-comments nil?)
+  "parses the contents of a toc file into a map."
   [toc-contents string?]
   (let [comment? #(= (utils/safe-subs % 2) "##")
         comment-comment? #(= (utils/safe-subs % 4) "# ##")
@@ -50,7 +51,8 @@
 ;; ---
 
 (defn-spec find-toc-files (s/or :ok ::sp/list-of-lists, :error nil?)
-  "returns a list of `[[game-track, filename.toc], ...]` where game-track is `nil` if it can't be guessed from the filename."
+  "returns a list of file names as `[[game-track, filename.toc], ...]` in the given `addon-dir`.
+  `game-track` is `nil` if it can't be guessed from the filename (and not 'retail')."
   [addon-dir ::sp/extant-dir]
   (let [pattern (Pattern/compile "(?u)^(.+?)(?:[\\-_]{1}(Mainline|Classic|Vanilla|TBC|BCC){1})?\\.toc$")
         matching-toc-pattern (fn [filename]
@@ -72,7 +74,7 @@
 
 (defn-spec read-addon-dir (s/or :ok ::sp/list-of-maps, :error nil?)
   "reads the contents of *all* .toc files found in the given `addon-dir`.
-  returns a list of [[guessed-game-track keyvals], ...]."
+  returns a list of `[[guessed-game-track keyvals], ...]`."
   [addon-dir ::sp/extant-dir]
   (let [toc-dir (-> addon-dir fs/absolute str)]
     (mapv (fn [[filename-game-track filename]]
@@ -83,22 +85,17 @@
           (find-toc-files toc-dir))))
 
 (defn-spec rm-trailing-version string?
-  "'foo 1.2.3' => 'foo', 'foo 1"
+  "strips any trailing version information from a string.
+  for example, 'Some Title 1.2.3' => 'Some Title' and 'Some Title v1.2.3' => 'Some Title'"
   [str string?]
   (let [matching-suffix #" v?[\d\.]+$"
         nothing ""]
     (clojure.string/replace str matching-suffix nothing)))
 
-(defn-spec replace string?
-  "simple find-replace"
-  [str string? matching string? replacement string?]
-  (clojure.string/replace str (re-pattern matching) replacement))
-
 (defn-spec normalise-name string?
-  "convert the 'Title' attribute in toc file to a curseforge-style slug. this value is used to match against curseforge results"
+  "convert the 'Title' attribute in toc file to a curseforge-style slug."
   [label string?]
-  ;; todo, replace this with a slugify fn
-  (-> label lower-case rm-trailing-version (replace ":" "") (replace " " "-") (replace "\\?" "")))
+  (-> label lower-case rm-trailing-version utils/slugify))
 
 ;;
 
@@ -108,14 +105,12 @@
    (parse-addon-toc (assoc keyvals :dirname (fs/base-name addon-dir))))
   ([keyvals map?]
    (let [dirname (:dirname keyvals)
-
-         ;; https://github.com/ogri-la/strongbox/issues/47 - user encountered addon sans 'Title' attribute
-         ;; if a match in the catalogue is found even after munging the title, it will overwrite this one
          no-label-label (str dirname " *") ;; "EveryAddon *"
          label (:title keyvals)
-         label (if-not (empty? label) label no-label-label)
-         _ (when (= label no-label-label)
-             (warn "addon with no \"Title\" value found:" dirname))
+         label (if (empty? label)
+                 (do (warn "addon with no \"Title\" value found:" dirname)
+                     no-label-label)
+                 label)
 
          wowi-source (when-let [x-wowi-id (-> keyvals :x-wowi-id utils/to-int)]
                        {:source "wowinterface"
@@ -144,6 +139,7 @@
                        (debug (format "ignoring '%s': 'Version' field in .toc file is unrendered" dirname))
                        {:ignore? true})
 
+         ;; todo: warning when interface version not defined.
          interface-version (or (some-> keyvals :interface utils/to-int)
                                constants/default-interface-version)
 
@@ -160,12 +156,12 @@
          addon {:name (normalise-name label)
                 :dirname dirname
                 :label label
-                ;; :notes is preferred but we'll fall back to :description
+                ;; `:notes` is preferred but we'll fall back to `:description`
                 :description (or (:notes keyvals) (:description keyvals))
                 :interface-version interface-version
                 :-toc/game-track game-track
 
-                ;; expanded upon in `parse-addon-toc-guard` when it knows about all available toc files
+                ;; expanded upon in `parse-addon-toc-guard` when it knows about *all* available toc files
                 :supported-game-tracks [game-track]
 
                 :installed-version (:version keyvals)
@@ -176,16 +172,17 @@
                 ;;:required-dependencies (:requireddeps keyvals)
                 }
 
-         ;; prefers tukui over wowi, wowi over github.
-         ;; github requires API calls to interact with and these are limited unless authenticated.
+         ;; prefers tukui over wowi, wowi over github. I'd like to prefer github over wowi, but github
+         ;; requires API calls to interact with and these are limited unless authenticated.
          addon (merge addon
                       github-source wowi-source tukui-source
                       ignore-flag source-map-list)]
 
      (if-not (s/valid? :addon/toc addon)
-       ;; "ignoring data in 'EveryAddon.toc', invalid values found."
-       (do (warn (utils/reportable-error (format "ignoring data in '%s', invalid values found." (:-filename keyvals))
-                                         "feel free to report this!"))
+       (do (warn (utils/reportable-error
+                  ;; "ignoring data in 'EveryAddon.toc', invalid values found."
+                  (format "ignoring data in '%s', invalid values found." (:-filename keyvals))
+                  "feel free to report this!"))
            (debug (s/explain :addon/toc addon)))
        addon))))
 
@@ -199,12 +196,14 @@
   [addon-dir ::sp/extant-dir]
   (when-not (blizzard-addon? addon-dir)
     (try
-      (let [result (remove nil? (map parse-addon-toc (read-addon-dir addon-dir)))
+      (let [result (->> addon-dir read-addon-dir (map parse-addon-toc) (remove nil?))
             supported-game-tracks (->> result (map :-toc/game-track) distinct sort vec)]
         (mapv #(assoc % :supported-game-tracks supported-game-tracks) result))
       (catch Exception e
         ;; this addon failed to parse somehow. don't propagate the exception, just report it and return `nil`.
-        (error e (utils/reportable-error (format "unexpected error parsing addon in directory '%s': %s" addon-dir (.getMessage e))))))))
+        (error e (utils/reportable-error
+                  ;; "unexpected error parsing addon in directory '/path/to/addon': Some obscure exception message."
+                  (format "unexpected error parsing addon in directory '%s': %s" addon-dir (.getMessage e))))))))
 
 ;; --
 

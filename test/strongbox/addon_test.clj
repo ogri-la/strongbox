@@ -75,7 +75,7 @@
 
           expected [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"
                      :supported-game-tracks [:retail]
-                     :group-id "foo" :primary? true :group-addon-count 2 :group-addons
+                     :group-id "foo" :primary? true :group-addons
                      [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"
                        :supported-game-tracks [:retail]
                        :group-id "foo" :primary? true}
@@ -101,7 +101,7 @@
 
           expected [{:name "a1", :dirname "A1", :label "foo (group)", :description "group record for the foo addon" :interface-version 80300 :installed-version "1.2.3"
                      :supported-game-tracks [:retail]
-                     :group-id "foo" :primary? false :group-addon-count 2 :group-addons
+                     :group-id "foo" :primary? false :group-addons
                      [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"
                        :supported-game-tracks [:retail]
                        :group-id "foo" :primary? false}
@@ -136,7 +136,6 @@
                      :group-id "foo"
                      :primary? true
                      :ignore? true
-                     :group-addon-count 3
                      :group-addons [{:name "a1",
                                      :dirname "A1",
                                      :label "A1",

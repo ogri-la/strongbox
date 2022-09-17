@@ -930,7 +930,7 @@
      (try
        (apply f arg-list)
        (catch RuntimeException re
-         ;;(error re "unhandled exception in thread"))))))
+         ;;(error re "unexpected exception in thread"))))))
          (println "unexpected error in thread" re))))))
 
 ;; handlers

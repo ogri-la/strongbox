@@ -42,8 +42,7 @@
   :version "v1.9.17",
   :dirname "AdiBags",
   :primary? true,
-  :matched? true,
-  :group-addon-count 2}
+  :matched? true}
  {:name "noname"
   :label "No Name"
   :description "An addon with no match in the catalogue"
