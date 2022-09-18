@@ -334,7 +334,7 @@
       (doseq [[given error-prefix] cases]
         (let [[error-message]
               (logging/buffered-log :error
-                                    (addon/remove-addon install-dir (merge defaults given)))]
+                                    (addon/remove-addon! install-dir (merge defaults given)))]
           (is (= expected (helper/install-dir-contents)))
           (is (clojure.string/starts-with? error-message error-prefix)))))))
 

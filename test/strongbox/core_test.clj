@@ -743,7 +743,7 @@
         (core/load-all-installed-addons)
 
         ;; pin the addon. 
-        (addon/pin install-dir (first (core/get-state :installed-addon-list)) "0.1.2")
+        (addon/pin! install-dir (first (core/get-state :installed-addon-list)) "0.1.2")
 
         ;; refresh our knowledge of what is installed.
         (core/load-all-installed-addons)
@@ -1391,7 +1391,7 @@
                              (assoc :update? false)
                              (update-in [:group-addons target-idx] dissoc :ignore?))]
           (core/install-addon-guard addon)
-          (nfo/ignore install-dir "EveryAddon-BundledAddon")
+          (nfo/ignore! install-dir "EveryAddon-BundledAddon")
           (core/load-all-installed-addons)
 
           ;; todo: the below makes this a UI test. move test to cli_test.clj

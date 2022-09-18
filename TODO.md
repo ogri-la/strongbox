@@ -37,6 +37,15 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* github, install addon from the auto-generated .zip files
+    - it looks like auctionator has disabled/deleted their 'releases' and put a link to their curseforge page up
+        - pretty sure they used to be there, I can see strongbox has downloaded a bunch
+        - we still have access to tags though
+            - https://github.com/Auctionator/Auctionator/tags
+    - we'll have to do some directory name munging
+
+* gui, right-click column header and show columns to disable
+
 * github authentication
     - so user doesn't get capped
         - or have to wrangle GITHUB_AUTH tokens

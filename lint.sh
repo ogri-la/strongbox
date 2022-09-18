@@ -4,10 +4,10 @@ set -e
 if which joker > /dev/null; then
     echo "joker lint"
     joker --lint --working-dir ./
-    echo "joker lint done"
 fi
 
-echo "eastwood lint"
+echo "cljfmt lint"
 lein cljfmt fix
+
+echo "eastwood lint"
 lein eastwood
-echo "eastwood lint done"

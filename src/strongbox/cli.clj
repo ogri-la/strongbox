@@ -257,7 +257,7 @@
    (run! (fn [addon]
            (logging/with-addon addon
              (info (format "pinning to \"%s\"" (:installed-version addon)))
-             (addon/pin (core/selected-addon-dir) addon)))
+             (addon/pin! (core/selected-addon-dir) addon)))
          addon-list)
    (core/refresh)))
 
@@ -269,7 +269,7 @@
   ([addon-list :addon/installed-list]
    (run! (fn [addon]
            (logging/addon-log addon :info (format "unpinning from \"%s\"" (:pinned-version addon)))
-           (addon/unpin (core/selected-addon-dir) addon))
+           (addon/unpin! (core/selected-addon-dir) addon))
          addon-list)
    (core/refresh)))
 
@@ -471,7 +471,7 @@
         (run! (fn [addon]
                 (logging/with-addon addon
                   (info "ignoring")
-                  (addon/ignore (core/selected-addon-dir) addon)))))
+                  (addon/ignore! (core/selected-addon-dir) addon)))))
    (core/refresh)))
 
 (defn-spec clear-ignore-selected nil?
@@ -482,7 +482,7 @@
   ([addon-list :addon/installed-list, addon-dir ::sp/addon-dir]
    (run! (fn [addon]
            (logging/with-addon addon
-             (addon/clear-ignore addon-dir addon)
+             (addon/clear-ignore! addon-dir addon)
              (info "stopped ignoring")))
          addon-list)
    (core/refresh)))

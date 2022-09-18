@@ -88,8 +88,6 @@
             [lein-cloverage "1.2.4"]
             [venantius/yagni "0.1.7"]]
 
-  
-  
   :eastwood {:exclude-linters [:constant-test
                                :reflection]
              ;; linters that are otherwise disabled

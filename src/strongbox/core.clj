@@ -1561,7 +1561,7 @@
     "removes given installed addon"
     [installed-addon :addon/installed]
     (logging/with-addon installed-addon
-      (addon/remove-addon (selected-addon-dir) installed-addon))
+      (addon/remove-addon! (selected-addon-dir) installed-addon))
     (refresh))
 
 ;; todo: move to ui.cli
@@ -1571,7 +1571,7 @@
   (let [addon-dir (selected-addon-dir)]
     (doseq [installed-addon installed-addon-list]
       (logging/with-addon installed-addon
-        (addon/remove-addon addon-dir installed-addon)))
+        (addon/remove-addon! addon-dir installed-addon)))
     (refresh)))
 
 ;;

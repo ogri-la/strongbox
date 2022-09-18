@@ -219,7 +219,7 @@
 
 ;;
 
-(defn-spec write-nfo (s/or :ok ::sp/extant-file, :error nil?)
+(defn-spec write-nfo! (s/or :ok ::sp/extant-file, :error nil?)
   "given an installation directory and an addon, select the neccessary bits (`prune`) and write them to a nfo file"
   [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, addon ::sp/map-or-list-of-maps]
   (let [path (nfo-path install-dir addon-dirname)]
@@ -232,7 +232,7 @@
 ;; this function could definitely do with a second pass, but not right now.
 ;; it's doing two things: updating the nfo and conditionally writing/removing a file
 ;; and the update logic is tied to the removal logic
-(defn-spec update-nfo nil?
+(defn-spec update-nfo! nil?
   "updates *existing* nfo data with new values."
   [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, updates map?]
   (let [path (nfo-path install-dir addon-dirname)
@@ -255,37 +255,37 @@
       ;; edge case. a valid nfo file is also simply a `ignore: [True|False]`.
       ;; if `:ignore?` was dissociated, it's now empty. when this happens, just delete the nfo file.
       (rm-nfo-file path)
-      (write-nfo install-dir addon-dirname new-nfo)))
+      (write-nfo! install-dir addon-dirname new-nfo)))
   nil)
 
-;;
+;; ignoring
 
-(defn-spec ignore nil?
+(defn-spec ignore! nil?
   "prevent any changes made by strongbox to this addon. 
   explicitly ignores this addon by setting the `ignore?` flag to `true`."
   [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname]
-  (update-nfo install-dir addon-dirname {:ignore? true}))
+  (update-nfo! install-dir addon-dirname {:ignore? true}))
 
-(defn-spec stop-ignoring nil?
+(defn-spec stop-ignoring! nil?
   "sets the `ignore?` flag to `false`, which is an explicit 'do not ignore'.
   used for implicitly ignored addons."
   [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname]
-  (update-nfo install-dir addon-dirname {:ignore? false}))
+  (update-nfo! install-dir addon-dirname {:ignore? false}))
 
-(defn-spec clear-ignore nil?
-  "removes the `ignore?` flag on an addon.
+(defn-spec clear-ignore! nil?
+  "removes the `ignore?` flag on a specific addon.
   the addon may still be implicitly ignored afterwards."
   [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname]
-  (update-nfo install-dir addon-dirname {:ignore? nil}))
+  (update-nfo! install-dir addon-dirname {:ignore? nil}))
 
-;;
+;; pinning
 
-(defn-spec pin nil?
+(defn-spec pin! nil?
   "'pins' the given `version` of a specific addon"
   [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, version :addon/pinned-version]
-  (update-nfo install-dir addon-dirname {:pinned-version version}))
+  (update-nfo! install-dir addon-dirname {:pinned-version version}))
 
-(defn-spec unpin nil?
+(defn-spec unpin! nil?
   "removes `:pinned-version` from a specific addon's nfo file, if it exists"
   [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname]
-  (update-nfo install-dir addon-dirname {:pinned-version nil}))
+  (update-nfo! install-dir addon-dirname {:pinned-version nil}))

@@ -14,10 +14,14 @@
     [zip :as zip]
     [specs :as sp]]))
 
+(comment "`addon` ties the `nfo` and `toc` logic together")
+
 (def dummy-dirname "not-the-addon-dir-you-are-looking-for")
 
-(defn-spec -remove-addon nil?
-  "safely removes the given `addon-dirname` from `install-dir`"
+(defn-spec -remove-addon! nil?
+  "safely removes the given `addon-dirname` from `install-dir`.
+  if the given `addon-dirname` is a mutual dependency with another addon, just remove it's entry from
+  the nfo file instead of deleting the whole directory."
   [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, group-id (s/nilable ::sp/group-id)]
   (let [addon-dirname (fs/base-name addon-dirname) ;; `fs/base-name` strips any parents. todo: when might this happen?
         addon-path (-> install-dir (utils/join addon-dirname) fs/absolute fs/normalized str)]
@@ -39,7 +43,7 @@
       ;; other addons depend on this addon, just remove the nfo file entry
       (nfo/mutual-dependency? install-dir addon-dirname)
       (let [updated-nfo-data (nfo/rm-nfo install-dir addon-dirname group-id)]
-        (nfo/write-nfo install-dir addon-dirname updated-nfo-data)
+        (nfo/write-nfo! install-dir addon-dirname updated-nfo-data)
         (debug (format "removed \"%s\" as mutual dependency" addon-dirname)))
 
       ;; all good, remove addon
@@ -53,7 +57,13 @@
     group-members
     [addon]))
 
-(defn-spec remove-addon nil?
+(defn-spec dirname-set set?
+  "returns a set of names of directories used by the given `addon` and it's grouped addons"
+  [addon map?]
+  ;; addon may not be installed yet, we may not have any `:dirname` values at all
+  (->> addon flatten-addon (map :dirname) (remove nil?) utils/nilable set))
+
+(defn-spec remove-addon! nil?
   "removes the given `addon`.
   if addon is part of a group, all addons in group are removed.
   if addon is being ignored, addon will not be removed."
@@ -65,14 +75,15 @@
     (error "refusing to delete ignored addon:" install-dir)
 
     (doseq [grouped-addon (flatten-addon addon)]
-      (-remove-addon install-dir (:dirname grouped-addon) (:group-id addon)))))
+      (-remove-addon! install-dir (:dirname grouped-addon) (:group-id addon)))))
 
 ;;
 
 (defn-spec group-addons :addon/installed-list
   "an addon may actually be many addons bundled together in a single download.
   strongbox tags the bundled addons as they are unzipped and tries to determine the primary one.
-  after we've loaded the addons and merged their nfo data, we can then group them"
+  after we've loaded the addons and merged their nfo data, we can then group them with the primary
+  addon representing the group."
   [addon-list :addon/installed-list]
   (let [;; group-id comes from the nfo file
         addon-groups (group-by :group-id addon-list)
@@ -148,6 +159,7 @@
     (merge toc nfo source-map-list)))
 
 (defn-spec -load-installed-addon (s/or :ok :addon/toc, :error nil?)
+  "finds the toc data for the given `addon-dir`, using the `game-track` to choose the correct toc file if many toc files exist."
   [addon-dir ::sp/addon-dir, game-track ::sp/game-track]
   (logging/with-addon {:dirname (-> addon-dir fs/base-name str)}
     (let [toc-data-list (toc/parse-addon-toc-guard addon-dir)]
@@ -177,7 +189,7 @@
           (-> group first (dissoc :-toc/game-track)))))))
 
 (defn-spec load-all-installed-addons :addon/toc-list
-  "reads and merges the toc+nfo data from all addons in the given `install-dir`, groups them and returns the grouped mooshed data."
+  "reads and merges the toc data and the nfo data from *all* addons in the given `install-dir`, groups them and returns the grouped mooshed data."
   [install-dir ::sp/extant-dir, game-track ::sp/game-track]
   (->> install-dir
        fs/list-dir
@@ -188,7 +200,8 @@
        group-addons))
 
 (defn-spec load-installed-addon (s/or :ok-toc :addon/toc, :ok-nfo :addon/nfo, :error nil?)
-  "reads and merges the toc+nfo data from the given `addon-dir` and those in it's group, groups them up and returns the grouped mooshed data."
+  "reads and merges the toc data and the nfo data from a specific `addon-dir` and all those in it's group, groups them up (again) and returns the grouped mooshed data.
+  this was introduced much later than `load-all-installed-addons` as parallel installation and loading of addons was introduced."
   [addon-dir ::sp/addon-dir, game-track ::sp/game-track]
   (logging/with-addon {:dirname (-> addon-dir fs/base-name str)}
     (let [install-dir (str (fs/parent addon-dir))
@@ -199,7 +212,7 @@
           group-id (:group-id target-addon)
           -load-installed-addon* (fn [[addon-path nfo-data]]
                                    (when-let [toc-data (if (= addon-dir addon-path)
-                                                         ;; skip reading toc data a second time as any warnings generated look duplicated to the user.
+                                                         ;; skip reading toc data a second time as any warnings generated are duplicated for the user.
                                                          target-toc
                                                          (-load-installed-addon addon-path game-track))]
                                      (merge-toc-nfo toc-data nfo-data)))
@@ -207,17 +220,15 @@
           grouped-addon
           (->> install-dir
                fs/list-dir
-               (filterv fs/directory?)
+               (filter fs/directory?)
                ;; [[/path/to/addon, {nfo data, ...}], ...]
-               (mapv #(vector (str %) (logging/silenced (nfo/read-nfo install-dir (str (fs/base-name %))))))
-               (filterv #(= group-id (:group-id (second %))))
-               (mapv -load-installed-addon*)
+               (map #(vector (str %) (logging/silenced (nfo/read-nfo install-dir (str (fs/base-name %))))))
+               (filter #(= group-id (:group-id (second %))))
+               (map -load-installed-addon*)
                (remove nil?)
                group-addons ;; should only be one, we filtered by group-id earlier
                first)]
       (or grouped-addon target-addon))))
-
-;; ---
 
 (defn-spec determine-primary-subdir (s/or :found map?, :not-found nil?)
   "if an addon unpacks to multiple directories, which is the 'main' addon?
@@ -254,24 +265,25 @@
       ;; couldn't reasonably determine the primary directory
       :else nil)))
 
-;;
-
 (defn-spec install-addon (s/or :ok (s/coll-of ::sp/extant-file), :error ::sp/empty-coll)
   "installs an addon given an addon description, a place to install the addon and the addon zip file itself.
   handles suspicious looking bundles, conflicts with other addons, uninstalling previous addon version and updating nfo files.
   returns a list of nfo files that were written to disk."
   [addon :addon/nfo-input-minimum, install-dir ::sp/writeable-dir, downloaded-file ::sp/archive-file]
   (let [nom (or (:label addon) (:name addon) (fs/base-name downloaded-file))
-        v (:version addon)]
-    (if v
-      (info (format "installing \"%s\" version \"%s\"" nom v))
-      (info (format "installing \"%s\"" nom))))
+        version (:version addon)
 
-  (let [zipfile-entries (zip/zipfile-normal-entries downloaded-file)
+        ;; 'Installing "EveryAddon" version "1.2.3"'  or just  'Installing "EveryAddon"'
+        _ (if version
+            (info (format "installing \"%s\" version \"%s\"" nom version))
+            (info (format "installing \"%s\"" nom)))
+
+        zipfile-entries (zip/zipfile-normal-entries downloaded-file)
         toplevel-dirs (zip/top-level-directories zipfile-entries)
         primary-dirname (determine-primary-subdir toplevel-dirs)
-        nom (or (:label addon) (:name addon) (fs/base-name downloaded-file))
-        ;; not a show stopper, but if there are bundled addons and they don't share a common prefix, let the user know
+
+        ;; let the user know if there are bundled addons and they don't share a common prefix
+        ;; "EveryAddon will also install these addons: Foo, Bar, Baz"
         suspicious-bundle-check (fn []
                                   (let [sus-addons (zip/inconsistently-prefixed zipfile-entries)
                                         msg "%s will also install these addons: %s"]
@@ -287,14 +299,14 @@
                               primary? (= addon-dirname (:path primary-dirname))
                               new-nfo-data (nfo/derive addon primary?)
                               new-nfo-data (nfo/add-nfo install-dir addon-dirname new-nfo-data)]
-                          (nfo/write-nfo install-dir addon-dirname new-nfo-data)))
+                          (nfo/write-nfo! install-dir addon-dirname new-nfo-data)))
 
+        ;; write the nfo files, return a list of all nfo files written
         update-nfo-files (fn []
-                           ;; write the nfo files, return a list of all nfo files written
                            (mapv update-nfo-fn toplevel-dirs))
 
-        ;; an addon may completely replace another addon.
-        ;; if it's a complete replacement, remove addon instead of creating a mutual dependency.
+        ;; an addon may completely replace an addon from another group.
+        ;; if it's a complete replacement, uninstall addon instead of creating a mutual dependency.
         remove-completely-overwritten-addons
         (fn []
           ;; find the full addons for each 
@@ -318,14 +330,14 @@
                                 (clojure.set/subset? dir-subset dir-superset)))]
             (->> all-addon-data
                  (filter removeable?)
-                 (run! (partial remove-addon install-dir)))))]
+                 (run! (partial remove-addon! install-dir)))))]
 
     (suspicious-bundle-check)
 
-    ;; todo: remove support for v1 addons in 2.0.0
+    ;; todo: remove support for v1 addons in 2.0.0 ;; todo!
     ;; when is it not valid? when importing v1 addons. v2 addons need 'padding' as well :(
     (when (s/valid? :addon/toc addon)
-      (remove-addon install-dir addon))
+      (remove-addon! install-dir addon))
 
     (remove-completely-overwritten-addons)
 
@@ -364,7 +376,7 @@
 
 ;; ignore
 
-;; todo: does this have tests? is it flawed like pinned-dir-list is?
+;; todo: does this have tests? is it flawed like pinned-dir-list is? ;; todo: wtf?
 (defn-spec ignored-dir-list (s/coll-of ::sp/dirname)
   "returns a list of unique addon directory names (including grouped addons) that are not being ignored"
   [addon-list (s/nilable :addon/installed-list)]
@@ -379,7 +391,7 @@
                           zip/zipfile-normal-entries
                           zip/top-level-directories
                           (map :path)
-                          (mapv #(utils/rtrim % "/")))
+                          (map #(utils/rtrim % "/")))
         zip-dir-in-ignore-dir-list? (fn [zip-dir] (some #{zip-dir} ignore-list))]
     (utils/any (map zip-dir-in-ignore-dir-list? zip-dir-list))))
 
@@ -397,49 +409,50 @@
     (or (nfo/version-controlled? path) ;; cheapest check first
         (->> path toc/find-toc-files (map check-toc-data) utils/any))))
 
-(defn-spec ignore nil?
+(defn-spec ignore! nil?
   "marks the given `addon` and all of it's group members (if any) as 'ignored'"
   [install-dir ::sp/extant-dir, addon :addon/installed]
   (->> addon
        flatten-addon
        (map :dirname)
-       (run! (partial nfo/ignore install-dir))))
+       (run! (partial nfo/ignore! install-dir))))
 
-(defn-spec clear-ignore nil?
-  "clears the `ignore?` flag on an addon, either by removing it from the nfo or setting it in the nfo to `false`.
+(defn-spec clear-ignore! nil?
+  "clears the `ignore?` flag on an addon and all of it's grouped addons.
+  It either removes the flag from the nfo or sets it to `false`.
   Has to happen here so we can distinguish between 'toc-ignores' and 'nfo-ignores'."
   [install-dir ::sp/extant-dir, addon :addon/installed]
   (let [addon-dirname (:dirname addon)
         ignore-fn (if (implicitly-ignored? install-dir addon-dirname)
-                    nfo/stop-ignoring
-                    nfo/clear-ignore)]
+                    nfo/stop-ignoring!
+                    nfo/clear-ignore!)]
     (->> addon
          flatten-addon
          (map :dirname)
          (run! (partial ignore-fn install-dir)))))
 
-;;
+;; pinning
 
-(defn-spec pin nil?
+(defn-spec pin! nil?
   "pins an `addon` and all of it's group members (if any) to the given `version` or the `:installed-version` when missing.
   if addon does not have an `:installed-version` it will fail silently."
   ([install-dir ::sp/install-dir, addon :addon/toc]
    (when-let [installed-version (:installed-version addon)]
-     (pin install-dir addon installed-version)))
+     (pin! install-dir addon installed-version)))
   ([install-dir ::sp/install-dir, addon :addon/toc, version :addon/pinned-version]
    (->> addon
         flatten-addon
         (map :dirname)
-        (run! #(nfo/pin install-dir % version)))))
+        (run! #(nfo/pin! install-dir % version)))))
 
-(defn-spec unpin nil?
+(defn-spec unpin! nil?
   "unpins an `addon` and all of it's group members. 
   if an addon is not pinned it will fail silently."
   [install-dir ::sp/extant-dir, addon :addon/toc]
   (->> addon
        flatten-addon
        (map :dirname)
-       (run! #(nfo/unpin install-dir %))))
+       (run! #(nfo/unpin! install-dir %))))
 
 (defn-spec pinned-dir-list (s/coll-of ::sp/dirname)
   "returns a set of unique addon directory names (including grouped addons) that are pinned"
@@ -471,7 +484,7 @@
   (when-let [{:keys [pinned-version]} addon]
     (some->> addon :release-list (filter #(= pinned-version (:version %))) first)))
 
-;;
+;; predicates
 
 (defn-spec installed? boolean?
   "returns `true` if given `addon` is present on filesystem."
@@ -550,24 +563,24 @@
        (not (ignored? addon))))
 
 (defn-spec releases-available? boolean?
-  "returns `true` if *any* addons are available, including the currently installed version, and the addon isn't pinned.
-  ignored addons shouldn't have a `:release-list`."
+  "returns `true` if *any* addon releases are available (including for the currently installed version) and the addon isn't pinned.
+  ignored addons don't have a `:release-list` because they don't get expanded."
   [addon map?]
   (and (not (empty? (:release-list addon)))
        (not (pinned? addon))))
 
 (defn-spec releases-visible? boolean?
-  "returns `true` if there is more than 1 release available and the addon isn't pinned"
+  "returns `true` if there is more than 1 release available and the addon isn't pinned."
   [addon map?]
   (releases-available? (update-in addon [:release-list] rest)))
 
 ;;
 
 (defn-spec update-nfo! nil?
-  "updates the nfo data for the given addon and all of it's grouped addons"
+  "updates the nfo data for the given `addon` and all of it's grouped addons"
   [install-dir ::sp/extant-dir, addon (s/keys :req-un [::sp/dirname]), updates map?]
   (doseq [grouped-addon (flatten-addon addon)]
-    (nfo/update-nfo install-dir (:dirname grouped-addon) updates)))
+    (nfo/update-nfo! install-dir (:dirname grouped-addon) updates)))
 
 (defn-spec switch-source! nil?
   "switches addon from one source (like curseforge) to another (like wowinterface), rewriting nfo data.
@@ -580,11 +593,3 @@
                                            [new-source-map])
           nfo-updates (merge new-source-map {:source-map-list new-source-map-list})]
       (update-nfo! install-dir addon nfo-updates))))
-
-;;
-
-(defn-spec dirname-set set?
-  "returns a set of names of directories used by the given `addon` and it's grouped addons"
-  [addon map?]
-  ;; addon may not be installed yet, we may not have any `:dirname` values at all
-  (->> addon flatten-addon (map :dirname) (remove nil?) utils/nilable set))
