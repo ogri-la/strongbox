@@ -703,12 +703,12 @@
                 ;; 2021-12: gitlab is an exception here. we have no download count information, it will always be zero.
                 inc-downloads #(if (= (:source %) "gitlab") % (update % :download-count inc))
                 today (utils/datestamp-now-ymd)
-                expected-user-catalogue (-> (core/get-create-user-catalogue)
+                expected-user-catalogue (-> (core/get-user-catalogue)
                                             (update-in [:addon-summary-list] #(mapv inc-downloads %))
                                             (assoc :datestamp today))]
             (cli/refresh-user-catalogue)
             ;; ensure new user-catalogue matches expectations
-            (is (= expected-user-catalogue (core/get-create-user-catalogue)))))))))
+            (is (= expected-user-catalogue (core/get-user-catalogue)))))))))
 
 (deftest refresh-user-catalogue-item
   (testing "individual addons can be refreshed, writing the changes to disk afterwards."

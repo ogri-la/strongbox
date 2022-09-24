@@ -17,7 +17,7 @@
 (defmethod c/runner-fn :strongbox
   [_]
   (fn [ns-list]
-    (with-redefs [core/testing? true
+    (with-redefs [core/*testing?* true
                   main/spec? true
                   http/*default-pause* 1 ;; ms
                   http/*default-attempts* 1

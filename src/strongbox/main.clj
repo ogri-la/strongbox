@@ -50,7 +50,7 @@
       :gui (jfx :stop)
 
       ;; allows us to start the app without starting a UI during testing.
-      (when (not core/testing?)
+      (when (not core/*testing?*)
         (jfx :stop)))
     (core/stop core/state)))
 
@@ -68,7 +68,7 @@
     :gui (jfx :start)
 
     ;; allows us to start the app without starting a UI during testing.
-    (when (not core/testing?)
+    (when (not core/*testing?*)
       (jfx :start)))
   nil)
 
@@ -86,7 +86,7 @@
 
   (try
     ;; note! remember to update `cloverage.clj` with any new bindings
-    (with-redefs [core/testing? true
+    (with-redefs [core/*testing?* true
                   http/*default-pause* 1 ;; ms
                   http/*default-attempts* 1
                   ;; don't pause while testing. nothing should depend on that pause happening.

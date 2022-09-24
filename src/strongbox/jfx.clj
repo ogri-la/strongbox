@@ -977,7 +977,7 @@
     ;; and so will exit again there :( the double-check here seems to work though.
     (or (:in-repl? @core/state)
         (utils/in-repl?)) (swap! core/state assoc :gui-showing? false)
-    core/testing? (swap! core/state assoc :gui-showing? false)
+    core/*testing?* (swap! core/state assoc :gui-showing? false)
     ;; 2020-08-08: `ss/invoke-later` was keeping the old window around when running outside of repl.
     ;; `ss/invoke-soon` seems to fix that.
     ;;  - http://daveray.github.io/seesaw/seesaw.invoke-api.html
@@ -1494,8 +1494,8 @@
                  :value (get sp/game-track-labels-map game-track)
                  :on-value-changed (async-event-handler
                                     (fn [new-game-track]
-                                      ;; todo: push to cli
-                                      (core/set-game-track! (get sp/game-track-labels-map-inv new-game-track))
+                                      ;; todo: push to cli or core
+                                      (core/set-game-track! (get sp/game-track-labels-map-inv new-game-track) (:addon-dir addon-dir-map))
                                       (core/refresh)))
                  :items (mapv second sp/game-track-labels)
                  :disable (nil? selected-addon-dir)}

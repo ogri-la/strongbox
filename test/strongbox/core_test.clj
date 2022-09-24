@@ -35,18 +35,18 @@
 
       ;; big long stateful test
 
-      (testing "fetching the addon-dir map data, without args, without addon directories, returns nil"
-        (is (nil? (core/addon-dir-map))))
+      (testing "fetching the addon-dir map data with a nil addon-dir and without addon directories returns nil"
+        (is (nil? (core/addon-dir-map nil))))
 
-      (testing "setting the game track, without args, without addon directories, does nothing"
-        (is (nil? (core/set-game-track! :retail))))
+      #_(testing "setting the game track, without args, without addon directories, does nothing"
+          (is (nil? (core/set-game-track! :retail))))
 
       (testing "add-addon-dir! adds an addon dir with a default game track of 'retail'"
-        (core/add-addon-dir! dir1 :retail)
+        (core/add-addon-dir! dir1 :retail core/default-game-track-strictness)
         (is (= [{:addon-dir dir1 :game-track :retail :strict? true}] (core/get-state :cfg :addon-dir-list))))
 
       (testing "add-addon-dir! idempotence"
-        (core/add-addon-dir! dir1 :retail)
+        (core/add-addon-dir! dir1 :retail core/default-game-track-strictness)
         (is (= [{:addon-dir dir1 :game-track :retail :strict? true}] (core/get-state :cfg :addon-dir-list))))
 
       (testing "add-addon-dir! just adds the dir, doesn't set it as selected"
@@ -74,9 +74,9 @@
         (is (= [{:addon-dir dir1 :game-track :retail :strict? true}] (core/get-state :cfg :addon-dir-list))))
 
       (testing "addon-dir-map, without args, returns the currently selected addon-dir"
-        (is (= {:addon-dir dir1 :game-track :retail :strict? true} (core/addon-dir-map)))
+        ;;(is (= {:addon-dir dir1 :game-track :retail :strict? true} (core/addon-dir-map)))
         (core/set-addon-dir! dir2)
-        (is (= {:addon-dir dir2 :game-track :retail :strict? true} (core/addon-dir-map)))
+        ;;(is (= {:addon-dir dir2 :game-track :retail :strict? true} (core/addon-dir-map)))
         (is (= {:addon-dir dir1 :game-track :retail :strict? true} (core/addon-dir-map dir1))))
 
       (testing "addon-dir-map returns nil if map cannot be found"
@@ -86,9 +86,10 @@
         (core/set-game-track! :classic dir1)
         (is (= {:addon-dir dir1 :game-track :classic :strict? true} (core/addon-dir-map dir1))))
 
-      (testing "set-game-track! without addon-dir, changes the game track of the currently selected addon dir"
-        (core/set-game-track! :classic)
-        (is (= {:addon-dir dir2 :game-track :classic :strict? true} (core/addon-dir-map dir2))))
+      #_(testing "set-game-track! without addon-dir, changes the game track of the currently selected addon dir"
+          (core/set-game-track! :classic)
+          (is (= {:addon-dir dir2 :game-track :classic :strict? true} (core/addon-dir-map dir2))))
+      (core/set-game-track! :classic dir2)
 
       (testing "set-addon-dir! changes default game-track to 'classic' if '_classic_' detected in addon dir name"
         (core/set-addon-dir! dir4)
@@ -135,16 +136,16 @@
       (testing "core/get-catalogue-location returns nil if it can't find the requested catalogue"
         (is (= nil (core/get-catalogue-location :foo))))
 
-      (testing "core/set-catalogue-location! always returns nil, even when it successfully completes"
-        (is (= nil (core/set-catalogue-location! :foo)))
+      (testing "core/set-catalogue! always returns nil, even when it successfully completes"
+        (is (= nil (core/set-catalogue! :foo)))
         (is (= short-catalogue (core/get-catalogue-location)))
 
-        (is (= nil (core/set-catalogue-location! :full)))
+        (is (= nil (core/set-catalogue! :full)))
         (is (= full-catalogue (core/get-catalogue-location))))
 
       (testing "core/catalogue-local-path returns the expected path to the catalogue file on the filesystem"
-        (is (= (utils/join fs/*cwd* helper-data-dir "short-catalogue.json") (core/catalogue-local-path short-catalogue)))
-        (is (= (utils/join fs/*cwd* helper-data-dir "full-catalogue.json") (core/catalogue-local-path full-catalogue)))))))
+        (is (= (utils/join fs/*cwd* helper-data-dir "short-catalogue.json") (core/catalogue-local-path :short)))
+        (is (= (utils/join fs/*cwd* helper-data-dir "full-catalogue.json") (core/catalogue-local-path :full)))))))
 
 (deftest paths
   (with-running-app
@@ -556,7 +557,7 @@
 
                 ;; we then attempt to match this 'toc+nfo' to an addon in the catalogue
                 ;; in this case we have a catalogue of 1 and only interested in the first result
-                result (first (core/-db-match-installed-addon-list-with-catalogue (core/get-state :db) [toc]))
+                result (first (core/db-match-installed-addon-list-with-catalogue (core/get-state :db) [toc]))
 
                 ;; previously done in above step, mooshing the installed addon and catalogue item together is
                 ;; now a separate step
@@ -758,7 +759,7 @@
     (with-running-app
       (let [install-dir (helper/install-dir)
             strict? false
-            _ (core/set-game-track-strictness! strict? install-dir)
+            _ (core/set-game-track-strictness! strict?)
 
             addon {:name "everyaddon-classic" :label "EveryAddon (Classic)" :version "1.2.3" :url "https://group.id/never/fetched"
                    :source "curseforge" :source-id 1
@@ -1114,7 +1115,7 @@
         (is (not (core/db-catalogue-loaded?)))
 
         ;; empty the file. quickest way to bad json
-        (-> (core/get-catalogue-location) core/catalogue-local-path (spit ""))
+        (-> (core/get-catalogue-location) :name core/catalogue-local-path (spit ""))
 
         ;; the catalogue will be re-requested, this time we've swapped out the fixture with one with a single entry
         (with-global-fake-routes-in-isolation fake-routes
@@ -1138,7 +1139,7 @@
         (is (not (core/db-catalogue-loaded?)))
 
         ;; empty the file. quickest way to bad json
-        (-> (core/get-catalogue-location) core/catalogue-local-path (spit ""))
+        (-> (core/get-catalogue-location) :name core/catalogue-local-path (spit ""))
 
         ;; the catalogue will be re-requested, this time the remote file is also corrupt
         (with-global-fake-routes-in-isolation fake-routes
@@ -1321,7 +1322,7 @@
 
         ;; addon are deselected after having an action performed on them.
         (cli/select-addons)
-        (cli/clear-ignore-selected)
+        (cli/clear-ignore-selected) ;; calls `core/refresh`
         (is (= expected (first (core/get-state :installed-addon-list))))))))
 
 (deftest clear-addon-ignore-flag--group-addons
@@ -1640,25 +1641,6 @@
 
           (is (= [] (core/get-state :installed-addon-list))))))))
 
-(deftest compressed-slurp
-  (let [expected "foo!"]
-    (is (= expected (core/decompress-bytes (core/compressed-slurp "foo.txt"))))))
-
-(deftest compressed-slurp--not-found
-  (is (nil? (core/compressed-slurp "file-that-definitely-does-not-exist.txt"))))
-
-(deftest decompress-bytes--empty
-  (is (nil? (core/decompress-bytes (.getBytes ""))))
-  (is (nil? (core/decompress-bytes nil))))
-
-(deftest decompress-bytes--not-compressed
-  (let [result (try
-                 (core/decompress-bytes (.getBytes "!"))
-                 (catch java.io.IOException ioe
-                   ioe))]
-    (is (instance? java.io.IOException result))
-    (is (= "Stream is not in the BZip2 format" (.getMessage result)))))
-
 ;;
 
 (deftest default-catalogue
@@ -1843,7 +1825,7 @@
                      :catalogue-match catalogue-entry
                      ;; installed addon that was matched
                      :installed-addon toc}]]
-      (is (= expected (core/-db-match-installed-addon-list-with-catalogue db installed-addon-list))))))
+      (is (= expected (core/db-match-installed-addon-list-with-catalogue db installed-addon-list))))))
 
 (deftest db-match-installed-addon-list-with-catalogue--ignored-addons-are-skipped
   (testing "ignored addons are not matched to the catalogue and always return themselves"
@@ -1868,4 +1850,4 @@
                :url "https://www.curseforge.com/wow/addons/every-addon"}]
 
           expected [toc]]
-      (is (= expected (core/-db-match-installed-addon-list-with-catalogue db installed-addon-list))))))
+      (is (= expected (core/db-match-installed-addon-list-with-catalogue db installed-addon-list))))))

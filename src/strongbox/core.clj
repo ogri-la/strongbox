@@ -1,12 +1,10 @@
 (ns strongbox.core
   (:require
-   [clojure.java.io]
    [clojure.set :refer [rename-keys]]
    [clojure.string :refer [lower-case starts-with? ends-with? trim]]
    [taoensso.timbre :as timbre :refer [debug info warn error report spy]]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
-   [taoensso.tufte :as tufte :refer [p]]
    [me.raynes.fs :as fs]
    [trptcolin.versioneer.core :as versioneer]
    [envvar.core :refer [env]]
@@ -27,42 +25,19 @@
 
 (def default-config-dir "~/.config/strongbox")
 (def default-data-dir "~/.local/share/strongbox")
-
 (def num-concurrent-downloads (-> (Runtime/getRuntime) .availableProcessors))
-
-(defn-spec compressed-slurp (s/or :ok bytes?, :no-resource nil?)
-  "returns the bz2 compressed bytes of the given resource file `resource`.
-  returns `nil` if the file can't be found."
-  [resource string?]
-  (let [input-file (clojure.java.io/resource resource)]
-    (when input-file
-      (with-open [out (java.io.ByteArrayOutputStream.)]
-        (with-open [cos (.createCompressorOutputStream (CompressorStreamFactory.) CompressorStreamFactory/BZIP2, out)]
-          (clojure.java.io/copy (clojure.java.io/input-stream input-file) cos))
-        ;; compressed output stream (cos) needs to be closed to flush any remaining bytes
-        (.toByteArray out)))))
-
-(defn-spec decompress-bytes (s/or :ok string?, :nil-or-empty-bytes nil?)
-  "decompresses the given `bz2-bytes` as bz2, returning a string.
-  if bytes are empty or `nil`, returns `nil`.
-  if bytes are not bz2 compressed, throws an `IOException`."
-  [bz2-bytes (s/nilable bytes?)]
-  (when-not (empty? bz2-bytes)
-    (with-open [is (clojure.java.io/input-stream bz2-bytes)]
-      (try
-        (with-open [cin (.createCompressorInputStream (CompressorStreamFactory.) CompressorStreamFactory/BZIP2, is)]
-          (slurp cin))
-        (catch CompressorException ce
-          (throw (.getCause ce)))))))
+(def ^:dynamic *testing?* false)
+(def default-game-track-strictness true) ;; strict
 
 (def static-catalogue
-  "a bz2 compressed copy of the full catalogue used when the remote catalogue is unavailable or corrupt."
-  (compressed-slurp "full-catalogue.json"))
+  "a bz2 compressed copy of the full catalogue used when the remote catalogue is unavailable or corrupt.
+  from this we can do per-host filtering as well as shortening to generate the other catalogues."
+  (utils/compressed-slurp "full-catalogue.json"))
 
 (defn generate-path-map
-  "generates filesystem paths whose location may vary based on the current working directory and environment variables.
-  this map of paths is generated during `init-dirs` and is then fixed in application state.
-  ensure the correct environment variables and cwd are set prior to init for proper isolation during tests."
+  "filesystem paths whose location may vary based on the current working directory, environment variables, etc.
+  this map of paths is generated during `start`, checked during `init-dirs` and then fixed in application state under `:paths`.
+  during testing, ensure the correct environment variables and cwd are set prior to init for proper isolation."
   []
   (let [strongbox-suffix (fn [path]
                            (if-not (ends-with? path "/strongbox")
@@ -71,15 +46,11 @@
 
         ;; XDG_DATA_HOME=/foo/bar => /foo/bar/strongbox
         ;; XDG_CONFIG_HOME=/baz/bup => /baz/bup/strongbox
-
-        ;; https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+        ;; - https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
         ;; ignoring XDG_CONFIG_DIRS and XDG_DATA_DIRS for now
+
         config-dir (-> @env :xdg-config-home utils/nilable (or default-config-dir) expand-path strongbox-suffix)
         data-dir (-> @env :xdg-data-home utils/nilable (or default-data-dir) expand-path strongbox-suffix)
-
-        ;; for migration tasks
-        old-config-dir (clojure.string/replace config-dir "strongbox" "wowman")
-        old-data-dir (clojure.string/replace data-dir "strongbox" "wowman")
 
         log-dir (join data-dir "logs")
 
@@ -88,10 +59,6 @@
         path-map {:config-dir config-dir
                   :data-dir data-dir
                   :catalogue-dir data-dir
-
-                  ;; 2021-09-16: no longer used, exists only for cleanup and will be removed in the future.
-                  ;; /home/$you/.local/share/strongbox/profile-data
-                  :profile-data-dir (join data-dir "profile-data")
 
                   ;; /home/$you/.local/share/strongbox/logs
                   :log-data-dir log-dir
@@ -103,18 +70,12 @@
                   ;; /home/$you/.config/strongbox/config.json
                   :cfg-file (join config-dir "config.json")
 
-                  ;; /home/$you/.config/wowman/config.json
-                  :old-cfg-file (join old-config-dir "config.json")
-
                   ;; /home/$you/.local/share/strongbox/etag-db.json
                   :etag-db-file (join data-dir "etag-db.json")
 
                   ;; 2020-05: moved to config dir
                   ;; /home/$you/.config/strongbox/user-catalogue.json
-                  :user-catalogue-file (join config-dir "user-catalogue.json")
-
-                  ;; /home/$you/.local/share/wowman/user-catalog.json
-                  :old-user-catalogue-file (join old-data-dir "user-catalog.json")}]
+                  :user-catalogue-file (join config-dir "user-catalogue.json")}]
     path-map))
 
 (def -search-state-template
@@ -145,10 +106,9 @@
    :latest-strongbox-version nil
 
    ;; subset of possible data about all INSTALLED addons
-   ;; starts as parsed .toc file data
-   ;; ... then updated with data from catalogue
-   ;; ... then updated again with live data from addon hosts
-   ;; see specs/toc-addon
+   ;; starts as parsed .toc and .strongbox.json data
+   ;; ... then updated with data from catalogue when a match is made
+   ;; ... then updated again with live data from addon hosts.
    :installed-addon-list nil
 
    :etag-db {}
@@ -162,15 +122,18 @@
    ;; the list of addons from the user-catalogue
    :user-catalogue nil
 
-   ;; a set of maps with `:source` and `:source-id` keys from the user-catalogue
+   ;; a set of maps of `:source` and `:source-id` keys from the user-catalogue.
+   ;; added as a quick lookup of favourited addons
    :user-catalogue-idx #{}
 
+   ;; the application log so we can see and filter log lines as part of the app.
    :log-lines []
 
    ;; a map of paths whose location may vary according to the cwd and envvars.
+   ;; see `generate-path-map`
    :paths nil
 
-   ;; a (stateful) ordered map of running jobs
+   ;; a (stateful) ordered map of running jobs.
    :job-queue (atom (joblib/make-queue))
 
    ;; ui
@@ -178,21 +141,22 @@
    ;; jfx ui showing?
    :gui-showing? false
 
-   ;; log-level for the gui dedicated notice-logger
-   ;; per-tab log-levels are attached to each tab in the `:tab-list`
+   ;; log-level for the gui's dedicated notice-logger.
+   ;; per-tab log levels are attached to each tab in the `:tab-list`
    :gui-log-level :info
 
-   ;; split the gui in two with the notice logger down the bottom
+   ;; split the gui in two horizontally with the notice logger on the bottom.
    :gui-split-pane false
 
-   ;; addons in an unsteady state (data being updated, addon being installed, etc)
-   ;; allows a UI to watch and update with progress
+   ;; addons in an 'unsteady' state (data being updated, addon being installed, etc)
+   ;; allows a UI to watch and update the gui with progress.
+   ;; also allows us to pause doing a thing until an addon is removed from the list.
    :unsteady-addon-list #{}
 
-   ;; a sublist of merged toc+addon that are selected
+   ;; a subset of addons that are selected in the UI
    :selected-addon-list []
 
-   ;; dynamic tabs
+   ;; dynamic tabs (not the fixed tabs)
    :tab-list []
 
    :search -search-state-template})
@@ -200,38 +164,36 @@
 (def state (atom nil))
 
 (defn started?
-  "`true` if app has been started."
+  "returns `true` if app has been started."
   []
-  (-> @state nil? not))
+  (some? @state))
 
 (defn assert-started
-  "raises a `RuntimeException` if app has not been started."
+  "throws a `RuntimeException` if app has not been started."
   []
   (when-not (started?)
     (throw (RuntimeException. "application must be `start`ed before state may be accessed."))))
 
 (defn get-state
-  "returns the state map of the value at the given path within the map, if path provided"
+  "returns the state map if `path` not provided, or just the state at the given `path`."
   [& path]
   (assert-started)
   (nav-map @state path))
 
 (defn paths
-  "like `get-in` and `get-state` but for the map of paths being used. requires running app"
+  "returns the map of paths in application if `path` not provided, or just the given `path`."
   [& path]
   (nav-map (get-state :paths) path))
-
-(def testing? false)
 
 (defn-spec debug-mode? boolean?
   "debug mode is when the log level has been set to `:debug` and we're *not* running tests.
   the intent is to collect as much information around a problem as possible.
   the log level may be changed through REPL usage.
   the log level may be changed by using a `--verbosity` flag at runtime.
-  `main/test` and `cloverage.clj` alter the `main/testing?` flag while running tests and resets it afterwards."
+  `main/test` and `cloverage.clj` alter the `main/*testing?*` flag while running tests and resets it afterwards."
   []
   (and (-> timbre/*config* :min-level (= :debug))
-       (not testing?)))
+       (not *testing?*)))
 
 ;;
 
@@ -255,7 +217,7 @@
    nil))
 
 (defn cache
-  "data and a setter that gets bound to http/*cache* when caching http requests"
+  "getting and setter that gets bound to `http/*cache*` when caching http requests"
   []
   (if-not (started?)
     (warn "http cache disabled, app is not started")
@@ -264,15 +226,24 @@
      :get-etag #(get-state :etag-db %) ;; do this instead
      :cache-dir (paths :cache-dir)}))
 
+#_(defn simple-cache
+    "a simplistic getter and setter bound to `http/*cache*` when caching http requests.
+  ignores etags and data to be cached is written directly to the temp directory.
+  can be used outside of an initialised app."
+    []
+    {:set-etag (constantly nil)
+     :get-etag (constantly nil)
+     :cache-dir (fs/tmpdir)})
+
 (defn-spec add-cleanup-fn nil?
-  "adds a function to a list of functions that are called without arguments when the application is stopped"
+  "adds function `f` to a list of functions that are called without arguments when the application is stopped."
   [f fn?]
   (swap! state update-in [:cleanup] conj f)
   nil)
 
 (defn-spec state-bind nil?
-  "executes given callback function when value at path in state map changes. 
-  trigger is discarded if old and new values are identical"
+  "executes given `callback` when value at `path` in state map changes,
+  unless both old and new values are identical."
   [path ::sp/list-of-keywords, callback fn?]
   (let [has-changed (fn [old-state new-state]
                       (not= (get-in old-state path)
@@ -283,7 +254,7 @@
     (add-watch state wid
                (fn [_ _ old-state new-state] ;; key, atom, old-state, new-state
                  (when (has-changed old-state new-state)
-                   ;; avoids infinite recursion
+                   ;; ... now avoid infinite recursion
                    (when (and (= :debug (:min-level timbre/*config*))
                               (not (empty? path)))
                      ;; this would cause the gui to receive a :debug of "path [] triggered a ..."
@@ -295,45 +266,43 @@
                    (try
                      (callback new-state)
                      (catch Exception e
-                       (error e "error caught in watch! your callback *must* be catching these or the thread dies silently:" path))))))
+                       ;; todo: potential for infinite recursion here too?
+                       ;; can the stacktrack be formatted and printed to stdout instead?
+                       (error e "error caught in watch! the callback *must* be catching these or the thread dies silently:" path))))))
     (add-cleanup-fn rmwatch)
     nil))
 
 ;; addon dirs
 
-(def default-game-track-strictness true) ;; strict
-
 (defn-spec selected-addon-dir (s/or :ok ::sp/addon-dir, :no-selection nil?)
-  "returns the currently selected addon directory or nil if no directories exist to select from"
+  "returns the currently selected addon directory or `nil` if no directories exist to select from."
   ([]
    (selected-addon-dir (get-state)))
   ([state map?]
    (-> state :cfg :selected-addon-dir)))
 
 (defn-spec addon-dir-exists? boolean?
-  ([addon-dir ::sp/addon-dir]
-   (addon-dir-exists? addon-dir (get-state :cfg :addon-dir-list)))
-  ([addon-dir ::sp/addon-dir, addon-dir-list ::sp/addon-dir-list]
-   (->> addon-dir-list (map :addon-dir) (some #{addon-dir}) nil? not)))
+  [addon-dir ::sp/addon-dir, addon-dir-list ::sp/addon-dir-list]
+  (->> addon-dir-list (map :addon-dir) (some #{addon-dir}) nil? not))
 
 (defn-spec add-addon-dir! nil?
   "creates and adds an addon directory entry in the user's `:addon-dir-list`, if it doesn't already exist."
-  ([addon-dir ::sp/addon-dir, game-track ::sp/game-track]
-   (add-addon-dir! addon-dir game-track default-game-track-strictness))
-  ([addon-dir ::sp/addon-dir, game-track ::sp/game-track, strict? ::sp/strict?]
-   (let [stub {:addon-dir addon-dir :game-track game-track :strict? strict?}]
-     (when-not (addon-dir-exists? addon-dir)
-       (swap! state update-in [:cfg :addon-dir-list] conj stub)))
-   nil))
+  [addon-dir ::sp/addon-dir, game-track ::sp/game-track, strict? ::sp/strict?]
+  (let [stub {:addon-dir addon-dir :game-track game-track :strict? strict?}]
+    (when-not (addon-dir-exists? addon-dir (get-state :cfg :addon-dir-list))
+      (swap! state update-in [:cfg :addon-dir-list] conj stub)))
+  nil)
 
 (defn-spec set-addon-dir! nil?
-  "adds a new :addon-dir to :addon-dir-list (if it doesn't already exist) and marks it as selected"
+  "convenience. adds a new addon directory to the list of addon directories (if it doesn't already exist) and marks it as selected."
   [addon-dir ::sp/addon-dir]
   (let [addon-dir (-> addon-dir fs/absolute fs/normalized str)
         ;; if '_classic_' is in given path, use the classic game track
         default-game-track (if (clojure.string/index-of addon-dir "_classic_") :classic :retail)]
     (dosync ;; necessary? makes me feel better
      (add-addon-dir! addon-dir default-game-track default-game-track-strictness)
+     ;; todo: break this down into two actions? adding a new directory + selecting the new one.
+     ;; selecting the new addon dir will clear/reset any state like the selected addon list and tab list etc.
      (swap! state assoc :selected-addon-list [])
      (swap! state assoc-in [:cfg :selected-addon-dir] addon-dir)
      (swap! state assoc :tab-list []))) ;; todo: consider adding a watch for this as well
@@ -347,6 +316,8 @@
   ([addon-dir ::sp/addon-dir]
    (let [matching #(= addon-dir (:addon-dir %))
          new-addon-dir-list (->> (get-state :cfg :addon-dir-list) (remove matching) vec)]
+     ;; todo: again, two distinct actions here. removing an addon directory and selecting the new one.
+     ;; selecting the new addon directory resets some state.
      (swap! state assoc-in [:cfg :addon-dir-list] new-addon-dir-list)
      ;; this may be nil if the new addon-dir-list is empty
      (swap! state assoc-in [:cfg :selected-addon-dir] (-> new-addon-dir-list first :addon-dir)))
@@ -357,66 +328,53 @@
     (mapv :addon-dir (get-state :cfg :addon-dir-list)))
 
 (defn-spec addon-dir-map (s/or :ok ::sp/addon-dir-map, :missing nil?)
-  "returns the addon-dir map for the given `addon-dir`, if it exists in the map.
-  when called without args, returns the addon-dir map for the currently selected addon-dir."
-  ([]
-   (assert-started)
-   (addon-dir-map (selected-addon-dir)))
-  ([addon-dir (s/nilable ::sp/addon-dir)]
-   (let [addon-dir-list (get-state :cfg :addon-dir-list)]
-     (when (and addon-dir
-                (not (empty? addon-dir-list)))
-       (first (filter #(= addon-dir (:addon-dir %)) addon-dir-list))))))
+  "returns the addon-dir map for the given `addon-dir` or `nil` if it doesn't exist."
+  [addon-dir (s/nilable ::sp/addon-dir)]
+  (let [addon-dir-list (get-state :cfg :addon-dir-list)]
+    (when (and addon-dir
+               (not (empty? addon-dir-list)))
+      (first (filter #(= addon-dir (:addon-dir %)) addon-dir-list)))))
 
 (defn-spec set-game-track! nil?
   "changes the game track (retail or classic) for the given `addon-dir`.
   when called without args, changes the game track on the currently selected addon-dir"
-  ([game-track :addon-dir/game-track]
-   (when-let [addon-dir (selected-addon-dir)]
-     (set-game-track! game-track addon-dir)))
-  ([game-track :addon-dir/game-track, addon-dir ::sp/addon-dir]
-   (let [tform (fn [addon-dir-map]
-                 (if (= addon-dir (:addon-dir addon-dir-map))
-                   (assoc addon-dir-map :game-track game-track)
-                   addon-dir-map))
-         new-addon-dir-map-list (mapv tform (get-state :cfg :addon-dir-list))]
-     (swap! state update-in [:cfg] assoc :addon-dir-list new-addon-dir-map-list)
-     nil)))
+  [game-track :addon-dir/game-track, addon-dir ::sp/addon-dir]
+  (let [tform (fn [addon-dir-map]
+                (if (= addon-dir (:addon-dir addon-dir-map))
+                  (assoc addon-dir-map :game-track game-track)
+                  addon-dir-map))
+        new-addon-dir-map-list (mapv tform (get-state :cfg :addon-dir-list))]
+    (swap! state update-in [:cfg] assoc :addon-dir-list new-addon-dir-map-list)
+    nil))
 
 (defn-spec get-game-track (s/or :ok :addon-dir/game-track, :missing nil?)
-  "returns the game track for the given `addon-dir`.
-  uses the currently selected addon-dir if no `addon-dir` given."
-  ([]
-   (get-game-track (selected-addon-dir)))
-  ([addon-dir (s/nilable ::sp/addon-dir)]
-   (when addon-dir
-     (-> addon-dir addon-dir-map :game-track))))
+  "convenience. returns the game track for the currently selected addon-dir.
+  returns `nil` if no addon directory is selected."
+  []
+  (when-let [addon-dir (selected-addon-dir)]
+    (-> addon-dir addon-dir-map :game-track)))
 
 (defn-spec get-game-track-strictness (s/or :addon-dir ::sp/strict?, :no-addon-dir nil?)
+  "convenience. returns the game track strictness for the currently selected addon-dir.
+  returns `nil` if no addon directory is selected."
   []
-  (when-let [addon-dir-map (addon-dir-map)]
+  (when-let [addon-dir-map (addon-dir-map (selected-addon-dir))]
     (get addon-dir-map :strict? default-game-track-strictness)))
 
-;; todo: this is almost identical with `get-game-track`.
-;; come up with a better solution if we repeat ourselves again.
 (defn-spec set-game-track-strictness! nil?
   "fetches the strictness level for the given `addon-dir` or the currently selected addon directory if not given."
-  ([new-strictness-level ::sp/strict?]
-   (when-let [addon-dir (selected-addon-dir)]
-     (set-game-track-strictness! new-strictness-level addon-dir)))
-  ([new-strictness-level ::sp/strict?, addon-dir ::sp/addon-dir]
-   (let [tform (fn [addon-dir-map]
-                 (if (= addon-dir (:addon-dir addon-dir-map))
-                   (assoc addon-dir-map :strict? new-strictness-level)
-                   addon-dir-map))
-         new-addon-dir-map-list (mapv tform (get-state :cfg :addon-dir-list))]
-     (swap! state update-in [:cfg] assoc :addon-dir-list new-addon-dir-map-list))
-   nil))
+  [new-strictness-level ::sp/strict?]
+  (when-let [addon-dir (selected-addon-dir)]
+    (let [addon-dir-map (addon-dir-map addon-dir)
+          pos (.indexOf (get-state :cfg :addon-dir-list) addon-dir-map)]
+      (when (> pos -1)
+        (swap! state assoc-in [:cfg :addon-dir-list pos :strict?] new-strictness-level))))
+  nil)
 
 ;; stateful logging
 
 (defn-spec -debug-logging nil?
-  "if we're in debug mode, turn profiling on and write log to file"
+  "log to a file if we're in debug mode."
   [state-atm ::sp/atom]
   (when (debug-mode?)
     (if-not @state-atm
@@ -428,7 +386,7 @@
 (defn-spec reset-logging! nil?
   "the logging configuration in timbre may become unpredictable during testing and this resets it to what it should be."
   ([]
-   (reset-logging! testing? state (and @state (selected-addon-dir))))
+   (reset-logging! *testing?* state (and @state (selected-addon-dir))))
 
   ([testing? boolean?, state-atm ::sp/atom, install-dir (s/nilable ::sp/install-dir)]
    ;; reset logging configuration to timbre's default.
@@ -441,6 +399,7 @@
    (when-let [user-level (some-> @state-atm :cli-opts :verbosity)]
      (timbre/merge-config! {:min-level user-level}))
 
+   ;; add a file appender if the user has set level `:debug`
    (-debug-logging state-atm)
 
    ;; ensure we're storing log lines in app state
@@ -454,8 +413,7 @@
 
 (defn-spec set-log-level! nil?
   "changes the effective log level from `logging/default-log-level` to `new-level`.
-  The `:debug` log level outside of unit tests will write a log file to the data directory and 
-  enables the profiling of certain sections of code."
+  The `:debug` log level outside of unit tests will write a log file to the `:log-file` path"
   [new-level keyword?]
   (timbre/merge-config! {:min-level new-level})
   (-debug-logging state))
@@ -481,6 +439,8 @@
   (let [final-config (config/load-settings cli-opts (paths :cfg-file) (paths :etag-db-file))]
     (swap! state merge final-config)
     (reset-logging!)
+    ;; erm, this is something I use while developing: (restart {:spec? false})
+    ;; spec checking slows everything down so turning it off gives me a feel of actual performance.
     (when (contains? cli-opts :spec?)
       (utils/instrument (:spec? cli-opts))))
   nil)
@@ -488,41 +448,40 @@
 ;; utils
 
 (defn-spec expanded? boolean?
-  "returns true if an addon has found further details online"
+  "returns `true` if given `addon` has found further details online."
   [addon map?]
   ;; nice and quick but essentially validating addon against `:addon/installable`
   (some? (:download-url addon)))
 
 (defn-spec unsteady? boolean?
-  "returns `true` if given `addon` is being updated"
+  "returns `true` if given `addon-name` or one of it's grouped addons is being updated/modified."
   [addon-name ::sp/name]
   (if @state
     (clojure.set/subset? #{addon-name} (get-state :unsteady-addon-list))
     false))
 
-(defn start-affecting-addon
-  [addon]
-  (dosync
-   (if-not (unsteady? (:name addon))
-     (do (swap! state update-in [:unsteady-addon-list] clojure.set/union #{(:name addon)})
-         true)
-     false)))
+(defn-spec stop-affecting-addon nil?
+  [addon map?]
+  (swap! state update-in [:unsteady-addon-list] clojure.set/difference #{(:name addon)})
+  nil)
 
-(defn stop-affecting-addon
-  [addon]
-  (swap! state update-in [:unsteady-addon-list] clojure.set/difference #{(:name addon)}))
+(defn-spec start-affecting-addon fn?
+  [addon map?]
+  (if (unsteady? (:name addon))
+    (constantly nil)
+    (do (swap! state update-in [:unsteady-addon-list] conj (:name addon))
+        (partial stop-affecting-addon addon))))
 
 (defn affects-addon-wrapper
   [wrapped-fn]
   (fn [addon & args]
     (assert-started)
-    (let [applied? (start-affecting-addon addon)]
+    (let [-stop-affecting-addon (start-affecting-addon addon)]
       (try
         (logging/with-addon addon
           (apply wrapped-fn addon args))
         (finally
-          (when applied?
-            (stop-affecting-addon addon)))))))
+          (-stop-affecting-addon))))))
 
 ;; downloading and installing and updating
 
@@ -531,55 +490,49 @@
   see `download-addon-guard` for a version with checks."
   [addon :addon/installable, install-dir ::sp/writeable-dir]
   (when (expanded? addon)
+    ;; "downloading 'EveryAddon' version '1.2.3'"
     (info (format "downloading '%s' version '%s'" (:label addon) (:version addon)))
-    (let [output-fname (addon/downloaded-addon-fname (:name addon) (:version addon)) ;; addonname--1-2-3.zip
-          output-path (join (fs/absolute install-dir) output-fname)] ;; /path/to/installed/addons/addonname--1.2.3.zip
+    (let [output-fname (addon/downloaded-addon-fname (:name addon) (:version addon)) ;; "everyaddon--1-2-3.zip"
+          output-path (join (fs/absolute install-dir) output-fname)] ;; "/path/to/addon/dir/everyaddon--1.2.3.zip"
       (binding [http/*cache* (cache)]
         (http/download-file (:download-url addon) output-path)))))
 
-#_(def download-addon-affective (affects-addon-wrapper download-addon))
-
 (defn-spec download-addon-guard (s/or :ok ::sp/archive-file, :error nil?)
   "downloads an addon, handling http and non-http errors, bad zip files, bad addons, bad directories."
-  ([addon :addon/installable]
-   (download-addon-guard addon (selected-addon-dir)))
-  ([addon :addon/installable, install-dir ::sp/extant-dir]
-   (cond
-     ;; do some pre-installation checks
-     (:ignore? addon) (error "refusing to install addon, addon is being ignored:" (:name addon))
-     (not (fs/writeable? install-dir)) (error "failed to install addon, directory not writeable:" install-dir)
+  [addon :addon/installable, install-dir ::sp/extant-dir]
+  (cond
+    ;; pre-installation checks
+    (:ignore? addon) (error "refusing to install addon, addon is being ignored:" (:name addon))
+    (not (fs/writeable? install-dir)) (error "failed to install addon, directory not writeable:" install-dir)
 
-     :else ;; attempt downloading and installing addon
+    :else ;; attempt downloading and installing addon
 
-     (let [;; todo: if -testing-zipfile, move zipfile into download dir
-           ;; this will help the zipfile pruning tests
-           downloaded-file (or (:-testing-zipfile addon) ;; don't download, install from this file (testing only right now)
-                               (download-addon addon install-dir))]
-       (cond
-         (map? downloaded-file) (error "failed to download addon.")
+    (let [;; todo: if -testing-zipfile, move zipfile into download dir
+          ;; this will help the zipfile pruning tests
+          downloaded-file (or (:-testing-zipfile addon) ;; don't download, install from this file (testing only right now)
+                              (download-addon addon install-dir))]
+      (cond
+        (map? downloaded-file) (error "failed to download addon.")
 
-         (nil? downloaded-file) (error "non-HTTP error downloading addon.") ;; I dunno. /shrug
+        (nil? downloaded-file) (error "non-HTTP error downloading addon.") ;; I dunno. /shrug
 
-         (not (zip/valid-zip-file? downloaded-file))
-         (do (error "failed to read addon zip file, possibly corrupt or not a zip file.")
-             (fs/delete downloaded-file)
-             (warn "removed bad zip file."))
+        (not (zip/valid-zip-file? downloaded-file))
+        (do (error "failed to read addon zip file, possibly corrupt or not a zip file.")
+            (fs/delete downloaded-file)
+            (warn "removed bad zip file."))
 
-         (not (zip/valid-addon-zip-file? downloaded-file))
-         (do (error "refusing to install, addon zip file contains top-level files or a top-level directory missing a .toc file.")
-             (fs/delete downloaded-file)
-             (warn "removed bad addon."))
+        (not (zip/valid-addon-zip-file? downloaded-file))
+        (do (error "refusing to install, addon zip file contains top-level files or a top-level directory missing a .toc file.")
+            (fs/delete downloaded-file)
+            (warn "removed bad addon."))
 
-         (not (s/valid? ::sp/writeable-dir install-dir))
-         (error (format "addon directory is not writable: %s" install-dir))
+        (addon/overwrites-ignored? downloaded-file (get-state :installed-addon-list))
+        (error "refusing to install addon that will overwrite an ignored addon.")
 
-         (addon/overwrites-ignored? downloaded-file (get-state :installed-addon-list))
-         (error "refusing to install addon that will overwrite an ignored addon.")
+        (addon/overwrites-pinned? downloaded-file (get-state :installed-addon-list))
+        (error "refusing to install addon that will overwrite a pinned addon.")
 
-         (addon/overwrites-pinned? downloaded-file (get-state :installed-addon-list))
-         (error "refusing to install addon that will overwrite a pinned addon.")
-
-         :else downloaded-file)))))
+        :else downloaded-file))))
 
 (def download-addon-guard-affective
   (affects-addon-wrapper download-addon-guard))
@@ -600,13 +553,14 @@
   "downloads an addon and installs it, handling http and non-http errors, bad zip files, bad addons, bad directories."
   ([addon :addon/installable]
    (install-addon-guard addon (selected-addon-dir) false))
+
   ([addon :addon/installable, install-dir ::sp/extant-dir]
    (install-addon-guard addon install-dir false))
+
   ([addon :addon/installable, install-dir ::sp/extant-dir, test-only? boolean?]
    (when-let [downloaded-file (download-addon-guard addon install-dir)]
      (if test-only?
        ;; addon was successfully downloaded and verified as being sound. stop here.
-       ;; todo: deprecate `test-only?`, logic has moved to `download-addon`
        true
        ;; else, install addon
        (install-addon addon install-dir downloaded-file)))))
@@ -624,19 +578,18 @@
     nil))
 
 (defn-spec update-installed-addon! :addon/installed
-  "adds or updates an addon in the `:installed-addon-list`, removing all addons matching the given `f` predicate and appending the given `addon`.
-  `f` defaults to addons matching the `:group-id` of the given `addon`.
+  "adds or updates the given `addon`, removing any identical or grouped addons first.
   order is not preserved. returns the given `addon`."
-  ([addon :addon/installed]
-   (update-installed-addon! addon (fn [some-addon]
-                                    ;; group-id matches, or there is 
-                                    (or (= (:group-id addon) (:group-id some-addon))
-                                        (and (:dirname addon)
-                                             (= (:dirname addon) (:dirname some-addon)))))))
-  ([addon :addon/installed, f fn?]
-   (update-installed-addon-list!
-    (conj (vec (remove f (get-state :installed-addon-list))) addon))
-   addon))
+  [addon :addon/installed]
+  (let [f (fn [some-addon]
+            ;; remove if group-id matches
+            (or (= (:group-id addon) (:group-id some-addon))
+                ;; or if the dirname matches
+                (and (:dirname addon)
+                     (= (:dirname addon) (:dirname some-addon)))))]
+    (update-installed-addon-list!
+     (conj (vec (remove f (get-state :installed-addon-list))) addon))
+    addon))
 
 (defn-spec load-installed-addon (s/or :ok :addon/installed, :error nil?)
   "loads the addon at the given `addon-dir` path, updating or adding it to the `:installed-addon-list`."
@@ -652,12 +605,10 @@
       (info (format "loading (%s) installed addons in: %s" (count addon-list) addon-dir))
       (update-installed-addon-list! addon-list))
 
-    ;; otherwise, ensure list of installed addons is cleared
+    ;; if no addon directory selected, ensure list of installed addons is empty
     (update-installed-addon-list! [])))
 
-;;
 ;; catalogue handling
-;;
 
 (defn-spec get-catalogue-location (s/or :ok :catalogue/location, :not-found nil?)
   "returns the catalogue-location map for the given `catalogue-name`.
@@ -686,33 +637,33 @@
   []
   (or (get-catalogue-location) (default-catalogue)))
 
-(defn-spec set-catalogue-location! nil?
-  [catalogue-name keyword?]
+(defn-spec set-catalogue! nil?
+  "change the selected catalogue using it's `catalogue-name`"
+  [catalogue-name :catalogue/name]
   (if-let [catalogue (get-catalogue-location catalogue-name)]
     (swap! state assoc-in [:cfg :selected-catalogue] (:name catalogue))
     (warn "catalogue not found" catalogue-name))
   nil)
 
 (defn-spec catalogue-local-path ::sp/file
-  "given a catalogue-location, returns the local path to the catalogue."
-  [catalogue-location :catalogue/location]
-  ;; {:name :full, ...} => "/path/to/catalogue/dir/full-catalogue.json"
-  (utils/join (paths :catalogue-dir) (-> catalogue-location :name name (str "-catalogue.json"))))
+  "returns the local path to the catalogue given a `catalogue-location`"
+  [catalogue-name :catalogue/name]
+  ;; :full => "/path/to/catalogue/dir/full-catalogue.json"
+  (utils/join (paths :catalogue-dir) (-> catalogue-name name (str "-catalogue.json"))))
 
 (defn-spec download-catalogue (s/or :ok ::sp/extant-file, :error nil?)
   "downloads catalogue to expected location, nothing more"
   [catalogue-location :catalogue/location]
   (binding [http/*cache* (cache)]
     (let [remote-catalogue (:source catalogue-location)
-          local-catalogue (catalogue-local-path catalogue-location)
+          local-catalogue (catalogue-local-path (:name catalogue-location))
           message (format "downloading '%s' catalogue" (name (:name catalogue-location)))
           resp (http/download-file remote-catalogue local-catalogue message)]
       (when-not (http/http-error? resp)
         resp))))
 
 (defn-spec download-current-catalogue (s/or :ok ::sp/extant-file, :error nil?)
-  "downloads the currently selected (or default) catalogue. 
-  issues a warning if no catalogue can be downloaded"
+  "downloads the currently selected (or default) catalogue."
   []
   (if-let [catalogue-location (current-catalogue)]
     (download-catalogue catalogue-location)
@@ -722,7 +673,7 @@
   "derives the requested catalogue from the static catalogue."
   [catalogue-location :catalogue/location]
   (let [opts {}
-        catalogue (catalogue/read-catalogue (.getBytes (decompress-bytes static-catalogue)) opts)
+        catalogue (catalogue/read-catalogue (.getBytes (utils/decompress-bytes static-catalogue)) opts)
         catalogue (assoc catalogue :emergency? true)]
 
     (warn (utils/message-list (format "the remote catalogue is unreachable or corrupt: %s" (:source catalogue-location))
@@ -734,61 +685,56 @@
       ;;:curseforge (catalogue/filter-catalogue catalogue "curseforge")
       :wowinterface (catalogue/filter-catalogue catalogue "wowinterface")
       :tukui (catalogue/filter-catalogue catalogue "tukui")
+      :github (catalogue/filter-catalogue catalogue "github") ;; todo: add a test for this. I expect all derivable catalogues to be available
       nil)))
 
-;; --
+;;
 
 (defn-spec moosh-addons :addon/toc+summary+match
   "merges the data from an installed addon with it's match in the catalogue"
   [installed-addon :addon/toc, db-catalogue-addon :addon/summary]
-  (let [;; 2021-09: this may not be the case anymore.
+  (let [;; 2021-09: this may not be the case anymore but it's still robust behaviour.
         ;; nil fields are removed from the catalogue item because they might override good values in the .toc or .nfo
         db-catalogue-addon (utils/drop-nils db-catalogue-addon [:description])
-
         inst-source (:source installed-addon)
         dbc-source (:source db-catalogue-addon)
-        source-mismatch (and inst-source
-                             dbc-source
-                             (not (= inst-source dbc-source)))]
+        source-mismatch? (and inst-source
+                              dbc-source
+                              (not (= inst-source dbc-source)))]
     ;; merges left->right. catalogue-addon overwrites installed-addon, ':matched' overwrites catalogue-addon, etc
-    (logging/addon-log installed-addon :info (format "found in catalogue with source \"%s\" and id \"%s\"" (:source db-catalogue-addon) (:source-id db-catalogue-addon)))
+    (logging/addon-log installed-addon :info (format "found in catalogue with source \"%s\" and id \"%s\""
+                                                     (:source db-catalogue-addon) (:source-id db-catalogue-addon)))
     (merge installed-addon
            db-catalogue-addon
            {:matched? true}
            ;; todo: I really want to disambiguate between where data is coming from.
            ;; it would mean carrying around the toc, nfo, catalogue, source updates and a merged set data.
            ;; all we have right now is the merged set (except this new `nfo/source` key)
-           (when source-mismatch
+           (when source-mismatch?
              {:nfo/source (:source installed-addon)}))))
 
 ;;
 
 (defn-spec write-user-catalogue! nil?
-  "writes the `new-user-catalogue` to disk, using the current state of the `:user-catalogue` by default"
-  ([]
-   (write-user-catalogue! (catalogue/new-catalogue (get-state :user-catalogue :addon-summary-list))))
-  ([new-user-catalogue :catalogue/catalogue]
-   (catalogue/write-catalogue new-user-catalogue (paths :user-catalogue-file))
-   nil))
+  "writes the current state of the `:user-catalogue` to disk."
+  []
+  (catalogue/write-catalogue
+   (catalogue/new-catalogue (or (get-state :user-catalogue :addon-summary-list) []))
+   (paths :user-catalogue-file))
+  nil)
 
-(defn-spec get-create-user-catalogue (s/or :ok :catalogue/catalogue, :missing+no-create nil?)
-  "returns the contents of the user catalogue at `user-catalogue-path`, creating one if `create?` is true (default)."
-  ([]
-   (get-create-user-catalogue (paths :user-catalogue-file) true))
-  ([user-catalogue-path string?, create? boolean?]
-   (when (and create?
-              (not (fs/exists? user-catalogue-path)))
-     (catalogue/write-empty-catalogue! user-catalogue-path))
-   (let [catalogue (catalogue/read-catalogue user-catalogue-path {:bad-data? nil})
-         curse? (fn [addon]
-                  (-> addon :source (= "curseforge")))
-         new-summary-list (->> catalogue :addon-summary-list (remove curse?) vec)]
-     (when catalogue
-       (merge catalogue {:addon-summary-list new-summary-list
-                         :total (count new-summary-list)})))))
+(defn-spec get-user-catalogue (s/or :ok :catalogue/catalogue, :missing nil?)
+  "returns the contents of the user catalogue or `nil` if it doesn't exist."
+  []
+  (let [catalogue (catalogue/read-catalogue (paths :user-catalogue-file) {:bad-data? nil})
+        curse? (fn [addon]
+                 (-> addon :source (= "curseforge")))
+        new-summary-list (->> catalogue :addon-summary-list (remove curse?) vec)]
+    (when catalogue
+      (catalogue/new-catalogue new-summary-list))))
 
 (defn-spec set-user-catalogue! nil?
-  "given a catalogue, replaces the current user-catalogue in app state and generates a source-map index for faster lookups."
+  "replaces the current user-catalogue in app state and generates a source-map index for faster lookups."
   [new-user-catalogue (s/nilable :catalogue/catalogue)]
   (let [user-catalogue-idx (some->> new-user-catalogue
                                     :addon-summary-list
@@ -825,7 +771,7 @@
 
 ;; catalogue db handling
 
-(defn-spec find-in-db :db/addon-catalogue-match
+(defn-spec -find-in-db :db/addon-catalogue-match
   "looks for `installed-addon` in the given `db`, matching `toc-key` to a `catalogue-key`.
   if a `toc-key` and `catalogue-key` are actually lists, then all the `toc-keys` must match the `catalogue-keys`"
   [db :addon/summary-list, installed-addon :db/installed-addon-or-import-stub, toc-keys :db/toc-keys, catalogue-keys :db/catalogue-keys]
@@ -859,7 +805,6 @@
        :matched? (not (nil? match)) ;; todo: still used?
        :catalogue-match match})))
 
-;; todo: can we do better than 'map?' now?
 (defn-spec -find-first-in-db (s/or :match map?, :no-match nil?)
   "find a match for the given `installed-addon` in the database using a list of attributes in `match-on-list`.
   returns immediately when first match is found (does not check other joins in `match-on-list`)."
@@ -870,13 +815,12 @@
     ;; we have exhausted all possibilities. not finding a match is ok.
     nil
     (let [[toc-keys catalogue-keys] (first match-on-list) ;; => [:name] or [:source-id :source]
-          match (find-in-db db installed-addon toc-keys catalogue-keys)]
-      (if-not match ;; recur
-        (-find-first-in-db db installed-addon (rest match-on-list))
+          match (-find-in-db db installed-addon toc-keys catalogue-keys)]
+      (if-not match
+        (-find-first-in-db db installed-addon (rest match-on-list)) ;; recur
         match))))
 
-;; todo: flesh out the 'match' and match-on-list specs.
-(defn-spec -db-match-installed-addon-list-with-catalogue (s/coll-of (s/or :match map? :no-match :addon/toc))
+(defn-spec db-match-installed-addon-list-with-catalogue (s/coll-of (s/or :match map? :no-match :addon/toc))
   "for each installed addon, search the catalogue across multiple joins until a match is found.
   addons with no match return themselves"
   [db :addon/summary-list, installed-addon-list :addon/installed-list]
@@ -893,109 +837,78 @@
       (or (-find-first-in-db db installed-addon match-on-list)
           installed-addon))))
 
-(defn-spec -addon-by-source-and-name :addon/summary-list
-  "returns a list of addon summaries whose source and name match (exactly) the given `source` and `name`"
+(defn-spec db-addon-by-source-and-name :addon/summary-list
+  "returns a list of addon summaries from `db` whose source and name match (exactly) the given `source` and `name`"
   [db :addon/summary-list, source :addon/source, name ::sp/name]
   (let [xf (filter #(and (= source (:source %))
                          (= name (:name %))))]
     (into [] xf db)))
 
-(defn-spec -addon-by-name :addon/summary-list
-  "returns a list of addon summaries whose name matches (exactly) the given `name`"
+(defn-spec db-addon-by-name :addon/summary-list
+  "returns a list of addon summaries from `db` whose name matches (exactly) the given `name`"
   [db :addon/summary-list, name ::sp/name]
   (let [xf (filter #(= name (:name %)))]
     (into [] xf db)))
 
-(defn -search
+;; --------- here ----
+
+(defn db-search
   "returns a lazily fetched and paginated list of addon summaries.
   results are constructed using a `seque` that (somehow) bypasses chunking behaviour so our
   search never takes more than `cap` results.
-  matches on `uin` are case insensitive.
+  matches on `uin` are case insensitive. if no user input, returns a list of randomly ordered results.
   `filter-by` filters are applied before searching for `uin`."
-  [db uin cap filter-by user-catalogue-idx]
-  (let [constantly-true (constantly true)
+  ([search-term cap filter-by]
+   (db-search (get-state :db) (utils/nilable search-term) cap filter-by (get-state :user-catalogue-idx)))
 
-        user-catalogue-filter (if (:user-catalogue filter-by)
-                                (fn [row]
-                                  (contains? user-catalogue-idx (utils/source-map row)))
-                                constantly-true)
+  ([db uin cap filter-by user-catalogue-idx]
+   (let [constantly-true (constantly true)
 
-        host-filter (if-let [source-list (:source filter-by)]
+         user-catalogue-filter (if (:user-catalogue filter-by)
+                                 (fn [row]
+                                   (contains? user-catalogue-idx (utils/source-map row)))
+                                 constantly-true)
+
+         host-filter (if-let [source-list (:source filter-by)]
+                       (fn [row]
+                         (utils/in? (:source row) source-list))
+                       constantly-true)
+
+         tag-set (:tag filter-by)
+         tag-filter (if-not (empty? tag-set)
                       (fn [row]
-                        (utils/in? (:source row) source-list))
+                        (if-let [row-tag-set (set (:tag-list row))]
+                          ;; if the addon contains *some* of the selected tags, include it
+                          (some tag-set row-tag-set)))
                       constantly-true)
 
-        tag-set (:tag filter-by)
-        tag-filter (if-not (empty? tag-set)
-                     (fn [row]
-                       (if-let [row-tag-set (set (:tag-list row))]
-                         ;; if the addon contains *some* of the selected tags, include it
-                         (some tag-set row-tag-set)))
-                     constantly-true)
+         db (->> db
+                 (filter user-catalogue-filter)
+                 (filter host-filter)
+                 (filter tag-filter))
 
-        db (->> db
-                (filter user-catalogue-filter)
-                (filter host-filter)
-                (filter tag-filter))
+         random-sample? (and (nil? uin)
+                             (not (:user-catalogue filter-by)))]
 
-        random-sample? (and (nil? uin)
-                            (not (:user-catalogue filter-by)))]
+     ;; no/empty input, do a random sample
+     (if random-sample?
+       (let [pct (->> db count (max 1) (/ 100) (* 0.6))]
+         ;; decrement cap here so navigation for random search results is disabled
+         [(take (dec cap) (random-sample pct db))])
 
-    ;; no/empty input, do a random sample
-    (if random-sample?
-      (let [pct (->> db count (max 1) (/ 100) (* 0.6))]
-        ;; decrement cap here so navigation for random search results is disabled
-        [(take (dec cap) (random-sample pct db))])
-
-      ;; else, search by input
-      (let [uin (clojure.string/trim (or uin ""))
-            ;; implementation taken from here:
-            ;; - https://www.baeldung.com/java-case-insensitive-string-matching
-            regex (Pattern/compile (Pattern/quote uin) Pattern/CASE_INSENSITIVE)
-            match-fn (fn [row]
-                       (p :p3/db-search-row
-                          (or
-                           (.find (.matcher regex (or (:label row) "")))
-                           (.find (.matcher regex (or (:description row) ""))))))]
-        (p :p3/db-partition
-           (partition-all cap (seque 100 (filter match-fn db))))))))
-
-;;
-
-;; not specced because the results and argument lists may vary greatly
-(defn stored-query
-  "common queries we can call by keyword"
-  [db query-kw & [arg-list]]
-  (case query-kw
-    :addon-by-source-and-name (-addon-by-source-and-name db (first arg-list) (second arg-list))
-    :addon-by-name (-addon-by-name db (first arg-list))
-    :search (-search db (first arg-list) (second arg-list) (nth arg-list 2) (nth arg-list 3))
-    nil))
-
-(defn query-db
-  "uses keywords to do predefined queries."
-  [query-kw & [arg-list]]
-  (when-let [db (get-state :db)]
-    (stored-query db query-kw arg-list)))
-
-(defn db-catalogue-loaded?
-  "returns `true` if the database has a catalogue loaded.
-  An empty database `[]` is distinct from an unloaded database (`nil`).
-  A database may be empty only if the `addon-summary-list` key of a catalogue is empty.
-  A database may be `nil` if it simply hasn't been loaded yet or we attempted to load it and it failed to load.
-  A database may fail to load if it simply isn't there, can't be downloaded or, once downloaded, the data is invalid."
-  []
-  (-> (get-state :db) nil? not))
-
-(defn db-search
-  "searches database for addons whose name or description contains given user input.
-  if no user input, returns a list of randomly ordered results"
-  [search-term cap filter-by]
-  (let [args [(utils/nilable search-term) cap filter-by (get-state :user-catalogue-idx)]]
-    (query-db :search args)))
+       ;; else, search by input
+       (let [uin (clojure.string/trim (or uin ""))
+             ;; implementation taken from here:
+             ;; - https://www.baeldung.com/java-case-insensitive-string-matching
+             regex (Pattern/compile (Pattern/quote uin) Pattern/CASE_INSENSITIVE)
+             match-fn (fn [row]
+                        (or
+                         (.find (.matcher regex (or (:label row) "")))
+                         (.find (.matcher regex (or (:description row) "")))))]
+         (partition-all cap (seque 100 (filter match-fn db))))))))
 
 (defn-spec empty-search-results nil?
-  "empties the search state of results.
+  "empties app state of search results.
   this is to clear out anything between catalogue reloads."
   []
   (swap! state update-in [:search] merge (select-keys -search-state-template [:page :results :selected-results-list]))
@@ -1005,78 +918,94 @@
   "loads the user catalogue into state, but only if it hasn't already been loaded."
   []
   (when-not (get-state :user-catalogue)
-    (let [create-user-catalogue? false
-          path (paths :user-catalogue-file)]
-      (set-user-catalogue! (get-create-user-catalogue path create-user-catalogue?))))
+    (set-user-catalogue! (get-user-catalogue)))
   nil)
 
 (defn-spec load-current-catalogue (s/or :ok :catalogue/catalogue, :error nil?)
   "merges the currently selected catalogue with the user-catalogue and returns the definitive list of addons 
-  available to install. Handles malformed catalogue data by re-downloading catalogue."
+  available to install.
+  Guard function, handles malformed catalogue data by re-downloading the catalogue."
   []
   (when-let [catalogue-location (current-catalogue)]
-    (let [catalogue-path (catalogue-local-path catalogue-location)
-          _ (info (format "loading '%s' catalogue" (name (:name catalogue-location))))
+    (let [catalogue-path (catalogue-local-path (:name catalogue-location))
+          catalogue-label (name (:name catalogue-location))
+          catalogue-source (:source catalogue-location)
+          ;; "loading 'full' catalogue"
+          _ (info (format "loading '%s' catalogue." catalogue-label))
 
           ;; download from remote and try again when json can't be read
           bad-json-file-handler
           (fn []
-            (warn "catalogue corrupted. re-downloading and trying again.")
+            ;; "catalogue 'full' corrupted, attempting download again."
+            (warn (format "catalogue '%s' corrupted, attempting download again." catalogue-label))
             (fs/delete catalogue-path)
-            (download-current-catalogue)
+            (download-current-catalogue) ;; todo: be explicit here
             (catalogue/read-catalogue
              catalogue-path
              {:bad-data? (fn []
-                           (error (utils/reportable-error "remote catalogue failed to load and might be corrupt.")))}))
+                           ;; "catalogue 'full failed to load again, it might be corrupt at it's source: https://path/to/online/catalogue.json"
+                           (let [msg (format "catalogue '%s' failed to load again, it might be corrupt at it's source: %s" catalogue-label catalogue-source)]
+                             (error (utils/reportable-error msg))))}))
 
           catalogue-data (or (catalogue/read-catalogue catalogue-path {:bad-data? bad-json-file-handler})
-                             (when-not testing?
+                             (when-not *testing?*
                                (emergency-catalogue catalogue-location)))
 
           user-catalogue-data (get-state :user-catalogue)
           ;; 2021-06-30: merge order changed. catalogue data is now merged over the top of the user-catalogue.
           ;; this is because the user-catalogue may now contain addons from all hosts and is likely to be out of date.
-          final-catalogue (p :p2/db:catalogue:merge-catalogues
-                             (catalogue/merge-catalogues user-catalogue-data catalogue-data))]
-      (-> final-catalogue :addon-summary-list count (str " addons in final catalogue") info)
+          final-catalogue (catalogue/merge-catalogues user-catalogue-data catalogue-data)]
+      ;; "1024 addons in final catalogue." ;; todo: is this just noise?
+      (info (-> final-catalogue :addon-summary-list count (str " addons in final catalogue.")))
       final-catalogue)))
+
+(defn db-catalogue-loaded?
+  "returns `true` if the database has a catalogue loaded.
+  An empty database `[]` is distinct from an unloaded database (`nil`).
+  A database may be empty only if the `addon-summary-list` key of a catalogue is empty.
+  A database may be `nil` if it simply hasn't been loaded yet or we attempted to load it and it failed to load.
+  A database may fail to load if it simply isn't there, can't be downloaded or, once downloaded, the data is invalid."
+  []
+  (some? (get-state :db)))
 
 (defn-spec db-load-catalogue nil?
   "loads the currently selected catalogue into the database, but only if we have a catalogue and it hasn't already 
-  been loaded. Handles bad/invalid catalogues and merging the user catalogue"
+  been loaded.
+  Handles bad/invalid catalogues and merging the user catalogue."
   []
-  (if (and (not (db-catalogue-loaded?))
-           (current-catalogue))
-    (let [final-catalogue (p :p2/db:catalogue
-                             (load-current-catalogue))]
+  (if (or (db-catalogue-loaded?)
+          (not (current-catalogue)))
+    (debug "skipping catalogue load. already loaded or no catalogue selected.")
+
+    (let [final-catalogue (load-current-catalogue)]
       (when-not (empty? final-catalogue)
-        (p :p2/db:load
-           (swap! state merge {:db (:addon-summary-list final-catalogue)
-                               :db-stats {:num-addons (count (:addon-summary-list final-catalogue))
-                                          :known-host-list (->> final-catalogue
-                                                                :addon-summary-list
-                                                                (map :source)
-                                                                distinct
-                                                                sort
-                                                                vec)}}))))
-    (debug "skipping db load. already loaded or no catalogue selected."))
+        (swap! state merge {:db (:addon-summary-list final-catalogue)
+                            :db-stats {:num-addons (count (:addon-summary-list final-catalogue))
+                                       :known-host-list (->> final-catalogue
+                                                             :addon-summary-list
+                                                             (map :source)
+                                                             distinct
+                                                             sort
+                                                             vec)}}))))
   nil)
 
 (defn-spec -match-installed-addon-list-with-catalogue :addon/installed-list
-  "compare the list of addons installed with the database of known addons and try to match the two up.
-  when a match is found (see `db/-db-match-installed-addon-list-with-catalogue`), merge it into the addon data."
+  "compare the list of given addons with the database of known addons and try to match the two up.
+  when a match is found (see `db-match-installed-addon-list-with-catalogue`), merge it into the addon data."
   [database :addon/summary-list, installed-addon-list :addon/toc-list]
   (let [num-installed (count installed-addon-list)
         _ (when (> num-installed 0)
             (info (format "matching %s addons to catalogue" (count installed-addon-list))))
-        match-results (-db-match-installed-addon-list-with-catalogue database installed-addon-list)
+        match-results (db-match-installed-addon-list-with-catalogue database installed-addon-list)
         [matched unmatched] (utils/split-filter :matched? match-results)
 
         ;; for those that *did* match, merge the installed addon data together with the catalogue data
         matched (mapv #(moosh-addons (:installed-addon %) (:catalogue-match %)) matched)
         ;; and then make them a single list of addons again
 
-        ;; for those that failed to match but have nfo data we can fall back to that
+        ;; for those that failed to match but have nfo data we can fall back to ...
+        ;; 2022-09: I don't like this, it relies on source and source-id from the group-id, a URL, and addons can now switch sources.
+        ;; group-id should be changed from a URL to something else to prevent this temptation.
         polyfilled (mapv (fn [addon]
                            (if-let [synthetic (catalogue/toc2summary addon)]
                              (moosh-addons addon synthetic)
@@ -1091,35 +1020,37 @@
         ;; we don't match ignored addons, we shouldn't report we couldn't find them either
         unmatched-names (->> unmatched (remove :ignore?) (map :name) set)]
 
+    ;; todo: revisit this message.
     (when-not (= num-installed num-matched)
       (info (format "num installed %s, num matched %s" num-installed num-matched)))
 
     (when (and (not (empty? unmatched-names))
-               (> 1 (count installed-addon-list))) ;; *probably* per-addon installation/refresh, it gives us just the addon in question
-      (let [msg (format "failed to find %s addons in the '%s' catalogue: %s"
+               (> 1 (count installed-addon-list))) ;; this is *probably* a per-addon install/refresh, it gives us just the addon in question
+      (let [;; "failed to find 5 addons in the 'full' catalogue: foo, bar, baz, bup, boo"
+            ;; "you need to manually search for them and then re-install them."
+            msg (format "failed to find %s addons in the '%s' catalogue: %s"
                         (count unmatched-names)
                         (name (get-state :cfg :selected-catalogue))
                         (clojure.string/join ", " unmatched-names))
-            suggestion "you need to manually search for them and then re-install them"]
+            suggestion "try searching for these addons by name or description in the search tab."]
         (warn (utils/message-list msg [suggestion]))))
 
     (when-not (empty? unmatched)
       (run! (fn [addon]
               (logging/with-addon addon
                 (if (:ignore? addon)
-                  (info "not matched to catalogue, addon is being ignored")
+                  (info "not matched to catalogue, addon is being ignored.")
                   (warn (utils/message-list
-                         (format "failed to find %s in the '%s' catalogue" (:dirname addon) (name (get-state :cfg :selected-catalogue)))
-                         ["try searching for this addon by name or description"
-                          ;;"if this addon is part of a bundle, try \"File -> Re-install all\"" ;; not great advice these days when 'downgrades' are likely.
-                          ])))))
-
+                         ;; "failed to find a match in the 'full' catalogue."
+                         ;; "try searching for this addon name or description in the search tab."
+                         (format "failed to find a match in the '%s' catalogue." (name (get-state :cfg :selected-catalogue)))
+                         ["try searching for this addon by name or description in the search tab."])))))
             unmatched))
 
     expanded-installed-addon-list))
 
 (defn-spec match-all-installed-addons-with-catalogue nil?
-  "compare the list of addons installed with the database of known addons, match the two up, merge
+  "compares the list of addons installed with the catalogue of known addons, match the two up, merge
   the two together and update the list of installed addons.
   Skipped when no catalogue loaded or no addon directory selected."
   []
@@ -1129,7 +1060,7 @@
      (-match-installed-addon-list-with-catalogue (get-state :db) (get-state :installed-addon-list)))))
 
 (defn-spec match-installed-addon-with-catalogue (s/or :ok :addon/installed, :app-not-started nil?) ;; todo: revisit
-  "compare the list of addons installed with the database of known addons, match the two up, merge
+  "compare the given `addon` with the catalogue of known addons, match the two up, merge
   the two together and update the list of installed addons.
   Skipped when no catalogue loaded or no addon directory selected."
   [addon :addon/installed]
@@ -1143,38 +1074,41 @@
 ;;
 
 (defn expand-summary-wrapper
+  "fetches updates for the given `addon-summary` from it's addon host.
+  uses the current game track and strictness settings to pick the right release when multiple releases available."
   [addon-summary]
   (binding [http/*cache* (cache)]
-    (let [game-track (get-game-track)
-          strict? (get-game-track-strictness)]
-      (catalogue/expand-summary addon-summary game-track strict?))))
+    (catalogue/expand-summary addon-summary (get-game-track) (get-game-track-strictness))))
 
 (defn-spec expandable? boolean?
-  "returns `true` if the given addon in whatever form has the requisites to be 'expanded' (checked for updates from host)"
+  "returns `true` if the given `addon` (in whatever form) can be checked against an addon host for updates."
   [addon map?]
   (and (s/valid? :addon/expandable addon)
        (not (:ignore? addon))))
 
 (defn-spec check-for-update :addon/toc
-  "Returns given `addon` with source updates, if any, and sets an `update?` property if a different version is available.
+  "returns the given `addon` with source updates, if any, and sets an `update?` property if a different version is available.
   If addon is pinned to a specific version, `update?` will only be true if pinned version is different from installed version."
   [addon (s/or :unmatched :addon/toc
                :matched :addon/toc+summary+match)]
   (logging/with-addon addon
+    (joblib/tick-delay 0.25)
     (let [expanded-addon (when (expandable? addon)
-                           (joblib/tick-delay 0.25)
                            (expand-summary-wrapper addon))
           addon (or expanded-addon addon) ;; expanded addon may still be nil
           has-update? (addon/updateable? addon)]
       (joblib/tick-delay 0.5)
       (when has-update?
-        (info (format "update \"%s\" available from %s" (:version addon) (:source addon)))
+        ;; "update '1.2.3' available from github"
+        (info (format "update '%s' available from %s" (:version addon) (:source addon)))
         (when-not (= (get-game-track) (:game-track addon))
           (warn (format "update is for '%s' and the addon directory is set to '%s'"
                         (-> addon :game-track sp/game-track-labels-map)
                         (-> (get-game-track) sp/game-track-labels-map))))
+
         (when (:nfo/source addon)
           (warn (utils/message-list
+                 ;; "update is from a different host (github) to the one it was installed from (wowinterface)"
                  (format "update is from a different host (%s) to the one it was installed from (%s)." (:source addon) (:nfo/source addon))
                  ["this happens when an exact match is not found in the selected catalogue."]))))
 
@@ -1183,7 +1117,6 @@
 
 (def check-for-update-affective (affects-addon-wrapper check-for-update))
 
-#_"unused"
 #_(defn-spec check-for-updates-serially nil?
     "downloads full details for all installed addons that can be found in summary list"
     []
@@ -1199,7 +1132,7 @@
             (info (format "%s addons checked, %s updates available" num-matched num-updates)))))))
 
 (defn-spec check-for-updates-in-parallel nil?
-  "downloads full details for all installed addons that can be found in summary list"
+  "fetches updates for all installed addons from addon hosts, in parallel."
   []
   (when (selected-addon-dir)
     (let [installed-addon-list (get-state :installed-addon-list)]
@@ -1220,56 +1153,57 @@
 (def check-for-updates check-for-updates-in-parallel)
 
 (defn-spec check-addon-for-updates (s/or :ok :addon/installed, :app-not-started nil?)
-  "downloads full details for all installed addons that can be found in summary list"
+  "fetches updates for given `addon` from it's addon host."
   [addon (s/or :unmatched :addon/toc
                :matched :addon/toc+summary+match)]
   (when (selected-addon-dir)
     (update-installed-addon! (check-for-update addon))))
 
-;; ui interface
+;;
 
 (defn-spec init-dirs nil?
-  "ensures all directories in `generate-path-map` exist and are writable, creating them if necessary.
+  "ensure all directories in `generate-path-map` exist and are writable, creating them if necessary.
   this logic depends on paths that are not generated until the application has been started."
   []
-  ;; data directory doesn't exist and parent directory isn't writable
-  ;; nowhere to create data dir, nowhere to store download catalogue. non-starter
+  ;; data directory doesn't exist and parent directory isn't writable.
+  ;; nowhere to create data dir, nowhere to store download catalogue. non-starter.
   (when (and
          (not (fs/exists? (paths :data-dir))) ;; doesn't exist and ..
          (not (utils/last-writeable-dir (paths :data-dir)))) ;; .. no writeable parent
     (throw (RuntimeException. (str "Data directory doesn't exist and it cannot be created: " (paths :data-dir)))))
 
-  ;; state directory *does* exist but isn't writeable
-  ;; another non-starter
+  ;; state directory *does* exist but isn't writeable.
+  ;; another non-starter.
   (when (and (fs/exists? (paths :data-dir))
              (not (fs/writeable? (paths :data-dir))))
     (throw (RuntimeException. (str "Data directory isn't writeable:" (paths :data-dir)))))
 
-  ;; ensure all '-dir' suffixed paths exist, creating them if necessary
+  ;; ensure all '-dir' suffixed paths exist, creating them if necessary.
   (doseq [[path val] (paths)]
     (when (-> path name (clojure.string/ends-with? "-dir"))
+      ;; "creating 'config-dir' directory: /path/to/config/dir"
       (debug (format "creating '%s' directory: %s" path val))
       (fs/mkdirs val)))
 
   nil)
 
 (defn-spec delete-log-files! nil?
-  "Deletes the 'logs' and 'profile-data' directories.
-  Files are written here when the log level is :debug (and we're not testing)."
+  "empties the 'logs' directory.
+  files are written here when the log level is set to `:debug` (and we're not testing)."
   []
   (warn "deleting logs")
   (fs/delete-dir (paths :log-data-dir))
-  (fs/delete-dir (paths :profile-data-dir))
   (init-dirs))
 
 (defn-spec prune-http-cache! nil?
   "deletes html/json files from the 'cache' directory that are older than a certain age."
   []
-  (info "pruning http cache")
+  (debug "pruning http cache")
   (http/prune-cache-dir (paths :cache-dir)))
 
 (defn-spec delete-http-cache! nil?
-  "Deletes the 'cache' directory that contains html/json files and the etag db file."
+  "deletes the 'cache' directory that contains html/json files and the etag db file.
+  this is something the user initiates and not done automatically."
   []
   (warn "deleting http cache")
   (fs/delete-dir (paths :cache-dir))
@@ -1293,8 +1227,9 @@
   (delete-many-files! (selected-addon-dir) #"(?i)WowMatrix.dat$" "WowMatrix.dat"))
 
 (defn-spec delete-catalogue-files! nil?
+  "deletes all downloaded catalogues from the `:data-dir`.
+  the user-catalogue is deliberately ignored. It also lives in the `:config-dir`."
   []
-  ;; the user catalogue is deliberately ignored here.
   (delete-many-files! (paths :data-dir) #".+\-catalogue\.json$" "catalogue"))
 
 (defn-spec clear-all-temp-files! nil?
@@ -1315,7 +1250,7 @@
 (defn-spec -latest-strongbox-release (s/or :ok string?, :failed? keyword)
   "returns the most recently released version of strongbox on github.
   returns `:failed` if an error occurred while downloading/decoding/extracting the version name, rather than `nil`.
-  `nil` is used to mean 'not set' in the app state."
+  `nil` is used to mean 'not set (yet)' in the app state."
   []
   (binding [http/*cache* (cache)]
     (let [message "downloading strongbox version data"
@@ -1377,8 +1312,7 @@
 (defn-spec export-catalogue-addon-list ::sp/export-record-list
   "given a catalogue of addons, generates a list of 'export-records' from the list of addon summaries"
   [catalogue :catalogue/catalogue]
-  (let [addon-list (:addon-summary-list catalogue)]
-    (export-installed-addon-list addon-list)))
+  (export-installed-addon-list (:addon-summary-list catalogue)))
 
 (defn-spec export-user-catalogue-addon-list-safely ::sp/extant-file
   "generates a list of 'export-records' from the addon summaries in the user catalogue and writes them to the given `output-file`"
@@ -1398,10 +1332,10 @@
                             matching-addon
                             (cond
                               ;; first addon by given name and source. hopefully 0 or 1 results
-                              (and source name) (first (query-db :addon-by-source-and-name [source name]))
+                              (and source name) (first (db-addon-by-source-and-name (get-state :db) source name))
 
                               ;; first addon by given name. potentially multiple results
-                              name (first (query-db :addon-by-name [name]))
+                              name (first (db-addon-by-name (get-state :db) name))
 
                               ;; we have nothing to query on :(                          
                               :else nil)]
@@ -1435,7 +1369,8 @@
                  :installed-version "0"}
         addon-list (map #(merge padding %) addon-list)
 
-        ;; todo: why aren't we just calling `expand-summary-wrapper` ?
+        ;; todo: why aren't we just calling `expand-summary-wrapper` directly?
+
         ;; match each of these padded addon maps to entries in the catalogue database
         ;; afterwards this will call `update-installed-addon-list!` that will trigger a refresh in the gui
         matching-addon-list (-match-installed-addon-list-with-catalogue (get-state :db) addon-list)
@@ -1486,10 +1421,10 @@
 (defn-spec refresh-addon* nil?
   "refreshes state of an individual addon using a filesystem path.
   note! an addon may change it's set of directories between updates, or be completely overwritten by the same addon being installed without the context of a catalogue.
-  This means the `:dirname` of the *given* `addon` may not represent the *new* `:dirname` and that it's list of `:grouped-addons` are now stale.
+  This means the `:dirname` of the *given* `addon-path` may not represent the *new* `:dirname` and that it's list of `:grouped-addons` are now stale.
   We could reload the addons using the set of old and new directories acquired (see `refresh-check`), however that also leads to 'orphaned' addons,
-  where a grouped addon that used to belong no longer does.
-  It's messy. A full refresh is best but that's ugly :("
+  where a grouped addon that used to belong but no longer does.
+  It's messy. A full refresh is best but that's noisy/ugly :("
   [addon-path ::sp/addon-dir]
   (some->> addon-path
            load-installed-addon
@@ -1498,12 +1433,7 @@
   nil)
 
 (defn-spec refresh-addon nil?
-  "refreshes state of an individual `addon`.
-  note! an addon may change it's set of directories between updates, or be completely overwritten by the same addon being installed without the context of a catalogue.
-  This means the `:dirname` of the *given* `addon` may not represent the *new* `:dirname` and that it's list of `:grouped-addons` are now stale.
-  We could reload the addons using the set of old and new directories acquired (see `refresh-check`), however that also leads to 'orphaned' addons,
-  where a grouped addon that used to belong no longer does.
-  It's messy. A full refresh is best but that's ugly :("
+  "refreshes state of an individual `addon`."
   [addon :addon/installed]
   (logging/with-addon addon
     (some->> addon
@@ -1525,7 +1455,7 @@
   (db-load-user-catalogue)
 
    ;; load the contents of the selected catalogue and the user catalogue
-  (p :p2/db (db-load-catalogue))
+  (db-load-catalogue)
 
    ;; match installed addons to those in catalogue
   (match-all-installed-addons-with-catalogue)
@@ -1542,8 +1472,8 @@
   nil)
 
 (defn refresh-check
-  "given a set of new directories, presumably introduced during an update, checks to see if new directories
-  are present at all in the current set of known directories and does a `refresh` if not.
+  "given a set of directories, presumably new ones introduced during an update, checks to see if any are
+  present at all in the current set of known directories and does a `refresh` if not.
   this should solve the problem with 'stuck' addons, where the addon changed it's primary directory name during update."
   [new-dirs]
   (let [existing-dirs (->> (get-state :installed-addon-list)
@@ -1577,7 +1507,7 @@
 ;;
 
 (defn-spec db-reload-catalogue nil?
-  "unloads the database from state then calls `refresh` which will trigger a rebuild"
+  "unloads the database from state then calls `refresh`, triggering a rebuild."
   []
   (swap! state assoc :db nil)
   (refresh))
@@ -1590,7 +1520,7 @@
   nil)
 
 (defn-spec detect-repl! nil?
-  "if we're working from the REPL, we don't want the gui closing the session"
+  "if we're working from the REPL, we don't want the gui closing the session when it's window closes."
   []
   (swap! state assoc :in-repl? (utils/in-repl?))
   nil)
@@ -1651,5 +1581,5 @@
     (f))
   (when (and @state (debug-mode?))
     (dump-useful-log-info)
-    (info "wrote logs to:" (paths :log-file)))
+    (info "wrote debug log to:" (paths :log-file)))
   (reset! state nil))

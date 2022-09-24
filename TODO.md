@@ -19,12 +19,10 @@ see CHANGELOG.md for a more formal list of changes by release
 * remove tags
     - done
 
-## todo
+* add github to emergency catalogue
+    - done
 
-* clean up this confusion between 'install-dir' and 'addon-dir'
-    - install-dir is where addons are installed
-    - addon-dir is either where addons are installed or a specific addon's directory
-        - i.e., ambiguous
+## todo
 
 * add 'wotlk support' to comrades.csv
 
@@ -36,6 +34,16 @@ see CHANGELOG.md for a more formal list of changes by release
 * update screenshots
 
 ## todo bucket (no particular order)
+
+* log pane, bug, the text 'catalogue' is being truncated in multi-line messages
+    - see screenshot Screenshot at 2022-09-24 08-56-35.png
+
+* 'core/state :db-stats', seems like a nice idea to put more information here
+    - known-hosts
+    - num addons per-host
+    - num addons favourited/user-catalogue
+    - num addons
+    - ...?
 
 * github, install addon from the auto-generated .zip files
     - it looks like auctionator has disabled/deleted their 'releases' and put a link to their curseforge page up

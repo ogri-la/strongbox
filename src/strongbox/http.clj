@@ -23,14 +23,6 @@
 (def ^:dynamic *default-pause* 1000)
 (def ^:dynamic *default-attempts* 3)
 
-#_(defn simple-cache
-    "binds a simplistic getter+setter and `/tmp` to *cache* when caching http requests.
-  good for debugging, don't use otherwise."
-    []
-    {:set-etag (constantly nil)
-     :get-etag (constantly nil)
-     :cache-dir (fs/tmpdir)})
-
 (defn- add-etag-or-not
   [etag-key req]
   (if-let [;; for some reason this dynamic binding of *cache* to nil results in:
