@@ -171,9 +171,9 @@
         ;; prefer the one for the given `game-track`, if it exists, otherwise do as we do with
         ;; the catalogue and use a list of priorities.
         (let [grouped-toc-data (group-by :-toc/game-track toc-data-list)
-              priority-map {:retail [:retail :classic :classic-tbc]
-                            :classic [:classic :classic-tbc :retail]
-                            :classic-tbc [:classic-tbc :classic :retail]
+              priority-map {:retail [:retail :classic :classic-tbc :classic-wotlk]
+                            :classic [:classic :classic-tbc :classic-wotlk :retail]
+                            :classic-tbc [:classic-tbc :classic-wotlk :classic :retail]
                             :classic-wotlk [:classic-wotlk :classic-tbc :classic :retail]}
               safe-fallback [game-track]
               priorities (get priority-map game-track safe-fallback)
