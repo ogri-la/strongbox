@@ -850,8 +850,6 @@
   (let [xf (filter #(= name (:name %)))]
     (into [] xf db)))
 
-;; --------- here ----
-
 (defn db-search
   "returns a lazily fetched and paginated list of addon summaries.
   results are constructed using a `seque` that (somehow) bypasses chunking behaviour so our
@@ -1484,6 +1482,7 @@
         diff (clojure.set/difference new-dirs existing-dirs)]
     (when-not (empty? diff)
       (debug "diff found between new and old, full refresh required:" diff)
+      ;; todo: could this be a half-refresh? should half-refresh live in core.clj ?
       (refresh))))
 
 ;; todo: move to ui.cli

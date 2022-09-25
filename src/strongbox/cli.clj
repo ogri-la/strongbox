@@ -22,7 +22,9 @@
     [utils :as utils :refer [if-let* message-list]]
     [core :as core :refer [get-state paths]]]))
 
-(comment "the UIs pool their logic here, which calls core.clj.")
+(comment
+  "cli.clj and gui.clj pool their logic here, which calls core.clj.
+   or at least that's the idea.")
 
 (defn-spec toggle-split-pane nil?
   []
@@ -31,16 +33,16 @@
 
 ;; selecting addons
 
-(defn-spec select-addons-search! nil?
-  "sets the selected list of addons in application state for a later action"
-  [selected-addons :addon/summary-list]
-  (swap! core/state assoc-in [:search :selected-result-list] selected-addons)
+(defn-spec select-addons-for-search! nil?
+  "replaces the selected addons in the search state with the given `addon-list`."
+  [addon-list :addon/summary-list]
+  (swap! core/state assoc-in [:search :selected-result-list] addon-list)
   nil)
 
 (defn-spec clear-selected-search-addons! nil?
-  "removes all addons from the `:selected-addon-list` list"
+  "removes all selected addons from the search state."
   []
-  (select-addons-search! []))
+  (select-addons-for-search! []))
 
 (defn-spec select-addons* nil?
   "sets the selected list of addons to the given `selected-addons` for bulk operations like 'update', 'delete', 'ignore', etc"
@@ -51,7 +53,7 @@
 (defn-spec select-addons nil?
   "creates a sub-selection of installed addons for bulk operations like 'update', 'delete', 'ignore', etc.
   called with no args, selects *all* installed addons.
-  called with a function, selects just those where `(filter-fn addon)` is `true`."
+  called with a function, selects just those where `(filter-fn addon)` returns `true`."
   ([]
    (select-addons identity))
   ([filter-fn fn?]
@@ -71,18 +73,17 @@
 (defn-spec hard-refresh nil?
   "unlike `core/refresh`, `cli/hard-refresh` clears the http cache before checking for addon updates."
   []
-  ;; why can we be more specific, like just the addons for the current addon-dir?
+  ;; why can't we be more specific, like just the addons for the current addon-dir?
   ;; the url used to 'expand' an addon from the catalogue isn't preserved.
-  ;; it may also change with the game track (tukui, historically) or not even exist (tukui, currently)
-  ;; a thorough accounting would be too much code.
-
-  ;; this is also removing the etag cache.
-  ;; the etag db is pretty worthless and only applies to catalogues and downloaded zip files.
+  ;; it may also change with the game track (tukui, historically) or not even exist (tukui, currently).
+  ;; a thorough inspection would be too much code.
+  ;; this also removes the etag cache. the etag db only applies to catalogues and downloaded zip files.
   (core/delete-http-cache!)
   (core/refresh))
 
 (defn-spec half-refresh nil?
-  "like core/refresh but focuses on loading+matching+checking for updates"
+  "like `core/refresh` but excludes reloading catalogues, focusing on re-reading installed addons,
+  matching them to the catalogue and reapplying host updates."
   []
   (report "refresh")
   (core/load-all-installed-addons)
@@ -91,13 +92,13 @@
   (core/save-settings!))
 
 (defn-spec set-addon-dir! nil?
-  "adds/sets an addon-dir, partial refresh of application state"
+  "adds and sets the given `addon-dir`, then reloads addons."
   [addon-dir ::sp/addon-dir]
   (core/set-addon-dir! addon-dir)
   (half-refresh))
 
 (defn-spec set-game-track-strictness! nil?
-  "toggles the 'strict' flag for the current addon directory and reloads addons"
+  "changes the the 'strict' flag for the current addon directory, then reloads addons."
   [new-strictness-level ::sp/strict?]
   (core/set-game-track-strictness! new-strictness-level)
   (half-refresh))
@@ -105,8 +106,7 @@
 (defn-spec remove-addon-dir! nil?
   "deletes an addon-dir, selects first available addon dir, partial refresh of application state"
   []
-  (core/remove-addon-dir!)
-  ;; the next addon dir is selected, if any
+  (core/remove-addon-dir!) ;; the next addon dir is selected, if any
   (half-refresh))
 
 ;; search
@@ -128,10 +128,10 @@
 
 (defn-spec search nil?
   "updates the `[:search :term]` and resets the current page of results to `0`.
-  does not actually do any searching, that is up to the interface"
+  does not actually do any searching, that is up to the interface/state watchers."
   [search-term (s/nilable string?)]
   (let [;; if the given search term is empty (nil, "") and the *current* search term is empty, switch empty values.
-        ;; this lets us hit the 'random' button many times for different results.
+        ;; this refresh the search results with a new random sample.
         search-term (if (empty? search-term)
                       (if (-> @core/state :search :term nil?) "" nil)
                       search-term)]
@@ -144,13 +144,13 @@
   (search nil))
 
 (defn-spec bump-search nil?
-  "search for the `[:search :term]`, if one exists, and adds some whitespace to jog the GUI into forcing an empty.
+  "search for the set `[:search :term]`, if one exists, and adds some whitespace to jog the GUI into forcing an empty.
   the db search function trims whitespace so there won't be any change to results"
   []
   (search (some-> @core/state :search :term (str " "))))
 
 (defn-spec search-results ::sp/list-of-maps
-  "returns the current page of results"
+  "returns the current page of search results"
   ([]
    (search-results (get-state :search)))
   ([search-state map?]
@@ -165,8 +165,8 @@
        []))))
 
 (defn-spec search-has-next? boolean?
-  "true if we've maxed out the number of results per-page.
-  where there are *precisely* that number of results we'll get an empty next page"
+  "returns `true` if we've maxed out the number of per-page results.
+  when there are *precisely* that number of results we'll get an empty next page."
   ([]
    (search-has-next? (get-state :search)))
   ([search-state map?]
@@ -227,7 +227,7 @@
   (when catalogue-name
     (core/set-catalogue! (keyword catalogue-name))
     (report "switched catalogues")
-    (core/db-reload-catalogue)
+    (core/db-reload-catalogue) ;; calls `core/refresh`
     (core/empty-search-results)
     (bump-search))
   nil)
@@ -241,7 +241,7 @@
      (core/reset-logging!))))
 
 (defn-spec set-preference nil?
-  "updates a user preference `preference-key` with given `preference-val` and saves the settings"
+  "updates a user preference `preference-key` with given `preference-val` and saves the settings."
   [preference-key keyword?, preference-val any?]
   (swap! core/state assoc-in [:cfg :preferences preference-key] preference-val)
   (core/save-settings!))
@@ -249,7 +249,7 @@
 ;;
 
 (defn-spec pin nil?
-  "pins the addons in given `addon-list` to their current `:installed-version` versions.
+  "pins the given `addon-list` to their current `:installed-version` versions.
   defaults to all addons in `:selected-addon-list` when called without parameters."
   ([]
    (pin (get-state :selected-addon-list)))
@@ -259,7 +259,7 @@
              (info (format "pinning to \"%s\"" (:installed-version addon)))
              (addon/pin! (core/selected-addon-dir) addon)))
          addon-list)
-   (core/refresh)))
+   (half-refresh)))
 
 (defn-spec unpin nil?
   "unpins the addons in given `addon-list` regardless of whether they are pinned or not.
@@ -273,20 +273,11 @@
          addon-list)
    (core/refresh)))
 
-(defn-spec -find-replace-release (s/or :ok :addon/expanded, :release-not-found nil?)
-  "looks for the `:installed-version` in the `:release-list` and, if found, updates the addon.
-  this is an intermediate step before pinning or installing a previous release."
-  [addon :addon/expanded]
-  (if-let [matching-release (addon/find-release addon)]
-    (merge addon matching-release)
-    (logging/with-addon addon
-      (warn (format "release \"%s\" not found, using latest instead." (:installed-version addon)))
-      addon)))
-
 ;;
 
 (defn-spec install-update-these-serially nil?
-  "installs/updates a list of addons serially"
+  "installs/updates a list of addons serially.
+  2022-09: not really used to install multiple addons any more, just individual addons from search results."
   [updateable-addon-list :addon/installable-list]
   (run! core/install-addon-guard-affective updateable-addon-list))
 
@@ -302,7 +293,8 @@
          set)))
 
 (defn-spec install-update-these-in-parallel nil?
-  "installs/updates a list of addons in parallel, pushing guard checks into threads and then installing serially."
+  "installs/updates a list of addons in parallel.
+  does a clever refresh check afterwards to try and prevent a full refresh from happening."
   [updateable-addon-list :addon/installable-list]
   (let [queue-atm (core/get-state :job-queue)
         install-dir (core/selected-addon-dir)
@@ -323,31 +315,36 @@
     (core/refresh-check @new-dirs)
     nil))
 
-(defn-spec re-install-or-update-selected nil?
+(defn-spec -find-replace-release (s/or :ok :addon/expanded, :release-not-found nil?)
+  "looks for the `:installed-version` in the given `addon`'s `:release-list` and, if found, updates the addon map.
+  this is an intermediate step before pinning or installing a previous release."
+  [addon :addon/expanded]
+  (if-let [matching-release (addon/find-release addon)]
+    (merge addon matching-release)
+    (logging/with-addon addon
+      (warn (format "release \"%s\" not found, using latest instead." (:installed-version addon)))
+      addon)))
+
+(defn-spec re-install-or-update nil?
   "re-installs (if possible) or updates all addons in given `addon-list`.
   defaults to all addons in `:selected-addon-list` when called without parameters."
   ([]
-   (re-install-or-update-selected (get-state :selected-addon-list)))
+   (re-install-or-update (get-state :selected-addon-list)))
   ([addon-list :addon/installed-list]
    (->> addon-list
         (filter core/expanded?)
         (map -find-replace-release)
         install-update-these-in-parallel)))
 
-(defn-spec re-install-or-update-all nil?
-  "re-installs (if possible) or updates all installed addons"
-  []
-  (re-install-or-update-selected (get-state :installed-addon-list)))
-
 (defn-spec unique-group-id-from-zip-file string?
   "generates a reasonably unique `group-id` from the given `downloaded-file` filename."
   [downloaded-file ::sp/file]
   (let [uniquish-id (subs (utils/unique-id) 0 8)]
-    (-> downloaded-file ;; /foo/bar/baz.zip
-        fs/base-name ;; baz.zip
-        fs/split-ext ;; [baz, .zip]
-        first ;; baz
-        (clojure.string/split #"--") ;; [baz,]
+    (-> downloaded-file ;; /foo/bar/baz--1-2-3.zip
+        fs/base-name ;; baz--1-2-3.zip
+        fs/split-ext ;; [baz--1-2-3, .zip]
+        first ;; baz--1-2-3
+        (clojure.string/split #"--") ;; [baz, 1-2-3]
         first ;; baz
         (str "-" uniquish-id)))) ;; baz-467cec22
 
@@ -364,7 +361,9 @@
        :error-messages error-messages}))
 
 (defn-spec install-addons-from-file-in-parallel ::sp/list-of-maps
-  "installs/updates a list of addon zip files in parallel, pushing guard checks into threads and then installing serially."
+  "installs/updates a list of addon zip files in parallel.
+  does a clever refresh check afterwards to try and prevent a full refresh from happening.
+  very similar code to `install-update-these-in-parallel`."
   [download-file-list (s/coll-of ::sp/extant-archive-file)]
   (let [queue-atm (core/get-state :job-queue)
         install-dir (core/selected-addon-dir)
@@ -406,8 +405,11 @@
           core/expand-summary-wrapper
           vector
           install-update-these-serially)
+  ;; todo: half-refresh?
   (core/refresh))
 
+;; todo: this doesn't seem to have any protection against mutual dependencies ...
+;; see `install-update-these-in-parallel`
 (defn-spec install-many ::sp/list-of-maps
   "install many addons from the catalogue.
   a bit different from the other installation functions, this one returns a list of maps with the installation results."
@@ -437,7 +439,7 @@
 
 (defn-spec update-all nil?
   "updates all installed addons with any new releases.
-  command is ignored if any addons are unsteady"
+  command is ignored if any addons are in an unsteady state."
   []
   (if-not (empty? (get-state :unsteady-addon-list))
     (warn "updates in progress, 'update all' command ignored")
@@ -449,7 +451,6 @@
 (defn-spec set-version nil?
   "updates `addon` with the given `release` data and then installs it."
   [addon :addon/installable, release :addon/source-updates]
-  ;;(core/install-addon-guard-affective (merge addon release))
   (install-update-these-in-parallel [(merge addon release)]))
 
 (defn-spec delete-selected nil?
@@ -472,6 +473,7 @@
                 (logging/with-addon addon
                   (info "ignoring")
                   (addon/ignore! (core/selected-addon-dir) addon)))))
+   ;; todo: half-refresh?
    (core/refresh)))
 
 (defn-spec clear-ignore-selected nil?
@@ -485,6 +487,7 @@
              (addon/clear-ignore! addon-dir addon)
              (info "stopped ignoring")))
          addon-list)
+   ;; todo: half-refresh?
    (core/refresh)))
 
 ;; tabs
@@ -498,7 +501,7 @@
 
 (defn-spec change-notice-logger-level nil?
   "changes the log level on the UI notice-logger widget.
-  changes the log level for a tab in `:tab-list` when `tab-idx` is also given."
+  changes the log level for a specific tab when `tab-idx` is also given."
   ([new-log-level ::sp/log-level]
    (change-notice-logger-level new-log-level nil))
   ([new-log-level ::sp/log-level, tab-idx (s/nilable int?)]
@@ -521,7 +524,7 @@
 
 (defn-spec add-tab nil?
   "adds a tab to `:tab-list`.
-  if tab already exists then it is removed from list and the new one is appeneded to the end.
+  if tab already exists then it is removed from list and the new one appended to the end.
   this is purely so the latest tab can be selected without index wrangling."
   [tab-id :ui/tab-id, tab-label ::sp/label, closable? ::sp/closable?, tab-data :ui/tab-data]
   (let [new-tab {:tab-id tab-id
@@ -539,18 +542,20 @@
   nil)
 
 (defn-spec add-addon-tab nil?
-  "convenience, adds a tab using given the `addon` data"
+  "convenience, adds a tab using the given `addon` data."
   [addon map?]
   (let [tab-id (utils/unique-id)
         closable? true
-        addon-id (utils/extract-addon-id addon)]
-    (add-tab tab-id (or (:dirname addon) (:label addon) (:name addon) "[bug: missing tab name!]") closable? addon-id)))
+        addon-id (utils/extract-addon-id addon)
+        tab-label (or (:dirname addon) (:label addon) (:name addon) "[bug: missing tab name!]")]
+    (add-tab tab-id tab-label closable? addon-id)))
 
 ;; log entries
 ;; todo: how much of this can be moved into logging.clj?
 
 (defn-spec log-entries-since-last-refresh ::sp/list-of-maps
-  "returns a list of log entries since last refresh"
+  "returns a list of log entries since the last 'refresh' notice-level log.
+  used to hide warnings and errors belonging to *updates* in previous refreshes."
   ([]
    (log-entries-since-last-refresh (core/get-state :log-lines)))
   ([log-lines ::sp/list-of-maps]
@@ -562,7 +567,8 @@
           vec))))
 
 (defn-spec addon-log-entries (s/or :ok ::sp/list-of-maps, :app-not-started nil?)
-  "returns a list of addon entries for the given `:dirname` since last refresh"
+  "returns a list of log entries for the given `addon` since last refresh.
+  used to hide warnings and errors belonging to *addons* in previous refreshes."
   [addon map?]
   (when-let [state @core/state]
     (let [not-report #(-> % :level (= :report) not)
@@ -576,7 +582,7 @@
            vec))))
 
 (defn-spec addon-num-log-level int?
-  "returns the number of log entries given `dirname` has for given `log-level` or 0 if not present"
+  "returns the number of log entries the given `dirname` has for the given `log-level`."
   [log-level ::sp/log-level, dirname ::sp/dirname]
   (->> {:dirname dirname}
        addon-log-entries
@@ -612,9 +618,10 @@
 
 ;; todo: logic might be better off in core.clj
 (defn-spec find-addon (s/or :ok :addon/summary, :error nil?)
-  "given a URL of a supported addon host, parses it, looks for it in the catalogue, expands addon and attempts a dry run installation.
-  if successful, returns the addon-summary."
-  [addon-url string?, dry-run? boolean?]
+  "given a URL of a supported addon host, parses it, looks for it in the catalogue, expands addon and attempts to install a dry run installation.
+  if successful, returns the addon-summary.
+  dry-run installation attempt can be skipped by setting `attempt-dry-run` to false."
+  [addon-url string?, attempt-dry-run? boolean?]
   (binding [http/*cache* (core/cache)]
     (if-let* [addon-summary-stub (catalogue/parse-user-string addon-url)
               source (:source addon-summary-stub)
@@ -658,7 +665,7 @@
 
               ;; a dry-run is good when importing an addon for the first time but
               ;; not necessary when updating the user-catalogue.
-              _ (if-not dry-run?
+              _ (if-not attempt-dry-run?
                   true
                   (or (core/install-addon-guard addon (core/selected-addon-dir) true)
                       (error "failed dry-run installation")))]
@@ -670,7 +677,7 @@
              nil)))
 
 (defn-spec import-addon nil?
-  "goes looking for given url and if found adds it to the user catalogue and then installs it."
+  "goes looking for given `addon-url` and, if found, adds it to the user catalogue and then installs it."
   [addon-url string?]
   (binding [http/*cache* (core/cache)]
     (if-let* [dry-run? true
@@ -681,22 +688,22 @@
                  (core/write-user-catalogue!)
                  (core/install-addon-guard addon (core/selected-addon-dir))
                  ;;(core/db-reload-catalogue) ;; db-reload-catalogue will call `refresh` which we want to trigger in the gui instead
-                 (swap! core/state assoc :db nil) ;; will force a reload of db
+                 (swap! core/state assoc :db nil) ;; will force a reload of db in the gui
                  nil)
 
              ;; failed to find or expand summary, probably because of selected game track.
              nil)))
 
 (defn-spec refresh-user-catalogue-item nil?
-  "refresh the details of an individual addon in the user catalogue, optionally writing the updated catalogue to file"
+  "refresh the details of an individual `addon` in the user catalogue, optionally writing the updated catalogue to file."
   ([addon :addon/summary]
    (refresh-user-catalogue-item addon true))
   ([addon :addon/summary, write? boolean?]
    (logging/with-addon addon
      (info "refreshing details")
      (try
-       (let [dry-run? false
-             refreshed-addon (find-addon (:url addon) dry-run?)]
+       (let [attempt-dry-run? false
+             refreshed-addon (find-addon (:url addon) attempt-dry-run?)]
          (if refreshed-addon
            (do (core/add-user-addon! refreshed-addon)
                (when write?
@@ -711,15 +718,16 @@
   "refresh the details of all addons in the user catalogue, writing the updated catalogue to file once."
   []
   (binding [http/*cache* (core/cache)]
-    (info (format "refreshing \"%s\", this may take a minute ..."
-                  (-> (core/paths :user-catalogue-file) fs/base-name)))
-    (doseq [user-addon (core/get-state :user-catalogue :addon-summary-list)]
-      (refresh-user-catalogue-item user-addon false))
+    (info (format "refreshing \"%s\", this may take a minute ..." (-> (core/paths :user-catalogue-file) fs/base-name)))
+    (let [write? false]
+      (doseq [user-addon (core/get-state :user-catalogue :addon-summary-list)]
+        (refresh-user-catalogue-item user-addon write?)))
     (core/write-user-catalogue!))
   nil)
 
 ;;
 
+;; todo: shift to core.clj or addon.clj
 (defn-spec addon-source-map-to-url (s/or :ok ::sp/url, :error nil?)
   "construct a URL given a `source`, `source-id` and toc data only.
   caveats: 
@@ -736,8 +744,7 @@
     nil))
 
 (defn-spec available-versions-v1 (s/or :ok string? :no-version-available nil?)
-  "formats the 'available version' string depending on the state of the addon.
-  pinned and ignored addons get a helpful prefix."
+  "formats the 'available version' string depending on the state of the addon."
   [row map?]
   (cond
     (:ignore? row) ""
@@ -750,14 +757,17 @@
   pinned and ignored addons get a helpful prefix."
   [row map?]
   (cond
-    ;; when wouldn't we have an `installed-version`? search result?
-    (and (:ignore? row) (:installed-version row)) (str "(ignored) " (:installed-version row))
+    (and (:ignore? row)
+         (:installed-version row)) (str "(ignored) " (:installed-version row))
     (:ignore? row) "(ignored)"
     (:pinned-version row) (str "(pinned) " (:pinned-version row))
-    :else
-    (or (:version row) (:installed-version row))))
+    :else (or (:version row)
+              (:installed-version row))))
 
+;; todo: do we really need this separate to jfx/gui-column-map ?
 (def column-map
+  "common column names mapped to labels and value-generating functions.
+  jfx.clj takes this and merges/augments it with jfx-specific stuff."
   {:browse-local {:label "browse" :value-fn :addon-dir}
    :source {:label "source" :value-fn :source}
    :source-id {:label "ID" :value-fn :source-id}
@@ -799,21 +809,21 @@
                                    :else (:tick constants/glyph-map)))))}})
 
 (defn-spec toggle-ui-column nil?
-  "toggles the given `column-id` in the user preferences depending on `selected?` boolean"
+  "toggles the display of the given `column-id` in the user preferences."
   [column-id keyword?, selected? boolean?]
   (dosync
    (swap! core/state update-in [:cfg :preferences :ui-selected-columns] (if selected? conj utils/rmv) column-id)
    (core/save-settings!)))
 
 (defn-spec set-column-list nil?
-  "replaces the current set of columns with `column-list`"
+  "replaces the current set of columns with the given `column-list`."
   [column-list :ui/column-list]
   (dosync
    (swap! core/state assoc-in [:cfg :preferences :ui-selected-columns] column-list)
    (core/save-settings!)))
 
 (defn-spec reset-ui-columns nil?
-  "replaces user column preferences with the default set"
+  "replaces the current set of columns with the default set."
   []
   (set-column-list sp/default-column-list))
 
@@ -836,12 +846,13 @@
 ;;
 
 (defn-spec add-summary-to-user-catalogue nil?
-  "adds an addon-summary (catalogue entry) to the user-catalogue, if it's not already present"
+  "adds an `addon-summary` (catalogue entry) to the user-catalogue, if it's not already present."
   [addon-summary :addon/summary]
   (core/add-user-addon! addon-summary)
   (core/write-user-catalogue!))
 
 (defn-spec remove-summary-from-user-catalogue nil?
+  "removes an `addon-summary` (catalogue entry) from the user-catalogue, but only if it's present."
   [addon-summary :addon/summary]
   (core/remove-user-addon! addon-summary)
   (core/write-user-catalogue!))
@@ -924,7 +935,6 @@
   (info "starting cli")
   (init-ui-logger)
   (-init-search-listener)
-
   (core/refresh)
   (action opts))
 

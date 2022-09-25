@@ -1399,7 +1399,7 @@
                    separator
                    (menu-item "_Update all" (async-handler cli/update-all)
                               {:key "Ctrl+U", :disable no-addon-dir?})
-                   (menu-item "Re-install all" (async-handler cli/re-install-or-update-all)
+                   (menu-item "Re-install all" (async-handler cli/re-install-or-update)
                               {:disable no-addon-dir?})
                    separator
                    (menu-item "Import a list of addons" (async-handler import-addon-list-handler)
@@ -1572,7 +1572,7 @@
                         {:disable (or child?
                                       (not (addon/updateable? selected-addon)))})
 
-             (menu-item "Re-install" (async-handler (juxt cli/re-install-or-update-selected clear-table-selected-items))
+             (menu-item "Re-install" (async-handler (juxt cli/re-install-or-update clear-table-selected-items))
                         {:disable (or child?
                                       (not (addon/re-installable? selected-addon)))})
              separator
@@ -1612,7 +1612,7 @@
              separator
              (menu-item "Update" (async-handler (juxt cli/update-selected clear-table-selected-items))
                         {:disable none-selected?})
-             (menu-item "Re-install" (async-handler (juxt cli/re-install-or-update-selected clear-table-selected-items))
+             (menu-item "Re-install" (async-handler (juxt cli/re-install-or-update clear-table-selected-items))
                         {:disable none-selected?})
              separator
              (menu "Source" [] {:disable true})
@@ -1916,7 +1916,7 @@
     {:fx/type fx.ext.table-view/with-selection-props
      :props {:selection-mode :multiple
              ;; unlike gui.clj, we have access to the original data here. no need to re-select addons.
-             :on-selected-items-changed cli/select-addons-search!}
+             :on-selected-items-changed cli/select-addons-for-search!}
      :desc {:fx/type :table-view
             :id "search-addons-table"
             :placeholder {:fx/type :label
@@ -2028,7 +2028,7 @@
   {:fx/type :h-box
    :id "addon-detail-button-menu"
    :children [(if (addon/installed? addon)
-                (button "Re-install" (async-handler #(cli/re-install-or-update-selected [addon]))
+                (button "Re-install" (async-handler #(cli/re-install-or-update [addon]))
                         {:disabled? (not (addon/re-installable? addon))
                          :tooltip (format "Re-install version %s" (:installed-version addon))})
 
