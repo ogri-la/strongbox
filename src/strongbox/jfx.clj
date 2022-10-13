@@ -39,7 +39,7 @@
    [java.text NumberFormat]))
 
 ;; javafx hack, fixes combobox that sometimes goes blank:
-;; https://github.com/cljfx/cljfx/issues/76#issuecomment-645563116
+;; - https://github.com/cljfx/cljfx/issues/76#issuecomment-645563116
 (def ext-recreate-on-key-changed
   "Extension lifecycle that recreates its component when lifecycle's key is changed
   
@@ -734,11 +734,13 @@
     :else (throw (Exception. (format "cannot coerce '%s' to `FileChooser$ExtensionFilter`" (type x))))))
 
 (defn file-chooser
-  "prompt user to select a file"
+  "prompt user to select a file, always returns a vector of absolute paths to files or `nil`.
+  use `{:type :open}` to choose a single file.
+  use `{:type :open-multi}` to choose multiple files.
+  use `{:type :save}` to choose a single file to write/replace."
   [& [opt-map]]
   (let [opt-map (or opt-map {})
-        default-open-type :open
-        open-type (get opt-map :type default-open-type)
+        open-type (get opt-map :type :open)
         window (get-window)
         chooser (doto (FileChooser.)
                   (.setTitle "Open File"))]
@@ -751,18 +753,17 @@
                             :save (.showSaveDialog chooser window)
                             :open-multi (.showOpenMultipleDialog chooser window)
                             (.showOpenDialog chooser window)))]
-      (if (instance? java.util.Collection file-obj)
-        (mapv #(str (.getAbsolutePath %)) file-obj)
-        (-> file-obj .getAbsolutePath str)))))
+      (mapv #(str (.getAbsolutePath %)) (if (instance? java.util.Collection file-obj)
+                                          file-obj
+                                          [file-obj])))))
 
-(defn dir-chooser
-  "prompt user to select a directory"
+(defn-spec dir-chooser (s/or :ok ::sp/dir, :noop nil?)
+  "prompt user to select a directory, returning an absolute path to a directory or `nil`."
   []
   (let [chooser (doto (DirectoryChooser.)
                   (.setTitle "Select Directory"))]
     (when-let [^java.io.File dir @(fx/on-fx-thread
                                    (.showDialog chooser (get-window)))]
-
       (-> dir .getAbsolutePath str))))
 
 (defn-spec text-input (s/or :ok string? :noop nil?)
@@ -811,11 +812,11 @@
     (= (.get result) ButtonType/OK)))
 
 (defn-spec confirm->action nil?
-  "displays a confirmation prompt with the given `heading` and `message` and then calls given `callback` on success"
+  "displays a confirmation prompt with the given `heading` and `message` and then calls given `callback` on success."
   [heading (s/nilable string?), message string?, callback fn?]
   (when (confirm heading message)
-    (callback)
-    nil))
+    (callback))
+  nil)
 
 ;; https://github.com/cljfx/cljfx/blob/babc2f09e4827efb29f859a442a1658d82169a62/examples/e25_radio_buttons.clj
 (defn radio-group
@@ -851,7 +852,7 @@
 
 (defn button
   "generates a simple button with a means to check to see if it should be disabled and an optional tooltip"
-  [label on-action & [{:keys [disabled? tooltip tooltip-delay style-class id]}]]
+  [label on-action & [{:keys [disabled?, tooltip tooltip-delay, style-class id]}]]
   (let [btn (cond->
              {:fx/type :button
               :text label
@@ -899,7 +900,7 @@
 
 (defn async
   "execute given function and it's optional argument list asynchronously.
-  for example: `(async println [1 2 3])` prints \"1 2 3\" on another thread."
+  exceptions are caught and printed to stdout but otherwise swallowed."
   ([f]
    (async f []))
   ([f arg-list]
@@ -946,6 +947,8 @@
 
 (def do-nothing donothing)
 
+;; ---
+
 (defn wow-dir-picker
   "prompts the user to select an addon dir. 
   if a valid addon directory is selected, calls `cli/set-addon-dir!`"
@@ -977,7 +980,10 @@
     ;; and so will exit again there :( the double-check here seems to work though.
     (or (:in-repl? @core/state)
         (utils/in-repl?)) (swap! core/state assoc :gui-showing? false)
+
+    ;; set with a `with-redef` in main.clj or cloverage.clj
     core/*testing?* (swap! core/state assoc :gui-showing? false)
+
     ;; 2020-08-08: `ss/invoke-later` was keeping the old window around when running outside of repl.
     ;; `ss/invoke-soon` seems to fix that.
     ;;  - http://daveray.github.io/seesaw/seesaw.invoke-api.html
@@ -986,34 +992,34 @@
                                (Platform/exit)
                                (System/exit 0)))))
 
-(defn-spec switch-tab nil?
+(defn-spec switch-tab! nil?
   "switches the tab-pane to the tab at the given index"
   [tab-idx int?]
   (-> (find-tabber) .getSelectionModel (.select tab-idx))
   nil)
 
-(defn-spec switch-tab-idx nil?
-  "switches the tab-pane to the tab at the given index *on the JavaFX event thread*.
+(defn-spec switch-tab-idx! nil?
+  "switches the tab-pane to the tab at the given `idx` *on the JavaFX event thread*.
   the dynamic tabs seem to require a `runLater` unlike static tabs.
-  multiple instances of strongbox will still interfere with this behaviour and the switching won't occur"
+  multiple instances of strongbox will still interfere with this behaviour and the switching won't occur."
   [idx int?]
   (Platform/runLater
    (fn []
-     (switch-tab idx))))
+     (switch-tab! idx))))
 
-(defn-spec switch-tab-latest nil?
-  "switches the tab-pan to the furthest-right tab"
+(defn-spec switch-tab-latest! nil?
+  "switches the tab pane to the right-most tab."
   []
-  (switch-tab-idx (-> (core/get-state :tab-list) count (+ NUM-STATIC-TABS) dec)))
+  (switch-tab-idx! (-> (core/get-state :tab-list) count (+ NUM-STATIC-TABS) dec)))
 
 (defn-spec switch-tab-event-handler fn?
   "returns an event handler that switches to the given `tab-idx` when called."
   [tab-idx int?]
   (fn [_]
-    (switch-tab tab-idx)))
+    (switch-tab! tab-idx)))
 
 (defn import-addon-handler
-  "imports an addon by parsing a URL"
+  "imports an addon by parsing a URL."
   []
   (let [addon-url (text-input "URL of addon:")]
     (when addon-url
@@ -1032,27 +1038,27 @@
   [{:description "JSON files" :extensions ["*.json"]}])
 
 (defn import-addon-list-handler
-  "prompts user with a file selection dialogue then imports a list of addons from the selected file"
+  "prompts user with a file selection dialogue then imports a list of addons from the selected file."
   []
-  (when-let [abs-path (file-chooser {:filters json-files-extension-filters})]
-    (core/import-exported-file abs-path)
+  (when-let [abs-path-list (file-chooser {:filters json-files-extension-filters})]
+    (core/import-exported-file (first abs-path-list))
     (core/refresh))
   nil)
 
 (defn export-addon-list-handler
-  "prompts user with a file selection dialogue then writes the current directory of addons to the selected file"
+  "prompts user with a file selection dialogue then writes the current directory of addons to the selected file."
   []
-  (when-let [abs-path (file-chooser {:type :save
-                                     :filters json-files-extension-filters})]
-    (core/export-installed-addon-list-safely abs-path))
+  (when-let [abs-path-list (file-chooser {:type :save
+                                          :filters json-files-extension-filters})]
+    (core/export-installed-addon-list-safely (first abs-path-list)))
   nil)
 
 (defn export-user-catalogue-handler
-  "prompts user with a file selection dialogue then writes the user catalogue to selected file"
+  "prompts user with a file selection dialogue then writes the user catalogue to selected file."
   []
-  (when-let [abs-path (file-chooser {:type :save
-                                     :filters json-files-extension-filters})]
-    (core/export-user-catalogue-addon-list-safely abs-path))
+  (when-let [abs-path-list (file-chooser {:type :save
+                                          :filters json-files-extension-filters})]
+    (core/export-user-catalogue-addon-list-safely (first abs-path-list)))
   nil)
 
 (defn-spec -about-strongbox-dialog map?
@@ -1078,13 +1084,13 @@
                :text "AGPL v3"}]})
 
 (defn about-strongbox-dialog
-  "displays an informational dialog to the user about strongbox"
-  [event]
+  "displays an informational dialog about strongbox."
+  [_]
   (alert :info "" {:content (component-instance (-about-strongbox-dialog))})
   nil)
 
 (defn delete-selected-confirmation-handler
-  "prompts the user to confirm if they *really* want to delete those addons they just selected and clicked 'delete' on"
+  "prompts the user to confirm if they *really* want to delete those addons they just selected and clicked 'delete' on."
   []
   (when-let [selected (core/get-state :selected-addon-list)]
     (if (utils/any (mapv :ignore? selected))
@@ -1096,9 +1102,9 @@
   nil)
 
 (defn search-results-install-handler
-  "this switches to the 'installed' tab then installs each of the selected addons in parallel."
+  "switches to the 'installed' tab then installs each of the selected addons in parallel."
   [addon-list]
-  (switch-tab INSTALLED-TAB)
+  (switch-tab! INSTALLED-TAB)
   (let [results-list (cli/install-many addon-list)]
     (doseq [{:keys [error-messages label]} results-list]
       (when-not (empty? error-messages)
@@ -1117,7 +1123,7 @@
 ;; column handling
 
 (defn uber-button
-  "returns a widget describing the current state of the given addon"
+  "returns a widget describing the current state of the given addon."
   [row]
   (let [row (parent-row row)
         [text, tooltip]
@@ -1142,9 +1148,10 @@
             :style-class ["button" "uber-button"]
             :on-action (fn [_]
                          (cli/add-addon-tab row)
-                         (switch-tab-latest))}}))
+                         (switch-tab-latest!))}}))
 
 (defn addon-progress-bar
+  "returns a progress-bar widget for the given `row`, using the jobs in the given `queue` filtered by `keyset`."
   [row queue keyset]
   (let [sub-queue (filter (joblib/by-keyset keyset) queue)
         progress (:progress (joblib/queue-info sub-queue))]
@@ -1152,7 +1159,7 @@
      :progress progress}))
 
 (defn-spec href-to-hyperlink map?
-  "returns a hyperlink description or an empty text description"
+  "returns a hyperlink description for the given `row` if a URL can be found, or an empty text description."
   [row (s/nilable (s/keys :opt-un [::sp/url]))]
   (let [url (:url row)
         fallback-url (:group-id row)
@@ -1215,7 +1222,7 @@
                                                {:graphic {:fx/type :h-box
                                                           :children (mapv (fn [tag]
                                                                             (button (name tag)
-                                                                                    (async-handler #(do (switch-tab SEARCH-TAB)
+                                                                                    (async-handler #(do (switch-tab! SEARCH-TAB)
                                                                                                         (cli/search-add-filter :tag tag)))
                                                                                     {:tooltip (name tag)}))
                                                                           (:tag-list row))}})}}
@@ -1270,7 +1277,7 @@
     column-map))
 
 (defn-spec make-table-column map?
-  "returns a description of a table column that lives within a table"
+  "returns a description of a table column that lives within a table."
   [column-data :gui/column-data]
   (let [column-class (if-let [column-id (some utils/nilable [(:id column-data) (:text column-data)])]
                        (lower-case (str column-id "-column"))
@@ -1289,19 +1296,19 @@
     (merge default column-data final-cvf final-style)))
 
 (defn-spec make-tree-table-column map?
-  "like `make-table-column` but returns a `tree-table-column` type"
+  "like `make-table-column` but returns a `tree-table-column` type."
   [column-data :gui/column-data]
   (make-table-column (assoc column-data :fx/type :tree-table-column)))
 
 ;;
 
 (def separator
-  "horizontal rule to logically separate menu items"
+  "horizontal rule to logically separate menu items."
   {:fx/type fx/ext-instance-factory
    :create #(javafx.scene.control.SeparatorMenuItem.)})
 
 (defn-spec build-catalogue-menu (s/or :ok ::sp/list-of-maps, :no-catalogues nil?)
-  "returns a list of radio button descriptions that can toggle through the available catalogues"
+  "returns a list of radio button descriptions that can toggle through the available catalogues."
   [selected-catalogue :catalogue/name, catalogue-location-list :catalogue/location-list]
   (when catalogue-location-list
     (let [rb (fn [{:keys [label name]}]
@@ -1314,7 +1321,7 @@
       (mapv rb catalogue-location-list))))
 
 (defn-spec build-theme-menu ::sp/list-of-maps
-  "returns a list of radio button descriptions that can toggle through the available themes defined in `themes`"
+  "returns a list of radio button descriptions that can toggle through the available themes defined in `themes`."
   [selected-theme ::sp/gui-theme, theme-map map?]
   (let [rb (fn [theme-key]
              {:fx/type :radio-menu-item
@@ -1330,18 +1337,18 @@
     (mapv rb (keys theme-map))))
 
 (defn-spec build-addon-detail-menu ::sp/list-of-maps
-  "returns a menu of dynamic tabs with a 'close all' button at the bottom"
+  "returns a menu of dynamic tabs with a 'close all' button at the bottom."
   [tab-list :ui/tab-list]
   (let [addon-detail-menuitem
         (fn [idx tab]
           (let [tab-idx (+ idx NUM-STATIC-TABS)]
-            (menu-item (:label tab) (async-handler #(switch-tab tab-idx)))))
+            (menu-item (:label tab) (async-handler #(switch-tab! tab-idx)))))
         close-all (menu-item "Close all" (async-handler cli/remove-all-tabs))]
     (concat (map-indexed addon-detail-menuitem tab-list)
             [separator close-all])))
 
 (defn menu-item--num-zips-to-keep
-  "returns a checkbox menuitem that affects the user preference `addon-zips-to-keep`"
+  "returns a checkbox menuitem that affects the user preference `addon-zips-to-keep`."
   [{:keys [fx/context]}]
   (let [num-addon-zips-to-keep (fx/sub-val context get-in [:app-state :cfg :preferences :addon-zips-to-keep])
         selected? (not (nil? num-addon-zips-to-keep)) ;; `nil` is 'keep all zips', see `config.clj`
@@ -1379,7 +1386,7 @@
                   (mapv toggle-column-menu-item column-list)])))
 
 (defn menu-bar
-  "returns a description of the menu at the top of the application"
+  "returns a description of the menu at the top of the application."
   [{:keys [fx/context]}]
 
   (let [addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])
@@ -1463,6 +1470,7 @@
                     (menu "Help" help-menu)]}}))
 
 (defn wow-dir-dropdown
+  "returns a description for the list of addon directories."
   [{:keys [fx/context]}]
   (let [config (fx/sub-val context get-in [:app-state :cfg])
         selected-addon-dir (:selected-addon-dir config)
@@ -1479,6 +1487,7 @@
             :disable (empty? addon-dir-map-list)}}))
 
 (defn game-track-dropdown
+  "returns a description for the list of available game tracks (retail, classic, etc) and how strictly they should be applied."
   [{:keys [fx/context]}]
   (let [selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])
         addon-dir-map (core/addon-dir-map selected-addon-dir)
@@ -1512,7 +1521,7 @@
                         :on-selected-changed (async-event-handler cli/set-game-track-strictness!)}}]}))
 
 (defn installed-addons-menu-bar
-  "returns a description of the installed-addons tab-pane menu"
+  "returns a description of the installed-addons tab-pane menu."
   [{:keys [fx/context]}]
   (let [selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])]
     {:fx/type :h-box
@@ -1555,7 +1564,7 @@
             source-map-list))))
 
 (defn singular-context-menu
-  "context menu when a single addon is selected."
+  "returns a context menu description for when a single addon is selected."
   [{:keys [fx/context]}]
   (let [selected-addon (fx/sub-val context get-in [:app-state :selected-addon-list 0])
         pinned? (some? (:pinned-version selected-addon))
@@ -1578,7 +1587,7 @@
              separator
              (menu "Source" (or source-menu []) {:disable (nil? source-menu)})
              (menu-item "Find similar" (async-handler (fn []
-                                                        (switch-tab SEARCH-TAB)
+                                                        (switch-tab! SEARCH-TAB)
                                                         (cli/search (:label selected-addon)))))
              separator
              (if pinned?
@@ -1588,7 +1597,7 @@
                           {:disable (or child? ignored?)}))
              (if releases-available?
                (menu "Releases" (build-release-menu selected-addon))
-               (menu "Releases" [] {:disable true})) ;; skips even attempting to build the menu
+               (menu "Releases" [] {:disable true}))
              separator
              (if ignored?
                (menu-item "Stop ignoring" (async-handler (juxt cli/clear-ignore-selected clear-table-selected-items)))
@@ -1599,7 +1608,7 @@
                         {:disable (or child? ignored?)})]}))
 
 (defn multiple-context-menu
-  "context menu when multiple addons are selected."
+  "returns a context menu for when multiple addons are selected."
   [{:keys [fx/context]}]
   (let [selected-addon-list (fx/sub-val context get-in [:app-state :selected-addon-list])
         selected-addon-list (remove child-row? selected-addon-list)
@@ -1634,10 +1643,8 @@
 
 (defn installed-addons-table
   [{:keys [fx/context]}]
-  ;; subscribe to re-render table when addons become unsteady
-  (fx/sub-val context get-in [:app-state :unsteady-addon-list])
-  ;; subscribe to re-render rows when addons emit warnings or errors
-  (fx/sub-val context get-in [:app-state :log-lines])
+  (fx/sub-val context get-in [:app-state :unsteady-addon-list]) ;; re-render table when addons become unsteady
+  (fx/sub-val context get-in [:app-state :log-lines]) ;; re-render rows when addons emit warnings or errors
   (let [queue (fx/sub-val context get-in [:app-state :job-queue])
         row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
         selected (fx/sub-val context get-in [:app-state :selected-addon-list])
@@ -1646,7 +1653,7 @@
                                    (fx/sub-val context get-in [:app-state :cfg :preferences :ui-selected-columns]))
 
         ;; can't be part of the column map because it's actually attached to the row.
-        ;; this is just spacer so the arrow always has room and isn't overlapped by another column's values.
+        ;; this is just a spacer so the arrow always has room and isn't overlapped by another column's values.
         arrow-column {:fx/type :tree-table-column :cell-value-factory (constantly "")
                       :min-width 25 :max-width 25 :resizable false}
 
@@ -1670,9 +1677,7 @@
     {:fx/type fx.ext.tree-table-view/with-selection-props
      :props {:selection-mode :multiple
              :on-selected-items-changed (fn [tree-item-list]
-                                          (cli/select-addons* (mapv (fn [tree-item]
-                                                                      (.getValue tree-item))
-                                                                    tree-item-list)))}
+                                          (cli/select-addons* (mapv (fn [tree-item] (.getValue tree-item)) tree-item-list)))}
      :desc {:fx/type :tree-table-view
             :id "installed-addons-table"
             ;; replaces "tree-table-view" class and keeps all styling attached to table-view.
@@ -1723,7 +1728,7 @@
 
                                                          (when (= (.getEventType ev) MouseEvent/MOUSE_CLICKED)
                                                            (cli/add-addon-tab row)
-                                                           (switch-tab-latest))))
+                                                           (switch-tab-latest!))))
 
                                        :style-class
                                        (remove nil?
@@ -1828,7 +1833,7 @@
                                                (if (or (contains? (:source row) :dirname)
                                                        (contains? (:source row) :source-id))
                                                  (do (cli/add-addon-tab (:source row))
-                                                     (switch-tab-latest))
+                                                     (switch-tab-latest!))
                                                  (let [remaining-seconds (- 60 (-> (Calendar/getInstance) (.get Calendar/SECOND)))]
                                                    (if (> remaining-seconds 1)
                                                      (timbre/warn (format "self destruction in T-minus %s seconds" remaining-seconds))
@@ -1915,23 +1920,22 @@
 
     {:fx/type fx.ext.table-view/with-selection-props
      :props {:selection-mode :multiple
-             ;; unlike gui.clj, we have access to the original data here. no need to re-select addons.
              :on-selected-items-changed cli/select-addons-for-search!}
      :desc {:fx/type :table-view
             :id "search-addons-table"
             :placeholder {:fx/type :label
                           :style-class ["table-placeholder-text"]
                           :text (if empty-next-page
-                                  "ᕙ(`▿´)ᕗ"
+                                  constants/mascot
                                   "No search results.")}
             :row-factory {:fx/cell-type :table-row
                           :describe (fn [addon]
                                       {:on-mouse-clicked (fn [^MouseEvent ev]
-                                                           ;; double click handler https://github.com/cljfx/cljfx/issues/118
+                                                           ;; double click handler: https://github.com/cljfx/cljfx/issues/118
                                                            (when (and (= javafx.scene.input.MouseButton/PRIMARY (.getButton ev))
                                                                       (= 2 (.getClickCount ev)))
                                                              (cli/add-addon-tab addon)
-                                                             (switch-tab-latest)))
+                                                             (switch-tab-latest!)))
                                        :style-class ["table-row-cell"
                                                      (when (installed? addon)
                                                        "ignored")]})}
@@ -2326,14 +2330,14 @@
                  :raw-data [nav key-vals])}))
 
 (defn addon-detail-pane
-  "a place to elaborate on what we know about an addon as well somewhere we can put lots of buttons and widgets."
+  "a place to elaborate on what we know about an addon as well as somewhere we can put lots of buttons and widgets."
   [{:keys [fx/context addon-id tab-idx]}]
   (let [installed-addons (fx/sub-val context get-in [:app-state :installed-addon-list])
         catalogue (fx/sub-val context get-in [:app-state :db]) ;; worst case is actually not so bad ...
         ;;addon-id-keys (keys addon-id) ;; [dirname] [source source-id], [source source-id dirname]
 
         -id-dirname (:dirname addon-id)
-        -id-dirname? (not (nil? -id-dirname))
+        -id-dirname? (some? -id-dirname)
         dirname-matcher (fn [addon]
                           (= -id-dirname (:dirname addon)))
         -id-source (select-keys addon-id [:source :source-id])
@@ -2389,7 +2393,7 @@
    :closable (:closable? tab)
    :on-closed (fn [_]
                 (cli/remove-tab-at-idx tab-idx)
-                (switch-tab INSTALLED-TAB))
+                (switch-tab! INSTALLED-TAB))
    :content {:fx/type addon-detail-pane
              :tab-idx tab-idx
              :addon-id (:tab-data tab)}})
@@ -2539,7 +2543,7 @@
                                        prev-tab (dec (tab-index))
                                        prev-tab (if (= prev-tab (dec NUM-STATIC-TABS)) 0 prev-tab)]
                                    (cli/remove-tab-at-idx (tab-list-tab-index))
-                                   (switch-tab prev-tab)))
+                                   (switch-tab! prev-tab)))
                                nil)
              :stylesheets [(::css/url style)]
              :root {:fx/type :border-pane
@@ -2595,7 +2599,7 @@
                                                       ;; context from option map to these functions
                                                       (fx/fn->lifecycle-with-context %))})
 
-        ;; don't do this, renderer has to be unmounted and the app closed before further state changes happen during cleanup
+        ;; don't do this, renderer has to be unmounted and the app closed before further state changes happen during cleanup.
         ;;_ (core/add-cleanup-fn #(fx/unmount-renderer gui-state renderer))
         _ (swap! core/state assoc :disable-gui (fn []
                                                  (fx/unmount-renderer gui-state renderer)
@@ -2614,7 +2618,7 @@
 
     ;; `refresh` the app but kill the `refresh` if app is closed before it finishes.
     ;; happens during testing and causes a few weird windows to hang around.
-    ;; see `(mapv (fn [_] (test :jfx)) (range 0 100))`
+    ;; see `(run! (fn [_] (test :jfx)) (range 0 100))`
     (let [kick (future
                  (set-icon)
                  (core/refresh)
