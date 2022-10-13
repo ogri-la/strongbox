@@ -119,7 +119,7 @@
   (fn? job))
 
 ;; todo: test this, integrate or something
-(defn-spec job-started? boolean?
+#_(defn-spec job-started? boolean?
   "returns `true` if the job has been started. It may even be done."
   [job :joblib/job]
   (future? job))
@@ -143,7 +143,7 @@
        (future-done? job)))
 
 ;; todo: test this, integrate or something
-(defn-spec cancel-job boolean?
+#_(defn-spec cancel-job boolean?
   "returns `true` if job was found and successfully cancelled. Already-cancelled and completed jobs cannot be cancelled."
   [job :joblib/job]
   (and (future? job)

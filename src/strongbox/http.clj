@@ -15,7 +15,6 @@
     [core]
     [client :as client]])
   (:import
-   ;; from clj-commons/fs
    [org.apache.commons.io.input CountingInputStream]))
 
 (def expiry-offset-hours 1) ;; hours
