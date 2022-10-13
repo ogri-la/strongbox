@@ -50,7 +50,7 @@
                     :source "curseforge"
                     :source-id 321
                     :source-map-list [{:source "curseforge" :source-id 321}]}]
-      (nfo/write-nfo (install-dir) addon-dir nfo-data)
+      (nfo/write-nfo! (install-dir) addon-dir nfo-data)
       (is (fs/exists? (nfo/nfo-path (install-dir) addon-dir)))))
 
   (testing "valid nfo data has extraneous keys pruned before being written to a file"
@@ -65,7 +65,7 @@
 
                     :foo "bar!"}
           expected (dissoc nfo-data :foo)]
-      (nfo/write-nfo (install-dir) addon-dir nfo-data)
+      (nfo/write-nfo! (install-dir) addon-dir nfo-data)
       (is (= expected (nfo/read-nfo (install-dir) addon-dir))))))
 
 (deftest read-nfo
@@ -215,7 +215,7 @@
           expected (merge nfo-data updates source-map-list)]
 
       (spit (utils/join (addon-path) nfo/nfo-filename) (utils/to-json nfo-data))
-      (nfo/update-nfo (install-dir) addon-dir updates)
+      (nfo/update-nfo! (install-dir) addon-dir updates)
       (is (= expected (nfo/read-nfo (install-dir) addon-dir))))))
 
 (deftest update-nfo-data--invalid-data
@@ -237,31 +237,31 @@
       (spit (utils/join (addon-path) nfo/nfo-filename) (utils/to-json nfo-data))
       (is (= expected-log
              (logging/buffered-log :error
-                                   (nfo/update-nfo (install-dir) addon-dir updates))))
+                                   (nfo/update-nfo! (install-dir) addon-dir updates))))
       (is (= expected (nfo/read-nfo (install-dir) addon-dir))))))
 
 (deftest update-nfo-data-with-ignore-flags
   (testing ""
     (let [expected {:ignore? true}]
-      (nfo/ignore (install-dir) addon-dir)
+      (nfo/ignore! (install-dir) addon-dir)
       (is (= expected (nfo/read-nfo (install-dir) addon-dir)))))
 
   (testing "nfo data that is *just* an `ignore?` flag is deleted when set to `nil`"
     (let [nfo-data {:ignore? true}]
-      (nfo/write-nfo (install-dir) addon-dir nfo-data)
-      (nfo/clear-ignore (install-dir) addon-dir)
+      (nfo/write-nfo! (install-dir) addon-dir nfo-data)
+      (nfo/clear-ignore! (install-dir) addon-dir)
       (is (not (fs/exists? (nfo/nfo-path (install-dir) addon-dir))))))
 
   (testing "implicitly ignored addons with no other nfo data have the `ignore?` flag set to `false` rather than cleared."
     (let [expected {:ignore? false}]
-      (nfo/clear-ignore (install-dir) ignorable-addon-dir)
+      (nfo/clear-ignore! (install-dir) ignorable-addon-dir)
       (is (fs/exists? (nfo/nfo-path (install-dir) ignorable-addon-dir)))
       (is (= expected (nfo/read-nfo (install-dir) ignorable-addon-dir)))))
 
   (testing "implicitly ignored addons with an explicit `ignore?` flag set to `false` will clear the flag as expected"
     (let [nfo-data {:ignore? false}]
-      (nfo/write-nfo (install-dir) ignorable-addon-dir nfo-data)
-      (nfo/clear-ignore (install-dir) ignorable-addon-dir)
+      (nfo/write-nfo! (install-dir) ignorable-addon-dir nfo-data)
+      (nfo/clear-ignore! (install-dir) ignorable-addon-dir)
       (is (not (fs/exists? (nfo/nfo-path (install-dir) ignorable-addon-dir))))))
 
   ;; note: should this behave like an ignore-flag-only nfo file and have it's `ignore?` flag set to `false` ?
@@ -277,8 +277,8 @@
                     :source-map-list [{:source "curseforge" :source-id 321}]}
           expected-raw nfo-data ;; no change in file
           expected (assoc nfo-data :ignore? true)] ;; back to being implicitly ignored
-      (nfo/write-nfo (install-dir) ignorable-addon-dir nfo-data)
-      (nfo/clear-ignore (install-dir) ignorable-addon-dir)
+      (nfo/write-nfo! (install-dir) ignorable-addon-dir nfo-data)
+      (nfo/clear-ignore! (install-dir) ignorable-addon-dir)
       (is (= expected-raw (nfo/read-nfo-file (install-dir) ignorable-addon-dir)))
       (is (= expected (nfo/read-nfo (install-dir) ignorable-addon-dir)))))
 
@@ -294,8 +294,8 @@
                     :ignore? false} ;; explicit ignore flag
           expected-raw (dissoc nfo-data :ignore?)
           expected (assoc nfo-data :ignore? true)] ;; back to being implicitly ignored
-      (nfo/write-nfo (install-dir) ignorable-addon-dir nfo-data)
-      (nfo/clear-ignore (install-dir) ignorable-addon-dir)
+      (nfo/write-nfo! (install-dir) ignorable-addon-dir nfo-data)
+      (nfo/clear-ignore! (install-dir) ignorable-addon-dir)
       (is (= expected-raw (nfo/read-nfo-file (install-dir) ignorable-addon-dir)))
       (is (= expected (nfo/read-nfo (install-dir) ignorable-addon-dir))))))
 
@@ -310,8 +310,8 @@
                     :source-id 321
                     :source-map-list [{:source "curseforge", :source-id 123}]}
           expected (assoc nfo-data :pinned-version "a.b.c")]
-      (nfo/write-nfo (install-dir) addon-dir nfo-data)
-      (nfo/pin (install-dir) addon-dir "a.b.c")
+      (nfo/write-nfo! (install-dir) addon-dir nfo-data)
+      (nfo/pin! (install-dir) addon-dir "a.b.c")
       (is (= expected (nfo/read-nfo (install-dir) addon-dir))))))
 
 (deftest unpin-addon
@@ -327,8 +327,8 @@
 
                     :pinned-version "1.2.1"}
           expected (dissoc nfo-data :pinned-version)]
-      (nfo/write-nfo (install-dir) addon-dir nfo-data)
-      (nfo/unpin (install-dir) addon-dir)
+      (nfo/write-nfo! (install-dir) addon-dir nfo-data)
+      (nfo/unpin! (install-dir) addon-dir)
       (is (= expected (nfo/read-nfo (install-dir) addon-dir)))))
 
   (testing "an unpinned addon can be safely 'unpinned' without issue"
@@ -341,8 +341,8 @@
                     :source-id 321
                     :source-map-list [{:source "curseforge" :source-id 321}]}
           expected nfo-data]
-      (nfo/write-nfo (install-dir) addon-dir nfo-data)
-      (nfo/unpin (install-dir) addon-dir)
+      (nfo/write-nfo! (install-dir) addon-dir nfo-data)
+      (nfo/unpin! (install-dir) addon-dir)
       (is (= expected (nfo/read-nfo (install-dir) addon-dir))))))
 
 (deftest mutual-dependencies--no-dependencies
@@ -356,7 +356,7 @@
                     :source-id 321
                     :source-map-list [{:source "wowinterface" :source-id 321}]}
           expected [nfo-data]]
-      (nfo/write-nfo (install-dir) addon-dir nfo-data)
+      (nfo/write-nfo! (install-dir) addon-dir nfo-data)
       (is (= expected (nfo/mutual-dependencies (install-dir) addon-dir))))))
 
 (deftest mutual-dependencies
@@ -380,6 +380,6 @@
                       :source-map-list [{:source "github" :source-id 123}]}
 
           expected [nfo-data-a nfo-data-b]]
-      (nfo/write-nfo (install-dir) addon-dir expected)
+      (nfo/write-nfo! (install-dir) addon-dir expected)
       (is (= expected (nfo/mutual-dependencies (install-dir) addon-dir))))))
 

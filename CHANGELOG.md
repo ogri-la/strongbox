@@ -10,23 +10,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* the slugify function used on a toc's 'title' value switched to the same one used when building catalogues.
+    - the 'title' value used to be more important as it was used to primarily match an addon within a catalogue. 
+        - It's more of a fallback these days if the addon's 'source' and 'source-id' aren't found in the catalogue.
+* reviewed a lot of code, lots of very minor shuffling and tweaks that won't affect the user at all.
+    - unless of course it breaks something.
+    - I was taking advantage of the major version bump to do some unnecessary and hard to justify changes.
+        - plenty more could be done but those will be more specific changes.
+
 ### Fixed
+
+* fixed an issue with WotLK toc data having no priority in non-WotLK game tracks.
+    - for example, if an addon directory is using the 'Classic TBC' game track and an addon had 'Classic WotLK' toc data but no TBC toc data, the WotLK toc data would be ignored when it should be preferred over retail toc data.
 
 ### Removed
 
-* Removed support for building catalogues.
+* removed support for building catalogues.
     - this logic now lives in `ogri-la/strongbox-catalogue-builder`.
-* Removed the command line actions:
+* removed the command line actions:
     - 'scrape-catalogue'
     - 'write-catalogue'
     - 'scrape-github-catalogue'
     - 'scrape-wowinterface-catalogue'
     - 'scrape-tukui-catalogue'
-* Removed support for reading version 1 catalogues built using `wowman` 
+* removed support for reading version 1 catalogues built using `wowman` 
     - last release of `wowman` was 2020-06-01
-* Removed the 'tag' logic used to normalise and map catagories between addons and addon hosts.
-    - it was used exclusively for catalogue building.
-* Removed dependencies `org.clojure/data.csv` and `enlive`.
+* removed the 'tag' logic used to normalise and map catagories between addons and addon hosts.
+    - it was used exclusively for catalogue building and this logic now lives in `ogri-la/strongbox-catalogue-builder`.
+* removed dependencies `org.clojure/data.csv` and `enlive`.
+* removed support for finding `wowman`-era config files.
 
 ## 5.4.1 - 2022-09-11
 

@@ -15,8 +15,6 @@
 (def classic-wotlk-summary-list-url "https://www.tukui.org/api.php?classic-wotlk-addons")
 
 (def proper-url "https://www.tukui.org/api.php?ui=%s")
-(def tukui-proper-url (format proper-url "tukui"))
-(def elvui-proper-url (format proper-url "elvui"))
 
 (defn-spec make-url (s/nilable ::sp/url)
   "given a map of addon data, returns a URL to the addon's tukui page or `nil`"

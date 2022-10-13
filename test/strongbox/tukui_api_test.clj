@@ -39,7 +39,7 @@
   (testing "expanding addon proper"
     (let [fixture (slurp (fixture-path "tukui--elvui-addon-proper.json"))
 
-          fake-routes {tukui-api/elvui-proper-url
+          fake-routes {"https://www.tukui.org/api.php?ui=elvui"
                        {:get (fn [req] {:status 200 :body fixture})}}
 
           game-track :retail
@@ -77,7 +77,7 @@
 
           game-track :retail
 
-          fake-routes {tukui-api/elvui-proper-url
+          fake-routes {"https://www.tukui.org/api.php?ui=elvui"
                        {:get (fn [req] {:status 404 :reason-phrase "Not Found" :body "<h1>Not Found</h1>"})}}]
       (with-fake-routes-in-isolation fake-routes
         (is (nil? (tukui-api/expand-summary addon-summary game-track)))))))

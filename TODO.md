@@ -19,6 +19,9 @@ see CHANGELOG.md for a more formal list of changes by release
 * remove tags
     - done
 
+* add github to emergency catalogue
+    - done
+
 ## todo
 
 * add 'wotlk support' to comrades.csv
@@ -31,6 +34,25 @@ see CHANGELOG.md for a more formal list of changes by release
 * update screenshots
 
 ## todo bucket (no particular order)
+
+* log pane, bug, the text 'catalogue' is being truncated in multi-line messages
+    - see screenshot Screenshot at 2022-09-24 08-56-35.png
+
+* 'core/state :db-stats', seems like a nice idea to put more information here
+    - known-hosts
+    - num addons per-host
+    - num addons favourited/user-catalogue
+    - num addons
+    - ...?
+
+* github, install addon from the auto-generated .zip files
+    - it looks like auctionator has disabled/deleted their 'releases' and put a link to their curseforge page up
+        - pretty sure they used to be there, I can see strongbox has downloaded a bunch
+        - we still have access to tags though
+            - https://github.com/Auctionator/Auctionator/tags
+    - we'll have to do some directory name munging
+
+* gui, right-click column header and show columns to disable
 
 * github authentication
     - so user doesn't get capped
@@ -73,11 +95,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * gui, better copying from the interface, especially the log box
 * possible bug? installing combuctor 8.1.1 from file matches against the catalogue (good), then installing 9.1.3 file loses the match.
     - mutual dependencies information is mostly blank
-
-* clean up this confusion between 'install-dir' and 'addon-dir'
-    - install-dir is where addons are installed
-    - addon-dir is either where addons are installed or a specific addon's directory
-        - i.e., ambiguous
 
 * catalogue, download counts for github addons
 * search, add ability to browse catalogue page by page
@@ -259,7 +276,7 @@ see CHANGELOG.md for a more formal list of changes by release
 * deleting an addon should also remove any of it's zip files
     - this sounds like an opt-in preference
 
-* share a pool of connections between jobs
+* http, share a pool of connections between jobs
     - https://github.com/dakrone/clj-http#user-content-persistent-connections
     - N connections serving M threads
     - pretty fast just by making requests in parallel
@@ -293,7 +310,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * test, can gui-diff and main/test be pushed back into the testing namespace and elided from release somehow?
 
-
 * add checksum checks after downloading
     - curseforge have an md5 that can be used
         - unfortunately no checksum in api results
@@ -323,14 +339,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * add a 'tabula rasa' option that wipes *everything* 
     - cache, catalog, config, downloaded zip files
-
-## next major version (v5)
-
-* drop support catalogue v1
-    - a prerequisite for v5 then would be introducing a new catalogue
-
-* rename 'retail' to 'mainline'
-    - pretty big change ;) but probably for the best.
 
 ## 
 

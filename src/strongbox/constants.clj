@@ -1,5 +1,7 @@
 (ns strongbox.constants)
 
+(def mascot "ᕙ[°▿°]ᕗ")
+
 ;; https://wow.gamepedia.com/Wowpedia
 (def release-of-previous-expansion
   "'Battle for Azeroth (BfA)', released August 14th 2018. Used to shorten the 'full' catalogue.

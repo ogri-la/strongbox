@@ -1,7 +1,6 @@
 {
 :known-macros [orchestra.core/defn-spec strongbox.utils/if-let*]
-
-:ignored-unused-namespaces [strongbox.ui.jfx ;; main.clj dynamically includes this ns
+:ignored-unused-namespaces [strongbox.jfx ;; main.clj dynamically includes this ns
                             cljfx.api ;; Eastwood dies mid-lint without this: "Toolkit not initialized"
                             ]
 }

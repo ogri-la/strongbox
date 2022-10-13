@@ -1,6 +1,5 @@
 (ns strongbox.catalogue
   (:require
-   [flatland.ordered.map :as omap]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
@@ -126,28 +125,13 @@
           syn (if (-> syn :source nil?) sink syn)]
       syn)))
 
-
 ;;
-
 
 (defn-spec format-catalogue-data :catalogue/catalogue
   "returns a correctly formatted, ordered, catalogue given a list of addons and a datestamp"
   [addon-list :addon/summary-list, datestamp ::sp/ymd-dt]
   (let [addon-list (p :cat/sort-addons
                       (sort-by :name addon-list))]
-    {:spec {:version 2}
-     :datestamp datestamp
-     :total (count addon-list)
-     :addon-summary-list addon-list}))
-
-(defn-spec format-catalogue-data-for-output :catalogue/catalogue
-  "same as `format-catalogue-data`, but the addon maps are converted to an `ordered-map` for better diffs"
-  [addon-list :addon/summary-list, datestamp ::sp/ymd-dt]
-  (let [addon-list (p :cat/format-catalogue-data
-                      (mapv #(p :cat/format-addon
-                                (into (omap/ordered-map) (sort %)))
-                            (p :cat/sort-addons
-                               (sort-by :name addon-list))))]
     {:spec {:version 2}
      :datestamp datestamp
      :total (count addon-list)
@@ -192,10 +176,10 @@
   [addon-list :addon/summary-list]
   (format-catalogue-data addon-list (utils/datestamp-now-ymd)))
 
-(defn-spec write-empty-catalogue! ::sp/extant-file
-  "writes a stub catalogue to the given `output-file`"
-  [output-file ::sp/file]
-  (write-catalogue (new-catalogue []) output-file))
+#_(defn-spec write-empty-catalogue! ::sp/extant-file
+    "writes a stub catalogue to the given `output-file`"
+    [output-file ::sp/file]
+    (write-catalogue (new-catalogue []) output-file))
 
 ;;
 
@@ -219,9 +203,7 @@
             (merge {:source source} (if (= source "curseforge") {:url result} {:source-id result})))
           (warn "unsupported URL"))))))
 
-
 ;;
-
 
 (defn-spec merge-catalogues (s/or :ok :catalogue/catalogue, :error nil?)
   "merges catalogue `cat-b` over catalogue `cat-a`.

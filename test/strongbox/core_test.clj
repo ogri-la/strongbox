@@ -6,10 +6,9 @@
    [envvar.core :refer [with-env]]
    [me.raynes.fs :as fs]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
-   [strongbox.ui.cli :as cli]
+   [strongbox.cli :as cli]
    [strongbox
     [addon :as addon :refer [downloaded-addon-fname]]
-    [db :as db]
     [logging :as logging]
     [zip :as zip]
     [main :as main]
@@ -36,18 +35,18 @@
 
       ;; big long stateful test
 
-      (testing "fetching the addon-dir map data, without args, without addon directories, returns nil"
-        (is (nil? (core/addon-dir-map))))
+      (testing "fetching the addon-dir map data with a nil addon-dir and without addon directories returns nil"
+        (is (nil? (core/addon-dir-map nil))))
 
-      (testing "setting the game track, without args, without addon directories, does nothing"
-        (is (nil? (core/set-game-track! :retail))))
+      #_(testing "setting the game track, without args, without addon directories, does nothing"
+          (is (nil? (core/set-game-track! :retail))))
 
       (testing "add-addon-dir! adds an addon dir with a default game track of 'retail'"
-        (core/add-addon-dir! dir1 :retail)
+        (core/add-addon-dir! dir1 :retail core/default-game-track-strictness)
         (is (= [{:addon-dir dir1 :game-track :retail :strict? true}] (core/get-state :cfg :addon-dir-list))))
 
       (testing "add-addon-dir! idempotence"
-        (core/add-addon-dir! dir1 :retail)
+        (core/add-addon-dir! dir1 :retail core/default-game-track-strictness)
         (is (= [{:addon-dir dir1 :game-track :retail :strict? true}] (core/get-state :cfg :addon-dir-list))))
 
       (testing "add-addon-dir! just adds the dir, doesn't set it as selected"
@@ -75,9 +74,9 @@
         (is (= [{:addon-dir dir1 :game-track :retail :strict? true}] (core/get-state :cfg :addon-dir-list))))
 
       (testing "addon-dir-map, without args, returns the currently selected addon-dir"
-        (is (= {:addon-dir dir1 :game-track :retail :strict? true} (core/addon-dir-map)))
+        ;;(is (= {:addon-dir dir1 :game-track :retail :strict? true} (core/addon-dir-map)))
         (core/set-addon-dir! dir2)
-        (is (= {:addon-dir dir2 :game-track :retail :strict? true} (core/addon-dir-map)))
+        ;;(is (= {:addon-dir dir2 :game-track :retail :strict? true} (core/addon-dir-map)))
         (is (= {:addon-dir dir1 :game-track :retail :strict? true} (core/addon-dir-map dir1))))
 
       (testing "addon-dir-map returns nil if map cannot be found"
@@ -87,9 +86,10 @@
         (core/set-game-track! :classic dir1)
         (is (= {:addon-dir dir1 :game-track :classic :strict? true} (core/addon-dir-map dir1))))
 
-      (testing "set-game-track! without addon-dir, changes the game track of the currently selected addon dir"
-        (core/set-game-track! :classic)
-        (is (= {:addon-dir dir2 :game-track :classic :strict? true} (core/addon-dir-map dir2))))
+      #_(testing "set-game-track! without addon-dir, changes the game track of the currently selected addon dir"
+          (core/set-game-track! :classic)
+          (is (= {:addon-dir dir2 :game-track :classic :strict? true} (core/addon-dir-map dir2))))
+      (core/set-game-track! :classic dir2)
 
       (testing "set-addon-dir! changes default game-track to 'classic' if '_classic_' detected in addon dir name"
         (core/set-addon-dir! dir4)
@@ -136,16 +136,16 @@
       (testing "core/get-catalogue-location returns nil if it can't find the requested catalogue"
         (is (= nil (core/get-catalogue-location :foo))))
 
-      (testing "core/set-catalogue-location! always returns nil, even when it successfully completes"
-        (is (= nil (core/set-catalogue-location! :foo)))
+      (testing "core/set-catalogue! always returns nil, even when it successfully completes"
+        (is (= nil (core/set-catalogue! :foo)))
         (is (= short-catalogue (core/get-catalogue-location)))
 
-        (is (= nil (core/set-catalogue-location! :full)))
+        (is (= nil (core/set-catalogue! :full)))
         (is (= full-catalogue (core/get-catalogue-location))))
 
       (testing "core/catalogue-local-path returns the expected path to the catalogue file on the filesystem"
-        (is (= (utils/join fs/*cwd* helper-data-dir "short-catalogue.json") (core/catalogue-local-path short-catalogue)))
-        (is (= (utils/join fs/*cwd* helper-data-dir "full-catalogue.json") (core/catalogue-local-path full-catalogue)))))))
+        (is (= (utils/join fs/*cwd* helper-data-dir "short-catalogue.json") (core/catalogue-local-path :short)))
+        (is (= (utils/join fs/*cwd* helper-data-dir "full-catalogue.json") (core/catalogue-local-path :full)))))))
 
 (deftest paths
   (with-running-app
@@ -243,7 +243,7 @@
 
                        ;; ... zip file
                        "https://cdn.wowinterface.com/downloads/getfile.php?id=3"
-                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array addon3-zip-file)})}
+                       {:get (fn [req] {:status 200 :body (helper/file-to-lazy-byte-array addon3-zip-file)})}
 
                        ;; addon4, tukui
                        "https://www.tukui.org/api.php?addons"
@@ -251,7 +251,7 @@
 
                        ;; ... zip file
                        "https://www.tukui.org/addons.php?download=4"
-                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array addon4-zip-file)})}
+                       {:get (fn [req] {:status 200 :body (helper/file-to-lazy-byte-array addon4-zip-file)})}
 
                        ;; addon5, github
                        "https://api.github.com/repos/author/addon5/releases"
@@ -259,7 +259,7 @@
 
                        ;; ... zip file
                        "https://github.com/author/addon5/releases/download/Addon5-v1.2.3/Addon5-v1.2.3.zip"
-                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array addon5-zip-file)})}}
+                       {:get (fn [req] {:status 200 :body (helper/file-to-lazy-byte-array addon5-zip-file)})}}
 
           expected [{:created-date "2011-01-04T05:42:23Z",
                      :description "desc",
@@ -387,7 +387,7 @@
 
                        ;; ... zip file
                        "https://cdn.wowinterface.com/downloads/getfile.php?id=3"
-                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array addon3-zip-file)})}
+                       {:get (fn [req] {:status 200 :body (helper/file-to-lazy-byte-array addon3-zip-file)})}
 
                        ;; addon4, tukui
                        "https://www.tukui.org/api.php?addons"
@@ -395,7 +395,7 @@
 
                        ;; ... zip file
                        "https://www.tukui.org/addons.php?download=4"
-                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array addon4-zip-file)})}
+                       {:get (fn [req] {:status 200 :body (helper/file-to-lazy-byte-array addon4-zip-file)})}
 
                        ;; addon5, github
                        "https://api.github.com/repos/author/addon5/releases"
@@ -403,7 +403,7 @@
 
                        ;; ... zip file
                        "https://github.com/author/addon5/releases/download/Addon5-v1.2.3/Addon5-v1.2.3.zip"
-                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array addon5-zip-file)})}}
+                       {:get (fn [req] {:status 200 :body (helper/file-to-lazy-byte-array addon5-zip-file)})}}
 
           expected [{:created-date "2011-01-04T05:42:23Z",
                      :description "desc",
@@ -557,7 +557,7 @@
 
                 ;; we then attempt to match this 'toc+nfo' to an addon in the catalogue
                 ;; in this case we have a catalogue of 1 and only interested in the first result
-                result (first (db/-db-match-installed-addon-list-with-catalogue (core/get-state :db) [toc]))
+                result (first (core/db-match-installed-addon-list-with-catalogue (core/get-state :db) [toc]))
 
                 ;; previously done in above step, mooshing the installed addon and catalogue item together is
                 ;; now a separate step
@@ -616,9 +616,7 @@
           (is (= expected
                  (:description (first (core/get-state :db))))))))))
 
-
 ;;
-
 
 (deftest install-addon-guard
   (testing "an addon can be installed"
@@ -746,7 +744,7 @@
         (core/load-all-installed-addons)
 
         ;; pin the addon. 
-        (addon/pin install-dir (first (core/get-state :installed-addon-list)) "0.1.2")
+        (addon/pin! install-dir (first (core/get-state :installed-addon-list)) "0.1.2")
 
         ;; refresh our knowledge of what is installed.
         (core/load-all-installed-addons)
@@ -761,7 +759,7 @@
     (with-running-app
       (let [install-dir (helper/install-dir)
             strict? false
-            _ (core/set-game-track-strictness! strict? install-dir)
+            _ (core/set-game-track-strictness! strict?)
 
             addon {:name "everyaddon-classic" :label "EveryAddon (Classic)" :version "1.2.3" :url "https://group.id/never/fetched"
                    :source "curseforge" :source-id 1
@@ -910,7 +908,7 @@
               _ (fs/mkdir (utils/join install-dir "EveryAddon-BundledAddon" ".git"))
               _ (core/load-all-installed-addons)
               refreshed-addon (first (core/get-state :installed-addon-list))]
-          (core/remove-addon refreshed-addon)
+          (core/remove-many-addons [refreshed-addon])
           (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (install-dir-contents))))))))
 
 ;; mutual dependencies
@@ -1041,7 +1039,7 @@
           (is (= ["EveryAddon" "EveryAddon-BundledAddon" "EveryOtherAddon"] (helper/install-dir-contents)))
           (core/load-all-installed-addons) ;; refresh our knowledge of what is installed
 
-          (core/remove-addon (helper/select-addon (:url addon-2)))
+          (core/remove-many-addons [(helper/select-addon (:url addon-2))])
           (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))
           (is (= expected (nfo/read-nfo install-dir bundled-dirname))))))))
 
@@ -1085,7 +1083,7 @@
           (is (= ["EveryAddon" "EveryAddon-BundledAddon" "EveryOtherAddon"] (helper/install-dir-contents)))
           (core/load-all-installed-addons) ;; refresh our knowledge of what is installed
 
-          (core/remove-addon (helper/select-addon (:url addon-1)))
+          (core/remove-many-addons [(helper/select-addon (:url addon-1))])
           (is (= ["EveryAddon-BundledAddon" "EveryOtherAddon"] (helper/install-dir-contents)))
           (is (= expected (nfo/read-nfo install-dir bundled-dirname))))))))
 
@@ -1117,7 +1115,7 @@
         (is (not (core/db-catalogue-loaded?)))
 
         ;; empty the file. quickest way to bad json
-        (-> (core/get-catalogue-location) core/catalogue-local-path (spit ""))
+        (-> (core/get-catalogue-location) :name core/catalogue-local-path (spit ""))
 
         ;; the catalogue will be re-requested, this time we've swapped out the fixture with one with a single entry
         (with-global-fake-routes-in-isolation fake-routes
@@ -1141,7 +1139,7 @@
         (is (not (core/db-catalogue-loaded?)))
 
         ;; empty the file. quickest way to bad json
-        (-> (core/get-catalogue-location) core/catalogue-local-path (spit ""))
+        (-> (core/get-catalogue-location) :name core/catalogue-local-path (spit ""))
 
         ;; the catalogue will be re-requested, this time the remote file is also corrupt
         (with-global-fake-routes-in-isolation fake-routes
@@ -1324,7 +1322,7 @@
 
         ;; addon are deselected after having an action performed on them.
         (cli/select-addons)
-        (cli/clear-ignore-selected)
+        (cli/clear-ignore-selected) ;; calls `core/refresh`
         (is (= expected (first (core/get-state :installed-addon-list))))))))
 
 (deftest clear-addon-ignore-flag--group-addons
@@ -1345,7 +1343,6 @@
 
               expected {:description "group record for the fetched addon",
                         :dirname "EveryAddon-BundledAddon",
-                        :group-addon-count 2,
                         :group-addons [{:description "A useful addon that everyone bundles with their own.",
                                         :dirname "EveryAddon-BundledAddon",
                                         :group-id "https://group.id/also/never/fetched",
@@ -1395,7 +1392,7 @@
                              (assoc :update? false)
                              (update-in [:group-addons target-idx] dissoc :ignore?))]
           (core/install-addon-guard addon)
-          (nfo/ignore install-dir "EveryAddon-BundledAddon")
+          (nfo/ignore! install-dir "EveryAddon-BundledAddon")
           (core/load-all-installed-addons)
 
           ;; todo: the below makes this a UI test. move test to cli_test.clj
@@ -1644,25 +1641,6 @@
 
           (is (= [] (core/get-state :installed-addon-list))))))))
 
-(deftest compressed-slurp
-  (let [expected "foo!"]
-    (is (= expected (core/decompress-bytes (core/compressed-slurp "foo.txt"))))))
-
-(deftest compressed-slurp--not-found
-  (is (nil? (core/compressed-slurp "file-that-definitely-does-not-exist.txt"))))
-
-(deftest decompress-bytes--empty
-  (is (nil? (core/decompress-bytes (.getBytes ""))))
-  (is (nil? (core/decompress-bytes nil))))
-
-(deftest decompress-bytes--not-compressed
-  (let [result (try
-                 (core/decompress-bytes (.getBytes "!"))
-                 (catch java.io.IOException ioe
-                   ioe))]
-    (is (instance? java.io.IOException result))
-    (is (= "Stream is not in the BZip2 format" (.getMessage result)))))
-
 ;;
 
 (deftest default-catalogue
@@ -1679,9 +1657,7 @@
                   (is (= expected-total (:total (core/emergency-catalogue catalogue-location)))))]
     (is (= expected-messages messages))))
 
-
 ;;
-
 
 (deftest update-installed-addon!
   (testing "a modified addon can be found in the installed addon list and replaced"
@@ -1732,7 +1708,6 @@
             ;; after installing A, then B then C, we expect C to have cleanly replaced A and B
             expected {:description "group record for the EveryAddonThree addon",
                       :dirname "EveryAddonOne",
-                      :group-addon-count 3,
                       :group-addons [{:description "Does what no other addon does, slightly differently.",
                                       :dirname "EveryAddonOne",
                                       :group-id "https://example.com/EveryAddonThree",
@@ -1815,3 +1790,64 @@
         (is (= expected-nfo (nfo/read-nfo-file install-dir (-> addon-a :toc :dirname))))
         (is (= expected-nfo (nfo/read-nfo-file install-dir (-> addon-b :toc :dirname))))
         (is (= expected-nfo (nfo/read-nfo-file install-dir (-> addon-c3 :toc :dirname))))))))
+
+;;
+
+(deftest db-match-installed-addon-list-with-catalogue
+  (testing "matched addons return a map of useful information"
+    (let [toc {:name "every-addon"
+               :label "Every Addon"
+               :description "foo"
+               :dirname "EveryAddon"
+               :interface-version 70000
+               :toc/game-track :retail
+               :supported-game-tracks [:retail]
+               :installed-version "v8.10.00"}
+          installed-addon-list [toc]
+
+          catalogue-entry {:name "every-addon",
+                           :label "Every Addon"
+                           :tag-list [],
+                           :download-count 1
+                           :source "curseforge",
+                           :source-id 0
+                           :updated-date "2012-09-20T05:32:00Z",
+                           :url "https://www.curseforge.com/wow/addons/every-addon"}
+          db [catalogue-entry]
+
+          expected [{;; how they were matched
+                     :idx [[:name] [:name]]
+                     ;; the value they were matched on
+                     :key ["every-addon"]
+                     ;; convenient flag for having matched
+                     :matched? true
+                     ;; catalogue entry that was matched
+                     :catalogue-match catalogue-entry
+                     ;; installed addon that was matched
+                     :installed-addon toc}]]
+      (is (= expected (core/db-match-installed-addon-list-with-catalogue db installed-addon-list))))))
+
+(deftest db-match-installed-addon-list-with-catalogue--ignored-addons-are-skipped
+  (testing "ignored addons are not matched to the catalogue and always return themselves"
+    (let [toc {:name "every-addon"
+               :label "Every Addon"
+               :description "foo"
+               :dirname "EveryAddon"
+               :interface-version 70000
+               :toc/game-track :retail
+               :supported-game-tracks [:retail]
+               :installed-version "v8.10.00"
+               :ignore? true}
+          installed-addon-list [toc]
+
+          db [{:name "every-addon",
+               :label "Every Addon"
+               :tag-list [],
+               :download-count 1
+               :source "curseforge",
+               :source-id 0
+               :updated-date "2012-09-20T05:32:00Z",
+               :url "https://www.curseforge.com/wow/addons/every-addon"}]
+
+          expected [toc]]
+      (is (= expected (core/db-match-installed-addon-list-with-catalogue db installed-addon-list))))))

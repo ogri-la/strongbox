@@ -1,4 +1,4 @@
-(ns strongbox.ui.check-combo-box
+(ns strongbox.check-combo-box
   (:require
    [cljfx.api] ;; Eastwood dies mid-lint without this: "Toolkit not initialized"
 
@@ -11,6 +11,8 @@
    [org.controlsfx.control IndexedCheckModel CheckComboBox]
    [javafx.collections ObservableList FXCollections]
    [java.util Collection]))
+
+cljfx.api/initialized ;; Eastwood complains if cljfx.api is not used
 
 ;; checkModelProperty https://controlsfx.github.io/javadoc/11.1.1/org.controlsfx.controls/org/controlsfx/control/CheckListView.html#checkModelProperty()
 ;; seeing a bug here: https://github.com/controlsfx/controlsfx/issues/1030

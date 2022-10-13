@@ -1,0 +1,14 @@
+strongbox.core/set-log-level!
+strongbox.specs/placeholder
+strongbox.specs/valid-or-explain
+strongbox.specs/limit-keys
+strongbox.specs/has-ext
+strongbox.main/test
+strongbox.main/restart
+strongbox.jfx/start
+strongbox.jfx/stop
+strongbox.jfx/do-nothing
+strongbox.cli/random-search
+strongbox.cli/touch-bar
+strongbox.cli/clear-selected-addons!
+strongbox.cli/select-addons
