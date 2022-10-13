@@ -177,9 +177,9 @@
   (format-catalogue-data addon-list (utils/datestamp-now-ymd)))
 
 #_(defn-spec write-empty-catalogue! ::sp/extant-file
-  "writes a stub catalogue to the given `output-file`"
-  [output-file ::sp/file]
-  (write-catalogue (new-catalogue []) output-file))
+    "writes a stub catalogue to the given `output-file`"
+    [output-file ::sp/file]
+    (write-catalogue (new-catalogue []) output-file))
 
 ;;
 

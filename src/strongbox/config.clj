@@ -71,7 +71,7 @@
     game-track))
 
 (defn handle-compound-game-tracks
-  "addon game track leniency is now handled through the flag `strict?` rather than encoded into a compund game track.
+  "addon game track leniency is now handled through the flag `strict?` rather than encoded into a compound game track.
   default strictness is `true` (strict)."
   [cfg]
   (if-let [addon-dir-list (:addon-dir-list cfg)]

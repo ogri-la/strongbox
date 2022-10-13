@@ -217,7 +217,7 @@
    nil))
 
 (defn cache
-  "getting and setter that gets bound to `http/*cache*` when caching http requests"
+  "getter and setter that gets bound to `http/*cache*` when caching http requests"
   []
   (if-not (started?)
     (warn "http cache disabled, app is not started")
@@ -267,7 +267,7 @@
                      (callback new-state)
                      (catch Exception e
                        ;; todo: potential for infinite recursion here too?
-                       ;; can the stacktrack be formatted and printed to stdout instead?
+                       ;; can the stacktrace be formatted and printed to stdout instead?
                        (error e "error caught in watch! the callback *must* be catching these or the thread dies silently:" path))))))
     (add-cleanup-fn rmwatch)
     nil))
@@ -598,7 +598,7 @@
     (update-installed-addon! installed-addon)))
 
 (defn-spec load-all-installed-addons nil?
-  "guard function. offloads the hard work to `addon/load-all-installed-addons` then updates application state"
+  "offloads the hard work to `addon/load-all-installed-addons` then updates application state"
   []
   (if-let [addon-dir (selected-addon-dir)]
     (let [addon-list (addon/load-all-installed-addons addon-dir (get-game-track))]
@@ -1040,7 +1040,7 @@
                   (info "not matched to catalogue, addon is being ignored.")
                   (warn (utils/message-list
                          ;; "failed to find a match in the 'full' catalogue."
-                         ;; "try searching for this addon name or description in the search tab."
+                         ;; "try searching for this addon name by or description in the search tab."
                          (format "failed to find a match in the '%s' catalogue." (name (get-state :cfg :selected-catalogue)))
                          ["try searching for this addon by name or description in the search tab."])))))
             unmatched))
@@ -1090,12 +1090,12 @@
   [addon (s/or :unmatched :addon/toc
                :matched :addon/toc+summary+match)]
   (logging/with-addon addon
-    (joblib/tick-delay 0.25)
+    (joblib/tick 0.25)
     (let [expanded-addon (when (expandable? addon)
                            (expand-summary-wrapper addon))
           addon (or expanded-addon addon) ;; expanded addon may still be nil
           has-update? (addon/updateable? addon)]
-      (joblib/tick-delay 0.5)
+      (joblib/tick 0.5)
       (when has-update?
         ;; "update '1.2.3' available from github"
         (info (format "update '%s' available from %s" (:version addon) (:source addon)))
@@ -1110,7 +1110,7 @@
                  (format "update is from a different host (%s) to the one it was installed from (%s)." (:source addon) (:nfo/source addon))
                  ["this happens when an exact match is not found in the selected catalogue."]))))
 
-      (joblib/tick-delay 0.75)
+      (joblib/tick 0.75)
       (assoc addon :update? has-update?))))
 
 (def check-for-update-affective (affects-addon-wrapper check-for-update))

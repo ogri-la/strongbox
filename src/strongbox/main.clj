@@ -10,7 +10,7 @@
    [strongbox
     [catalogue :as catalogue]
     [http :as http]
-    [joblib :as joblib]
+    ;;[joblib :as joblib]
     [core :as core]
     [utils :as utils :refer [in?]]
     ;; warning! requiring cljfx starts the javafx application thread.
@@ -28,7 +28,7 @@
 
 ;; spec checking is enabled during repl development and *any* testing unless explicitly turned off.
 ;; spec checking is disabled upon release
-(def spec? (utils/in-repl?))
+(def ^:dynamic *spec?* (utils/in-repl?))
 
 (defn jfx
   "dynamically resolve the `strongbox.jfx` ns and call the requisite `action`.
@@ -62,7 +62,7 @@
 
 (defn start
   [& [cli-opts]]
-  (core/start (merge {:spec? spec?} cli-opts))
+  (core/start (merge {:spec? *spec?*} cli-opts))
   (case (:ui cli-opts)
     :cli (cli/start cli-opts)
     :gui (jfx :start)
@@ -92,8 +92,8 @@
                   ;; don't pause while testing. nothing should depend on that pause happening.
                   ;; note! this is different to `joblib/tick-delay` not delaying when `joblib/*tick*` is unbound.
                   ;; tests still bind `joblib/*tick*` and run things in parallel.
-                  joblib/tick-delay joblib/*tick*
-                  ;;main/spec? true
+                  ;;joblib/tick-delay joblib/*tick*
+                  ;;main/*spec?* true
                   ;;cli/install-update-these-in-parallel cli/install-update-these-serially
                   ;;core/check-for-updates core/check-for-updates-serially
                   ;; for testing purposes, no addon host is disabled

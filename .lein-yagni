@@ -1,6 +1,8 @@
 strongbox.core/set-log-level!
 strongbox.specs/placeholder
 strongbox.specs/valid-or-explain
+strongbox.specs/limit-keys
+strongbox.specs/has-ext
 strongbox.main/test
 strongbox.main/restart
 strongbox.jfx/start
