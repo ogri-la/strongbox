@@ -40,6 +40,16 @@
            "30002" "3.0.2" ;; WotLK, Echos of Doom
            "30008a" "3.0.8a" ;; 'a' ?? supported, but eh ...
 
+           ;; six digit cases
+           "100000" "10.0.0"
+           "100002" "10.0.2"
+           "100102" "10.1.2"
+           "200102" "20.1.2"
+           "300102" "30.1.2"
+           ;; (I think...) first two digits are now the major, second two minor and remaining are patch
+           ;; the regex doesn't consider minor or patch versions > 9, so '10' becomes '00'.
+           "101010" "10.0.0"
+
             ;; ambiguous/broken cases
            "00010" "0.0.0"
            "01000" "0.0.0"
@@ -251,6 +261,8 @@
                ["5.0.4" :retail]
                ;; ...etc
                ["9.0.1" :retail]
+               ["10.0.02" :retail]
+
                [constants/latest-retail-game-version :retail]]]
     (doseq [[given expected] cases]
       (is (= expected (utils/game-version-to-game-track given))))))

@@ -22,9 +22,13 @@ see CHANGELOG.md for a more formal list of changes by release
 * add github to emergency catalogue
     - done
 
-## todo
+* cleanup
+    - done
 
 * add 'wotlk support' to comrades.csv
+    - done
+
+## todo
 
 * wowinterface, fetch addon data from secondary source
     - *augment* what is currently implemented with my own source
