@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* support for six digit interface versions
+    - Dragonflight is '100000'
+* 'Dragonflight' tooltip for 10.0 addons
+
 ### Changed
 
 * the slugify function used on a toc's 'title' value switched to the same one used when building catalogues.
