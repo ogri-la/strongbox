@@ -43,11 +43,11 @@
            ;; six digit cases
            "100000" "10.0.0"
            "100002" "10.0.2"
-           "100102" "10.1.2"
+           "100102" "10.1.2" ;; just guessing
            "200102" "20.1.2"
            "300102" "30.1.2"
-           ;; (I think...) first two digits are now the major, second two minor and remaining are patch
-           ;; the regex doesn't consider minor or patch versions > 9, so '10' becomes '00'.
+           ;; first three digits are now the major, second two minor and remaining is patch (I think ...)
+           ;; so '101', '201' become '10.' and '20.', minor '01' becomes '00' and '0' is still '0'
            "101010" "10.0.0"
 
             ;; ambiguous/broken cases
