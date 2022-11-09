@@ -4,6 +4,7 @@
    [clj-http.fake :refer [with-fake-routes-in-isolation]]
    ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [strongbox
+    [constants :as constants]
     [curseforge-api :as curseforge-api]
     [test-helper :as helper :refer [fixture-path]]]))
 
@@ -86,15 +87,15 @@
           expected {:retail [{:download-url "https://example.org/path/to/1.2.3.zip"
                               :version "1.2.3"
                               :game-track :retail
-                              :release-label "[WoW 9.2.5] Foo",
+                              :release-label "[WoW 10.0.0] Foo",
                               ;; synthetic, we had to guess using `:gameVersionFlavor`
-                              :interface-version 90200}]
+                              :interface-version constants/default-interface-version}]
                     :classic [{:download-url "https://example.org/path/to/a.b.c.zip"
                                :version "a.b.c"
                                :game-track :classic
                                :release-label "[WoW 1.14.3] Foo"
                                ;; synthetic, we had to guess using `:gameVersionFlavor`
-                               :interface-version 11400}]}]
+                               :interface-version constants/default-interface-version-classic}]}]
       (is (= expected (curseforge-api/group-releases fixture)))))
 
   (testing "a release using both `:gameVersionFlavor` and a list of supported `:gameVersion` game tracks ignores `:gameVersionFlavor` and is expanded into multiple releases"

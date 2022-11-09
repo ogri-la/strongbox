@@ -2,29 +2,30 @@
 
 (def mascot "ᕙ[°▿°]ᕗ")
 
-;; https://wow.gamepedia.com/Wowpedia
 (def release-of-previous-expansion
-  "'Battle for Azeroth (BfA)', released August 14th 2018. Used to shorten the 'full' catalogue.
-  https://en.wikipedia.org/wiki/World_of_Warcraft#Expansions"
+  "'Shadowlands', released October 13, 2020. Used to shorten the 'full' catalogue.
+  https://wowpedia.fandom.com/wiki/Public_client_builds"
   "2018-08-14T00:00:00Z")
 
 (def release-of-wow-classic
-  "the date wow classic went live. Addon development may have started before that.
+  "the date wow classic went live (addon development may have started before that). Used to guess possible game tracks when it's ambiguous.
+  https://wowpedia.fandom.com/wiki/Public_client_builds
   https://worldofwarcraft.com/en-us/news/22990080/mark-your-calendars-wow-classic-launch-and-testing-schedule"
   "2019-08-26T00:00:00Z")
 
 ;; used as a placeholder for an addon's supported version when we're forced to guess.
 ;; don't fret too much about patch versions. These values don't affect much.
 ;; https://wowpedia.fandom.com/wiki/Public_client_builds
-(def latest-retail-game-version "9.2.5")
+(def latest-retail-game-version "10.0.0")
 (def latest-classic-game-version "1.14.3")
 (def latest-classic-tbc-game-version "2.5.4")
 (def latest-classic-wotlk-game-version "3.4.0")
 
 ;; interface version to use if .toc file is missing one.
 ;; assume addon is compatible with the most recent version of retail (see above).
-(def default-interface-version 90500)
-(def default-interface-version-classic 11300)
+;; these values need to match the latest-* values above.
+(def default-interface-version 100000)
+(def default-interface-version-classic 11400)
 
 (def bullet "\u2022") ;; •
 
@@ -51,7 +52,9 @@
 (def releases
   "https://wowpedia.fandom.com/wiki/Patch"
 
-  {"9.2" "Shadowlands: Eternity's End"
+  {"10.0" "Dragonflight"
+
+   "9.2" "Shadowlands: Eternity's End"
    "9.1" "Shadowlands: Chains of Domination"
    "9" "Shadowlands"
 

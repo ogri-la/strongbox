@@ -22,18 +22,26 @@ see CHANGELOG.md for a more formal list of changes by release
 * add github to emergency catalogue
     - done
 
-## todo
+* cleanup
+    - done
 
 * add 'wotlk support' to comrades.csv
+    - done
+
+* added support for dragonflight and six digit interface versions
+    - done
+
+
+## todo
+
+* update screenshots
+
+## todo bucket (no particular order)
 
 * wowinterface, fetch addon data from secondary source
     - *augment* what is currently implemented with my own source
         - failure to fetch this other data shouldn't prevent wowi updates from working normally
     - this source is hosted on github as static content, updated daily.
-
-* update screenshots
-
-## todo bucket (no particular order)
 
 * log pane, bug, the text 'catalogue' is being truncated in multi-line messages
     - see screenshot Screenshot at 2022-09-24 08-56-35.png

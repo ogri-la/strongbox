@@ -287,14 +287,14 @@
   ;; the below code should only be considered unambigous for versions of WoW between 2.x and 8.x
   ;; (and 9.x if that series follows the behaviour of all other patch levels since 2.x)
   ;; see: https://wow.gamepedia.com/Patches
-  (let [iface-regex #"(?<major>\d{1})\d(?<minor>\d{1})\d(?<patch>\d{1}\w?)"
+  (let [iface-regex #"(?<major>\d0|\d{1})\d(?<minor>\d{1})\d(?<patch>\d{1}\w?)"
         matcher (re-matcher iface-regex (str iface-version))
         major-minor-patch (rest (re-find matcher))]
     (when-not (empty? major-minor-patch)
       (clojure.string/join "." major-minor-patch))))
 
 (defn-spec game-version-to-interface-version (s/or :ok ::sp/interface-version :error nil?)
-  "'8.2.0' => '80200', '1.13.2' => '101300"
+  "'8.2.0' => '80200', '1.13.2' => '11300', '10.0.0' => '100000'"
   [game-version string?]
   (let [;; patch-version isn't considered apparently: http://wowwiki.wikia.com/wiki/Getting_the_current_interface_number
         [major minor & _] (clojure.string/split game-version #"\.")
