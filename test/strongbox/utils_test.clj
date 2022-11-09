@@ -261,7 +261,7 @@
                ["5.0.4" :retail]
                ;; ...etc
                ["9.0.1" :retail]
-               ["10.0.02" :retail]
+               ["10.0.2" :retail]
 
                [constants/latest-retail-game-version :retail]]]
     (doseq [[given expected] cases]
