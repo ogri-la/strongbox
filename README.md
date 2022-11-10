@@ -10,23 +10,21 @@ It supports addons hosted by ~Curseforge,~ wowinterface.com, Tukui, Github and G
 
 ***Notice***: Curseforge addons no longer receive updates as of version **5.0.0**, released Feb 1st, 2022.
 
-The **4.x** releases may or may not continue to work for a time [depending on Overwolf's deprecation schedule](https://mailchi.mp/overwolf/whats-new-with-overwolf-curseforge-november3).
-
 Use the *"Source"* and *"Find similar"* actions from the addon context menu ([added **4.9.0**](https://github.com/ogri-la/strongbox/releases)) to help migrate addons away from Curseforge.
 
 I also maintain a list of [other addon managers](https://ogri-la.github.io/wow-addon-managers/).
 
 ---
 
-[![strongbox version 5.0.0](./screenshots/screenshot-5.0.0-installed-skinny-thumbnail.jpg)](./screenshots/screenshot-5.0.0-installed-skinny.png?raw=true)
-[![strongbox version 5.0.0](./screenshots/screenshot-5.0.0-installed-thumbnail.jpg)](./screenshots/screenshot-5.0.0-installed.png?raw=true)
-[![strongbox version 5.0.0](./screenshots/screenshot-5.0.0-installed-fat-thumbnail.jpg)](./screenshots/screenshot-5.0.0-installed-fat.png?raw=true)
-[![strongbox version 5.0.0](./screenshots/screenshot-5.0.0-detail-thumbnail.jpg)](./screenshots/screenshot-5.0.0-detail.png?raw=true)
+[![strongbox version 6.0.0](./screenshots/screenshot-6.0.0-installed-skinny-thumbnail.jpg)](./screenshots/screenshot-6.0.0-installed-skinny.png?raw=true)
+[![strongbox version 6.0.0](./screenshots/screenshot-6.0.0-installed-thumbnail.jpg)](./screenshots/screenshot-6.0.0-installed.png?raw=true)
+[![strongbox version 6.0.0](./screenshots/screenshot-6.0.0-installed-fat-thumbnail.jpg)](./screenshots/screenshot-6.0.0-installed-fat.png?raw=true)
+[![strongbox version 6.0.0](./screenshots/screenshot-6.0.0-detail-thumbnail.jpg)](./screenshots/screenshot-6.0.0-detail.png?raw=true)
 
-[![strongbox version 5.0.0](./screenshots/screenshot-5.0.0-dark-installed-skinny-thumbnail.jpg)](./screenshots/screenshot-5.0.0-dark-installed-skinny.png?raw=true)
-[![strongbox version 5.0.0](./screenshots/screenshot-5.0.0-dark-installed-thumbnail.jpg)](./screenshots/screenshot-5.0.0-dark-installed.png?raw=true)
-[![strongbox version 5.0.0](./screenshots/screenshot-5.0.0-dark-installed-fat-thumbnail.jpg)](./screenshots/screenshot-5.0.0-dark-installed-fat.png?raw=true)
-[![strongbox version 5.0.0](./screenshots/screenshot-5.0.0-dark-detail-thumbnail.jpg)](./screenshots/screenshot-5.0.0-dark-detail.png?raw=true)
+[![strongbox version 6.0.0](./screenshots/screenshot-6.0.0-dark-installed-skinny-thumbnail.jpg)](./screenshots/screenshot-6.0.0-dark-installed-skinny.png?raw=true)
+[![strongbox version 6.0.0](./screenshots/screenshot-6.0.0-dark-installed-thumbnail.jpg)](./screenshots/screenshot-6.0.0-dark-installed.png?raw=true)
+[![strongbox version 6.0.0](./screenshots/screenshot-6.0.0-dark-installed-fat-thumbnail.jpg)](./screenshots/screenshot-6.0.0-dark-installed-fat.png?raw=true)
+[![strongbox version 6.0.0](./screenshots/screenshot-6.0.0-dark-detail-thumbnail.jpg)](./screenshots/screenshot-6.0.0-dark-detail.png?raw=true)
 
 ## Installation
 
