@@ -31,10 +31,11 @@ see CHANGELOG.md for a more formal list of changes by release
 * added support for dragonflight and six digit interface versions
     - done
 
+* update screenshots
+    - done
 
 ## todo
 
-* update screenshots
 
 ## todo bucket (no particular order)
 
