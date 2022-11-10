@@ -6,36 +6,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* remove catalogue building logic
-    - this now lives in strongbox-catalogue-builder
-    - update scripts in strongbox-catalogue as well
-        - strongbox-catalogue is now just a dumb repository of catalogues again
-    - this will make this a major version release
-    - done
-
-* remove wowman/v1 catalogue support
-    - done
-
-* remove tags
-    - done
-
-* add github to emergency catalogue
-    - done
-
-* cleanup
-    - done
-
-* add 'wotlk support' to comrades.csv
-    - done
-
-* added support for dragonflight and six digit interface versions
-    - done
-
-* update screenshots
-    - done
-
 ## todo
-
 
 ## todo bucket (no particular order)
 
