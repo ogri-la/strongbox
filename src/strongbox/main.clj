@@ -10,16 +10,15 @@
    [strongbox
     [catalogue :as catalogue]
     [http :as http]
-    [joblib :as joblib]
+    ;;[joblib :as joblib]
     [core :as core]
-    [utils :as utils :refer [in?]]]
-   [gui.diff :refer [with-gui-diff]]
-   [strongbox.ui
+    [utils :as utils :refer [in?]]
     ;; warning! requiring cljfx starts the javafx application thread.
     ;; this is a pita for exiting a non-javafx UI (cli) and aot as it just 'hangs'.
     ;; hanging aot is handled in project.clj, but dynamic inclusion of jfx is handled here.
     ;;[jfx :as jfx] 
-    [cli :as cli]])
+    [cli :as cli]]
+   [gui.diff :refer [with-gui-diff]])
   (:gen-class))
 
 (Thread/setDefaultUncaughtExceptionHandler
@@ -29,16 +28,16 @@
 
 ;; spec checking is enabled during repl development and *any* testing unless explicitly turned off.
 ;; spec checking is disabled upon release
-(def spec? (utils/in-repl?))
+(def ^:dynamic *spec?* (utils/in-repl?))
 
 (defn jfx
-  "dynamically resolve the `strongbox.ui.jfx` ns and call the requisite `action`.
+  "dynamically resolve the `strongbox.jfx` ns and call the requisite `action`.
   `action` is either `:start` or `:stop`.
   this is done because including the cljfx directly will start will the JavaFX application
   thread and cause hanging behaviour when running tests or using the non-gui CLI"
   [action]
-  (require 'strongbox.ui.jfx)
-  (let [jfx-ns (find-ns 'strongbox.ui.jfx)]
+  (require '[strongbox.jfx])
+  (let [jfx-ns (find-ns 'strongbox.jfx)]
     (case action
       :start ((ns-resolve jfx-ns 'start))
       :stop ((ns-resolve jfx-ns 'stop)))))
@@ -51,7 +50,7 @@
       :gui (jfx :stop)
 
       ;; allows us to start the app without starting a UI during testing.
-      (when (not core/testing?)
+      (when (not core/*testing?*)
         (jfx :stop)))
     (core/stop core/state)))
 
@@ -63,13 +62,13 @@
 
 (defn start
   [& [cli-opts]]
-  (core/start (merge {:spec? spec?} cli-opts))
+  (core/start (merge {:spec? *spec?*} cli-opts))
   (case (:ui cli-opts)
     :cli (cli/start cli-opts)
     :gui (jfx :start)
 
     ;; allows us to start the app without starting a UI during testing.
-    (when (not core/testing?)
+    (when (not core/*testing?*)
       (jfx :start)))
   nil)
 
@@ -87,14 +86,14 @@
 
   (try
     ;; note! remember to update `cloverage.clj` with any new bindings
-    (with-redefs [core/testing? true
+    (with-redefs [core/*testing?* true
                   http/*default-pause* 1 ;; ms
                   http/*default-attempts* 1
                   ;; don't pause while testing. nothing should depend on that pause happening.
                   ;; note! this is different to `joblib/tick-delay` not delaying when `joblib/*tick*` is unbound.
                   ;; tests still bind `joblib/*tick*` and run things in parallel.
-                  joblib/tick-delay joblib/*tick*
-                  ;;main/spec? true
+                  ;;joblib/tick-delay joblib/*tick*
+                  ;;main/*spec?* true
                   ;;cli/install-update-these-in-parallel cli/install-update-these-serially
                   ;;core/check-for-updates core/check-for-updates-serially
                   ;; for testing purposes, no addon host is disabled
@@ -102,10 +101,10 @@
       (core/reset-logging!)
 
       (if ns-kw
-        (if (some #{ns-kw} [:main :utils :http :tags
-                            :core :toc :nfo :zip :config :catalogue :db :addon :logging :joblib
+        (if (some #{ns-kw} [:main :utils :http
+                            :core :toc :nfo :zip :config :catalogue :addon :logging :joblib
                             :cli :gui :jfx
-                            :curseforge-api :wowinterface :wowinterface-api :gitlab-api :github-api :tukui-api
+                            :curseforge-api :wowinterface-api :gitlab-api :github-api :tukui-api
                             :release-json])
           (with-gui-diff
             (if fn-kw
@@ -128,12 +127,6 @@
   (str "Usage: ./strongbox [--action] [--addons-dir]\n\n" (:summary parsed-opts)))
 
 ;;
-
-(def catalogue-actions
-  #{:scrape-catalogue :write-catalogue
-    :scrape-github-catalogue :scrape-wowinterface-catalogue :scrape-tukui-catalogue})
-
-(def catalogue-action-str (clojure.string/join ", " (mapv #(format "'%s'" (name %)) (sort catalogue-actions))))
 
 (def cli-options
   [["-h" "--help"]
@@ -165,10 +158,10 @@
     :parse-fn #(-> % lower-case keyword)
     :validate [(in? [:cli :gui])]]
 
-   ["-a" "--action ACTION" (str "perform action and exit. action is one of: 'list', 'list-updates', 'update-all'," catalogue-action-str)
+   ["-a" "--action ACTION" "perform action and exit. action is one of: 'list', 'list-updates', 'update-all'"
     :id :action
     :parse-fn #(-> % lower-case keyword)
-    :validate [(in? (concat [:list :list-updates :update-all] catalogue-actions))]]])
+    :validate [(in? [:list :list-updates :update-all])]]])
 
 (defn validate
   [parsed]
@@ -196,19 +189,18 @@
       ;; post-processing
       (let [{:keys [options]} args
 
-            ;; force verbosity to :debug when `--debug` is given
-            ;; `--debug` is a shortcut right now but has potential beyond just throttling output
+            ;; force verbosity to `:debug` when `--debug` is given
             args (if (:debug-mode? options)
                    (-> args (assoc-in [:options :verbosity] :debug) (update-in [:options] dissoc :debug-mode?))
                    args)
 
-            ;; switch default ui to :cli if --headless given without explicit --ui
+            ;; switch default ui to `:cli` if `--headless` given without explicit `--ui`
             args (if (not (contains? options :ui))
                    (assoc-in args [:options :ui] (if (:headless? options) :cli :gui))
                    args)
 
-            ;; force :cli for certain actions
-            args (if (contains? catalogue-actions (:action options))
+            ;; force `:cli` for certain actions
+            args (if (contains? #{} (:action options))
                    (assoc-in args [:options :ui] :cli)
                    args)]
         args))))

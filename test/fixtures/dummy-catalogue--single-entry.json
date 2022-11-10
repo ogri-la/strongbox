@@ -1,13 +1,13 @@
 {
   "spec" : {
-    "version" : 1
+    "version" : 2
   },
   "datestamp" : "2019-10-03",
   "updated-datestamp" : "2019-10-03",
   "total" : 1,
   "addon-summary-list" : [ {
     "age" : "ancient",
-    "category-list" : [ "Graphic UI Mods" ],
+    "tag-list" : [ "ui", "ui-replacement" ],
     "download-count" : 73560,
     "game-track-list" : [ "retail" ],
     "label" : "Every Addon",

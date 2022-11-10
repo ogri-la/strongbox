@@ -2,27 +2,12 @@
   (:require
    [clojure.test :refer [deftest testing is use-fixtures]]
    ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
-   [me.raynes.fs :as fs :refer [with-cwd]]
    [strongbox
-    [utils :as utils]
     [constants :as constants]
     [logging :as logging]
     [catalogue :as catalogue]
     [test-helper :as helper :refer [fixture-path]]]
    [clj-http.fake :refer [with-fake-routes-in-isolation]]))
-
-(deftest de-dupe-wowinterface
-  (testing "given multiple addons with the same name, the most recently updated one is preferred"
-    (let [fixture [{:name "adibags" :updated-date "2001-01-01T00:00:00Z" :source "wowinterface"}
-                   {:name "adibags" :updated-date "2019-09-09T00:00:00Z" :source "curseforge"}]
-          expected [{:name "adibags" :updated-date "2019-09-09T00:00:00Z" :source "curseforge"}]]
-      (is (= (catalogue/de-dupe-wowinterface fixture) expected))))
-
-  (testing "given multiple addons with distinct names, all addons are returned"
-    (let [fixture [{:name "adi-bags" :updated-date "2001-01-01T00:00:00Z" :source "wowinterface"}
-                   {:name "baggy-adidas" :updated-date "2019-09-09T00:00:00Z" :source "curseforge"}]
-          expected fixture]
-      (is (= (catalogue/de-dupe-wowinterface fixture) expected)))))
 
 (deftest format-catalogue-data
   (testing "catalogue data has a consistent structure"
@@ -137,8 +122,7 @@
         (is (= expected (catalogue/parse-user-string given)))))))
 
 (deftest read-catalogue
-  (let [v1-catalogue-path (fixture-path "catalogue--v1.json")
-        v2-catalogue-path (fixture-path "catalogue--v2.json")
+  (let [v2-catalogue-path (fixture-path "catalogue--v2.json")
 
         expected-addon-list
         [{:download-count 1077,
@@ -185,9 +169,6 @@
                   :total 4
                   :addon-summary-list expected-addon-list}]
 
-    (testing "a v1 (wowman-era) catalogue spec can be processed and coerced to a valid v2 spec"
-      (is (= expected (catalogue/read-catalogue v1-catalogue-path))))
-
     (testing "a v2 (strongbox-era) catalogue spec can be read and validated as a v2 spec"
       (is (= expected (catalogue/read-catalogue v2-catalogue-path))))))
 
@@ -218,58 +199,6 @@
 
     (testing "catalogue with an incorrect total yields `nil`"
       (is (nil? (catalogue/validate catalogue-with-incorrect-total))))))
-
-(deftest write-catalogue
-  (testing "JSON serialised data is ordered and formatted correctly"
-    (let [datestamp "2020-02-20"
-
-          ;; addons are sorted by the `:name` key on output.
-          ;; the fixture is sorted, this list is deliberately *unsorted*.
-          addon-summary-list
-          [{:download-count 9,
-            :game-track-list [:retail :classic],
-            :label "Chinchilla",
-            :name "chinchilla",
-            :source "github",
-            :source-id "Ravendwyr/Chinchilla",
-            :tag-list [],
-            :updated-date "2019-10-19T15:07:07Z",
-            :url "https://github.com/Ravendwyr/Chinchilla"}
-           {:created-date "2019-04-13T15:23:09.397Z",
-            :description "A New Simple Percent",
-            :download-count 1034,
-            :label "A New Simple Percent",
-            :name "a-new-simple-percent",
-            :source "curseforge",
-            :source-id 319346,
-            :tag-list [:unit-frames],
-            :updated-date "2019-10-29T22:47:42.463Z",
-            :url "https://www.curseforge.com/wow/addons/a-new-simple-percent"}
-           {:description "Skins for AddOns",
-            :download-count 1112033,
-            :game-track-list [:retail],
-            :label "AddOnSkins",
-            :name "addonskins",
-            :source "tukui",
-            :source-id 3,
-            :tag-list [:ui],
-            :updated-date "2019-11-17T23:02:23Z",
-            :url "https://www.tukui.org/addons.php?id=3"}
-           {:download-count 1077,
-            :game-track-list [:retail],
-            :label "$old!it",
-            :name "$old-it",
-            :source "wowinterface",
-            :source-id 21651,
-            :tag-list [:auction-house :vendors],
-            :updated-date "2012-09-20T05:32:00Z",
-            :url "https://www.wowinterface.com/downloads/info21651"}]
-
-          catalogue (catalogue/format-catalogue-data-for-output addon-summary-list datestamp)
-          ;; this test relies on the *exact* JSON formatting of the below fixture
-          expected (slurp (fixture-path "catalogue--v2.json"))
-          actual (slurp (catalogue/write-catalogue catalogue (utils/join fs/*cwd* "catalogue.json")))]
-      (is (= expected actual)))))
 
 (deftest shorten-catalogue
   (testing "a catalogue can be shortened by removing all addons before a cut off date"

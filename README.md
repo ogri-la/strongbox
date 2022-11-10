@@ -10,23 +10,21 @@ It supports addons hosted by ~Curseforge,~ wowinterface.com, Tukui, Github and G
 
 ***Notice***: Curseforge addons no longer receive updates as of version **5.0.0**, released Feb 1st, 2022.
 
-The **4.x** releases may or may not continue to work for a time [depending on Overwolf's deprecation schedule](https://mailchi.mp/overwolf/whats-new-with-overwolf-curseforge-november3).
-
 Use the *"Source"* and *"Find similar"* actions from the addon context menu ([added **4.9.0**](https://github.com/ogri-la/strongbox/releases)) to help migrate addons away from Curseforge.
 
 I also maintain a list of [other addon managers](https://ogri-la.github.io/wow-addon-managers/).
 
 ---
 
-[![strongbox version 5.0.0](./screenshots/screenshot-5.0.0-installed-skinny-thumbnail.jpg)](./screenshots/screenshot-5.0.0-installed-skinny.png?raw=true)
-[![strongbox version 5.0.0](./screenshots/screenshot-5.0.0-installed-thumbnail.jpg)](./screenshots/screenshot-5.0.0-installed.png?raw=true)
-[![strongbox version 5.0.0](./screenshots/screenshot-5.0.0-installed-fat-thumbnail.jpg)](./screenshots/screenshot-5.0.0-installed-fat.png?raw=true)
-[![strongbox version 5.0.0](./screenshots/screenshot-5.0.0-detail-thumbnail.jpg)](./screenshots/screenshot-5.0.0-detail.png?raw=true)
+[![strongbox version 6.0.0](./screenshots/screenshot-6.0.0-installed-skinny-thumbnail.jpg)](./screenshots/screenshot-6.0.0-installed-skinny.png?raw=true)
+[![strongbox version 6.0.0](./screenshots/screenshot-6.0.0-installed-thumbnail.jpg)](./screenshots/screenshot-6.0.0-installed.png?raw=true)
+[![strongbox version 6.0.0](./screenshots/screenshot-6.0.0-installed-fat-thumbnail.jpg)](./screenshots/screenshot-6.0.0-installed-fat.png?raw=true)
+[![strongbox version 6.0.0](./screenshots/screenshot-6.0.0-detail-thumbnail.jpg)](./screenshots/screenshot-6.0.0-detail.png?raw=true)
 
-[![strongbox version 5.0.0](./screenshots/screenshot-5.0.0-dark-installed-skinny-thumbnail.jpg)](./screenshots/screenshot-5.0.0-dark-installed-skinny.png?raw=true)
-[![strongbox version 5.0.0](./screenshots/screenshot-5.0.0-dark-installed-thumbnail.jpg)](./screenshots/screenshot-5.0.0-dark-installed.png?raw=true)
-[![strongbox version 5.0.0](./screenshots/screenshot-5.0.0-dark-installed-fat-thumbnail.jpg)](./screenshots/screenshot-5.0.0-dark-installed-fat.png?raw=true)
-[![strongbox version 5.0.0](./screenshots/screenshot-5.0.0-dark-detail-thumbnail.jpg)](./screenshots/screenshot-5.0.0-dark-detail.png?raw=true)
+[![strongbox version 6.0.0](./screenshots/screenshot-6.0.0-dark-installed-skinny-thumbnail.jpg)](./screenshots/screenshot-6.0.0-dark-installed-skinny.png?raw=true)
+[![strongbox version 6.0.0](./screenshots/screenshot-6.0.0-dark-installed-thumbnail.jpg)](./screenshots/screenshot-6.0.0-dark-installed.png?raw=true)
+[![strongbox version 6.0.0](./screenshots/screenshot-6.0.0-dark-installed-fat-thumbnail.jpg)](./screenshots/screenshot-6.0.0-dark-installed-fat.png?raw=true)
+[![strongbox version 6.0.0](./screenshots/screenshot-6.0.0-dark-detail-thumbnail.jpg)](./screenshots/screenshot-6.0.0-dark-detail.png?raw=true)
 
 ## Installation
 
@@ -34,14 +32,14 @@ Arch Linux users can install `strongbox` from the [AUR](https://aur.archlinux.or
 
 For other Linux users:
 
-1. download: [./releases/strongbox](https://github.com/ogri-la/strongbox/releases/download/5.4.1/strongbox)
+1. download: [./releases/strongbox](https://github.com/ogri-la/strongbox/releases/download/6.0.0/strongbox)
 2. make executable: `chmod +x strongbox`
 3. run: `./strongbox`
 
 If you're on macOS or having a problem with the binary or just prefer Java `.jar` files (requires Java 11+):
 
-1. download: [./releases/strongbox-5.4.1-standalone.jar](https://github.com/ogri-la/strongbox/releases/download/5.4.1/strongbox-5.4.1-standalone.jar)
-2. run: `java -jar strongbox-5.4.1-standalone.jar`
+1. download: [./releases/strongbox-6.0.0-standalone.jar](https://github.com/ogri-la/strongbox/releases/download/6.0.0/strongbox-6.0.0-standalone.jar)
+2. run: `java -jar strongbox-6.0.0-standalone.jar`
 
 ## Usage
 
@@ -114,7 +112,7 @@ This software interacts with the following remote hosts:
 * [www.tukui.org](https://www.tukui.org/api.php)
 * [api.github.com](https://developer.github.com/v3/repos/releases)
     - to download repository and release data for addons hosted on Github
-    - to download the latest `strongbox` release data
+    - to download the latest `strongbox` release information
 * [gitlab.com](https://gitlab.com)
 * [github.com/ogri-la/strongbox-catalogue](https://github.com/ogri-la/strongbox-catalogue), to download addon catalogues
 
@@ -122,9 +120,9 @@ These hosts *may* redirect requests to other hosts.
 
 These interactions use a HTTP user agent header unique to `strongbox` so that it may be identified easily:
 
-    "strongbox/4.x (https://github.com/ogri-la/strongbox)"
+    "strongbox/6.x (https://github.com/ogri-la/strongbox)"
 
-Running strongbox with `--debug` will generate a file called "debug.log" that I may ask you to upload if you report a 
+Running strongbox with `--debug` will generate a file called `debug.log` that I may ask you to upload if you report a 
 bug. *Some* of the details it contains are:
 
 * addons detected in the currently selected addon directory
@@ -150,23 +148,24 @@ bug. *Some* of the details it contains are:
 
 ### classic and retail addon support
 
-"Classic", "Classic (The Burning Crusade)" and "Retail" versions of WoW are all distinct addon systems.
+"Classic", "Classic (The Burning Crusade)", "Classic (Wrath of the Lich King)" and "Retail" versions of WoW are all distinct addon systems.
 
-Some addons support all systems in a single download, some support classic as an alternate release of the same addon, 
+Some addons support all systems in a single download, some support classic as an alternate build of the same addon, 
 some addons support classic only, some addons have been split up into multiple addons. There is a lot of variation.
 
 Click the drop-down next to your addon directory and select either `retail`, `classic` or `classic (TBC)`.
 
-This will restrict the types of addons that can be installed in the current addon directory. 
+This will restrict the types of addons that can be installed in the current addon directory.
 
 The `Strict` checkbox allows you to enforce or relax restrictions and mix together addons meant for different systems in 
 the same addon directory. If an addon is available for multiple addon systems it will prefer one over another:
 
-* `retail` will prefer `retail` addons, then `classic`, then `classic (TBC)`
-* `classic` will prefer `classic` addons, then `classic (TBC)` then `retail`
-* `classic (TBC)` will prefer `classic (TBC)` addons, then `classic`, then `retail`
+* `retail` will prefer `retail` addons, then `classic`, then `classic (TBC)` then `classic (WotLK)`
+* `classic` will prefer `classic` addons, then `classic (TBC)` then `classic (WotLK)` then `retail`
+* `classic (TBC)` will prefer `classic (TBC)` addons, then `classic (WotLK)` then `classic` then `retail`
+* `classic (WotLK)` will prefer `classic (WotLK)` addons, then `classic (TBC)` then `classic` then `retail`
 
-If in doubt which addon system an installed addon supports, look at the value in `WoW` column on the `installed` tab and 
+If uncertain which addon system an installed addon supports, look at the `WoW` column value on the `installed` tab and 
 compare it to the `Version` value in the list of WoW [public client builds](https://wowpedia.fandom.com/wiki/Public_client_builds).
 
 ### install addons from URL
@@ -338,15 +337,15 @@ Strongbox also searches for and reads the toc data from the most appropriate fil
 
 Multiple toc files also help determine if an update is required or not.
 
-### release.json support
+### 'release.json' support
 
 The `release.json` file is generated by [BigWigsMods/packager](https://github.com/BigWigsMods/packager) and includes 
 extra information about files in a Github/Gitlab 'release'.
 
 No documentation or specification seems to exist for it but there are [plenty of examples](https://github.com/layday/github-wow-addon-catalogue/blob/main/addons.csv).
 
-Because another HTTP request is required to download the file it is only consulted for the latest release and only if
-the game tracks for a release can't be otherwise guessed.
+Because another HTTP request is required to download the file it is only consulted for the *latest* release and only if
+the supported game tracks for a release (retail, classic, etc) can't be otherwise guessed.
 
 ### source swapping
 

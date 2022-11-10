@@ -9,9 +9,9 @@
     [specs :as sp]
     [utils :as utils]]))
 
-;; if the user provides their own catalogue list in their config file, it will override these defaults entirely
+;; if the user provides their own catalogue list in their config file, it will override these defaults entirely.
 ;; if the `:catalogue-location-list` entry is *missing* in the user config file, these will be used instead.
-;; to use strongbox with no catalogues at all, use `:catalogue-location-list []` (empty list)
+;; to use strongbox with no catalogues at all, use `:catalogue-location-list []` (empty list).
 (def -default-catalogue-list--v1
   [{:name :short :label "Short (default)" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"}
    {:name :full :label "Full" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/full-catalogue.json"}
@@ -63,15 +63,16 @@
 
 (defn-spec convert-compound-game-track ::sp/game-track
   "takes any game track, new or old, and returns the new version.
-  for example: `:classic` => `:classic` and `:classic-retail` => `:classic`"
+  for example: `:classic` => `:classic` and `:classic-retail` => `:classic`.
+  compound game tracks captured addon release preference order and strictness while it was just 'retail' and 'classic'."
   [game-track (s/or :new-game-track ::sp/game-track, :old-game-track ::sp/old-game-track)]
   (if (some #{game-track} sp/old-game-tracks)
     (-> game-track name (clojure.string/split #"\-") first keyword)
     game-track))
 
 (defn handle-compound-game-tracks
-  "addon game track leniency is now handled through the flag `strict?` rather than encoded into the game track.
-  default strictness is `true`."
+  "addon game track leniency is now handled through the flag `strict?` rather than encoded into a compound game track.
+  default strictness is `true` (strict)."
   [cfg]
   (if-let [addon-dir-list (:addon-dir-list cfg)]
     (let [updater (fn [addon-dir-map]
@@ -84,7 +85,7 @@
     cfg))
 
 (defn-spec valid-catalogue-location? boolean?
-  "returns true if given `catalogue-location` is a valid `:catalogue/location`"
+  "returns `true` if given `catalogue-location` is a valid `:catalogue/location`."
   [catalogue-location any?]
   (let [valid (s/valid? :catalogue/location catalogue-location)]
     (when-not valid
@@ -97,13 +98,13 @@
   [cfg]
   (if-let [csl (:catalogue-location-list cfg)]
     (if (not (vector? csl))
-      ;; we have something, but whatever we were given it wasn't a vector. non-starter
+      ;; we have something, but whatever we were given it wasn't a vector. non-starter.
       (assoc cfg :catalogue-location-list [])
 
-      ;; strip anything that isn't valid
+      ;; strip anything that isn't valid. warnings are emitted.
       (assoc cfg :catalogue-location-list (filterv valid-catalogue-location? csl)))
 
-    ;; key not present, return config as-is
+    ;; key not present, return config as-is.
     cfg))
 
 (defn-spec add-github-catalogue map?
@@ -130,12 +131,12 @@
     cfg))
 
 (defn remove-invalid-addon-dirs
-  "removes any `addon-dir-map` items from the given configuration whose directories do not exist"
+  "removes any `addon-dir-map` items from the given configuration whose directories do not exist."
   [cfg]
   (assoc cfg :addon-dir-list (filterv #(s/valid? ::sp/addon-dir-map %) (:addon-dir-list cfg []))))
 
 (defn handle-selected-addon-dir
-  "ensures the `:selected-addon-dir` value is valid and present in the list of addon directories"
+  "ensures the `:selected-addon-dir` value is valid and present in the list of addon directories."
   [cfg]
   (let [;; it shouldn't happen but ensure the default addon dir is valid or nil
         default-selected-addon-dir (->> cfg :addon-dir-list first :addon-dir (sp/valid-or-nil ::sp/addon-dir))
@@ -176,7 +177,8 @@
                         msg (s/explain-str ::sp/user-config cfg))]
     (if (s/valid? ::sp/user-config cfg)
       cfg
-      (do (warn message) cfg-a))))
+      (do (warn message)
+          cfg-a))))
 
 (defn-spec merge-config ::sp/user-config
   "merges the default user configuration with settings in the user config file and any CLI options"
@@ -216,12 +218,12 @@
 
 (defn-spec load-etag-db-file map?
   "reads etag database from given file.
-  if file is missing or malformed, returns an empty map"
+  if file is missing or malformed, returns an empty map."
   [etag-db-file ::sp/file]
   (utils/load-json-file-safely etag-db-file {:no-file? {} :bad-data? {}}))
 
 (defn load-settings
-  "reads config files and returns a map of configuration settings that can be merged over `core/state`"
+  "reads config files and returns a map of configuration settings that can be merged over `core/state`."
   [cli-opts cfg-file etag-db-file]
   (let [file-opts (load-settings-file cfg-file)
         etag-db (load-etag-db-file etag-db-file)]

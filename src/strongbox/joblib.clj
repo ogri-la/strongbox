@@ -16,14 +16,19 @@
   "per-thread binding to a function that updates progress of running job"
   (constantly nil))
 
-(defn-spec tick-delay :joblib/progress
-  "ticks but then pauses for a short random period providing an illusion that something is happening.
-  pause only occurs if the `tick` fn is bound."
+(defn-spec tick :joblib/progress
+  "ticks current job percentage to the given `pct`."
   [pct :joblib/progress]
   (when-let [progress (*tick* pct)]
-    ;; 2022-07-09: disabled, let things look fast, they *are* fast.
-    ;;(Thread/sleep (rand-int 150))
     progress))
+
+#_(defn-spec tick-delay :joblib/progress
+    "ticks but then pauses for a short random period providing an illusion that something is happening.
+  pause only occurs if the `tick` fn is bound."
+    [pct :joblib/progress]
+    (when-let [progress (*tick* pct)]
+      (Thread/sleep (rand-int 150))
+      progress))
 
 (defn-spec deref* any?
   [future-obj future?]
@@ -60,9 +65,9 @@
   [addon :joblib/addon]
   (set (utils/select-vals addon [:source :source-id :dirname])))
 
-(defn-spec addon-job-id :joblib/job-id
-  [addon :joblib/addon, job-id :joblib/job-id]
-  (conj (addon-id addon) job-id))
+#_(defn-spec addon-job-id :joblib/job-id
+    [addon :joblib/addon, job-id :joblib/job-id]
+    (conj (addon-id addon) job-id))
 
 ;;
 
@@ -118,10 +123,11 @@
   [job :joblib/job]
   (fn? job))
 
-(defn-spec job-started? boolean?
-  "returns `true` if the job has been started. It may even be done."
-  [job :joblib/job]
-  (future? job))
+;; todo: test this, integrate or something
+#_(defn-spec job-started? boolean?
+    "returns `true` if the job has been started. It may even be done."
+    [job :joblib/job]
+    (future? job))
 
 (defn-spec job-running? boolean?
   "returns `true` if job has been started and isn't finished or cancelled yet."
@@ -141,11 +147,12 @@
   (and (future? job)
        (future-done? job)))
 
-(defn-spec cancel-job boolean?
-  "returns `true` if job was found and successfully cancelled. Already-cancelled and completed jobs cannot be cancelled."
-  [job :joblib/job]
-  (and (future? job)
-       (future-cancel job)))
+;; todo: test this, integrate or something
+#_(defn-spec cancel-job boolean?
+    "returns `true` if job was found and successfully cancelled. Already-cancelled and completed jobs cannot be cancelled."
+    [job :joblib/job]
+    (and (future? job)
+         (future-cancel job)))
 
 (defn-spec pop-job! :joblib/job-info
   "removes the job info from the queue and returns the derefable future, regardless of whether the job has been started, cancelled, completed etc"

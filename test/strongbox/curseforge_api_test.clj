@@ -4,6 +4,7 @@
    [clj-http.fake :refer [with-fake-routes-in-isolation]]
    ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [strongbox
+    [constants :as constants]
     [curseforge-api :as curseforge-api]
     [test-helper :as helper :refer [fixture-path]]]))
 
@@ -86,15 +87,15 @@
           expected {:retail [{:download-url "https://example.org/path/to/1.2.3.zip"
                               :version "1.2.3"
                               :game-track :retail
-                              :release-label "[WoW 9.2.5] Foo",
+                              :release-label "[WoW 10.0.0] Foo",
                               ;; synthetic, we had to guess using `:gameVersionFlavor`
-                              :interface-version 90200}]
+                              :interface-version constants/default-interface-version}]
                     :classic [{:download-url "https://example.org/path/to/a.b.c.zip"
                                :version "a.b.c"
                                :game-track :classic
                                :release-label "[WoW 1.14.3] Foo"
                                ;; synthetic, we had to guess using `:gameVersionFlavor`
-                               :interface-version 11400}]}]
+                               :interface-version constants/default-interface-version-classic}]}]
       (is (= expected (curseforge-api/group-releases fixture)))))
 
   (testing "a release using both `:gameVersionFlavor` and a list of supported `:gameVersion` game tracks ignores `:gameVersionFlavor` and is expanded into multiple releases"
@@ -175,24 +176,6 @@
                                :release-label "[WoW 1.13.1] Foo",
                                :interface-version 11300}]}]
       (is (= expected (curseforge-api/group-releases fixture))))))
-
-(deftest extract-addon-summary
-  (testing "data extracted from curseforge api 'search' results is correct"
-    (let [fixture (slurp (fixture-path "curseforge-api-search--truncated.json"))
-          fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/search?gameId=1&index=0&pageSize=50&searchFilter=&sort=3"
-                       {:get (fn [req] {:status 200 :body fixture})}}
-          expected [{:created-date "2016-05-09T17:21:30.1Z",
-                     :description "Restores access to removed interface options in Legion",
-                     :tag-list [:misc],
-                     :updated-date "2019-08-30T14:39:44.943Z",
-                     :name "advancedinterfaceoptions",
-                     :label "AdvancedInterfaceOptions",
-                     :download-count 2923589,
-                     :source "curseforge"
-                     :source-id 99982,
-                     :url "https://www.curseforge.com/wow/addons/advancedinterfaceoptions"}]]
-      (with-fake-routes-in-isolation fake-routes
-        (is (= expected (curseforge-api/download-all-summaries-alphabetically)))))))
 
 ;;
 

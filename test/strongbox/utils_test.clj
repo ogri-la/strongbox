@@ -6,7 +6,13 @@
     [logging :as logging]
     [utils :as utils :refer [join]]
     [constants :as constants]]
-   [me.raynes.fs :as fs]))
+   [me.raynes.fs :as fs]
+   [java-time :as jt])
+
+  (:import
+   [java.util Base64]
+   [org.ocpsoft.prettytime.units Decade]
+   [org.ocpsoft.prettytime PrettyTime]))
 
 (def ^:dynamic *temp-dir-path* "")
 
@@ -33,6 +39,16 @@
            "20001" "2.0.1" ;; Burning Crusade, Before The Storm
            "30002" "3.0.2" ;; WotLK, Echos of Doom
            "30008a" "3.0.8a" ;; 'a' ?? supported, but eh ...
+
+           ;; six digit cases
+           "100000" "10.0.0"
+           "100002" "10.0.2"
+           "100102" "10.1.2" ;; just guessing
+           "200102" "20.1.2"
+           "300102" "30.1.2"
+           ;; first three digits are now the major, second two minor and remaining is patch (I think ...)
+           ;; so '101', '201' become '10.' and '20.', minor '01' becomes '00' and '0' is still '0'
+           "101010" "10.0.0"
 
             ;; ambiguous/broken cases
            "00010" "0.0.0"
@@ -62,10 +78,10 @@
           expected '("1.2" "1.2.3" "1.2.3" "1.2.3.4" "1.5.5" "1.5.19" "1.6.0" "1.6.0-unstable" "1.6.0-aaaaaa" "2.3.1" "4.1.3" "4.2.0" "4.11.6" "10.5.5" "11.3.0")]
       (is (= expected (utils/sort-semver-strings given))))))
 
-(deftest days-between-then-and-now
-  (testing "the number of days between two dates"
-    (java-time/with-clock (java-time/fixed-clock "2001-01-02T00:00:00Z")
-      (is (= (utils/days-between-then-and-now "2001-01-01") 1)))))
+#_(deftest days-between-then-and-now
+    (testing "the number of days between two dates"
+      (java-time/with-clock (java-time/fixed-clock "2001-01-02T00:00:00Z")
+        (is (= (utils/days-between-then-and-now "2001-01-01") 1)))))
 
 (deftest file-older-than
   (testing "files whose modification times are older than N hours"
@@ -78,18 +94,6 @@
           (is (not (utils/file-older-than path 3)))
           (finally
             (fs/delete path)))))))
-
-(deftest pad
-  (let [cases [;;[[nil 2] nil] ;; must be a collection
-               [[[] 0] []]
-               [[[] 2] [nil nil]]
-               [[[nil nil] 2] [nil nil]]
-               [[[:foo :bar] 2] [:foo :bar]]
-               [[[:foo] 2] [:foo nil]]
-               [[[:foo :bar] 1] [:foo :bar]]]]
-    (doseq [[[coll pad-amt] expected] cases]
-      (testing (str "list is padded, case:" expected)
-        (is (= expected (utils/pad coll pad-amt)))))))
 
 (deftest nilable
   (let [cases [[nil nil]
@@ -257,6 +261,8 @@
                ["5.0.4" :retail]
                ;; ...etc
                ["9.0.1" :retail]
+               ["10.0.2" :retail]
+
                [constants/latest-retail-game-version :retail]]]
     (doseq [[given expected] cases]
       (is (= expected (utils/game-version-to-game-track given))))))
@@ -405,9 +411,14 @@
 
                ;; weird that the sixth hour changes '12 months from now' to '1 year from now'
                ["2002-01-01T05:00:00Z" "12 months from now"]
-               ["2002-01-01T06:00:00Z" "1 year from now"]]]
+               ["2002-01-01T06:00:00Z" "1 year from now"]]
+
+        pretty-dt-printer-dummy
+        (doto (PrettyTime. (java-time/local-date constants/fake-date) (java-time/zone-id "UTC"))
+          (.removeUnit Decade))]
+
     (with-redefs [;; default date formatter uses `(now)` as it's reference point.
-                  utils/*pretty-dt-printer* utils/-pretty-dt-printer-dummy]
+                  utils/*pretty-dt-printer* pretty-dt-printer-dummy]
       (doseq [[given expected] cases]
         (is (= expected (utils/format-dt given)))))))
 
@@ -464,21 +475,6 @@
                ["2019-08-26T00:00:01Z" false]]]
     (doseq [[given expected] cases]
       (is (= expected (utils/published-before-classic? given))))))
-
-(deftest just-in
-  (let [cases [[nil [] nil]
-               [nil [:foo :bar [:baz]] nil]
-               [{} [] nil]
-               [{:foo :bar} [:foo] nil]
-               [{:foo :bar} [:foo [:foo]] nil]
-               [{:foo :bar, :baz :bup} [:foo [:foo :baz]] nil]
-               [{:foo {:bar :baz}} [:foo [:bar]] {:bar :baz}]
-               [{:foo {:bar :baz, :bup :boo}} [:foo [:bar :bup :boop]] {:bar :baz, :bup :boo}]
-
-               [{:foo []} [:foo [:bar]] nil]
-               [{:foo ""} [:foo [:bar]] nil]]]
-    (doseq [[m ks expected] cases]
-      (is (= expected (utils/just-in m ks)), (str "failed case: " m ks)))))
 
 (deftest source-map
   (let [cases [[nil {}]
@@ -568,12 +564,21 @@
     (doseq [[given expected] cases]
       (is (= expected (utils/patch-name given))))))
 
-(deftest matching
-  (let [cases [[[0 pos?] [0 true]]
-               [[0 pos?] [1 false]]
-               [[0 pos?] [-1 true]]
-               [[{:foo :bar} :foo], [{:foo :bar} true]]
-               [[{:foo :bar} :foo], [{:foo :baz} false]]]]
-    (doseq [[[x f] [given expected]] cases]
-      (let [p (utils/matching x f)]
-        (is (= expected (p given)))))))
+(deftest compressed-slurp
+  (let [expected "foo!"]
+    (is (= expected (utils/decompress-bytes (utils/compressed-slurp "foo.txt"))))))
+
+(deftest compressed-slurp--not-found
+  (is (nil? (utils/compressed-slurp "file-that-definitely-does-not-exist.txt"))))
+
+(deftest decompress-bytes--empty
+  (is (nil? (utils/decompress-bytes (.getBytes ""))))
+  (is (nil? (utils/decompress-bytes nil))))
+
+(deftest decompress-bytes--not-compressed
+  (let [result (try
+                 (utils/decompress-bytes (.getBytes "!"))
+                 (catch java.io.IOException ioe
+                   ioe))]
+    (is (instance? java.io.IOException result))
+    (is (= "Stream is not in the BZip2 format" (.getMessage result)))))

@@ -103,7 +103,7 @@ SomeAddon.lua")
 (deftest parse-addon-toc
   (testing "parsing scraped keyvals in .toc yields expected values"
     (let [;; all of this can be derived from the directory name and sensible defaults
-          base-case {:name "everyaddon-*"
+          base-case {:name "everyaddon"
                      :dirname "EveryAddon"
                      :label "EveryAddon *"
                      :description nil
@@ -141,39 +141,39 @@ SomeAddon.lua")
                     :supported-game-tracks [:retail]
                     :-toc/game-track :retail}
           cases [;; wowinterface
-                 [{:x-wowi-id "123"} {:label "dirname *" :name "dirname-*"
+                 [{:x-wowi-id "123"} {:label "dirname *" :name "dirname"
                                       :source "wowinterface" :source-id 123
                                       :source-map-list [{:source "wowinterface" :source-id 123}]}]
-                 [{:x-wowi-id 123} {:label "dirname *" :name "dirname-*"
+                 [{:x-wowi-id 123} {:label "dirname *" :name "dirname"
                                     :source "wowinterface" :source-id 123
                                     :source-map-list [{:source "wowinterface" :source-id 123}]}]
-                 [{:x-wowi-id "abc"} {:label "dirname *" :name "dirname-*"}] ;; bad case, non-numeric wowi ID
+                 [{:x-wowi-id "abc"} {:label "dirname *" :name "dirname"}] ;; bad case, non-numeric wowi ID
 
                  ;; curse
-                 ;;[{:x-curse-project-id "123"} {:label "dirname *" :name "dirname-*"
+                 ;;[{:x-curse-project-id "123"} {:label "dirname *" :name "dirname"
                  ;;                              :source "curseforge" :source-id 123
                  ;;                              :source-map-list [{:source "curseforge" :source-id 123}]}]
-                 ;;[{:x-curse-project-id 123} {:label "dirname *" :name "dirname-*"
+                 ;;[{:x-curse-project-id 123} {:label "dirname *" :name "dirname"
                  ;;                            :source "curseforge" :source-id 123
                  ;;                            :source-map-list [{:source "curseforge" :source-id 123}]}]
-                 ;;[{:x-curse-project-id "abc"} {:label "dirname *" :name "dirname-*"}] ;; bad case, non-numeric curse ID
+                 ;;[{:x-curse-project-id "abc"} {:label "dirname *" :name "dirname"}] ;; bad case, non-numeric curse ID
 
                  ;; tukui
-                 [{:x-tukui-projectid "123"} {:label "dirname *" :name "dirname-*"
+                 [{:x-tukui-projectid "123"} {:label "dirname *" :name "dirname"
                                               :source "tukui" :source-id 123
                                               :source-map-list [{:source "tukui" :source-id 123}]}]
-                 [{:x-tukui-projectid "-1"} {:label "dirname *" :name "dirname-*"
+                 [{:x-tukui-projectid "-1"} {:label "dirname *" :name "dirname"
                                              :source "tukui" :source-id -1
                                              :source-map-list [{:source "tukui" :source-id -1}]}]
-                 [{:x-tukui-projectid 123} {:label "dirname *" :name "dirname-*"
+                 [{:x-tukui-projectid 123} {:label "dirname *" :name "dirname"
                                             :source "tukui" :source-id 123
                                             :source-map-list [{:source "tukui" :source-id 123}]}]
-                 [{:x-tukui-projectid "abc"} {:label "dirname *" :name "dirname-*"}] ;; bad case
+                 [{:x-tukui-projectid "abc"} {:label "dirname *" :name "dirname"}] ;; bad case
 
                  ;; mixed
                  [{:x-wowi-id "123"
                    :x-tukui-projectid "123"
-                   :x-curse-project-id "123"} {:label "dirname *" :name "dirname-*"
+                   :x-curse-project-id "123"} {:label "dirname *" :name "dirname"
                                                :source "tukui" :source-id 123 ;; todo: this precedence is interesting ...
                                                :source-map-list [{:source "wowinterface" :source-id 123}
                                                                  ;;{:source "curseforge" :source-id 123}

@@ -5,7 +5,9 @@
 /checkouts
 *.jar
 *.class
-/.lein-*
+/.lein-failures
+/.lein-jlink
+.lein-repl-history
 /.nrepl-port
 .eastwood
 .vagrant/

@@ -9,6 +9,7 @@
    [taoensso.timbre :as log :refer [debug info warn error spy]]))
 
 (def wowinterface-api "https://api.mmoui.com/v3/game/WOW")
+(def wowinterface-host "https://www.wowinterface.com/downloads/")
 
 (defn-spec extract-aid (s/nilable string?)
   "not sure what an 'aid' is, but if it's included in the download request it bypasses the 'approval pending' page."
@@ -51,3 +52,11 @@
   "extracts the addon ID from the given `url`"
   [url ::sp/url]
   (some->> url java.net.URL. .getPath (re-find #"/(?:info|download){1}(\d+)") second utils/to-int))
+
+;;
+
+(defn-spec make-url (s/nilable ::sp/url)
+  "given a map of addon data, returns a URL to the addon's wowinterface page or `nil`"
+  [{:keys [source-id]} map?]
+  (when source-id
+    (str wowinterface-host "info" source-id)))

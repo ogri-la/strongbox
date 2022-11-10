@@ -17,8 +17,8 @@
    [java-time :as jt]
    [java-time.format])
   (:import
-   [java.lang StringBuilder]
-   [java.util Base64 Random]
+   [java.util Base64]
+   [org.apache.commons.compress.compressors CompressorStreamFactory CompressorException]
    [org.ocpsoft.prettytime.units Decade]
    [org.ocpsoft.prettytime PrettyTime]))
 
@@ -63,20 +63,6 @@
     (and (string? x)
          (clojure.string/blank? x)) nil
     :else x))
-
-(defn-spec pad coll?
-  "given a collection, ensures there are at least pad-amt items in result. pad value is nil"
-  [lst coll?, pad-amt int?]
-  (let [lst-size (count lst)]
-    (if (< lst-size pad-amt)
-      (into lst (repeat (- pad-amt lst-size) nil))
-      lst)))
-
-(defn-spec kw2str (s/or :ok? string? :nil nil?)
-  "returns the string version of the given keyword, if keyword is not nil"
-  [kw (s/nilable keyword?)]
-  (when kw
-    (name kw)))
 
 (defn-spec safe-to-delete? boolean?
   "predicate, returns `true` if given file is prefixed with given directory."
@@ -129,11 +115,11 @@
       (debug (format "path %s; modtime %s; expiry-offset %s; expiry-date %s; now %s; expired? %s" file modtime expiry-offset expiry-date now expired?)))
     expired?))
 
-(defn-spec days-between-then-and-now int?
-  [datestamp ::sp/inst]
-  (let [then (java-time/local-date datestamp)
-        now (java-time/local-date)]
-    (.getDays (java-time/period then now))))
+#_(defn-spec days-between-then-and-now int?
+    [datestamp ::sp/inst]
+    (let [then (java-time/local-date datestamp)
+          now (java-time/local-date)]
+      (.getDays (java-time/period then now))))
 
 (defn datestamp-now-ymd
   []
@@ -162,9 +148,6 @@
 (def -pretty-dt-printer (doto (PrettyTime.)
                           (.removeUnit Decade)))
 
-(def -pretty-dt-printer-dummy (doto (PrettyTime. (java-time/local-date constants/fake-date) (java-time/zone-id "UTC"))
-                                (.removeUnit Decade)))
-
 (def ^:dynamic *pretty-dt-printer* -pretty-dt-printer)
 
 (defn-spec format-dt string?
@@ -182,11 +165,11 @@
     ;;(ensure (get-in m path) (str "path does not exist: " (clojure.string/join ", " path)))))
     (get-in m path)))
 
-(defn-spec nav-map-fn fn?
-  "given a map `m`, returns a function that accepts an optional path of keywords into that map"
-  [m map?]
-  (fn [& path]
-    (nav-map m path)))
+#_(defn-spec nav-map-fn fn?
+    "given a map `m`, returns a function that accepts an optional path of keywords into that map"
+    [m map?]
+    (fn [& path]
+      (nav-map m path)))
 
 (defn pprint
   [x]
@@ -266,21 +249,21 @@
             (not (s/valid? data-spec data))) (call-if-fn invalid-data?)
            :else data))))))
 
-(defn-spec load-edn-file any?
-  [path ::sp/extant-file]
-  (-> path slurp read-string))
+#_(defn-spec load-edn-file any?
+    [path ::sp/extant-file]
+    (-> path slurp read-string))
 
-(defn load-edn-file-safely
-  [path & {:keys [no-file? bad-data? invalid-data? data-spec]}]
-  (if-not (fs/file? path)
-    (call-if-fn no-file?)
-    (let [data (load-edn-file path)]
-      (cond
-        (not data) (call-if-fn bad-data?)
-        (and ;; both are present AND data is invalid
-         (and invalid-data? data-spec)
-         (not (s/valid? data-spec data))) (call-if-fn invalid-data?)
-        :else data))))
+#_(defn load-edn-file-safely
+    [path & {:keys [no-file? bad-data? invalid-data? data-spec]}]
+    (if-not (fs/file? path)
+      (call-if-fn no-file?)
+      (let [data (load-edn-file path)]
+        (cond
+          (not data) (call-if-fn bad-data?)
+          (and ;; both are present AND data is invalid
+           (and invalid-data? data-spec)
+           (not (s/valid? data-spec data))) (call-if-fn invalid-data?)
+          :else data))))
 
 (defn-spec to-int (s/or :ok int?, :error nil?)
   "given any value `x`, converts it to an integer or returns `nil` if it can't be converted."
@@ -304,14 +287,14 @@
   ;; the below code should only be considered unambigous for versions of WoW between 2.x and 8.x
   ;; (and 9.x if that series follows the behaviour of all other patch levels since 2.x)
   ;; see: https://wow.gamepedia.com/Patches
-  (let [iface-regex #"(?<major>\d{1})\d(?<minor>\d{1})\d(?<patch>\d{1}\w?)"
+  (let [iface-regex #"(?<major>\d0|\d{1})\d(?<minor>\d{1})\d(?<patch>\d{1}\w?)"
         matcher (re-matcher iface-regex (str iface-version))
         major-minor-patch (rest (re-find matcher))]
     (when-not (empty? major-minor-patch)
       (clojure.string/join "." major-minor-patch))))
 
 (defn-spec game-version-to-interface-version (s/or :ok ::sp/interface-version :error nil?)
-  "'8.2.0' => '80200', '1.13.2' => '101300"
+  "'8.2.0' => '80200', '1.13.2' => '11300', '10.0.0' => '100000'"
   [game-version string?]
   (let [;; patch-version isn't considered apparently: http://wowwiki.wikia.com/wiki/Getting_the_current_interface_number
         [major minor & _] (clojure.string/split game-version #"\.")
@@ -390,24 +373,9 @@
         parent (some->> (-> path fs/split butlast) (apply join))]
     (join parent (-> path str fs/split-ext first (str ext)))))
 
-(defn-spec file-to-lazy-byte-array bytes?
-  [path ::sp/extant-file]
-  (let [fobj (java.io.File. ^String path)
-        ary (byte-array (.length fobj))
-        is (java.io.FileInputStream. fobj)]
-    (.read is ary)
-    (.close is)
-    ary))
-
 (defn split-filter
   [f c]
   [(filterv f c) (filterv (complement f) c)])
-
-(defn-spec cp ::sp/extant-file
-  [old-path ::sp/extant-file new-dir ::sp/extant-dir]
-  (let [new-path (join new-dir (fs/base-name old-path))]
-    (fs/copy old-path new-path)
-    new-path))
 
 (defn -semver-comp
   [a-bits b-bits]
@@ -536,12 +504,12 @@
        m)
      (rest fields))))
 
-(defn-spec copy-old-to-new-if-safe (s/or :copied ::sp/extant-file, :no-op nil?)
-  "copies `old-path` to `new-path` if `old-path` exists and `new-path` doesn't exist"
-  [old-path ::sp/file, new-path ::sp/file]
-  (when (and (fs/exists? old-path)
-             (not (fs/exists? new-path)))
-    (fs/copy old-path new-path)))
+#_(defn-spec copy-old-to-new-if-safe (s/or :copied ::sp/extant-file, :no-op nil?)
+    "copies `old-path` to `new-path` if `old-path` exists and `new-path` doesn't exist"
+    [old-path ::sp/file, new-path ::sp/file]
+    (when (and (fs/exists? old-path)
+               (not (fs/exists? new-path)))
+      (fs/copy old-path new-path)))
 
 ;;
 
@@ -629,23 +597,6 @@
   "returns a UUID as a string that is guaranteed to always be unique."
   []
   (str (java.util.UUID/randomUUID)))
-
-;; `rand-str2`, Istvan
-;; - https://stackoverflow.com/questions/64034761/fast-random-string-generator-in-clojure
-(defn short-unique-id
-  ^String
-  ([]
-   (short-unique-id 8))
-  ([^Long len]
-   (let [leftLimit 97
-         rightLimit 122
-         random (java.util.Random.)
-         stringBuilder (StringBuilder. len)
-         diff (- rightLimit leftLimit)]
-     (dotimes [_ len]
-       (let [ch (char (.intValue ^Double (+ leftLimit (* (.nextFloat ^Random random) (+ diff 1)))))]
-         (.append ^StringBuilder stringBuilder ch)))
-     (.toString ^StringBuilder stringBuilder))))
 
 (defn count-occurances
   ;; {"Foo-v1.zip" 1, "Foo-v2.zip 1, "Foo.zip" 5}
@@ -782,17 +733,6 @@
   [url ::sp/url]
   (->> url java.net.URL. .getPath (re-matches #"^/([^/]+/[^/]+)[/]?.*") rest first))
 
-(defn-spec just-in any?
-  "like `get-in` but the last path element is used with `select-keys`.
-  returns nil if the second-to-last path element doesn't yield a map."
-  [m (s/nilable map?), ks vector?]
-  (let [path (butlast ks)
-        these-keys (last ks)]
-    (when m
-      (let [v (get-in m path)]
-        (when (and (map? v) (vector? these-keys))
-          (select-keys v these-keys))))))
-
 (defn-spec source-map (s/nilable map?)
   [addon (s/nilable map?)]
   (select-keys addon [:source :source-id]))
@@ -843,12 +783,6 @@
                (debug (format "recurring in %s ms, have waited %s ms" wait-time# waited#))
                (recur (+ waited# wait-time#))))))))
 
-(defn-spec matching fn?
-  "returns a predicate that accepts one argument and returns true if it matches the result of applying `keyfn` to `x`"
-  [x any?, keyfn ifn?]
-  (let [match (keyfn x)]
-    #(= match (keyfn %))))
-
 (defn-spec patch-name (s/or :ok string?, :not-found nil?)
   "returns the 'patch' name for the given `game-version`, considering only the major and minor values.
   if a precise match is not found, the major version is then considered.
@@ -859,3 +793,28 @@
         major-minor (clojure.string/join "." [major minor])]
     (or (get constants/releases major-minor)
         (get constants/releases major))))
+
+(defn-spec compressed-slurp (s/or :ok bytes?, :no-resource nil?)
+  "returns the bz2 compressed bytes of the given resource file `resource`.
+  returns `nil` if the file can't be found."
+  [resource string?]
+  (let [input-file (clojure.java.io/resource resource)]
+    (when input-file
+      (with-open [out (java.io.ByteArrayOutputStream.)]
+        (with-open [cos (.createCompressorOutputStream (CompressorStreamFactory.) CompressorStreamFactory/BZIP2, out)]
+          (clojure.java.io/copy (clojure.java.io/input-stream input-file) cos))
+        ;; compressed output stream (cos) needs to be closed to flush any remaining bytes
+        (.toByteArray out)))))
+
+(defn-spec decompress-bytes (s/or :ok string?, :nil-or-empty-bytes nil?)
+  "decompresses the given `bz2-bytes` as bz2, returning a string.
+  if bytes are empty or `nil`, returns `nil`.
+  if bytes are not bz2 compressed, throws an `IOException`."
+  [bz2-bytes (s/nilable bytes?)]
+  (when-not (empty? bz2-bytes)
+    (with-open [is (clojure.java.io/input-stream bz2-bytes)]
+      (try
+        (with-open [cin (.createCompressorInputStream (CompressorStreamFactory.) CompressorStreamFactory/BZIP2, is)]
+          (slurp cin))
+        (catch CompressorException ce
+          (throw (.getCause ce)))))))

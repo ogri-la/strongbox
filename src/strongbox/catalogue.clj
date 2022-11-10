@@ -1,6 +1,5 @@
 (ns strongbox.catalogue
   (:require
-   [flatland.ordered.map :as omap]
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
@@ -9,12 +8,10 @@
    [strongbox
     [constants :as constants]
     [addon]
-    [tags :as tags]
     [utils :as utils :refer [todt]]
     [specs :as sp]
     [tukui-api :as tukui-api]
     [curseforge-api :as curseforge-api]
-    [wowinterface :as wowinterface]
     [wowinterface-api :as wowinterface-api]
     [gitlab-api :as gitlab-api]
     [github-api :as github-api]]))
@@ -113,7 +110,7 @@
           syn (if (-> syn :url nil?)
                 (case (:source toc)
                   ;; "curseforge" ... ;; addon page URL can't be reconstructed, so clickable links break.
-                  "wowinterface" (assoc syn :url (wowinterface/make-url toc))
+                  "wowinterface" (assoc syn :url (wowinterface-api/make-url toc))
                   "tukui" (assoc syn :url (tukui-api/make-url toc))
                   "github" (assoc syn :url (github-api/make-url toc))
                   ;; gitlab addons only appear in the user catalogue so will only be 'polyfilled' here if
@@ -128,9 +125,7 @@
           syn (if (-> syn :source nil?) sink syn)]
       syn)))
 
-
 ;;
-
 
 (defn-spec format-catalogue-data :catalogue/catalogue
   "returns a correctly formatted, ordered, catalogue given a list of addons and a datestamp"
@@ -142,30 +137,6 @@
      :total (count addon-list)
      :addon-summary-list addon-list}))
 
-(defn-spec format-catalogue-data-for-output :catalogue/catalogue
-  "same as `format-catalogue-data`, but the addon maps are converted to an `ordered-map` for better diffs"
-  [addon-list :addon/summary-list, datestamp ::sp/ymd-dt]
-  (let [addon-list (p :cat/format-catalogue-data
-                      (mapv #(p :cat/format-addon
-                                (into (omap/ordered-map) (sort %)))
-                            (p :cat/sort-addons
-                               (sort-by :name addon-list))))]
-    {:spec {:version 2}
-     :datestamp datestamp
-     :total (count addon-list)
-     :addon-summary-list addon-list}))
-
-(defn-spec catalogue-v1-coercer :catalogue/catalogue
-  "converts wowman-era specification 1 catalogues, coercing them to specification version 2 catalogues"
-  [catalogue-data map?]
-  (let [row-coerce (fn [row]
-                     (-> row
-                         (assoc :tag-list (tags/category-list-to-tag-list (:source row) (:category-list row)))
-                         (dissoc :category-list)))]
-    (-> catalogue-data
-        (update-in [:addon-summary-list] #(into [] (map row-coerce) %))
-        (update-in [:spec :version] inc))))
-
 (defn -read-catalogue-value-fn
   "used to transform catalogue values as the json is read. applies to both v1 and v2 catalogues."
   [key val]
@@ -173,37 +144,18 @@
     :game-track-list (mapv keyword val)
     :tag-list (mapv keyword val)
     :description (utils/safe-subs val 255) ;; no database anymore, no hard failures on value length?
-
-    ;; returning the function itself ensures element is removed from the result entirely
-    :alt-name -read-catalogue-value-fn
-
-    ;; catalogue-level in v1 catalogue, not the addon-level 'updated-date' that we should keep
-    :updated-datestamp -read-catalogue-value-fn
-
     val))
 
 (defn-spec read-catalogue (s/or :ok :catalogue/catalogue, :error nil?)
-  "reads the catalogue of addon data at the given `catalogue-path`.
-  supports reading legacy catalogues by dispatching on the `[:spec :version]` number."
+  "reads the catalogue of addon data at the given `catalogue-path`."
   ([catalogue-path (s/or :file ::sp/file, :bytes bytes?)]
    (read-catalogue catalogue-path {}))
   ([catalogue-path (s/or :file ::sp/file, :bytes bytes?), opts map?]
-   (p :catalogue
-      (let [key-fn (fn [k]
-                     (case k
-                       "uri" :url
-                       ;;"category-list" :tag-list ;; pushed back into v1 post-processing
-                       (keyword k)))
-            value-fn -read-catalogue-value-fn ;; defined 'outside' so it can reference itself
-            opts (merge opts {:key-fn key-fn :value-fn value-fn})
-            catalogue-data (p :catalogue:load-json-file
-                              (utils/load-json-file-safely catalogue-path opts))]
-
-        (when-not (empty? catalogue-data)
-          (if (-> catalogue-data :spec :version (= 1)) ;; if v1 catalogue, coerce
-            (p :catalogue:v1-coercer
-               (utils/nilable (catalogue-v1-coercer catalogue-data)))
-            catalogue-data))))))
+   (let [value-fn -read-catalogue-value-fn ;; defined 'outside' so it can reference itself
+         opts (merge opts {:key-fn keyword :value-fn value-fn})
+         catalogue-data (utils/load-json-file-safely catalogue-path opts)]
+     (when-not (empty? catalogue-data)
+       catalogue-data))))
 
 (defn validate
   "validates the given data as a `:catalogue/catalogue`, returning nil if data is invalid"
@@ -224,10 +176,10 @@
   [addon-list :addon/summary-list]
   (format-catalogue-data addon-list (utils/datestamp-now-ymd)))
 
-(defn-spec write-empty-catalogue! ::sp/extant-file
-  "writes a stub catalogue to the given `output-file`"
-  [output-file ::sp/file]
-  (write-catalogue (new-catalogue []) output-file))
+#_(defn-spec write-empty-catalogue! ::sp/extant-file
+    "writes a stub catalogue to the given `output-file`"
+    [output-file ::sp/file]
+    (write-catalogue (new-catalogue []) output-file))
 
 ;;
 
@@ -251,9 +203,7 @@
             (merge {:source source} (if (= source "curseforge") {:url result} {:source-id result})))
           (warn "unsupported URL"))))))
 
-
 ;;
-
 
 (defn-spec merge-catalogues (s/or :ok :catalogue/catalogue, :error nil?)
   "merges catalogue `cat-b` over catalogue `cat-a`.
@@ -276,23 +226,6 @@
       (format-catalogue-data addon-summary-list datestamp))))
 
 ;; 
-
-(defn de-dupe-wowinterface
-  "at time of writing, wowinterface has 5 pairs of duplicate addons with slightly different labels
-  for each pair we'll pick the most recently updated.
-  these pairs *may* get picked up and filtered out further down when comparing merged catalogues,
-  depending on the time difference between the two updated dates"
-  [addon-list]
-  (let [de-duper (fn [[_ group-list]]
-                   (if (> (count group-list) 1)
-                     (do
-                       (warn "wowinterface: multiple addons slugify to the same :name" (utils/pprint group-list))
-                       (last (sort-by :updated-date group-list)))
-                     (first group-list)))
-        addon-groups (group-by :name addon-list)]
-    (mapv de-duper addon-groups)))
-
-;;
 
 (defn-spec shorten-catalogue (s/or :ok :catalogue/catalogue, :problem nil?)
   "returns a truncated version of `catalogue` where all addons considered unmaintained are removed.

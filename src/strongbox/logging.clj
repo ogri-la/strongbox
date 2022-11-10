@@ -179,6 +179,7 @@
   `(with-addon nil ~@form))
 
 (defmacro with-label
+  "groups log messages using given `label` by hacking the `with-addon` macro"
   [label & form]
   `(with-addon {:name ~label}
      ~@form))

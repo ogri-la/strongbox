@@ -75,7 +75,7 @@
 
           expected [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"
                      :supported-game-tracks [:retail]
-                     :group-id "foo" :primary? true :group-addon-count 2 :group-addons
+                     :group-id "foo" :primary? true :group-addons
                      [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"
                        :supported-game-tracks [:retail]
                        :group-id "foo" :primary? true}
@@ -101,7 +101,7 @@
 
           expected [{:name "a1", :dirname "A1", :label "foo (group)", :description "group record for the foo addon" :interface-version 80300 :installed-version "1.2.3"
                      :supported-game-tracks [:retail]
-                     :group-id "foo" :primary? false :group-addon-count 2 :group-addons
+                     :group-id "foo" :primary? false :group-addons
                      [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"
                        :supported-game-tracks [:retail]
                        :group-id "foo" :primary? false}
@@ -136,7 +136,6 @@
                      :group-id "foo"
                      :primary? true
                      :ignore? true
-                     :group-addon-count 3
                      :group-addons [{:name "a1",
                                      :dirname "A1",
                                      :label "A1",
@@ -335,7 +334,7 @@
       (doseq [[given error-prefix] cases]
         (let [[error-message]
               (logging/buffered-log :error
-                                    (addon/remove-addon install-dir (merge defaults given)))]
+                                    (addon/remove-addon! install-dir (merge defaults given)))]
           (is (= expected (helper/install-dir-contents)))
           (is (clojure.string/starts-with? error-message error-prefix)))))))
 
@@ -709,13 +708,13 @@
 
     ;; sanity checks
     (is (= ["EveryAddon-BundledAddon" "EveryOtherAddon"] (helper/install-dir-contents)))
-    (is (= original-nfo (addon/-read-nfo (helper/install-dir) addon)))
+    (is (= original-nfo (helper/read-nfo (helper/install-dir) addon)))
 
     ;; updated nfo is returned
     (addon/update-nfo! (helper/install-dir) addon updates)
 
     ;; updated nfo is written to disk
-    (is (= expected-nfo (addon/-read-nfo (helper/install-dir) addon)))))
+    (is (= expected-nfo (helper/read-nfo (helper/install-dir) addon)))))
 
 (deftest addon-locks
   (let [cases [[{} #{}]

@@ -1,10 +1,10 @@
 (ns strongbox.cli-test
   (:require
    [clojure.test :refer [deftest testing is use-fixtures]]
-   [strongbox.ui.cli :as cli]
+   [strongbox.cli :as cli]
    [clj-http.fake :refer [with-global-fake-routes-in-isolation]]
    [strongbox
-    [nfo :as nfo]
+    ;;[nfo :as nfo]
     [specs :as specs]
     [utils :as utils]
     [logging :as logging]
@@ -32,37 +32,6 @@
       (doseq [action-kw safe-actions]
         (testing (str "cli: " action)
           (is (nil? (cli/action action-kw))))))))
-
-(deftest write-catalogue
-  (with-running-app
-    (let [full (core/find-catalogue-local-path :full)
-          short (core/find-catalogue-local-path :short)
-
-          ;;curse (core/find-catalogue-local-path :curseforge)
-          wowi (core/find-catalogue-local-path :wowinterface)
-          tukui (core/find-catalogue-local-path :tukui)
-          github (core/find-catalogue-local-path :github)
-
-          num-full-addons (- 4 1) ;; 2022-01-22: curseforge not present in full catalogue
-          num-short-addons 2]
-
-      ;; copy some fixtures
-      ;;(fs/copy (fixture-path "catalogue--v2--curseforge.json") curse)
-      (fs/copy (fixture-path "catalogue--v2--wowinterface.json") wowi)
-      (fs/copy (fixture-path "catalogue--v2--tukui.json") tukui)
-      (fs/copy (fixture-path "catalogue--v2--github.json") github)
-
-      (cli/action :write-catalogue)
-
-      (testing "full and shortened catalogues were written"
-        (is (fs/exists? (core/find-catalogue-local-path :full)))
-        (is (fs/exists? (core/find-catalogue-local-path :short))))
-
-      (testing "each catalogue has one addon each"
-        (is (= num-full-addons (-> full catalogue/read-catalogue :total))))
-
-      (testing "the short catalogue has two addons in range"
-        (is (= num-short-addons (-> short catalogue/read-catalogue :total)))))))
 
 (deftest search-db--empty-db
   (testing "an empty database can be searched from the CLI"
@@ -410,7 +379,7 @@
                        {:get (fn [req] {:status 200 :body "[]"})}
 
                        "https://github.com/Aviana/HealComm/releases/download/2.04/HealComm.zip"
-                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-addon-zip-file)})}}
+                       {:get (fn [req] {:status 200 :body (helper/file-to-lazy-byte-array every-addon-zip-file)})}}
 
           user-url "https://github.com/Aviana/HealComm"
 
@@ -486,7 +455,7 @@
                        {:get (fn [req] {:status 200 :body (slurp (fixture-path "wowinterface-api--addon-details.json"))})}
 
                        "https://cdn.wowinterface.com/downloads/getfile.php?id=25079"
-                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-addon-zip-file)})}}
+                       {:get (fn [req] {:status 200 :body (helper/file-to-lazy-byte-array every-addon-zip-file)})}}
 
           user-url (:url match)]
 
@@ -544,7 +513,7 @@
                        {:get (fn [req] {:status 200 :body (slurp (fixture-path "curseforge-api-addon--everyaddon.json"))})}
 
                        "https://edge.forgecdn.net/files/1/1/EveryAddon.zip"
-                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-addon-zip-file)})}}
+                       {:get (fn [req] {:status 200 :body (helper/file-to-lazy-byte-array every-addon-zip-file)})}}
 
           user-url (:url match)]
 
@@ -615,7 +584,7 @@
                        {:get (fn [req] {:status 200 :body (slurp (fixture-path "tukui--addon-details.json"))})}
 
                        "https://www.tukui.org/addons.php?download=98"
-                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array every-addon-zip-file)})}}
+                       {:get (fn [req] {:status 200 :body (helper/file-to-lazy-byte-array every-addon-zip-file)})}}
 
           user-url (:url match)]
 
@@ -646,7 +615,6 @@
                  (:addon-summary-list (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))))
 
 ;; todo: no import-addon-gitlab ?
-
 
 (deftest refresh-user-catalogue
   (testing "the user catalogue can be 'refreshed', pulling in updated information from github and the current catalogue"
@@ -735,12 +703,12 @@
                 ;; 2021-12: gitlab is an exception here. we have no download count information, it will always be zero.
                 inc-downloads #(if (= (:source %) "gitlab") % (update % :download-count inc))
                 today (utils/datestamp-now-ymd)
-                expected-user-catalogue (-> (core/get-create-user-catalogue)
+                expected-user-catalogue (-> (core/get-user-catalogue)
                                             (update-in [:addon-summary-list] #(mapv inc-downloads %))
                                             (assoc :datestamp today))]
             (cli/refresh-user-catalogue)
             ;; ensure new user-catalogue matches expectations
-            (is (= expected-user-catalogue (core/get-create-user-catalogue)))))))))
+            (is (= expected-user-catalogue (core/get-user-catalogue)))))))))
 
 (deftest refresh-user-catalogue-item
   (testing "individual addons can be refreshed, writing the changes to disk afterwards."
@@ -765,9 +733,7 @@
       (with-redefs [cli/find-addon (fn [& args] (throw (Exception. "catastrophe!")))]
         (is (nil? (cli/refresh-user-catalogue-item helper/addon-summary)))))))
 
-
 ;;
-
 
 (deftest add-summary-to-user-catalogue
   (testing "addon summaries can be added to the user catalogue"
@@ -794,12 +760,7 @@
         (is (= expected (core/get-state :user-catalogue)))
         (is (= expected (catalogue/read-catalogue user-catalogue-file)))))))
 
-
-;;
-
-
 ;; test doesn't seem to live comfortably in `core_test.clj`
-
 
 (deftest install-update-these-in-parallel--bad-download
   (testing "bad downloads are not passed to `core/install-addon`."
@@ -897,88 +858,87 @@
         expected #{"EveryAddon" "EveryAddon-BundledAddon"}]
     (is (= expected (cli/zipfile-locks zipfile-fixture)))))
 
-(deftest install-addon-from-file
-  (testing "an addon can be installed from a zip file."
-    (with-redefs [utils/unique-id (constantly "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")]
-      (with-running-app
-        (let [install-dir (helper/install-dir)
-              fixture (helper/fixture-path "everyaddon--0-1-2.zip")
-              expected [{:description "Does what no other addon does, slightly differently",
-                         :dirname "EveryAddon",
-                         :group-addon-count 2,
-                         :group-addons [{:description "Does what no other addon does, slightly differently",
-                                         :dirname "EveryAddon",
-                                         :group-id "everyaddon-aaaaaaaa",
-                                         :installed-version "1.2.3",
-                                         :interface-version 70000,
-                                         :label "EveryAddon 1.2.3",
-                                         :name "everyaddon",
-                                         :primary? true,
-                                         :supported-game-tracks [:retail]}
-                                        {:description "A useful addon that everyone bundles with their own.",
-                                         :dirname "EveryAddon-BundledAddon",
-                                         :group-id "everyaddon-aaaaaaaa",
-                                         :installed-version "a.b.c",
-                                         :interface-version 80000,
-                                         :label "BundledAddon a.b.c",
-                                         :name "bundledaddon-a.b.c",
-                                         :primary? false,
-                                         :supported-game-tracks [:retail]}],
-                         :group-id "everyaddon-aaaaaaaa",
-                         :installed-version "1.2.3",
-                         :interface-version 70000,
-                         :label "EveryAddon 1.2.3",
-                         :name "everyaddon",
-                         :primary? true,
-                         :supported-game-tracks [:retail],
-                         :update? false}]
-
-              expected-nfo {:group-id "everyaddon-aaaaaaaa", :primary? true}]
-          (cli/install-addon-from-file fixture)
-          (is (= expected (core/get-state :installed-addon-list)))
-          (is (= expected-nfo (nfo/read-nfo-file install-dir "EveryAddon"))))))))
-
-(deftest install-addon-from-file--then-update
-  (testing "an addon can be installed from a zip file."
-    (let [fixture (helper/fixture-path "everyaddon--0-1-2.zip")
-          dummy-catalogue (slurp (fixture-path "catalogue--v2--everyaddon.json"))
-          dummy-host-response (slurp (fixture-path "everyaddon--wowinterface--detail.json"))
-          update-fixture (fixture-path "everyaddon--7-8-9.zip")
-
-          fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
-                       {:get (fn [req] {:status 200 :body dummy-catalogue})}
-
-                       "https://api.mmoui.com/v3/game/WOW/filedetails/1.json"
-                       {:get (fn [req] {:status 200 :body dummy-host-response})}
-
-                       "https://cdn.wowinterface.com/downloads/getfile.php?id=1"
-                       {:get (fn [req] {:status 200 :body (utils/file-to-lazy-byte-array update-fixture)})}}
-
-          ;;expected []
-          expected-nfo {:source "wowinterface",
-                        :source-id 1,
-                        :group-id "https://www.wowinterface.com/downloads/info1",
-
-                        :installed-game-track :retail,
-                        :installed-version "7.8.9",
-                        :name "everyaddon",
-                        :primary? true,
-                        :source-map-list [{:source "wowinterface", :source-id 1}]}]
-
-      (with-global-fake-routes-in-isolation fake-routes
+#_(deftest install-addon-from-file
+    (testing "an addon can be installed from a zip file."
+      (with-redefs [utils/unique-id (constantly "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")]
         (with-running-app
           (let [install-dir (helper/install-dir)
-                _ (cli/install-addon-from-file fixture)
-                _ (core/refresh)
-                addon (first (core/get-state :installed-addon-list))]
+                fixture (helper/fixture-path "everyaddon--0-1-2.zip")
+                expected [{:description "Does what no other addon does, slightly differently",
+                           :dirname "EveryAddon",
+                           :group-addons [{:description "Does what no other addon does, slightly differently",
+                                           :dirname "EveryAddon",
+                                           :group-id "everyaddon-aaaaaaaa",
+                                           :installed-version "1.2.3",
+                                           :interface-version 70000,
+                                           :label "EveryAddon 1.2.3",
+                                           :name "everyaddon",
+                                           :primary? true,
+                                           :supported-game-tracks [:retail]}
+                                          {:description "A useful addon that everyone bundles with their own.",
+                                           :dirname "EveryAddon-BundledAddon",
+                                           :group-id "everyaddon-aaaaaaaa",
+                                           :installed-version "a.b.c",
+                                           :interface-version 80000,
+                                           :label "BundledAddon a.b.c",
+                                           :name "bundledaddon-a-b-c",
+                                           :primary? false,
+                                           :supported-game-tracks [:retail]}],
+                           :group-id "everyaddon-aaaaaaaa",
+                           :installed-version "1.2.3",
+                           :interface-version 70000,
+                           :label "EveryAddon 1.2.3",
+                           :name "everyaddon",
+                           :primary? true,
+                           :supported-game-tracks [:retail],
+                           :update? false}]
 
-            (is (:matched? addon))
-            (is (:update? addon))
+                expected-nfo {:group-id "everyaddon-aaaaaaaa", :primary? true}]
+            (cli/install-addon-from-file fixture)
+            (is (= expected (core/get-state :installed-addon-list)))
+            (is (= expected-nfo (nfo/read-nfo-file install-dir "EveryAddon"))))))))
 
-            (cli/install-update-these-serially [addon])
-            (core/refresh)
+#_(deftest install-addon-from-file--then-update
+    (testing "an addon can be installed from a zip file."
+      (let [fixture (helper/fixture-path "everyaddon--0-1-2.zip")
+            dummy-catalogue (slurp (fixture-path "catalogue--v2--everyaddon.json"))
+            dummy-host-response (slurp (fixture-path "everyaddon--wowinterface--detail.json"))
+            update-fixture (fixture-path "everyaddon--7-8-9.zip")
 
-            (is (= expected-nfo (nfo/read-nfo-file install-dir "EveryAddon")))))))))
+            fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
+                         {:get (fn [req] {:status 200 :body dummy-catalogue})}
+
+                         "https://api.mmoui.com/v3/game/WOW/filedetails/1.json"
+                         {:get (fn [req] {:status 200 :body dummy-host-response})}
+
+                         "https://cdn.wowinterface.com/downloads/getfile.php?id=1"
+                         {:get (fn [req] {:status 200 :body (helper/file-to-lazy-byte-array update-fixture)})}}
+
+          ;;expected []
+            expected-nfo {:source "wowinterface",
+                          :source-id 1,
+                          :group-id "https://www.wowinterface.com/downloads/info1",
+
+                          :installed-game-track :retail,
+                          :installed-version "7.8.9",
+                          :name "everyaddon",
+                          :primary? true,
+                          :source-map-list [{:source "wowinterface", :source-id 1}]}]
+
+        (with-global-fake-routes-in-isolation fake-routes
+          (with-running-app
+            (let [install-dir (helper/install-dir)
+                  _ (cli/install-addon-from-file fixture)
+                  _ (core/refresh)
+                  addon (first (core/get-state :installed-addon-list))]
+
+              (is (:matched? addon))
+              (is (:update? addon))
+
+              (cli/install-update-these-serially [addon])
+              (core/refresh)
+
+              (is (= expected-nfo (nfo/read-nfo-file install-dir "EveryAddon")))))))))
 
 (deftest unique-group-id-from-zip-file
   (let [cases [["/foo/bar/baz.zip" "baz-aaaaaaaa"]

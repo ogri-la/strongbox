@@ -16,7 +16,55 @@
     [specs :as sp]
     [main :as main]
     [core :as core]
-    [utils :as utils]]))
+    [utils :as utils]])
+  (:import
+   [java.util Random]
+   [java.lang StringBuilder]))
+
+;; utils used only during testing
+
+(defn-spec file-to-lazy-byte-array bytes?
+  [path ::sp/extant-file]
+  (let [fobj (java.io.File. ^String path)
+        ary (byte-array (.length fobj))
+        is (java.io.FileInputStream. fobj)]
+    (.read is ary)
+    (.close is)
+    ary))
+
+(defn-spec cp ::sp/extant-file
+  "copies `old-path` into `new-dir`, returning the new full path."
+  [old-path ::sp/extant-file new-dir ::sp/extant-dir]
+  (let [new-path (utils/join new-dir (fs/base-name old-path))]
+    (fs/copy old-path new-path)
+    new-path))
+
+(defn-spec read-nfo ::sp/list-of-maps
+  "reads the nfo data for the given addon and all of it's grouped addons. returns a list of nfo data."
+  [install-dir ::sp/extant-dir, addon map?]
+  (->> addon
+       addon/flatten-addon
+       (map :dirname)
+       (mapv (partial nfo/read-nfo-file install-dir))))
+
+;; `rand-str2`, Istvan
+;; - https://stackoverflow.com/questions/64034761/fast-random-string-generator-in-clojure
+(defn short-unique-id
+  ^String
+  ([]
+   (short-unique-id 8))
+  ([^Long len]
+   (let [leftLimit 97
+         rightLimit 122
+         random (java.util.Random.)
+         stringBuilder (StringBuilder. len)
+         diff (- rightLimit leftLimit)]
+     (dotimes [_ len]
+       (let [ch (char (.intValue ^Double (+ leftLimit (* (.nextFloat ^Random random) (+ diff 1)))))]
+         (.append ^StringBuilder stringBuilder ch)))
+     (.toString ^StringBuilder stringBuilder))))
+
+;;
 
 (def toc-data
   "local addon .toc file"
@@ -176,6 +224,33 @@
        (filter (fn [addon] (= (:group-id addon) group-id)))
        first))
 
+(defn-spec gen-tocfile string?
+  "given `addon` toc data, generates the contents of a `.toc` file.
+  order of keys is deterministic, some keys are renamed.
+  only used during testing."
+  [addon map?]
+  (let [unslug
+        (fn [string]
+          (clojure.string/join "" (map clojure.string/capitalize (clojure.string/split string #"-"))))
+
+        render-line
+        (fn [[key val]]
+          (format "## %s: %s" (unslug (name key)) val))
+
+        rename-map {:interface-version :interface
+                    :label :title
+                    :installed-version :version}
+        toc (clojure.set/rename-keys addon rename-map)
+
+        white-list [:interface :title :version :author :description
+                    :default-state :required-deps :optional-deps :saved-variables]
+        sort-order (keep-indexed vector white-list)
+        sorted-map (sort-by #(get sort-order %1) (select-keys toc white-list))
+
+        footer (str (:dirname addon) ".lua")
+        footer (str "\n" footer)]
+    (clojure.string/join "\n" (conj (mapv render-line sorted-map) footer))))
+
 (defn gen-addon-data
   "generates a complete set of addon data, including toc, nfo, summary, expanded (`:installable`) as well as
   a struct that can be used to create a zipfile that includes a .toc file.
@@ -245,7 +320,6 @@
 
                 ;; nfo data derived from the toc+addon-summary (catalogue entry) data.
 
-
                 derived-nfo {:group-id url
                              :source-map-list [{:source "wowinterface", :source-id "999"}]
                              :installed-game-track game-track
@@ -259,7 +333,7 @@
 
                 ;; zip file contents
                 tocfile-name (str dirname "/" dirname ".toc") ;; EveryAddonOne/EveryAddonOne.toc
-                tocfile (toc/gen-tocfile toc)
+                tocfile (gen-tocfile toc)
                 luafile-name (str dirname "/" dirname ".lua") ;; EveryAddonOne/EveryAddonOne.lua
                 luafile ""
                 filename+content-list [[tocfile-name tocfile]
@@ -282,7 +356,7 @@
         addon-data (mapv #(dissoc % :zip-contents) generated)
 
         ;; multi dir zip file contents
-        output-filename (str nom "-" (utils/short-unique-id) ".zip") ;; EveryAddon-fe3b9639.zip
+        output-filename (str nom "-" (short-unique-id) ".zip") ;; EveryAddon-fe3b9639.zip
         zipfile+contents [output-filename
                           (mapcat :zip-contents generated)]]
 
@@ -301,3 +375,5 @@
   "convenience. just like `gen-addon`, but also writes the generated zip file to the given `output-dir`."
   [output-dir & [opts]]
   (mk-addon! output-dir (gen-addon-data opts)))
+
+;;
