@@ -8,24 +8,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* support for six digit interface versions
-    - Dragonflight is '100000'
-* 'Dragonflight' tooltip for 10.0 addons
+* support for six digit interface versions.
+    - Dragonflight is `100000`
+* 'Dragonflight' tooltip for 10.0 addons.
 
 ### Changed
 
 * the slugify function used on a toc's 'title' value switched to the same one used when building catalogues.
-    - the 'title' value used to be more important as it was used to primarily match an addon within a catalogue. 
-        - It's more of a fallback these days if the addon's 'source' and 'source-id' aren't found in the catalogue.
+    - the 'title' value used to be more important as it was primarily used to match an addon within a catalogue.
+        - it's more of a fallback these days if the addon's `source` and `source-id` aren't found in the catalogue.
 * reviewed a lot of code, lots of very minor shuffling and tweaks that won't affect the user at all.
     - unless of course it breaks something.
     - I was taking advantage of the major version bump to do some unnecessary and hard to justify changes.
-        - plenty more could be done but those will be more specific changes.
+        - plenty more could still be done but I'll tackle them individually.
 
 ### Fixed
 
 * fixed an issue with WotLK toc data having no priority in non-WotLK game tracks.
-    - for example, if an addon directory is using the 'Classic TBC' game track and an addon had 'Classic WotLK' toc data but no TBC toc data, the WotLK toc data would be ignored when it should be preferred over retail toc data.
+    - for example, if an addon directory is using the 'Classic TBC' game track and an addon had 'Classic WotLK' toc data but no TBC toc data, the WotLK toc data would be ignored when it *should* be preferred over retail toc data.
 
 ### Removed
 
@@ -39,7 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - 'scrape-tukui-catalogue'
 * removed support for reading version 1 catalogues built using `wowman` 
     - last release of `wowman` was 2020-06-01
-* removed the 'tag' logic used to normalise and map catagories between addons and addon hosts.
+* removed the 'tag' logic used to normalise and map categories between addons and addon hosts.
     - it was used exclusively for catalogue building and this logic now lives in `ogri-la/strongbox-catalogue-builder`.
 * removed dependencies `org.clojure/data.csv` and `enlive`.
 * removed support for finding `wowman`-era config files.
