@@ -8,15 +8,32 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+* add support for cloning git repositories
+    - switch between branches
+    - switch between tags
+    - could branches/tags be considered 'releases'?
+        - and what if we switch to a different branch and the folder structure changes?
+            - perhaps what we need is a separate place to clone these, and then *copy* them into the addons directory
+    - only available if local git available
+    - how to deal with local changes?
+        - have a policy of wiping out changes. or stashing changes.
+    - how to deal with repository being a mutual dependency?
+        - like, some other addon tries to overwrite it with their own version?
+            - we have ignore rules and pin rules already.
+                - can pinned addons be replaced? I've forgotten.
+
+* fonts are screwy on some systems
+    - https://github.com/ogri-la/strongbox/issues/384
+
+* log pane, bug, the text 'catalogue' is being truncated in multi-line messages
+    - see screenshot Screenshot at 2022-09-24 08-56-35.png
+
 ## todo bucket (no particular order)
 
 * wowinterface, fetch addon data from secondary source
     - *augment* what is currently implemented with my own source
         - failure to fetch this other data shouldn't prevent wowi updates from working normally
     - this source is hosted on github as static content, updated daily.
-
-* log pane, bug, the text 'catalogue' is being truncated in multi-line messages
-    - see screenshot Screenshot at 2022-09-24 08-56-35.png
 
 * 'core/state :db-stats', seems like a nice idea to put more information here
     - known-hosts
