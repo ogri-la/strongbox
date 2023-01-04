@@ -21,6 +21,8 @@ see CHANGELOG.md for a more formal list of changes by release
         - like, some other addon tries to overwrite it with their own version?
             - we have ignore rules and pin rules already.
                 - can pinned addons be replaced? I've forgotten.
+    - how about a shallow clone?
+        - just the files are cloned to a directory
 
 * fonts are screwy on some systems
     - https://github.com/ogri-la/strongbox/issues/384
