@@ -37,7 +37,7 @@
 ;; like during testing the formatting of date durations.
 (def fake-date "2001-01-01")
 
-(def glyph-map
+(def glyph-map--regular
   {:tick "\u2714" ;; '✔'
    :unsteady "\u2941" ;; '⥁' CLOCKWISE CLOSED CIRCLE ARROW
    :warnings "\u2501" ;; '━' heavy horizontal
@@ -47,6 +47,20 @@
    :pinned "\u26ab" ;; '⚫' medium black circle
    :star "\u2605" ;; '★' black star
    })
+
+(def glyph-map--fontawesome
+  {:tick "\uf00c"
+   :unsteady "\uf021"
+   :warnings "\uf068"
+   :errors "\uf00d"
+   :update "\uf2f5"
+   :ignored "\uf056"
+   ;;:pinned "\uf08d" ;; '⚫' medium black circle
+   :pinned "\uf192"
+   :star "\uf005" ;; '★' black star
+   })
+
+(def glyph-map glyph-map--fontawesome)
 
 (def curseforge-cutoff-label "Feb 1st, 2022")
 
