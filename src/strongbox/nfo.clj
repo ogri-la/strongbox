@@ -135,9 +135,10 @@
   "returns a list of `addon/nfo` data for addons using the given `addon-dirname` (including itself)."
   [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname]
   (let [contents (read-nfo-file install-dir addon-dirname)]
-    (if (vector? contents)
-      contents
-      [contents])))
+    (cond
+      (nil? contents) [] ;; an ignored addon may not have nfo data
+      (not (vector? contents)) [contents]
+      :else contents)))
 
 (defn-spec mutual-dependency? boolean?
   "returns `true` if multiple sets of nfo data exist in file"

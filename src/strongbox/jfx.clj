@@ -2164,24 +2164,25 @@
                         :value row})
 
         to-children (fn [a b]
-                      (assoc b :children [a]))
+                      (if (empty? a)
+                        b
+                        (assoc b :children [a])))
 
         install-dir (core/get-state :cfg :selected-addon-dir)
 
         children (if-not (:dirname addon)
                    ;; search result
                    []
-                   ;; todo: move this logic to addon or cli and remove 'nfo' from includes
                    ;; installed addon. read the raw nfo data and create a hierarchy of lowest->highest (see to-children)
                    (for [grouped-addon (addon/flatten-addon addon)
                          :let [mut-deps (nfo/mutual-dependencies install-dir (:dirname grouped-addon))
                                mut-deps-tree-items (map (fn [nfo]
                                                           (to-tree-rows (merge grouped-addon nfo))) mut-deps)]]
-                     (reduce to-children mut-deps-tree-items)))
+                     (reduce to-children {} mut-deps-tree-items)))
 
         root {:fx/type :tree-item
               :expanded true
-              :children children}
+              :children (remove empty? children)}
 
         ;; we need a depth > 1 to show anything meaningful
         depth (utils/find-depth root 0)
