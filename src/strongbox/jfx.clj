@@ -1876,7 +1876,7 @@
                                      :describe (fn [addon-summary]
                                                  (let [starred (starred? addon-summary)
                                                        f (if starred cli/remove-summary-from-user-catalogue cli/add-summary-to-user-catalogue)]
-                                                   {:graphic (button "\u2605"
+                                                   {:graphic (button (:star constants/glyph-map)
                                                                      (async-handler (partial f addon-summary))
                                                                      {:style-class (if starred "starred" "unstarred")})}))}}
 

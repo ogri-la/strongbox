@@ -41,10 +41,11 @@
   {:tick "\u2714" ;; '✔'
    :unsteady "\u2941" ;; '⥁' CLOCKWISE CLOSED CIRCLE ARROW
    :warnings "\u2501" ;; '━' heavy horizontal
-   :errors "\u2A2F" ;; '⨯'
-   :update "\u21A6" ;; '↦'
+   :errors "\u2A2F" ;; '⨯' vector or cross product
+   :update "\u21A6" ;; '↦' rightwards arrow from bar
    :ignored "\u26AA" ;; '⚪' medium white circle
    :pinned "\u26ab" ;; '⚫' medium black circle
+   :star "\u2605" ;; '★' black star
    })
 
 (def curseforge-cutoff-label "Feb 1st, 2022")
