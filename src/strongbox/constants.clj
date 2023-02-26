@@ -53,7 +53,7 @@
    :unsteady "\uf021"
    :warnings "\uf068"
    :errors "\uf00d"
-   :update "\uf2f5"
+   :update "\uf061" ;; arrow_right
    :ignored "\uf056"
    ;;:pinned "\uf08d" ;; '⚫' medium black circle
    :pinned "\uf192"

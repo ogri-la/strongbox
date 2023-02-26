@@ -44,7 +44,7 @@
   (-> resource
       clojure.java.io/resource
       str
-      (Font/loadFont 900.0)))
+      (Font/loadFont 40.0)))
 
 (def embedded-font (load-font-from-resources "fontawesome-4.7.0.ttf"))
 
