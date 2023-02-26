@@ -8,7 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* embedded font for glyphs used in the uber and star buttons for systems running with minimal fonts.
+    - https://github.com/ogri-la/strongbox/issues/384
+
 ### Changed
+
+* glyphs used for the uber and star buttons switched to their close equivalents in the new embedded font
+    - they're a little chunkier now but also look a little better in my estimation.
 
 ### Fixed
 
