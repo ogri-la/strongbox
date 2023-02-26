@@ -3,6 +3,7 @@
    [me.raynes.fs :as fs]
    [clojure.pprint]
    [clojure.set]
+   [clojure.java.io :as io]
    ;;[clojure.core.cache :as cache]
    [clojure.string :refer [lower-case join capitalize replace] :rename {replace str-replace}]
    ;; logging in the gui should be avoided as it can lead to infinite loops
@@ -41,10 +42,7 @@
 
 (defn load-font-from-resources
   [resource]
-  (-> resource
-      clojure.java.io/resource
-      str
-      (Font/loadFont 40.0)))
+  (-> resource io/resource str (Font/loadFont 40.0)))
 
 (def embedded-font (load-font-from-resources "fontawesome-4.7.0.ttf"))
 

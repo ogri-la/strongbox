@@ -50,15 +50,15 @@
    })
 
 (def glyph-map--fontawesome
-  {:tick "\uf00c"
-   :unsteady "\uf021"
-   :warnings "\uf068"
-   :errors "\uf00d"
-   :update "\uf061" ;; arrow_right
-   :ignored "\uf056"
-   :pinned "\uf192"
-   :star "\uf005" ;; '★' black star
-   :right-arrow "\uf061" ;; arrow_right
+  {:tick "\uf00c" ;; check
+   :unsteady "\uf021" ;; arrows rotate
+   :warnings "\uf068" ;; minus
+   :errors "\uf00d" ;; xmark
+   :update "\uf061" ;; arrow-right
+   :ignored "\uf056" ;; circle minus
+   :pinned "\uf192" ;; circle dot
+   :star "\uf005" ;; star
+   :right-arrow "\uf061" ;; arrow-right
    })
 
 (def glyph-map glyph-map--fontawesome)
