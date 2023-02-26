@@ -3,6 +3,7 @@
    [me.raynes.fs :as fs]
    [clojure.pprint]
    [clojure.set]
+   [clojure.java.io :as io]
    ;;[clojure.core.cache :as cache]
    [clojure.string :refer [lower-case join capitalize replace] :rename {replace str-replace}]
    ;; logging in the gui should be avoided as it can lead to infinite loops
@@ -28,6 +29,7 @@
     [utils :as utils :refer [no-new-lines message-list]]
     [core :as core]])
   (:import
+   [javafx.scene.text Font]
    [java.util List Calendar Locale]
    [javafx.util Callback]
    [javafx.scene.control TreeTableRow TableRow TextInputDialog Alert Alert$AlertType ButtonType]
@@ -37,6 +39,12 @@
    [javafx.scene Node]
    [javafx.event Event]
    [java.text NumberFormat]))
+
+(defn load-font-from-resources
+  [resource]
+  (-> resource io/resource str (Font/loadFont 40.0)))
+
+(def embedded-font (load-font-from-resources "fontawesome-4.7.0.ttf"))
 
 ;; javafx hack, fixes combobox that sometimes goes blank:
 ;; - https://github.com/cljfx/cljfx/issues/76#issuecomment-645563116
@@ -369,7 +377,7 @@
                   :-fx-spacing "1em"}
 
                  ".big-welcome-subtext"
-                 {:-fx-font-size "1.8em"
+                 {:-fx-font-size "1.6em"
                   :-fx-font-family "monospace"
                   :-fx-padding ".8em 0 1em 0"}}
 
@@ -388,9 +396,10 @@
                  {:-fx-alignment "center"}
 
                  ".uber-button"
-                 {:-fx-font-size "1.5em"
+                 {:-fx-font-size "1.3em"
+                  :-fx-padding "1 0"
                   :-fx-text-fill (colour :uber-button-tick) ;; green tick
-                  :-fx-font-weight "bold"}
+                  :-fx-font-family "'FontAwesome'"}
 
                  ".table-row-cell.warnings .invisible-button-column > .uber-button"
                  {;; orange bar
@@ -485,8 +494,8 @@
                 {:-fx-text-fill (colour :star-hover)}
 
                 ".star-column > .button"
-                {:-fx-padding "-0.25em !important"
-                 :-fx-font-size "1.9em"
+                {:-fx-padding "1 0"
+                 :-fx-font-size "1.3em"
                  :-fx-text-fill (colour :star-unstarred)
 
                  ".starred"
@@ -500,8 +509,8 @@
 
                 "#search-user-catalogue-button"
                 {:-fx-font-weight "bold"
-                 :-fx-font-size "1.4em"
-                 :-fx-padding "1 7"
+                 :-fx-font-size "1.2em"
+                 :-fx-padding "2 7 "
 
                  ".starred" {:-fx-text-fill (colour :star-starred)
                              ;; the yellow of the star doesn't stand out from the gray gradient behind it.
@@ -1694,7 +1703,9 @@
                                         :text "STRONGBOX"}
                                        {:fx/type :label
                                         :style-class ["big-welcome-subtext"]
-                                        :text "\"File\" \u2794 \"New addon directory\""}]}
+                                        ;; note! glyph is using FontAwesome map but the font-family is 'monospace'.
+                                        ;; it could be java is looking for missing glyphs in other loaded fonts?
+                                        :text (str "\"File\" " (:right-arrow constants/glyph-map) " \"New addon directory\"")}]}
 
                            (empty? column-list)
                            {:fx/type :v-box
@@ -1876,7 +1887,7 @@
                                      :describe (fn [addon-summary]
                                                  (let [starred (starred? addon-summary)
                                                        f (if starred cli/remove-summary-from-user-catalogue cli/add-summary-to-user-catalogue)]
-                                                   {:graphic (button "\u2605"
+                                                   {:graphic (button (:star constants/glyph-map)
                                                                      (async-handler (partial f addon-summary))
                                                                      {:style-class (if starred "starred" "unstarred")})}))}}
 
@@ -1977,7 +1988,7 @@
                  :text (core/get-state :search :term) ;; this seems ok, probably has it's own drawbacks
                  :on-text-changed cli/search}
 
-                (button "\u2605" (async-handler #(cli/search-toggle-filter :user-catalogue))
+                (button (:star constants/glyph-map) (async-handler #(cli/search-toggle-filter :user-catalogue))
                         {:id "search-user-catalogue-button"
                          :style-class (if (-> search-state :filter-by :user-catalogue) "starred" "unstarred")})
 

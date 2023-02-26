@@ -6,6 +6,11 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
+* fonts are screwy on some systems
+    - https://github.com/ogri-la/strongbox/issues/384
+    - embedded an older, smaller, lighter fontawesome and switched the glyphs
+    - done
+
 ## todo
 
 * add support for cloning git repositories
@@ -24,11 +29,11 @@ see CHANGELOG.md for a more formal list of changes by release
     - how about a shallow clone?
         - just the files are cloned to a directory
 
-* fonts are screwy on some systems
-    - https://github.com/ogri-la/strongbox/issues/384
 
 * log pane, bug, the text 'catalogue' is being truncated in multi-line messages
     - see screenshot Screenshot at 2022-09-24 08-56-35.png
+
+* dark theme, 'wow' column text is black on black for some reason
 
 ## todo bucket (no particular order)
 
