@@ -46,6 +46,7 @@
    :ignored "\u26AA" ;; '⚪' medium white circle
    :pinned "\u26ab" ;; '⚫' medium black circle
    :star "\u2605" ;; '★' black star
+   :right-arrow "\u2794" ;; '➔' HEAVY WIDE-HEADED RIGHTWARDS ARROW
    })
 
 (def glyph-map--fontawesome
@@ -55,9 +56,9 @@
    :errors "\uf00d"
    :update "\uf061" ;; arrow_right
    :ignored "\uf056"
-   ;;:pinned "\uf08d" ;; '⚫' medium black circle
    :pinned "\uf192"
    :star "\uf005" ;; '★' black star
+   :right-arrow "\uf061" ;; arrow_right
    })
 
 (def glyph-map glyph-map--fontawesome)

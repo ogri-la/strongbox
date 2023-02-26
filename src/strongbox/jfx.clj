@@ -379,7 +379,7 @@
                   :-fx-spacing "1em"}
 
                  ".big-welcome-subtext"
-                 {:-fx-font-size "1.8em"
+                 {:-fx-font-size "1.6em"
                   :-fx-font-family "monospace"
                   :-fx-padding ".8em 0 1em 0"}}
 
@@ -1705,7 +1705,9 @@
                                         :text "STRONGBOX"}
                                        {:fx/type :label
                                         :style-class ["big-welcome-subtext"]
-                                        :text "\"File\" \u2794 \"New addon directory\""}]}
+                                        ;; note! glyph is using FontAwesome map but the font-family is 'monospace'.
+                                        ;; it could be java is looking for missing glyphs in other loaded fonts?
+                                        :text (str "\"File\" " (:right-arrow constants/glyph-map) " \"New addon directory\"")}]}
 
                            (empty? column-list)
                            {:fx/type :v-box
