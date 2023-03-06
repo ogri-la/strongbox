@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * characters in multi-line messages in the notice logger no longer get their descenders ('y', 'g', 'p', etc) truncated.
 * ignored addons in the addon detail pane now display mutual dependencies (if any).
+* 'WoW' column text was black with a dark background in dark mode, making the value illegible.
 
 ### Removed
 

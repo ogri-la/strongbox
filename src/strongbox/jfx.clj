@@ -395,6 +395,12 @@
                 {".wow-column"
                  {:-fx-alignment "center"}
 
+                 ;; 2023-03-04: 'WoW' column text was black in dark mode, missing styling from 'table-cell'.
+                 ;; added 'table-cell' to the :game-version `:desc`, but then it had a border-right-width of 1,
+                 ;; which is only present in buttons. not sure what is going on but this fixes that.
+                 ".wow-column .table-cell"
+                 {:-fx-border-width "0"}
+
                  ".uber-button"
                  {:-fx-font-size "1.3em"
                   :-fx-padding "1 0"
@@ -1263,6 +1269,7 @@
                                                                                   ;; the tooltip will be long and intrusive, make delay longer than typical.
                                                                                   :show-delay 400}}
                                                                 :desc {:fx/type :label
+                                                                       :style-class ["table-cell"]
                                                                        :text text}}}))}}
 
          :uber-button {:min-width 80 :pref-width 80 :max-width 120 :style-class ["invisible-button-column"]
