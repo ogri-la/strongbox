@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+* characters in multi-line messages in the notice logger no longer get their descenders ('y', 'g', 'p', etc) truncated.
+* ignored addons in the addon detail pane now display mutual dependencies (if any).
+
 ### Removed
 
 ## 6.0.0 - 2022-11-10
