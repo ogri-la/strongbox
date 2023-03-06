@@ -472,7 +472,10 @@
                  {:-fx-alignment "center"}
 
                  "#message.column-header .label"
-                 {:-fx-alignment "center-left"}}
+                 {:-fx-alignment "center-left"}
+
+                 ".table-row-cell .message-text"
+                 {:-fx-fill "-fx-text-background-color"}}
 
                ;;
                ;; notice-logger-nav
@@ -1791,7 +1794,13 @@
         column-list [{:id "source" :text "source" :pref-width source-width :max-width source-width :min-width source-width :cell-value-factory source-label}
                      {:id "level" :text "level" :max-width 80 :cell-value-factory (comp name :level)}
                      {:id "time" :text "time" :max-width 100 :cell-value-factory :time}
-                     {:id "message" :text "message" :pref-width 500 :cell-value-factory :message}]
+                     {:id "message" :text "message" :pref-width 500
+                      :cell-factory {:fx/cell-type :table-cell
+                                     :describe (fn [row]
+                                                 {:graphic {:fx/type :text
+                                                            :style-class ["message-text"]
+                                                            :text (get row :message "")}})}
+                      :cell-value-factory identity}]
 
         log-level-list [:debug :info :warn :error] ;; :report] ;; 'reports' won't be interesting, no need to filter by them right now.
         log-level-list (if-not (contains? level-occurances :debug)
