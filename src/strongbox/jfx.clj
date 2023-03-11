@@ -1983,7 +1983,7 @@
         tag-button (fn [tag]
                      (button (name tag) (async-handler #(cli/search-rm-filter :tag tag))))
 
-        tag-membership ["any-of" "all-of"]
+        tag-membership ["any of" "all of"]
         tag-any-all {:fx/type :combo-box
                      :id "tag-any-all-of"
                      :value (first tag-membership)
