@@ -82,6 +82,7 @@
   {:term nil
    :filter-by {:source nil
                :tag #{}
+               :tag-membership "any-of" ;; "all-of"
                :user-catalogue false}
    :page 0
    :results []
@@ -876,8 +877,10 @@
          tag-filter (if-not (empty? tag-set)
                       (fn [row]
                         (if-let [row-tag-set (set (:tag-list row))]
-                          ;; if the addon contains *some* of the selected tags, include it
-                          (some tag-set row-tag-set)))
+                          (if (-> filter-by :tag-membership (= "any-of"))
+                            ;; if the addon contains *some* of the selected tags, include it
+                            (some tag-set row-tag-set)
+                            (clojure.set/subset? tag-set row-tag-set))))
                       constantly-true)
 
          db (->> db

@@ -19,7 +19,11 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+* add a .desktop file for AUR installations
+    - ...
+
 * add support for cloning git repositories
+    - this is to get around addon repositories not uploading 'releases' when tagging
     - switch between branches
     - switch between tags
     - could branches/tags be considered 'releases'?
@@ -36,6 +40,16 @@ see CHANGELOG.md for a more formal list of changes by release
         - just the files are cloned to a directory
 
 ## todo bucket (no particular order)
+
+* size of addon on disk
+    - I'd like to see a column with 'size on disk'
+        - "1024KiB", "1MiB", "1.04MB"
+    - I'd like to see a total size of all addons in addon dir
+        - "1024MiB", "1GiB"
+    - I'd like to see size of disk and free space
+        - "2TiB of 14TiB free"
+    - and everything mooshed together
+        - "1GiB of addons on /dev/foo with 2TiB of 14TiB available"
 
 * wowinterface, fetch addon data from secondary source
     - *augment* what is currently implemented with my own source

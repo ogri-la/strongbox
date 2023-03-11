@@ -202,7 +202,8 @@
   [filter-by :search/filter-by, val any?]
   (case filter-by
     :source (swap! core/state assoc-in [:search :filter-by filter-by] (utils/nilable val))
-    :tag (swap! core/state update-in [:search :filter-by filter-by] conj val))
+    :tag (swap! core/state update-in [:search :filter-by filter-by] conj val)
+    :tag-membership (swap! core/state assoc-in [:search :filter-by filter-by] val))
   nil)
 
 (defn-spec search-rm-filter nil?
