@@ -1890,11 +1890,17 @@
 
         ;; rare case when there are precisely $cap results, the next page is empty
         empty-next-page (and (= 0 (count addon-list))
-                             (> (-> search-state :page) 0))
+                             (-> search-state :page (> 0)))
 
         tag-set (-> search-state :filter-by :tag)
         tag-selected (fn [tag]
                        (some #{tag} tag-set))
+
+        tag-button (fn [tag]
+                     (when-not (tag-selected tag)
+                       (button (name tag)
+                               (async-handler #(cli/search-add-filter :tag tag))
+                               {:tooltip (name tag)})))
 
         column-list [{:text "" :style-class ["invisible-button-column" "star-column"]
                       :min-width 50 :pref-width 50 :max-width 50
@@ -1919,13 +1925,7 @@
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [row]
                                                  {:graphic {:fx/type :h-box
-                                                            :children (remove nil?
-                                                                              (map (fn [tag]
-                                                                                     (when-not (tag-selected tag)
-                                                                                       (button (name tag)
-                                                                                               (async-handler #(cli/search-add-filter :tag tag))
-                                                                                               {:tooltip (name tag)})))
-                                                                                   (:tag-list row)))}})}}
+                                                            :children (remove nil? (map tag-button (:tag-list row)))}})}}
                      {:text "updated" :min-width 90 :pref-width 110 :max-width 120 :resizable false
                       :cell-value-factory :updated-date
                       :cell-factory {:fx/cell-type :table-cell
@@ -1983,6 +1983,18 @@
         tag-button (fn [tag]
                      (button (name tag) (async-handler #(cli/search-rm-filter :tag tag))))
 
+        tag-membership ["any of" "all of"]
+        tag-any-all {:fx/type :combo-box
+                     :id "tag-any-all-of"
+                     :value (first tag-membership)
+                     :on-value-changed (async-event-handler #(cli/search-add-filter :tag-membership %))
+                     :items tag-membership}
+
+        tag-buttons (mapv tag-button tag-set)
+        tag-buttons (if-not (empty? tag-buttons)
+                      (into [tag-any-all] tag-buttons)
+                      [])
+
         num-selected (count (:selected-result-list search-state))
 
         row-1 {:fx/type :h-box
@@ -2039,7 +2051,7 @@
 
         row-2 {:fx/type :h-box
                :id "search-selected-tag-bar"
-               :children (mapv tag-button tag-set)}]
+               :children tag-buttons}]
 
     (if (empty? tag-set)
       row-1

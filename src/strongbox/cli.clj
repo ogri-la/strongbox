@@ -197,23 +197,33 @@
     (doseq [path path-list]
       (core/state-bind path listener))))
 
+(defn-spec reset-search-navigation nil?
+  "returns the search results to page 1"
+  []
+  (swap! core/state assoc-in [:search :page] 0)
+  nil)
+
 (defn-spec search-add-filter nil?
   "adds a new filter to the search `filter-by` state."
   [filter-by :search/filter-by, val any?]
+  (reset-search-navigation)
   (case filter-by
     :source (swap! core/state assoc-in [:search :filter-by filter-by] (utils/nilable val))
-    :tag (swap! core/state update-in [:search :filter-by filter-by] conj val))
+    :tag (swap! core/state update-in [:search :filter-by filter-by] conj val)
+    :tag-membership (swap! core/state assoc-in [:search :filter-by filter-by] val))
   nil)
 
 (defn-spec search-rm-filter nil?
   "removes a filter from the search `filter-by` state."
   [filter-by :search/filter-by, val any?]
+  (reset-search-navigation)
   (swap! core/state update-in [:search :filter-by filter-by] clojure.set/difference #{val})
   nil)
 
 (defn-spec search-toggle-filter nil?
   "toggles boolean filters on and off"
   [filter-by :search/filter-by]
+  (reset-search-navigation)
   (swap! core/state update-in [:search :filter-by filter-by] not)
   nil)
 

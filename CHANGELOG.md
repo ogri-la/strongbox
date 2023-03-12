@@ -8,16 +8,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* filtering search results by tag can now be switched between inclusive ('any of', default) and exclusive ('all of').
 * embedded font for glyphs used in the uber and star buttons for systems running with minimal fonts.
     - https://github.com/ogri-la/strongbox/issues/384
 
 ### Changed
 
+* search results filtered by tag are no longer sampled when no search input is available.
+    - this means you can now browse addons by tags alone if there are more addons that can fit on a single page of results.
 * glyphs used for the uber and star buttons switched to their close equivalents in the new embedded font
     - they're a little chunkier now but also look a little better in my estimation.
 
 ### Fixed
 
+* page >1 of search results that were then filtered further may have displayed the 'mascot' screen (ᕙ[°▿°]ᕗ)
+    - this was because the pagination wasn't being reset and there was no 'page N' for the given set of filters.
+    - the 'mascot' screen is still (deliberately) displayed in rare cases.
 * characters in multi-line messages in the notice logger no longer get their descenders ('y', 'g', 'p', etc) truncated.
 * ignored addons in the addon detail pane now display mutual dependencies (if any).
 * 'WoW' column text was black with a dark background in dark mode, making the value illegible.
