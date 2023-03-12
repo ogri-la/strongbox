@@ -893,7 +893,7 @@
                  (filter host-filter)
                  (filter tag-filter))
 
-         random-sample? (and (nil? uin) 
+         random-sample? (and (nil? uin)
                              (empty? selected-tag-set)
                              (not (:user-catalogue filter-by)))]
 

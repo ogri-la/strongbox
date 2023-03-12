@@ -151,18 +151,32 @@
           (is (= 1 (-> (core/get-state :search :results) page-1 count)))
           (is (= "tukui" (-> (core/get-state :search :results) page-1 first :source)))
 
-          ;; results are OR'ed
+          ;; results are OR'ed by default ...
           (cli/search-add-filter :tag :vendors)
           (is (= #{:vendors :ui} (core/get-state :search :filter-by :tag)))
-
           (Thread/sleep 10)
           (is (= 2 (-> (core/get-state :search :results) page-1 count)))
           (is (= "wowinterface" (->> (core/get-state :search :results) page-1 first :source)))
           (is (= "tukui" (-> (core/get-state :search :results) page-1 second :source)))
 
+          ;; ... but can also be AND'ed
+          (cli/search-add-filter :tag-membership "all of")
+          (is (= "all of" (core/get-state :search :filter-by :tag-membership)))
+          (Thread/sleep 10)
+
+          ;; (no addons tagged with both 'ui' and 'vendors')
+          (is (= 0 (-> (core/get-state :search :results) page-1 count)))
+
           ;; filters can be removed
           (cli/search-rm-filter :tag :ui)
           (is (= #{:vendors} (core/get-state :search :filter-by :tag)))
+          (Thread/sleep 10)
+          (is (= "wowinterface" (->> (core/get-state :search :results) page-1 first :source)))
+
+          (cli/search-add-filter :tag :auction-house)
+          (is (= #{:vendors :auction-house} (core/get-state :search :filter-by :tag)))
+          (Thread/sleep 10)
+          (is (= 1 (-> (core/get-state :search :results) page-1 count)))
           (is (= "wowinterface" (->> (core/get-state :search :results) page-1 first :source))))))))
 
 (deftest search-db--navigate
