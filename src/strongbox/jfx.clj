@@ -1990,8 +1990,9 @@
                      :on-value-changed (async-event-handler #(cli/search-add-filter :tag-membership %))
                      :items tag-membership}
 
-        tag-buttons (if-let [tags (mapv tag-button tag-set)]
-                      (into [tag-any-all] tags)
+        tag-buttons (mapv tag-button tag-set)
+        tag-buttons (if-not (empty? tag-buttons)
+                      (into [tag-any-all] tag-buttons)
                       [])
 
         num-selected (count (:selected-result-list search-state))

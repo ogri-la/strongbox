@@ -134,7 +134,7 @@
     (let [catalogue (slurp (fixture-path "catalogue--v2.json"))
           fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                        {:get (fn [req] {:status 200 :body catalogue})}}
-          page-1 0]
+          page-1 first]
       (with-global-fake-routes-in-isolation fake-routes
         (with-running-app
           ;; populate the search
@@ -142,26 +142,28 @@
           (Thread/sleep 10)
 
           ;; sanity check
-          (is (= 4 (count (core/get-state :search :results page-1))))
+          (is (= 4 (-> (core/get-state :search :results) page-1 count)))
 
           (cli/search-add-filter :tag :ui)
           (is (= #{:ui} (core/get-state :search :filter-by :tag)))
           (Thread/sleep 10)
-          (is (= 1 (count (core/get-state :search :results page-1))))
-          (is (= "tukui" (-> (core/get-state :search :results page-1) first :source)))
+
+          (is (= 1 (-> (core/get-state :search :results) page-1 count)))
+          (is (= "tukui" (-> (core/get-state :search :results) page-1 first :source)))
 
           ;; results are OR'ed
           (cli/search-add-filter :tag :vendors)
           (is (= #{:vendors :ui} (core/get-state :search :filter-by :tag)))
+
           (Thread/sleep 10)
-          (is (= 2 (count (core/get-state :search :results page-1))))
-          (is (= "wowinterface" (->> (core/get-state :search :results page-1) first :source)))
-          (is (= "tukui" (-> (core/get-state :search :results page-1) second :source)))
+          (is (= 2 (-> (core/get-state :search :results) page-1 count)))
+          (is (= "wowinterface" (->> (core/get-state :search :results) page-1 first :source)))
+          (is (= "tukui" (-> (core/get-state :search :results) page-1 second :source)))
 
           ;; filters can be removed
           (cli/search-rm-filter :tag :ui)
           (is (= #{:vendors} (core/get-state :search :filter-by :tag)))
-          (is (= "wowinterface" (->> (core/get-state :search :results page-1) first :source))))))))
+          (is (= "wowinterface" (->> (core/get-state :search :results) page-1 first :source))))))))
 
 (deftest search-db--navigate
   (testing "a populated database can be searched forwards and backwards from the CLI"
