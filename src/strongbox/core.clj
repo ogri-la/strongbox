@@ -82,6 +82,7 @@
   {:term nil
    :filter-by {:source nil
                :tag #{}
+               :tag-membership "any of" ;; "all of"
                :user-catalogue false}
    :page 0
    :results []
@@ -872,13 +873,20 @@
                          (utils/in? (:source row) source-list))
                        constantly-true)
 
-         tag-set (:tag filter-by)
-         tag-filter (if-not (empty? tag-set)
-                      (fn [row]
-                        (if-let [row-tag-set (set (:tag-list row))]
-                          ;; if the addon contains *some* of the selected tags, include it
-                          (some tag-set row-tag-set)))
-                      constantly-true)
+         selected-tag-set (:tag filter-by)
+         tag-filter (if (empty? selected-tag-set)
+                      constantly-true
+                      (fn [addon]
+                        (let [addon-tag-set (-> addon :tag-list set)
+                              tag-membership (:tag-membership filter-by)]
+                          (cond
+                            ;; exclude addon if tags have been selected but it has no tags
+                            (empty? addon-tag-set) false
+                            ;; include addon if it contains *some* of the selected tags
+                            (= tag-membership "any of") (some selected-tag-set addon-tag-set)
+                            ;; include addon if it contains *all* of the selected tags
+                            (= tag-membership "all of") (clojure.set/subset? selected-tag-set addon-tag-set)
+                            :else false))))
 
          db (->> db
                  (filter user-catalogue-filter)
@@ -886,6 +894,7 @@
                  (filter tag-filter))
 
          random-sample? (and (nil? uin)
+                             (empty? selected-tag-set)
                              (not (:user-catalogue filter-by)))]
 
      ;; no/empty input, do a random sample

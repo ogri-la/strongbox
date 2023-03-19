@@ -452,4 +452,4 @@
 
 ;; search
 
-(s/def :search/filter-by #{:source :tag :user-catalogue})
+(s/def :search/filter-by #{:source :tag :tag-membership :user-catalogue})

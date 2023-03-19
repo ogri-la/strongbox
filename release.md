@@ -17,6 +17,7 @@ git checkout master
 git pull
 git checkout develop
 git merge master
+lein clean
 
 truncate TODO
 update CHANGELOG with new sections from bottom

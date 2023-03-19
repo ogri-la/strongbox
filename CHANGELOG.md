@@ -4,6 +4,35 @@ All notable changes to this project will be documented in this file. This change
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 6.1.0 - 2023-03-19
+
+### Added
+
+* filtering search results by tag can now be switched between inclusive ('any of', default) and exclusive ('all of').
+* embedded font for glyphs used in the uber and star buttons for systems running with minimal fonts.
+    - https://github.com/ogri-la/strongbox/issues/384
+* an app launcher to desktop environments that support them.
+    - for me, `strongbox` was found under the `Games` menu item.
+    - only for installations via the AUR
+        - the `.desktop` file can be found here: https://github.com/ogri-la/strongbox-pkgbuild/blob/master/strongbox.desktop
+
+### Changed
+
+* search results filtered by tag are no longer sampled when no search input is available.
+    - this means you can now browse addons by tags alone if there are more addons that can fit on a single page of results.
+* glyphs used for the uber and star buttons switched to their close equivalents in the new embedded font
+    - they're a little chunkier now but also look a little better in my estimation.
+* moved some files used for building the AppImage from the root into a directory called `AppImage`.
+
+### Fixed
+
+* page >1 of search results that were then filtered further may have displayed the 'mascot' screen (ᕙ[°▿°]ᕗ)
+    - this was because the pagination wasn't being reset and there was no 'page N' for the given set of filters.
+    - the 'mascot' screen is still (deliberately) displayed in rare cases.
+* characters in multi-line messages in the notice logger no longer get their descenders ('y', 'g', 'p', etc) truncated.
+* ignored addons in the addon detail pane now display mutual dependencies (if any).
+* 'WoW' column text was black with a dark background in dark mode, making the value illegible.
+
 ## 6.0.0 - 2022-11-10
 
 ### Added

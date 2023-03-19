@@ -3,6 +3,7 @@
    [me.raynes.fs :as fs]
    [clojure.pprint]
    [clojure.set]
+   [clojure.java.io :as io]
    ;;[clojure.core.cache :as cache]
    [clojure.string :refer [lower-case join capitalize replace] :rename {replace str-replace}]
    ;; logging in the gui should be avoided as it can lead to infinite loops
@@ -28,6 +29,7 @@
     [utils :as utils :refer [no-new-lines message-list]]
     [core :as core]])
   (:import
+   [javafx.scene.text Font]
    [java.util List Calendar Locale]
    [javafx.util Callback]
    [javafx.scene.control TreeTableRow TableRow TextInputDialog Alert Alert$AlertType ButtonType]
@@ -37,6 +39,12 @@
    [javafx.scene Node]
    [javafx.event Event]
    [java.text NumberFormat]))
+
+(defn load-font-from-resources
+  [resource]
+  (-> resource io/resource str (Font/loadFont 40.0)))
+
+(def embedded-font (load-font-from-resources "fontawesome-4.7.0.ttf"))
 
 ;; javafx hack, fixes combobox that sometimes goes blank:
 ;; - https://github.com/cljfx/cljfx/issues/76#issuecomment-645563116
@@ -369,7 +377,7 @@
                   :-fx-spacing "1em"}
 
                  ".big-welcome-subtext"
-                 {:-fx-font-size "1.8em"
+                 {:-fx-font-size "1.6em"
                   :-fx-font-family "monospace"
                   :-fx-padding ".8em 0 1em 0"}}
 
@@ -387,10 +395,17 @@
                 {".wow-column"
                  {:-fx-alignment "center"}
 
+                 ;; 2023-03-04: 'WoW' column text was black in dark mode, missing styling from 'table-cell'.
+                 ;; added 'table-cell' to the :game-version `:desc`, but then it had a border-right-width of 1,
+                 ;; which is only present in buttons. not sure what is going on but this fixes that.
+                 ".wow-column .table-cell"
+                 {:-fx-border-width "0"}
+
                  ".uber-button"
-                 {:-fx-font-size "1.5em"
+                 {:-fx-font-size "1.3em"
+                  :-fx-padding "1 0"
                   :-fx-text-fill (colour :uber-button-tick) ;; green tick
-                  :-fx-font-weight "bold"}
+                  :-fx-font-family "'FontAwesome'"}
 
                  ".table-row-cell.warnings .invisible-button-column > .uber-button"
                  {;; orange bar
@@ -463,7 +478,10 @@
                  {:-fx-alignment "center"}
 
                  "#message.column-header .label"
-                 {:-fx-alignment "center-left"}}
+                 {:-fx-alignment "center-left"}
+
+                 ".table-row-cell .message-text"
+                 {:-fx-fill "-fx-text-background-color"}}
 
                ;;
                ;; notice-logger-nav
@@ -485,8 +503,8 @@
                 {:-fx-text-fill (colour :star-hover)}
 
                 ".star-column > .button"
-                {:-fx-padding "-0.25em !important"
-                 :-fx-font-size "1.9em"
+                {:-fx-padding "1 0"
+                 :-fx-font-size "1.3em"
                  :-fx-text-fill (colour :star-unstarred)
 
                  ".starred"
@@ -500,8 +518,8 @@
 
                 "#search-user-catalogue-button"
                 {:-fx-font-weight "bold"
-                 :-fx-font-size "1.4em"
-                 :-fx-padding "1 7"
+                 :-fx-font-size "1.2em"
+                 :-fx-padding "2 7 "
 
                  ".starred" {:-fx-text-fill (colour :star-starred)
                              ;; the yellow of the star doesn't stand out from the gray gradient behind it.
@@ -1251,6 +1269,7 @@
                                                                                   ;; the tooltip will be long and intrusive, make delay longer than typical.
                                                                                   :show-delay 400}}
                                                                 :desc {:fx/type :label
+                                                                       :style-class ["table-cell"]
                                                                        :text text}}}))}}
 
          :uber-button {:min-width 80 :pref-width 80 :max-width 120 :style-class ["invisible-button-column"]
@@ -1694,7 +1713,9 @@
                                         :text "STRONGBOX"}
                                        {:fx/type :label
                                         :style-class ["big-welcome-subtext"]
-                                        :text "\"File\" \u2794 \"New addon directory\""}]}
+                                        ;; note! glyph is using FontAwesome map but the font-family is 'monospace'.
+                                        ;; it could be java is looking for missing glyphs in other loaded fonts?
+                                        :text (str "\"File\" " (:right-arrow constants/glyph-map) " \"New addon directory\"")}]}
 
                            (empty? column-list)
                            {:fx/type :v-box
@@ -1780,7 +1801,13 @@
         column-list [{:id "source" :text "source" :pref-width source-width :max-width source-width :min-width source-width :cell-value-factory source-label}
                      {:id "level" :text "level" :max-width 80 :cell-value-factory (comp name :level)}
                      {:id "time" :text "time" :max-width 100 :cell-value-factory :time}
-                     {:id "message" :text "message" :pref-width 500 :cell-value-factory :message}]
+                     {:id "message" :text "message" :pref-width 500
+                      :cell-factory {:fx/cell-type :table-cell
+                                     :describe (fn [row]
+                                                 {:graphic {:fx/type :text
+                                                            :style-class ["message-text"]
+                                                            :text (get row :message "")}})}
+                      :cell-value-factory identity}]
 
         log-level-list [:debug :info :warn :error] ;; :report] ;; 'reports' won't be interesting, no need to filter by them right now.
         log-level-list (if-not (contains? level-occurances :debug)
@@ -1863,11 +1890,17 @@
 
         ;; rare case when there are precisely $cap results, the next page is empty
         empty-next-page (and (= 0 (count addon-list))
-                             (> (-> search-state :page) 0))
+                             (-> search-state :page (> 0)))
 
         tag-set (-> search-state :filter-by :tag)
         tag-selected (fn [tag]
                        (some #{tag} tag-set))
+
+        tag-button (fn [tag]
+                     (when-not (tag-selected tag)
+                       (button (name tag)
+                               (async-handler #(cli/search-add-filter :tag tag))
+                               {:tooltip (name tag)})))
 
         column-list [{:text "" :style-class ["invisible-button-column" "star-column"]
                       :min-width 50 :pref-width 50 :max-width 50
@@ -1876,7 +1909,7 @@
                                      :describe (fn [addon-summary]
                                                  (let [starred (starred? addon-summary)
                                                        f (if starred cli/remove-summary-from-user-catalogue cli/add-summary-to-user-catalogue)]
-                                                   {:graphic (button "\u2605"
+                                                   {:graphic (button (:star constants/glyph-map)
                                                                      (async-handler (partial f addon-summary))
                                                                      {:style-class (if starred "starred" "unstarred")})}))}}
 
@@ -1892,13 +1925,7 @@
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [row]
                                                  {:graphic {:fx/type :h-box
-                                                            :children (remove nil?
-                                                                              (map (fn [tag]
-                                                                                     (when-not (tag-selected tag)
-                                                                                       (button (name tag)
-                                                                                               (async-handler #(cli/search-add-filter :tag tag))
-                                                                                               {:tooltip (name tag)})))
-                                                                                   (:tag-list row)))}})}}
+                                                            :children (remove nil? (map tag-button (:tag-list row)))}})}}
                      {:text "updated" :min-width 90 :pref-width 110 :max-width 120 :resizable false
                       :cell-value-factory :updated-date
                       :cell-factory {:fx/cell-type :table-cell
@@ -1956,6 +1983,18 @@
         tag-button (fn [tag]
                      (button (name tag) (async-handler #(cli/search-rm-filter :tag tag))))
 
+        tag-membership ["any of" "all of"]
+        tag-any-all {:fx/type :combo-box
+                     :id "tag-any-all-of"
+                     :value (first tag-membership)
+                     :on-value-changed (async-event-handler #(cli/search-add-filter :tag-membership %))
+                     :items tag-membership}
+
+        tag-buttons (mapv tag-button tag-set)
+        tag-buttons (if-not (empty? tag-buttons)
+                      (into [tag-any-all] tag-buttons)
+                      [])
+
         num-selected (count (:selected-result-list search-state))
 
         row-1 {:fx/type :h-box
@@ -1977,7 +2016,7 @@
                  :text (core/get-state :search :term) ;; this seems ok, probably has it's own drawbacks
                  :on-text-changed cli/search}
 
-                (button "\u2605" (async-handler #(cli/search-toggle-filter :user-catalogue))
+                (button (:star constants/glyph-map) (async-handler #(cli/search-toggle-filter :user-catalogue))
                         {:id "search-user-catalogue-button"
                          :style-class (if (-> search-state :filter-by :user-catalogue) "starred" "unstarred")})
 
@@ -2012,7 +2051,7 @@
 
         row-2 {:fx/type :h-box
                :id "search-selected-tag-bar"
-               :children (mapv tag-button tag-set)}]
+               :children tag-buttons}]
 
     (if (empty? tag-set)
       row-1
@@ -2164,24 +2203,25 @@
                         :value row})
 
         to-children (fn [a b]
-                      (assoc b :children [a]))
+                      (if (empty? a)
+                        b
+                        (assoc b :children [a])))
 
         install-dir (core/get-state :cfg :selected-addon-dir)
 
         children (if-not (:dirname addon)
                    ;; search result
                    []
-                   ;; todo: move this logic to addon or cli and remove 'nfo' from includes
                    ;; installed addon. read the raw nfo data and create a hierarchy of lowest->highest (see to-children)
                    (for [grouped-addon (addon/flatten-addon addon)
                          :let [mut-deps (nfo/mutual-dependencies install-dir (:dirname grouped-addon))
                                mut-deps-tree-items (map (fn [nfo]
                                                           (to-tree-rows (merge grouped-addon nfo))) mut-deps)]]
-                     (reduce to-children mut-deps-tree-items)))
+                     (reduce to-children {} mut-deps-tree-items)))
 
         root {:fx/type :tree-item
               :expanded true
-              :children children}
+              :children (remove empty? children)}
 
         ;; we need a depth > 1 to show anything meaningful
         depth (utils/find-depth root 0)
