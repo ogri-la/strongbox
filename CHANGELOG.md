@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * filtering search results by tag can now be switched between inclusive ('any of', default) and exclusive ('all of').
 * embedded font for glyphs used in the uber and star buttons for systems running with minimal fonts.
     - https://github.com/ogri-la/strongbox/issues/384
+* an app launcher to desktop environments that support them.
+    - for me, `strongbox` was found under the `Games` menu item.
+    - only for installations via the AUR
+        - the `.desktop` file can be found here: https://github.com/ogri-la/strongbox-pkgbuild/blob/master/strongbox.desktop
 
 ### Changed
 
@@ -18,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - this means you can now browse addons by tags alone if there are more addons that can fit on a single page of results.
 * glyphs used for the uber and star buttons switched to their close equivalents in the new embedded font
     - they're a little chunkier now but also look a little better in my estimation.
+* moved some files used for building the AppImage from the root into a directory called `AppImage`.
 
 ### Fixed
 
