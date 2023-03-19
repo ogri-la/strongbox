@@ -17,10 +17,13 @@ see CHANGELOG.md for a more formal list of changes by release
 * dark theme, 'wow' column text is black on black for some reason
     - done
 
+* add a .desktop file for AUR installations
+    - done
+
 ## todo
 
-* add a .desktop file for AUR installations
-    - ...
+
+## todo bucket (no particular order)
 
 * add support for cloning git repositories
     - this is to get around addon repositories not uploading 'releases' when tagging
@@ -38,8 +41,6 @@ see CHANGELOG.md for a more formal list of changes by release
                 - can pinned addons be replaced? I've forgotten.
     - how about a shallow clone?
         - just the files are cloned to a directory
-
-## todo bucket (no particular order)
 
 * size of addon on disk
     - I'd like to see a column with 'size on disk'
