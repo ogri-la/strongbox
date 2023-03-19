@@ -43,9 +43,9 @@ fi
 rm -rf ./AppDir
 mkdir AppDir
 mv "$output_dir" AppDir/usr
-cp strongbox.desktop AppDir/
+cp AppImage/strongbox.desktop AppDir/
 cp resources/strongbox.svg resources/strongbox.png AppDir/
-cp AppRun AppDir/
+cp AppImage/AppRun AppDir/
 du -sh AppDir/
 rm -f strongbox.appimage # safer than 'rm -f strongbox'
 ARCH=x86_64 ./appimagetool AppDir/ strongbox.appimage
