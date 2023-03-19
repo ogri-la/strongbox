@@ -6,22 +6,7 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* fonts are screwy on some systems
-    - https://github.com/ogri-la/strongbox/issues/384
-    - embedded an older, smaller, lighter fontawesome and switched the glyphs
-    - done
-
-* log pane, bug, the text 'catalogue' is being truncated in multi-line messages
-    - see screenshot Screenshot at 2022-09-24 08-56-35.png
-
-* dark theme, 'wow' column text is black on black for some reason
-    - done
-
-* add a .desktop file for AUR installations
-    - done
-
 ## todo
-
 
 ## todo bucket (no particular order)
 
