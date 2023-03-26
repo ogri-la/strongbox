@@ -8,6 +8,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+* gui, raw data, 'key' column too small for 'supported-game-tracks'
+
 * search, a 'clear' button
     - resets favourited, search input, tags, etc
 
@@ -49,6 +51,10 @@ see CHANGELOG.md for a more formal list of changes by release
     - done, via favouriting, but! it's not available on the installed addon pane page
 
 ## todo bucket (no particular order)
+
+* gui, raw data, add textual versions of this data as well
+    - pretty printing in a gui is one thing, but useless if it can't be copied
+    - have a text field with plain text and yaml or json formatted addon data could be useful as well
 
 * gui, better copying from the interface, especially the log box
 
