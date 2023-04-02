@@ -8,12 +8,32 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
-* gui, raw data, 'key' column too small for 'supported-game-tracks'
+* 'downloading strongbox data' shouldn't be blocking the gui from starting
+    - is the version check happening async too?
+
+* user catalogue, what is happening now that regular, non-github, addons can be favourited?
+    - do they need to have their details refreshed?
+    - also, we have a github catalogue now, I bet the majority of these updates can be pulled directly from catalogues.
+        - it looks like refreshing the user catalogue is actually finding the addon in the catalogue, expandinging it and then installing it
+            - I don't think it should be installed!
+                - at least, finding and installing should be separate steps
+                    - for example, import-addon should find-addon then install-addon
+                    - and refresh-user-catalogue-item should be find-addon and then update-catalogue
+                        - and doesn't the catalogue it's looing in already contain the user-catalogue?
+
+* user catalogue, schedule refreshes
+    - ensure the user catalogue doesn't get too stale and perform an update in the background if it looks like it's very old
+        - update README
+    - perhaps a preference?
+
+* user catalogue, refreshing may guarantee exceeding github limit.
+    - if we know this, add a warning? refuse?
+
+* user catalogue, add a 'add to user-catalogue' option to make an addon always available despite selected catalogue
+    - done, via favouriting, but! it's not available on the installed addon pane page
 
 * search, a 'clear' button
     - resets favourited, search input, tags, etc
-
-* 'downloading strongbox data' shouldn't be blocking the gui from starting
 
 * size of addon on disk
     - I'd like to see a column with 'size on disk'
@@ -35,20 +55,7 @@ see CHANGELOG.md for a more formal list of changes by release
 * display github requests remaining
     - ...
 
-* user catalogue, schedule refreshes
-    - ensure the user catalogue doesn't get too stale and perform an update in the background if it looks like it's very old
-        - update README
-    - perhaps a preference?
-
-* user catalogue, what is happening now that regular, non-github, addons can be favourited?
-    - do they need to have their details refreshed?
-    - also, we have a github catalogue now, I bet the majority of these updates can be pulled directly from catalogues.
-
-* user catalogue, refreshing my guarantee exceeding github limit.
-    - if we know this, add a warning? refuse?
-
-* user catalogue, add a 'add to user-catalogue' option to make an addon always available despite selected catalogue
-    - done, via favouriting, but! it's not available on the installed addon pane page
+* gui, raw data, 'key' column too small for 'supported-game-tracks'
 
 ## todo bucket (no particular order)
 

@@ -25,11 +25,9 @@
                  [org.flatland/ordered "1.5.9"] ;; better ordered map
                  [clojure.java-time "0.3.3"] ;; date/time handling library, https://github.com/dm3/clojure.java-time
                  [envvar "1.1.2"] ;; environment variable wrangling
-                 [gui-diff "0.6.7" :exclusions [net.cgrant/parsley]] ;; pops up a graphical diff for test results
-                 [com.taoensso/tufte "2.2.0"] ;; profiling
                  [tolitius/lasync "0.1.23"] ;; better parallel processing
 
-                 [cljfx "1.7.19" :exclusions [org.openjfx/javafx-web
+                 [cljfx "1.7.22" :exclusions [org.openjfx/javafx-web
                                               org.openjfx/javafx-media]]
                  [cljfx/css "1.1.0"]
 
@@ -47,7 +45,6 @@
 
                  ;; GPLv3 compatible dependencies.
                  ;; these don't need an exception in LICENCE.txt
-                 [org.apache.commons/commons-compress "1.21"] ;; Apache 2.0 licenced, bz2 compression/decompression of static catalogue
                  [org.ocpsoft.prettytime/prettytime "5.0.2.Final"] ;; Apache 2.0 licenced, pretty date formatting
                  [org.controlsfx/controlsfx "11.1.1"] ;; BSD-3
                  
@@ -66,16 +63,22 @@
 
   :resource-paths ["resources"]
 
-  :profiles {:dev {:plugins [[lein-ancient "0.7.0"]]
+  :profiles {:repl {:source-paths ["repl"]}
+             :dev {:plugins [[lein-ancient "0.7.0"]]
                    :resource-paths ["dev-resources" "resources"] ;; dev-resources take priority
                    :dependencies [[clj-http-fake "1.0.3"] ;; fake http responses for testing
+                                  [gui-diff "0.6.7" :exclusions [net.cgrant/parsley]] ;; pops up a graphical diff for test results
                                   ]}
 
              :uberjar {:aot :all
                        ;; fixes hanging issue:
                        ;; - https://github.com/cljfx/cljfx/issues/17
                        :injections [(javafx.application.Platform/exit)]
-                       }}
+                       :jvm-opts ["-Dclojure.compiler.disable-locals-clearing=true"
+                                  "-Dclojure.compiler.elide-meta=[:doc :file :line :added]"
+                                  "-Dclojure.compiler.direct-linking=true"]}}
+
+  :repl-options {:init-ns strongbox.user} ;; see repl/strongbox/user.clj
 
   ;; debug output from JavaFX about which GTK it is looking for. 
   ;; was useful in figuring out why javafx was failing to initialise even with xvfb.
@@ -97,5 +100,6 @@
                            ;;:unused-fn-args ;; prefer to keep for readability
                            ;;:keyword-typos ;; bugged with spec?
                            ]
-             :only-modified true}
+             :only-modified true
+             }
   )

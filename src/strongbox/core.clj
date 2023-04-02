@@ -32,7 +32,7 @@
 (def static-catalogue
   "a bz2 compressed copy of the full catalogue used when the remote catalogue is unavailable or corrupt.
   from this we can do per-host filtering as well as shortening to generate the other catalogues."
-  (utils/compressed-slurp "full-catalogue.json"))
+  (utils/compile-time-slurp "full-catalogue.json"))
 
 (defn generate-path-map
   "filesystem paths whose location may vary based on the current working directory, environment variables, etc.
@@ -674,7 +674,7 @@
   "derives the requested catalogue from the static catalogue."
   [catalogue-location :catalogue/location]
   (let [opts {}
-        catalogue (catalogue/read-catalogue (.getBytes (utils/decompress-bytes static-catalogue)) opts)
+        catalogue (catalogue/read-catalogue (.getBytes static-catalogue) opts)
         catalogue (assoc catalogue :emergency? true)]
 
     (warn (utils/message-list (format "the remote catalogue is unreachable or corrupt: %s" (:source catalogue-location))
