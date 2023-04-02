@@ -2621,12 +2621,6 @@
                                 (swap! gui-state fx/swap-context assoc :style (style))))
             (core/add-cleanup-fn #(remove-watch rf key)))
 
-        ;; logging to app state for use in the UI
-        _ (cli/init-ui-logger)
-
-        ;; asynchronous searching. as the user types, update the state with search results asynchronously
-        _ (cli/-init-search-listener)
-
         renderer (fx/create-renderer
                   :middleware (comp
                                fx/wrap-context-desc
@@ -2641,6 +2635,7 @@
 
         ;; don't do this, renderer has to be unmounted and the app closed before further state changes happen during cleanup.
         ;;_ (core/add-cleanup-fn #(fx/unmount-renderer gui-state renderer))
+
         _ (swap! core/state assoc :disable-gui (fn []
                                                  (fx/unmount-renderer gui-state renderer)
                                                  ;; the slightest of delays allows any final rendering to happen before the exit-handler is called.
@@ -2660,9 +2655,18 @@
     ;; happens during testing and causes a few weird windows to hang around.
     ;; see `(run! (fn [_] (test :jfx)) (range 0 100))`
     (let [kick (future
-                 (set-icon)
+                 ;; roughly follows `cli/start`
+
+                 ;; logging to app state for use in the UI
+                 (cli/init-ui-logger)
+                 ;; asynchronous searching. as the user types, update the state with search results asynchronously
+                 (cli/-init-search-listener)
                  (core/refresh)
-                 (bump-search))]
+
+                 (bump-search)
+
+                 (set-icon) ;; 601ms :(
+                 )]
       (core/add-cleanup-fn #(future-cancel kick)))
 
     ;; calling the `renderer` will re-render the GUI.
