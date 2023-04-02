@@ -6,13 +6,16 @@ output_dir="custom-jre"
 rm -rf "./$output_dir"
 
 echo "--- building custom JRE ---"
+
+# compress=1 'constant string sharing' compresses better eventually than compress=2 'zip', 52MB -> 45MB
+# - https://docs.oracle.com/en/java/javase/19/docs/specs/man/jlink.html#plugin-compress
 jlink \
     --add-modules "java.sql,java.naming,java.desktop,jdk.unsupported,jdk.crypto.ec" \
     --output "$output_dir" \
     --strip-debug \
     --no-man-pages \
     --no-header-files \
-    --compress=2
+    --compress=1
 
 # needed when built using Ubuntu as libjvm.so is *huge*
 # doesn't seem to hurt to strip the other .so files.
