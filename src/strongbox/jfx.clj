@@ -1244,6 +1244,10 @@
                                                                                                         (cli/search-add-filter :tag tag)))
                                                                                     {:tooltip (name tag)}))
                                                                           (:tag-list row))}})}}
+         :dirsize {:cell-value-factory :dirsize
+                   :cell-factory {:fx/cell-type :tree-table-cell
+                                  :describe (fn [bytes]
+                                              {:text (utils/filesize (if-not bytes 0 bytes))})}}
          :created-date {:min-width 90 :pref-width 110 :max-width 120
                         :cell-value-factory :created-date
                         :cell-factory {:fx/cell-type :tree-table-cell

@@ -80,6 +80,7 @@
     (mapv (fn [[filename-game-track filename]]
             (merge (read-toc-file (utils/join toc-dir filename))
                    {:dirname (fs/base-name addon-dir) ;; /foo/bar/baz => baz
+                    :dirsize (utils/folder-size-bytes addon-dir)
                     :-filename filename
                     :-filename-game-track filename-game-track}))
           (find-toc-files toc-dir))))
@@ -172,6 +173,10 @@
                 ;;:required-dependencies (:requireddeps keyvals)
                 }
 
+         addon (if-let [dirsize (:dirsize keyvals)]
+                 (assoc addon :dirsize dirsize)
+                 addon)
+         
          ;; prefers tukui over wowi, wowi over github. I'd like to prefer github over wowi, but github
          ;; requires API calls to interact with and these are limited unless authenticated.
          addon (merge addon

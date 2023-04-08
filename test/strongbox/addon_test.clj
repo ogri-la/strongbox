@@ -182,6 +182,7 @@
 
           expected {:name "someaddon",
                     :dirname "SomeAddon",
+                    :dirsize 138
                     :label "SomeAddon",
                     :description "asdf",
                     :interface-version 80300,
@@ -214,6 +215,7 @@
           expected {;; toc data
                     :name "someaddon"
                     :dirname "SomeAddon"
+                    :dirsize 390
                     :label "SomeAddon"
                     :description "asdf"
                     :interface-version 80300
@@ -255,6 +257,7 @@
 
           expected {:name "someaddon",
                     :dirname "SomeAddon",
+                    :dirsize 138
                     :label "SomeAddon",
                     :description "asdf",
                     :interface-version 80300,
@@ -279,6 +282,7 @@
 
           expected {:name "someaddon",
                     :dirname "SomeAddon",
+                    :dirsize 230
                     :label "SomeAddon",
                     :description "asdf",
                     :interface-version 80300
@@ -298,6 +302,7 @@
         expected [;; description has been modified in "-Classic" vs "-Vanilla"
                   {:description "Slightly differently does what no other addon does."
                    :dirname "EveryAddon",
+                   :dirsize 1297
                    :installed-version "1.2.3",
                    :interface-version 11307,
                    :label "EveryAddon 1.2.3",
