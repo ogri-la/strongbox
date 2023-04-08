@@ -6,10 +6,11 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-## todo
-
 * 'downloading strongbox data' shouldn't be blocking the gui from starting
     - is the version check happening async too?
+    - done
+
+## todo
 
 * user catalogue, what is happening now that regular, non-github, addons can be favourited?
     - do they need to have their details refreshed?
@@ -58,6 +59,8 @@ see CHANGELOG.md for a more formal list of changes by release
 * gui, raw data, 'key' column too small for 'supported-game-tracks'
 
 ## todo bucket (no particular order)
+
+* gui, 'set-icon' is taking a long time to do it's thing.
 
 * gui, raw data, add textual versions of this data as well
     - pretty printing in a gui is one thing, but useless if it can't be copied

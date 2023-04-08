@@ -8,9 +8,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* user.clj, where the repl will take you by default during development.
+    - this lets me separate some development dependencies and logic from what is released.
+
 ### Changed
 
+* jlink `compress` changed from `2` to `1` during the building of the linux AppImage
+    - `compress=2` means 'zip', which (I think) interferes with AppImage compression.
+    - this leads to shaving ~7MB off of the final AppImage.
+* replaced compressed, static, 'emergency' catalogue with a simple JSON string.
+    1. it wasn't working at compile time like I thought.
+    2. regular strings are more compressible ultimately when building an AppImage.
+* bumped dependencies.
+    - removed `apache.commons.compressors` as no longer required.
+* some dependencies used for development are no longer bundled during release.
+* release data will only be downloaded once the app has finished loading.
+* release data will only be downloaded once per-session.
+    - it would previously re-attempt to download release information on failure indefinitely.
+
 ### Fixed
+
+* possible cache stampede fetching strongbox release data. a lock is now acquired to ensure checks happen sequentially.
+    - it was possible for the GUI to fire off many requests to Github simultaneously, bypassing cache and overwriting each other.
 
 ### Removed
 
