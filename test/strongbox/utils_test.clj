@@ -564,21 +564,3 @@
     (doseq [[given expected] cases]
       (is (= expected (utils/patch-name given))))))
 
-(deftest compressed-slurp
-  (let [expected "foo!"]
-    (is (= expected (utils/decompress-bytes (utils/compressed-slurp "foo.txt"))))))
-
-(deftest compressed-slurp--not-found
-  (is (nil? (utils/compressed-slurp "file-that-definitely-does-not-exist.txt"))))
-
-(deftest decompress-bytes--empty
-  (is (nil? (utils/decompress-bytes (.getBytes ""))))
-  (is (nil? (utils/decompress-bytes nil))))
-
-(deftest decompress-bytes--not-compressed
-  (let [result (try
-                 (utils/decompress-bytes (.getBytes "!"))
-                 (catch java.io.IOException ioe
-                   ioe))]
-    (is (instance? java.io.IOException result))
-    (is (= "Stream is not in the BZip2 format" (.getMessage result)))))

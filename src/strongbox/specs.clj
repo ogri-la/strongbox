@@ -121,6 +121,8 @@
 (s/def ::label string?) ;; name of the addon without normalisation
 (s/def ::release-label ::label)
 
+(s/def ::latest-strongbox-release (s/or :set string? :not-set nil? :failed keyword?))
+
 ;; dates and times
 
 (s/def ::inst (s/and string? #(try

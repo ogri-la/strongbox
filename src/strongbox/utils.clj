@@ -794,27 +794,8 @@
     (or (get constants/releases major-minor)
         (get constants/releases major))))
 
-(defn-spec compressed-slurp (s/or :ok bytes?, :no-resource nil?)
-  "returns the bz2 compressed bytes of the given resource file `resource`.
-  returns `nil` if the file can't be found."
-  [resource string?]
-  (let [input-file (clojure.java.io/resource resource)]
-    (when input-file
-      (with-open [out (java.io.ByteArrayOutputStream.)]
-        (with-open [cos (.createCompressorOutputStream (CompressorStreamFactory.) CompressorStreamFactory/BZIP2, out)]
-          (clojure.java.io/copy (clojure.java.io/input-stream input-file) cos))
-        ;; compressed output stream (cos) needs to be closed to flush any remaining bytes
-        (.toByteArray out)))))
+(defmacro compile-time-slurp
+  "slurps given `resource` file at macro-expansion (compile) time."
+  [resource]
+  `(slurp (clojure.java.io/resource ~resource)))
 
-(defn-spec decompress-bytes (s/or :ok string?, :nil-or-empty-bytes nil?)
-  "decompresses the given `bz2-bytes` as bz2, returning a string.
-  if bytes are empty or `nil`, returns `nil`.
-  if bytes are not bz2 compressed, throws an `IOException`."
-  [bz2-bytes (s/nilable bytes?)]
-  (when-not (empty? bz2-bytes)
-    (with-open [is (clojure.java.io/input-stream bz2-bytes)]
-      (try
-        (with-open [cin (.createCompressorInputStream (CompressorStreamFactory.) CompressorStreamFactory/BZIP2, is)]
-          (slurp cin))
-        (catch CompressorException ce
-          (throw (.getCause ce)))))))

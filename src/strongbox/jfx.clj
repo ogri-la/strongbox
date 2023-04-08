@@ -1091,7 +1091,7 @@
               {:fx/type :text
                :text (format "version %s" (core/strongbox-version))}
               {:fx/type :text
-               :text (format "version %s is now available to download!" (core/latest-strongbox-release))
+               :text (format "version %s is now available to download!" (core/latest-strongbox-release!))
                :managed (not (core/latest-strongbox-version?))
                :visible (not (core/latest-strongbox-version?))}
               {:fx/type :hyperlink
@@ -1542,7 +1542,9 @@
 (defn installed-addons-menu-bar
   "returns a description of the installed-addons tab-pane menu."
   [{:keys [fx/context]}]
-  (let [selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])]
+  (let [selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])
+        latest-release (fx/sub-val context get-in [:app-state :latest-strongbox-release])
+        latest-version? (core/latest-strongbox-version? latest-release)]
     {:fx/type :h-box
      :padding 10
      :spacing 10
@@ -1554,10 +1556,10 @@
                 {:fx/type wow-dir-dropdown}
                 {:fx/type game-track-dropdown}
                 {:fx/type :button
-                 :text (str "Update Available: " (core/latest-strongbox-release))
+                 :text (str "Update Available: " latest-release)
                  :on-action (handler #(utils/browse-to "https://github.com/ogri-la/strongbox/releases"))
-                 :visible (not (core/latest-strongbox-version?))
-                 :managed (not (core/latest-strongbox-version?))}]}))
+                 :visible (not latest-version?)
+                 :managed (not latest-version?)}]}))
 
 (defn-spec build-release-menu ::sp/list-of-maps
   "returns a list of `:menu-item` maps that will update the given `addon` with 
@@ -2621,12 +2623,6 @@
                                 (swap! gui-state fx/swap-context assoc :style (style))))
             (core/add-cleanup-fn #(remove-watch rf key)))
 
-        ;; logging to app state for use in the UI
-        _ (cli/init-ui-logger)
-
-        ;; asynchronous searching. as the user types, update the state with search results asynchronously
-        _ (cli/-init-search-listener)
-
         renderer (fx/create-renderer
                   :middleware (comp
                                fx/wrap-context-desc
@@ -2641,6 +2637,7 @@
 
         ;; don't do this, renderer has to be unmounted and the app closed before further state changes happen during cleanup.
         ;;_ (core/add-cleanup-fn #(fx/unmount-renderer gui-state renderer))
+
         _ (swap! core/state assoc :disable-gui (fn []
                                                  (fx/unmount-renderer gui-state renderer)
                                                  ;; the slightest of delays allows any final rendering to happen before the exit-handler is called.
@@ -2660,9 +2657,19 @@
     ;; happens during testing and causes a few weird windows to hang around.
     ;; see `(run! (fn [_] (test :jfx)) (range 0 100))`
     (let [kick (future
-                 (set-icon)
+                 ;; roughly follows `cli/start`
+
+                 ;; logging to app state for use in the UI
+                 (cli/init-ui-logger)
+                 ;; asynchronous searching. as the user types, update the state with search results asynchronously
+                 (cli/-init-search-listener)
+
                  (core/refresh)
-                 (bump-search))]
+
+                 (bump-search)
+                 (core/latest-strongbox-release!)
+                 (set-icon) ;; 601ms :(
+                 )]
       (core/add-cleanup-fn #(future-cancel kick)))
 
     ;; calling the `renderer` will re-render the GUI.

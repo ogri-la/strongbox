@@ -3,7 +3,6 @@
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
-   [taoensso.tufte :as tufte :refer [p]]
    [java-time]
    [strongbox
     [constants :as constants]
@@ -130,8 +129,7 @@
 (defn-spec format-catalogue-data :catalogue/catalogue
   "returns a correctly formatted, ordered, catalogue given a list of addons and a datestamp"
   [addon-list :addon/summary-list, datestamp ::sp/ymd-dt]
-  (let [addon-list (p :cat/sort-addons
-                      (sort-by :name addon-list))]
+  (let [addon-list (sort-by :name addon-list)]
     {:spec {:version 2}
      :datestamp datestamp
      :total (count addon-list)
@@ -160,8 +158,7 @@
 (defn validate
   "validates the given data as a `:catalogue/catalogue`, returning nil if data is invalid"
   [catalogue]
-  (p :catalogue:validate
-     (sp/valid-or-nil :catalogue/catalogue catalogue)))
+  (sp/valid-or-nil :catalogue/catalogue catalogue))
 
 (defn-spec write-catalogue (s/or :ok ::sp/extant-file, :error nil?)
   "write catalogue to given `output-file` as JSON. returns path to output file"
