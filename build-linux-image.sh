@@ -7,7 +7,7 @@ rm -rf "./$output_dir"
 
 echo "--- building custom JRE ---"
 
-# compress=1 'constant string sharing' compresses better eventually than compress=2 'zip', 52MB -> 45MB
+# compress=1 'constant string sharing' compresses better with AppImage than compress=2 'zip', 52MB -> 45MB
 # - https://docs.oracle.com/en/java/javase/19/docs/specs/man/jlink.html#plugin-compress
 jlink \
     --add-modules "java.sql,java.naming,java.desktop,jdk.unsupported,jdk.crypto.ec" \

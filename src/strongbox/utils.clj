@@ -795,6 +795,7 @@
         (get constants/releases major))))
 
 (defmacro compile-time-slurp
+  "slurps given `resource` file at macro-expansion (compile) time."
   [resource]
   `(slurp (clojure.java.io/resource ~resource)))
 

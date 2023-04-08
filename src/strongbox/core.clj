@@ -1254,14 +1254,14 @@
   []
   (versioneer/get-version "ogri-la" "strongbox"))
 
-(def version-lock (Object.))
+(def download-version-lock (Object.))
 
 (defn-spec -download-strongbox-release (s/or :ok string?, :failed? keyword)
   "returns the most recently released version of strongbox on github.
   returns `:failed` if an error occurred while downloading/decoding/extracting the version name, rather than `nil`.
   `nil` is used to mean 'not set (yet)' in the app state."
   []
-  (locking version-lock
+  (locking download-version-lock
     (binding [http/*cache* (cache)]
       (let [message "downloading strongbox version data"
             url "https://api.github.com/repos/ogri-la/strongbox/releases/latest"]
@@ -1270,7 +1270,7 @@
 
 (defn-spec latest-strongbox-version? boolean?
   "returns `true` if the given `latest-release` is the *most recent known* version of strongbox.
-  when called with no parameters the `latest-release` is the version of the currently running instance."
+  when called with no parameters the `latest-release` is pulled from application state."
   ([]
    (latest-strongbox-version? (get-state :latest-strongbox-release)))
   ([latest-release ::sp/latest-strongbox-release]
@@ -1281,7 +1281,7 @@
            sorted-asc (utils/sort-semver-strings [latest-release version-running])]
        (= version-running (last sorted-asc))))))
 
-(defn-spec latest-strongbox-release ::sp/latest-strongbox-release
+(defn-spec latest-strongbox-release! ::sp/latest-strongbox-release
   "downloads and sets the most recently released version of strongbox on github, returning the found version or `:failed` on error."
   []
   (let [lsr (get-state :latest-strongbox-release)]

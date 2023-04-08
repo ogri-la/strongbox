@@ -1091,7 +1091,7 @@
               {:fx/type :text
                :text (format "version %s" (core/strongbox-version))}
               {:fx/type :text
-               :text (format "version %s is now available to download!" (core/latest-strongbox-release))
+               :text (format "version %s is now available to download!" (core/latest-strongbox-release!))
                :managed (not (core/latest-strongbox-version?))
                :visible (not (core/latest-strongbox-version?))}
               {:fx/type :hyperlink
@@ -1543,8 +1543,8 @@
   "returns a description of the installed-addons tab-pane menu."
   [{:keys [fx/context]}]
   (let [selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])
-        lsr (fx/sub-val context get-in [:app-state :latest-strongbox-release])
-        lsv? (core/latest-strongbox-version? lsr)]
+        latest-release (fx/sub-val context get-in [:app-state :latest-strongbox-release])
+        latest-version? (core/latest-strongbox-version? latest-release)]
     {:fx/type :h-box
      :padding 10
      :spacing 10
@@ -1556,10 +1556,10 @@
                 {:fx/type wow-dir-dropdown}
                 {:fx/type game-track-dropdown}
                 {:fx/type :button
-                 :text (str "Update Available: " lsr)
+                 :text (str "Update Available: " latest-release)
                  :on-action (handler #(utils/browse-to "https://github.com/ogri-la/strongbox/releases"))
-                 :visible (not lsv?)
-                 :managed (not lsv?)}]}))
+                 :visible (not latest-version?)
+                 :managed (not latest-version?)}]}))
 
 (defn-spec build-release-menu ::sp/list-of-maps
   "returns a list of `:menu-item` maps that will update the given `addon` with 
@@ -2663,11 +2663,12 @@
                  (cli/init-ui-logger)
                  ;; asynchronous searching. as the user types, update the state with search results asynchronously
                  (cli/-init-search-listener)
+
                  (core/refresh)
 
                  (bump-search)
-                 (core/latest-strongbox-release)
-                 ;;(set-icon) ;; 601ms :(
+                 (core/latest-strongbox-release!)
+                 (set-icon) ;; 601ms :(
                  )]
       (core/add-cleanup-fn #(future-cancel kick)))
 
