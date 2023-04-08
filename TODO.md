@@ -15,12 +15,12 @@ see CHANGELOG.md for a more formal list of changes by release
 * user catalogue, what is happening now that regular, non-github, addons can be favourited?
     - do they need to have their details refreshed?
     - also, we have a github catalogue now, I bet the majority of these updates can be pulled directly from catalogues.
-        - it looks like refreshing the user catalogue is actually finding the addon in the catalogue, expandinging it and then installing it
+        - it looks like refreshing the user catalogue is actually finding the addon in the catalogue, expanding it and then installing it
             - I don't think it should be installed!
                 - at least, finding and installing should be separate steps
                     - for example, import-addon should find-addon then install-addon
                     - and refresh-user-catalogue-item should be find-addon and then update-catalogue
-                        - and doesn't the catalogue it's looing in already contain the user-catalogue?
+                        - and doesn't the catalogue it's looking in already contain the user-catalogue?
 
 * user catalogue, schedule refreshes
     - ensure the user catalogue doesn't get too stale and perform an update in the background if it looks like it's very old
@@ -52,6 +52,7 @@ see CHANGELOG.md for a more formal list of changes by release
     - num addons favourited/user-catalogue
     - num addons
     - ...?
+    - a button on the opposite of the log popup button but similar that will show some overall stats
 
 * display github requests remaining
     - ...
