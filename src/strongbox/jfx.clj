@@ -1542,7 +1542,9 @@
 (defn installed-addons-menu-bar
   "returns a description of the installed-addons tab-pane menu."
   [{:keys [fx/context]}]
-  (let [selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])]
+  (let [selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])
+        lsr (fx/sub-val context get-in [:app-state :latest-strongbox-release])
+        lsv? (core/latest-strongbox-version? lsr)]
     {:fx/type :h-box
      :padding 10
      :spacing 10
@@ -1554,10 +1556,10 @@
                 {:fx/type wow-dir-dropdown}
                 {:fx/type game-track-dropdown}
                 {:fx/type :button
-                 :text (str "Update Available: " (core/latest-strongbox-release))
+                 :text (str "Update Available: " lsr)
                  :on-action (handler #(utils/browse-to "https://github.com/ogri-la/strongbox/releases"))
-                 :visible (not (core/latest-strongbox-version?))
-                 :managed (not (core/latest-strongbox-version?))}]}))
+                 :visible (not lsv?)
+                 :managed (not lsv?)}]}))
 
 (defn-spec build-release-menu ::sp/list-of-maps
   "returns a list of `:menu-item` maps that will update the given `addon` with 
@@ -2664,8 +2666,8 @@
                  (core/refresh)
 
                  (bump-search)
-
-                 (set-icon) ;; 601ms :(
+                 (core/latest-strongbox-release)
+                 ;;(set-icon) ;; 601ms :(
                  )]
       (core/add-cleanup-fn #(future-cancel kick)))
 

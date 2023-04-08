@@ -1254,35 +1254,46 @@
   []
   (versioneer/get-version "ogri-la" "strongbox"))
 
-(defn-spec -latest-strongbox-release (s/or :ok string?, :failed? keyword)
+(def version-lock (Object.))
+
+(defn-spec -download-strongbox-release (s/or :ok string?, :failed? keyword)
   "returns the most recently released version of strongbox on github.
   returns `:failed` if an error occurred while downloading/decoding/extracting the version name, rather than `nil`.
   `nil` is used to mean 'not set (yet)' in the app state."
   []
-  (binding [http/*cache* (cache)]
-    (let [message "downloading strongbox version data"
-          url "https://api.github.com/repos/ogri-la/strongbox/releases/latest"]
-      (or (some-> url (http/download message) http/sink-error utils/from-json :tag_name)
-          :failed))))
+  (locking version-lock
+    (binding [http/*cache* (cache)]
+      (let [message "downloading strongbox version data"
+            url "https://api.github.com/repos/ogri-la/strongbox/releases/latest"]
+        (or (some-> url (http/download message) http/sink-error utils/from-json :tag_name)
+            :failed)))))
 
-(defn-spec latest-strongbox-release (s/nilable string?)
-  "returns the most recently released version of strongbox on github or `nil` if it can't."
+(defn-spec latest-strongbox-version? boolean?
+  "returns `true` if the given `latest-release` is the *most recent known* version of strongbox.
+  when called with no parameters the `latest-release` is the version of the currently running instance."
+  ([]
+   (latest-strongbox-version? (get-state :latest-strongbox-release)))
+  ([latest-release ::sp/latest-strongbox-release]
+   (case latest-release
+     nil true ;; we haven't looked yet, so yes, we're the latest :)
+     :failed true ;; we've already looked and failed, so as far as we know we're the latest.
+     (let [version-running (strongbox-version)
+           sorted-asc (utils/sort-semver-strings [latest-release version-running])]
+       (= version-running (last sorted-asc))))))
+
+(defn-spec latest-strongbox-release ::sp/latest-strongbox-release
+  "downloads and sets the most recently released version of strongbox on github, returning the found version or `:failed` on error."
   []
   (let [lsr (get-state :latest-strongbox-release)]
     (case lsr
-      nil (let [lsr (-latest-strongbox-release)]
+      ;; we haven't looked yet, so look.
+      nil (let [lsr (-download-strongbox-release)]
             (swap! state assoc :latest-strongbox-release lsr)
-            (latest-strongbox-release)) ;; recurse
+            lsr)
+      ;; we've already looked and failed, don't try again this session.
       :failed nil
+      ;; we've already looked, return what we found
       lsr)))
-
-(defn-spec latest-strongbox-version? boolean?
-  "returns true if the *running instance* of strongbox is the *most recent known* version of strongbox."
-  []
-  (let [version-running (strongbox-version)
-        latest-release (or (latest-strongbox-release) version-running)
-        sorted-asc (utils/sort-semver-strings [latest-release version-running])]
-    (= version-running (last sorted-asc))))
 
 ;; import/export
 
