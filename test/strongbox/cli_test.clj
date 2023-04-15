@@ -446,6 +446,7 @@
           ;; a mush of the above (.nfo written during install) and the EveryAddon .toc file
           expected {:description "Does what no other addon does, slightly differently",
                     :dirname "EveryAddon",
+                    :dirsize 0
                     :group-id "https://www.wowinterface.com/downloads/info25079",
                     :installed-game-track :retail,
                     :installed-version "1.2.3",
@@ -575,6 +576,7 @@
           ;; a mush of the above (.nfo written during install) and the EveryAddon .toc file
           expected {:description "Does what no other addon does, slightly differently",
                     :dirname "EveryAddon",
+                    :dirsize 0
                     :group-id "https://www.tukui.org/addons.php?id=98",
                     :installed-game-track :retail,
                     :installed-version "0.960",

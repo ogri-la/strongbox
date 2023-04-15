@@ -108,6 +108,7 @@
 (s/def ::ignore-flag (s/keys :req-un [::ignore?]))
 (s/def ::download-url ::url)
 (s/def ::dirname (s/and string? #(not (empty? %)))) ;; and doesn't contain any '/' characters
+(s/def ::dirsize (s/and int? #(>= % 0)))
 (s/def ::description (s/nilable string?))
 (s/def ::matched? boolean?)
 (s/def ::group-id string?)
@@ -165,7 +166,7 @@
 (def default-column-list default-column-list--v2)
 
 (def skinny-column-list [:name :version :combined-version :game-version :uber-button])
-(def fat-column-list [:browse-local :source :source-id :name :description :tag-list :created-date :updated-date :combined-version :game-version :uber-button])
+(def fat-column-list [:dirsize :browse-local :source :source-id :name :description :tag-list :created-date :updated-date :combined-version :game-version :uber-button])
 
 (def column-preset-list [[:default default-column-list]
                          [:skinny skinny-column-list]
@@ -259,7 +260,8 @@
                    ::interface-version
                    ::installed-version
                    :addon/supported-game-tracks]
-          :opt-un [;; toc file may contain addon host information but it's not guaranteed.
+          :opt-un [::dirsize ;; not present on error during calculation. zero during testing.
+                   ;; toc file may contain addon host information but it's not guaranteed.
                    :addon/source
                    :addon/source-id
                    :addon/source-map-list]))

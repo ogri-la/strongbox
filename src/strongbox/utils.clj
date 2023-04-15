@@ -17,6 +17,7 @@
    [java-time :as jt]
    [java-time.format])
   (:import
+   [java.lang Math]
    [java.util Base64]
    [org.apache.commons.compress.compressors CompressorStreamFactory CompressorException]
    [org.ocpsoft.prettytime.units Decade]
@@ -749,39 +750,40 @@
 
 (def -with-lock-lock (Object.))
 
+(def -with-lock-wait-retry-time 10) ;; ms
+
 (defmacro with-lock
   "executes `form` once all items in given `user-set` are available in `lock-set-atom`."
   [lock-set-atom user-set & form]
-  `(let [wait-time# 10] ;; ms
-     (loop [waited# 0]
+  `(loop [waited# 0]
 
        ;; ensure reading the atom is single threaded (locking) and that when we read it and test the result,
        ;; we update it in the same operation (dosync).
-       (let [lock-set#
-             (locking -with-lock-lock
-               (dosync
-                (debug "current locks:" (deref ~lock-set-atom))
-                (when (empty? (clojure.set/intersection (deref ~lock-set-atom) ~user-set))
+     (let [lock-set#
+           (locking -with-lock-lock
+             (dosync
+              (debug "current locks:" (deref ~lock-set-atom))
+              (when (empty? (clojure.set/intersection (deref ~lock-set-atom) ~user-set))
                   ;; there is no overlap between the locks we have and what the user wants.
                   ;; add the user locks to the working set and execute body
-                  (swap! ~lock-set-atom into ~user-set))))]
+                (swap! ~lock-set-atom into ~user-set))))]
 
-         (debug "acquiring locks:" ~user-set)
-         (if (not (nil? lock-set#))
-           (try
-             (debug "locks acquired:" ~user-set)
-             ~@form
-             (finally
+       (debug "acquiring locks:" ~user-set)
+       (if (not (nil? lock-set#))
+         (try
+           (debug "locks acquired:" ~user-set)
+           ~@form
+           (finally
                ;; when body is complete, release the locks
                ;; synchronised access not required ?
-               (debug "releasing locks:" ~user-set)
-               (swap! ~lock-set-atom clojure.set/difference ~user-set)))
+             (debug "releasing locks:" ~user-set)
+             (swap! ~lock-set-atom clojure.set/difference ~user-set)))
 
            ;; something else holds one or more of the desired locks! wait a duration and try again
-           (do (debug "blocked!")
-               (Thread/sleep wait-time#)
-               (debug (format "recurring in %s ms, have waited %s ms" wait-time# waited#))
-               (recur (+ waited# wait-time#))))))))
+         (do (debug "blocked!")
+             (Thread/sleep -with-lock-wait-retry-time)
+             (debug (format "recurring in %s ms, have waited %s ms" -with-lock-wait-retry-time waited#))
+             (recur (+ waited# -with-lock-wait-retry-time)))))))
 
 (defn-spec patch-name (s/or :ok string?, :not-found nil?)
   "returns the 'patch' name for the given `game-version`, considering only the major and minor values.
@@ -799,3 +801,53 @@
   [resource]
   `(slurp (clojure.java.io/resource ~resource)))
 
+(defn-spec folder-size-bytes int?
+  "returns the size of a directory and it's contents in bytes"
+  [path ::sp/extant-dir]
+  (let [count-subdirs (fn [root dir-set]
+                        (map #(-> root (fs/file %) .length) dir-set))
+        count-files (fn [root file-list]
+                      (map #(.length (fs/file root %)) file-list))
+        count-subdirs+files (fn [root dir-set file-list]
+                              (into (count-subdirs root dir-set)
+                                    (count-files root file-list)))]
+    (+ (-> path fs/file .length)
+       (reduce + (flatten (fs/walk count-subdirs+files path))))))
+
+;; ---
+;; copied from: https://github.com/clj-commons/humanize/blob/master/src/clj_commons/humanize.cljc
+;; on: 2023-04-08
+;; with licence: EPL v1.0
+;; added to GPL exclusion list, see LICENCE.md.
+
+(defn logn [num base]
+  (/ (Math/round (Math/log num))
+     (Math/round (Math/log base))))
+
+(defn filesize
+  "Format a number of bytes as a human readable filesize (eg. 10 kB).
+  decimal suffixes (kB, MB) are used."
+  [bytes]
+  (cond
+    (not (number? bytes)) ""
+    (zero? bytes) "0" ;; special case for zero
+
+    :else
+    (let [format-string "%.1f"
+          decimal-sizes  [:B, :KB, :MB, :GB, :TB,
+                          :PB, :EB, :ZB, :YB]
+
+          units decimal-sizes
+          base  1000
+
+          base-pow  (int (Math/floor (logn bytes base)))
+          ;; if base power shouldn't be larger than biggest unit
+          base-pow  (if (< base-pow (count units))
+                      base-pow
+                      (dec (count units)))
+          suffix (name (get units base-pow))
+          ;; TODO: Math/pow isn't a drop-in for `expt`:
+          ;; https://github.com/clojure/math.numeric-tower/blob/97827be66f35feebc3c89ba81c546fef4adc7947/src/main/clojure/clojure/math/numeric_tower.clj#L89-L103
+          value (float (/ bytes (Math/pow base base-pow)))]
+
+      (str (format format-string value) suffix))))

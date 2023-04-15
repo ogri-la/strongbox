@@ -120,9 +120,15 @@
                                   {:label (format "%s (group)" next-best-label)
                                    :description (format "group record for the %s addon" next-best-label)}))
 
-                         addon-str (clojure.string/join ", " (map :dirname addons))]
+                         ;; count total size in bytes, update top-level :dirsize
+                         total-grouped-size (apply + (remove nil? (map :dirsize (:group-addons addon))))
+                         addon (if (> total-grouped-size 0)
+                                 (assoc addon :dirsize total-grouped-size)
+                                 addon)
 
-                     (logging/addon-log addon :info (format "contains %s addons: %s" (count addons) addon-str))
+                         msg-str (clojure.string/join ", " (map :dirname addons))]
+
+                     (logging/addon-log addon :info (format "contains %s addons: %s" (count addons) msg-str))
                      addon)))
 
         ;; this flattens the newly grouped addons from a map into a list and joins the unknowns

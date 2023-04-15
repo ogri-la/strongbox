@@ -534,7 +534,7 @@
                         :debug
                         (let [fn1-ref (fn1)
                               ;; ensure fn1 is always executed first. it will always finish last.
-                              _ (Thread/sleep 7)
+                              _ (Thread/sleep 5)
                               fn2-ref (fn2)]
                           @fn1-ref
                           @fn2-ref))
@@ -564,3 +564,22 @@
     (doseq [[given expected] cases]
       (is (= expected (utils/patch-name given))))))
 
+(deftest filesize
+  (let [cases [[0 "0"] ;; special case
+               [1 "1.0B"]
+               [1000 "1.0KB"]
+               [1024 "1.0KB"]
+               [10000 "10.0KB"]
+               [100000 "100.0KB"]
+               [1000000 "1.0MB"]
+               [1500000 "1.5MB"]
+
+               [-1 "-1.0B"]
+
+               [nil ""]
+               ["foo" ""]
+               [:foo ""]
+               [{:foo "bar"} ""]]]
+
+    (doseq [[given expected] cases]
+      (is (= expected (utils/filesize given))))))

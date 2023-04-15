@@ -5,7 +5,7 @@
    [clojure.test]
    [clojure.tools.namespace.repl :as tn :refer [refresh]]
    [strongbox
-    [main :as main :refer [restart]]
+    [main :as main :refer [restart stop]]
     [catalogue :as catalogue]
     [http :as http]
     [core :as core]
@@ -34,7 +34,8 @@
                   ;;cli/install-update-these-in-parallel cli/install-update-these-serially
                   ;;core/check-for-updates core/check-for-updates-serially
                   ;; for testing purposes, no addon host is disabled
-                  catalogue/host-disabled? (constantly false)]
+                  catalogue/host-disabled? (constantly false)
+                  utils/folder-size-bytes (constantly 0)]
       (core/reset-logging!)
 
       (if ns-kw

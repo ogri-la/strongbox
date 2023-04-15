@@ -264,6 +264,7 @@
           expected [{:created-date "2011-01-04T05:42:23Z",
                      :description "desc",
                      :dirname "Addon3",
+                     :dirsize 0
                      :download-count 3,
                      :download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=3",
                      :game-track :retail,
@@ -291,6 +292,7 @@
                     {:created-date "2011-01-04T05:42:23Z",
                      :description "desc",
                      :dirname "Addon4",
+                     :dirsize 0
                      :download-count 4,
                      :download-url "https://www.tukui.org/addons.php?download=4",
                      :game-track :retail,
@@ -318,6 +320,7 @@
                     {:created-date "2011-01-04T05:42:23Z",
                      :description "desc",
                      :dirname "Addon5",
+                     :dirsize 0
                      :download-count 5,
                      :download-url "https://github.com/author/addon5/releases/download/Addon5-v1.2.3/Addon5-v1.2.3.zip",
                      :game-track :classic-tbc,
@@ -408,6 +411,7 @@
           expected [{:created-date "2011-01-04T05:42:23Z",
                      :description "desc",
                      :dirname "Addon3",
+                     :dirsize 0
                      :download-count 3,
                      :download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=3",
                      :game-track :retail ;; addon supports retail and classic, addon dir game track is set to retail
@@ -435,6 +439,7 @@
                     {:created-date "2011-01-04T05:42:23Z",
                      :description "desc",
                      :dirname "Addon4",
+                     :dirsize 0
                      :download-count 4,
                      :download-url "https://www.tukui.org/addons.php?download=4",
                      :game-track :retail,
@@ -462,6 +467,7 @@
                     {:created-date "2011-01-04T05:42:23Z",
                      :description "desc",
                      :dirname "Addon5",
+                     :dirsize 0
                      :download-count 5,
                      :download-url "https://github.com/author/addon5/releases/download/Addon5-v1.2.3/Addon5-v1.2.3.zip",
                      :game-track :classic-tbc
@@ -1266,6 +1272,7 @@
                       ;;:version ...
                       :description "Does what no other addon does, slightly differently",
                       :dirname "EveryAddon",
+                      :dirsize 0
                       :group-id "https://group.id/never/fetched",
                       :installed-game-track :retail,
                       :installed-version "1.2.3",
@@ -1300,6 +1307,7 @@
             expected {;;:ignore? false, ;; removed rather than set to false.
                       :description "Does what no other addon does, slightly differently",
                       :dirname "EveryAddon",
+                      :dirsize 0
                       :group-id "https://group.id/never/fetched",
                       :installed-game-track :retail,
                       :installed-version "1.2.3",
@@ -1343,8 +1351,10 @@
 
               expected {:description "group record for the fetched addon",
                         :dirname "EveryAddon-BundledAddon",
+                        :dirsize 0
                         :group-addons [{:description "A useful addon that everyone bundles with their own.",
                                         :dirname "EveryAddon-BundledAddon",
+                                        :dirsize 0
                                         :group-id "https://group.id/also/never/fetched",
 
                                         :ignore? true,
@@ -1362,6 +1372,7 @@
 
                                        {:description "Does what every addon does, just better",
                                         :dirname "EveryOtherAddon",
+                                        :dirsize 0
                                         :group-id "https://group.id/also/never/fetched",
                                         :installed-game-track :retail,
                                         :installed-version "5.6.7",
@@ -1421,6 +1432,7 @@
               expected {:ignore? false, ;; explicit `false` rather than removed
                         :description "Does what no other addon does, slightly differently",
                         :dirname "EveryAddon",
+                        :dirsize 0
                         :group-id "https://group.id/never/fetched",
                         :installed-game-track :retail,
                         :installed-version "1.2.3",
@@ -1708,8 +1720,10 @@
             ;; after installing A, then B then C, we expect C to have cleanly replaced A and B
             expected {:description "group record for the EveryAddonThree addon",
                       :dirname "EveryAddonOne",
+                      :dirsize 0
                       :group-addons [{:description "Does what no other addon does, slightly differently.",
                                       :dirname "EveryAddonOne",
+                                      :dirsize 0
                                       :group-id "https://example.com/EveryAddonThree",
                                       :installed-game-track :retail,
                                       :installed-version "1.2.3",
@@ -1724,6 +1738,7 @@
                                       :supported-game-tracks [:retail]}
                                      {:description "Does what no other addon does, slightly differently.",
                                       :dirname "EveryAddonThree",
+                                      :dirsize 0
                                       :group-id "https://example.com/EveryAddonThree",
                                       :installed-game-track :retail,
                                       :installed-version "1.2.3",
@@ -1738,6 +1753,7 @@
                                       :supported-game-tracks [:retail]}
                                      {:description "Does what no other addon does, slightly differently.",
                                       :dirname "EveryAddonTwo",
+                                      :dirsize 0
                                       :group-id "https://example.com/EveryAddonThree",
                                       :installed-game-track :retail,
                                       :installed-version "1.2.3",

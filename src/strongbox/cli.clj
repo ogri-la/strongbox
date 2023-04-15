@@ -790,6 +790,7 @@
                                                              (clojure.string/join ", ")))}
    :name {:label "name" :value-fn (comp utils/no-new-lines :label)}
    :description {:label "description" :value-fn (comp utils/no-new-lines :description)}
+   :dirsize {:label "size" :value-fn :dirsize}
    :tag-list {:label "tags" :value-fn (fn [row]
                                         (when-not (empty? (:tag-list row))
                                           (str (:tag-list row))))}

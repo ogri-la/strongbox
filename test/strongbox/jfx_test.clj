@@ -78,6 +78,7 @@
                   {:fx/type :menu-item, :text "skinny"}
                   {:fx/type :menu-item, :text "fat"}
                   jfx/separator
+                  {:fx/type :check-menu-item, :text "size", :selected false}
                   {:fx/type :check-menu-item, :text "browse", :selected false}
                   {:fx/type :check-menu-item, :text "source", :selected true}
                   {:fx/type :check-menu-item, :text "ID", :selected true}
