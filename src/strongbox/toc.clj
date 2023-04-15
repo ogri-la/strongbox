@@ -176,7 +176,7 @@
          addon (if-let [dirsize (:dirsize keyvals)]
                  (assoc addon :dirsize dirsize)
                  addon)
-         
+
          ;; prefers tukui over wowi, wowi over github. I'd like to prefer github over wowi, but github
          ;; requires API calls to interact with and these are limited unless authenticated.
          addon (merge addon

@@ -812,8 +812,7 @@
                                     (count-files root file-list)))]
     (+ (-> path fs/file .length)
        (reduce + (flatten (fs/walk count-subdirs+files path))))))
-  
-  
+
 ;; ---
 ;; copied from: https://github.com/clj-commons/humanize/blob/master/src/clj_commons/humanize.cljc
 ;; on: 2023-04-08
@@ -836,26 +835,25 @@
     ;; special case for zero
     "0"
 
-  (let [decimal-sizes  [:B, :KB, :MB, :GB, :TB,
-                        :PB, :EB, :ZB, :YB]
-        binary-sizes [:B, :KiB, :MiB, :GiB, :TiB,
-                      :PiB, :EiB, :ZiB, :YiB]
+    (let [decimal-sizes  [:B, :KB, :MB, :GB, :TB,
+                          :PB, :EB, :ZB, :YB]
+          binary-sizes [:B, :KiB, :MiB, :GiB, :TiB,
+                        :PiB, :EiB, :ZiB, :YiB]
 
-        units (if binary binary-sizes decimal-sizes)
-        base  (if binary 1024 1000)
+          units (if binary binary-sizes decimal-sizes)
+          base  (if binary 1024 1000)
 
         ;;base-pow  (int (floor (logn bytes base)))
-        base-pow  (int (Math/floor (logn bytes base)))
+          base-pow  (int (Math/floor (logn bytes base)))
         ;; if base power shouldn't be larger than biggest unit
-        base-pow  (if (< base-pow (count units))
-                    base-pow
-                    (dec (count units)))
-        suffix (name (get units base-pow))
+          base-pow  (if (< base-pow (count units))
+                      base-pow
+                      (dec (count units)))
+          suffix (name (get units base-pow))
         ;; TODO: Math/pow isn't a drop-in for `expt`:
         ;; https://github.com/clojure/math.numeric-tower/blob/97827be66f35feebc3c89ba81c546fef4adc7947/src/main/clojure/clojure/math/numeric_tower.clj#L89-L103
         ;;value (float (/ bytes (expt base base-pow)))
-        value (float (/ bytes (Math/pow base base-pow)))
-        ]
+          value (float (/ bytes (Math/pow base base-pow)))]
 
-    ;;(str (num-format format value) suffix))))
-    (str (format format-string value) suffix))))
+;;(str (num-format format value) suffix))))
+      (str (format format-string value) suffix))))
