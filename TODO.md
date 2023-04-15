@@ -10,6 +10,20 @@ see CHANGELOG.md for a more formal list of changes by release
     - is the version check happening async too?
     - done
 
+* size of addon on disk
+    - I'd like to see a column with 'size on disk'
+        - "1024KiB", "1MiB", "1.04MB"
+        - done
+    - I'd like to see a total size of all addons in addon dir
+        - "1024MiB", "1GiB"
+        - see :db-stats
+    - I'd like to see size of disk and free space
+        - "2TiB of 14TiB free"
+        - nah
+    - and everything mooshed together
+        - "1GiB of addons on /dev/foo with 2TiB of 14TiB available"
+        - nah
+
 ## todo
 
 * user catalogue, what is happening now that regular, non-github, addons can be favourited?
@@ -36,21 +50,12 @@ see CHANGELOG.md for a more formal list of changes by release
 * search, a 'clear' button
     - resets favourited, search input, tags, etc
 
-* size of addon on disk
-    - I'd like to see a column with 'size on disk'
-        - "1024KiB", "1MiB", "1.04MB"
-    - I'd like to see a total size of all addons in addon dir
-        - "1024MiB", "1GiB"
-    - I'd like to see size of disk and free space
-        - "2TiB of 14TiB free"
-    - and everything mooshed together
-        - "1GiB of addons on /dev/foo with 2TiB of 14TiB available"
-
 * 'core/state :db-stats', seems like a nice idea to put more information here
     - known-hosts
     - num addons per-host
     - num addons favourited/user-catalogue
     - num addons
+    - total size of addons
     - ...?
     - a button on the opposite of the log popup button but similar that will show some overall stats
 

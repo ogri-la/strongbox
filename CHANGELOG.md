@@ -8,11 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* user.clj, where the repl will take you by default during development.
+* new column for installed addons "size" with the total size of the addon on disk, including any grouped addons.
+    - you can find it under `View` -> `Columns` -> `size`
+* `user.clj`, where the REPL will take you by default during development.
     - this lets me separate some development dependencies and logic from what is released.
 
 ### Changed
 
+* the 'fat' column profile includes the new 'size' column.
+    - you can find it under `View` -> `Columns` -> `fat`
 * `jlink compress=2` changed to `jlink compress=1` during the building of the linux AppImage.
     - `2` means 'zip', which interferes with the final AppImage compression.
     - this shaves off ~7MB from the final AppImage.
