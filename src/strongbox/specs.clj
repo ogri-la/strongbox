@@ -108,6 +108,7 @@
 (s/def ::ignore-flag (s/keys :req-un [::ignore?]))
 (s/def ::download-url ::url)
 (s/def ::dirname (s/and string? #(not (empty? %)))) ;; and doesn't contain any '/' characters
+(s/def ::dirsize (s/and int? #(>= % 0)))
 (s/def ::description (s/nilable string?))
 (s/def ::matched? boolean?)
 (s/def ::group-id string?)
@@ -259,7 +260,8 @@
                    ::interface-version
                    ::installed-version
                    :addon/supported-game-tracks]
-          :opt-un [;; toc file may contain addon host information but it's not guaranteed.
+          :opt-un [::dirsize ;; not present if there was an error calculating it, zero during testing.
+                   ;; toc file may contain addon host information but it's not guaranteed.
                    :addon/source
                    :addon/source-id
                    :addon/source-map-list]))

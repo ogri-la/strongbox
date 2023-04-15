@@ -2,6 +2,7 @@
   (:require
    [strongbox
     [main :as main]
+    [utils :as utils]
     [http :as http]
     [joblib :as joblib]
     [logging :as logging]
@@ -22,7 +23,8 @@
                   http/*default-pause* 1 ;; ms
                   http/*default-attempts* 1
                   ;;joblib/tick-delay joblib/*tick*
-                  catalogue/host-disabled? (constantly false)]
+                  catalogue/host-disabled? (constantly false)
+                  utils/folder-size-bytes (constantly 0)]
       (core/reset-logging!)
       (apply require (map symbol ns-list))
       {:errors (reduce + ((juxt :error :fail)
