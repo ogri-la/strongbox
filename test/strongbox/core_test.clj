@@ -1351,10 +1351,10 @@
 
               expected {:description "group record for the fetched addon",
                         :dirname "EveryAddon-BundledAddon",
-                        :dirsize 616
+                        :dirsize 1296
                         :group-addons [{:description "A useful addon that everyone bundles with their own.",
                                         :dirname "EveryAddon-BundledAddon",
-                                        :dirsize 616
+                                        :dirsize 633
                                         :group-id "https://group.id/also/never/fetched",
 
                                         :ignore? true,
@@ -1400,9 +1400,11 @@
               target-idx 0
               expected-2 (-> expected
                              (dissoc :ignore?)
-                             (dissoc :dirsize)
                              (assoc :update? false)
-                             (update-in [:group-addons target-idx] dissoc :ignore?))]
+                             (update-in [:group-addons target-idx] dissoc :ignore?)
+                             ;; the ':ignore? true' information has been removed, resulting in fewer bytes
+                             (assoc :dirsize 1279)
+                             (update-in [:group-addons target-idx] assoc :dirsize 616))]
           (core/install-addon-guard addon)
           (nfo/ignore! install-dir "EveryAddon-BundledAddon")
           (core/load-all-installed-addons)
@@ -1721,7 +1723,7 @@
             ;; after installing A, then B then C, we expect C to have cleanly replaced A and B
             expected {:description "group record for the EveryAddonThree addon",
                       :dirname "EveryAddonOne",
-                      :dirsize 515
+                      :dirsize 1547
                       :group-addons [{:description "Does what no other addon does, slightly differently.",
                                       :dirname "EveryAddonOne",
                                       :dirsize 515
