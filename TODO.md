@@ -61,6 +61,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* gui, bug, sorting isn't preserved between addon dir switches
+    - for example, sorting by 'size' in one addon dir, then switching to another will see random sorting
+
 * gui, 'set-icon' is taking a long time to do it's thing.
 
 * gui, raw data, add textual versions of this data as well

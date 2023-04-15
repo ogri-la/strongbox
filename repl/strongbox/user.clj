@@ -5,7 +5,7 @@
    [clojure.test]
    [clojure.tools.namespace.repl :as tn :refer [refresh]]
    [strongbox
-    [main :as main :refer [restart]]
+    [main :as main :refer [restart stop]]
     [catalogue :as catalogue]
     [http :as http]
     [core :as core]
