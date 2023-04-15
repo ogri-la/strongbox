@@ -1213,7 +1213,8 @@
          :source {:min-width 130 :pref-width 135 :max-width 145
                   :cell-factory {:fx/cell-type :tree-table-cell
                                  :describe (fn [row]
-                                             {:graphic (href-to-hyperlink row)})}
+                                             (when (map? row)
+                                               {:graphic (href-to-hyperlink row)}))}
                   :cell-value-factory identity}
          :source-id {:min-width 60 :pref-width 150}
          :source-map-list {:cell-factory {:fx/cell-type :tree-table-cell
@@ -1244,10 +1245,11 @@
                                                                                                         (cli/search-add-filter :tag tag)))
                                                                                     {:tooltip (name tag)}))
                                                                           (:tag-list row))}})}}
-         :dirsize {:cell-value-factory :dirsize
+         :dirsize {:min-width 80 :pref-width 80 :cell-value-factory :dirsize
                    :cell-factory {:fx/cell-type :tree-table-cell
                                   :describe (fn [bytes]
-                                              {:text (utils/filesize (if-not bytes 0 bytes))})}}
+                                              (when (number? bytes)
+                                                {:text (utils/filesize (if-not bytes 0 bytes))}))}}
          :created-date {:min-width 90 :pref-width 110 :max-width 120
                         :cell-value-factory :created-date
                         :cell-factory {:fx/cell-type :tree-table-cell
