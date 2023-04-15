@@ -121,7 +121,10 @@
                                    :description (format "group record for the %s addon" next-best-label)}))
 
                          ;; count total size in bytes, update top-level :dirsize
-                         addon (assoc addon :dirsize (apply + (map :dirsize (:group-addons addon))))
+                         total-grouped-size (apply + (remove nil? (map :dirsize (:group-addons addon))))
+                         addon (if (> total-grouped-size 0)
+                                 (assoc addon :dirsize total-grouped-size)
+                                 addon)
 
                          msg-str (clojure.string/join ", " (map :dirname addons))]
 
