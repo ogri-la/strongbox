@@ -1249,7 +1249,7 @@
                    :cell-factory {:fx/cell-type :tree-table-cell
                                   :describe (fn [bytes]
                                               (when (number? bytes)
-                                                {:text (utils/filesize (if-not bytes 0 bytes))}))}}
+                                                {:text (utils/filesize bytes)}))}}
          :created-date {:min-width 90 :pref-width 110 :max-width 120
                         :cell-value-factory :created-date
                         :cell-factory {:fx/cell-type :tree-table-cell

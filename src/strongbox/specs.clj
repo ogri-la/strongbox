@@ -260,7 +260,7 @@
                    ::interface-version
                    ::installed-version
                    :addon/supported-game-tracks]
-          :opt-un [::dirsize ;; not present if there was an error calculating it, zero during testing.
+          :opt-un [::dirsize ;; not present on error during calculation. zero during testing.
                    ;; toc file may contain addon host information but it's not guaranteed.
                    :addon/source
                    :addon/source-id
