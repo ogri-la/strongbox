@@ -161,11 +161,11 @@
 
 ;; default set of columns
 (def default-column-list--v1 [:source :name :description :installed-version :available-version :game-version :uber-button])
-(def default-column-list--v2 [:source :name :description :combined-version :game-version :uber-button])
+(def default-column-list--v2 [:dirsize :source :name :description :combined-version :game-version :uber-button])
 (def default-column-list default-column-list--v2)
 
 (def skinny-column-list [:name :version :combined-version :game-version :uber-button])
-(def fat-column-list [:browse-local :source :source-id :name :description :tag-list :created-date :updated-date :combined-version :game-version :uber-button])
+(def fat-column-list [:dirsize :browse-local :source :source-id :name :description :tag-list :created-date :updated-date :combined-version :game-version :uber-button])
 
 (def column-preset-list [[:default default-column-list]
                          [:skinny skinny-column-list]
