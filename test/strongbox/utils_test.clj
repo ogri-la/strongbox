@@ -534,7 +534,7 @@
                         :debug
                         (let [fn1-ref (fn1)
                               ;; ensure fn1 is always executed first. it will always finish last.
-                              _ (Thread/sleep 7)
+                              _ (Thread/sleep 5)
                               fn2-ref (fn2)]
                           @fn1-ref
                           @fn2-ref))

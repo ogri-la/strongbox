@@ -750,11 +750,12 @@
 
 (def -with-lock-lock (Object.))
 
+(def -with-lock-wait-time 10) ;; ms
+
 (defmacro with-lock
   "executes `form` once all items in given `user-set` are available in `lock-set-atom`."
   [lock-set-atom user-set & form]
-  `(let [wait-time# 10] ;; ms
-     (loop [waited# 0]
+  `(loop [waited# 0]
 
        ;; ensure reading the atom is single threaded (locking) and that when we read it and test the result,
        ;; we update it in the same operation (dosync).
@@ -780,9 +781,9 @@
 
            ;; something else holds one or more of the desired locks! wait a duration and try again
            (do (debug "blocked!")
-               (Thread/sleep wait-time#)
-               (debug (format "recurring in %s ms, have waited %s ms" wait-time# waited#))
-               (recur (+ waited# wait-time#))))))))
+               (Thread/sleep -with-lock-wait-time)
+               (debug (format "recurring in %s ms, have waited %s ms" -with-lock-wait-time waited#))
+               (recur (+ waited# -with-lock-wait-time)))))))
 
 (defn-spec patch-name (s/or :ok string?, :not-found nil?)
   "returns the 'patch' name for the given `game-version`, considering only the major and minor values.
