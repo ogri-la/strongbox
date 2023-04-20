@@ -64,6 +64,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * gui, raw data, 'key' column too small for 'supported-game-tracks'
 
+* update screenshots
+
 ## todo bucket (no particular order)
 
 * gui, bug, sorting isn't preserved between addon dir switches

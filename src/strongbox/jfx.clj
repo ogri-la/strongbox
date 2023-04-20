@@ -1271,7 +1271,9 @@
                 :cell-factory {:fx/cell-type :tree-table-cell
                                :describe (fn [addon-summary]
                                            (let [starred (starred? addon-summary)
-                                                 f (if starred cli/remove-summary-from-user-catalogue cli/add-summary-to-user-catalogue)]
+                                                 f (if starred cli/remove-summary-from-user-catalogue
+                                                       ;; we're not dealing with an :addon/summary here not an :addon/installed.
+                                                       cli/add-addon-to-user-catalogue)]
                                              {:graphic (button (:star constants/glyph-map)
                                                                (async-handler (partial f addon-summary))
                                                                {:style-class (if starred "starred" "unstarred")})}))}}
