@@ -158,7 +158,8 @@
 ;; defined here to prevent coupling between cli.clj and config.clj (I guess?)
 
 ;; all known columns. also constitutes the column order.
-(def known-column-list [:browse-local :source :source-id :source-map-list :name :description :tag-list :created-date :updated-date :installed-version :available-version :combined-version :game-version :uber-button])
+;; arrow column/group expander always comes first
+(def known-column-list [:starred :dirsize :browse-local :source :source-id :source-map-list :name :description :tag-list :created-date :updated-date :installed-version :available-version :combined-version :game-version :uber-button])
 
 ;; default set of columns
 (def default-column-list--v1 [:source :name :description :installed-version :available-version :game-version :uber-button])

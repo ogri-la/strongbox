@@ -774,51 +774,6 @@
     :else (or (:version row)
               (:installed-version row))))
 
-;; todo: do we really need this separate to jfx/gui-column-map ?
-(def column-map
-  "common column names mapped to labels and value-generating functions.
-  jfx.clj takes this and merges/augments it with jfx-specific stuff."
-  {:browse-local {:label "browse" :value-fn :addon-dir}
-   :source {:label "source" :value-fn :source}
-   :source-id {:label "ID" :value-fn :source-id}
-   :source-map-list {:label "other sources" :value-fn (fn [row]
-                                                        (->> row
-                                                             :source-map-list
-                                                             (map :source)
-                                                             (remove #(= % (:source row)))
-                                                             utils/nilable
-                                                             (clojure.string/join ", ")))}
-   :name {:label "name" :value-fn (comp utils/no-new-lines :label)}
-   :description {:label "description" :value-fn (comp utils/no-new-lines :description)}
-   :dirsize {:label "size" :value-fn :dirsize}
-   :tag-list {:label "tags" :value-fn (fn [row]
-                                        (when-not (empty? (:tag-list row))
-                                          (str (:tag-list row))))}
-   :updated-date {:label "updated" :value-fn (comp utils/format-dt :updated-date)}
-   :created-date {:label "created" :value-fn (comp utils/format-dt :created-date)}
-   :installed-version {:label "installed" :value-fn :installed-version}
-   :available-version {:label "available" :value-fn available-versions-v1}
-   :combined-version {:label "version" :value-fn available-versions-v2}
-   :game-version {:label "WoW"
-                  :value-fn (fn [row]
-                              (some-> row :interface-version str utils/interface-version-to-game-version))}
-
-   :uber-button {:label nil ;; the gui will use the column-id (`:uber-button`) for the column menu when label is `nil`
-                 :value-fn (fn [row]
-                             (let [queue (core/get-state :job-queue)
-                                   job-id (joblib/addon-id row)]
-                               (if (and (core/unsteady? (:name row))
-                                        (joblib/has-job? queue job-id))
-                                 ;; parallel job in progress, show a ticker.
-                                 "*"
-                                 (cond
-                                   (:ignore? row) (:ignored constants/glyph-map)
-                                   (:pinned-version row) (:pinned constants/glyph-map)
-                                   (core/unsteady? (:name row)) (:unsteady constants/glyph-map)
-                                   (addon-has-errors? row) (:errors constants/glyph-map)
-                                   (addon-has-warnings? row) (:warnings constants/glyph-map)
-                                   :else (:tick constants/glyph-map)))))}})
-
 (defn-spec toggle-ui-column nil?
   "toggles the display of the given `column-id` in the user preferences."
   [column-id keyword?, selected? boolean?]
