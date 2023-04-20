@@ -359,7 +359,18 @@
                              :-fx-border-width "0 1 0 0"
                              :-fx-border-color (colour :table-border)
                              :-fx-text-overrun "word-ellipsis"
-                             ":hover" {:-fx-background-color (colour :row-updateable-selected)}}}}
+                             ":hover" {:-fx-background-color (colour :row-updateable-selected)}}}
+
+                ".star-column:hover > .button"
+                {:-fx-text-fill (colour :star-hover)}
+
+                ".star-column > .button"
+                {:-fx-padding "1 0"
+                 :-fx-font-size "1.3em"
+                 :-fx-text-fill (colour :star-unstarred)
+
+                 ".starred"
+                 {:-fx-text-fill (colour :star-starred)}}}
 
                ;;
                ;; installed-addons tab
@@ -498,18 +509,7 @@
                ;;
 
                "#search-addons "
-               {".star-column:hover > .button"
-                {:-fx-text-fill (colour :star-hover)}
-
-                ".star-column > .button"
-                {:-fx-padding "1 0"
-                 :-fx-font-size "1.3em"
-                 :-fx-text-fill (colour :star-unstarred)
-
-                 ".starred"
-                 {:-fx-text-fill (colour :star-starred)}}
-
-                "#search-install-button"
+               {"#search-install-button"
                 {:-fx-min-width "90px"}
 
                 "#search-random-button"
@@ -1197,144 +1197,155 @@
      :on-action (handler #(utils/browse-to (format "%s/%s" (core/selected-addon-dir) dirname)))
      :text "↪ browse local files"}))
 
-;; todo: integrate star column logic
 (defn gui-column-map
-  [queue]
-  {:browse-local {:text "browse"
-                  :min-width 135 :pref-width 143 :max-width 150
-                  :cell-value-factory identity
-                  :cell-factory {:fx/cell-type :tree-table-cell
-                                 :describe (fn [row]
-                                             {:graphic (or (addon-fs-link (:dirname row))
-                                                           {:fx/type :label
-                                                            :text (get row :dirname "")})})}}
-
-   :source {:text "source"
-            :min-width 130 :pref-width 135 :max-width 145
-            :cell-value-factory identity
-            :cell-factory {:fx/cell-type :tree-table-cell
-                           :describe (fn [row]
-                                       (when (map? row)
-                                         {:graphic (href-to-hyperlink row)}))}}
-
-   :source-id {:text "ID"
-               :min-width 60 :pref-width 150
-               :cell-value-factory :source-id}
-
-   :source-map-list {:text "other sources"
+  ([]
+   (gui-column-map nil))
+  ([context]
+   (let [queue (when context
+                 (fx/sub-val context get-in [:app-state :job-queue]))
+         user-catalogue-idx (when context
+                              (mapv utils/source-map (fx/sub-val context get-in [:app-state, :user-catalogue :addon-summary-list])))
+         starred? (fn [row]
+                    (if (or (not context)
+                            (not (map? row)))
+                      false
+                      (utils/in? (utils/source-map row) user-catalogue-idx)))]
+     {:browse-local {:text "browse"
+                     :min-width 135 :pref-width 143 :max-width 150
                      :cell-value-factory identity
                      :cell-factory {:fx/cell-type :tree-table-cell
                                     :describe (fn [row]
-                                                (let [urls (for [source-map (:source-map-list row)
-                                                                 :let [url (cli/addon-source-map-to-url row source-map)]
-                                                                 :when (and url
-                                                                            (not (= (:source row) (:source source-map))))]
-                                                             (href-to-hyperlink (assoc source-map :url url)))
-                                                      urls (utils/nilable (vec urls))]
-                                                  (if urls
-                                                    {:graphic {:fx/type :h-box
-                                                               :children urls}}
-                                                    {:graphic {:fx/type :label
-                                                               :text ""}})))}}
+                                                {:graphic (or (addon-fs-link (:dirname row))
+                                                              {:fx/type :label
+                                                               :text (get row :dirname "")})})}}
 
-   :name {:text "name"
-          :min-width 100 :pref-width 300
-          :cell-value-factory (comp utils/no-new-lines :label)}
+      :source {:text "source"
+               :min-width 130 :pref-width 135 :max-width 145
+               :cell-value-factory identity
+               :cell-factory {:fx/cell-type :tree-table-cell
+                              :describe (fn [row]
+                                          (when (map? row)
+                                            {:graphic (href-to-hyperlink row)}))}}
 
-   :description {:text "description"
-                 :min-width 150 :pref-width 450
-                 :cell-value-factory (comp utils/no-new-lines :description)}
+      :source-id {:text "ID"
+                  :min-width 60 :pref-width 150
+                  :cell-value-factory :source-id}
 
-   :dirsize {:text "size"
-             :min-width 80 :pref-width 80
-             :cell-value-factory :dirsize
-             :cell-factory {:fx/cell-type :tree-table-cell
-                            :describe (fn [bytes]
-                                        (when (number? bytes)
-                                          {:text (utils/filesize bytes)}))}}
+      :source-map-list {:text "other sources"
+                        :cell-value-factory identity
+                        :cell-factory {:fx/cell-type :tree-table-cell
+                                       :describe (fn [row]
+                                                   (let [urls (for [source-map (:source-map-list row)
+                                                                    :let [url (cli/addon-source-map-to-url row source-map)]
+                                                                    :when (and url
+                                                                               (not (= (:source row) (:source source-map))))]
+                                                                (href-to-hyperlink (assoc source-map :url url)))
+                                                         urls (utils/nilable (vec urls))]
+                                                     (if urls
+                                                       {:graphic {:fx/type :h-box
+                                                                  :children urls}}
+                                                       {:graphic {:fx/type :label
+                                                                  :text ""}})))}}
 
-   :starred {:text "" :menu-label "starred"
-             :min-width 50 :pref-width 50 :max-width 50 :style-class ["invisible-button-column" "star-column"]
-             :cell-value-factory identity
-             :cell-factory {:fx/cell-type :tree-table-cell
-                            :describe (fn [addon-summary]
-                                        (let [starred false ;(starred? addon-summary)
-                                              f (if starred cli/remove-summary-from-user-catalogue cli/add-summary-to-user-catalogue)]
-                                          {:graphic (button (:star constants/glyph-map)
-                                                            (async-handler (partial f addon-summary))
-                                                            {:style-class (if starred "starred" "unstarred")})}))}}
+      :name {:text "name"
+             :min-width 100 :pref-width 300
+             :cell-value-factory (comp utils/no-new-lines :label)}
 
-   :tag-list {:text "tags"
-              :min-width 200 :pref-width 300 :style-class ["tag-button-column"]
-              :cell-value-factory identity
-              :cell-factory {:fx/cell-type :tree-table-cell
-                             :describe (fn [row]
-                                         {:graphic {:fx/type :h-box
-                                                    :children (mapv (fn [tag]
-                                                                      (button (name tag)
-                                                                              (async-handler #(do (switch-tab! SEARCH-TAB)
-                                                                                                  (cli/search-add-filter :tag tag)))
-                                                                              {:tooltip (name tag)}))
-                                                                    (:tag-list row))}})}}
+      :description {:text "description"
+                    :min-width 150 :pref-width 450
+                    :cell-value-factory (comp utils/no-new-lines :description)}
 
-   :updated-date {:text "updated"
-                  :min-width 90 :pref-width 110 :max-width 120
-                  :cell-value-factory :updated-date
-                  :cell-factory {:fx/cell-type :tree-table-cell
-                                 :describe (fn [dt]
-                                             {:text (if-not (string? dt) "" (utils/format-dt dt))})}}
+      :dirsize {:text "size"
+                :min-width 80 :pref-width 80
+                :cell-value-factory :dirsize
+                :cell-factory {:fx/cell-type :tree-table-cell
+                               :describe (fn [bytes]
+                                           (when (number? bytes)
+                                             {:text (utils/filesize bytes)}))}}
 
-   :created-date {:text "created"
-                  :min-width 90 :pref-width 110 :max-width 120
-                  :cell-value-factory :created-date
-                  :cell-factory {:fx/cell-type :tree-table-cell
-                                 :describe (fn [dt]
-                                             ;; for some reason I'm getting the whole row here ... (:uber button column?)!
-                                             {:text (if-not (string? dt) "" (utils/format-dt dt))})}}
+      :starred {:text "" :menu-label "starred"
+                :min-width 50 :pref-width 50 :max-width 50 :style-class ["invisible-button-column" "star-column"]
+                :comparator (fn [a b]
+                              (if (starred? a) 1 0))
+                :cell-value-factory identity
+                :cell-factory {:fx/cell-type :tree-table-cell
+                               :describe (fn [addon-summary]
+                                           (let [starred (starred? addon-summary)
+                                                 f (if starred cli/remove-summary-from-user-catalogue cli/add-summary-to-user-catalogue)]
+                                             {:graphic (button (:star constants/glyph-map)
+                                                               (async-handler (partial f addon-summary))
+                                                               {:style-class (if starred "starred" "unstarred")})}))}}
 
-   :installed-version {:text "installed"
-                       :min-width 100 :pref-width 175 :max-width 250 :style-class ["installed-column"]
-                       :cell-value-factory :installed-version}
-
-   :available-version {:text "available"
-                       :min-width 100 :pref-width 175 :max-width 250 :style-class ["available-version-column"]
-                       :cell-value-factory cli/available-versions-v1}
-
-   :combined-version {:text "version"
-                      :min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]
-                      :cell-value-factory cli/available-versions-v2}
-
-   :game-version {:text "WoW"
-                  :min-width 70 :pref-width 70 :max-width 100
-                  :cell-value-factory identity
-                  :cell-factory {:fx/cell-type :tree-table-cell
-                                 :describe (fn [row]
-                                             (let [text (some-> row :interface-version str utils/interface-version-to-game-version)
-                                                   text (if-not (string? text) "" text)]
-                                               {:graphic {:fx/type fx.ext.node/with-tooltip-props
-                                                          :props {:tooltip {:fx/type :tooltip
-                                                                            :text (-> text utils/patch-name (or "?"))
-                                                                            ;; the tooltip will be long and intrusive, make delay longer than typical.
-                                                                            :show-delay 400}}
-                                                          :desc {:fx/type :label
-                                                                 :style-class ["table-cell"]
-                                                                 :text text}}}))}}
-
-   :uber-button {:text "uber-button" ;; the gui will use the column-id (`:uber-button`) for the column menu when label is `nil`
-                 :min-width 80 :pref-width 80 :max-width 120 :style-class ["invisible-button-column"]
+      :tag-list {:text "tags"
+                 :min-width 200 :pref-width 300 :style-class ["tag-button-column"]
                  :cell-value-factory identity
                  :cell-factory {:fx/cell-type :tree-table-cell
                                 :describe (fn [row]
-                                            (if (or (not row)
-                                                    (not (map? row)))
-                                              ;; for some reason I'm getting the contents of the :created-date column here
-                                              {:text ""}
-                                              ;; else
-                                              (let [job-id (joblib/addon-id row)]
-                                                {:graphic (if (and (core/unsteady? (:name row))
-                                                                   (joblib/has-job? queue job-id))
-                                                            (addon-progress-bar row queue job-id)
-                                                            (uber-button row))})))}}})
+                                            {:graphic {:fx/type :h-box
+                                                       :children (mapv (fn [tag]
+                                                                         (button (name tag)
+                                                                                 (async-handler #(do (switch-tab! SEARCH-TAB)
+                                                                                                     (cli/search-add-filter :tag tag)))
+                                                                                 {:tooltip (name tag)}))
+                                                                       (:tag-list row))}})}}
+
+      :updated-date {:text "updated"
+                     :min-width 90 :pref-width 110 :max-width 120
+                     :cell-value-factory :updated-date
+                     :cell-factory {:fx/cell-type :tree-table-cell
+                                    :describe (fn [dt]
+                                                {:text (if-not (string? dt) "" (utils/format-dt dt))})}}
+
+      :created-date {:text "created"
+                     :min-width 90 :pref-width 110 :max-width 120
+                     :cell-value-factory :created-date
+                     :cell-factory {:fx/cell-type :tree-table-cell
+                                    :describe (fn [dt]
+                                                ;; for some reason I'm getting the whole row here ... (:uber button column?)!
+                                                {:text (if-not (string? dt) "" (utils/format-dt dt))})}}
+
+      :installed-version {:text "installed"
+                          :min-width 100 :pref-width 175 :max-width 250 :style-class ["installed-column"]
+                          :cell-value-factory :installed-version}
+
+      :available-version {:text "available"
+                          :min-width 100 :pref-width 175 :max-width 250 :style-class ["available-version-column"]
+                          :cell-value-factory cli/available-versions-v1}
+
+      :combined-version {:text "version"
+                         :min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]
+                         :cell-value-factory cli/available-versions-v2}
+
+      :game-version {:text "WoW"
+                     :min-width 70 :pref-width 70 :max-width 100
+                     :cell-value-factory identity
+                     :cell-factory {:fx/cell-type :tree-table-cell
+                                    :describe (fn [row]
+                                                (let [text (some-> row :interface-version str utils/interface-version-to-game-version)
+                                                      text (if-not (string? text) "" text)]
+                                                  {:graphic {:fx/type fx.ext.node/with-tooltip-props
+                                                             :props {:tooltip {:fx/type :tooltip
+                                                                               :text (-> text utils/patch-name (or "?"))
+                                                                               ;; the tooltip will be long and intrusive, make delay longer than typical.
+                                                                               :show-delay 400}}
+                                                             :desc {:fx/type :label
+                                                                    :style-class ["table-cell"]
+                                                                    :text text}}}))}}
+
+      :uber-button {:text "" :menu-label "uber-button"
+                    :min-width 80 :pref-width 80 :max-width 120 :style-class ["invisible-button-column"]
+                    :cell-value-factory identity
+                    :cell-factory {:fx/cell-type :tree-table-cell
+                                   :describe (fn [row]
+                                               (if (not (map? row))
+                                                 ;; for some reason I'm getting the contents of the :created-date column here
+                                                 {:text ""}
+                                                 ;; else
+                                                 (let [job-id (joblib/addon-id row)]
+                                                   {:graphic (if (and (core/unsteady? (:name row))
+                                                                      (joblib/has-job? queue job-id))
+                                                               (addon-progress-bar row queue job-id)
+                                                               (uber-button row))})))}}})))
 
 (defn-spec make-table-column map?
   "returns a description of a table column that lives within a table."
@@ -1424,8 +1435,7 @@
 (defn-spec build-column-menu ::sp/list-of-maps
   "returns a list of columns that are 'selected' if present in `selected-column-list`."
   [selected-column-list :ui/column-list]
-  (let [queue nil
-        gui-column-map (gui-column-map queue)
+  (let [gui-column-map (gui-column-map)
         column-list (cli/sort-column-list (keys gui-column-map))
         toggle-column-menu-item
         (fn [column-id]
@@ -1707,8 +1717,7 @@
   [{:keys [fx/context]}]
   (fx/sub-val context get-in [:app-state :unsteady-addon-list]) ;; re-render table when addons become unsteady
   (fx/sub-val context get-in [:app-state :log-lines]) ;; re-render rows when addons emit warnings or errors
-  (let [queue (fx/sub-val context get-in [:app-state :job-queue])
-        row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
+  (let [row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
         selected (fx/sub-val context get-in [:app-state :selected-addon-list])
         selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])
         user-selected-column-list (cli/sort-column-list
@@ -1722,7 +1731,7 @@
                       :cell-value-factory (constantly "")}
 
         selected-columns (or user-selected-column-list sp/default-column-list)
-        column-list (utils/select-vals (gui-column-map queue) selected-columns)
+        column-list (utils/select-vals (gui-column-map context) selected-columns)
         column-list (mapv make-tree-table-column column-list)
         column-list (if-not (empty? column-list) (into [arrow-column] column-list) [])
         column-list (mapv #(dissoc % :menu-label) column-list)
