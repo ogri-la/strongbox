@@ -833,7 +833,8 @@
     (if-let [catalogue-addon (sp/valid-or-nil :addon/summary (installed-addon-to-addon-summary addon))]
       (add-summary-to-user-catalogue catalogue-addon)
       ;; todo: not a helpful error message
-      (error "cannot add non-catalogue addon to user-catalogue.")))
+      (logging/with-addon addon
+        (error "cannot add non-catalogue addon to user-catalogue."))))
   nil)
 
 (defn-spec remove-summary-from-user-catalogue nil?
