@@ -1269,14 +1269,16 @@
                               (if (starred? a) 1 0))
                 :cell-value-factory identity
                 :cell-factory {:fx/cell-type :tree-table-cell
-                               :describe (fn [addon-summary]
-                                           (let [starred (starred? addon-summary)
-                                                 f (if starred cli/remove-summary-from-user-catalogue
-                                                       ;; we're not dealing with an :addon/summary here not an :addon/installed.
-                                                       cli/add-addon-to-user-catalogue)]
-                                             {:graphic (button (:star constants/glyph-map)
-                                                               (async-handler (partial f addon-summary))
-                                                               {:style-class (if starred "starred" "unstarred")})}))}}
+                               :describe (fn [installed-addon]
+                                           (if (addon/ignored? installed-addon)
+                                             {:text ""}
+                                             (let [starred (starred? installed-addon)
+                                                   f (if starred cli/remove-summary-from-user-catalogue
+                                                         ;; we're not dealing with an :addon/summary here not an :addon/installed.
+                                                         cli/add-addon-to-user-catalogue)]
+                                               {:graphic (button (:star constants/glyph-map)
+                                                                 (async-handler (partial f installed-addon))
+                                                                 {:style-class (if starred "starred" "unstarred")})})))}}
 
       :tag-list {:text "tags"
                  :min-width 200 :pref-width 300 :style-class ["tag-button-column"]
