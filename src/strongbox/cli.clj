@@ -817,24 +817,17 @@
   (core/add-user-addon! addon-summary)
   (core/write-user-catalogue!))
 
-(defn-spec installed-addon-to-addon-summary (s/nilable :addon/summary)
-  [addon :addon/source-map]
-
-  ;; if-let ...
-  (first
-   (core/db-addon-by-source-and-source-id
-    (core/get-state :db) (:source addon) (:source-id addon)))
-
-  ;; else ... try a dry-run install? gussy something up?
-  )
 (defn-spec add-addon-to-user-catalogue nil?
-  [addon map?] ;;:addon/source-map]
-  (when (s/valid? :addon/source-map addon)
-    (if-let [catalogue-addon (sp/valid-or-nil :addon/summary (installed-addon-to-addon-summary addon))]
-      (add-summary-to-user-catalogue catalogue-addon)
-      ;; todo: not a helpful error message
-      (logging/with-addon addon
-        (error "cannot add non-catalogue addon to user-catalogue."))))
+  [addon map?]
+  (logging/with-addon addon
+    (if-not (s/valid? :addon/source-map addon)
+      (error "failed to star addon, it is missing some basic information ('source' and 'source-id').")
+      (let [catalogue-addon (first
+                             (core/db-addon-by-source-and-source-id
+                              (core/get-state :db) (:source addon) (:source-id addon)))]
+        (if-not (s/valid? :addon/summary catalogue-addon)
+          (error "failed to star addon, it isn't matched to the catalogue yet.")
+          (add-summary-to-user-catalogue catalogue-addon)))))
   nil)
 
 (defn-spec remove-summary-from-user-catalogue nil?

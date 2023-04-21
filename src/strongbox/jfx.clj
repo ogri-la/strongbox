@@ -1270,7 +1270,8 @@
                 :cell-value-factory identity
                 :cell-factory {:fx/cell-type :tree-table-cell
                                :describe (fn [installed-addon]
-                                           (if (addon/ignored? installed-addon)
+                                           (if (or (addon/ignored? installed-addon)
+                                                   (not (:matched? installed-addon)))
                                              {:text ""}
                                              (let [starred (starred? installed-addon)
                                                    f (if starred cli/remove-summary-from-user-catalogue
