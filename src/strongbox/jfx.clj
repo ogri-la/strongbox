@@ -1270,13 +1270,14 @@
                 :cell-value-factory identity
                 :cell-factory {:fx/cell-type :tree-table-cell
                                :describe (fn [installed-addon]
-                                           (if (or (addon/ignored? installed-addon)
+                                           (if (or (not (map? installed-addon))
+                                                   (addon/ignored? installed-addon)
                                                    (not (:matched? installed-addon)))
                                              {:text ""}
                                              (let [starred (starred? installed-addon)
-                                                   f (if starred cli/remove-summary-from-user-catalogue
-                                                         ;; we're not dealing with an :addon/summary here not an :addon/installed.
-                                                         cli/add-addon-to-user-catalogue)]
+                                                   f (if starred
+                                                       cli/remove-summary-from-user-catalogue
+                                                       cli/add-addon-to-user-catalogue)]
                                                {:graphic (button (:star constants/glyph-map)
                                                                  (async-handler (partial f installed-addon))
                                                                  {:style-class (if starred "starred" "unstarred")})})))}}
@@ -1309,19 +1310,19 @@
                                                 ;; for some reason I'm getting the whole row here ... (:uber button column?)!
                                                 {:text (if-not (string? dt) "" (utils/format-dt dt))})}}
 
-      :installed-version {:text "installed"
+      :installed-version {:text "installed" :menu-label "installed version"
                           :min-width 100 :pref-width 175 :max-width 250 :style-class ["installed-column"]
                           :cell-value-factory :installed-version}
 
-      :available-version {:text "available"
+      :available-version {:text "available" :menu-label "available version"
                           :min-width 100 :pref-width 175 :max-width 250 :style-class ["available-version-column"]
                           :cell-value-factory cli/available-versions-v1}
 
-      :combined-version {:text "version"
+      :combined-version {:text "version" :menu-label "installed+available version"
                          :min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]
                          :cell-value-factory cli/available-versions-v2}
 
-      :game-version {:text "WoW"
+      :game-version {:text "WoW" :menu-label "game version (WoW)"
                      :min-width 70 :pref-width 70 :max-width 100
                      :cell-value-factory identity
                      :cell-factory {:fx/cell-type :tree-table-cell
@@ -1337,7 +1338,7 @@
                                                                     :style-class ["table-cell"]
                                                                     :text text}}}))}}
 
-      :uber-button {:text "" :menu-label "uber-button"
+      :uber-button {:text "" :menu-label "über button"
                     :min-width 80 :pref-width 80 :max-width 120 :style-class ["invisible-button-column"]
                     :cell-value-factory identity
                     :cell-factory {:fx/cell-type :tree-table-cell
