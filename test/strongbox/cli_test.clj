@@ -732,24 +732,27 @@
   (testing "individual addons can be refreshed, writing the changes to disk afterwards."
     (let [user-catalogue (catalogue/new-catalogue [helper/addon-summary])
           new-addon (merge helper/addon-summary {:updated-date "2022-02-02T02:02:02"})
-          expected (assoc user-catalogue :addon-summary-list [new-addon])]
+          expected (assoc user-catalogue :addon-summary-list [new-addon])
+          db []]
       (with-running-app
         (swap! core/state assoc :user-catalogue user-catalogue)
         (core/write-user-catalogue!)
         (with-redefs [cli/find-addon (fn [& args] new-addon)]
-          (cli/refresh-user-catalogue-item helper/addon-summary))
+          (cli/refresh-user-catalogue-item helper/addon-summary db))
         (is (= expected (core/get-state :user-catalogue)))))))
 
 (deftest refresh-user-catalogue-item--no-catalogue
   (testing "looking for an addon that doesn't exist in the catalogue isn't a total failure"
     (with-running-app
-      (is (nil? (cli/refresh-user-catalogue-item helper/addon-summary))))))
+      (let [db []]
+        (is (nil? (cli/refresh-user-catalogue-item helper/addon-summary db)))))))
 
 (deftest refresh-user-catalogue-item--unhandled-exception
   (testing "unhandled exceptions while refreshing a user-catalogue item isn't a total failure"
     (with-running-app
       (with-redefs [cli/find-addon (fn [& args] (throw (Exception. "catastrophe!")))]
-        (is (nil? (cli/refresh-user-catalogue-item helper/addon-summary)))))))
+        (let [db []]
+          (is (nil? (cli/refresh-user-catalogue-item helper/addon-summary db))))))))
 
 ;;
 

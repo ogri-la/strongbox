@@ -706,33 +706,34 @@
 
 (defn-spec refresh-user-catalogue-item nil?
   "refresh the details of an individual `addon` in the user catalogue, optionally writing the updated catalogue to file."
-  ([addon :addon/summary]
-   (refresh-user-catalogue-item addon true))
-  ([addon :addon/summary, write? boolean?]
-   (logging/with-addon addon
-     (info "refreshing details")
-     (try
-       (let [attempt-dry-run? false
-             refreshed-addon (find-addon (:url addon) attempt-dry-run?)]
-         (if refreshed-addon
-           (do (core/add-user-addon! refreshed-addon)
-               (when write?
-                 (core/write-user-catalogue!))
-               (info "... done!"))
-           (warn "failed to refresh catalogue entry")))
-       (catch Exception e
-         (error (format "an unexpected error happened while updating the details for '%s' in the user-catalogue: %s"
-                        (:name addon) (.getMessage e))))))))
+  [addon :addon/summary, db :addon/summary-list]
+  (logging/with-addon addon
+    (info "refreshing details")
+    (try
+      (let [{:keys [source source-id url]} addon
+            refreshed-addon (first (core/db-addon-by-source-and-source-id db source source-id))
+            refreshed-addon (or refreshed-addon
+                                (find-addon url false))]
+        (if-not refreshed-addon
+          (warn "failed to refresh details of addon in user-catalogue: couldn't find addon in catalogue or online" [source source-id url])
+          (core/add-user-addon! refreshed-addon)))
+
+      (catch Exception e
+        (error e (format "an unexpected error happened while updating the details for '%s' in the user-catalogue: %s"
+                         (:name addon) (.getMessage e)))))))
 
 (defn-spec refresh-user-catalogue nil?
   "refresh the details of all addons in the user catalogue, writing the updated catalogue to file once."
   []
   (binding [http/*cache* (core/cache)]
-    (info (format "refreshing \"%s\", this may take a minute ..." (-> (core/paths :user-catalogue-file) fs/base-name)))
-    (let [write? false]
+    (let [path (fs/base-name  (core/paths :user-catalogue-file))
+          full-catalogue (or (:addon-summary-list (catalogue/read-catalogue (core/catalogue-local-path :full)))
+                             [])]
+      (info (format "refreshing \"%s\", this may take a minute ..." path))
       (doseq [user-addon (core/get-state :user-catalogue :addon-summary-list)]
-        (refresh-user-catalogue-item user-addon write?)))
-    (core/write-user-catalogue!))
+        (refresh-user-catalogue-item user-addon full-catalogue))
+      (core/write-user-catalogue!)
+      (info (format "\"%s\" has been refreshed" path))))
   nil)
 
 ;;
