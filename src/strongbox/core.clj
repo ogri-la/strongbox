@@ -838,15 +838,22 @@
       (or (-find-first-in-db db installed-addon match-on-list)
           installed-addon))))
 
+(defn-spec db-addon-by-source-and-source-id :addon/summary-list
+  "returns a list of addon summaries from `db` whose source and source-id exactly match the given `source` and `source-id`."
+  [db :addon/summary-list, source :addon/source, source-id :addon/source-id]
+  (let [xf (filter #(and (= source (:source %))
+                         (= source-id (:source-id %))))]
+    (into [] xf db)))
+
 (defn-spec db-addon-by-source-and-name :addon/summary-list
-  "returns a list of addon summaries from `db` whose source and name match (exactly) the given `source` and `name`"
+  "returns a list of addon summaries from `db` whose source and name exactly match the given `source` and `name`."
   [db :addon/summary-list, source :addon/source, name ::sp/name]
   (let [xf (filter #(and (= source (:source %))
                          (= name (:name %))))]
     (into [] xf db)))
 
 (defn-spec db-addon-by-name :addon/summary-list
-  "returns a list of addon summaries from `db` whose name matches (exactly) the given `name`"
+  "returns a list of addon summaries from `db` whose name exactly matches the given `name`."
   [db :addon/summary-list, name ::sp/name]
   (let [xf (filter #(= name (:name %)))]
     (into [] xf db)))
