@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* new column for installed addons "starred" that will add an installed addon to the 'user-catalogue'.
+    - star button disabled when addon is being ignored or isn't matched against the catalogue.
 * new column for installed addons "size" with the total size of the addon on disk, including any grouped addons.
     - you can find it under `View` -> `Columns` -> `size`
 * `user.clj`, where the REPL will take you by default during development.
@@ -15,7 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-* the 'fat' column profile includes the new 'size' column.
+* menu labels for the installed addons table columns have been tweaked (see `View` -> `Columns`)
+    - "installed" is now "installed version"
+    - "available" is now "available version"
+    - "version" is now "installed+available version"
+    - "WoW" is now "game version (WoW)"
+* the 'fat' column profile now uses the "installed" and "available" columns rather than the combined "version" column.
+* the 'fat' column profile includes the new 'starred' and 'size' columns.
     - you can find it under `View` -> `Columns` -> `fat`
 * `jlink compress=2` changed to `jlink compress=1` during the building of the linux AppImage.
     - `2` means 'zip', which interferes with the final AppImage compression.

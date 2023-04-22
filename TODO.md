@@ -24,6 +24,10 @@ see CHANGELOG.md for a more formal list of changes by release
         - "1GiB of addons on /dev/foo with 2TiB of 14TiB available"
         - nah
 
+* user catalogue, add a 'add to user-catalogue' option to make an addon always available despite selected catalogue
+    - done, via favouriting, but! it's not available on the installed addon pane page
+    - done
+
 ## todo
 
 * user catalogue, what is happening now that regular, non-github, addons can be favourited?
@@ -43,9 +47,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * user catalogue, refreshing may guarantee exceeding github limit.
     - if we know this, add a warning? refuse?
-
-* user catalogue, add a 'add to user-catalogue' option to make an addon always available despite selected catalogue
-    - done, via favouriting, but! it's not available on the installed addon pane page
 
 * search, a 'clear' button
     - resets favourited, search input, tags, etc
