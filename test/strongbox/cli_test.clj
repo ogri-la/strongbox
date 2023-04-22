@@ -778,6 +778,25 @@
         (is (= expected (core/get-state :user-catalogue)))
         (is (= expected (catalogue/read-catalogue user-catalogue-file)))))))
 
+(deftest add-addon-to-user-catalogue
+  (testing "random addons can be added to the user catalogue, provided they can be found in the catalogue."
+    (with-running-app
+      (let [expected (catalogue/new-catalogue [helper/addon-summary])
+            given (select-keys helper/addon-summary [:source :source-id])
+            user-catalogue-file (core/paths :user-catalogue-file)
+            db [helper/addon-summary]]
+
+        (is (nil? (core/get-state :db)))
+        (is (nil? (core/get-state :user-catalogue)))
+        (is (not (fs/exists? user-catalogue-file)))
+
+        (swap! core/state assoc :db db)
+
+        (cli/add-addon-to-user-catalogue given)
+
+        (is (= expected (core/get-state :user-catalogue)))
+        (is (= expected (catalogue/read-catalogue user-catalogue-file)))))))
+
 ;; test doesn't seem to live comfortably in `core_test.clj`
 
 (deftest install-update-these-in-parallel--bad-download

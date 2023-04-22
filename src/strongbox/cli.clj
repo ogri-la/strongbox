@@ -818,6 +818,8 @@
   (core/write-user-catalogue!))
 
 (defn-spec add-addon-to-user-catalogue nil?
+  "given an `addon` with only a `:source` and `:source-id`, find it in the catalogue and add it to the user-catalogue.
+  fails if addon cannot be found in catalogue."
   [addon map?]
   (logging/with-addon addon
     (if-not (s/valid? :addon/source-map addon)

@@ -1198,6 +1198,8 @@
      :text "↪ browse local files"}))
 
 (defn gui-column-map
+  "list of columns for the installed-addons-table that needs to be separately defined so a menu can be built.
+  called with no arguments, the various attached functions will probably fail."
   ([]
    (gui-column-map nil))
   ([context]
@@ -1729,8 +1731,8 @@
         user-selected-column-list (cli/sort-column-list
                                    (fx/sub-val context get-in [:app-state :cfg :preferences :ui-selected-columns]))
 
-        ;; can't be part of the column map because it's actually attached to the row.
-        ;; this is just a spacer so the arrow always has room and isn't overlapped by another column's values.
+        ;; can't be part of the column map because the arrow glyph is actually embedded in the row.
+        ;; this is just a spacer so the arrow always has a fixed amount of room and is not overlapped by other columns.
         arrow-column {:text ""
                       :fx/type :tree-table-column
                       :min-width 25 :max-width 25 :resizable false
@@ -1739,6 +1741,7 @@
         selected-columns (or user-selected-column-list sp/default-column-list)
         column-list (utils/select-vals (gui-column-map context) selected-columns)
         column-list (mapv make-tree-table-column column-list)
+        ;; the column list can be empty if the user removes all columns!
         column-list (if-not (empty? column-list) (into [arrow-column] column-list) [])
         column-list (mapv #(dissoc % :menu-label) column-list)
 
