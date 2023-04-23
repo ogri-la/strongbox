@@ -706,33 +706,38 @@
 
 (defn-spec refresh-user-catalogue-item nil?
   "refresh the details of an individual `addon` in the user catalogue, optionally writing the updated catalogue to file."
-  ([addon :addon/summary]
-   (refresh-user-catalogue-item addon true))
-  ([addon :addon/summary, write? boolean?]
-   (logging/with-addon addon
-     (info "refreshing details")
-     (try
-       (let [attempt-dry-run? false
-             refreshed-addon (find-addon (:url addon) attempt-dry-run?)]
-         (if refreshed-addon
-           (do (core/add-user-addon! refreshed-addon)
-               (when write?
-                 (core/write-user-catalogue!))
-               (info "... done!"))
-           (warn "failed to refresh catalogue entry")))
-       (catch Exception e
-         (error (format "an unexpected error happened while updating the details for '%s' in the user-catalogue: %s"
-                        (:name addon) (.getMessage e))))))))
+  [addon :addon/summary, db :addon/summary-list]
+  (logging/with-addon addon
+    (info "refreshing user-catalogue addon:" (:name addon))
+    (try
+      (let [{:keys [source source-id url]} addon
+            refreshed-addon (core/db-addon-by-source-and-source-id db source source-id)
+            attempt-dry-run? false
+            refreshed-addon (or refreshed-addon
+                                (find-addon url attempt-dry-run?))]
+        (if-not refreshed-addon
+          (warn (format "failed to refresh details of addon in user-catalogue: couldn't find addon '%s' in catalogue or online"
+                        (:name addon)))
+          (core/add-user-addon! refreshed-addon)))
+
+      (catch Exception e
+        (error (format "an unexpected error happened while updating the details for '%s' in the user-catalogue: %s"
+                       (:name addon) (.getMessage e)))))))
 
 (defn-spec refresh-user-catalogue nil?
   "refresh the details of all addons in the user catalogue, writing the updated catalogue to file once."
   []
   (binding [http/*cache* (core/cache)]
-    (info (format "refreshing \"%s\", this may take a minute ..." (-> (core/paths :user-catalogue-file) fs/base-name)))
-    (let [write? false]
+    (let [path (fs/base-name (core/paths :user-catalogue-file)) ;; "user-catalogue.json"
+          ;; we can't assume the full-catalogue is available.
+          _ (core/download-catalogue (core/get-catalogue-location :full))
+          db (catalogue/read-catalogue (core/catalogue-local-path :full))
+          full-catalogue (or (:addon-summary-list db) [])]
+      (info (format "refreshing \"%s\", this may take a minute ..." path))
       (doseq [user-addon (core/get-state :user-catalogue :addon-summary-list)]
-        (refresh-user-catalogue-item user-addon write?)))
-    (core/write-user-catalogue!))
+        (refresh-user-catalogue-item user-addon full-catalogue))
+      (core/write-user-catalogue!)
+      (info (format "\"%s\" has been refreshed" path))))
   nil)
 
 ;;
@@ -824,11 +829,10 @@
   (logging/with-addon addon
     (if-not (s/valid? :addon/source-map addon)
       (error "failed to star addon, it is missing some basic information ('source' and 'source-id').")
-      (let [catalogue-addon (first
-                             (core/db-addon-by-source-and-source-id
-                              (core/get-state :db) (:source addon) (:source-id addon)))]
+      (let [catalogue-addon (core/db-addon-by-source-and-source-id
+                             (core/get-state :db) (:source addon) (:source-id addon))]
         (if-not (s/valid? :addon/summary catalogue-addon)
-          (error "failed to star addon, it isn't matched to the catalogue yet.")
+          (error "failed to star addon, it is not matched to the catalogue.")
           (add-summary-to-user-catalogue catalogue-addon)))))
   nil)
 

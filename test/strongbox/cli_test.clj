@@ -634,15 +634,19 @@
 
 ;; todo: no import-addon-gitlab ?
 
-(deftest refresh-user-catalogue
+(deftest refresh-user-catalogue--not-in-catalogue
   (testing "the user catalogue can be 'refreshed', pulling in updated information from github and the current catalogue"
     (with-running-app+opts {:ui nil}
       (let [;; user-catalogue with a bunch of addons across all hosts that the user has added.
             user-catalogue-fixture (fixture-path "user-catalogue--populated.json")
 
-            ;; default app catalogue, contains newer versions of the addon summaries in the user-catalogue.
-            ;; this is because the catalogue is updated periodically and the user-catalogue is not.
+            ;; default app catalogue. this is what the user should have selected before and after refresh,
+            ;; despite using the 'full' catalogue for the refresh.
             short-catalogue (slurp (fixture-path "user-catalogue--short-catalogue.json"))
+
+            ;; full app catalogue, contains newer versions of the addon summaries in the user-catalogue.
+            ;; this is because regular catalogues are updated periodically and the user-catalogue is not.
+            full-catalogue short-catalogue
 
             tukui-fixture (slurp (fixture-path "user-catalogue--tukui.json"))
             tukui-classic-fixture (slurp (fixture-path "user-catalogue--tukui-classic.json"))
@@ -659,7 +663,10 @@
             gitlab-blob-fixture (slurp (fixture-path "user-catalogue--gitlab-blob.json"))
             gitlab-releases-fixture (slurp (fixture-path "user-catalogue--gitlab-releases.json"))
 
-            fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
+            fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/full-catalogue.json"
+                         {:get (fn [req] {:status 200 :body full-catalogue})}
+
+                         "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                          {:get (fn [req] {:status 200 :body short-catalogue})}
 
                          "https://www.tukui.org/api.php?addons"
@@ -713,6 +720,9 @@
           ;; sanity check, ensure user-catalogue loaded
           (is (= expected-num (count (core/get-state :db))))
 
+          ;; ensure default short-catalogue is being used
+          (is (= :short (:name (core/current-catalogue))))
+
           ;; we need to load the short-catalogue using newer versions of what is in the user-catalogue
           ;; the user-catalogue is then matched against db, the newer summary returned and written to the user catalogue
 
@@ -726,30 +736,36 @@
                                             (assoc :datestamp today))]
             (cli/refresh-user-catalogue)
             ;; ensure new user-catalogue matches expectations
-            (is (= expected-user-catalogue (core/get-user-catalogue)))))))))
+            (is (= expected-user-catalogue (core/get-user-catalogue)))
+
+            ;; ensure the selected catalogue hasn't changed despite downloading the full catalogue
+            (is (= :short (:name (core/current-catalogue))))))))))
 
 (deftest refresh-user-catalogue-item
   (testing "individual addons can be refreshed, writing the changes to disk afterwards."
     (let [user-catalogue (catalogue/new-catalogue [helper/addon-summary])
           new-addon (merge helper/addon-summary {:updated-date "2022-02-02T02:02:02"})
-          expected (assoc user-catalogue :addon-summary-list [new-addon])]
+          expected (assoc user-catalogue :addon-summary-list [new-addon])
+          db []]
       (with-running-app
         (swap! core/state assoc :user-catalogue user-catalogue)
         (core/write-user-catalogue!)
         (with-redefs [cli/find-addon (fn [& args] new-addon)]
-          (cli/refresh-user-catalogue-item helper/addon-summary))
+          (cli/refresh-user-catalogue-item helper/addon-summary db))
         (is (= expected (core/get-state :user-catalogue)))))))
 
 (deftest refresh-user-catalogue-item--no-catalogue
   (testing "looking for an addon that doesn't exist in the catalogue isn't a total failure"
     (with-running-app
-      (is (nil? (cli/refresh-user-catalogue-item helper/addon-summary))))))
+      (let [db []]
+        (is (nil? (cli/refresh-user-catalogue-item helper/addon-summary db)))))))
 
 (deftest refresh-user-catalogue-item--unhandled-exception
   (testing "unhandled exceptions while refreshing a user-catalogue item isn't a total failure"
     (with-running-app
       (with-redefs [cli/find-addon (fn [& args] (throw (Exception. "catastrophe!")))]
-        (is (nil? (cli/refresh-user-catalogue-item helper/addon-summary)))))))
+        (let [db []]
+          (is (nil? (cli/refresh-user-catalogue-item helper/addon-summary db))))))))
 
 ;;
 
