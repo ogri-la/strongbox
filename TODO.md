@@ -28,8 +28,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - done, via favouriting, but! it's not available on the installed addon pane page
     - done
 
-## todo
-
 * user catalogue, what is happening now that regular non-github addons can be favourited?
     - do they need to have their details refreshed?
         - yes, they are copies from whatever catalogue they came from.
@@ -63,11 +61,17 @@ see CHANGELOG.md for a more formal list of changes by release
                 - I think find-addon should be skipped as we already have the addon as an addon-summary with a url, source, source-id, etc.
             - if not found in catalogue ... ? 
                 - import it with find-addon?
+    - done
+
+## todo
 
 * user catalogue, schedule refreshes
     - ensure the user catalogue doesn't get too stale and perform an update in the background if it looks like it's very old
         - update README
     - perhaps a preference?
+
+* display github requests remaining
+    - ...
 
 * user catalogue, refreshing may guarantee exceeding github limit.
     - if we know this, add a warning? refuse?
@@ -83,9 +87,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - total size of addons
     - ...?
     - a button on the opposite of the log popup button but similar that will show some overall stats
-
-* display github requests remaining
-    - ...
 
 * gui, raw data, 'key' column too small for 'supported-game-tracks'
 

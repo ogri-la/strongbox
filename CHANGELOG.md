@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* refreshing the user-catalogue now checks imported/starred addons against the full catalogue before checking online.
+    - if it fails to find addon in catalogue, it will fall back to checking online like before.
+    - the user-catalogue is ostensibly for addons without a catalogue (github, gitlab) but is now also for 'starred' addons. Now that we have a github catalogue, attempting to refresh addons from the catalogue is much faster.
 * menu labels for the installed addons table columns have been tweaked (see `View` -> `Columns`)
     - "installed" is now "installed version"
     - "available" is now "available version"
