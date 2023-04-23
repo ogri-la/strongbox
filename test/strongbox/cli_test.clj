@@ -664,10 +664,10 @@
             gitlab-releases-fixture (slurp (fixture-path "user-catalogue--gitlab-releases.json"))
 
             fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/full-catalogue.json"
-                         {:get (fn [req] {:status 200 :body short-catalogue})}
+                         {:get (fn [req] {:status 200 :body full-catalogue})}
 
                          "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
-                         {:get (fn [req] {:status 200 :body full-catalogue})}
+                         {:get (fn [req] {:status 200 :body short-catalogue})}
 
                          "https://www.tukui.org/api.php?addons"
                          {:get (fn [req] {:status 200 :body tukui-fixture})}
