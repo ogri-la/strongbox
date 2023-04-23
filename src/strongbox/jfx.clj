@@ -2097,6 +2097,11 @@
                 ;; :text "random"
                 ;; :on-action (handler cli/random-search)}
 
+                {:fx/type :button
+                 :id "search-clear-button"
+                 :text "clear"
+                 :on-action donothing}
+                
                 {:fx/type :h-box
                  :id "spacer"
                  :h-box/hgrow :ALWAYS}

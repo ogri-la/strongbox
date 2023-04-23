@@ -65,6 +65,12 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+* search, a 'clear' button
+    - resets favourited, search input, tags, etc
+
+* search, buttons are slightly different sizes
+    - input star and dropdown are a few pixels shorter than the buttons on either side
+
 * user catalogue, schedule refreshes
     - ensure the user catalogue doesn't get too stale and perform an update in the background if it looks like it's very old
         - update README
@@ -76,8 +82,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * user catalogue, refreshing may guarantee exceeding github limit.
     - if we know this, add a warning? refuse?
 
-* search, a 'clear' button
-    - resets favourited, search input, tags, etc
 
 * 'core/state :db-stats', seems like a nice idea to put more information here
     - known-hosts
