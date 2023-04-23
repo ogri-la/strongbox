@@ -1869,7 +1869,8 @@
       (is (= expected (core/db-match-installed-addon-list-with-catalogue db installed-addon-list))))))
 
 (deftest db-addon-by-source-and-source-id
-  (let [db [helper/addon-summary]
+  (let [expected helper/addon-summary
+        db [helper/addon-summary]
         {:keys [source source-id]} helper/addon-summary]
-    (is (= db (core/db-addon-by-source-and-source-id db source source-id)))
-    (is (= [] (core/db-addon-by-source-and-source-id db "wowinterface" "foo")))))
+    (is (= expected (core/db-addon-by-source-and-source-id db source source-id)))
+    (is (nil? (core/db-addon-by-source-and-source-id db "wowinterface" "foo")))))

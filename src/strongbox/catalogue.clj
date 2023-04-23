@@ -85,7 +85,7 @@
 
 (defn-spec toc2summary (s/nilable :addon/summary)
   "accepts toc or toc+nfo data and emits a version of the data that validates as an `:addon/summary`.
-  why do we do this?"
+  used as a last ditch effort to match installed addons against the catalogue by guessing a bunch of parameters."
   [toc (s/or :just-toc :addon/toc, :mixed :addon/toc+nfo)]
   (when-not (:ignore? toc)
     (let [sink nil
