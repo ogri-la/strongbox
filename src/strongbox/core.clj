@@ -923,10 +923,22 @@
          (partition-all cap (seque 100 (filter match-fn db))))))))
 
 (defn-spec empty-search-results nil?
-  "empties app state of search results.
-  this is to clear out anything between catalogue reloads."
+  "empties app state of *search results* but not filters.
+  this handles catalogue reloads but preserves user filtering."
   []
   (swap! state update-in [:search] merge (select-keys -search-state-template [:page :results :selected-results-list]))
+  nil)
+
+(defn-spec reset-search-navigation nil?
+  "resets the search results to page 1"
+  []
+  (swap! state assoc-in [:search :page] 0)
+  nil)
+
+(defn-spec reset-search-state! nil?
+  "replaces search state with default settings."
+  []
+  (swap! state update-in [:search] merge -search-state-template)
   nil)
 
 (defn-spec db-load-user-catalogue nil?

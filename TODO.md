@@ -68,6 +68,9 @@ see CHANGELOG.md for a more formal list of changes by release
 * search, a 'clear' button
     - resets favourited, search input, tags, etc
 
+* user-catalogue
+    - switch to log window to see progress when refresh-catalogue triggered
+
 * search, buttons are slightly different sizes
     - input star and dropdown are a few pixels shorter than the buttons on either side
 

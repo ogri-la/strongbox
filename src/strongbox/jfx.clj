@@ -2088,6 +2088,7 @@
                  :title "addon host"
                  :items known-host-list
                  :show-checked-count false
+                 :id "search-addon-hosts-list"
                  :on-checked-items-changed (fn [val]
                                              (cli/search-add-filter :source val))
                  :disable disable-host-selector?}
@@ -2100,8 +2101,19 @@
                 {:fx/type :button
                  :id "search-clear-button"
                  :text "clear"
-                 :on-action donothing}
-                
+                 :on-action (fn [_]
+                              (when-let [ccb (first (select "#search-addon-hosts-list"))]
+                                (.clearChecks (.getCheckModel ccb)))
+                              (cli/clear-search!))
+                 :disable (let [ss (dissoc search-state :results)
+                                as (dissoc core/-search-state-template :results)]
+                            (if (clojure.string/blank? (:term ss))
+                              ;; we use alternating `" "` and `nil` to 'bump' search results.
+                              ;; if we have one of those, don't consider the search term.
+                              (= (dissoc ss :term)
+                                 (dissoc as :term))
+                              (= ss as)))}
+
                 {:fx/type :h-box
                  :id "spacer"
                  :h-box/hgrow :ALWAYS}

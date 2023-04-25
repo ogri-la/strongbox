@@ -197,16 +197,10 @@
     (doseq [path path-list]
       (core/state-bind path listener))))
 
-(defn-spec reset-search-navigation nil?
-  "returns the search results to page 1"
-  []
-  (swap! core/state assoc-in [:search :page] 0)
-  nil)
-
 (defn-spec search-add-filter nil?
   "adds a new filter to the search `filter-by` state."
   [filter-by :search/filter-by, val any?]
-  (reset-search-navigation)
+  (core/reset-search-navigation)
   (case filter-by
     :source (swap! core/state assoc-in [:search :filter-by filter-by] (utils/nilable val))
     :tag (swap! core/state update-in [:search :filter-by filter-by] conj val)
@@ -216,16 +210,21 @@
 (defn-spec search-rm-filter nil?
   "removes a filter from the search `filter-by` state."
   [filter-by :search/filter-by, val any?]
-  (reset-search-navigation)
+  (core/reset-search-navigation)
   (swap! core/state update-in [:search :filter-by filter-by] clojure.set/difference #{val})
   nil)
 
 (defn-spec search-toggle-filter nil?
   "toggles boolean filters on and off"
   [filter-by :search/filter-by]
-  (reset-search-navigation)
+  (core/reset-search-navigation)
   (swap! core/state update-in [:search :filter-by filter-by] not)
   nil)
+
+(defn-spec clear-search! nil?
+  []
+  (core/reset-search-state!)
+  (bump-search))
 
 ;;
 
@@ -708,7 +707,7 @@
   "refresh the details of an individual `addon` in the user catalogue, optionally writing the updated catalogue to file."
   [addon :addon/summary, db :addon/summary-list]
   (logging/with-addon addon
-    (info "refreshing user-catalogue addon:" (:name addon))
+    (info "refreshing user-catalogue entry")
     (try
       (let [{:keys [source source-id url]} addon
             refreshed-addon (core/db-addon-by-source-and-source-id db source source-id)
@@ -716,13 +715,11 @@
             refreshed-addon (or refreshed-addon
                                 (find-addon url attempt-dry-run?))]
         (if-not refreshed-addon
-          (warn (format "failed to refresh details of addon in user-catalogue: couldn't find addon '%s' in catalogue or online"
-                        (:name addon)))
+          (warn "failed to refresh user-catalogue entry as the addon was not found in the catalogue or online")
           (core/add-user-addon! refreshed-addon)))
 
       (catch Exception e
-        (error (format "an unexpected error happened while updating the details for '%s' in the user-catalogue: %s"
-                       (:name addon) (.getMessage e)))))))
+        (error (format "an unexpected error happened while refreshing the user-catalogue entry: %s" (.getMessage e)))))))
 
 (defn-spec refresh-user-catalogue nil?
   "refresh the details of all addons in the user catalogue, writing the updated catalogue to file once."
