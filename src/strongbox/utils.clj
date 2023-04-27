@@ -104,18 +104,6 @@
             (warn (format "deleting %s %s files" (count file-list) file-type))
             (dorun (map (juxt alert fs/delete) file-list))))))))
 
-(defn-spec file-older-than boolean?
-  [file ::sp/extant-file, hours pos-int?]
-  (let [modtime (jt/instant (fs/mod-time file))
-        now (java-time/instant)
-        expiry-offset (jt/hours hours)
-        expiry-date (jt/plus modtime expiry-offset)
-        expired? (jt/before? expiry-date now)]
-    (when expired?
-      ;; too noisy even for :debug when nothing has expired
-      (debug (format "path %s; modtime %s; expiry-offset %s; expiry-date %s; now %s; expired? %s" file modtime expiry-offset expiry-date now expired?)))
-    expired?))
-
 #_(defn-spec days-between-then-and-now int?
     [datestamp ::sp/inst]
     (let [then (java-time/local-date datestamp)
@@ -127,15 +115,39 @@
   (.format (java.text.SimpleDateFormat. "yyyy-MM-dd") (java.util.Date.)))
 
 (defn-spec todt ::sp/zoned-dt-obj
-  "takes an ISO8901 string and returns a java.time.ZonedDateTime object. 
-  these are needed to calculate durations"
+  "takes an ISO8601 string and returns a java.time.ZonedDateTime object.
+  if the date is missing it's time portion, it's assumed to be `T00:00:00Z`."
   [dt ::sp/inst]
-  (java-time/zoned-date-time (get java-time.format/predefined-formatters "iso-zoned-date-time") dt))
+  (let [dt (if (-> dt count (= 10)) (str dt "T00:00:00Z") dt)]
+    (java-time/zoned-date-time (get java-time.format/predefined-formatters "iso-zoned-date-time") dt)))
 
 (defn-spec dt-before? boolean?
   "returns `true` if `date-1` happened before `date-2`"
   [date-1 ::sp/inst, date-2 ::sp/inst]
   (jt/before? (todt date-1) (todt date-2)))
+
+(defn-spec older-than? boolean?
+  [then ::sp/inst, threshold pos-int?, period keyword?]
+  (let [expiry-offset
+        (case period
+          :hours (jt/hours threshold)
+          :days (jt/days threshold))
+        now (java-time/instant)
+        expiry-date (jt/plus (jt/instant (todt then)) expiry-offset)]
+    (jt/before? expiry-date now)))
+
+(defn-spec file-older-than boolean?
+  "returns `true` if given `file` has a modification date older than given `hours`."
+  [file ::sp/extant-file, hours pos-int?]
+  (let [modtime (jt/instant (fs/mod-time file))
+        now (java-time/instant)
+        expiry-offset (jt/hours hours)
+        expiry-date (jt/plus modtime expiry-offset)
+        expired? (jt/before? expiry-date now)]
+    (when expired?
+      ;; too noisy even for :debug when nothing has expired
+      (debug (format "path %s; modtime %s; expiry-offset %s; expiry-date %s; now %s; expired? %s" file modtime expiry-offset expiry-date now expired?)))
+    expired?))
 
 (defn-spec published-before-classic? (s/or :ok boolean?, :error nil?)
   [dt-string (s/nilable ::sp/inst)]

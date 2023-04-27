@@ -73,19 +73,14 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
-* user-catalogue
-    - switch to log window to see progress when refresh-catalogue triggered
-
 * user catalogue, schedule refreshes
     - ensure the user catalogue doesn't get too stale and perform an update in the background if it looks like it's very old
         - update README
     - perhaps a preference?
-
-* display github requests remaining
-    - ...
-
-* user catalogue, refreshing may guarantee exceeding github limit.
-    - if we know this, add a warning? refuse?
+        - opt-in, opt-out?
+    - some task on startup that examines the catalogue's age and decides to do a refresh?
+        - would play havoc with testing.
+            - disable during testing?
 
 * 'core/state :db-stats', seems like a nice idea to put more information here
     - known-hosts
@@ -96,7 +91,19 @@ see CHANGELOG.md for a more formal list of changes by release
     - ...?
     - a button on the opposite of the log popup button but similar that will show some overall stats
 
+* user-catalogue
+    - switch to log window to see progress when refresh-catalogue triggered
+
+* display github requests remaining
+    - ...
+
+* user catalogue, refreshing may guarantee exceeding github limit.
+    - if we know this, add a warning? refuse?
+
+
 * gui, raw data, 'key' column too small for 'supported-game-tracks'
+
+* gui, installed, 'updated' column too small for 'NN months ago'
 
 * update screenshots
 
