@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* a "clear" button to the search addons tab that removes all search filters, including search terms.
 * new column for installed addons "starred" that will add an installed addon to the 'user-catalogue'.
     - star button disabled when addon is being ignored or isn't matched against the catalogue.
 * new column for installed addons "size" with the total size of the addon on disk, including any grouped addons.
@@ -43,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+* minor cosmetic fix. the buttons on the search tab are now a consistent height.
 * possible cache stampede fetching strongbox release info. A lock is now acquired to ensure checks happen sequentially.
     - it was possible for the GUI to fire off many requests to Github simultaneously, bypassing cache and overwriting each other.
 

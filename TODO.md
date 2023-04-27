@@ -63,16 +63,18 @@ see CHANGELOG.md for a more formal list of changes by release
                 - import it with find-addon?
     - done
 
-## todo
-
 * search, a 'clear' button
     - resets favourited, search input, tags, etc
-
-* user-catalogue
-    - switch to log window to see progress when refresh-catalogue triggered
+    - done
 
 * search, buttons are slightly different sizes
     - input star and dropdown are a few pixels shorter than the buttons on either side
+    - done
+
+## todo
+
+* user-catalogue
+    - switch to log window to see progress when refresh-catalogue triggered
 
 * user catalogue, schedule refreshes
     - ensure the user catalogue doesn't get too stale and perform an update in the background if it looks like it's very old
@@ -84,7 +86,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * user catalogue, refreshing may guarantee exceeding github limit.
     - if we know this, add a warning? refuse?
-
 
 * 'core/state :db-stats', seems like a nice idea to put more information here
     - known-hosts
