@@ -222,6 +222,7 @@
   nil)
 
 (defn-spec clear-search! nil?
+  "resets the search state to defaults and jogs the search results"
   []
   (core/reset-search-state!)
   (bump-search))

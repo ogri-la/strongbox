@@ -923,7 +923,7 @@
          (partition-all cap (seque 100 (filter match-fn db))))))))
 
 (defn-spec empty-search-results nil?
-  "empties app state of *search results* but not filters.
+  "empties app state of search *results* but not filters.
   this handles catalogue reloads but preserves user filtering."
   []
   (swap! state update-in [:search] merge (select-keys -search-state-template [:page :results :selected-results-list]))

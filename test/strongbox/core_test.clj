@@ -1465,18 +1465,78 @@
           expected-empty-search-state (assoc core/-search-state-template :term search-term)]
       (with-global-fake-routes-in-isolation fake-routes
         (with-running-app
+
+          ;; we have 4 search results to start with
+          (cli/bump-search)
+          (Thread/sleep 50) ;; searching happens in the background
+          (is (= 4 (-> (core/get-state :search) :results first count)))
+
+          ;; search for 'a'
+          ;; we should have three results:
+          ;; 1. "*A* New Simple Percent"
+          ;; 2. "Skins for *A*ddOns"
+          ;; 3. "Chinchill*a*"
           (cli/search search-term)
-           ;; searching happens in the background
           (Thread/sleep 50)
-          ;; we have one search result from a catalogue of 4 addons
-          (is (= 1 (-> (core/get-state :search) :results count)))
+          (is (= 3 (-> (core/get-state :search) :results first count)))
+
           ;; empty the stale search state
           (core/empty-search-results)
+          (Thread/sleep 50)
           (is (= expected-empty-search-state (core/get-state :search)))
+
           ;; do the search again without specifying a search term
+          ;; we should have three search results again
           (cli/bump-search)
           (Thread/sleep 50)
-          (is (= 1 (-> (core/get-state :search) :results count))))))))
+          (is (= 3 (-> (core/get-state :search) :results first count))))))))
+
+(deftest reset-search-state
+  (testing "search state can be cleared entirely"
+    (let [dummy-catalogue (slurp (fixture-path "catalogue--v2.json"))
+          fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
+                       {:get (fn [req] {:status 200 :body dummy-catalogue})}}
+          search-term "a"]
+      (with-global-fake-routes-in-isolation fake-routes
+        (with-running-app
+          (cli/bump-search)
+
+          ;; we have four results initially
+          (Thread/sleep 50)
+          (is (= 4 (-> (core/get-state :search) :results first count)))
+
+          ;; search for 'a'
+          ;; we should have three results:
+          ;; 1. "*A* New Simple Percent"
+          ;; 2. "Skins for *A*ddOns"
+          ;; 3. "Chinchill*a*"
+          (cli/search search-term)
+          (Thread/sleep 50)
+          (is (= 3 (-> (core/get-state :search) :results first count)))
+
+          ;; filter by host and we still have one search result
+          (cli/search-add-filter :source ["curseforge"])
+          (Thread/sleep 50)
+          ;;(is (= {} (core/get-state :search)))
+          (is (= 1 (-> (core/get-state :search) :results first count)))
+          (is (= ["curseforge"] (core/get-state :search :filter-by :source)))
+
+          ;; filter by tag and we still have one search result
+          (cli/search-add-filter :tag :unit-frames)
+          (Thread/sleep 50)
+          (is (= 1 (-> (core/get-state :search) :results count)))
+          (is (= #{:unit-frames} (core/get-state :search :filter-by :tag)))
+
+          (core/reset-search-state!)
+          (Thread/sleep 50)
+
+          ;; we have 4 search results from a catalogue of 4 addons
+          (is (= 4 (-> (core/get-state :search) :results first count)))
+
+          ;; and all the filters have been removed
+          (is (nil? (core/get-state :search :term)))
+          (is (empty? (core/get-state :search :filter-by :tag)))
+          (is (nil? (core/get-state :search :filter-by :source))))))))
 
 (deftest -download-strongbox-release
   (testing "standard github response for strongbox release data can be parsed and the release version extracted"

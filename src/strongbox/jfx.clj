@@ -516,8 +516,6 @@
                 "#search-text-field "
                 {:-fx-min-width "100px"
                  :-fx-padding ".4em .5em"
-                 ;; also works, but fx-padding also lets me squish horizontally a bit more.
-                 ;;:-fx-pref-height "2em"
                  :-fx-background-radius "0"
                  :-fx-text-fill (colour :table-font-colour)}
 
@@ -537,9 +535,7 @@
                                        :-fx-effect (str "dropshadow( gaussian , " (colour :star-starred) " , 10, 0.0 , 0 , 0 )")}}}
 
                 "#search-addon-hosts-list"
-                {;;:-fx-padding ".4em .5em"
-                 ;;:-fx-pref-height "26px"
-                 :-fx-pref-height "2em"}
+                {:-fx-pref-height "2em"}
 
                 "#search-prev-button"
                 {:-fx-min-width "80px"}
