@@ -510,7 +510,14 @@
 
                "#search-addons "
                {"#search-install-button"
-                {:-fx-min-width "90px"}
+                {:-fx-min-width "90px"
+                 :-fx-padding ".4em 1em"}
+
+                "#search-text-field "
+                {:-fx-min-width "100px"
+                 :-fx-padding ".4em .5em"
+                 :-fx-background-radius "0"
+                 :-fx-text-fill (colour :table-font-colour)}
 
                 "#search-random-button"
                 {:-fx-min-width "80px"}
@@ -518,7 +525,7 @@
                 "#search-user-catalogue-button"
                 {:-fx-font-weight "bold"
                  :-fx-font-size "1.2em"
-                 :-fx-padding "2 7 "
+                 :-fx-padding "3 7 "
 
                  ".starred" {:-fx-text-fill (colour :star-starred)
                              ;; the yellow of the star doesn't stand out from the gray gradient behind it.
@@ -527,15 +534,14 @@
                                        :-fx-stroke-width ".2"
                                        :-fx-effect (str "dropshadow( gaussian , " (colour :star-starred) " , 10, 0.0 , 0 , 0 )")}}}
 
+                "#search-addon-hosts-list"
+                {:-fx-pref-height "2em"}
+
                 "#search-prev-button"
                 {:-fx-min-width "80px"}
 
                 "#search-next-button"
                 {:-fx-min-width "70px"}
-
-                "#search-text-field "
-                {:-fx-min-width "100px"
-                 :-fx-text-fill (colour :table-font-colour)}
 
                 "#search-selected-tag-bar"
                 {:-fx-padding "0 0 10 10"
@@ -2088,6 +2094,7 @@
                  :title "addon host"
                  :items known-host-list
                  :show-checked-count false
+                 :id "search-addon-hosts-list"
                  :on-checked-items-changed (fn [val]
                                              (cli/search-add-filter :source val))
                  :disable disable-host-selector?}
@@ -2096,6 +2103,22 @@
                 ;; :id "search-random-button"
                 ;; :text "random"
                 ;; :on-action (handler cli/random-search)}
+
+                {:fx/type :button
+                 :id "search-clear-button"
+                 :text "clear"
+                 :on-action (fn [_]
+                              (when-let [ccb (first (select "#search-addon-hosts-list"))]
+                                (.clearChecks (.getCheckModel ccb)))
+                              (cli/clear-search!))
+                 :disable (let [ss (dissoc search-state :results)
+                                as (dissoc core/-search-state-template :results)]
+                            (if (clojure.string/blank? (:term ss))
+                              ;; we use alternating `" "` and `nil` to 'bump' search results.
+                              ;; if we have one of those, don't consider the search term.
+                              (= (dissoc ss :term)
+                                 (dissoc as :term))
+                              (= ss as)))}
 
                 {:fx/type :h-box
                  :id "spacer"
