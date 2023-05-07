@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file. This change
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 6.1.1 - 2023-05-07
+
+### Fixed
+
+* bad or missing 'content-length' HTTP header fields are now handled without errors.
+* the "All" patch level returned by Tukui is now supported when checking the updated details of an addon.
+
 ## 6.1.0 - 2023-03-19
 
 ### Added

@@ -57,8 +57,11 @@
 
         ti (->> addon-list (filter #(= source-id-str (:id %))) first)
 
-        interface-version (when-let [patch (:patch ti)]
-                            {:interface-version (utils/game-version-to-interface-version patch)})]
+        patch (:patch ti)
+        interface-version (cond
+                            (nil? patch) {}
+                            (= patch "All") {:interface-version (utils/game-version-to-interface-version (utils/game-track-to-latest-game-version game-track))}
+                            :else {:interface-version (utils/game-version-to-interface-version patch)})]
     (when ti
       [(merge {:download-url (:url ti)
                :version (:version ti)
