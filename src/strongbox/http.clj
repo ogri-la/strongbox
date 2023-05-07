@@ -197,7 +197,7 @@
 
                                              ;; count bytes transferred so we can update the job progress (if one exists). taken from:
                                              ;; - https://github.com/dakrone/clj-http/blob/7aa6d02ad83dff9af6217f39e517cde2ded73a25/examples/progress_download.clj
-                                             (let [length (-> resp (get-in [:headers "content-length"] 0) utils/to-int)
+                                             (let [length (:length resp)
                                                    buffer-size (* 1024 10)]
                                                (with-open [^java.io.InputStream input (:body resp)
                                                            output (clojure.java.io/output-stream partial-output-file)]
@@ -207,7 +207,8 @@
                                                      (let [size (.read input buffer)]
                                                        (when (pos? size)
                                                          (.write output buffer 0 size)
-                                                         (joblib/*tick* (joblib/progress length (.getByteCount counter)))
+                                                         (when (> length 0)
+                                                           (joblib/*tick* (joblib/progress length (.getByteCount counter))))
                                                          (recur))))))))
 
                                            (when streaming-response?
