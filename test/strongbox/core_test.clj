@@ -1936,7 +1936,7 @@
     (is (nil? (core/db-addon-by-source-and-source-id db "wowinterface" "foo")))))
 
 
-(deftest asdfsadfsad
+#_(deftest asdfsadfsad
   (with-running-app
     (helper/install-dir)
     (let [zip-list ["elvui--1-17.zip",

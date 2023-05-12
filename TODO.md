@@ -100,7 +100,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * user catalogue, refreshing may guarantee exceeding github limit.
     - if we know this, add a warning? refuse?
 
-
 * gui, raw data, 'key' column too small for 'supported-game-tracks'
 
 * gui, installed, 'updated' column too small for 'NN months ago'
