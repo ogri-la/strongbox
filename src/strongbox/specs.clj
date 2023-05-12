@@ -206,11 +206,13 @@
 (s/def ::addon-dir-map (s/keys :req-un [::addon-dir :addon-dir/game-track ::strict?]))
 (s/def ::addon-dir-list (s/coll-of ::addon-dir-map))
 (s/def ::selected-catalogue keyword?)
+(s/def ::keep-user-catalogue-updated boolean?)
 
 (s/def :config/addon-zips-to-keep (s/nilable int?))
 (s/def :config/ui-selected-columns :ui/column-list)
 (s/def :config/preferences (s/keys :req-un [:config/addon-zips-to-keep
-                                            (s/nilable :config/ui-selected-columns)]))
+                                            (s/nilable :config/ui-selected-columns)
+                                            :config/keep-user-catalogue-updated]))
 
 (s/def ::user-config (s/keys :req-un [::addon-dir-list ::selected-addon-dir
                                       ::catalogue-location-list ::selected-catalogue

@@ -467,14 +467,15 @@
 
 (deftest published-before-classic?
   (let [cases [["2001" nil]
-               ["2001-01-01" nil]
+               ;;["2001-01-01" nil]
+               ["2001-01-01" true] ;; 2023-05-12: utc timezone now appended to y-m-d strings
                ["2001-01-01T01:00" nil]
                ["2001-01-01T01:00:00Z" true]
                ["2019-08-25T23:59:59Z" true]
                [constants/release-of-wow-classic false]
                ["2019-08-26T00:00:01Z" false]]]
     (doseq [[given expected] cases]
-      (is (= expected (utils/published-before-classic? given))))))
+      (is (= expected (utils/published-before-classic? given)) (str "case: " given)))))
 
 (deftest source-map
   (let [cases [[nil {}]

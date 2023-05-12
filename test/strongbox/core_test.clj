@@ -1935,14 +1935,3 @@
     (is (= expected (core/db-addon-by-source-and-source-id db source source-id)))
     (is (nil? (core/db-addon-by-source-and-source-id db "wowinterface" "foo")))))
 
-
-#_(deftest asdfsadfsad
-  (with-running-app
-    (helper/install-dir)
-    (let [zip-list ["elvui--1-17.zip",
-                    "elvui-13.30.zip"
-                    ]
-          ]
-      (doseq [z zip-list]
-        (let [path (helper/fixture-path (str "actual-zips/" z))]
-          (cli/install-addons-from-file-in-parallel [path]))))))

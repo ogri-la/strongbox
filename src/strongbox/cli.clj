@@ -16,7 +16,6 @@
     [logging :as logging]
     [addon :as addon]
     [specs :as sp]
-    [catalogue :as catalogue]
     [http :as http]
     [utils :as utils :refer [if-let* message-list]]
     [core :as core :refer [get-state paths]]]))

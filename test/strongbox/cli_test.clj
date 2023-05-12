@@ -741,6 +741,7 @@
             ;; ensure the selected catalogue hasn't changed despite downloading the full catalogue
             (is (= :short (:name (core/current-catalogue))))))))))
 
+;; todo: move these to core-test?
 (deftest refresh-user-catalogue-item
   (testing "individual addons can be refreshed, writing the changes to disk afterwards."
     (let [user-catalogue (catalogue/new-catalogue [helper/addon-summary])
@@ -750,7 +751,7 @@
       (with-running-app
         (swap! core/state assoc :user-catalogue user-catalogue)
         (core/write-user-catalogue!)
-        (with-redefs [cli/find-addon (fn [& args] new-addon)]
+        (with-redefs [core/find-addon (fn [& args] new-addon)]
           (cli/refresh-user-catalogue-item helper/addon-summary db))
         (is (= expected (core/get-state :user-catalogue)))))))
 

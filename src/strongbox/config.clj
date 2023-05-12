@@ -44,7 +44,10 @@
 
                  ;; see `specs/column-preset-list` for selectable presets
                  ;; see `cli/column-map` for all known columns
-                 :ui-selected-columns sp/default-column-list}})
+                 :ui-selected-columns sp/default-column-list
+
+                 ;; refresh the user-catalogue every ~28 days
+                 :keep-user-catalogue-updated false}})
 
 (defn handle-install-dir
   "`:install-dir` was once supported in the user configuration but is now only supported in the command line options.
