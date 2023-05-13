@@ -1451,7 +1451,8 @@
     {:fx/type :check-menu-item
      :text "Keep user catalogue updated"
      :selected selected?
-     :on-action donothing}))
+     :on-action (fn [_]
+                  (cli/set-preference :keep-user-catalogue-updated (not selected?)))}))
 
 (defn-spec build-column-menu ::sp/list-of-maps
   "returns a list of columns that are 'selected' if present in `selected-column-list`."
