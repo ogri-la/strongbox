@@ -81,6 +81,7 @@
   (core/delete-http-cache!)
   (core/refresh))
 
+;; move to core.clj?
 (defn-spec half-refresh nil?
   "like `core/refresh` but excludes reloading catalogues, focusing on re-reading installed addons,
   matching them to the catalogue and reapplying host updates."
@@ -89,6 +90,7 @@
   (core/load-all-installed-addons)
   (core/match-all-installed-addons-with-catalogue)
   (core/check-for-updates)
+  (core/update-stats!)
   (core/save-settings!))
 
 (defn-spec set-addon-dir! nil?

@@ -2045,7 +2045,7 @@
   [{:keys [fx/context]}]
   (let [search-state (fx/sub-val context get-in [:app-state, :search])
         ;;known-host-list (fx/sub-val context get-in [:app-state, :db-stats :known-host-list])
-        known-host-list (core/get-state :db-stats :known-host-list)
+        known-host-list (or (core/get-state :db-stats :known-host-list) [])
         disable-host-selector? (= 1 (count known-host-list))
 
         tag-set (->> search-state :filter-by :tag)

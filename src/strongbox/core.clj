@@ -118,7 +118,7 @@
    :db nil
 
    ;; some generated stats about the db that are updated just once at load time.
-   :db-stats {:known-host-list []}
+   :db-stats nil
 
    ;; the list of addons from the user-catalogue
    :user-catalogue nil
@@ -1006,14 +1006,7 @@
 
     (let [final-catalogue (load-current-catalogue)]
       (when-not (empty? final-catalogue)
-        (swap! state merge {:db (:addon-summary-list final-catalogue)
-                            :db-stats {:num-addons (count (:addon-summary-list final-catalogue))
-                                       :known-host-list (->> final-catalogue
-                                                             :addon-summary-list
-                                                             (map :source)
-                                                             distinct
-                                                             sort
-                                                             vec)}}))))
+        (swap! state assoc :db (:addon-summary-list final-catalogue)))))
   nil)
 
 (defn-spec -match-installed-addon-list-with-catalogue :addon/installed-list
@@ -1315,6 +1308,37 @@
       ;; we've already looked, return what we found
       lsr)))
 
+;; stats
+
+(defn-spec app-stats map?
+  "summarises application state and returns a map of stats"
+  [state map?]
+  (let [num-addons (-> state :db count)
+        known-host-list (->> state
+                             :db
+                             (map :source)
+                             distinct
+                             sort
+                             vec)
+        num-addons-starred (-> state :user-catalogue-idx count)
+        num-addons-installed (-> state :installed-addon-list count)
+        num-addons-ignored (->> state :installed-addon-list (filter addon/ignored?) count)
+        bytes-installed-addons (->> state :installed-addon-list (map :dirsize) (reduce +))]
+    {:known-host-list known-host-list
+     :num-addons num-addons
+     :num-addons-per-host {} ;; 1234 github, 5678 wowi, 12 gitlab, etc
+     :num-addons-installed num-addons-installed
+     :num-addons-installed-per-host 0 ;; 12 github, 3 wowi, 0 gitlab, etc
+     :num-addons-starred num-addons-starred
+     :num-addons-ignored num-addons-ignored
+     :bytes-installed-addons bytes-installed-addons}))
+
+(defn-spec update-stats! nil?
+  "summarises application state and updates a map of stats"
+  []
+  (swap! state assoc :db-stats (app-stats (get-state)))
+  nil)
+
 ;; import/export
 
 (defn-spec export-installed-addon ::sp/export-record
@@ -1503,6 +1527,8 @@
 
    ;; 2019-06-30, travis is failing with 403: Forbidden. Moved to gui init
    ;;(latest-strongbox-release) ;; check for updates after everything else is done 
+
+  (update-stats!)
 
    ;; seems like a good place to preserve the etag-db
   (save-settings!)

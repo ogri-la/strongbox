@@ -85,7 +85,7 @@ see CHANGELOG.md for a more formal list of changes by release
     - ...
 
 * user catalogue, refreshing may guarantee exceeding github limit.
-    - if we know this, add a warning? refuse?
+    - if we know this, add a warning? refuse? stop?
 
 * 'core/state :db-stats', seems like a nice idea to put more information here
     - known-hosts
