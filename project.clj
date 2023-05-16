@@ -1,4 +1,4 @@
-(defproject ogri-la/strongbox "6.1.1"
+(defproject ogri-la/strongbox "6.1.2"
   :description "World Of Warcraft Addon Manager"
   :url "https://github.com/ogri-la/strongbox"
   :license {:name "GNU Affero General Public License (AGPL)"
