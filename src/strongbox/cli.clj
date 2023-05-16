@@ -189,11 +189,13 @@
                    [:search :filter-by]]
         listener (fn [new-state]
                    (future
-                     (let [{:keys [term results-per-page filter-by]} (:search new-state)
-                           results (core/db-search term results-per-page filter-by)]
-                       (dosync
-                        (clear-selected-search-addons!)
-                        (swap! core/state assoc-in [:search :results] results)))))]
+                     (let [new-search-state (:search new-state)
+                           {:keys [term results-per-page filter-by]} new-search-state
+                           results (core/db-search term results-per-page filter-by)
+                           new-search-state (-> new-search-state
+                                                (assoc :results results)
+                                                (assoc :selected-result-list []))]
+                       (swap! core/state assoc :search new-search-state))))]
     (doseq [path path-list]
       (core/state-bind path listener))))
 
