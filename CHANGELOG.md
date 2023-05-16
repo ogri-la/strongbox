@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file. This change
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 6.1.2 - 2023-05-16
+
+* issue #402, fixed a freezing bug in the search results, introduced in 5.1.0 (2022-03-02).
+    - if the 'full' catalogue were selected, searching and selecting a result would freeze the GUI.
+        - it may possibly have disabled mouse events as well, depending on your window manager.
+    - No definite cause found, however the bug was quacking suspicously like a deadlock/livelock.
+    - Thanks to @sergen213 for their help and feedback.
+
 ## 6.1.1 - 2023-05-07
 
 ### Fixed
