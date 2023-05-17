@@ -71,8 +71,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - input star and dropdown are a few pixels shorter than the buttons on either side
     - done
 
-## todo
-
 * user catalogue, schedule refreshes
     - ensure the user catalogue doesn't get too stale and perform an update in the background if it looks like it's very old
         - update README
@@ -81,6 +79,9 @@ see CHANGELOG.md for a more formal list of changes by release
     - some task on startup that examines the catalogue's age and decides to do a refresh?
         - would play havoc with testing.
             - disable during testing?
+    - done
+
+## todo
 
 * 'core/state :db-stats', seems like a nice idea to put more information here
     - known-hosts
