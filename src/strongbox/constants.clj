@@ -122,3 +122,5 @@
    "1.3" "World of Warcraft: Ruins of the Dire Maul"
    "1.2" "World of Warcraft: Mysteries of Maraudon"
    "1" "World of Warcraft"})
+
+(def max-user-catalogue-age 28)

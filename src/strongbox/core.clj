@@ -15,9 +15,11 @@
     [zip :as zip]
     [http :as http]
     [logging :as logging]
-    [utils :as utils :refer [join nav-map delete-many-files! expand-path if-let*]]
+    [utils :as utils :refer [join nav-map delete-many-files! expand-path if-let* message-list]]
     [catalogue :as catalogue]
     [specs :as sp]
+    [github-api :as github-api]
+    [gitlab-api :as gitlab-api]
     [joblib :as joblib]])
   (:import
    [org.apache.commons.compress.compressors CompressorStreamFactory CompressorException]
@@ -1188,6 +1190,116 @@
 
 ;;
 
+(defn-spec find-addon (s/or :ok :addon/summary, :error nil?)
+  "given a URL of a supported addon host, parses it, looks for it in the catalogue, expands addon and attempts to install a dry run installation.
+  if successful, returns the addon-summary.
+  dry-run installation attempt can be skipped by setting `attempt-dry-run` to false."
+  [addon-url string?, attempt-dry-run? boolean?]
+  (binding [http/*cache* (cache)]
+    (if-let* [addon-summary-stub (catalogue/parse-user-string addon-url)
+              source (:source addon-summary-stub)
+              match-on-list [[[:source :url] [:source :url]]
+                             [[:source :source-id] [:source :source-id]]]
+              addon-summary (cond
+                              (= source "github")
+                              (or (github-api/find-addon (:source-id addon-summary-stub))
+                                  (error (message-list
+                                          "Failed. URL must be:"
+                                          ["valid"
+                                           "originate from github.com"
+                                           "addon uses 'releases'"
+                                           "latest release has a packaged 'asset'"
+                                           "asset must be a .zip file"
+                                           "zip file must be structured like an addon"])))
+
+                              (= source "gitlab")
+                              (or (gitlab-api/find-addon (:source-id addon-summary-stub))
+                                  (error (message-list
+                                          "Failed. URL must be:"
+                                          ["valid"
+                                           "originate from gitlab.com"
+                                           "addon uses releases"
+                                           "latest release has a custom asset with a 'link'"
+                                           "link type must be either a 'package' or 'other'"])))
+
+                              (= source "curseforge")
+                              (error (str "addon host 'curseforge' was disabled " constants/curseforge-cutoff-label "."))
+
+                              :else
+                              ;; look in the current catalogue. emit an error if we fail
+                              (or (:catalogue-match (-find-first-in-db (or (get-state :db) []) addon-summary-stub match-on-list))
+                                  (error (format "couldn't find addon in catalogue '%s'"
+                                                 (name (get-state :cfg :selected-catalogue))))))
+
+              ;; game track doesn't matter when adding it to the user catalogue.
+              ;; prefer retail though (it's the most common) and `strict` here is `false`
+              addon (or (catalogue/expand-summary addon-summary :retail false)
+                        (error "failed to fetch details of addon"))
+
+              ;; a dry-run is good when importing an addon for the first time but
+              ;; not necessary when updating the user-catalogue.
+              _ (if-not attempt-dry-run?
+                  true
+                  (or (install-addon-guard addon (selected-addon-dir) true)
+                      (error "failed dry-run installation")))]
+
+             ;; if-let* was successful!
+             addon-summary
+
+             ;; failed if-let* :(
+             nil)))
+
+(defn-spec refresh-user-catalogue-item nil?
+  "refresh the details of an individual `addon` in the user catalogue, optionally writing the updated catalogue to file."
+  [addon :addon/summary, db :addon/summary-list]
+  (logging/with-addon addon
+    (info "refreshing user-catalogue entry")
+    (try
+      (let [{:keys [source source-id url]} addon
+            refreshed-addon (db-addon-by-source-and-source-id db source source-id)
+            attempt-dry-run? false
+            refreshed-addon (or refreshed-addon
+                                (find-addon url attempt-dry-run?))]
+        (if-not refreshed-addon
+          (warn "failed to refresh user-catalogue entry as the addon was not found in the catalogue or online")
+          (add-user-addon! refreshed-addon)))
+
+      (catch Exception e
+        (error (format "an unexpected error happened while refreshing the user-catalogue entry: %s" (.getMessage e)))))))
+
+(defn-spec refresh-user-catalogue nil?
+  "refresh the details of all addons in the user catalogue, writing the updated catalogue to file once."
+  []
+  (binding [http/*cache* (cache)]
+    (let [path (fs/base-name (paths :user-catalogue-file)) ;; "user-catalogue.json"
+          ;; we can't assume the full-catalogue is available.
+          _ (download-catalogue (get-catalogue-location :full))
+          db (catalogue/read-catalogue (catalogue-local-path :full))
+          full-catalogue (or (:addon-summary-list db) [])]
+      (info (format "refreshing \"%s\", this may take a minute ..." path))
+      (doseq [user-addon (get-state :user-catalogue :addon-summary-list)]
+        (refresh-user-catalogue-item user-addon full-catalogue))
+      (write-user-catalogue!)
+      (info (format "\"%s\" has been refreshed" path))))
+  nil)
+
+(defn-spec refresh-user-catalogue? boolean?
+  "predicate, returns `true` if the user-catalogue needs a refresh."
+  [keep-user-catalogue-updated? boolean?, catalogue-datestamp (s/nilable ::sp/inst)]
+  (and keep-user-catalogue-updated?
+       catalogue-datestamp
+       (utils/older-than? catalogue-datestamp constants/max-user-catalogue-age :days)))
+
+(defn-spec scheduled-user-catalogue-refresh nil?
+  "checks the loaded database and calls `refresh-user-catalogue` if it's considered too old."
+  []
+  (when (refresh-user-catalogue? (get-state :cfg :preferences :keep-user-catalogue-updated)
+                                 (get-state :user-catalogue :datestamp))
+    (info (format "user-catalogue not updated in the last %s days, automatic refresh triggered." constants/max-user-catalogue-age))
+    (refresh-user-catalogue)))
+
+;;
+
 (defn-spec init-dirs nil?
   "ensure all directories in `generate-path-map` exist and are writable, creating them if necessary.
   this logic depends on paths that are not generated until the application has been started."
@@ -1506,6 +1618,8 @@
 
    ;; seems like a good place to preserve the etag-db
   (save-settings!)
+
+  (scheduled-user-catalogue-refresh)
 
   nil)
 
