@@ -734,39 +734,12 @@
                 expected-user-catalogue (-> (core/get-user-catalogue)
                                             (update-in [:addon-summary-list] #(mapv inc-downloads %))
                                             (assoc :datestamp today))]
-            (cli/refresh-user-catalogue)
+            (core/refresh-user-catalogue)
             ;; ensure new user-catalogue matches expectations
             (is (= expected-user-catalogue (core/get-user-catalogue)))
 
             ;; ensure the selected catalogue hasn't changed despite downloading the full catalogue
             (is (= :short (:name (core/current-catalogue))))))))))
-
-;; todo: move these to core-test?
-(deftest refresh-user-catalogue-item
-  (testing "individual addons can be refreshed, writing the changes to disk afterwards."
-    (let [user-catalogue (catalogue/new-catalogue [helper/addon-summary])
-          new-addon (merge helper/addon-summary {:updated-date "2022-02-02T02:02:02"})
-          expected (assoc user-catalogue :addon-summary-list [new-addon])
-          db []]
-      (with-running-app
-        (swap! core/state assoc :user-catalogue user-catalogue)
-        (core/write-user-catalogue!)
-        (with-redefs [core/find-addon (fn [& args] new-addon)]
-          (cli/refresh-user-catalogue-item helper/addon-summary db))
-        (is (= expected (core/get-state :user-catalogue)))))))
-
-(deftest refresh-user-catalogue-item--no-catalogue
-  (testing "looking for an addon that doesn't exist in the catalogue isn't a total failure"
-    (with-running-app
-      (let [db []]
-        (is (nil? (cli/refresh-user-catalogue-item helper/addon-summary db)))))))
-
-(deftest refresh-user-catalogue-item--unhandled-exception
-  (testing "unhandled exceptions while refreshing a user-catalogue item isn't a total failure"
-    (with-running-app
-      (with-redefs [cli/find-addon (fn [& args] (throw (Exception. "catastrophe!")))]
-        (let [db []]
-          (is (nil? (cli/refresh-user-catalogue-item helper/addon-summary db))))))))
 
 ;;
 

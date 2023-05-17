@@ -642,12 +642,9 @@
              ;; failed to find or expand summary, probably because of selected game track.
              nil)))
 
-;; TODO: update references
-(def refresh-user-catalogue-item core/refresh-user-catalogue-item)
-(def refresh-user-catalogue core/refresh-user-catalogue)
-(def find-addon core/find-addon)
-
-;;
+(defn refresh-user-catalogue
+  []
+  (core/refresh-user-catalogue))
 
 ;; todo: shift to core.clj or addon.clj
 (defn-spec addon-source-map-to-url (s/or :ok ::sp/url, :error nil?)

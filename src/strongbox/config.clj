@@ -46,7 +46,7 @@
                  ;; see `cli/column-map` for all known columns
                  :ui-selected-columns sp/default-column-list
 
-                 ;; refresh the user-catalogue every ~28 days
+                 ;; refresh the user-catalogue every N days
                  :keep-user-catalogue-updated false}})
 
 (defn handle-install-dir

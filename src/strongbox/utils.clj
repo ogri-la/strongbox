@@ -127,7 +127,8 @@
   (jt/before? (todt date-1) (todt date-2)))
 
 (defn-spec older-than? boolean?
-  [then ::sp/inst, threshold pos-int?, period keyword?]
+  "returns `true` if the `period` (hours, days) between *now* and `then` is greater than `threshold`."
+  [then ::sp/inst, threshold ::sp/gte-zero, period keyword?]
   (let [expiry-offset
         (case period
           :hours (jt/hours threshold)
@@ -144,9 +145,6 @@
         expiry-offset (jt/hours hours)
         expiry-date (jt/plus modtime expiry-offset)
         expired? (jt/before? expiry-date now)]
-    (when expired?
-      ;; too noisy even for :debug when nothing has expired
-      (debug (format "path %s; modtime %s; expiry-offset %s; expiry-date %s; now %s; expired? %s" file modtime expiry-offset expiry-date now expired?)))
     expired?))
 
 (defn-spec published-before-classic? (s/or :ok boolean?, :error nil?)

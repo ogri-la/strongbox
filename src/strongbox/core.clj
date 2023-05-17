@@ -1190,7 +1190,6 @@
 
 ;;
 
-;; todo: logic might be better off in core.clj
 (defn-spec find-addon (s/or :ok :addon/summary, :error nil?)
   "given a URL of a supported addon host, parses it, looks for it in the catalogue, expands addon and attempts to install a dry run installation.
   if successful, returns the addon-summary.
@@ -1284,17 +1283,20 @@
       (info (format "\"%s\" has been refreshed" path))))
   nil)
 
+(defn-spec refresh-user-catalogue? boolean?
+  "predicate, returns `true` if the user-catalogue needs a refresh."
+  [keep-user-catalogue-updated? boolean?, catalogue-datestamp (s/nilable ::sp/inst)]
+  (and keep-user-catalogue-updated?
+       catalogue-datestamp
+       (utils/older-than? catalogue-datestamp constants/max-user-catalogue-age :days)))
+
 (defn-spec scheduled-user-catalogue-refresh nil?
-  "checks the loaded database and does a user-catalogue refresh if it's considered too old."
+  "checks the loaded database and calls `refresh-user-catalogue` if it's considered too old."
   []
-  (when (get-state :cfg :preferences :keep-user-catalogue-updated)
-    (when-let [db-age (:datestamp (get-state :user-catalogue))]
-      ;; when the days since the user-catalogue were last updated are greater than 30
-      (if (and (utils/older-than? db-age 28 :days)
-               false)
-        (do (info (format "user-catalogue last updated more than 28 days ago on %s, automatic refresh triggered." db-age))
-            (refresh-user-catalogue))
-        (info (format "user-catalogue last updated %s, automatic refresh skipped" db-age))))))
+  (when (refresh-user-catalogue? (get-state :cfg :preferences :keep-user-catalogue-updated)
+                                 (get-state :user-catalogue :datestamp))
+    (info (format "user-catalogue not updated in the last %s days, automatic refresh triggered." constants/max-user-catalogue-age))
+    (refresh-user-catalogue)))
 
 ;;
 

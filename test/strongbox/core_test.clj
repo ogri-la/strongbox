@@ -8,6 +8,7 @@
    [taoensso.timbre :as log :refer [debug info warn error spy]]
    [strongbox.cli :as cli]
    [strongbox
+    [constants :as constants]
     [addon :as addon :refer [downloaded-addon-fname]]
     [logging :as logging]
     [zip :as zip]
@@ -1935,3 +1936,42 @@
     (is (= expected (core/db-addon-by-source-and-source-id db source source-id)))
     (is (nil? (core/db-addon-by-source-and-source-id db "wowinterface" "foo")))))
 
+;; ---
+
+(deftest refresh-user-catalogue-item
+  (testing "individual addons can be refreshed, writing the changes to disk afterwards."
+    (let [user-catalogue (catalogue/new-catalogue [helper/addon-summary])
+          new-addon (merge helper/addon-summary {:updated-date "2022-02-02T02:02:02"})
+          expected (assoc user-catalogue :addon-summary-list [new-addon])
+          db []]
+      (with-running-app
+        (swap! core/state assoc :user-catalogue user-catalogue)
+        (core/write-user-catalogue!)
+        (with-redefs [core/find-addon (fn [& args] new-addon)]
+          (core/refresh-user-catalogue-item helper/addon-summary db))
+        (is (= expected (core/get-state :user-catalogue)))))))
+
+(deftest refresh-user-catalogue-item--no-catalogue
+  (testing "looking for an addon that doesn't exist in the catalogue isn't a total failure"
+    (with-running-app
+      (let [db []]
+        (is (nil? (core/refresh-user-catalogue-item helper/addon-summary db)))))))
+
+(deftest refresh-user-catalogue-item--unhandled-exception
+  (testing "unhandled exceptions while refreshing a user-catalogue item isn't a total failure"
+    (with-running-app
+      (with-redefs [core/find-addon (fn [& args] (throw (Exception. "catastrophe!")))]
+        (let [db []]
+          (is (nil? (core/refresh-user-catalogue-item helper/addon-summary db))))))))
+
+(deftest scheduled-user-catalogue-refresh
+  (with-running-app
+    (with-redefs [constants/max-user-catalogue-age 0]
+      (cli/set-preference :keep-user-catalogue-updated true)
+      (is (true? (core/get-state :cfg :preferences :keep-user-catalogue-updated)))
+      (swap! core/state assoc :user-catalogue (catalogue/new-catalogue []))
+      (let [expected ["user-catalogue not updated in the last 0 days, automatic refresh triggered."
+                      "downloading 'full' catalogue"
+                      "refreshing \"user-catalogue.json\", this may take a minute ..."
+                      "\"user-catalogue.json\" has been refreshed"]]
+        (is (= expected (logging/buffered-log :info (core/scheduled-user-catalogue-refresh))))))))

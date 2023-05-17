@@ -42,6 +42,8 @@
 
 (s/def ::atom #(instance? clojure.lang.Atom %))
 
+(s/def ::gte-zero #(and (number? %) (>= % 0)))
+
 (s/def ::list-of-strings (s/coll-of string?))
 (s/def ::list-of-maps (s/coll-of map?))
 (s/def ::list-of-keywords (s/coll-of keyword?))
