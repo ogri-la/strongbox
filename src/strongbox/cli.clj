@@ -90,7 +90,8 @@
   (core/load-all-installed-addons)
   (core/match-all-installed-addons-with-catalogue)
   (core/check-for-updates)
-  (core/update-stats!)
+  (future
+    (core/update-stats!))
   (core/save-settings!))
 
 (defn-spec set-addon-dir! nil?

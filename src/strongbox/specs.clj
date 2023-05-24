@@ -136,6 +136,7 @@
                                     false))))
 
 (s/def ::zoned-dt-obj #(instance? java.time.ZonedDateTime %))
+(s/def ::local-dt-obj #(instance? java.time.LocalDateTime %))
 
 ;; javafx, cljfx, gui
 ;; no references to cljfx or javafx please!

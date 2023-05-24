@@ -1310,6 +1310,16 @@
 
 ;; stats
 
+(defn-spec github-stats! (s/nilable map?)
+  []
+  ;; no `(binding [http/*cache* (cache)] ...)` is deliberate! we don't want this response cached.
+  (when-let [resp (some-> "https://api.github.com/rate_limit" http/download http/sink-error utils/from-json :resources :core)]
+    {:github-token-set? (not (nil? (System/getenv "GITHUB_TOKEN")))
+     :github-requests-limit (:limit resp)
+     :github-requests-limit-reset (-> resp :reset utils/unix-time-to-java-time str)
+     :github-requests-remaining (:remaining resp)
+     :github-requests-used (:used resp)}))
+
 (defn-spec app-stats map?
   "summarises application state and returns a map of stats"
   [state map?]
@@ -1323,15 +1333,31 @@
         num-addons-starred (-> state :user-catalogue-idx count)
         num-addons-installed (-> state :installed-addon-list count)
         num-addons-ignored (->> state :installed-addon-list (filter addon/ignored?) count)
-        bytes-installed-addons (->> state :installed-addon-list (map :dirsize) (reduce +))]
-    {:known-host-list known-host-list
-     :num-addons num-addons
-     :num-addons-per-host {} ;; 1234 github, 5678 wowi, 12 gitlab, etc
-     :num-addons-installed num-addons-installed
-     :num-addons-installed-per-host 0 ;; 12 github, 3 wowi, 0 gitlab, etc
-     :num-addons-starred num-addons-starred
-     :num-addons-ignored num-addons-ignored
-     :bytes-installed-addons bytes-installed-addons}))
+        bytes-installed-addons (->> state :installed-addon-list (map :dirsize) (reduce +))
+
+        num-addons-reducer (fn [acc addon]
+                             (update acc (-> addon :source (or "no-host")) (fnil inc 0)))
+        num-addons-per-host (reduce num-addons-reducer {} (-> state :db))
+        num-addons-installed-per-host (reduce num-addons-reducer {} (-> state :installed-addon-list))]
+
+    (merge
+     {:known-host-list known-host-list
+      :num-addons num-addons
+      ;; {"wowinterface" 7261, "github" 1374, "tukui" 123, "gitlab" 6, "tukui-classic" 59, "tukui-classic-tbc" 44, "tukui-classic-wotlk" 49}
+      :num-addons-per-host num-addons-per-host
+      :num-addons-installed num-addons-installed
+      ;; {"wowinterface" 20, nil 1, "github" 9, "tukui-classic-tbc" 2, "curseforge" 1}
+      :num-addons-installed-per-host num-addons-installed-per-host
+      :num-addons-starred num-addons-starred
+      :num-addons-ignored num-addons-ignored
+      :bytes-installed-addons bytes-installed-addons
+
+      :github-requests-limit nil
+      :github-requests-limit-reset nil
+      :github-requests-remaining nil
+      :github-requests-used nil}
+
+     (github-stats!))))
 
 (defn-spec update-stats! nil?
   "summarises application state and updates a map of stats"
@@ -1528,7 +1554,8 @@
    ;; 2019-06-30, travis is failing with 403: Forbidden. Moved to gui init
    ;;(latest-strongbox-release) ;; check for updates after everything else is done 
 
-  (update-stats!)
+  (future
+    (update-stats!))
 
    ;; seems like a good place to preserve the etag-db
   (save-settings!)

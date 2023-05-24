@@ -851,3 +851,10 @@
           value (float (/ bytes (Math/pow base base-pow)))]
 
       (str (format format-string value) suffix))))
+
+(defn-spec unix-time-to-java-time ::sp/local-dt-obj
+  [unix-time-seconds number?]
+  (-> unix-time-seconds
+      (* 1000)
+      java-time/instant
+      (java-time/local-date-time (jt/zone-id))))
