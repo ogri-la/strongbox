@@ -71,15 +71,20 @@ see CHANGELOG.md for a more formal list of changes by release
     - input star and dropdown are a few pixels shorter than the buttons on either side
     - done
 
-## todo
-
-* user-catalogue
-    - switch to log window to see progress when refresh-catalogue triggered
-
 * user catalogue, schedule refreshes
     - ensure the user catalogue doesn't get too stale and perform an update in the background if it looks like it's very old
         - update README
     - perhaps a preference?
+        - opt-in, opt-out?
+    - some task on startup that examines the catalogue's age and decides to do a refresh?
+        - would play havoc with testing.
+            - disable during testing?
+    - done
+
+## todo
+
+* user-catalogue
+    - switch to log window to see progress when refresh-catalogue triggered
 
 * display github requests remaining
     - ...
@@ -97,6 +102,8 @@ see CHANGELOG.md for a more formal list of changes by release
     - a button on the opposite of the log popup button but similar that will show some overall stats
 
 * gui, raw data, 'key' column too small for 'supported-game-tracks'
+
+* gui, installed, 'updated' column too small for 'NN months ago'
 
 * update screenshots
 

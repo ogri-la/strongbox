@@ -1445,6 +1445,14 @@
                   (let [^javafx.scene.control.CheckMenuItem menu-item (.getSource ev)]
                     (cli/set-preference :addon-zips-to-keep (if (.isSelected menu-item)
                                                               0 nil))))}))
+(defn menu-item--keep-user-catalogue-updated
+  [{:keys [fx/context]}]
+  (let [selected? (fx/sub-val context get-in [:app-state :cfg :preferences :keep-user-catalogue-updated])]
+    {:fx/type :check-menu-item
+     :text "Keep user catalogue updated"
+     :selected selected?
+     :on-action (fn [_]
+                  (cli/set-preference :keep-user-catalogue-updated (not selected?)))}))
 
 (defn-spec build-column-menu ::sp/list-of-maps
   "returns a list of columns that are 'selected' if present in `selected-column-list`."
@@ -1502,7 +1510,8 @@
                    separator
                    (menu-item "E_xit" exit-handler {:key "Ctrl+Q"})]
 
-        prefs-menu [{:fx/type menu-item--num-zips-to-keep}]
+        prefs-menu [{:fx/type menu-item--num-zips-to-keep}
+                    {:fx/type menu-item--keep-user-catalogue-updated}]
 
         view-menu (into
                    [(menu-item "Refresh" (async-handler cli/hard-refresh) {:key "F5"})

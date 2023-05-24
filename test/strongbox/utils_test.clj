@@ -83,6 +83,24 @@
       (java-time/with-clock (java-time/fixed-clock "2001-01-02T00:00:00Z")
         (is (= (utils/days-between-then-and-now "2001-01-01") 1)))))
 
+(deftest older-than?
+  (let [cases [[["2001-01-01" 0 :days] true]
+               [["2001-01-01" 0 :hours] true]
+
+               [["2001-01-01" 1 :days] true]
+               [["2001-01-01" 1 :hours] true]
+
+               [["2079-12-31" 1 :days] false]
+               [["2079-12-31" 1 :hours] false]
+
+               [["2079-12-31" 0 :days] false]
+               [["2079-12-31" 0 :hours] false]]]
+    (doseq [[[then threshold period] expected] cases]
+      (is (= expected (utils/older-than? then threshold period))))))
+
+(deftest older-than?--bad-period
+  (is (thrown? java.lang.IllegalArgumentException (utils/older-than? "2001-01-01" 12 :parsecs))))
+
 (deftest file-older-than
   (testing "files whose modification times are older than N hours"
     (java-time/with-clock (java-time/fixed-clock "1970-01-01T02:00:00Z") ;; jan 1st 1970, 2 am
@@ -467,14 +485,15 @@
 
 (deftest published-before-classic?
   (let [cases [["2001" nil]
-               ["2001-01-01" nil]
+               ;;["2001-01-01" nil]
+               ["2001-01-01" true] ;; 2023-05-12: utc timezone now appended to y-m-d strings
                ["2001-01-01T01:00" nil]
                ["2001-01-01T01:00:00Z" true]
                ["2019-08-25T23:59:59Z" true]
                [constants/release-of-wow-classic false]
                ["2019-08-26T00:00:01Z" false]]]
     (doseq [[given expected] cases]
-      (is (= expected (utils/published-before-classic? given))))))
+      (is (= expected (utils/published-before-classic? given)) (str "case: " given)))))
 
 (deftest source-map
   (let [cases [[nil {}]

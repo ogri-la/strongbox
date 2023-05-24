@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* an (opt-in) automatic refesh of the user-catalogue every 28 days.
+    - see `Preferences` -> `Keep user catalogue updated`.
+    - the user-catalogue is a catalogue of the addons added to strongbox using `File` -> `Import addon` 
+        - or through 'starring' a regular catalogue addon.
 * a "clear" button to the search addons tab that removes all search filters, including search terms.
 * new column for installed addons "starred" that will add an installed addon to the 'user-catalogue'.
     - star button disabled when addon is being ignored or isn't matched against the catalogue.
@@ -49,6 +53,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - it was possible for the GUI to fire off many requests to Github simultaneously, bypassing cache and overwriting each other.
 
 ### Removed
+
+## 6.1.2 - 2023-05-16
+
+* issue #402, fixed a freezing bug in the search results, introduced in 5.1.0 (2022-03-02).
+    - if the 'full' catalogue were selected, searching and selecting a result would freeze the GUI.
+        - it may possibly have disabled mouse events as well, depending on your window manager.
+    - No definite cause found, however the bug was quacking suspicously like a deadlock/livelock.
+    - Thanks to @sergen213 for their help and feedback.
 
 ## 6.1.1 - 2023-05-07
 

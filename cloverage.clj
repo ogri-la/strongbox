@@ -2,6 +2,7 @@
   (:require
    [strongbox
     [main :as main]
+    [constants :as constants]
     [utils :as utils]
     [http :as http]
     [joblib :as joblib]
@@ -24,7 +25,8 @@
                   http/*default-attempts* 1
                   ;;joblib/tick-delay joblib/*tick*
                   catalogue/host-disabled? (constantly false)
-                  utils/folder-size-bytes (constantly 0)]
+                  utils/folder-size-bytes (constantly 0)
+                  constants/max-user-catalogue-age 9999]
       (core/reset-logging!)
       (apply require (map symbol ns-list))
       {:errors (reduce + ((juxt :error :fail)
