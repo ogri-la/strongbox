@@ -17,11 +17,13 @@
    [java-time :as jt]
    [java-time.format])
   (:import
+   [java.util List Calendar Locale]
    [java.lang Math]
    [java.util Base64]
    [org.apache.commons.compress.compressors CompressorStreamFactory CompressorException]
    [org.ocpsoft.prettytime.units Decade]
-   [org.ocpsoft.prettytime PrettyTime]))
+   [org.ocpsoft.prettytime PrettyTime]
+   [java.text NumberFormat]))
 
 (defn repl-stack-element?
   [stack-element]
@@ -131,6 +133,7 @@
   [then ::sp/inst, threshold ::sp/gte-zero, period keyword?]
   (let [expiry-offset
         (case period
+          :minutes (jt/minutes threshold)
           :hours (jt/hours threshold)
           :days (jt/days threshold))
         now (java-time/instant)
@@ -139,13 +142,8 @@
 
 (defn-spec file-older-than boolean?
   "returns `true` if given `file` has a modification date older than given `hours`."
-  [file ::sp/extant-file, hours pos-int?]
-  (let [modtime (jt/instant (fs/mod-time file))
-        now (java-time/instant)
-        expiry-offset (jt/hours hours)
-        expiry-date (jt/plus modtime expiry-offset)
-        expired? (jt/before? expiry-date now)]
-    expired?))
+  [file ::sp/extant-file, threshold ::sp/gte-zero, period keyword?]
+  (-> file fs/mod-time jt/instant str (older-than? threshold period)))
 
 (defn-spec published-before-classic? (s/or :ok boolean?, :error nil?)
   [dt-string (s/nilable ::sp/inst)]
@@ -868,3 +866,41 @@
       (* 1000)
       java-time/instant
       (java-time/local-date-time (jt/zone-id))))
+
+(defn-spec unkeywordify (s/nilable string?)
+  "converts an unqualified keyword like `:foo-bar-baz` into a string like `\"foo bar baz\"`.
+  hyphens in namespace portion are left as-is.
+  non-keywords return nil. nil returns nil."
+  [kw (s/nilable keyword?)]
+  (when (keyword? kw) ;; :foo, :foo/bar-baz
+    (let [ns-str (namespace kw) ;; nil, :foo
+          rest-str (some-> kw name (clojure.string/replace "-" " ")) ;; "bar baz"
+          ]
+      (if ns-str
+        (format "%s / %s" ns-str rest-str) ;; "foo / bar baz"
+        rest-str)))) ;; "bar baz"
+
+(def user-locale (Locale/getDefault))
+(def ^java.text.NumberFormat number-formatter (NumberFormat/getNumberInstance user-locale))
+
+(defn format-number
+  [^Integer n]
+  (.format number-formatter n))
+
+(defn-spec valifyval string?
+  "converts any value into a string suitable for non-developer human beings.
+  strings are returned as-is.
+  integers are formatted according to locale.
+  
+  `nil` becomes the string \"(nothing)\"
+  "
+  [v any?]
+  (cond
+    (nil? v) "(none)"
+    (number? v) (format-number v)
+    (sequential? v) (clojure.string/join ", " (mapv valifyval v))
+    ;; key1: val1, key2: val2
+    (map? v) (clojure.string/join ", " (mapv (fn [[key val]]
+                                               (format "%s: %s" (valifyval key) (valifyval val))) (sort-by first v)))
+    (boolean? v) (-> v str clojure.string/capitalize)
+    :else (str v)))

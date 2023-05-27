@@ -29,15 +29,14 @@
     [core :as core]])
   (:import
    [javafx.scene.text Font]
-   [java.util List Calendar Locale]
+   [java.util List Calendar]
    [javafx.util Callback]
    [javafx.scene.control TreeTableRow TableRow TextInputDialog Alert Alert$AlertType ButtonType]
    [javafx.scene.input MouseButton MouseEvent KeyEvent KeyCode]
    [javafx.stage Stage FileChooser FileChooser$ExtensionFilter DirectoryChooser Window WindowEvent]
    [javafx.application Platform]
    [javafx.scene Node]
-   [javafx.event Event]
-   [java.text NumberFormat]))
+   [javafx.event Event]))
 
 (defn load-font-from-resources
   [resource]
@@ -65,13 +64,6 @@
             (fx.lifecycle/create this this-desc opts))))
     (delete [_ component opts]
       (fx.lifecycle/delete fx.lifecycle/dynamic (:child component) opts))))
-
-(def user-locale (Locale/getDefault))
-(def ^java.text.NumberFormat number-formatter (NumberFormat/getNumberInstance user-locale))
-
-(defn format-number
-  [^Integer n]
-  (.format number-formatter n))
 
 (def major-theme-map
   {:light
@@ -567,7 +559,9 @@
                  :-fx-alignment "center-left"
                  :-fx-pref-width 9999.0
                  " > .text" {;; omg, wtf does 'fx-fill' work and not 'fx-text-fill' ???
-                             :-fx-fill (colour :table-font-colour)}}
+                             ;;:-fx-fill (colour :table-font-colour) ;; 2023-05: widget changed from :text to :label so I could pad-left
+                             :-fx-text-fill (colour :table-font-colour)
+                             :-fx-padding "0 0 0 10"}}
 
                 "#status-bar-right"
                 {:-fx-min-width "130px" ;; long enough to render "warnings (999)"
@@ -2016,7 +2010,7 @@
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [n]
                                                  (when n
-                                                   {:text (format-number n)}))}}
+                                                   {:text (utils/format-number n)}))}}
                      {:text "" :style-class ["wide-button-column"] :min-width 120 :pref-width 120 :max-width 120 :resizable false
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [addon]
@@ -2053,8 +2047,7 @@
 (defn search-addons-search-field
   [{:keys [fx/context]}]
   (let [search-state (fx/sub-val context get-in [:app-state, :search])
-        ;;known-host-list (fx/sub-val context get-in [:app-state, :db-stats :known-host-list])
-        known-host-list (or (core/get-state :db-stats :known-host-list) [])
+        known-host-list (or (fx/sub-val context get-in [:app-state :db-stats :addons/known-host-list]) [])
         disable-host-selector? (= 1 (count known-host-list))
 
         tag-set (->> search-state :filter-by :tag)
@@ -2624,6 +2617,19 @@
                                                   (cli/set-split-pane (not selected?))
                                                   (cli/change-notice-logger-level max-level)))}}))
 
+(defn key-vals-widget
+  [{:keys [column-list row-list placeholder]}]
+  (let [row-list (or row-list [])]
+    {:fx/type :table-view
+     :id "key-vals"
+     :style-class ["table-view"]
+     :placeholder {:fx/type :text
+                   :style-class ["table-placeholder-text"]
+                   :text (or placeholder "")}
+     :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
+     :columns (mapv make-table-column column-list)
+     :items row-list}))
+
 (defn stats-button
   [{:keys [fx/context]}]
   (let [split-pane-state (fx/sub-val context get-in [:app-state :gui-split-pane])
@@ -2649,21 +2655,30 @@
   (let [stats (fx/sub-val context get-in [:app-state :db-stats])
 
         catalogue-count-template (format "%s addons in catalogue, %s addons installed, %s addons matched to catalogue"
-                                         (get stats :num-addons 0)
-                                         (get stats :num-addons-installed 0)
-                                         (get stats :num-addons-installed-matched 0))]
+                                         (get stats :addons/total 0)
+                                         (get stats :installed-addons/total 0)
+                                         (get stats :installed-addons/num-matched 0))]
 
     {:fx/type :h-box
      :id "status-bar"
      :children [{:fx/type :h-box
                  :id "status-bar-left"
-                 :children [{:fx/type :text
+                 :children [{:fx/type stats-button}
+                            {:fx/type :label
                              :style-class ["text"]
-                             :text catalogue-count-template}
-                            {:fx/type stats-button}]}
+                             :text catalogue-count-template}]}
                 {:fx/type :h-box
                  :id "status-bar-right"
                  :children [{:fx/type split-pane-button}]}]}))
+
+(defn db-stats-widget
+  [{:keys [fx/context]}]
+  (let [db-stats (fx/sub-val context get-in [:app-state :db-stats])
+        key-vals (sort-by :key (mapv (fn [[key val]] {:key key :val val}) db-stats))]
+    {:fx/type key-vals-widget
+     :column-list [{:text "" :min-width 220 :pref-width 250 :max-width 300 :cell-value-factory (comp utils/unkeywordify :key)}
+                   {:text "" :cell-value-factory (comp utils/valifyval :val)}]
+     :row-list key-vals}))
 
 ;;
 
@@ -2679,7 +2694,7 @@
         sub-pane (or (fx/sub-val context get-in [:app-state :gui-sub-pane])
                      :notice-logger)
         -notice-logger {:fx/type notice-logger}
-        -btn (button "wooo" donothing)]
+        -db-stats {:fx/type  db-stats-widget}]
     {:fx/type :stage
      :showing showing?
      :on-close-request exit-handler
@@ -2709,7 +2724,7 @@
                              :items [{:fx/type tabber}
                                      {:fx/type :v-box
                                       :managed split-pane-on?
-                                      :children [(if (= sub-pane :notice-logger) -notice-logger -btn)]}]}
+                                      :children [(if (= sub-pane :notice-logger) -notice-logger -db-stats)]}]}
                     :bottom {:fx/type status-bar}}}}))
 
 (defn start

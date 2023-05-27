@@ -2,7 +2,7 @@
   (:require
    [clojure.string :refer [starts-with? ends-with?]]
    [clojure.test :refer [deftest testing is use-fixtures]]
-   [clj-http.fake :refer [with-global-fake-routes-in-isolation]]
+   [clj-http.fake :refer [with-global-fake-routes-in-isolation with-global-fake-routes]]
    [envvar.core :refer [with-env]]
    [me.raynes.fs :as fs]
    [taoensso.timbre :as log :refer [debug info warn error spy]]

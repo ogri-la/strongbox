@@ -108,8 +108,8 @@
         (try
           (fs/touch path 0) ;; created Jan 1st 1970
           (.setLastModified (fs/file path) 0) ;; modified Jan 1st 1970
-          (is (utils/file-older-than path 1))
-          (is (not (utils/file-older-than path 3)))
+          (is (utils/file-older-than path 1 :hours))
+          (is (not (utils/file-older-than path 3 :hours)))
           (finally
             (fs/delete path)))))))
 

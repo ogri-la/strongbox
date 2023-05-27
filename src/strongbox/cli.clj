@@ -36,7 +36,8 @@
 
 (defn-spec set-sub-pane nil?
   [sub-pane keyword?]
-  (swap! core/state assoc :gui-sub-pane sub-pane))
+  (swap! core/state assoc :gui-sub-pane sub-pane)
+  nil)
 
 ;; selecting addons
 
@@ -97,8 +98,6 @@
   (core/load-all-installed-addons)
   (core/match-all-installed-addons-with-catalogue)
   (core/check-for-updates)
-  (future
-    (core/update-stats!))
   (core/save-settings!))
 
 (defn-spec set-addon-dir! nil?

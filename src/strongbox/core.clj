@@ -1427,13 +1427,17 @@
 
 (defn-spec github-stats! (s/nilable map?)
   []
-  ;; no `(binding [http/*cache* (cache)] ...)` is deliberate! we don't want this response cached.
-  (when-let [resp (some-> "https://api.github.com/rate_limit" http/download http/sink-error utils/from-json :resources :core)]
-    {:github-token-set? (not (nil? (System/getenv "GITHUB_TOKEN")))
-     :github-requests-limit (:limit resp)
-     :github-requests-limit-reset (-> resp :reset utils/unix-time-to-java-time str)
-     :github-requests-remaining (:remaining resp)
-     :github-requests-used (:used resp)}))
+  (when (and (started?)
+             (not *testing?*))
+    (binding [http/*cache* (cache)
+              ;; don't make a github rate-limit request more often than every minute
+              http/*expiry-offset-minutes* 1]
+      (when-let [resp (some-> "https://api.github.com/rate_limit" http/download http/sink-error utils/from-json :resources :core)]
+        {:github/token-set? (not (nil? (System/getenv "GITHUB_TOKEN")))
+         :github/requests-limit (:limit resp)
+         :github/requests-limit-reset (-> resp :reset utils/unix-time-to-java-time str)
+         :github/requests-remaining (:remaining resp)
+         :github/requests-used (:used resp)}))))
 
 (defn-spec app-stats map?
   "summarises application state and returns a map of stats"
@@ -1445,30 +1449,29 @@
         num-addons-installed (-> state :installed-addon-list count)
         num-addons-installed-matched (->> state :installed-addon-list (filter :matched?) count)
         num-addons-installed-ignored (->> state :installed-addon-list (filter addon/ignored?) count)
-        num-addons-installed-bytes (->> state :installed-addon-list (map :dirsize) (reduce +))
+        num-addons-installed-bytes (->> state :installed-addon-list (map :dirsize) (remove nil?) (reduce +))
 
         num-addons-reducer (fn [acc addon]
-                             (update acc (-> addon :source (or "no-host")) (fnil inc 0)))
+                             (update acc (-> addon :source (or "none")) (fnil inc 0)))
         num-addons-per-host (reduce num-addons-reducer {} (-> state :db))
         num-addons-installed-per-host (reduce num-addons-reducer {} (-> state :installed-addon-list))]
 
     (merge
-     {:known-host-list known-host-list
-      :num-addons num-addons
-      :num-addons-starred num-addons-starred
-      ;; {"wowinterface" 7261, "github" 1374, "tukui" 123, "gitlab" 6, "tukui-classic" 59, "tukui-classic-tbc" 44, "tukui-classic-wotlk" 49}
-      :num-addons-per-host num-addons-per-host
-      :num-addons-installed num-addons-installed
-      :num-addons-installed-matched num-addons-installed-matched
-      ;; {"wowinterface" 20, nil 1, "github" 9, "tukui-classic-tbc" 2, "curseforge" 1}
-      :num-addons-installed-per-host num-addons-installed-per-host
-      :num-addons-installed-ignored num-addons-installed-ignored
-      :num-addons-installed-bytes num-addons-installed-bytes
+     {:addons/total num-addons
+      :addons/known-host-list known-host-list
+      :addons/num-by-host num-addons-per-host
+      :addons/total-starred num-addons-starred
 
-      :github-requests-limit nil
-      :github-requests-limit-reset nil
-      :github-requests-remaining nil
-      :github-requests-used nil}
+      :installed-addons/total num-addons-installed
+      :installed-addons/num-matched num-addons-installed-matched
+      :installed-addons/num-by-host num-addons-installed-per-host
+      :installed-addons/num-ignored num-addons-installed-ignored
+      :installed-addons/total-bytes num-addons-installed-bytes
+
+      :github/requests-limit nil
+      :github/requests-limit-reset nil
+      :github/requests-remaining nil
+      :github/requests-used nil}
 
      (github-stats!))))
 
@@ -1477,6 +1480,19 @@
   []
   (swap! state assoc :db-stats (app-stats (get-state)))
   nil)
+
+(defn-spec watch-stats! nil?
+  "attaches a listener to sections of the state so stats are updated as they happen"
+  []
+  (let [watch-these-paths [[:db]
+                           [:installed-addon-list]
+                           [:user-catalogue-idx]]]
+    (doseq [path watch-these-paths]
+      (state-bind path (fn [_]
+                         (try
+                           (update-stats!)
+                           (catch Exception e
+                             (error e "uncaught exception updating stats"))))))))
 
 ;; import/export
 
@@ -1667,9 +1683,6 @@
    ;; 2019-06-30, travis is failing with 403: Forbidden. Moved to gui init
    ;;(latest-strongbox-release) ;; check for updates after everything else is done 
 
-  (future
-    (update-stats!))
-
    ;; seems like a good place to preserve the etag-db
   (save-settings!)
 
@@ -1776,6 +1789,7 @@
   (init-dirs)
   (prune-http-cache!)
   (load-settings! cli-opts)
+  (watch-stats!)
 
   state)
 
