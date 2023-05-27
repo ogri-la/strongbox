@@ -83,6 +83,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+* size column should be right aligned
+
 * user-catalogue
     - switch to log window to see progress when refresh-catalogue triggered
 

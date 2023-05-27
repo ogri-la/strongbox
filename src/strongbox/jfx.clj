@@ -2577,7 +2577,10 @@
   (let [log-lines (fx/sub-val context get-in [:app-state :log-lines])
         log-lines (cli/log-entries-since-last-refresh log-lines)
 
-        toggle (fx/sub-val context get-in [:app-state :gui-split-pane])
+        split-pane-state (fx/sub-val context get-in [:app-state :gui-split-pane])
+        sub-pane-selected (fx/sub-val context get-in [:app-state :gui-sub-pane])
+        selected? (and split-pane-state
+                       (= sub-pane-selected :notice-logger))
 
         ;; {:warn 1, :info 20}
         stats (utils/count-occurances log-lines :level)
@@ -2611,34 +2614,44 @@
                        :show-delay 400}}
      :desc {:fx/type :toggle-button
             :text lbl
-            :selected (boolean toggle)
+            :selected selected?
             :style-class (utils/items
                           ["toggle-button" (cond
                                              has-errors? "with-error"
                                              has-warnings? "with-warning")])
             :on-selected-changed (async-handler (fn []
-                                                  (cli/toggle-split-pane)
+                                                  (cli/set-sub-pane :notice-logger)
+                                                  (cli/set-split-pane (not selected?))
                                                   (cli/change-notice-logger-level max-level)))}}))
+
+(defn stats-button
+  [{:keys [fx/context]}]
+  (let [split-pane-state (fx/sub-val context get-in [:app-state :gui-split-pane])
+        sub-pane-selected (fx/sub-val context get-in [:app-state :gui-sub-pane])
+        selected? (and split-pane-state
+                       (= sub-pane-selected :stats))]
+
+    {:fx/type fx.ext.node/with-tooltip-props
+     :props {:tooltip {:fx/type :tooltip
+                       :text "tooltip"
+                       :show-delay 400}}
+     :desc {:fx/type :toggle-button
+            :text "more stats"
+            :selected selected?
+            :style-class ["toggle-button"]
+            :on-selected-changed (async-handler (fn []
+                                                  (cli/set-sub-pane :stats)
+                                                  (cli/set-split-pane (not selected?))))}}))
 
 (defn status-bar
   "this is the litle strip of text at the bottom of the application."
   [{:keys [fx/context]}]
-  (let [num-matching-template "%s of %s installed addons found in catalogue."
-        all-matching-template "all installed addons found in catalogue."
-        catalogue-count-template "%s addons in catalogue."
+  (let [stats (fx/sub-val context get-in [:app-state :db-stats])
 
-        ia (fx/sub-val context get-in [:app-state :installed-addon-list])
-
-        uia (filter :matched? ia)
-
-        a-count (count (fx/sub-val context get-in [:app-state :db]))
-        ia-count (count ia)
-        uia-count (count uia)
-
-        strings [(format catalogue-count-template (format-number a-count))
-                 (if (= ia-count uia-count)
-                   all-matching-template
-                   (format num-matching-template uia-count ia-count))]]
+        catalogue-count-template (format "%s addons in catalogue, %s addons installed, %s addons matched to catalogue"
+                                         (get stats :num-addons 0)
+                                         (get stats :num-addons-installed 0)
+                                         (get stats :num-addons-installed-matched 0))]
 
     {:fx/type :h-box
      :id "status-bar"
@@ -2646,7 +2659,8 @@
                  :id "status-bar-left"
                  :children [{:fx/type :text
                              :style-class ["text"]
-                             :text (join " " strings)}]}
+                             :text catalogue-count-template}
+                            {:fx/type stats-button}]}
                 {:fx/type :h-box
                  :id "status-bar-right"
                  :children [{:fx/type split-pane-button}]}]}))
@@ -2661,7 +2675,11 @@
         style (fx/sub-val context get :style)
         showing? (fx/sub-val context get-in [:app-state :gui-showing?])
         theme (fx/sub-val context get-in [:app-state :cfg :gui-theme])
-        split-pane-on? (fx/sub-val context get-in [:app-state :gui-split-pane])]
+        split-pane-on? (fx/sub-val context get-in [:app-state :gui-split-pane])
+        sub-pane (or (fx/sub-val context get-in [:app-state :gui-sub-pane])
+                     :notice-logger)
+        -notice-logger {:fx/type notice-logger}
+        -btn (button "wooo" donothing)]
     {:fx/type :stage
      :showing showing?
      :on-close-request exit-handler
@@ -2685,13 +2703,13 @@
              :root {:fx/type :border-pane
                     :id (name theme)
                     :top {:fx/type menu-bar}
-                    :center (if split-pane-on?
-                              {:fx/type :split-pane
-                               :orientation :vertical
-                               :divider-positions [0.6]
-                               :items [{:fx/type tabber}
-                                       {:fx/type notice-logger}]}
-                              {:fx/type tabber})
+                    :center {:fx/type :split-pane
+                             :orientation :vertical
+                             :divider-positions (if split-pane-on? [0.6] [1])
+                             :items [{:fx/type tabber}
+                                     {:fx/type :v-box
+                                      :managed split-pane-on?
+                                      :children [(if (= sub-pane :notice-logger) -notice-logger -btn)]}]}
                     :bottom {:fx/type status-bar}}}}))
 
 (defn start

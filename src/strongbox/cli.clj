@@ -29,6 +29,15 @@
   (swap! core/state update-in [:gui-split-pane] not)
   nil)
 
+(defn-spec set-split-pane nil?
+  [selected? boolean?]
+  (swap! core/state assoc :gui-split-pane selected?)
+  nil)
+
+(defn-spec set-sub-pane nil?
+  [sub-pane keyword?]
+  (swap! core/state assoc :gui-sub-pane sub-pane))
+
 ;; selecting addons
 
 (defn-spec select-addons-for-search! nil?

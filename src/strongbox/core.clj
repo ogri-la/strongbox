@@ -148,8 +148,11 @@
    ;; per-tab log levels are attached to each tab in the `:tab-list`
    :gui-log-level :info
 
-   ;; split the gui in two horizontally with the notice logger on the bottom.
+   ;; split the gui in two horizontally with the sub-pane on the bottom.
    :gui-split-pane false
+
+   ;; default widget for the sub-pane
+   :gui-sub-pane :notice-logger
 
    ;; addons in an 'unsteady' state (data being updated, addon being installed, etc)
    ;; allows a UI to watch and update the gui with progress.
@@ -1436,16 +1439,13 @@
   "summarises application state and returns a map of stats"
   [state map?]
   (let [num-addons (-> state :db count)
-        known-host-list (->> state
-                             :db
-                             (map :source)
-                             distinct
-                             sort
-                             vec)
+        known-host-list (->> state :db (map :source) distinct sort vec)
         num-addons-starred (-> state :user-catalogue-idx count)
+
         num-addons-installed (-> state :installed-addon-list count)
-        num-addons-ignored (->> state :installed-addon-list (filter addon/ignored?) count)
-        bytes-installed-addons (->> state :installed-addon-list (map :dirsize) (reduce +))
+        num-addons-installed-matched (->> state :installed-addon-list (filter :matched?) count)
+        num-addons-installed-ignored (->> state :installed-addon-list (filter addon/ignored?) count)
+        num-addons-installed-bytes (->> state :installed-addon-list (map :dirsize) (reduce +))
 
         num-addons-reducer (fn [acc addon]
                              (update acc (-> addon :source (or "no-host")) (fnil inc 0)))
@@ -1455,14 +1455,15 @@
     (merge
      {:known-host-list known-host-list
       :num-addons num-addons
+      :num-addons-starred num-addons-starred
       ;; {"wowinterface" 7261, "github" 1374, "tukui" 123, "gitlab" 6, "tukui-classic" 59, "tukui-classic-tbc" 44, "tukui-classic-wotlk" 49}
       :num-addons-per-host num-addons-per-host
       :num-addons-installed num-addons-installed
+      :num-addons-installed-matched num-addons-installed-matched
       ;; {"wowinterface" 20, nil 1, "github" 9, "tukui-classic-tbc" 2, "curseforge" 1}
       :num-addons-installed-per-host num-addons-installed-per-host
-      :num-addons-starred num-addons-starred
-      :num-addons-ignored num-addons-ignored
-      :bytes-installed-addons bytes-installed-addons
+      :num-addons-installed-ignored num-addons-installed-ignored
+      :num-addons-installed-bytes num-addons-installed-bytes
 
       :github-requests-limit nil
       :github-requests-limit-reset nil
