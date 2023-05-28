@@ -87,6 +87,12 @@ see CHANGELOG.md for a more formal list of changes by release
 * gui, installed, 'updated' column too small for 'NN months ago'
     - done
 
+* user-catalogue
+    - switch to log window to see progress when refresh-catalogue triggered
+        - only when triggered from menu
+        - scheduled refreshes happen in background
+    - done
+
 ## todo
 
 * 'core/state :db-stats', seems like a nice idea to put more information here
@@ -97,9 +103,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - total size of addons
     - ...?
     - a button on the opposite of the log popup button but similar that will show some overall stats
-
-* user-catalogue
-    - switch to log window to see progress when refresh-catalogue triggered
 
 * display github requests remaining
     - ...

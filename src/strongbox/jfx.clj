@@ -1532,7 +1532,9 @@
                               (fx/sub-val context get-in [:app-state :cfg :selected-catalogue])
                               (fx/sub-val context get-in [:app-state :cfg :catalogue-location-list]))
                              [separator
-                              (menu-item "Refresh user catalogue" (async-handler cli/refresh-user-catalogue))])
+                              (menu-item "Refresh user catalogue" (async-handler (fn []
+                                                                                   (switch-tab! LOG-TAB)
+                                                                                   (cli/refresh-user-catalogue))))])
 
         cache-menu [(menu-item "Clear http cache" (async-handler core/delete-http-cache!))
                     (menu-item "Clear addon zips" (async-handler core/delete-downloaded-addon-zips!)
