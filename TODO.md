@@ -107,12 +107,17 @@ see CHANGELOG.md for a more formal list of changes by release
 * display github requests remaining
     - ...
 
+* user-catalogue, don't switch to user catalogue if sub-pane is up and notice logger is showing
+    - ...
+
 * user catalogue, refreshing may guarantee exceeding github limit.
     - if we know this, add a warning? refuse?
 
 * update screenshots
 
 ## todo bucket (no particular order)
+
+* support NO_COLOR envvar, http://no-color.org
 
 * gui, bug, sorting isn't preserved between addon dir switches
     - for example, sorting by 'size' in one addon dir, then switching to another will see random sorting

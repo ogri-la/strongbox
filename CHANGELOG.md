@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* manually refreshing the user catalogue will now switch to the `log` pane before doing so.
+    - see `Catalogue -> Refresh user catalogue`.
+    - the intent is to show that *something* is happening.
 * an (opt-in) automatic refesh of the user-catalogue every 28 days.
     - see `Preferences` -> `Keep user catalogue updated`.
     - the user-catalogue is a catalogue of the addons added to strongbox using `File` -> `Import addon` 
@@ -48,7 +51,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-* minor cosmetic fix. the buttons on the search tab are now a consistent height.
+* filter buttons on the search tab are now a uniform height.
+* `key` column in the addon detail 'raw data' widget is now wide enough for the text 'supported game tracks'.
+* `updated` column in the installed addon tab is now wide enough for the text '12 months ago'.
 * possible cache stampede fetching strongbox release info. A lock is now acquired to ensure checks happen sequentially.
     - it was possible for the GUI to fire off many requests to Github simultaneously, bypassing cache and overwriting each other.
 
