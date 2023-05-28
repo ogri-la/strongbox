@@ -587,6 +587,24 @@
                  :-fx-base (colour :row-error)}}
 
                ;;
+               ;; widgets
+               ;;
+
+               ".table-view#key-vals .column-header .label"
+               {:-fx-font-style "normal"} ;; column *values*, not the column *header* should be italic
+
+               ".table-view#key-vals .key-column"
+               {:-fx-alignment "center-right"
+                :-fx-padding "0 1em 0 0"
+                :-fx-font-style "italic"}
+
+               ".table-view#key-vals .key-column.column-header .label"
+               {:-fx-alignment "center-right"}
+
+               ".table-view#key-vals .val-column.column-header .label"
+               {:-fx-alignment "center-left"}
+
+               ;;
                ;; addon-detail
                ;;
 
@@ -660,20 +678,6 @@
                 {:-fx-padding ".6em 0 .7em 0"
                  :-fx-alignment "bottom-right"
                  :-fx-pref-width 9999.0}
-
-                ".table-view#key-vals .column-header .label"
-                {:-fx-font-style "normal"} ;; column *values*, not the column *header* should be italic
-
-                ".table-view#key-vals .key-column"
-                {:-fx-alignment "center-right"
-                 :-fx-padding "0 1em 0 0"
-                 :-fx-font-style "italic"}
-
-                ".table-view#key-vals .key-column.column-header .label"
-                {:-fx-alignment "center-right"}
-
-                ".table-view#key-vals .val-column.column-header .label"
-                {:-fx-alignment "center-left"}
 
                 "#addon-detail-big-buttons"
                 {:-fx-padding "2em 0"
@@ -1479,6 +1483,7 @@
         no-addon-dir? (nil? addon-dir)
         selected-theme (fx/sub-val context get-in [:app-state :cfg :gui-theme])
         selected-columns (fx/sub-val context get-in [:app-state :cfg :preferences :ui-selected-columns])
+        split-pane (fx/sub-val context get-in [:app-state :gui-split-pane])
         file-menu [(menu-item "Install addon from file" (async-handler zip-file-picker)
                               {:disable no-addon-dir?})
                    (menu-item "Import addon" (async-handler import-addon-handler)
@@ -1526,9 +1531,12 @@
                               (fx/sub-val context get-in [:app-state :cfg :selected-catalogue])
                               (fx/sub-val context get-in [:app-state :cfg :catalogue-location-list]))
                              [separator
-                              (menu-item "Refresh user catalogue" (async-handler (fn []
-                                                                                   (switch-tab! LOG-TAB)
-                                                                                   (cli/refresh-user-catalogue))))])
+                              (menu-item "Refresh user catalogue" (async-handler
+                                                                   (fn []
+                                                                     (if split-pane
+                                                                       (cli/set-sub-pane :notice-logger)
+                                                                       (switch-tab! LOG-TAB))
+                                                                     (cli/refresh-user-catalogue))))])
 
         cache-menu [(menu-item "Clear http cache" (async-handler core/delete-http-cache!))
                     (menu-item "Clear addon zips" (async-handler core/delete-downloaded-addon-zips!)
@@ -2202,11 +2210,8 @@
 (defn addon-detail-key-vals-widget
   "displays a two-column table of `key: val` fields for what we know about an addon."
   [{:keys [addon]}]
-  (let [key-col (fn [keypair]
-                  ;; shouldn't ever be nil but better safe than sorry
-                  (-> keypair :key (or ":nil") str (subs 1)))
-        column-list [{:text "key" :min-width 220 :pref-width 250 :max-width 300 :resizable false :cell-value-factory key-col}
-                     {:text "val" :cell-value-factory :val}]
+  (let [column-list [{:text "key" :min-width 220 :pref-width 250 :max-width 300 :resizable false :cell-value-factory (comp utils/unkeywordify :key)}
+                     {:text "val" :cell-value-factory (comp utils/valifyval :val)}]
 
         blacklist [:group-addons :release-list :source-map-list]
         sanitised (apply dissoc addon blacklist)
@@ -2678,8 +2683,11 @@
   (let [db-stats (fx/sub-val context get-in [:app-state :db-stats])
         key-vals (sort-by :key (mapv (fn [[key val]] {:key key :val val}) db-stats))]
     {:fx/type key-vals-widget
-     :column-list [{:text "" :min-width 220 :pref-width 250 :max-width 300 :cell-value-factory (comp utils/unkeywordify :key)}
-                   {:text "" :cell-value-factory (comp utils/valifyval :val)}]
+     :column-list [{:text "" :min-width 250 :pref-width 270 :max-width 290
+                    :style-class ["key-column"]
+                    :cell-value-factory (comp utils/unkeywordify :key)}
+                   {:text "" :cell-value-factory (comp utils/valifyval :val)
+                    :style-class ["val-column"]}]
      :row-list key-vals}))
 
 ;;

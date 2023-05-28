@@ -903,4 +903,5 @@
     (map? v) (clojure.string/join ", " (mapv (fn [[key val]]
                                                (format "%s: %s" (valifyval key) (valifyval val))) (sort-by first v)))
     (boolean? v) (-> v str clojure.string/capitalize)
+    (keyword? v) (name v)
     :else (str v)))
