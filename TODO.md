@@ -81,14 +81,26 @@ see CHANGELOG.md for a more formal list of changes by release
             - disable during testing?
     - done
 
+* gui, raw data, 'key' column too small for 'supported-game-tracks'
+    - done
+
+* gui, installed, 'updated' column too small for 'NN months ago'
+    - done
+
+* user-catalogue
+    - switch to log window to see progress when refresh-catalogue triggered
+        - only when triggered from menu
+        - scheduled refreshes happen in background
+    - done
+
 ## todo
 
 * size column should be right aligned
 
-* user-catalogue
-    - switch to log window to see progress when refresh-catalogue triggered
-
 * display github requests remaining
+    - ...
+
+* user-catalogue, don't switch to user catalogue if sub-pane is up and notice logger is showing
     - ...
 
 * user catalogue, refreshing may guarantee exceeding github limit.
@@ -103,13 +115,11 @@ see CHANGELOG.md for a more formal list of changes by release
     - ...?
     - a button on the opposite of the log popup button but similar that will show some overall stats
 
-* gui, raw data, 'key' column too small for 'supported-game-tracks'
-
-* gui, installed, 'updated' column too small for 'NN months ago'
-
 * update screenshots
 
 ## todo bucket (no particular order)
+
+* support NO_COLOR envvar, http://no-color.org
 
 * gui, bug, sorting isn't preserved between addon dir switches
     - for example, sorting by 'size' in one addon dir, then switching to another will see random sorting
