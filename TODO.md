@@ -81,6 +81,12 @@ see CHANGELOG.md for a more formal list of changes by release
             - disable during testing?
     - done
 
+* gui, raw data, 'key' column too small for 'supported-game-tracks'
+    - done
+
+* gui, installed, 'updated' column too small for 'NN months ago'
+    - done
+
 ## todo
 
 * 'core/state :db-stats', seems like a nice idea to put more information here
@@ -100,10 +106,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * user catalogue, refreshing may guarantee exceeding github limit.
     - if we know this, add a warning? refuse?
-
-* gui, raw data, 'key' column too small for 'supported-game-tracks'
-
-* gui, installed, 'updated' column too small for 'NN months ago'
 
 * update screenshots
 

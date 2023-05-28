@@ -1304,7 +1304,7 @@
                                                                        (:tag-list row))}})}}
 
       :updated-date {:text "updated"
-                     :min-width 90 :pref-width 110 :max-width 120
+                     :min-width 100 :pref-width 130 :max-width 150
                      :cell-value-factory :updated-date
                      :cell-factory {:fx/cell-type :tree-table-cell
                                     :describe (fn [dt]
@@ -2210,7 +2210,7 @@
   (let [key-col (fn [keypair]
                   ;; shouldn't ever be nil but better safe than sorry
                   (-> keypair :key (or ":nil") str (subs 1)))
-        column-list [{:text "key" :min-width 150 :pref-width 150 :max-width 200 :resizable false :cell-value-factory key-col}
+        column-list [{:text "key" :min-width 220 :pref-width 250 :max-width 300 :resizable false :cell-value-factory key-col}
                      {:text "val" :cell-value-factory :val}]
 
         blacklist [:group-addons :release-list :source-map-list]
