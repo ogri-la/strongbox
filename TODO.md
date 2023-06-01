@@ -93,18 +93,11 @@ see CHANGELOG.md for a more formal list of changes by release
         - scheduled refreshes happen in background
     - done
 
-## todo
-
-* size column should be right aligned
-
 * display github requests remaining
-    - ...
+    - done
 
 * user-catalogue, don't switch to user catalogue if sub-pane is up and notice logger is showing
-    - ...
-
-* user catalogue, refreshing may guarantee exceeding github limit.
-    - if we know this, add a warning? refuse? stop?
+    - done
 
 * 'core/state :db-stats', seems like a nice idea to put more information here
     - known-hosts
@@ -114,6 +107,11 @@ see CHANGELOG.md for a more formal list of changes by release
     - total size of addons
     - ...?
     - a button on the opposite of the log popup button but similar that will show some overall stats
+    - done
+
+## todo
+
+* size column should be right aligned
 
 * update screenshots
 
@@ -125,6 +123,9 @@ see CHANGELOG.md for a more formal list of changes by release
         - ...
 
 ## todo bucket (no particular order)
+
+* user catalogue, refreshing may guarantee exceeding github limit.
+    - if we know this, add a warning? refuse? stop?
 
 * support NO_COLOR envvar, http://no-color.org
 
