@@ -860,17 +860,37 @@
 
       (str (format format-string value) suffix))))
 
-(defn-spec unix-time-to-java-time ::sp/local-dt-obj
-  [unix-time-seconds number?]
-  (-> unix-time-seconds
-      (* 1000)
-      java-time/instant
-      (java-time/local-date-time (jt/zone-id))))
+(defn-spec now ::sp/inst
+  "returns the date and time right now as a datetime string"
+  []
+  (str (java-time/instant)))
 
-(defn-spec unkeywordify (s/nilable string?)
-  "converts an unqualified keyword like `:foo-bar-baz` into a string like `\"foo bar baz\"`.
-  hyphens in namespace portion are left as-is.
-  non-keywords return nil. nil returns nil."
+(defn-spec unix-time-to-datetime ::sp/inst
+  "converts a number in the unix time format '1685623484' to milliseconds, then a `java.time.Instant` then a string"
+  [unix-time-seconds number?]
+  (-> unix-time-seconds (* 1000) java-time/instant str))
+
+(defn-spec minutes-from-now number?
+  "returns the number of minutes between `(now)` and the given `instant`"
+  [instant ::sp/inst]
+  (let [duration (->> instant java-time/instant (java-time/duration (java-time/instant (now))))]
+    (java-time/as duration :minutes)))
+
+(defn user-locale
+  []
+  (Locale/getDefault))
+
+(defn-spec format-number string?
+  "locale-aware number formatting."
+  [^Integer n number?]
+  (.format ^java.text.NumberFormat (NumberFormat/getNumberInstance (user-locale)) n))
+
+(defn-spec pretty-print-keyword (s/nilable string?)
+  "converts a keyword into a string.
+  hyphens are removed: :foo-bar => 'foo bar'
+  namespaces are handled: :foo/bar-baz => 'foo / bar baz'
+  non-keywords return nil.
+  nil returns nil."
   [kw (s/nilable keyword?)]
   (when (keyword? kw) ;; :foo, :foo/bar-baz
     (let [ns-str (namespace kw) ;; nil, :foo
@@ -880,28 +900,23 @@
         (format "%s / %s" ns-str rest-str) ;; "foo / bar baz"
         rest-str)))) ;; "bar baz"
 
-(def user-locale (Locale/getDefault))
-(def ^java.text.NumberFormat number-formatter (NumberFormat/getNumberInstance user-locale))
-
-(defn format-number
-  [^Integer n]
-  (.format number-formatter n))
-
-(defn-spec valifyval string?
-  "converts any value into a string suitable for non-developer human beings.
+(defn-spec pretty-print-value string?
+  "converts any value into a friendly string.
   strings are returned as-is.
   integers are formatted according to locale.
-  
-  `nil` becomes the string \"(nothing)\"
+  lists and maps are recursively formatted.
+  empty lists and maps return '(empty)'
+  `nil` becomes the string '(none)'.
   "
   [v any?]
   (cond
     (nil? v) "(none)"
     (number? v) (format-number v)
-    (sequential? v) (clojure.string/join ", " (mapv valifyval v))
-    ;; key1: val1, key2: val2
-    (map? v) (clojure.string/join ", " (mapv (fn [[key val]]
-                                               (format "%s: %s" (valifyval key) (valifyval val))) (sort-by first v)))
+    (sequential? v) (if (empty? v) "(empty)" (clojure.string/join ", " (mapv pretty-print-value v)))
+    (map? v) (if (empty? v)
+               "(empty)"
+               (clojure.string/join ", " (mapv (fn [[key val]]
+                                                 (format "%s: %s" (pretty-print-value key) (pretty-print-value val))) (sort-by first v))))
     (boolean? v) (-> v str clojure.string/capitalize)
     (keyword? v) (name v)
     :else (str v)))

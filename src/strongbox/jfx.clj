@@ -558,9 +558,7 @@
                 {:-fx-padding "0 10"
                  :-fx-alignment "center-left"
                  :-fx-pref-width 9999.0
-                 " > .text" {;; omg, wtf does 'fx-fill' work and not 'fx-text-fill' ???
-                             ;;:-fx-fill (colour :table-font-colour) ;; 2023-05: widget changed from :text to :label so I could pad-left
-                             :-fx-text-fill (colour :table-font-colour)
+                 " > .text" {:-fx-text-fill (colour :table-font-colour)
                              :-fx-padding "0 0 0 10"}}
 
                 "#status-bar-right"
@@ -1131,7 +1129,7 @@
       (when-not (empty? error-messages)
         (let [msg (message-list (format "warnings/errors while installing \"%s\"" label) error-messages)]
           (alert :warning msg {:wait? false}))))
-    (cli/half-refresh)))
+    (core/half-refresh)))
 
 ;;
 
@@ -1513,7 +1511,7 @@
                     {:fx/type menu-item--keep-user-catalogue-updated}]
 
         view-menu (into
-                   [(menu-item "Refresh" (async-handler cli/hard-refresh) {:key "F5"})
+                   [(menu-item "Refresh" (async-handler core/hard-refresh) {:key "F5"})
                     separator
                     (menu-item "_Installed" (switch-tab-event-handler INSTALLED-TAB) {:key "Ctrl+I"})
                     (menu-item "Searc_h" (switch-tab-event-handler SEARCH-TAB)
@@ -2210,8 +2208,8 @@
 (defn addon-detail-key-vals-widget
   "displays a two-column table of `key: val` fields for what we know about an addon."
   [{:keys [addon]}]
-  (let [column-list [{:text "key" :min-width 220 :pref-width 250 :max-width 300 :resizable false :cell-value-factory (comp utils/unkeywordify :key)}
-                     {:text "val" :cell-value-factory (comp utils/valifyval :val)}]
+  (let [column-list [{:text "key" :min-width 220 :pref-width 250 :max-width 300 :resizable false :cell-value-factory (comp utils/pretty-print-keyword :key)}
+                     {:text "val" :cell-value-factory (comp utils/pretty-print-value :val)}]
 
         blacklist [:group-addons :release-list :source-map-list]
         sanitised (apply dissoc addon blacklist)
@@ -2625,6 +2623,7 @@
                                                   (cli/change-notice-logger-level max-level)))}}))
 
 (defn key-vals-widget
+  "general purpose two-column table intended for two-column key+val data."
   [{:keys [column-list row-list placeholder]}]
   (let [row-list (or row-list [])]
     {:fx/type :table-view
@@ -2661,10 +2660,14 @@
   [{:keys [fx/context]}]
   (let [stats (fx/sub-val context get-in [:app-state :db-stats])
 
-        catalogue-count-template (format "%s addons in catalogue, %s addons installed, %s addons matched to catalogue"
-                                         (get stats :addons/total 0)
-                                         (get stats :installed-addons/total 0)
-                                         (get stats :installed-addons/num-matched 0))]
+        ;; don't show the message if we haven't finished loading yet
+        hide-status? (or (zero? (get stats :addons/total 0))
+                         (zero? (get stats :installed-addons/total 0)))
+
+        catalogue-count-status (format "%s addons in catalogue, %s addons installed, %s addons matched to catalogue"
+                                       (get stats :addons/total 0)
+                                       (get stats :installed-addons/total 0)
+                                       (get stats :installed-addons/num-matched 0))]
 
     {:fx/type :h-box
      :id "status-bar"
@@ -2673,20 +2676,21 @@
                  :children [{:fx/type stats-button}
                             {:fx/type :label
                              :style-class ["text"]
-                             :text catalogue-count-template}]}
+                             :text (if hide-status? "" catalogue-count-status)}]}
                 {:fx/type :h-box
                  :id "status-bar-right"
                  :children [{:fx/type split-pane-button}]}]}))
 
 (defn db-stats-widget
+  "an instance of the `key-vals-widget` for displaying the `:db-stats` data"
   [{:keys [fx/context]}]
   (let [db-stats (fx/sub-val context get-in [:app-state :db-stats])
         key-vals (sort-by :key (mapv (fn [[key val]] {:key key :val val}) db-stats))]
     {:fx/type key-vals-widget
      :column-list [{:text "" :min-width 250 :pref-width 270 :max-width 290
                     :style-class ["key-column"]
-                    :cell-value-factory (comp utils/unkeywordify :key)}
-                   {:text "" :cell-value-factory (comp utils/valifyval :val)
+                    :cell-value-factory (comp utils/pretty-print-keyword :key)}
+                   {:text "" :cell-value-factory (comp utils/pretty-print-value :val)
                     :style-class ["val-column"]}]
      :row-list key-vals}))
 
@@ -2701,8 +2705,9 @@
         showing? (fx/sub-val context get-in [:app-state :gui-showing?])
         theme (fx/sub-val context get-in [:app-state :cfg :gui-theme])
         split-pane-on? (fx/sub-val context get-in [:app-state :gui-split-pane])
+        default-sub-pane :notice-logger
         sub-pane (or (fx/sub-val context get-in [:app-state :gui-sub-pane])
-                     :notice-logger)
+                     default-sub-pane)
         -notice-logger {:fx/type notice-logger}
         -db-stats {:fx/type  db-stats-widget}]
     {:fx/type :stage

@@ -1425,17 +1425,18 @@
 
 ;; stats
 
-(defn-spec github-stats! (s/nilable map?)
+(defn-spec github-stats! (s/nilable :github/requests-stats)
+  "returns a map of github request rate limiting stats by querying the `/rate_limit` API endpoint.
+  doesn't make a Github `/rate_limit` request more often than once a minute."
   []
   (when (and (started?)
              (not *testing?*))
     (binding [http/*cache* (cache)
-              ;; don't make a github rate-limit request more often than every minute
               http/*expiry-offset-minutes* 1]
       (when-let [resp (some-> "https://api.github.com/rate_limit" http/download http/sink-error utils/from-json :resources :core)]
         {:github/token-set? (not (nil? (System/getenv "GITHUB_TOKEN")))
          :github/requests-limit (:limit resp)
-         :github/requests-limit-reset (-> resp :reset utils/unix-time-to-java-time str)
+         :github/requests-limit-reset-minutes (-> resp :reset utils/unix-time-to-datetime utils/minutes-from-now)
          :github/requests-remaining (:remaining resp)
          :github/requests-used (:used resp)}))))
 
@@ -1466,12 +1467,7 @@
       :installed-addons/num-matched num-addons-installed-matched
       :installed-addons/num-by-host num-addons-installed-per-host
       :installed-addons/num-ignored num-addons-installed-ignored
-      :installed-addons/total-bytes num-addons-installed-bytes
-
-      :github/requests-limit nil
-      :github/requests-limit-reset nil
-      :github/requests-remaining nil
-      :github/requests-used nil}
+      :installed-addons/total-bytes num-addons-installed-bytes}
 
      (github-stats!))))
 
@@ -1690,6 +1686,28 @@
 
   nil)
 
+(defn-spec hard-refresh nil?
+  "unlike `refresh`, `hard-refresh` clears the http cache before checking for addon updates."
+  []
+  ;; why can't we be more specific, like just the addons for the current addon-dir?
+  ;; the url used to 'expand' an addon from the catalogue isn't preserved.
+  ;; it may also change with the game track (tukui, historically) or not even exist (tukui, currently).
+  ;; a thorough inspection would be too much code.
+  ;; this also removes the etag cache. the etag db only applies to catalogues and downloaded zip files.
+  (delete-http-cache!)
+  (refresh))
+
+;; move to core.clj?
+(defn-spec half-refresh nil?
+  "like `refresh` but excludes reloading catalogues, focusing on re-reading installed addons,
+  matching them to the catalogue and reapplying host updates."
+  []
+  (report "refresh")
+  (load-all-installed-addons)
+  (match-all-installed-addons-with-catalogue)
+  (check-for-updates)
+  (save-settings!))
+
 (defn refresh-check
   "given a set of directories, presumably new ones introduced during an update, checks to see if any are
   present at all in the current set of known directories and does a `refresh` if not.
@@ -1703,7 +1721,7 @@
         diff (clojure.set/difference new-dirs existing-dirs)]
     (when-not (empty? diff)
       (debug "diff found between new and old, full refresh required:" diff)
-      ;; todo: could this be a half-refresh? should half-refresh live in core.clj ?
+      ;; todo: could this be a half-refresh instead?
       (refresh))))
 
 ;; todo: move to ui.cli

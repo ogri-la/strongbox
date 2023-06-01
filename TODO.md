@@ -117,6 +117,13 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * update screenshots
 
+* remove tukui
+    - I'm not keeping all this logic for two addons
+    - stop catalogue addons from being merged
+        -...
+    - can the addons be mirrored/hosted on github?
+        - ...
+
 ## todo bucket (no particular order)
 
 * support NO_COLOR envvar, http://no-color.org

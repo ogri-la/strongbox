@@ -146,6 +146,7 @@
 (s/def :javafx/node #(instance? javafx.scene.Node %))
 
 (s/def :gui/column-data (s/keys :opt-un [:gui/text :gui/cell-value-factory :gui/style-class]))
+(s/def :gui/sub-pane-content #{:notice-logger :stats})
 
 (s/def :addon/id (s/or :regular (s/keys :req-un [:addon/source :addon/source-id]) ;; installed addons and catalogue addons
                        :edge (s/keys :req-in [::dirname]))) ;; unmatched and ignored addons
@@ -487,3 +488,16 @@
 ;; search
 
 (s/def :search/filter-by #{:source :tag :tag-membership :user-catalogue})
+
+;; github
+
+(s/def :github/requests-used ::gte-zero)
+(s/def :github/remaining ::gte-zero)
+(s/def :github/requests-limit-reset-minutes number?)
+(s/def :github/requests-limit ::gte-zero)
+(s/def :github/token-set? boolean?)
+(s/def :github/requests-stats (s/keys :req [:github/token-set?
+                                            :github/requests-limit
+                                            :github/requests-limit-reset-minutes
+                                            :github/requests-remaining
+                                            :github/requests-used]))

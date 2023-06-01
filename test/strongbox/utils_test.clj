@@ -103,15 +103,27 @@
 
 (deftest file-older-than
   (testing "files whose modification times are older than N hours"
-    (java-time/with-clock (java-time/fixed-clock "1970-01-01T02:00:00Z") ;; jan 1st 1970, 2 am
-      (let [path (utils/join *temp-dir-path* "foo")]
-        (try
-          (fs/touch path 0) ;; created Jan 1st 1970
-          (.setLastModified (fs/file path) 0) ;; modified Jan 1st 1970
+    (let [path (utils/join *temp-dir-path* "foo")]
+      (fs/touch path 0) ;; created Jan 1st 1970
+      (.setLastModified (fs/file path) 0) ;; modified Jan 1st 1970
+      (try
+        ;; 2 minutes past the epoch
+        (java-time/with-clock (java-time/fixed-clock "1970-01-01T00:02:00Z")
+          (is (utils/file-older-than path 1 :minutes))
+          (is (not (utils/file-older-than path 3 :minutes))))
+
+        ;; 2 hours past the epoch
+        (java-time/with-clock (java-time/fixed-clock "1970-01-01T02:00:00Z")
           (is (utils/file-older-than path 1 :hours))
-          (is (not (utils/file-older-than path 3 :hours)))
-          (finally
-            (fs/delete path)))))))
+          (is (not (utils/file-older-than path 3 :hours))))
+
+        ;; 1 day, 1 second past the epoch
+        (java-time/with-clock (java-time/fixed-clock "1970-01-02T00:00:01Z")
+          (is (utils/file-older-than path 1 :days))
+          (is (not (utils/file-older-than path 2 :days))))
+
+        (finally
+          (fs/delete path))))))
 
 (deftest nilable
   (let [cases [[nil nil]
@@ -602,3 +614,75 @@
 
     (doseq [[given expected] cases]
       (is (= expected (utils/filesize given))))))
+
+(deftest format-number
+  (with-redefs [utils/user-locale (constantly java.util.Locale/GERMAN)]
+    (let [cases [[1 "1"]
+                 [10 "10"]
+                 [1000 "1.000"]]]
+      (doseq [[given expected] cases]
+        (is (= expected (utils/format-number given))))))
+
+  (with-redefs [utils/user-locale (constantly java.util.Locale/UK)]
+    (let [cases [[1 "1"]
+                 [10 "10"]
+                 [1000 "1,000"]]]
+      (doseq [[given expected] cases]
+        (is (= expected (utils/format-number given)))))))
+
+(deftest unix-time-to-datetime
+  (let [cases [[0 "1970-01-01T00:00:00Z"]
+               [1 "1970-01-01T00:00:01Z"]
+               [61 "1970-01-01T00:01:01Z"]
+               [1685623484 "2023-06-01T12:44:44Z"]]]
+    (doseq [[given expected] cases]
+      (is (= expected (utils/unix-time-to-datetime given))))))
+
+(deftest minutes-from-now
+  (let [cases [["2023-06-01T00:00:00Z" 0]
+               ["2023-06-01T00:00:01Z" 0]
+               ["2023-06-01T00:00:10Z" 0]
+               ["2023-06-01T00:01:00Z" 1]
+               ["2023-06-01T00:10:00Z" 10]
+               ["2023-06-01T01:00:00Z" 60]
+
+               ["2023-05-31T23:59:59Z" 0]
+               ["2023-05-31T23:59:00Z" -1]
+               ["2023-05-31T23:50:00Z" -10]
+               ["2023-05-31T23:00:00Z" -60]]]
+    (with-redefs [utils/now (constantly "2023-06-01T00:00:00Z")]
+      (doseq [[given expected] cases]
+        (is (= expected (utils/minutes-from-now given)))))))
+
+(deftest pretty-print-keyword
+  (let [cases [[nil nil]
+               [:foo "foo"]
+               [:foo-bar "foo bar"]
+               [:foo/bar "foo / bar"]
+               [:foo/bar-baz "foo / bar baz"]]]
+    (doseq [[given expected] cases]
+      (is (= expected (utils/pretty-print-keyword given))))))
+
+(deftest pretty-print-value
+  (let [cases [[nil "(none)"]
+
+               [:foo "foo"]
+               [:foo/bar "bar"]
+
+               [1 "1"]
+               [100 "100"]
+
+               [{} "(empty)"]
+               [{:foo []} "foo: (empty)"]
+               [{:foo :bar} "foo: bar"]
+               [{:foo {:bar :baz}} "foo: bar: baz"]
+               [{:foo {:bar :baz} :bup :boo} "bup: boo, foo: bar: baz"] ;; non-deterministic ...
+
+               [[] "(empty)"]
+               [[1,2,3] "1, 2, 3"]
+               [[{}, 1] "(empty), 1"]
+
+               [true "True"]
+               [false "False"]]]
+    (doseq [[given expected] cases]
+      (is (= expected (utils/pretty-print-value given))))))
