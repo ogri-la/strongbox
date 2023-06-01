@@ -177,7 +177,11 @@
 
                      ;; latest strongbox version
                      "https://api.github.com/repos/ogri-la/strongbox/releases/latest"
-                     {:get (fn [req] {:status 200 :body "{\"tag_name\": \"0.0.0\"}"})}}]
+                     {:get (fn [req] {:status 200 :body "{\"tag_name\": \"0.0.0\"}"})}
+
+                     ;; github requests remaining
+                     "https://api.github.com/rate_limit"
+                     {:get (fn [req] {:status 200 :body (utils/to-json {:resources {:core {:limit 0, :remaining 0, :reset 978307200, :used 0, :resource "core"}}})})}}]
     (try
       (debug "stopping application if it hasn't already been stopped")
       (main/stop)

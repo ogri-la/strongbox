@@ -17,11 +17,13 @@
    [java-time :as jt]
    [java-time.format])
   (:import
+   [java.util List Calendar Locale]
    [java.lang Math]
    [java.util Base64]
    [org.apache.commons.compress.compressors CompressorStreamFactory CompressorException]
    [org.ocpsoft.prettytime.units Decade]
-   [org.ocpsoft.prettytime PrettyTime]))
+   [org.ocpsoft.prettytime PrettyTime]
+   [java.text NumberFormat]))
 
 (defn repl-stack-element?
   [stack-element]
@@ -131,6 +133,7 @@
   [then ::sp/inst, threshold ::sp/gte-zero, period keyword?]
   (let [expiry-offset
         (case period
+          :minutes (jt/minutes threshold)
           :hours (jt/hours threshold)
           :days (jt/days threshold))
         now (java-time/instant)
@@ -139,13 +142,8 @@
 
 (defn-spec file-older-than boolean?
   "returns `true` if given `file` has a modification date older than given `hours`."
-  [file ::sp/extant-file, hours pos-int?]
-  (let [modtime (jt/instant (fs/mod-time file))
-        now (java-time/instant)
-        expiry-offset (jt/hours hours)
-        expiry-date (jt/plus modtime expiry-offset)
-        expired? (jt/before? expiry-date now)]
-    expired?))
+  [file ::sp/extant-file, threshold ::sp/gte-zero, period keyword?]
+  (-> file fs/mod-time jt/instant str (older-than? threshold period)))
 
 (defn-spec published-before-classic? (s/or :ok boolean?, :error nil?)
   [dt-string (s/nilable ::sp/inst)]
@@ -861,3 +859,64 @@
           value (float (/ bytes (Math/pow base base-pow)))]
 
       (str (format format-string value) suffix))))
+
+(defn-spec now ::sp/inst
+  "returns the date and time right now as a datetime string"
+  []
+  (str (java-time/instant)))
+
+(defn-spec unix-time-to-datetime ::sp/inst
+  "converts a number in the unix time format '1685623484' to milliseconds, then a `java.time.Instant` then a string"
+  [unix-time-seconds number?]
+  (-> unix-time-seconds (* 1000) java-time/instant str))
+
+(defn-spec minutes-from-now number?
+  "returns the number of minutes between `(now)` and the given `instant`"
+  [instant ::sp/inst]
+  (let [duration (->> instant java-time/instant (java-time/duration (java-time/instant (now))))]
+    (java-time/as duration :minutes)))
+
+(defn user-locale
+  []
+  (Locale/getDefault))
+
+(defn-spec format-number string?
+  "locale-aware number formatting."
+  [^Integer n number?]
+  (.format ^java.text.NumberFormat (NumberFormat/getNumberInstance (user-locale)) n))
+
+(defn-spec pretty-print-keyword (s/nilable string?)
+  "converts a keyword into a string.
+  hyphens are removed: :foo-bar => 'foo bar'
+  namespaces are handled: :foo/bar-baz => 'foo / bar baz'
+  non-keywords return nil.
+  nil returns nil."
+  [kw (s/nilable keyword?)]
+  (when (keyword? kw) ;; :foo, :foo/bar-baz
+    (let [ns-str (namespace kw) ;; nil, :foo
+          rest-str (some-> kw name (clojure.string/replace "-" " ")) ;; "bar baz"
+          ]
+      (if ns-str
+        (format "%s / %s" ns-str rest-str) ;; "foo / bar baz"
+        rest-str)))) ;; "bar baz"
+
+(defn-spec pretty-print-value string?
+  "converts any value into a friendly string.
+  strings are returned as-is.
+  integers are formatted according to locale.
+  lists and maps are recursively formatted.
+  empty lists and maps return '(empty)'
+  `nil` becomes the string '(none)'.
+  "
+  [v any?]
+  (cond
+    (nil? v) "(none)"
+    (number? v) (format-number v)
+    (sequential? v) (if (empty? v) "(empty)" (clojure.string/join ", " (mapv pretty-print-value v)))
+    (map? v) (if (empty? v)
+               "(empty)"
+               (clojure.string/join ", " (mapv (fn [[key val]]
+                                                 (format "%s: %s" (pretty-print-value key) (pretty-print-value val))) (sort-by first v))))
+    (boolean? v) (-> v str clojure.string/capitalize)
+    (keyword? v) (name v)
+    :else (str v)))

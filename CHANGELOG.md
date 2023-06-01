@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* 'stats' thats serves to centralise a bunch of numbers that are used internally and might be interesting to the user.
+    - see the `more stats` button in the bottom left corner.
+* Github rate limit information is now fetched as part of the stats
+    - but no more than once a minute
+    - see https://github.com/ogri-la/strongbox#user-content-github-api-authentication
 * manually refreshing the user catalogue will now switch to the `log` pane before doing so.
     - see `Catalogue -> Refresh user catalogue`.
     - the intent is to show that *something* is happening.
@@ -25,6 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* the main window is now always split with the bottom pane hidden by default.
+    - if can be dragged open or either of the two status bar buttons can be clicked to toggle it.
+* clicking the status bar buttons to open the bottom pane is now much quicker.
 * refreshing the user-catalogue now checks imported/starred addons against the full catalogue before checking online.
     - if it fails to find addon in catalogue, it will fall back to checking online like before.
     - the user-catalogue is ostensibly for addons without a catalogue (github, gitlab) but is now also for 'starred' addons. Now that we have a github catalogue, attempting to refresh addons from the catalogue is much faster.

@@ -29,15 +29,14 @@
     [core :as core]])
   (:import
    [javafx.scene.text Font]
-   [java.util List Calendar Locale]
+   [java.util List Calendar]
    [javafx.util Callback]
    [javafx.scene.control TreeTableRow TableRow TextInputDialog Alert Alert$AlertType ButtonType]
    [javafx.scene.input MouseButton MouseEvent KeyEvent KeyCode]
    [javafx.stage Stage FileChooser FileChooser$ExtensionFilter DirectoryChooser Window WindowEvent]
    [javafx.application Platform]
    [javafx.scene Node]
-   [javafx.event Event]
-   [java.text NumberFormat]))
+   [javafx.event Event]))
 
 (defn load-font-from-resources
   [resource]
@@ -65,13 +64,6 @@
             (fx.lifecycle/create this this-desc opts))))
     (delete [_ component opts]
       (fx.lifecycle/delete fx.lifecycle/dynamic (:child component) opts))))
-
-(def user-locale (Locale/getDefault))
-(def ^java.text.NumberFormat number-formatter (NumberFormat/getNumberInstance user-locale))
-
-(defn format-number
-  [^Integer n]
-  (.format number-formatter n))
 
 (def major-theme-map
   {:light
@@ -566,8 +558,8 @@
                 {:-fx-padding "0 10"
                  :-fx-alignment "center-left"
                  :-fx-pref-width 9999.0
-                 " > .text" {;; omg, wtf does 'fx-fill' work and not 'fx-text-fill' ???
-                             :-fx-fill (colour :table-font-colour)}}
+                 " > .text" {:-fx-text-fill (colour :table-font-colour)
+                             :-fx-padding "0 0 0 10"}}
 
                 "#status-bar-right"
                 {:-fx-min-width "130px" ;; long enough to render "warnings (999)"
@@ -591,6 +583,24 @@
                 ".toggle-button.with-error"
                 {:-fx-text-fill (colour :row-error-text)
                  :-fx-base (colour :row-error)}}
+
+               ;;
+               ;; widgets
+               ;;
+
+               ".table-view#key-vals .column-header .label"
+               {:-fx-font-style "normal"} ;; column *values*, not the column *header* should be italic
+
+               ".table-view#key-vals .key-column"
+               {:-fx-alignment "center-right"
+                :-fx-padding "0 1em 0 0"
+                :-fx-font-style "italic"}
+
+               ".table-view#key-vals .key-column.column-header .label"
+               {:-fx-alignment "center-right"}
+
+               ".table-view#key-vals .val-column.column-header .label"
+               {:-fx-alignment "center-left"}
 
                ;;
                ;; addon-detail
@@ -666,20 +676,6 @@
                 {:-fx-padding ".6em 0 .7em 0"
                  :-fx-alignment "bottom-right"
                  :-fx-pref-width 9999.0}
-
-                ".table-view#key-vals .column-header .label"
-                {:-fx-font-style "normal"} ;; column *values*, not the column *header* should be italic
-
-                ".table-view#key-vals .key-column"
-                {:-fx-alignment "center-right"
-                 :-fx-padding "0 1em 0 0"
-                 :-fx-font-style "italic"}
-
-                ".table-view#key-vals .key-column.column-header .label"
-                {:-fx-alignment "center-right"}
-
-                ".table-view#key-vals .val-column.column-header .label"
-                {:-fx-alignment "center-left"}
 
                 "#addon-detail-big-buttons"
                 {:-fx-padding "2em 0"
@@ -1133,7 +1129,7 @@
       (when-not (empty? error-messages)
         (let [msg (message-list (format "warnings/errors while installing \"%s\"" label) error-messages)]
           (alert :warning msg {:wait? false}))))
-    (cli/half-refresh)))
+    (core/half-refresh)))
 
 ;;
 
@@ -1485,6 +1481,7 @@
         no-addon-dir? (nil? addon-dir)
         selected-theme (fx/sub-val context get-in [:app-state :cfg :gui-theme])
         selected-columns (fx/sub-val context get-in [:app-state :cfg :preferences :ui-selected-columns])
+        split-pane (fx/sub-val context get-in [:app-state :gui-split-pane])
         file-menu [(menu-item "Install addon from file" (async-handler zip-file-picker)
                               {:disable no-addon-dir?})
                    (menu-item "Import addon" (async-handler import-addon-handler)
@@ -1514,7 +1511,7 @@
                     {:fx/type menu-item--keep-user-catalogue-updated}]
 
         view-menu (into
-                   [(menu-item "Refresh" (async-handler cli/hard-refresh) {:key "F5"})
+                   [(menu-item "Refresh" (async-handler core/hard-refresh) {:key "F5"})
                     separator
                     (menu-item "_Installed" (switch-tab-event-handler INSTALLED-TAB) {:key "Ctrl+I"})
                     (menu-item "Searc_h" (switch-tab-event-handler SEARCH-TAB)
@@ -1532,9 +1529,12 @@
                               (fx/sub-val context get-in [:app-state :cfg :selected-catalogue])
                               (fx/sub-val context get-in [:app-state :cfg :catalogue-location-list]))
                              [separator
-                              (menu-item "Refresh user catalogue" (async-handler (fn []
-                                                                                   (switch-tab! LOG-TAB)
-                                                                                   (cli/refresh-user-catalogue))))])
+                              (menu-item "Refresh user catalogue" (async-handler
+                                                                   (fn []
+                                                                     (if split-pane
+                                                                       (cli/set-sub-pane :notice-logger)
+                                                                       (switch-tab! LOG-TAB))
+                                                                     (cli/refresh-user-catalogue))))])
 
         cache-menu [(menu-item "Clear http cache" (async-handler core/delete-http-cache!))
                     (menu-item "Clear addon zips" (async-handler core/delete-downloaded-addon-zips!)
@@ -2018,7 +2018,7 @@
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [n]
                                                  (when n
-                                                   {:text (format-number n)}))}}
+                                                   {:text (utils/format-number n)}))}}
                      {:text "" :style-class ["wide-button-column"] :min-width 120 :pref-width 120 :max-width 120 :resizable false
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [addon]
@@ -2055,8 +2055,7 @@
 (defn search-addons-search-field
   [{:keys [fx/context]}]
   (let [search-state (fx/sub-val context get-in [:app-state, :search])
-        ;;known-host-list (fx/sub-val context get-in [:app-state, :db-stats :known-host-list])
-        known-host-list (core/get-state :db-stats :known-host-list)
+        known-host-list (or (fx/sub-val context get-in [:app-state :db-stats :addons/known-host-list]) [])
         disable-host-selector? (= 1 (count known-host-list))
 
         tag-set (->> search-state :filter-by :tag)
@@ -2209,11 +2208,8 @@
 (defn addon-detail-key-vals-widget
   "displays a two-column table of `key: val` fields for what we know about an addon."
   [{:keys [addon]}]
-  (let [key-col (fn [keypair]
-                  ;; shouldn't ever be nil but better safe than sorry
-                  (-> keypair :key (or ":nil") str (subs 1)))
-        column-list [{:text "key" :min-width 220 :pref-width 250 :max-width 300 :resizable false :cell-value-factory key-col}
-                     {:text "val" :cell-value-factory :val}]
+  (let [column-list [{:text "key" :min-width 220 :pref-width 250 :max-width 300 :resizable false :cell-value-factory (comp utils/pretty-print-keyword :key)}
+                     {:text "val" :cell-value-factory (comp utils/pretty-print-value :val)}]
 
         blacklist [:group-addons :release-list :source-map-list]
         sanitised (apply dissoc addon blacklist)
@@ -2579,7 +2575,10 @@
   (let [log-lines (fx/sub-val context get-in [:app-state :log-lines])
         log-lines (cli/log-entries-since-last-refresh log-lines)
 
-        toggle (fx/sub-val context get-in [:app-state :gui-split-pane])
+        split-pane-state (fx/sub-val context get-in [:app-state :gui-split-pane])
+        sub-pane-selected (fx/sub-val context get-in [:app-state :gui-sub-pane])
+        selected? (and split-pane-state
+                       (= sub-pane-selected :notice-logger))
 
         ;; {:warn 1, :info 20}
         stats (utils/count-occurances log-lines :level)
@@ -2613,45 +2612,87 @@
                        :show-delay 400}}
      :desc {:fx/type :toggle-button
             :text lbl
-            :selected (boolean toggle)
+            :selected selected?
             :style-class (utils/items
                           ["toggle-button" (cond
                                              has-errors? "with-error"
                                              has-warnings? "with-warning")])
             :on-selected-changed (async-handler (fn []
-                                                  (cli/toggle-split-pane)
+                                                  (cli/set-sub-pane :notice-logger)
+                                                  (cli/set-split-pane (not selected?))
                                                   (cli/change-notice-logger-level max-level)))}}))
+
+(defn key-vals-widget
+  "general purpose two-column table intended for two-column key+val data."
+  [{:keys [column-list row-list placeholder]}]
+  (let [row-list (or row-list [])]
+    {:fx/type :table-view
+     :id "key-vals"
+     :style-class ["table-view"]
+     :placeholder {:fx/type :text
+                   :style-class ["table-placeholder-text"]
+                   :text (or placeholder "")}
+     :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
+     :columns (mapv make-table-column column-list)
+     :items row-list}))
+
+(defn stats-button
+  [{:keys [fx/context]}]
+  (let [split-pane-state (fx/sub-val context get-in [:app-state :gui-split-pane])
+        sub-pane-selected (fx/sub-val context get-in [:app-state :gui-sub-pane])
+        selected? (and split-pane-state
+                       (= sub-pane-selected :stats))]
+
+    {:fx/type fx.ext.node/with-tooltip-props
+     :props {:tooltip {:fx/type :tooltip
+                       :text "tooltip"
+                       :show-delay 400}}
+     :desc {:fx/type :toggle-button
+            :text "more stats"
+            :selected selected?
+            :style-class ["toggle-button"]
+            :on-selected-changed (async-handler (fn []
+                                                  (cli/set-sub-pane :stats)
+                                                  (cli/set-split-pane (not selected?))))}}))
 
 (defn status-bar
   "this is the litle strip of text at the bottom of the application."
   [{:keys [fx/context]}]
-  (let [num-matching-template "%s of %s installed addons found in catalogue."
-        all-matching-template "all installed addons found in catalogue."
-        catalogue-count-template "%s addons in catalogue."
+  (let [stats (fx/sub-val context get-in [:app-state :db-stats])
 
-        ia (fx/sub-val context get-in [:app-state :installed-addon-list])
+        ;; don't show the message if we haven't finished loading yet
+        hide-status? (or (zero? (get stats :addons/total 0))
+                         (zero? (get stats :installed-addons/total 0)))
 
-        uia (filter :matched? ia)
-
-        a-count (count (fx/sub-val context get-in [:app-state :db]))
-        ia-count (count ia)
-        uia-count (count uia)
-
-        strings [(format catalogue-count-template (format-number a-count))
-                 (if (= ia-count uia-count)
-                   all-matching-template
-                   (format num-matching-template uia-count ia-count))]]
+        catalogue-count-status (format "%s addons in catalogue, %s addons installed, %s addons matched to catalogue"
+                                       (get stats :addons/total 0)
+                                       (get stats :installed-addons/total 0)
+                                       (get stats :installed-addons/num-matched 0))]
 
     {:fx/type :h-box
      :id "status-bar"
      :children [{:fx/type :h-box
                  :id "status-bar-left"
-                 :children [{:fx/type :text
+                 :children [{:fx/type stats-button}
+                            {:fx/type :label
                              :style-class ["text"]
-                             :text (join " " strings)}]}
+                             :text (if hide-status? "" catalogue-count-status)}]}
                 {:fx/type :h-box
                  :id "status-bar-right"
                  :children [{:fx/type split-pane-button}]}]}))
+
+(defn db-stats-widget
+  "an instance of the `key-vals-widget` for displaying the `:db-stats` data"
+  [{:keys [fx/context]}]
+  (let [db-stats (fx/sub-val context get-in [:app-state :db-stats])
+        key-vals (sort-by :key (mapv (fn [[key val]] {:key key :val val}) db-stats))]
+    {:fx/type key-vals-widget
+     :column-list [{:text "" :min-width 250 :pref-width 270 :max-width 290
+                    :style-class ["key-column"]
+                    :cell-value-factory (comp utils/pretty-print-keyword :key)}
+                   {:text "" :cell-value-factory (comp utils/pretty-print-value :val)
+                    :style-class ["val-column"]}]
+     :row-list key-vals}))
 
 ;;
 
@@ -2663,7 +2704,12 @@
         style (fx/sub-val context get :style)
         showing? (fx/sub-val context get-in [:app-state :gui-showing?])
         theme (fx/sub-val context get-in [:app-state :cfg :gui-theme])
-        split-pane-on? (fx/sub-val context get-in [:app-state :gui-split-pane])]
+        split-pane-on? (fx/sub-val context get-in [:app-state :gui-split-pane])
+        default-sub-pane :notice-logger
+        sub-pane (or (fx/sub-val context get-in [:app-state :gui-sub-pane])
+                     default-sub-pane)
+        -notice-logger {:fx/type notice-logger}
+        -db-stats {:fx/type  db-stats-widget}]
     {:fx/type :stage
      :showing showing?
      :on-close-request exit-handler
@@ -2687,13 +2733,13 @@
              :root {:fx/type :border-pane
                     :id (name theme)
                     :top {:fx/type menu-bar}
-                    :center (if split-pane-on?
-                              {:fx/type :split-pane
-                               :orientation :vertical
-                               :divider-positions [0.6]
-                               :items [{:fx/type tabber}
-                                       {:fx/type notice-logger}]}
-                              {:fx/type tabber})
+                    :center {:fx/type :split-pane
+                             :orientation :vertical
+                             :divider-positions (if split-pane-on? [0.6] [1])
+                             :items [{:fx/type tabber}
+                                     {:fx/type :v-box
+                                      :managed split-pane-on?
+                                      :children [(if (= sub-pane :notice-logger) -notice-logger -db-stats)]}]}
                     :bottom {:fx/type status-bar}}}}))
 
 (defn start

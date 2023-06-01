@@ -120,7 +120,7 @@
    :db nil
 
    ;; some generated stats about the db that are updated just once at load time.
-   :db-stats {:known-host-list []}
+   :db-stats nil
 
    ;; the list of addons from the user-catalogue
    :user-catalogue nil
@@ -148,8 +148,11 @@
    ;; per-tab log levels are attached to each tab in the `:tab-list`
    :gui-log-level :info
 
-   ;; split the gui in two horizontally with the notice logger on the bottom.
+   ;; split the gui in two horizontally with the sub-pane on the bottom.
    :gui-split-pane false
+
+   ;; default widget for the sub-pane
+   :gui-sub-pane :notice-logger
 
    ;; addons in an 'unsteady' state (data being updated, addon being installed, etc)
    ;; allows a UI to watch and update the gui with progress.
@@ -1008,14 +1011,7 @@
 
     (let [final-catalogue (load-current-catalogue)]
       (when-not (empty? final-catalogue)
-        (swap! state merge {:db (:addon-summary-list final-catalogue)
-                            :db-stats {:num-addons (count (:addon-summary-list final-catalogue))
-                                       :known-host-list (->> final-catalogue
-                                                             :addon-summary-list
-                                                             (map :source)
-                                                             distinct
-                                                             sort
-                                                             vec)}}))))
+        (swap! state assoc :db (:addon-summary-list final-catalogue)))))
   nil)
 
 (defn-spec -match-installed-addon-list-with-catalogue :addon/installed-list
@@ -1427,6 +1423,73 @@
       ;; we've already looked, return what we found
       lsr)))
 
+;; stats
+
+(defn-spec github-stats! (s/nilable :github/requests-stats)
+  "returns a map of github request rate limiting stats by querying the `/rate_limit` API endpoint.
+  doesn't make a Github `/rate_limit` request more often than once a minute."
+  []
+  (when (and (started?)
+             (not *testing?*))
+    (binding [http/*cache* (cache)
+              http/*expiry-offset-minutes* 1]
+      (when-let [resp (some-> "https://api.github.com/rate_limit" http/download http/sink-error utils/from-json :resources :core)]
+        {:github/token-set? (not (nil? (System/getenv "GITHUB_TOKEN")))
+         :github/requests-limit (:limit resp)
+         :github/requests-limit-reset-minutes (-> resp :reset utils/unix-time-to-datetime utils/minutes-from-now)
+         :github/requests-remaining (:remaining resp)
+         :github/requests-used (:used resp)}))))
+
+(defn-spec app-stats map?
+  "summarises application state and returns a map of stats"
+  [state map?]
+  (let [num-addons (-> state :db count)
+        known-host-list (->> state :db (map :source) distinct sort vec)
+        num-addons-starred (-> state :user-catalogue-idx count)
+
+        num-addons-installed (-> state :installed-addon-list count)
+        num-addons-installed-matched (->> state :installed-addon-list (filter :matched?) count)
+        num-addons-installed-ignored (->> state :installed-addon-list (filter addon/ignored?) count)
+        num-addons-installed-bytes (->> state :installed-addon-list (map :dirsize) (remove nil?) (reduce +))
+
+        num-addons-reducer (fn [acc addon]
+                             (update acc (-> addon :source (or "none")) (fnil inc 0)))
+        num-addons-per-host (reduce num-addons-reducer {} (-> state :db))
+        num-addons-installed-per-host (reduce num-addons-reducer {} (-> state :installed-addon-list))]
+
+    (merge
+     {:addons/total num-addons
+      :addons/known-host-list known-host-list
+      :addons/num-by-host num-addons-per-host
+      :addons/total-starred num-addons-starred
+
+      :installed-addons/total num-addons-installed
+      :installed-addons/num-matched num-addons-installed-matched
+      :installed-addons/num-by-host num-addons-installed-per-host
+      :installed-addons/num-ignored num-addons-installed-ignored
+      :installed-addons/total-bytes num-addons-installed-bytes}
+
+     (github-stats!))))
+
+(defn-spec update-stats! nil?
+  "summarises application state and updates a map of stats"
+  []
+  (swap! state assoc :db-stats (app-stats (get-state)))
+  nil)
+
+(defn-spec watch-stats! nil?
+  "attaches a listener to sections of the state so stats are updated as they happen"
+  []
+  (let [watch-these-paths [[:db]
+                           [:installed-addon-list]
+                           [:user-catalogue-idx]]]
+    (doseq [path watch-these-paths]
+      (state-bind path (fn [_]
+                         (try
+                           (update-stats!)
+                           (catch Exception e
+                             (error e "uncaught exception updating stats"))))))))
+
 ;; import/export
 
 (defn-spec export-installed-addon ::sp/export-record
@@ -1623,6 +1686,28 @@
 
   nil)
 
+(defn-spec hard-refresh nil?
+  "unlike `refresh`, `hard-refresh` clears the http cache before checking for addon updates."
+  []
+  ;; why can't we be more specific, like just the addons for the current addon-dir?
+  ;; the url used to 'expand' an addon from the catalogue isn't preserved.
+  ;; it may also change with the game track (tukui, historically) or not even exist (tukui, currently).
+  ;; a thorough inspection would be too much code.
+  ;; this also removes the etag cache. the etag db only applies to catalogues and downloaded zip files.
+  (delete-http-cache!)
+  (refresh))
+
+;; move to core.clj?
+(defn-spec half-refresh nil?
+  "like `refresh` but excludes reloading catalogues, focusing on re-reading installed addons,
+  matching them to the catalogue and reapplying host updates."
+  []
+  (report "refresh")
+  (load-all-installed-addons)
+  (match-all-installed-addons-with-catalogue)
+  (check-for-updates)
+  (save-settings!))
+
 (defn refresh-check
   "given a set of directories, presumably new ones introduced during an update, checks to see if any are
   present at all in the current set of known directories and does a `refresh` if not.
@@ -1636,7 +1721,7 @@
         diff (clojure.set/difference new-dirs existing-dirs)]
     (when-not (empty? diff)
       (debug "diff found between new and old, full refresh required:" diff)
-      ;; todo: could this be a half-refresh? should half-refresh live in core.clj ?
+      ;; todo: could this be a half-refresh instead?
       (refresh))))
 
 ;; todo: move to ui.cli
@@ -1722,6 +1807,7 @@
   (init-dirs)
   (prune-http-cache!)
   (load-settings! cli-opts)
+  (watch-stats!)
 
   state)
 
