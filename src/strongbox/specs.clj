@@ -164,10 +164,10 @@
 ;; all known columns. also constitutes the column order.
 ;; arrow column/group expander always comes first
 (def known-column-list
-  [:starred :dirsize :browse-local
+  [:starred :browse-local
    :source :source-id :source-map-list
    :name :description :tag-list
-   :created-date :updated-date
+   :created-date :updated-date :dirsize
    :installed-version :available-version :combined-version :game-version
    :uber-button])
 
@@ -190,10 +190,10 @@
    :uber-button])
 
 (def fat-column-list
-  [:starred :dirsize :browse-local
+  [:starred :browse-local
    :source :source-id
    :name :description :tag-list
-   :created-date :updated-date
+   :created-date :updated-date :dirsize
    :installed-version :available-version :game-version
    :uber-button])
 
