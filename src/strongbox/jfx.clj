@@ -298,7 +298,7 @@
                 {:-fx-opacity "1" ;; a disabled button already has a greying effect applied
                  :-fx-font-style "normal"}
 
-                [".version-column" ".installed-column" ".available-version-column"]
+                [".version-column" ".installed-column" ".available-version-column" ".size-column"]
                 {:-fx-alignment "center-right"
                  :-fx-text-overrun "leading-ellipsis"}
 

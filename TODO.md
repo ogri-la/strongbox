@@ -109,9 +109,12 @@ see CHANGELOG.md for a more formal list of changes by release
     - a button on the opposite of the log popup button but similar that will show some overall stats
     - done
 
+* size column should be right aligned
+    - done
+
 ## todo
 
-* size column should be right aligned
+
 
 * update screenshots
 
