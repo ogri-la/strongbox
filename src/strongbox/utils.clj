@@ -841,7 +841,7 @@
     (zero? bytes) "0" ;; special case for zero
 
     :else
-    (let [format-string "%.1f"
+    (let [format-string "%.1f "
           decimal-sizes  [:B, :KB, :MB, :GB, :TB,
                           :PB, :EB, :ZB, :YB]
 
