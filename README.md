@@ -8,6 +8,20 @@ It supports addons hosted by ~Curseforge,~ wowinterface.com, Tukui, Github and G
 
 ---
 
+***Notice***: tukui.org hosted addons no longer receive updates as of 2023-06-01 except `elvui` and `tukui`.
+
+Unfortunately the location of these two addons has changed as well as details around their access.
+
+I've decied to drop support for tukui.org and instead mirror the `tukui` and `elvui` releases on Github so they will be
+incorporated into the Github catalogue (updated weekly).
+
+In the interim you can go `File -> Import addon` and paste in the below URLs to install:
+
+* https://github.com/ogri-la/tukui
+* https://github.com/ogri-la/elvui
+
+---
+
 ***Notice***: Curseforge addons no longer receive updates as of version **5.0.0**, released Feb 1st, 2022.
 
 Use the *"Source"* and *"Find similar"* actions from the addon context menu ([added **4.9.0**](https://github.com/ogri-la/strongbox/releases)) to help migrate addons away from Curseforge.
