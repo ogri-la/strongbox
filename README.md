@@ -13,9 +13,9 @@ It supports addons hosted by ~Curseforge,~ wowinterface.com, Tukui, Github and G
 Unfortunately the location of these two addons has changed as well as details around their access.
 
 I've decied to drop support for tukui.org and instead mirror the `tukui` and `elvui` releases on Github so they will be
-incorporated into the Github catalogue (updated weekly).
+incorporated into the Github catalogue.
 
-In the interim you can go `File -> Import addon` and paste in the below URLs to install:
+In the meantime `File -> Import addon` and pasting the below URLs will install them:
 
 * https://github.com/ogri-la/tukui
 * https://github.com/ogri-la/elvui
