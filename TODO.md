@@ -114,15 +114,15 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
-
-
 * update screenshots
 
 * remove tukui
     - I'm not keeping all this logic for two addons
-    - stop catalogue addons from being merged
-        -...
+    - stop catalogue addons from being merged into full catalogue
+        - done
     - can the addons be mirrored/hosted on github?
+        - done
+    - follow curseforge removal pr
         - ...
 
 ## todo bucket (no particular order)

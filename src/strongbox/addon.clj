@@ -157,9 +157,12 @@
   [toc (s/nilable map?), nfo (s/nilable map?)]
   (let [curse? (fn [source-map]
                  (= (:source source-map) "curseforge"))
+        tukui? (fn [source-map]
+                 (utils/in? (:source source-map) sp/tukui-source-list))
         source-map-list (some->> (merge-lists (extract-source-map-list toc)
                                               (extract-source-map-list nfo))
                                  (remove curse?)
+                                 (remove tukui?)
                                  vec
                                  (assoc {} :source-map-list))]
     (merge toc nfo source-map-list)))

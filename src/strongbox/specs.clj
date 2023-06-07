@@ -270,6 +270,7 @@
 (s/def :addon/category string?)
 (s/def :addon/category-list (s/coll-of :addon/category))
 
+(def tukui-source-list #{"tukui" "tukui-classic" "tukui-classic-tbc" "tukui-classic-wotlk"})
 (s/def :addon/source (s/or :known #{"curseforge" "wowinterface" "github" "gitlab" "tukui" "tukui-classic" "tukui-classic-tbc" "tukui-classic-wotlk"}
                            :unknown string?))
 (s/def :addon/source-id (s/or ::integer-id? int? ;; tukui has negative ids
