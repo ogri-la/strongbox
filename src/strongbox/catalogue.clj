@@ -19,7 +19,7 @@
   "returns `true` if the addon host has been disabled"
   [addon map?]
   (or (-> addon :source (= "curseforge")
-      (-> addon :source (utils/in? sp/tukui-source-list))))
+      (-> addon :source (utils/in? sp/tukui-source-list)))))
 
 (defn-spec -expand-summary (s/or :ok :addon/expanded, :error nil?)
   "fetches updates from the addon host for the given `addon` and `game-track`.
