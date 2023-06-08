@@ -588,9 +588,11 @@
                     :source "tukui",
                     :source-id 98
                     :source-map-list [{:source "tukui" :source-id 98}]}
+          _ expected
 
           expected-addon-dir (utils/join install-dir "EveryAddon")
           expected-user-catalogue [match]
+          _ expected-user-catalogue
 
           catalogue (utils/to-json (catalogue/new-catalogue [match]))
 
@@ -616,21 +618,25 @@
           ;; user gives us this url, we find it and install it
           (cli/import-addon user-url)
 
-          ;; addon was successfully download and installed
-          (is (fs/exists? expected-addon-dir))
+          ;; addon was (not) successfully download and installed
+          ;;(is (fs/exists? expected-addon-dir))
+          (is (not (fs/exists? expected-addon-dir)))
 
           ;; re-read install dir
           (core/load-all-installed-addons)
 
-          ;; we expect our mushy set of .nfo and .toc data
-          (is (= [expected] (core/get-state :installed-addon-list)))
+          ;; we expect ~our~ (no) mushy set of .nfo and .toc data
+          ;;(is (= [expected] (core/get-state :installed-addon-list)))
+          (is (= [] (core/get-state :installed-addon-list)))
 
           ;; and that the addon was added to the user catalogue
-          (is (= expected-user-catalogue (core/get-state :user-catalogue :addon-summary-list)))
+          ;;(is (= expected-user-catalogue (core/get-state :user-catalogue :addon-summary-list)))
+          (is (nil? (core/get-state :user-catalogue :addon-summary-list)))
 
           ;; and that the user catalogue was persisted to disk
-          (is (= expected-user-catalogue
-                 (:addon-summary-list (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))))
+          ;;(is (= expected-user-catalogue
+          ;;       (:addon-summary-list (catalogue/read-catalogue (core/paths :user-catalogue-file)))))
+          (is (nil? (:addon-summary-list (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))))
 
 ;; todo: no import-addon-gitlab ?
 

@@ -733,7 +733,7 @@
   "returns the contents of the user catalogue or `nil` if it doesn't exist."
   []
   (let [catalogue (catalogue/read-catalogue (paths :user-catalogue-file) {:bad-data? nil})
-        new-summary-list (->> catalogue :addon-summary-list (remove catalogue/host-disabled?) vec)]
+        new-summary-list (->> catalogue :addon-summary-list (remove addon/host-disabled?) vec)]
     (when catalogue
       (catalogue/new-catalogue new-summary-list))))
 
@@ -1616,7 +1616,7 @@
                                                  :invalid-data? nil-me
                                                  :transform-map {:game-track keyword}})
 
-        addon-list (remove catalogue/host-disabled? addon-list)
+        addon-list (remove addon/host-disabled? addon-list)
 
         full-data? (fn [addon]
                      (utils/all (mapv #(contains? addon %) [:source :source-id :name])))

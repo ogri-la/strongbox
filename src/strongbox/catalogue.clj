@@ -15,12 +15,6 @@
     [gitlab-api :as gitlab-api]
     [github-api :as github-api]]))
 
-(defn-spec host-disabled? boolean?
-  "returns `true` if the addon host has been disabled"
-  [addon map?]
-  (or (-> addon :source (= "curseforge")
-      (-> addon :source (utils/in? sp/tukui-source-list)))))
-
 (defn-spec -expand-summary (s/or :ok :addon/expanded, :error nil?)
   "fetches updates from the addon host for the given `addon` and `game-track`.
   does *not* support multiple game tracks or warning the user, see `expand-summary`.
@@ -66,7 +60,7 @@
       (not game-track)
       (error (format "unsupported game track '%s'." (str game-track*)))
 
-      (host-disabled? addon)
+      (strongbox.addon/host-disabled? addon)
       (if (= (:source addon) "curseforge")
         (warn (utils/message-list (str "addon host 'curseforge' was disabled " constants/curseforge-cutoff-label ".")
                                   ["use 'Source' and 'Find similar' from the addon context menu for alternatives."]))

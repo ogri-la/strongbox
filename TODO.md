@@ -127,6 +127,12 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* expand-summary, can the game track wrangling logic be made generic rather than per-host?
+    - this would tie in with returning *all* releases from a host
+    - it would insulate host logic from selected game tracks and game track strictness
+    - it would handle pinned logic as well
+        - currently handled in catalogue
+
 * user catalogue, refreshing may guarantee exceeding github limit.
     - if we know this, add a warning? refuse? stop?
 

@@ -84,19 +84,28 @@
         (is (= (utils/days-between-then-and-now "2001-01-01") 1)))))
 
 (deftest older-than?
-  (let [cases [[["2001-01-01" 0 :days] true]
-               [["2001-01-01" 0 :hours] true]
+  (java-time/with-clock (java-time/fixed-clock "2023-01-01T00:00:00Z")
+    (let [cases [[["2001-01-01" 0 :days] true]
+                 [["2001-01-01" 0 :hours] true]
 
-               [["2001-01-01" 1 :days] true]
-               [["2001-01-01" 1 :hours] true]
+                 [["2001-01-01" 1 :days] true]
+                 [["2001-01-01" 1 :hours] true]
 
-               [["2079-12-31" 1 :days] false]
-               [["2079-12-31" 1 :hours] false]
+                 [["2079-12-31" 1 :days] false]
+                 [["2079-12-31" 1 :hours] false]
 
-               [["2079-12-31" 0 :days] false]
-               [["2079-12-31" 0 :hours] false]]]
-    (doseq [[[then threshold period] expected] cases]
-      (is (= expected (utils/older-than? then threshold period))))))
+                 [["2079-12-31" 0 :days] false]
+                 [["2079-12-31" 0 :hours] false]
+
+                 ;; right now is 2023-01-01T00:00:00Z
+
+                 [["2023-01-01T00:00:00Z" 0 :minutes] false]
+
+                 [["2022-12-31T23:58:59Z" 1 :minutes] true]
+                 [["2023-01-01T00:00:00Z" 1 :minutes] false]]]
+
+      (doseq [[[then threshold period] expected] cases]
+        (is (= expected (utils/older-than? then threshold period)), (format "case %s %s %s" then threshold period))))))
 
 (deftest older-than?--bad-period
   (is (thrown? java.lang.IllegalArgumentException (utils/older-than? "2001-01-01" 12 :parsecs))))

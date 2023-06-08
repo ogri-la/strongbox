@@ -5,6 +5,7 @@
    [clojure.test]
    [clojure.tools.namespace.repl :as tn :refer [refresh]]
    [strongbox
+    [addon :as addon]
     [constants :as constants]
     [main :as main :refer [restart stop]]
     [catalogue :as catalogue]
@@ -35,7 +36,6 @@
                   ;;cli/install-update-these-in-parallel cli/install-update-these-serially
                   ;;core/check-for-updates core/check-for-updates-serially
                   ;; for testing purposes, no addon host is disabled
-                  catalogue/host-disabled? (constantly false)
                   utils/folder-size-bytes (constantly 0)
                   constants/max-user-catalogue-age 9999
                   ]
