@@ -1,30 +1,27 @@
 # strongbox, a World of Warcraft addon manager
 
-`strongbox` is an **open source**, **[advertisement free](#recognition)** and **[privacy respecting](#privacy)** addon manager for World of Warcraft.
+`strongbox` is an **open source**, **[advertisement free](#recognition)** and **[privacy respecting](#privacy)** addon
+manager for World of Warcraft.
 
 It runs on Linux and macOS.
 
-It supports addons hosted by ~Curseforge,~ wowinterface.com, Tukui, Github and Gitlab.
+It supports addons hosted by ~Curseforge,~ wowinterface.com, ~Tukui~, Github and Gitlab.
 
 ---
 
-***Notice***: tukui.org hosted addons no longer receive updates as of 2023-06-01 except `elvui` and `tukui`.
+***Notice***: tukui.org no longer hosts addons except `elvui` and `tukui` as of 2023-06-01.
 
 Unfortunately the location of these two addons has changed as well as details around their access.
 
-I've decied to drop support for tukui.org and instead mirror the `tukui` and `elvui` releases on Github so they will be
-incorporated into the Github catalogue.
-
-In the meantime `File -> Import addon` and pasting the below URLs will install them:
-
-* https://github.com/ogri-la/tukui
-* https://github.com/ogri-la/elvui
+I've dropped support for tukui.org in **7.0.0** and instead mirror the `tukui` and `elvui` releases on Github. This
+allows them to be incorporated into the Github catalogue.
 
 ---
 
 ***Notice***: Curseforge addons no longer receive updates as of version **5.0.0**, released Feb 1st, 2022.
 
-Use the *"Source"* and *"Find similar"* actions from the addon context menu ([added **4.9.0**](https://github.com/ogri-la/strongbox/releases)) to help migrate addons away from Curseforge.
+Use the *"Source"* and *"Find similar"* actions from the addon context menu
+([added **4.9.0**](https://github.com/ogri-la/strongbox/releases)) to help migrate addons away from Curseforge.
 
 I also maintain a list of [other addon managers](https://ogri-la.github.io/wow-addon-managers/).
 
@@ -82,7 +79,7 @@ Afterwards, use the `Update all` button to update all addons with new versions a
 * [install addons from multiple sources](#install-addons-from-multiple-sources):
     - ~Curseforge~
     - wowinterface.com
-    - Tukui
+    - ~Tukui~
     - Github (using *releases*)
     - Gitlab (using *releases*)
 * [import and export lists of addons](#import-and-export-lists-of-addons)
@@ -121,9 +118,7 @@ that it's my privilege to offer this small piece back.
 
 This software interacts with the following remote hosts:
 
-* ~Overwolf/Twitch/Curseforge [Addons API](https://addons-ecs.forgesvc.net/) and its [CDN](https://edge.forgecdn.net/)~
 * [wowinterface.com](https://wowinterface.com)
-* [www.tukui.org](https://www.tukui.org/api.php)
 * [api.github.com](https://developer.github.com/v3/repos/releases)
     - to download repository and release data for addons hosted on Github
     - to download the latest `strongbox` release information
@@ -162,7 +157,8 @@ bug. *Some* of the details it contains are:
 
 ### classic and retail addon support
 
-"Classic", "Classic (The Burning Crusade)", "Classic (Wrath of the Lich King)" and "Retail" versions of WoW are all distinct addon systems.
+"Classic", "Classic (The Burning Crusade)", "Classic (Wrath of the Lich King)" and "Retail" versions of WoW are all
+distinct addon systems.
 
 Some addons support all systems in a single download, some support classic as an alternate build of the same addon, 
 some addons support classic only, some addons have been split up into multiple addons. There is a lot of variation.
@@ -196,9 +192,7 @@ Click `File` from the top menu and select `Import addon` and paste the URL of th
 
 Strongbox supports searching for addons from the following addon hosts:
 
-* ~[Curseforge](https://www.curseforge.com/wow/addons)~
 * [wowinterface.com](https://wowinterface.com/addons.php)
-* [Tukui](https://www.tukui.org)
 * [Github](https://github.com)
 
 Click the `search` tab and start typing.
@@ -238,9 +232,7 @@ Click the `Update all` button next to your addon directory.
 
 Strongbox supports installing addons from the following addon hosts:
 
-* ~[Curseforge](https://www.curseforge.com/wow/addons)~
 * [wowinterface.com](https://wowinterface.com/addons.php)
-* [Tukui](https://www.tukui.org)
 * [Github](https://www.github.com)
 * [Gitlab](https://gitlab.com)
 
@@ -327,7 +319,6 @@ Right-click an addon and select `Release`.
 
 Strongbox currently supports installing previous releases for:
 
-* ~Curseforge~
 * Github
 * Gitlab
 
@@ -408,6 +399,6 @@ Prior to `1.0.0`, `strongbox` was known as `wowman`. The [AUR package](https://a
 
 ## License
 
-Copyright © 2018-2022 Torkus
+Copyright © 2018-2023 Torkus
 
 Distributed under the GNU Affero General Public Licence, version 3 [with additional permissions](LICENCE.txt#L665)
