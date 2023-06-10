@@ -121,9 +121,10 @@ see CHANGELOG.md for a more formal list of changes by release
     - follow curseforge removal pr
         - done
 
-## todo
-
 * update screenshots
+    - done
+
+## todo
 
 ## todo bucket (no particular order)
 
