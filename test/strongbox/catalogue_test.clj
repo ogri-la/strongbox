@@ -319,7 +319,11 @@
 
 (deftest expand-summary--retail-strict--just-classic
   (testing "when just classic is available, use nothing"
-    (let [addon {:name "foo" :label "Foo" :source "wowinterface" :source-id "4646" :game-track-list [:classic]}
+    (let [addon {:name "foo" :label "Foo" :source "wowinterface" :source-id "4646"
+                 ;; 2023-06-11: test switched from curseforge to wowinterface.
+                 ;; wowinterface doesn't expand to different game tracks, so what we're testing here is refusing to expand,
+                 ;; rather than filtering out a classic release.
+                 :game-track-list [:classic]}
           game-track :retail
           strict? true
           response [{:game-track :classic

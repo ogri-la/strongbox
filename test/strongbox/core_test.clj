@@ -462,11 +462,10 @@
 
           dummy-catalogue (catalogue/new-catalogue catalogue)
 
-          ;; this is a subset of the data the remote addon host (like curseforge) serves us
+          ;; this is a subset of the data the remote addon host (like wowinterface) serves us
           api-result [{:game-track :retail,
                        :UIVersion "v8.10.00"}]
 
-          ;;alt-api-result (assoc-in api-result [:latestFiles 0 :displayName] "v8.20.00")
           alt-api-result (assoc-in api-result [0 :UIVersion] "v8.20.00")
 
           fake-routes {;; catalogue

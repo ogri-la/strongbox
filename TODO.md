@@ -127,6 +127,10 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo bucket (no particular order)
 
+* search results, if there are addons from the same host (github) with the same name (tukui), disambiguate them
+    - 'tukui' in the search results shouldn't mean 'ogri-la/tukui' if 'tukui.org/tukui' is also available
+        - which it isn't, but that's not the point.
+
 * expand-summary, can the game track wrangling logic be made generic rather than per-host?
     - this would tie in with returning *all* releases from a host
     - it would insulate host logic from selected game tracks and game track strictness

@@ -28,17 +28,14 @@
     (error (utils/reportable-error "given addon-summary has no game track list."))
     (error addon-summary))
 
+  ;; when the selected game track is supported by the addon, check for updates.
   (when (some #{game-track} (:game-track-list addon-summary))
     (let [url (str wowinterface-api "/filedetails/" (:source-id addon-summary) ".json")
           result-list (some-> url http/download-with-backoff http/sink-error utils/from-json)]
       (when-not (empty? result-list)
 
-        ;; has this happened before? can we find an example?
-        (when (> (count result-list) 1)
-          (warn "wowinterface api returned more than one result for addon with id:" (:source-id addon-summary)))
-
         ;; 2023-06-09: we don't expect more than one result from wowi, ever, but for the sake of testing and
-        ;; consistency it's now supported.
+        ;; consistency with other hosts it is now supported.
         (mapv (fn [result]
                 (let [sid (:source-id addon-summary)
                       ;; rarely present. use it if found. actual value of `aid` not necessary, it seems to work when empty as well.

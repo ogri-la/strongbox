@@ -9,7 +9,7 @@ It supports addons hosted by ~Curseforge,~ wowinterface.com, ~Tukui~, Github and
 
 ---
 
-***Notice***: tukui.org no longer hosts addons except `elvui` and `tukui` as of 2023-06-01.
+***Notice***: tukui.org no longer hosts addons except `elvui` and `tukui` as of **2023-06-01**.
 
 Unfortunately the location of these two addons has changed as well as details around their access.
 
