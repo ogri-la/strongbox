@@ -112,10 +112,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * size column should be right aligned
     - done
 
-## todo
-
-* update screenshots
-
 * remove tukui
     - I'm not keeping all this logic for two addons
     - stop catalogue addons from being merged into full catalogue
@@ -123,7 +119,11 @@ see CHANGELOG.md for a more formal list of changes by release
     - can the addons be mirrored/hosted on github?
         - done
     - follow curseforge removal pr
-        - ...
+        - done
+
+## todo
+
+* update screenshots
 
 ## todo bucket (no particular order)
 
