@@ -690,7 +690,7 @@
       :short (catalogue/shorten-catalogue catalogue)
       ;;:curseforge (catalogue/filter-catalogue catalogue "curseforge")
       :wowinterface (catalogue/filter-catalogue catalogue "wowinterface")
-      :tukui (catalogue/filter-catalogue catalogue "tukui")
+      ;;:tukui (catalogue/filter-catalogue catalogue "tukui")
       :github (catalogue/filter-catalogue catalogue "github") ;; todo: add a test for this. I expect all derivable catalogues to be available
       nil)))
 
@@ -733,9 +733,7 @@
   "returns the contents of the user catalogue or `nil` if it doesn't exist."
   []
   (let [catalogue (catalogue/read-catalogue (paths :user-catalogue-file) {:bad-data? nil})
-        curse? (fn [addon]
-                 (-> addon :source (= "curseforge")))
-        new-summary-list (->> catalogue :addon-summary-list (remove curse?) vec)]
+        new-summary-list (->> catalogue :addon-summary-list (remove addon/host-disabled?) vec)]
     (when catalogue
       (catalogue/new-catalogue new-summary-list))))
 
@@ -1221,6 +1219,9 @@
                               (= source "curseforge")
                               (error (str "addon host 'curseforge' was disabled " constants/curseforge-cutoff-label "."))
 
+                              (utils/in? source sp/tukui-source-list)
+                              (error (str "addon host 'tukui' was disabled " constants/tukui-cutoff-label "."))
+
                               :else
                               ;; look in the current catalogue. emit an error if we fail
                               (or (:catalogue-match (-find-first-in-db (or (get-state :db) []) addon-summary-stub match-on-list))
@@ -1615,9 +1616,7 @@
                                                  :invalid-data? nil-me
                                                  :transform-map {:game-track keyword}})
 
-        curse? (fn [addon]
-                 (some-> addon :source (= "curseforge")))
-        addon-list (remove curse? addon-list)
+        addon-list (remove addon/host-disabled? addon-list)
 
         full-data? (fn [addon]
                      (utils/all (mapv #(contains? addon %) [:source :source-id :name])))

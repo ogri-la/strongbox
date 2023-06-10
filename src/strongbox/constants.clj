@@ -64,6 +64,7 @@
 (def glyph-map glyph-map--fontawesome)
 
 (def curseforge-cutoff-label "Feb 1st, 2022")
+(def tukui-cutoff-label "June 1st, 2023")
 
 (def releases
   "https://wowpedia.fandom.com/wiki/Patch"

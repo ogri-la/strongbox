@@ -6,9 +6,9 @@
    [envvar.core :refer [with-env]]
    [me.raynes.fs :as fs]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
+   [java-time :as jt]
    [strongbox.cli :as cli]
    [strongbox
-    [constants :as constants]
     [addon :as addon :refer [downloaded-addon-fname]]
     [logging :as logging]
     [zip :as zip]
@@ -292,34 +292,6 @@
                      :version "1.2.3"}
                     {:created-date "2011-01-04T05:42:23Z",
                      :description "desc",
-                     :dirname "Addon4",
-                     :dirsize 0
-                     :download-count 4,
-                     :download-url "https://www.tukui.org/addons.php?download=4",
-                     :game-track :retail,
-                     :group-id "https://www.tukui.org/addons.php?id=4",
-                     :installed-game-track :retail,
-                     :installed-version "1.2.3",
-                     :interface-version 80200,
-                     :label "Addon4",
-                     :matched? true,
-                     :name "addon4",
-                     :primary? true,
-                     :release-list [{:download-url "https://www.tukui.org/addons.php?download=4",
-                                     :game-track :retail,
-                                     :interface-version 80200,
-                                     :version "1.2.3"}],
-                     :source "tukui",
-                     :source-id 4,
-                     :source-map-list [{:source "tukui", :source-id 4}],
-                     :supported-game-tracks [:retail],
-                     :tag-list [],
-                     :update? false,
-                     :updated-date "2019-07-03T07:11:47Z",
-                     :url "https://www.tukui.org/addons.php?id=4",
-                     :version "1.2.3"}
-                    {:created-date "2011-01-04T05:42:23Z",
-                     :description "desc",
                      :dirname "Addon5",
                      :dirsize 0
                      :download-count 5,
@@ -439,34 +411,6 @@
                      :version "1.2.3"}
                     {:created-date "2011-01-04T05:42:23Z",
                      :description "desc",
-                     :dirname "Addon4",
-                     :dirsize 0
-                     :download-count 4,
-                     :download-url "https://www.tukui.org/addons.php?download=4",
-                     :game-track :retail,
-                     :group-id "https://www.tukui.org/addons.php?id=4",
-                     :installed-game-track :retail,
-                     :installed-version "1.2.3",
-                     :interface-version 80200,
-                     :label "Addon4",
-                     :matched? true,
-                     :name "addon4",
-                     :primary? true,
-                     :release-list [{:download-url "https://www.tukui.org/addons.php?download=4",
-                                     :game-track :retail,
-                                     :interface-version 80200,
-                                     :version "1.2.3"}],
-                     :source "tukui",
-                     :source-id 4,
-                     :source-map-list [{:source "tukui", :source-id 4}],
-                     :supported-game-tracks [:retail],
-                     :tag-list [],
-                     :update? false,
-                     :updated-date "2019-07-03T07:11:47Z",
-                     :url "https://www.tukui.org/addons.php?id=4",
-                     :version "1.2.3"}
-                    {:created-date "2011-01-04T05:42:23Z",
-                     :description "desc",
                      :dirname "Addon5",
                      :dirsize 0
                      :download-count 5,
@@ -503,38 +447,37 @@
 
 (deftest check-for-addon-update
   (testing "the key `:update?` is set to `true` when the installed version doesn't match the catalogue version"
-    (let [;; we start off with a list of these called a catalogue. it's downloaded from github
-          catalogue {:tag-list [:auction-house]
-                     :download-count 1
-                     :label "Every Addon"
-                     :name "every-addon",
-                     :source "curseforge",
-                     :source-id 0
-                     :updated-date "2012-09-20T05:32:00Z",
-                     :url "https://www.curseforge.com/wow/addons/every-addon"}
+    (let [;; we start off with a list of these called a catalogue
+          catalogue [{:label "Every Addon"
+                      :name "every-addon",
+                      :description "Does foo, only better."
+                      :source "wowinterface",
+                      :source-id 0
+                      :game-track-list [:retail]
+                      :url "https://github.com/addons/every-addon"
+                      :download-count 1
+                      :tag-list [:auction-house]
+                      :updated-date "2012-09-20T05:32:00Z",
+                      :created-date "2023-08-01T00:00:00Z"}]
 
-          ;; this is subset of the data the remote addon host (like curseforge) serves us
-          api-result {:latestFiles [{:downloadUrl "https://example.org/foo"
-                                     :displayName "v8.10.00"
-                                     :gameVersionFlavor "wow_retail",
-                                     :gameVersion ["7.0.0"]
-                                     :fileDate "2001-01-03T00:00:00.000Z",
-                                     :fileName "EveryAddon.zip"
-                                     :releaseType 1,
-                                     :exposeAsAlternative nil}]}
-          alt-api-result (assoc-in api-result [:latestFiles 0 :displayName] "v8.20.00")
+          dummy-catalogue (catalogue/new-catalogue catalogue)
 
-          dummy-catalogue (catalogue/new-catalogue [catalogue])
+          ;; this is a subset of the data the remote addon host (like wowinterface) serves us
+          api-result [{:game-track :retail,
+                       :UIVersion "v8.10.00"}]
+
+          alt-api-result (assoc-in api-result [0 :UIVersion] "v8.20.00")
 
           fake-routes {;; catalogue
                        "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                        {:get (fn [req] {:status 200 :body (utils/to-json dummy-catalogue)})}
 
-                       ;; every-addon
-                       "https://addons-ecs.forgesvc.net/api/v2/addon/0"
+                       ;; every-addon 0
+                       "https://api.mmoui.com/v3/game/WOW/filedetails/0.json"
                        {:get (fn [req] {:status 200 :body (utils/to-json api-result)})}
 
-                       "https://addons-ecs.forgesvc.net/api/v2/addon/1"
+                       ;; every-addon 1
+                       "https://api.mmoui.com/v3/game/WOW/filedetails/1.json"
                        {:get (fn [req] {:status 200 :body (utils/to-json alt-api-result)})}}]
 
       (with-global-fake-routes-in-isolation fake-routes
@@ -556,7 +499,7 @@
                      :name "every-addon",
                      :group-id "doesntmatter"
                      :primary? true,
-                     :source "curseforge"
+                     :source "wowinterface"
                      :source-id 0}
 
                 ;; the nfo data is simply merged over the top of the scraped toc data
@@ -566,20 +509,16 @@
                 ;; in this case we have a catalogue of 1 and only interested in the first result
                 result (first (core/db-match-installed-addon-list-with-catalogue (core/get-state :db) [toc]))
 
-                ;; previously done in above step, mooshing the installed addon and catalogue item together is
-                ;; now a separate step
+                ;; the installed addon result and catalogue item result are mooshed together
                 toc-addon (core/moosh-addons toc (:catalogue-match result))
-
                 alt-toc-addon (assoc toc-addon :source-id 1)
 
                 ;; and what we 'expand' that data into
-                source-updates {:download-url "https://example.org/foo",
+                source-updates {:download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=0"
                                 :version "v8.10.00"
                                 :game-track :retail
-                                :release-list [{:download-url "https://example.org/foo",
+                                :release-list [{:download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=0"
                                                 :game-track :retail,
-                                                :interface-version 70000,
-                                                :release-label "[WoW 7.0.0] EveryAddon",
                                                 :version "v8.10.00"}]}
 
                 alt-source-updates (assoc source-updates :version "v8.20.00")
@@ -587,7 +526,8 @@
 
                 ;; after calling `check-for-update` we expect the result to be the merged sum of the below parts
                 expected (merge toc-addon source-updates {:update? false})
-                alt-expected (merge alt-toc-addon alt-source-updates {:update? true})]
+                alt-expected (merge alt-toc-addon alt-source-updates {:update? true :download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=1"})
+                alt-expected (assoc-in alt-expected [:release-list 0 :download-url] "https://cdn.wowinterface.com/downloads/getfile.php?id=1")]
 
             (is (= expected (core/check-for-update toc-addon)))
             (is (= alt-expected (core/check-for-update alt-toc-addon)))))))))
@@ -1966,11 +1906,14 @@
 
 (deftest scheduled-user-catalogue-refresh
   (with-running-app
-    (with-redefs [constants/max-user-catalogue-age 0]
+    (java-time/with-clock (java-time/fixed-clock "2100-01-01T00:00:00Z")
       (cli/set-preference :keep-user-catalogue-updated true)
       (is (true? (core/get-state :cfg :preferences :keep-user-catalogue-updated)))
       (swap! core/state assoc :user-catalogue (catalogue/new-catalogue []))
-      (let [expected ["user-catalogue not updated in the last 0 days, automatic refresh triggered."
+      (is (true? (core/refresh-user-catalogue?
+                  (core/get-state :cfg :preferences :keep-user-catalogue-updated)
+                  (core/get-state :user-catalogue :datestamp))))
+      (let [expected ["user-catalogue not updated in the last 9999 days, automatic refresh triggered."
                       "downloading 'full' catalogue"
                       "refreshing \"user-catalogue.json\", this may take a minute ..."
                       "\"user-catalogue.json\" has been refreshed"]]

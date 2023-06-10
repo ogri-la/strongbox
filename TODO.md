@@ -112,20 +112,30 @@ see CHANGELOG.md for a more formal list of changes by release
 * size column should be right aligned
     - done
 
+* remove tukui
+    - I'm not keeping all this logic for two addons
+    - stop catalogue addons from being merged into full catalogue
+        - done
+    - can the addons be mirrored/hosted on github?
+        - done
+    - follow curseforge removal pr
+        - done
+
 ## todo
-
-
 
 * update screenshots
 
-* remove tukui
-    - I'm not keeping all this logic for two addons
-    - stop catalogue addons from being merged
-        -...
-    - can the addons be mirrored/hosted on github?
-        - ...
-
 ## todo bucket (no particular order)
+
+* search results, if there are addons from the same host (github) with the same name (tukui), disambiguate them
+    - 'tukui' in the search results shouldn't mean 'ogri-la/tukui' if 'tukui.org/tukui' is also available
+        - which it isn't, but that's not the point.
+
+* expand-summary, can the game track wrangling logic be made generic rather than per-host?
+    - this would tie in with returning *all* releases from a host
+    - it would insulate host logic from selected game tracks and game track strictness
+    - it would handle pinned logic as well
+        - currently handled in catalogue
 
 * user catalogue, refreshing may guarantee exceeding github limit.
     - if we know this, add a warning? refuse? stop?

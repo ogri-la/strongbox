@@ -67,6 +67,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+* Tukui support. Tukui addons are:
+    - no longer checked for updates.
+    - excluded from being imported.
+    - excluded from the user-catalogue.
+    - no longer scraped from the tukui.org API into a catalogue.
+    - no longer present in the 'full' or 'short' catalogues.
+    - excluded from search results.
+    - removed from the 'emergency' (built-in, hardcoded) catalogue (used when remote catalogues are unavailable).
+    - removed from lists of available addon hosts to switch an addon between.
+
 ## 6.1.2 - 2023-05-16
 
 * issue #402, fixed a freezing bug in the search results, introduced in 5.1.0 (2022-03-02).

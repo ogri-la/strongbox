@@ -360,6 +360,7 @@
                                 ;; the set of available catalogues are added to configuration.
                                 :catalogue-location-list [{:name :short :label "Short (default)" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"}
                                                           {:name :full :label "Full" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/full-catalogue.json"}
+                                                          ;; removed in 7.0.0
                                                           {:name :tukui :label "Tukui" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/tukui-catalogue.json"}
                                                           ;; removed in 5.0.0
                                                           {:name :curseforge :label "Curseforge" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/curseforge-catalogue.json"}
@@ -408,6 +409,7 @@
                                 ;; new in 1.0
                                 :catalogue-location-list [{:name :short :label "Short (default)" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"}
                                                           {:name :full :label "Full" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/full-catalogue.json"}
+                                                          ;; removed in 7.0.0
                                                           {:name :tukui :label "Tukui" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/tukui-catalogue.json"}
                                                           ;; removed in 5.0.0
                                                           {:name :curseforge :label "Curseforge" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/curseforge-catalogue.json"}
@@ -458,6 +460,7 @@
                                 ;; new in 1.0
                                 :catalogue-location-list [{:name :short :label "Short (default)" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"}
                                                           {:name :full :label "Full" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/full-catalogue.json"}
+                                                          ;; removed in 7.0.0
                                                           {:name :tukui :label "Tukui" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/tukui-catalogue.json"}
                                                           ;; removed in 5.0.0
                                                           {:name :curseforge :label "Curseforge" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/curseforge-catalogue.json"}
@@ -507,6 +510,7 @@
                                 ;; new in 1.0
                                 :catalogue-location-list [{:name :short :label "Short (default)" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"}
                                                           {:name :full :label "Full" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/full-catalogue.json"}
+                                                          ;; removed in 7.0.0
                                                           {:name :tukui :label "Tukui" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/tukui-catalogue.json"}
                                                           ;; removed in 5.0.0
                                                           {:name :curseforge :label "Curseforge" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/curseforge-catalogue.json"}
@@ -553,6 +557,7 @@
                                 ;; new in 1.0
                                 :catalogue-location-list [{:name :short :label "Short (default)" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"}
                                                           {:name :full :label "Full" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/full-catalogue.json"}
+                                                          ;; removed in 7.0.0
                                                           {:name :tukui :label "Tukui" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/tukui-catalogue.json"}
                                                           ;; removed in 5.0.0
                                                           {:name :curseforge :label "Curseforge" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/curseforge-catalogue.json"}
@@ -601,6 +606,7 @@
                                 ;; new in 1.0
                                 :catalogue-location-list [{:name :short :label "Short (default)" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"}
                                                           {:name :full :label "Full" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/full-catalogue.json"}
+                                                          ;; removed in 7.0.0
                                                           {:name :tukui :label "Tukui" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/tukui-catalogue.json"}
                                                           ;; removed in 5.0.0
                                                           {:name :curseforge :label "Curseforge" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/curseforge-catalogue.json"}
@@ -654,12 +660,12 @@
                                 ;; new in 1.0
                                 :catalogue-location-list [{:name :short :label "Short (default)" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"}
                                                           {:name :full :label "Full" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/full-catalogue.json"}
+                                                          ;; removed in 7.0.0
                                                           {:name :tukui :label "Tukui" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/tukui-catalogue.json"}
                                                           ;; removed in 5.0.0
                                                           ;;{:name :curseforge :label "Curseforge" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/curseforge-catalogue.json"}
                                                           {:name :wowinterface :label "WoWInterface" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/wowinterface-catalogue.json"}
                                                           ;; new in 4.9
-                                                          ;; the set of available catalogues now includes a github catalogue
                                                           {:name :github :label "GitHub" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/github-catalogue.json"}]
 
                                 :preferences {:addon-zips-to-keep 3
@@ -709,12 +715,68 @@
                                 ;; new in 1.0
                                 :catalogue-location-list [{:name :short :label "Short (default)" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"}
                                                           {:name :full :label "Full" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/full-catalogue.json"}
+                                                          ;; removed in 7.0.0
                                                           {:name :tukui :label "Tukui" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/tukui-catalogue.json"}
                                                           ;; removed in 5.0.0
                                                           ;;{:name :curseforge :label "Curseforge" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/curseforge-catalogue.json"}
                                                           {:name :wowinterface :label "WoWInterface" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/wowinterface-catalogue.json"}
                                                           ;; new in 4.9
-                                                          ;; the set of available catalogues now includes a github catalogue
+                                                          {:name :github :label "GitHub" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/github-catalogue.json"}]
+
+                                :preferences {:addon-zips-to-keep 3
+                                              :ui-selected-columns [:source :name :description
+                                                                    :installed-version :available-version ;; replaced in 5.0.0
+                                                                    :game-version :uber-button]
+                                              :keep-user-catalogue-updated true}}
+
+                    :etag-db {}}]
+      (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))
+
+(deftest load-settings-7.0
+  (testing "a standard config file circa 7.0 is loaded and parsed as expected"
+    (let [cli-opts {}
+          cfg-file (fixture-path "user-config-7.0.json")
+          etag-db-file (fixture-path "empty-map.json")
+
+          expected {:cfg {:gui-theme :dark-green ;; new in 0.11, `:dark-green` new in 3.2.0
+                          :selected-catalogue :full ;; new in 0.10
+                          ;;:debug? true ;; removed in 0.12
+                          :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :classic-tbc :strict? true} ;; `:classic-tbc` and `:strict?` added in 4.1
+                                           {:addon-dir "/tmp/.strongbox-foo", :game-track :retail :strict? false}]
+
+                          ;; new in 1.0
+                          ;; new in 4.9, the set of available catalogues now includes a github catalogue
+                          :catalogue-location-list (:catalogue-location-list config/default-cfg)
+
+                          ;; new in 0.12
+                          ;; moved to :cfg in 1.0
+                          :selected-addon-dir "/tmp/.strongbox-foo"
+
+                          ;; new in 3.1.0
+                          :preferences {:addon-zips-to-keep 3
+
+                                        :ui-selected-columns [:source :name :description
+                                                              :combined-version ;; new default in 5.0.0
+                                                              :game-version :uber-button]
+                                        ;; new in 6.2.0
+                                        :keep-user-catalogue-updated true}}
+
+                    :cli-opts {}
+                    :file-opts {:gui-theme :dark-green
+                                :selected-catalogue :full
+                                :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :classic-tbc, :strict? true}
+                                                 {:addon-dir "/tmp/.strongbox-foo", :game-track :retail, :strict? false}]
+                                :selected-addon-dir "/tmp/.strongbox-foo"
+
+                                ;; new in 1.0
+                                :catalogue-location-list [{:name :short :label "Short (default)" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"}
+                                                          {:name :full :label "Full" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/full-catalogue.json"}
+                                                          ;; removed in 7.0.0
+                                                          ;;{:name :tukui :label "Tukui" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/tukui-catalogue.json"}
+                                                          ;; removed in 5.0.0
+                                                          ;;{:name :curseforge :label "Curseforge" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/curseforge-catalogue.json"}
+                                                          {:name :wowinterface :label "WoWInterface" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/wowinterface-catalogue.json"}
+                                                          ;; new in 4.9
                                                           {:name :github :label "GitHub" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/github-catalogue.json"}]
 
                                 :preferences {:addon-zips-to-keep 3

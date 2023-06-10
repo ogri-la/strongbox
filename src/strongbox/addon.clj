@@ -18,6 +18,12 @@
 
 (def dummy-dirname "not-the-addon-dir-you-are-looking-for")
 
+(defn-spec host-disabled? boolean?
+  "returns `true` if the addon host has been disabled"
+  [addon map?]
+  (or (-> addon :source (= "curseforge"))
+      (-> addon :source (utils/in? sp/tukui-source-list))))
+
 (defn-spec -remove-addon! nil?
   "safely removes the given `addon-dirname` from `install-dir`.
   if the given `addon-dirname` is a mutual dependency with another addon, just remove it's entry from
@@ -155,11 +161,9 @@
 (defn-spec merge-toc-nfo (s/or :ok map?, :empty nil?)
   "merges `toc` data with `nfo` data with special handling for the `source-map-list`."
   [toc (s/nilable map?), nfo (s/nilable map?)]
-  (let [curse? (fn [source-map]
-                 (= (:source source-map) "curseforge"))
-        source-map-list (some->> (merge-lists (extract-source-map-list toc)
+  (let [source-map-list (some->> (merge-lists (extract-source-map-list toc)
                                               (extract-source-map-list nfo))
-                                 (remove curse?)
+                                 (remove host-disabled?)
                                  vec
                                  (assoc {} :source-map-list))]
     (merge toc nfo source-map-list)))

@@ -15,11 +15,6 @@
     [gitlab-api :as gitlab-api]
     [github-api :as github-api]]))
 
-(defn-spec host-disabled? boolean?
-  "returns `true` if the addon host has been disabled"
-  [addon map?]
-  (-> addon :source (= "curseforge")))
-
 (defn-spec -expand-summary (s/or :ok :addon/expanded, :error nil?)
   "fetches updates from the addon host for the given `addon` and `game-track`.
   does *not* support multiple game tracks or warning the user, see `expand-summary`.
@@ -62,24 +57,32 @@
         game-track* game-track
         game-track (some #{game-track} sp/game-tracks)] ;; :retail => :retail, :unknown-game-track => nil
     (cond
-      (not game-track) (error (format "unsupported game track '%s'." (str game-track*)))
-      (host-disabled? addon) (warn (utils/message-list (str "addon host 'curseforge' was disabled " constants/curseforge-cutoff-label ".")
-                                                       ["use 'Source' and 'Find similar' from the addon context menu for alternatives."]))
-      :else (if-let [source-updates (if strict?
-                                      (-expand-summary addon game-track)
-                                      (utils/first-nn (partial -expand-summary addon) (get track-map game-track)))]
-              source-updates
+      (not game-track)
+      (error (format "unsupported game track '%s'." (str game-track*)))
 
-              ;; "no 'Retail' release found on github"
-              ;; "no 'Classic' release found on wowinterface"
-              ;; "no 'Classic (TBC)', 'Classic' or 'Retail' release found on github"
-              (let [single-template "no '%s' release found on %s."
-                    multi-template "no '%s', '%s', '%s' or '%s' release found on %s."
-                    msg (if strict?
-                          (format single-template (sp/game-track-labels-map game-track) (:source addon))
-                          (apply format multi-template (conj (mapv #(sp/game-track-labels-map %) (get track-map game-track))
-                                                             (:source addon))))]
-                (warn msg))))))
+      (strongbox.addon/host-disabled? addon)
+      (if (= (:source addon) "curseforge")
+        (warn (utils/message-list (str "addon host 'curseforge' was disabled " constants/curseforge-cutoff-label ".")
+                                  ["use 'Source' and 'Find similar' from the addon context menu for alternatives."]))
+        (warn (utils/message-list (str "addon host 'tukui' was disabled " constants/tukui-cutoff-label ".")
+                                  ["use 'Source' and 'Find similar' from the addon context menu for alternatives."])))
+
+      :else
+      (if-let [source-updates (if strict?
+                                (-expand-summary addon game-track)
+                                (utils/first-nn (partial -expand-summary addon) (get track-map game-track)))]
+        source-updates
+
+        ;; "no 'Retail' release found on github"
+        ;; "no 'Classic' release found on wowinterface"
+        ;; "no 'Classic (TBC)', 'Classic' or 'Retail' release found on github"
+        (let [single-template "no '%s' release found on %s."
+              multi-template "no '%s', '%s', '%s' or '%s' release found on %s."
+              msg (if strict?
+                    (format single-template (sp/game-track-labels-map game-track) (:source addon))
+                    (apply format multi-template (conj (mapv #(sp/game-track-labels-map %) (get track-map game-track))
+                                                       (:source addon))))]
+          (warn msg))))))
 
 ;;
 
